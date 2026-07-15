@@ -25,7 +25,7 @@ const (
 type Entry struct {
 	Lemma        string
 	PartOfSpeech string
-	Translation string
+	Translation  string
 	Note         string
 	SourceSheet  string
 	SourceRow    int
@@ -81,7 +81,7 @@ func Entries() ([]Entry, error) {
 		entry := Entry{
 			Lemma:        strings.TrimSpace(record[0]),
 			PartOfSpeech: strings.TrimSpace(record[1]),
-			Translation: strings.TrimSpace(record[2]),
+			Translation:  strings.TrimSpace(record[2]),
 			Note:         strings.TrimSpace(record[3]),
 			SourceSheet:  strings.TrimSpace(record[4]),
 			SourceRow:    sourceRow,
