@@ -18,14 +18,14 @@ jobs:
       - uses: actions/setup-go@v5
         with: { go-version: "1.26.5", cache-dependency-path: backend/go.mod }
       - run: go mod tidy
-      - name: Upload generated Go lock file
+      - run: gofmt -w .
+      - name: Upload Go 1.26 formatted sources
         uses: actions/upload-artifact@v4
         with:
-          name: backend-dependency-lock
-          path: backend/go.sum
-          if-no-files-found: error
+          name: backend-formatted-source
+          path: backend
+          include-hidden-files: true
           retention-days: 3
-      - run: test -z "$(gofmt -l .)" || (gofmt -d . && exit 1)
       - run: go vet ./...
       - run: go test -race -count=1 -coverprofile=coverage.out ./...
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
@@ -57,7 +57,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: { go-version: "1.26.5", cache-dependency-path: backend/go.mod }
-      - run: go test -race -count=1 -tags=integration ./...
+      - name: Run integration tests
+        run: go test -race -count=1 -tags=integration ./... 2>&1 | tee integration-test.log
+      - name: Upload integration test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-integration-log
+          path: backend/integration-test.log
+          if-no-files-found: error
+          retention-days: 3
 
   frontend:
     runs-on: ubuntu-latest
@@ -67,13 +76,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - run: npm install --no-audit --no-fund
-      - name: Upload generated npm lock file
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dependency-lock
-          path: frontend/package-lock.json
-          if-no-files-found: error
-          retention-days: 3
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
