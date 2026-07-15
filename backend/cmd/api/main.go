@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Dja-tiger/New-project/backend/internal/catalog"
 	"github.com/Dja-tiger/New-project/backend/internal/config"
 	"github.com/Dja-tiger/New-project/backend/internal/platform/migrate"
 	postgresplatform "github.com/Dja-tiger/New-project/backend/internal/platform/postgres"
@@ -52,6 +53,14 @@ func run() error {
 	if err := migrate.Up(ctx, pg); err != nil {
 		return fmt.Errorf("apply migrations: %w", err)
 	}
+	seededWords, err := catalog.Seed(ctx, pg)
+	if err != nil {
+		return fmt.Errorf("synchronize word catalog: %w", err)
+	}
+	logger.Info("word catalog synchronized",
+		slog.String("source", catalog.Source),
+		slog.Int("words", seededWords),
+	)
 
 	rdb, err := redisplatform.Open(ctx, cfg.Redis)
 	if err != nil {
