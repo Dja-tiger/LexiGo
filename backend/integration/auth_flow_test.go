@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Dja-tiger/New-project/backend/internal/catalog"
 	"github.com/Dja-tiger/New-project/backend/internal/config"
 	"github.com/Dja-tiger/New-project/backend/internal/platform/migrate"
 	postgresplatform "github.com/Dja-tiger/New-project/backend/internal/platform/postgres"
@@ -44,6 +45,9 @@ func TestCompleteAuthenticationFlow(t *testing.T) {
 	}
 	if _, err := pg.Exec(ctx, "truncate table review_events, user_words, refresh_tokens, words, users restart identity cascade"); err != nil {
 		t.Fatalf("truncate test data: %v", err)
+	}
+	if _, err := catalog.Seed(ctx, pg); err != nil {
+		t.Fatalf("catalog.Seed() error = %v", err)
 	}
 
 	rdb, err := redisplatform.Open(ctx, config.Redis{Addr: requiredEnv(t, "TEST_REDIS_ADDR")})
@@ -81,6 +85,19 @@ func TestCompleteAuthenticationFlow(t *testing.T) {
 		t.Fatal("register response does not contain tokens")
 	}
 
+	var enrolledWords int
+	if err := pg.QueryRow(ctx, `
+		select count(*)
+		from user_words
+		join users on users.id = user_words.user_id
+		where users.email = $1
+	`, email).Scan(&enrolledWords); err != nil {
+		t.Fatalf("count enrolled words: %v", err)
+	}
+	if enrolledWords != catalog.ExpectedCount {
+		t.Fatalf("enrolled words = %d, want %d", enrolledWords, catalog.ExpectedCount)
+	}
+
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, testServer.URL+"/api/v1/me", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -93,6 +110,32 @@ func TestCompleteAuthenticationFlow(t *testing.T) {
 	response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("GET /me status = %d", response.StatusCode)
+	}
+
+	dueRequest, err := http.NewRequestWithContext(ctx, http.MethodGet, testServer.URL+"/api/v1/words/due?limit=1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dueRequest.Header.Set("Authorization", "Bearer "+registered.Tokens.AccessToken)
+	dueResponse, err := http.DefaultClient.Do(dueRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dueResponse.Body.Close()
+	if dueResponse.StatusCode != http.StatusOK {
+		t.Fatalf("GET /words/due status = %d", dueResponse.StatusCode)
+	}
+	var duePayload struct {
+		Items []struct {
+			Lemma string `json:"lemma"`
+		} `json:"items"`
+		Count int `json:"count"`
+	}
+	if err := json.NewDecoder(dueResponse.Body).Decode(&duePayload); err != nil {
+		t.Fatalf("decode due words: %v", err)
+	}
+	if duePayload.Count != 1 || len(duePayload.Items) != 1 || duePayload.Items[0].Lemma != "absolute" {
+		t.Fatalf("unexpected due words payload: %+v", duePayload)
 	}
 
 	refreshed := postJSON[integrationTokenPair](t, testServer.URL+"/api/v1/auth/refresh", map[string]string{
