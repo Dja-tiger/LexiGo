@@ -31,7 +31,7 @@ backend-cover:
 	cd backend && GOTOOLCHAIN=local go test -coverprofile=coverage.out ./...
 
 frontend-install:
-	cd frontend && npm install --no-audit --no-fund
+	cd frontend && npm ci --no-audit --no-fund
 
 frontend-test:
 	cd frontend && npm run test
