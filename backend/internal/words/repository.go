@@ -17,7 +17,7 @@ func (r *Repository) ListDue(ctx context.Context, userID string, limit int) ([]U
 		limit = 20
 	}
 	rows, err := r.pool.Query(ctx, `
-		select w.id, w.lemma, w.translation, w.phonetic, w.part_of_speech, w.topic, w.examples,
+		select w.id, w.lemma, w.translation, w.phonetic, w.part_of_speech, w.topic, w.examples, w.note,
 		       uw.status, uw.easiness::float8, uw.interval_days, uw.repetitions, uw.due_at, uw.last_reviewed_at
 		from user_words uw
 		join words w on w.id = uw.word_id
@@ -35,7 +35,7 @@ func (r *Repository) ListDue(ctx context.Context, userID string, limit int) ([]U
 		var item UserWord
 		var examples []byte
 		if err := rows.Scan(
-			&item.ID, &item.Lemma, &item.Translation, &item.Phonetic, &item.PartOfSpeech, &item.Topic, &examples,
+			&item.ID, &item.Lemma, &item.Translation, &item.Phonetic, &item.PartOfSpeech, &item.Topic, &examples, &item.Note,
 			&item.Status, &item.Easiness, &item.IntervalDays, &item.Repetitions, &item.DueAt, &item.LastReviewedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan due word: %w", err)
