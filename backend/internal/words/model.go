@@ -10,6 +10,7 @@ type Word struct {
 	PartOfSpeech string   `json:"partOfSpeech"`
 	Topic        string   `json:"topic"`
 	Examples     []string `json:"examples"`
+	Note         string   `json:"note"`
 }
 
 type UserWord struct {
