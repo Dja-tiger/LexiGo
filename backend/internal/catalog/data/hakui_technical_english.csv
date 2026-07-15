@@ -1,0 +1,493 @@
+lemma,part_of_speech,translation,note,source_sheet,source_row
+absolute,adjective,абсолютный,an absolute value (абсолютное значение),Table 1,4
+abstract,adjective,"резюме, квинтэссенция",an abstract of the paper (резюме научной работы),Table 1,5
+academic,adjective,"академический, научный",an academic journal (научный журнал),Table 1,6
+acceptable,adjective,"приемлемый, допустимый",an acceptable sentence (допустимое предложение),Table 1,7
+accidental,adjective,случайный,an accidental coincidence (случайное совпадение),Table 1,8
+accordance,noun,соответствие,"according to Sakamoto, 2013 (согласно работе Сакамото, 2013 г.)",Table 1,9
+account,noun,"расчёт, учёт",account for the data (с учётом данных),Table 1,10
+achieve,verb,достигать,achieve the goal (достигать цели),Table 1,11
+acknowledge,verb,признавать,"acknowledgment (признание, благодарность)",Table 1,12
+acquire,verb,приобретать,acquisition (приобретение),Table 1,13
+adapt,verb,адаптировать,adaptation (адаптация),Table 1,14
+adequate,adjective,"адекватный, достаточный",adequacy (адекватность),Table 1,15
+adjacent,adjective,соседний,adjacency (смежность),Table 1,16
+adopt,verb,принимать,adoption (принятие),Table 1,17
+advance,noun,"продвижение, прогресс",advance the discussion (продвигать обсуждение),Table 1,18
+advantage,noun,преимущество,disadvantage (недостаток),Table 1,19
+affect,verb,влиять,effect (эффект),Table 1,20
+aggregate,adjective,совокупный,aggregation (агрегация),Table 1,21
+albeit,preposition,хотя,,Table 1,22
+allow,verb,позволять,allow A to V (позволять А сделать В),Table 1,23
+alternative,noun,альтернатива,alternatively (в качестве альтернативы),Table 1,24
+ambiguous,adjective,двусмысленный,ambiguity (двусмысленность),Table 1,25
+analogous,adjective,аналогичный,analogy (аналогия),Table 1,26
+analysis,noun,анализ,analyze (анализировать),Table 1,27
+annotation,noun,аннотация,annotate (аннотировать),Table 1,28
+anonymous,adjective,анонимный,anonymous reviewers (анонимные рецензенты),Table 2,1
+apparatus,noun,"аппарат, инструментарий",a conceptual apparatus (понятийный аппарат),Table 2,2
+apparent,adjective,очевидный,an apparent counterexample (очевидный контрпример),Table 2,3
+appendix,noun,приложение,Appendix A (Приложение А); используется без артикля,Table 2,4
+applicable,adjective,применимый,apply to (применять к…),Table 2,5
+approach,noun,"подход, подходить",approach the problem (подходить к проблеме),Table 2,6
+appropriate,adjective,подходящий,an appropriate explanation (подходящее объяснение),Table 2,7
+approximately,noun,приблизительно,approximate (приблизительный),Table 2,8
+arbitrary,adjective,произвольный,an arbitrary relationship (произвольная зависимость),Table 2,9
+argument,noun,спор,argue (спорить),Table 2,10
+aspect,noun,аспект,,Table 2,11
+associate,verb,"ассоциировать, связывать",associate A with B (связывать А с В),Table 2,12
+assume,verb,предполагать,assumption (предположение),Table 2,13
+attain,verb,достигать,attainment (достижение),Table 2,14
+attribute,verb,приписывать,attribute A to B (приписывать А к В),Table 2,15
+automatic,adjective,автоматический,automatically (автоматически),Table 2,16
+background,noun,предыстория,background knowledge (фоновые знания),Table 2,17
+basis,noun,основа,on the basis of (на основании),Table 2,18
+bear,verb,нести,bear in mind (иметь в виду),Table 2,19
+behavior,noun,поведение,behave (вести себя),Table 2,20
+benefit,noun,"польза, выгода",beneficial (полезный),Table 2,21
+brief,adjective,краткий,briefly (кратко),Table 2,22
+broad,adjective,широкий,broadly (в широком смысле),Table 2,23
+calculate,verb,вычислять,calculation (вычисление),Table 2,24
+capture,verb,"захватывать, отражать",capture the essence (отразить суть),Table 2,25
+case,noun,случай,in this case (в этом случае),Table 2,26
+category,noun,категория,categorize (категоризировать),Table 2,27
+cause,noun,причина,cause A to V (заставить А сделать В),Table 2,28
+central,adjective,центральный,centrally (центрально),Table 2,29
+certain,adjective,"определённый, некоторый",certainty (уверенность),Table 3,1
+challenge,noun,проблема,challenging (сложный),Table 3,2
+characteristic,noun,характеристика,characterize (характеризовать),Table 3,3
+chart,noun,диаграмма,,Table 3,4
+cite,verb,цитировать,citation (цитата),Table 3,5
+claim,verb,утверждать,,Table 3,6
+clarify,verb,прояснять,clarification (прояснение),Table 3,7
+classic,adjective,классический,,Table 3,8
+classification,noun,классификация,classify (классифицировать),Table 3,9
+clearly,adverb,ясно,clear (ясный),Table 3,10
+closely,adverb,пристально,"close (детальный, приближенный – о рассмотрении и т. п.)",Table 3,11
+clue,noun,ключ,provide clues to answering (предоставить ключи к ответу),Table 3,12
+coherent,adjective,связанный,coherence (связанность),Table 3,13
+collaboration,noun,сотрудничество,collaborate (сотрудничать),Table 3,14
+column,noun,столбец,the leftmost/rightmost column (крайний слева/ справа столбец),Table 3,15
+common,adjective,общий,commonality (общность),Table 3,16
+comparable,adjective,сравнимый,,Table 3,17
+comparative,adjective,сравнительный,compare A to/with B (сравнивать А с В),Table 3,18
+comparison,noun,сравнение,by comparison (для сравнения),Table 3,19
+compatible,adjective,совместимый,compatibility (совместимость),Table 3,20
+compelling,adjective,убедительный,a compelling argument (убедительный аргумент),Table 3,21
+complement,verb,дополнять,complementary (дополняющий),Table 3,22
+complete,adjective,полный,completion (завершение),Table 3,23
+complex,adjective,сложный,complexity (сложность),Table 3,24
+component,noun,компонент,,Table 3,25
+comprehensive,adjective,всеобъемлющий,comprehensively (всеобъемлюще),Table 3,26
+comprise,verb,состоять,comprise A (состоять из А),Table 3,27
+concept,noun,понятие,conceptual (концептуальный),Table 3,28
+conclusion,noun,вывод,conclude (делать вывод),Table 3,29
+concrete,adjective,конкретный,concretely (конкретно),Table 3,30
+condition,noun,условие,conditional (условный),Table 3,31
+conduct,verb,проводить,conduct an experiment (проводить эксперимент),Table 4,1
+confer,verb,предоставлять,confer an advantage (предоставлять преимущество),Table 4,2
+configuration,noun,конфигурация,configure (конфигурировать),Table 4,3
+confirm,verb,подтверждать,confirmation (подтверждение),Table 4,4
+conflict,noun,конфликт,conflicting evidence (противоречивые данные),Table 4,5
+conform,verb,соответствовать,conform to a standard (соответствовать стандарту),Table 4,6
+consequence,noun,последствие,consequently (следовательно),Table 4,7
+consider,verb,рассматривать,consideration (рассмотрение),Table 4,8
+consistent,adjective,последовательный,consistency (последовательность),Table 4,9
+constitute,verb,составлять,constitute a problem (представлять проблему),Table 4,10
+constraint,noun,ограничение,constrain (ограничивать),Table 4,11
+construct,verb,создавать,construction (создание),Table 4,12
+contain,verb,содержать,container (контейнер),Table 4,13
+context,noun,контекст,contextual (контекстуальный),Table 4,14
+contrast,noun,контраст,in contrast (в отличие),Table 4,15
+contribute,verb,вносить вклад,contribution (вклад),Table 4,16
+controversial,adjective,спорный,controversy (спор),Table 4,17
+conventional,adjective,традиционный,convention (соглашение),Table 4,18
+converse,adjective,обратный,conversely (наоборот),Table 4,19
+convert,verb,преобразовывать,conversion (преобразование),Table 4,20
+convey,verb,передавать,convey the meaning (передавать значение),Table 4,21
+correspond,verb,соответствовать,correspondence (соответствие),Table 4,22
+crucial,adjective,ключевой,crucially (что особенно важно),Table 4,23
+current,adjective,текущий,currently (в настоящее время),Table 4,24
+data,noun,данные,datum (единица данных),Table 4,25
+debate,noun,дискуссия,debate the issue (обсуждать вопрос),Table 4,26
+decade,noun,десятилетие,,Table 4,27
+decide,verb,решать,decision (решение),Table 4,28
+define,verb,определять,definition (определение),Table 4,29
+demonstrate,verb,демонстрировать,demonstration (демонстрация),Table 4,30
+depend,verb,зависеть,dependence (зависимость),Table 4,31
+deal,verb,"иметь дело, рассматривать",deal with a problem (рассматривать проблему),Table 5,3
+deduce,verb,выводить,deduction (вывод),Table 5,4
+defect,noun,дефект,defective (дефектный),Table 5,5
+deliver,verb,доставлять,delivery (доставка),Table 5,6
+dense,adjective,плотный,density (плотность),Table 5,7
+depict,verb,изображать,depiction (изображение),Table 5,8
+derive,verb,выводить,derive A from B (выводить А из В),Table 5,9
+describe,verb,описывать,description (описание),Table 5,10
+design,noun,дизайн,design an experiment (разработать эксперимент),Table 5,11
+desirable,adjective,желательный,desirability (желательность),Table 5,12
+detail,noun,деталь,in detail (подробно),Table 5,13
+detect,verb,обнаруживать,detection (обнаружение),Table 5,14
+determine,verb,определять,determination (определение),Table 5,15
+develop,verb,разрабатывать,development (разработка),Table 5,16
+deviate,verb,отклоняться,deviation (отклонение),Table 5,17
+difference,noun,различие,differ (различаться),Table 5,18
+differentiate,verb,различать,differentiation (различение),Table 5,19
+dimension,noun,измерение,dimensional (размерный),Table 5,20
+direct,adjective,прямой,directly (непосредственно),Table 5,21
+discuss,verb,обсуждать,discussion (обсуждение),Table 5,22
+distinct,adjective,отдельный,distinction (различие),Table 5,23
+distribute,verb,распределять,distribution (распределение),Table 5,24
+diverse,adjective,разнообразный,diversity (разнообразие),Table 5,25
+document,noun,документ,documentation (документация),Table 5,26
+domain,noun,область,,Table 5,27
+dominant,adjective,доминирующий,dominate (доминировать),Table 5,28
+draw,verb,делать вывод,draw a conclusion (сделать вывод),Table 5,29
+due,adjective,"обусловленный, должный",due to (из-за),Table 5,30
+dynamic,adjective,динамический,dynamics (динамика),Table 5,31
+element,noun,элемент,,Table 5,32
+eliminate,verb,устранять,elimination (устранение),Table 5,33
+elsewhere,adverb,где-либо (в другом месте),,Table 6,10
+emerge,verb,возникать,emergence (возникновение),Table 6,11
+emphasis,noun,акцент,emphasize (подчеркивать),Table 6,12
+empirical,adjective,эмпирический,empirically (эмпирически),Table 6,13
+enable,verb,позволять,enable A to V (позволять А сделать В),Table 6,14
+encounter,verb,сталкиваться,encounter a problem (столкнуться с проблемой),Table 6,15
+ensure,verb,обеспечивать,ensure that S + V (обеспечить то, что С + Г),Table 6,16
+entity,noun,сущность,,Table 6,17
+environment,noun,среда,environmental (относящийся к среде),Table 6,18
+equivalent,adjective,эквивалентный,equivalence (эквивалентность),Table 6,19
+error,noun,ошибка,erroneous (ошибочный),Table 6,20
+establish,verb,устанавливать,establishment (установление),Table 6,21
+equally,adverb,в равной степени,equal (равный),Table 6,22
+essential,adjective,существенный,essentially (по существу),Table 6,23
+estimate,verb,оценивать,estimation (оценка),Table 6,24
+especially,adverb,особенно,,Table 6,25
+evaluate,verb,оценивать,evaluation (оценка),Table 6,26
+event,noun,событие,,Table 6,27
+evidence,noun,доказательство,evident (очевидный),Table 6,28
+exact,adjective,точный,exactly (точно),Table 6,29
+examine,verb,исследовать,examination (исследование),Table 6,30
+example,noun,пример,for example (например),Table 6,31
+exceed,verb,превышать,excess (превышение),Table 6,32
+exclude,verb,исключать,exclusion (исключение),Table 6,33
+exist,verb,существовать,existence (существование),Table 6,34
+expand,verb,расширять,expansion (расширение),Table 7,1
+experiment,noun,эксперимент,experimental (экспериментальный),Table 7,2
+explicit,adjective,явный,explicitly (явно),Table 7,3
+explain,verb,объяснять,explanation (объяснение),Table 7,4
+explore,verb,исследовать,exploration (исследование),Table 7,5
+express,verb,выражать,expression (выражение),Table 7,6
+extend,verb,расширять,extension (расширение),Table 7,7
+external,adjective,внешний,externally (внешне),Table 7,8
+extract,verb,извлекать,extraction (извлечение),Table 7,9
+factor,noun,фактор,,Table 7,10
+feature,noun,особенность,,Table 7,11
+figure,noun,"рисунок, число",Figure 1 (Рисунок 1); используется без артикля,Table 7,12
+final,adjective,конечный,finally (наконец),Table 7,13
+focus,noun,фокус,focus on (сосредоточиться на),Table 7,14
+form,noun,форма,,Table 7,15
+formal,adjective,формальный,formally (формально),Table 7,16
+framework,noun,структура,a theoretical framework (теоретическая структура),Table 7,17
+frequent,adjective,частый,frequently (часто),Table 7,18
+function,noun,функция,functional (функциональный),Table 7,19
+fundamental,adjective,фундаментальный,fundamentally (фундаментально),Table 7,20
+further,adjective,дальнейший,further investigation (дальнейшее исследование),Table 7,21
+facet,noun,аспект,,Table 7,22
+facilitate,verb,облегчать,facilitation (облегчение),Table 7,23
+fail,verb,не удаваться,failure (неудача),Table 7,24
+feasible,adjective,осуществимый,feasibility (осуществимость),Table 7,25
+finite,adjective,конечный,infinite (бесконечный),Table 7,26
+flexible,adjective,гибкий,flexibility (гибкость),Table 7,27
+follow,verb,следовать,following (следующий),Table 7,28
+force,verb,заставлять,force A to V (заставлять А сделать В),Table 7,29
+formulate,verb,формулировать,formulation (формулировка),Table 7,30
+foster,verb,способствовать,foster development (способствовать развитию),Table 7,31
+freely,adverb,свободно,free (свободный),Table 7,32
+fully,adverb,полностью,full (полный),Table 7,33
+gain,verb,получать,gain insight (получить понимание),Table 7,34
+general,adjective,общий,generally (в целом),Table 8,1
+generate,verb,генерировать,generation (генерация),Table 8,2
+generic,adjective,общий,generically (в общем виде),Table 8,3
+give,verb,давать,given (данный),Table 8,4
+govern,verb,управлять,governance (управление),Table 8,5
+gradual,adjective,постепенный,gradually (постепенно),Table 8,6
+grant,verb,предоставлять,grant access (предоставить доступ),Table 8,7
+graph,noun,график,graphical (графический),Table 8,8
+group,noun,группа,grouping (группировка),Table 8,9
+guarantee,verb,гарантировать,guarantee that S + V (гарантировать то, что С + Г),Table 8,10
+guide,verb,направлять,guidance (руководство),Table 8,11
+highlight,verb,подчеркивать,highlight the importance (подчеркнуть важность),Table 8,12
+hypothesis,noun,гипотеза,hypothesize (выдвигать гипотезу),Table 8,13
+identify,verb,идентифицировать,identification (идентификация),Table 8,14
+generalization,noun,обобщение,generalize (обобщать),Table 8,15
+given,adjective,данный,given that S + V (учитывая то, что С + Г),Table 8,16
+gradient,noun,градиент,,Table 8,17
+graphic,adjective,графический,,Table 8,18
+greater,adjective,больший,greater than (больше чем),Table 8,19
+handle,verb,обрабатывать,handle data (обрабатывать данные),Table 8,21
+hence,adverb,следовательно,,Table 8,22
+hierarchy,noun,иерархия,hierarchical (иерархический),Table 8,23
+horizontal,adjective,горизонтальный,horizontally (горизонтально),Table 8,24
+however,adverb,однако,,Table 8,25
+ideal,adjective,идеальный,ideally (в идеале),Table 8,26
+illustrate,verb,иллюстрировать,illustration (иллюстрация),Table 8,27
+immediate,adjective,непосредственный,immediately (немедленно),Table 8,28
+impact,noun,влияние,impact on (влиять на),Table 8,29
+implement,verb,реализовывать,implementation (реализация),Table 8,30
+identical,adjective,идентичный,identity (идентичность),Table 8,31
+ignore,verb,игнорировать,ignorance (незнание),Table 8,32
+imply,verb,подразумевать,implication (следствие),Table 8,33
+impose,verb,налагать,impose a constraint (наложить ограничение),Table 8,34
+include,verb,включать,inclusion (включение),Table 9,1
+incorporate,verb,включать,incorporation (включение),Table 9,2
+increase,verb,увеличивать,increase in (увеличение чего-либо),Table 9,3
+indicate,verb,указывать,indication (указание),Table 9,4
+individual,adjective,индивидуальный,individually (индивидуально),Table 9,5
+infer,verb,выводить,inference (вывод),Table 9,6
+influence,noun,влияние,influence A (влиять на А),Table 9,7
+initial,adjective,начальный,initially (первоначально),Table 9,8
+input,noun,вход,input data (входные данные),Table 9,9
+insight,noun,понимание,gain insight into (получить понимание),Table 9,10
+instance,noun,пример,for instance (например),Table 9,11
+integrate,verb,интегрировать,integration (интеграция),Table 9,12
+intend,verb,намереваться,intention (намерение),Table 9,13
+interact,verb,взаимодействовать,interaction (взаимодействие),Table 9,14
+interpretation,noun,интерпретация,interpret (интерпретировать),Table 9,15
+intervention,noun,вмешательство,intervene (вмешиваться),Table 9,16
+introduce,verb,представлять,introduction (введение),Table 9,17
+investigate,verb,исследовать,investigation (исследование),Table 9,18
+involve,verb,включать,involvement (вовлечение),Table 9,19
+issue,noun,вопрос,address an issue (рассмотреть вопрос),Table 9,20
+item,noun,элемент,,Table 9,21
+justify,verb,обосновывать,justification (обоснование),Table 9,22
+key,adjective,ключевой,key factor (ключевой фактор),Table 9,23
+knowledge,noun,знание,,Table 9,24
+lack,noun,недостаток,lack of evidence (недостаток доказательств),Table 9,25
+layer,noun,слой,,Table 9,26
+lead,verb,приводить,lead to (приводить к),Table 9,27
+limit,noun,предел,limitation (ограничение),Table 9,28
+linear,adjective,линейный,linearity (линейность),Table 9,29
+link,noun,связь,link A to B (связывать А с В),Table 9,30
+literature,noun,литература,the literature (литература по теме),Table 9,31
+local,adjective,локальный,locally (локально),Table 9,32
+locate,verb,располагать,location (расположение),Table 9,33
+logical,adjective,логический,logically (логически),Table 9,34
+maintain,verb,поддерживать,maintenance (поддержка),Table 9,35
+interface,noun,область взаимодействия,,Table 10,1
+intermediate,adjective,промежуточный,,Table 10,2
+internal,adjective,внутренний,internally (внутри),Table 10,3
+interpret,verb,интерпретировать,interpretation (интерпретация),Table 10,4
+interval,noun,интервал,,Table 10,5
+intimate,adjective,близкий,,Table 10,6
+intricate,adjective,"сложный, запутанный",,Table 10,7
+intriguing,adjective,интригующий,interesting (интересный),Table 10,8
+intrinsic,adjective,внутренний,,Table 10,9
+introduction,noun,введение,introduce (представлять, вводить),Table 10,10
+intuitively,adverb,интуитивно,"intuitive (интуитивный), intuition (интуиция)",Table 10,11
+invalid,adjective,несостоятельный,,Table 10,12
+inventory,noun,список,,Table 10,13
+investigate,verb,исследовать,,Table 10,14
+jointly,adverb,совместно,,Table 10,18
+label,verb,"помечать, маркировать",,Table 10,20
+latter,adjective,последний (из двух),the former ... the latter (первый ... последний),Table 10,21
+layout,noun,макет,,Table 10,22
+likely,adjective,вероятный,likely to V (вероятно сделать В),Table 10,23
+likewise,adverb,аналогично,,Table 10,24
+linkage,noun,связь,,Table 10,25
+literally,adverb,буквально,literal (буквальный),Table 10,26
+locally,adverb,локально,local (локальный),Table 10,27
+longitudinal,adjective,продольный,,Table 10,28
+lower,adjective,нижний,lower than (меньше чем),Table 10,29
+main,adjective,главный,mainly (главным образом),Table 10,30
+magnitude,noun,величина,,Table 10,32
+major,adjective,основной,majority (большинство),Table 10,33
+manipulate,verb,манипулировать,manipulation (манипуляция),Table 10,34
+manner,noun,способ,in a similar manner (подобным образом),Table 10,35
+map,noun,карта,map A onto B (отображать А на В),Table 11,1
+match,verb,соответствовать,matching (соответствие),Table 11,2
+material,noun,материал,,Table 11,3
+measure,verb,измерять,measurement (измерение),Table 11,4
+mechanism,noun,механизм,,Table 11,5
+method,noun,метод,methodology (методология),Table 11,6
+minor,adjective,незначительный,minority (меньшинство),Table 11,7
+model,noun,модель,modeling (моделирование),Table 11,8
+modify,verb,изменять,modification (изменение),Table 11,9
+monitor,verb,отслеживать,monitoring (мониторинг),Table 11,10
+multiple,adjective,множественный,multiply (умножать),Table 11,11
+mutual,adjective,взаимный,mutually (взаимно),Table 11,12
+namely,adverb,а именно,,Table 11,20
+necessary,adjective,необходимый,necessarily (обязательно),Table 11,21
+negative,adjective,отрицательный,negatively (отрицательно),Table 11,22
+network,noun,сеть,,Table 11,23
+neutral,adjective,нейтральный,neutrality (нейтральность),Table 11,24
+nevertheless,adverb,тем не менее,,Table 11,25
+normal,adjective,нормальный,normally (обычно),Table 11,26
+notion,noun,понятие,,Table 11,27
+numerical,adjective,численный,numerically (численно),Table 11,28
+objective,noun,цель,objectively (объективно),Table 11,29
+object,noun,объект,,Table 11,30
+obtain,verb,получать,obtain a result (получить результат),Table 11,31
+obvious,adjective,очевидный,obviously (очевидно),Table 11,32
+occur,verb,происходить,occurrence (происхождение),Table 11,33
+offset,noun,смещение,,Table 11,34
+overall,adjective,общий,overall result (общий результат),Table 11,35
+output,noun,выход,output data (выходные данные),Table 11,36
+pair,noun,пара,a pair of values (пара значений),Table 12,12
+parallel,adjective,параллельный,in parallel (параллельно),Table 12,13
+parameter,noun,параметр,,Table 12,14
+particular,adjective,конкретный,particularly (в частности),Table 12,15
+pattern,noun,шаблон,,Table 12,16
+perform,verb,выполнять,performance (производительность),Table 12,17
+perspective,noun,перспектива,from the perspective of A (с точки зрения А),Table 12,18
+phase,noun,фаза,,Table 12,19
+phenomenon,noun,явление,phenomena (явления),Table 12,20
+plot,noun,график,plot the data (построить график),Table 12,21
+point,noun,точка,point out (указывать),Table 12,22
+positive,adjective,положительный,positively (положительно),Table 12,23
+potential,adjective,потенциальный,potentially (потенциально),Table 12,24
+precise,adjective,точный,precision (точность),Table 12,25
+predict,verb,предсказывать,prediction (предсказание),Table 12,26
+preliminary,adjective,предварительный,preliminarily (предварительно),Table 12,27
+present,verb,представлять,presentation (представление),Table 12,28
+preserve,verb,сохранять,preservation (сохранение),Table 12,29
+previous,adjective,предыдущий,previously (ранее),Table 12,30
+primary,adjective,первичный,primarily (прежде всего),Table 12,31
+principle,noun,принцип,principled (принципиальный),Table 12,32
+prior,adjective,предшествующий,prior to (до),Table 12,33
+probability,noun,вероятность,probable (вероятный),Table 12,34
+procedure,noun,процедура,procedural (процедурный),Table 13,1
+process,noun,процесс,processing (обработка),Table 13,2
+produce,verb,производить,production (производство),Table 13,3
+profile,noun,профиль,,Table 13,4
+progress,noun,прогресс,progressive (прогрессивный),Table 13,5
+project,noun,проект,projection (проекция),Table 13,6
+prominent,adjective,заметный,prominently (заметно),Table 13,7
+proof,noun,доказательство,prove (доказывать),Table 13,8
+proper,adjective,правильный,properly (правильно),Table 13,9
+property,noun,"свойство, собственность",,Table 13,25
+propose,verb,предлагать,proposal (предложение),Table 13,26
+proportion,noun,пропорция,proportional (пропорциональный),Table 13,27
+prove,verb,доказывать,proof (доказательство),Table 13,28
+purpose,noun,цель,,Table 13,29
+pursue,verb,преследовать,,Table 13,30
+quality,noun,качество,qualitative (качественный),Table 13,31
+quantity,noun,количество,quantitative (количественный),Table 13,32
+question,noun,вопрос,"questionable (сомнительный, спорный)",Table 13,33
+radical,adjective,радикальный,radically (радикально),Table 14,4
+random,adjective,случайный,randomly (случайно),Table 14,5
+range,noun,диапазон,a range of values (диапазон значений),Table 14,6
+ratio,noun,отношение,ratio of A to B (отношение А к В),Table 14,7
+reach,verb,достигать,reach a conclusion (прийти к выводу),Table 14,8
+reason,noun,причина,reasonable (разумный),Table 14,9
+recent,adjective,недавний,recently (недавно),Table 14,10
+recognize,verb,признавать,recognition (признание),Table 14,11
+refer,verb,ссылаться,reference (ссылка),Table 14,12
+reflect,verb,отражать,reflection (отражение),Table 14,13
+regard,noun,отношение,with regard to (относительно),Table 14,14
+region,noun,область,regional (региональный),Table 14,15
+relate,verb,связывать,relation (отношение),Table 14,16
+relative,adjective,относительный,relatively (относительно),Table 14,17
+relevant,adjective,релевантный,relevance (релевантность),Table 14,18
+reliable,adjective,надёжный,reliability (надёжность),Table 14,19
+remain,verb,оставаться,remainder (остаток),Table 14,20
+represent,verb,представлять,representation (представление),Table 14,21
+require,verb,требовать,requirement (требование),Table 14,22
+research,noun,исследование,researcher (исследователь),Table 14,23
+resolve,verb,разрешать,resolution (разрешение),Table 14,24
+respect,noun,отношение,with respect to (относительно),Table 14,25
+result,noun,результат,result in (приводить к),Table 14,26
+retain,verb,сохранять,retention (сохранение),Table 14,27
+reveal,verb,выявлять,revelation (выявление),Table 14,28
+review,noun,обзор,review the literature (обзор литературы),Table 14,29
+rigorous,adjective,строгий,rigorously (строго),Table 14,30
+role,noun,роль,play a role (играть роль),Table 14,31
+rough,adjective,приблизительный,roughly (приблизительно),Table 14,32
+route,noun,маршрут,,Table 14,33
+rule,noun,правило,,Table 14,34
+sample,noun,образец,sampling (выборка),Table 14,35
+sake,noun,ради,for the sake of (ради),Table 15,16
+scale,noun,масштаб,large-scale (крупномасштабный),Table 15,17
+scenario,noun,сценарий,,Table 15,18
+scheme,noun,схема,,Table 15,19
+scope,noun,область,the scope of the study (область исследования),Table 15,20
+section,noun,раздел,Section 1 (Раздел 1); используется без артикля,Table 15,21
+select,verb,выбирать,selection (выбор),Table 15,22
+sequence,noun,последовательность,sequential (последовательный),Table 15,23
+series,noun,серия,a series of experiments (серия экспериментов),Table 15,24
+significant,adjective,значительный,significance (значимость),Table 15,25
+similar,adjective,похожий,similarity (сходство),Table 15,26
+simple,adjective,простой,simplicity (простота),Table 15,27
+simulate,verb,моделировать,simulation (моделирование),Table 15,28
+simultaneous,adjective,одновременный,simultaneously (одновременно),Table 15,29
+single,adjective,единственный,singly (по отдельности),Table 15,30
+solve,verb,решать,solution (решение),Table 15,31
+source,noun,источник,,Table 15,32
+specific,adjective,конкретный,specifically (конкретно),Table 15,33
+specify,verb,указывать,specification (спецификация),Table 15,34
+standard,noun,стандарт,standardize (стандартизировать),Table 15,35
+state,verb,утверждать,statement (утверждение),Table 16,1
+static,adjective,статический,dynamic (динамический),Table 16,2
+strategy,noun,стратегия,strategic (стратегический),Table 16,3
+structure,noun,структура,structural (структурный),Table 16,4
+study,noun,исследование,study the problem (изучать проблему),Table 16,5
+subsequent,adjective,последующий,subsequently (впоследствии),Table 16,6
+substantial,adjective,существенный,substantially (существенно),Table 16,7
+sufficient,adjective,достаточный,sufficiently (достаточно),Table 16,8
+suggest,verb,предлагать,suggestion (предложение),Table 16,9
+suitable,adjective,подходящий,suitability (пригодность),Table 16,10
+summarize,verb,обобщать,summary (резюме),Table 16,11
+support,verb,поддерживать,supporting evidence (подтверждающие данные),Table 16,12
+suppose,verb,предполагать,supposition (предположение),Table 16,13
+surface,noun,поверхность,,Table 16,14
+survey,noun,обзор,survey the literature (обзор литературы),Table 16,15
+symbol,noun,символ,symbolic (символический),Table 16,16
+system,noun,система,systematic (систематический),Table 16,17
+table,noun,таблица,Table 1 (Таблица 1); используется без артикля,Table 16,34
+target,noun,цель,target value (целевое значение),Table 16,35
+technique,noun,метод,technical (технический),Table 16,36
+tendency,noun,тенденция,tend (иметь тенденцию),Table 17,1
+theoretical,adjective,теоретический,theoretically (теоретически),Table 17,2
+theory,noun,теория,theorize (теоретизировать),Table 17,3
+thereby,adverb,тем самым,,Table 17,4
+therefore,adverb,следовательно,,Table 17,5
+threshold,noun,порог,,Table 17,6
+thus,adverb,таким образом,,Table 17,7
+total,adjective,общий,totally (полностью),Table 17,8
+trace,verb,прослеживать,tracing (прослеживание),Table 17,9
+traditional,adjective,традиционный,traditionally (традиционно),Table 17,10
+transform,verb,преобразовывать,transformation (преобразование),Table 17,11
+transition,noun,переход,transitional (переходный),Table 17,12
+trend,noun,тенденция,,Table 17,13
+typical,adjective,типичный,typically (обычно),Table 17,14
+ubiquitous,adjective,повсеместный,,Table 17,16
+ultimate,adjective,конечный,ultimately (в конечном счёте),Table 17,17
+underlie,verb,лежать в основе,underlying (лежащий в основе),Table 17,18
+undertake,verb,предпринимать,undertake a study (провести исследование),Table 17,19
+uniform,adjective,единообразный,uniformly (единообразно),Table 17,20
+unique,adjective,уникальный,uniqueness (уникальность),Table 17,21
+universal,adjective,универсальный,universally (универсально),Table 17,22
+upper,adjective,верхний,upper bound (верхняя граница),Table 17,23
+valid,adjective,действительный,validity (действительность),Table 17,24
+value,noun,значение,valuable (ценный),Table 17,25
+variable,noun,переменная,variability (изменчивость),Table 17,26
+vary,verb,варьироваться,variation (изменение),Table 17,27
+vast,adjective,огромный,vastly (значительно),Table 17,28
+vector,noun,вектор,,Table 17,29
+vague,adjective,неопределённый,,Table 17,30
+validity,noun,действительность,validate (проверять),Table 17,31
+valuable,adjective,ценный,value (значение),Table 17,32
+variation,noun,изменение,,Table 18,2
+variety,noun,разнообразие,a variety of factors (разнообразие факторов),Table 18,3
+various,adjective,разнообразные,vary (различаться),Table 18,4
+verify,verb,проверять,verification (проверка, подтверждение),Table 18,5
+vertical,adjective,вертикальный,vertically (вертикально),Table 18,6
+view,noun,"мнение, взгляд",,Table 18,7
+viewpoint,noun,точка зрения,from the viewpoint of A (с точки зрения А),Table 18,8
+virtually,adverb,"фактически, в сущности","virtual (виртуальный, смоделированный, воображаемый)",Table 18,9
+virtue,noun,достоинство,by virtue of the fact that S + V (на основании того факта, что С + Г),Table 18,10
+vital,adjective,критически важный,,Table 18,11
+weakness,noun,слабость,weaken (слабый),Table 18,12
+widely,adverb,широко,broad (широкий – синоним wide),Table 18,13
+worthwhile,adjective,"стоящий, полезный",,Table 18,14
+worthy,adjective,"достойный, стоящий",worthy of further investigation (стоящий того, чтобы продолжить исследование),Table 18,15
+yield,verb,"склоняться, уступать",,Table 18,16
