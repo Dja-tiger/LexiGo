@@ -1,0 +1,69 @@
+name: lexigo-stage
+
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    env_file: ../env/stage.env
+    volumes: [stage_postgres:/var/lib/postgresql/data]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.0-alpine
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    env_file: ../env/stage.env
+    volumes: [stage_redis:/data]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping 2>/dev/null | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/dja-tiger/new-project-api:${IMAGE_TAG:-main}
+    env_file: ../env/stage.env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/app/lexigo", "healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  web:
+    image: ghcr.io/dja-tiger/new-project-web:${IMAGE_TAG:-main}
+    env_file: ../env/stage.env
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  caddy:
+    image: caddy:2.10-alpine
+    env_file: ../env/stage.env
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - stage_caddy_data:/data
+      - stage_caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
+      web: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  stage_postgres:
+  stage_redis:
+  stage_caddy_data:
+  stage_caddy_config:
