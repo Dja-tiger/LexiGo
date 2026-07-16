@@ -12,7 +12,12 @@ import {
   type LearningItem,
 } from "./learning";
 
-function item(id: string, section: LearningItem["section"], answer = id): LearningItem {
+function item(
+  id: string,
+  section: LearningItem["section"],
+  answer = id,
+  topic = "",
+): LearningItem {
   return {
     id,
     kind: "word",
@@ -21,7 +26,7 @@ function item(id: string, section: LearningItem["section"], answer = id): Learni
     phonetic: "",
     partOfSpeech: section,
     section,
-    topic: "",
+    topic,
     examples: [],
     note: "",
     status: "new",
@@ -66,6 +71,21 @@ describe("learning helpers", () => {
     const nouns = prepareWordItems(items, "noun");
     expect(takeLessonBlock(nouns, 15)).toHaveLength(2);
     expect(takeLessonBlock(items, "all")).toHaveLength(3);
+  });
+
+  it("filters the four product collections by their catalog topic", () => {
+    const items = [
+      item("receipt", "noun", "чек", "Daily Life"),
+      item("passport", "noun", "паспорт", "Travel"),
+      item("lineage", "noun", "происхождение данных", "Data Engineering"),
+      item("middleware", "noun", "промежуточный обработчик", "Backend Development"),
+      item("academic", "adjective", "академический", "academic-technical-english"),
+    ];
+
+    expect(prepareWordItems(items, "daily-life").map((entry) => entry.id)).toEqual(["receipt"]);
+    expect(prepareWordItems(items, "travel").map((entry) => entry.id)).toEqual(["passport"]);
+    expect(prepareWordItems(items, "data-engineering").map((entry) => entry.id)).toEqual(["lineage"]);
+    expect(prepareWordItems(items, "backend").map((entry) => entry.id)).toEqual(["middleware"]);
   });
 
   it("builds stable unique answer options containing the correct answer", () => {
