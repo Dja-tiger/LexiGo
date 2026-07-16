@@ -23,7 +23,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !validLessonSource(request.Source) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be mixed, noun, verb or adjective")
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be mixed, noun, verb, adjective or phrases")
 		return
 	}
 	if request.StudyMode != "recall" && request.StudyMode != "choice" {
@@ -42,7 +42,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	lesson, err := h.repository.CreateLesson(r.Context(), userID, request)
 	if err != nil {
 		if errors.Is(err, ErrInvalidLessonWords) {
-			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_words", "all lesson words must be assigned to the current user")
+			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_words", "all lesson items must be assigned to the current user")
 			return
 		}
 		slog.ErrorContext(r.Context(), "create lesson failed", "user_id", userID, "error", err)
@@ -107,7 +107,7 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 	}
 	wordID, err := strconv.ParseInt(r.PathValue("wordID"), 10, 64)
 	if err != nil || wordID <= 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "word id must be a positive integer")
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "learning item id must be a positive integer")
 		return
 	}
 
@@ -133,15 +133,15 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonItemNotFound):
-			httpx.WriteError(w, http.StatusNotFound, "lesson_item_not_found", "word is not part of the active lesson")
+			httpx.WriteError(w, http.StatusNotFound, "lesson_item_not_found", "learning item is not part of the active lesson")
 		case errors.Is(err, ErrLessonItemAlreadyReviewed):
 			httpx.WriteError(w, http.StatusConflict, "lesson_item_already_reviewed", "lesson item was already reviewed")
 		case errors.Is(err, ErrWordNotFound):
-			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "word is not assigned to the current user")
+			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "learning item is not assigned to the current user")
 		case errors.Is(err, ErrInvalidRating):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_rating", "rating must be again, almost or known")
 		default:
-			slog.ErrorContext(r.Context(), "review lesson word failed", "user_id", userID, "lesson_id", lessonID, "word_id", wordID, "error", err)
+			slog.ErrorContext(r.Context(), "review lesson item failed", "user_id", userID, "lesson_id", lessonID, "word_id", wordID, "error", err)
 			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		}
 		return
@@ -150,7 +150,7 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func validLessonSource(value string) bool {
-	return value == "mixed" || value == "noun" || value == "verb" || value == "adjective"
+	return value == "mixed" || value == "noun" || value == "verb" || value == "adjective" || value == "phrases"
 }
 
 func validLessonSize(value string) bool {
