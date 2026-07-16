@@ -1,1 +1,25 @@
-*.exe
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!deploy/env/*.env.example
+
+# Go
+backend/bin/
+backend/coverage.out
+backend/coverage.html
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/coverage/
+frontend/.env.local
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Runtime
+*.log
+.tmp/
