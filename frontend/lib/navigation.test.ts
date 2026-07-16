@@ -16,6 +16,13 @@ describe("product navigation", () => {
     });
   });
 
+  it("parses all themed vocabulary collections", () => {
+    for (const source of ["daily-life", "travel", "data-engineering", "backend"] as const) {
+      expect(parseNavigation(`?view=learn&source=${source}`)).toEqual({ view: "learn", source });
+      expect(navigationURL({ view: "learn", source })).toBe(`/?view=learn&source=${source}`);
+    }
+  });
+
   it("drops invalid sources without losing the selected view", () => {
     expect(parseNavigation("?view=learn&source=adverb")).toEqual({ view: "learn" });
   });
