@@ -68,8 +68,8 @@ func (r *PostgresRepository) readUser(ctx context.Context, query string, arg any
 
 func (r *PostgresRepository) Store(ctx context.Context, userID string, tokenHash []byte, expiresAt time.Time, userAgent, ip string) error {
 	_, err := r.pool.Exec(ctx, `
-		insert into refresh_tokens(user_id, token_hash, expires_at, user_agent, ip_address)
-		values ($1::uuid, $2, $3, $4, nullif($5, '')::inet)
+		insert into refresh_tokens(user_id, family_id, token_hash, expires_at, user_agent, ip_address)
+		values ($1::uuid, gen_random_uuid(), $2, $3, $4, nullif($5, '')::inet)
 	`, userID, tokenHash, expiresAt, userAgent, ip)
 	if err != nil {
 		return fmt.Errorf("store refresh token: %w", err)
@@ -84,25 +84,66 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	var userID string
+	var (
+		userID    string
+		familyID  string
+		expiresAt time.Time
+		revokedAt *time.Time
+	)
 	err = tx.QueryRow(ctx, `
-		update refresh_tokens
-		set revoked_at = now()
-		where token_hash = $1 and revoked_at is null and expires_at > now()
-		returning user_id::text
-	`, oldHash).Scan(&userID)
+		select user_id::text, family_id::text, expires_at, revoked_at
+		from refresh_tokens
+		where token_hash = $1
+		for update
+	`, oldHash).Scan(&userID, &familyID, &expiresAt, &revokedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", ErrInvalidRefresh
 	}
 	if err != nil {
+		return "", fmt.Errorf("read refresh token for rotation: %w", err)
+	}
+
+	if revokedAt != nil {
+		if _, err := tx.Exec(ctx, `
+			update refresh_tokens
+			set revoked_at = coalesce(revoked_at, now()),
+				reuse_detected_at = coalesce(reuse_detected_at, now())
+			where family_id = $1::uuid
+		`, familyID); err != nil {
+			return "", fmt.Errorf("revoke reused refresh token family: %w", err)
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return "", fmt.Errorf("commit refresh token reuse revocation: %w", err)
+		}
+		return "", ErrRefreshTokenReuse
+	}
+
+	if !expiresAt.After(time.Now().UTC()) {
+		if _, err := tx.Exec(ctx, `
+			update refresh_tokens
+			set revoked_at = coalesce(revoked_at, now())
+			where token_hash = $1
+		`, oldHash); err != nil {
+			return "", fmt.Errorf("revoke expired refresh token: %w", err)
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return "", fmt.Errorf("commit expired refresh token revocation: %w", err)
+		}
+		return "", ErrInvalidRefresh
+	}
+
+	if _, err := tx.Exec(ctx, `
+		update refresh_tokens
+		set revoked_at = now(), replaced_by_hash = $2
+		where token_hash = $1
+	`, oldHash, newHash); err != nil {
 		return "", fmt.Errorf("revoke old refresh token: %w", err)
 	}
 
-	_, err = tx.Exec(ctx, `
-		insert into refresh_tokens(user_id, token_hash, expires_at, user_agent, ip_address)
-		values ($1::uuid, $2, $3, $4, nullif($5, '')::inet)
-	`, userID, newHash, newExpiresAt, userAgent, ip)
-	if err != nil {
+	if _, err := tx.Exec(ctx, `
+		insert into refresh_tokens(user_id, family_id, token_hash, expires_at, user_agent, ip_address)
+		values ($1::uuid, $2::uuid, $3, $4, $5, nullif($6, '')::inet)
+	`, userID, familyID, newHash, newExpiresAt, userAgent, ip); err != nil {
 		return "", fmt.Errorf("insert rotated refresh token: %w", err)
 	}
 
@@ -114,11 +155,16 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 
 func (r *PostgresRepository) Revoke(ctx context.Context, tokenHash []byte) error {
 	command, err := r.pool.Exec(ctx, `
-		update refresh_tokens set revoked_at = now()
-		where token_hash = $1 and revoked_at is null
+		update refresh_tokens
+		set revoked_at = coalesce(revoked_at, now())
+		where family_id = (
+			select family_id
+			from refresh_tokens
+			where token_hash = $1
+		)
 	`, tokenHash)
 	if err != nil {
-		return fmt.Errorf("revoke refresh token: %w", err)
+		return fmt.Errorf("revoke refresh token family: %w", err)
 	}
 	if command.RowsAffected() == 0 {
 		return ErrInvalidRefresh
