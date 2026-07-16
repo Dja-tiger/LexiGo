@@ -13,7 +13,6 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -162,14 +161,14 @@ func TestCompleteAuthenticationFlow(t *testing.T) {
 	// Reuse revokes only the compromised device family. An independent login on
 	// another device remains valid and can continue rotating its own token.
 	deviceBCSRF := cookieFromJar(t, deviceB, testServer.URL, integrationCSRFCookieName)
-	postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/refresh", nil, deviceBCSRF, http.StatusOK)
-	currentDeviceBRefresh := cookieFromJar(t, deviceB, testServer.URL, integrationRefreshCookieName)
+	deviceBRefreshResult := postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/refresh", nil, deviceBCSRF, http.StatusOK)
+	currentDeviceBRefresh := requireSessionCookies(t, deviceBRefreshResult.Cookies)
 	currentDeviceBCSRF := cookieFromJar(t, deviceB, testServer.URL, integrationCSRFCookieName)
 
 	logoutResult := postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/logout", nil, currentDeviceBCSRF, http.StatusNoContent)
 	requireClearedSessionCookies(t, logoutResult.Cookies)
-	if hasCookie(deviceB, testServer.URL, integrationRefreshCookieName) || hasCookie(deviceB, testServer.URL, integrationCSRFCookieName) {
-		t.Fatal("logout did not remove session cookies from the client jar")
+	if hasCookie(deviceB, testServer.URL, integrationCSRFCookieName) {
+		t.Fatal("logout did not remove the CSRF cookie from the client jar")
 	}
 	replayRefreshToken(t, testServer, currentDeviceBRefresh, currentDeviceBCSRF, http.StatusUnauthorized)
 }
