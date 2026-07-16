@@ -1,0 +1,96 @@
+name: Deploy Resumable Lesson Release
+
+on:
+  push:
+    paths:
+      - .github/workflows/deploy-resumable-release.yml
+
+permissions:
+  contents: read
+  packages: read
+  issues: write
+
+env:
+  IMAGE_TAG: a4c7dcb920541712b19169543cebcb1e40d868f7
+
+jobs:
+  wait-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for immutable images
+        run: |
+          for attempt in $(seq 1 60); do
+            if docker manifest inspect "ghcr.io/dja-tiger/lexigo-api:$IMAGE_TAG" >/dev/null 2>&1 && docker manifest inspect "ghcr.io/dja-tiger/lexigo-web:$IMAGE_TAG" >/dev/null 2>&1; then exit 0; fi
+            sleep 15
+          done
+          exit 1
+
+  stage:
+    needs: wait-images
+    runs-on: ubuntu-latest
+    environment: stage
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy stage
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '${{ github.repository_owner }}'"
+
+  production:
+    needs: stage
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy production
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '${{ github.repository_owner }}'"
+
+  report:
+    if: always()
+    needs: [wait-images, stage, production]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          IMAGES_RESULT: ${{ needs.wait-images.result }}
+          STAGE_RESULT: ${{ needs.stage.result }}
+          PRODUCTION_RESULT: ${{ needs.production.result }}
+        with:
+          script: |
+            const body = `# LexiGo resumable lesson deployment\n\n- image SHA: \`${process.env.IMAGE_TAG}\`\n- images: **${process.env.IMAGES_RESULT}**\n- stage: **${process.env.STAGE_RESULT}**\n- production: **${process.env.PRODUCTION_RESULT}**\n- run_id: \`${context.runId}\``;
+            await github.rest.issues.update({owner: context.repo.owner, repo: context.repo.repo, issue_number: 12, body});
