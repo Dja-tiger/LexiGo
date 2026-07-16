@@ -15,6 +15,7 @@ concurrency:
 permissions:
   contents: read
   packages: read
+  issues: write
 
 jobs:
   deploy:
@@ -26,6 +27,7 @@ jobs:
           ref: main
 
       - name: Configure SSH
+        id: configure_ssh
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
@@ -38,6 +40,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
 
       - name: Upload deployment bundle
+        id: upload
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -53,6 +56,7 @@ jobs:
             "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
 
       - name: Deploy production
+        id: deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -61,5 +65,44 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
           printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'"
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'" \
+            2>&1 | tee /tmp/lexigo-prod-deploy.log
+
+      - name: Report production deployment
+        if: always()
+        uses: actions/github-script@v9
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+          IMAGE_SHA: ${{ inputs.image_tag }}
+          RUN_ID: ${{ github.run_id }}
+          CONFIGURE_OUTCOME: ${{ steps.configure_ssh.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.existsSync('/tmp/lexigo-prod-deploy.log')
+              ? fs.readFileSync('/tmp/lexigo-prod-deploy.log', 'utf8').slice(-10000)
+              : 'deploy log was not created';
+            const body = [
+              '# LexiGo production deployment',
+              '',
+              `## Production: **${process.env.DEPLOY_STATUS}**`,
+              `- image SHA: \`${process.env.IMAGE_SHA}\``,
+              `- run_id: \`${process.env.RUN_ID}\``,
+              `- configure SSH: \`${process.env.CONFIGURE_OUTCOME}\``,
+              `- upload bundle: \`${process.env.UPLOAD_OUTCOME}\``,
+              `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
+              '',
+              '```text',
+              log,
+              '```'
+            ].join('\n');
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
