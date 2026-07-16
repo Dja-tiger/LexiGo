@@ -4,6 +4,8 @@ import "time"
 
 type Word struct {
 	ID           int64    `json:"id"`
+	Kind         string   `json:"kind"`
+	Slug         string   `json:"slug,omitempty"`
 	Lemma        string   `json:"lemma"`
 	Translation  string   `json:"translation"`
 	Phonetic     string   `json:"phonetic"`
@@ -11,6 +13,8 @@ type Word struct {
 	Topic        string   `json:"topic"`
 	Examples     []string `json:"examples"`
 	Note         string   `json:"note"`
+	Cloze        string   `json:"cloze,omitempty"`
+	ClozeAnswer  string   `json:"clozeAnswer,omitempty"`
 }
 
 type UserWord struct {
