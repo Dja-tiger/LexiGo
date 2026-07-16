@@ -52,8 +52,16 @@ export function csrfTokenFromCookie(
 
 export function clearLegacyAuthStorage(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(LEGACY_SESSION_KEY);
-  window.sessionStorage.removeItem(LEGACY_SESSION_KEY);
+  try {
+    window.localStorage.removeItem(LEGACY_SESSION_KEY);
+  } catch {
+    // Safari private mode and managed browsers may deny storage access.
+  }
+  try {
+    window.sessionStorage.removeItem(LEGACY_SESSION_KEY);
+  } catch {
+    // Session restoration must continue even when storage is unavailable.
+  }
 }
 
 async function performRefresh(): Promise<Session> {
