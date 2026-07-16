@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,11 +54,16 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("SESSION_COOKIE_SECURE must be a boolean: %w", err)
 	}
 
+	allowedOrigin := strings.TrimSuffix(env("CORS_ALLOWED_ORIGIN", "http://localhost:3000"), "/")
+	if err := validateBrowserOrigin(allowedOrigin); err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		AppEnv:            appEnv,
 		HTTPAddr:          env("HTTP_ADDR", ":8080"),
 		LogLevel:          env("LOG_LEVEL", "info"),
-		CORSAllowedOrigin: env("CORS_ALLOWED_ORIGIN", "http://localhost:3000"),
+		CORSAllowedOrigin: allowedOrigin,
 		PostgresDSN:       os.Getenv("POSTGRES_DSN"),
 		Redis: Redis{
 			Addr:     env("REDIS_ADDR", "localhost:6379"),
@@ -82,6 +89,20 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("SESSION_COOKIE_SECURE must be true outside local and test environments")
 	}
 	return cfg, nil
+}
+
+func validateBrowserOrigin(value string) error {
+	if value == "" || value == "*" {
+		return fmt.Errorf("CORS_ALLOWED_ORIGIN must contain one explicit browser origin")
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		return fmt.Errorf("CORS_ALLOWED_ORIGIN must be an absolute http or https origin")
+	}
+	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") {
+		return fmt.Errorf("CORS_ALLOWED_ORIGIN must not contain credentials, path, query, or fragment")
+	}
+	return nil
 }
 
 func env(key, fallback string) string {
