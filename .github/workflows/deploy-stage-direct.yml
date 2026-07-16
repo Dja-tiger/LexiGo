@@ -48,7 +48,7 @@ jobs:
         run: |
           set -o pipefail
           printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage 'a6f990906877d27a931f8baecc96bfb2b95345f1' 'http://$DEPLOY_HOST' '${{ github.actor }}'" \
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '102672409168bc4b2e199a302aa8a56a13ecdd35' 'http://$DEPLOY_HOST' '${{ github.actor }}'" \
             2>&1 | tee /tmp/lexigo-direct-deploy.log
 
       - name: Report
