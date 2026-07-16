@@ -72,7 +72,7 @@ jobs:
 
       - name: Report stage deployment
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           DEPLOY_STATUS: ${{ job.status }}
           IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
