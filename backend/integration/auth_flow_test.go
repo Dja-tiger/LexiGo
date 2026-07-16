@@ -179,9 +179,10 @@ func newIntegrationClient(t *testing.T, testServer *httptest.Server) *http.Clien
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := testServer.Client()
+	baseClient := testServer.Client()
+	client := *baseClient
 	client.Jar = jar
-	return client
+	return &client
 }
 
 func postJSONWithClient(t *testing.T, client *http.Client, endpoint string, payload any, csrfToken string, expectedStatus int) integrationHTTPResult {
@@ -307,7 +308,10 @@ func replayRefreshToken(t *testing.T, testServer *httptest.Server, refreshToken,
 	request.AddCookie(&http.Cookie{Name: integrationRefreshCookieName, Value: refreshToken, Path: "/api/v1/auth", Secure: true})
 	request.AddCookie(&http.Cookie{Name: integrationCSRFCookieName, Value: csrfToken, Path: "/", Secure: true})
 	request.Header.Set("X-CSRF-Token", csrfToken)
-	response, err := testServer.Client().Do(request)
+	baseClient := testServer.Client()
+	client := *baseClient
+	client.Jar = nil
+	response, err := client.Do(request)
 	if err != nil {
 		t.Fatal(err)
 	}
