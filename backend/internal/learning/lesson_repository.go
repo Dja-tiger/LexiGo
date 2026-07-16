@@ -116,18 +116,27 @@ func (r *Repository) ReviewLessonWord(
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	var lockedLessonID string
+	if err := tx.QueryRow(ctx, `
+		select id::text
+		from lesson_sessions
+		where id = $1::uuid and user_id = $2::uuid and status = 'active'
+		for update
+	`, lessonID, userID).Scan(&lockedLessonID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return LessonReviewResult{}, ErrLessonItemNotFound
+		}
+		return LessonReviewResult{}, fmt.Errorf("lock lesson: %w", err)
+	}
+
 	var position int
 	var existingRating *string
 	if err := tx.QueryRow(ctx, `
-		select item.position, item.rating
-		from lesson_session_items item
-		join lesson_sessions lesson on lesson.id = item.session_id
-		where lesson.id = $1::uuid
-		  and lesson.user_id = $2::uuid
-		  and lesson.status = 'active'
-		  and item.word_id = $3
-		for update of lesson, item
-	`, lessonID, userID, wordID).Scan(&position, &existingRating); err != nil {
+		select position, rating
+		from lesson_session_items
+		where session_id = $1::uuid and word_id = $2
+		for update
+	`, lessonID, wordID).Scan(&position, &existingRating); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
@@ -190,7 +199,7 @@ func (r *Repository) ReviewLessonWord(
 	var remaining, nextIndex int
 	if err := tx.QueryRow(ctx, `
 		select count(*) filter (where rating is null)::int,
-		       coalesce(min(position) filter (where rating is null), count(*)::int)::int
+		       coalesce(min(position) filter (where rating is null), 0)::int
 		from lesson_session_items
 		where session_id = $1::uuid
 	`, lessonID).Scan(&remaining, &nextIndex); err != nil {
@@ -223,7 +232,7 @@ func (r *Repository) ReviewLessonWord(
 			DueAt:          dueAt,
 			LastReviewedAt: now,
 		},
-		LessonID:           lessonID,
+		LessonID:           lockedLessonID,
 		LessonCurrentIndex: nextIndex,
 		LessonCompleted:    completed,
 	}, nil
