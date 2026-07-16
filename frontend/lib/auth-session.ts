@@ -18,6 +18,10 @@ export type Session = {
   tokens: AccessTokens;
 };
 
+type RefreshOptions = {
+  redirectOnInvalid?: boolean;
+};
+
 const CSRF_COOKIE_NAME = "lexigo_csrf";
 const LEGACY_SESSION_KEY = "lexigo.session.v1";
 const REFRESH_LOCK_NAME = "lexigo.auth.refresh";
@@ -103,16 +107,25 @@ async function refreshWithCrossTabLock(): Promise<Session> {
   return lockManager ? lockManager.request(REFRESH_LOCK_NAME, performRefresh) : performRefresh();
 }
 
-export function refreshSession(): Promise<Session> {
-  if (activeRefresh) return activeRefresh;
-  activeRefresh = refreshWithCrossTabLock().finally(() => {
-    activeRefresh = null;
+export function refreshSession(options: RefreshOptions = {}): Promise<Session> {
+  if (!activeRefresh) {
+    activeRefresh = refreshWithCrossTabLock().finally(() => {
+      activeRefresh = null;
+    });
+  }
+
+  const refresh = activeRefresh;
+  if (options.redirectOnInvalid === false) return refresh;
+  return refresh.catch((error: unknown) => {
+    if (error instanceof SessionRefreshError && (error.status === 401 || error.status === 403)) {
+      redirectToExpiredSession();
+    }
+    throw error;
   });
-  return activeRefresh;
 }
 
 export async function restoreSession(): Promise<Session | null> {
   clearLegacyAuthStorage();
   if (!csrfTokenFromCookie()) return null;
-  return refreshSession();
+  return refreshSession({ redirectOnInvalid: false });
 }
