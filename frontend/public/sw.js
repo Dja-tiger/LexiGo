@@ -1,4 +1,4 @@
-const CACHE = "lexigo-shell-v2";
+const CACHE = "lexigo-shell-v3";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
