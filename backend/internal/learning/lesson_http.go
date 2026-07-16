@@ -2,6 +2,7 @@ package learning
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -44,6 +45,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_words", "all lesson words must be assigned to the current user")
 			return
 		}
+		slog.ErrorContext(r.Context(), "create lesson failed", "user_id", userID, "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
@@ -62,6 +64,7 @@ func (h *Handler) ActiveLesson(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusNotFound, "active_lesson_not_found", "there is no active lesson")
 			return
 		}
+		slog.ErrorContext(r.Context(), "load active lesson failed", "user_id", userID, "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
@@ -84,6 +87,7 @@ func (h *Handler) DiscardLesson(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusNotFound, "active_lesson_not_found", "active lesson was not found")
 			return
 		}
+		slog.ErrorContext(r.Context(), "discard lesson failed", "user_id", userID, "lesson_id", lessonID, "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
@@ -137,6 +141,7 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ErrInvalidRating):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_rating", "rating must be again, almost or known")
 		default:
+			slog.ErrorContext(r.Context(), "review lesson word failed", "user_id", userID, "lesson_id", lessonID, "word_id", wordID, "error", err)
 			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		}
 		return
