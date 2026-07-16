@@ -1,0 +1,34 @@
+name: Apply Dictionary Navigation Fix
+
+on:
+  push:
+    branches:
+      - fix/dictionary-navigation-ios
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/dictionary-navigation-ios
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Apply deterministic patch
+        run: python scripts/apply_dictionary_navigation_fix.py
+      - name: Commit patched application
+        run: |
+          if git diff --quiet; then
+            echo "Dictionary navigation patch is already applied"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/enhanced-ui-interactions.tsx frontend/public/sw.js .github/workflows/ci.yml
+          git commit -m "fix: stabilize dictionary navigation on iOS PWA"
+          git push origin HEAD:fix/dictionary-navigation-ios
