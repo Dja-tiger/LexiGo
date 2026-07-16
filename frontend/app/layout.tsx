@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 import "./product-navigation.css";
+import "./premium-ui.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
-  description: "Персональный тренажёр английского",
+  description: "Персональный тренажёр технического английского",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#111827",
+  themeColor: "#050914",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
