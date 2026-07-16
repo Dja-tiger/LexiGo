@@ -4,11 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Immutable image tag, normally a commit SHA"
+        description: "Immutable image tag, normally a main commit SHA"
         required: true
         type: string
 
-permissions: { contents: read }
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
   deploy:
@@ -16,6 +22,9 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -27,11 +36,30 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
-      - name: Deploy prod
+
+      - name: Upload deployment bundle
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
         run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          case "$DEPLOY_PATH" in /opt/*) ;; *) echo "DEPLOY_PATH must be under /opt" >&2; exit 1 ;; esac
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
           ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && git fetch origin main && git reset --hard origin/main && ./scripts/remote-deploy.sh prod '${{ inputs.image_tag }}'"
+            "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+
+      - name: Deploy production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'"
