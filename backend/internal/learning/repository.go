@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrWordNotFound = errors.New("word is not assigned to the user")
+var ErrWordNotFound = errors.New("learning item is not assigned to the user")
 
 type Repository struct{ pool *pgxpool.Pool }
 
@@ -38,7 +38,7 @@ func (r *Repository) ReviewWord(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ReviewResult{}, ErrWordNotFound
 		}
-		return ReviewResult{}, fmt.Errorf("lock user word: %w", err)
+		return ReviewResult{}, fmt.Errorf("lock user learning item: %w", err)
 	}
 
 	schedule, err := ScheduleReview(state, request.Rating)
@@ -59,7 +59,7 @@ func (r *Repository) ReviewWord(
 		    updated_at = $8
 		where user_id = $1::uuid and word_id = $2
 	`, userID, wordID, schedule.Status, schedule.Easiness, schedule.IntervalDays, schedule.Repetitions, dueAt, now); err != nil {
-		return ReviewResult{}, fmt.Errorf("update user word: %w", err)
+		return ReviewResult{}, fmt.Errorf("update user learning item: %w", err)
 	}
 
 	if _, err := tx.Exec(ctx, `
@@ -90,25 +90,34 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 	var result ProgressSummary
 
 	if err := r.pool.QueryRow(ctx, `
-		select count(*)::int,
-		       count(*) filter (where due_at <= now())::int,
-		       count(*) filter (where status = 'new')::int,
-		       count(*) filter (where status = 'learning')::int,
-		       count(*) filter (where status = 'review')::int,
-		       count(*) filter (where status = 'mastered')::int,
-		       min(due_at) filter (where due_at > now())
-		from user_words
-		where user_id = $1::uuid
+		select count(*) filter (where word.kind = 'word')::int,
+		       count(*) filter (where word.kind = 'phrase')::int,
+		       count(*) filter (where user_word.due_at <= now())::int,
+		       count(*) filter (where word.kind = 'word' and user_word.due_at <= now())::int,
+		       count(*) filter (where word.kind = 'phrase' and user_word.due_at <= now())::int,
+		       count(*) filter (where word.kind = 'word' and user_word.status = 'new')::int,
+		       count(*) filter (where word.kind = 'word' and user_word.status = 'learning')::int,
+		       count(*) filter (where word.kind = 'word' and user_word.status = 'review')::int,
+		       count(*) filter (where word.kind = 'word' and user_word.status = 'mastered')::int,
+		       count(*) filter (where word.kind = 'phrase' and user_word.status = 'mastered')::int,
+		       min(user_word.due_at) filter (where user_word.due_at > now())
+		from user_words user_word
+		join words word on word.id = user_word.word_id
+		where user_word.user_id = $1::uuid
 	`, userID).Scan(
 		&result.TotalWords,
+		&result.TotalPhrases,
 		&result.DueNow,
+		&result.DueWords,
+		&result.DuePhrases,
 		&result.NewWords,
 		&result.LearningWords,
 		&result.ReviewWords,
 		&result.MasteredWords,
+		&result.MasteredPhrases,
 		&result.NextDueAt,
 	); err != nil {
-		return ProgressSummary{}, fmt.Errorf("query word progress: %w", err)
+		return ProgressSummary{}, fmt.Errorf("query learning progress: %w", err)
 	}
 
 	if err := r.pool.QueryRow(ctx, `
@@ -130,6 +139,36 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		&result.ReviewsTotal,
 	); err != nil {
 		return ProgressSummary{}, fmt.Errorf("query review progress: %w", err)
+	}
+
+	if err := r.pool.QueryRow(ctx, `
+		with bounds as (
+			select date_trunc('week', now() - make_interval(mins => $2)) +
+			       make_interval(mins => $2) as week_start
+		)
+		select count(distinct current_review.word_id)::int,
+		       count(distinct current_review.word_id) filter (where word.kind = 'word')::int,
+		       count(distinct current_review.word_id) filter (where word.kind = 'phrase')::int
+		from review_events current_review
+		join words word on word.id = current_review.word_id
+		cross join bounds
+		where current_review.user_id = $1::uuid
+		  and current_review.grade = 5
+		  and current_review.reviewed_at >= bounds.week_start
+		  and exists (
+			select 1
+			from review_events previous_review
+			where previous_review.user_id = current_review.user_id
+			  and previous_review.word_id = current_review.word_id
+			  and previous_review.grade = 5
+			  and previous_review.reviewed_at < bounds.week_start
+		  )
+	`, userID, timezoneOffsetMinutes).Scan(
+		&result.RetainedItemsWeek,
+		&result.RetainedWordsWeek,
+		&result.RetainedPhrasesWeek,
+	); err != nil {
+		return ProgressSummary{}, fmt.Errorf("query retained learning progress: %w", err)
 	}
 
 	if err := r.pool.QueryRow(ctx, `
