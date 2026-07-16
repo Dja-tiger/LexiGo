@@ -1,0 +1,34 @@
+name: Report CI
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    if: github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          CI_STATUS: ${{ github.event.workflow_run.conclusion }}
+          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+        with:
+          script: |
+            const body = [
+              `### Main CI: **${process.env.CI_STATUS}**`,
+              `- commit SHA: \`${process.env.CI_SHA}\``,
+              `- run_id: \`${process.env.CI_RUN_ID}\``
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
