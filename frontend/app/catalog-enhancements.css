@@ -1,0 +1,88 @@
+.lx-catalog-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 18px;
+  background: rgba(17, 24, 39, 0.72);
+  box-shadow: 0 14px 36px rgba(2, 6, 23, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.lx-catalog-sort > div {
+  display: grid;
+  gap: 4px;
+}
+
+.lx-catalog-sort strong {
+  font-size: 0.94rem;
+  color: var(--lx-text, #f8fafc);
+}
+
+.lx-catalog-sort small {
+  color: var(--lx-muted, #94a3b8);
+  line-height: 1.35;
+}
+
+.lx-catalog-sort label {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.lx-catalog-sort select {
+  min-width: 188px;
+  min-height: 44px;
+  padding: 0 42px 0 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 13px;
+  color: var(--lx-text, #f8fafc);
+  background:
+    linear-gradient(45deg, transparent 50%, #a78bfa 50%) calc(100% - 18px) 18px / 6px 6px no-repeat,
+    linear-gradient(135deg, #a78bfa 50%, transparent 50%) calc(100% - 12px) 18px / 6px 6px no-repeat,
+    rgba(15, 23, 42, 0.9);
+  font: inherit;
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+.lx-catalog-sort select:focus-visible {
+  outline: 3px solid rgba(139, 92, 246, 0.32);
+  outline-offset: 2px;
+  border-color: rgba(167, 139, 250, 0.75);
+}
+
+.lx-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .lx-catalog-sort {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    margin: 14px 0;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .lx-catalog-sort label,
+  .lx-catalog-sort select {
+    width: 100%;
+  }
+
+  .lx-catalog-sort select {
+    min-width: 0;
+  }
+}

@@ -5,6 +5,7 @@ import "./product-navigation.css";
 import "./premium-ui.css";
 import "./mobile-pwa-fixes.css";
 import "./themed-vocabulary.css";
+import "./catalog-enhancements.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",

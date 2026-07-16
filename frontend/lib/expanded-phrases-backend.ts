@@ -1,0 +1,55 @@
+import type { LearningItem } from "./learning";
+
+type PhraseTuple = readonly [
+  id: string,
+  prompt: string,
+  answer: string,
+  example: string,
+  note: string,
+  cloze: string,
+  clozeAnswer: string,
+];
+
+const PHRASES: PhraseTuple[] = [
+  ["phrase-the-endpoint-returns-a-404-response", "The endpoint returns a 404 response.", "Эндпоинт возвращает ответ 404.", "The endpoint returns a 404 response when the resource is missing.", "Стандартная формулировка поведения API.", "The endpoint returns a 404 _____.", "response"],
+  ["phrase-the-request-payload-is-invalid", "The request payload is invalid.", "Полезная нагрузка запроса некорректна.", "The request payload is invalid because a required field is missing.", "payload — данные запроса.", "The request payload is _____.", "invalid"],
+  ["phrase-the-token-has-expired", "The token has expired.", "Срок действия токена истёк.", "The token has expired and must be refreshed.", "expired — истёкший.", "The token has _____.", "expired"],
+  ["phrase-the-user-does-not-have-permission", "The user does not have permission.", "У пользователя нет разрешения.", "The user does not have permission to delete this resource.", "Фраза для ошибки авторизации.", "The user does not have _____.", "permission"],
+  ["phrase-the-transaction-was-rolled-back", "The transaction was rolled back.", "Транзакция была отменена.", "The transaction was rolled back after the insert failed.", "roll back — откатить изменения.", "The transaction was rolled _____.", "back"],
+  ["phrase-the-connection-pool-is-exhausted", "The connection pool is exhausted.", "Пул соединений исчерпан.", "The connection pool is exhausted during traffic spikes.", "exhausted — все доступные ресурсы заняты.", "The connection pool is _____.", "exhausted"],
+  ["phrase-the-cache-entry-is-stale", "The cache entry is stale.", "Запись в кэше устарела.", "The cache entry is stale and should be invalidated.", "stale cache entry — устаревшее значение.", "The cache entry is _____.", "stale"],
+  ["phrase-the-request-timed-out", "The request timed out.", "Время ожидания запроса истекло.", "The request timed out while waiting for the upstream service.", "timed out — завершился по таймауту.", "The request timed _____.", "out"],
+  ["phrase-the-service-failed-to-start", "The service failed to start.", "Сервис не смог запуститься.", "The service failed to start because the configuration is invalid.", "failed to start — не смог запуститься.", "The service failed to _____.", "start"],
+  ["phrase-the-health-check-is-failing", "The health check is failing.", "Проверка состояния завершается ошибкой.", "The health check is failing because the database is unavailable.", "Фраза для диагностики готовности сервиса.", "The health check is _____.", "failing"],
+  ["phrase-we-need-to-add-input-validation", "We need to add input validation.", "Нам нужно добавить валидацию входных данных.", "We need to add input validation before calling the service layer.", "input validation — проверка входных данных.", "We need to add input _____.", "validation"],
+  ["phrase-this-operation-must-be-idempotent", "This operation must be idempotent.", "Эта операция должна быть идемпотентной.", "This operation must be idempotent because clients may retry it.", "Требование к безопасно повторяемой операции.", "This operation must be _____.", "idempotent"],
+  ["phrase-the-retry-should-use-exponential-backoff", "The retry should use exponential backoff.", "Повторная попытка должна использовать экспоненциальную задержку.", "The retry should use exponential backoff with jitter.", "Стандартная стратегия повторных попыток.", "The retry should use exponential _____.", "backoff"],
+  ["phrase-the-feature-flag-is-disabled", "The feature flag is disabled.", "Флаг функциональности отключён.", "The feature flag is disabled in production.", "disabled — отключён.", "The feature flag is _____.", "disabled"],
+  ["phrase-the-api-is-rate-limited", "The API is rate-limited.", "API ограничен по частоте запросов.", "The API is rate-limited per client identifier.", "rate-limited — ограниченный по числу запросов.", "The API is rate-_____.", "limited"],
+  ["phrase-the-database-query-needs-an-index", "The database query needs an index.", "Запросу к базе данных нужен индекс.", "The database query needs an index on the filtering columns.", "Фраза для обсуждения оптимизации SQL.", "The database query needs an _____.", "index"],
+  ["phrase-the-lock-caused-a-deadlock", "The lock caused a deadlock.", "Блокировка вызвала взаимную блокировку.", "The lock caused a deadlock between two transactions.", "deadlock — взаимная блокировка.", "The lock caused a _____.", "deadlock"],
+  ["phrase-there-is-a-race-condition-here", "There is a race condition here.", "Здесь есть состояние гонки.", "There is a race condition here when two workers update the cache.", "Фраза для code review конкурентного кода.", "There is a race condition _____.", "here"],
+  ["phrase-the-worker-is-leaking-memory", "The worker is leaking memory.", "Воркер допускает утечку памяти.", "The worker is leaking memory after every completed job.", "leaking memory — постепенно терять доступную память.", "The worker is leaking _____.", "memory"],
+  ["phrase-the-response-should-include-pagination-metadata", "The response should include pagination metadata.", "Ответ должен включать метаданные пагинации.", "The response should include pagination metadata and the next cursor.", "Требование к API со списками.", "The response should include pagination _____.", "metadata"],
+  ["phrase-the-service-must-shut-down-gracefully", "The service must shut down gracefully.", "Сервис должен завершаться корректно.", "The service must shut down gracefully without dropping active requests.", "gracefully — корректно, с завершением текущей работы.", "The service must shut down _____.", "gracefully"],
+  ["phrase-the-secret-must-not-be-logged", "The secret must not be logged.", "Секрет нельзя записывать в лог.", "The secret must not be logged even at debug level.", "Критичное правило безопасности.", "The secret must not be _____.", "logged"],
+  ["phrase-the-configuration-is-loaded-from-the-environment", "The configuration is loaded from the environment.", "Конфигурация загружается из окружения.", "The configuration is loaded from the environment at startup.", "from the environment — из переменных окружения.", "The configuration is loaded from the _____.", "environment"],
+  ["phrase-the-gateway-forwards-the-request", "The gateway forwards the request.", "Шлюз перенаправляет запрос.", "The gateway forwards the request to a healthy service instance.", "forward a request — передать запрос дальше.", "The gateway forwards the _____.", "request"],
+  ["phrase-lets-add-an-integration-test-for-this-case", "Let's add an integration test for this case.", "Давайте добавим интеграционный тест для этого случая.", "Let's add an integration test for this case before merging the change.", "Частотная фраза при обсуждении качества реализации.", "Let's add an integration test for this _____.", "case"],
+];
+
+export const BACKEND_PHRASES: LearningItem[] = PHRASES.map(([id, prompt, answer, example, note, cloze, clozeAnswer]) => ({
+  id,
+  kind: "phrase",
+  prompt,
+  answer,
+  phonetic: "",
+  partOfSpeech: "phrase",
+  section: "phrase",
+  topic: "Backend Development",
+  examples: [example],
+  note,
+  status: "phrase",
+  cloze,
+  clozeAnswer,
+}));
