@@ -13,8 +13,11 @@ type Repository struct{ pool *pgxpool.Pool }
 func NewRepository(pool *pgxpool.Pool) *Repository { return &Repository{pool: pool} }
 
 func (r *Repository) ListDue(ctx context.Context, userID string, limit int) ([]UserWord, error) {
-	if limit <= 0 || limit > 100 {
-		limit = 20
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 1000 {
+		limit = 1000
 	}
 	rows, err := r.pool.Query(ctx, `
 		select w.id, w.lemma, w.translation, w.phonetic, w.part_of_speech, w.topic, w.examples, w.note,
