@@ -12,6 +12,7 @@ concurrency:
 permissions:
   contents: read
   packages: read
+  issues: write
 
 jobs:
   deploy:
@@ -26,6 +27,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure SSH
+        id: configure_ssh
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
@@ -38,6 +40,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
 
       - name: Upload deployment bundle
+        id: upload
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -53,6 +56,7 @@ jobs:
             "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
 
       - name: Deploy stage
+        id: deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -63,3 +67,30 @@ jobs:
         run: |
           printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
             "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'"
+
+      - name: Report stage deployment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+          IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.run_id }}
+          CONFIGURE_OUTCOME: ${{ steps.configure_ssh.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        with:
+          script: |
+            const body = [
+              `### Stage deployment: **${process.env.DEPLOY_STATUS}**`,
+              `- image SHA: \`${process.env.IMAGE_SHA}\``,
+              `- run_id: \`${process.env.RUN_ID}\``,
+              `- configure SSH: \`${process.env.CONFIGURE_OUTCOME}\``,
+              `- upload bundle: \`${process.env.UPLOAD_OUTCOME}\``,
+              `- deploy: \`${process.env.DEPLOY_OUTCOME}\``
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
