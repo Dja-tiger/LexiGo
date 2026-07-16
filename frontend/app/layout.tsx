@@ -3,6 +3,7 @@ import { ServiceWorkerRegistration } from "@/components/service-worker-registrat
 import "./globals.css";
 import "./product-navigation.css";
 import "./premium-ui.css";
+import "./mobile-pwa-fixes.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
     title: "LexiGo",
   },
   icons: {
