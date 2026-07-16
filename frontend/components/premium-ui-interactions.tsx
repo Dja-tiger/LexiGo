@@ -72,7 +72,7 @@ function navigateToCollection(source: CollectionSource) {
   window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
   window.setTimeout(() => {
     initializeVocabularyCollections();
-    document.querySelector<HTMLElement>(`.lx-themed-option[data-lexigo-collection="${source}"]`)?.scrollIntoView({
+    document.querySelector<HTMLElement>(`.lx-themed-selector[data-lexigo-collection="${source}"]`)?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
@@ -232,7 +232,9 @@ function updateCollectionSelection() {
   document.querySelectorAll<HTMLElement>("[data-lexigo-collection]").forEach((button) => {
     const selected = button.dataset.lexigoCollection === source;
     button.classList.toggle("selected", selected);
-    button.setAttribute("aria-pressed", String(selected));
+    if (button.getAttribute("aria-pressed") !== String(selected)) {
+      button.setAttribute("aria-pressed", String(selected));
+    }
   });
 }
 
@@ -241,22 +243,29 @@ function updateCatalogCounts(root: ParentNode = document) {
     const label = button.querySelector("strong")?.textContent?.trim() ?? "";
     const count = CATALOG_COUNTS[label];
     if (count === undefined) return;
+    const countText = String(count);
 
     const directCount = button.querySelector<HTMLElement>(":scope > b");
-    if (directCount) directCount.textContent = String(count);
+    if (directCount && directCount.textContent !== countText) directCount.textContent = countText;
 
     const firstSpan = button.querySelector<HTMLElement>(":scope > span:not(.lx-section-icon):not(.lx-themed-symbol)");
-    if (firstSpan && /^\d+$/.test(firstSpan.textContent?.trim() ?? "")) firstSpan.textContent = String(count);
+    if (firstSpan && /^\d+$/.test(firstSpan.textContent?.trim() ?? "") && firstSpan.textContent !== countText) {
+      firstSpan.textContent = countText;
+    }
 
     const small = button.querySelector<HTMLElement>("small");
     if (small && /^\d+\s/.test(small.textContent?.trim() ?? "")) {
-      small.textContent = small.textContent?.replace(/^\d+/, String(count)) ?? String(count);
+      const current = small.textContent ?? "";
+      const next = current.replace(/^\d+/, countText);
+      if (next !== current) small.textContent = next;
     }
   });
 
   root.querySelectorAll<HTMLElement>(".lx-view h1, .lx-view p, .lx-view small").forEach((element) => {
-    if (element.childElementCount === 0 && element.textContent?.includes("579")) {
-      element.textContent = element.textContent.replace(/\b579\b/g, "699");
+    const current = element.textContent ?? "";
+    if (element.childElementCount === 0 && current.includes("579")) {
+      const next = current.replace(/\b579\b/g, "699");
+      if (next !== current) element.textContent = next;
     }
   });
 }
@@ -268,7 +277,7 @@ function localizeCollectionLabels(root: ParentNode = document) {
     "data-engineering": "Data Engineer",
     backend: "Backend Development",
   };
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(root as Node, NodeFilter.SHOW_TEXT);
   let node = walker.nextNode();
   while (node) {
     const value = node.nodeValue?.trim() as CollectionSource | undefined;
