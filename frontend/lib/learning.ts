@@ -5,6 +5,7 @@ export type LearningItem = {
   id: string;
   wordId?: number;
   kind: "word" | "phrase";
+  slug?: string;
   prompt: string;
   answer: string;
   phonetic: string;
@@ -15,6 +16,7 @@ export type LearningItem = {
   note: string;
   status: string;
   cloze?: string;
+  clozeAnswer?: string;
 };
 
 export function normalizePartOfSpeech(value: string): Exclude<LearningItem["section"], "mixed" | "phrase"> {
@@ -54,6 +56,29 @@ export function takeLessonBlock(items: LearningItem[], size: LessonSize): Learni
   return size === "all" ? items : items.slice(0, size);
 }
 
+export function inferClozeAnswer(prompt: string, cloze?: string): string {
+  if (!cloze || !cloze.includes("_")) return "";
+  const firstBlank = cloze.indexOf("_");
+  const lastBlank = cloze.lastIndexOf("_");
+  const prefix = cloze.slice(0, firstBlank);
+  const suffix = cloze.slice(lastBlank + 1);
+  if (!prompt.startsWith(prefix) || !prompt.endsWith(suffix)) return "";
+  return prompt.slice(prefix.length, prompt.length - suffix.length).trim();
+}
+
+export function exerciseAnswer(item: LearningItem): string {
+  if (item.kind === "phrase" && item.cloze) {
+    return item.clozeAnswer?.trim() || inferClozeAnswer(item.prompt, item.cloze) || item.answer.trim();
+  }
+  return item.answer.trim();
+}
+
+export function exercisePromptLabel(item: LearningItem): string {
+  return item.kind === "phrase" && item.cloze
+    ? "Введите пропущенное английское слово или фрагмент"
+    : "Введите перевод или смысл своими словами";
+}
+
 function hash(value: string): number {
   let result = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -64,9 +89,12 @@ function hash(value: string): number {
 }
 
 export function buildAnswerOptions(current: LearningItem, pool: LearningItem[], count = 4): string[] {
-  const alternatives = Array.from(new Set(pool.map((item) => item.answer.trim()).filter((answer) => answer && answer !== current.answer.trim())));
+  const correctAnswer = exerciseAnswer(current);
+  const alternatives = Array.from(
+    new Set(pool.map((item) => exerciseAnswer(item)).filter((answer) => answer && answer !== correctAnswer)),
+  );
   alternatives.sort((left, right) => hash(`${current.id}:${left}`) - hash(`${current.id}:${right}`));
-  const options = [current.answer.trim(), ...alternatives.slice(0, Math.max(0, count - 1))];
+  const options = [correctAnswer, ...alternatives.slice(0, Math.max(0, count - 1))];
   return options.sort((left, right) => hash(`${current.id}:option:${left}`) - hash(`${current.id}:option:${right}`));
 }
 
