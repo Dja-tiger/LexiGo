@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
+import "./product-navigation.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
