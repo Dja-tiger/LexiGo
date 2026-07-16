@@ -112,10 +112,10 @@ func TestPersistentLearningFlow(t *testing.T) {
 	}
 
 	var progress struct {
-		DueNow       int `json:"dueNow"`
-		TotalWords   int `json:"totalWords"`
-		ReviewsToday int `json:"reviewsToday"`
-		DailyGoal    int `json:"dailyGoal"`
+		DueNow        int `json:"dueNow"`
+		TotalWords    int `json:"totalWords"`
+		ReviewsToday  int `json:"reviewsToday"`
+		DailyGoal     int `json:"dailyGoal"`
 		CurrentStreak int `json:"currentStreak"`
 	}
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/progress?timezoneOffsetMinutes=0", registered.Tokens.AccessToken, http.StatusOK, &progress)
