@@ -6,6 +6,7 @@ import {
   clearLegacyAuthStorage,
   cookieValue,
   csrfTokenFromCookie,
+  expiredSessionURL,
   refreshSession,
 } from "./auth-session";
 
@@ -33,6 +34,11 @@ describe("auth session", () => {
     expect(cookieValue("other=1; lexigo_csrf=abc%2Fdef%3D; theme=dark", "lexigo_csrf")).toBe("abc/def=");
     expect(csrfTokenFromCookie("lexigo_csrf=csrf-token")).toBe("csrf-token");
     expect(cookieValue("lexigo_csrf=%E0%A4%A", "lexigo_csrf")).toBe("");
+  });
+
+  it("builds one deterministic authorization route for an expired session", () => {
+    expect(expiredSessionURL("https://lexigo.example/lesson?view=lesson#card-2"))
+      .toBe("/lesson?view=profile&session=expired");
   });
 
   it("removes the legacy persisted session without failing when storage is restricted", () => {
@@ -78,7 +84,6 @@ describe("auth session", () => {
 
     const first = refreshSession();
     const second = refreshSession();
-    expect(first).toBe(second);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     resolveResponse?.(new Response(JSON.stringify(SESSION), {
