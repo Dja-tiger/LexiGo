@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.2.0
+  version: 0.3.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -39,7 +39,12 @@ paths:
               $ref: "#/components/schemas/RegisterRequest"
       responses:
         "201":
-          description: Пользователь создан.
+          description: Пользователь создан. Refresh-сессия установлена через HttpOnly cookie, CSRF-токен — через отдельную readable cookie.
+          headers:
+            Set-Cookie:
+              description: Cookies lexigo_refresh и lexigo_csrf.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -60,7 +65,12 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Авторизация выполнена.
+          description: Авторизация выполнена. Refresh-сессия установлена через HttpOnly cookie.
+          headers:
+            Set-Cookie:
+              description: Cookies lexigo_refresh и lexigo_csrf.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -71,34 +81,44 @@ paths:
     post:
       operationId: refresh
       tags: [auth]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RefreshRequest"
+      description: Ротирует refresh token из HttpOnly cookie и выдаёт новый access token. Тело запроса отсутствует.
+      security:
+        - refreshCookie: []
+          csrfHeader: []
       responses:
         "200":
-          description: Токены обновлены с обязательной ротацией refresh token.
+          description: Сессия обновлена, refresh token и CSRF token ротированы через Set-Cookie.
+          headers:
+            Set-Cookie:
+              description: Обновлённые cookies lexigo_refresh и lexigo_csrf.
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenPair"
+                $ref: "#/components/schemas/AuthResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/v1/auth/logout:
     post:
       operationId: logout
       tags: [auth]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RefreshRequest"
+      description: Отзывает всё семейство refresh-токенов текущего устройства и удаляет session cookies.
+      security:
+        - refreshCookie: []
+          csrfHeader: []
       responses:
         "204":
-          description: Refresh token отозван или уже недействителен.
+          description: Сессия отозвана или уже недействительна; cookies удалены.
+          headers:
+            Set-Cookie:
+              description: Expired cookies lexigo_refresh и lexigo_csrf.
+              schema:
+                type: string
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/v1/me:
     get:
       operationId: me
@@ -226,6 +246,16 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: lexigo_refresh
+      description: HttpOnly refresh token cookie. Browser JavaScript не имеет к ней доступа.
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Значение readable cookie lexigo_csrf для double-submit CSRF validation.
   parameters:
     TimezoneOffsetMinutes:
       name: timezoneOffsetMinutes
@@ -240,6 +270,12 @@ components:
   responses:
     Unauthorized:
       description: Неверные учётные данные или токен.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Запрос не прошёл origin или CSRF validation.
       content:
         application/json:
           schema:
@@ -287,12 +323,6 @@ components:
           format: email
         password:
           type: string
-    RefreshRequest:
-      type: object
-      required: [refreshToken]
-      properties:
-        refreshToken:
-          type: string
     AuthResponse:
       type: object
       required: [user, tokens]
@@ -303,12 +333,11 @@ components:
           $ref: "#/components/schemas/TokenPair"
     TokenPair:
       type: object
-      required: [accessToken, refreshToken, tokenType, expiresIn]
+      required: [accessToken, tokenType, expiresIn]
       properties:
         accessToken:
           type: string
-        refreshToken:
-          type: string
+          description: Короткоживущий bearer token. Клиент хранит его только в памяти процесса.
         tokenType:
           type: string
           const: Bearer
@@ -418,58 +447,3 @@ components:
           type: integer
           minimum: 5
           maximum: 200
-    ProgressSummary:
-      type: object
-      required:
-        - dueNow
-        - totalWords
-        - newWords
-        - learningWords
-        - reviewWords
-        - masteredWords
-        - reviewsToday
-        - successfulToday
-        - reviewsTotal
-        - dailyGoal
-        - currentStreak
-        - longestStreak
-      properties:
-        dueNow:
-          type: integer
-        totalWords:
-          type: integer
-        newWords:
-          type: integer
-        learningWords:
-          type: integer
-        reviewWords:
-          type: integer
-        masteredWords:
-          type: integer
-        reviewsToday:
-          type: integer
-        successfulToday:
-          type: integer
-        reviewsTotal:
-          type: integer
-        dailyGoal:
-          type: integer
-        currentStreak:
-          type: integer
-        longestStreak:
-          type: integer
-        nextDueAt:
-          type: [string, "null"]
-          format: date-time
-    Error:
-      type: object
-      required: [error]
-      properties:
-        error:
-          type: object
-          required: [code, message]
-          properties:
-            code:
-              type: string
-            message:
-              type: string
