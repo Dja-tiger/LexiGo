@@ -1,11 +1,5 @@
-import { LexigoPremiumApp } from "../components/lexigo-premium-app";
-import { PremiumUIInteractions } from "../components/premium-ui-interactions";
+import { LexigoBootstrappedApp } from "../components/lexigo-bootstrapped-app";
 
 export default function Home() {
-  return (
-    <>
-      <PremiumUIInteractions />
-      <LexigoPremiumApp />
-    </>
-  );
+  return <LexigoBootstrappedApp />;
 }
