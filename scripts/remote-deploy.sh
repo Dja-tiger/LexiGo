@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 ENVIRONMENT="${1:?environment is required: stage or prod}"
 IMAGE_TAG="${2:?image tag is required}"
 PUBLIC_URL="${3:?public URL is required}"
