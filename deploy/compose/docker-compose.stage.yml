@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:18.4-alpine
     env_file: ../env/stage.env
-    volumes: [stage_postgres:/var/lib/postgresql/data]
+    volumes: [stage_postgres:/var/lib/postgresql]
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
