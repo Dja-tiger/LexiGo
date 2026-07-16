@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.1.0
-  description: API персонального тренажёра английского.
+  version: 0.2.0
+  description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
     description: local
@@ -117,7 +117,7 @@ paths:
   /api/v1/words/due:
     get:
       operationId: listDueWords
-      tags: [words]
+      tags: [learning]
       security:
         - bearerAuth: []
       parameters:
@@ -126,8 +126,8 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
-            default: 20
+            maximum: 1000
+            default: 30
       responses:
         "200":
           description: Слова, срок повторения которых наступил.
@@ -145,12 +145,98 @@ paths:
                     type: integer
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/words/{wordID}/review:
+    post:
+      operationId: reviewWord
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequest"
+      responses:
+        "200":
+          description: Результат сохранён, рассчитана следующая дата повторения.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Слово не назначено текущему пользователю.
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/progress:
+    get:
+      operationId: getProgress
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TimezoneOffsetMinutes"
+      responses:
+        "200":
+          description: Текущий прогресс, очередь и серии занятий.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/progress/goal:
+    put:
+      operationId: setDailyGoal
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TimezoneOffsetMinutes"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalRequest"
+      responses:
+        "200":
+          description: Дневная цель сохранена; возвращён обновлённый прогресс.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  parameters:
+    TimezoneOffsetMinutes:
+      name: timezoneOffsetMinutes
+      in: query
+      required: false
+      description: Значение JavaScript Date.getTimezoneOffset; используется для дневной статистики.
+      schema:
+        type: integer
+        minimum: -840
+        maximum: 840
+        default: 0
   responses:
     Unauthorized:
       description: Неверные учётные данные или токен.
@@ -265,6 +351,8 @@ components:
           type: array
           items:
             type: string
+        note:
+          type: string
         status:
           type: string
           enum: [new, learning, review, mastered]
@@ -278,6 +366,99 @@ components:
           type: string
           format: date-time
         lastReviewedAt:
+          type: [string, "null"]
+          format: date-time
+    ReviewRequest:
+      type: object
+      required: [rating, timezoneOffsetMinutes]
+      properties:
+        rating:
+          type: string
+          enum: [again, almost, known]
+        responseMs:
+          type: integer
+          minimum: 0
+          maximum: 3600000
+        answerMode:
+          type: string
+          enum: [recall, choice]
+        correct:
+          type: [boolean, "null"]
+        timezoneOffsetMinutes:
+          type: integer
+          minimum: -840
+          maximum: 840
+    ReviewResult:
+      type: object
+      required: [wordId, status, easiness, intervalDays, repetitions, dueAt, lastReviewedAt]
+      properties:
+        wordId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [learning, review, mastered]
+        easiness:
+          type: number
+        intervalDays:
+          type: integer
+        repetitions:
+          type: integer
+        dueAt:
+          type: string
+          format: date-time
+        lastReviewedAt:
+          type: string
+          format: date-time
+    GoalRequest:
+      type: object
+      required: [dailyGoal]
+      properties:
+        dailyGoal:
+          type: integer
+          minimum: 5
+          maximum: 200
+    ProgressSummary:
+      type: object
+      required:
+        - dueNow
+        - totalWords
+        - newWords
+        - learningWords
+        - reviewWords
+        - masteredWords
+        - reviewsToday
+        - successfulToday
+        - reviewsTotal
+        - dailyGoal
+        - currentStreak
+        - longestStreak
+      properties:
+        dueNow:
+          type: integer
+        totalWords:
+          type: integer
+        newWords:
+          type: integer
+        learningWords:
+          type: integer
+        reviewWords:
+          type: integer
+        masteredWords:
+          type: integer
+        reviewsToday:
+          type: integer
+        successfulToday:
+          type: integer
+        reviewsTotal:
+          type: integer
+        dailyGoal:
+          type: integer
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        nextDueAt:
           type: [string, "null"]
           format: date-time
     Error:

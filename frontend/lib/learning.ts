@@ -3,6 +3,7 @@ export type LessonSize = 15 | 30 | 60 | "all";
 
 export type LearningItem = {
   id: string;
+  wordId?: number;
   kind: "word" | "phrase";
   prompt: string;
   answer: string;

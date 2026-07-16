@@ -8,6 +8,7 @@ import (
 	"github.com/Dja-tiger/New-project/backend/internal/config"
 	"github.com/Dja-tiger/New-project/backend/internal/health"
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/New-project/backend/internal/learning"
 	"github.com/Dja-tiger/New-project/backend/internal/ratelimit"
 	"github.com/Dja-tiger/New-project/backend/internal/words"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,7 +27,11 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	authHandler := auth.NewHandler(authService)
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
+	learningHandler := learning.NewHandler(learning.NewRepository(pg))
 	limiter := ratelimit.New(rdb)
+	authenticated := func(handler http.HandlerFunc) http.Handler {
+		return httpx.Authenticate(authService.ParseAccess, handler)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health/live", healthHandler.Live)
@@ -35,8 +40,11 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	mux.Handle("POST /api/v1/auth/login", limiter.Middleware(20, http.HandlerFunc(authHandler.Login)))
 	mux.Handle("POST /api/v1/auth/refresh", limiter.Middleware(30, http.HandlerFunc(authHandler.Refresh)))
 	mux.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
-	mux.Handle("GET /api/v1/me", httpx.Authenticate(authService.ParseAccess, http.HandlerFunc(authHandler.Me)))
-	mux.Handle("GET /api/v1/words/due", httpx.Authenticate(authService.ParseAccess, http.HandlerFunc(wordsHandler.Due)))
+	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
+	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
+	mux.Handle("POST /api/v1/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewWord)))
+	mux.Handle("GET /api/v1/progress", authenticated(http.HandlerFunc(learningHandler.Progress)))
+	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
 
 	var handler http.Handler = mux
 	handler = httpx.CORS(cfg.CORSAllowedOrigin, handler)
