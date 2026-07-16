@@ -86,24 +86,23 @@ jobs:
             let tail = 'deploy log was not created';
             if (fs.existsSync('/tmp/lexigo-deploy.log')) {
               const log = fs.readFileSync('/tmp/lexigo-deploy.log', 'utf8');
-              tail = log.slice(-6000);
+              tail = log.slice(-3000);
             }
             const body = [
-              `### Stage deployment: **${process.env.DEPLOY_STATUS}**`,
+              '# LexiGo current deployment status',
+              '',
+              `## Stage: **${process.env.DEPLOY_STATUS}**`,
               `- image SHA: \`${process.env.IMAGE_SHA}\``,
               `- run_id: \`${process.env.RUN_ID}\``,
               `- configure SSH: \`${process.env.CONFIGURE_OUTCOME}\``,
               `- upload bundle: \`${process.env.UPLOAD_OUTCOME}\``,
               `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
               '',
-              '<details><summary>Deploy log tail</summary>',
-              '',
               '```text',
               tail,
-              '```',
-              '</details>'
+              '```'
             ].join('\n');
-            await github.rest.issues.createComment({
+            await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: 12,
