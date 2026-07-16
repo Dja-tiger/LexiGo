@@ -211,8 +211,8 @@ func (r *Repository) ReviewLessonWord(
 		update lesson_sessions
 		set current_index = $3,
 		    status = case when $4 then 'completed' else 'active' end,
-		    completed_at = case when $4 then $5 else null end,
-		    updated_at = $5
+		    completed_at = case when $4 then $5::timestamptz else null::timestamptz end,
+		    updated_at = $5::timestamptz
 		where id = $1::uuid and user_id = $2::uuid
 	`, lessonID, userID, nextIndex, completed, now); err != nil {
 		return LessonReviewResult{}, fmt.Errorf("update lesson progress: %w", err)
