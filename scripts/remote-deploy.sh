@@ -108,7 +108,11 @@ export IMAGE_TAG
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 
 "${COMPOSE[@]}" pull
-"${COMPOSE[@]}" up -d --remove-orphans
+if ! "${COMPOSE[@]}" up -d --remove-orphans; then
+  "${COMPOSE[@]}" ps || true
+  "${COMPOSE[@]}" logs --tail=200 || true
+  exit 1
+fi
 
 SITE_HOST="${PUBLIC_URL#*://}"
 SITE_HOST="${SITE_HOST%%/*}"
