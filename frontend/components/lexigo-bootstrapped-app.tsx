@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { apiUrl } from "../lib/api";
+import { EnhancedUIInteractions } from "./enhanced-ui-interactions";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
-import { PremiumUIInteractions } from "./premium-ui-interactions";
 
 type StoredSession = {
   user: unknown;
@@ -95,7 +95,7 @@ export function LexigoBootstrappedApp() {
 
   return (
     <>
-      <PremiumUIInteractions />
+      <EnhancedUIInteractions />
       {notice ? <div className="lx-session-notice" role="status">{notice}</div> : null}
       <LexigoPremiumApp />
     </>

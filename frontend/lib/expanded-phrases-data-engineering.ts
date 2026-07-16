@@ -1,0 +1,55 @@
+import type { LearningItem } from "./learning";
+
+type PhraseTuple = readonly [
+  id: string,
+  prompt: string,
+  answer: string,
+  example: string,
+  note: string,
+  cloze: string,
+  clozeAnswer: string,
+];
+
+const PHRASES: PhraseTuple[] = [
+  ["phrase-the-pipeline-is-running-behind-schedule", "The pipeline is running behind schedule.", "Пайплайн отстаёт от расписания.", "The pipeline is running behind schedule because the source is slow.", "behind schedule — с отставанием от плана.", "The pipeline is running behind _____.", "schedule"],
+  ["phrase-the-source-system-is-unavailable", "The source system is unavailable.", "Система-источник недоступна.", "The source system is unavailable, so ingestion has stopped.", "Нейтральное описание недоступности источника.", "The source system is _____.", "unavailable"],
+  ["phrase-the-schema-has-changed-upstream", "The schema has changed upstream.", "Схема изменилась в вышестоящей системе.", "The schema has changed upstream without prior notice.", "upstream — выше по потоку данных.", "The schema has changed _____.", "upstream"],
+  ["phrase-we-need-to-backfill-the-missing-partition", "We need to backfill the missing partition.", "Нам нужно дозагрузить отсутствующую партицию.", "We need to backfill the missing partition for yesterday.", "backfill — дозагрузить исторический период.", "We need to backfill the missing _____.", "partition"],
+  ["phrase-the-job-can-be-safely-retried", "The job can be safely retried.", "Задачу можно безопасно перезапустить.", "The job can be safely retried because it is idempotent.", "safely retried — безопасно повторно запущен.", "The job can be safely _____.", "retried"],
+  ["phrase-the-consumer-lag-is-increasing", "The consumer lag is increasing.", "Отставание потребителя растёт.", "The consumer lag is increasing during peak traffic.", "Фраза для мониторинга Kafka-потребителя.", "The consumer lag is _____.", "increasing"],
+  ["phrase-the-data-arrived-later-than-expected", "The data arrived later than expected.", "Данные пришли позже ожидаемого.", "The data arrived later than expected and missed the processing window.", "later than expected — позже ожидаемого.", "The data arrived later than _____.", "expected"],
+  ["phrase-this-table-is-partitioned-by-date", "This table is partitioned by date.", "Эта таблица партиционирована по дате.", "This table is partitioned by date and distributed by store identifier.", "partitioned by — разбита на разделы по полю.", "This table is partitioned by _____.", "date"],
+  ["phrase-the-query-is-scanning-too-much-data", "The query is scanning too much data.", "Запрос сканирует слишком много данных.", "The query is scanning too much data because partition pruning is not applied.", "scanning data — читать данные при выполнении запроса.", "The query is scanning too much _____.", "data"],
+  ["phrase-we-should-add-a-data-quality-check", "We should add a data quality check.", "Нам следует добавить проверку качества данных.", "We should add a data quality check for null identifiers.", "Фраза для обсуждения контроля данных.", "We should add a data quality _____.", "check"],
+  ["phrase-the-record-count-does-not-match", "The record count does not match.", "Количество записей не совпадает.", "The record count does not match between the source and target.", "does not match — не совпадает.", "The record count does not _____.", "match"],
+  ["phrase-the-load-completed-with-partial-data", "The load completed with partial data.", "Загрузка завершилась с неполными данными.", "The load completed with partial data from one region.", "partial data — неполный набор данных.", "The load completed with partial _____.", "data"],
+  ["phrase-the-downstream-task-is-blocked", "The downstream task is blocked.", "Нижестоящая задача заблокирована.", "The downstream task is blocked by a failed dependency.", "downstream — ниже по цепочке.", "The downstream task is _____.", "blocked"],
+  ["phrase-we-need-to-preserve-historical-changes", "We need to preserve historical changes.", "Нам нужно сохранить исторические изменения.", "We need to preserve historical changes in the customer dimension.", "preserve history — сохранять историю.", "We need to preserve historical _____.", "changes"],
+  ["phrase-this-transformation-is-not-idempotent", "This transformation is not idempotent.", "Это преобразование не идемпотентно.", "This transformation is not idempotent and duplicates rows on retry.", "Критичное свойство для безопасных повторных запусков.", "This transformation is not _____.", "idempotent"],
+  ["phrase-the-watermark-was-not-updated", "The watermark was not updated.", "Водяной знак не обновился.", "The watermark was not updated after the failed transaction.", "Фраза для диагностики инкрементальной загрузки.", "The watermark was not _____.", "updated"],
+  ["phrase-the-checkpoint-is-no-longer-valid", "The checkpoint is no longer valid.", "Контрольная точка больше недействительна.", "The checkpoint is no longer valid after the topic was recreated.", "no longer valid — больше недействителен.", "The checkpoint is no longer _____.", "valid"],
+  ["phrase-the-dataset-contains-duplicate-records", "The dataset contains duplicate records.", "Набор данных содержит дублирующиеся записи.", "The dataset contains duplicate records with the same business key.", "duplicate records — повторяющиеся записи.", "The dataset contains duplicate _____.", "records"],
+  ["phrase-the-event-timestamp-is-in-utc", "The event timestamp is in UTC.", "Временная метка события указана в UTC.", "The event timestamp is in UTC and must be converted for the report.", "UTC важно явно указывать при работе со временем.", "The event timestamp is in _____.", "UTC"],
+  ["phrase-the-retention-period-is-seven-days", "The retention period is seven days.", "Период хранения составляет семь дней.", "The retention period is seven days for this topic.", "retention period — срок хранения.", "The retention period is seven _____.", "days"],
+  ["phrase-the-topic-has-twelve-partitions", "The topic has twelve partitions.", "В топике двенадцать партиций.", "The topic has twelve partitions and three replicas.", "Базовая фраза о конфигурации Kafka-топика.", "The topic has twelve _____.", "partitions"],
+  ["phrase-the-batch-size-is-too-large", "The batch size is too large.", "Размер пакета слишком большой.", "The batch size is too large for the current memory limit.", "batch size — размер обрабатываемой порции.", "The batch size is too _____.", "large"],
+  ["phrase-the-data-contract-is-backward-compatible", "The data contract is backward-compatible.", "Контракт данных обратно совместим.", "The data contract is backward-compatible with current consumers.", "Фраза для обсуждения совместимости схем.", "The data contract is backward-_____.", "compatible"],
+  ["phrase-the-materialized-view-needs-a-refresh", "The materialized view needs a refresh.", "Материализованное представление нужно обновить.", "The materialized view needs a refresh after the load finishes.", "refresh — обновление сохранённого результата.", "The materialized view needs a _____.", "refresh"],
+  ["phrase-lets-compare-the-source-and-target-counts", "Let's compare the source and target counts.", "Давайте сравним количество записей в источнике и приёмнике.", "Let's compare the source and target counts before publishing the table.", "Практичная формулировка для сверки загрузки.", "Let's compare the source and target _____.", "counts"],
+];
+
+export const DATA_ENGINEERING_PHRASES: LearningItem[] = PHRASES.map(([id, prompt, answer, example, note, cloze, clozeAnswer]) => ({
+  id,
+  kind: "phrase",
+  prompt,
+  answer,
+  phonetic: "",
+  partOfSpeech: "phrase",
+  section: "phrase",
+  topic: "Data Engineering",
+  examples: [example],
+  note,
+  status: "phrase",
+  cloze,
+  clozeAnswer,
+}));

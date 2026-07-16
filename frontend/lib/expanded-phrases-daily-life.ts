@@ -1,0 +1,55 @@
+import type { LearningItem } from "./learning";
+
+type PhraseTuple = readonly [
+  id: string,
+  prompt: string,
+  answer: string,
+  example: string,
+  note: string,
+  cloze: string,
+  clozeAnswer: string,
+];
+
+const PHRASES: PhraseTuple[] = [
+  ["phrase-could-you-help-me-with-this", "Could you help me with this?", "Не могли бы вы помочь мне с этим?", "Could you help me with this form?", "Вежливая универсальная просьба о помощи.", "Could you _____ me with this?", "help"],
+  ["phrase-where-can-i-find-the-nearest-supermarket", "Where can I find the nearest supermarket?", "Где я могу найти ближайший супермаркет?", "Where can I find the nearest supermarket that is open now?", "nearest — ближайший.", "Where can I find the nearest _____?", "supermarket"],
+  ["phrase-im-looking-for-the-household-section", "I'm looking for the household section.", "Я ищу отдел товаров для дома.", "I'm looking for the household section and cleaning supplies.", "I'm looking for — нейтральный способ сказать, что вы ищете.", "I'm _____ for the household section.", "looking"],
+  ["phrase-could-i-get-a-refund-for-this-item", "Could I get a refund for this item?", "Могу я получить возврат денег за этот товар?", "Could I get a refund for this item if I have the receipt?", "get a refund — получить возврат денег.", "Could I get a _____ for this item?", "refund"],
+  ["phrase-the-heating-is-not-working", "The heating is not working.", "Отопление не работает.", "The heating is not working in the bedroom.", "Подходит для сообщения о бытовой неисправности.", "The _____ is not working.", "heating"],
+  ["phrase-i-need-to-make-a-doctor-s-appointment", "I need to make a doctor's appointment.", "Мне нужно записаться к врачу.", "I need to make a doctor's appointment for tomorrow morning.", "make an appointment — записаться на конкретное время.", "I need to make a doctor's _____.", "appointment"],
+  ["phrase-is-there-a-pharmacy-nearby", "Is there a pharmacy nearby?", "Поблизости есть аптека?", "Is there a pharmacy nearby that is open at night?", "nearby — поблизости.", "Is there a _____ nearby?", "pharmacy"],
+  ["phrase-can-i-pay-by-card", "Can I pay by card?", "Можно оплатить картой?", "Can I pay by card or do you only accept cash?", "Короткая частотная фраза при оплате.", "Can I pay by _____?", "card"],
+  ["phrase-could-you-repeat-that-more-slowly", "Could you repeat that more slowly?", "Не могли бы вы повторить это медленнее?", "Could you repeat that more slowly, please?", "Полезно, когда английскую речь трудно разобрать.", "Could you repeat that more _____?", "slowly"],
+  ["phrase-im-running-late", "I'm running late.", "Я опаздываю.", "I'm running late, but I'll be there soon.", "running late — опаздывать относительно плана.", "I'm running _____.", "late"],
+  ["phrase-i-ll-be-there-in-ten-minutes", "I'll be there in ten minutes.", "Я буду там через десять минут.", "I'll be there in ten minutes, so please wait for me.", "in ten minutes — через десять минут.", "I'll be there in ten _____.", "minutes"],
+  ["phrase-could-you-write-it-down", "Could you write it down?", "Не могли бы вы это записать?", "Could you write the address down for me?", "write down — записать информацию.", "Could you write it _____?", "down"],
+  ["phrase-i-dont-feel-well", "I don't feel well.", "Я плохо себя чувствую.", "I don't feel well and I have a temperature.", "Базовая фраза для описания плохого самочувствия.", "I don't feel _____.", "well"],
+  ["phrase-where-is-the-nearest-restroom", "Where is the nearest restroom?", "Где ближайший туалет?", "Excuse me, where is the nearest restroom?", "restroom — частый американский вариант.", "Where is the nearest _____?", "restroom"],
+  ["phrase-the-tap-is-leaking", "The tap is leaking.", "Кран протекает.", "The tap is leaking and the water will not stop.", "leaking — протекающий.", "The tap is _____.", "leaking"],
+  ["phrase-the-power-is-out", "The power is out.", "Электричество отключено.", "The power is out in the whole building.", "the power is out — нет электричества.", "The power is _____.", "out"],
+  ["phrase-please-leave-the-package-at-the-door", "Please leave the package at the door.", "Пожалуйста, оставьте посылку у двери.", "Please leave the package at the door if no one answers.", "Инструкция для курьера.", "Please leave the package at the _____.", "door"],
+  ["phrase-could-you-send-me-the-address", "Could you send me the address?", "Можешь прислать мне адрес?", "Could you send me the address and the entrance code?", "send me — прислать мне.", "Could you send me the _____?", "address"],
+  ["phrase-i-need-to-pick-up-my-order", "I need to pick up my order.", "Мне нужно забрать мой заказ.", "I need to pick up my order before the store closes.", "pick up — забрать готовый заказ.", "I need to pick _____ my order.", "up"],
+  ["phrase-do-you-have-this-in-another-size", "Do you have this in another size?", "У вас есть это в другом размере?", "Do you have this jacket in another size?", "Частотная фраза в магазине одежды.", "Do you have this in another _____?", "size"],
+  ["phrase-im-just-looking-thank-you", "I'm just looking, thank you.", "Я просто смотрю, спасибо.", "I'm just looking, thank you. I'll ask if I need help.", "Вежливый ответ консультанту.", "I'm just _____, thank you.", "looking"],
+  ["phrase-could-you-call-a-taxi-for-me", "Could you call a taxi for me?", "Не могли бы вы вызвать мне такси?", "Could you call a taxi for me and tell the driver the address?", "call a taxi — вызвать такси.", "Could you call a _____ for me?", "taxi"],
+  ["phrase-how-much-does-it-cost", "How much does it cost?", "Сколько это стоит?", "How much does it cost with delivery?", "Универсальный вопрос о цене.", "How much does it _____?", "cost"],
+  ["phrase-is-service-included", "Is service included?", "Обслуживание включено?", "Is service included in the total price?", "Вопрос о сервисном сборе или чаевых.", "Is _____ included?", "service"],
+  ["phrase-could-we-split-the-bill", "Could we split the bill?", "Мы можем разделить счёт?", "Could we split the bill between three people?", "split the bill — разделить счёт.", "Could we split the _____?", "bill"],
+];
+
+export const DAILY_LIFE_PHRASES: LearningItem[] = PHRASES.map(([id, prompt, answer, example, note, cloze, clozeAnswer]) => ({
+  id,
+  kind: "phrase",
+  prompt,
+  answer,
+  phonetic: "",
+  partOfSpeech: "phrase",
+  section: "phrase",
+  topic: "Daily Life",
+  examples: [example],
+  note,
+  status: "phrase",
+  cloze,
+  clozeAnswer,
+}));

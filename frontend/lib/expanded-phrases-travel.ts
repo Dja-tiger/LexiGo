@@ -1,0 +1,55 @@
+import type { LearningItem } from "./learning";
+
+type PhraseTuple = readonly [
+  id: string,
+  prompt: string,
+  answer: string,
+  example: string,
+  note: string,
+  cloze: string,
+  clozeAnswer: string,
+];
+
+const PHRASES: PhraseTuple[] = [
+  ["phrase-where-is-the-check-in-desk", "Where is the check-in desk?", "Где стойка регистрации?", "Where is the check-in desk for this airline?", "check-in desk — стойка регистрации.", "Where is the check-in _____?", "desk"],
+  ["phrase-id-like-an-aisle-seat", "I'd like an aisle seat.", "Я хотел бы место у прохода.", "I'd like an aisle seat if one is available.", "I'd like — вежливая форма запроса.", "I'd like an _____ seat.", "aisle"],
+  ["phrase-how-many-bags-can-i-check-in", "How many bags can I check in?", "Сколько сумок я могу сдать в багаж?", "How many bags can I check in without an extra fee?", "check in a bag — сдать багаж.", "How many bags can I check _____?", "in"],
+  ["phrase-my-luggage-has-not-arrived", "My luggage has not arrived.", "Мой багаж не прибыл.", "My luggage has not arrived on the carousel.", "Фраза для обращения в службу розыска багажа.", "My luggage has not _____.", "arrived"],
+  ["phrase-is-this-the-line-for-passport-control", "Is this the line for passport control?", "Это очередь на паспортный контроль?", "Is this the line for passport control or for security?", "line — очередь в американском английском.", "Is this the line for passport _____?", "control"],
+  ["phrase-how-long-is-the-delay", "How long is the delay?", "Насколько долгая задержка?", "How long is the delay and what is the new departure time?", "Вопрос при задержке транспорта.", "How long is the _____?", "delay"],
+  ["phrase-which-platform-does-the-train-leave-from", "Which platform does the train leave from?", "С какой платформы отправляется поезд?", "Which platform does the train leave from today?", "leave from — отправляться с.", "Which platform does the train leave _____?", "from"],
+  ["phrase-does-this-bus-go-to-the-city-center", "Does this bus go to the city center?", "Этот автобус идёт в центр города?", "Does this bus go to the city center or the airport?", "Частотный вопрос о маршруте.", "Does this bus go to the city _____?", "center"],
+  ["phrase-id-like-to-book-a-room-for-two-nights", "I'd like to book a room for two nights.", "Я хотел бы забронировать номер на две ночи.", "I'd like to book a room for two nights from Friday.", "book a room — забронировать номер.", "I'd like to book a room for two _____.", "nights"],
+  ["phrase-i-have-a-reservation-under-my-name", "I have a reservation under my name.", "У меня бронирование на моё имя.", "I have a reservation under my name for three nights.", "under my name — на моё имя.", "I have a reservation under my _____.", "name"],
+  ["phrase-could-i-check-in-early", "Could I check in early?", "Можно заселиться раньше?", "Could I check in early if the room is ready?", "early check-in — раннее заселение.", "Could I check in _____?", "early"],
+  ["phrase-what-time-is-check-out", "What time is check-out?", "Во сколько выезд из отеля?", "What time is check-out on Sunday?", "check-out — оформление выезда.", "What time is check-_____?", "out"],
+  ["phrase-is-breakfast-included", "Is breakfast included?", "Завтрак включён?", "Is breakfast included in the room rate?", "included — включён в стоимость.", "Is _____ included?", "breakfast"],
+  ["phrase-could-you-recommend-a-local-restaurant", "Could you recommend a local restaurant?", "Не могли бы вы порекомендовать местный ресторан?", "Could you recommend a local restaurant that is not too expensive?", "recommend — рекомендовать.", "Could you recommend a local _____?", "restaurant"],
+  ["phrase-how-do-i-get-to-the-old-town", "How do I get to the old town?", "Как добраться до старого города?", "How do I get to the old town by public transport?", "How do I get to — как добраться до.", "How do I get to the old _____?", "town"],
+  ["phrase-could-you-show-me-on-the-map", "Could you show me on the map?", "Не могли бы вы показать мне на карте?", "Could you show me the station on the map?", "Полезно при уточнении маршрута.", "Could you show me on the _____?", "map"],
+  ["phrase-is-it-within-walking-distance", "Is it within walking distance?", "До этого можно дойти пешком?", "Is the hotel within walking distance of the center?", "within walking distance — в пешей доступности.", "Is it within walking _____?", "distance"],
+  ["phrase-id-like-a-round-trip-ticket", "I'd like a round-trip ticket.", "Я хотел бы билет туда и обратно.", "I'd like a round-trip ticket for tomorrow.", "round-trip ticket — билет туда и обратно.", "I'd like a round-trip _____.", "ticket"],
+  ["phrase-can-i-change-my-booking", "Can I change my booking?", "Могу я изменить бронирование?", "Can I change my booking to a later flight?", "change a booking — изменить бронирование.", "Can I change my _____?", "booking"],
+  ["phrase-what-is-the-cancellation-fee", "What is the cancellation fee?", "Какова комиссия за отмену?", "What is the cancellation fee for this ticket?", "fee — сбор или комиссия.", "What is the cancellation _____?", "fee"],
+  ["phrase-where-can-i-exchange-money", "Where can I exchange money?", "Где я могу обменять деньги?", "Where can I exchange money at a reasonable rate?", "exchange money — обменять валюту.", "Where can I exchange _____?", "money"],
+  ["phrase-do-i-need-to-validate-the-ticket", "Do I need to validate the ticket?", "Мне нужно прокомпостировать билет?", "Do I need to validate the ticket before boarding?", "validate a ticket — активировать или прокомпостировать билет.", "Do I need to _____ the ticket?", "validate"],
+  ["phrase-could-you-take-a-photo-of-me", "Could you take a photo of me?", "Не могли бы вы меня сфотографировать?", "Could you take a photo of me with the building behind me?", "take a photo — сфотографировать.", "Could you take a _____ of me?", "photo"],
+  ["phrase-is-this-area-safe-at-night", "Is this area safe at night?", "Этот район безопасен ночью?", "Is this area safe at night for someone walking alone?", "Практичный вопрос о безопасности.", "Is this area safe at _____?", "night"],
+  ["phrase-i-need-help-contacting-my-embassy", "I need help contacting my embassy.", "Мне нужна помощь, чтобы связаться с посольством.", "I need help contacting my embassy because my passport was stolen.", "Фраза для экстренной ситуации за границей.", "I need help contacting my _____.", "embassy"],
+];
+
+export const TRAVEL_PHRASES: LearningItem[] = PHRASES.map(([id, prompt, answer, example, note, cloze, clozeAnswer]) => ({
+  id,
+  kind: "phrase",
+  prompt,
+  answer,
+  phonetic: "",
+  partOfSpeech: "phrase",
+  section: "phrase",
+  topic: "Travel",
+  examples: [example],
+  note,
+  status: "phrase",
+  cloze,
+  clozeAnswer,
+}));
