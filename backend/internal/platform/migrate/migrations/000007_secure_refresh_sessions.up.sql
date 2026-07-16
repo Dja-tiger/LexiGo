@@ -3,8 +3,12 @@ alter table refresh_tokens
     add column replaced_by_hash bytea,
     add column reuse_detected_at timestamptz;
 
+-- Все ранее выпущенные refresh-токены хранились в localStorage и должны
+-- считаться потенциально скомпрометированными. Миграция принудительно завершает
+-- старые сессии; новые cookie-сессии будут созданы после повторного входа.
 update refresh_tokens
-set family_id = id
+set family_id = id,
+    revoked_at = coalesce(revoked_at, now())
 where family_id is null;
 
 alter table refresh_tokens
