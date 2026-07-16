@@ -1,5 +1,5 @@
-import { LexigoResumableApp } from "../components/lexigo-resumable-app";
+import { LexigoProductApp } from "../components/lexigo-product-app";
 
 export default function Home() {
-  return <LexigoResumableApp />;
+  return <LexigoProductApp />;
 }
