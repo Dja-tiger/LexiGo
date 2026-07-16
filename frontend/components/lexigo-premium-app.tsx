@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { apiUrl } from "../lib/api";
+import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
 import {
   buildAnswerOptions,
   exerciseAnswer,
@@ -32,25 +33,6 @@ import {
   type ReviewRating,
 } from "../lib/progress";
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
-
-type User = {
-  id: string;
-  email: string;
-  displayName: string;
-  createdAt: string;
-};
-
-type TokenPair = {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
-};
-
-type Session = {
-  user: User;
-  tokens: TokenPair;
-};
 
 type APIItem = {
   id: number;
@@ -140,7 +122,6 @@ type IconName =
   | "volume"
   | "close";
 
-const SESSION_KEY = "lexigo.session.v1";
 const PRESENTATION_PREFIX = "lexigo.lesson.presentation.";
 
 const SOURCE_OPTIONS: Array<{
@@ -197,7 +178,6 @@ const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
 ];
 
 const GOAL_OPTIONS = [15, 30, 60];
-
 const WORD_PREVIEW = {
   prompt: "incident",
   phonetic: "/ˈɪnsɪdənt/",
@@ -252,7 +232,12 @@ async function requestJSON<T>(path: string, init: RequestInit = {}, accessToken?
   headers.set("Accept", "application/json");
   if (init.body) headers.set("Content-Type", "application/json");
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  const response = await fetch(apiUrl(path), { ...init, headers });
+  const method = (init.method ?? "GET").toUpperCase();
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const csrfToken = csrfTokenFromCookie();
+    if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
+  }
+  const response = await fetch(apiUrl(path), { ...init, headers, credentials: "include" });
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
     try {
@@ -272,29 +257,9 @@ async function authorizedRequest<T>(current: Session, path: string, init: Reques
     return { activeSession: current, data: await requestJSON<T>(path, init, current.tokens.accessToken) };
   } catch (requestError) {
     if (!(requestError instanceof APIError) || requestError.status !== 401) throw requestError;
-    const tokens = await requestJSON<TokenPair>("/api/v1/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: current.tokens.refreshToken }),
-    });
-    const refreshed = { ...current, tokens };
-    storeSession(refreshed);
+    const refreshed = await refreshSession();
     return { activeSession: refreshed, data: await requestJSON<T>(path, init, refreshed.tokens.accessToken) };
   }
-}
-
-function readSession(): Session | null {
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
-  } catch {
-    window.localStorage.removeItem(SESSION_KEY);
-    return null;
-  }
-}
-
-function storeSession(session: Session | null) {
-  if (session) window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  else window.localStorage.removeItem(SESSION_KEY);
 }
 
 function presentationKey(lessonID: string) {
@@ -382,10 +347,10 @@ function navigationIcon(view: AppView): IconName {
   return "home";
 }
 
-export function LexigoPremiumApp() {
+export function LexigoPremiumApp({ initialSession }: { initialSession: Session | null }) {
   const [navigation, setNavigation] = useState<NavigationTarget>({ view: "home" });
   const [returnView, setReturnView] = useState<AppView>("home");
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(initialSession);
   const [progress, setProgress] = useState<ProgressSummary | null>(null);
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
   const [hydratedUserID, setHydratedUserID] = useState("");
@@ -423,10 +388,8 @@ export function LexigoPremiumApp() {
     };
     syncNavigation();
     window.addEventListener("popstate", syncNavigation);
-    const timer = window.setTimeout(() => setSession(readSession()), 0);
     return () => {
       window.removeEventListener("popstate", syncNavigation);
-      window.clearTimeout(timer);
     };
   }, []);
 
@@ -526,7 +489,6 @@ export function LexigoPremiumApp() {
       }
 
       setSession(currentSession);
-      storeSession(currentSession);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить данные аккаунта");
     }
@@ -538,7 +500,6 @@ export function LexigoPremiumApp() {
       `/api/v1/progress?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
     );
     setSession(result.activeSession);
-    storeSession(result.activeSession);
     setProgress(result.data);
     return result.activeSession;
   }
@@ -581,7 +542,6 @@ export function LexigoPremiumApp() {
     try {
       const result = await authorizedRequest<LessonSessionResponse>(session, "/api/v1/lessons/active");
       setSession(result.activeSession);
-      storeSession(result.activeSession);
       applyLesson(result.data);
       navigate({ view: "lesson", source: result.data.source });
     } catch (requestError) {
@@ -604,7 +564,6 @@ export function LexigoPremiumApp() {
     try {
       const result = await authorizedRequest<void>(session, `/api/v1/lessons/${activeLesson.id}`, { method: "DELETE" });
       setSession(result.activeSession);
-      storeSession(result.activeSession);
       clearPresentationMode(activeLesson.id);
       setActiveLesson(null);
       clearLessonState();
@@ -679,7 +638,6 @@ export function LexigoPremiumApp() {
         );
         storePresentationMode(result.data.id, resolvedMode);
         setSession(result.activeSession);
-        storeSession(result.activeSession);
         applyLesson(result.data);
       } else {
         setActiveLesson(null);
@@ -697,7 +655,6 @@ export function LexigoPremiumApp() {
       setBusy(false);
     }
   }
-
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -708,7 +665,6 @@ export function LexigoPremiumApp() {
         body: JSON.stringify({ email, password, ...(authMode === "register" ? { displayName } : {}) }),
       });
       setSession(authenticated);
-      storeSession(authenticated);
       setPassword("");
       setHydratedUserID("");
       await hydrateAccount(authenticated);
@@ -722,23 +678,22 @@ export function LexigoPremiumApp() {
   }
 
   async function logout() {
-    const current = session;
-    setSession(null);
-    setProgress(null);
-    setActiveLesson(null);
-    setPhraseCatalog(TECHNICAL_PHRASES);
-    setHydratedUserID("");
-    storeSession(null);
-    clearLessonState();
-    navigate({ view: "home" });
-    if (!current) return;
+    if (!session) return;
+    setBusy(true);
+    setError("");
     try {
-      await requestJSON<void>("/api/v1/auth/logout", {
-        method: "POST",
-        body: JSON.stringify({ refreshToken: current.tokens.refreshToken }),
-      });
-    } catch {
-      // Local logout is complete even if token revocation is temporarily unavailable.
+      await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
+      setSession(null);
+      setProgress(null);
+      setActiveLesson(null);
+      setPhraseCatalog(TECHNICAL_PHRASES);
+      setHydratedUserID("");
+      clearLessonState();
+      navigate({ view: "home" });
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось завершить выход");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -755,7 +710,6 @@ export function LexigoPremiumApp() {
         { method: "PUT", body: JSON.stringify({ dailyGoal }) },
       );
       setSession(result.activeSession);
-      storeSession(result.activeSession);
       setProgress(result.data);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить дневную цель");
@@ -833,7 +787,6 @@ export function LexigoPremiumApp() {
         }),
       });
       setSession(result.activeSession);
-      storeSession(result.activeSession);
       setRatings((current) => ({ ...current, [currentItem.id]: rating }));
       if (activeLesson) {
         if (result.data.lessonCompleted) {

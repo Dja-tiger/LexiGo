@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	ErrUserNotFound   = errors.New("user not found")
-	ErrEmailTaken     = errors.New("email already registered")
-	ErrInvalidRefresh = errors.New("invalid refresh token")
-	ErrInvalidLogin   = errors.New("invalid email or password")
-	ErrInvalidAccess  = errors.New("invalid access token")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrEmailTaken        = errors.New("email already registered")
+	ErrInvalidRefresh    = errors.New("invalid refresh token")
+	ErrRefreshTokenReuse = errors.New("refresh token reuse detected")
+	ErrInvalidLogin      = errors.New("invalid email or password")
+	ErrInvalidAccess     = errors.New("invalid access token")
 )
 
 type UserRepository interface {

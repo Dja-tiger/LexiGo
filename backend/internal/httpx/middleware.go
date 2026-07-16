@@ -53,12 +53,38 @@ func CORS(allowedOrigin string, next http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 		if origin != "" && (allowedOrigin == "*" || origin == allowedOrigin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-ID")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Add("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-ID, X-CSRF-Token")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			if allowedOrigin != "*" {
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
 		}
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// SameOrigin rejects cross-site browser mutation requests before they reach an
+// endpoint. Bearer-authenticated endpoints do not use ambient credentials, but
+// the guard also prevents login CSRF and provides defense in depth for the
+// cookie-backed refresh and logout endpoints.
+func SameOrigin(allowedOrigin string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if strings.EqualFold(r.Header.Get("Sec-Fetch-Site"), "cross-site") {
+			WriteError(w, http.StatusForbidden, "cross_site_request", "cross-site request is not allowed")
+			return
+		}
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin != "" && allowedOrigin != "*" && origin != allowedOrigin {
+			WriteError(w, http.StatusForbidden, "origin_mismatch", "request origin is not allowed")
 			return
 		}
 		next.ServeHTTP(w, r)

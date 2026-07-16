@@ -24,7 +24,10 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	}
 	authRepository := auth.NewPostgresRepository(pg)
 	authService := auth.NewService(authRepository, authRepository, tokenManager, cfg.RefreshTokenTTL)
-	authHandler := auth.NewHandler(authService)
+	authHandler := auth.NewHandler(authService, auth.CookieConfig{
+		Secure:     cfg.SessionCookieSecure,
+		RefreshTTL: cfg.RefreshTokenTTL,
+	})
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
@@ -52,6 +55,7 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
 
 	var handler http.Handler = mux
+	handler = httpx.SameOrigin(cfg.CORSAllowedOrigin, handler)
 	handler = httpx.CORS(cfg.CORSAllowedOrigin, handler)
 	handler = httpx.AccessLog(logger, handler)
 	handler = httpx.RequestID(handler)
