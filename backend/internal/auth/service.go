@@ -60,31 +60,33 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 	return user, pair, err
 }
 
-func (s *Service) Refresh(ctx context.Context, oldToken, userAgent, ip string) (TokenPair, error) {
+func (s *Service) Refresh(ctx context.Context, oldToken, userAgent, ip string) (User, TokenPair, error) {
 	oldHash, err := HashRefreshToken(oldToken)
 	if err != nil {
-		return TokenPair{}, ErrInvalidRefresh
+		return User{}, TokenPair{}, ErrInvalidRefresh
 	}
 	newPlain, newHash, err := NewRefreshToken()
 	if err != nil {
-		return TokenPair{}, err
+		return User{}, TokenPair{}, err
 	}
 	expiresAt := s.now().UTC().Add(s.refreshTTL)
 	userID, err := s.refresh.Rotate(ctx, oldHash, newHash, expiresAt, userAgent, ip)
 	if err != nil {
-		return TokenPair{}, err
+		return User{}, TokenPair{}, err
 	}
 	user, err := s.users.ByID(ctx, userID)
 	if err != nil {
-		return TokenPair{}, err
+		return User{}, TokenPair{}, err
 	}
 	access, accessExpiry, err := s.tokens.IssueAccess(user)
 	if err != nil {
-		return TokenPair{}, err
+		return User{}, TokenPair{}, err
 	}
-	return TokenPair{
-		AccessToken: access, RefreshToken: newPlain, TokenType: "Bearer",
-		ExpiresIn: int64(time.Until(accessExpiry).Seconds()),
+	return user, TokenPair{
+		AccessToken:  access,
+		RefreshToken: newPlain,
+		TokenType:    "Bearer",
+		ExpiresIn:    int64(time.Until(accessExpiry).Seconds()),
 	}, nil
 }
 
@@ -117,8 +119,10 @@ func (s *Service) issuePair(ctx context.Context, user User, userAgent, ip string
 		return TokenPair{}, err
 	}
 	return TokenPair{
-		AccessToken: access, RefreshToken: refreshPlain, TokenType: "Bearer",
-		ExpiresIn: int64(time.Until(accessExpiry).Seconds()),
+		AccessToken:  access,
+		RefreshToken: refreshPlain,
+		TokenType:    "Bearer",
+		ExpiresIn:    int64(time.Until(accessExpiry).Seconds()),
 	}, nil
 }
 
