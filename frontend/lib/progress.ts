@@ -37,9 +37,3 @@ export function ratingLabel(rating: ReviewRating): string {
   if (rating === "almost") return "Почти";
   return "Не знал";
 }
-
-export function correctFromAnswer(selectedAnswer: string, typedMatch: boolean): boolean | undefined {
-  if (selectedAnswer) return selectedAnswer === "correct";
-  if (typedMatch) return true;
-  return undefined;
-}
