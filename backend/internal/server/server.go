@@ -43,6 +43,10 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
 	mux.Handle("POST /api/v1/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewWord)))
+	mux.Handle("POST /api/v1/lessons", authenticated(http.HandlerFunc(learningHandler.CreateLesson)))
+	mux.Handle("GET /api/v1/lessons/active", authenticated(http.HandlerFunc(learningHandler.ActiveLesson)))
+	mux.Handle("DELETE /api/v1/lessons/{lessonID}", authenticated(http.HandlerFunc(learningHandler.DiscardLesson)))
+	mux.Handle("POST /api/v1/lessons/{lessonID}/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewLessonWord)))
 	mux.Handle("GET /api/v1/progress", authenticated(http.HandlerFunc(learningHandler.Progress)))
 	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
 
