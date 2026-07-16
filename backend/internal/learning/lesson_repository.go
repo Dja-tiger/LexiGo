@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	ErrNoActiveLesson           = errors.New("active lesson was not found")
-	ErrInvalidLessonWords       = errors.New("lesson contains words not assigned to the user")
-	ErrLessonItemNotFound       = errors.New("lesson item was not found")
+	ErrNoActiveLesson            = errors.New("active lesson was not found")
+	ErrInvalidLessonWords        = errors.New("lesson contains words not assigned to the user")
+	ErrLessonItemNotFound        = errors.New("lesson item was not found")
 	ErrLessonItemAlreadyReviewed = errors.New("lesson item was already reviewed")
 )
 
