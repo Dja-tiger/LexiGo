@@ -2,12 +2,31 @@ export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "p
 
 export type NavigationTarget = {
   view: AppView;
-  source?: "mixed" | "noun" | "verb" | "adjective" | "phrases";
+  source?:
+    | "mixed"
+    | "noun"
+    | "verb"
+    | "adjective"
+    | "phrases"
+    | "daily-life"
+    | "travel"
+    | "data-engineering"
+    | "backend";
   detail?: string;
 };
 
 const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson"]);
-const SOURCES = new Set<NonNullable<NavigationTarget["source"]>>(["mixed", "noun", "verb", "adjective", "phrases"]);
+const SOURCES = new Set<NonNullable<NavigationTarget["source"]>>([
+  "mixed",
+  "noun",
+  "verb",
+  "adjective",
+  "phrases",
+  "daily-life",
+  "travel",
+  "data-engineering",
+  "backend",
+]);
 
 export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabel: string }> = [
   { view: "home", label: "Главная", shortLabel: "Главная" },
