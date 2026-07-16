@@ -1,0 +1,95 @@
+.lx-themed-home,
+.lx-themed-library,
+.lx-themed-selector {
+  cursor: pointer;
+}
+
+.lx-themed-symbol {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 15px;
+  color: #f8f7ff;
+  background: linear-gradient(145deg, rgba(109, 93, 252, 0.3), rgba(51, 168, 255, 0.12));
+  box-shadow: inset 0 0 22px rgba(124, 92, 255, 0.1);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.lx-collection-travel .lx-themed-symbol {
+  border-color: rgba(51, 168, 255, 0.38);
+  background: linear-gradient(145deg, rgba(35, 143, 230, 0.3), rgba(37, 200, 232, 0.12));
+  font-size: 20px;
+}
+
+.lx-collection-data-engineering .lx-themed-symbol {
+  border-color: rgba(53, 210, 139, 0.32);
+  background: linear-gradient(145deg, rgba(30, 143, 101, 0.28), rgba(51, 168, 255, 0.1));
+}
+
+.lx-collection-backend .lx-themed-symbol {
+  border-color: rgba(255, 159, 63, 0.34);
+  background: linear-gradient(145deg, rgba(185, 100, 29, 0.25), rgba(139, 92, 246, 0.1));
+  font-size: 11px;
+}
+
+.lx-themed-arrow {
+  margin-left: auto;
+  color: #8e7cff;
+  font-size: 20px;
+  transition: transform 160ms ease;
+}
+
+.lx-themed-home:hover .lx-themed-arrow,
+.lx-themed-library:hover .lx-themed-arrow {
+  transform: translateX(3px);
+}
+
+.lx-themed-selector.selected {
+  border-color: rgba(139, 92, 246, 0.72) !important;
+  background: linear-gradient(145deg, rgba(78, 56, 168, 0.26), rgba(15, 27, 51, 0.88)) !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.08);
+}
+
+.lx-themed-selector.selected .lx-themed-symbol {
+  border-color: rgba(168, 139, 255, 0.72);
+  box-shadow: 0 10px 30px rgba(98, 74, 218, 0.24);
+}
+
+.lx-themed-home,
+.lx-themed-library {
+  position: relative;
+  overflow: hidden;
+}
+
+.lx-themed-home::before,
+.lx-themed-library::before {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 12% 0%, rgba(119, 91, 255, 0.14), transparent 42%);
+  content: "";
+  pointer-events: none;
+}
+
+.lx-themed-home > *,
+.lx-themed-library > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 760px) {
+  .lx-themed-symbol {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 13px;
+  }
+
+  .lx-themed-selector {
+    min-height: 92px;
+  }
+}
