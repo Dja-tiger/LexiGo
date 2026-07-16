@@ -5,17 +5,24 @@ import { goalPercent, ratingLabel, type ProgressSummary } from "./progress";
 function progress(reviewsToday: number, dailyGoal: number): ProgressSummary {
   return {
     dueNow: 0,
+    dueWords: 0,
+    duePhrases: 0,
     totalWords: 579,
+    totalPhrases: 24,
     newWords: 0,
     learningWords: 0,
     reviewWords: 0,
     masteredWords: 0,
+    masteredPhrases: 0,
     reviewsToday,
     successfulToday: 0,
     reviewsTotal: 0,
     dailyGoal,
     currentStreak: 0,
     longestStreak: 0,
+    retainedItemsWeek: 0,
+    retainedWordsWeek: 0,
+    retainedPhrasesWeek: 0,
   };
 }
 
