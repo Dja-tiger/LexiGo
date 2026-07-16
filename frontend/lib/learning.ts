@@ -1,5 +1,14 @@
-export type WordSection = "mixed" | "noun" | "verb" | "adjective";
+export type PartOfSpeechSection = "noun" | "verb" | "adjective" | "other";
+export type WordCollection = "daily-life" | "travel" | "data-engineering" | "backend";
+export type WordSection = "mixed" | Exclude<PartOfSpeechSection, "other"> | WordCollection;
 export type LessonSize = 15 | 30 | 60 | "all";
+
+export const WORD_COLLECTION_TOPICS: Record<WordCollection, string> = {
+  "daily-life": "Daily Life",
+  travel: "Travel",
+  "data-engineering": "Data Engineering",
+  backend: "Backend Development",
+};
 
 export type LearningItem = {
   id: string;
@@ -10,7 +19,7 @@ export type LearningItem = {
   answer: string;
   phonetic: string;
   partOfSpeech: string;
-  section: WordSection | "other" | "phrase";
+  section: PartOfSpeechSection | "phrase";
   topic: string;
   examples: string[];
   note: string;
@@ -19,7 +28,7 @@ export type LearningItem = {
   clozeAnswer?: string;
 };
 
-export function normalizePartOfSpeech(value: string): Exclude<LearningItem["section"], "mixed" | "phrase"> {
+export function normalizePartOfSpeech(value: string): PartOfSpeechSection {
   const normalized = value.trim().toLowerCase();
   const tokens = normalized.split(/[\s,;/()\-]+/).filter(Boolean);
   if (tokens.some((token) => token === "noun" || token === "n") || normalized.includes("существ")) return "noun";
@@ -47,9 +56,13 @@ function roundRobin<T>(groups: T[][]): T[] {
 }
 
 export function prepareWordItems(items: LearningItem[], section: WordSection): LearningItem[] {
-  if (section !== "mixed") return items.filter((item) => item.section === section);
-  const order: LearningItem["section"][] = ["noun", "verb", "adjective", "other"];
-  return roundRobin(order.map((part) => items.filter((item) => item.section === part)));
+  if (section in WORD_COLLECTION_TOPICS) {
+    const topic = WORD_COLLECTION_TOPICS[section as WordCollection];
+    return items.filter((item) => item.kind === "word" && item.topic === topic);
+  }
+  if (section !== "mixed") return items.filter((item) => item.kind === "word" && item.section === section);
+  const order: PartOfSpeechSection[] = ["noun", "verb", "adjective", "other"];
+  return roundRobin(order.map((part) => items.filter((item) => item.kind === "word" && item.section === part)));
 }
 
 export function takeLessonBlock(items: LearningItem[], size: LessonSize): LearningItem[] {

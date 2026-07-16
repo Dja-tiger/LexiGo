@@ -23,7 +23,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !validLessonSource(request.Source) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be mixed, noun, verb, adjective or phrases")
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
 		return
 	}
 	if request.StudyMode != "recall" && request.StudyMode != "choice" {
@@ -150,7 +150,12 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func validLessonSource(value string) bool {
-	return value == "mixed" || value == "noun" || value == "verb" || value == "adjective" || value == "phrases"
+	switch value {
+	case "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend":
+		return true
+	default:
+		return false
+	}
 }
 
 func validLessonSize(value string) bool {
