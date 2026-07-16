@@ -1,4 +1,4 @@
-const CACHE = "lexigo-shell-v12";
+const CACHE = "lexigo-shell-v13";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -19,7 +19,14 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/health/")) return;
 
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).catch(() => caches.match("/")));
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) return response;
+          return caches.match("/").then((cached) => cached || response);
+        })
+        .catch(() => caches.match("/").then((cached) => cached || Response.error())),
+    );
     return;
   }
 
