@@ -38,7 +38,7 @@ type LessonSession struct {
 
 type LessonReviewResult struct {
 	ReviewResult
-	LessonID          string `json:"lessonId"`
+	LessonID           string `json:"lessonId"`
 	LessonCurrentIndex int    `json:"lessonCurrentIndex"`
 	LessonCompleted    bool   `json:"lessonCompleted"`
 }
