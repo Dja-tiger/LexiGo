@@ -18,9 +18,10 @@ export type LearningItem = {
 
 export function normalizePartOfSpeech(value: string): Exclude<LearningItem["section"], "mixed" | "phrase"> {
   const normalized = value.trim().toLowerCase();
-  if (normalized.includes("noun") || normalized.includes("существ")) return "noun";
-  if (normalized.includes("verb") || normalized.includes("глагол")) return "verb";
-  if (normalized.includes("adjective") || normalized.includes("adj") || normalized.includes("прилаг")) return "adjective";
+  const tokens = normalized.split(/[\s,;/()\-]+/).filter(Boolean);
+  if (tokens.some((token) => token === "noun" || token === "n") || normalized.includes("существ")) return "noun";
+  if (tokens.some((token) => token === "verb" || token === "v") || normalized.includes("глагол")) return "verb";
+  if (tokens.some((token) => token === "adjective" || token === "adj") || normalized.includes("прилаг")) return "adjective";
   return "other";
 }
 
