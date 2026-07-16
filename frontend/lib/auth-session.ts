@@ -27,6 +27,7 @@ let activeRefresh: Promise<Session> | null = null;
 export class SessionRefreshError extends Error {
   constructor(readonly status: number, message: string) {
     super(message);
+    this.name = "SessionRefreshError";
   }
 }
 
@@ -62,6 +63,18 @@ export function clearLegacyAuthStorage(): void {
   } catch {
     // Session restoration must continue even when storage is unavailable.
   }
+}
+
+export function expiredSessionURL(currentURL: string): string {
+  const target = new URL(currentURL);
+  target.search = "?view=profile&session=expired";
+  target.hash = "";
+  return target.pathname + target.search;
+}
+
+export function redirectToExpiredSession(): void {
+  if (typeof window === "undefined") return;
+  window.location.replace(expiredSessionURL(window.location.href));
 }
 
 async function performRefresh(): Promise<Session> {
