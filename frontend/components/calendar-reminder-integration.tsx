@@ -70,20 +70,17 @@ function createCalendarDownloadURL(settings: CalendarReminderSettings, start: Da
 }
 
 export function CalendarReminderIntegration() {
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-    setSettings(readSettings());
+    const timer = window.setTimeout(() => setSettings(readSettings()), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
-
     let host: HTMLElement | null = null;
     let frame = 0;
 
@@ -125,12 +122,10 @@ export function CalendarReminderIntegration() {
       window.removeEventListener("popstate", scheduleSync);
       observer.disconnect();
       host?.remove();
-      setPortalHost(null);
     };
-  }, [mounted]);
+  }, []);
 
   useEffect(() => {
-    if (!mounted) return;
     const handleBellClick = (event: MouseEvent) => {
       if (!(event.target instanceof Element)) return;
       const button = event.target.closest<HTMLButtonElement>(".lx-icon-button[aria-label*='Уведомления']");
@@ -140,7 +135,7 @@ export function CalendarReminderIntegration() {
     };
     document.addEventListener("click", handleBellClick, true);
     return () => document.removeEventListener("click", handleBellClick, true);
-  }, [mounted]);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -333,7 +328,7 @@ export function CalendarReminderIntegration() {
   return (
     <>
       {portalHost ? createPortal(card, portalHost) : null}
-      {mounted && modal ? createPortal(modal, document.body) : null}
+      {modal ? createPortal(modal, document.body) : null}
     </>
   );
 }
