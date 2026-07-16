@@ -1,6 +1,13 @@
 {$CADDY_SITE_ADDRESS:http://localhost} {
     encode zstd gzip
 
+    # The Apple Calendar iCalendar endpoint is implemented by Next.js.
+    # It must be matched before the backend /api/* catch-all, otherwise
+    # Caddy forwards it to the Go API and the user receives "404 page not found".
+    handle /api/calendar/reminder {
+        reverse_proxy web:3000
+    }
+
     handle /api/* {
         reverse_proxy api:8080
     }
