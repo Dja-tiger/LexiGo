@@ -1,0 +1,110 @@
+name: Deploy Calendar Reminder Release
+
+on:
+  push:
+    paths:
+      - .github/workflows/deploy-calendar-reminders.yml
+
+permissions:
+  contents: read
+  packages: read
+  issues: write
+
+env:
+  IMAGE_TAG: 69ff306858d970964aa09dc2578e50064b217206
+
+jobs:
+  wait-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for immutable images
+        run: |
+          for attempt in $(seq 1 80); do
+            if docker manifest inspect "ghcr.io/dja-tiger/lexigo-api:$IMAGE_TAG" >/dev/null 2>&1 && \
+               docker manifest inspect "ghcr.io/dja-tiger/lexigo-web:$IMAGE_TAG" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Images for $IMAGE_TAG were not published in time" >&2
+          exit 1
+
+  production:
+    needs: wait-images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY"
+          test -n "$KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Upload deployment bundle
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          case "$DEPLOY_PATH" in /opt/*) ;; *) echo "DEPLOY_PATH must be under /opt" >&2; exit 1 ;; esac
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+
+      - name: Deploy production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '${{ github.repository_owner }}'" \
+            2>&1 | tee /tmp/lexigo-prod-deploy.log
+
+      - name: Report production deployment
+        if: always()
+        uses: actions/github-script@v9
+        env:
+          RESULT: ${{ job.status }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.existsSync('/tmp/lexigo-prod-deploy.log')
+              ? fs.readFileSync('/tmp/lexigo-prod-deploy.log', 'utf8').slice(-10000)
+              : 'deploy log was not created';
+            const body = [
+              '# LexiGo production deployment',
+              '',
+              `- result: **${process.env.RESULT}**`,
+              `- image SHA: \`${process.env.IMAGE_TAG}\``,
+              `- run_id: \`${process.env.RUN_ID}\``,
+              '',
+              '```text',
+              log,
+              '```'
+            ].join('\n');
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
