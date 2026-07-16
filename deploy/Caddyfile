@@ -1,4 +1,4 @@
-{$APP_DOMAIN:localhost} {
+{$CADDY_SITE_ADDRESS:http://localhost} {
     encode zstd gzip
 
     handle /api/* {
