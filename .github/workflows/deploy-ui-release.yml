@@ -1,0 +1,152 @@
+name: Deploy Interactive UI Release
+
+on:
+  push:
+    paths:
+      - .github/workflows/deploy-ui-release.yml
+
+permissions:
+  contents: read
+  packages: read
+  issues: write
+
+env:
+  IMAGE_TAG: 36ea0ca74c0ff2468390bd07392eaf49b78f0966
+
+jobs:
+  wait-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for immutable images
+        run: |
+          for attempt in $(seq 1 40); do
+            if docker manifest inspect "ghcr.io/dja-tiger/lexigo-api:$IMAGE_TAG" >/dev/null 2>&1 && \
+               docker manifest inspect "ghcr.io/dja-tiger/lexigo-web:$IMAGE_TAG" >/dev/null 2>&1; then
+              echo "Images are available: $IMAGE_TAG"
+              exit 0
+            fi
+            echo "Waiting for images ($attempt/40)"
+            sleep 15
+          done
+          echo "Images were not published in time" >&2
+          exit 1
+
+  stage:
+    needs: wait-images
+    runs-on: ubuntu-latest
+    environment: stage
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Upload deployment bundle
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          case "$DEPLOY_PATH" in /opt/*) ;; *) echo "DEPLOY_PATH must be under /opt" >&2; exit 1 ;; esac
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+
+      - name: Deploy and verify stage
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '${{ github.repository_owner }}'"
+
+  production:
+    needs: stage
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Upload deployment bundle
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          case "$DEPLOY_PATH" in /opt/*) ;; *) echo "DEPLOY_PATH must be under /opt" >&2; exit 1 ;; esac
+          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+
+      - name: Deploy and verify production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' prod '$IMAGE_TAG' 'http://$DEPLOY_HOST' '${{ github.repository_owner }}'"
+
+  report:
+    if: always()
+    needs: [wait-images, stage, production]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record release status
+        uses: actions/github-script@v7
+        env:
+          WAIT_RESULT: ${{ needs.wait-images.result }}
+          STAGE_RESULT: ${{ needs.stage.result }}
+          PRODUCTION_RESULT: ${{ needs.production.result }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const body = [
+              '# LexiGo interactive UI deployment',
+              '',
+              `- image SHA: \`${process.env.IMAGE_TAG}\``,
+              `- images: **${process.env.WAIT_RESULT}**`,
+              `- stage: **${process.env.STAGE_RESULT}**`,
+              `- production: **${process.env.PRODUCTION_RESULT}**`,
+              `- run_id: \`${process.env.RUN_ID}\``
+            ].join('\n');
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
