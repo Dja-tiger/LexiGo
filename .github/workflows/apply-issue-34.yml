@@ -1,0 +1,33 @@
+name: Apply Issue 34
+
+on:
+  push:
+    branches:
+      - fix/issue-34-secure-session-cookies
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[issue-34-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-34-secure-session-cookies
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+      - name: Apply source changes
+        run: python3 scripts/apply_issue_34.py
+      - name: Format Go sources
+        run: cd backend && gofmt -w $(find . -name '*.go' -type f)
+      - name: Commit generated implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(auth): move refresh sessions to secure cookies [issue-34-applied]"
+          git push origin HEAD:fix/issue-34-secure-session-cookies
