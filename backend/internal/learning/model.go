@@ -29,26 +29,26 @@ type ReviewResult struct {
 }
 
 type ProgressSummary struct {
-	DueNow               int        `json:"dueNow"`
-	DueWords             int        `json:"dueWords"`
-	DuePhrases           int        `json:"duePhrases"`
-	TotalWords           int        `json:"totalWords"`
-	TotalPhrases         int        `json:"totalPhrases"`
-	NewWords             int        `json:"newWords"`
-	LearningWords        int        `json:"learningWords"`
-	ReviewWords          int        `json:"reviewWords"`
-	MasteredWords        int        `json:"masteredWords"`
-	MasteredPhrases      int        `json:"masteredPhrases"`
-	ReviewsToday         int        `json:"reviewsToday"`
-	SuccessfulToday      int        `json:"successfulToday"`
-	ReviewsTotal         int        `json:"reviewsTotal"`
-	DailyGoal            int        `json:"dailyGoal"`
-	CurrentStreak        int        `json:"currentStreak"`
-	LongestStreak        int        `json:"longestStreak"`
-	RetainedItemsWeek    int        `json:"retainedItemsWeek"`
-	RetainedWordsWeek    int        `json:"retainedWordsWeek"`
-	RetainedPhrasesWeek  int        `json:"retainedPhrasesWeek"`
-	NextDueAt            *time.Time `json:"nextDueAt,omitempty"`
+	DueNow              int        `json:"dueNow"`
+	DueWords            int        `json:"dueWords"`
+	DuePhrases          int        `json:"duePhrases"`
+	TotalWords          int        `json:"totalWords"`
+	TotalPhrases        int        `json:"totalPhrases"`
+	NewWords            int        `json:"newWords"`
+	LearningWords       int        `json:"learningWords"`
+	ReviewWords         int        `json:"reviewWords"`
+	MasteredWords       int        `json:"masteredWords"`
+	MasteredPhrases     int        `json:"masteredPhrases"`
+	ReviewsToday        int        `json:"reviewsToday"`
+	SuccessfulToday     int        `json:"successfulToday"`
+	ReviewsTotal        int        `json:"reviewsTotal"`
+	DailyGoal           int        `json:"dailyGoal"`
+	CurrentStreak       int        `json:"currentStreak"`
+	LongestStreak       int        `json:"longestStreak"`
+	RetainedItemsWeek   int        `json:"retainedItemsWeek"`
+	RetainedWordsWeek   int        `json:"retainedWordsWeek"`
+	RetainedPhrasesWeek int        `json:"retainedPhrasesWeek"`
+	NextDueAt           *time.Time `json:"nextDueAt,omitempty"`
 }
 
 type GoalRequest struct {
