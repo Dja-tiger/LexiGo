@@ -129,7 +129,7 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.repository.ReviewLessonWord(r.Context(), userID, lessonID, wordID, request)
+	result, err := h.repository.ReviewLessonWordSafe(r.Context(), userID, lessonID, wordID, request)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonItemNotFound):
