@@ -447,3 +447,58 @@ components:
           type: integer
           minimum: 5
           maximum: 200
+    ProgressSummary:
+      type: object
+      required:
+        - dueNow
+        - totalWords
+        - newWords
+        - learningWords
+        - reviewWords
+        - masteredWords
+        - reviewsToday
+        - successfulToday
+        - reviewsTotal
+        - dailyGoal
+        - currentStreak
+        - longestStreak
+      properties:
+        dueNow:
+          type: integer
+        totalWords:
+          type: integer
+        newWords:
+          type: integer
+        learningWords:
+          type: integer
+        reviewWords:
+          type: integer
+        masteredWords:
+          type: integer
+        reviewsToday:
+          type: integer
+        successfulToday:
+          type: integer
+        reviewsTotal:
+          type: integer
+        dailyGoal:
+          type: integer
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        nextDueAt:
+          type: [string, "null"]
+          format: date-time
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
