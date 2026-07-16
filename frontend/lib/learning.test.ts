@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAnswerOptions,
+  exerciseAnswer,
+  exercisePromptLabel,
+  inferClozeAnswer,
   normalizeAnswer,
   normalizePartOfSpeech,
   prepareWordItems,
@@ -22,6 +25,23 @@ function item(id: string, section: LearningItem["section"], answer = id): Learni
     examples: [],
     note: "",
     status: "new",
+  };
+}
+
+function phrase(id: string, prompt: string, cloze: string, translation: string): LearningItem {
+  return {
+    id,
+    kind: "phrase",
+    prompt,
+    answer: translation,
+    phonetic: "",
+    partOfSpeech: "phrase",
+    section: "phrase",
+    topic: "Incidents",
+    examples: [],
+    note: "",
+    status: "new",
+    cloze,
   };
 }
 
@@ -56,6 +76,27 @@ describe("learning helpers", () => {
     expect(new Set(options).size).toBe(4);
     expect(options).toContain("правильный ответ");
     expect(buildAnswerOptions(current, pool)).toEqual(options);
+  });
+
+  it("uses the missing English fragment as the answer for a phrase cloze", () => {
+    const current = phrase(
+      "phrase-root-cause",
+      "We need to identify the root cause.",
+      "We need to identify the _____ cause.",
+      "Нам нужно определить первопричину.",
+    );
+    const pool = [
+      current,
+      phrase("phrase-reproducible", "The issue is reproducible in production.", "The issue is _____ in production.", "Проблема воспроизводится."),
+      phrase("phrase-degraded", "The service is currently degraded.", "The service is currently _____.", "Сервис деградировал."),
+      phrase("phrase-confirmed", "There is no confirmed root cause yet.", "There is no _____ root cause yet.", "Причина не подтверждена."),
+    ];
+
+    expect(inferClozeAnswer(current.prompt, current.cloze)).toBe("root");
+    expect(exerciseAnswer(current)).toBe("root");
+    expect(exercisePromptLabel(current)).toContain("английское");
+    expect(buildAnswerOptions(current, pool)).toContain("root");
+    expect(buildAnswerOptions(current, pool)).not.toContain(current.answer);
   });
 
   it("normalizes punctuation, spaces and Russian yo", () => {
