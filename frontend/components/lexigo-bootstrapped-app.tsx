@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { apiUrl } from "../lib/api";
+import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 import { EnhancedUIInteractions } from "./enhanced-ui-interactions";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
 
@@ -96,6 +97,7 @@ export function LexigoBootstrappedApp() {
   return (
     <>
       <EnhancedUIInteractions />
+      <CalendarReminderIntegration />
       {notice ? <div className="lx-session-notice" role="status">{notice}</div> : null}
       <LexigoPremiumApp />
     </>
