@@ -65,8 +65,10 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
           printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'"
+            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'" \
+            2>&1 | tee /tmp/lexigo-deploy.log
 
       - name: Report stage deployment
         if: always()
@@ -80,13 +82,26 @@ jobs:
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
         with:
           script: |
+            const fs = require('fs');
+            let tail = 'deploy log was not created';
+            if (fs.existsSync('/tmp/lexigo-deploy.log')) {
+              const log = fs.readFileSync('/tmp/lexigo-deploy.log', 'utf8');
+              tail = log.slice(-6000);
+            }
             const body = [
               `### Stage deployment: **${process.env.DEPLOY_STATUS}**`,
               `- image SHA: \`${process.env.IMAGE_SHA}\``,
               `- run_id: \`${process.env.RUN_ID}\``,
               `- configure SSH: \`${process.env.CONFIGURE_OUTCOME}\``,
               `- upload bundle: \`${process.env.UPLOAD_OUTCOME}\``,
-              `- deploy: \`${process.env.DEPLOY_OUTCOME}\``
+              `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
+              '',
+              '<details><summary>Deploy log tail</summary>',
+              '',
+              '```text',
+              tail,
+              '```',
+              '</details>'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
