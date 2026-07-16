@@ -1,16 +1,23 @@
 export type ProgressSummary = {
   dueNow: number;
+  dueWords: number;
+  duePhrases: number;
   totalWords: number;
+  totalPhrases: number;
   newWords: number;
   learningWords: number;
   reviewWords: number;
   masteredWords: number;
+  masteredPhrases: number;
   reviewsToday: number;
   successfulToday: number;
   reviewsTotal: number;
   dailyGoal: number;
   currentStreak: number;
   longestStreak: number;
+  retainedItemsWeek: number;
+  retainedWordsWeek: number;
+  retainedPhrasesWeek: number;
   nextDueAt?: string;
 };
 
