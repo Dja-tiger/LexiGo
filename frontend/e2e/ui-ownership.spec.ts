@@ -121,8 +121,10 @@ async function installBrowserMocks(page: Page) {
       return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
-      const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string; wordIds: number[] };
-      const selected = WORDS.filter((item) => input.wordIds.includes(item.id));
+      const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string; wordIds?: number[] };
+      const selected = input.wordIds
+        ? WORDS.filter((item) => input.wordIds?.includes(item.id))
+        : [WORDS[0], PHRASES[0]];
       await route.fulfill({
         status: 201,
         contentType: "application/json",
