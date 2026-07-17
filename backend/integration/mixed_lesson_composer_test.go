@@ -57,6 +57,29 @@ func TestMixedLessonComposerPreviewCreateAndFallback(t *testing.T) {
 	if _, err := catalog.Seed(ctx, pg); err != nil {
 		t.Fatalf("catalog.Seed() error = %v", err)
 	}
+	if _, err := pg.Exec(ctx, `
+		insert into words(
+			lemma, translation, phonetic, part_of_speech, topic, examples, source, note,
+			kind, slug, cloze, cloze_answer
+		)
+		select
+			'Mixed integration phrase ' || phrase_number || '.',
+			'Смешанная интеграционная фраза ' || phrase_number || '.',
+			'',
+			'phrase',
+			'Integration',
+			jsonb_build_array('Use mixed integration phrase ' || phrase_number || ' in the test.'),
+			'lexigo-technical-phrases-v1',
+			'Integration-only deterministic phrase.',
+			'phrase',
+			'mixed-integration-phrase-' || phrase_number,
+			'Mixed integration _____ ' || phrase_number || '.',
+			'phrase'
+		from generate_series(1, 10) as phrase_number
+	`); err != nil {
+		t.Fatalf("seed integration phrases: %v", err)
+	}
+
 	rdb, err := redisplatform.Open(ctx, config.Redis{Addr: requiredEnv(t, "TEST_REDIS_ADDR")})
 	if err != nil {
 		t.Fatal(err)
