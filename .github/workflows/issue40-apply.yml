@@ -1,16 +1,14 @@
 name: Apply Issue 40 Composer
 
 on:
-  push:
-    branches:
-      - fix/issue-40-mixed-lesson-composer
+  pull_request:
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: ${{ github.actor != 'github-actions[bot]' }}
+    if: ${{ github.head_ref == 'fix/issue-40-mixed-lesson-composer' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
