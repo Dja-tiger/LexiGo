@@ -102,6 +102,7 @@ type LessonReviewResponse = {
   lessonId: string;
   lessonCurrentIndex: number;
   lessonVersion: number;
+  lastReviewedAt: string;
   lessonCompleted: boolean;
   lessonReviewedItems: number;
   lessonSkippedItems: number;
