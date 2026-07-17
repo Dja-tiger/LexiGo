@@ -1,0 +1,71 @@
+name: Apply Issue 38 Learning Modes
+
+on:
+  push:
+    branches: [fix/issue-38-study-review-mode]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[issue-38-codemod]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-38-study-review-mode
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: backend/go.sum
+      - name: Repair and run verified codemod
+        run: |
+          if [ -f backend/internal/platform/migrate/migrations/000007_learning_event_modes.up.sql ]; then
+            echo "Issue 38 codemod is already applied"
+            exit 0
+          fi
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/apply_issue_38.py")
+          source = path.read_text(encoding="utf-8")
+
+          old = '''source = (ROOT / premium).read_text(encoding="utf-8")
+          source = source.replace('      clearPresentationMode(activeLesson.id);\\n', '')
+          if 'clearPresentationMode' in source or 'storePresentationMode' in source or 'readPresentationMode' in source or 'PRESENTATION_PREFIX' in source:
+              raise RuntimeError("presentation-mode compatibility layer was not fully removed")
+          (ROOT / premium).write_text(source, encoding="utf-8")'''
+          new = '''source = (ROOT / premium).read_text(encoding="utf-8")
+          source = source.replace('      clearPresentationMode(activeLesson.id);\\n', '')
+          source = source.replace('        storePresentationMode(result.data.id, resolvedMode);\\n', '')
+          if 'clearPresentationMode' in source or 'storePresentationMode' in source or 'readPresentationMode' in source or 'PRESENTATION_PREFIX' in source:
+              raise RuntimeError("presentation-mode compatibility layer was not fully removed")
+          (ROOT / premium).write_text(source, encoding="utf-8")'''
+          if source.count(old) != 1:
+              raise SystemExit(f"presentation repair anchor count={source.count(old)}")
+          source = source.replace(old, new)
+
+          obsolete = '''replace_once(premium, '        storePresentationMode(result.data.id, resolvedMode);\\n', '')
+          '''
+          if source.count(obsolete) != 1:
+              raise SystemExit(f"obsolete store replacement count={source.count(obsolete)}")
+          source = source.replace(obsolete, "")
+          path.write_text(source, encoding="utf-8")
+          PY
+          python scripts/apply_issue_38.py
+          gofmt -w backend/internal/learning backend/integration
+          git diff --check
+      - name: Verify backend compilation
+        working-directory: backend
+        run: go test ./internal/learning/...
+      - name: Commit generated implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "[issue-38-codemod] implement distinct learning modes"
+          git push origin HEAD:fix/issue-38-study-review-mode
