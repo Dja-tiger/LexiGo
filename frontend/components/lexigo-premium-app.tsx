@@ -578,6 +578,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, [speechNotice]);
 
   useEffect(() => {
+    if (!speakingText) return;
+    const wordCount = Math.max(1, speakingText.trim().split(/\s+/).length);
+    const timeoutMs = Math.min(10_000, Math.max(1_500, wordCount * 700));
+    const timer = window.setTimeout(() => setSpeakingText(""), timeoutMs);
+    return () => window.clearTimeout(timer);
+  }, [speakingText]);
+
+  useEffect(() => {
     document.title = `${viewTitle(navigation.view)} · LexiGo`;
   }, [navigation.view]);
 
@@ -737,19 +745,22 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     utterance.lang = utterance.voice?.lang || "en-US";
     utterance.rate = 0.88;
     utterance.pitch = 1;
-    utterance.onstart = () => {
-      setSpeakingText(value);
-      showSpeechNotice(`Воспроизводим: ${value}`);
-    };
     utterance.onend = () => setSpeakingText((current) => current === value ? "" : current);
     utterance.onerror = () => {
       setSpeakingText((current) => current === value ? "" : current);
       showSpeechNotice("Не удалось воспроизвести произношение", true);
     };
 
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    window.speechSynthesis.speak(utterance);
+    setSpeakingText(value);
+    showSpeechNotice(`Воспроизводим: ${value}`);
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      setSpeakingText("");
+      showSpeechNotice("Не удалось воспроизвести произношение", true);
+    }
   }
 
   function handleStudyTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, view: StudyView) {
