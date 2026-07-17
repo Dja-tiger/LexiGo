@@ -241,11 +241,14 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   await expect(tabs).toHaveCount(3);
 
   await page.getByRole("tab", { name: "Карточка", exact: true }).click();
-  const speech = page.getByRole("button", { name: "Произнести: absolute" });
+  const speech = page.locator(".lx-word-title-row > button");
+  await expect(speech).toHaveAttribute("aria-label", "Произнести: absolute");
   await speech.click();
   await expect(speech).toHaveClass(/speaking/);
+  await expect(speech).toHaveAttribute("aria-label", "Остановить произношение: absolute");
   await expect(page.getByRole("status").filter({ hasText: "Воспроизводим: absolute" })).toBeVisible();
   await expect(speech).not.toHaveClass(/speaking/, { timeout: 3_000 });
+  await expect(speech).toHaveAttribute("aria-label", "Произнести: absolute");
   await expect(tabs).toHaveCount(3);
   expect(runtimeErrors).toEqual([]);
 });
