@@ -1,0 +1,116 @@
+name: Self-hosted runner smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/self-hosted-runner-smoke.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-hosted-runner-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Selectel runner smoke
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+
+    steps:
+      - name: Verify host
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          test "$(id -un)" = "github-runner"
+          test "$(uname -m)" = "x86_64"
+
+          docker version
+          docker compose version
+
+          printf '\n=== CPU ===\n'
+          nproc
+
+          printf '\n=== MEMORY ===\n'
+          free -h
+
+          printf '\n=== DISK ===\n'
+          df -h /
+
+      - name: Verify Docker services and port isolation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          postgres="runner-smoke-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          redis="runner-smoke-redis-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          docker rm -f "$postgres" "$redis" >/dev/null 2>&1 || true
+
+          docker run --detach \
+            --name "$postgres" \
+            --env POSTGRES_DB=lexigo_test \
+            --env POSTGRES_USER=lexigo \
+            --env POSTGRES_PASSWORD=lexigo_test \
+            --health-cmd='pg_isready -U lexigo -d lexigo_test' \
+            --health-interval=2s \
+            --health-timeout=3s \
+            --health-retries=30 \
+            --publish 5432:5432 \
+            postgres:18.4-alpine
+
+          docker run --detach \
+            --name "$redis" \
+            --health-cmd='redis-cli ping' \
+            --health-interval=2s \
+            --health-timeout=3s \
+            --health-retries=30 \
+            --publish 6379:6379 \
+            redis:8.0-alpine
+
+          for container in "$postgres" "$redis"; do
+            for attempt in $(seq 1 60); do
+              status="$(docker inspect --format '{{.State.Health.Status}}' "$container")"
+
+              if [ "$status" = healthy ]; then
+                break
+              fi
+
+              if [ "$status" = unhealthy ]; then
+                docker logs "$container"
+                exit 1
+              fi
+
+              sleep 1
+            done
+
+            test "$(docker inspect --format '{{.State.Health.Status}}' "$container")" = healthy
+          done
+
+          docker exec "$postgres" pg_isready -U lexigo -d lexigo_test
+          test "$(docker exec "$redis" redis-cli ping)" = PONG
+
+          postgres_host_ip="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostIp}}' "$postgres")"
+          redis_host_ip="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "6379/tcp") 0).HostIp}}' "$redis")"
+
+          test "$postgres_host_ip" = 127.0.0.1
+          test "$redis_host_ip" = 127.0.0.1
+
+          docker ps --filter "name=runner-smoke-"
+
+      - name: Cleanup Docker smoke containers
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f \
+            "runner-smoke-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            "runner-smoke-redis-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            >/dev/null 2>&1 || true
