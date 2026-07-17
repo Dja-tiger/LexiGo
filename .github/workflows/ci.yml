@@ -120,6 +120,20 @@ jobs:
         run: npm run test
       - name: Production build
         run: npm run build
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Lesson completion browser tests
+        run: npm run test:e2e:lesson
+      - name: Upload lesson browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lesson-playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Dictionary navigation browser smoke
         run: |
           npm run start -- --hostname 127.0.0.1 > /tmp/lexigo-next.log 2>&1 &
