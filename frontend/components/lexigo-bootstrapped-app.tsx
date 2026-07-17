@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { restoreSession, SessionRefreshError, type Session } from "../lib/auth-session";
-import { CalendarReminderIntegration } from "./calendar-reminder-integration";
-import { EnhancedUIInteractions } from "./enhanced-ui-interactions";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
 
 function moveToExpiredSessionScreen(): void {
@@ -54,8 +52,6 @@ export function LexigoBootstrappedApp() {
 
   return (
     <>
-      <EnhancedUIInteractions />
-      <CalendarReminderIntegration />
       {notice ? <div className="lx-session-notice" role="status">{notice}</div> : null}
       <LexigoPremiumApp initialSession={initialSession} />
     </>

@@ -14,8 +14,10 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "desktop-webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "android-chromium", use: { ...devices["Pixel 5"] } },
+    { name: "ios-webkit", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
     command: "npm run start -- --hostname 127.0.0.1",
