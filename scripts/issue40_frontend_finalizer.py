@@ -29,6 +29,8 @@ app = replace_once(
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем due, new и доступность обоих типов.</small></div>
               ) : lessonPreview ? (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(lessonPreview.composition)}</strong><small>{lessonPriorityDescription(lessonPreview.composition)}</small>{lessonCompositionFallbackMessage(lessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(lessonPreview.composition)}</em> : null}</div>
+              ) : (
+                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Будет рассчитан сервером</strong><small>Локальный random selection не используется.</small></div>
 ''',
     '''              ) : previewingLesson || !matchingLessonPreview ? (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем due, new и доступность обоих типов.</small></div>
