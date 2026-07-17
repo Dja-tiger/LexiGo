@@ -115,12 +115,16 @@ func (r *Repository) DiscardLesson(ctx context.Context, userID, lessonID string,
 		return ErrLessonVersionConflict
 	}
 
-	if _, err := tx.Exec(ctx, `
+	discardResult, err := tx.Exec(ctx, `
 		update lesson_sessions
 		set status = 'discarded', version = version + 1, updated_at = now()
 		where id = $1::uuid and user_id = $2::uuid and status = 'active' and version = $3
-	`, lessonID, userID, expectedVersion); err != nil {
+	`, lessonID, userID, expectedVersion)
+	if err != nil {
 		return fmt.Errorf("discard lesson: %w", err)
+	}
+	if discardResult.RowsAffected() != 1 {
+		return ErrLessonVersionConflict
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit discard lesson: %w", err)
@@ -395,12 +399,7 @@ func (r *Repository) lessonByID(
 	}
 	rows.Close()
 
-	if lesson.Status == "active" {
-		if lesson.CurrentIndex < 0 || lesson.CurrentIndex >= len(lesson.Items) || lesson.Items[lesson.CurrentIndex].Rating != nil {
-			return LessonSession{}, ErrInvalidLessonState
-		}
-	}
-	if lesson.Status == "completed" && lesson.CurrentIndex != len(lesson.Items) {
+	if !validLessonState(lesson.Status, lesson.CurrentIndex, lesson.Items) {
 		return LessonSession{}, ErrInvalidLessonState
 	}
 
