@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { goalPercent, ratingLabel, type ProgressSummary } from "./progress";
+import {
+  goalPercent,
+  normalizedProgressModes,
+  objectiveSuccessRate,
+  ratingLabel,
+  type ProgressSummary,
+} from "./progress";
 
 function progress(reviewsToday: number, dailyGoal: number): ProgressSummary {
   return {
@@ -33,6 +39,20 @@ describe("progress helpers", () => {
 
   it("calculates partial daily progress", () => {
     expect(goalPercent(progress(9, 30))).toBe(30);
+  });
+
+  it("uses objective attempts instead of passive study in success rate", () => {
+    expect(objectiveSuccessRate({
+      ...progress(5, 30),
+      successfulToday: 2,
+      objectiveReviewsToday: 2,
+      objectiveSuccessfulToday: 2,
+    })).toBe(100);
+  });
+
+  it("falls back to v1 progress fields during rolling deployments", () => {
+    expect(objectiveSuccessRate({ ...progress(4, 30), successfulToday: 3 })).toBe(75);
+    expect(normalizedProgressModes(progress(1, 30)).study.attemptsToday).toBe(0);
   });
 
   it("uses user-facing rating labels", () => {

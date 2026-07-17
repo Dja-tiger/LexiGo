@@ -3,10 +3,10 @@ package learning
 import "time"
 
 type LessonCreateRequest struct {
-	Source     string  `json:"source"`
-	StudyMode  string  `json:"studyMode"`
-	LessonSize string  `json:"lessonSize"`
-	WordIDs    []int64 `json:"wordIds"`
+	Source     string     `json:"source"`
+	StudyMode  AnswerMode `json:"studyMode"`
+	LessonSize string     `json:"lessonSize"`
+	WordIDs    []int64    `json:"wordIds"`
 }
 
 type LessonItem struct {

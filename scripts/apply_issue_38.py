@@ -1376,6 +1376,7 @@ regex_once(premium, r"function presentationKey\([\s\S]*?function clearPresentati
 replace_once(premium, '    const presentationMode = readPresentationMode(lesson.id, lesson.studyMode);', '    const presentationMode = lesson.studyMode;')
 source = (ROOT / premium).read_text(encoding="utf-8")
 source = source.replace('      clearPresentationMode(activeLesson.id);\n', '')
+source = source.replace('        storePresentationMode(result.data.id, resolvedMode);\n', '')
 if 'clearPresentationMode' in source or 'storePresentationMode' in source or 'readPresentationMode' in source or 'PRESENTATION_PREFIX' in source:
     raise RuntimeError("presentation-mode compatibility layer was not fully removed")
 (ROOT / premium).write_text(source, encoding="utf-8")
@@ -1386,7 +1387,6 @@ replace_once(
     '''        const backendMode: AnswerMode = resolvedMode;
         const result = await authorizedRequest<LessonSessionResponse>(''',
 )
-replace_once(premium, '        storePresentationMode(result.data.id, resolvedMode);\n', '')
 replace_once(
     premium,
     '''      const path = activeLesson

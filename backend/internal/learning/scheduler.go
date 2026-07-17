@@ -6,9 +6,13 @@ import (
 	"time"
 )
 
-var ErrInvalidRating = errors.New("invalid rating")
+var (
+	ErrInvalidRating     = errors.New("invalid rating")
+	ErrInvalidAnswerMode = errors.New("invalid answer mode")
+)
 
 type ReviewState struct {
+	Status       string
 	Easiness     float64
 	IntervalDays int
 	Repetitions  int
@@ -21,6 +25,53 @@ type Schedule struct {
 	IntervalDays int
 	Repetitions  int
 	DueAfter     time.Duration
+}
+
+func ScheduleAttempt(state ReviewState, rating Rating, mode AnswerMode) (Schedule, error) {
+	switch mode {
+	case AnswerModeStudy:
+		return scheduleStudy(state, rating)
+	case AnswerModeRecall, AnswerModeChoice:
+		return ScheduleReview(state, rating)
+	default:
+		return Schedule{}, ErrInvalidAnswerMode
+	}
+}
+
+func scheduleStudy(state ReviewState, rating Rating) (Schedule, error) {
+	easiness := state.Easiness
+	if easiness < 1.3 {
+		easiness = 2.5
+	}
+	status := state.Status
+	if status == "" || status == "new" {
+		status = "learning"
+	}
+
+	grade := 0
+	dueAfter := time.Duration(0)
+	switch rating {
+	case RatingAgain:
+		grade = 1
+		dueAfter = 10 * time.Minute
+	case RatingAlmost:
+		grade = 3
+		dueAfter = 12 * time.Hour
+	case RatingKnown:
+		grade = 5
+		dueAfter = 24 * time.Hour
+	default:
+		return Schedule{}, ErrInvalidRating
+	}
+
+	return Schedule{
+		Grade:        grade,
+		Status:       status,
+		Easiness:     round2(easiness),
+		IntervalDays: state.IntervalDays,
+		Repetitions:  state.Repetitions,
+		DueAfter:     dueAfter,
+	}, nil
 }
 
 func ScheduleReview(state ReviewState, rating Rating) (Schedule, error) {

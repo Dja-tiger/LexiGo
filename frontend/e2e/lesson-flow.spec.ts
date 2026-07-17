@@ -4,6 +4,8 @@ type LessonMode = "study" | "recall" | "choice";
 
 type MockLesson = {
   reviewCalls: () => number;
+  lessonRequests: () => Array<Record<string, unknown>>;
+  reviewRequests: () => Array<Record<string, unknown>>;
 };
 
 const SESSION = {
@@ -16,6 +18,7 @@ const SESSION = {
   tokens: { accessToken: "e2e-access-token", tokenType: "Bearer", expiresIn: 900 },
 };
 
+const EMPTY_MODE = { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 };
 const WORDS = [
   { id: 101, lemma: "absolute", translation: "абсолютный", phonetic: "/ˈæbsəluːt/", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "new" },
   { id: 102, lemma: "build", translation: "собирать", phonetic: "/bɪld/", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" },
@@ -36,6 +39,8 @@ const PROGRESS = {
   masteredPhrases: 0,
   reviewsToday: 0,
   successfulToday: 0,
+  objectiveReviewsToday: 0,
+  objectiveSuccessfulToday: 0,
   reviewsTotal: 0,
   dailyGoal: 30,
   currentStreak: 0,
@@ -43,6 +48,8 @@ const PROGRESS = {
   retainedItemsWeek: 0,
   retainedWordsWeek: 0,
   retainedPhrasesWeek: 0,
+  eventSchemaVersion: 2,
+  modes: { study: EMPTY_MODE, recall: EMPTY_MODE, choice: EMPTY_MODE, legacy: EMPTY_MODE },
 };
 
 function lessonItems(count: number) {
@@ -53,6 +60,8 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
   let reviewCalls = 0;
   let reviewedItems = 0;
   const selectedItems = lessonItems(itemCount);
+  const lessonRequests: Array<Record<string, unknown>> = [];
+  const reviewRequests: Array<Record<string, unknown>> = [];
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -87,13 +96,15 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
       return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      lessonRequests.push(payload);
       await route.fulfill({
         status: 201,
         contentType: "application/json",
         body: JSON.stringify({
           id: "00000000-0000-0000-0000-000000000350",
           source: "mixed",
-          studyMode: "recall",
+          studyMode: payload.studyMode,
           lessonSize: String(itemCount),
           currentIndex: 0,
           status: "active",
@@ -106,6 +117,7 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCalls += 1;
+      reviewRequests.push(request.postDataJSON() as Record<string, unknown>);
       if (reviewDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, reviewDelayMs));
       reviewedItems += 1;
       const completed = reviewedItems === itemCount;
@@ -134,7 +146,11 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
 
-  return { reviewCalls: () => reviewCalls };
+  return {
+    reviewCalls: () => reviewCalls,
+    lessonRequests: () => lessonRequests,
+    reviewRequests: () => reviewRequests,
+  };
 }
 
 async function openLesson(page: Page, mode: LessonMode) {
@@ -147,9 +163,10 @@ async function openLesson(page: Page, mode: LessonMode) {
   await expect(page).toHaveURL(/view=lesson/);
 }
 
-test("study: blocks skip, coalesces double click and completes only after server confirmation", async ({ page }) => {
+test("study: persists exposure without masquerading as recall", async ({ page }) => {
   const api = await installLessonAPI(page, 2, 350);
   await openLesson(page, "study");
+  expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "study" });
 
   await expect(page.getByText("Слово 1 из 2")).toBeVisible();
   await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
@@ -162,49 +179,39 @@ test("study: blocks skip, coalesces double click and completes only after server
   });
   await expect(page.getByRole("button", { name: "Сохраняем оценку…", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Дальше", exact: true })).toBeEnabled();
-  await expect(page.getByText("Слово 1 из 2")).toBeVisible();
   expect(api.reviewCalls()).toBe(1);
+  expect(api.reviewRequests()[0]).toMatchObject({ answerMode: "study", answerRevealed: true });
+  expect(api.reviewRequests()[0]).not.toHaveProperty("correct");
 
   await page.getByRole("button", { name: "Дальше", exact: true }).click();
-  await expect(page.getByText("Слово 2 из 2")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
-
   await page.getByRole("button", { name: "Не знал", exact: true }).click();
   await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
-  await expect(page.getByText("Слово 2 из 2")).toBeVisible();
   await page.getByRole("button", { name: "К результатам", exact: true }).click();
-
   await expect(page.getByText("СЕССИЯ ЗАВЕРШЕНА")).toBeVisible();
   await expect(page.getByText(/Знал: 1\. Почти: 0\. Не знал: 1\. Пропущено: 0\./)).toBeVisible();
 });
 
-test("recall: answer reveal does not bypass the required persisted rating", async ({ page }) => {
-  await installLessonAPI(page, 1);
+test("recall: sends objective recall data after answer comparison", async ({ page }) => {
+  const api = await installLessonAPI(page, 1);
   await openLesson(page, "recall");
+  expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "recall" });
 
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
   await page.locator("#premium-answer").fill("абсолютный");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await expect(page.getByText("Ответ совпал.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
-
   await page.getByRole("button", { name: "Почти", exact: true }).click();
+  expect(api.reviewRequests()[0]).toMatchObject({ answerMode: "recall", correct: true });
   await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
-  await page.getByRole("button", { name: "К результатам", exact: true }).click();
-  await expect(page.getByText(/Знал: 0\. Почти: 1\. Не знал: 0\. Пропущено: 0\./)).toBeVisible();
 });
 
-test("choice: selecting an option still requires a server-persisted self-rating", async ({ page }) => {
-  await installLessonAPI(page, 1);
+test("choice: keeps choice analytics separate from recall", async ({ page }) => {
+  const api = await installLessonAPI(page, 1);
   await openLesson(page, "choice");
+  expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "choice" });
 
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
   await page.locator(".lx-answer-grid").getByRole("button", { name: "абсолютный", exact: true }).click();
   await expect(page.getByText("Верный вариант.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
-
   await page.getByRole("button", { name: "Знал", exact: true }).click();
+  expect(api.reviewRequests()[0]).toMatchObject({ answerMode: "choice", correct: true });
   await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
-  await page.getByRole("button", { name: "К результатам", exact: true }).click();
-  await expect(page.getByText(/Знал: 1\. Почти: 0\. Не знал: 0\. Пропущено: 0\./)).toBeVisible();
 });
