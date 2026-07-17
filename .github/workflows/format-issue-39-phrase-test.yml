@@ -1,0 +1,38 @@
+name: Format Issue 39 Phrase Test
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ github.head_ref == 'fix/issue-39-lesson-concurrency' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-39-lesson-concurrency
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: backend/go.sum
+      - name: Format and compile integration package
+        run: |
+          gofmt -w backend/integration/phrase_learning_test.go
+          git diff --check
+          cd backend
+          go test -run '^$' -tags=integration ./integration
+      - name: Commit formatted test
+        run: |
+          if git diff --quiet; then
+            echo "Phrase test already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/integration/phrase_learning_test.go
+          git commit -m "[issue-39-format] format versioned phrase test"
+          git push origin HEAD:fix/issue-39-lesson-concurrency
