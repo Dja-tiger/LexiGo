@@ -1,0 +1,68 @@
+name: Setup Issue 35 Playwright
+
+on:
+  pull_request:
+    types: [reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    if: github.head_ref == 'fix/issue-35-lesson-state-machine'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install and lock Playwright
+        working-directory: frontend
+        run: npm install --save-dev @playwright/test --no-audit --no-fund
+
+      - name: Add lesson browser gate to CI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/ci.yml')
+          source = path.read_text()
+          target = '''      - name: Production build
+                  run: npm run build
+          '''
+          replacement = '''      - name: Production build
+                  run: npm run build
+                - name: Install Playwright browsers
+                  run: npx playwright install --with-deps chromium webkit
+                - name: Lesson completion browser tests
+                  run: npm run test:e2e:lesson
+                - name: Upload lesson browser diagnostics
+                  if: failure()
+                  uses: actions/upload-artifact@v7
+                  with:
+                    name: lesson-playwright-report
+                    path: frontend/playwright-report
+                    if-no-files-found: ignore
+                    retention-days: 7
+          '''
+          target = target.replace('          ', '')
+          replacement = replacement.replace('          ', '')
+          if source.count(target) != 1:
+              raise SystemExit(f'CI target count={source.count(target)}')
+          path.write_text(source.replace(target, replacement))
+          PY
+
+      - name: Commit Playwright setup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json .github/workflows/ci.yml
+          git diff --cached --exit-code && exit 0
+          git commit -m "test(e2e): add lesson completion browser gate"
+          git push origin HEAD:${{ github.head_ref }}
