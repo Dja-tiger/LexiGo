@@ -60,7 +60,7 @@ func queryLessonCandidates(
 		       word.kind,
 		       user_word.status,
 		       user_word.due_at,
-		       user_word.due_at <= now()
+		       user_word.status <> 'new' and user_word.due_at <= now()
 		from user_words user_word
 		join words word on word.id = user_word.word_id
 		where user_word.user_id = $1::uuid
@@ -131,7 +131,7 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 	}
 	selected := make([]lessonCandidate, 0, limit)
 	if source == "mixed" {
-		selected = alternateLessonKinds(wordQueue, phraseQueue, limit)
+		selected = composeMixedPriorityTiers(wordQueue, phraseQueue, limit)
 	} else {
 		queue := wordQueue
 		if source == "phrases" {
@@ -159,6 +159,38 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 	return selected, composition
 }
 
+func composeMixedPriorityTiers(words, phrases []lessonCandidate, limit int) []lessonCandidate {
+	selected := make([]lessonCandidate, 0, limit)
+	for priority := 0; priority <= 2 && len(selected) < limit; priority++ {
+		tierWords := candidatesAtPriority(words, priority)
+		tierPhrases := candidatesAtPriority(phrases, priority)
+		if len(tierWords) == 0 && len(tierPhrases) == 0 {
+			continue
+		}
+
+		startKind := "word"
+		if len(selected) > 0 {
+			if selected[len(selected)-1].Kind == "word" {
+				startKind = "phrase"
+			}
+		} else if len(tierPhrases) > len(tierWords) {
+			startKind = "phrase"
+		}
+		selected = append(selected, alternateLessonKinds(tierWords, tierPhrases, limit-len(selected), startKind)...)
+	}
+	return selected
+}
+
+func candidatesAtPriority(candidates []lessonCandidate, priority int) []lessonCandidate {
+	result := make([]lessonCandidate, 0)
+	for _, candidate := range candidates {
+		if lessonCandidatePriority(candidate) == priority {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
 func sortLessonQueue(queue []lessonCandidate) {
 	sort.SliceStable(queue, func(left, right int) bool {
 		leftPriority := lessonCandidatePriority(queue[left])
@@ -183,13 +215,10 @@ func lessonCandidatePriority(candidate lessonCandidate) int {
 	return 2
 }
 
-func alternateLessonKinds(words, phrases []lessonCandidate, limit int) []lessonCandidate {
+func alternateLessonKinds(words, phrases []lessonCandidate, limit int, startKind string) []lessonCandidate {
 	selected := make([]lessonCandidate, 0, limit)
 	wordIndex, phraseIndex := 0, 0
-	nextKind := "word"
-	if dueCount(phrases) > dueCount(words) {
-		nextKind = "phrase"
-	}
+	nextKind := startKind
 	for len(selected) < limit && (wordIndex < len(words) || phraseIndex < len(phrases)) {
 		if nextKind == "word" && wordIndex < len(words) {
 			selected = append(selected, words[wordIndex])
@@ -214,16 +243,6 @@ func alternateLessonKinds(words, phrases []lessonCandidate, limit int) []lessonC
 		}
 	}
 	return selected
-}
-
-func dueCount(candidates []lessonCandidate) int {
-	count := 0
-	for _, candidate := range candidates {
-		if candidate.Due {
-			count++
-		}
-	}
-	return count
 }
 
 func lessonSizeLimit(value string) int {
