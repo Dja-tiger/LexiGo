@@ -113,7 +113,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
       - name: Lint
-        run: npm run lint
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee eslint.log
       - name: Type check
         run: npm run typecheck
       - name: Unit tests
@@ -132,6 +134,7 @@ jobs:
         with:
           name: frontend-playwright-report
           path: |
+            frontend/eslint.log
             frontend/playwright-report
             frontend/test-results
           if-no-files-found: ignore
