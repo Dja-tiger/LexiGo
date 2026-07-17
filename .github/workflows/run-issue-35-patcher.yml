@@ -1,0 +1,42 @@
+name: Run Issue 35 Patcher
+
+on:
+  pull_request:
+    types: [reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/issue-35-lesson-state-machine'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Execute dedented patch script
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/apply-issue-35.yml').read_text()
+          marker = "python3 - <<'PY'\n"
+          script = workflow.split(marker, 1)[1].split("\n          PY", 1)[0]
+          script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
+          exec(compile(script, 'apply-issue-35.py', 'exec'), {'__name__': '__main__'})
+          PY
+
+          cd backend
+          gofmt -w internal/learning/lesson.go internal/learning/lesson_http.go internal/learning/lesson_repository.go
+
+      - name: Commit implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/internal/learning frontend/components/lexigo-premium-app.tsx frontend/app/premium-ui.css
+          git diff --cached --exit-code && exit 0
+          git commit -m "fix(lesson): require persisted reviews before advancing"
+          git push origin HEAD:${{ github.head_ref }}
