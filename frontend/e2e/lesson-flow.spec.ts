@@ -176,7 +176,7 @@ test("stale device resynchronizes to the server position without duplicate revie
   expect(state.reviewEvents).toBe(1);
 
   await second.getByRole("button", { name: "Знал", exact: true }).click();
-  await expect(second.getByRole("alert")).toContainText("Урок изменён на другом устройстве");
+  await expect(second.locator(".lx-error[role=\"alert\"]")).toContainText("Урок изменён на другом устройстве");
   await expect(second.getByText("Слово 2 из 2")).toBeVisible();
   expect(state.reviewEvents).toBe(1);
   await expect(second.getByRole("button", { name: "← Предыдущее недоступно", exact: true })).toBeDisabled();
