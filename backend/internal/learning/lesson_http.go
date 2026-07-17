@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -82,13 +83,27 @@ func (h *Handler) DiscardLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_lesson_id", "lesson id must be a UUID")
 		return
 	}
-	if err := h.repository.DiscardLesson(r.Context(), userID, lessonID); err != nil {
-		if errors.Is(err, ErrNoActiveLesson) {
-			httpx.WriteError(w, http.StatusNotFound, "active_lesson_not_found", "active lesson was not found")
-			return
+	expectedVersion, code := lessonVersionFromIfMatch(r.Header.Get("If-Match"))
+	if code != "" {
+		status := http.StatusUnprocessableEntity
+		message := "If-Match must contain a positive lesson version"
+		if code == "lesson_version_required" {
+			status = http.StatusPreconditionRequired
+			message = "If-Match lesson version is required"
 		}
-		slog.ErrorContext(r.Context(), "discard lesson failed", "user_id", userID, "lesson_id", lessonID, "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		httpx.WriteError(w, status, code, message)
+		return
+	}
+	if err := h.repository.DiscardLesson(r.Context(), userID, lessonID, expectedVersion); err != nil {
+		switch {
+		case errors.Is(err, ErrNoActiveLesson):
+			httpx.WriteError(w, http.StatusNotFound, "active_lesson_not_found", "active lesson was not found")
+		case errors.Is(err, ErrLessonVersionConflict):
+			httpx.WriteError(w, http.StatusConflict, "lesson_version_conflict", "lesson changed on another device; reload the active lesson")
+		default:
+			slog.ErrorContext(r.Context(), "discard lesson failed", "user_id", userID, "lesson_id", lessonID, "error", err)
+			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		}
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -111,9 +126,13 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request ReviewRequest
+	var request LessonReviewRequest
 	if err := httpx.DecodeJSON(w, r, &request); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
+		return
+	}
+	if request.LessonVersion <= 0 {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_version", "lessonVersion must be a positive integer")
 		return
 	}
 	if !validRating(request.Rating) {
@@ -124,7 +143,7 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_response_ms", "responseMs must be between 0 and 3600000")
 		return
 	}
-	if code, message := normalizeAndValidateReviewRequest(&request); code != "" {
+	if code, message := normalizeAndValidateReviewRequest(&request.ReviewRequest); code != "" {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, code, message)
 		return
 	}
@@ -132,6 +151,8 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 	result, err := h.repository.ReviewLessonWord(r.Context(), userID, lessonID, wordID, request)
 	if err != nil {
 		switch {
+		case errors.Is(err, ErrLessonVersionConflict):
+			httpx.WriteError(w, http.StatusConflict, "lesson_version_conflict", "lesson changed on another device; reload the active lesson")
 		case errors.Is(err, ErrLessonItemNotFound):
 			httpx.WriteError(w, http.StatusNotFound, "lesson_item_not_found", "learning item is not part of the active lesson")
 		case errors.Is(err, ErrLessonItemAlreadyReviewed):
@@ -151,6 +172,20 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, result)
+}
+
+func lessonVersionFromIfMatch(value string) (int64, string) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, "lesson_version_required"
+	}
+	value = strings.TrimSpace(strings.TrimPrefix(value, "W/"))
+	value = strings.Trim(value, "\"")
+	version, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || version <= 0 {
+		return 0, "invalid_lesson_version"
+	}
+	return version, ""
 }
 
 func validLessonSource(value string) bool {

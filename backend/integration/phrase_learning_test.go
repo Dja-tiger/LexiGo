@@ -121,23 +121,30 @@ func TestPersistentPhraseLearningFlow(t *testing.T) {
 		ID           string          `json:"id"`
 		Source       string          `json:"source"`
 		CurrentIndex int             `json:"currentIndex"`
+		Version      int64           `json:"version"`
 		Items        []phrasePayload `json:"items"`
 	}
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
 		"source": "phrases", "studyMode": "recall", "lessonSize": "15", "wordIds": []int64{phraseID},
 	}, http.StatusCreated, &created)
-	if created.ID == "" || created.Source != "phrases" || created.CurrentIndex != 0 || len(created.Items) != 1 {
+	if created.ID == "" || created.Source != "phrases" || created.CurrentIndex != 0 || created.Version != 1 || len(created.Items) != 1 {
 		t.Fatalf("unexpected phrase lesson: %+v", created)
 	}
 
 	var reviewed struct {
 		LessonCompleted bool      `json:"lessonCompleted"`
+		LessonVersion   int64     `json:"lessonVersion"`
 		DueAt           time.Time `json:"dueAt"`
 	}
 	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, phraseID), registered.Tokens.AccessToken, map[string]any{
-		"rating": "known", "responseMs": 700, "answerMode": "recall", "correct": true, "timezoneOffsetMinutes": 0,
+		"lessonVersion":         created.Version,
+		"rating":                "known",
+		"responseMs":            700,
+		"answerMode":            "recall",
+		"correct":               true,
+		"timezoneOffsetMinutes": 0,
 	}, http.StatusOK, &reviewed)
-	if !reviewed.LessonCompleted || !reviewed.DueAt.After(time.Now()) {
+	if !reviewed.LessonCompleted || reviewed.LessonVersion != 2 || !reviewed.DueAt.After(time.Now()) {
 		t.Fatalf("unexpected phrase review: %+v", reviewed)
 	}
 

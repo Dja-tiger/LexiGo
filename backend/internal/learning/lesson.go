@@ -9,6 +9,11 @@ type LessonCreateRequest struct {
 	WordIDs    []int64    `json:"wordIds"`
 }
 
+type LessonReviewRequest struct {
+	ReviewRequest
+	LessonVersion int64 `json:"lessonVersion"`
+}
+
 type LessonItem struct {
 	Position     int        `json:"position"`
 	WordID       int64      `json:"id"`
@@ -31,9 +36,10 @@ type LessonItem struct {
 type LessonSession struct {
 	ID           string       `json:"id"`
 	Source       string       `json:"source"`
-	StudyMode    string       `json:"studyMode"`
+	StudyMode    AnswerMode   `json:"studyMode"`
 	LessonSize   string       `json:"lessonSize"`
 	CurrentIndex int          `json:"currentIndex"`
+	Version      int64        `json:"version"`
 	Status       string       `json:"status"`
 	Items        []LessonItem `json:"items"`
 	CreatedAt    time.Time    `json:"createdAt"`
@@ -44,6 +50,7 @@ type LessonReviewResult struct {
 	ReviewResult
 	LessonID            string `json:"lessonId"`
 	LessonCurrentIndex  int    `json:"lessonCurrentIndex"`
+	LessonVersion       int64  `json:"lessonVersion"`
 	LessonCompleted     bool   `json:"lessonCompleted"`
 	LessonReviewedItems int    `json:"lessonReviewedItems"`
 	LessonSkippedItems  int    `json:"lessonSkippedItems"`
