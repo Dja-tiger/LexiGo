@@ -15,7 +15,15 @@ permissions:
 jobs:
   backend-unit:
     name: Backend unit and security
-    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend
@@ -48,7 +56,15 @@ jobs:
 
   backend-integration:
     name: Backend integration
-    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:18.4-alpine
@@ -99,51 +115,59 @@ jobs:
 
   frontend:
     name: Frontend quality
-    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
       - name: Install locked dependencies
-        run: npm ci --no-audit --no-fund
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
       - name: Lint
         run: |
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
           set -o pipefail
           npm run lint 2>&1 | tee eslint.log
+          CONTAINER_SCRIPT
+
       - name: Type check
-        run: npm run typecheck
+        run: bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+
       - name: Unit tests
-        run: npm run test
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test
+
       - name: Production build
-        run: npm run build
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
       - name: Lesson completion browser tests
-        run: npm run test:e2e:lesson
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:lesson
+
       - name: React-owned UI browser tests
-        run: npm run test:e2e:ui
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui
+
       - name: iOS PWA dictionary tests
-        run: npm run test:e2e:pwa
-      - name: Upload browser diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: frontend-playwright-report
-          path: |
-            frontend/eslint.log
-            frontend/playwright-report
-            frontend/test-results
-          if-no-files-found: ignore
-          retention-days: 7
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:pwa
+
       - name: Dictionary navigation browser smoke
         run: |
-          npm run start -- --hostname 127.0.0.1 > /tmp/lexigo-next.log 2>&1 &
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          npm run start -- --hostname 127.0.0.1 > next-start.log 2>&1 &
           app_pid=$!
           cleanup() {
             kill "$app_pid" >/dev/null 2>&1 || true
@@ -159,17 +183,44 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then
-            cat /tmp/lexigo-next.log
+            cat next-start.log
             exit 1
           fi
 
           bash scripts/dictionary-navigation-smoke.sh
+          CONTAINER_SCRIPT
+
       - name: Production dependency audit
-        run: npm audit --omit=dev --audit-level=high
+        run: bash ../scripts/ci/frontend-container.sh exec npm audit --omit=dev --audit-level=high
+
+      - name: Extract frontend diagnostics
+        if: failure()
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-playwright-report
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
 
   container-build:
     name: Container build (${{ matrix.component }})
-    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
     needs: [backend-unit, backend-integration, frontend]
     permissions:
       contents: read
