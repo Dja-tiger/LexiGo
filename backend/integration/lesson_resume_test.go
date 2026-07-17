@@ -113,7 +113,7 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 
 	var created lessonPayload
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
-		"source": "mixed", "studyMode": "recall", "lessonSize": "3", "wordIds": wordIDs,
+		"source": "mixed", "studyMode": "recall", "lessonSize": "15", "wordIds": wordIDs,
 	}, http.StatusCreated, &created)
 	if created.ID == "" || created.CurrentIndex != 0 || created.Status != "active" || len(created.Items) != 3 {
 		t.Fatalf("unexpected created lesson: %+v", created)
