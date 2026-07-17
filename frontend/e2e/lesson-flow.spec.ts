@@ -143,7 +143,7 @@ async function openLesson(page: Page, mode: LessonMode) {
 
   const modeLabel = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";
   await page.getByRole("button", { name: new RegExp(modeLabel) }).click();
-  await page.getByRole("button", { name: "Начать урок" }).click();
+  await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   await expect(page).toHaveURL(/view=lesson/);
 }
 
@@ -152,27 +152,27 @@ test("study: blocks skip, coalesces double click and completes only after server
   await openLesson(page, "study");
 
   await expect(page.getByText("Слово 1 из 2")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
 
-  const known = page.getByRole("button", { name: "Знал" });
+  const known = page.getByRole("button", { name: "Знал", exact: true });
   await known.evaluate((element) => {
     const button = element as HTMLButtonElement;
     button.click();
     button.click();
   });
-  await expect(page.getByRole("button", { name: "Сохраняем оценку…" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Дальше" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Сохраняем оценку…", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Дальше", exact: true })).toBeEnabled();
   await expect(page.getByText("Слово 1 из 2")).toBeVisible();
   expect(api.reviewCalls()).toBe(1);
 
-  await page.getByRole("button", { name: "Дальше" }).click();
+  await page.getByRole("button", { name: "Дальше", exact: true }).click();
   await expect(page.getByText("Слово 2 из 2")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
 
-  await page.getByRole("button", { name: "Не знал" }).click();
-  await expect(page.getByRole("button", { name: "К результатам" })).toBeEnabled();
+  await page.getByRole("button", { name: "Не знал", exact: true }).click();
+  await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
   await expect(page.getByText("Слово 2 из 2")).toBeVisible();
-  await page.getByRole("button", { name: "К результатам" }).click();
+  await page.getByRole("button", { name: "К результатам", exact: true }).click();
 
   await expect(page.getByText("СЕССИЯ ЗАВЕРШЕНА")).toBeVisible();
   await expect(page.getByText(/Знал: 1\. Почти: 0\. Не знал: 1\. Пропущено: 0\./)).toBeVisible();
@@ -182,15 +182,15 @@ test("recall: answer reveal does not bypass the required persisted rating", asyn
   await installLessonAPI(page, 1);
   await openLesson(page, "recall");
 
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
   await page.locator("#premium-answer").fill("абсолютный");
-  await page.getByRole("button", { name: "Сверить ответ" }).click();
+  await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await expect(page.getByText("Ответ совпал.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
 
-  await page.getByRole("button", { name: "Почти" }).click();
-  await expect(page.getByRole("button", { name: "К результатам" })).toBeEnabled();
-  await page.getByRole("button", { name: "К результатам" }).click();
+  await page.getByRole("button", { name: "Почти", exact: true }).click();
+  await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "К результатам", exact: true }).click();
   await expect(page.getByText(/Знал: 0\. Почти: 1\. Не знал: 0\. Пропущено: 0\./)).toBeVisible();
 });
 
@@ -198,13 +198,13 @@ test("choice: selecting an option still requires a server-persisted self-rating"
   await installLessonAPI(page, 1);
   await openLesson(page, "choice");
 
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
-  await page.locator(".lx-answer-grid").getByRole("button", { name: "абсолютный" }).click();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
+  await page.locator(".lx-answer-grid").getByRole("button", { name: "абсолютный", exact: true }).click();
   await expect(page.getByText("Верный вариант.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Сначала сохраните оценку" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Сначала сохраните оценку", exact: true })).toBeDisabled();
 
-  await page.getByRole("button", { name: "Знал" }).click();
-  await expect(page.getByRole("button", { name: "К результатам" })).toBeEnabled();
-  await page.getByRole("button", { name: "К результатам" }).click();
+  await page.getByRole("button", { name: "Знал", exact: true }).click();
+  await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "К результатам", exact: true }).click();
   await expect(page.getByText(/Знал: 1\. Почти: 0\. Не знал: 0\. Пропущено: 0\./)).toBeVisible();
 });
