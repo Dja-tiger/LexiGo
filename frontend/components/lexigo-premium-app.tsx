@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiUrl } from "../lib/api";
@@ -597,7 +597,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   useEffect(() => {
     if (!lessonStarted) return;
-    const timer = window.setTimeout(() => setCardStartedAt(Date.now()), 0);
+    const timer = window.setTimeout(() => setCardStartedAt(window.performance.now()), 0);
     return () => window.clearTimeout(timer);
   }, [lessonStarted, currentIndex, studyMode]);
 
@@ -1122,7 +1122,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     moveToServerIndex(decision.nextIndex);
   }
 
-  async function rateCurrent(rating: ReviewRating) {
+  function handleRatingClick(event: MouseEvent<HTMLButtonElement>) {
+    const rating = event.currentTarget.dataset.rating;
+    if (rating === "again" || rating === "almost" || rating === "known") {
+      void rateCurrent(rating, event.timeStamp);
+    }
+  }
+
+  async function rateCurrent(rating: ReviewRating, submittedAt: number) {
     if (!currentItem || currentRating || reviewInFlightRef.current) return;
     if (!session || !activeLesson || currentItem.wordId === undefined) {
       requestAuthentication("lesson");
@@ -1146,7 +1153,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         body: JSON.stringify({
           lessonVersion: activeLesson.version,
           rating,
-          responseMs: Math.max(0, Date.now() - cardStartedAt),
+          responseMs: Math.max(0, Math.round(submittedAt - cardStartedAt)),
           answerMode: reviewMode,
           answerRevealed: revealed || reviewMode === "study",
           ...(reviewMode === "study" ? {} : { correct }),
@@ -1432,12 +1439,17 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     );
   }
 
+  function startSelectedPhraseLesson() {
+    if (!selectedPhrase) return;
+    void startLesson(session, { source: "phrases", size: 15, mode: "study", items: [selectedPhrase] });
+  }
+
   function renderPhrases() {
     if (selectedPhrase) {
       return (
         <section className="lx-detail-card">
           <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "phrases" })}>← Все фразы</button>
-          <div className="lx-detail-content"><span>{selectedPhrase.topic}</span><h1>{selectedPhrase.prompt}</h1><strong>{selectedPhrase.answer}</strong>{selectedPhrase.cloze ? <div><small>Cloze practice</small><p>{selectedPhrase.cloze}</p></div> : null}{selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p>{selectedPhrase.examples[0]}</p></div> : null}{selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}<div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={() => startLesson(session, { source: "phrases", size: 15, mode: "study", items: [selectedPhrase] })}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div></div>
+          <div className="lx-detail-content"><span>{selectedPhrase.topic}</span><h1>{selectedPhrase.prompt}</h1><strong>{selectedPhrase.answer}</strong>{selectedPhrase.cloze ? <div><small>Cloze practice</small><p>{selectedPhrase.cloze}</p></div> : null}{selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p>{selectedPhrase.examples[0]}</p></div> : null}{selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}<div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div></div>
         </section>
       );
     }
@@ -1589,7 +1601,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
             <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled title="Активный урок проходит в серверном порядке">← Предыдущее недоступно</button><button className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
 
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
 
             {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong>{item.prompt}</strong><small>{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
           </main>
