@@ -496,7 +496,7 @@ components:
           description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.
         objectiveReviewsToday:
           type: integer
-          description: Recall, choice and legacy attempts; study is excluded.
+          description: Verified schema-v2 recall and choice attempts; study and legacy events are excluded.
         objectiveSuccessfulToday:
           type: integer
         reviewsTotal: { type: integer }
