@@ -22,6 +22,12 @@ if source.count(obsolete) != 1:
 codemod.write_text(source.replace(obsolete, ""), encoding="utf-8")
 runpy.run_path(str(codemod), run_name="__main__")
 
+replace_once(
+    "backend/internal/learning/lesson_http.go",
+    'value = strings.Trim(value, """)',
+    'value = strings.Trim(value, "\\\"")',
+)
+
 premium = "frontend/components/lexigo-premium-app.tsx"
 replace_once(
     premium,
