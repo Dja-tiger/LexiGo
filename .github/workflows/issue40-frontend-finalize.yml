@@ -28,15 +28,29 @@ jobs:
           python scripts/issue40_frontend_finalizer.py
           git diff --check
       - name: Verify frontend and lesson browser matrix
+        id: verify
         working-directory: frontend
         run: |
-          npm ci --no-audit --no-fund
-          npm run lint
-          npm run typecheck
-          npm test
-          npm run build
-          npx playwright install --with-deps chromium webkit
-          npm run test:e2e:lesson
+          set -o pipefail
+          {
+            npm ci --no-audit --no-fund
+            npm run lint
+            npm run typecheck
+            npm test
+            npm run build
+            npx playwright install --with-deps chromium webkit
+            npm run test:e2e:lesson
+          } 2>&1 | tee ../issue40-finalizer.log
+      - name: Upload finalizer diagnostics
+        if: steps.verify.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue40-frontend-finalizer-diagnostics
+          path: |
+            issue40-finalizer.log
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: warn
       - name: Commit product files only
         run: |
           git config user.name "github-actions[bot]"
