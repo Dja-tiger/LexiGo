@@ -7,6 +7,7 @@ import "./mobile-pwa-fixes.css";
 import "./themed-vocabulary.css";
 import "./catalog-enhancements.css";
 import "./calendar-reminders.css";
+import "./error-boundary.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
