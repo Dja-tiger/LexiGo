@@ -26,8 +26,8 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
 		return
 	}
-	if request.StudyMode != "recall" && request.StudyMode != "choice" {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be recall or choice")
+	if !validAnswerMode(request.StudyMode) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be study, recall or choice")
 		return
 	}
 	if !validLessonSize(request.LessonSize) {
@@ -124,8 +124,8 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_response_ms", "responseMs must be between 0 and 3600000")
 		return
 	}
-	if request.AnswerMode != "recall" && request.AnswerMode != "choice" {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "answerMode must be recall or choice")
+	if code, message := normalizeAndValidateReviewRequest(&request); code != "" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, code, message)
 		return
 	}
 
@@ -138,6 +138,8 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusConflict, "lesson_item_already_reviewed", "lesson item was already reviewed")
 		case errors.Is(err, ErrLessonItemOutOfOrder):
 			httpx.WriteError(w, http.StatusConflict, "lesson_item_out_of_order", "review the current lesson item before moving forward")
+		case errors.Is(err, ErrLessonModeMismatch):
+			httpx.WriteError(w, http.StatusConflict, "lesson_mode_mismatch", "answerMode must match the active lesson studyMode")
 		case errors.Is(err, ErrWordNotFound):
 			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "learning item is not assigned to the current user")
 		case errors.Is(err, ErrInvalidRating):

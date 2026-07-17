@@ -37,8 +37,8 @@ func (h *Handler) ReviewWord(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_response_ms", "responseMs must be between 0 and 3600000")
 		return
 	}
-	if request.AnswerMode != "" && request.AnswerMode != "recall" && request.AnswerMode != "choice" {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "answerMode must be recall or choice")
+	if code, message := normalizeAndValidateReviewRequest(&request); code != "" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, code, message)
 		return
 	}
 
@@ -49,6 +49,8 @@ func (h *Handler) ReviewWord(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "word is not assigned to the current user")
 		case errors.Is(err, ErrInvalidRating):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_rating", "rating must be again, almost or known")
+		case errors.Is(err, ErrInvalidAnswerMode):
+			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "answerMode must be study, recall or choice")
 		default:
 			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		}
@@ -99,6 +101,29 @@ func (h *Handler) SetDailyGoal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, result)
+}
+
+func normalizeAndValidateReviewRequest(request *ReviewRequest) (code, message string) {
+	// Pre-v2 clients were allowed to omit answerMode. Preserve that contract as recall.
+	if request.AnswerMode == "" {
+		request.AnswerMode = AnswerModeRecall
+	}
+	if !validAnswerMode(request.AnswerMode) {
+		return "invalid_answer_mode", "answerMode must be study, recall or choice"
+	}
+	if request.AnswerMode == AnswerModeStudy {
+		if request.Correct != nil {
+			return "invalid_study_correctness", "study attempts cannot report objective correctness"
+		}
+		if request.AnswerRevealed == nil || !*request.AnswerRevealed {
+			return "invalid_answer_revealed", "study attempts must report answerRevealed=true"
+		}
+	}
+	return "", ""
+}
+
+func validAnswerMode(mode AnswerMode) bool {
+	return mode == AnswerModeStudy || mode == AnswerModeRecall || mode == AnswerModeChoice
 }
 
 func validRating(rating Rating) bool {

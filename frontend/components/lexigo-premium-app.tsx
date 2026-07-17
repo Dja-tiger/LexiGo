@@ -33,6 +33,8 @@ import {
 } from "../lib/navigation";
 import {
   goalPercent,
+  normalizedProgressModes,
+  objectiveSuccessRate,
   ratingLabel,
   type AnswerMode,
   type ProgressSummary,
@@ -69,7 +71,7 @@ type LessonItemResponse = APIItem & {
 };
 
 type LessonSource = WordSection | "phrases";
-type StudyMode = AnswerMode | "study" | "all";
+type StudyMode = AnswerMode | "all";
 type StudyView = "card" | "example" | "context";
 type CollectionSource = Extract<WordSection, "daily-life" | "travel" | "data-engineering" | "backend">;
 type CatalogKind = "phrases" | "all-items";
@@ -144,7 +146,6 @@ type IconName =
   | "volume"
   | "close";
 
-const PRESENTATION_PREFIX = "lexigo.lesson.presentation.";
 const SORT_STORAGE_PREFIX = "lexigo.catalog.sort.";
 const WORD_CATALOG_COUNT = 799;
 const DEFAULT_PHRASE_CATALOG = Array.from(
@@ -441,23 +442,6 @@ async function authorizedRequest<T>(current: Session, path: string, init: Reques
   }
 }
 
-function presentationKey(lessonID: string) {
-  return `${PRESENTATION_PREFIX}${lessonID}`;
-}
-
-function storePresentationMode(lessonID: string, mode: StudyMode) {
-  window.localStorage.setItem(presentationKey(lessonID), mode);
-}
-
-function readPresentationMode(lessonID: string, fallback: AnswerMode): StudyMode {
-  const value = window.localStorage.getItem(presentationKey(lessonID));
-  return value === "study" || value === "recall" || value === "choice" ? value : fallback;
-}
-
-function clearPresentationMode(lessonID: string) {
-  window.localStorage.removeItem(presentationKey(lessonID));
-}
-
 function toLearningItem(item: APIItem): LearningItem {
   const kind = item.kind === "phrase" || item.partOfSpeech.toLowerCase() === "phrase" ? "phrase" : "word";
   const fallback = kind === "phrase"
@@ -666,9 +650,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const overallPercent = progress && progress.totalWords + progress.totalPhrases > 0
     ? Math.round(((progress.masteredWords + progress.masteredPhrases) / (progress.totalWords + progress.totalPhrases)) * 100)
     : 0;
-  const successRate = progress && progress.reviewsToday > 0
-    ? Math.round((progress.successfulToday / progress.reviewsToday) * 100)
-    : 0;
+  const successRate = objectiveSuccessRate(progress);
 
   function navigate(target: NavigationTarget, replace = false) {
     const url = navigationURL(target);
@@ -834,7 +816,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       if (item.rating && lessonItems[index]) restoredRatings[lessonItems[index].id] = item.rating;
     });
     const safeIndex = Math.min(Math.max(lesson.currentIndex, 0), Math.max(lessonItems.length - 1, 0));
-    const presentationMode = readPresentationMode(lesson.id, lesson.studyMode);
+    const presentationMode = lesson.studyMode;
     setActiveLesson(lesson);
     setSource(lesson.source);
     setStudyMode(presentationMode);
@@ -882,7 +864,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     try {
       const result = await authorizedRequest<void>(session, `/api/v1/lessons/${activeLesson.id}`, { method: "DELETE" });
       setSession(result.activeSession);
-      clearPresentationMode(activeLesson.id);
       setActiveLesson(null);
       clearLessonState();
       navigate({ view: "learn" });
@@ -940,7 +921,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
       const lessonItems = takeLessonBlock(available, resolvedSize);
       if (resolvedMode !== "all" && lessonItems.length > 0) {
-        const backendMode: AnswerMode = resolvedMode === "choice" ? "choice" : "recall";
+        const backendMode: AnswerMode = resolvedMode;
         const result = await authorizedRequest<LessonSessionResponse>(
           currentSession as Session,
           "/api/v1/lessons",
@@ -954,7 +935,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             }),
           },
         );
-        storePresentationMode(result.data.id, resolvedMode);
         setSession(result.activeSession);
         applyLesson(result.data);
       } else {
@@ -1111,6 +1091,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         : typedAnswer.trim()
           ? literalMatch
           : undefined;
+      const reviewMode: AnswerMode = studyMode === "all" ? "study" : studyMode;
       const path = activeLesson
         ? `/api/v1/lessons/${activeLesson.id}/words/${currentItem.wordId}/review`
         : `/api/v1/words/${currentItem.wordId}/review`;
@@ -1119,8 +1100,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         body: JSON.stringify({
           rating,
           responseMs: Math.max(0, Date.now() - cardStartedAt),
-          answerMode: studyMode === "choice" ? "choice" : "recall",
-          correct,
+          answerMode: reviewMode,
+          answerRevealed: revealed || reviewMode === "study",
+          ...(reviewMode === "study" ? {} : { correct }),
           timezoneOffsetMinutes: timezoneOffsetMinutes(),
         }),
       });
@@ -1131,7 +1113,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setServerSkippedItems(result.data.lessonSkippedItems);
       if (activeLesson) {
         if (result.data.lessonCompleted) {
-          clearPresentationMode(activeLesson.id);
           setActiveLesson(null);
         } else {
           setActiveLesson((current) => current ? { ...current, currentIndex: result.data.lessonCurrentIndex } : current);
@@ -1433,9 +1414,10 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     if (!session || !progress) {
       return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, due-очередь, retained items и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
     }
+    const modes = normalizedProgressModes(progress);
     const cards = [
       { label: "Сегодня", value: `${progress.reviewsToday} / ${progress.dailyGoal}`, hint: `${goalPercent(progress)}% цели`, color: "purple" },
-      { label: "Успешность", value: `${successRate}%`, hint: `${progress.successfulToday} успешных ответов`, color: "green" },
+      { label: "Объективная успешность", value: `${successRate}%`, hint: `${progress.objectiveSuccessfulToday ?? progress.successfulToday} из ${progress.objectiveReviewsToday ?? progress.reviewsToday} попыток`, color: "green" },
       { label: "Retained items", value: String(progress.retainedItemsWeek), hint: `${progress.retainedWordsWeek} слов · ${progress.retainedPhrasesWeek} фраз`, color: "blue" },
       { label: "Текущая серия", value: `${progress.currentStreak} дн.`, hint: `рекорд ${progress.longestStreak}`, color: "orange" },
     ];
@@ -1443,6 +1425,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       <>
         <section className="lx-page-heading"><div><span>ПРОГРЕСС</span><h1>Смотрите, что действительно сохранилось</h1><p>Retained item засчитывается после повторного успешного воспроизведения.</p></div><div className="lx-heading-badge"><Icon name="progress"/><span>Следующее повторение: {nextDueLabel(progress.nextDueAt)}</span></div></section>
         <section className="lx-stat-grid">{cards.map((card) => <article key={card.label}><span>{card.label}</span><strong className={card.color}>{card.value}</strong><small>{card.hint}</small></article>)}</section>
+        <section className="lx-summary-panel" aria-label="Попытки по режимам">
+          <div><span>Изучение</span><strong>{modes.study.attemptsToday}</strong><small>показ ответа · не active recall</small></div>
+          <div><span>Recall</span><strong>{modes.recall.successfulToday} / {modes.recall.attemptsToday}</strong><small>объективно верные сегодня</small></div>
+          <div><span>Выбор варианта</span><strong>{modes.choice.successfulToday} / {modes.choice.attemptsToday}</strong><small>объективно верные сегодня</small></div>
+          <div><span>Legacy</span><strong>{modes.legacy.attemptsTotal}</strong><small>исторические события без точного режима</small></div>
+        </section>
         <section className="lx-progress-detail"><div className="lx-detail-main"><span>Дневная цель</span><h2>{progress.reviewsToday >= progress.dailyGoal ? "Цель выполнена" : "Продолжайте учебный цикл"}</h2><div className="lx-goal-track large"><span style={{ width: `${goalPercent(progress)}%` }}/></div><div className="lx-goal-options">{GOAL_OPTIONS.map((goal) => <button key={goal} type="button" className={progress.dailyGoal === goal ? "selected" : ""} disabled={busy} onClick={() => updateDailyGoal(goal)}>{goal}</button>)}</div></div><div className="lx-queue-list"><div><span>Слова к повторению</span><strong>{progress.dueWords}</strong></div><div><span>Фразы к повторению</span><strong>{progress.duePhrases}</strong></div><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong></div></div></section>
       </>
     );

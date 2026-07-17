@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.3.0
+  version: 0.4.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -410,9 +410,13 @@ components:
           maximum: 3600000
         answerMode:
           type: string
-          enum: [recall, choice]
+          enum: [study, recall, choice]
         correct:
           type: [boolean, "null"]
+          description: Objective correctness for recall/choice. Must be null or omitted for study.
+        answerRevealed:
+          type: [boolean, "null"]
+          description: Whether the answer was visible before persistence. Required as true for study.
         timezoneOffsetMinutes:
           type: integer
           minimum: -840
@@ -451,45 +455,85 @@ components:
       type: object
       required:
         - dueNow
+        - dueWords
+        - duePhrases
         - totalWords
+        - totalPhrases
         - newWords
         - learningWords
         - reviewWords
         - masteredWords
+        - masteredPhrases
         - reviewsToday
         - successfulToday
+        - objectiveReviewsToday
+        - objectiveSuccessfulToday
         - reviewsTotal
         - dailyGoal
         - currentStreak
         - longestStreak
+        - retainedItemsWeek
+        - retainedWordsWeek
+        - retainedPhrasesWeek
+        - eventSchemaVersion
+        - modes
       properties:
-        dueNow:
-          type: integer
-        totalWords:
-          type: integer
-        newWords:
-          type: integer
-        learningWords:
-          type: integer
-        reviewWords:
-          type: integer
-        masteredWords:
-          type: integer
+        dueNow: { type: integer }
+        dueWords: { type: integer }
+        duePhrases: { type: integer }
+        totalWords: { type: integer }
+        totalPhrases: { type: integer }
+        newWords: { type: integer }
+        learningWords: { type: integer }
+        reviewWords: { type: integer }
+        masteredWords: { type: integer }
+        masteredPhrases: { type: integer }
         reviewsToday:
           type: integer
+          description: All persisted learning activity, including study exposure.
         successfulToday:
           type: integer
-        reviewsTotal:
+          description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.
+        objectiveReviewsToday:
           type: integer
-        dailyGoal:
+          description: Verified schema-v2 recall and choice attempts; study and legacy events are excluded.
+        objectiveSuccessfulToday:
           type: integer
-        currentStreak:
+        reviewsTotal: { type: integer }
+        dailyGoal: { type: integer }
+        currentStreak: { type: integer }
+        longestStreak: { type: integer }
+        retainedItemsWeek: { type: integer }
+        retainedWordsWeek: { type: integer }
+        retainedPhrasesWeek: { type: integer }
+        eventSchemaVersion:
           type: integer
-        longestStreak:
-          type: integer
+          const: 2
+        modes:
+          $ref: "#/components/schemas/ProgressModes"
         nextDueAt:
           type: [string, "null"]
           format: date-time
+    ModeProgress:
+      type: object
+      required: [attemptsToday, successfulToday, attemptsTotal, successfulTotal]
+      properties:
+        attemptsToday: { type: integer }
+        successfulToday: { type: integer }
+        attemptsTotal: { type: integer }
+        successfulTotal: { type: integer }
+    ProgressModes:
+      type: object
+      required: [study, recall, choice, legacy]
+      properties:
+        study:
+          $ref: "#/components/schemas/ModeProgress"
+        recall:
+          $ref: "#/components/schemas/ModeProgress"
+        choice:
+          $ref: "#/components/schemas/ModeProgress"
+        legacy:
+          $ref: "#/components/schemas/ModeProgress"
     Error:
       type: object
       required: [error]

@@ -6,7 +6,7 @@ import (
 )
 
 func TestScheduleReviewAgainReturnsSoon(t *testing.T) {
-	schedule, err := ScheduleReview(ReviewState{Easiness: 2.5, IntervalDays: 6, Repetitions: 2}, RatingAgain)
+	schedule, err := ScheduleReview(ReviewState{Status: "review", Easiness: 2.5, IntervalDays: 6, Repetitions: 2}, RatingAgain)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,7 +19,7 @@ func TestScheduleReviewAgainReturnsSoon(t *testing.T) {
 }
 
 func TestScheduleReviewKnownExpandsInterval(t *testing.T) {
-	first, err := ScheduleReview(ReviewState{Easiness: 2.5}, RatingKnown)
+	first, err := ScheduleReview(ReviewState{Status: "new", Easiness: 2.5}, RatingKnown)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestScheduleReviewKnownExpandsInterval(t *testing.T) {
 	}
 
 	second, err := ScheduleReview(ReviewState{
-		Easiness: first.Easiness, IntervalDays: first.IntervalDays, Repetitions: first.Repetitions,
+		Status: "review", Easiness: first.Easiness, IntervalDays: first.IntervalDays, Repetitions: first.Repetitions,
 	}, RatingKnown)
 	if err != nil {
 		t.Fatal(err)
@@ -39,12 +39,45 @@ func TestScheduleReviewKnownExpandsInterval(t *testing.T) {
 }
 
 func TestScheduleReviewAlmostUsesModerateInterval(t *testing.T) {
-	schedule, err := ScheduleReview(ReviewState{Easiness: 2.5, IntervalDays: 6, Repetitions: 2}, RatingAlmost)
+	schedule, err := ScheduleReview(ReviewState{Status: "review", Easiness: 2.5, IntervalDays: 6, Repetitions: 2}, RatingAlmost)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if schedule.Grade != 3 || schedule.IntervalDays != 9 || schedule.Status != "review" {
 		t.Fatalf("unexpected schedule: %+v", schedule)
+	}
+}
+
+func TestScheduleStudyDoesNotAdvanceRecallState(t *testing.T) {
+	state := ReviewState{Status: "review", Easiness: 2.7, IntervalDays: 14, Repetitions: 4, DueAt: time.Now().UTC().Add(-time.Hour)}
+	schedule, err := ScheduleAttempt(state, RatingKnown, AnswerModeStudy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if schedule.Status != state.Status || schedule.Easiness != state.Easiness || schedule.IntervalDays != state.IntervalDays || schedule.Repetitions != state.Repetitions {
+		t.Fatalf("study mutated recall state: state=%+v schedule=%+v", state, schedule)
+	}
+	if !schedule.PreserveDue {
+		t.Fatalf("study of an existing item must preserve due schedule: %+v", schedule)
+	}
+	if schedule.DueAfter != 24*time.Hour || schedule.Grade != 5 {
+		t.Fatalf("unexpected study schedule: %+v", schedule)
+	}
+}
+
+func TestScheduleStudyIntroducesNewItemWithoutMastering(t *testing.T) {
+	schedule, err := ScheduleAttempt(ReviewState{Status: "new", Easiness: 2.5}, RatingKnown, AnswerModeStudy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if schedule.Status != "learning" || schedule.Repetitions != 0 || schedule.IntervalDays != 0 || schedule.PreserveDue {
+		t.Fatalf("new study schedule = %+v", schedule)
+	}
+}
+
+func TestScheduleAttemptRejectsUnknownMode(t *testing.T) {
+	if _, err := ScheduleAttempt(ReviewState{}, RatingKnown, AnswerMode("video")); err != ErrInvalidAnswerMode {
+		t.Fatalf("error = %v, want ErrInvalidAnswerMode", err)
 	}
 }
 

@@ -30,23 +30,26 @@ func (r *Repository) ReviewWord(
 
 	var state ReviewState
 	if err := tx.QueryRow(ctx, `
-		select easiness::float8, interval_days, repetitions
+		select status, easiness::float8, interval_days, repetitions, due_at
 		from user_words
 		where user_id = $1::uuid and word_id = $2
 		for update
-	`, userID, wordID).Scan(&state.Easiness, &state.IntervalDays, &state.Repetitions); err != nil {
+	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions, &state.DueAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ReviewResult{}, ErrWordNotFound
 		}
 		return ReviewResult{}, fmt.Errorf("lock user learning item: %w", err)
 	}
 
-	schedule, err := ScheduleReview(state, request.Rating)
+	schedule, err := ScheduleAttempt(state, request.Rating, request.AnswerMode)
 	if err != nil {
 		return ReviewResult{}, err
 	}
 	now := time.Now().UTC()
-	dueAt := now.Add(schedule.DueAfter)
+	dueAt := state.DueAt
+	if !schedule.PreserveDue {
+		dueAt = now.Add(schedule.DueAfter)
+	}
 
 	if _, err := tx.Exec(ctx, `
 		update user_words
@@ -64,9 +67,10 @@ func (r *Repository) ReviewWord(
 
 	if _, err := tx.Exec(ctx, `
 		insert into review_events(
-			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct
-		) values ($1::uuid, $2, $3, $4, $5, $6, nullif($7, ''), $8)
-	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct); err != nil {
+			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
+			answer_revealed, event_schema_version
+		) values ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, 2)
+	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct, request.AnswerRevealed); err != nil {
 		return ReviewResult{}, fmt.Errorf("insert review event: %w", err)
 	}
 
@@ -87,7 +91,7 @@ func (r *Repository) ReviewWord(
 
 func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffsetMinutes int) (ProgressSummary, error) {
 	timezoneOffsetMinutes = clampOffset(timezoneOffsetMinutes)
-	var result ProgressSummary
+	result := ProgressSummary{EventSchemaVersion: 2}
 
 	if err := r.pool.QueryRow(ctx, `
 		select count(*) filter (where word.kind = 'word')::int,
@@ -121,22 +125,60 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 	}
 
 	if err := r.pool.QueryRow(ctx, `
-		select count(*) filter (
-		           where (reviewed_at - make_interval(mins => $2))::date =
-		                 (now() - make_interval(mins => $2))::date
-		       )::int,
-		       count(*) filter (
-		           where grade >= 4 and
-		                 (reviewed_at - make_interval(mins => $2))::date =
-		                 (now() - make_interval(mins => $2))::date
-		       )::int,
-		       count(*)::int
-		from review_events
-		where user_id = $1::uuid
+		with events as (
+			select answer_mode, correct, grade, event_schema_version,
+			       (reviewed_at - make_interval(mins => $2))::date =
+			       (now() - make_interval(mins => $2))::date as is_today
+			from review_events
+			where user_id = $1::uuid
+		)
+		select count(*) filter (where is_today)::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode in ('recall', 'choice'))::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode in ('recall', 'choice') and correct is true)::int,
+		       count(*) filter (where is_today and (
+		           (event_schema_version = 2 and answer_mode in ('recall', 'choice') and correct is true)
+		           or (event_schema_version = 1 and grade >= 4)
+		       ))::int,
+		       count(*)::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'study')::int,
+		       0::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'study')::int,
+		       0::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'recall')::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'recall' and correct is true)::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'recall')::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'recall' and correct is true)::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'choice')::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'choice' and correct is true)::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'choice')::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'choice' and correct is true)::int,
+		       count(*) filter (where is_today and event_schema_version = 1)::int,
+		       count(*) filter (where is_today and event_schema_version = 1 and grade >= 4)::int,
+		       count(*) filter (where event_schema_version = 1)::int,
+		       count(*) filter (where event_schema_version = 1 and grade >= 4)::int
+		from events
 	`, userID, timezoneOffsetMinutes).Scan(
 		&result.ReviewsToday,
+		&result.ObjectiveReviewsToday,
+		&result.ObjectiveSuccessfulToday,
 		&result.SuccessfulToday,
 		&result.ReviewsTotal,
+		&result.Modes.Study.AttemptsToday,
+		&result.Modes.Study.SuccessfulToday,
+		&result.Modes.Study.AttemptsTotal,
+		&result.Modes.Study.SuccessfulTotal,
+		&result.Modes.Recall.AttemptsToday,
+		&result.Modes.Recall.SuccessfulToday,
+		&result.Modes.Recall.AttemptsTotal,
+		&result.Modes.Recall.SuccessfulTotal,
+		&result.Modes.Choice.AttemptsToday,
+		&result.Modes.Choice.SuccessfulToday,
+		&result.Modes.Choice.AttemptsTotal,
+		&result.Modes.Choice.SuccessfulTotal,
+		&result.Modes.Legacy.AttemptsToday,
+		&result.Modes.Legacy.SuccessfulToday,
+		&result.Modes.Legacy.AttemptsTotal,
+		&result.Modes.Legacy.SuccessfulTotal,
 	); err != nil {
 		return ProgressSummary{}, fmt.Errorf("query review progress: %w", err)
 	}
@@ -153,6 +195,9 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		join words word on word.id = current_review.word_id
 		cross join bounds
 		where current_review.user_id = $1::uuid
+		  and current_review.event_schema_version = 2
+		  and current_review.answer_mode in ('recall', 'choice')
+		  and current_review.correct is true
 		  and current_review.grade = 5
 		  and current_review.reviewed_at >= bounds.week_start
 		  and exists (
@@ -160,6 +205,9 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 			from review_events previous_review
 			where previous_review.user_id = current_review.user_id
 			  and previous_review.word_id = current_review.word_id
+			  and previous_review.event_schema_version = 2
+			  and previous_review.answer_mode in ('recall', 'choice')
+			  and previous_review.correct is true
 			  and previous_review.grade = 5
 			  and previous_review.reviewed_at < bounds.week_start
 		  )

@@ -16,6 +16,7 @@ var (
 	ErrLessonItemNotFound        = errors.New("lesson item was not found")
 	ErrLessonItemAlreadyReviewed = errors.New("lesson item was already reviewed")
 	ErrLessonItemOutOfOrder      = errors.New("lesson item is not the current item")
+	ErrLessonModeMismatch        = errors.New("lesson answer mode does not match session")
 )
 
 func (r *Repository) CreateLesson(
@@ -119,16 +120,20 @@ func (r *Repository) ReviewLessonWord(
 
 	var lockedLessonID string
 	var currentIndex int
+	var lessonMode AnswerMode
 	if err := tx.QueryRow(ctx, `
-		select id::text, current_index
+		select id::text, current_index, study_mode
 		from lesson_sessions
 		where id = $1::uuid and user_id = $2::uuid and status = 'active'
 		for update
-	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex); err != nil {
+	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex, &lessonMode); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock lesson: %w", err)
+	}
+	if lessonMode != request.AnswerMode {
+		return LessonReviewResult{}, ErrLessonModeMismatch
 	}
 
 	var position int
@@ -153,23 +158,26 @@ func (r *Repository) ReviewLessonWord(
 
 	var state ReviewState
 	if err := tx.QueryRow(ctx, `
-		select easiness::float8, interval_days, repetitions
+		select status, easiness::float8, interval_days, repetitions, due_at
 		from user_words
 		where user_id = $1::uuid and word_id = $2
 		for update
-	`, userID, wordID).Scan(&state.Easiness, &state.IntervalDays, &state.Repetitions); err != nil {
+	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions, &state.DueAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrWordNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock user word: %w", err)
 	}
 
-	schedule, err := ScheduleReview(state, request.Rating)
+	schedule, err := ScheduleAttempt(state, request.Rating, request.AnswerMode)
 	if err != nil {
 		return LessonReviewResult{}, err
 	}
 	now := time.Now().UTC()
-	dueAt := now.Add(schedule.DueAfter)
+	dueAt := state.DueAt
+	if !schedule.PreserveDue {
+		dueAt = now.Add(schedule.DueAfter)
+	}
 
 	if _, err := tx.Exec(ctx, `
 		update user_words
@@ -187,9 +195,10 @@ func (r *Repository) ReviewLessonWord(
 
 	if _, err := tx.Exec(ctx, `
 		insert into review_events(
-			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct
-		) values ($1::uuid, $2, $3, $4, $5, $6, nullif($7, ''), $8)
-	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct); err != nil {
+			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
+			answer_revealed, event_schema_version
+		) values ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, 2)
+	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct, request.AnswerRevealed); err != nil {
 		return LessonReviewResult{}, fmt.Errorf("insert review event: %w", err)
 	}
 
