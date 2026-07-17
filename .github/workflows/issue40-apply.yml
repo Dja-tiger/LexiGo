@@ -39,7 +39,40 @@ jobs:
           path.write_text(source.replace(old, new, 1), encoding="utf-8")
           PY
           set -o pipefail
-          python scripts/issue40_apply.py 2>&1 | tee issue40-patch.log
+          {
+            python scripts/issue40_apply.py
+            python - <<'PY'
+          from pathlib import Path
+          path = Path("frontend/components/lexigo-premium-app.tsx")
+          source = path.read_text(encoding="utf-8")
+          old = '''    if (!session || navigation.view !== "learn" || studyMode === "all") {
+              setLessonPreview(null);
+              setPreviewingLesson(false);
+              return;
+            }
+          '''
+          new = '''    if (!session || navigation.view !== "learn" || studyMode === "all") return;
+          '''
+          if source.count(old) != 1:
+              raise SystemExit(f"preview guard occurrences: {source.count(old)}")
+          source = source.replace(old, new, 1)
+          old = '''        setSession(result.activeSession);
+                setLessonPreview(result.data);
+          '''
+          new = '''        setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+                setLessonPreview(result.data);
+          '''
+          if source.count(old) != 1:
+              raise SystemExit(f"preview session update occurrences: {source.count(old)}")
+          source = source.replace(old, new, 1)
+          start = source.find("  function resolveSelectedPhrases")
+          end = source.find("  async function startLesson", start)
+          if start < 0 or end < 0:
+              raise SystemExit("resolveSelectedPhrases block not found")
+          source = source[:start] + source[end:]
+          path.write_text(source, encoding="utf-8")
+          PY
+          } 2>&1 | tee issue40-patch.log
       - name: Upload patch diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
