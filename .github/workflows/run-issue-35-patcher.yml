@@ -19,7 +19,9 @@ jobs:
 
       - name: Execute dedented patch script
         run: |
-          python3 - <<'PY'
+          set -o pipefail
+          {
+            python3 - <<'PY'
           from pathlib import Path
 
           workflow = Path('.github/workflows/apply-issue-35.yml').read_text()
@@ -28,9 +30,18 @@ jobs:
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
           exec(compile(script, 'apply-issue-35.py', 'exec'), {'__name__': '__main__'})
           PY
+            cd backend
+            gofmt -w internal/learning/lesson.go internal/learning/lesson_http.go internal/learning/lesson_repository.go
+          } 2>&1 | tee patch-error.log
 
-          cd backend
-          gofmt -w internal/learning/lesson.go internal/learning/lesson_http.go internal/learning/lesson_repository.go
+      - name: Upload patch diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-35-patch-error
+          path: patch-error.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Commit implementation
         run: |
