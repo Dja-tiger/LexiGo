@@ -55,11 +55,21 @@ jobs:
       - name: Verify frontend
         working-directory: frontend
         run: |
-          npm ci --no-audit --no-fund
-          npm run lint
-          npm run typecheck
-          npm test
-          npm run build
+          set -o pipefail
+          {
+            npm ci --no-audit --no-fund
+            npm run lint
+            npm run typecheck
+            npm test
+            npm run build
+          } 2>&1 | tee ../issue40-frontend.log
+      - name: Upload frontend diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue40-frontend-diagnostics
+          path: issue40-frontend.log
+          if-no-files-found: error
       - name: Verify diff
         run: |
           git diff --check
