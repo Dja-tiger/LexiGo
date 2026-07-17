@@ -656,9 +656,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         resetCardState(resolvedMode);
         setLessonStarted(true);
         setLessonComplete(lessonItems.length === 0);
-    setServerLessonCompleted(false);
-    setServerNextIndex(null);
-    setServerSkippedItems(0);
+        setServerLessonCompleted(false);
+        setServerNextIndex(null);
+        setServerSkippedItems(0);
       }
       navigate({ view: "lesson", source: resolvedSource });
     } catch (requestError) {
