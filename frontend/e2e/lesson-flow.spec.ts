@@ -21,6 +21,8 @@ const PROGRESS = {
   longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0, retainedPhrasesWeek: 0, eventSchemaVersion: 2,
   modes: { study: EMPTY_MODE, recall: EMPTY_MODE, choice: EMPTY_MODE, legacy: EMPTY_MODE },
 };
+const PHRASE = { id: 201, kind: "phrase" as const, slug: "roll-back", lemma: "roll back", translation: "откатить", phonetic: "", partOfSpeech: "phrase", topic: "Release", examples: ["Roll back the release."], note: "", cloze: "roll ____", clozeAnswer: "back", status: "new" };
+
 const WORDS = [
   { id: 101, lemma: "absolute", translation: "абсолютный", phonetic: "/ˈæbsəluːt/", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "new" },
   { id: 102, lemma: "build", translation: "собирать", phonetic: "/bɪld/", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" },
@@ -36,11 +38,11 @@ async function installBaseRoutes(page: Page) {
   await page.context().addCookies([{ name: "lexigo_csrf", value: "e2e-csrf-token", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
 }
 
-async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0): Promise<MockLesson> {
+async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0, itemOverride?: ReturnType<typeof lessonItems>): Promise<MockLesson> {
   let reviewCalls = 0;
   let reviewedItems = 0;
   let version = 1;
-  const selectedItems = lessonItems(itemCount);
+  const selectedItems = itemOverride ?? lessonItems(itemCount);
   const lessonRequests: RequestRecord[] = [];
   const reviewRequests: RequestRecord[] = [];
   await installBaseRoutes(page);
@@ -53,6 +55,15 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
     if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
+    if (path === "/api/v1/lessons/preview") {
+      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
+      const phraseCount = selectedItems.filter((item) => item.kind === "phrase").length;
+      const wordCount = selectedItems.length - phraseCount;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30",
+        composition: { total: selectedItems.length, words: wordCount, phrases: phraseCount, due: selectedItems.length, new: 0, scheduled: 0, availableWords: wordCount, availablePhrases: phraseCount, ...(phraseCount === 0 ? { fallback: "words_only" } : {}) },
+      }) });
+    }
     if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "active lesson was not found" } }) });
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const payload = request.postDataJSON() as RequestRecord;
@@ -95,7 +106,8 @@ async function openLesson(page: Page, mode: LessonMode) {
 test("study: persists exposure with the current lesson version", async ({ page }) => {
   const api = await installLessonAPI(page, 2, 350);
   await openLesson(page, "study");
-  expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "study" });
+  expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "study", source: "mixed" });
+  expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
   await expect(page.getByRole("button", { name: "← Предыдущее недоступно", exact: true })).toBeDisabled();
 
   const known = page.getByRole("button", { name: "Знал", exact: true });
@@ -187,4 +199,39 @@ test("stale device resynchronizes to the server position without duplicate revie
   await second.getByRole("button", { name: "Продолжить урок", exact: true }).click();
   await expect(second.getByText("Слово 2 из 2")).toBeVisible();
   expect(state.reviewEvents).toBe(1);
+});
+
+
+test("mixed practice previews and opens both words and phrases", async ({ page }) => {
+  const mixedItems = [
+    lessonItems(1)[0],
+    { ...PHRASE, position: 1 },
+  ];
+  const api = await installLessonAPI(page, 2, 0, mixedItems);
+  await page.goto("/?view=learn");
+  await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
+  await page.getByRole("button", { name: /Вспомнить самому/ }).click();
+  await page.getByRole("button", { name: "Начать урок", exact: true }).click();
+  expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
+  await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
+  await page.locator("#premium-answer").fill("абсолютный");
+  await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
+  await page.getByRole("button", { name: "Знал", exact: true }).click();
+  await page.getByRole("button", { name: "Дальше", exact: true }).click();
+  await expect(page.getByText("Техническая фраза", { exact: true })).toBeVisible();
+});
+
+
+test("home review CTA requests a server-composed mixed due queue", async ({ page }) => {
+  const mixedItems = [
+    lessonItems(1)[0],
+    { ...PHRASE, position: 1 },
+  ];
+  const api = await installLessonAPI(page, 2, 0, mixedItems);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Начать повторение", exact: true }).click();
+  await expect(page).toHaveURL(/view=lesson/);
+  expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
+  expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
+  await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
 });

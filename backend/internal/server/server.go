@@ -47,6 +47,7 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
 	mux.Handle("POST /api/v1/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewWord)))
+	mux.Handle("POST /api/v1/lessons/preview", authenticated(http.HandlerFunc(learningHandler.PreviewLesson)))
 	mux.Handle("POST /api/v1/lessons", authenticated(http.HandlerFunc(learningHandler.CreateLesson)))
 	mux.Handle("GET /api/v1/lessons/active", authenticated(http.HandlerFunc(learningHandler.ActiveLesson)))
 	mux.Handle("DELETE /api/v1/lessons/{lessonID}", authenticated(http.HandlerFunc(learningHandler.DiscardLesson)))

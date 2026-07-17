@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.5.0
+  version: 0.6.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -196,6 +196,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Слово не назначено текущему пользователю.
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/lessons/preview:
+    post:
+      operationId: previewLesson
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonPreviewRequest"
+      responses:
+        "200":
+          description: Детерминированный состав будущего урока без создания session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonPreview"
         "422":
           $ref: "#/components/responses/ValidationError"
   /api/v1/lessons:
@@ -547,7 +568,7 @@ components:
           format: date-time
     LessonCreateRequest:
       type: object
-      required: [source, studyMode, lessonSize, wordIds]
+      required: [source, studyMode, lessonSize]
       properties:
         source: { type: string }
         studyMode:
@@ -557,6 +578,7 @@ components:
           type: string
           enum: ["15", "30", "60", all]
         wordIds:
+          description: Optional explicit selection for manual phrase/topic lessons. Omit to use the server composer.
           type: array
           minItems: 1
           maxItems: 1000
@@ -564,6 +586,43 @@ components:
           items:
             type: integer
             format: int64
+    LessonPreviewRequest:
+      type: object
+      required: [source, studyMode, lessonSize]
+      properties:
+        source: { type: string }
+        studyMode:
+          type: string
+          enum: [study, recall, choice]
+        lessonSize:
+          type: string
+          enum: ["15", "30", "60", all]
+    LessonComposition:
+      type: object
+      required: [total, words, phrases, due, new, scheduled, availableWords, availablePhrases]
+      properties:
+        total: { type: integer, minimum: 0 }
+        words: { type: integer, minimum: 0 }
+        phrases: { type: integer, minimum: 0 }
+        due: { type: integer, minimum: 0 }
+        new: { type: integer, minimum: 0 }
+        scheduled: { type: integer, minimum: 0 }
+        availableWords: { type: integer, minimum: 0 }
+        availablePhrases: { type: integer, minimum: 0 }
+        fallback:
+          type: string
+          enum: [words_only, phrases_only, empty]
+    LessonPreview:
+      type: object
+      required: [source, studyMode, lessonSize, composition]
+      properties:
+        source: { type: string }
+        studyMode:
+          type: string
+          enum: [study, recall, choice]
+        lessonSize: { type: string }
+        composition:
+          $ref: "#/components/schemas/LessonComposition"
     LessonItem:
       type: object
       required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, examples, note, status]

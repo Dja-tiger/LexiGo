@@ -11,6 +11,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func (h *Handler) PreviewLesson(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.UserID(r.Context())
+	if !ok {
+		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
+		return
+	}
+	var request LessonPreviewRequest
+	if err := httpx.DecodeJSON(w, r, &request); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
+		return
+	}
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize) {
+		return
+	}
+	preview, err := h.repository.PreviewLesson(r.Context(), userID, request)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "preview lesson failed", "user_id", userID, "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, preview)
+}
+
 func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	userID, ok := httpx.UserID(r.Context())
 	if !ok {
@@ -23,34 +46,44 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
 		return
 	}
-	if !validLessonSource(request.Source) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize) {
 		return
 	}
-	if !validAnswerMode(request.StudyMode) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be study, recall or choice")
-		return
-	}
-	if !validLessonSize(request.LessonSize) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30, 60 or all")
-		return
-	}
-	if len(request.WordIDs) == 0 || len(request.WordIDs) > 1000 || !uniquePositiveWordIDs(request.WordIDs) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_word_ids", "wordIds must contain between 1 and 1000 unique positive ids")
+	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 1000 || !uniquePositiveWordIDs(request.WordIDs)) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_word_ids", "wordIds must be omitted or contain between 1 and 1000 unique positive ids")
 		return
 	}
 
 	lesson, err := h.repository.CreateLesson(r.Context(), userID, request)
 	if err != nil {
-		if errors.Is(err, ErrInvalidLessonWords) {
+		switch {
+		case errors.Is(err, ErrInvalidLessonWords):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_words", "all lesson items must be assigned to the current user")
-			return
+		case errors.Is(err, ErrLessonQueueEmpty):
+			httpx.WriteError(w, http.StatusUnprocessableEntity, "lesson_queue_empty", "no learning items are available for this lesson configuration")
+		default:
+			slog.ErrorContext(r.Context(), "create lesson failed", "user_id", userID, "error", err)
+			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		}
-		slog.ErrorContext(r.Context(), "create lesson failed", "user_id", userID, "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, lesson)
+}
+
+func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode AnswerMode, lessonSize string) bool {
+	if !validLessonSource(source) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
+		return false
+	}
+	if !validAnswerMode(studyMode) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be study, recall or choice")
+		return false
+	}
+	if !validLessonSize(lessonSize) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30, 60 or all")
+		return false
+	}
+	return true
 }
 
 func (h *Handler) ActiveLesson(w http.ResponseWriter, r *http.Request) {
