@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestComposeMixedLessonAlternatesKindsAndPrioritizesWithinEachKind(t *testing.T) {
+func TestComposeMixedLessonAlternatesWithinPriorityTiers(t *testing.T) {
 	now := time.Date(2026, 7, 17, 10, 0, 0, 0, time.UTC)
 	candidates := []lessonCandidate{
 		{WordID: 6, Kind: "phrase", Status: "review", DueAt: now.Add(3 * time.Hour)},
@@ -31,16 +31,41 @@ func TestComposeMixedLessonAlternatesKindsAndPrioritizesWithinEachKind(t *testin
 	}
 }
 
-func TestComposeMixedLessonStartsWithKindThatHasMoreDueItems(t *testing.T) {
-	now := time.Now().UTC()
+func TestComposeMixedLessonNeverSelectsNewBeforeRemainingDue(t *testing.T) {
+	now := time.Date(2026, 7, 17, 10, 0, 0, 0, time.UTC)
 	candidates := []lessonCandidate{
 		{WordID: 1, Kind: "word", Status: "new", DueAt: now.Add(time.Hour)},
 		{WordID: 2, Kind: "phrase", Status: "review", DueAt: now.Add(-2 * time.Hour), Due: true},
 		{WordID: 3, Kind: "phrase", Status: "review", DueAt: now.Add(-time.Hour), Due: true},
 	}
+
+	selected, composition := composeLessonCandidates(candidates, "mixed", 3)
+	ids := make([]int64, 0, len(selected))
+	for _, candidate := range selected {
+		ids = append(ids, candidate.WordID)
+	}
+	want := []int64{2, 3, 1}
+	if !reflect.DeepEqual(ids, want) {
+		t.Fatalf("selected ids = %v, want %v", ids, want)
+	}
+	if composition.Due != 2 || composition.New != 1 {
+		t.Fatalf("unexpected composition: %+v", composition)
+	}
+}
+
+func TestComposeMixedLessonContinuesAlternationAcrossTierBoundary(t *testing.T) {
+	now := time.Date(2026, 7, 17, 10, 0, 0, 0, time.UTC)
+	candidates := []lessonCandidate{
+		{WordID: 1, Kind: "word", Status: "review", DueAt: now.Add(-time.Hour), Due: true},
+		{WordID: 2, Kind: "phrase", Status: "new", DueAt: now.Add(time.Hour)},
+		{WordID: 3, Kind: "word", Status: "new", DueAt: now.Add(2 * time.Hour)},
+	}
+
 	selected, _ := composeLessonCandidates(candidates, "mixed", 3)
-	if len(selected) != 3 || selected[0].Kind != "phrase" || selected[1].Kind != "word" || selected[2].Kind != "phrase" {
-		t.Fatalf("unexpected order: %+v", selected)
+	ids := []int64{selected[0].WordID, selected[1].WordID, selected[2].WordID}
+	want := []int64{1, 2, 3}
+	if !reflect.DeepEqual(ids, want) {
+		t.Fatalf("selected ids = %v, want %v", ids, want)
 	}
 }
 
