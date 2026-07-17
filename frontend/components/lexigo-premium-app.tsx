@@ -21,8 +21,11 @@ import {
   type WordSection,
 } from "../lib/learning";
 import {
+  isRestorableNavigation,
   navigationURL,
+  NAVIGATION_STORAGE_KEY,
   parseNavigation,
+  parseStoredNavigation,
   PRIMARY_NAVIGATION,
   type AppView,
   type NavigationTarget,
@@ -303,6 +306,8 @@ function CollectionCard({
     <button
       type="button"
       data-lexigo-collection={definition.source}
+      data-lexigo-source={definition.source}
+      data-lexigo-dictionary-source={variant === "library" ? definition.source : undefined}
       className={`lx-themed-${variant} lx-collection-${definition.source}${selected ? " selected" : ""}`}
       aria-pressed={variant === "selector" ? selected : undefined}
       onClick={onSelect}
@@ -368,6 +373,31 @@ function localizeAPIMessage(message: string): string {
     return "Неверный email или пароль. Проверьте данные и попробуйте снова.";
   }
   return message;
+}
+
+function isStandaloneDisplayMode(): boolean {
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+  return navigatorWithStandalone.standalone === true
+    || window.matchMedia?.("(display-mode: standalone)").matches === true;
+}
+
+function readPersistedNavigation(): NavigationTarget | null {
+  try {
+    const target = parseStoredNavigation(window.localStorage.getItem(NAVIGATION_STORAGE_KEY));
+    if (!target) window.localStorage.removeItem(NAVIGATION_STORAGE_KEY);
+    return target;
+  } catch {
+    return null;
+  }
+}
+
+function persistNavigation(target: NavigationTarget) {
+  if (!isRestorableNavigation(target)) return;
+  try {
+    window.localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(target));
+  } catch {
+    // URL navigation remains authoritative when standalone storage is restricted.
+  }
 }
 
 class APIError extends Error {
@@ -542,15 +572,27 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const reviewInFlightRef = useRef(false);
 
   useEffect(() => {
-    const syncNavigation = () => {
-      const next = parseNavigation(window.location.search);
+    const applyNavigation = (next: NavigationTarget) => {
       setNavigation(next);
       if (next.source) setSource(next.source);
+      persistNavigation(next);
     };
-    syncNavigation();
-    window.addEventListener("popstate", syncNavigation);
+    const syncNavigationFromURL = () => applyNavigation(parseNavigation(window.location.search));
+
+    const explicitNavigation = window.location.search.length > 0;
+    const restored = !explicitNavigation && isStandaloneDisplayMode()
+      ? readPersistedNavigation()
+      : null;
+    if (restored) {
+      window.history.replaceState({ lexigo: true, ...restored }, "", navigationURL(restored));
+      applyNavigation(restored);
+    } else {
+      syncNavigationFromURL();
+    }
+
+    window.addEventListener("popstate", syncNavigationFromURL);
     return () => {
-      window.removeEventListener("popstate", syncNavigation);
+      window.removeEventListener("popstate", syncNavigationFromURL);
     };
   }, []);
 
@@ -634,6 +676,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     else window.history.pushState({ lexigo: true, ...target }, "", url);
     setNavigation(target);
     if (target.source) setSource(target.source);
+    persistNavigation(target);
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1320,7 +1363,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             <div className="lx-block-heading"><span>2</span><div><strong>Выберите раздел</strong><small>Можно начать со всех слов или сфокусироваться на части речи</small></div></div>
             <div className="lx-source-selector">
               {SOURCE_OPTIONS.map((option) => (
-                <button key={option.value} type="button" className={source === option.value ? "selected" : ""} onClick={() => setSource(option.value)}>
+                <button key={option.value} type="button" data-lexigo-source={option.value} aria-pressed={source === option.value} className={source === option.value ? "selected" : ""} onClick={() => setSource(option.value)}>
                   <span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span>
                   <div><strong>{option.label}</strong><small>{option.hint}</small></div>
                   <b>{option.count}</b>
@@ -1371,7 +1414,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       <>
         <section className="lx-page-heading"><div><span>СЛОВАРЬ</span><h1>Материалы, организованные по учебной задаче</h1><p>{progress?.totalWords ?? WORD_CATALOG_COUNT} слов и {progress?.totalPhrases ?? DEFAULT_PHRASE_CATALOG.length} технических фраз с общей системой повторений.</p></div><div className="lx-heading-badge"><Icon name="library"/><span>{progress ? `${progress.masteredWords + progress.masteredPhrases} освоено` : "Откройте раздел"}</span></div></section>
         <section className="lx-library-grid">
-          {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{option.count} {option.value === "phrases" ? "фразы" : "слов"}</small><p>{option.hint}</p><em>Открыть <Icon name="arrow" size={15}/></em></button>)}
+          {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" data-lexigo-dictionary-source={option.value} aria-label={`Открыть раздел: ${option.label}`} onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{option.count} {option.value === "phrases" ? "фразы" : "слов"}</small><p>{option.hint}</p><em>Открыть <Icon name="arrow" size={15}/></em></button>)}
           {COLLECTIONS.map((definition) => (
             <CollectionCard
               key={definition.source}
