@@ -29,6 +29,10 @@ jobs:
           script = workflow.split(marker, 1)[1].split("\n          PY", 1)[0]
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
           script = script.replace(
+              "source = file.read_text()\n    if source.count(old) != 1:",
+              "source = file.read_text()\n    if source.count(old) == 0 and path.endswith('.tsx'):\n        old = old.replace('\\t', '  ')\n        new = new.replace('\\t', '  ')\n    if source.count(old) != 1:",
+          )
+          script = script.replace(
               "raise SystemExit(f'{path}: expected one target, found {source.count(old)}')",
               "raise SystemExit(f'{path}: expected one target, found {source.count(old)}; target={old[:120]!r}')",
           )
