@@ -32,6 +32,14 @@ type lessonCompositionPayload struct {
 	Fallback         string `json:"fallback"`
 }
 
+type mixedLessonPayload struct {
+	ID    string `json:"id"`
+	Items []struct {
+		ID   int64  `json:"id"`
+		Kind string `json:"kind"`
+	} `json:"items"`
+}
+
 func TestMixedLessonComposerPreviewCreateAndFallback(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
@@ -78,48 +86,41 @@ func TestMixedLessonComposerPreviewCreateAndFallback(t *testing.T) {
 	if err := pg.QueryRow(ctx, "select id::text from users where email = $1", email).Scan(&userID); err != nil {
 		t.Fatalf("query user id: %v", err)
 	}
-	var wordOne, wordTwo, phraseOne, phraseTwo int64
-	if err := pg.QueryRow(ctx, `select min(id), max(id) filter (where id = (select min(id) from words where kind = 'word') + 1) from words where kind = 'word'`).Scan(&wordOne, &wordTwo); err != nil || wordTwo == 0 {
-		rows, queryErr := pg.Query(ctx, "select id from words where kind = 'word' order by id limit 2")
+	loadIDs := func(kind string, limit int) []int64 {
+		t.Helper()
+		rows, queryErr := pg.Query(ctx, "select id from words where kind = $1 order by id limit $2", kind, limit)
 		if queryErr != nil {
-			t.Fatalf("query word ids: %v", queryErr)
+			t.Fatalf("query %s ids: %v", kind, queryErr)
 		}
-		defer rows.Close()
-		ids := make([]int64, 0, 2)
+		ids := make([]int64, 0, limit)
 		for rows.Next() {
 			var id int64
 			if scanErr := rows.Scan(&id); scanErr != nil {
-				t.Fatalf("scan word id: %v", scanErr)
+				rows.Close()
+				t.Fatalf("scan %s id: %v", kind, scanErr)
 			}
 			ids = append(ids, id)
 		}
-		if len(ids) != 2 {
-			t.Fatalf("word ids = %v", ids)
+		if rowsErr := rows.Err(); rowsErr != nil {
+			rows.Close()
+			t.Fatalf("iterate %s ids: %v", kind, rowsErr)
 		}
-		wordOne, wordTwo = ids[0], ids[1]
-	}
-	rows, err := pg.Query(ctx, "select id from words where kind = 'phrase' order by id limit 2")
-	if err != nil {
-		t.Fatalf("query phrase ids: %v", err)
-	}
-	phraseIDs := make([]int64, 0, 2)
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			t.Fatalf("scan phrase id: %v", err)
+		rows.Close()
+		if len(ids) != limit {
+			t.Fatalf("%s ids = %v, want %d", kind, ids, limit)
 		}
-		phraseIDs = append(phraseIDs, id)
+		return ids
 	}
-	rows.Close()
-	if len(phraseIDs) != 2 {
-		t.Fatalf("phrase ids = %v", phraseIDs)
-	}
-	phraseOne, phraseTwo = phraseIDs[0], phraseIDs[1]
+	wordIDs := loadIDs("word", 2)
+	phraseIDs := loadIDs("phrase", 3)
+	wordOne, wordTwo := wordIDs[0], wordIDs[1]
+	phraseOne, phraseTwo := phraseIDs[0], phraseIDs[1]
 
 	if _, err := pg.Exec(ctx, "update user_words set due_at = now() + interval '30 days', status = 'new' where user_id = $1::uuid", userID); err != nil {
 		t.Fatalf("move queue to future: %v", err)
 	}
-	if _, err := pg.Exec(ctx, "update user_words set due_at = now() - interval '2 hours', status = 'review' where user_id = $1::uuid and word_id = any($2::bigint[])", userID, []int64{wordOne, phraseOne}); err != nil {
+	dueIDs := []int64{wordOne, phraseOne, phraseTwo}
+	if _, err := pg.Exec(ctx, "update user_words set due_at = now() - interval '2 hours', status = 'review' where user_id = $1::uuid and word_id = any($2::bigint[])", userID, dueIDs); err != nil {
 		t.Fatalf("mark due candidates: %v", err)
 	}
 
@@ -129,25 +130,22 @@ func TestMixedLessonComposerPreviewCreateAndFallback(t *testing.T) {
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/preview", registered.Tokens.AccessToken, map[string]any{
 		"source": "mixed", "studyMode": "study", "lessonSize": "15",
 	}, http.StatusOK, &preview)
-	if preview.Composition.Total != 15 || preview.Composition.Words != 8 || preview.Composition.Phrases != 7 || preview.Composition.Due != 2 || preview.Composition.New != 13 || preview.Composition.Fallback != "" {
+	if preview.Composition.Total != 15 || preview.Composition.Words != 7 || preview.Composition.Phrases != 8 || preview.Composition.Due != 3 || preview.Composition.New != 12 || preview.Composition.Fallback != "" {
 		t.Fatalf("unexpected mixed preview: %+v", preview.Composition)
 	}
 
-	var lesson struct {
-		ID    string `json:"id"`
-		Items []struct {
-			ID   int64  `json:"id"`
-			Kind string `json:"kind"`
-		} `json:"items"`
-	}
+	var lesson mixedLessonPayload
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
 		"source": "mixed", "studyMode": "study", "lessonSize": "15",
 	}, http.StatusCreated, &lesson)
 	if lesson.ID == "" || len(lesson.Items) != 15 {
 		t.Fatalf("unexpected lesson: %+v", lesson)
 	}
-	if lesson.Items[0].ID != wordOne || lesson.Items[0].Kind != "word" || lesson.Items[1].ID != phraseOne || lesson.Items[1].Kind != "phrase" {
-		t.Fatalf("due candidates were not first and alternating: %+v", lesson.Items[:2])
+	wantDueOrder := []int64{phraseOne, wordOne, phraseTwo}
+	for index, wordID := range wantDueOrder {
+		if lesson.Items[index].ID != wordID {
+			t.Fatalf("due item %d = %d, want %d; items=%+v", index, lesson.Items[index].ID, wordID, lesson.Items[:3])
+		}
 	}
 	for index := 1; index < len(lesson.Items); index++ {
 		if lesson.Items[index].Kind == lesson.Items[index-1].Kind {
@@ -158,15 +156,26 @@ func TestMixedLessonComposerPreviewCreateAndFallback(t *testing.T) {
 	if _, err := pg.Exec(ctx, "update user_words set due_at = now() + interval '30 days' where user_id = $1::uuid and word_id in (select id from words where kind = 'phrase')", userID); err != nil {
 		t.Fatalf("move phrases out of due queue: %v", err)
 	}
-	if _, err := pg.Exec(ctx, "update user_words set due_at = now() - interval '1 hour' where user_id = $1::uuid and word_id = $2", userID, wordTwo); err != nil {
+	if _, err := pg.Exec(ctx, "update user_words set due_at = now() - interval '1 hour', status = 'review' where user_id = $1::uuid and word_id = $2", userID, wordTwo); err != nil {
 		t.Fatalf("mark word due: %v", err)
 	}
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/preview", registered.Tokens.AccessToken, map[string]any{
 		"source": "mixed", "studyMode": "recall", "lessonSize": "15",
 	}, http.StatusOK, &preview)
-	if preview.Composition.Total < 1 || preview.Composition.Words < 1 || preview.Composition.Phrases != 0 || preview.Composition.Fallback != "words_only" {
-		t.Fatalf("unexpected words-only fallback: %+v", preview.Composition)
+	if preview.Composition.Total != 2 || preview.Composition.Words != 2 || preview.Composition.Phrases != 0 || preview.Composition.Due != 2 || preview.Composition.Fallback != "words_only" {
+		t.Fatalf("unexpected words-only fallback preview: %+v", preview.Composition)
 	}
 
-	_ = phraseTwo
+	var fallbackLesson mixedLessonPayload
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
+		"source": "mixed", "studyMode": "recall", "lessonSize": "15",
+	}, http.StatusCreated, &fallbackLesson)
+	if len(fallbackLesson.Items) != 2 {
+		t.Fatalf("fallback lesson size = %d, want 2", len(fallbackLesson.Items))
+	}
+	for _, item := range fallbackLesson.Items {
+		if item.Kind != "word" {
+			t.Fatalf("fallback lesson contains non-word item: %+v", fallbackLesson.Items)
+		}
+	}
 }
