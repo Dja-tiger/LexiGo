@@ -538,9 +538,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
-  const cardStartedAt = useRef(Date.now());
+  const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
-  const speechNoticeTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const syncNavigation = () => {
@@ -562,10 +561,21 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }, 0);
     return () => {
       window.clearTimeout(storageTimer);
-      if (speechNoticeTimer.current !== null) window.clearTimeout(speechNoticeTimer.current);
       window.speechSynthesis?.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    if (!lessonStarted) return;
+    const timer = window.setTimeout(() => setCardStartedAt(Date.now()), 0);
+    return () => window.clearTimeout(timer);
+  }, [lessonStarted, currentIndex, studyMode]);
+
+  useEffect(() => {
+    if (!speechNotice) return;
+    const timer = window.setTimeout(() => setSpeechNotice(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [speechNotice]);
 
   useEffect(() => {
     document.title = `${viewTitle(navigation.view)} · LexiGo`;
@@ -666,11 +676,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   useEffect(() => {
     if (!session || hydratedUserID === session.user.id) return;
     let cancelled = false;
-    void hydrateAccount(session).then(() => {
-      if (!cancelled) setHydratedUserID(session.user.id);
-    });
+    const timer = window.setTimeout(() => {
+      void hydrateAccount(session).then(() => {
+        if (!cancelled) setHydratedUserID(session.user.id);
+      });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [session, hydratedUserID, hydrateAccount]);
 
@@ -695,12 +708,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function showSpeechNotice(message: string, speechError = false) {
-    if (speechNoticeTimer.current !== null) window.clearTimeout(speechNoticeTimer.current);
     setSpeechNotice({ message, error: speechError });
-    speechNoticeTimer.current = window.setTimeout(() => {
-      speechNoticeTimer.current = null;
-      setSpeechNotice(null);
-    }, 2200);
   }
 
   function pronounceText(text: string) {
@@ -763,7 +771,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setShowChoices(!rated && mode === "choice");
     setSelectedAnswer("");
     setTypedAnswer("");
-    cardStartedAt.current = Date.now();
   }
 
   function applyLesson(lesson: LessonSessionResponse) {
@@ -1057,7 +1064,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         method: "POST",
         body: JSON.stringify({
           rating,
-          responseMs: Math.max(0, Date.now() - cardStartedAt.current),
+          responseMs: Math.max(0, Date.now() - cardStartedAt),
           answerMode: studyMode === "choice" ? "choice" : "recall",
           correct,
           timezoneOffsetMinutes: timezoneOffsetMinutes(),
