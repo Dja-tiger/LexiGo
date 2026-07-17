@@ -28,6 +28,10 @@ jobs:
           marker = "python3 - <<'PY'\n"
           script = workflow.split(marker, 1)[1].split("\n          PY", 1)[0]
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
+          script = script.replace(
+              "raise SystemExit(f'{path}: expected one target, found {source.count(old)}')",
+              "raise SystemExit(f'{path}: expected one target, found {source.count(old)}; target={old[:120]!r}')",
+          )
           exec(compile(script, 'apply-issue-35.py', 'exec'), {'__name__': '__main__'})
           PY
             cd backend
