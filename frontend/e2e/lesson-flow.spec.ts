@@ -220,3 +220,18 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   await page.getByRole("button", { name: "Дальше", exact: true }).click();
   await expect(page.getByText("Техническая фраза", { exact: true })).toBeVisible();
 });
+
+
+test("home review CTA requests a server-composed mixed due queue", async ({ page }) => {
+  const mixedItems = [
+    lessonItems(1)[0],
+    { ...PHRASE, position: 1 },
+  ];
+  const api = await installLessonAPI(page, 2, 0, mixedItems);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Начать повторение", exact: true }).click();
+  await expect(page).toHaveURL(/view=lesson/);
+  expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
+  expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
+  await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
+});

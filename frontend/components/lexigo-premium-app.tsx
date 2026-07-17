@@ -1443,6 +1443,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function renderLearn() {
+    const matchingLessonPreview = lessonPreview
+      && lessonPreview.source === source
+      && lessonPreview.studyMode === studyMode
+      && lessonPreview.lessonSize === String(lessonSize)
+      ? lessonPreview
+      : null;
     return (
       <>
         <section className="lx-page-heading">
@@ -1489,14 +1495,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                 <div className="lx-lesson-preview"><span>Состав списка</span><strong>Все доступные элементы раздела</strong><small>Справочный режим не создаёт server lesson session.</small></div>
               ) : !session ? (
                 <div className="lx-lesson-preview"><span>Состав урока</span><strong>Войдите для расчёта</strong><small>Composer учитывает вашу due-очередь и доступные фразы.</small></div>
-              ) : previewingLesson ? (
+              ) : previewingLesson || !matchingLessonPreview ? (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем due, new и доступность обоих типов.</small></div>
-              ) : lessonPreview ? (
-                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(lessonPreview.composition)}</strong><small>{lessonPriorityDescription(lessonPreview.composition)}</small>{lessonCompositionFallbackMessage(lessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(lessonPreview.composition)}</em> : null}</div>
               ) : (
-                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Будет рассчитан сервером</strong><small>Локальный random selection не используется.</small></div>
+                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(matchingLessonPreview.composition)}</strong><small>{lessonPriorityDescription(matchingLessonPreview.composition)}</small>{lessonCompositionFallbackMessage(matchingLessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(matchingLessonPreview.composition)}</em> : null}</div>
               )}
-              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy || previewingLesson || Boolean(session && studyMode !== "all" && lessonPreview?.composition.total === 0)} onClick={() => startLesson()}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
+              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0))} onClick={() => startLesson()}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
             </div>
           </div>
         </section>
