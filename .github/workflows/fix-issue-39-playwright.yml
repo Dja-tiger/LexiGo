@@ -37,6 +37,16 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium webkit
           npm run test:e2e:lesson
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-39-playwright-diagnostics
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: error
+          retention-days: 7
       - name: Commit locator fix
         run: |
           if git diff --quiet; then
