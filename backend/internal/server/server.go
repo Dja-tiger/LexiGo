@@ -39,6 +39,7 @@ func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Cl
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health/live", healthHandler.Live)
 	mux.HandleFunc("GET /health/ready", healthHandler.Ready)
+	mux.HandleFunc("GET /api/v1/catalog/metadata", wordsHandler.Metadata)
 	mux.Handle("POST /api/v1/auth/register", limiter.Middleware(10, http.HandlerFunc(authHandler.Register)))
 	mux.Handle("POST /api/v1/auth/login", limiter.Middleware(20, http.HandlerFunc(authHandler.Login)))
 	mux.Handle("POST /api/v1/auth/refresh", limiter.Middleware(30, http.HandlerFunc(authHandler.Refresh)))
