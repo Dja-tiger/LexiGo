@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ github.head_ref == 'fix/issue-39-lesson-concurrency' && !contains(github.event.pull_request.head.sha, 'never') }}
+    if: ${{ github.head_ref == 'fix/issue-39-lesson-concurrency' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -24,16 +24,27 @@ jobs:
           cache-dependency-path: backend/go.sum
       - name: Apply verified implementation
         run: |
+          set -o pipefail
           if grep -q 'LessonVersion.*json:"lessonVersion"' backend/internal/learning/lesson.go; then
-            echo "Issue 39 implementation is already applied"
+            echo "Issue 39 implementation is already applied" | tee issue39.log
             exit 0
           fi
-          python scripts/run_issue_39.py
-          gofmt -w backend/internal/learning backend/integration
-          git diff --check
+          python scripts/run_issue_39.py 2>&1 | tee issue39.log
+          gofmt -w backend/internal/learning backend/integration 2>&1 | tee -a issue39.log
+          git diff --check 2>&1 | tee -a issue39.log
       - name: Verify backend lesson compilation
         working-directory: backend
-        run: go test ./internal/learning/...
+        run: go test ./internal/learning/... 2>&1 | tee ../issue39-backend.log
+      - name: Upload codemod diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-39-codemod-diagnostics
+          path: |
+            issue39.log
+            issue39-backend.log
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Commit generated implementation
         run: |
           if git diff --quiet; then
