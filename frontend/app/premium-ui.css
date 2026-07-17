@@ -825,7 +825,8 @@ button, input { font: inherit; }
 .lx-answer-reveal blockquote { margin: 5px 0; border-left: 2px solid #745dff; padding-left: 15px; color: #c5ccda; text-align: left; }
 .lx-answer-reveal small { color: #7e8ba2; line-height: 1.5; }
 
-.lx-lesson-navigation { display: flex; gap: 10px; border-top: 1px solid var(--lx-border); padding: 0 16px 16px; }
+.lx-lesson-navigation { display: grid; grid-template-columns: minmax(140px, auto) minmax(220px, 1fr); gap: 10px; border-top: 1px solid var(--lx-border); padding: 0 16px 16px; }
+.lx-lesson-navigation button:disabled, .lx-rating-row button:disabled { cursor: not-allowed; opacity: .48; }
 .lx-rating-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--lx-border); padding: 16px; }
 .lx-rating-row > span { color: #8b98ad; }
 .lx-rating-row > div { display: flex; gap: 8px; }

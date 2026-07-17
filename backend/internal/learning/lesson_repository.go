@@ -15,6 +15,7 @@ var (
 	ErrInvalidLessonWords        = errors.New("lesson contains words not assigned to the user")
 	ErrLessonItemNotFound        = errors.New("lesson item was not found")
 	ErrLessonItemAlreadyReviewed = errors.New("lesson item was already reviewed")
+	ErrLessonItemOutOfOrder      = errors.New("lesson item is not the current item")
 )
 
 func (r *Repository) CreateLesson(
@@ -117,12 +118,13 @@ func (r *Repository) ReviewLessonWord(
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var lockedLessonID string
+	var currentIndex int
 	if err := tx.QueryRow(ctx, `
-		select id::text
+		select id::text, current_index
 		from lesson_sessions
 		where id = $1::uuid and user_id = $2::uuid and status = 'active'
 		for update
-	`, lessonID, userID).Scan(&lockedLessonID); err != nil {
+	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
@@ -144,6 +146,9 @@ func (r *Repository) ReviewLessonWord(
 	}
 	if existingRating != nil {
 		return LessonReviewResult{}, ErrLessonItemAlreadyReviewed
+	}
+	if position != currentIndex {
+		return LessonReviewResult{}, ErrLessonItemOutOfOrder
 	}
 
 	var state ReviewState
@@ -196,16 +201,21 @@ func (r *Repository) ReviewLessonWord(
 		return LessonReviewResult{}, fmt.Errorf("update lesson item: %w", err)
 	}
 
-	var remaining, nextIndex int
+	var remaining, nextIndex, totalItems int
 	if err := tx.QueryRow(ctx, `
 		select count(*) filter (where rating is null)::int,
-		       coalesce(min(position) filter (where rating is null), 0)::int
+		       coalesce(min(position) filter (where rating is null), 0)::int,
+		       count(*)::int
 		from lesson_session_items
 		where session_id = $1::uuid
-	`, lessonID).Scan(&remaining, &nextIndex); err != nil {
+	`, lessonID).Scan(&remaining, &nextIndex, &totalItems); err != nil {
 		return LessonReviewResult{}, fmt.Errorf("calculate lesson progress: %w", err)
 	}
 	completed := remaining == 0
+	reviewedItems := totalItems - remaining
+	if completed {
+		nextIndex = totalItems
+	}
 
 	if _, err := tx.Exec(ctx, `
 		update lesson_sessions
@@ -232,9 +242,12 @@ func (r *Repository) ReviewLessonWord(
 			DueAt:          dueAt,
 			LastReviewedAt: now,
 		},
-		LessonID:           lockedLessonID,
-		LessonCurrentIndex: nextIndex,
-		LessonCompleted:    completed,
+		LessonID:            lockedLessonID,
+		LessonCurrentIndex:  nextIndex,
+		LessonCompleted:     completed,
+		LessonReviewedItems: reviewedItems,
+		LessonSkippedItems:  0,
+		LessonTotalItems:    totalItems,
 	}, nil
 }
 

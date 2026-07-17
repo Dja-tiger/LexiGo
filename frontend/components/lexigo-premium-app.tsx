@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { apiUrl } from "../lib/api";
 import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
+import { decideLessonAdvance, summarizePersistedLesson } from "../lib/lesson-flow";
 import {
   buildAnswerOptions,
   exerciseAnswer,
@@ -80,6 +81,9 @@ type LessonReviewResponse = {
   lessonId: string;
   lessonCurrentIndex: number;
   lessonCompleted: boolean;
+  lessonReviewedItems: number;
+  lessonSkippedItems: number;
+  lessonTotalItems: number;
 };
 
 type ErrorResponse = {
@@ -375,10 +379,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [ratings, setRatings] = useState<Record<string, ReviewRating>>({});
   const [lessonStarted, setLessonStarted] = useState(false);
   const [lessonComplete, setLessonComplete] = useState(false);
+  const [serverLessonCompleted, setServerLessonCompleted] = useState(false);
+  const [serverNextIndex, setServerNextIndex] = useState<number | null>(null);
+  const [serverSkippedItems, setServerSkippedItems] = useState(0);
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
   const cardStartedAt = useRef(Date.now());
+  const reviewInFlightRef = useRef(false);
 
   useEffect(() => {
     const syncNavigation = () => {
@@ -431,9 +439,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       ?? TECHNICAL_PHRASES.find((phrase) => phrase.id === navigation.detail)
     : undefined;
   const ratingValues = Object.values(ratings);
-  const knownCount = ratingValues.filter((rating) => rating === "known").length;
-  const almostCount = ratingValues.filter((rating) => rating === "almost").length;
-  const againCount = ratingValues.filter((rating) => rating === "again").length;
+  const lessonSummary = summarizePersistedLesson(ratings, items.length);
   const overallPercent = progress && progress.totalWords + progress.totalPhrases > 0
     ? Math.round(((progress.masteredWords + progress.masteredPhrases) / (progress.totalWords + progress.totalPhrases)) * 100)
     : 0;
@@ -529,6 +535,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setCurrentIndex(safeIndex);
     resetCardState(presentationMode, Boolean(lessonItems[safeIndex] && restoredRatings[lessonItems[safeIndex].id]));
     setLessonComplete(lessonItems.length === 0);
+    setServerLessonCompleted(false);
+    setServerNextIndex(null);
+    setServerSkippedItems(0);
     setLessonStarted(true);
   }
 
@@ -647,6 +656,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         resetCardState(resolvedMode);
         setLessonStarted(true);
         setLessonComplete(lessonItems.length === 0);
+    setServerLessonCompleted(false);
+    setServerNextIndex(null);
+    setServerSkippedItems(0);
       }
       navigate({ view: "lesson", source: resolvedSource });
     } catch (requestError) {
@@ -728,6 +740,10 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setRatings({});
     setLessonStarted(false);
     setLessonComplete(false);
+    setServerLessonCompleted(false);
+    setServerNextIndex(null);
+    setServerSkippedItems(0);
+    reviewInFlightRef.current = false;
     setError("");
   }
 
@@ -739,32 +755,45 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function moveToIndex(index: number) {
     const target = items[index];
     setCurrentIndex(index);
+    setServerNextIndex(null);
     resetCardState(studyMode, Boolean(target && ratings[target.id]));
   }
 
   function previousItem() {
-    if (currentIndex === 0) {
-      saveAndExitLesson();
-      return;
-    }
+    if (currentIndex === 0 || reviewing) return;
     moveToIndex(currentIndex - 1);
   }
 
   function nextItem() {
-    if (currentIndex + 1 >= items.length) {
-      setLessonComplete(true);
-      if (session) void refreshProgress(session).catch(() => undefined);
+    const decision = decideLessonAdvance({
+      currentIndex,
+      itemCount: items.length,
+      reviewPersisted: Boolean(currentRating),
+      reviewSaving: reviewing,
+      serverCompleted: serverLessonCompleted,
+      serverNextIndex,
+    });
+    if (!decision.canAdvance) {
+      setError(decision.reason === "completion_not_confirmed"
+        ? "Сервер ещё не подтвердил завершение урока. Повторите попытку."
+        : "Сначала сохраните оценку текущей карточки.");
       return;
     }
-    moveToIndex(currentIndex + 1);
+    setError("");
+    if (decision.kind === "results") {
+      setLessonComplete(true);
+      return;
+    }
+    moveToIndex(decision.nextIndex);
   }
 
   async function rateCurrent(rating: ReviewRating) {
-    if (!currentItem || currentRating) return;
+    if (!currentItem || currentRating || reviewInFlightRef.current) return;
     if (!session || currentItem.wordId === undefined) {
       requestAuthentication("lesson");
       return;
     }
+    reviewInFlightRef.current = true;
     setReviewing(true);
     setError("");
     try {
@@ -788,6 +817,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       });
       setSession(result.activeSession);
       setRatings((current) => ({ ...current, [currentItem.id]: rating }));
+      setServerLessonCompleted(result.data.lessonCompleted);
+      setServerNextIndex(result.data.lessonCompleted ? null : result.data.lessonCurrentIndex);
+      setServerSkippedItems(result.data.lessonSkippedItems);
       if (activeLesson) {
         if (result.data.lessonCompleted) {
           clearPresentationMode(activeLesson.id);
@@ -796,11 +828,15 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           setActiveLesson((current) => current ? { ...current, currentIndex: result.data.lessonCurrentIndex } : current);
         }
       }
-      await refreshProgress(result.activeSession);
-      nextItem();
+      try {
+        await refreshProgress(result.activeSession);
+      } catch {
+        setError("Оценка сохранена, но статистика обновится после следующей синхронизации.");
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить результат");
     } finally {
+      reviewInFlightRef.current = false;
       setReviewing(false);
     }
   }
@@ -1104,12 +1140,20 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         : <section className="lx-empty"><span>УРОК</span><h1>Активного урока нет</h1><p>Выберите режим, раздел и размер блока.</p><button className="lx-button primary" type="button" onClick={() => navigate({ view: "learn" })}>Настроить урок</button></section>;
     }
     if (studyMode === "all") return renderAllItems();
-    if (lessonComplete) return <section className="lx-empty"><span>СЕССИЯ ЗАВЕРШЕНА</span><h1>{items.length ? "Результаты сохранены" : "Нет доступных элементов"}</h1><p>{items.length ? `Знал: ${knownCount}. Почти: ${almostCount}. Не знал: ${againCount}.` : "Измените раздел или дождитесь следующего интервала."}</p><div className="lx-hero-actions"><button className="lx-button ghost" type="button" onClick={() => { clearLessonState(); navigate({ view: "progress" }); }}>К прогрессу</button><button className="lx-button primary" type="button" disabled={busy} onClick={() => startLesson()}>Следующий блок</button></div></section>;
+    if (lessonComplete) return <section className="lx-empty"><span>СЕССИЯ ЗАВЕРШЕНА</span><h1>{items.length ? "Результаты сохранены" : "Нет доступных элементов"}</h1><p>{items.length ? `Знал: ${lessonSummary.known}. Почти: ${lessonSummary.almost}. Не знал: ${lessonSummary.again}. Пропущено: ${Math.max(lessonSummary.skipped, serverSkippedItems)}.` : "Измените раздел или дождитесь следующего интервала."}</p><div className="lx-hero-actions"><button className="lx-button ghost" type="button" onClick={() => { clearLessonState(); navigate({ view: "progress" }); }}>К прогрессу</button><button className="lx-button primary" type="button" disabled={busy} onClick={() => startLesson()}>Следующий блок</button></div></section>;
     if (!currentItem) return null;
 
     const lessonPercent = Math.round(((currentIndex + 1) / items.length) * 100);
     const remaining = Math.max(0, items.length - ratingValues.length);
-    const relatedItems = items.filter((item) => item.id !== currentItem.id).slice(currentIndex, currentIndex + 3);
+    const relatedItems = items.filter((item) => item.id !== currentItem.id && Boolean(ratings[item.id])).slice(0, 3);
+    const advanceDecision = decideLessonAdvance({
+      currentIndex,
+      itemCount: items.length,
+      reviewPersisted: Boolean(currentRating),
+      reviewSaving: reviewing,
+      serverCompleted: serverLessonCompleted,
+      serverNextIndex,
+    });
     const phraseCloze = currentItem.kind === "phrase" && currentItem.cloze;
     const simpleStudy = studyMode === "study";
 
@@ -1137,9 +1181,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               )}
             </article>
 
-            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" onClick={previousItem}>← Предыдущее</button><button className="lx-button primary wide" type="button" onClick={nextItem}>{currentIndex + 1 === items.length ? "К результатам" : "Следующее"} <Icon name="arrow"/></button><button className="lx-button ghost" type="button" onClick={saveAndExitLesson}>♡ Сохранить</button></div>
+            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled={reviewing || currentIndex === 0} onClick={previousItem}>← Предыдущее</button><button className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
 
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Оценка сохранена: {ratingLabel(currentRating)}</span><button className="lx-button primary" type="button" onClick={nextItem}>Дальше</button></div> : <div className="lx-rating-row"><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
 
             {relatedItems.length ? <section className="lx-related"><div><span>Похожие и следующие элементы</span></div><div>{relatedItems.map((item) => <button key={item.id} type="button" onClick={() => moveToIndex(items.findIndex((candidate) => candidate.id === item.id))}><strong>{item.prompt}</strong><small>{item.answer}</small><Icon name="arrow" size={15}/></button>)}</div></section> : null}
           </main>

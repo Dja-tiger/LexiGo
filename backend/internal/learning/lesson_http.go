@@ -136,6 +136,8 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusNotFound, "lesson_item_not_found", "learning item is not part of the active lesson")
 		case errors.Is(err, ErrLessonItemAlreadyReviewed):
 			httpx.WriteError(w, http.StatusConflict, "lesson_item_already_reviewed", "lesson item was already reviewed")
+		case errors.Is(err, ErrLessonItemOutOfOrder):
+			httpx.WriteError(w, http.StatusConflict, "lesson_item_out_of_order", "review the current lesson item before moving forward")
 		case errors.Is(err, ErrWordNotFound):
 			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "learning item is not assigned to the current user")
 		case errors.Is(err, ErrInvalidRating):
