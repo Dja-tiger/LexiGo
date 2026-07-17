@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiUrl } from "../lib/api";
 import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
@@ -556,9 +556,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, []);
 
   useEffect(() => {
-    setPhraseSortMode(readStoredCatalogSort("phrases"));
-    setAllItemsSortMode(readStoredCatalogSort("all-items"));
+    const storageTimer = window.setTimeout(() => {
+      setPhraseSortMode(readStoredCatalogSort("phrases"));
+      setAllItemsSortMode(readStoredCatalogSort("all-items"));
+    }, 0);
     return () => {
+      window.clearTimeout(storageTimer);
       if (speechNoticeTimer.current !== null) window.clearTimeout(speechNoticeTimer.current);
       window.speechSynthesis?.cancel();
     };
@@ -567,17 +570,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   useEffect(() => {
     document.title = `${viewTitle(navigation.view)} · LexiGo`;
   }, [navigation.view]);
-
-  useEffect(() => {
-    if (!session || hydratedUserID === session.user.id) return;
-    let cancelled = false;
-    void hydrateAccount(session).then(() => {
-      if (!cancelled) setHydratedUserID(session.user.id);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [session, hydratedUserID]);
 
   const currentItem = items[currentIndex];
   const currentRating = currentItem ? ratings[currentItem.id] : undefined;
@@ -633,16 +625,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     navigate({ view: "profile" });
   }
 
-  async function loadItems(activeSession: Session, kind: "word" | "phrase", dueOnly: boolean) {
+  const loadItems = useCallback(async (activeSession: Session, kind: "word" | "phrase", dueOnly: boolean) => {
     const endpoint = dueOnly ? "/api/v1/words/due" : "/api/v1/words";
     const result = await authorizedRequest<ItemsResponse>(
       activeSession,
       `${endpoint}?kind=${kind}&limit=1000`,
     );
     return { activeSession: result.activeSession, items: result.data.items.map(toLearningItem) };
-  }
+  }, []);
 
-  async function hydrateAccount(activeSession: Session) {
+  const hydrateAccount = useCallback(async (activeSession: Session) => {
     setError("");
     try {
       const progressResult = await authorizedRequest<ProgressSummary>(
@@ -669,7 +661,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить данные аккаунта");
     }
-  }
+  }, [loadItems]);
+
+  useEffect(() => {
+    if (!session || hydratedUserID === session.user.id) return;
+    let cancelled = false;
+    void hydrateAccount(session).then(() => {
+      if (!cancelled) setHydratedUserID(session.user.id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, hydratedUserID, hydrateAccount]);
 
   async function refreshProgress(activeSession: Session): Promise<Session> {
     const result = await authorizedRequest<ProgressSummary>(
