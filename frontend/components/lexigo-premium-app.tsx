@@ -431,7 +431,7 @@ function clearPresentationMode(lessonID: string) {
 function toLearningItem(item: APIItem): LearningItem {
   const kind = item.kind === "phrase" || item.partOfSpeech.toLowerCase() === "phrase" ? "phrase" : "word";
   const fallback = kind === "phrase"
-    ? TECHNICAL_PHRASES.find((phrase) => phrase.id === item.slug || phrase.prompt === item.lemma)
+    ? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === item.slug || phrase.prompt === item.lemma)
     : undefined;
   return {
     id: `${kind}-${item.id}`,
