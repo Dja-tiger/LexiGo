@@ -19,6 +19,7 @@ var (
 	ErrLessonModeMismatch        = errors.New("lesson answer mode does not match session")
 	ErrLessonVersionConflict     = errors.New("lesson version conflict")
 	ErrInvalidLessonState        = errors.New("lesson state is inconsistent")
+	ErrLessonQueueEmpty          = errors.New("lesson queue is empty")
 )
 
 func (r *Repository) CreateLesson(
@@ -32,16 +33,32 @@ func (r *Repository) CreateLesson(
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	var assigned int
-	if err := tx.QueryRow(ctx, `
-		select count(*)::int
-		from user_words
-		where user_id = $1::uuid and word_id = any($2::bigint[])
-	`, userID, request.WordIDs).Scan(&assigned); err != nil {
-		return LessonSession{}, fmt.Errorf("validate lesson words: %w", err)
-	}
-	if assigned != len(request.WordIDs) {
-		return LessonSession{}, ErrInvalidLessonWords
+	wordIDs := request.WordIDs
+	if wordIDs == nil {
+		candidates, candidateErr := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode)
+		if candidateErr != nil {
+			return LessonSession{}, candidateErr
+		}
+		selected, _ := composeLessonCandidates(candidates, request.Source, lessonSizeLimit(request.LessonSize))
+		if len(selected) == 0 {
+			return LessonSession{}, ErrLessonQueueEmpty
+		}
+		wordIDs = make([]int64, 0, len(selected))
+		for _, candidate := range selected {
+			wordIDs = append(wordIDs, candidate.WordID)
+		}
+	} else {
+		var assigned int
+		if err := tx.QueryRow(ctx, `
+			select count(*)::int
+			from user_words
+			where user_id = $1::uuid and word_id = any($2::bigint[])
+		`, userID, wordIDs).Scan(&assigned); err != nil {
+			return LessonSession{}, fmt.Errorf("validate lesson words: %w", err)
+		}
+		if assigned != len(wordIDs) {
+			return LessonSession{}, ErrInvalidLessonWords
+		}
 	}
 
 	if _, err := tx.Exec(ctx, `
@@ -65,7 +82,7 @@ func (r *Repository) CreateLesson(
 		insert into lesson_session_items(session_id, position, word_id)
 		select $1::uuid, (ordinality - 1)::int, word_id
 		from unnest($2::bigint[]) with ordinality as selected(word_id, ordinality)
-	`, lessonID, request.WordIDs); err != nil {
+	`, lessonID, wordIDs); err != nil {
 		return LessonSession{}, fmt.Errorf("insert lesson items: %w", err)
 	}
 

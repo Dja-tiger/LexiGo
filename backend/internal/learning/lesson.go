@@ -6,7 +6,32 @@ type LessonCreateRequest struct {
 	Source     string     `json:"source"`
 	StudyMode  AnswerMode `json:"studyMode"`
 	LessonSize string     `json:"lessonSize"`
-	WordIDs    []int64    `json:"wordIds"`
+	WordIDs    []int64    `json:"wordIds,omitempty"`
+}
+
+type LessonPreviewRequest struct {
+	Source     string     `json:"source"`
+	StudyMode  AnswerMode `json:"studyMode"`
+	LessonSize string     `json:"lessonSize"`
+}
+
+type LessonComposition struct {
+	Total            int    `json:"total"`
+	Words            int    `json:"words"`
+	Phrases          int    `json:"phrases"`
+	Due              int    `json:"due"`
+	New              int    `json:"new"`
+	Scheduled        int    `json:"scheduled"`
+	AvailableWords   int    `json:"availableWords"`
+	AvailablePhrases int    `json:"availablePhrases"`
+	Fallback         string `json:"fallback,omitempty"`
+}
+
+type LessonPreview struct {
+	Source      string            `json:"source"`
+	StudyMode   AnswerMode        `json:"studyMode"`
+	LessonSize  string            `json:"lessonSize"`
+	Composition LessonComposition `json:"composition"`
 }
 
 type LessonReviewRequest struct {

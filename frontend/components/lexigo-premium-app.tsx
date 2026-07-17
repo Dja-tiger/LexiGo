@@ -7,6 +7,12 @@ import { apiUrl } from "../lib/api";
 import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
+import {
+  lessonCompositionDescription,
+  lessonCompositionFallbackMessage,
+  lessonPriorityDescription,
+  type LessonComposition,
+} from "../lib/lesson-composition";
 import { decideLessonAdvance, resolveActiveLessonIndex, summarizePersistedLesson } from "../lib/lesson-flow";
 import {
   buildAnswerOptions,
@@ -109,6 +115,13 @@ type LessonReviewResponse = {
   lessonTotalItems: number;
 };
 
+type LessonPreviewResponse = {
+  source: LessonSource;
+  studyMode: AnswerMode;
+  lessonSize: string;
+  composition: LessonComposition;
+};
+
 type ErrorResponse = {
   error?: { code?: string; message?: string };
 };
@@ -203,7 +216,7 @@ const SOURCE_OPTIONS: Array<{
   icon: IconName;
   count: number;
 }> = [
-  { value: "mixed", label: "Все слова", hint: "Смешанный порядок и разные темы", icon: "shuffle", count: WORD_CATALOG_COUNT },
+  { value: "mixed", label: "Смешанная практика", hint: "Слова и фразы в детерминированном чередовании", icon: "shuffle", count: WORD_CATALOG_COUNT + DEFAULT_PHRASE_CATALOG.length },
   { value: "noun", label: "Существительные", hint: "Системы, объекты и метрики", icon: "cube", count: 383 },
   { value: "verb", label: "Глаголы", hint: "Действия, процессы и операции", icon: "bolt", count: 179 },
   { value: "adjective", label: "Прилагательные", hint: "Состояния и характеристики", icon: "spark", count: 193 },
@@ -517,6 +530,15 @@ function navigationIcon(view: AppView): IconName {
   return "home";
 }
 
+function mixedLessonFallbackMessage(lesson: LessonSessionResponse): string {
+  if (lesson.source !== "mixed" || lesson.items.length === 0) return "";
+  const words = lesson.items.filter((item) => item.kind !== "phrase").length;
+  const phrases = lesson.items.length - words;
+  if (words === 0) return "Слова для этого режима закончились. Смешанная практика продолжится доступными фразами.";
+  if (phrases === 0) return "Фразы для этого режима закончились. Смешанная практика продолжится доступными словами.";
+  return "";
+}
+
 export function LexigoPremiumApp({ initialSession }: { initialSession: Session | null }) {
   const [navigation, setNavigation] = useState<NavigationTarget>({ view: "home" });
   const [returnView, setReturnView] = useState<AppView>("home");
@@ -557,6 +579,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
+  const [lessonQueueNotice, setLessonQueueNotice] = useState("");
+  const [lessonPreview, setLessonPreview] = useState<LessonPreviewResponse | null>(null);
+  const [previewingLesson, setPreviewingLesson] = useState(false);
   const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
 
@@ -665,6 +690,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     if (target.source) setSource(target.source);
     persistNavigation(target);
     setError("");
+    if (target.view !== "lesson") setLessonQueueNotice("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -724,6 +750,30 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       window.clearTimeout(timer);
     };
   }, [session, hydratedUserID, hydrateAccount]);
+
+  useEffect(() => {
+    if (!session || navigation.view !== "learn" || studyMode === "all") return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setPreviewingLesson(true);
+      void authorizedRequest<LessonPreviewResponse>(session, "/api/v1/lessons/preview", {
+        method: "POST",
+        body: JSON.stringify({ source, studyMode, lessonSize: String(lessonSize) }),
+      }).then((result) => {
+        if (cancelled) return;
+        setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+        setLessonPreview(result.data);
+      }).catch(() => {
+        if (!cancelled) setLessonPreview(null);
+      }).finally(() => {
+        if (!cancelled) setPreviewingLesson(false);
+      });
+    }, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [navigation.view, session, source, studyMode, lessonSize]);
 
   async function refreshProgress(activeSession: Session): Promise<Session> {
     const result = await authorizedRequest<ProgressSummary>(
@@ -921,11 +971,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
   }
 
-  function resolveSelectedPhrases(requested: LearningItem[]): LearningItem[] {
-    const requestedKeys = new Set(requested.map(itemKey));
-    return phraseCatalog.filter((phrase) => requestedKeys.has(itemKey(phrase)));
-  }
-
   async function startLesson(activeSession = session, overrides: StartOverrides = {}) {
     const resolvedSource = overrides.source ?? source;
     const resolvedSize = overrides.size ?? lessonSize;
@@ -945,30 +990,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     setBusy(true);
     setError("");
+    setLessonQueueNotice("");
     try {
-      let available: LearningItem[];
       let currentSession = activeSession;
-      const dueOnly = resolvedMode === "recall" || resolvedMode === "choice";
-
-      if (resolvedMode === "all" && resolvedSource === "phrases") {
-        available = overrides.items ?? phraseCatalog;
-      } else if (resolvedSource === "phrases") {
-        if (overrides.items?.length) {
-          available = resolveSelectedPhrases(overrides.items);
-        } else {
-          const result = await loadItems(currentSession as Session, "phrase", dueOnly);
-          currentSession = result.activeSession;
-          available = result.items;
+      if (resolvedMode !== "all") {
+        const explicitItems = overrides.items?.filter((item) => typeof item.wordId === "number") ?? [];
+        if (overrides.items && explicitItems.length !== overrides.items.length) {
+          throw new Error("Выбранные элементы ещё не синхронизированы с сервером");
         }
-      } else {
-        const result = await loadItems(currentSession as Session, "word", dueOnly);
-        currentSession = result.activeSession;
-        available = prepareWordItems(result.items, resolvedSource);
-      }
-
-      const lessonItems = takeLessonBlock(available, resolvedSize);
-      if (resolvedMode !== "all" && lessonItems.length > 0) {
-        const backendMode: AnswerMode = resolvedMode;
         const result = await authorizedRequest<LessonSessionResponse>(
           currentSession as Session,
           "/api/v1/lessons",
@@ -976,26 +1005,47 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             method: "POST",
             body: JSON.stringify({
               source: resolvedSource,
-              studyMode: backendMode,
+              studyMode: resolvedMode,
               lessonSize: String(resolvedSize),
-              wordIds: lessonItems.map((item) => item.wordId),
+              ...(overrides.items ? { wordIds: explicitItems.map((item) => item.wordId) } : {}),
             }),
           },
         );
         setSession(result.activeSession);
-        applyLesson(result.data);
-      } else {
-        setActiveLesson(null);
-        setItems(lessonItems);
-        setCurrentIndex(0);
-        setRatings({});
-        resetCardState(resolvedMode);
-        setLessonStarted(true);
-        setLessonComplete(lessonItems.length === 0);
-        setServerLessonCompleted(false);
-        setServerNextIndex(null);
-        setServerSkippedItems(0);
+        if (applyLesson(result.data)) {
+          setLessonQueueNotice(mixedLessonFallbackMessage(result.data));
+          navigate({ view: "lesson", source: resolvedSource });
+        }
+        return;
       }
+
+      let available: LearningItem[];
+      if (resolvedSource === "phrases") {
+        available = overrides.items ?? phraseCatalog;
+      } else if (resolvedSource === "mixed") {
+        const wordsResult = await loadItems(currentSession as Session, "word", false);
+        currentSession = wordsResult.activeSession;
+        const phrasesResult = await loadItems(currentSession, "phrase", false);
+        currentSession = phrasesResult.activeSession;
+        available = [...prepareWordItems(wordsResult.items, "mixed"), ...phrasesResult.items];
+      } else {
+        const result = await loadItems(currentSession as Session, "word", false);
+        currentSession = result.activeSession;
+        available = prepareWordItems(result.items, resolvedSource);
+      }
+
+      const lessonItems = takeLessonBlock(available, resolvedSize);
+      setSession(currentSession as Session);
+      setActiveLesson(null);
+      setItems(lessonItems);
+      setCurrentIndex(0);
+      setRatings({});
+      resetCardState(resolvedMode);
+      setLessonStarted(true);
+      setLessonComplete(lessonItems.length === 0);
+      setServerLessonCompleted(false);
+      setServerNextIndex(null);
+      setServerSkippedItems(0);
       navigate({ view: "lesson", source: resolvedSource });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось сформировать учебный блок");
@@ -1081,6 +1131,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setServerSkippedItems(0);
     reviewInFlightRef.current = false;
     setError("");
+    setLessonQueueNotice("");
   }
 
   function saveAndExitLesson() {
@@ -1433,7 +1484,20 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           </div>
           <div className="lx-setup-footer">
             <fieldset><legend>Размер урока</legend><div className="lx-size-control">{SIZE_OPTIONS.map((option) => <button key={String(option.value)} type="button" className={lessonSize === option.value ? "selected" : ""} onClick={() => setLessonSize(option.value)}>{option.label}</button>)}</div></fieldset>
-            <div><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy} onClick={() => startLesson()}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
+            <div className="lx-setup-actions">
+              {studyMode === "all" ? (
+                <div className="lx-lesson-preview"><span>Состав списка</span><strong>Все доступные элементы раздела</strong><small>Справочный режим не создаёт server lesson session.</small></div>
+              ) : !session ? (
+                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Войдите для расчёта</strong><small>Composer учитывает вашу due-очередь и доступные фразы.</small></div>
+              ) : previewingLesson ? (
+                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем due, new и доступность обоих типов.</small></div>
+              ) : lessonPreview ? (
+                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(lessonPreview.composition)}</strong><small>{lessonPriorityDescription(lessonPreview.composition)}</small>{lessonCompositionFallbackMessage(lessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(lessonPreview.composition)}</em> : null}</div>
+              ) : (
+                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Будет рассчитан сервером</strong><small>Локальный random selection не используется.</small></div>
+              )}
+              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy || previewingLesson || Boolean(session && studyMode !== "all" && lessonPreview?.composition.total === 0)} onClick={() => startLesson()}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
+            </div>
           </div>
         </section>
       </>
@@ -1632,6 +1696,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     <main className="lx-app">
       {renderHeader()}
       {error ? <p className="lx-error" role="alert">{error}</p> : null}
+      {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}
       <div className="lx-view">
         {view}
         <CalendarReminderIntegration

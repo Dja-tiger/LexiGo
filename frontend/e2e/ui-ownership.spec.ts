@@ -109,6 +109,13 @@ async function installBrowserMocks(page: Page) {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
       return;
     }
+    if (path === "/api/v1/lessons/preview") {
+      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30",
+        composition: { total: 2, words: 1, phrases: 1, due: 2, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 },
+      }) });
+    }
     if (path === "/api/v1/lessons/active") {
       await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }) });
       return;
