@@ -13,7 +13,7 @@ New events are stored with `event_schema_version = 2`.
 
 ## Scheduling
 
-`recall` and `choice` use the spaced-repetition transition. `study` is an exposure/self-assessment event: it may move a new item into `learning` and schedule a near-term objective attempt, but it never increases repetitions, easiness, review status, or mastery. Database and HTTP constraints reject schema-v2 study events that claim objective correctness or omit `answer_revealed=true`.
+`recall` and `choice` use the spaced-repetition transition. `study` is an exposure/self-assessment event: it may move a new item into `learning` and schedule its first near-term objective attempt, but it never increases repetitions, easiness, review status, or mastery. For an existing learning/review/mastered item, study preserves the current `due_at` exactly, so passive viewing cannot postpone an objective review. Database and HTTP constraints reject schema-v2 study events that claim objective correctness or omit `answer_revealed=true`.
 
 ## Analytics
 

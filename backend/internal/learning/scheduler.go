@@ -16,6 +16,7 @@ type ReviewState struct {
 	Easiness     float64
 	IntervalDays int
 	Repetitions  int
+	DueAt        time.Time
 }
 
 type Schedule struct {
@@ -25,6 +26,7 @@ type Schedule struct {
 	IntervalDays int
 	Repetitions  int
 	DueAfter     time.Duration
+	PreserveDue  bool
 }
 
 func ScheduleAttempt(state ReviewState, rating Rating, mode AnswerMode) (Schedule, error) {
@@ -44,7 +46,8 @@ func scheduleStudy(state ReviewState, rating Rating) (Schedule, error) {
 		easiness = 2.5
 	}
 	status := state.Status
-	if status == "" || status == "new" {
+	preserveDue := status != "" && status != "new"
+	if !preserveDue {
 		status = "learning"
 	}
 
@@ -71,6 +74,7 @@ func scheduleStudy(state ReviewState, rating Rating) (Schedule, error) {
 		IntervalDays: state.IntervalDays,
 		Repetitions:  state.Repetitions,
 		DueAfter:     dueAfter,
+		PreserveDue:  preserveDue,
 	}, nil
 }
 

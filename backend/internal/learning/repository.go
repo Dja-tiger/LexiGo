@@ -30,11 +30,11 @@ func (r *Repository) ReviewWord(
 
 	var state ReviewState
 	if err := tx.QueryRow(ctx, `
-		select status, easiness::float8, interval_days, repetitions
+		select status, easiness::float8, interval_days, repetitions, due_at
 		from user_words
 		where user_id = $1::uuid and word_id = $2
 		for update
-	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions); err != nil {
+	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions, &state.DueAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ReviewResult{}, ErrWordNotFound
 		}
@@ -46,7 +46,10 @@ func (r *Repository) ReviewWord(
 		return ReviewResult{}, err
 	}
 	now := time.Now().UTC()
-	dueAt := now.Add(schedule.DueAfter)
+	dueAt := state.DueAt
+	if !schedule.PreserveDue {
+		dueAt = now.Add(schedule.DueAfter)
+	}
 
 	if _, err := tx.Exec(ctx, `
 		update user_words

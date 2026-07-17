@@ -106,6 +106,31 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		"rating": "known", "responseMs": 800, "answerMode": "choice", "answerRevealed": false, "correct": true, "timezoneOffsetMinutes": 0,
 	}, http.StatusOK, &reviewResult{})
 
+	var recallDueAt time.Time
+	var recallRepetitions int
+	if err := pg.QueryRow(ctx, `
+		select due_at, repetitions
+		from user_words
+		where user_id = $1::uuid and word_id = $2
+	`, registered.User.ID, words.Items[1].ID).Scan(&recallDueAt, &recallRepetitions); err != nil {
+		t.Fatalf("query recall state before study: %v", err)
+	}
+	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/words/%d/review", testServer.URL, words.Items[1].ID), registered.Tokens.AccessToken, map[string]any{
+		"rating": "known", "responseMs": 500, "answerMode": "study", "answerRevealed": true, "timezoneOffsetMinutes": 0,
+	}, http.StatusOK, &reviewResult{})
+	var recallDueAtAfterStudy time.Time
+	var recallRepetitionsAfterStudy int
+	if err := pg.QueryRow(ctx, `
+		select due_at, repetitions
+		from user_words
+		where user_id = $1::uuid and word_id = $2
+	`, registered.User.ID, words.Items[1].ID).Scan(&recallDueAtAfterStudy, &recallRepetitionsAfterStudy); err != nil {
+		t.Fatalf("query recall state after study: %v", err)
+	}
+	if !recallDueAtAfterStudy.Equal(recallDueAt) || recallRepetitionsAfterStudy != recallRepetitions {
+		t.Fatalf("study changed existing recall schedule: before due=%s reps=%d, after due=%s reps=%d", recallDueAt, recallRepetitions, recallDueAtAfterStudy, recallRepetitionsAfterStudy)
+	}
+
 	var mode string
 	var correct *bool
 	var answerRevealed *bool
@@ -174,10 +199,10 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		} `json:"modes"`
 	}
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/progress?timezoneOffsetMinutes=0", registered.Tokens.AccessToken, http.StatusOK, &progress)
-	if progress.ReviewsToday != 4 || progress.ObjectiveReviewsToday != 2 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 3 {
+	if progress.ReviewsToday != 5 || progress.ObjectiveReviewsToday != 2 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 3 {
 		t.Fatalf("objective progress = %+v", progress)
 	}
-	if progress.Modes.Study.AttemptsToday != 1 || progress.Modes.Recall.AttemptsToday != 1 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 || progress.Modes.Legacy.AttemptsToday != 1 || progress.Modes.Legacy.SuccessfulToday != 1 {
+	if progress.Modes.Study.AttemptsToday != 2 || progress.Modes.Recall.AttemptsToday != 1 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 || progress.Modes.Legacy.AttemptsToday != 1 || progress.Modes.Legacy.SuccessfulToday != 1 {
 		t.Fatalf("mode progress = %+v", progress.Modes)
 	}
 	if progress.RetainedItemsWeek != 2 || progress.EventSchemaVersion != 2 {
