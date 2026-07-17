@@ -1,0 +1,47 @@
+name: Apply Issue 39 From PR
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.head_ref == 'fix/issue-39-lesson-concurrency' && !contains(github.event.pull_request.head.sha, 'never') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-39-lesson-concurrency
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: backend/go.sum
+      - name: Apply verified implementation
+        run: |
+          if grep -q 'LessonVersion.*json:"lessonVersion"' backend/internal/learning/lesson.go; then
+            echo "Issue 39 implementation is already applied"
+            exit 0
+          fi
+          python scripts/run_issue_39.py
+          gofmt -w backend/internal/learning backend/integration
+          git diff --check
+      - name: Verify backend lesson compilation
+        working-directory: backend
+        run: go test ./internal/learning/...
+      - name: Commit generated implementation
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "[issue-39-codemod] enforce versioned linear lessons"
+          git push origin HEAD:fix/issue-39-lesson-concurrency
