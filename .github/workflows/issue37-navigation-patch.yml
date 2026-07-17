@@ -1,0 +1,29 @@
+name: Apply Issue 37 Navigation Patch
+
+on:
+  push:
+    branches: [fix/issue-37-ios-pwa-dictionary]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-37-ios-pwa-dictionary
+          fetch-depth: 0
+      - name: Apply verified navigation patch
+        run: python tools/issue37_navigation_patch.py
+      - name: Remove one-shot script
+        run: rm tools/issue37_navigation_patch.py
+      - name: Commit standalone navigation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx tools/issue37_navigation_patch.py
+          git commit -m "fix(pwa): restore dictionary navigation safely"
+          git push origin HEAD:fix/issue-37-ios-pwa-dictionary
