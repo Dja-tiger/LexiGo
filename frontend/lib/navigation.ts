@@ -15,11 +15,13 @@ export type NavigationTarget = {
   detail?: string;
 };
 
+type NavigationSource = NonNullable<NavigationTarget["source"]>;
+
 export const NAVIGATION_STORAGE_KEY = "lexigo.navigation.v1";
 
 const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson"]);
 const RESTORABLE_VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress"]);
-const SOURCES = new Set<NonNullable<NavigationTarget["source"]>>([
+const SOURCES = new Set<NavigationSource>([
   "mixed",
   "noun",
   "verb",
@@ -43,7 +45,7 @@ function normalizeNavigation(candidate: unknown): NavigationTarget | null {
   if (!candidate || typeof candidate !== "object") return null;
   const value = candidate as { view?: unknown; source?: unknown; detail?: unknown };
   if (typeof value.view !== "string" || !VIEWS.has(value.view as AppView)) return null;
-  if (value.source !== undefined && (typeof value.source !== "string" || !SOURCES.has(value.source as NavigationTarget["source"]))) {
+  if (value.source !== undefined && (typeof value.source !== "string" || !SOURCES.has(value.source as NavigationSource))) {
     return null;
   }
   if (value.detail !== undefined && typeof value.detail !== "string") return null;
@@ -51,7 +53,7 @@ function normalizeNavigation(candidate: unknown): NavigationTarget | null {
   const detail = typeof value.detail === "string" ? value.detail.trim() || undefined : undefined;
   return {
     view: value.view as AppView,
-    ...(value.source ? { source: value.source as NavigationTarget["source"] } : {}),
+    ...(value.source ? { source: value.source as NavigationSource } : {}),
     ...(detail ? { detail } : {}),
   };
 }
@@ -59,7 +61,7 @@ function normalizeNavigation(candidate: unknown): NavigationTarget | null {
 export function parseNavigation(search: string): NavigationTarget {
   const params = new URLSearchParams(search);
   const rawView = params.get("view") as AppView | null;
-  const rawSource = params.get("source") as NavigationTarget["source"] | null;
+  const rawSource = params.get("source") as NavigationSource | null;
   const detail = params.get("detail")?.trim() || undefined;
 
   return {
