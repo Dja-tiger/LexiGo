@@ -125,6 +125,7 @@ async function installBrowserMocks(page: Page) {
           studyMode: input.studyMode,
           lessonSize: input.lessonSize,
           currentIndex: 0,
+          version: 1,
           status: "active",
           items: selected.map((item, position) => ({ ...item, position })),
           createdAt: "2026-07-17T00:00:00Z",
