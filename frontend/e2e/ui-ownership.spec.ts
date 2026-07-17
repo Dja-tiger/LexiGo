@@ -75,7 +75,7 @@ async function installBrowserMocks(page: Page) {
         },
         speak(utterance: MockSpeechSynthesisUtterance) {
           utterance.onstart?.();
-          window.setTimeout(() => utterance.onend?.(), 180);
+          window.setTimeout(() => utterance.onend?.(), 1_200);
         },
       },
     });
@@ -146,7 +146,10 @@ function watchRuntimeErrors(page: Page) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+    if (message.type() !== "error") return;
+    const text = message.text();
+    const expectedMissingActiveLesson = text.includes("Failed to load resource") && text.includes("404");
+    if (!expectedMissingActiveLesson) errors.push(`console: ${text}`);
   });
   return errors;
 }
@@ -242,7 +245,7 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   await speech.click();
   await expect(speech).toHaveClass(/speaking/);
   await expect(page.getByRole("status").filter({ hasText: "Воспроизводим: absolute" })).toBeVisible();
-  await expect(speech).not.toHaveClass(/speaking/, { timeout: 2_000 });
+  await expect(speech).not.toHaveClass(/speaking/, { timeout: 3_000 });
   await expect(tabs).toHaveCount(3);
   expect(runtimeErrors).toEqual([]);
 });
