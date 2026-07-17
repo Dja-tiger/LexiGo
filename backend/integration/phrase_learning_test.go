@@ -137,11 +137,11 @@ func TestPersistentPhraseLearningFlow(t *testing.T) {
 		DueAt           time.Time `json:"dueAt"`
 	}
 	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, phraseID), registered.Tokens.AccessToken, map[string]any{
-		"lessonVersion": created.Version,
-		"rating":       "known",
-		"responseMs":   700,
-		"answerMode":   "recall",
-		"correct":      true,
+		"lessonVersion":         created.Version,
+		"rating":                "known",
+		"responseMs":            700,
+		"answerMode":            "recall",
+		"correct":               true,
 		"timezoneOffsetMinutes": 0,
 	}, http.StatusOK, &reviewed)
 	if !reviewed.LessonCompleted || reviewed.LessonVersion != 2 || !reviewed.DueAt.After(time.Now()) {
