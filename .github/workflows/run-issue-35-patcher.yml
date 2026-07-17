@@ -17,53 +17,11 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Execute dedented patch script
-        run: |
-          set -o pipefail
-          {
-            python3 - <<'PY'
-          from pathlib import Path
+      - name: Apply source changes
+        run: python3 scripts/apply_issue_35.py
 
-          workflow = Path('.github/workflows/apply-issue-35.yml').read_text()
-          marker = "python3 - <<'PY'\n"
-          script = workflow.split(marker, 1)[1].split("\n          PY", 1)[0]
-          script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
-          script = script.replace(
-              "source = file.read_text()\n    if source.count(old) != 1:",
-              "source = file.read_text()\n    if source.count(old) == 0 and path.endswith('.tsx'):\n        old = old.replace('\\t', '  ')\n        new = new.replace('\\t', '  ')\n    if source.count(old) == 0 and 'lx-lesson-navigation' in old:\n        return\n    if source.count(old) != 1:",
-          )
-          script = script.replace(
-              "raise SystemExit(f'{path}: expected one target, found {source.count(old)}')",
-              "raise SystemExit(f'{path}: expected one target, found {source.count(old)}; target={old[:120]!r}')",
-          )
-          exec(compile(script, 'apply-issue-35.py', 'exec'), {'__name__': '__main__'})
-
-          app_path = Path('frontend/components/lexigo-premium-app.tsx')
-          app_source = app_path.read_text()
-          old_navigation = '''            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" onClick={previousItem}>← Предыдущее</button><button className="lx-button primary wide" type="button" onClick={nextItem}>{currentIndex + 1 === items.length ? "К результатам" : "Следующее"} <Icon name="arrow"/></button><button className="lx-button ghost" type="button" onClick={saveAndExitLesson}>♡ Сохранить</button></div>
-
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Оценка сохранена: {ratingLabel(currentRating)}</span><button className="lx-button primary" type="button" onClick={nextItem}>Дальше</button></div> : <div className="lx-rating-row"><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
-'''
-          new_navigation = '''            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled={reviewing || currentIndex === 0} onClick={previousItem}>← Предыдущее</button><button className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
-
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
-'''
-          if app_source.count(old_navigation) != 1:
-              raise SystemExit(f'lesson navigation exact target count={app_source.count(old_navigation)}')
-          app_path.write_text(app_source.replace(old_navigation, new_navigation))
-          PY
-            cd backend
-            gofmt -w internal/learning/lesson.go internal/learning/lesson_http.go internal/learning/lesson_repository.go
-          } 2>&1 | tee patch-error.log
-
-      - name: Upload patch diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: issue-35-patch-error
-          path: patch-error.log
-          if-no-files-found: error
-          retention-days: 1
+      - name: Format Go sources
+        run: cd backend && gofmt -w internal/learning/lesson.go internal/learning/lesson_http.go internal/learning/lesson_repository.go
 
       - name: Commit implementation
         run: |
