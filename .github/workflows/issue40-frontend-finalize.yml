@@ -28,7 +28,6 @@ jobs:
           python scripts/issue40_frontend_finalizer.py
           git diff --check
       - name: Verify frontend and lesson browser matrix
-        id: verify
         working-directory: frontend
         run: |
           set -o pipefail
@@ -42,7 +41,7 @@ jobs:
             npm run test:e2e:lesson
           } 2>&1 | tee ../issue40-finalizer.log
       - name: Upload finalizer diagnostics
-        if: steps.verify.outcome == 'failure'
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: issue40-frontend-finalizer-diagnostics
