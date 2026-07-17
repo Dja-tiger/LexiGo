@@ -11,6 +11,7 @@ jobs:
   apply:
     if: ${{ !contains(github.event.head_commit.message, '[issue-39-codemod]') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -60,14 +61,18 @@ jobs:
           replace_once(premium, '          lessonVersion: activeLesson?.version,', '          lessonVersion: activeLesson.version,')
 
           e2e = "frontend/e2e/lesson-flow.spec.ts"
-          replace_once(e2e, 'import { expect, test, type BrowserContext, type Page } from "@playwright/test";', 'import { expect, test, type Page } from "@playwright/test";')
+          replace_once(
+              e2e,
+              'import { expect, test, type BrowserContext, type Page } from "@playwright/test";',
+              'import { expect, test, type Page } from "@playwright/test";',
+          )
           replace_once(
               e2e,
               '''  await second.reload();
-            await expect(second.getByText("Слово 2 из 2")).toBeVisible();''',
+          await expect(second.getByText("Слово 2 из 2")).toBeVisible();''',
               '''  await second.reload();
-            await second.getByRole("button", { name: "Продолжить урок", exact: true }).click();
-            await expect(second.getByText("Слово 2 из 2")).toBeVisible();''',
+          await second.getByRole("button", { name: "Продолжить урок", exact: true }).click();
+          await expect(second.getByText("Слово 2 из 2")).toBeVisible();''',
           )
 
           repository = Path("backend/internal/learning/lesson_repository.go")
@@ -92,29 +97,29 @@ jobs:
           api = api.replace('          enum: [15, 30, 60, all]', '          enum: ["15", "30", "60", all]')
           pattern = r'''    LessonItem:\n      allOf:\n        - \$ref: "#/components/schemas/UserWord"\n        - type: object\n          required: \[position\]\n          properties:\n            position: \{ type: integer, minimum: 0 \}\n            rating:\n              type: \[string, "null"\]\n              enum: \[again, almost, known, null\]\n            reviewedAt:\n              type: \[string, "null"\]\n              format: date-time\n'''
           replacement = '''    LessonItem:
-            type: object
-            required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, examples, note, status]
-            properties:
-              position: { type: integer, minimum: 0 }
-              id: { type: integer, format: int64 }
-              kind: { type: string, enum: [word, phrase] }
-              slug: { type: string }
-              lemma: { type: string }
-              translation: { type: string }
-              phonetic: { type: string }
-              partOfSpeech: { type: string }
-              topic: { type: string }
-              examples:
-                type: array
-                items: { type: string }
-              note: { type: string }
-              status: { type: string, enum: [new, learning, review, mastered] }
-              rating:
-                type: [string, "null"]
-                enum: [again, almost, known, null]
-              reviewedAt:
-                type: [string, "null"]
-                format: date-time
+              type: object
+              required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, examples, note, status]
+              properties:
+                position: { type: integer, minimum: 0 }
+                id: { type: integer, format: int64 }
+                kind: { type: string, enum: [word, phrase] }
+                slug: { type: string }
+                lemma: { type: string }
+                translation: { type: string }
+                phonetic: { type: string }
+                partOfSpeech: { type: string }
+                topic: { type: string }
+                examples:
+                  type: array
+                  items: { type: string }
+                note: { type: string }
+                status: { type: string, enum: [new, learning, review, mastered] }
+                rating:
+                  type: [string, "null"]
+                  enum: [again, almost, known, null]
+                reviewedAt:
+                  type: [string, "null"]
+                  format: date-time
           '''
           api, count = re.subn(pattern, replacement, api, count=1)
           if count != 1:
