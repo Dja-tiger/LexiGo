@@ -253,6 +253,12 @@ paths:
           description: Урок сброшен; version атомарно увеличена.
         "409":
           $ref: "#/components/responses/Conflict"
+        "422":
+          description: If-Match не содержит положительную lesson version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "428":
           description: If-Match отсутствует.
   /api/v1/lessons/{lessonID}/words/{wordID}/review:
