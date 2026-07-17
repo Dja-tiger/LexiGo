@@ -28,6 +28,16 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Apply product patch
         run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("scripts/issue40_apply.py")
+          source = path.read_text(encoding="utf-8")
+          old = "source = source.replace(marker, handler + marker)"
+          new = "source = source.replace(marker, handler + marker, 1)"
+          if source.count(old) != 1:
+              raise SystemExit(f"expected one preview insertion expression, found {source.count(old)}")
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          PY
           set -o pipefail
           python scripts/issue40_apply.py 2>&1 | tee issue40-patch.log
       - name: Upload patch diagnostics
