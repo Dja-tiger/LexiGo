@@ -1,9 +1,18 @@
 package learning
 
 func validLessonState(status string, currentIndex int, items []LessonItem) bool {
+	if len(items) == 0 {
+		return false
+	}
+	for index, item := range items {
+		if item.Position != index {
+			return false
+		}
+	}
+
 	switch status {
 	case "active":
-		if len(items) == 0 || currentIndex < 0 || currentIndex >= len(items) {
+		if currentIndex < 0 || currentIndex >= len(items) {
 			return false
 		}
 		for index, item := range items {
