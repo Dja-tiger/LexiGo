@@ -1,0 +1,39 @@
+name: Finalize Issue 39 UI And Contract
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: ${{ github.head_ref == 'fix/issue-39-lesson-concurrency' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-39-lesson-concurrency
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Apply UI and OpenAPI finalization
+        run: |
+          if grep -q '.lx-related article > span' frontend/app/premium-ui.css; then
+            echo "Issue 39 UI finalization is already applied"
+          else
+            python scripts/finalize_issue_39_contract_ui.py
+          fi
+          git diff --check
+      - name: Commit finalized product files
+        run: |
+          if git diff --quiet; then
+            echo "No finalization changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "[issue-39-finalize] style read-only lesson history"
+          git push origin HEAD:fix/issue-39-lesson-concurrency
