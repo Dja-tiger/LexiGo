@@ -1,0 +1,29 @@
+name: Apply Issue 36 Purity Fix
+
+on:
+  push:
+    branches: [fix/issue-36-react-owned-ui]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-36-react-owned-ui
+          fetch-depth: 0
+      - name: Apply verified purity fix
+        run: python tools/issue36_purity_fix.py
+      - name: Remove one-shot script
+        run: rm tools/issue36_purity_fix.py
+      - name: Commit purity correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx tools/issue36_purity_fix.py
+          git commit -m "refactor(ui): satisfy React purity rules"
+          git push origin HEAD:fix/issue-36-react-owned-ui
