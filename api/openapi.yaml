@@ -493,7 +493,7 @@ components:
           description: All persisted learning activity, including study exposure.
         successfulToday:
           type: integer
-          description: Compatibility alias for objectiveSuccessfulToday.
+          description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.
         objectiveReviewsToday:
           type: integer
           description: Recall, choice and legacy attempts; study is excluded.

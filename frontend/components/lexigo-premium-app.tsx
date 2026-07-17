@@ -1113,7 +1113,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setServerSkippedItems(result.data.lessonSkippedItems);
       if (activeLesson) {
         if (result.data.lessonCompleted) {
-              setActiveLesson(null);
+          setActiveLesson(null);
         } else {
           setActiveLesson((current) => current ? { ...current, currentIndex: result.data.lessonCurrentIndex } : current);
         }

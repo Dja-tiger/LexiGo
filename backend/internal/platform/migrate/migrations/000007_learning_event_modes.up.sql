@@ -17,6 +17,19 @@ alter table review_events
     add constraint review_events_event_schema_version_chk
         check (event_schema_version in (1, 2));
 
+alter table review_events
+    add constraint review_events_v2_semantics_chk
+        check (
+            event_schema_version = 1
+            or (
+                answer_mode is not null
+                and (
+                    answer_mode <> 'study'
+                    or (correct is null and answer_revealed is true)
+                )
+            )
+        );
+
 alter table lesson_sessions
     drop constraint lesson_sessions_study_mode_chk;
 

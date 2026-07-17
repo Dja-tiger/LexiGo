@@ -123,6 +123,15 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		t.Fatalf("study event mode=%q correct=%v answerRevealed=%v schema=%d", mode, correct, answerRevealed, schemaVersion)
 	}
 
+	if _, err := pg.Exec(ctx, `
+		insert into review_events(
+			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
+			answer_revealed, event_schema_version
+		) values ($1::uuid, $2, 5, 1000, now(), 'known', 'recall', null, true, 1)
+	`, registered.User.ID, words.Items[3].ID); err != nil {
+		t.Fatalf("insert ambiguous schema-v1 event: %v", err)
+	}
+
 	for index, attemptMode := range []string{"study", "recall", "choice"} {
 		wordID := words.Items[index].ID
 		var objectiveCorrect any
@@ -158,13 +167,17 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 				AttemptsToday   int `json:"attemptsToday"`
 				SuccessfulToday int `json:"successfulToday"`
 			} `json:"choice"`
+			Legacy struct {
+				AttemptsToday   int `json:"attemptsToday"`
+				SuccessfulToday int `json:"successfulToday"`
+			} `json:"legacy"`
 		} `json:"modes"`
 	}
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/progress?timezoneOffsetMinutes=0", registered.Tokens.AccessToken, http.StatusOK, &progress)
-	if progress.ReviewsToday != 3 || progress.ObjectiveReviewsToday != 2 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 2 {
+	if progress.ReviewsToday != 4 || progress.ObjectiveReviewsToday != 2 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 3 {
 		t.Fatalf("objective progress = %+v", progress)
 	}
-	if progress.Modes.Study.AttemptsToday != 1 || progress.Modes.Recall.AttemptsToday != 1 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 {
+	if progress.Modes.Study.AttemptsToday != 1 || progress.Modes.Recall.AttemptsToday != 1 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 || progress.Modes.Legacy.AttemptsToday != 1 || progress.Modes.Legacy.SuccessfulToday != 1 {
 		t.Fatalf("mode progress = %+v", progress.Modes)
 	}
 	if progress.RetainedItemsWeek != 2 || progress.EventSchemaVersion != 2 {

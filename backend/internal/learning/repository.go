@@ -130,33 +130,35 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 			where user_id = $1::uuid
 		)
 		select count(*) filter (where is_today)::int,
-		       count(*) filter (where is_today and (answer_mode is null or answer_mode in ('recall', 'choice')))::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode in ('recall', 'choice'))::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode in ('recall', 'choice') and correct is true)::int,
 		       count(*) filter (where is_today and (
-		           (answer_mode in ('recall', 'choice') and (correct is true or (event_schema_version = 1 and correct is null and grade >= 4)))
-		           or (answer_mode is null and grade >= 4)
+		           (event_schema_version = 2 and answer_mode in ('recall', 'choice') and correct is true)
+		           or (event_schema_version = 1 and grade >= 4)
 		       ))::int,
 		       count(*)::int,
-		       count(*) filter (where is_today and answer_mode = 'study')::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'study')::int,
 		       0::int,
-		       count(*) filter (where answer_mode = 'study')::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'study')::int,
 		       0::int,
-		       count(*) filter (where is_today and answer_mode = 'recall')::int,
-		       count(*) filter (where is_today and answer_mode = 'recall' and (correct is true or (event_schema_version = 1 and correct is null and grade >= 4)))::int,
-		       count(*) filter (where answer_mode = 'recall')::int,
-		       count(*) filter (where answer_mode = 'recall' and (correct is true or (event_schema_version = 1 and correct is null and grade >= 4)))::int,
-		       count(*) filter (where is_today and answer_mode = 'choice')::int,
-		       count(*) filter (where is_today and answer_mode = 'choice' and (correct is true or (event_schema_version = 1 and correct is null and grade >= 4)))::int,
-		       count(*) filter (where answer_mode = 'choice')::int,
-		       count(*) filter (where answer_mode = 'choice' and (correct is true or (event_schema_version = 1 and correct is null and grade >= 4)))::int,
-		       count(*) filter (where is_today and answer_mode is null)::int,
-		       count(*) filter (where is_today and answer_mode is null and grade >= 4)::int,
-		       count(*) filter (where answer_mode is null)::int,
-		       count(*) filter (where answer_mode is null and grade >= 4)::int
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'recall')::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'recall' and correct is true)::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'recall')::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'recall' and correct is true)::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'choice')::int,
+		       count(*) filter (where is_today and event_schema_version = 2 and answer_mode = 'choice' and correct is true)::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'choice')::int,
+		       count(*) filter (where event_schema_version = 2 and answer_mode = 'choice' and correct is true)::int,
+		       count(*) filter (where is_today and event_schema_version = 1)::int,
+		       count(*) filter (where is_today and event_schema_version = 1 and grade >= 4)::int,
+		       count(*) filter (where event_schema_version = 1)::int,
+		       count(*) filter (where event_schema_version = 1 and grade >= 4)::int
 		from events
 	`, userID, timezoneOffsetMinutes).Scan(
 		&result.ReviewsToday,
 		&result.ObjectiveReviewsToday,
 		&result.ObjectiveSuccessfulToday,
+		&result.SuccessfulToday,
 		&result.ReviewsTotal,
 		&result.Modes.Study.AttemptsToday,
 		&result.Modes.Study.SuccessfulToday,
@@ -177,7 +179,6 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 	); err != nil {
 		return ProgressSummary{}, fmt.Errorf("query review progress: %w", err)
 	}
-	result.SuccessfulToday = result.ObjectiveSuccessfulToday
 
 	if err := r.pool.QueryRow(ctx, `
 		with bounds as (
@@ -191,29 +192,21 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		join words word on word.id = current_review.word_id
 		cross join bounds
 		where current_review.user_id = $1::uuid
+		  and current_review.event_schema_version = 2
+		  and current_review.answer_mode in ('recall', 'choice')
+		  and current_review.correct is true
 		  and current_review.grade = 5
 		  and current_review.reviewed_at >= bounds.week_start
-		  and (
-		      current_review.answer_mode is null
-		      or (current_review.answer_mode in ('recall', 'choice') and (
-		          current_review.correct is true
-		          or (current_review.event_schema_version = 1 and current_review.correct is null)
-		      ))
-		  )
 		  and exists (
 			select 1
 			from review_events previous_review
 			where previous_review.user_id = current_review.user_id
 			  and previous_review.word_id = current_review.word_id
+			  and previous_review.event_schema_version = 2
+			  and previous_review.answer_mode in ('recall', 'choice')
+			  and previous_review.correct is true
 			  and previous_review.grade = 5
 			  and previous_review.reviewed_at < bounds.week_start
-			  and (
-			      previous_review.answer_mode is null
-			      or (previous_review.answer_mode in ('recall', 'choice') and (
-			          previous_review.correct is true
-			          or (previous_review.event_schema_version = 1 and previous_review.correct is null)
-			      ))
-			  )
 		  )
 	`, userID, timezoneOffsetMinutes).Scan(
 		&result.RetainedItemsWeek,
