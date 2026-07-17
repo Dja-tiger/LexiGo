@@ -17,6 +17,8 @@ var (
 	ErrLessonItemAlreadyReviewed = errors.New("lesson item was already reviewed")
 	ErrLessonItemOutOfOrder      = errors.New("lesson item is not the current item")
 	ErrLessonModeMismatch        = errors.New("lesson answer mode does not match session")
+	ErrLessonVersionConflict     = errors.New("lesson version conflict")
+	ErrInvalidLessonState        = errors.New("lesson state is inconsistent")
 )
 
 func (r *Repository) CreateLesson(
@@ -44,7 +46,7 @@ func (r *Repository) CreateLesson(
 
 	if _, err := tx.Exec(ctx, `
 		update lesson_sessions
-		set status = 'discarded', updated_at = now()
+		set status = 'discarded', version = version + 1, updated_at = now()
 		where user_id = $1::uuid and status = 'active'
 	`, userID); err != nil {
 		return LessonSession{}, fmt.Errorf("discard previous lesson: %w", err)
@@ -90,17 +92,38 @@ func (r *Repository) ActiveLesson(ctx context.Context, userID string) (LessonSes
 	return r.lessonByID(ctx, userID, lessonID, "active")
 }
 
-func (r *Repository) DiscardLesson(ctx context.Context, userID, lessonID string) error {
-	result, err := r.pool.Exec(ctx, `
-		update lesson_sessions
-		set status = 'discarded', updated_at = now()
-		where id = $1::uuid and user_id = $2::uuid and status = 'active'
-	`, lessonID, userID)
+func (r *Repository) DiscardLesson(ctx context.Context, userID, lessonID string, expectedVersion int64) error {
+	tx, err := r.pool.Begin(ctx)
 	if err != nil {
+		return fmt.Errorf("begin discard lesson transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var version int64
+	if err := tx.QueryRow(ctx, `
+		select version
+		from lesson_sessions
+		where id = $1::uuid and user_id = $2::uuid and status = 'active'
+		for update
+	`, lessonID, userID).Scan(&version); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoActiveLesson
+		}
+		return fmt.Errorf("lock lesson for discard: %w", err)
+	}
+	if version != expectedVersion {
+		return ErrLessonVersionConflict
+	}
+
+	if _, err := tx.Exec(ctx, `
+		update lesson_sessions
+		set status = 'discarded', version = version + 1, updated_at = now()
+		where id = $1::uuid and user_id = $2::uuid and status = 'active' and version = $3
+	`, lessonID, userID, expectedVersion); err != nil {
 		return fmt.Errorf("discard lesson: %w", err)
 	}
-	if result.RowsAffected() == 0 {
-		return ErrNoActiveLesson
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit discard lesson: %w", err)
 	}
 	return nil
 }
@@ -110,7 +133,7 @@ func (r *Repository) ReviewLessonWord(
 	userID string,
 	lessonID string,
 	wordID int64,
-	request ReviewRequest,
+	request LessonReviewRequest,
 ) (LessonReviewResult, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -121,16 +144,20 @@ func (r *Repository) ReviewLessonWord(
 	var lockedLessonID string
 	var currentIndex int
 	var lessonMode AnswerMode
+	var version int64
 	if err := tx.QueryRow(ctx, `
-		select id::text, current_index, study_mode
+		select id::text, current_index, study_mode, version
 		from lesson_sessions
 		where id = $1::uuid and user_id = $2::uuid and status = 'active'
 		for update
-	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex, &lessonMode); err != nil {
+	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex, &lessonMode, &version); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock lesson: %w", err)
+	}
+	if version != request.LessonVersion {
+		return LessonReviewResult{}, ErrLessonVersionConflict
 	}
 	if lessonMode != request.AnswerMode {
 		return LessonReviewResult{}, ErrLessonModeMismatch
@@ -226,14 +253,20 @@ func (r *Repository) ReviewLessonWord(
 		nextIndex = totalItems
 	}
 
-	if _, err := tx.Exec(ctx, `
+	var nextVersion int64
+	if err := tx.QueryRow(ctx, `
 		update lesson_sessions
 		set current_index = $3,
+		    version = version + 1,
 		    status = case when $4 then 'completed' else 'active' end,
 		    completed_at = case when $4 then $5::timestamptz else null::timestamptz end,
 		    updated_at = $5::timestamptz
-		where id = $1::uuid and user_id = $2::uuid
-	`, lessonID, userID, nextIndex, completed, now); err != nil {
+		where id = $1::uuid and user_id = $2::uuid and version = $6
+		returning version
+	`, lessonID, userID, nextIndex, completed, now, request.LessonVersion).Scan(&nextVersion); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return LessonReviewResult{}, ErrLessonVersionConflict
+		}
 		return LessonReviewResult{}, fmt.Errorf("update lesson progress: %w", err)
 	}
 
@@ -253,6 +286,7 @@ func (r *Repository) ReviewLessonWord(
 		},
 		LessonID:            lockedLessonID,
 		LessonCurrentIndex:  nextIndex,
+		LessonVersion:       nextVersion,
 		LessonCompleted:     completed,
 		LessonReviewedItems: reviewedItems,
 		LessonSkippedItems:  0,
@@ -266,9 +300,15 @@ func (r *Repository) lessonByID(
 	lessonID string,
 	requiredStatus string,
 ) (LessonSession, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return LessonSession{}, fmt.Errorf("begin lesson snapshot: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	var lesson LessonSession
-	if err := r.pool.QueryRow(ctx, `
-		select id::text, source, study_mode, lesson_size, current_index, status, created_at, updated_at
+	if err := tx.QueryRow(ctx, `
+		select id::text, source, study_mode, lesson_size, current_index, version, status, created_at, updated_at
 		from lesson_sessions
 		where id = $1::uuid
 		  and user_id = $2::uuid
@@ -279,6 +319,7 @@ func (r *Repository) lessonByID(
 		&lesson.StudyMode,
 		&lesson.LessonSize,
 		&lesson.CurrentIndex,
+		&lesson.Version,
 		&lesson.Status,
 		&lesson.CreatedAt,
 		&lesson.UpdatedAt,
@@ -289,7 +330,7 @@ func (r *Repository) lessonByID(
 		return LessonSession{}, fmt.Errorf("query lesson: %w", err)
 	}
 
-	rows, err := r.pool.Query(ctx, `
+	rows, err := tx.Query(ctx, `
 		select item.position,
 		       word.id,
 		       word.lemma,
@@ -339,13 +380,32 @@ func (r *Repository) lessonByID(
 			return LessonSession{}, fmt.Errorf("decode lesson examples: %w", err)
 		}
 		if rating != nil {
-			value := Rating(*rating)
-			item.Rating = &value
+			parsed := Rating(*rating)
+			item.Rating = &parsed
+		}
+		item.Kind = "word"
+		if item.PartOfSpeech == "phrase" {
+			item.Kind = "phrase"
+			item.Slug = item.Lemma
 		}
 		lesson.Items = append(lesson.Items, item)
 	}
 	if err := rows.Err(); err != nil {
 		return LessonSession{}, fmt.Errorf("iterate lesson items: %w", err)
+	}
+	rows.Close()
+
+	if lesson.Status == "active" {
+		if lesson.CurrentIndex < 0 || lesson.CurrentIndex >= len(lesson.Items) || lesson.Items[lesson.CurrentIndex].Rating != nil {
+			return LessonSession{}, ErrInvalidLessonState
+		}
+	}
+	if lesson.Status == "completed" && lesson.CurrentIndex != len(lesson.Items) {
+		return LessonSession{}, ErrInvalidLessonState
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return LessonSession{}, fmt.Errorf("commit lesson snapshot: %w", err)
 	}
 	return lesson, nil
 }

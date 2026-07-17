@@ -212,6 +212,7 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 	var lesson struct {
 		ID        string `json:"id"`
 		StudyMode string `json:"studyMode"`
+		Version   int64  `json:"version"`
 	}
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
 		"source": "mixed", "studyMode": "study", "lessonSize": "15", "wordIds": []int64{words.Items[3].ID},
@@ -222,9 +223,9 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 
 	lessonReviewURL := fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, lesson.ID, words.Items[3].ID)
 	postAuthenticatedJSON(t, lessonReviewURL, registered.Tokens.AccessToken, map[string]any{
-		"rating": "known", "answerMode": "recall", "answerRevealed": true, "correct": true, "timezoneOffsetMinutes": 0,
+		"lessonVersion": lesson.Version, "rating": "known", "answerMode": "recall", "answerRevealed": true, "correct": true, "timezoneOffsetMinutes": 0,
 	}, http.StatusConflict, nil)
 	postAuthenticatedJSON(t, lessonReviewURL, registered.Tokens.AccessToken, map[string]any{
-		"rating": "known", "answerMode": "study", "answerRevealed": true, "timezoneOffsetMinutes": 0,
+		"lessonVersion": lesson.Version, "rating": "known", "answerMode": "study", "answerRevealed": true, "timezoneOffsetMinutes": 0,
 	}, http.StatusOK, &struct{}{})
 }

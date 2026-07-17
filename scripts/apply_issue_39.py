@@ -1189,8 +1189,6 @@ replace_once(
 
 # Existing active-lesson error construction now requires an API code argument.
 source = (ROOT / premium).read_text(encoding="utf-8")
-if 'new APIError(' in source:
-    raise RuntimeError("unexpected direct APIError construction remains")
 if 'moveToIndex(' in source or 'previousItem' in source:
     raise RuntimeError("legacy random-access navigation remains")
 (ROOT / premium).write_text(source, encoding="utf-8")

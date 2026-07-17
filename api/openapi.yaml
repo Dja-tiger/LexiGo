@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.4.0
+  version: 0.5.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -198,6 +198,95 @@ paths:
           description: Слово не назначено текущему пользователю.
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/lessons:
+    post:
+      operationId: createLesson
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonCreateRequest"
+      responses:
+        "201":
+          description: Создан новый серверный урок с version=1.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonSession"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/lessons/active:
+    get:
+      operationId: getActiveLesson
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Snapshot активного урока и фактическая серверная позиция.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonSession"
+        "404":
+          description: Активный урок отсутствует.
+  /api/v1/lessons/{lessonID}:
+    delete:
+      operationId: discardLesson
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/LessonID"
+        - name: If-Match
+          in: header
+          required: true
+          description: Текущая lesson version, например `"3"`.
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Урок сброшен; version атомарно увеличена.
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "428":
+          description: If-Match отсутствует.
+  /api/v1/lessons/{lessonID}/words/{wordID}/review:
+    post:
+      operationId: reviewLessonWord
+      tags: [learning]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/LessonID"
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonReviewRequest"
+      responses:
+        "200":
+          description: Review и переход к следующей серверной позиции сохранены атомарно.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonReviewResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/progress:
     get:
       operationId: getProgress
@@ -257,6 +346,13 @@ components:
       name: X-CSRF-Token
       description: Значение readable cookie lexigo_csrf для double-submit CSRF validation.
   parameters:
+    LessonID:
+      name: lessonID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     TimezoneOffsetMinutes:
       name: timezoneOffsetMinutes
       in: query
@@ -443,6 +539,97 @@ components:
         lastReviewedAt:
           type: string
           format: date-time
+    LessonCreateRequest:
+      type: object
+      required: [source, studyMode, lessonSize, wordIds]
+      properties:
+        source: { type: string }
+        studyMode:
+          type: string
+          enum: [study, recall, choice]
+        lessonSize:
+          type: string
+          enum: ["15", "30", "60", all]
+        wordIds:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+    LessonItem:
+      type: object
+      required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, examples, note, status]
+      properties:
+        position: { type: integer, minimum: 0 }
+        id: { type: integer, format: int64 }
+        kind: { type: string, enum: [word, phrase] }
+        slug: { type: string }
+        lemma: { type: string }
+        translation: { type: string }
+        phonetic: { type: string }
+        partOfSpeech: { type: string }
+        topic: { type: string }
+        examples:
+          type: array
+          items: { type: string }
+        note: { type: string }
+        status: { type: string, enum: [new, learning, review, mastered] }
+        rating:
+          type: [string, "null"]
+          enum: [again, almost, known, null]
+        reviewedAt:
+          type: [string, "null"]
+          format: date-time
+    LessonSession:
+      type: object
+      required: [id, source, studyMode, lessonSize, currentIndex, version, status, items, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        source: { type: string }
+        studyMode:
+          type: string
+          enum: [study, recall, choice]
+        lessonSize: { type: string }
+        currentIndex: { type: integer, minimum: 0 }
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Monotonic optimistic-concurrency version.
+        status:
+          type: string
+          enum: [active, completed, discarded]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LessonItem"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    LessonReviewRequest:
+      allOf:
+        - $ref: "#/components/schemas/ReviewRequest"
+        - type: object
+          required: [lessonVersion]
+          properties:
+            lessonVersion:
+              type: integer
+              format: int64
+              minimum: 1
+    LessonReviewResult:
+      allOf:
+        - $ref: "#/components/schemas/ReviewResult"
+        - type: object
+          required: [lessonId, lessonCurrentIndex, lessonVersion, lessonCompleted, lessonReviewedItems, lessonSkippedItems, lessonTotalItems]
+          properties:
+            lessonId: { type: string, format: uuid }
+            lessonCurrentIndex: { type: integer, minimum: 0 }
+            lessonVersion: { type: integer, format: int64, minimum: 1 }
+            lessonCompleted: { type: boolean }
+            lessonReviewedItems: { type: integer, minimum: 0 }
+            lessonSkippedItems: { type: integer, minimum: 0 }
+            lessonTotalItems: { type: integer, minimum: 1 }
     GoalRequest:
       type: object
       required: [dailyGoal]

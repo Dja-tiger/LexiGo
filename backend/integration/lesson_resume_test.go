@@ -25,11 +25,12 @@ import (
 )
 
 type lessonProgressPayload struct {
-	LessonCurrentIndex  int  `json:"lessonCurrentIndex"`
-	LessonCompleted     bool `json:"lessonCompleted"`
-	LessonReviewedItems int  `json:"lessonReviewedItems"`
-	LessonSkippedItems  int  `json:"lessonSkippedItems"`
-	LessonTotalItems    int  `json:"lessonTotalItems"`
+	LessonCurrentIndex  int   `json:"lessonCurrentIndex"`
+	LessonVersion       int64 `json:"lessonVersion"`
+	LessonCompleted     bool  `json:"lessonCompleted"`
+	LessonReviewedItems int   `json:"lessonReviewedItems"`
+	LessonSkippedItems  int   `json:"lessonSkippedItems"`
+	LessonTotalItems    int   `json:"lessonTotalItems"`
 }
 
 type lessonHTTPResult struct {
@@ -38,8 +39,8 @@ type lessonHTTPResult struct {
 	err    error
 }
 
-func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+func TestResumeAndCompleteLessonWithOptimisticConcurrency(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 
 	pg, err := postgresplatform.Open(ctx, requiredEnv(t, "TEST_POSTGRES_DSN"))
@@ -67,15 +68,9 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 	}
 
 	cfg := config.Config{
-		AppEnv:            "test",
-		HTTPAddr:          ":0",
-		LogLevel:          "error",
-		CORSAllowedOrigin: "http://test.local",
-		PostgresDSN:       requiredEnv(t, "TEST_POSTGRES_DSN"),
-		Redis:             config.Redis{Addr: requiredEnv(t, "TEST_REDIS_ADDR")},
-		JWTSecret:         "integration-test-secret-with-at-least-32-bytes",
-		AccessTokenTTL:    15 * time.Minute,
-		RefreshTokenTTL:   24 * time.Hour,
+		AppEnv: "test", HTTPAddr: ":0", LogLevel: "error", CORSAllowedOrigin: "http://test.local",
+		PostgresDSN: requiredEnv(t, "TEST_POSTGRES_DSN"), Redis: config.Redis{Addr: requiredEnv(t, "TEST_REDIS_ADDR")},
+		JWTSecret: "integration-test-secret-with-at-least-32-bytes", AccessTokenTTL: 15 * time.Minute, RefreshTokenTTL: 24 * time.Hour,
 	}
 	app, err := server.New(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pg, rdb)
 	if err != nil {
@@ -84,9 +79,8 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 	testServer := httptest.NewServer(app.Handler())
 	defer testServer.Close()
 
-	email := fmt.Sprintf("resume-%d@example.com", time.Now().UnixNano())
 	registered := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
-		"email": email, "password": "strong-password", "displayName": "Learner",
+		"email": fmt.Sprintf("resume-%d@example.com", time.Now().UnixNano()), "password": "strong-password", "displayName": "Learner",
 	}, http.StatusCreated)
 
 	var due struct {
@@ -107,6 +101,7 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 	type lessonPayload struct {
 		ID           string       `json:"id"`
 		CurrentIndex int          `json:"currentIndex"`
+		Version      int64        `json:"version"`
 		Status       string       `json:"status"`
 		Items        []lessonItem `json:"items"`
 	}
@@ -115,21 +110,19 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
 		"source": "mixed", "studyMode": "recall", "lessonSize": "15", "wordIds": wordIDs,
 	}, http.StatusCreated, &created)
-	if created.ID == "" || created.CurrentIndex != 0 || created.Status != "active" || len(created.Items) != 3 {
+	if created.ID == "" || created.CurrentIndex != 0 || created.Version != 1 || created.Status != "active" || len(created.Items) != 3 {
 		t.Fatalf("unexpected created lesson: %+v", created)
 	}
 
 	var resumed lessonPayload
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/active", registered.Tokens.AccessToken, http.StatusOK, &resumed)
-	if resumed.ID != created.ID || resumed.CurrentIndex != 0 || len(resumed.Items) != 3 {
+	if resumed.ID != created.ID || resumed.CurrentIndex != 0 || resumed.Version != 1 {
 		t.Fatalf("unexpected resumed lesson: %+v", resumed)
 	}
 
-	// A later card cannot be reviewed before the current required card.
-	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[1]), registered.Tokens.AccessToken, lessonReviewPayload("known"), http.StatusConflict, nil)
+	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[1]), registered.Tokens.AccessToken, lessonReviewPayload("known", 1), http.StatusConflict, nil)
+	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[0]), registered.Tokens.AccessToken, lessonReviewPayload("known", 0), http.StatusUnprocessableEntity, nil)
 
-	// Simulate a slow request and a repeated click. The row lock allows one
-	// persisted review and returns a conflict for the duplicate.
 	endpoint := fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[0])
 	start := make(chan struct{})
 	results := make(chan lessonHTTPResult, 2)
@@ -139,7 +132,7 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			results <- sendLessonReview(endpoint, registered.Tokens.AccessToken, lessonReviewPayload("known"))
+			results <- sendLessonReview(endpoint, registered.Tokens.AccessToken, lessonReviewPayload("known", 1))
 		}()
 	}
 	close(start)
@@ -148,6 +141,7 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 
 	statuses := make([]int, 0, 2)
 	var first lessonProgressPayload
+	var conflictCode string
 	for result := range results {
 		if result.err != nil {
 			t.Fatalf("concurrent review: %v", result.err)
@@ -155,57 +149,67 @@ func TestResumeAndCompleteLessonWithOrderedPersistedReviews(t *testing.T) {
 		statuses = append(statuses, result.status)
 		if result.status == http.StatusOK {
 			if err := json.Unmarshal(result.body, &first); err != nil {
-				t.Fatalf("decode first review: %v; body=%s", err, result.body)
+				t.Fatalf("decode review: %v; body=%s", err, result.body)
 			}
+		} else {
+			var payload struct {
+				Error struct {
+					Code string `json:"code"`
+				} `json:"error"`
+			}
+			if err := json.Unmarshal(result.body, &payload); err != nil {
+				t.Fatalf("decode conflict: %v; body=%s", err, result.body)
+			}
+			conflictCode = payload.Error.Code
 		}
 	}
 	sort.Ints(statuses)
-	if len(statuses) != 2 || statuses[0] != http.StatusOK || statuses[1] != http.StatusConflict {
-		t.Fatalf("concurrent statuses = %v", statuses)
+	if len(statuses) != 2 || statuses[0] != http.StatusOK || statuses[1] != http.StatusConflict || conflictCode != "lesson_version_conflict" {
+		t.Fatalf("concurrent statuses=%v conflict=%q", statuses, conflictCode)
 	}
-	assertLessonProgress(t, first, 1, 3, false)
+	assertLessonProgress(t, first, 1, 3, 2, false)
 
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/active", registered.Tokens.AccessToken, http.StatusOK, &resumed)
-	if resumed.CurrentIndex != 1 || resumed.Items[0].Rating == nil || *resumed.Items[0].Rating != "known" {
-		t.Fatalf("lesson did not resume at the next item: %+v", resumed)
+	if resumed.CurrentIndex != 1 || resumed.Version != 2 || resumed.Items[0].Rating == nil {
+		t.Fatalf("resume after first review: %+v", resumed)
 	}
 
+	secondURL := fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[1])
+	postAuthenticatedJSON(t, secondURL, registered.Tokens.AccessToken, lessonReviewPayload("almost", 1), http.StatusConflict, nil)
 	var second lessonProgressPayload
-	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[1]), registered.Tokens.AccessToken, lessonReviewPayload("almost"), http.StatusOK, &second)
-	assertLessonProgress(t, second, 2, 3, false)
+	postAuthenticatedJSON(t, secondURL, registered.Tokens.AccessToken, lessonReviewPayload("almost", 2), http.StatusOK, &second)
+	assertLessonProgress(t, second, 2, 3, 3, false)
+
+	postAuthenticatedJSON(t, endpoint, registered.Tokens.AccessToken, lessonReviewPayload("known", 3), http.StatusConflict, nil)
 
 	var completed lessonProgressPayload
-	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[2]), registered.Tokens.AccessToken, lessonReviewPayload("again"), http.StatusOK, &completed)
-	assertLessonProgress(t, completed, 3, 3, true)
+	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[2]), registered.Tokens.AccessToken, lessonReviewPayload("again", 3), http.StatusOK, &completed)
+	assertLessonProgress(t, completed, 3, 3, 4, true)
 
-	// Completion is server-owned: the session disappears from the active queue,
-	// and a repeated final click cannot persist another review.
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/active", registered.Tokens.AccessToken, http.StatusNotFound, nil)
-	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, created.ID, wordIDs[2]), registered.Tokens.AccessToken, lessonReviewPayload("again"), http.StatusNotFound, nil)
 
 	var status string
 	var currentIndex, ratedItems, reviewEvents int
+	var version int64
 	if err := pg.QueryRow(ctx, `
-		select lesson_sessions.status, lesson_sessions.current_index,
-		       count(lesson_session_items.rating)::int
-		from lesson_sessions
-		join lesson_session_items on lesson_session_items.session_id = lesson_sessions.id
+		select lesson_sessions.status, lesson_sessions.current_index, lesson_sessions.version, count(lesson_session_items.rating)::int
+		from lesson_sessions join lesson_session_items on lesson_session_items.session_id = lesson_sessions.id
 		where lesson_sessions.id = $1::uuid
-		group by lesson_sessions.status, lesson_sessions.current_index
-	`, created.ID).Scan(&status, &currentIndex, &ratedItems); err != nil {
+		group by lesson_sessions.status, lesson_sessions.current_index, lesson_sessions.version
+	`, created.ID).Scan(&status, &currentIndex, &version, &ratedItems); err != nil {
 		t.Fatalf("query completed lesson: %v", err)
 	}
 	if err := pg.QueryRow(ctx, "select count(*)::int from review_events where word_id = any($1::bigint[])", wordIDs).Scan(&reviewEvents); err != nil {
-		t.Fatalf("count lesson review events: %v", err)
+		t.Fatalf("count review events: %v", err)
 	}
-	if status != "completed" || currentIndex != 3 || ratedItems != 3 || reviewEvents != 3 {
-		t.Fatalf("completed lesson: status=%s index=%d rated=%d events=%d", status, currentIndex, ratedItems, reviewEvents)
+	if status != "completed" || currentIndex != 3 || version != 4 || ratedItems != 3 || reviewEvents != 3 {
+		t.Fatalf("completed lesson status=%s index=%d version=%d rated=%d events=%d", status, currentIndex, version, ratedItems, reviewEvents)
 	}
 }
 
-func lessonReviewPayload(rating string) map[string]any {
+func lessonReviewPayload(rating string, version int64) map[string]any {
 	return map[string]any{
-		"rating": rating, "responseMs": 500, "answerMode": "recall", "correct": true, "timezoneOffsetMinutes": 0,
+		"lessonVersion": version, "rating": rating, "responseMs": 500, "answerMode": "recall", "correct": true, "timezoneOffsetMinutes": 0,
 	}
 }
 
@@ -229,9 +233,9 @@ func sendLessonReview(endpoint, accessToken string, payload any) lessonHTTPResul
 	return lessonHTTPResult{status: response.StatusCode, body: responseBody, err: err}
 }
 
-func assertLessonProgress(t *testing.T, payload lessonProgressPayload, reviewed, total int, completed bool) {
+func assertLessonProgress(t *testing.T, payload lessonProgressPayload, reviewed, total int, version int64, completed bool) {
 	t.Helper()
-	if payload.LessonReviewedItems != reviewed || payload.LessonTotalItems != total || payload.LessonSkippedItems != 0 || payload.LessonCompleted != completed || payload.LessonCurrentIndex != reviewed {
+	if payload.LessonReviewedItems != reviewed || payload.LessonTotalItems != total || payload.LessonSkippedItems != 0 || payload.LessonCompleted != completed || payload.LessonCurrentIndex != reviewed || payload.LessonVersion != version {
 		t.Fatalf("unexpected lesson progress: %+v", payload)
 	}
 }

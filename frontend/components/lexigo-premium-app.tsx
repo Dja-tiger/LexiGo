@@ -7,7 +7,7 @@ import { apiUrl } from "../lib/api";
 import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
-import { decideLessonAdvance, summarizePersistedLesson } from "../lib/lesson-flow";
+import { decideLessonAdvance, resolveActiveLessonIndex, summarizePersistedLesson } from "../lib/lesson-flow";
 import {
   buildAnswerOptions,
   exerciseAnswer,
@@ -91,6 +91,7 @@ type LessonSessionResponse = {
   studyMode: AnswerMode;
   lessonSize: string;
   currentIndex: number;
+  version: number;
   status: "active" | "completed" | "discarded";
   items: LessonItemResponse[];
   createdAt: string;
@@ -100,6 +101,7 @@ type LessonSessionResponse = {
 type LessonReviewResponse = {
   lessonId: string;
   lessonCurrentIndex: number;
+  lessonVersion: number;
   lessonCompleted: boolean;
   lessonReviewedItems: number;
   lessonSkippedItems: number;
@@ -107,7 +109,7 @@ type LessonReviewResponse = {
 };
 
 type ErrorResponse = {
-  error?: { message?: string };
+  error?: { code?: string; message?: string };
 };
 
 type AuthorizedResult<T> = {
@@ -402,7 +404,7 @@ function persistNavigation(target: NavigationTarget) {
 }
 
 class APIError extends Error {
-  constructor(readonly status: number, message: string) {
+  constructor(readonly status: number, readonly code: string, message: string) {
     super(message);
   }
 }
@@ -419,14 +421,16 @@ async function requestJSON<T>(path: string, init: RequestInit = {}, accessToken?
   }
   const response = await fetch(apiUrl(path), { ...init, headers, credentials: "include" });
   if (!response.ok) {
+    let code = "request_failed";
     let message = `Request failed with status ${response.status}`;
     try {
       const payload = (await response.json()) as ErrorResponse;
+      code = payload.error?.code ?? code;
       message = payload.error?.message ?? message;
     } catch {
       // Keep the HTTP status when the upstream response is not JSON.
     }
-    throw new APIError(response.status, localizeAPIMessage(message));
+    throw new APIError(response.status, code, localizeAPIMessage(message));
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
@@ -815,7 +819,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     lesson.items.forEach((item, index) => {
       if (item.rating && lessonItems[index]) restoredRatings[lessonItems[index].id] = item.rating;
     });
-    const safeIndex = Math.min(Math.max(lesson.currentIndex, 0), Math.max(lessonItems.length - 1, 0));
+    const candidate = lessonItems[lesson.currentIndex];
+    const safeIndex = resolveActiveLessonIndex(
+      lesson.currentIndex,
+      lessonItems.length,
+      Boolean(candidate && restoredRatings[candidate.id]),
+    );
+    if (safeIndex === null || !Number.isInteger(lesson.version) || lesson.version <= 0) {
+      setActiveLesson(null);
+      clearLessonState();
+      setError("Сервер вернул некорректную позицию урока. Обновите страницу или начните новый блок.");
+      return false;
+    }
     const presentationMode = lesson.studyMode;
     setActiveLesson(lesson);
     setSource(lesson.source);
@@ -830,6 +845,30 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setServerNextIndex(null);
     setServerSkippedItems(0);
     setLessonStarted(true);
+    return true;
+  }
+
+  async function resynchronizeActiveLesson(message: string) {
+    if (!session) return;
+    try {
+      const result = await authorizedRequest<LessonSessionResponse>(session, "/api/v1/lessons/active");
+      setSession(result.activeSession);
+      if (applyLesson(result.data)) {
+        navigate({ view: "lesson", source: result.data.source }, true);
+        setError(message);
+      } else {
+        navigate({ view: "learn" }, true);
+      }
+    } catch (requestError) {
+      if (requestError instanceof APIError && requestError.status === 404) {
+        setActiveLesson(null);
+        clearLessonState();
+        navigate({ view: "learn" }, true);
+        setError("Активный урок уже завершён или сброшен на другом устройстве.");
+        return;
+      }
+      setError(requestError instanceof Error ? requestError.message : "Не удалось синхронизировать урок");
+    }
   }
 
   async function resumeLesson() {
@@ -842,8 +881,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     try {
       const result = await authorizedRequest<LessonSessionResponse>(session, "/api/v1/lessons/active");
       setSession(result.activeSession);
-      applyLesson(result.data);
-      navigate({ view: "lesson", source: result.data.source });
+      if (applyLesson(result.data)) navigate({ view: "lesson", source: result.data.source });
+      else navigate({ view: "learn" }, true);
     } catch (requestError) {
       if (requestError instanceof APIError && requestError.status === 404) {
         setActiveLesson(null);
@@ -862,13 +901,20 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setBusy(true);
     setError("");
     try {
-      const result = await authorizedRequest<void>(session, `/api/v1/lessons/${activeLesson.id}`, { method: "DELETE" });
+      const result = await authorizedRequest<void>(session, `/api/v1/lessons/${activeLesson.id}`, {
+        method: "DELETE",
+        headers: { "If-Match": `"${activeLesson.version}"` },
+      });
       setSession(result.activeSession);
       setActiveLesson(null);
       clearLessonState();
       navigate({ view: "learn" });
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось сбросить урок");
+      if (requestError instanceof APIError && requestError.status === 409) {
+        await resynchronizeActiveLesson("Урок изменён на другом устройстве. Показана актуальная позиция.");
+      } else {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось сбросить урок");
+      }
     } finally {
       setBusy(false);
     }
@@ -1041,16 +1087,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     navigate({ view: "home" });
   }
 
-  function moveToIndex(index: number) {
+  function moveToServerIndex(index: number) {
+    if (!Number.isInteger(index) || index < 0 || index >= items.length || !items[index]) {
+      setError("Сервер вернул недопустимую позицию урока. Выполнена повторная синхронизация.");
+      void resynchronizeActiveLesson("Урок синхронизирован с сервером.");
+      return;
+    }
     const target = items[index];
     setCurrentIndex(index);
     setServerNextIndex(null);
-    resetCardState(studyMode, Boolean(target && ratings[target.id]));
-  }
-
-  function previousItem() {
-    if (currentIndex === 0 || reviewing) return;
-    moveToIndex(currentIndex - 1);
+    resetCardState(studyMode, Boolean(ratings[target.id]));
   }
 
   function nextItem() {
@@ -1073,12 +1119,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setLessonComplete(true);
       return;
     }
-    moveToIndex(decision.nextIndex);
+    moveToServerIndex(decision.nextIndex);
   }
 
   async function rateCurrent(rating: ReviewRating) {
     if (!currentItem || currentRating || reviewInFlightRef.current) return;
-    if (!session || currentItem.wordId === undefined) {
+    if (!session || !activeLesson || currentItem.wordId === undefined) {
       requestAuthentication("lesson");
       return;
     }
@@ -1098,6 +1144,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       const result = await authorizedRequest<LessonReviewResponse>(session, path, {
         method: "POST",
         body: JSON.stringify({
+          lessonVersion: activeLesson.version,
           rating,
           responseMs: Math.max(0, Date.now() - cardStartedAt),
           answerMode: reviewMode,
@@ -1115,7 +1162,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         if (result.data.lessonCompleted) {
           setActiveLesson(null);
         } else {
-          setActiveLesson((current) => current ? { ...current, currentIndex: result.data.lessonCurrentIndex } : current);
+          setActiveLesson((current) => current ? {
+            ...current,
+            currentIndex: result.data.lessonCurrentIndex,
+            version: result.data.lessonVersion,
+            items: current.items.map((item) => item.id === currentItem.wordId
+              ? { ...item, rating, reviewedAt: result.data.lastReviewedAt }
+              : item),
+          } : current);
         }
       }
       try {
@@ -1124,7 +1178,15 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         setError("Оценка сохранена, но статистика обновится после следующей синхронизации.");
       }
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить результат");
+      if (requestError instanceof APIError && (
+        requestError.status === 409
+        || requestError.code === "lesson_item_not_found"
+        || requestError.code === "active_lesson_not_found"
+      )) {
+        await resynchronizeActiveLesson("Урок изменён на другом устройстве. Показана актуальная карточка.");
+      } else {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить результат");
+      }
     } finally {
       reviewInFlightRef.current = false;
       setReviewing(false);
@@ -1525,11 +1587,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               )}
             </article>
 
-            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled={reviewing || currentIndex === 0} onClick={previousItem}>← Предыдущее</button><button className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
+            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled title="Активный урок проходит в серверном порядке">← Предыдущее недоступно</button><button className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
 
             {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} onClick={() => rateCurrent("again")}>Не знал</button><button className="almost" type="button" disabled={reviewing} onClick={() => rateCurrent("almost")}>Почти</button><button className="known" type="button" disabled={reviewing} onClick={() => rateCurrent("known")}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
 
-            {relatedItems.length ? <section className="lx-related"><div><span>Похожие и следующие элементы</span></div><div>{relatedItems.map((item) => <button key={item.id} type="button" onClick={() => moveToIndex(items.findIndex((candidate) => candidate.id === item.id))}><strong>{item.prompt}</strong><small>{item.answer}</small><Icon name="arrow" size={15}/></button>)}</div></section> : null}
+            {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong>{item.prompt}</strong><small>{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
           </main>
 
           <aside className="lx-lesson-stats">
