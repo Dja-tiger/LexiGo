@@ -25,11 +25,12 @@ jobs:
       - name: Apply verified implementation
         run: |
           set -o pipefail
-          if grep -q 'LessonVersion.*json:"lessonVersion"' backend/internal/learning/lesson.go; then
-            echo "Issue 39 implementation is already applied" | tee issue39.log
-            exit 0
+          if ! grep -q 'LessonVersion.*json:"lessonVersion"' backend/internal/learning/lesson.go; then
+            python scripts/run_issue_39.py 2>&1 | tee issue39.log
+          else
+            echo "Issue 39 base implementation is already applied" | tee issue39.log
           fi
-          python scripts/run_issue_39.py 2>&1 | tee issue39.log
+          python scripts/finalize_issue_39.py 2>&1 | tee -a issue39.log
           gofmt -w backend/internal/learning backend/integration 2>&1 | tee -a issue39.log
           git diff --check 2>&1 | tee -a issue39.log
       - name: Verify backend lesson compilation
@@ -54,5 +55,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all
-          git commit -m "[issue-39-codemod] enforce versioned linear lessons"
+          git commit -m "[issue-39-codemod] finalize lesson state invariants"
           git push origin HEAD:fix/issue-39-lesson-concurrency
