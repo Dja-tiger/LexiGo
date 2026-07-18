@@ -3,8 +3,18 @@
 import type { FormEvent, MouseEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import {
+  failedResourceStatus,
+  idleResourceStatus,
+  isActiveLessonPayload,
+  isItemsResponsePayload,
+  isProgressSummaryPayload,
+  loadingResourceStatus,
+  readyResourceStatus,
+  type ResourceStatus,
+} from "../lib/account-resources";
 import { apiUrl } from "../lib/api";
-import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
+import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import { catalogCountText, catalogSummaryText, type CatalogMetadata, type CatalogMetadataStatus } from "../lib/catalog-metadata";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
@@ -28,15 +38,14 @@ import {
   type WordSection,
 } from "../lib/learning";
 import {
-  isRestorableNavigation,
   navigationURL,
-  NAVIGATION_STORAGE_KEY,
   parseNavigation,
-  parseStoredNavigation,
   PRIMARY_NAVIGATION,
+  readPersistedNavigation as readNavigationCache,
   type AppView,
   type NavigationTarget,
   viewTitle,
+  writePersistedNavigation as writeNavigationCache,
 } from "../lib/navigation";
 import {
   goalPercent,
@@ -47,6 +56,12 @@ import {
   type ProgressSummary,
   type ReviewRating,
 } from "../lib/progress";
+import {
+  decodeJSON,
+  failureFromResponse,
+  fetchWithTimeout,
+  RequestFailure,
+} from "../lib/request-failure";
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 
@@ -120,10 +135,6 @@ type LessonPreviewResponse = {
   studyMode: AnswerMode;
   lessonSize: string;
   composition: LessonComposition;
-};
-
-type ErrorResponse = {
-  error?: { code?: string; message?: string };
 };
 
 type AuthorizedResult<T> = {
@@ -332,6 +343,24 @@ function CollectionCard({
   );
 }
 
+function AccountResourceNotice({
+  label,
+  status,
+  onRetry,
+}: {
+  label: string;
+  status: ResourceStatus;
+  onRetry: () => void;
+}) {
+  if (status.phase !== "error" || !status.problem) return null;
+  return (
+    <section className={`lx-resource-notice ${status.problem.kind}`} role="alert" aria-label={`${label}: ошибка загрузки`}>
+      <div><strong>{status.problem.title}</strong><span>{status.problem.message}</span></div>
+      {status.problem.retryable ? <button type="button" onClick={onRetry}>Повторить</button> : null}
+    </section>
+  );
+}
+
 function CatalogSortControl({
   kind,
   mode,
@@ -394,32 +423,12 @@ function isStandaloneDisplayMode(): boolean {
     || window.matchMedia?.("(display-mode: standalone)").matches === true;
 }
 
-function readPersistedNavigation(): NavigationTarget | null {
-  try {
-    const target = parseStoredNavigation(window.localStorage.getItem(NAVIGATION_STORAGE_KEY));
-    if (!target) window.localStorage.removeItem(NAVIGATION_STORAGE_KEY);
-    return target;
-  } catch {
-    return null;
-  }
-}
-
-function persistNavigation(target: NavigationTarget) {
-  if (!isRestorableNavigation(target)) return;
-  try {
-    window.localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(target));
-  } catch {
-    // URL navigation remains authoritative when standalone storage is restricted.
-  }
-}
-
-class APIError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
-    super(message);
-  }
-}
-
-async function requestJSON<T>(path: string, init: RequestInit = {}, accessToken?: string): Promise<T> {
+async function requestJSON<T>(
+  path: string,
+  init: RequestInit = {},
+  accessToken?: string,
+  validator: (value: unknown) => boolean = () => true,
+): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   if (init.body) headers.set("Content-Type", "application/json");
@@ -429,30 +438,41 @@ async function requestJSON<T>(path: string, init: RequestInit = {}, accessToken?
     const csrfToken = csrfTokenFromCookie();
     if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
   }
-  const response = await fetch(apiUrl(path), { ...init, headers, credentials: "include" });
+  const response = await fetchWithTimeout(apiUrl(path), {
+    ...init,
+    headers,
+    credentials: "include",
+  });
   if (!response.ok) {
-    let code = "request_failed";
-    let message = `Request failed with status ${response.status}`;
-    try {
-      const payload = (await response.json()) as ErrorResponse;
-      code = payload.error?.code ?? code;
-      message = payload.error?.message ?? message;
-    } catch {
-      // Keep the HTTP status when the upstream response is not JSON.
-    }
-    throw new APIError(response.status, code, localizeAPIMessage(message));
+    const failure = await failureFromResponse(response);
+    throw new RequestFailure(failure.kind, localizeAPIMessage(failure.message), {
+      status: failure.status,
+      code: failure.code,
+      cause: failure,
+    });
   }
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return decodeJSON<T>(response, validator, `${path} response`);
 }
 
-async function authorizedRequest<T>(current: Session, path: string, init: RequestInit = {}): Promise<AuthorizedResult<T>> {
+async function authorizedRequest<T>(
+  current: Session,
+  path: string,
+  init: RequestInit = {},
+  validator: (value: unknown) => boolean = () => true,
+): Promise<AuthorizedResult<T>> {
   try {
-    return { activeSession: current, data: await requestJSON<T>(path, init, current.tokens.accessToken) };
+    return {
+      activeSession: current,
+      data: await requestJSON<T>(path, init, current.tokens.accessToken, validator),
+    };
   } catch (requestError) {
-    if (!(requestError instanceof APIError) || requestError.status !== 401) throw requestError;
+    if (!(requestError instanceof RequestFailure) || requestError.status !== 401) throw requestError;
     const refreshed = await refreshSession();
-    return { activeSession: refreshed, data: await requestJSON<T>(path, init, refreshed.tokens.accessToken) };
+    return {
+      activeSession: refreshed,
+      data: await requestJSON<T>(path, init, refreshed.tokens.accessToken, validator),
+    };
   }
 }
 
@@ -540,11 +560,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [returnView, setReturnView] = useState<AppView>("home");
   const [session, setSession] = useState<Session | null>(initialSession);
   const [progress, setProgress] = useState<ProgressSummary | null>(null);
+  const [progressStatus, setProgressStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [catalogMetadata, setCatalogMetadata] = useState<CatalogMetadata | null>(null);
   const [catalogMetadataStatus, setCatalogMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
+  const [activeLessonStatus, setActiveLessonStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [hydratedUserID, setHydratedUserID] = useState("");
   const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>(DEFAULT_PHRASE_CATALOG);
+  const [phraseCatalogStatus, setPhraseCatalogStatus] = useState<ResourceStatus>(idleResourceStatus);
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -603,13 +626,13 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const applyNavigation = (next: NavigationTarget) => {
       setNavigation(next);
       if (next.source) setSource(next.source);
-      persistNavigation(next);
+      writeNavigationCache(window.localStorage, next);
     };
     const syncNavigationFromURL = () => applyNavigation(parseNavigation(window.location.search));
 
     const explicitNavigation = window.location.search.length > 0;
     const restored = !explicitNavigation && isStandaloneDisplayMode()
-      ? readPersistedNavigation()
+      ? readNavigationCache(window.localStorage)
       : null;
     if (restored) {
       window.history.replaceState({ lexigo: true, ...restored }, "", navigationURL(restored));
@@ -702,7 +725,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     else window.history.pushState({ lexigo: true, ...target }, "", url);
     setNavigation(target);
     if (target.source) setSource(target.source);
-    persistNavigation(target);
+    writeNavigationCache(window.localStorage, target);
     setError("");
     if (target.view !== "lesson") setLessonQueueNotice("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -713,57 +736,130 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     navigate({ view: "profile" });
   }
 
-  const loadItems = useCallback(async (activeSession: Session, kind: "word" | "phrase", dueOnly: boolean) => {
+  const loadItems = useCallback(async (
+    activeSession: Session,
+    kind: "word" | "phrase",
+    dueOnly: boolean,
+    signal?: AbortSignal,
+  ) => {
     const endpoint = dueOnly ? "/api/v1/words/due" : "/api/v1/words";
     const result = await authorizedRequest<ItemsResponse>(
       activeSession,
       `${endpoint}?kind=${kind}&limit=1000`,
+      { signal },
+      isItemsResponsePayload,
     );
     return { activeSession: result.activeSession, items: result.data.items.map(toLearningItem) };
   }, []);
 
-  const hydrateAccount = useCallback(async (activeSession: Session) => {
-    setError("");
+  const loadProgressResource = useCallback(async (
+    activeSession: Session,
+    signal?: AbortSignal,
+    adoptSession = true,
+  ): Promise<Session | null> => {
+    setProgressStatus(loadingResourceStatus());
     try {
-      const progressResult = await authorizedRequest<ProgressSummary>(
+      const result = await authorizedRequest<ProgressSummary>(
         activeSession,
         `/api/v1/progress?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
+        { signal },
+        isProgressSummaryPayload,
       );
-      let currentSession = progressResult.activeSession;
-      setProgress(progressResult.data);
-
-      const phrasesResult = await loadItems(currentSession, "phrase", false);
-      currentSession = phrasesResult.activeSession;
-      setPhraseCatalog(phrasesResult.items);
-
-      try {
-        const lessonResult = await authorizedRequest<LessonSessionResponse>(currentSession, "/api/v1/lessons/active");
-        currentSession = lessonResult.activeSession;
-        setActiveLesson(lessonResult.data);
-      } catch (lessonError) {
-        if (lessonError instanceof APIError && lessonError.status === 404) setActiveLesson(null);
-        else throw lessonError;
-      }
-
-      setSession(currentSession);
+      if (signal?.aborted) return null;
+      setProgress(result.data);
+      setProgressStatus(readyResourceStatus());
+      if (adoptSession) setSession(result.activeSession);
+      return result.activeSession;
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить данные аккаунта");
+      if (signal?.aborted) return null;
+      setProgressStatus(failedResourceStatus(requestError, "прогресс"));
+      return null;
+    }
+  }, []);
+
+  const loadPhraseCatalogResource = useCallback(async (
+    activeSession: Session,
+    signal?: AbortSignal,
+    adoptSession = true,
+  ): Promise<Session | null> => {
+    setPhraseCatalogStatus(loadingResourceStatus());
+    try {
+      const result = await loadItems(activeSession, "phrase", false, signal);
+      if (signal?.aborted) return null;
+      setPhraseCatalog(result.items);
+      setPhraseCatalogStatus(readyResourceStatus());
+      if (adoptSession) setSession(result.activeSession);
+      return result.activeSession;
+    } catch (requestError) {
+      if (signal?.aborted) return null;
+      setPhraseCatalogStatus(failedResourceStatus(requestError, "каталог фраз"));
+      return null;
     }
   }, [loadItems]);
+
+  const loadActiveLessonResource = useCallback(async (
+    activeSession: Session,
+    signal?: AbortSignal,
+    adoptSession = true,
+  ): Promise<Session | null> => {
+    setActiveLessonStatus(loadingResourceStatus());
+    try {
+      const result = await authorizedRequest<LessonSessionResponse>(
+        activeSession,
+        "/api/v1/lessons/active",
+        { signal },
+        isActiveLessonPayload,
+      );
+      if (signal?.aborted) return null;
+      setActiveLesson(result.data);
+      setActiveLessonStatus(readyResourceStatus());
+      if (adoptSession) setSession(result.activeSession);
+      return result.activeSession;
+    } catch (requestError) {
+      if (signal?.aborted) return null;
+      if (requestError instanceof RequestFailure && requestError.status === 404) {
+        setActiveLesson(null);
+        setActiveLessonStatus(readyResourceStatus());
+        return activeSession;
+      }
+      setActiveLessonStatus(failedResourceStatus(requestError, "незавершённый урок"));
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!session || hydratedUserID === session.user.id) return;
     let cancelled = false;
+    const controller = new AbortController();
+    const activeSession = session;
     const timer = window.setTimeout(() => {
-      void hydrateAccount(session).then(() => {
-        if (!cancelled) setHydratedUserID(session.user.id);
+      if (cancelled) return;
+      setProgress(null);
+      setActiveLesson(null);
+      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      void Promise.all([
+        loadProgressResource(activeSession, controller.signal, false),
+        loadPhraseCatalogResource(activeSession, controller.signal, false),
+        loadActiveLessonResource(activeSession, controller.signal, false),
+      ]).then((sessions) => {
+        if (cancelled) return;
+        setHydratedUserID(activeSession.user.id);
+        const refreshed = sessions.find((candidate) => candidate?.tokens.accessToken !== activeSession.tokens.accessToken);
+        if (refreshed) setSession(refreshed);
       });
     }, 0);
     return () => {
       cancelled = true;
+      controller.abort();
       window.clearTimeout(timer);
     };
-  }, [session, hydratedUserID, hydrateAccount]);
+  }, [
+    session,
+    hydratedUserID,
+    loadActiveLessonResource,
+    loadPhraseCatalogResource,
+    loadProgressResource,
+  ]);
 
   useEffect(() => {
     if (!session || navigation.view !== "learn" || studyMode === "all") return;
@@ -790,13 +886,22 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, [navigation.view, session, source, studyMode, lessonSize]);
 
   async function refreshProgress(activeSession: Session): Promise<Session> {
-    const result = await authorizedRequest<ProgressSummary>(
-      activeSession,
-      `/api/v1/progress?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
-    );
-    setSession(result.activeSession);
-    setProgress(result.data);
-    return result.activeSession;
+    setProgressStatus(loadingResourceStatus());
+    try {
+      const result = await authorizedRequest<ProgressSummary>(
+        activeSession,
+        `/api/v1/progress?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
+        {},
+        isProgressSummaryPayload,
+      );
+      setSession(result.activeSession);
+      setProgress(result.data);
+      setProgressStatus(readyResourceStatus());
+      return result.activeSession;
+    } catch (requestError) {
+      setProgressStatus(failedResourceStatus(requestError, "прогресс"));
+      throw requestError;
+    }
   }
 
   function updateCatalogSort(kind: CatalogKind, mode: CatalogSortMode) {
@@ -925,7 +1030,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         navigate({ view: "learn" }, true);
       }
     } catch (requestError) {
-      if (requestError instanceof APIError && requestError.status === 404) {
+      if (requestError instanceof RequestFailure && requestError.status === 404) {
         setActiveLesson(null);
         clearLessonState();
         navigate({ view: "learn" }, true);
@@ -949,7 +1054,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       if (applyLesson(result.data)) navigate({ view: "lesson", source: result.data.source });
       else navigate({ view: "learn" }, true);
     } catch (requestError) {
-      if (requestError instanceof APIError && requestError.status === 404) {
+      if (requestError instanceof RequestFailure && requestError.status === 404) {
         setActiveLesson(null);
         setError("Незавершённый урок отсутствует. Начните новый блок.");
         navigate({ view: "learn" }, true);
@@ -975,7 +1080,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       clearLessonState();
       navigate({ view: "learn" });
     } catch (requestError) {
-      if (requestError instanceof APIError && requestError.status === 409) {
+      if (requestError instanceof RequestFailure && requestError.status === 409) {
         await resynchronizeActiveLesson("Урок изменён на другом устройстве. Показана актуальная позиция.");
       } else {
         setError(requestError instanceof Error ? requestError.message : "Не удалось сбросить урок");
@@ -1075,12 +1180,10 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       const authenticated = await requestJSON<Session>(`/api/v1/auth/${authMode}`, {
         method: "POST",
         body: JSON.stringify({ email, password, ...(authMode === "register" ? { displayName } : {}) }),
-      });
+      }, undefined, isSessionPayload);
       setSession(authenticated);
       setPassword("");
       setHydratedUserID("");
-      await hydrateAccount(authenticated);
-      setHydratedUserID(authenticated.user.id);
       navigate({ view: returnView === "profile" ? "home" : returnView });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось выполнить вход");
@@ -1097,8 +1200,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
       setSession(null);
       setProgress(null);
+      setProgressStatus(idleResourceStatus());
       setActiveLesson(null);
-      setPhraseCatalog(TECHNICAL_PHRASES);
+      setActiveLessonStatus(idleResourceStatus());
+      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      setPhraseCatalogStatus(idleResourceStatus());
       setHydratedUserID("");
       clearLessonState();
       navigate({ view: "home" });
@@ -1251,7 +1357,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         setError("Оценка сохранена, но статистика обновится после следующей синхронизации.");
       }
     } catch (requestError) {
-      if (requestError instanceof APIError && (
+      if (requestError instanceof RequestFailure && (
         requestError.status === 409
         || requestError.code === "lesson_item_not_found"
         || requestError.code === "active_lesson_not_found"
@@ -1327,9 +1433,43 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function renderHome() {
-    const dueNow = progress?.dueNow ?? 0;
-    const retained = progress?.retainedItemsWeek ?? 0;
+    const progressPending = Boolean(session && (progressStatus.phase === "idle" || progressStatus.phase === "loading"));
+    const dueNow = !session ? "—" : progress ? progress.dueNow : progressPending ? "…" : "—";
+    const retained = !session ? "—" : progress ? progress.retainedItemsWeek : progressPending ? "…" : "—";
     const dailyPercent = goalPercent(progress);
+    const progressPanelStatus = !session
+      ? "Войдите для персональной статистики"
+      : progress
+        ? "Актуальные данные аккаунта"
+        : progressPending
+          ? "Загружаем данные аккаунта…"
+          : "Статистика временно недоступна";
+    const dueBreakdown = !session
+      ? "После входа"
+      : progress
+        ? `${progress.dueWords} слов · ${progress.duePhrases} фраз`
+        : progressPending
+          ? "Загружаем очередь…"
+          : "Очередь недоступна";
+    const streakValue = !session ? "—" : progress ? progress.currentStreak : progressPending ? "…" : "—";
+    const streakHint = !session ? "Сохраняется" : progress ? `Рекорд ${progress.longestStreak}` : progressPending ? "Загружаем серию…" : "Серия недоступна";
+    const overallProgressLabel = !session
+      ? "—"
+      : !progress
+        ? progressPending ? "…" : "—"
+        : catalogMetadataStatus === "loading"
+          ? "…"
+          : catalogMetadata
+            ? `${overallPercent}%`
+            : "—";
+    const goalSummary = !session
+      ? "Войдите в аккаунт"
+      : progress
+        ? `${progress.reviewsToday} / ${progress.dailyGoal}`
+        : progressPending
+          ? "Загружаем цель…"
+          : "Цель недоступна";
+    const goalPercentLabel = !session ? "—" : progress ? `${dailyPercent}%` : progressPending ? "…" : "—";
     const heroAction = activeLesson ? resumeLesson : () => startLesson(session, { mode: "study", source: "mixed", size: 30 });
     return (
       <>
@@ -1361,29 +1501,29 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
           <article className="lx-progress-panel">
             <div className="lx-panel-heading">
-              <div><span>Ваш прогресс</span><small>{session ? "Актуальные данные аккаунта" : "Войдите для персональной статистики"}</small></div>
+              <div><span>Ваш прогресс</span><small>{progressPanelStatus}</small></div>
               <button type="button" onClick={() => navigate({ view: "progress" })}>Подробнее <Icon name="arrow" size={16}/></button>
             </div>
             <div className="lx-progress-stats">
               <button type="button" onClick={() => navigate({ view: "learn" })}>
-                <span>К повторению</span><strong className="purple">{session ? dueNow : "—"}</strong><small>{session ? `${progress?.dueWords ?? 0} слов · ${progress?.duePhrases ?? 0} фраз` : "После входа"}</small>
+                <span>К повторению</span><strong className="purple">{dueNow}</strong><small>{dueBreakdown}</small>
               </button>
               <button type="button" onClick={() => navigate({ view: "progress" })}>
-                <span>Серия дней</span><strong className="orange">{session ? progress?.currentStreak ?? 0 : "—"}</strong><small>{session ? `Рекорд ${progress?.longestStreak ?? 0}` : "Сохраняется"}</small>
+                <span>Серия дней</span><strong className="orange">{streakValue}</strong><small>{streakHint}</small>
               </button>
               <button type="button" onClick={() => navigate({ view: "progress" })}>
-                <span>Сохранено за неделю</span><strong className="blue">{session ? retained : "—"}</strong><small>Retained items</small>
+                <span>Сохранено за неделю</span><strong className="blue">{retained}</strong><small>Retained items</small>
               </button>
               <button type="button" className="lx-ring-stat" onClick={() => navigate({ view: "library" })}>
                 <span>Общий прогресс</span>
-                <div className="lx-progress-ring" style={{ "--progress": `${overallPercent}%` } as React.CSSProperties}><strong>{session ? `${overallPercent}%` : "—"}</strong></div>
+                <div className="lx-progress-ring" style={{ "--progress": `${progress && catalogMetadata ? overallPercent : 0}%` } as React.CSSProperties}><strong>{overallProgressLabel}</strong></div>
                 <small>Освоенные элементы</small>
               </button>
             </div>
             <div className="lx-goal-row">
-              <div><span>Цель на сегодня</span><strong>{session ? `${progress?.reviewsToday ?? 0} / ${progress?.dailyGoal ?? 30}` : "Войдите в аккаунт"}</strong></div>
+              <div><span>Цель на сегодня</span><strong>{goalSummary}</strong></div>
               <div className="lx-goal-track"><span style={{ width: `${dailyPercent}%` }}/></div>
-              <b>{session ? `${dailyPercent}%` : "—"}</b>
+              <b>{goalPercentLabel}</b>
             </div>
           </article>
         </section>
@@ -1549,7 +1689,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
     return (
       <>
-        <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress?.duePhrases ?? 0} фраз готовы к повторению</span></div></section>
+        <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
         <div className="lx-topic-filter">{phraseTopics.map((topic) => <button key={topic} type="button" className={phraseTopic === topic ? "selected" : ""} onClick={() => setPhraseTopic(topic)}>{topic === "all" ? "Все темы" : topic}</button>)}</div>
         <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => updateCatalogSort("phrases", mode)} />
         <section className="lx-phrase-grid">{sortedVisiblePhrases.map((phrase) => <button key={itemKey(phrase)} type="button" onClick={() => navigate({ view: "phrases", detail: itemKey(phrase) })}><span>{phrase.topic}</span><strong>{phrase.prompt}</strong><small>{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button>)}</section>
@@ -1589,8 +1729,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function renderProgress() {
-    if (!session || !progress) {
+    if (!session) {
       return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, due-очередь, retained items и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
+    }
+    if (!progress) {
+      const problem = progressStatus.problem;
+      return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>{progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем прогресс…" : problem?.title ?? "Прогресс недоступен"}</h1><p>{problem?.message ?? "Данные появятся после синхронизации аккаунта."}</p>{problem?.retryable ? <button className="lx-button primary" type="button" onClick={() => void loadProgressResource(session)}>Повторить загрузку</button> : null}</section>;
     }
     const modes = normalizedProgressModes(progress);
     const cards = [
@@ -1735,6 +1879,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     <main className="lx-app">
       {renderHeader()}
       {error ? <p className="lx-error" role="alert">{error}</p> : null}
+      {session ? <div className="lx-resource-stack">
+        {navigation.view !== "progress" ? <AccountResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
+        <AccountResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
+        <AccountResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
+      </div> : null}
       {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}
       <div className="lx-view">
         {view}

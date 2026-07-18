@@ -1,4 +1,12 @@
 import { apiUrl } from "./api";
+import {
+  decodeJSON,
+  failureFromResponse,
+  fetchWithTimeout,
+  RequestFailure,
+  type RequestFailureKind,
+  toRequestFailure,
+} from "./request-failure";
 
 export type User = {
   id: string;
@@ -28,9 +36,49 @@ const REFRESH_LOCK_NAME = "lexigo.auth.refresh";
 
 let activeRefresh: Promise<Session> | null = null;
 
-export class SessionRefreshError extends Error {
-  constructor(readonly status: number, message: string) {
-    super(message);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export function isSessionPayload(value: unknown): value is Session {
+  if (!isRecord(value) || !isRecord(value.user) || !isRecord(value.tokens)) return false;
+  const { user, tokens } = value;
+  return isNonEmptyString(user.id)
+    && isNonEmptyString(user.email)
+    && typeof user.displayName === "string"
+    && isNonEmptyString(user.createdAt)
+    && Number.isFinite(Date.parse(user.createdAt))
+    && isNonEmptyString(tokens.accessToken)
+    && isNonEmptyString(tokens.tokenType)
+    && typeof tokens.expiresIn === "number"
+    && Number.isFinite(tokens.expiresIn)
+    && tokens.expiresIn > 0;
+}
+
+function kindForStatus(status: number): RequestFailureKind {
+  if (status === 401) return "unauthorized";
+  if (status === 403) return "forbidden";
+  if (status >= 500) return "server";
+  if (status >= 400) return "client";
+  return "unknown";
+}
+
+export class SessionRefreshError extends RequestFailure {
+  constructor(
+    status: number,
+    message: string,
+    kind: RequestFailureKind = kindForStatus(status),
+    cause?: unknown,
+  ) {
+    super(kind, message, {
+      status,
+      code: "session_refresh_failed",
+      cause,
+    });
     this.name = "SessionRefreshError";
   }
 }
@@ -69,34 +117,48 @@ export function clearLegacyAuthStorage(): void {
   }
 }
 
-export function expiredSessionURL(currentURL: string): string {
+export function expiredSessionURL(currentURL: string, reason = "expired"): string {
   const target = new URL(currentURL);
-  target.search = "?view=profile&session=expired";
+  target.search = `?view=profile&session=${encodeURIComponent(reason)}`;
   target.hash = "";
   return target.pathname + target.search;
 }
 
-export function redirectToExpiredSession(): void {
+export function redirectToExpiredSession(reason = "expired"): void {
   if (typeof window === "undefined") return;
-  window.location.replace(expiredSessionURL(window.location.href));
+  window.location.replace(expiredSessionURL(window.location.href, reason));
 }
 
 async function performRefresh(): Promise<Session> {
   const csrfToken = csrfTokenFromCookie();
-  if (!csrfToken) throw new SessionRefreshError(401, "Session marker is missing");
+  if (!csrfToken) throw new SessionRefreshError(401, "Session marker is missing", "unauthorized");
 
-  const response = await fetch(apiUrl("/api/v1/auth/refresh"), {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Accept": "application/json",
-      "X-CSRF-Token": csrfToken,
-    },
-  });
-  if (!response.ok) {
-    throw new SessionRefreshError(response.status, `Session refresh failed with status ${response.status}`);
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(apiUrl("/api/v1/auth/refresh"), {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Accept": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+    });
+  } catch (error) {
+    const failure = toRequestFailure(error);
+    throw new SessionRefreshError(failure.status, failure.message, failure.kind, failure);
   }
-  return (await response.json()) as Session;
+
+  if (!response.ok) {
+    const failure = await failureFromResponse(response);
+    throw new SessionRefreshError(response.status, failure.message, failure.kind, failure);
+  }
+
+  try {
+    return await decodeJSON<Session>(response, isSessionPayload, "Session response");
+  } catch (error) {
+    const failure = toRequestFailure(error);
+    throw new SessionRefreshError(response.status, failure.message, failure.kind, failure);
+  }
 }
 
 async function refreshWithCrossTabLock(): Promise<Session> {
@@ -117,8 +179,8 @@ export function refreshSession(options: RefreshOptions = {}): Promise<Session> {
   const refresh = activeRefresh;
   if (options.redirectOnInvalid === false) return refresh;
   return refresh.catch((error: unknown) => {
-    if (error instanceof SessionRefreshError && (error.status === 401 || error.status === 403)) {
-      redirectToExpiredSession();
+    if (error instanceof SessionRefreshError && (error.kind === "unauthorized" || error.kind === "forbidden")) {
+      redirectToExpiredSession(error.kind === "forbidden" ? "forbidden" : "expired");
     }
     throw error;
   });

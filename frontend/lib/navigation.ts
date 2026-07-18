@@ -16,8 +16,16 @@ export type NavigationTarget = {
 };
 
 type NavigationSource = NonNullable<NavigationTarget["source"]>;
+type NavigationStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export const NAVIGATION_STORAGE_KEY = "lexigo.navigation.v1";
+type PersistedNavigation = {
+  version: 2;
+  target: NavigationTarget;
+};
+
+export const NAVIGATION_STORAGE_VERSION = 2 as const;
+export const NAVIGATION_STORAGE_KEY = "lexigo.navigation.v2";
+export const LEGACY_NAVIGATION_STORAGE_KEY = "lexigo.navigation.v1";
 
 const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson"]);
 const RESTORABLE_VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress"]);
@@ -41,8 +49,12 @@ export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabe
   { view: "progress", label: "Прогресс", shortLabel: "Прогресс" },
 ];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function normalizeNavigation(candidate: unknown): NavigationTarget | null {
-  if (!candidate || typeof candidate !== "object") return null;
+  if (!isRecord(candidate)) return null;
   const value = candidate as { view?: unknown; source?: unknown; detail?: unknown };
   if (typeof value.view !== "string" || !VIEWS.has(value.view as AppView)) return null;
   if (value.source !== undefined && (typeof value.source !== "string" || !SOURCES.has(value.source as NavigationSource))) {
@@ -58,6 +70,20 @@ function normalizeNavigation(candidate: unknown): NavigationTarget | null {
   };
 }
 
+function parseJSON(raw: string | null): unknown {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function restorableTarget(candidate: unknown): NavigationTarget | null {
+  const target = normalizeNavigation(candidate);
+  return target && RESTORABLE_VIEWS.has(target.view) ? target : null;
+}
+
 export function parseNavigation(search: string): NavigationTarget {
   const params = new URLSearchParams(search);
   const rawView = params.get("view") as AppView | null;
@@ -71,13 +97,58 @@ export function parseNavigation(search: string): NavigationTarget {
   };
 }
 
+export function serializeStoredNavigation(target: NavigationTarget): string {
+  if (!isRestorableNavigation(target)) {
+    throw new TypeError(`View ${target.view} cannot be persisted`);
+  }
+  const envelope: PersistedNavigation = {
+    version: NAVIGATION_STORAGE_VERSION,
+    target,
+  };
+  return JSON.stringify(envelope);
+}
+
 export function parseStoredNavigation(raw: string | null): NavigationTarget | null {
-  if (!raw) return null;
+  const value = parseJSON(raw);
+  if (!isRecord(value) || value.version !== NAVIGATION_STORAGE_VERSION) return null;
+  return restorableTarget(value.target);
+}
+
+export function parseLegacyStoredNavigation(raw: string | null): NavigationTarget | null {
+  return restorableTarget(parseJSON(raw));
+}
+
+export function readPersistedNavigation(storage: NavigationStorage): NavigationTarget | null {
   try {
-    const target = normalizeNavigation(JSON.parse(raw));
-    return target && RESTORABLE_VIEWS.has(target.view) ? target : null;
+    const currentRaw = storage.getItem(NAVIGATION_STORAGE_KEY);
+    if (currentRaw !== null) {
+      const current = parseStoredNavigation(currentRaw);
+      if (current) return current;
+      storage.removeItem(NAVIGATION_STORAGE_KEY);
+    }
+
+    const legacyRaw = storage.getItem(LEGACY_NAVIGATION_STORAGE_KEY);
+    if (legacyRaw === null) return null;
+    const legacy = parseLegacyStoredNavigation(legacyRaw);
+    storage.removeItem(LEGACY_NAVIGATION_STORAGE_KEY);
+    if (!legacy) return null;
+    storage.setItem(NAVIGATION_STORAGE_KEY, serializeStoredNavigation(legacy));
+    return legacy;
   } catch {
     return null;
+  }
+}
+
+export function writePersistedNavigation(storage: NavigationStorage, target: NavigationTarget): void {
+  try {
+    if (!isRestorableNavigation(target)) {
+      storage.removeItem(NAVIGATION_STORAGE_KEY);
+      return;
+    }
+    storage.setItem(NAVIGATION_STORAGE_KEY, serializeStoredNavigation(target));
+    storage.removeItem(LEGACY_NAVIGATION_STORAGE_KEY);
+  } catch {
+    // Navigation remains usable when private mode or browser policy blocks storage.
   }
 }
 
