@@ -83,6 +83,13 @@ async function installMocks(page: Page, phraseMode: PhraseMode, options: { refre
   let refreshCount = 0;
   let phraseCount = 0;
 
+  await page.context().addCookies([{
+    name: "lexigo_csrf",
+    value: "async-state-csrf",
+    url: "http://127.0.0.1:3000",
+    sameSite: "Lax",
+  }]);
+
   if (phraseMode === "offline") {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
