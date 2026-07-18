@@ -7,6 +7,7 @@ PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.61.1-noble
 FRONTEND_CI_VOLUME="${FRONTEND_CI_VOLUME:?FRONTEND_CI_VOLUME is required}"
 GITHUB_WORKSPACE="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
 SOURCE_DIR="${GITHUB_WORKSPACE}/frontend"
+DEPLOY_DIR="${GITHUB_WORKSPACE}/deploy"
 WORK_DIR="/workspace"
 ARTIFACT_DIR="${SOURCE_DIR}/ci-artifacts"
 
@@ -25,6 +26,9 @@ die() {
 [[ -d "$SOURCE_DIR" ]] || \
   die "frontend source directory does not exist: $SOURCE_DIR"
 
+[[ -d "$DEPLOY_DIR" ]] || \
+  die "deploy directory does not exist: $DEPLOY_DIR"
+
 container_run() {
   docker run \
     --rm \
@@ -33,6 +37,7 @@ container_run() {
     --env CI=true \
     --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
+    --volume "$DEPLOY_DIR:/deploy:ro" \
     --workdir "$WORK_DIR" \
     "$PLAYWRIGHT_IMAGE" \
     "$@"
