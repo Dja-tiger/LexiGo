@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/mail"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,17 +16,29 @@ type Redis struct {
 	DB       int
 }
 
+type SMTP struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+	Timeout  time.Duration
+}
+
 type Config struct {
-	AppEnv              string
-	HTTPAddr            string
-	LogLevel            string
-	CORSAllowedOrigin   string
-	PostgresDSN         string
-	Redis               Redis
-	JWTSecret           string
-	AccessTokenTTL      time.Duration
-	RefreshTokenTTL     time.Duration
-	SessionCookieSecure bool
+	AppEnv                string
+	HTTPAddr              string
+	LogLevel              string
+	CORSAllowedOrigin     string
+	PostgresDSN           string
+	Redis                 Redis
+	JWTSecret             string
+	AccessTokenTTL        time.Duration
+	RefreshTokenTTL       time.Duration
+	SessionCookieSecure   bool
+	PasswordResetTTL      time.Duration
+	PasswordResetDelivery string
+	SMTP                  SMTP
 }
 
 func Load() (Config, error) {
@@ -39,15 +52,28 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("ACCESS_TOKEN_TTL: %w", err)
 	}
-
 	refreshTTL, err := time.ParseDuration(env("REFRESH_TOKEN_TTL", "720h"))
 	if err != nil {
 		return Config{}, fmt.Errorf("REFRESH_TOKEN_TTL: %w", err)
 	}
+	passwordResetTTL, err := time.ParseDuration(env("PASSWORD_RESET_TTL", "30m"))
+	if err != nil {
+		return Config{}, fmt.Errorf("PASSWORD_RESET_TTL: %w", err)
+	}
+	smtpTimeout, err := time.ParseDuration(env("SMTP_TIMEOUT", "10s"))
+	if err != nil {
+		return Config{}, fmt.Errorf("SMTP_TIMEOUT: %w", err)
+	}
+	smtpPort, err := strconv.Atoi(env("SMTP_PORT", "587"))
+	if err != nil {
+		return Config{}, fmt.Errorf("SMTP_PORT must be an integer: %w", err)
+	}
 
 	secureDefault := "true"
+	passwordResetDeliveryDefault := "smtp"
 	if appEnv == "local" || appEnv == "test" {
 		secureDefault = "false"
+		passwordResetDeliveryDefault = "log"
 	}
 	sessionCookieSecure, err := strconv.ParseBool(env("SESSION_COOKIE_SECURE", secureDefault))
 	if err != nil {
@@ -70,10 +96,20 @@ func Load() (Config, error) {
 			Password: os.Getenv("REDIS_PASSWORD"),
 			DB:       redisDB,
 		},
-		JWTSecret:           os.Getenv("JWT_SECRET"),
-		AccessTokenTTL:      accessTTL,
-		RefreshTokenTTL:     refreshTTL,
-		SessionCookieSecure: sessionCookieSecure,
+		JWTSecret:             os.Getenv("JWT_SECRET"),
+		AccessTokenTTL:        accessTTL,
+		RefreshTokenTTL:       refreshTTL,
+		SessionCookieSecure:   sessionCookieSecure,
+		PasswordResetTTL:      passwordResetTTL,
+		PasswordResetDelivery: strings.ToLower(strings.TrimSpace(env("PASSWORD_RESET_DELIVERY", passwordResetDeliveryDefault))),
+		SMTP: SMTP{
+			Host:     strings.TrimSpace(os.Getenv("SMTP_HOST")),
+			Port:     smtpPort,
+			Username: strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
+			Password: os.Getenv("SMTP_PASSWORD"),
+			From:     strings.TrimSpace(os.Getenv("SMTP_FROM")),
+			Timeout:  smtpTimeout,
+		},
 	}
 
 	if cfg.PostgresDSN == "" {
@@ -82,11 +118,22 @@ func Load() (Config, error) {
 	if len(cfg.JWTSecret) < 32 {
 		return Config{}, fmt.Errorf("JWT_SECRET must contain at least 32 characters")
 	}
-	if cfg.AccessTokenTTL <= 0 || cfg.RefreshTokenTTL <= 0 {
+	if cfg.AccessTokenTTL <= 0 || cfg.RefreshTokenTTL <= 0 || cfg.PasswordResetTTL <= 0 {
 		return Config{}, fmt.Errorf("token TTL values must be positive")
 	}
 	if cfg.AppEnv != "local" && cfg.AppEnv != "test" && !cfg.SessionCookieSecure {
 		return Config{}, fmt.Errorf("SESSION_COOKIE_SECURE must be true outside local and test environments")
+	}
+	if cfg.PasswordResetDelivery != "log" && cfg.PasswordResetDelivery != "smtp" {
+		return Config{}, fmt.Errorf("PASSWORD_RESET_DELIVERY must be log or smtp")
+	}
+	if cfg.AppEnv != "local" && cfg.AppEnv != "test" && cfg.PasswordResetDelivery != "smtp" {
+		return Config{}, fmt.Errorf("PASSWORD_RESET_DELIVERY must be smtp outside local and test environments")
+	}
+	if cfg.PasswordResetDelivery == "smtp" {
+		if err := validateSMTP(cfg.SMTP); err != nil {
+			return Config{}, err
+		}
 	}
 	return cfg, nil
 }
@@ -101,6 +148,26 @@ func validateBrowserOrigin(value string) error {
 	}
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") {
 		return fmt.Errorf("CORS_ALLOWED_ORIGIN must not contain credentials, path, query, or fragment")
+	}
+	return nil
+}
+
+func validateSMTP(value SMTP) error {
+	if value.Host == "" {
+		return fmt.Errorf("SMTP_HOST is required when password reset delivery uses smtp")
+	}
+	if value.Port <= 0 || value.Port > 65535 {
+		return fmt.Errorf("SMTP_PORT must be between 1 and 65535")
+	}
+	if value.Timeout <= 0 {
+		return fmt.Errorf("SMTP_TIMEOUT must be positive")
+	}
+	parsed, err := mail.ParseAddress(value.From)
+	if err != nil || parsed.Address == "" {
+		return fmt.Errorf("SMTP_FROM must contain a valid email address")
+	}
+	if (value.Username == "") != (value.Password == "") {
+		return fmt.Errorf("SMTP_USERNAME and SMTP_PASSWORD must be configured together")
 	}
 	return nil
 }

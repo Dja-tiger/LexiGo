@@ -20,6 +20,7 @@ export type RequestProblem = {
 type RequestFailureOptions = {
   status?: number;
   code?: string;
+  field?: string;
   cause?: unknown;
 };
 
@@ -32,6 +33,7 @@ const DEFAULT_TIMEOUT_MS = 12_000;
 export class RequestFailure extends Error {
   readonly status: number;
   readonly code: string;
+  readonly field: string;
 
   constructor(
     readonly kind: RequestFailureKind,
@@ -42,6 +44,7 @@ export class RequestFailure extends Error {
     this.name = "RequestFailure";
     this.status = options.status ?? 0;
     this.code = options.code ?? "request_failed";
+    this.field = options.field ?? "";
   }
 }
 
@@ -57,12 +60,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function errorDetails(value: unknown): { code: string; message: string } {
-  if (!isRecord(value)) return { code: "request_failed", message: "" };
+function errorDetails(value: unknown): { code: string; message: string; field: string } {
+  if (!isRecord(value)) return { code: "request_failed", message: "", field: "" };
   const nested = isRecord(value.error) ? value.error : value;
   return {
     code: typeof nested.code === "string" && nested.code.trim() ? nested.code : "request_failed",
     message: typeof nested.message === "string" ? nested.message.trim() : "",
+    field: typeof nested.field === "string" ? nested.field.trim() : "",
   };
 }
 
@@ -110,7 +114,7 @@ export async function fetchWithTimeout(
 }
 
 export async function failureFromResponse(response: Response): Promise<RequestFailure> {
-  let details = { code: "request_failed", message: "" };
+  let details = { code: "request_failed", message: "", field: "" };
   try {
     details = errorDetails(await response.clone().json());
   } catch {
@@ -119,7 +123,7 @@ export async function failureFromResponse(response: Response): Promise<RequestFa
   return new RequestFailure(
     failureKindForStatus(response.status),
     details.message || `Request failed with status ${response.status}`,
-    { status: response.status, code: details.code },
+    { status: response.status, code: details.code, field: details.field },
   );
 }
 

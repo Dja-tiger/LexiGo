@@ -14,6 +14,15 @@ import {
   type ResourceStatus,
 } from "../lib/account-resources";
 import { apiUrl } from "../lib/api";
+import {
+  isAcceptedResponse,
+  passwordRequirements,
+  presentAuthFailure,
+  validateAuthValues,
+  type AuthField,
+  type AuthFieldErrors,
+  type AuthMode,
+} from "../lib/auth-form";
 import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import { catalogCountText, catalogSummaryText, type CatalogMetadata, type CatalogMetadataStatus } from "../lib/catalog-metadata";
@@ -409,14 +418,6 @@ function sortLearningItems(items: readonly LearningItem[], mode: CatalogSortMode
   );
 }
 
-function localizeAPIMessage(message: string): string {
-  const normalized = message.trim().toLowerCase();
-  if (normalized.includes("invalid credentials") || normalized.includes("invalid token")) {
-    return "Неверный email или пароль. Проверьте данные и попробуйте снова.";
-  }
-  return message;
-}
-
 function isStandaloneDisplayMode(): boolean {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
   return navigatorWithStandalone.standalone === true
@@ -445,9 +446,10 @@ async function requestJSON<T>(
   });
   if (!response.ok) {
     const failure = await failureFromResponse(response);
-    throw new RequestFailure(failure.kind, localizeAPIMessage(failure.message), {
+    throw new RequestFailure(failure.kind, failure.message, {
       status: failure.status,
       code: failure.code,
+      field: failure.field,
       cause: failure,
     });
   }
@@ -569,10 +571,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>(DEFAULT_PHRASE_CATALOG);
   const [phraseCatalogStatus, setPhraseCatalogStatus] = useState<ResourceStatus>(idleResourceStatus);
 
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [authFieldErrors, setAuthFieldErrors] = useState<AuthFieldErrors>({});
+  const [authFormError, setAuthFormError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
 
   const [source, setSource] = useState<LessonSource>("mixed");
   const [lessonSize, setLessonSize] = useState<LessonSize>(30);
@@ -645,6 +653,31 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     return () => {
       window.removeEventListener("popstate", syncNavigationFromURL);
     };
+  }, []);
+
+  useEffect(() => {
+    const target = new URL(window.location.href);
+    const fragment = new URLSearchParams(target.hash.replace(/^#/, ""));
+    const token = fragment.get("reset_token")?.trim()
+      || target.searchParams.get("reset_token")?.trim()
+      || "";
+    if (!token) return;
+    const timer = window.setTimeout(() => {
+      target.searchParams.delete("reset_token");
+      target.hash = "";
+      window.history.replaceState(
+        { lexigo: true, view: "profile" },
+        "",
+        target.pathname + (target.searchParams.size ? `?${target.searchParams.toString()}` : ""),
+      );
+      setResetToken(token);
+      setAuthMode("reset");
+      setReturnView("profile");
+      setAuthFieldErrors({});
+      setAuthFormError("");
+      setAuthNotice("");
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -1172,21 +1205,104 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setBusy(false);
     }
   }
+  function clearAuthFieldError(field: AuthField) {
+    setAuthFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setAuthFormError("");
+  }
+
+  function switchAuthMode(nextMode: AuthMode) {
+    setAuthMode(nextMode);
+    setAuthFieldErrors({});
+    setAuthFormError("");
+    setAuthNotice("");
+    setPassword("");
+    setPasswordConfirmation("");
+    setPasswordVisible(false);
+  }
+
+  function focusFirstAuthError(errors: AuthFieldErrors) {
+    const order: AuthField[] = ["displayName", "email", "password", "passwordConfirmation", "token"];
+    const field = order.find((candidate) => Boolean(errors[candidate]));
+    if (!field) return;
+    window.requestAnimationFrame(() => document.getElementById(`auth-${field}`)?.focus());
+  }
+
+  function removeResetTokenFromURL() {
+    const target = new URL(window.location.href);
+    target.searchParams.delete("reset_token");
+    target.hash = "";
+    window.history.replaceState(
+      { lexigo: true, view: "profile" },
+      "",
+      target.pathname + (target.searchParams.size ? `?${target.searchParams.toString()}` : ""),
+    );
+  }
+
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const values = { displayName, email, password, passwordConfirmation, token: resetToken };
+    const validationErrors = validateAuthValues(authMode, values);
+    if (Object.keys(validationErrors).length > 0) {
+      setAuthFieldErrors(validationErrors);
+      setAuthFormError("Исправьте отмеченные поля.");
+      focusFirstAuthError(validationErrors);
+      return;
+    }
+
     setBusy(true);
     setError("");
+    setAuthFieldErrors({});
+    setAuthFormError("");
+    setAuthNotice("");
     try {
+      if (authMode === "forgot") {
+        await requestJSON<{ accepted: true }>(
+          "/api/v1/auth/password-reset/request",
+          { method: "POST", body: JSON.stringify({ email: email.trim() }) },
+          undefined,
+          isAcceptedResponse,
+        );
+        setAuthNotice("Если аккаунт существует, письмо со ссылкой отправлено. Проверьте также папку «Спам».");
+        return;
+      }
+
+      if (authMode === "reset") {
+        await requestJSON<void>("/api/v1/auth/password-reset/confirm", {
+          method: "POST",
+          body: JSON.stringify({ token: resetToken, newPassword: password }),
+        });
+        setPassword("");
+        setPasswordConfirmation("");
+        setResetToken("");
+        removeResetTokenFromURL();
+        setAuthMode("login");
+        setAuthNotice("Пароль изменён. Войдите с новым паролем.");
+        return;
+      }
+
       const authenticated = await requestJSON<Session>(`/api/v1/auth/${authMode}`, {
         method: "POST",
-        body: JSON.stringify({ email, password, ...(authMode === "register" ? { displayName } : {}) }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          ...(authMode === "register" ? { displayName: displayName.trim() } : {}),
+        }),
       }, undefined, isSessionPayload);
       setSession(authenticated);
       setPassword("");
+      setPasswordConfirmation("");
       setHydratedUserID("");
       navigate({ view: returnView === "profile" ? "home" : returnView });
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось выполнить вход");
+      const presentation = presentAuthFailure(requestError);
+      setAuthFieldErrors(presentation.fieldErrors);
+      setAuthFormError(presentation.formError);
+      focusFirstAuthError(presentation.fieldErrors);
     } finally {
       setBusy(false);
     }
@@ -1760,11 +1876,205 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function renderProfile() {
     if (!session) {
+      const resetMode = authMode === "reset";
+      const forgotMode = authMode === "forgot";
+      const registrationMode = authMode === "register";
+      const passwordMode = authMode === "login" || registrationMode || resetMode;
+      const requirements = passwordRequirements(password);
+      const title = resetMode
+        ? "Создайте новый пароль"
+        : forgotMode
+          ? "Восстановите доступ"
+          : "Сохраняйте прогресс на всех устройствах";
+      const description = resetMode
+        ? "Ссылка одноразовая. После смены пароля активные сессии на других устройствах будут завершены."
+        : forgotMode
+          ? "Укажите email аккаунта. Ответ не раскрывает, зарегистрирован ли адрес."
+          : "Аккаунт нужен для интервальной очереди, продолжения уроков и недельной аналитики.";
+      const submitLabel = busy
+        ? "Отправляем…"
+        : resetMode
+          ? "Сохранить новый пароль"
+          : forgotMode
+            ? "Отправить ссылку"
+            : authMode === "login"
+              ? "Войти"
+              : "Создать аккаунт";
+      const passwordDescriptionID = authMode === "login" ? undefined : "auth-password-requirements";
+
       return (
         <section className="lx-auth-card">
-          <div><span>АККАУНТ</span><h1>Сохраняйте прогресс на всех устройствах</h1><p>Аккаунт нужен для интервальной очереди, продолжения уроков и недельной аналитики.</p></div>
-          <div className="lx-auth-tabs"><button type="button" className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")}>Вход</button><button type="button" className={authMode === "register" ? "active" : ""} onClick={() => setAuthMode("register")}>Регистрация</button></div>
-          <form onSubmit={submitAuth}>{authMode === "register" ? <label>Имя<input autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Ваше имя"/></label> : null}<label>Email<input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)}/></label><label>Пароль<input type="password" required minLength={10} maxLength={72} autoComplete={authMode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)}/></label><div><button className="lx-button ghost" type="button" onClick={() => navigate({ view: "home" })}>Отмена</button><button className="lx-button primary" type="submit" disabled={busy}>{busy ? "Подключение…" : authMode === "login" ? "Войти" : "Создать аккаунт"}</button></div></form>
+          <div className="lx-auth-heading">
+            <span>АККАУНТ</span>
+            <h1>{title}</h1>
+            <p>{description}</p>
+          </div>
+
+          {!resetMode && !forgotMode ? (
+            <div className="lx-auth-tabs" role="tablist" aria-label="Режим аккаунта">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={authMode === "login"}
+                className={authMode === "login" ? "active" : ""}
+                onClick={() => switchAuthMode("login")}
+              >
+                Вход
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={registrationMode}
+                className={registrationMode ? "active" : ""}
+                onClick={() => switchAuthMode("register")}
+              >
+                Регистрация
+              </button>
+            </div>
+          ) : null}
+
+          {authNotice ? <p className="lx-auth-notice" role="status" aria-live="polite">{authNotice}</p> : null}
+          {authFormError ? <p className="lx-auth-form-error" role="alert">{authFormError}</p> : null}
+
+          <form onSubmit={submitAuth} noValidate aria-label={resetMode ? "Новый пароль" : forgotMode ? "Восстановление пароля" : registrationMode ? "Регистрация" : "Вход"}>
+            {registrationMode ? (
+              <label htmlFor="auth-displayName">
+                <span>Имя</span>
+                <input
+                  id="auth-displayName"
+                  name="name"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  autoComplete="name"
+                  value={displayName}
+                  aria-invalid={Boolean(authFieldErrors.displayName)}
+                  aria-describedby={authFieldErrors.displayName ? "auth-displayName-error" : undefined}
+                  onChange={(event) => {
+                    setDisplayName(event.target.value);
+                    clearAuthFieldError("displayName");
+                  }}
+                  placeholder="Как к вам обращаться"
+                />
+                {authFieldErrors.displayName ? <small id="auth-displayName-error" className="lx-field-error" role="alert">{authFieldErrors.displayName}</small> : null}
+              </label>
+            ) : null}
+
+            {!resetMode ? (
+              <label htmlFor="auth-email">
+                <span>Email</span>
+                <input
+                  id="auth-email"
+                  name="username"
+                  type="email"
+                  inputMode="email"
+                  required
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="username"
+                  value={email}
+                  aria-invalid={Boolean(authFieldErrors.email)}
+                  aria-describedby={authFieldErrors.email ? "auth-email-error" : undefined}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    clearAuthFieldError("email");
+                  }}
+                  placeholder="name@example.com"
+                />
+                {authFieldErrors.email ? <small id="auth-email-error" className="lx-field-error" role="alert">{authFieldErrors.email}</small> : null}
+              </label>
+            ) : null}
+
+            {passwordMode ? (
+              <div className="lx-auth-field">
+                <label htmlFor="auth-password">{resetMode ? "Новый пароль" : "Пароль"}</label>
+                <span className="lx-password-control">
+                  <input
+                    id="auth-password"
+                    name="password"
+                    type={passwordVisible ? "text" : "password"}
+                    required
+                    minLength={authMode === "login" ? undefined : 10}
+                    maxLength={72}
+                    autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                    value={password}
+                    aria-invalid={Boolean(authFieldErrors.password)}
+                    aria-describedby={[passwordDescriptionID, authFieldErrors.password ? "auth-password-error" : ""].filter(Boolean).join(" ") || undefined}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      clearAuthFieldError("password");
+                      if (passwordConfirmation) clearAuthFieldError("passwordConfirmation");
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="lx-password-toggle"
+                    aria-pressed={passwordVisible}
+                    aria-label={passwordVisible ? "Скрыть пароль" : "Показать пароль"}
+                    onClick={() => setPasswordVisible((current) => !current)}
+                  >
+                    {passwordVisible ? "Скрыть" : "Показать"}
+                  </button>
+                </span>
+                {authFieldErrors.password ? <small id="auth-password-error" className="lx-field-error" role="alert">{authFieldErrors.password}</small> : null}
+              </div>
+            ) : null}
+
+            {(registrationMode || resetMode) ? (
+              <>
+                <ul id="auth-password-requirements" className="lx-password-requirements" aria-label="Требования к паролю" aria-live="polite">
+                  {requirements.map((requirement) => (
+                    <li
+                      key={requirement.id}
+                      className={requirement.met ? "met" : ""}
+                      aria-label={`${requirement.label}: ${requirement.met ? "выполнено" : "не выполнено"}`}
+                    >
+                      <span aria-hidden="true">{requirement.met ? "✓" : "○"}</span>{requirement.label}
+                    </li>
+                  ))}
+                </ul>
+                <label htmlFor="auth-passwordConfirmation">
+                  <span>Повторите пароль</span>
+                  <input
+                    id="auth-passwordConfirmation"
+                    name="password-confirmation"
+                    type={passwordVisible ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    value={passwordConfirmation}
+                    aria-invalid={Boolean(authFieldErrors.passwordConfirmation)}
+                    aria-describedby={authFieldErrors.passwordConfirmation ? "auth-passwordConfirmation-error" : undefined}
+                    onChange={(event) => {
+                      setPasswordConfirmation(event.target.value);
+                      clearAuthFieldError("passwordConfirmation");
+                    }}
+                  />
+                  {authFieldErrors.passwordConfirmation ? <small id="auth-passwordConfirmation-error" className="lx-field-error" role="alert">{authFieldErrors.passwordConfirmation}</small> : null}
+                </label>
+              </>
+            ) : null}
+
+            {authFieldErrors.token ? <p id="auth-token" className="lx-field-error lx-token-error" role="alert" tabIndex={-1}>{authFieldErrors.token}</p> : null}
+
+            {authMode === "login" ? (
+              <button className="lx-auth-link" type="button" onClick={() => switchAuthMode("forgot")}>Забыли пароль?</button>
+            ) : null}
+
+            <div className="lx-auth-actions">
+              <button
+                className="lx-button ghost"
+                type="button"
+                onClick={() => {
+                  if (forgotMode || resetMode) switchAuthMode("login");
+                  else navigate({ view: "home" });
+                }}
+              >
+                {forgotMode || resetMode ? "К входу" : "Отмена"}
+              </button>
+              <button className="lx-button primary" type="submit" disabled={busy}>{submitLabel}</button>
+            </div>
+          </form>
         </section>
       );
     }
