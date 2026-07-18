@@ -1,0 +1,71 @@
+.lx-skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  max-width: calc(100vw - 20px);
+  transform: translateY(calc(-100% - 24px));
+  border: 1px solid rgba(139, 220, 255, 0.88);
+  border-radius: 12px;
+  padding: 11px 16px;
+  color: #ffffff;
+  background: #07101f;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.46);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: transform 140ms ease-out;
+}
+
+.lx-skip-link:focus,
+.lx-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+.lx-main-content {
+  min-width: 0;
+  scroll-margin-top: calc(84px + env(safe-area-inset-top));
+}
+
+/* Programmatic route focus identifies the new landmark without drawing a page-sized ring. */
+.lx-main-content:focus {
+  outline: none;
+}
+
+.lx-route-announcement {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .lx-main-content {
+    scroll-margin-top: calc(72px + env(safe-area-inset-top));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto !important;
+  }
+
+  .lx-skip-link,
+  .lx-app *,
+  .lx-app *::before,
+  .lx-app *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
