@@ -171,3 +171,98 @@ func (r *PostgresRepository) Revoke(ctx context.Context, tokenHash []byte) error
 	}
 	return nil
 }
+
+func (r *PostgresRepository) ReplacePasswordReset(
+	ctx context.Context,
+	userID string,
+	tokenHash []byte,
+	expiresAt time.Time,
+	userAgent,
+	ip string,
+) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin password reset replacement: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `
+		update password_reset_tokens
+		set used_at = coalesce(used_at, now())
+		where user_id = $1::uuid and used_at is null
+	`, userID); err != nil {
+		return fmt.Errorf("invalidate previous password reset tokens: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		insert into password_reset_tokens(user_id, token_hash, expires_at, user_agent, ip_address)
+		values ($1::uuid, $2, $3, $4, nullif($5, '')::inet)
+	`, userID, tokenHash, expiresAt, userAgent, ip); err != nil {
+		return fmt.Errorf("insert password reset token: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit password reset replacement: %w", err)
+	}
+	return nil
+}
+
+func (r *PostgresRepository) ConsumePasswordReset(
+	ctx context.Context,
+	tokenHash []byte,
+	passwordHash string,
+	now time.Time,
+) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin password reset: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var (
+		resetID   string
+		userID    string
+		expiresAt time.Time
+		usedAt    *time.Time
+	)
+	err = tx.QueryRow(ctx, `
+		select id::text, user_id::text, expires_at, used_at
+		from password_reset_tokens
+		where token_hash = $1
+		for update
+	`, tokenHash).Scan(&resetID, &userID, &expiresAt, &usedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrInvalidPasswordReset
+	}
+	if err != nil {
+		return fmt.Errorf("read password reset token: %w", err)
+	}
+	if usedAt != nil || !expiresAt.After(now) {
+		return ErrInvalidPasswordReset
+	}
+
+	if _, err := tx.Exec(ctx, `
+		update users
+		set password_hash = $2
+		where id = $1::uuid
+	`, userID, passwordHash); err != nil {
+		return fmt.Errorf("update reset password: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		update password_reset_tokens
+		set used_at = $2
+		where user_id = $1::uuid and used_at is null
+	`, userID, now); err != nil {
+		return fmt.Errorf("consume password reset tokens: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		update refresh_tokens
+		set revoked_at = coalesce(revoked_at, $2)
+		where user_id = $1::uuid
+	`, userID, now); err != nil {
+		return fmt.Errorf("revoke sessions after password reset: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit password reset: %w", err)
+	}
+	_ = resetID
+	return nil
+}
