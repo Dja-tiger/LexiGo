@@ -206,10 +206,11 @@ export function AccessibleDialog({
     const first = controls[0];
     const last = controls[controls.length - 1];
     const active = document.activeElement;
-    if (event.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+    const activeIndex = active instanceof HTMLElement ? controls.indexOf(active) : -1;
+    if (event.shiftKey && (active === first || activeIndex === -1)) {
       event.preventDefault();
       last.focus({ preventScroll: true });
-    } else if (!event.shiftKey && (active === last || !dialogRef.current?.contains(active))) {
+    } else if (!event.shiftKey && (active === last || activeIndex === -1)) {
       event.preventDefault();
       first.focus({ preventScroll: true });
     }
