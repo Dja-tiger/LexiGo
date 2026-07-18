@@ -1,0 +1,64 @@
+name: Issue 49 typecheck diagnostics
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 15
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-issue49-typecheck-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Prepare isolated frontend workspace
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh prepare
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+      - name: Capture typecheck output
+        working-directory: frontend
+        run: |
+          set +e
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -o pipefail
+          npm run typecheck 2>&1 | tee typecheck.log
+          CONTAINER_SCRIPT
+          status=$?
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          cat typecheck.log
+          CONTAINER_SCRIPT
+          exit "$status"
+      - name: Extract typecheck log
+        if: always()
+        working-directory: frontend
+        run: |
+          rm -rf typecheck-artifact
+          mkdir -p typecheck-artifact
+          docker run --rm \
+            --volume "$FRONTEND_CI_VOLUME:/workspace:ro" \
+            --volume "$PWD/typecheck-artifact:/artifact" \
+            "$PLAYWRIGHT_IMAGE" \
+            bash -Eeuo pipefail -c 'cp /workspace/typecheck.log /artifact/typecheck.log'
+      - name: Upload typecheck diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue49-typecheck-diagnostics
+          path: frontend/typecheck-artifact/typecheck.log
+          if-no-files-found: error
+          retention-days: 1
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh cleanup
