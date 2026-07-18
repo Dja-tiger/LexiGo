@@ -17,13 +17,22 @@ jobs:
         with:
           ref: feat/issue-50-adaptive-navigation
           fetch-depth: 0
+          show-progress: false
 
       - name: Apply pending hardening patch
+        id: hardening
         shell: bash
         run: |
           test -f scripts/issue50-hardening.py
-          python3 scripts/issue50-hardening.py
-          rm scripts/issue50-hardening.py
+          set +e
+          python3 scripts/issue50-hardening.py > issue50-hardening.log 2>&1
+          status=$?
+          set -e
+          cat issue50-hardening.log
+          if [[ $status -ne 0 ]]; then
+            exit "$status"
+          fi
+          rm scripts/issue50-hardening.py issue50-hardening.log
 
           if git diff --quiet; then
             echo "Issue #50 hardening produced no diff" >&2
@@ -35,3 +44,12 @@ jobs:
           git add -A
           git commit -m "fix(navigation): harden adaptive state and landscape behavior"
           git push origin HEAD:feat/issue-50-adaptive-navigation
+
+      - name: Upload hardening diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue50-hardening-diagnostics
+          path: issue50-hardening.log
+          if-no-files-found: error
+          retention-days: 2
