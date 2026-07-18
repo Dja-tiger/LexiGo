@@ -25,6 +25,13 @@ describe("navigation history accessibility state", () => {
     expect(readNavigationHistoryState(state)).toEqual(state);
   });
 
+  it("sanitizes infinite and negative scroll coordinates", () => {
+    expect(createNavigationHistoryState(
+      { view: "progress" },
+      { x: Number.POSITIVE_INFINITY, y: -240 },
+    ).scroll).toEqual({ x: 0, y: 0 });
+  });
+
   it("rejects malformed versioned entries instead of trusting arbitrary history data", () => {
     expect(readNavigationHistoryState({
       lexigo: true,
