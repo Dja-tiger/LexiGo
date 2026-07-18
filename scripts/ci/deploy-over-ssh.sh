@@ -92,7 +92,7 @@ unset DEPLOY_KNOWN_HOSTS
 
 export SSH_AUTH_SOCK="$AGENT_SOCKET"
 export SSH_ASKPASS_REQUIRE=never
-eval "$(ssh-agent -a "$AGENT_SOCKET" -s)" >/dev/null
+eval "$(ssh-agent -a "$AGENT_SOCKET" -t 1800 -s)" >/dev/null
 
 printf '%s\n' "$SSH_KEY" | ssh-add - >/dev/null
 unset SSH_KEY
