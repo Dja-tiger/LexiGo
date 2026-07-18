@@ -147,8 +147,9 @@ func passwordResetURL(origin, token string) (string, error) {
 	}
 	query := target.Query()
 	query.Set("view", "profile")
-	query.Set("reset_token", token)
 	target.RawQuery = query.Encode()
-	target.Fragment = ""
+	fragment := url.Values{}
+	fragment.Set("reset_token", token)
+	target.Fragment = fragment.Encode()
 	return target.String(), nil
 }
