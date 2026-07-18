@@ -46,8 +46,12 @@ func (s *capturePasswordResetSender) token(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := parsed.Query().Get("reset_token")
-	if token == "" || parsed.Query().Get("view") != "profile" {
+	fragment, err := url.ParseQuery(parsed.Fragment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := fragment.Get("reset_token")
+	if token == "" || parsed.Query().Get("view") != "profile" || parsed.Query().Get("reset_token") != "" {
 		t.Fatalf("unexpected reset URL %q", s.resetURL)
 	}
 	return token
