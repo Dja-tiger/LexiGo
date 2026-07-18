@@ -68,45 +68,96 @@ jobs:
       - x64
       - lexigo-ci
     timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:18.4-alpine
-        env:
-          POSTGRES_DB: lexigo_test
-          POSTGRES_USER: lexigo
-          POSTGRES_PASSWORD: lexigo_test
-        ports:
-          - 5432/tcp
-        options: >-
-          --health-cmd "pg_isready -U lexigo -d lexigo_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-      redis:
-        image: redis:8.0-alpine
-        ports:
-          - 6379/tcp
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     defaults:
       run:
         working-directory: backend
+    env:
+      POSTGRES_CONTAINER: lexigo-postgres-${{ github.run_id }}-${{ github.run_attempt }}
+      REDIS_CONTAINER: lexigo-redis-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version: "1.26.5"
           cache-dependency-path: backend/go.sum
+
+      - name: Start isolated integration services
+        run: |
+          set -Eeuo pipefail
+
+          cleanup_container() {
+            docker rm --force "$1" >/dev/null 2>&1 || true
+          }
+
+          wait_for_healthy() {
+            local container="$1"
+            local status
+
+            for _ in $(seq 1 60); do
+              status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container" 2>/dev/null || true)"
+              case "$status" in
+                healthy)
+                  return 0
+                  ;;
+                unhealthy)
+                  docker logs "$container" || true
+                  return 1
+                  ;;
+              esac
+              sleep 1
+            done
+
+            docker logs "$container" || true
+            return 1
+          }
+
+          cleanup_container "$POSTGRES_CONTAINER"
+          cleanup_container "$REDIS_CONTAINER"
+
+          docker run --detach --rm \
+            --name "$POSTGRES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --env POSTGRES_DB=lexigo_test \
+            --env POSTGRES_USER=lexigo \
+            --env POSTGRES_PASSWORD=lexigo_test \
+            --publish 127.0.0.1::5432 \
+            --health-cmd "pg_isready -U lexigo -d lexigo_test" \
+            --health-interval 5s \
+            --health-timeout 5s \
+            --health-retries 20 \
+            postgres:18.4-alpine >/dev/null
+
+          docker run --detach --rm \
+            --name "$REDIS_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --publish 127.0.0.1::6379 \
+            --health-cmd "redis-cli ping" \
+            --health-interval 5s \
+            --health-timeout 5s \
+            --health-retries 20 \
+            redis:8.0-alpine >/dev/null
+
+          wait_for_healthy "$POSTGRES_CONTAINER"
+          wait_for_healthy "$REDIS_CONTAINER"
+
+          postgres_port="$(docker port "$POSTGRES_CONTAINER" 5432/tcp | awk -F: 'END { print $NF }')"
+          redis_port="$(docker port "$REDIS_CONTAINER" 6379/tcp | awk -F: 'END { print $NF }')"
+
+          test -n "$postgres_port"
+          test -n "$redis_port"
+
+          {
+            printf 'TEST_POSTGRES_DSN=postgres://lexigo:lexigo_test@127.0.0.1:%s/lexigo_test?sslmode=disable\n' "$postgres_port"
+            printf 'TEST_REDIS_ADDR=127.0.0.1:%s\n' "$redis_port"
+          } >> "$GITHUB_ENV"
+
       - name: Integration tests with race detector
-        env:
-          TEST_POSTGRES_DSN: "postgres://lexigo:lexigo_test@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/lexigo_test?sslmode=disable"
-          TEST_REDIS_ADDR: "127.0.0.1:${{ job.services.redis.ports['6379'] }}"
         run: |
           set -o pipefail
           go test -race -count=1 -tags=integration ./... 2>&1 | tee integration-test.log
+
       - name: Upload integration diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
@@ -115,6 +166,13 @@ jobs:
           path: backend/integration-test.log
           if-no-files-found: error
           retention-days: 7
+
+      - name: Cleanup integration services
+        if: always()
+        run: |
+          for container in "$POSTGRES_CONTAINER" "$REDIS_CONTAINER"; do
+            docker rm --force "$container" >/dev/null 2>&1 || true
+          done
 
   frontend:
     name: Frontend quality
@@ -250,7 +308,10 @@ jobs:
             context: frontend
     steps:
       - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - id: buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          cleanup: true
       - name: Login to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v4
@@ -270,3 +331,43 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.component }},ignore-error=true
           provenance: mode=max
           sbom: true
+
+      - name: Cleanup Buildx builder
+        if: always()
+        env:
+          BUILDER_NAME: ${{ steps.buildx.outputs.name }}
+        run: |
+          if [ -n "${BUILDER_NAME:-}" ]; then
+            docker buildx rm --force "$BUILDER_NAME" >/dev/null 2>&1 || true
+          fi
+
+  ci-resource-cleanup:
+    name: Cleanup CI Docker resources
+    if: always()
+    needs: [backend-unit, backend-integration, frontend, container-build]
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    env:
+      FRONTEND_CI_VOLUME: lexigo-frontend-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Remove resources owned by this workflow run
+        run: |
+          set -Eeuo pipefail
+
+          mapfile -t containers < <(
+            docker ps --all --quiet --filter "label=com.lexigo.ci.run=${GITHUB_RUN_ID}"
+          )
+          if ((${#containers[@]} > 0)); then
+            docker rm --force "${containers[@]}" >/dev/null 2>&1 || true
+          fi
+
+          docker volume rm --force "$FRONTEND_CI_VOLUME" >/dev/null 2>&1 || true
+          docker volume prune --force \
+            --filter "label=com.lexigo.ci.run=${GITHUB_RUN_ID}" >/dev/null 2>&1 || true
+
+          printf 'Docker usage after run cleanup:\n'
+          docker system df
