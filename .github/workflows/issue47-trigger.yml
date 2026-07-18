@@ -67,7 +67,12 @@ jobs:
               raise SystemExit(f"{path}: no unique indentation variant: {old[:300]!r}")'''
           if source.count(original) != 1:
               raise SystemExit("replace_once implementation was not found in extracted patch")
-          path.write_text(source.replace(original, replacement, 1))
+          source = source.replace(original, replacement, 1)
+          ambiguous = '''replace_once(a11y, 'toHaveClass(/selected/);', 'toHaveAttribute("aria-checked", "true");')'''
+          specific = '''replace_once(a11y, 'await expect(recallMode).toHaveClass(/selected/);', 'await expect(recallMode).toHaveAttribute("aria-checked", "true");')'''
+          if source.count(ambiguous) != 1:
+              raise SystemExit("ambiguous recall assertion patch was not found")
+          path.write_text(source.replace(ambiguous, specific, 1))
           PY
           set +e
           python3 /tmp/issue47-apply.py 2> /tmp/issue47-error.txt
