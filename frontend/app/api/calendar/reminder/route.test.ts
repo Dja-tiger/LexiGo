@@ -52,4 +52,20 @@ describe("Apple Calendar reminder endpoint", () => {
     expect(calendar).toContain("RRULE:FREQ=DAILY\r\n");
     expect(calendar).toContain("TRIGGER:PT0M\r\n");
   });
+
+  it("rejects an extreme start timestamp instead of formatting an unsupported year", async () => {
+    const response = await GET(new Request(
+      "https://lexigo.example/api/calendar/reminder"
+        + "?time=19%3A00"
+        + "&timezone=Europe%2FBerlin"
+        + "&start=8640000000000000",
+    ));
+    const calendar = await response.text();
+    const start = calendar.match(/DTSTART;TZID=Europe\/Berlin:(\d{4})\d{4}T\d{6}/);
+
+    expect(response.status).toBe(200);
+    expect(start).not.toBeNull();
+    expect(Math.abs(Number(start?.[1]) - new Date().getFullYear())).toBeLessThanOrEqual(2);
+    expect(calendar).not.toContain("275760");
+  });
 });
