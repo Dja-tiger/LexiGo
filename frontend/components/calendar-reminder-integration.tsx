@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -17,6 +18,14 @@ import {
 const STORAGE_KEY = "lexigo.calendar.reminder.v1";
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60];
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60];
+const MODAL_FOCUSABLE_SELECTOR = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
 
 type CalendarReminderIntegrationProps = {
   open: boolean;
@@ -88,6 +97,8 @@ export function CalendarReminderIntegration({
   const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
   const [status, setStatus] = useState("");
   const modalRef = useRef<HTMLElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSettings(readSettings()), 0);
@@ -95,8 +106,24 @@ export function CalendarReminderIntegration({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const frame = window.requestAnimationFrame(() => modalRef.current?.focus());
+    if (open) {
+      previousFocusRef.current = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+      wasOpenRef.current = true;
+      const frame = window.requestAnimationFrame(() => {
+        const firstControl = modalRef.current?.querySelector<HTMLElement>(MODAL_FOCUSABLE_SELECTOR);
+        (firstControl ?? modalRef.current)?.focus({ preventScroll: true });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
+    const focusTarget = previousFocusRef.current;
+    previousFocusRef.current = null;
+    if (!focusTarget?.isConnected) return;
+    const frame = window.requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
     return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
@@ -154,6 +181,37 @@ export function CalendarReminderIntegration({
     setStatus("Файл календаря создан. Откройте его и подтвердите добавление события в Apple Calendar.");
   }
 
+  function handleModalKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const controls = Array.from(
+      modalRef.current?.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR) ?? [],
+    ).filter((element) => element.getClientRects().length > 0 && element.getAttribute("aria-hidden") !== "true");
+
+    if (controls.length === 0) {
+      event.preventDefault();
+      modalRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !modalRef.current?.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
     <>
       {showCard ? (
@@ -174,9 +232,7 @@ export function CalendarReminderIntegration({
         <div
           className="lx-calendar-modal-backdrop"
           role="presentation"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") onClose();
-          }}
+          onKeyDown={handleModalKeyDown}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
