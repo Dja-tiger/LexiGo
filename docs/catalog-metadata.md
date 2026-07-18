@@ -12,4 +12,6 @@ The repository reads totals and topic aggregates inside one read-only repeatable
 
 The HTTP handler exposes `catalogVersion` as an `ETag`, supports weak and strong `If-None-Match` values and returns `304 Not Modified` when the catalog has not changed. Clients must show a loading state or an explicit unavailable state. Embedded catalog lengths and historical numeric constants must not be used as fallback totals.
 
+Catalog seeding updates persisted rows only when catalog-owned fields actually change. Repeating an identical seed therefore preserves `updatedAt`, `catalogVersion` and the HTTP `ETag` across API restarts.
+
 Adding or updating rows in `words` changes the metadata response automatically. User progress remains user-specific; catalog capacity always comes from this endpoint.
