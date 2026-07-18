@@ -63,13 +63,12 @@ describe("request failure classification", () => {
       init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
     })));
 
-    const request = fetchWithTimeout("/api/test", { timeoutMs: 25 });
-    await vi.advanceTimersByTimeAsync(25);
-
-    await expect(request).rejects.toMatchObject({
+    const rejection = expect(fetchWithTimeout("/api/test", { timeoutMs: 25 })).rejects.toMatchObject({
       kind: "timeout",
       code: "request_timeout",
     });
+    await vi.advanceTimersByTimeAsync(25);
+    await rejection;
   });
 
   it("returns distinct user-facing recovery states", () => {
