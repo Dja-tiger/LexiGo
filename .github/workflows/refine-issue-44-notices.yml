@@ -1,0 +1,66 @@
+name: Refine issue 44 notices
+
+on:
+  push:
+    branches:
+      - automation/refine-issue-44-notices
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    name: Refine async notice ownership
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-44-async-states
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply deterministic notice ownership update
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('frontend/components/lexigo-premium-app.tsx')
+          content = path.read_text(encoding='utf-8')
+          old = '''      {session ? <div className="lx-resource-stack">
+        {navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
+        <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
+        <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
+        <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
+      </div> : null}'''
+          new = '''      {catalogMetadataResourceStatus.phase === "error" || (session && (
+        (navigation.view !== "progress" && progressStatus.phase === "error")
+        || (navigation.view !== "phrases" && phraseCatalogStatus.phase === "error")
+        || (navigation.view !== "lesson" && activeLessonStatus.phase === "error")
+      )) ? <div className="lx-resource-stack">
+        <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
+        {session && navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
+        {session && navigation.view !== "phrases" ? <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} /> : null}
+        {session && navigation.view !== "lesson" ? <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} /> : null}
+      </div> : null}'''
+          if content.count(old) != 1:
+              raise SystemExit(f'expected one resource stack block, found {content.count(old)}')
+          path.write_text(content.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          git commit -m "fix(ux): keep async notices local to their owning view"
+          git push origin HEAD:fix/issue-44-async-states
+
+      - name: Remove automation branch
+        if: always()
+        run: git push origin --delete automation/refine-issue-44-notices || true
