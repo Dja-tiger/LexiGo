@@ -1,0 +1,189 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const SESSION = {
+  user: {
+    id: "00000000-0000-0000-0000-000000000042",
+    email: "hydration@example.com",
+    displayName: "Hydration User",
+    createdAt: "2026-01-01T00:00:00Z",
+  },
+  tokens: {
+    accessToken: "hydration-access-token",
+    tokenType: "Bearer",
+    expiresIn: 900,
+  },
+};
+
+const PROGRESS = {
+  dueNow: 7,
+  dueWords: 4,
+  duePhrases: 3,
+  totalWords: 100,
+  totalPhrases: 20,
+  newWords: 40,
+  learningWords: 20,
+  reviewWords: 10,
+  masteredWords: 30,
+  masteredPhrases: 8,
+  reviewsToday: 12,
+  successfulToday: 10,
+  reviewsTotal: 240,
+  dailyGoal: 30,
+  currentStreak: 6,
+  longestStreak: 14,
+  retainedItemsWeek: 9,
+  retainedWordsWeek: 6,
+  retainedPhrasesWeek: 3,
+};
+
+const PHRASES = [{
+  id: 4201,
+  kind: "phrase",
+  slug: "independent-retry",
+  lemma: "Independent retry",
+  translation: "независимый повтор запроса",
+  phonetic: "",
+  partOfSpeech: "phrase",
+  topic: "Reliability",
+  examples: ["Retry only the failed resource."],
+  note: "A successful resource must remain visible.",
+  status: "new",
+}];
+
+const METADATA = {
+  catalogVersion: "sha256:hydration-e2e",
+  updatedAt: "2026-07-18T00:00:00Z",
+  totals: { items: 120, words: 100, phrases: 20 },
+  sources: {
+    mixed: 120,
+    noun: 30,
+    verb: 30,
+    adjective: 40,
+    phrases: 20,
+    dailyLife: 10,
+    travel: 10,
+    dataEngineering: 10,
+    backend: 10,
+  },
+  topics: [{ topic: "Reliability", count: 1 }],
+};
+
+function visibleNavigation(page: Page) {
+  return page.locator(".lx-nav:visible, .lx-mobile-nav:visible");
+}
+
+async function installAccountMocks(page: Page, options: { failPhrasesOnce?: boolean } = {}) {
+  let progressRequests = 0;
+  let phraseRequests = 0;
+  let activeLessonRequests = 0;
+
+  await page.context().addCookies([{
+    name: "lexigo_csrf",
+    value: "hydration-csrf",
+    url: "http://127.0.0.1:3000",
+    sameSite: "Lax",
+  }]);
+
+  await page.route("**/api/v1/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname;
+
+    if (path === "/api/v1/auth/refresh") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
+      return;
+    }
+    if (path === "/api/v1/catalog/metadata") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(METADATA) });
+      return;
+    }
+    if (path === "/api/v1/progress") {
+      progressRequests += 1;
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
+      return;
+    }
+    if (path === "/api/v1/words" && url.searchParams.get("kind") === "phrase") {
+      phraseRequests += 1;
+      if (options.failPhrasesOnce && phraseRequests === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: { code: "phrases_unavailable", message: "temporary phrase failure" } }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: PHRASES, count: PHRASES.length }),
+      });
+      return;
+    }
+    if (path === "/api/v1/lessons/active") {
+      activeLessonRequests += 1;
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "not_mocked", message: path } }),
+    });
+  });
+
+  return {
+    progressRequests: () => progressRequests,
+    phraseRequests: () => phraseRequests,
+    activeLessonRequests: () => activeLessonRequests,
+  };
+}
+
+test("a failed phrase catalog does not hide progress and retries only its own resource", async ({ page }) => {
+  const requests = await installAccountMocks(page, { failPhrasesOnce: true });
+
+  await page.goto("/");
+
+  const dueCard = page.locator(".lx-progress-stats button").filter({ hasText: "К повторению" });
+  await expect(dueCard.locator("strong")).toHaveText("7");
+  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
+
+  const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
+  await expect(phraseNotice).toContainText("Сервис временно недоступен");
+  await phraseNotice.getByRole("button", { name: "Повторить" }).click();
+  await expect(phraseNotice).toBeHidden();
+
+  await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.locator(".lx-phrase-grid").getByText("Independent retry", { exact: true })).toBeVisible();
+
+  expect(requests.progressRequests()).toBe(1);
+  expect(requests.phraseRequests()).toBe(2);
+  expect(requests.activeLessonRequests()).toBe(1);
+});
+
+test("standalone startup migrates away from corrupted navigation without clearing unrelated state", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "standalone", { configurable: true, value: true });
+    window.localStorage.setItem("lexigo.navigation.v2", JSON.stringify({
+      version: 999,
+      target: { view: "lesson", source: "unknown" },
+    }));
+    window.localStorage.setItem("lexigo.unrelated", "keep");
+  });
+  await installAccountMocks(page);
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+
+  const persisted = await page.evaluate(() => ({
+    navigation: JSON.parse(window.localStorage.getItem("lexigo.navigation.v2") ?? "null") as unknown,
+    unrelated: window.localStorage.getItem("lexigo.unrelated"),
+  }));
+  expect(persisted.navigation).toEqual({ version: 2, target: { view: "home" } });
+  expect(persisted.unrelated).toBe("keep");
+});
