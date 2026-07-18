@@ -357,11 +357,15 @@ test("primary flows work with Enter and Space and the calendar dialog contains a
 
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
+  const title = dialog.getByRole("heading", { name: "Напоминание об английском" });
   const close = dialog.getByRole("button", { name: "Закрыть" });
   const apple = dialog.getByRole("button", { name: /Apple Calendar/ });
-  await expect(close).toBeFocused();
-  await expectVisibleFocusRing(close);
+  await expect(title).toBeFocused();
+  await expectVisibleFocusRing(title);
 
+  await page.keyboard.press("Tab");
+  await expect(close).toBeFocused();
+  await title.focus();
   await page.keyboard.press("Shift+Tab");
   await expect(apple).toBeFocused();
   await page.keyboard.press("Tab");
