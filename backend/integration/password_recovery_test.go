@@ -5,6 +5,7 @@ package integration
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -15,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Dja-tiger/New-project/backend/internal/auth"
 	"github.com/Dja-tiger/New-project/backend/internal/catalog"
 	"github.com/Dja-tiger/New-project/backend/internal/config"
 	"github.com/Dja-tiger/New-project/backend/internal/platform/migrate"
@@ -218,7 +218,7 @@ func TestPasswordResetRequestIsRateLimited(t *testing.T) {
 	}
 	cfg := config.Config{
 		AppEnv: "test", CORSAllowedOrigin: "https://test.local",
-		JWTSecret: "integration-test-secret-with-at-least-32-bytes",
+		JWTSecret:      "integration-test-secret-with-at-least-32-bytes",
 		AccessTokenTTL: 15 * time.Minute, RefreshTokenTTL: time.Hour,
 		PasswordResetTTL: 30 * time.Minute,
 	}

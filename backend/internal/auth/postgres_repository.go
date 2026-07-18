@@ -218,17 +218,16 @@ func (r *PostgresRepository) ConsumePasswordReset(
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var (
-		resetID   string
 		userID    string
 		expiresAt time.Time
 		usedAt    *time.Time
 	)
 	err = tx.QueryRow(ctx, `
-		select id::text, user_id::text, expires_at, used_at
+		select user_id::text, expires_at, used_at
 		from password_reset_tokens
 		where token_hash = $1
 		for update
-	`, tokenHash).Scan(&resetID, &userID, &expiresAt, &usedAt)
+	`, tokenHash).Scan(&userID, &expiresAt, &usedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrInvalidPasswordReset
 	}
@@ -263,6 +262,5 @@ func (r *PostgresRepository) ConsumePasswordReset(
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit password reset: %w", err)
 	}
-	_ = resetID
 	return nil
 }

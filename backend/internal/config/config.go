@@ -26,19 +26,19 @@ type SMTP struct {
 }
 
 type Config struct {
-	AppEnv                 string
-	HTTPAddr               string
-	LogLevel               string
-	CORSAllowedOrigin      string
-	PostgresDSN            string
-	Redis                  Redis
-	JWTSecret              string
-	AccessTokenTTL         time.Duration
-	RefreshTokenTTL        time.Duration
-	SessionCookieSecure    bool
-	PasswordResetTTL       time.Duration
-	PasswordResetDelivery  string
-	SMTP                   SMTP
+	AppEnv                string
+	HTTPAddr              string
+	LogLevel              string
+	CORSAllowedOrigin     string
+	PostgresDSN           string
+	Redis                 Redis
+	JWTSecret             string
+	AccessTokenTTL        time.Duration
+	RefreshTokenTTL       time.Duration
+	SessionCookieSecure   bool
+	PasswordResetTTL      time.Duration
+	PasswordResetDelivery string
+	SMTP                  SMTP
 }
 
 func Load() (Config, error) {

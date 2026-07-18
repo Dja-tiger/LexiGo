@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.7.0
+  version: 0.8.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -77,6 +77,8 @@ paths:
           $ref: "#/components/responses/Conflict"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /api/v1/auth/login:
     post:
       operationId: login
@@ -101,6 +103,55 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/auth/password-reset/request:
+    post:
+      operationId: requestPasswordReset
+      tags: [auth]
+      summary: Запросить одноразовую ссылку восстановления пароля.
+      description: Ответ одинаков для существующего и отсутствующего аккаунта и не раскрывает регистрацию email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+      responses:
+        "202":
+          description: Запрос принят. Письмо отправляется только для существующего аккаунта.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/auth/password-reset/confirm:
+    post:
+      operationId: confirmPasswordReset
+      tags: [auth]
+      summary: Установить новый пароль по одноразовому токену.
+      description: Успешная операция отзывает все refresh-сессии пользователя.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetConfirmRequest"
+      responses:
+        "204":
+          description: Пароль изменён, токен использован, активные сессии отозваны.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /api/v1/auth/refresh:
     post:
       operationId: refresh
@@ -415,6 +466,21 @@ components:
         maximum: 840
         default: 0
   responses:
+    BadRequest:
+      description: Запрос содержит некорректный JSON, недействительный или использованный reset token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: Превышен лимит запросов для IP и endpoint.
+      headers:
+        Retry-After:
+          schema: { type: integer, const: 60 }
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: Неверные учётные данные или токен.
       content:
@@ -486,7 +552,7 @@ components:
           examples: [ok]
     RegisterRequest:
       type: object
-      required: [email, password]
+      required: [email, password, displayName]
       properties:
         email:
           type: string
@@ -497,7 +563,8 @@ components:
           maxLength: 72
         displayName:
           type: string
-          maxLength: 100
+          minLength: 2
+          maxLength: 80
     LoginRequest:
       type: object
       required: [email, password]
@@ -507,6 +574,35 @@ components:
           format: email
         password:
           type: string
+    PasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: Ответ endpoint не раскрывает, зарегистрирован ли адрес.
+    PasswordResetConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+          minLength: 43
+          maxLength: 43
+          description: Одноразовый base64url bearer token из письма.
+        newPassword:
+          type: string
+          minLength: 10
+          maxLength: 72
+    AcceptedResponse:
+      type: object
+      required: [accepted]
+      properties:
+        accepted:
+          type: boolean
+          const: true
     AuthResponse:
       type: object
       required: [user, tokens]
@@ -859,3 +955,7 @@ components:
               type: string
             message:
               type: string
+            field:
+              type: string
+              description: Опциональное стабильное имя поля формы, связанное с ошибкой.
+              enum: [email, password, displayName, passwordConfirmation, token]

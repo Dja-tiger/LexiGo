@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrInvalidPasswordReset = errors.New("invalid or expired password reset token")
+	ErrInvalidPasswordReset  = errors.New("invalid or expired password reset token")
 	ErrPasswordResetDisabled = errors.New("password reset is not configured")
 )
 
