@@ -238,7 +238,9 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
-      max-parallel: 2
+      # BuildKit jobs share one resource-constrained self-hosted host.
+      # Serialize image builds to prevent host-wide memory pressure and runner loss.
+      max-parallel: 1
       matrix:
         component: [api, web]
         include:
