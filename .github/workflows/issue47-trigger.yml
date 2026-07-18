@@ -1,0 +1,42 @@
+name: Trigger issue 47 semantic patch
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/issue-47-semantic-controls' && github.actor != 'github-actions[bot]'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-47-semantic-controls
+          fetch-depth: 0
+
+      - name: Extract and apply prepared semantic patch
+        shell: bash
+        run: |
+          sed -n "/python - <<'PY'/,/^[[:space:]]*PY$/p" .github/workflows/issue47-apply.yml \
+            | sed '1d;$d' \
+            | sed 's/^          //' \
+            > /tmp/issue47-apply.py
+          python /tmp/issue47-apply.py
+
+      - name: Commit implementation and remove temporary tooling
+        shell: bash
+        run: |
+          git rm .github/workflows/issue47-apply.yml .github/workflows/issue47-trigger.yml
+          git add frontend/components/lexigo-premium-app.tsx frontend/e2e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat(a11y): implement semantic learning controls"
+          git push origin HEAD:fix/issue-47-semantic-controls
