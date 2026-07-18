@@ -81,8 +81,12 @@ func TestRequestPasswordResetStoresOnlyHashAndBuildsOneTimeURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := parsed.Query().Get("reset_token")
-	if parsed.Query().Get("view") != "profile" || token == "" {
+	fragment, err := url.ParseQuery(parsed.Fragment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := fragment.Get("reset_token")
+	if parsed.Query().Get("view") != "profile" || parsed.Query().Get("reset_token") != "" || token == "" {
 		t.Fatalf("unexpected reset URL %q", sender.resetURL)
 	}
 	hash, err := hashPasswordResetToken(token)
