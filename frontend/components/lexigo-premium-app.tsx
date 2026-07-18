@@ -25,7 +25,13 @@ import {
 } from "../lib/auth-form";
 import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
-import { catalogCountText, catalogSummaryText, type CatalogMetadata, type CatalogMetadataStatus } from "../lib/catalog-metadata";
+import {
+  catalogCountText,
+  catalogSummaryText,
+  isCatalogMetadataPayload,
+  type CatalogMetadata,
+  type CatalogMetadataStatus,
+} from "../lib/catalog-metadata";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
 import {
   lessonCompositionDescription,
@@ -72,6 +78,7 @@ import {
   RequestFailure,
 } from "../lib/request-failure";
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
+import { AsyncResourceNotice, AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 
 type APIItem = {
@@ -352,24 +359,6 @@ function CollectionCard({
   );
 }
 
-function AccountResourceNotice({
-  label,
-  status,
-  onRetry,
-}: {
-  label: string;
-  status: ResourceStatus;
-  onRetry: () => void;
-}) {
-  if (status.phase !== "error" || !status.problem) return null;
-  return (
-    <section className={`lx-resource-notice ${status.problem.kind}`} role="alert" aria-label={`${label}: ошибка загрузки`}>
-      <div><strong>{status.problem.title}</strong><span>{status.problem.message}</span></div>
-      {status.problem.retryable ? <button type="button" onClick={onRetry}>Повторить</button> : null}
-    </section>
-  );
-}
-
 function CatalogSortControl({
   kind,
   mode,
@@ -450,6 +439,7 @@ async function requestJSON<T>(
       status: failure.status,
       code: failure.code,
       field: failure.field,
+      correlationId: failure.correlationId,
       cause: failure,
     });
   }
@@ -565,6 +555,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [progressStatus, setProgressStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [catalogMetadata, setCatalogMetadata] = useState<CatalogMetadata | null>(null);
   const [catalogMetadataStatus, setCatalogMetadataStatus] = useState<CatalogMetadataStatus>("loading");
+  const [catalogMetadataResourceStatus, setCatalogMetadataResourceStatus] = useState<ResourceStatus>(loadingResourceStatus);
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
   const [activeLessonStatus, setActiveLessonStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [hydratedUserID, setHydratedUserID] = useState("");
@@ -614,21 +605,39 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
 
+  const loadCatalogMetadataResource = useCallback(async (signal?: AbortSignal) => {
+    setCatalogMetadataStatus("loading");
+    setCatalogMetadataResourceStatus(loadingResourceStatus());
+    try {
+      const metadata = await requestJSON<CatalogMetadata>(
+        "/api/v1/catalog/metadata",
+        { signal },
+        undefined,
+        isCatalogMetadataPayload,
+      );
+      if (signal?.aborted) return;
+      setCatalogMetadata(metadata);
+      setCatalogMetadataStatus("ready");
+      setCatalogMetadataResourceStatus(readyResourceStatus());
+    } catch (metadataError) {
+      if (signal?.aborted) return;
+      console.error("catalog metadata request failed", metadataError);
+      setCatalogMetadata(null);
+      setCatalogMetadataStatus("error");
+      setCatalogMetadataResourceStatus(failedResourceStatus(metadataError, "состав каталога"));
+    }
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
-    requestJSON<CatalogMetadata>("/api/v1/catalog/metadata", { signal: controller.signal })
-      .then((metadata) => {
-        setCatalogMetadata(metadata);
-        setCatalogMetadataStatus("ready");
-      })
-      .catch((metadataError) => {
-        if (controller.signal.aborted) return;
-        console.error("catalog metadata request failed", metadataError);
-        setCatalogMetadata(null);
-        setCatalogMetadataStatus("error");
-      });
-    return () => controller.abort();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadCatalogMetadataResource(controller.signal);
+    }, 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [loadCatalogMetadataResource]);
 
   useEffect(() => {
     const applyNavigation = (next: NavigationTarget) => {
@@ -1803,6 +1812,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         </section>
       );
     }
+    const phrasesPending = Boolean(session && (phraseCatalogStatus.phase === "idle" || phraseCatalogStatus.phase === "loading"));
+    if (phrasesPending) {
+      return <><section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Загружаем актуальный каталог и доступные темы.</p></div></section><AsyncSkeletonGrid label="Загружаем каталог фраз" /></>;
+    }
+    if (session && phraseCatalogStatus.phase === "error" && phraseCatalogStatus.problem) {
+      return <AsyncStatePanel label="Каталог фраз недоступен" kind="error" title={phraseCatalogStatus.problem.title} message={phraseCatalogStatus.problem.message} reference={phraseCatalogStatus.problem.correlationId} actionLabel={phraseCatalogStatus.problem.retryable ? "Повторить" : undefined} onAction={phraseCatalogStatus.problem.retryable ? () => void loadPhraseCatalogResource(session) : undefined} />;
+    }
+    if (sortedVisiblePhrases.length === 0) {
+      return <AsyncStatePanel label="Каталог фраз пуст" kind="empty" title="В этой теме пока нет фраз" message={phraseTopic === "all" ? "Каталог синхронизирован, но доступные фразы отсутствуют." : "Сбросьте фильтр темы или выберите другой раздел."} actionLabel="Показать все темы" onAction={() => setPhraseTopic("all")} />;
+    }
     return (
       <>
         <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
@@ -1817,6 +1836,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function renderLibrary() {
     return (
       <>
+        {catalogMetadataResourceStatus.phase === "loading" ? <AsyncSkeletonGrid label="Загружаем состав словаря" count={3} /> : null}
         <section className="lx-page-heading"><div><span>СЛОВАРЬ</span><h1>Материалы, организованные по учебной задаче</h1><p>{catalogSummaryText(catalogMetadata, catalogMetadataStatus)}</p></div><div className="lx-heading-badge"><Icon name="library"/><span>{progress ? `${progress.masteredWords + progress.masteredPhrases} освоено` : "Откройте раздел"}</span></div></section>
         <section className="lx-library-grid">
           {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" data-lexigo-dictionary-source={option.value} aria-label={`Открыть раздел: ${option.label}`} onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{catalogCountText(
@@ -1850,9 +1870,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
     if (!progress) {
       const problem = progressStatus.problem;
-      return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>{progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем прогресс…" : problem?.title ?? "Прогресс недоступен"}</h1><p>{problem?.message ?? "Данные появятся после синхронизации аккаунта."}</p>{problem?.retryable ? <button className="lx-button primary" type="button" onClick={() => void loadProgressResource(session)}>Повторить загрузку</button> : null}</section>;
+      const loading = progressStatus.phase === "loading" || progressStatus.phase === "idle";
+      return <AsyncStatePanel label={loading ? "Загрузка прогресса" : "Прогресс недоступен"} kind={loading ? "loading" : "error"} title={loading ? "Загружаем прогресс…" : problem?.title ?? "Прогресс недоступен"} message={problem?.message ?? "Получаем очередь, дневную цель и статистику обучения."} reference={problem?.correlationId} actionLabel={problem?.retryable ? "Повторить загрузку" : undefined} onAction={problem?.retryable ? () => void loadProgressResource(session) : undefined} focusResult={!loading} />;
     }
     const modes = normalizedProgressModes(progress);
+    const progressIsEmpty = progress.reviewsTotal === 0 && progress.masteredWords === 0 && progress.masteredPhrases === 0;
     const cards = [
       { label: "Сегодня", value: `${progress.reviewsToday} / ${progress.dailyGoal}`, hint: `${goalPercent(progress)}% цели`, color: "purple" },
       { label: "Объективная успешность", value: `${successRate}%`, hint: `${progress.objectiveSuccessfulToday ?? progress.successfulToday} из ${progress.objectiveReviewsToday ?? progress.reviewsToday} попыток`, color: "green" },
@@ -1862,6 +1884,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     return (
       <>
         <section className="lx-page-heading"><div><span>ПРОГРЕСС</span><h1>Смотрите, что действительно сохранилось</h1><p>Retained item засчитывается после повторного успешного воспроизведения.</p></div><div className="lx-heading-badge"><Icon name="progress"/><span>Следующее повторение: {nextDueLabel(progress.nextDueAt)}</span></div></section>
+        {progressIsEmpty ? <AsyncStatePanel label="Прогресс пока пуст" kind="empty" title="Начните первый учебный блок" message="После первой сохранённой оценки здесь появятся очередь, серия и объективная успешность." actionLabel="Настроить урок" onAction={() => navigate({ view: "learn" })} compact /> : null}
         <section className="lx-stat-grid">{cards.map((card) => <article key={card.label}><span>{card.label}</span><strong className={card.color}>{card.value}</strong><small>{card.hint}</small></article>)}</section>
         <section className="lx-summary-panel" aria-label="Попытки по режимам">
           <div><span>Изучение</span><strong>{modes.study.attemptsToday}</strong><small>показ ответа · не active recall</small></div>
@@ -2078,7 +2101,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         </section>
       );
     }
-    return <><section className="lx-page-heading"><div><span>ПРОФИЛЬ</span><h1>{session.user.displayName || "Ваш аккаунт"}</h1><p>Настройки обучения и синхронизация между устройствами.</p></div><div className="lx-heading-badge"><Icon name="user"/><span>{session.user.email}</span></div></section><section className="lx-profile-grid"><article><span>Email</span><strong>{session.user.email}</strong><small>используется для входа</small></article><article><span>Аккаунт создан</span><strong>{formatAccountDate(session.user.createdAt)}</strong><small>история хранится на сервере</small></article><article><span>Дневная цель</span><strong>{progress?.dailyGoal ?? 30}</strong><small>ответов в день</small></article><article><span>Активный урок</span><strong>{activeLesson ? "Есть" : "Нет"}</strong><small>{activeLesson ? sourceLabel(activeLesson.source) : "можно начать новый"}</small></article></section><section className="lx-page-actions"><button className="lx-button ghost" type="button" onClick={logout}>Выйти</button><button className="lx-button primary" type="button" onClick={() => navigate({ view: "progress" })}>Открыть прогресс</button></section></>;
+    const profileProgressPending = progressStatus.phase === "idle" || progressStatus.phase === "loading";
+    return <><section className="lx-page-heading"><div><span>ПРОФИЛЬ</span><h1>{session.user.displayName || "Ваш аккаунт"}</h1><p>Настройки обучения и синхронизация между устройствами.</p></div><div className="lx-heading-badge"><Icon name="user"/><span>{session.user.email}</span></div></section>{profileProgressPending ? <AsyncStatePanel label="Загрузка настроек профиля" kind="loading" title="Синхронизируем настройки" message="Получаем дневную цель и состояние учебной очереди." compact focusResult={false} /> : progressStatus.phase === "error" && progressStatus.problem ? <AsyncStatePanel label="Настройки профиля недоступны" kind="error" title={progressStatus.problem.title} message={progressStatus.problem.message} reference={progressStatus.problem.correlationId} actionLabel={progressStatus.problem.retryable ? "Повторить" : undefined} onAction={progressStatus.problem.retryable ? () => void loadProgressResource(session) : undefined} compact /> : null}<section className="lx-profile-grid"><article><span>Email</span><strong>{session.user.email}</strong><small>используется для входа</small></article><article><span>Аккаунт создан</span><strong>{formatAccountDate(session.user.createdAt)}</strong><small>история хранится на сервере</small></article><article><span>Дневная цель</span><strong>{progress ? progress.dailyGoal : "—"}</strong><small>{progress ? "ответов в день" : "данные не загружены"}</small></article><article><span>Активный урок</span><strong>{activeLessonStatus.phase === "loading" || activeLessonStatus.phase === "idle" ? "…" : activeLesson ? "Есть" : "Нет"}</strong><small>{activeLesson ? sourceLabel(activeLesson.source) : activeLessonStatus.phase === "error" ? "состояние недоступно" : "можно начать новый"}</small></article></section><section className="lx-page-actions"><button className="lx-button ghost" type="button" onClick={logout}>Выйти</button><button className="lx-button primary" type="button" onClick={() => navigate({ view: "progress" })}>Открыть прогресс</button></section></>;
   }
 
   function renderAllItems() {
@@ -2093,13 +2117,19 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function renderLesson() {
     if (!lessonStarted) {
+      if (activeLessonStatus.phase === "idle" || activeLessonStatus.phase === "loading") {
+        return <AsyncStatePanel label="Загрузка активного урока" kind="loading" title="Проверяем незавершённый урок…" message="Синхронизируем текущую позицию и сохранённые оценки." focusResult={false} />;
+      }
+      if (activeLessonStatus.phase === "error" && activeLessonStatus.problem && session) {
+        return <AsyncStatePanel label="Активный урок недоступен" kind="error" title={activeLessonStatus.problem.title} message={activeLessonStatus.problem.message} reference={activeLessonStatus.problem.correlationId} actionLabel={activeLessonStatus.problem.retryable ? "Повторить" : undefined} onAction={activeLessonStatus.problem.retryable ? () => void loadActiveLessonResource(session) : undefined} />;
+      }
       return activeLesson
-        ? <section className="lx-empty"><span>АКТИВНЫЙ УРОК</span><h1>Урок сохранён</h1><p>{sourceLabel(activeLesson.source)} · позиция {activeLesson.currentIndex + 1} из {activeLesson.items.length}</p><div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={resumeLesson}>Продолжить урок</button><button className="lx-button ghost" type="button" onClick={() => navigate({ view: "learn" })}>К настройкам</button></div></section>
-        : <section className="lx-empty"><span>УРОК</span><h1>Активного урока нет</h1><p>Выберите режим, раздел и размер блока.</p><button className="lx-button primary" type="button" onClick={() => navigate({ view: "learn" })}>Настроить урок</button></section>;
+        ? <AsyncStatePanel label="Сохранённый активный урок" kind="success" title="Урок сохранён" message={`${sourceLabel(activeLesson.source)} · позиция ${activeLesson.currentIndex + 1} из ${activeLesson.items.length}`} actionLabel="Продолжить урок" onAction={() => void resumeLesson()} />
+        : <AsyncStatePanel label="Активный урок отсутствует" kind="empty" title="Активного урока нет" message="Выберите режим, раздел и размер блока." actionLabel="Настроить урок" onAction={() => navigate({ view: "learn" })} />;
     }
     if (studyMode === "all") return renderAllItems();
     if (lessonComplete) return <section className="lx-empty"><span>СЕССИЯ ЗАВЕРШЕНА</span><h1>{items.length ? "Результаты сохранены" : "Нет доступных элементов"}</h1><p>{items.length ? `Знал: ${lessonSummary.known}. Почти: ${lessonSummary.almost}. Не знал: ${lessonSummary.again}. Пропущено: ${Math.max(lessonSummary.skipped, serverSkippedItems)}.` : "Измените раздел или дождитесь следующего интервала."}</p><div className="lx-hero-actions"><button className="lx-button ghost" type="button" onClick={() => { clearLessonState(); navigate({ view: "progress" }); }}>К прогрессу</button><button className="lx-button primary" type="button" disabled={busy} onClick={() => startLesson()}>Следующий блок</button></div></section>;
-    if (!currentItem) return null;
+    if (!currentItem) return <AsyncStatePanel label="Ошибка учебной карточки" kind="error" title="Карточка урока недоступна" message="Серверная сессия не содержит ожидаемую текущую карточку." actionLabel="Синхронизировать урок" onAction={() => void resynchronizeActiveLesson("Урок синхронизирован с сервером.")} />;
 
     const lessonPercent = Math.round(((currentIndex + 1) / items.length) * 100);
     const remaining = Math.max(0, items.length - ratingValues.length);
@@ -2188,11 +2218,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   return (
     <main className="lx-app">
       {renderHeader()}
-      {error ? <p className="lx-error" role="alert">{error}</p> : null}
+      {error ? <AsyncStatePanel label="Ошибка текущего действия" kind="error" title="Действие не выполнено" message={error} compact /> : null}
       {session ? <div className="lx-resource-stack">
-        {navigation.view !== "progress" ? <AccountResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
-        <AccountResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
-        <AccountResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
+        {navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
+        <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
+        <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
+        <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
       </div> : null}
       {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}
       <div className="lx-view">

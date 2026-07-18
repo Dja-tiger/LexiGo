@@ -15,12 +15,14 @@ export type RequestProblem = {
   retryable: boolean;
   status: number;
   code: string;
+  correlationId: string;
 };
 
 type RequestFailureOptions = {
   status?: number;
   code?: string;
   field?: string;
+  correlationId?: string;
   cause?: unknown;
 };
 
@@ -34,6 +36,7 @@ export class RequestFailure extends Error {
   readonly status: number;
   readonly code: string;
   readonly field: string;
+  readonly correlationId: string;
 
   constructor(
     readonly kind: RequestFailureKind,
@@ -45,6 +48,7 @@ export class RequestFailure extends Error {
     this.status = options.status ?? 0;
     this.code = options.code ?? "request_failed";
     this.field = options.field ?? "";
+    this.correlationId = options.correlationId ?? "";
   }
 }
 
@@ -120,10 +124,14 @@ export async function failureFromResponse(response: Response): Promise<RequestFa
   } catch {
     // Status classification remains reliable even when the error body is empty or malformed.
   }
+  const correlationId = response.headers.get("x-request-id")
+    ?? response.headers.get("x-correlation-id")
+    ?? response.headers.get("traceparent")
+    ?? "";
   return new RequestFailure(
     failureKindForStatus(response.status),
     details.message || `Request failed with status ${response.status}`,
-    { status: response.status, code: details.code, field: details.field },
+    { status: response.status, code: details.code, field: details.field, correlationId },
   );
 }
 
@@ -177,6 +185,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: false,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "forbidden":
       return {
@@ -186,6 +195,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: false,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "offline":
       return {
@@ -195,6 +205,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: true,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "timeout":
       return {
@@ -204,6 +215,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: true,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "malformed":
       return {
@@ -213,6 +225,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: true,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "server":
       return {
@@ -222,6 +235,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: true,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     case "client":
       return {
@@ -231,6 +245,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: false,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
     default:
       return {
@@ -240,6 +255,7 @@ export function describeRequestFailure(error: unknown, resource: string): Reques
         retryable: true,
         status: failure.status,
         code: failure.code,
+        correlationId: failure.correlationId,
       };
   }
 }
