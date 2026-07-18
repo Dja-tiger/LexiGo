@@ -20,24 +20,35 @@ import (
 	"github.com/Dja-tiger/New-project/backend/internal/server"
 )
 
+type catalogMetadataTotals struct {
+	Items   int `json:"items"`
+	Words   int `json:"words"`
+	Phrases int `json:"phrases"`
+}
+
+type catalogMetadataSources struct {
+	Mixed           int `json:"mixed"`
+	Noun            int `json:"noun"`
+	Verb            int `json:"verb"`
+	Adjective       int `json:"adjective"`
+	Phrases         int `json:"phrases"`
+	DailyLife       int `json:"dailyLife"`
+	Travel          int `json:"travel"`
+	DataEngineering int `json:"dataEngineering"`
+	Backend         int `json:"backend"`
+}
+
+type catalogMetadataTopic struct {
+	Topic string `json:"topic"`
+	Count int    `json:"count"`
+}
+
 type catalogMetadataPayload struct {
-	CatalogVersion string    `json:"catalogVersion"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	Totals         struct {
-		Items   int `json:"items"`
-		Words   int `json:"words"`
-		Phrases int `json:"phrases"`
-	} `json:"totals"`
-	Sources struct {
-		Mixed     int `json:"mixed"`
-		Noun      int `json:"noun"`
-		Phrases   int `json:"phrases"`
-		DailyLife int `json:"dailyLife"`
-	} `json:"sources"`
-	Topics []struct {
-		Topic string `json:"topic"`
-		Count int    `json:"count"`
-	} `json:"topics"`
+	CatalogVersion string                 `json:"catalogVersion"`
+	UpdatedAt      time.Time              `json:"updatedAt"`
+	Totals         catalogMetadataTotals  `json:"totals"`
+	Sources        catalogMetadataSources `json:"sources"`
+	Topics         []catalogMetadataTopic `json:"topics"`
 }
 
 func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
@@ -59,6 +70,37 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 	if _, err := catalog.Seed(ctx, pg); err != nil {
 		t.Fatalf("catalog.Seed() error = %v", err)
 	}
+
+	var expectedTotals catalogMetadataTotals
+	var expectedSources catalogMetadataSources
+	if err := pg.QueryRow(ctx, `
+		select count(*)::int,
+		       count(*) filter (where kind = 'word')::int,
+		       count(*) filter (where kind = 'phrase')::int,
+		       count(*) filter (where kind = 'word' and lower(part_of_speech) = 'noun')::int,
+		       count(*) filter (where kind = 'word' and lower(part_of_speech) = 'verb')::int,
+		       count(*) filter (where kind = 'word' and lower(part_of_speech) = 'adjective')::int,
+		       count(*) filter (where kind = 'word' and topic = 'Daily Life')::int,
+		       count(*) filter (where kind = 'word' and topic = 'Travel')::int,
+		       count(*) filter (where kind = 'word' and topic = 'Data Engineering')::int,
+		       count(*) filter (where kind = 'word' and topic = 'Backend Development')::int
+		from words
+	`).Scan(
+		&expectedTotals.Items,
+		&expectedTotals.Words,
+		&expectedTotals.Phrases,
+		&expectedSources.Noun,
+		&expectedSources.Verb,
+		&expectedSources.Adjective,
+		&expectedSources.DailyLife,
+		&expectedSources.Travel,
+		&expectedSources.DataEngineering,
+		&expectedSources.Backend,
+	); err != nil {
+		t.Fatalf("query expected catalog metadata: %v", err)
+	}
+	expectedSources.Mixed = expectedTotals.Items
+	expectedSources.Phrases = expectedTotals.Phrases
 
 	rdb, err := redisplatform.Open(ctx, config.Redis{Addr: requiredEnv(t, "TEST_REDIS_ADDR")})
 	if err != nil {
@@ -103,30 +145,74 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 		return payload, response.Header
 	}
 
-	request, _ := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	request, err := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	if err != nil {
+		t.Fatalf("create metadata request: %v", err)
+	}
 	first, headers := read(request, http.StatusOK)
+	if first.Totals != expectedTotals {
+		t.Fatalf("catalog totals = %+v, want %+v", first.Totals, expectedTotals)
+	}
+	if first.Sources != expectedSources {
+		t.Fatalf("catalog source totals = %+v, want %+v", first.Sources, expectedSources)
+	}
 	if first.Totals.Words != catalog.ExpectedCount || first.Totals.Items != first.Totals.Words+first.Totals.Phrases {
 		t.Fatalf("unexpected totals: %+v", first.Totals)
 	}
-	if first.Sources.Mixed != first.Totals.Items || first.CatalogVersion == "" || first.UpdatedAt.IsZero() {
+	if first.CatalogVersion == "" || first.UpdatedAt.IsZero() || len(first.Topics) == 0 {
 		t.Fatalf("incomplete metadata: %+v", first)
+	}
+	if cacheControl := headers.Get("Cache-Control"); cacheControl != "public, max-age=60, must-revalidate" {
+		t.Fatalf("Cache-Control = %q", cacheControl)
 	}
 	etag := headers.Get("ETag")
 	if etag == "" {
 		t.Fatal("ETag is empty")
 	}
 
-	conditional, _ := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	conditional, err := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	if err != nil {
+		t.Fatalf("create conditional metadata request: %v", err)
+	}
 	conditional.Header.Set("If-None-Match", etag)
 	read(conditional, http.StatusNotModified)
 
-	if _, err := pg.Exec(ctx, `insert into words(lemma, translation, part_of_speech, topic, source, kind) values ('metadata contract phrase', 'контрактная фраза', 'phrase', 'Integration Metadata', 'integration', 'phrase')`); err != nil {
+	if _, err := pg.Exec(ctx, `
+		insert into words (
+			lemma,
+			translation,
+			part_of_speech,
+			topic,
+			source,
+			kind,
+			slug,
+			cloze,
+			cloze_answer
+		) values (
+			'metadata contract phrase',
+			'контрактная фраза',
+			'phrase',
+			'Integration Metadata',
+			'integration',
+			'phrase',
+			'integration-metadata-contract-phrase',
+			'metadata contract _____',
+			'phrase'
+		)
+	`); err != nil {
 		t.Fatalf("insert catalog item: %v", err)
 	}
-	request, _ = http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+
+	request, err = http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	if err != nil {
+		t.Fatalf("create updated metadata request: %v", err)
+	}
 	second, secondHeaders := read(request, http.StatusOK)
 	if second.Totals.Items != first.Totals.Items+1 || second.Totals.Phrases != first.Totals.Phrases+1 {
 		t.Fatalf("metadata did not track insert: before=%+v after=%+v", first.Totals, second.Totals)
+	}
+	if second.Sources.Mixed != first.Sources.Mixed+1 || second.Sources.Phrases != first.Sources.Phrases+1 {
+		t.Fatalf("source totals did not track phrase insert: before=%+v after=%+v", first.Sources, second.Sources)
 	}
 	if second.CatalogVersion == first.CatalogVersion || secondHeaders.Get("ETag") == etag {
 		t.Fatal("catalog version and ETag must change")
@@ -135,6 +221,7 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 	for _, topic := range second.Topics {
 		if topic.Topic == "Integration Metadata" && topic.Count == 1 {
 			found = true
+			break
 		}
 	}
 	if !found {
