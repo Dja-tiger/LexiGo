@@ -2,6 +2,14 @@ import { readFile } from "node:fs/promises";
 
 import { expect, test, type BrowserContext, type Page, type Route } from "@playwright/test";
 
+type SharedCalendarCapture = { name: string; type: string; text: string };
+
+declare global {
+  interface Window {
+    __lexigoSharedCalendars?: SharedCalendarCapture[];
+  }
+}
+
 const SESSION = {
   user: {
     id: "00000000-0000-0000-0000-000000000049",
@@ -89,9 +97,8 @@ async function installMocks(page: Page) {
 
 async function emulateStandaloneShare(context: BrowserContext) {
   await context.addInitScript(() => {
-    type SharedCalendar = { name: string; type: string; text: string };
     type ShareInput = { files?: File[] };
-    const calls: SharedCalendar[] = [];
+    const calls: SharedCalendarCapture[] = [];
     Object.defineProperty(window, "__lexigoSharedCalendars", {
       configurable: true,
       value: calls,
@@ -165,12 +172,10 @@ test("installed iOS PWA shares a real ICS file without opening an error page", a
   const dialog = await openCalendarDialog(page);
   await dialog.getByRole("button", { name: /Apple Calendar/ }).click();
 
-  await expect.poll(() => page.evaluate(() => (
-    window as Window & { __lexigoSharedCalendars?: unknown[] }
-  ).__lexigoSharedCalendars?.length ?? 0)).toBe(1);
-  const shared = await page.evaluate(() => (
-    window as Window & { __lexigoSharedCalendars: Array<{ name: string; type: string; text: string }> }
-  ).__lexigoSharedCalendars[0]);
+  await expect.poll(() => page.evaluate(() => window.__lexigoSharedCalendars?.length ?? 0)).toBe(1);
+  const shared = await page.evaluate(() => window.__lexigoSharedCalendars?.[0] ?? null);
+  expect(shared).not.toBeNull();
+  if (!shared) throw new Error("shared calendar capture is missing");
 
   expect(shared.name).toBe("lexigo-study-reminder.ics");
   expect(shared.type).toBe("text/calendar;charset=utf-8");
