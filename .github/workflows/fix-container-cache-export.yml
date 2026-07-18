@@ -27,12 +27,14 @@ jobs:
           from pathlib import Path
 
           path = Path('.github/workflows/ci.yml')
-          text = path.read_text(encoding='utf-8')
-          old = '          cache-to: type=gha,mode=max,scope=${{ matrix.component }}\n'
-          new = '          cache-to: type=gha,mode=max,scope=${{ matrix.component }},ignore-error=true\n'
-          if text.count(old) != 1:
-              raise SystemExit(f'cache exporter marker count: {text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
+          matches = [index for index, line in enumerate(lines) if line.strip().startswith('cache-to: type=gha,mode=max,scope=')]
+          if len(matches) != 1:
+              raise SystemExit(f'cache exporter marker count: {len(matches)}')
+          index = matches[0]
+          if 'ignore-error=true' not in lines[index]:
+              lines[index] = lines[index].rstrip('\n') + ',ignore-error=true\n'
+          path.write_text(''.join(lines), encoding='utf-8')
           PY
           rm -f \
             .github/workflows/debug-issue-43-web-build.yml \
