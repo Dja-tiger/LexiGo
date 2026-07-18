@@ -681,9 +681,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
   const navigationRef = useRef(navigation);
-  const navigationTabsRef = useRef<NavigationTabSnapshots>({});
   const lessonNavigationLockRef = useRef(false);
   const announcementCounterRef = useRef(0);
+  const [navigationTabs, setNavigationTabs] = useState<NavigationTabSnapshots>({});
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigationFocus | null>(null);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
   const lessonNavigationLocked = navigation.view === "lesson" && lessonStarted && !lessonComplete;
@@ -732,11 +732,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       scroll: NavigationScrollPosition = { x: 0, y: 0 },
     ) => {
       navigationRef.current = next;
-      navigationTabsRef.current = rememberNavigationTabSnapshot(
-        navigationTabsRef.current,
+      setNavigationTabs((current) => rememberNavigationTabSnapshot(
+        current,
         next,
         scroll,
-      );
+      ));
       setNavigation(next);
       if (next.source) setSource(next.source);
       writeNavigationCache(window.localStorage, next);
@@ -745,11 +745,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const persistCurrentEntry = () => {
       const current = navigationRef.current;
       const scroll = { x: window.scrollX, y: window.scrollY };
-      navigationTabsRef.current = rememberNavigationTabSnapshot(
-        navigationTabsRef.current,
+      setNavigationTabs((snapshots) => rememberNavigationTabSnapshot(
+        snapshots,
         current,
         scroll,
-      );
+      ));
       window.history.replaceState(
         createNavigationHistoryState(current, scroll),
         "",
@@ -968,11 +968,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
 
     const currentScroll = { x: window.scrollX, y: window.scrollY };
-    navigationTabsRef.current = rememberNavigationTabSnapshot(
-      navigationTabsRef.current,
+    setNavigationTabs((current) => rememberNavigationTabSnapshot(
+      current,
       navigation,
       currentScroll,
-    );
+    ));
     const targetScroll = options.scroll ?? { x: 0, y: 0 };
     const url = navigationURL(target);
     window.history.replaceState(
@@ -999,7 +999,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function navigatePrimary(view: PrimaryNavigationView) {
     if (navigation.view === view) return;
-    const destination = navigationTabDestination(navigationTabsRef.current, view);
+    const destination = navigationTabDestination(navigationTabs, view);
     navigate(destination.target, false, { scroll: destination.scroll });
   }
 
