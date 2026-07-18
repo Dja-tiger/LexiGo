@@ -19,6 +19,7 @@
 13. Все content lines используют CRLF и складываются до 75 octets.
 14. UI не сообщает об успешном действии до завершения share/download launch.
 15. Share cancellation, download fallback и hard failure имеют разные статусы.
+16. Валидированный `Intl.DateTimeFormat` и сформированный `VTIMEZONE` переиспользуются по timezone и стартовому году, поэтому повторный экспорт не повторяет полный DST scan.
 
 Автоматическое покрытие:
 
