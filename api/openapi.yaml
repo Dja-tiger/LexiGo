@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.6.0
+  version: 0.7.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -27,6 +27,30 @@ paths:
           description: PostgreSQL и Redis доступны.
         "503":
           description: Одна из зависимостей недоступна.
+  /api/v1/catalog/metadata:
+    get:
+      operationId: catalogMetadata
+      tags: [catalog]
+      summary: Публичные агрегаты и версия каталога.
+      parameters:
+        - in: header
+          name: If-None-Match
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Актуальный snapshot каталога.
+          headers:
+            ETag:
+              schema: { type: string }
+            Cache-Control:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogMetadata"
+        "304":
+          description: Версия каталога не изменилась.
   /api/v1/auth/register:
     post:
       operationId: register
@@ -416,6 +440,43 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    CatalogMetadata:
+      type: object
+      required: [catalogVersion, updatedAt, totals, sources, topics]
+      properties:
+        catalogVersion: { type: string }
+        updatedAt: { type: string, format: date-time }
+        totals: { $ref: "#/components/schemas/CatalogTotals" }
+        sources: { $ref: "#/components/schemas/CatalogSourceTotals" }
+        topics:
+          type: array
+          items: { $ref: "#/components/schemas/CatalogTopicTotal" }
+    CatalogTotals:
+      type: object
+      required: [items, words, phrases]
+      properties:
+        items: { type: integer, minimum: 0 }
+        words: { type: integer, minimum: 0 }
+        phrases: { type: integer, minimum: 0 }
+    CatalogSourceTotals:
+      type: object
+      required: [mixed, noun, verb, adjective, phrases, dailyLife, travel, dataEngineering, backend]
+      properties:
+        mixed: { type: integer, minimum: 0 }
+        noun: { type: integer, minimum: 0 }
+        verb: { type: integer, minimum: 0 }
+        adjective: { type: integer, minimum: 0 }
+        phrases: { type: integer, minimum: 0 }
+        dailyLife: { type: integer, minimum: 0 }
+        travel: { type: integer, minimum: 0 }
+        dataEngineering: { type: integer, minimum: 0 }
+        backend: { type: integer, minimum: 0 }
+    CatalogTopicTotal:
+      type: object
+      required: [topic, count]
+      properties:
+        topic: { type: string }
+        count: { type: integer, minimum: 0 }
     Health:
       type: object
       required: [status]

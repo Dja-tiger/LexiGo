@@ -51,6 +51,16 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;
+    if (path === "/api/v1/catalog/metadata") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        catalogVersion: "sha256:e2e-catalog",
+        updatedAt: "2026-07-18T00:00:00Z",
+        totals: { items: 6, words: 3, phrases: 3 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        topics: [{ topic: "Backend", count: 2 }],
+      }) });
+      return;
+    }
     if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
