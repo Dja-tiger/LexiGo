@@ -34,6 +34,18 @@ describe("request failure classification", () => {
     expect(failure.message).toBe("test message");
   });
 
+  it("preserves a safe request correlation id from response headers", async () => {
+    const failure = await failureFromResponse(new Response(JSON.stringify({
+      error: { code: "temporary_failure", message: "temporary" },
+    }), {
+      status: 503,
+      headers: { "Content-Type": "application/json", "X-Request-ID": "req-44-test" },
+    }));
+
+    expect(failure.correlationId).toBe("req-44-test");
+    expect(describeRequestFailure(failure, "каталог").correlationId).toBe("req-44-test");
+  });
+
   it("distinguishes malformed JSON from an incompatible schema", async () => {
     await expect(decodeJSON(
       new Response("{broken", { status: 200 }),
