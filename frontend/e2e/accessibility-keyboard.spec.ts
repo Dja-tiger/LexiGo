@@ -273,6 +273,7 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
   const expected = [
+    page.getByRole("link", { name: "Перейти к основному содержимому" }),
     page.locator(".lx-brand"),
     page.locator(".lx-nav").getByRole("button", { name: "Главная", exact: true }),
     page.locator(".lx-nav").getByRole("button", { name: "Обучение", exact: true }),
