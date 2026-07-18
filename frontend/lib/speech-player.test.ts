@@ -58,4 +58,9 @@ describe("speech player helpers", () => {
     expect(speechControlLabel("error", "cache")).toBe("Повторить произношение: cache");
     expect(speechControlLabel("unsupported", "cache")).toBe("Произношение недоступно: cache");
   });
+
+  it("normalizes accessible text and preserves a fallback name for an empty value", () => {
+    expect(speechControlLabel("idle", "  warm\n  cache  ")).toBe("Произнести: warm cache");
+    expect(speechControlLabel("unsupported", "   ")).toBe("Произношение недоступно: текст");
+  });
 });
