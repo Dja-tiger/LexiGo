@@ -9,10 +9,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const MAX_START_DISTANCE_MS = 400 * 24 * 60 * 60 * 1_000;
+
 function parseStart(value: string | null, fallback: Date): Date {
   if (!value) return fallback;
   const timestamp = Number(value);
   if (!Number.isFinite(timestamp)) return fallback;
+  if (Math.abs(timestamp - fallback.getTime()) > MAX_START_DISTANCE_MS) return fallback;
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
