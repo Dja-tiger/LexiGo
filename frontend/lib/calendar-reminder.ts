@@ -43,6 +43,7 @@ const WEEKDAY_CODES = new Set<string>(CALENDAR_WEEKDAYS.map((weekday) => weekday
 const WORKDAYS: CalendarWeekday[] = ["MO", "TU", "WE", "TH", "FR"];
 const TRANSITION_SCAN_STEP_MS = 7 * 24 * 60 * 60 * 1_000;
 const TIME_ZONE_YEARS_AHEAD = 10;
+const TIME_ZONE_LINES_CACHE_LIMIT = 32;
 const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const timeZoneLinesCache = new Map<string, string[]>();
 
@@ -386,6 +387,10 @@ function buildTimeZoneLines(timeZone: string, eventStart: Date): string[] {
     )),
     "END:VTIMEZONE",
   ];
+  if (timeZoneLinesCache.size >= TIME_ZONE_LINES_CACHE_LIMIT) {
+    const oldestKey = timeZoneLinesCache.keys().next().value;
+    if (oldestKey !== undefined) timeZoneLinesCache.delete(oldestKey);
+  }
   timeZoneLinesCache.set(cacheKey, lines);
   return lines;
 }
