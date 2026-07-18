@@ -186,7 +186,8 @@ test("offline and expired-session states are distinct", async ({ page }) => {
   const second = await page.context().newPage();
   await installMocks(second, "success", { refreshExpires: true });
   await second.goto("/");
-  await expect(second.getByRole("alert", { name: "Прогресс: ошибка загрузки" })).toContainText("Сессия истекла");
+  await expect(second).toHaveURL(/view=profile&session=expired/);
+  await expect(second.getByRole("alert").filter({ hasText: "Сессия истекла" })).toContainText("Войдите снова, чтобы загрузить сессию аккаунта");
 });
 
 test("empty phrase response provides a next action", async ({ page }) => {
