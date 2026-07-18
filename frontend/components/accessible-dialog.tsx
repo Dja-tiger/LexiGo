@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 const FOCUSABLE_SELECTOR = [
@@ -134,31 +134,34 @@ export function AccessibleDialog({
 }: AccessibleDialogProps) {
   const dialogRef = useRef<HTMLElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  const portalRootRef = useRef<HTMLElement | null>(null);
+
+  if (!portalRootRef.current && typeof document !== "undefined") {
+    const root = document.createElement("div");
+    root.dataset.accessibleDialogPortal = "true";
+    portalRootRef.current = root;
+  }
+  const portalRoot = portalRootRef.current;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !portalRoot) return;
     previousFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
 
-    const root = document.createElement("div");
-    root.dataset.accessibleDialogPortal = "true";
-    document.body.append(root);
-    setPortalRoot(root);
-    const unregister = registerDialog(root);
+    document.body.append(portalRoot);
+    const unregister = registerDialog(portalRoot);
 
     return () => {
       unregister();
-      root.remove();
-      setPortalRoot(null);
+      portalRoot.remove();
 
       const previousFocus = previousFocusRef.current;
       previousFocusRef.current = null;
       if (!previousFocus?.isConnected) return;
       window.requestAnimationFrame(() => previousFocus.focus({ preventScroll: true }));
     };
-  }, [open]);
+  }, [open, portalRoot]);
 
   useEffect(() => {
     if (!open || !portalRoot) return;
