@@ -41,10 +41,14 @@ jobs:
               if count != 1:
                   raise SystemExit(f"{path}: expected one match, found {count}: {old[:100]!r}")
               file.write_text(source.replace(old, new, 1))'''
-          replacement = '''def shifted_multiline(value: str, amount: int) -> str:
-              if amount == 0 or "\\n" not in value:
+          replacement = '''def adjusted_multiline(value: str, delta: int) -> str:
+              if delta == 0 or "\\n" not in value:
                   return value
               lines = value.splitlines(keepends=True)
+              if delta > 0:
+                  prefix = " " * delta
+                  return lines[0] + "".join(prefix + line if line.strip() else line for line in lines[1:])
+              amount = -delta
               prefix = " " * amount
               return lines[0] + "".join(
                   line[amount:] if line.startswith(prefix) else line
@@ -54,11 +58,11 @@ jobs:
           def replace_once(path: str, old: str, new: str) -> None:
               file = Path(path)
               source = file.read_text()
-              for amount in range(17):
-                  candidate = shifted_multiline(old, amount)
+              for delta in [0, *range(1, 17), *range(-1, -17, -1)]:
+                  candidate = adjusted_multiline(old, delta)
                   count = source.count(candidate)
                   if count == 1:
-                      file.write_text(source.replace(candidate, shifted_multiline(new, amount), 1))
+                      file.write_text(source.replace(candidate, adjusted_multiline(new, delta), 1))
                       return
               raise SystemExit(f"{path}: no unique indentation variant: {old[:300]!r}")'''
           if source.count(original) != 1:
@@ -83,6 +87,7 @@ jobs:
         shell: bash
         run: |
           git rm .github/workflows/issue47-apply.yml .github/workflows/issue47-trigger.yml
+          git rm -f issue47-patch-error.txt || true
           git add frontend/components/lexigo-premium-app.tsx frontend/e2e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
