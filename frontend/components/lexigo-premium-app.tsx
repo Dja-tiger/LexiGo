@@ -92,6 +92,7 @@ import {
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
 import { AsyncResourceNotice, AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
+import { SpeechPlayerButton } from "./speech-player-button";
 
 type APIItem = {
   id: number;
@@ -653,8 +654,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [phraseSortMode, setPhraseSortMode] = useState<CatalogSortMode>("default");
   const [allItemsSortMode, setAllItemsSortMode] = useState<CatalogSortMode>("default");
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [speakingText, setSpeakingText] = useState("");
-  const [speechNotice, setSpeechNotice] = useState<{ message: string; error: boolean } | null>(null);
 
   const [items, setItems] = useState<LearningItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1181,54 +1180,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       window.localStorage.setItem(`${SORT_STORAGE_PREFIX}${kind}`, mode);
     } catch {
       // Sorting remains available for the current session when storage is restricted.
-    }
-  }
-
-  function showSpeechNotice(message: string, speechError = false) {
-    setSpeechNotice({ message, error: speechError });
-  }
-
-  function pronounceText(text: string) {
-    const value = text.trim();
-    if (!value) {
-      showSpeechNotice("Не удалось определить слово или фразу для озвучивания", true);
-      return;
-    }
-    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
-      showSpeechNotice("Озвучивание не поддерживается этим браузером", true);
-      return;
-    }
-    if (speakingText === value) {
-      window.speechSynthesis.cancel();
-      setSpeakingText("");
-      showSpeechNotice("Озвучивание остановлено");
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(value);
-    const voices = window.speechSynthesis.getVoices();
-    utterance.voice = voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb"))
-      ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us"))
-      ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en"))
-      ?? null;
-    utterance.lang = utterance.voice?.lang || "en-US";
-    utterance.rate = 0.88;
-    utterance.pitch = 1;
-    utterance.onend = () => setSpeakingText((current) => current === value ? "" : current);
-    utterance.onerror = () => {
-      setSpeakingText((current) => current === value ? "" : current);
-      showSpeechNotice("Не удалось воспроизвести произношение", true);
-    };
-
-    setSpeakingText(value);
-    showSpeechNotice(`Воспроизводим: ${value}`);
-    try {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.resume();
-      window.speechSynthesis.speak(utterance);
-    } catch {
-      setSpeakingText("");
-      showSpeechNotice("Не удалось воспроизвести произношение", true);
     }
   }
 
@@ -1974,7 +1925,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           </div>
 
           <article className="lx-word-preview">
-            <div className="lx-preview-heading"><span>Пример карточки слова</span><button type="button" className={speakingText === WORD_PREVIEW.prompt ? "speaking" : ""} aria-label={`${speakingText === WORD_PREVIEW.prompt ? "Остановить произношение" : "Произнести"}: ${WORD_PREVIEW.prompt}`} onClick={() => pronounceText(WORD_PREVIEW.prompt)}><Icon name="volume" /></button></div>
+            <div className="lx-preview-heading"><span>Пример карточки слова</span><SpeechPlayerButton text={WORD_PREVIEW.prompt}><Icon name="volume" /></SpeechPlayerButton></div>
             <h3 lang="en">{WORD_PREVIEW.prompt}</h3>
             <p className="lx-preview-phonetic" lang="en">{WORD_PREVIEW.phonetic}</p>
             <dl><dt>Перевод</dt><dd lang="ru">{WORD_PREVIEW.answer}</dd><dt>Пример</dt><dd lang="en">{WORD_PREVIEW.example}</dd></dl>
@@ -2132,7 +2083,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       return (
         <section className="lx-detail-card">
           <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "phrases" })}>← Все фразы</button>
-          <div className="lx-detail-content"><span lang="en">{selectedPhrase.topic}</span><h1 lang="en">{selectedPhrase.prompt}</h1><strong lang="ru">{selectedPhrase.answer}</strong>{selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}{selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}{selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}<div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div></div>
+          <div className="lx-detail-content">
+            <span lang="en">{selectedPhrase.topic}</span>
+            <div className="lx-detail-speech-row">
+              <h1 lang="en">{selectedPhrase.prompt}</h1>
+              <SpeechPlayerButton text={selectedPhrase.prompt}><Icon name="volume" /></SpeechPlayerButton>
+            </div>
+            <strong lang="ru">{selectedPhrase.answer}</strong>
+            {selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}
+            {selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}
+            {selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}
+            <div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div>
+          </div>
         </section>
       );
     }
@@ -2526,13 +2488,13 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               <div className="lx-word-header"><div><span>{currentItem.kind === "phrase" ? "Техническая фраза" : currentItem.partOfSpeech}</span><small>{currentItem.topic || "Общая лексика"}</small></div><b>{currentRating ? ratingLabel(currentRating) : currentItem.status === "new" ? "Новое" : "Повторение"}</b></div>
               {simpleStudy ? (
                 <div className="lx-simple-word">
-                  <div className="lx-word-title-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><button type="button" className={speakingText === currentItem.prompt ? "speaking" : ""} aria-label={`${speakingText === currentItem.prompt ? "Остановить произношение" : "Произнести"}: ${currentItem.prompt}`} onClick={() => pronounceText(currentItem.prompt)}><Icon name="volume"/></button></div>
+                  <div className="lx-word-title-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><SpeechPlayerButton text={currentItem.prompt}><Icon name="volume"/></SpeechPlayerButton></div>
                   <dl><dt>Перевод</dt><dd lang="ru">{currentItem.answer}</dd>{currentItem.examples[0] ? <><dt>Пример</dt><dd className="example" lang="en">{currentItem.examples[0]}</dd></> : null}{currentItem.note ? <><dt>Примечание</dt><dd className="note">{currentItem.note}</dd></> : null}</dl>
                   {currentItem.cloze ? <div className="lx-cloze-note"><span>Тренировка пропуска</span><strong lang="en">{currentItem.cloze}</strong></div> : null}
                 </div>
               ) : (
                 <div className="lx-test-word">
-                  {phraseCloze && !revealed ? <><span>ВОССТАНОВИТЕ АНГЛИЙСКИЙ ПРОПУСК</span><h1 lang="en">{currentItem.cloze}</h1></> : <><span>{currentItem.kind === "phrase" ? "ТЕХНИЧЕСКАЯ ФРАЗА" : "ПЕРЕВЕДИТЕ СЛОВО"}</span><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</>}
+                  {phraseCloze && !revealed ? <><span>ВОССТАНОВИТЕ АНГЛИЙСКИЙ ПРОПУСК</span><div className="lx-test-prompt-row"><h1 lang="en">{currentItem.cloze}</h1></div></> : <><span>{currentItem.kind === "phrase" ? "ТЕХНИЧЕСКАЯ ФРАЗА" : "ПЕРЕВЕДИТЕ СЛОВО"}</span><div className="lx-test-prompt-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><SpeechPlayerButton text={currentItem.prompt}><Icon name="volume"/></SpeechPlayerButton></div></>}
                   {!revealed && studyMode === "recall" ? <div className="lx-recall-box"><label htmlFor="premium-answer">{exercisePromptLabel(currentItem)}</label><input id="premium-answer" lang={phraseCloze ? "en" : "ru"} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && typedAnswer.trim()) setRevealed(true); }} placeholder={currentItem.kind === "phrase" ? "Например: root" : "Ваш ответ"} autoComplete="off"/><div><button className="lx-button ghost" type="button" aria-expanded={showChoices} aria-controls="lesson-answer-choices" onClick={() => setShowChoices((value) => !value)}>{showChoices ? "Скрыть варианты" : "Показать варианты"}</button><button className="lx-button primary" type="button" onClick={() => setRevealed(true)}>{typedAnswer.trim() ? "Сверить ответ" : "Показать ответ"}</button></div></div> : null}
                   {!revealed && showChoices ? <div id="lesson-answer-choices" className="lx-answer-grid">{answerOptions.map((answer) => <button key={answer} type="button" lang={phraseCloze ? "en" : "ru"} onClick={() => { setSelectedAnswer(answer); setRevealed(true); }}>{answer}</button>)}</div> : null}
                   {revealed ? <div className="lx-answer-reveal" role="status" aria-live="polite" aria-atomic="true">{currentItem.kind === "phrase" ? <><h2 lang="en">{currentItem.prompt}</h2><span>Пропуск: <span lang="en">{expectedAnswer}</span></span></> : null}<strong lang="ru">{currentItem.answer}</strong>{typedAnswer.trim() ? <p className={literalMatch ? "success" : "error"}>{literalMatch ? "Ответ совпал." : <>Ваш ответ: <span lang={phraseCloze ? "en" : "ru"}>{typedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{selectedAnswer ? <p className={normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "success" : "error"}>{normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "Верный вариант." : <>Вы выбрали: <span lang={phraseCloze ? "en" : "ru"}>{selectedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{currentItem.examples[0] ? <blockquote lang="en">{currentItem.examples[0]}</blockquote> : null}{currentItem.note ? <small>{currentItem.note}</small> : null}</div> : null}
@@ -2632,7 +2594,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           {routeAnnouncement.message}
         </p>
       ) : null}
-      {speechNotice ? <div className={`lx-speech-toast visible${speechNotice.error ? " error" : ""}`} role="status">{speechNotice.message}</div> : null}
     </div>
   );
 }
