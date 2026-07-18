@@ -36,9 +36,16 @@ export const DEFAULT_CALENDAR_REMINDER: CalendarReminderSettings = {
 
 export const CALENDAR_EVENT_TITLE = "LexiGo — повторение английского";
 export const CALENDAR_EVENT_DESCRIPTION = "Откройте LexiGo и выполните дневную цель по английскому.";
+export const CALENDAR_ICS_FILE_NAME = "lexigo-study-reminder.ics";
+export const CALENDAR_ICS_MEDIA_TYPE = "text/calendar";
 
 const WEEKDAY_CODES = new Set<string>(CALENDAR_WEEKDAYS.map((weekday) => weekday.code));
 const WORKDAYS: CalendarWeekday[] = ["MO", "TU", "WE", "TH", "FR"];
+const TRANSITION_SCAN_STEP_MS = 7 * 24 * 60 * 60 * 1_000;
+const TIME_ZONE_YEARS_AHEAD = 10;
+const TIME_ZONE_LINES_CACHE_LIMIT = 32;
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const timeZoneLinesCache = new Map<string, string[]>();
 
 function recordFrom(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
@@ -160,9 +167,17 @@ type DateParts = {
   second: string;
 };
 
-function dateParts(date: Date, timeZone: string): DateParts {
+type TimeZoneTransition = {
+  at: Date;
+  offsetFrom: number;
+  offsetTo: number;
+};
+
+function dateFormatter(timeZone: string): Intl.DateTimeFormat {
+  const cached = dateFormatterCache.get(timeZone);
+  if (cached) return cached;
   const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: normalizeCalendarTimeZone(timeZone),
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -171,8 +186,13 @@ function dateParts(date: Date, timeZone: string): DateParts {
     second: "2-digit",
     hourCycle: "h23",
   });
+  dateFormatterCache.set(timeZone, formatter);
+  return formatter;
+}
+
+function dateParts(date: Date, timeZone: string): DateParts {
   const values = Object.fromEntries(
-    formatter.formatToParts(date)
+    dateFormatter(timeZone).formatToParts(date)
       .filter((part) => part.type !== "literal")
       .map((part) => [part.type, part.value]),
   );
@@ -252,6 +272,129 @@ function foldICalendarLine(line: string): string[] {
   return folded;
 }
 
+function timeZoneOffsetMinutes(date: Date, timeZone: string): number {
+  const parts = dateParts(date, timeZone);
+  const localTimestamp = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  const exactTimestamp = Math.floor(date.getTime() / 1_000) * 1_000;
+  return Math.round((localTimestamp - exactTimestamp) / 60_000);
+}
+
+function findTimeZoneTransition(
+  timeZone: string,
+  lowerBound: Date,
+  upperBound: Date,
+  offsetFrom: number,
+): TimeZoneTransition {
+  let lower = Math.floor(lowerBound.getTime() / 60_000) * 60_000;
+  let upper = Math.ceil(upperBound.getTime() / 60_000) * 60_000;
+
+  while (upper - lower > 60_000) {
+    const midpoint = Math.floor(((lower + upper) / 2) / 60_000) * 60_000;
+    if (midpoint <= lower) break;
+    if (timeZoneOffsetMinutes(new Date(midpoint), timeZone) === offsetFrom) lower = midpoint;
+    else upper = midpoint;
+  }
+
+  const at = new Date(upper);
+  return {
+    at,
+    offsetFrom,
+    offsetTo: timeZoneOffsetMinutes(at, timeZone),
+  };
+}
+
+function timeZoneTransitions(timeZone: string, rangeStart: Date, rangeEnd: Date): TimeZoneTransition[] {
+  const transitions: TimeZoneTransition[] = [];
+  let cursor = rangeStart;
+  let currentOffset = timeZoneOffsetMinutes(cursor, timeZone);
+
+  while (cursor.getTime() < rangeEnd.getTime()) {
+    const next = new Date(Math.min(rangeEnd.getTime(), cursor.getTime() + TRANSITION_SCAN_STEP_MS));
+    const nextOffset = timeZoneOffsetMinutes(next, timeZone);
+    if (nextOffset !== currentOffset) {
+      const transition = findTimeZoneTransition(timeZone, cursor, next, currentOffset);
+      transitions.push(transition);
+      cursor = transition.at;
+      currentOffset = transition.offsetTo;
+      continue;
+    }
+    cursor = next;
+  }
+
+  return transitions;
+}
+
+function iCalendarOffset(minutes: number): string {
+  const sign = minutes < 0 ? "-" : "+";
+  const absolute = Math.abs(minutes);
+  const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
+  const remainingMinutes = String(absolute % 60).padStart(2, "0");
+  return `${sign}${hours}${remainingMinutes}`;
+}
+
+function localTransitionDate(date: Date, offsetFrom: number): string {
+  const shifted = new Date(date.getTime() + offsetFrom * 60_000);
+  return utcCalendarDate(shifted).replace(/Z$/, "");
+}
+
+function observanceLines(
+  kind: "STANDARD" | "DAYLIGHT",
+  at: Date,
+  offsetFrom: number,
+  offsetTo: number,
+): string[] {
+  return [
+    `BEGIN:${kind}`,
+    `DTSTART:${localTransitionDate(at, offsetFrom)}`,
+    `TZOFFSETFROM:${iCalendarOffset(offsetFrom)}`,
+    `TZOFFSETTO:${iCalendarOffset(offsetTo)}`,
+    `END:${kind}`,
+  ];
+}
+
+function buildTimeZoneLines(timeZone: string, eventStart: Date): string[] {
+  if (timeZone === "UTC") return [];
+  const startYear = Number(dateParts(eventStart, timeZone).year);
+  const cacheKey = `${timeZone}:${startYear}`;
+  const cached = timeZoneLinesCache.get(cacheKey);
+  if (cached) return cached;
+
+  const rangeStart = new Date(Date.UTC(startYear - 1, 0, 1, 0, 0, 0));
+  const rangeEnd = new Date(Date.UTC(startYear + TIME_ZONE_YEARS_AHEAD + 1, 0, 1, 0, 0, 0));
+  const initialOffset = timeZoneOffsetMinutes(rangeStart, timeZone);
+  const transitions = timeZoneTransitions(timeZone, rangeStart, rangeEnd);
+  const firstTransition = transitions[0];
+  const initialKind = firstTransition && firstTransition.offsetTo < firstTransition.offsetFrom
+    ? "DAYLIGHT"
+    : "STANDARD";
+  const lines = [
+    "BEGIN:VTIMEZONE",
+    `TZID:${timeZone}`,
+    `X-LIC-LOCATION:${timeZone}`,
+    ...observanceLines(initialKind, rangeStart, initialOffset, initialOffset),
+    ...transitions.flatMap((transition) => observanceLines(
+      transition.offsetTo > transition.offsetFrom ? "DAYLIGHT" : "STANDARD",
+      transition.at,
+      transition.offsetFrom,
+      transition.offsetTo,
+    )),
+    "END:VTIMEZONE",
+  ];
+  if (timeZoneLinesCache.size >= TIME_ZONE_LINES_CACHE_LIMIT) {
+    const oldestKey = timeZoneLinesCache.keys().next().value;
+    if (oldestKey !== undefined) timeZoneLinesCache.delete(oldestKey);
+  }
+  timeZoneLinesCache.set(cacheKey, lines);
+  return lines;
+}
+
 export function buildCalendarICS(
   value: CalendarReminderSettings,
   options: CalendarEventOptions,
@@ -262,20 +405,28 @@ export function buildCalendarICS(
   const end = new Date(options.start.getTime() + settings.durationMinutes * 60_000);
   const alarmTrigger = settings.reminderMinutes === 0 ? "PT0M" : `-PT${settings.reminderMinutes}M`;
   const uid = `lexigo-${options.start.getTime()}-${settings.time.replace(":", "")}@lexigo.app`;
+  const dateLines = timeZone === "UTC"
+    ? [`DTSTART:${utcCalendarDate(options.start)}`, `DTEND:${utcCalendarDate(end)}`]
+    : [
+        `DTSTART;TZID=${timeZone}:${calendarDate(options.start, timeZone)}`,
+        `DTEND;TZID=${timeZone}:${calendarDate(end, timeZone)}`,
+      ];
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//LexiGo//Study Reminder//RU",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    `X-WR-TIMEZONE:${timeZone}`,
+    ...buildTimeZoneLines(timeZone, options.start),
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${utcCalendarDate(generatedAt)}`,
-    `DTSTART;TZID=${timeZone}:${calendarDate(options.start, timeZone)}`,
-    `DTEND;TZID=${timeZone}:${calendarDate(end, timeZone)}`,
+    ...dateLines,
     `RRULE:${buildCalendarRecurrenceRule(settings)}`,
     `SUMMARY:${escapeICalendarText(CALENDAR_EVENT_TITLE)}`,
     `DESCRIPTION:${escapeICalendarText(eventDescription(options.appURL))}`,
+    "SEQUENCE:0",
     "STATUS:CONFIRMED",
     "TRANSP:OPAQUE",
     "BEGIN:VALARM",

@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { deliverAppleCalendarFile, type AppleCalendarDeliveryMethod } from "../lib/apple-calendar-delivery";
 import {
+  buildCalendarICS,
   buildGoogleCalendarURL,
+  CALENDAR_ICS_FILE_NAME,
   CALENDAR_WEEKDAYS,
   DEFAULT_CALENDAR_REMINDER,
   describeCalendarSchedule,
@@ -80,6 +83,19 @@ function createCalendarDownloadURL(settings: CalendarReminderSettings, start: Da
   return `/api/calendar/reminder?${parameters.toString()}`;
 }
 
+function appleCalendarStatus(method: AppleCalendarDeliveryMethod): string {
+  if (method === "shared") {
+    return "Файл передан выбранному приложению. В Apple Calendar подтвердите добавление события и уведомления.";
+  }
+  if (method === "downloaded") {
+    return `Файл ${CALENDAR_ICS_FILE_NAME} загружен. Откройте его и подтвердите добавление события в Apple Calendar.`;
+  }
+  if (method === "navigated") {
+    return "Открыт файл iCalendar. Подтвердите добавление события и уведомления в Apple Calendar.";
+  }
+  return "Добавление отменено. Apple Calendar не изменён.";
+}
+
 export function CalendarReminderIntegration({
   open,
   showCard,
@@ -88,6 +104,8 @@ export function CalendarReminderIntegration({
 }: CalendarReminderIntegrationProps) {
   const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
   const [status, setStatus] = useState("");
+  const [appleCalendarPending, setAppleCalendarPending] = useState(false);
+  const appleCalendarPendingRef = useRef(false);
   const dialogTitleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
@@ -140,13 +158,32 @@ export function CalendarReminderIntegration({
     setStatus("Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.");
   }
 
-  function addToAppleCalendar() {
-    const normalized = persistSettings();
-    const start = nextCalendarOccurrence(normalized);
-    const url = createCalendarDownloadURL(normalized, start);
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-    if (!opened) window.location.assign(url);
-    setStatus("Файл календаря создан. Откройте его и подтвердите добавление события в Apple Calendar.");
+  async function addToAppleCalendar() {
+    if (appleCalendarPendingRef.current) return;
+    appleCalendarPendingRef.current = true;
+    setAppleCalendarPending(true);
+    setStatus("");
+
+    try {
+      const normalized = persistSettings();
+      const start = nextCalendarOccurrence(normalized);
+      const timeZone = browserTimeZone();
+      const calendar = buildCalendarICS(normalized, {
+        start,
+        timeZone,
+        appURL: window.location.origin,
+      });
+      const method = await deliverAppleCalendarFile(
+        calendar,
+        createCalendarDownloadURL(normalized, start),
+      );
+      setStatus(appleCalendarStatus(method));
+    } catch {
+      setStatus("Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.");
+    } finally {
+      appleCalendarPendingRef.current = false;
+      setAppleCalendarPending(false);
+    }
   }
 
   return (
@@ -257,9 +294,18 @@ export function CalendarReminderIntegration({
             <span aria-hidden="true">G</span>
             <div><strong>Google Calendar</strong><small>Открыть готовое повторяющееся событие</small></div>
           </button>
-          <button type="button" className="apple" onClick={addToAppleCalendar}>
+          <button
+            type="button"
+            className="apple"
+            disabled={appleCalendarPending}
+            aria-busy={appleCalendarPending}
+            onClick={() => void addToAppleCalendar()}
+          >
             <span aria-hidden="true">A</span>
-            <div><strong>Apple Calendar</strong><small>Добавить через стандартный файл iCalendar</small></div>
+            <div>
+              <strong>Apple Calendar</strong>
+              <small>{appleCalendarPending ? "Открываем системный импорт…" : "Добавить через стандартный файл iCalendar"}</small>
+            </div>
           </button>
         </div>
 

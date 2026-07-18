@@ -1,5 +1,7 @@
 import {
   buildCalendarICS,
+  CALENDAR_ICS_FILE_NAME,
+  CALENDAR_ICS_MEDIA_TYPE,
   nextCalendarOccurrence,
   normalizeCalendarReminderSettings,
   normalizeCalendarTimeZone,
@@ -7,10 +9,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const MAX_START_DISTANCE_MS = 400 * 24 * 60 * 60 * 1_000;
+
 function parseStart(value: string | null, fallback: Date): Date {
   if (!value) return fallback;
   const timestamp = Number(value);
   if (!Number.isFinite(timestamp)) return fallback;
+  if (Math.abs(timestamp - fallback.getTime()) > MAX_START_DISTANCE_MS) return fallback;
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
@@ -38,8 +43,8 @@ export async function GET(request: Request): Promise<Response> {
     status: 200,
     headers: {
       "Cache-Control": "no-store, max-age=0",
-      "Content-Disposition": "attachment; filename=\"lexigo-study-reminder.ics\"",
-      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${CALENDAR_ICS_FILE_NAME}"`,
+      "Content-Type": `${CALENDAR_ICS_MEDIA_TYPE}; charset=utf-8`,
       "X-Content-Type-Options": "nosniff",
     },
   });
