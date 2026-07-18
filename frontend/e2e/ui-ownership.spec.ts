@@ -214,7 +214,7 @@ test("collections remain unique through repeated React navigation and rerenders"
   await page.getByRole("button", { name: /Путешествия/ }).click();
   await expect(page).toHaveURL(/view=learn&source=travel/);
   await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
-  await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
   expect(runtimeErrors).toEqual([]);
 });
 
@@ -247,7 +247,7 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   await page.goto("/?view=learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Простое изучение слов/ }).click();
+  await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   await page.getByRole("button", { name: "Начать урок" }).click();
   await expect(page).toHaveURL(/view=lesson/);
 

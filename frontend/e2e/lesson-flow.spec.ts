@@ -108,7 +108,7 @@ async function openLesson(page: Page, mode: LessonMode) {
   await page.goto("/?view=learn");
   await expect(page.getByText("0 элементов готовы")).toBeVisible();
   const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";
-  await page.getByRole("button", { name: new RegExp(label) }).click();
+  await page.getByRole("radio", { name: new RegExp(label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   await expect(page).toHaveURL(/view=lesson/);
 }
