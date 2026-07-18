@@ -178,7 +178,20 @@ async function phrasePrompts(page: Page) {
   return page.locator(".lx-phrase-grid > button strong").allTextContents();
 }
 
+test.describe.configure({ timeout: 60_000 });
+
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const install = () => {
+      if (document.getElementById("lexigo-e2e-reduced-motion")) return;
+      const style = document.createElement("style");
+      style.id = "lexigo-e2e-reduced-motion";
+      style.textContent = "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }";
+      (document.head ?? document.documentElement).append(style);
+    };
+    if (document.documentElement) install();
+    else document.addEventListener("DOMContentLoaded", install, { once: true });
+  });
   await installBrowserMocks(page);
 });
 

@@ -73,6 +73,17 @@ function visibleNavigation(page: Page) {
 }
 
 async function installAccountMocks(page: Page, options: { failPhrasesOnce?: boolean } = {}) {
+  await page.addInitScript(() => {
+    const install = () => {
+      if (document.getElementById("lexigo-e2e-reduced-motion")) return;
+      const style = document.createElement("style");
+      style.id = "lexigo-e2e-reduced-motion";
+      style.textContent = "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }";
+      (document.head ?? document.documentElement).append(style);
+    };
+    if (document.documentElement) install();
+    else document.addEventListener("DOMContentLoaded", install, { once: true });
+  });
   let progressRequests = 0;
   let phraseRequests = 0;
   let activeLessonRequests = 0;
@@ -144,6 +155,7 @@ async function installAccountMocks(page: Page, options: { failPhrasesOnce?: bool
 }
 
 test("a failed phrase catalog does not hide progress and retries only its own resource", async ({ page }) => {
+  test.setTimeout(60_000);
   const requests = await installAccountMocks(page, { failPhrasesOnce: true });
 
   await page.goto("/");

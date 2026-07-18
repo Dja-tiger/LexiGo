@@ -834,7 +834,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const activeSession = session;
     const timer = window.setTimeout(() => {
       if (cancelled) return;
-      setHydratedUserID(activeSession.user.id);
       setProgress(null);
       setActiveLesson(null);
       setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
@@ -844,6 +843,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         loadActiveLessonResource(activeSession, controller.signal, false),
       ]).then((sessions) => {
         if (cancelled) return;
+        setHydratedUserID(activeSession.user.id);
         const refreshed = sessions.find((candidate) => candidate?.tokens.accessToken !== activeSession.tokens.accessToken);
         if (refreshed) setSession(refreshed);
       });
@@ -1200,8 +1200,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
       setSession(null);
       setProgress(null);
+      setProgressStatus(idleResourceStatus());
       setActiveLesson(null);
-      setPhraseCatalog(TECHNICAL_PHRASES);
+      setActiveLessonStatus(idleResourceStatus());
+      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      setPhraseCatalogStatus(idleResourceStatus());
       setHydratedUserID("");
       clearLessonState();
       navigate({ view: "home" });
@@ -1430,9 +1433,43 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function renderHome() {
-    const dueNow = progress?.dueNow ?? 0;
-    const retained = progress?.retainedItemsWeek ?? 0;
+    const progressPending = Boolean(session && (progressStatus.phase === "idle" || progressStatus.phase === "loading"));
+    const dueNow = !session ? "—" : progress ? progress.dueNow : progressPending ? "…" : "—";
+    const retained = !session ? "—" : progress ? progress.retainedItemsWeek : progressPending ? "…" : "—";
     const dailyPercent = goalPercent(progress);
+    const progressPanelStatus = !session
+      ? "Войдите для персональной статистики"
+      : progress
+        ? "Актуальные данные аккаунта"
+        : progressPending
+          ? "Загружаем данные аккаунта…"
+          : "Статистика временно недоступна";
+    const dueBreakdown = !session
+      ? "После входа"
+      : progress
+        ? `${progress.dueWords} слов · ${progress.duePhrases} фраз`
+        : progressPending
+          ? "Загружаем очередь…"
+          : "Очередь недоступна";
+    const streakValue = !session ? "—" : progress ? progress.currentStreak : progressPending ? "…" : "—";
+    const streakHint = !session ? "Сохраняется" : progress ? `Рекорд ${progress.longestStreak}` : progressPending ? "Загружаем серию…" : "Серия недоступна";
+    const overallProgressLabel = !session
+      ? "—"
+      : !progress
+        ? progressPending ? "…" : "—"
+        : catalogMetadataStatus === "loading"
+          ? "…"
+          : catalogMetadata
+            ? `${overallPercent}%`
+            : "—";
+    const goalSummary = !session
+      ? "Войдите в аккаунт"
+      : progress
+        ? `${progress.reviewsToday} / ${progress.dailyGoal}`
+        : progressPending
+          ? "Загружаем цель…"
+          : "Цель недоступна";
+    const goalPercentLabel = !session ? "—" : progress ? `${dailyPercent}%` : progressPending ? "…" : "—";
     const heroAction = activeLesson ? resumeLesson : () => startLesson(session, { mode: "study", source: "mixed", size: 30 });
     return (
       <>
@@ -1464,29 +1501,29 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
           <article className="lx-progress-panel">
             <div className="lx-panel-heading">
-              <div><span>Ваш прогресс</span><small>{session ? "Актуальные данные аккаунта" : "Войдите для персональной статистики"}</small></div>
+              <div><span>Ваш прогресс</span><small>{progressPanelStatus}</small></div>
               <button type="button" onClick={() => navigate({ view: "progress" })}>Подробнее <Icon name="arrow" size={16}/></button>
             </div>
             <div className="lx-progress-stats">
               <button type="button" onClick={() => navigate({ view: "learn" })}>
-                <span>К повторению</span><strong className="purple">{session ? dueNow : "—"}</strong><small>{session ? `${progress?.dueWords ?? 0} слов · ${progress?.duePhrases ?? 0} фраз` : "После входа"}</small>
+                <span>К повторению</span><strong className="purple">{dueNow}</strong><small>{dueBreakdown}</small>
               </button>
               <button type="button" onClick={() => navigate({ view: "progress" })}>
-                <span>Серия дней</span><strong className="orange">{session ? progress?.currentStreak ?? 0 : "—"}</strong><small>{session ? `Рекорд ${progress?.longestStreak ?? 0}` : "Сохраняется"}</small>
+                <span>Серия дней</span><strong className="orange">{streakValue}</strong><small>{streakHint}</small>
               </button>
               <button type="button" onClick={() => navigate({ view: "progress" })}>
-                <span>Сохранено за неделю</span><strong className="blue">{session ? retained : "—"}</strong><small>Retained items</small>
+                <span>Сохранено за неделю</span><strong className="blue">{retained}</strong><small>Retained items</small>
               </button>
               <button type="button" className="lx-ring-stat" onClick={() => navigate({ view: "library" })}>
                 <span>Общий прогресс</span>
-                <div className="lx-progress-ring" style={{ "--progress": `${overallPercent}%` } as React.CSSProperties}><strong>{session ? `${overallPercent}%` : "—"}</strong></div>
+                <div className="lx-progress-ring" style={{ "--progress": `${progress && catalogMetadata ? overallPercent : 0}%` } as React.CSSProperties}><strong>{overallProgressLabel}</strong></div>
                 <small>Освоенные элементы</small>
               </button>
             </div>
             <div className="lx-goal-row">
-              <div><span>Цель на сегодня</span><strong>{session ? `${progress?.reviewsToday ?? 0} / ${progress?.dailyGoal ?? 30}` : "Войдите в аккаунт"}</strong></div>
+              <div><span>Цель на сегодня</span><strong>{goalSummary}</strong></div>
               <div className="lx-goal-track"><span style={{ width: `${dailyPercent}%` }}/></div>
-              <b>{session ? `${dailyPercent}%` : "—"}</b>
+              <b>{goalPercentLabel}</b>
             </div>
           </article>
         </section>
@@ -1843,7 +1880,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       {renderHeader()}
       {error ? <p className="lx-error" role="alert">{error}</p> : null}
       {session ? <div className="lx-resource-stack">
-        <AccountResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} />
+        {navigation.view !== "progress" ? <AccountResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
         <AccountResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
         <AccountResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
       </div> : null}
