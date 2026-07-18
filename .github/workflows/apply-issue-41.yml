@@ -51,22 +51,34 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Apply deterministic patch
         run: |
-          python scripts/apply_issue_41.py
-          gofmt -w backend/internal/words/metadata.go backend/internal/words/metadata_http.go backend/internal/words/metadata_test.go backend/integration/catalog_metadata_test.go
-          git diff --check
+          set -o pipefail
+          { python scripts/apply_issue_41.py
+            gofmt -w backend/internal/words/metadata.go backend/internal/words/metadata_http.go backend/internal/words/metadata_test.go backend/integration/catalog_metadata_test.go
+            git diff --check
+          } 2>&1 | tee issue41.log
       - name: Verify backend
         working-directory: backend
         run: |
-          go test ./internal/words ./internal/server
-          go test -race -tags=integration ./integration -run TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges -count=1
+          set -o pipefail
+          { go test ./internal/words ./internal/server
+            go test -race -tags=integration ./integration -run TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges -count=1
+          } 2>&1 | tee -a ../issue41.log
       - name: Verify frontend
         working-directory: frontend
         run: |
-          npm ci --no-audit --no-fund
-          npm run lint
-          npm run typecheck
-          npm test
-          npm run build
+          set -o pipefail
+          { npm ci --no-audit --no-fund
+            npm run lint
+            npm run typecheck
+            npm test
+            npm run build
+          } 2>&1 | tee -a ../issue41.log
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-41-apply-diagnostics
+          path: issue41.log
       - name: Commit product changes
         run: |
           git config user.name "github-actions[bot]"
