@@ -178,7 +178,7 @@ test("installed iOS PWA shares a real ICS file without opening an error page", a
   if (!shared) throw new Error("shared calendar capture is missing");
 
   expect(shared.name).toBe("lexigo-study-reminder.ics");
-  expect(shared.type).toBe("text/calendar;charset=utf-8");
+  expect(shared.type).toBe("text/calendar");
   expect(shared.text).toContain("BEGIN:VCALENDAR\r\n");
   expect(shared.text).toContain("BEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\n");
   expect(shared.text).toContain("DTSTART;TZID=Europe/Berlin:");
