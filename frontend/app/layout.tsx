@@ -11,6 +11,7 @@ import "./error-boundary.css";
 import "./accessibility-focus.css";
 import "./accessibility-navigation.css";
 import "./adaptive-navigation.css";
+import "./speech-player.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
