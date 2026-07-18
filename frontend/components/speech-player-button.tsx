@@ -25,6 +25,14 @@ type SpeechPlayerButtonProps = {
   rate?: number;
 };
 
+type SpeechPlaybackSnapshot = {
+  text: string;
+  state: SpeechPlaybackState;
+  message: string;
+};
+
+const UNSUPPORTED_MESSAGE = "Озвучивание недоступно в этом браузере. Используйте системный переводчик или другой браузер.";
+
 function playbackFailureMessage(): string {
   return "Не удалось воспроизвести произношение. Проверьте звук и повторите попытку.";
 }
@@ -38,13 +46,26 @@ export function SpeechPlayerButton({
 }: SpeechPlayerButtonProps) {
   const value = normalizeSpeechText(text);
   const feedbackID = useId();
-  const [state, setState] = useState<SpeechPlaybackState>("idle");
-  const [message, setMessage] = useState("");
+  const [playback, setPlayback] = useState<SpeechPlaybackSnapshot>(() => ({
+    text: value,
+    state: "idle",
+    message: "",
+  }));
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const sequenceRef = useRef(0);
   const mountedRef = useRef(false);
+  const currentPlayback = playback.text === value
+    ? playback
+    : { text: value, state: "idle" as const, message: "" };
+  const state = currentPlayback.state;
+  const message = currentPlayback.message;
+
+  const publish = useCallback((nextState: SpeechPlaybackState, nextMessage: string) => {
+    if (!mountedRef.current) return;
+    setPlayback({ text: value, state: nextState, message: nextMessage });
+  }, [value]);
 
   const detachUtterance = useCallback(() => {
     const utterance = utteranceRef.current;
@@ -63,16 +84,14 @@ export function SpeechPlayerButton({
     } catch {
       // State is still restored even when a browser rejects cancel().
     }
-    if (!mountedRef.current) return;
-    setState("idle");
-    setMessage(announce ? "Озвучивание остановлено." : "");
-  }, [detachUtterance]);
+    publish("idle", announce ? "Озвучивание остановлено." : "");
+  }, [detachUtterance, publish]);
 
   useEffect(() => {
     mountedRef.current = true;
-    sequenceRef.current += 1;
-    setState("idle");
-    setMessage("");
+    const lifecycleToken = sequenceRef.current + 1;
+    sequenceRef.current = lifecycleToken;
+    let unsupportedTimer = 0;
 
     if (
       typeof window === "undefined"
@@ -81,10 +100,14 @@ export function SpeechPlayerButton({
     ) {
       synthesisRef.current = null;
       voicesRef.current = [];
-      setState("unsupported");
-      setMessage("Озвучивание недоступно в этом браузере. Используйте системный переводчик или другой браузер.");
+      unsupportedTimer = window.setTimeout(() => {
+        if (!mountedRef.current || sequenceRef.current !== lifecycleToken) return;
+        setPlayback({ text: value, state: "unsupported", message: UNSUPPORTED_MESSAGE });
+      }, 0);
       return () => {
         mountedRef.current = false;
+        sequenceRef.current += 1;
+        window.clearTimeout(unsupportedTimer);
       };
     }
 
@@ -100,12 +123,16 @@ export function SpeechPlayerButton({
     };
 
     refreshVoices();
-    synthesis.addEventListener?.("voiceschanged", refreshVoices);
+    const supportsEventTarget = typeof synthesis.addEventListener === "function";
+    const previousVoicesChanged = synthesis.onvoiceschanged;
+    if (supportsEventTarget) synthesis.addEventListener("voiceschanged", refreshVoices);
+    else synthesis.onvoiceschanged = refreshVoices;
 
     return () => {
       mountedRef.current = false;
       sequenceRef.current += 1;
-      synthesis.removeEventListener?.("voiceschanged", refreshVoices);
+      if (supportsEventTarget) synthesis.removeEventListener("voiceschanged", refreshVoices);
+      else synthesis.onvoiceschanged = previousVoicesChanged;
       detachUtterance();
       try {
         synthesis.cancel();
@@ -124,8 +151,7 @@ export function SpeechPlayerButton({
     }
 
     if (!value) {
-      setState("error");
-      setMessage("Не удалось определить слово или фразу для озвучивания.");
+      publish("error", "Не удалось определить слово или фразу для озвучивания.");
       return;
     }
 
@@ -134,8 +160,7 @@ export function SpeechPlayerButton({
       || !("speechSynthesis" in window)
       || typeof window.SpeechSynthesisUtterance !== "function"
     ) {
-      setState("unsupported");
-      setMessage("Озвучивание недоступно в этом браузере. Используйте системный переводчик или другой браузер.");
+      publish("unsupported", UNSUPPORTED_MESSAGE);
       return;
     }
 
@@ -175,30 +200,25 @@ export function SpeechPlayerButton({
 
     utterance.onstart = () => {
       if (!isCurrent()) return;
-      setState("playing");
-      setMessage(`Воспроизводим: ${value}`);
+      publish("playing", `Воспроизводим: ${value}`);
     };
     utterance.onend = () => {
       if (!isCurrent()) return;
       utteranceRef.current = null;
-      setState("idle");
-      setMessage("Произношение завершено.");
+      publish("idle", "Произношение завершено.");
     };
     utterance.onerror = (event) => {
       if (!isCurrent()) return;
       utteranceRef.current = null;
       if (isSpeechCancellationError(event.error)) {
-        setState("idle");
-        setMessage("Озвучивание остановлено.");
+        publish("idle", "Озвучивание остановлено.");
         return;
       }
-      setState("error");
-      setMessage(playbackFailureMessage());
+      publish("error", playbackFailureMessage());
     };
 
     utteranceRef.current = utterance;
-    setState("loading");
-    setMessage(`Подготавливаем произношение: ${value}`);
+    publish("loading", `Подготавливаем произношение: ${value}`);
 
     try {
       if (synthesis.paused) synthesis.resume();
@@ -206,10 +226,9 @@ export function SpeechPlayerButton({
     } catch {
       if (!isCurrent()) return;
       utteranceRef.current = null;
-      setState("error");
-      setMessage(playbackFailureMessage());
+      publish("error", playbackFailureMessage());
     }
-  }, [detachUtterance, lang, rate, state, stop, value]);
+  }, [detachUtterance, lang, publish, rate, state, stop, value]);
 
   const active = state === "loading" || state === "playing";
   const visibleFeedback = state === "error" || state === "unsupported";
