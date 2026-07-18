@@ -80,7 +80,7 @@ extract_artifacts() {
     "$PLAYWRIGHT_IMAGE" \
     bash -Eeuo pipefail -c '
       paths=()
-      for path in eslint.log next-start.log playwright-report test-results; do
+      for path in eslint.log vitest.log next-start.log playwright-report test-results; do
         if [[ -e "$path" ]]; then
           paths+=("$path")
         fi
