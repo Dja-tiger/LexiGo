@@ -33,6 +33,7 @@ jobs:
           set -o pipefail
           {
             python3 scripts/apply_issue_43_contracts.py
+            python3 scripts/fix_issue_43_compile.py
             python3 scripts/apply_issue_43_frontend.py
             gofmt -w \
               backend/internal/auth \
