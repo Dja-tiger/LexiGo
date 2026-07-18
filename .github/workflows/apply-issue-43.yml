@@ -1,0 +1,101 @@
+name: Apply Issue 43
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: >-
+      github.head_ref == 'fix/issue-43-public-auth-recovery' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 40
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-issue43-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-43-public-auth-recovery
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: backend/go.sum
+      - name: Apply deterministic product patches
+        run: |
+          set -o pipefail
+          {
+            python3 scripts/apply_issue_43_contracts.py
+            python3 scripts/apply_issue_43_frontend.py
+            gofmt -w \
+              backend/internal/auth \
+              backend/internal/config \
+              backend/internal/httpx \
+              backend/internal/server \
+              backend/integration/password_recovery_test.go
+            git diff --check
+          } 2>&1 | tee issue43.log
+      - name: Verify backend contracts
+        working-directory: backend
+        run: |
+          set -o pipefail
+          {
+            go test ./internal/auth ./internal/config ./internal/httpx ./internal/server
+            go test -run '^$' -tags=integration ./integration
+          } 2>&1 | tee -a ../issue43.log
+      - name: Prepare isolated frontend workspace
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh prepare
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+      - name: Verify frontend contracts and browser flows
+        working-directory: frontend
+        run: |
+          set -o pipefail
+          {
+            bash ../scripts/ci/frontend-container.sh exec npm run lint
+            bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+            bash ../scripts/ci/frontend-container.sh exec npm test
+            bash ../scripts/ci/frontend-container.sh exec npm run build
+            bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui
+          } 2>&1 | tee -a ../issue43.log
+      - name: Extract browser diagnostics
+        if: failure()
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh extract
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-43-apply-diagnostics
+          path: |
+            issue43.log
+            frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Commit product diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .env.example \
+            api \
+            backend \
+            deploy \
+            docs \
+            frontend
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "feat(auth): add public password recovery flow"
+          git push origin HEAD:fix/issue-43-public-auth-recovery
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh cleanup
