@@ -66,6 +66,9 @@ func (s *SMTPPasswordResetSender) SendPasswordReset(ctx context.Context, recipie
 		return fmt.Errorf("connect SMTP: %w", err)
 	}
 	defer connection.Close()
+	if err := connection.SetDeadline(deadline); err != nil {
+		return fmt.Errorf("set SMTP deadline: %w", err)
+	}
 
 	client, err := smtp.NewClient(connection, s.config.Host)
 	if err != nil {
@@ -73,13 +76,15 @@ func (s *SMTPPasswordResetSender) SendPasswordReset(ctx context.Context, recipie
 	}
 	defer client.Close()
 
-	if ok, _ := client.Extension("STARTTLS"); ok {
-		if err := client.StartTLS(&tls.Config{
-			MinVersion: tls.VersionTLS12,
-			ServerName: s.config.Host,
-		}); err != nil {
-			return fmt.Errorf("start SMTP TLS: %w", err)
-		}
+	startTLS, _ := client.Extension("STARTTLS")
+	if !startTLS {
+		return fmt.Errorf("SMTP server does not support STARTTLS")
+	}
+	if err := client.StartTLS(&tls.Config{
+		MinVersion: tls.VersionTLS12,
+		ServerName: s.config.Host,
+	}); err != nil {
+		return fmt.Errorf("start SMTP TLS: %w", err)
 	}
 	if s.config.Username != "" {
 		if err := client.Auth(smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)); err != nil {
@@ -139,6 +144,9 @@ type LogPasswordResetSender struct {
 }
 
 func NewLogPasswordResetSender(logger *slog.Logger) *LogPasswordResetSender {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &LogPasswordResetSender{logger: logger}
 }
 
