@@ -837,10 +837,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setPhraseSortMode(readStoredCatalogSort("phrases"));
       setAllItemsSortMode(readStoredCatalogSort("all-items"));
     }, 0);
-    return () => {
-      window.clearTimeout(storageTimer);
-      window.speechSynthesis?.cancel();
-    };
+    return () => window.clearTimeout(storageTimer);
   }, []);
 
   useEffect(() => {
@@ -848,20 +845,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const timer = window.setTimeout(() => setCardStartedAt(window.performance.now()), 0);
     return () => window.clearTimeout(timer);
   }, [lessonStarted, currentIndex, studyMode]);
-
-  useEffect(() => {
-    if (!speechNotice) return;
-    const timer = window.setTimeout(() => setSpeechNotice(null), 2200);
-    return () => window.clearTimeout(timer);
-  }, [speechNotice]);
-
-  useEffect(() => {
-    if (!speakingText) return;
-    const wordCount = Math.max(1, speakingText.trim().split(/\s+/).length);
-    const timeoutMs = Math.min(10_000, Math.max(1_500, wordCount * 700));
-    const timer = window.setTimeout(() => setSpeakingText(""), timeoutMs);
-    return () => window.clearTimeout(timer);
-  }, [speakingText]);
 
   useEffect(() => {
     document.title = `${viewTitle(navigation.view)} · LexiGo`;
