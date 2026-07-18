@@ -1,0 +1,61 @@
+name: Self Review Issue 42
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  self-review:
+    if: >-
+      github.head_ref == 'fix/issue-42-session-hydration' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-42-session-hydration
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Apply deterministic self-review patch
+        run: |
+          set -o pipefail
+          {
+            python3 scripts/self_review_issue_42.py
+            git diff --check
+          } 2>&1 | tee issue42-self-review.log
+      - name: Verify frontend and browser contracts
+        working-directory: frontend
+        run: |
+          set -o pipefail
+          {
+            npm ci --no-audit --no-fund
+            npm run lint
+            npm run typecheck
+            npm test
+            npm run build
+            npm run test:e2e:ui
+          } 2>&1 | tee -a ../issue42-self-review.log
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-42-self-review-diagnostics
+          path: issue42-self-review.log
+      - name: Commit reviewed product diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix(session): render explicit hydration states"
+          git push origin HEAD:fix/issue-42-session-hydration
