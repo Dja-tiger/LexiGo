@@ -45,8 +45,7 @@ describe("account resource contracts", () => {
   it("accepts complete progress and rejects missing or invalid counters", () => {
     expect(isProgressSummaryPayload(PROGRESS)).toBe(true);
     expect(isProgressSummaryPayload({ ...PROGRESS, dailyGoal: 0 })).toBe(false);
-    const { dueNow: _dueNow, ...missingDueNow } = PROGRESS;
-    expect(isProgressSummaryPayload(missingDueNow)).toBe(false);
+    expect(isProgressSummaryPayload({ ...PROGRESS, dueNow: undefined })).toBe(false);
   });
 
   it("validates catalog and active lesson payloads", () => {
