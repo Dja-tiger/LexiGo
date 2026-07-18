@@ -1,0 +1,151 @@
+:root {
+  --lx-focus-ring: #f8fafc;
+  --lx-focus-edge: #050914;
+  --lx-focus-halo: rgba(79, 195, 255, 0.46);
+  --lx-focus-width: 3px;
+  --lx-focus-offset: 3px;
+}
+
+/*
+ * Issue #45: every keyboard-operable control receives the same two-tone
+ * focus treatment. The inner ring remains visible even when a legacy card
+ * clips overflowing content; the outer outline preserves the WCAG focus area.
+ */
+:where(
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  summary,
+  [contenteditable="true"],
+  [tabindex]:not([tabindex="-1"])
+) {
+  scroll-margin-block: calc(92px + env(safe-area-inset-top)) calc(96px + env(safe-area-inset-bottom));
+}
+
+:where(
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  summary,
+  [contenteditable="true"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: var(--lx-focus-width) solid var(--lx-focus-ring) !important;
+  outline-offset: var(--lx-focus-offset);
+  box-shadow:
+    inset 0 0 0 2px var(--lx-focus-edge),
+    0 0 0 1px var(--lx-focus-edge),
+    0 0 0 7px var(--lx-focus-halo) !important;
+}
+
+/* Keep hover affordances available to keyboard users without moving layout. */
+:where(
+  .lx-nav button,
+  .lx-mobile-nav button,
+  .lx-mode-card,
+  .lx-section-grid > button,
+  .lx-phrase-grid > button,
+  .lx-library-grid > button,
+  .lx-progress-stats > button,
+  .lx-themed-home,
+  .lx-themed-selector,
+  .lx-themed-library,
+  .lx-answer-grid > button,
+  .lx-calendar-provider-grid > button,
+  .lx-calendar-weekdays button
+):focus-visible {
+  border-color: rgba(139, 220, 255, 0.82) !important;
+  color: #ffffff;
+}
+
+:where(
+  .lx-mode-card,
+  .lx-section-grid > button,
+  .lx-phrase-grid > button,
+  .lx-library-grid > button,
+  .lx-progress-stats > button,
+  .lx-themed-home,
+  .lx-themed-selector,
+  .lx-themed-library,
+  .lx-answer-grid > button,
+  .lx-calendar-provider-grid > button
+):focus-visible {
+  background-image: linear-gradient(145deg, rgba(124, 92, 246, 0.18), rgba(40, 156, 220, 0.14));
+}
+
+/* Input focus must not rely on a subtle border-color change alone. */
+:where(
+  .lx-auth-card input,
+  .lx-recall-box input,
+  .lx-calendar-form-grid input,
+  .lx-calendar-form-grid select,
+  .lx-catalog-sort select
+):focus-visible {
+  border-color: rgba(139, 220, 255, 0.9) !important;
+  background-color: rgba(3, 9, 19, 0.96);
+}
+
+/* Disabled controls are not keyboard targets and must not look actionable. */
+:where(button, input, select, textarea):disabled {
+  outline: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  :where(
+    button,
+    a[href],
+    input,
+    select,
+    textarea,
+    summary,
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ) {
+    scroll-margin-block: calc(76px + env(safe-area-inset-top)) calc(104px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    button,
+    a[href],
+    input,
+    select,
+    textarea,
+    summary,
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --lx-focus-ring: Highlight;
+    --lx-focus-edge: Canvas;
+    --lx-focus-halo: transparent;
+  }
+
+  :where(
+    button,
+    a[href],
+    input,
+    select,
+    textarea,
+    summary,
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline-color: Highlight !important;
+    box-shadow: none !important;
+    forced-color-adjust: auto;
+  }
+}
