@@ -83,14 +83,18 @@ describe("Apple Calendar delivery", () => {
 });
 
 describe("native Apple Calendar file sharing", () => {
-  it("validates and shares the iCalendar file", async () => {
+  it("validates only the file payload before sharing the full description", async () => {
     const canShare = vi.fn(() => true);
     const share = vi.fn(async () => undefined);
 
     await expect(shareAppleCalendarFile(file, { canShare, share })).resolves.toBe("shared");
 
-    expect(canShare).toHaveBeenCalledWith(expect.objectContaining({ files: [file] }));
-    expect(share).toHaveBeenCalledWith(expect.objectContaining({ files: [file] }));
+    expect(canShare).toHaveBeenCalledWith({ files: [file] });
+    expect(share).toHaveBeenCalledWith({
+      files: [file],
+      title: "LexiGo — повторение английского",
+      text: "Добавить повторяющееся напоминание LexiGo в календарь",
+    });
   });
 
   it("does not call share when the browser rejects the file type", async () => {
