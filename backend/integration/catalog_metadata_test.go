@@ -177,6 +177,21 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 	conditional.Header.Set("If-None-Match", etag)
 	read(conditional, http.StatusNotModified)
 
+	if _, err := catalog.Seed(ctx, pg); err != nil {
+		t.Fatalf("repeat catalog.Seed() error = %v", err)
+	}
+	reseedRequest, err := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
+	if err != nil {
+		t.Fatalf("create reseeded metadata request: %v", err)
+	}
+	reseeded, reseededHeaders := read(reseedRequest, http.StatusOK)
+	if reseeded.CatalogVersion != first.CatalogVersion || !reseeded.UpdatedAt.Equal(first.UpdatedAt) {
+		t.Fatalf("idempotent seed changed catalog identity: before=%+v after=%+v", first, reseeded)
+	}
+	if reseededHeaders.Get("ETag") != etag {
+		t.Fatalf("idempotent seed changed ETag: before=%q after=%q", etag, reseededHeaders.Get("ETag"))
+	}
+
 	if _, err := pg.Exec(ctx, `
 		insert into words (
 			lemma,

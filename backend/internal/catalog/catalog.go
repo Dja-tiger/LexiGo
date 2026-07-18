@@ -166,6 +166,8 @@ func Seed(ctx context.Context, pool *pgxpool.Pool) (int, error) {
 				note = excluded.note,
 				source = excluded.source,
 				updated_at = now()
+			where (words.part_of_speech, words.topic, words.note, words.source)
+				is distinct from (excluded.part_of_speech, excluded.topic, excluded.note, excluded.source)
 		`, entry.Lemma, entry.Translation, entry.PartOfSpeech, Topic, entry.Note, Source); err != nil {
 			return 0, fmt.Errorf("upsert catalog word %q: %w", entry.Lemma, err)
 		}

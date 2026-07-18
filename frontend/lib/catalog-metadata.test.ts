@@ -11,9 +11,14 @@ const metadata: CatalogMetadata = {
 };
 
 describe("catalog metadata helpers", () => {
-  it("maps all product source aliases", () => {
+  it("maps every product source alias", () => {
     expect(catalogSourceCount(metadata, "mixed")).toBe(923);
+    expect(catalogSourceCount(metadata, "noun")).toBe(383);
+    expect(catalogSourceCount(metadata, "verb")).toBe(179);
+    expect(catalogSourceCount(metadata, "adjective")).toBe(193);
+    expect(catalogSourceCount(metadata, "phrases")).toBe(124);
     expect(catalogSourceCount(metadata, "daily-life")).toBe(55);
+    expect(catalogSourceCount(metadata, "travel")).toBe(55);
     expect(catalogSourceCount(metadata, "data-engineering")).toBe(55);
     expect(catalogSourceCount(metadata, "backend")).toBe(55);
   });
