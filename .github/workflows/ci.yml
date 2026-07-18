@@ -52,7 +52,10 @@ jobs:
       - name: Coverage summary
         run: go tool cover -func=coverage.out
       - name: Vulnerability scan
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
+        run: |
+          install -d "$RUNNER_TEMP/gobin"
+          GOBIN="$RUNNER_TEMP/gobin" go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$RUNNER_TEMP/gobin/govulncheck" ./...
 
   backend-integration:
     name: Backend integration
@@ -73,7 +76,7 @@ jobs:
           POSTGRES_USER: lexigo
           POSTGRES_PASSWORD: lexigo_test
         ports:
-          - 5432:5432
+          - 5432/tcp
         options: >-
           --health-cmd "pg_isready -U lexigo -d lexigo_test"
           --health-interval 5s
@@ -82,7 +85,7 @@ jobs:
       redis:
         image: redis:8.0-alpine
         ports:
-          - 6379:6379
+          - 6379/tcp
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s
@@ -91,9 +94,6 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    env:
-      TEST_POSTGRES_DSN: postgres://lexigo:lexigo_test@localhost:5432/lexigo_test?sslmode=disable
-      TEST_REDIS_ADDR: localhost:6379
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -101,6 +101,9 @@ jobs:
           go-version: "1.26.5"
           cache-dependency-path: backend/go.sum
       - name: Integration tests with race detector
+        env:
+          TEST_POSTGRES_DSN: "postgres://lexigo:lexigo_test@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/lexigo_test?sslmode=disable"
+          TEST_REDIS_ADDR: "127.0.0.1:${{ job.services.redis.ports['6379'] }}"
         run: |
           set -o pipefail
           go test -race -count=1 -tags=integration ./... 2>&1 | tee integration-test.log
@@ -235,6 +238,7 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         component: [api, web]
         include:
