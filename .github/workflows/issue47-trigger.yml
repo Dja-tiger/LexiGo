@@ -29,6 +29,42 @@ jobs:
             | sed '1d;$d' \
             | sed 's/^          //' \
             > /tmp/issue47-apply.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("/tmp/issue47-apply.py")
+          source = path.read_text()
+          original = '''def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              source = file.read_text()
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}: {old[:100]!r}")
+              file.write_text(source.replace(old, new, 1))'''
+          replacement = '''def shifted_multiline(value: str, amount: int) -> str:
+              if amount == 0 or "\\n" not in value:
+                  return value
+              lines = value.splitlines(keepends=True)
+              prefix = " " * amount
+              return lines[0] + "".join(
+                  line[amount:] if line.startswith(prefix) else line
+                  for line in lines[1:]
+              )
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              source = file.read_text()
+              for amount in range(17):
+                  candidate = shifted_multiline(old, amount)
+                  count = source.count(candidate)
+                  if count == 1:
+                      file.write_text(source.replace(candidate, shifted_multiline(new, amount), 1))
+                      return
+              raise SystemExit(f"{path}: no unique indentation variant: {old[:100]!r}")'''
+          if source.count(original) != 1:
+              raise SystemExit("replace_once implementation was not found in extracted patch")
+          path.write_text(source.replace(original, replacement, 1))
+          PY
           python3 /tmp/issue47-apply.py
 
       - name: Commit implementation and remove temporary tooling
