@@ -228,6 +228,7 @@ export function SpeechPlayerButton({
         className={buttonClassName}
         aria-label={speechControlLabel(state, value)}
         aria-pressed={active}
+        aria-busy={state === "loading"}
         aria-describedby={message ? feedbackID : undefined}
         disabled={state === "unsupported" || !value}
         onClick={toggle}
