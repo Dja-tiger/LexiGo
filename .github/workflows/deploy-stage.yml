@@ -18,57 +18,33 @@ jobs:
   deploy:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main'
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 25
     environment: stage
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Configure SSH
-        id: configure_ssh
-        env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-        run: |
-          test -n "$SSH_KEY"
-          test -n "$DEPLOY_KNOWN_HOSTS"
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
-
-      - name: Upload deployment bundle
-        id: upload
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
-        run: |
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_USER"
-          case "$DEPLOY_PATH" in /opt/*) ;; *) echo "DEPLOY_PATH must be under /opt" >&2; exit 1 ;; esac
-          tar -czf /tmp/lexigo-deploy.tgz deploy scripts/remote-deploy.sh
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
-          scp /tmp/lexigo-deploy.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/lexigo-deploy.tgz"
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "tar -xzf /tmp/lexigo-deploy.tgz -C '$DEPLOY_PATH' && rm -f /tmp/lexigo-deploy.tgz"
+          persist-credentials: false
 
       - name: Deploy stage
         id: deploy
         env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
-          GHCR_USER: ${{ github.actor }}
+          GHCR_USER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -o pipefail
-          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' stage '$IMAGE_TAG' 'http://$DEPLOY_HOST' '$GHCR_USER'" \
-            2>&1 | tee /tmp/lexigo-deploy.log
+        run: bash scripts/ci/deploy-over-ssh.sh stage "$IMAGE_TAG"
 
       - name: Report stage deployment
         if: always()
@@ -77,29 +53,24 @@ jobs:
           DEPLOY_STATUS: ${{ job.status }}
           IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_ID: ${{ github.run_id }}
-          CONFIGURE_OUTCOME: ${{ steps.configure_ssh.outcome }}
-          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          DEPLOY_LOG: ${{ runner.temp }}/lexigo-stage-deploy.log
         with:
           script: |
             const fs = require('fs');
-            let tail = 'deploy log was not created';
-            if (fs.existsSync('/tmp/lexigo-deploy.log')) {
-              const log = fs.readFileSync('/tmp/lexigo-deploy.log', 'utf8');
-              tail = log.slice(-3000);
-            }
+            const log = fs.existsSync(process.env.DEPLOY_LOG)
+              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-6000)
+              : 'deploy log was not created';
             const body = [
               '# LexiGo current deployment status',
               '',
               `## Stage: **${process.env.DEPLOY_STATUS}**`,
               `- image SHA: \`${process.env.IMAGE_SHA}\``,
               `- run_id: \`${process.env.RUN_ID}\``,
-              `- configure SSH: \`${process.env.CONFIGURE_OUTCOME}\``,
-              `- upload bundle: \`${process.env.UPLOAD_OUTCOME}\``,
               `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
               '',
               '```text',
-              tail,
+              log,
               '```'
             ].join('\n');
             await github.rest.issues.update({
@@ -108,3 +79,7 @@ jobs:
               issue_number: 12,
               body
             });
+
+      - name: Cleanup deployment log
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/lexigo-stage-deploy.log"
