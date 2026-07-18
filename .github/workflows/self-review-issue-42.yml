@@ -16,41 +16,44 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 30
+    timeout-minutes: 35
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-issue42-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: fix/issue-42-session-hydration
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
       - name: Apply deterministic self-review patch
         run: |
-          set -o pipefail
-          {
-            python3 scripts/self_review_issue_42.py
-            git diff --check
-          } 2>&1 | tee issue42-self-review.log
-      - name: Verify frontend and browser contracts
+          python3 scripts/self_review_issue_42.py
+          git diff --check
+      - name: Prepare isolated frontend workspace
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh prepare
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+      - name: Verify frontend contracts
         working-directory: frontend
         run: |
-          set -o pipefail
-          {
-            npm ci --no-audit --no-fund
-            npm run lint
-            npm run typecheck
-            npm test
-            npm run build
-            npm run test:e2e:ui
-          } 2>&1 | tee -a ../issue42-self-review.log
-      - name: Upload diagnostics
+          bash ../scripts/ci/frontend-container.sh exec npm run lint
+          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+          bash ../scripts/ci/frontend-container.sh exec npm test
+          bash ../scripts/ci/frontend-container.sh exec npm run build
+          bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui
+      - name: Extract browser diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh extract
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
         with:
           name: issue-42-self-review-diagnostics
-          path: issue42-self-review.log
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Commit reviewed product diff
         run: |
           git config user.name "github-actions[bot]"
@@ -59,3 +62,7 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "fix(session): render explicit hydration states"
           git push origin HEAD:fix/issue-42-session-hydration
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh cleanup
