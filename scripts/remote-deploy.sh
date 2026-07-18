@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+IFS=$'\n\t'
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -10,11 +12,50 @@ IMAGE_TAG="${2:?image tag is required}"
 PUBLIC_URL="${3:?public URL is required}"
 GHCR_USER="${4:?GHCR user is required}"
 GHCR_TOKEN="$(cat)"
+DOCKER_CONFIG_DIR=""
 
-if [ "$(id -u)" -ne 0 ]; then
+cleanup() {
+  local status=$?
+  trap - EXIT
+  unset GHCR_TOKEN
+  if [[ -n "$DOCKER_CONFIG_DIR" ]]; then
+    rm -rf -- "$DOCKER_CONFIG_DIR"
+  fi
+  exit "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 130' HUP INT TERM
+
+if [[ "$(id -u)" -ne 0 ]]; then
   echo "remote deployment must run as root" >&2
   exit 1
 fi
+
+[[ -n "$GHCR_TOKEN" ]] || {
+  echo "GHCR token is empty" >&2
+  exit 1
+}
+
+[[ "$IMAGE_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] || {
+  echo "image tag is not a valid OCI tag" >&2
+  exit 1
+}
+
+[[ "$PUBLIC_URL" == http://* || "$PUBLIC_URL" == https://* ]] || {
+  echo "public URL must use http or https" >&2
+  exit 1
+}
+
+[[ "$PUBLIC_URL" != *$'\n'* && "$PUBLIC_URL" != *"'"* ]] || {
+  echo "public URL contains unsupported characters" >&2
+  exit 1
+}
+
+[[ "$GHCR_USER" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]] || {
+  echo "GHCR user contains unsupported characters" >&2
+  exit 1
+}
 
 case "$ENVIRONMENT" in
   stage)
@@ -56,8 +97,9 @@ systemctl enable --now docker
 install -d -m 700 "$(dirname "$ENV_FILE")"
 
 upsert_env() {
-  key="$1"
-  value="$2"
+  local key="$1"
+  local value="$2"
+
   if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
     sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
   else
@@ -65,8 +107,7 @@ upsert_env() {
   fi
 }
 
-if [ ! -s "$ENV_FILE" ]; then
-  umask 077
+if [[ ! -s "$ENV_FILE" ]]; then
   POSTGRES_PASSWORD="$(openssl rand -hex 32)"
   REDIS_PASSWORD="$(openssl rand -hex 32)"
   JWT_SECRET="$(openssl rand -hex 64)"
@@ -101,7 +142,11 @@ fi
 
 chmod 600 "$ENV_FILE"
 
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+DOCKER_CONFIG_DIR="$(mktemp -d /tmp/lexigo-docker-config.XXXXXX)"
+export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
+
+printf '%s' "$GHCR_TOKEN" \
+  | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 unset GHCR_TOKEN
 
 export IMAGE_TAG
