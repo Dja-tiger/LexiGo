@@ -13,6 +13,7 @@ import {
   readyResourceStatus,
   type ResourceStatus,
 } from "../lib/account-resources";
+import { normalizeProgressValue, rovingTargetIndex, type RovingNavigationAxis } from "../lib/accessibility-semantics";
 import { apiUrl } from "../lib/api";
 import {
   isAcceptedResponse,
@@ -297,6 +298,14 @@ const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
 ];
 
 const GOAL_OPTIONS = [15, 30, 60];
+const STUDY_TAB_VALUES = STUDY_TABS.map((tab) => tab.value);
+const MODE_VALUES = MODE_OPTIONS.map((option) => option.value);
+const SOURCE_VALUES: LessonSource[] = [
+  ...SOURCE_OPTIONS.map((option) => option.value),
+  ...COLLECTIONS.map((collection) => collection.source),
+];
+const SIZE_VALUES = SIZE_OPTIONS.map((option) => option.value);
+const AUTH_TAB_VALUES: Array<Extract<AuthMode, "login" | "register">> = ["login", "register"];
 const WORD_PREVIEW = {
   prompt: "incident",
   phonetic: "/ˈɪnsɪdənt/",
@@ -345,12 +354,19 @@ function CollectionCard({
   variant,
   countText,
   selected = false,
+  selectionProps,
   onSelect,
 }: {
   definition: CollectionDefinition;
   variant: "home" | "selector" | "library";
   countText: string;
   selected?: boolean;
+  selectionProps?: {
+    role: "radio";
+    "aria-checked": boolean;
+    tabIndex: number;
+    onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
+  };
   onSelect: () => void;
 }) {
   const title = variant === "home" ? definition.shortLabel : definition.label;
@@ -361,8 +377,8 @@ function CollectionCard({
       data-lexigo-collection={definition.source}
       data-lexigo-source={definition.source}
       data-lexigo-dictionary-source={variant === "library" ? definition.source : undefined}
+      {...selectionProps}
       className={`lx-themed-${variant} lx-collection-${definition.source}${selected ? " selected" : ""}`}
-      aria-pressed={variant === "selector" ? selected : undefined}
       onClick={onSelect}
     >
       <span className="lx-themed-symbol">{definition.symbol}</span>
@@ -1105,17 +1121,37 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
   }
 
-  function handleStudyTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, view: StudyView) {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+  function selectRovingControl<T extends string | number>(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    values: readonly T[],
+    currentValue: T,
+    onSelect: (value: T) => void,
+    axis: RovingNavigationAxis = "both",
+  ) {
+    const currentIndex = values.findIndex((value) => value === currentValue);
+    const nextIndex = rovingTargetIndex(currentIndex, values.length, event.key, axis);
+    if (nextIndex === null) return;
+    const nextValue = values[nextIndex];
+    if (nextValue === undefined) return;
+
     event.preventDefault();
-    const currentIndex = STUDY_TABS.findIndex((tab) => tab.value === view);
-    const direction = event.key === "ArrowRight" ? 1 : -1;
-    const nextIndex = (currentIndex + direction + STUDY_TABS.length) % STUDY_TABS.length;
-    const buttons = Array.from(
-      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [],
+    const group = event.currentTarget.closest<HTMLElement>('[role="radiogroup"], [role="tablist"]');
+    const controls = Array.from(
+      group?.querySelectorAll<HTMLButtonElement>('[role="radio"], [role="tab"]') ?? [],
     );
-    setStudyView(STUDY_TABS[nextIndex].value);
-    buttons[nextIndex]?.focus();
+    controls[nextIndex]?.focus();
+    onSelect(nextValue);
+  }
+
+  function handleStudyTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, view: StudyView) {
+    selectRovingControl(event, STUDY_TAB_VALUES, view, setStudyView, "horizontal");
+  }
+
+  function handleAuthTabKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    mode: Extract<AuthMode, "login" | "register">,
+  ) {
+    selectRovingControl(event, AUTH_TAB_VALUES, mode, switchAuthMode, "horizontal");
   }
 
   function resetCardState(mode = studyMode, rated = false) {
@@ -1750,13 +1786,32 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               </button>
               <button type="button" className="lx-ring-stat" onClick={() => navigate({ view: "library" })}>
                 <span>Общий прогресс</span>
-                <div className="lx-progress-ring" style={{ "--progress": `${progress && catalogMetadata ? overallPercent : 0}%` } as React.CSSProperties}><strong>{overallProgressLabel}</strong></div>
+                <div
+        className="lx-progress-ring"
+        role="progressbar"
+        aria-label="Общий прогресс каталога"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={normalizeProgressValue(progress && catalogMetadata ? overallPercent : 0)}
+        aria-valuetext={progress && catalogMetadata
+          ? `${progress.masteredWords + progress.masteredPhrases} из ${catalogMetadata.totals.items} элементов, ${overallPercent}%`
+          : progressPanelStatus}
+        style={{ "--progress": `${progress && catalogMetadata ? overallPercent : 0}%` } as React.CSSProperties}
+      ><strong>{overallProgressLabel}</strong></div>
                 <small>Освоенные элементы</small>
               </button>
             </div>
             <div className="lx-goal-row">
               <div><span>Цель на сегодня</span><strong>{goalSummary}</strong></div>
-              <div className="lx-goal-track"><span style={{ width: `${dailyPercent}%` }}/></div>
+              <div
+      className="lx-goal-track"
+      role="progressbar"
+      aria-label="Дневная цель на главной"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={normalizeProgressValue(dailyPercent)}
+      aria-valuetext={goalSummary}
+    ><span style={{ width: `${dailyPercent}%` }}/></div>
               <b>{goalPercentLabel}</b>
             </div>
           </article>
@@ -1797,9 +1852,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
           <article className="lx-word-preview">
             <div className="lx-preview-heading"><span>Пример карточки слова</span><button type="button" className={speakingText === WORD_PREVIEW.prompt ? "speaking" : ""} aria-label={`${speakingText === WORD_PREVIEW.prompt ? "Остановить произношение" : "Произнести"}: ${WORD_PREVIEW.prompt}`} onClick={() => pronounceText(WORD_PREVIEW.prompt)}><Icon name="volume" /></button></div>
-            <h3>{WORD_PREVIEW.prompt}</h3>
-            <p className="lx-preview-phonetic">{WORD_PREVIEW.phonetic}</p>
-            <dl><dt>Перевод</dt><dd>{WORD_PREVIEW.answer}</dd><dt>Пример</dt><dd>{WORD_PREVIEW.example}</dd></dl>
+            <h3 lang="en">{WORD_PREVIEW.prompt}</h3>
+            <p className="lx-preview-phonetic" lang="en">{WORD_PREVIEW.phonetic}</p>
+            <dl><dt>Перевод</dt><dd lang="ru">{WORD_PREVIEW.answer}</dd><dt>Пример</dt><dd lang="en">{WORD_PREVIEW.example}</dd></dl>
             <button className="lx-preview-action" type="button" onClick={() => startLesson(session, { mode: "study", source: "mixed", size: 30 })}>Открыть простое изучение <Icon name="arrow" size={16}/></button>
             <div className="lx-dots"><i className="active"/><i/><i/><i/><i/></div>
           </article>
@@ -1857,38 +1912,75 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         <section className="lx-setup-card">
           <div className="lx-setup-block">
             <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Главный режим — простое изучение с открытой карточкой</small></div></div>
-            <div className="lx-mode-selector">
-              {MODE_OPTIONS.map((option) => (
-                <button key={option.value} type="button" className={studyMode === option.value ? "selected" : ""} onClick={() => setStudyMode(option.value)}>
-                  <span><Icon name={option.icon}/></span><div><strong>{option.label}</strong><small>{option.hint}</small></div><i><Icon name="check" size={14}/></i>
-                </button>
-              ))}
+            <div className="lx-mode-selector" role="radiogroup" aria-label="Режим обучения" aria-orientation="vertical">
+              {MODE_OPTIONS.map((option) => {
+                const selected = studyMode === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    tabIndex={selected ? 0 : -1}
+                    className={selected ? "selected" : ""}
+                    onClick={() => setStudyMode(option.value)}
+                    onKeyDown={(event) => selectRovingControl(event, MODE_VALUES, option.value, setStudyMode, "vertical")}
+                  >
+                    <span><Icon name={option.icon}/></span><div><strong>{option.label}</strong><small>{option.hint}</small></div><i><Icon name="check" size={14}/></i>
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="lx-setup-block">
             <div className="lx-block-heading"><span>2</span><div><strong>Выберите раздел</strong><small>Можно начать со всех слов или сфокусироваться на части речи</small></div></div>
-            <div className="lx-source-selector">
-              {SOURCE_OPTIONS.map((option) => (
-                <button key={option.value} type="button" data-lexigo-source={option.value} aria-pressed={source === option.value} className={source === option.value ? "selected" : ""} onClick={() => setSource(option.value)}>
-                  <span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span>
-                  <div><strong>{option.label}</strong><small>{option.hint}</small></div>
-                  <b data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, option.value, ["элемент", "элемента", "элементов"])}</b>
-                </button>
-              ))}
-              {COLLECTIONS.map((definition) => (
-                <CollectionCard
-                  key={definition.source}
-                  definition={definition}
-                  variant="selector"
-                  countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["элемент", "элемента", "элементов"])}
-                  selected={source === definition.source}
-                  onSelect={() => setSource(definition.source)}
-                />
-              ))}
+            <div className="lx-source-selector" role="radiogroup" aria-label="Раздел обучения">
+              {SOURCE_OPTIONS.map((option) => {
+                const selected = source === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    tabIndex={selected ? 0 : -1}
+                    data-lexigo-source={option.value}
+                    className={selected ? "selected" : ""}
+                    onClick={() => setSource(option.value)}
+                    onKeyDown={(event) => selectRovingControl(event, SOURCE_VALUES, option.value, setSource)}
+                  >
+                    <span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span>
+                    <div><strong>{option.label}</strong><small>{option.hint}</small></div>
+                    <b data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, option.value, ["элемент", "элемента", "элементов"])}</b>
+                  </button>
+                );
+              })}
+              {COLLECTIONS.map((definition) => {
+                const selected = source === definition.source;
+                return (
+                  <CollectionCard
+                    key={definition.source}
+                    definition={definition}
+                    variant="selector"
+                    countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["элемент", "элемента", "элементов"])}
+                    selected={selected}
+                    selectionProps={{
+                      role: "radio",
+                      "aria-checked": selected,
+                      tabIndex: selected ? 0 : -1,
+                      onKeyDown: (event) => selectRovingControl(event, SOURCE_VALUES, definition.source, setSource),
+                    }}
+                    onSelect={() => setSource(definition.source)}
+                  />
+                );
+              })}
             </div>
           </div>
           <div className="lx-setup-footer">
-            <fieldset><legend>Размер урока</legend><div className="lx-size-control">{SIZE_OPTIONS.map((option) => <button key={String(option.value)} type="button" className={lessonSize === option.value ? "selected" : ""} onClick={() => setLessonSize(option.value)}>{option.label}</button>)}</div></fieldset>
+            <fieldset><legend id="lesson-size-label">Размер урока</legend><div className="lx-size-control" role="radiogroup" aria-labelledby="lesson-size-label" aria-orientation="horizontal">{SIZE_OPTIONS.map((option) => {
+      const selected = lessonSize === option.value;
+      return <button key={String(option.value)} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} onClick={() => setLessonSize(option.value)} onKeyDown={(event) => selectRovingControl(event, SIZE_VALUES, option.value, setLessonSize, "horizontal")}>{option.label}</button>;
+    })}</div></fieldset>
             <div className="lx-setup-actions">
               {studyMode === "all" ? (
                 <div className="lx-lesson-preview"><span>Состав списка</span><strong>Все доступные элементы раздела</strong><small>Справочный режим не создаёт server lesson session.</small></div>
@@ -1917,7 +2009,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       return (
         <section className="lx-detail-card">
           <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "phrases" })}>← Все фразы</button>
-          <div className="lx-detail-content"><span>{selectedPhrase.topic}</span><h1>{selectedPhrase.prompt}</h1><strong>{selectedPhrase.answer}</strong>{selectedPhrase.cloze ? <div><small>Cloze practice</small><p>{selectedPhrase.cloze}</p></div> : null}{selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p>{selectedPhrase.examples[0]}</p></div> : null}{selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}<div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div></div>
+          <div className="lx-detail-content"><span lang="en">{selectedPhrase.topic}</span><h1 lang="en">{selectedPhrase.prompt}</h1><strong lang="ru">{selectedPhrase.answer}</strong>{selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}{selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}{selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}<div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div></div>
         </section>
       );
     }
@@ -1934,9 +2026,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     return (
       <>
         <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
-        <div className="lx-topic-filter">{phraseTopics.map((topic) => <button key={topic} type="button" className={phraseTopic === topic ? "selected" : ""} onClick={() => setPhraseTopic(topic)}>{topic === "all" ? "Все темы" : topic}</button>)}</div>
+        <div className="lx-topic-filter" role="radiogroup" aria-label="Тема фраз" aria-orientation="horizontal">{phraseTopics.map((topic) => {
+          const selected = phraseTopic === topic;
+          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => setPhraseTopic(topic)} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, setPhraseTopic, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
+        })}</div>
         <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => updateCatalogSort("phrases", mode)} />
-        <section className="lx-phrase-grid">{sortedVisiblePhrases.map((phrase) => <button key={itemKey(phrase)} type="button" onClick={() => navigate({ view: "phrases", detail: itemKey(phrase) })}><span>{phrase.topic}</span><strong>{phrase.prompt}</strong><small>{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button>)}</section>
+        <section className="lx-phrase-grid">{sortedVisiblePhrases.map((phrase) => <button key={itemKey(phrase)} type="button" onClick={() => navigate({ view: "phrases", detail: itemKey(phrase) })}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button>)}</section>
         <div className="lx-page-actions"><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: "all", mode: "all", items: sortedVisiblePhrases })}>Посмотреть выбранные</button><button className="lx-button primary" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "study", items: sortedVisiblePhrases })}>Изучать выбранную тему</button></div>
       </>
     );
@@ -2001,7 +2096,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           <div><span>Выбор варианта</span><strong>{modes.choice.successfulToday} / {modes.choice.attemptsToday}</strong><small>объективно верные сегодня</small></div>
           <div><span>Legacy</span><strong>{modes.legacy.attemptsTotal}</strong><small>исторические события без точного режима</small></div>
         </section>
-        <section className="lx-progress-detail"><div className="lx-detail-main"><span>Дневная цель</span><h2>{progress.reviewsToday >= progress.dailyGoal ? "Цель выполнена" : "Продолжайте учебный цикл"}</h2><div className="lx-goal-track large"><span style={{ width: `${goalPercent(progress)}%` }}/></div><div className="lx-goal-options">{GOAL_OPTIONS.map((goal) => <button key={goal} type="button" className={progress.dailyGoal === goal ? "selected" : ""} disabled={busy} onClick={() => updateDailyGoal(goal)}>{goal}</button>)}</div></div><div className="lx-queue-list"><div><span>Слова к повторению</span><strong>{progress.dueWords}</strong></div><div><span>Фразы к повторению</span><strong>{progress.duePhrases}</strong></div><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong></div></div></section>
+        <section className="lx-progress-detail"><div className="lx-detail-main"><span>Дневная цель</span><h2>{progress.reviewsToday >= progress.dailyGoal ? "Цель выполнена" : "Продолжайте учебный цикл"}</h2><div className="lx-goal-track large" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span style={{ width: `${goalPercent(progress)}%` }}/></div><div className="lx-goal-options" role="radiogroup" aria-label="Дневная цель" aria-orientation="horizontal">{GOAL_OPTIONS.map((goal, index) => {
+        const selected = progress.dailyGoal === goal;
+        const fallbackTabStop = !GOAL_OPTIONS.includes(progress.dailyGoal) && index === 0;
+        return <button key={goal} type="button" role="radio" aria-checked={selected} tabIndex={selected || fallbackTabStop ? 0 : -1} className={selected ? "selected" : ""} disabled={busy} onClick={() => updateDailyGoal(goal)} onKeyDown={(event) => selectRovingControl(event, GOAL_OPTIONS, progress.dailyGoal, updateDailyGoal, "horizontal")}>{goal}</button>;
+      })}</div></div><div className="lx-queue-list"><div><span>Слова к повторению</span><strong>{progress.dueWords}</strong></div><div><span>Фразы к повторению</span><strong>{progress.duePhrases}</strong></div><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong></div></div></section>
       </>
     );
   }
@@ -2043,22 +2142,30 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           </div>
 
           {!resetMode && !forgotMode ? (
-            <div className="lx-auth-tabs" role="tablist" aria-label="Режим аккаунта">
+            <div className="lx-auth-tabs" role="tablist" aria-label="Режим аккаунта" aria-orientation="horizontal">
               <button
+                id="auth-mode-tab-login"
                 type="button"
                 role="tab"
                 aria-selected={authMode === "login"}
+                aria-controls="auth-mode-panel"
+                tabIndex={authMode === "login" ? 0 : -1}
                 className={authMode === "login" ? "active" : ""}
                 onClick={() => switchAuthMode("login")}
+                onKeyDown={(event) => handleAuthTabKeyDown(event, "login")}
               >
                 Вход
               </button>
               <button
+                id="auth-mode-tab-register"
                 type="button"
                 role="tab"
                 aria-selected={registrationMode}
+                aria-controls="auth-mode-panel"
+                tabIndex={registrationMode ? 0 : -1}
                 className={registrationMode ? "active" : ""}
                 onClick={() => switchAuthMode("register")}
+                onKeyDown={(event) => handleAuthTabKeyDown(event, "register")}
               >
                 Регистрация
               </button>
@@ -2068,7 +2175,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           {authNotice ? <p className="lx-auth-notice" role="status" aria-live="polite">{authNotice}</p> : null}
           {authFormError ? <p className="lx-auth-form-error" role="alert">{authFormError}</p> : null}
 
-          <form onSubmit={submitAuth} noValidate aria-label={resetMode ? "Новый пароль" : forgotMode ? "Восстановление пароля" : registrationMode ? "Регистрация" : "Вход"}>
+          <form
+      id={!resetMode && !forgotMode ? "auth-mode-panel" : undefined}
+      role={!resetMode && !forgotMode ? "tabpanel" : undefined}
+      aria-labelledby={!resetMode && !forgotMode ? `auth-mode-tab-${registrationMode ? "register" : "login"}` : undefined}
+      onSubmit={submitAuth}
+      noValidate
+      aria-label={resetMode ? "Новый пароль" : forgotMode ? "Восстановление пароля" : registrationMode ? "Регистрация" : "Вход"}
+    >
             {registrationMode ? (
               <label htmlFor="auth-displayName">
                 <span>Имя</span>
@@ -2219,7 +2333,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       <section className="lx-all-items">
         <div className="lx-lesson-top"><button className="lx-button ghost" type="button" onClick={() => navigate({ view: source === "phrases" ? "phrases" : "learn", source })}>← Назад</button><strong>{items.length} элементов · {sourceLabel(source)}</strong></div>
         <CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={(mode) => updateCatalogSort("all-items", mode)} />
-        <div>{sortedAllItems.map((item, index) => <article key={item.id}><span>{index + 1}</span><div><small>{item.partOfSpeech} · {item.topic}</small><h3>{item.prompt}</h3>{item.cloze ? <p>{item.cloze}</p> : null}<strong>{item.answer}</strong>{item.examples[0] ? <p>{item.examples[0]}</p> : null}</div></article>)}</div>
+        <div>{sortedAllItems.map((item, index) => <article key={item.id}><span>{index + 1}</span><div><small>{item.partOfSpeech} · {item.topic}</small><h3 lang="en">{item.prompt}</h3>{item.cloze ? <p lang="en">{item.cloze}</p> : null}<strong lang="ru">{item.answer}</strong>{item.examples[0] ? <p lang="en">{item.examples[0]}</p> : null}</div></article>)}</div>
       </section>
     );
   }
@@ -2256,7 +2370,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     return (
       <section className="lx-lesson-page">
-        <div className="lx-lesson-progress"><strong>{currentItem.kind === "phrase" ? "Фраза" : "Слово"} {currentIndex + 1} из {items.length}</strong><div className="lx-goal-track"><span style={{ width: `${lessonPercent}%` }}/></div><span>{lessonPercent}% урока</span><button className="lx-button ghost" type="button" onClick={saveAndExitLesson}>Сохранить и выйти</button></div>
+        <div className="lx-lesson-progress"><strong>{currentItem.kind === "phrase" ? "Фраза" : "Слово"} {currentIndex + 1} из {items.length}</strong><div className="lx-goal-track" role="progressbar" aria-label="Прогресс урока" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(lessonPercent)} aria-valuetext={`${currentIndex + 1} из ${items.length} элементов`}><span style={{ width: `${lessonPercent}%` }}/></div><span>{lessonPercent}% урока</span><button className="lx-button ghost" type="button" onClick={saveAndExitLesson}>Сохранить и выйти</button></div>
         <div className="lx-lesson-layout">
           <div className="lx-study-column" data-study-view={studyView}>
             <div className="lx-study-tabs" role="tablist" aria-label="Представление учебной карточки">
@@ -2265,10 +2379,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                 return (
                   <button
                     key={tab.value}
+                    id={`lesson-study-tab-${tab.value}`}
                     type="button"
                     role="tab"
                     className={selected ? "active" : ""}
                     aria-selected={selected}
+                    aria-controls="lesson-study-panel"
                     tabIndex={selected ? 0 : -1}
                     onClick={() => setStudyView(tab.value)}
                     onKeyDown={(event) => handleStudyTabKeyDown(event, tab.value)}
@@ -2278,29 +2394,35 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                 );
               })}
             </div>
-            <article className={`lx-main-word-card ${simpleStudy ? "simple" : "test"}`}>
+            <article
+      id="lesson-study-panel"
+      role="tabpanel"
+      aria-labelledby={`lesson-study-tab-${studyView}`}
+      className={`lx-main-word-card ${simpleStudy ? "simple" : "test"}`}
+    >
               <div className="lx-word-header"><div><span>{currentItem.kind === "phrase" ? "Техническая фраза" : currentItem.partOfSpeech}</span><small>{currentItem.topic || "Общая лексика"}</small></div><b>{currentRating ? ratingLabel(currentRating) : currentItem.status === "new" ? "Новое" : "Повторение"}</b></div>
               {simpleStudy ? (
                 <div className="lx-simple-word">
-                  <div className="lx-word-title-row"><div><h1>{currentItem.prompt}</h1>{currentItem.phonetic ? <p>{currentItem.phonetic}</p> : null}</div><button type="button" className={speakingText === currentItem.prompt ? "speaking" : ""} aria-label={`${speakingText === currentItem.prompt ? "Остановить произношение" : "Произнести"}: ${currentItem.prompt}`} onClick={() => pronounceText(currentItem.prompt)}><Icon name="volume"/></button></div>
-                  <dl><dt>Перевод</dt><dd>{currentItem.answer}</dd>{currentItem.examples[0] ? <><dt>Пример</dt><dd className="example">{currentItem.examples[0]}</dd></> : null}{currentItem.note ? <><dt>Примечание</dt><dd className="note">{currentItem.note}</dd></> : null}</dl>
-                  {currentItem.cloze ? <div className="lx-cloze-note"><span>Тренировка пропуска</span><strong>{currentItem.cloze}</strong></div> : null}
+                  <div className="lx-word-title-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><button type="button" className={speakingText === currentItem.prompt ? "speaking" : ""} aria-label={`${speakingText === currentItem.prompt ? "Остановить произношение" : "Произнести"}: ${currentItem.prompt}`} onClick={() => pronounceText(currentItem.prompt)}><Icon name="volume"/></button></div>
+                  <dl><dt>Перевод</dt><dd lang="ru">{currentItem.answer}</dd>{currentItem.examples[0] ? <><dt>Пример</dt><dd className="example" lang="en">{currentItem.examples[0]}</dd></> : null}{currentItem.note ? <><dt>Примечание</dt><dd className="note">{currentItem.note}</dd></> : null}</dl>
+                  {currentItem.cloze ? <div className="lx-cloze-note"><span>Тренировка пропуска</span><strong lang="en">{currentItem.cloze}</strong></div> : null}
                 </div>
               ) : (
                 <div className="lx-test-word">
-                  {phraseCloze && !revealed ? <><span>ВОССТАНОВИТЕ АНГЛИЙСКИЙ ПРОПУСК</span><h1>{currentItem.cloze}</h1></> : <><span>{currentItem.kind === "phrase" ? "ТЕХНИЧЕСКАЯ ФРАЗА" : "ПЕРЕВЕДИТЕ СЛОВО"}</span><h1>{currentItem.prompt}</h1>{currentItem.phonetic ? <p>{currentItem.phonetic}</p> : null}</>}
-                  {!revealed && studyMode === "recall" ? <div className="lx-recall-box"><label htmlFor="premium-answer">{exercisePromptLabel(currentItem)}</label><input id="premium-answer" value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && typedAnswer.trim()) setRevealed(true); }} placeholder={currentItem.kind === "phrase" ? "Например: root" : "Ваш ответ"} autoComplete="off"/><div><button className="lx-button ghost" type="button" onClick={() => setShowChoices((value) => !value)}>{showChoices ? "Скрыть варианты" : "Показать варианты"}</button><button className="lx-button primary" type="button" onClick={() => setRevealed(true)}>{typedAnswer.trim() ? "Сверить ответ" : "Показать ответ"}</button></div></div> : null}
-                  {!revealed && showChoices ? <div className="lx-answer-grid">{answerOptions.map((answer) => <button key={answer} type="button" onClick={() => { setSelectedAnswer(answer); setRevealed(true); }}>{answer}</button>)}</div> : null}
-                  {revealed ? <div className="lx-answer-reveal">{currentItem.kind === "phrase" ? <><h2>{currentItem.prompt}</h2><span>Пропуск: {expectedAnswer}</span></> : null}<strong>{currentItem.answer}</strong>{typedAnswer.trim() ? <p className={literalMatch ? "success" : "error"}>{literalMatch ? "Ответ совпал." : `Ваш ответ: ${typedAnswer}. Правильно: ${expectedAnswer}`}</p> : null}{selectedAnswer ? <p className={normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "success" : "error"}>{normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "Верный вариант." : `Вы выбрали: ${selectedAnswer}. Правильно: ${expectedAnswer}`}</p> : null}{currentItem.examples[0] ? <blockquote>{currentItem.examples[0]}</blockquote> : null}{currentItem.note ? <small>{currentItem.note}</small> : null}</div> : null}
+                  {phraseCloze && !revealed ? <><span>ВОССТАНОВИТЕ АНГЛИЙСКИЙ ПРОПУСК</span><h1 lang="en">{currentItem.cloze}</h1></> : <><span>{currentItem.kind === "phrase" ? "ТЕХНИЧЕСКАЯ ФРАЗА" : "ПЕРЕВЕДИТЕ СЛОВО"}</span><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</>}
+                  {!revealed && studyMode === "recall" ? <div className="lx-recall-box"><label htmlFor="premium-answer">{exercisePromptLabel(currentItem)}</label><input id="premium-answer" lang={phraseCloze ? "en" : "ru"} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && typedAnswer.trim()) setRevealed(true); }} placeholder={currentItem.kind === "phrase" ? "Например: root" : "Ваш ответ"} autoComplete="off"/><div><button className="lx-button ghost" type="button" aria-expanded={showChoices} aria-controls="lesson-answer-choices" onClick={() => setShowChoices((value) => !value)}>{showChoices ? "Скрыть варианты" : "Показать варианты"}</button><button className="lx-button primary" type="button" onClick={() => setRevealed(true)}>{typedAnswer.trim() ? "Сверить ответ" : "Показать ответ"}</button></div></div> : null}
+                  {!revealed && showChoices ? <div id="lesson-answer-choices" className="lx-answer-grid">{answerOptions.map((answer) => <button key={answer} type="button" lang={phraseCloze ? "en" : "ru"} onClick={() => { setSelectedAnswer(answer); setRevealed(true); }}>{answer}</button>)}</div> : null}
+                  {revealed ? <div className="lx-answer-reveal" role="status" aria-live="polite" aria-atomic="true">{currentItem.kind === "phrase" ? <><h2 lang="en">{currentItem.prompt}</h2><span>Пропуск: <span lang="en">{expectedAnswer}</span></span></> : null}<strong lang="ru">{currentItem.answer}</strong>{typedAnswer.trim() ? <p className={literalMatch ? "success" : "error"}>{literalMatch ? "Ответ совпал." : <>Ваш ответ: <span lang={phraseCloze ? "en" : "ru"}>{typedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{selectedAnswer ? <p className={normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "success" : "error"}>{normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "Верный вариант." : <>Вы выбрали: <span lang={phraseCloze ? "en" : "ru"}>{selectedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{currentItem.examples[0] ? <blockquote lang="en">{currentItem.examples[0]}</blockquote> : null}{currentItem.note ? <small>{currentItem.note}</small> : null}</div> : null}
                 </div>
               )}
             </article>
 
             <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled title="Активный урок проходит в серверном порядке">← Предыдущее недоступно</button><button ref={lessonAdvanceRef} className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
 
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row" role="status"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            <p className="lx-visually-hidden" role="status" aria-live="polite" aria-atomic="true">{reviewing ? "Сохраняем оценку." : currentRating ? `Оценка сохранена: ${ratingLabel(currentRating)}.` : ""}</p>
 
-            {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong>{item.prompt}</strong><small>{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
+            {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong lang="en">{item.prompt}</strong><small lang="ru">{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
           </div>
 
           <aside className="lx-lesson-stats">

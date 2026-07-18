@@ -388,7 +388,7 @@ test("saving a review transfers focus locally without generating a route announc
   await page.goto("/?view=learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Простое изучение слов/ }).click();
+  await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled();
   await start.click();

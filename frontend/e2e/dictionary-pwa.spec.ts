@@ -162,7 +162,7 @@ async function expectCategory(page: Page, category: typeof CATEGORIES[number]) {
   } else {
     await expect(page).toHaveURL(new RegExp(`view=learn&source=${category.source}`));
     await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
-    await expect(page.locator(`[data-lexigo-source="${category.source}"]`)).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(`[data-lexigo-source="${category.source}"]`)).toHaveAttribute("aria-checked", "true");
   }
   await expect(page.locator(".lx-app")).toBeVisible();
   await expect(page.locator(".lx-view")).not.toBeEmpty();
