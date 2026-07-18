@@ -71,6 +71,12 @@ import {
   type NavigationScrollPosition,
 } from "../lib/navigation-history";
 import {
+  navigationTabDestination,
+  rememberNavigationTabSnapshot,
+  type NavigationTabSnapshots,
+  type PrimaryNavigationView,
+} from "../lib/navigation-tabs";
+import {
   goalPercent,
   normalizedProgressModes,
   objectiveSuccessRate,
@@ -126,6 +132,11 @@ type PendingNavigationFocus = {
   identity: string;
   scroll: NavigationScrollPosition;
   behavior: ScrollBehavior;
+};
+
+type NavigationRequestOptions = {
+  scroll?: NavigationScrollPosition;
+  allowLessonExit?: boolean;
 };
 
 type CollectionDefinition = {
@@ -567,6 +578,40 @@ function navigationIcon(view: AppView): IconName {
   return "home";
 }
 
+type PrimaryNavigationProps = {
+  className: string;
+  ariaLabel: string;
+  currentView: AppView;
+  labelMode: "full" | "short";
+  onNavigate: (view: PrimaryNavigationView) => void;
+};
+
+function PrimaryNavigation({
+  className,
+  ariaLabel,
+  currentView,
+  labelMode,
+  onNavigate,
+}: PrimaryNavigationProps) {
+  return (
+    <nav className={className} aria-label={ariaLabel}>
+      {PRIMARY_NAVIGATION.map((entry) => (
+        <button
+          key={entry.view}
+          type="button"
+          data-navigation-view={entry.view}
+          className={currentView === entry.view ? "active" : ""}
+          aria-current={currentView === entry.view ? "page" : undefined}
+          onClick={() => onNavigate(entry.view as PrimaryNavigationView)}
+        >
+          <Icon name={navigationIcon(entry.view)} />
+          <span>{labelMode === "short" ? entry.shortLabel : entry.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 function mixedLessonFallbackMessage(lesson: LessonSessionResponse): string {
   if (lesson.source !== "mixed" || lesson.items.length === 0) return "";
   const words = lesson.items.filter((item) => item.kind !== "phrase").length;
@@ -636,9 +681,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
   const navigationRef = useRef(navigation);
+  const navigationTabsRef = useRef<NavigationTabSnapshots>({});
+  const lessonNavigationLockRef = useRef(false);
   const announcementCounterRef = useRef(0);
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigationFocus | null>(null);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
+  const lessonNavigationLocked = navigation.view === "lesson" && lessonStarted && !lessonComplete;
 
   const loadCatalogMetadataResource = useCallback(async (signal?: AbortSignal) => {
     setCatalogMetadataStatus("loading");
@@ -679,8 +727,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     window.history.scrollRestoration = "manual";
     let scrollFrame = 0;
 
-    const applyNavigation = (next: NavigationTarget) => {
+    const applyNavigation = (
+      next: NavigationTarget,
+      scroll: NavigationScrollPosition = { x: 0, y: 0 },
+    ) => {
       navigationRef.current = next;
+      navigationTabsRef.current = rememberNavigationTabSnapshot(
+        navigationTabsRef.current,
+        next,
+        scroll,
+      );
       setNavigation(next);
       if (next.source) setSource(next.source);
       writeNavigationCache(window.localStorage, next);
@@ -688,8 +744,14 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     const persistCurrentEntry = () => {
       const current = navigationRef.current;
+      const scroll = { x: window.scrollX, y: window.scrollY };
+      navigationTabsRef.current = rememberNavigationTabSnapshot(
+        navigationTabsRef.current,
+        current,
+        scroll,
+      );
       window.history.replaceState(
-        createNavigationHistoryState(current, { x: window.scrollX, y: window.scrollY }),
+        createNavigationHistoryState(current, scroll),
         "",
         window.location.href,
       );
@@ -705,12 +767,29 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     const syncNavigationFromHistory = (event: PopStateEvent) => {
       const next = navigationTargetFromHistory(event.state, window.location.search);
+      const scroll = navigationScrollFromHistory(event.state);
+      const current = navigationRef.current;
+      if (lessonNavigationLockRef.current && current.view === "lesson" && next.view !== "lesson") {
+        const currentScroll = { x: window.scrollX, y: window.scrollY };
+        window.history.pushState(
+          createNavigationHistoryState(current, currentScroll),
+          "",
+          navigationURL(current),
+        );
+        setLessonQueueNotice("Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».");
+        setPendingNavigation({
+          identity: navigationIdentity(current),
+          scroll: currentScroll,
+          behavior: "auto",
+        });
+        return;
+      }
       setPendingNavigation({
         identity: navigationIdentity(next),
-        scroll: navigationScrollFromHistory(event.state),
+        scroll,
         behavior: "auto",
       });
-      applyNavigation(next);
+      applyNavigation(next, scroll);
     };
 
     const explicitNavigation = window.location.search.length > 0;
@@ -724,7 +803,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       "",
       restored ? navigationURL(restored) : window.location.href,
     );
-    applyNavigation(initial);
+    applyNavigation(initial, { x: window.scrollX, y: window.scrollY });
 
     window.addEventListener("popstate", syncNavigationFromHistory);
     window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
@@ -799,6 +878,20 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     document.title = `${viewTitle(navigation.view)} · LexiGo`;
   }, [navigation.view]);
 
+  useEffect(() => {
+    lessonNavigationLockRef.current = lessonNavigationLocked;
+  }, [lessonNavigationLocked]);
+
+  useEffect(() => {
+    if (!lessonNavigationLocked) return;
+    const preventAccidentalUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", preventAccidentalUnload);
+    return () => window.removeEventListener("beforeunload", preventAccidentalUnload);
+  }, [lessonNavigationLocked]);
+
   useLayoutEffect(() => {
     navigationRef.current = navigation;
     if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
@@ -858,21 +951,43 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     : 0;
   const successRate = objectiveSuccessRate(progress);
 
-  function navigate(target: NavigationTarget, replace = false) {
+  function navigate(
+    target: NavigationTarget,
+    replace = false,
+    options: NavigationRequestOptions = {},
+  ) {
+    if (
+      lessonNavigationLocked
+      && navigation.view === "lesson"
+      && target.view !== "lesson"
+      && !options.allowLessonExit
+    ) {
+      setLessonQueueNotice("Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».");
+      window.requestAnimationFrame(() => mainContentRef.current?.focus({ preventScroll: true }));
+      return;
+    }
+
+    const currentScroll = { x: window.scrollX, y: window.scrollY };
+    navigationTabsRef.current = rememberNavigationTabSnapshot(
+      navigationTabsRef.current,
+      navigation,
+      currentScroll,
+    );
+    const targetScroll = options.scroll ?? { x: 0, y: 0 };
     const url = navigationURL(target);
     window.history.replaceState(
-      createNavigationHistoryState(navigation, { x: window.scrollX, y: window.scrollY }),
+      createNavigationHistoryState(navigation, currentScroll),
       "",
       window.location.href,
     );
 
-    const nextState = createNavigationHistoryState(target, { x: 0, y: 0 });
+    const nextState = createNavigationHistoryState(target, targetScroll);
     if (replace) window.history.replaceState(nextState, "", url);
     else window.history.pushState(nextState, "", url);
 
     setPendingNavigation({
       identity: navigationIdentity(target),
-      scroll: { x: 0, y: 0 },
+      scroll: targetScroll,
       behavior: navigationScrollBehavior(window),
     });
     setNavigation(target);
@@ -880,6 +995,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     writeNavigationCache(window.localStorage, target);
     setError("");
     if (target.view !== "lesson") setLessonQueueNotice("");
+  }
+
+  function navigatePrimary(view: PrimaryNavigationView) {
+    if (navigation.view === view) return;
+    const destination = navigationTabDestination(navigationTabsRef.current, view);
+    navigate(destination.target, false, { scroll: destination.scroll });
   }
 
   function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
@@ -1516,9 +1637,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setLessonQueueNotice("");
   }
 
-  function saveAndExitLesson() {
+  function saveAndExitLesson(target: PrimaryNavigationView = "home") {
     clearLessonState();
-    navigate({ view: "home" });
+    navigate({ view: target }, false, { allowLessonExit: true });
   }
 
   function moveToServerIndex(index: number) {
@@ -1645,29 +1766,41 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const initial = session?.user.displayName?.trim().charAt(0).toUpperCase()
       || session?.user.email.charAt(0).toUpperCase()
       || "L";
+
+    if (lessonNavigationLocked) {
+      return (
+        <header className="lx-header lx-header--lesson">
+          <div className="lx-lesson-focus-brand">
+            <span className="lx-logo-mark"><span>L</span></span>
+            <div>
+              <strong>LexiGo</strong>
+              <small>{sourceLabel(source)} · прогресс сохраняется после каждой оценки</small>
+            </div>
+          </div>
+          <div className="lx-lesson-focus-badge" aria-label="Активный урок">
+            <Icon name="learn" />
+            <span>Урок в процессе</span>
+          </div>
+        </header>
+      );
+    }
+
     return (
       <header className="lx-header">
-        <button className="lx-brand" type="button" onClick={() => navigate({ view: "home" })}>
+        <button className="lx-brand" type="button" onClick={() => navigatePrimary("home")}>
           <span className="lx-logo-mark"><span>L</span></span>
           <strong>LexiGo</strong>
         </button>
-        <nav className="lx-nav" aria-label="Основная навигация">
-          {PRIMARY_NAVIGATION.map((entry) => (
-            <button
-              key={entry.view}
-              type="button"
-              className={navigation.view === entry.view ? "active" : ""}
-              aria-current={navigation.view === entry.view ? "page" : undefined}
-              onClick={() => navigate({ view: entry.view })}
-            >
-              <Icon name={navigationIcon(entry.view)} />
-              <span>{entry.label}</span>
-            </button>
-          ))}
-        </nav>
+        <PrimaryNavigation
+          className="lx-nav lx-primary-navigation"
+          ariaLabel="Основная навигация"
+          currentView={navigation.view}
+          labelMode="full"
+          onNavigate={navigatePrimary}
+        />
         <div className="lx-header-tools">
           {session && progress ? (
-            <button className="lx-streak" type="button" aria-current={navigation.view === "progress" ? "page" : undefined} onClick={() => navigate({ view: "progress" })}>
+            <button className="lx-streak" type="button" aria-current={navigation.view === "progress" ? "page" : undefined} onClick={() => navigatePrimary("progress")}>
               <Icon name="flame" />
               <span>{progress.currentStreak} дн.</span>
             </button>
@@ -2370,7 +2503,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     return (
       <section className="lx-lesson-page">
-        <div className="lx-lesson-progress"><strong>{currentItem.kind === "phrase" ? "Фраза" : "Слово"} {currentIndex + 1} из {items.length}</strong><div className="lx-goal-track" role="progressbar" aria-label="Прогресс урока" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(lessonPercent)} aria-valuetext={`${currentIndex + 1} из ${items.length} элементов`}><span style={{ width: `${lessonPercent}%` }}/></div><span>{lessonPercent}% урока</span><button className="lx-button ghost" type="button" onClick={saveAndExitLesson}>Сохранить и выйти</button></div>
+        <div className="lx-lesson-progress"><strong>{currentItem.kind === "phrase" ? "Фраза" : "Слово"} {currentIndex + 1} из {items.length}</strong><div className="lx-goal-track" role="progressbar" aria-label="Прогресс урока" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(lessonPercent)} aria-valuetext={`${currentIndex + 1} из ${items.length} элементов`}><span style={{ width: `${lessonPercent}%` }}/></div><span>{lessonPercent}% урока</span><button className="lx-button ghost" type="button" onClick={() => saveAndExitLesson()}>Сохранить и выйти</button></div>
         <div className="lx-lesson-layout">
           <div className="lx-study-column" data-study-view={studyView}>
             <div className="lx-study-tabs" role="tablist" aria-label="Представление учебной карточки">
@@ -2431,7 +2564,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             <div><span className="orange"><Icon name="repeat"/></span><p>На повторении<strong>{items.filter((item) => item.status !== "new").length}</strong></p></div>
             <div><span className="green"><Icon name="check"/></span><p>Оценено<strong>{ratingValues.length}</strong></p></div>
             <div><span className="blue"><Icon name="clock"/></span><p>Осталось<strong>{remaining}</strong></p></div>
-            <button type="button" onClick={() => navigate({ view: "progress" })}><Icon name="bolt"/><span><strong>Продолжайте</strong><small>Каждая оценка обновляет вашу интервальную очередь.</small></span><Icon name="arrow" size={16}/></button>
+            <button type="button" onClick={() => saveAndExitLesson("progress")}><Icon name="bolt"/><span><strong>Сохранить и открыть прогресс</strong><small>Урок останется доступен для продолжения с текущей позиции.</small></span><Icon name="arrow" size={16}/></button>
           </aside>
         </div>
       </section>
@@ -2447,12 +2580,22 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               : renderLesson();
 
   return (
-    <div className="lx-app">
+    <div className={`lx-app${lessonNavigationLocked ? " lx-lesson-focus-mode" : ""}`}>
       <a className="lx-skip-link" href="#lexigo-main-content" onClick={skipToMainContent}>
         Перейти к основному содержимому
       </a>
       {renderHeader()}
-      <main
+      <div className="lx-app-shell">
+        {!lessonNavigationLocked ? (
+          <PrimaryNavigation
+            className="lx-navigation-rail lx-primary-navigation"
+            ariaLabel="Навигация по разделам"
+            currentView={navigation.view}
+            labelMode="full"
+            onNavigate={navigatePrimary}
+          />
+        ) : null}
+        <main
         id="lexigo-main-content"
         ref={mainContentRef}
         className="lx-main-content"
@@ -2476,20 +2619,17 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             onClose={() => setCalendarOpen(false)}
           />
         </div>
-      </main>
-      <nav className="lx-mobile-nav" aria-label="Мобильная навигация">
-        {PRIMARY_NAVIGATION.map((entry) => (
-          <button
-            key={entry.view}
-            type="button"
-            className={navigation.view === entry.view ? "active" : ""}
-            aria-current={navigation.view === entry.view ? "page" : undefined}
-            onClick={() => navigate({ view: entry.view })}
-          >
-            <Icon name={navigationIcon(entry.view)}/><span>{entry.shortLabel}</span>
-          </button>
-        ))}
-      </nav>
+        </main>
+      </div>
+      {!lessonNavigationLocked ? (
+        <PrimaryNavigation
+          className="lx-mobile-nav lx-primary-navigation"
+          ariaLabel="Мобильная навигация"
+          currentView={navigation.view}
+          labelMode="short"
+          onNavigate={navigatePrimary}
+        />
+      ) : null}
       {routeAnnouncement.message ? (
         <p
           key={routeAnnouncement.id}
