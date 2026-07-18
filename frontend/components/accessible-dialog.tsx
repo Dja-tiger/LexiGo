@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const FOCUSABLE_SELECTOR = [
@@ -134,14 +134,12 @@ export function AccessibleDialog({
 }: AccessibleDialogProps) {
   const dialogRef = useRef<HTMLElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const portalRootRef = useRef<HTMLElement | null>(null);
-
-  if (!portalRootRef.current && typeof document !== "undefined") {
+  const [portalRoot] = useState<HTMLElement | null>(() => {
+    if (typeof document === "undefined") return null;
     const root = document.createElement("div");
     root.dataset.accessibleDialogPortal = "true";
-    portalRootRef.current = root;
-  }
-  const portalRoot = portalRootRef.current;
+    return root;
+  });
 
   useEffect(() => {
     if (!open || !portalRoot) return;
