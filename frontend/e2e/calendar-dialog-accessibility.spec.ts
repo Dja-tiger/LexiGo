@@ -132,8 +132,11 @@ test("calendar dialog isolates the application and contains keyboard and program
   await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
 
+  const activeBeforeAttempt = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
   await page.locator(".lx-nav button").first().evaluate((element) => (element as HTMLElement).focus());
-  await expect(title).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.getAttribute("aria-label"))).toBe(activeBeforeAttempt);
+  await expect(close).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)).toBe(true);
 
   const axe = await new AxeBuilder({ page })
     .withRules([
