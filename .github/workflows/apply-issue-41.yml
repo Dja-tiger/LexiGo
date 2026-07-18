@@ -32,22 +32,37 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Apply deterministic product patch
         run: |
-          python scripts/apply_issue_41.py
-          gofmt -w backend/internal/words backend/integration/catalog_metadata_test.go
-          git diff --check
+          set -o pipefail
+          {
+            python scripts/apply_issue_41.py
+            gofmt -w backend/internal/words backend/integration/catalog_metadata_test.go
+            git diff --check
+          } 2>&1 | tee issue41.log
       - name: Verify backend compile and unit contracts
         working-directory: backend
         run: |
-          go test ./internal/words ./internal/server
-          go test -run '^$' -tags=integration ./integration
+          set -o pipefail
+          {
+            go test ./internal/words ./internal/server
+            go test -run '^$' -tags=integration ./integration
+          } 2>&1 | tee -a ../issue41.log
       - name: Verify frontend static gates
         working-directory: frontend
         run: |
-          npm ci --no-audit --no-fund
-          npm run lint
-          npm run typecheck
-          npm test
-          npm run build
+          set -o pipefail
+          {
+            npm ci --no-audit --no-fund
+            npm run lint
+            npm run typecheck
+            npm test
+            npm run build
+          } 2>&1 | tee -a ../issue41.log
+      - name: Upload apply diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-41-apply-diagnostics
+          path: issue41.log
       - name: Commit product-only diff
         run: |
           git config user.name "github-actions[bot]"
