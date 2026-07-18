@@ -34,6 +34,7 @@ jobs:
         run: |
           set -o pipefail
           {
+            sed -i '/^[[:space:]]*setCatalogMetadataStatus("loading");$/d' scripts/apply_issue_41.py
             python3 scripts/apply_issue_41.py
             gofmt -w backend/internal/words backend/integration/catalog_metadata_test.go
             git diff --check
