@@ -9,8 +9,8 @@ import {
 
 const calendar = "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n";
 const fallbackURL = "/api/calendar/reminder?time=19%3A00";
-const file = { name: "lexigo-study-reminder.ics", type: "text/calendar;charset=utf-8" } as File;
-const blob = { type: "text/calendar;charset=utf-8" } as Blob;
+const file = { name: "lexigo-study-reminder.ics", type: "text/calendar" } as File;
+const blob = { type: "text/calendar" } as Blob;
 
 function adapters(
   shareResult: AppleCalendarShareResult,
