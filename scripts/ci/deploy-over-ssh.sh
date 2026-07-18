@@ -20,13 +20,14 @@ GHCR_TOKEN="${GHCR_TOKEN:?GHCR_TOKEN is required}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RUN_DIR="$RUNNER_TEMP/lexigo-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-KEY_FILE="$RUN_DIR/id_ed25519"
 KNOWN_HOSTS_FILE="$RUN_DIR/known_hosts"
 ARCHIVE_FILE="$RUN_DIR/lexigo-deploy.tgz"
+AGENT_SOCKET="$RUN_DIR/agent.sock"
 LOG_FILE="$RUNNER_TEMP/lexigo-${ENVIRONMENT}-deploy.log"
 REMOTE_ARCHIVE="/tmp/lexigo-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.tgz"
 PUBLIC_URL="http://${DEPLOY_HOST}"
 TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
+SSH_AGENT_PID=""
 
 log() {
   printf '[deploy] %s\n' "$*"
@@ -40,7 +41,13 @@ die() {
 cleanup() {
   local status=$?
   trap - EXIT
+
   unset SSH_KEY DEPLOY_KNOWN_HOSTS GHCR_TOKEN
+
+  if [[ -n "$SSH_AGENT_PID" ]]; then
+    ssh-agent -k >/dev/null 2>&1 || kill "$SSH_AGENT_PID" >/dev/null 2>&1 || true
+  fi
+
   rm -rf -- "$RUN_DIR"
   exit "$status"
 }
@@ -79,16 +86,21 @@ install -d -m 0700 "$RUN_DIR"
 : > "$LOG_FILE"
 chmod 0600 "$LOG_FILE"
 
-printf '%s\n' "$SSH_KEY" > "$KEY_FILE"
 printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$KNOWN_HOSTS_FILE"
-chmod 0600 "$KEY_FILE" "$KNOWN_HOSTS_FILE"
+chmod 0600 "$KNOWN_HOSTS_FILE"
+unset DEPLOY_KNOWN_HOSTS
 
-ssh-keygen -y -f "$KEY_FILE" >/dev/null
+export SSH_AUTH_SOCK="$AGENT_SOCKET"
+export SSH_ASKPASS_REQUIRE=never
+eval "$(ssh-agent -a "$AGENT_SOCKET" -s)" >/dev/null
+
+printf '%s\n' "$SSH_KEY" | ssh-add - >/dev/null
+unset SSH_KEY
+ssh-add -l >/dev/null
 
 SSH_OPTIONS=(
-  -i "$KEY_FILE"
   -o BatchMode=yes
-  -o IdentitiesOnly=yes
+  -o "IdentityAgent=$SSH_AUTH_SOCK"
   -o StrictHostKeyChecking=yes
   -o "UserKnownHostsFile=$KNOWN_HOSTS_FILE"
   -o ConnectTimeout=15
@@ -118,4 +130,5 @@ printf '%s' "$GHCR_TOKEN" \
       2>&1 \
   | tee "$LOG_FILE"
 
+unset GHCR_TOKEN
 log "$ENVIRONMENT deployment completed"
