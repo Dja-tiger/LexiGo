@@ -70,6 +70,31 @@
   min-width: 0;
 }
 
+.lx-test-prompt-row {
+  width: min(1050px, 100%);
+  align-items: center;
+  margin: 18px auto 0;
+  text-align: left;
+}
+
+.lx-test-prompt-row > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lx-test-prompt-row h1 {
+  margin: 0;
+  font-size: clamp(38px, 5vw, 67px);
+  line-height: 1.12;
+  letter-spacing: -0.05em;
+}
+
+.lx-test-prompt-row p {
+  margin: 12px 0 0;
+  color: #78869c;
+  font-size: 19px;
+}
+
 .lx-detail-speech-row .lx-speech-player > button,
 .lx-test-prompt-row .lx-speech-player > button {
   display: grid;
@@ -107,5 +132,10 @@
 
   .lx-lesson-focus-mode .lx-speech-feedback {
     bottom: calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .lx-detail-speech-row,
+  .lx-test-prompt-row {
+    gap: 10px;
   }
 }
