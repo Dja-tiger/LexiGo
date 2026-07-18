@@ -21,7 +21,7 @@ LexiGo password recovery uses a one-time bearer token delivered outside the brow
 - request and confirm endpoints are rate-limited independently by source IP;
 - request responses do not reveal account existence;
 - reset responses use stable error codes and optional field metadata;
-- the frontend never displays or persists the reset token outside component memory and the current URL fragment; legacy query links remain readable for rollout compatibility;
+- the frontend reads the token from the URL fragment into component memory and immediately removes fragment/query credentials with `history.replaceState`; legacy query links remain readable for rollout compatibility;
 - after success the token is removed from browser history with `replaceState`;
 - production requires SMTP delivery; logging the bearer URL is allowed only in local/test environments.
 

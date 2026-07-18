@@ -663,6 +663,13 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       || "";
     if (!token) return;
     const timer = window.setTimeout(() => {
+      target.searchParams.delete("reset_token");
+      target.hash = "";
+      window.history.replaceState(
+        { lexigo: true, view: "profile" },
+        "",
+        target.pathname + (target.searchParams.size ? `?${target.searchParams.toString()}` : ""),
+      );
       setResetToken(token);
       setAuthMode("reset");
       setReturnView("profile");

@@ -136,6 +136,7 @@ test("one-time reset link validates confirmation and returns to login without ex
 
   await page.goto("/?view=profile#reset_token=one-time-token");
   await expect(page.getByRole("heading", { name: "Создайте новый пароль" })).toBeVisible();
+  await expect(page).toHaveURL(/\?view=profile$/);
   await expect(page.locator("#auth-password")).toHaveAttribute("name", "password");
   await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.locator("#auth-passwordConfirmation")).toHaveAttribute("autocomplete", "new-password");
