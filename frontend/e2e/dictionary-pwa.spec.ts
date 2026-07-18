@@ -93,6 +93,16 @@ async function installAPI(context: BrowserContext) {
     const url = new URL(request.url());
     const path = url.pathname;
 
+    if (path === "/api/v1/catalog/metadata") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        catalogVersion: "sha256:e2e-catalog",
+        updatedAt: "2026-07-18T00:00:00Z",
+        totals: { items: 6, words: 3, phrases: 3 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        topics: [{ topic: "Backend", count: 2 }],
+      }) });
+      return;
+    }
     if (path === "/api/v1/auth/refresh") {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
       return;

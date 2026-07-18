@@ -93,6 +93,16 @@ async function installBrowserMocks(page: Page) {
     const url = new URL(request.url());
     const path = url.pathname;
 
+    if (path === "/api/v1/catalog/metadata") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        catalogVersion: "sha256:e2e-catalog",
+        updatedAt: "2026-07-18T00:00:00Z",
+        totals: { items: 6, words: 3, phrases: 3 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        topics: [{ topic: "Backend", count: 2 }],
+      }) });
+      return;
+    }
     if (path === "/api/v1/auth/refresh") {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
       return;
@@ -261,4 +271,12 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   await expect(speech).toHaveAttribute("aria-label", "Произнести: absolute");
   await expect(tabs).toHaveCount(3);
   expect(runtimeErrors).toEqual([]);
+});
+
+
+test("catalog counters come from public metadata without DOM rewriting", async ({ page }) => {
+  await page.goto("/?view=library");
+  await expect(page.getByText("3 слова и 3 технические фразы с общей системой повторений.")).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("799");
+  await expect(page.locator("body")).not.toContainText("579");
 });

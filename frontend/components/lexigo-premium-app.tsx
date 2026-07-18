@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "../lib/api";
 import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
+import { catalogCountText, catalogSummaryText, type CatalogMetadata, type CatalogMetadataStatus } from "../lib/catalog-metadata";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
 import {
   lessonCompositionDescription,
@@ -88,7 +89,6 @@ type CollectionDefinition = {
   shortLabel: string;
   description: string;
   symbol: string;
-  count: number;
 };
 
 type LessonSessionResponse = {
@@ -163,7 +163,6 @@ type IconName =
   | "close";
 
 const SORT_STORAGE_PREFIX = "lexigo.catalog.sort.";
-const WORD_CATALOG_COUNT = 799;
 const DEFAULT_PHRASE_CATALOG = Array.from(
   new Map([...TECHNICAL_PHRASES, ...EXPANDED_PHRASES].map((item) => [item.id, item])).values(),
 );
@@ -175,7 +174,6 @@ const COLLECTIONS: CollectionDefinition[] = [
     shortLabel: "Для жизни",
     description: "Дом, покупки, услуги, здоровье и повседневное общение",
     symbol: "A1",
-    count: 55,
   },
   {
     source: "travel",
@@ -183,7 +181,6 @@ const COLLECTIONS: CollectionDefinition[] = [
     shortLabel: "Путешествия",
     description: "Аэропорт, отель, транспорт, документы и навигация",
     symbol: "✈",
-    count: 55,
   },
   {
     source: "data-engineering",
@@ -191,7 +188,6 @@ const COLLECTIONS: CollectionDefinition[] = [
     shortLabel: "Data Engineer",
     description: "Моделирование, пайплайны, Kafka, качество и хранение данных",
     symbol: "DB",
-    count: 55,
   },
   {
     source: "backend",
@@ -199,7 +195,6 @@ const COLLECTIONS: CollectionDefinition[] = [
     shortLabel: "Backend",
     description: "API, архитектура, базы данных, конкурентность и надёжность",
     symbol: "</>",
-    count: 55,
   },
 ];
 
@@ -214,13 +209,12 @@ const SOURCE_OPTIONS: Array<{
   label: string;
   hint: string;
   icon: IconName;
-  count: number;
 }> = [
-  { value: "mixed", label: "Смешанная практика", hint: "Слова и фразы в детерминированном чередовании", icon: "shuffle", count: WORD_CATALOG_COUNT + DEFAULT_PHRASE_CATALOG.length },
-  { value: "noun", label: "Существительные", hint: "Системы, объекты и метрики", icon: "cube", count: 383 },
-  { value: "verb", label: "Глаголы", hint: "Действия, процессы и операции", icon: "bolt", count: 179 },
-  { value: "adjective", label: "Прилагательные", hint: "Состояния и характеристики", icon: "spark", count: 193 },
-  { value: "phrases", label: "Технические фразы", hint: "Рабочие chunks и cloze", icon: "code", count: DEFAULT_PHRASE_CATALOG.length },
+  { value: "mixed", label: "Смешанная практика", hint: "Слова и фразы в детерминированном чередовании", icon: "shuffle" },
+  { value: "noun", label: "Существительные", hint: "Системы, объекты и метрики", icon: "cube" },
+  { value: "verb", label: "Глаголы", hint: "Действия, процессы и операции", icon: "bolt" },
+  { value: "adjective", label: "Прилагательные", hint: "Состояния и характеристики", icon: "spark" },
+  { value: "phrases", label: "Технические фразы", hint: "Рабочие chunks и cloze", icon: "code" },
 ];
 
 const MODE_OPTIONS: Array<{
@@ -309,16 +303,18 @@ function Icon({ name, size = 19 }: { name: IconName; size?: number }) {
 function CollectionCard({
   definition,
   variant,
+  countText,
   selected = false,
   onSelect,
 }: {
   definition: CollectionDefinition;
   variant: "home" | "selector" | "library";
+  countText: string;
   selected?: boolean;
   onSelect: () => void;
 }) {
   const title = variant === "home" ? definition.shortLabel : definition.label;
-  const hint = variant === "home" ? `${definition.count} слов и терминов` : definition.description;
+  const hint = variant === "home" ? countText : definition.description;
   return (
     <button
       type="button"
@@ -331,7 +327,7 @@ function CollectionCard({
     >
       <span className="lx-themed-symbol">{definition.symbol}</span>
       <div><strong>{title}</strong><small>{hint}</small></div>
-      {variant === "selector" ? <b>{definition.count}</b> : <span className="lx-themed-arrow" aria-hidden="true">→</span>}
+      {variant === "selector" ? <b data-catalog-count-state={countText === "Загрузка…" ? "loading" : undefined}>{countText}</b> : <span className="lx-themed-arrow" aria-hidden="true">→</span>}
     </button>
   );
 }
@@ -544,6 +540,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [returnView, setReturnView] = useState<AppView>("home");
   const [session, setSession] = useState<Session | null>(initialSession);
   const [progress, setProgress] = useState<ProgressSummary | null>(null);
+  const [catalogMetadata, setCatalogMetadata] = useState<CatalogMetadata | null>(null);
+  const [catalogMetadataStatus, setCatalogMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
   const [hydratedUserID, setHydratedUserID] = useState("");
   const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>(DEFAULT_PHRASE_CATALOG);
@@ -584,6 +582,22 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [previewingLesson, setPreviewingLesson] = useState(false);
   const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    requestJSON<CatalogMetadata>("/api/v1/catalog/metadata", { signal: controller.signal })
+      .then((metadata) => {
+        setCatalogMetadata(metadata);
+        setCatalogMetadataStatus("ready");
+      })
+      .catch((metadataError) => {
+        if (controller.signal.aborted) return;
+        console.error("catalog metadata request failed", metadataError);
+        setCatalogMetadata(null);
+        setCatalogMetadataStatus("error");
+      });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const applyNavigation = (next: NavigationTarget) => {
@@ -677,8 +691,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     : undefined;
   const ratingValues = Object.values(ratings);
   const lessonSummary = summarizePersistedLesson(ratings, items.length);
-  const overallPercent = progress && progress.totalWords + progress.totalPhrases > 0
-    ? Math.round(((progress.masteredWords + progress.masteredPhrases) / (progress.totalWords + progress.totalPhrases)) * 100)
+  const overallPercent = progress && catalogMetadata && catalogMetadata.totals.items > 0
+    ? Math.round(((progress.masteredWords + progress.masteredPhrases) / catalogMetadata.totals.items) * 100)
     : 0;
   const successRate = objectiveSuccessRate(progress);
 
@@ -1425,7 +1439,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           {SOURCE_OPTIONS.filter((option) => option.value !== "mixed").map((option) => (
             <button key={option.value} type="button" onClick={() => navigate(option.value === "phrases" ? { view: "phrases" } : { view: "learn", source: option.value })}>
               <span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span>
-              <div><strong>{option.label}</strong><small>{option.count} {option.value === "phrases" ? "фразы" : "слов"}</small></div>
+              <div><strong>{option.label}</strong><small>{catalogCountText(
+                      catalogMetadata,
+                      catalogMetadataStatus,
+                      option.value,
+                      option.value === "mixed"
+                        ? ["элемент", "элемента", "элементов"]
+                        : option.value === "phrases"
+                          ? ["фраза", "фразы", "фраз"]
+                          : ["слово", "слова", "слов"],
+                    )}</small></div>
               <Icon name="arrow" size={17}/>
             </button>
           ))}
@@ -1434,6 +1457,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
               key={definition.source}
               definition={definition}
               variant="home"
+              countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["слово и термин", "слова и термина", "слов и терминов"])}
               onSelect={() => navigate({ view: "learn", source: definition.source })}
             />
           ))}
@@ -1474,7 +1498,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                 <button key={option.value} type="button" data-lexigo-source={option.value} aria-pressed={source === option.value} className={source === option.value ? "selected" : ""} onClick={() => setSource(option.value)}>
                   <span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span>
                   <div><strong>{option.label}</strong><small>{option.hint}</small></div>
-                  <b>{option.count}</b>
+                  <b data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, option.value, ["элемент", "элемента", "элементов"])}</b>
                 </button>
               ))}
               {COLLECTIONS.map((definition) => (
@@ -1482,6 +1506,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                   key={definition.source}
                   definition={definition}
                   variant="selector"
+                  countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["элемент", "элемента", "элементов"])}
                   selected={source === definition.source}
                   onSelect={() => setSource(definition.source)}
                 />
@@ -1524,7 +1549,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
     return (
       <>
-        <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication.</p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress?.duePhrases ?? 0} фраз готовы к повторению</span></div></section>
+        <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress?.duePhrases ?? 0} фраз готовы к повторению</span></div></section>
         <div className="lx-topic-filter">{phraseTopics.map((topic) => <button key={topic} type="button" className={phraseTopic === topic ? "selected" : ""} onClick={() => setPhraseTopic(topic)}>{topic === "all" ? "Все темы" : topic}</button>)}</div>
         <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => updateCatalogSort("phrases", mode)} />
         <section className="lx-phrase-grid">{sortedVisiblePhrases.map((phrase) => <button key={itemKey(phrase)} type="button" onClick={() => navigate({ view: "phrases", detail: itemKey(phrase) })}><span>{phrase.topic}</span><strong>{phrase.prompt}</strong><small>{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button>)}</section>
@@ -1536,19 +1561,29 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function renderLibrary() {
     return (
       <>
-        <section className="lx-page-heading"><div><span>СЛОВАРЬ</span><h1>Материалы, организованные по учебной задаче</h1><p>{progress?.totalWords ?? WORD_CATALOG_COUNT} слов и {progress?.totalPhrases ?? DEFAULT_PHRASE_CATALOG.length} технических фраз с общей системой повторений.</p></div><div className="lx-heading-badge"><Icon name="library"/><span>{progress ? `${progress.masteredWords + progress.masteredPhrases} освоено` : "Откройте раздел"}</span></div></section>
+        <section className="lx-page-heading"><div><span>СЛОВАРЬ</span><h1>Материалы, организованные по учебной задаче</h1><p>{catalogSummaryText(catalogMetadata, catalogMetadataStatus)}</p></div><div className="lx-heading-badge"><Icon name="library"/><span>{progress ? `${progress.masteredWords + progress.masteredPhrases} освоено` : "Откройте раздел"}</span></div></section>
         <section className="lx-library-grid">
-          {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" data-lexigo-dictionary-source={option.value} aria-label={`Открыть раздел: ${option.label}`} onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{option.count} {option.value === "phrases" ? "фразы" : "слов"}</small><p>{option.hint}</p><em>Открыть <Icon name="arrow" size={15}/></em></button>)}
+          {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" data-lexigo-dictionary-source={option.value} aria-label={`Открыть раздел: ${option.label}`} onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{catalogCountText(
+                      catalogMetadata,
+                      catalogMetadataStatus,
+                      option.value,
+                      option.value === "mixed"
+                        ? ["элемент", "элемента", "элементов"]
+                        : option.value === "phrases"
+                          ? ["фраза", "фразы", "фраз"]
+                          : ["слово", "слова", "слов"],
+                    )}</small><p>{option.hint}</p><em>Открыть <Icon name="arrow" size={15}/></em></button>)}
           {COLLECTIONS.map((definition) => (
             <CollectionCard
               key={definition.source}
               definition={definition}
               variant="library"
+              countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["слово и термин", "слова и термина", "слов и терминов"])}
               onSelect={() => navigate({ view: "learn", source: definition.source })}
             />
           ))}
         </section>
-        {session && progress ? <section className="lx-summary-panel"><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong><small>из {progress.totalWords}</small></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong><small>из {progress.totalPhrases}</small></div><div><span>Due-слова</span><strong>{progress.dueWords}</strong><small>готовы сейчас</small></div><div><span>Due-фразы</span><strong>{progress.duePhrases}</strong><small>готовы сейчас</small></div></section> : null}
+        {session && progress ? <section className="lx-summary-panel"><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong><small>{catalogMetadataStatus === "ready" && catalogMetadata ? `из ${catalogMetadata.totals.words.toLocaleString("ru-RU")}` : catalogMetadataStatus === "loading" ? "каталог загружается" : "общее количество недоступно"}</small></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong><small>{catalogMetadataStatus === "ready" && catalogMetadata ? `из ${catalogMetadata.totals.phrases.toLocaleString("ru-RU")}` : catalogMetadataStatus === "loading" ? "каталог загружается" : "общее количество недоступно"}</small></div><div><span>Due-слова</span><strong>{progress.dueWords}</strong><small>готовы сейчас</small></div><div><span>Due-фразы</span><strong>{progress.duePhrases}</strong><small>готовы сейчас</small></div></section> : null}
       </>
     );
   }
