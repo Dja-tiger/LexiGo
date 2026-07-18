@@ -1,0 +1,48 @@
+name: Issue 51 web container diagnostics
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'fix/issue-51-reliable-speech'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-51-reliable-speech
+
+      - name: Build web image with plain progress
+        id: build
+        shell: bash
+        run: |
+          set +e
+          docker build --no-cache --progress=plain -t lexigo-web-issue51-diagnostic frontend \
+            > issue51-web-container.log 2>&1
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          tail -n 250 issue51-web-container.log
+          exit 0
+
+      - name: Upload complete container log
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue51-web-container-diagnostics
+          path: issue51-web-container.log
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Fail when the diagnostic build failed
+        if: steps.build.outputs.exit_code != '0'
+        run: exit 1
