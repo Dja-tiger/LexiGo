@@ -28,6 +28,7 @@ Record device model, OS/browser version, installed voice language, silent-mode s
 9. Verify both EventTarget-style `voiceschanged` and the older Safari `onvoiceschanged` property path where available.
 10. No stale audio continues after moving to another route or lesson item.
 11. Screen-reader focus and announcement remain stable after start, stop, end and error.
+12. The production `node:22-alpine` Web image completes its multi-stage build and contains the Next.js standalone output.
 
 ## Release blockers
 
@@ -39,4 +40,5 @@ Do not release when any of the following is reproduced:
 - the control remains visually active after end/error/cancel;
 - unsupported browsers show an enabled control that does nothing;
 - an English voice is available but a non-English voice is selected;
-- a playback error is silent or cannot be retried.
+- a playback error is silent or cannot be retried;
+- the production Web container cannot be built from `frontend/Dockerfile`.
