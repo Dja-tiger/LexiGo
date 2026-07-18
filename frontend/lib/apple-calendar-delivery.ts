@@ -43,20 +43,21 @@ export async function shareAppleCalendarFile(
     return "unsupported";
   }
 
-  const data: FileShareData = {
+  const filePayload: FileShareData = { files: [file] };
+  const sharePayload: FileShareData = {
+    ...filePayload,
     title: CALENDAR_EVENT_TITLE,
     text: "Добавить повторяющееся напоминание LexiGo в календарь",
-    files: [file],
   };
 
   try {
-    if (!shareNavigator.canShare(data)) return "unsupported";
+    if (!shareNavigator.canShare(filePayload)) return "unsupported";
   } catch {
     return "unsupported";
   }
 
   try {
-    await shareNavigator.share(data);
+    await shareNavigator.share(sharePayload);
     return "shared";
   } catch (error) {
     return errorName(error) === "AbortError" ? "cancelled" : "unsupported";
