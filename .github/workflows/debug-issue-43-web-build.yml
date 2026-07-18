@@ -1,0 +1,42 @@
+name: Debug Issue 43 Web Build
+
+on:
+  pull_request:
+
+jobs:
+  web-build:
+    if: >-
+      github.head_ref == 'fix/issue-43-public-auth-recovery' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-43-public-auth-recovery
+      - name: Capture plain Docker build output
+        run: |
+          set -o pipefail
+          docker build --progress=plain --no-cache -t lexigo-web-issue43-debug frontend 2>&1 | tee web-build.log
+      - name: Record runner resources
+        if: always()
+        run: |
+          {
+            echo '=== disk ==='
+            df -h
+            echo '=== memory ==='
+            free -h
+            echo '=== docker ==='
+            docker system df
+          } >> web-build.log
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-43-web-build-diagnostics
+          path: web-build.log
+          retention-days: 7
