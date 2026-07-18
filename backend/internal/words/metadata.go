@@ -89,18 +89,20 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 	if err != nil {
 		return CatalogMetadata{}, fmt.Errorf("query catalog topic totals: %w", err)
 	}
-	defer rows.Close()
 	metadata.Topics = make([]CatalogTopicTotal, 0)
 	for rows.Next() {
 		var topic CatalogTopicTotal
 		if err := rows.Scan(&topic.Topic, &topic.Count); err != nil {
+			rows.Close()
 			return CatalogMetadata{}, fmt.Errorf("scan catalog topic total: %w", err)
 		}
 		metadata.Topics = append(metadata.Topics, topic)
 	}
 	if err := rows.Err(); err != nil {
+		rows.Close()
 		return CatalogMetadata{}, fmt.Errorf("iterate catalog topic totals: %w", err)
 	}
+	rows.Close()
 
 	metadata.CatalogVersion = catalogMetadataVersion(metadata)
 	if err := tx.Commit(ctx); err != nil {
