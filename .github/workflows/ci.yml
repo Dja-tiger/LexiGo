@@ -265,6 +265,6 @@ jobs:
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:${{ github.sha }}
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:main
           cache-from: type=gha,scope=${{ matrix.component }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }},ignore-error=true
           provenance: mode=max
           sbom: true
