@@ -4,25 +4,44 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/mail"
-	"strings"
 	"time"
 )
 
 type Service struct {
-	users      UserRepository
-	refresh    RefreshTokenRepository
-	tokens     *TokenManager
-	refreshTTL time.Duration
-	now        func() time.Time
+	users         UserRepository
+	refresh       RefreshTokenRepository
+	tokens        *TokenManager
+	refreshTTL    time.Duration
+	passwordReset passwordResetConfig
+	now           func() time.Time
 }
 
-func NewService(users UserRepository, refresh RefreshTokenRepository, tokens *TokenManager, refreshTTL time.Duration) *Service {
-	return &Service{users: users, refresh: refresh, tokens: tokens, refreshTTL: refreshTTL, now: time.Now}
+func NewService(
+	users UserRepository,
+	refresh RefreshTokenRepository,
+	tokens *TokenManager,
+	refreshTTL time.Duration,
+	options ...ServiceOption,
+) *Service {
+	service := &Service{
+		users:      users,
+		refresh:    refresh,
+		tokens:     tokens,
+		refreshTTL: refreshTTL,
+		now:        time.Now,
+	}
+	for _, option := range options {
+		option(service)
+	}
+	return service
 }
 
 func (s *Service) Register(ctx context.Context, email, password, displayName, userAgent, ip string) (User, TokenPair, error) {
 	email, err := normalizeEmail(email)
+	if err != nil {
+		return User{}, TokenPair{}, err
+	}
+	displayName, err = normalizeDisplayName(displayName)
 	if err != nil {
 		return User{}, TokenPair{}, err
 	}
@@ -33,7 +52,7 @@ func (s *Service) Register(ctx context.Context, email, password, displayName, us
 	if err != nil {
 		return User{}, TokenPair{}, fmt.Errorf("hash password: %w", err)
 	}
-	user, err := s.users.Create(ctx, email, hash, strings.TrimSpace(displayName))
+	user, err := s.users.Create(ctx, email, hash, displayName)
 	if err != nil {
 		return User{}, TokenPair{}, err
 	}
@@ -124,20 +143,4 @@ func (s *Service) issuePair(ctx context.Context, user User, userAgent, ip string
 		TokenType:    "Bearer",
 		ExpiresIn:    int64(time.Until(accessExpiry).Seconds()),
 	}, nil
-}
-
-func normalizeEmail(value string) (string, error) {
-	value = strings.ToLower(strings.TrimSpace(value))
-	parsed, err := mail.ParseAddress(value)
-	if err != nil || parsed.Address != value {
-		return "", fmt.Errorf("invalid email")
-	}
-	return value, nil
-}
-
-func validatePassword(value string) error {
-	if len([]byte(value)) < 10 || len([]byte(value)) > 72 {
-		return fmt.Errorf("password must contain from 10 to 72 bytes")
-	}
-	return nil
 }
