@@ -7,6 +7,7 @@ Issue #50 introduces three navigation layouts and a focused lesson mode. Automat
 - Expanded width (`>= 1100px`): full labelled header navigation.
 - Medium width (`720–1099px`): labelled navigation rail and no compact tab bar.
 - Compact width (`<= 719px`): five-item bottom tab bar with safe-area insets.
+- Breakpoint boundary checks cover 719/720 px and 1099/1100 px without duplicate visible navigation.
 - Every primary navigation target is at least 48 CSS px in both dimensions where space permits.
 - Re-entering a top-level tab restores its previous nested target and scroll position.
 - Active lessons remove top-level navigation and reject browser Back until the explicit `Сохранить и выйти` action is used.
