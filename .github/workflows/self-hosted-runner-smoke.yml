@@ -22,14 +22,15 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 10
+    timeout-minutes: 12
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 3
       matrix:
-        slot: [1, 2]
+        slot: [1, 2, 3]
     env:
       SMOKE_SLOT: ${{ matrix.slot }}
+      BARRIER_DIR: /tmp/lexigo-runner-smoke-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Verify host
@@ -54,6 +55,31 @@ jobs:
 
           printf '\n=== DISK ===\n'
           df -h /
+
+      - name: Require three concurrent runners
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          install -d -m 0755 "$BARRIER_DIR"
+          marker="$BARRIER_DIR/ready-${SMOKE_SLOT}-${RUNNER_NAME}"
+          : > "$marker"
+
+          for attempt in $(seq 1 90); do
+            ready_count="$(find "$BARRIER_DIR" -maxdepth 1 -type f -name 'ready-*' | wc -l)"
+
+            if [ "$ready_count" -eq 3 ]; then
+              printf 'Three runners reached the barrier concurrently:\n'
+              find "$BARRIER_DIR" -maxdepth 1 -type f -name 'ready-*' -printf '%f\n' | sort
+              exit 0
+            fi
+
+            sleep 1
+          done
+
+          printf 'Expected 3 concurrent runners, observed:\n' >&2
+          find "$BARRIER_DIR" -maxdepth 1 -type f -name 'ready-*' -printf '%f\n' | sort >&2 || true
+          exit 1
 
       - name: Verify Docker services and port isolation
         shell: bash
@@ -123,9 +149,12 @@ jobs:
             "$postgres_host_port" \
             "$redis_host_port"
 
-          docker ps --filter "name=runner-smoke-"
+          printf '\n=== CONCURRENT RESOURCE SNAPSHOT ===\n'
+          uptime
+          free -h
+          docker stats --no-stream
 
-      - name: Cleanup Docker smoke containers
+      - name: Cleanup smoke resources
         if: always()
         shell: bash
         run: |
@@ -133,3 +162,6 @@ jobs:
             "runner-smoke-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${SMOKE_SLOT}" \
             "runner-smoke-redis-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${SMOKE_SLOT}" \
             >/dev/null 2>&1 || true
+
+          rm -f -- "$BARRIER_DIR/ready-${SMOKE_SLOT}-${RUNNER_NAME}"
+          rmdir "$BARRIER_DIR" >/dev/null 2>&1 || true
