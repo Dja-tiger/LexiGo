@@ -54,7 +54,6 @@ import {
 } from "../lib/learning";
 import {
   navigationURL,
-  parseNavigation,
   PRIMARY_NAVIGATION,
   readPersistedNavigation as readNavigationCache,
   type AppView,
@@ -1542,7 +1541,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     reviewInFlightRef.current = true;
     setReviewing(true);
     setError("");
-    let reviewSaved = false;
     try {
       const correct = selectedAnswer
         ? normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer)
@@ -1567,7 +1565,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       });
       setSession(result.activeSession);
       setRatings((current) => ({ ...current, [currentItem.id]: rating }));
-      reviewSaved = true;
+      if (restoreFocusAfterSave) {
+        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
+      }
       setServerLessonCompleted(result.data.lessonCompleted);
       setServerNextIndex(result.data.lessonCompleted ? null : result.data.lessonCurrentIndex);
       setServerSkippedItems(result.data.lessonSkippedItems);
@@ -1603,9 +1603,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     } finally {
       reviewInFlightRef.current = false;
       setReviewing(false);
-      if (reviewSaved && restoreFocusAfterSave) {
-        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
-      }
     }
   }
 
@@ -2376,6 +2373,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         <p
           key={routeAnnouncement.id}
           className="lx-route-announcement"
+          data-announcement-id={routeAnnouncement.id}
           role="status"
           aria-live="polite"
           aria-atomic="true"
