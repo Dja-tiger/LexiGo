@@ -101,6 +101,19 @@
   letter-spacing: -0.045em;
 }
 
+.lx-calendar-modal header h2[tabindex="-1"] {
+  border-radius: 8px;
+  scroll-margin-block: 24px;
+}
+
+.lx-calendar-modal header h2[tabindex="-1"]:focus-visible {
+  outline: var(--lx-focus-width, 3px) solid var(--lx-focus-ring, #f8fafc) !important;
+  outline-offset: var(--lx-focus-offset, 3px);
+  box-shadow:
+    0 0 0 1px var(--lx-focus-edge, #050914),
+    0 0 0 7px var(--lx-focus-halo, rgba(79, 195, 255, 0.46)) !important;
+}
+
 .lx-calendar-modal header p {
   max-width: 590px;
   margin: 10px 0 0;
@@ -358,5 +371,13 @@
   .lx-calendar-weekdays button {
     min-height: 39px;
     font-size: 12px;
+  }
+}
+
+@media (forced-colors: active) {
+  .lx-calendar-modal header h2[tabindex="-1"]:focus-visible {
+    outline-color: Highlight !important;
+    box-shadow: none !important;
+    forced-color-adjust: auto;
   }
 }
