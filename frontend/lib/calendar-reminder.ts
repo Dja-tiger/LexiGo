@@ -173,11 +173,10 @@ type TimeZoneTransition = {
 };
 
 function dateFormatter(timeZone: string): Intl.DateTimeFormat {
-  const normalized = normalizeCalendarTimeZone(timeZone);
-  const cached = dateFormatterCache.get(normalized);
+  const cached = dateFormatterCache.get(timeZone);
   if (cached) return cached;
   const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: normalized,
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -186,7 +185,7 @@ function dateFormatter(timeZone: string): Intl.DateTimeFormat {
     second: "2-digit",
     hourCycle: "h23",
   });
-  dateFormatterCache.set(normalized, formatter);
+  dateFormatterCache.set(timeZone, formatter);
   return formatter;
 }
 
