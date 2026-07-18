@@ -8,8 +8,14 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ github.head_ref == 'fix/issue-41-catalog-metadata' }}
-    runs-on: ubuntu-latest
+    if: >-
+      github.head_ref == 'fix/issue-41-catalog-metadata' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
