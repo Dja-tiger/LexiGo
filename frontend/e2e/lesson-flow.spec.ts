@@ -220,7 +220,7 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   const api = await installLessonAPI(page, 2, 0, mixedItems);
   await page.goto("/?view=learn");
   await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
-  await page.getByRole("button", { name: /Вспомнить самому/ }).click();
+  await page.getByRole("radio", { name: /Вспомнить самому/ }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
   await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
