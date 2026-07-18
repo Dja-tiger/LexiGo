@@ -43,7 +43,7 @@ export function AsyncStatePanel({
   return (
     <section
       ref={regionRef}
-      className={`lx-async-state ${kind}${compact ? " compact" : ""}`}
+      className={`lx-async-state ${kind}${kind === "error" ? " lx-error" : ""}${compact ? " compact" : ""}`}
       role={kind === "error" ? "alert" : "status"}
       aria-live={kind === "error" ? "assertive" : "polite"}
       aria-atomic="true"
