@@ -1,6 +1,5 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -14,18 +13,11 @@ import {
   type CalendarReminderSettings,
   type CalendarWeekday,
 } from "../lib/calendar-reminder";
+import { AccessibleDialog } from "./accessible-dialog";
 
 const STORAGE_KEY = "lexigo.calendar.reminder.v1";
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60];
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60];
-const MODAL_FOCUSABLE_SELECTOR = [
-  "button:not([disabled])",
-  "a[href]",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
-].join(",");
 
 type CalendarReminderIntegrationProps = {
   open: boolean;
@@ -96,36 +88,12 @@ export function CalendarReminderIntegration({
 }: CalendarReminderIntegrationProps) {
   const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
   const [status, setStatus] = useState("");
-  const modalRef = useRef<HTMLElement | null>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  const wasOpenRef = useRef(false);
+  const dialogTitleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSettings(readSettings()), 0);
     return () => window.clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (open) {
-      previousFocusRef.current = document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-      wasOpenRef.current = true;
-      const frame = window.requestAnimationFrame(() => {
-        const firstControl = modalRef.current?.querySelector<HTMLElement>(MODAL_FOCUSABLE_SELECTOR);
-        (firstControl ?? modalRef.current)?.focus({ preventScroll: true });
-      });
-      return () => window.cancelAnimationFrame(frame);
-    }
-
-    if (!wasOpenRef.current) return;
-    wasOpenRef.current = false;
-    const focusTarget = previousFocusRef.current;
-    previousFocusRef.current = null;
-    if (!focusTarget?.isConnected) return;
-    const frame = window.requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
-    return () => window.cancelAnimationFrame(frame);
-  }, [open]);
 
   function openSettings() {
     setStatus("");
@@ -181,37 +149,6 @@ export function CalendarReminderIntegration({
     setStatus("Файл календаря создан. Откройте его и подтвердите добавление события в Apple Calendar.");
   }
 
-  function handleModalKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-      onClose();
-      return;
-    }
-    if (event.key !== "Tab") return;
-
-    const controls = Array.from(
-      modalRef.current?.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR) ?? [],
-    ).filter((element) => element.getClientRects().length > 0 && element.getAttribute("aria-hidden") !== "true");
-
-    if (controls.length === 0) {
-      event.preventDefault();
-      modalRef.current?.focus({ preventScroll: true });
-      return;
-    }
-
-    const first = controls[0];
-    const last = controls[controls.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || !modalRef.current?.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
   return (
     <>
       {showCard ? (
@@ -228,119 +165,109 @@ export function CalendarReminderIntegration({
         </section>
       ) : null}
 
-      {open ? (
-        <div
-          className="lx-calendar-modal-backdrop"
-          role="presentation"
-          onKeyDown={handleModalKeyDown}
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) onClose();
-          }}
-        >
-          <section
-            ref={modalRef}
-            className="lx-calendar-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="lexigo-calendar-modal-title"
-            tabIndex={-1}
-          >
-            <header>
-              <div>
-                <span>КАЛЕНДАРЬ</span>
-                <h2 id="lexigo-calendar-modal-title">Напоминание об английском</h2>
-                <p>Создайте повторяющееся событие. Настройки хранятся только в этом браузере.</p>
-              </div>
-              <button type="button" className="lx-calendar-modal-close" aria-label="Закрыть" onClick={onClose}>×</button>
-            </header>
+      <AccessibleDialog
+        open={open}
+        className="lx-calendar-modal"
+        backdropClassName="lx-calendar-modal-backdrop"
+        labelledBy="lexigo-calendar-modal-title"
+        describedBy="lexigo-calendar-modal-description"
+        initialFocusRef={dialogTitleRef}
+        onClose={onClose}
+      >
+        <header>
+          <div>
+            <span>КАЛЕНДАРЬ</span>
+            <h2 id="lexigo-calendar-modal-title" ref={dialogTitleRef} tabIndex={-1}>Напоминание об английском</h2>
+            <p id="lexigo-calendar-modal-description">Создайте повторяющееся событие. Настройки хранятся только в этом браузере.</p>
+          </div>
+          <button type="button" className="lx-calendar-modal-close" aria-label="Закрыть" onClick={onClose}>×</button>
+        </header>
 
-            <div className="lx-calendar-form-grid">
-              <label>
-                <span>Время занятия</span>
-                <input
-                  type="time"
-                  value={settings.time}
-                  onChange={(event) => updateSettings({ time: event.target.value })}
-                />
-              </label>
-              <label>
-                <span>Длительность</span>
-                <select
-                  value={settings.durationMinutes}
-                  onChange={(event) => updateSettings({ durationMinutes: Number(event.target.value) })}
-                >
-                  {DURATION_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{minutes} минут</option>)}
-                </select>
-              </label>
-              <label>
-                <span>Повторение</span>
-                <select
-                  value={settings.recurrence}
-                  onChange={(event) => updateSettings({ recurrence: event.target.value as CalendarRecurrence })}
-                >
-                  {(["daily", "weekdays", "custom"] as CalendarRecurrence[]).map((recurrence) => (
-                    <option key={recurrence} value={recurrence}>{recurrenceLabel(recurrence)}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span>Уведомление</span>
-                <select
-                  value={settings.reminderMinutes}
-                  onChange={(event) => updateSettings({ reminderMinutes: Number(event.target.value) })}
-                >
-                  {REMINDER_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{reminderLabel(minutes)}</option>)}
-                </select>
-              </label>
-            </div>
-
-            {settings.recurrence === "custom" ? (
-              <fieldset className="lx-calendar-weekdays">
-                <legend>Дни недели</legend>
-                <div>
-                  {CALENDAR_WEEKDAYS.map((weekday) => {
-                    const selected = settings.weekdays.includes(weekday.code);
-                    return (
-                      <button
-                        key={weekday.code}
-                        type="button"
-                        className={selected ? "selected" : ""}
-                        aria-pressed={selected}
-                        title={weekday.longLabel}
-                        onClick={() => toggleWeekday(weekday.code)}
-                      >
-                        {weekday.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ) : null}
-
-            <div className="lx-calendar-preview">
-              <span>Будущее расписание</span>
-              <strong>{describeCalendarSchedule(settings)}</strong>
-              <small>Занятие на {settings.durationMinutes} минут, уведомление: {reminderLabel(settings.reminderMinutes).toLowerCase()}.</small>
-            </div>
-
-            <div className="lx-calendar-provider-grid">
-              <button type="button" className="google" onClick={addToGoogleCalendar}>
-                <span aria-hidden="true">G</span>
-                <div><strong>Google Calendar</strong><small>Открыть готовое повторяющееся событие</small></div>
-              </button>
-              <button type="button" className="apple" onClick={addToAppleCalendar}>
-                <span aria-hidden="true">A</span>
-                <div><strong>Apple Calendar</strong><small>Добавить через стандартный файл iCalendar</small></div>
-              </button>
-            </div>
-
-            <p className="lx-calendar-privacy-note">
-              LexiGo не получает доступ к вашим календарям. Финальное добавление и разрешение уведомлений подтверждаются в Google или Apple Calendar.
-            </p>
-            {status ? <p className="lx-calendar-status" role="status">{status}</p> : null}
-          </section>
+        <div className="lx-calendar-form-grid">
+          <label>
+            <span>Время занятия</span>
+            <input
+              type="time"
+              value={settings.time}
+              onChange={(event) => updateSettings({ time: event.target.value })}
+            />
+          </label>
+          <label>
+            <span>Длительность</span>
+            <select
+              value={settings.durationMinutes}
+              onChange={(event) => updateSettings({ durationMinutes: Number(event.target.value) })}
+            >
+              {DURATION_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{minutes} минут</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Повторение</span>
+            <select
+              value={settings.recurrence}
+              onChange={(event) => updateSettings({ recurrence: event.target.value as CalendarRecurrence })}
+            >
+              {(["daily", "weekdays", "custom"] as CalendarRecurrence[]).map((recurrence) => (
+                <option key={recurrence} value={recurrence}>{recurrenceLabel(recurrence)}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Уведомление</span>
+            <select
+              value={settings.reminderMinutes}
+              onChange={(event) => updateSettings({ reminderMinutes: Number(event.target.value) })}
+            >
+              {REMINDER_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{reminderLabel(minutes)}</option>)}
+            </select>
+          </label>
         </div>
-      ) : null}
+
+        {settings.recurrence === "custom" ? (
+          <fieldset className="lx-calendar-weekdays">
+            <legend>Дни недели</legend>
+            <div>
+              {CALENDAR_WEEKDAYS.map((weekday) => {
+                const selected = settings.weekdays.includes(weekday.code);
+                return (
+                  <button
+                    key={weekday.code}
+                    type="button"
+                    className={selected ? "selected" : ""}
+                    aria-pressed={selected}
+                    title={weekday.longLabel}
+                    onClick={() => toggleWeekday(weekday.code)}
+                  >
+                    {weekday.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        ) : null}
+
+        <div className="lx-calendar-preview">
+          <span>Будущее расписание</span>
+          <strong>{describeCalendarSchedule(settings)}</strong>
+          <small>Занятие на {settings.durationMinutes} минут, уведомление: {reminderLabel(settings.reminderMinutes).toLowerCase()}.</small>
+        </div>
+
+        <div className="lx-calendar-provider-grid">
+          <button type="button" className="google" onClick={addToGoogleCalendar}>
+            <span aria-hidden="true">G</span>
+            <div><strong>Google Calendar</strong><small>Открыть готовое повторяющееся событие</small></div>
+          </button>
+          <button type="button" className="apple" onClick={addToAppleCalendar}>
+            <span aria-hidden="true">A</span>
+            <div><strong>Apple Calendar</strong><small>Добавить через стандартный файл iCalendar</small></div>
+          </button>
+        </div>
+
+        <p className="lx-calendar-privacy-note">
+          LexiGo не получает доступ к вашим календарям. Финальное добавление и разрешение уведомлений подтверждаются в Google или Apple Calendar.
+        </p>
+        {status ? <p className="lx-calendar-status" role="status">{status}</p> : null}
+      </AccessibleDialog>
     </>
   );
 }
