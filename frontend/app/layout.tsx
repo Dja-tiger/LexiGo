@@ -10,6 +10,7 @@ import "./calendar-reminders.css";
 import "./error-boundary.css";
 import "./accessibility-focus.css";
 import "./accessibility-navigation.css";
+import "./adaptive-navigation.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",
