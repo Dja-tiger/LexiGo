@@ -11,6 +11,7 @@ type ErrorResponse struct {
 	Error struct {
 		Code    string `json:"code"`
 		Message string `json:"message"`
+		Field   string `json:"field,omitempty"`
 	} `json:"error"`
 }
 
@@ -34,8 +35,13 @@ func WriteJSON(w http.ResponseWriter, status int, value any) {
 }
 
 func WriteError(w http.ResponseWriter, status int, code, message string) {
+	WriteFieldError(w, status, code, message, "")
+}
+
+func WriteFieldError(w http.ResponseWriter, status int, code, message, field string) {
 	var response ErrorResponse
 	response.Error.Code = code
 	response.Error.Message = message
+	response.Error.Field = field
 	WriteJSON(w, status, response)
 }
