@@ -25,8 +25,9 @@ Record device model, OS/browser version, installed voice language, silent-mode s
 6. A browser without Web Speech support shows a disabled control and visible fallback guidance.
 7. English voice selection prefers a local `en-GB` voice, then `en-US`, then another English voice.
 8. Loading voices after initial render does not require a reload.
-9. No stale audio continues after moving to another route or lesson item.
-10. Screen-reader focus and announcement remain stable after start, stop, end and error.
+9. Verify both EventTarget-style `voiceschanged` and the older Safari `onvoiceschanged` property path where available.
+10. No stale audio continues after moving to another route or lesson item.
+11. Screen-reader focus and announcement remain stable after start, stop, end and error.
 
 ## Release blockers
 
