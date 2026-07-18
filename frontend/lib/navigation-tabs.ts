@@ -74,3 +74,28 @@ export function navigationTabDestination(
     scroll: copyScroll(saved.scroll),
   };
 }
+
+
+export type NavigationTabStore = {
+  remember: (target: NavigationTarget, scroll: NavigationScrollPosition) => void;
+  destination: (view: PrimaryNavigationView) => NavigationTabSnapshot;
+};
+
+export function createNavigationTabStore(
+  initial: NavigationTabSnapshots = {},
+): NavigationTabStore {
+  let snapshots: NavigationTabSnapshots = {};
+  for (const view of PRIMARY_VIEWS) {
+    const saved = initial[view];
+    if (saved) snapshots = rememberNavigationTabSnapshot(snapshots, saved.target, saved.scroll);
+  }
+
+  return {
+    remember(target, scroll) {
+      snapshots = rememberNavigationTabSnapshot(snapshots, target, scroll);
+    },
+    destination(view) {
+      return navigationTabDestination(snapshots, view);
+    },
+  };
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createNavigationTabStore,
   isPrimaryNavigationView,
   navigationTabDestination,
   rememberNavigationTabSnapshot,
@@ -53,6 +54,20 @@ describe("navigation tab snapshots", () => {
     expect(navigationTabDestination(snapshots, "learn")).toEqual({
       target: { view: "learn", source: "backend" },
       scroll: { x: 0, y: 0 },
+    });
+  });
+
+  it("keeps frequent scroll snapshots outside React render state", () => {
+    const store = createNavigationTabStore();
+    store.remember({ view: "phrases", detail: "status-update" }, { x: 0, y: 640 });
+
+    const first = store.destination("phrases");
+    first.target.detail = "mutated";
+    first.scroll.y = 0;
+
+    expect(store.destination("phrases")).toEqual({
+      target: { view: "phrases", detail: "status-update" },
+      scroll: { x: 0, y: 640 },
     });
   });
 

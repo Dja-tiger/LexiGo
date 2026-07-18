@@ -256,6 +256,31 @@ test("expanded width keeps all header navigation labels visible", async ({ page 
   await expectNoHorizontalOverflow(page);
 });
 
+test("breakpoint boundaries expose exactly one labelled primary navigation", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Breakpoint boundaries are asserted once.");
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+
+  const cases = [
+    { width: 719, expected: ".lx-mobile-nav" },
+    { width: 720, expected: ".lx-navigation-rail" },
+    { width: 1099, expected: ".lx-navigation-rail" },
+    { width: 1100, expected: ".lx-nav" },
+  ];
+
+  for (const current of cases) {
+    await page.setViewportSize({ width: current.width, height: 800 });
+    const visibility = await page.locator(".lx-nav, .lx-navigation-rail, .lx-mobile-nav")
+      .evaluateAll((elements) => elements.map((element) => ({
+        className: element.className,
+        visible: window.getComputedStyle(element).display !== "none",
+      })));
+    expect(visibility.filter((entry) => entry.visible)).toHaveLength(1);
+    await expect(page.locator(current.expected)).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
 test("medium width uses a labelled rail and restores the previous tab target and scroll", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-webkit", "Tablet rail and WebKit behavior are asserted once.");
   await page.setViewportSize({ width: 1024, height: 768 });
@@ -338,6 +363,10 @@ test("mobile landscape switches to the medium rail without clipping content", as
   await expect(navigation(page, ".lx-mobile-nav")).toBeHidden();
   await expectMinimumNavigationTargets(page, ".lx-navigation-rail");
   await expect(rail.getByText("Прогресс", { exact: true })).toBeVisible();
+  const railBox = await rail.boundingBox();
+  expect(railBox).not.toBeNull();
+  expect(railBox!.y + railBox!.height).toBeLessThanOrEqual(390);
+  expect(await rail.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
   await expectNoHorizontalOverflow(page);
 });
 
@@ -363,6 +392,11 @@ test("an active lesson removes top-level navigation and blocks browser history e
   await page.getByRole("button", { name: "Сохранить и выйти", exact: true }).click();
   await expect(page).toHaveURL("http://127.0.0.1:3000/");
   await expect(navigation(page, ".lx-navigation-rail")).toBeVisible();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/view=learn/);
+  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page).not.toHaveURL(/view=lesson/);
 });
 
 test("the PWA manifest no longer restricts the app to portrait", async ({ request }, testInfo) => {

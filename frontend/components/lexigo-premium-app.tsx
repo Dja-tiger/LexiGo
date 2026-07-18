@@ -71,9 +71,7 @@ import {
   type NavigationScrollPosition,
 } from "../lib/navigation-history";
 import {
-  navigationTabDestination,
-  rememberNavigationTabSnapshot,
-  type NavigationTabSnapshots,
+  createNavigationTabStore,
   type PrimaryNavigationView,
 } from "../lib/navigation-tabs";
 import {
@@ -683,7 +681,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const navigationRef = useRef(navigation);
   const lessonNavigationLockRef = useRef(false);
   const announcementCounterRef = useRef(0);
-  const [navigationTabs, setNavigationTabs] = useState<NavigationTabSnapshots>({});
+  const [navigationTabs] = useState(createNavigationTabStore);
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigationFocus | null>(null);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
   const lessonNavigationLocked = navigation.view === "lesson" && lessonStarted && !lessonComplete;
@@ -732,11 +730,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       scroll: NavigationScrollPosition = { x: 0, y: 0 },
     ) => {
       navigationRef.current = next;
-      setNavigationTabs((current) => rememberNavigationTabSnapshot(
-        current,
-        next,
-        scroll,
-      ));
+      navigationTabs.remember(next, scroll);
       setNavigation(next);
       if (next.source) setSource(next.source);
       writeNavigationCache(window.localStorage, next);
@@ -745,11 +739,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const persistCurrentEntry = () => {
       const current = navigationRef.current;
       const scroll = { x: window.scrollX, y: window.scrollY };
-      setNavigationTabs((snapshots) => rememberNavigationTabSnapshot(
-        snapshots,
-        current,
-        scroll,
-      ));
+      navigationTabs.remember(current, scroll);
       window.history.replaceState(
         createNavigationHistoryState(current, scroll),
         "",
@@ -813,7 +803,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       window.removeEventListener("popstate", syncNavigationFromHistory);
       window.removeEventListener("scroll", scheduleScrollSnapshot);
     };
-  }, []);
+  }, [navigationTabs]);
 
   useEffect(() => {
     const target = new URL(window.location.href);
@@ -972,11 +962,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
 
     const currentScroll = { x: window.scrollX, y: window.scrollY };
-    setNavigationTabs((current) => rememberNavigationTabSnapshot(
-      current,
-      navigation,
-      currentScroll,
-    ));
+    navigationTabs.remember(navigation, currentScroll);
     const targetScroll = options.scroll ?? { x: 0, y: 0 };
     const url = navigationURL(target);
     window.history.replaceState(
@@ -1003,7 +989,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function navigatePrimary(view: PrimaryNavigationView) {
     if (navigation.view === view) return;
-    const destination = navigationTabDestination(navigationTabs, view);
+    const destination = navigationTabs.destination(view);
     navigate(destination.target, false, { scroll: destination.scroll });
   }
 
@@ -1643,7 +1629,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function saveAndExitLesson(target: PrimaryNavigationView = "home") {
     clearLessonState();
-    navigate({ view: target }, false, { allowLessonExit: true });
+    navigate({ view: target }, true, { allowLessonExit: true });
   }
 
   function moveToServerIndex(index: number) {
