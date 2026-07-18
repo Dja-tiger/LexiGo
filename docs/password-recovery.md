@@ -7,7 +7,7 @@ LexiGo password recovery uses a one-time bearer token delivered outside the brow
 1. The client sends `POST /api/v1/auth/password-reset/request` with an email address.
 2. The API always returns `202 {"accepted":true}` for a valid JSON request, regardless of whether the account exists or delivery succeeds. This prevents account enumeration.
 3. For an existing account, the API generates 32 random bytes, encodes them with base64url and stores only the SHA-256 digest in PostgreSQL.
-4. The raw token is placed in a same-origin URL as `reset_token` and delivered by SMTP.
+4. The raw token is placed in the URL fragment as `#reset_token=...` and delivered by SMTP. Fragments are not sent in HTTP requests or Referer headers.
 5. The client submits the token and new password to `POST /api/v1/auth/password-reset/confirm`.
 6. PostgreSQL locks and consumes the token, updates the bcrypt password hash, invalidates every unused reset token for that user and revokes all refresh-token families in one transaction.
 7. The user signs in again with the new password.
@@ -21,7 +21,7 @@ LexiGo password recovery uses a one-time bearer token delivered outside the brow
 - request and confirm endpoints are rate-limited independently by source IP;
 - request responses do not reveal account existence;
 - reset responses use stable error codes and optional field metadata;
-- the frontend never displays or stores the reset token outside component memory and the current URL;
+- the frontend never displays or persists the reset token outside component memory and the current URL fragment; legacy query links remain readable for rollout compatibility;
 - after success the token is removed from browser history with `replaceState`;
 - production requires SMTP delivery; logging the bearer URL is allowed only in local/test environments.
 

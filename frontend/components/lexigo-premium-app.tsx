@@ -656,7 +656,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, []);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("reset_token")?.trim() ?? "";
+    const target = new URL(window.location.href);
+    const fragment = new URLSearchParams(target.hash.replace(/^#/, ""));
+    const token = fragment.get("reset_token")?.trim()
+      || target.searchParams.get("reset_token")?.trim()
+      || "";
     if (!token) return;
     const timer = window.setTimeout(() => {
       setResetToken(token);
@@ -1224,6 +1228,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function removeResetTokenFromURL() {
     const target = new URL(window.location.href);
     target.searchParams.delete("reset_token");
+    target.hash = "";
     window.history.replaceState(
       { lexigo: true, view: "profile" },
       "",

@@ -130,7 +130,7 @@ test("one-time reset link validates confirmation and returns to login without ex
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/?view=profile&reset_token=one-time-token");
+  await page.goto("/?view=profile#reset_token=one-time-token");
   await expect(page.getByRole("heading", { name: "Создайте новый пароль" })).toBeVisible();
   await expect(page.locator("#auth-password")).toHaveAttribute("name", "password");
   await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
@@ -148,5 +148,6 @@ test("one-time reset link validates confirmation and returns to login without ex
   await expect(page.getByRole("status")).toContainText("Пароль изменён");
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
   await expect(page).not.toHaveURL(/reset_token=/);
+  await expect(page).toHaveURL(/\?view=profile$/);
   expect(resetPayload).toEqual({ token: "one-time-token", newPassword: "new-strong-password" });
 });

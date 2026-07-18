@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"mime"
 	"net"
 	"net/mail"
 	"net/smtp"
@@ -123,7 +124,7 @@ func passwordResetMessage(from, recipient mail.Address, displayName, resetURL st
 	return strings.Join([]string{
 		"From: " + from.String(),
 		"To: " + recipient.String(),
-		"Subject: Восстановление пароля LexiGo",
+		"Subject: " + mime.BEncoding.Encode("UTF-8", "Восстановление пароля LexiGo"),
 		"MIME-Version: 1.0",
 		"Content-Type: text/plain; charset=UTF-8",
 		"Content-Transfer-Encoding: 8bit",
