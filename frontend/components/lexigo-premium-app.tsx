@@ -620,8 +620,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
   const navigationRef = useRef(navigation);
-  const pendingNavigationRef = useRef<PendingNavigationFocus | null>(null);
   const announcementCounterRef = useRef(0);
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigationFocus | null>(null);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
 
   const loadCatalogMetadataResource = useCallback(async (signal?: AbortSignal) => {
@@ -689,11 +689,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     const syncNavigationFromHistory = (event: PopStateEvent) => {
       const next = navigationTargetFromHistory(event.state, window.location.search);
-      pendingNavigationRef.current = {
+      setPendingNavigation({
         identity: navigationIdentity(next),
         scroll: navigationScrollFromHistory(event.state),
         behavior: "auto",
-      };
+      });
       applyNavigation(next);
     };
 
@@ -784,9 +784,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, [navigation.view]);
 
   useLayoutEffect(() => {
-    const pending = pendingNavigationRef.current;
-    if (!pending || pending.identity !== navigationIdentity(navigation)) return;
-    pendingNavigationRef.current = null;
+    navigationRef.current = navigation;
+    if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+    const pending = pendingNavigation;
 
     const frame = window.requestAnimationFrame(() => {
       mainContentRef.current?.focus({ preventScroll: true });
@@ -803,7 +803,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [navigation]);
+  }, [navigation, pendingNavigation]);
 
   const currentItem = items[currentIndex];
   const currentRating = currentItem ? ratings[currentItem.id] : undefined;
@@ -845,7 +845,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function navigate(target: NavigationTarget, replace = false) {
     const url = navigationURL(target);
     window.history.replaceState(
-      createNavigationHistoryState(navigationRef.current, { x: window.scrollX, y: window.scrollY }),
+      createNavigationHistoryState(navigation, { x: window.scrollX, y: window.scrollY }),
       "",
       window.location.href,
     );
@@ -854,12 +854,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     if (replace) window.history.replaceState(nextState, "", url);
     else window.history.pushState(nextState, "", url);
 
-    pendingNavigationRef.current = {
+    setPendingNavigation({
       identity: navigationIdentity(target),
       scroll: { x: 0, y: 0 },
       behavior: navigationScrollBehavior(window),
-    };
-    navigationRef.current = target;
+    });
     setNavigation(target);
     if (target.source) setSource(target.source);
     writeNavigationCache(window.localStorage, target);
