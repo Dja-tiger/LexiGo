@@ -291,10 +291,16 @@ test("skip link reaches the main landmark and route navigation announces the new
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
   await expectMainFocus(page, "Обучение");
 
-  await expect(page.locator(".lx-nav").getByRole("button", { name: "Обучение", exact: true }))
-    .toHaveAttribute("aria-current", "page");
-  await expect(page.locator(".lx-mobile-nav").getByRole("button", { name: "Учить", exact: true }))
-    .toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".lx-nav").getByRole("button", {
+    name: "Обучение",
+    exact: true,
+    includeHidden: true,
+  })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".lx-mobile-nav").getByRole("button", {
+    name: "Учить",
+    exact: true,
+    includeHidden: true,
+  })).toHaveAttribute("aria-current", "page");
   await expect(page.locator(".lx-route-announcement"))
     .toHaveText("Обучение. Экран загружен.");
 });
@@ -371,7 +377,10 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
   const transitionDuration = await page.getByRole("link", {
     name: "Перейти к основному содержимому",
   }).evaluate((element) => window.getComputedStyle(element).transitionDuration);
-  expect(["0s", "0.00001s"]).toContain(transitionDuration);
+  const maximumTransitionSeconds = Math.max(
+    ...transitionDuration.split(",").map((duration) => Number.parseFloat(duration)),
+  );
+  expect(maximumTransitionSeconds).toBeLessThanOrEqual(0.00001);
 });
 
 test("saving a review transfers focus locally without generating a route announcement", async ({ page }, testInfo) => {
