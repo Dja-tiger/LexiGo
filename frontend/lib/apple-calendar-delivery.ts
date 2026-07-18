@@ -4,7 +4,6 @@ import {
   CALENDAR_ICS_MEDIA_TYPE,
 } from "./calendar-reminder";
 
-const CALENDAR_FILE_TYPE = `${CALENDAR_ICS_MEDIA_TYPE};charset=utf-8`;
 const OBJECT_URL_LIFETIME_MS = 60_000;
 
 type FileShareData = {
@@ -90,11 +89,11 @@ function triggerBrowserDownload(blob: Blob, fileName: string): boolean {
 
 function browserDeliveryAdapters(): AppleCalendarDeliveryAdapters {
   return {
-    createBlob: (calendar) => new Blob([calendar], { type: CALENDAR_FILE_TYPE }),
+    createBlob: (calendar) => new Blob([calendar], { type: CALENDAR_ICS_MEDIA_TYPE }),
     createFile: (calendar) => typeof File === "undefined"
       ? null
       : new File([calendar], CALENDAR_ICS_FILE_NAME, {
-          type: CALENDAR_FILE_TYPE,
+          type: CALENDAR_ICS_MEDIA_TYPE,
           lastModified: Date.now(),
         }),
     shareFile: (file) => shareAppleCalendarFile(file),
