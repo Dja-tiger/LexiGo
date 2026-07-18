@@ -1,0 +1,43 @@
+name: Issue 51 implementation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.head_ref == 'fix/issue-51-reliable-speech'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-51-reliable-speech
+          fetch-depth: 0
+
+      - name: Apply React speech integration
+        shell: bash
+        run: |
+          test -f scripts/issue51-implementation.py
+          python3 scripts/issue51-implementation.py
+          rm scripts/issue51-implementation.py
+          rm .github/workflows/issue51-implementation.yml
+          git diff --check
+
+          if git diff --quiet; then
+            echo "Issue #51 integration produced no diff" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(speech): make playback lifecycle reliable"
+          git push origin HEAD:fix/issue-51-reliable-speech
