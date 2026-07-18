@@ -161,7 +161,7 @@ test.beforeEach(async ({ page }) => {
   await installMocks(page);
 });
 
-test("installed iOS PWA shares a real ICS file without opening an error page", async ({ context, page }, testInfo) => {
+test("installed iOS PWA shares one real ICS file without opening an error page", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "ios-webkit", "Dedicated installed iOS PWA file-share regression.");
   await emulateStandaloneShare(context);
   const attachmentRequests: string[] = [];
@@ -170,7 +170,11 @@ test("installed iOS PWA shares a real ICS file without opening an error page", a
   });
 
   const dialog = await openCalendarDialog(page);
-  await dialog.getByRole("button", { name: /Apple Calendar/ }).click();
+  const appleButton = dialog.getByRole("button", { name: /Apple Calendar/ });
+  await appleButton.evaluate((element) => {
+    (element as HTMLButtonElement).click();
+    (element as HTMLButtonElement).click();
+  });
 
   await expect.poll(() => page.evaluate(() => window.__lexigoSharedCalendars?.length ?? 0)).toBe(1);
   const shared = await page.evaluate(() => window.__lexigoSharedCalendars?.[0] ?? null);
