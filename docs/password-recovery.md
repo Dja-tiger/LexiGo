@@ -38,6 +38,8 @@ Required outside local/test:
 
 The SMTP implementation expects a submission server that supports STARTTLS. Credentials and reset URLs must not be written to application logs.
 
+The public request endpoint intentionally remains `202 Accepted` when SMTP delivery fails. Operators must detect delivery incidents through structured server logs and SMTP monitoring rather than exposing account existence or delivery status to the caller.
+
 ## Operations
 
 Monitor:
