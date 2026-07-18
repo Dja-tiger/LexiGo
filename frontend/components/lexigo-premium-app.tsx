@@ -963,7 +963,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       && !options.allowLessonExit
     ) {
       setLessonQueueNotice("Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».");
-      window.requestAnimationFrame(() => mainContentRef.current?.focus({ preventScroll: true }));
+      setPendingNavigation({
+        identity: navigationIdentity(navigation),
+        scroll: { x: window.scrollX, y: window.scrollY },
+        behavior: "auto",
+      });
       return;
     }
 
