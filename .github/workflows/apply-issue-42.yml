@@ -30,6 +30,7 @@ jobs:
         run: |
           set -o pipefail
           {
+            python3 scripts/prepare_issue_42.py
             python3 scripts/apply_issue_42.py
             git diff --check
           } 2>&1 | tee issue42.log
