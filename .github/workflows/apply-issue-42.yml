@@ -30,8 +30,8 @@ jobs:
         run: |
           set -o pipefail
           {
-            python3 scripts/prepare_issue_42.py
             python3 scripts/apply_issue_42.py
+            python3 scripts/finalize_issue_42_product.py
             git diff --check
           } 2>&1 | tee issue42.log
       - name: Verify frontend contracts
