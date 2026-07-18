@@ -48,77 +48,19 @@ jobs:
           error_copy_count = component_text.count('"total недоступен"')
           if error_copy_count not in (0, 2):
               raise SystemExit(f"unexpected unavailable copy count: {error_copy_count}")
-          component.write_text(
-              component_text.replace('"total недоступен"', '"общее количество недоступно"'),
-              encoding="utf-8",
-          )
+          component.write_text(component_text.replace('"total недоступен"', '"общее количество недоступно"'), encoding="utf-8")
 
-          replace_once(
-              "backend/internal/catalog/catalog.go",
-              '''\t\t\t\tsource = excluded.source,
-\t\t\t\tupdated_at = now()
-''',
-              '''\t\t\t\tsource = excluded.source,
-\t\t\t\tupdated_at = now()
-\t\t\twhere (words.part_of_speech, words.topic, words.note, words.source)
-\t\t\t\tis distinct from (excluded.part_of_speech, excluded.topic, excluded.note, excluded.source)
-''',
-              "idempotent catalog upsert",
-          )
+          catalog_old = "\t\t\t\tsource = excluded.source,\n\t\t\t\tupdated_at = now()\n"
+          catalog_new = "\t\t\t\tsource = excluded.source,\n\t\t\t\tupdated_at = now()\n\t\t\twhere (words.part_of_speech, words.topic, words.note, words.source)\n\t\t\t\tis distinct from (excluded.part_of_speech, excluded.topic, excluded.note, excluded.source)\n"
+          replace_once("backend/internal/catalog/catalog.go", catalog_old, catalog_new, "idempotent catalog upsert")
 
-          replace_once(
-              "backend/integration/catalog_metadata_test.go",
-              '''\tconditional.Header.Set("If-None-Match", etag)
-\tread(conditional, http.StatusNotModified)
+          integration_old = "\tconditional.Header.Set(\"If-None-Match\", etag)\n\tread(conditional, http.StatusNotModified)\n\n\tif _, err := pg.Exec(ctx, `\n"
+          integration_new = "\tconditional.Header.Set(\"If-None-Match\", etag)\n\tread(conditional, http.StatusNotModified)\n\n\tif _, err := catalog.Seed(ctx, pg); err != nil {\n\t\tt.Fatalf(\"repeat catalog.Seed() error = %v\", err)\n\t}\n\treseedRequest, err := http.NewRequest(http.MethodGet, testServer.URL+\"/api/v1/catalog/metadata\", nil)\n\tif err != nil {\n\t\tt.Fatalf(\"create reseeded metadata request: %v\", err)\n\t}\n\treseeded, reseededHeaders := read(reseedRequest, http.StatusOK)\n\tif reseeded.CatalogVersion != first.CatalogVersion || !reseeded.UpdatedAt.Equal(first.UpdatedAt) {\n\t\tt.Fatalf(\"idempotent seed changed catalog identity: before=%+v after=%+v\", first, reseeded)\n\t}\n\tif reseededHeaders.Get(\"ETag\") != etag {\n\t\tt.Fatalf(\"idempotent seed changed ETag: before=%q after=%q\", etag, reseededHeaders.Get(\"ETag\"))\n\t}\n\n\tif _, err := pg.Exec(ctx, `\n"
+          replace_once("backend/integration/catalog_metadata_test.go", integration_old, integration_new, "stable metadata after idempotent seed")
 
-\tif _, err := pg.Exec(ctx, `
-''',
-              '''\tconditional.Header.Set("If-None-Match", etag)
-\tread(conditional, http.StatusNotModified)
-
-\tif _, err := catalog.Seed(ctx, pg); err != nil {
-\t\tt.Fatalf("repeat catalog.Seed() error = %v", err)
-\t}
-\treseedRequest, err := http.NewRequest(http.MethodGet, testServer.URL+"/api/v1/catalog/metadata", nil)
-\tif err != nil {
-\t\tt.Fatalf("create reseeded metadata request: %v", err)
-\t}
-\treseeded, reseededHeaders := read(reseedRequest, http.StatusOK)
-\tif reseeded.CatalogVersion != first.CatalogVersion || !reseeded.UpdatedAt.Equal(first.UpdatedAt) {
-\t\tt.Fatalf("idempotent seed changed catalog identity: before=%+v after=%+v", first, reseeded)
-\t}
-\tif reseededHeaders.Get("ETag") != etag {
-\t\tt.Fatalf("idempotent seed changed ETag: before=%q after=%q", etag, reseededHeaders.Get("ETag"))
-\t}
-
-\tif _, err := pg.Exec(ctx, `
-''',
-              "stable metadata after idempotent seed",
-          )
-
-          replace_once(
-              "frontend/lib/catalog-metadata.test.ts",
-              '''  it("maps all product source aliases", () => {
-    expect(catalogSourceCount(metadata, "mixed")).toBe(923);
-    expect(catalogSourceCount(metadata, "daily-life")).toBe(55);
-    expect(catalogSourceCount(metadata, "data-engineering")).toBe(55);
-    expect(catalogSourceCount(metadata, "backend")).toBe(55);
-  });
-''',
-              '''  it("maps every product source alias", () => {
-    expect(catalogSourceCount(metadata, "mixed")).toBe(923);
-    expect(catalogSourceCount(metadata, "noun")).toBe(383);
-    expect(catalogSourceCount(metadata, "verb")).toBe(179);
-    expect(catalogSourceCount(metadata, "adjective")).toBe(193);
-    expect(catalogSourceCount(metadata, "phrases")).toBe(124);
-    expect(catalogSourceCount(metadata, "daily-life")).toBe(55);
-    expect(catalogSourceCount(metadata, "travel")).toBe(55);
-    expect(catalogSourceCount(metadata, "data-engineering")).toBe(55);
-    expect(catalogSourceCount(metadata, "backend")).toBe(55);
-  });
-''',
-              "all catalog source aliases",
-          )
+          aliases_old = "  it(\"maps all product source aliases\", () => {\n    expect(catalogSourceCount(metadata, \"mixed\")).toBe(923);\n    expect(catalogSourceCount(metadata, \"daily-life\")).toBe(55);\n    expect(catalogSourceCount(metadata, \"data-engineering\")).toBe(55);\n    expect(catalogSourceCount(metadata, \"backend\")).toBe(55);\n  });\n"
+          aliases_new = "  it(\"maps every product source alias\", () => {\n    expect(catalogSourceCount(metadata, \"mixed\")).toBe(923);\n    expect(catalogSourceCount(metadata, \"noun\")).toBe(383);\n    expect(catalogSourceCount(metadata, \"verb\")).toBe(179);\n    expect(catalogSourceCount(metadata, \"adjective\")).toBe(193);\n    expect(catalogSourceCount(metadata, \"phrases\")).toBe(124);\n    expect(catalogSourceCount(metadata, \"daily-life\")).toBe(55);\n    expect(catalogSourceCount(metadata, \"travel\")).toBe(55);\n    expect(catalogSourceCount(metadata, \"data-engineering\")).toBe(55);\n    expect(catalogSourceCount(metadata, \"backend\")).toBe(55);\n  });\n"
+          replace_once("frontend/lib/catalog-metadata.test.ts", aliases_old, aliases_new, "all catalog source aliases")
           PY
           gofmt -w backend/internal/catalog/catalog.go backend/integration/catalog_metadata_test.go
           git diff --check
