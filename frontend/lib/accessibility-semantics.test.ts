@@ -17,6 +17,13 @@ describe("rovingTargetIndex", () => {
     expect(rovingTargetIndex(1, 4, "Enter", "both")).toBeNull();
   });
 
+  it("keeps a single-item group on its only option", () => {
+    expect(rovingTargetIndex(0, 1, "ArrowLeft", "horizontal")).toBe(0);
+    expect(rovingTargetIndex(0, 1, "ArrowRight", "horizontal")).toBe(0);
+    expect(rovingTargetIndex(0, 1, "ArrowUp", "vertical")).toBe(0);
+    expect(rovingTargetIndex(0, 1, "ArrowDown", "vertical")).toBe(0);
+  });
+
   it("fails safely for empty groups and invalid current indexes", () => {
     expect(rovingTargetIndex(0, 0, "ArrowRight")).toBeNull();
     expect(rovingTargetIndex(-1, 3, "ArrowRight")).toBe(1);
