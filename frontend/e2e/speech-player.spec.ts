@@ -214,7 +214,7 @@ test("end and error restore state while navigation cancels the owned utterance",
   await expect(page.locator(".lx-speech-feedback.error")).toContainText("Не удалось воспроизвести");
 
   await speech.click();
-  await page.getByRole("button", { name: "Технические фразы" }).click();
+  await page.locator('[data-navigation-view="phrases"]:visible').click();
   await expect(page).toHaveURL(/view=phrases/);
   expect((await speechSnapshot(page)).cancelCount).toBeGreaterThanOrEqual(1);
 });
