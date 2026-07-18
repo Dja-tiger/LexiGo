@@ -35,6 +35,7 @@ jobs:
             python3 scripts/apply_issue_43_contracts.py
             python3 scripts/fix_issue_43_compile.py
             python3 scripts/apply_issue_43_frontend.py
+            python3 scripts/fix_issue_43_frontend_effect.py
             gofmt -w \
               backend/internal/auth \
               backend/internal/config \
