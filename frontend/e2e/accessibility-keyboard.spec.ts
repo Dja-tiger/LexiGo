@@ -353,9 +353,14 @@ for (const target of [
 }
 
 test("axe keyboard baseline: calendar dialog", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
-  await page.getByRole("button", { name: "Уведомления" }).click();
+  await page.goto("/?view=progress");
+  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+
+  const headerTrigger = page.getByRole("button", { name: "Уведомления" });
+  const cardTrigger = page.getByRole("button", { name: "Настроить календарь" });
+  if (await headerTrigger.isVisible()) await headerTrigger.click();
+  else await cardTrigger.click();
+
   await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
   await expectKeyboardAxeBaseline(page);
   await expectNoPositiveTabIndex(page);
