@@ -112,18 +112,22 @@ replace_once(
     "auth field layout",
 )
 
-replace_once(
-    "frontend/e2e/auth-flow.spec.ts",
-    '''  await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
+e2e_path = Path("frontend/e2e/auth-flow.spec.ts")
+e2e_text = e2e_path.read_text(encoding="utf-8")
+assertion_marker = '''  await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.locator("#auth-passwordConfirmation")).toHaveAttribute("autocomplete", "new-password");
-''',
-    '''  await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
-  await expect(page.locator("#auth-passwordConfirmation")).toHaveAttribute("autocomplete", "new-password");
-  await expect(page.locator("#auth-password").locator("xpath=ancestor::label")).toHaveCount(0);
+'''
+if e2e_text.count(assertion_marker) != 2:
+    raise SystemExit(f"password accessibility browser assertions: expected two markers, found {e2e_text.count(assertion_marker)}")
+e2e_text = e2e_text.replace(
+    assertion_marker,
+    assertion_marker
+    + '''  await expect(page.locator("#auth-password").locator("xpath=ancestor::label")).toHaveCount(0);
   await expect(page.locator("#auth-password-requirements")).toHaveAttribute("aria-live", "polite");
 ''',
-    "password accessibility browser assertions",
+    1,
 )
+e2e_path.write_text(e2e_text, encoding="utf-8")
 
 replace_once(
     "frontend/e2e/auth-flow.spec.ts",
