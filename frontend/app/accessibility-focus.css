@@ -34,8 +34,6 @@
   [contenteditable="true"],
   [tabindex]:not([tabindex="-1"])
 ):focus-visible {
-  position: relative;
-  z-index: 2;
   outline: var(--lx-focus-width) solid var(--lx-focus-ring) !important;
   outline-offset: var(--lx-focus-offset);
   box-shadow:
