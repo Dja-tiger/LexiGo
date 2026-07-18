@@ -34,8 +34,8 @@ jobs:
 
           if [[ $status -ne 0 ]]; then
             cp issue50-hardening.log issue50-hardening-error.txt
-            if ! git diff --quiet -- issue50-hardening-error.txt; then
-              git add issue50-hardening-error.txt
+            git add issue50-hardening-error.txt
+            if ! git diff --cached --quiet; then
               git commit -m "chore: record issue 50 hardening failure"
               git push origin HEAD:feat/issue-50-adaptive-navigation
             fi
