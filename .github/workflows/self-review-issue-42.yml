@@ -27,6 +27,7 @@ jobs:
       - name: Apply deterministic self-review patch
         run: |
           python3 scripts/self_review_issue_42.py
+          python3 scripts/fix_issue_42_hydration_race.py
           git diff --check
       - name: Prepare isolated frontend workspace
         working-directory: frontend
