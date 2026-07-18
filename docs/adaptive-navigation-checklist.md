@@ -16,7 +16,7 @@ Issue #50 introduces three navigation layouts and a focused lesson mode. Automat
 
 ## Physical device matrix
 
-Record device model, OS version, browser/PWA mode, orientation and result.
+Record device model, OS version, browser/PWA mode, orientation and result. Capture portrait and landscape screenshots at the closest available widths to both breakpoint boundaries.
 
 | Platform | Required scenarios |
 | --- | --- |
