@@ -47,6 +47,7 @@ export function AsyncStatePanel({
       role={kind === "error" ? "alert" : "status"}
       aria-live={kind === "error" ? "assertive" : "polite"}
       aria-atomic="true"
+      aria-busy={kind === "loading" ? true : undefined}
       aria-label={label}
       tabIndex={focusResult ? -1 : undefined}
       data-async-state={kind}
