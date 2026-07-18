@@ -10,15 +10,28 @@ def replace_once(path: str, old: str, new: str, label: str) -> None:
     file_path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
-apply_path = "scripts/apply_issue_42.py"
-replace_once(
-    apply_path,
-    'import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";\\n',
-    'import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";\\n',
-    "session validator import",
+apply_path = Path("scripts/apply_issue_42.py")
+apply_text = apply_path.read_text(encoding="utf-8")
+old_import = 'import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";\\n'
+new_import = 'import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";\\n'
+positions: list[int] = []
+start = 0
+while True:
+    position = apply_text.find(old_import, start)
+    if position < 0:
+        break
+    positions.append(position)
+    start = position + len(old_import)
+if len(positions) != 2:
+    raise SystemExit(f"session validator import: expected two codemod markers, found {len(positions)}")
+position = positions[-1]
+apply_path.write_text(
+    apply_text[:position] + new_import + apply_text[position + len(old_import):],
+    encoding="utf-8",
 )
+
 replace_once(
-    apply_path,
+    str(apply_path),
     '''      const authenticated = await requestJSON<Session>(`/api/v1/auth/${authMode}`, {
         method: "POST",
         body: JSON.stringify({ email, password, ...(authMode === "register" ? { displayName } : {}) }),
