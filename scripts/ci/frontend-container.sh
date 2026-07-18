@@ -56,6 +56,16 @@ prepare() {
 execute() {
   shift
   (($# > 0)) || die "exec requires a command"
+
+  if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "test" ]]; then
+    container_run bash -Eeuo pipefail -c '
+      node --version
+      npm --version
+      npm run test 2>&1 | tee vitest.log
+    '
+    return
+  fi
+
   container_run "$@"
 }
 
