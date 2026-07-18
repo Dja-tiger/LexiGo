@@ -1980,8 +1980,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
             ) : null}
 
             {passwordMode ? (
-              <label htmlFor="auth-password">
-                <span>{resetMode ? "Новый пароль" : "Пароль"}</span>
+              <div className="lx-auth-field">
+                <label htmlFor="auth-password">{resetMode ? "Новый пароль" : "Пароль"}</label>
                 <span className="lx-password-control">
                   <input
                     id="auth-password"
@@ -2011,14 +2011,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
                   </button>
                 </span>
                 {authFieldErrors.password ? <small id="auth-password-error" className="lx-field-error" role="alert">{authFieldErrors.password}</small> : null}
-              </label>
+              </div>
             ) : null}
 
             {(registrationMode || resetMode) ? (
               <>
-                <ul id="auth-password-requirements" className="lx-password-requirements" aria-label="Требования к паролю">
+                <ul id="auth-password-requirements" className="lx-password-requirements" aria-label="Требования к паролю" aria-live="polite">
                   {requirements.map((requirement) => (
-                    <li key={requirement.id} className={requirement.met ? "met" : ""}>
+                    <li
+                      key={requirement.id}
+                      className={requirement.met ? "met" : ""}
+                      aria-label={`${requirement.label}: ${requirement.met ? "выполнено" : "не выполнено"}`}
+                    >
                       <span aria-hidden="true">{requirement.met ? "✓" : "○"}</span>{requirement.label}
                     </li>
                   ))}

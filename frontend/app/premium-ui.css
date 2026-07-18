@@ -769,7 +769,8 @@ button, input { font: inherit; }
 .lx-auth-notice, .lx-auth-form-error { margin: 18px 0 0; border-radius: 13px; padding: 12px 14px; line-height: 1.5; }
 .lx-auth-notice { border: 1px solid rgba(53, 210, 139, .28); color: #bdf5df; background: rgba(15, 85, 61, .25); }
 .lx-auth-form-error { border: 1px solid rgba(255, 91, 119, .3); color: #ffc1ca; background: rgba(108, 20, 41, .28); }
-.lx-auth-card label > span:first-child { color: #aab5c8; }
+.lx-auth-card label, .lx-auth-field > label { color: #aab5c8; }
+.lx-auth-field { display: grid; gap: 7px; }
 .lx-auth-card input[aria-invalid="true"] { border-color: rgba(255, 91, 119, .68); box-shadow: 0 0 0 3px rgba(255, 91, 119, .1); }
 .lx-password-control { position: relative; display: block; }
 .lx-password-control input { padding-right: 108px; }

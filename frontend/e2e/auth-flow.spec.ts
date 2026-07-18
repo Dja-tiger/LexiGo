@@ -69,6 +69,8 @@ test("registration has accessible validation, password visibility and stable fie
   await expect(email).toHaveAttribute("autocomplete", "username");
   await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.locator("#auth-passwordConfirmation")).toHaveAttribute("autocomplete", "new-password");
+  await expect(page.locator("#auth-password").locator("xpath=ancestor::label")).toHaveCount(0);
+  await expect(page.locator("#auth-password-requirements")).toHaveAttribute("aria-live", "polite");
 
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await expect(page.locator("#auth-displayName-error")).toHaveText("Введите имя.");
@@ -80,8 +82,10 @@ test("registration has accessible validation, password visibility and stable fie
   await page.locator("#auth-displayName").fill("Public User");
   await page.locator("#auth-password").fill("short");
   await expect(page.locator(".lx-password-requirements li").first()).not.toHaveClass(/met/);
+  await expect(page.locator(".lx-password-requirements li").first()).toHaveAttribute("aria-label", "Не менее 10 символов: не выполнено");
   await page.locator("#auth-password").fill("correct horse battery staple");
   await expect(page.locator(".lx-password-requirements li").first()).toHaveClass(/met/);
+  await expect(page.locator(".lx-password-requirements li").first()).toHaveAttribute("aria-label", "Не менее 10 символов: выполнено");
 
   const password = page.locator("#auth-password");
   await expect(password).toHaveAttribute("type", "password");
