@@ -93,7 +93,7 @@ function appleCalendarStatus(method: AppleCalendarDeliveryMethod): string {
   if (method === "navigated") {
     return "Открыт файл iCalendar. Подтвердите добавление события и уведомления в Apple Calendar.";
   }
-  return "Добавление отменено. Настройки сохранены, Apple Calendar не изменён.";
+  return "Добавление отменено. Apple Calendar не изменён.";
 }
 
 export function CalendarReminderIntegration({
@@ -105,6 +105,7 @@ export function CalendarReminderIntegration({
   const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
   const [status, setStatus] = useState("");
   const [appleCalendarPending, setAppleCalendarPending] = useState(false);
+  const appleCalendarPendingRef = useRef(false);
   const dialogTitleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
@@ -158,7 +159,8 @@ export function CalendarReminderIntegration({
   }
 
   async function addToAppleCalendar() {
-    if (appleCalendarPending) return;
+    if (appleCalendarPendingRef.current) return;
+    appleCalendarPendingRef.current = true;
     setAppleCalendarPending(true);
     setStatus("");
 
@@ -179,6 +181,7 @@ export function CalendarReminderIntegration({
     } catch {
       setStatus("Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.");
     } finally {
+      appleCalendarPendingRef.current = false;
       setAppleCalendarPending(false);
     }
   }
