@@ -59,7 +59,6 @@ export function catalogSummaryText(metadata: CatalogMetadata | null, status: Cat
   return `${russianCount(metadata.totals.words, ["слово", "слова", "слов"])} и ${russianCount(metadata.totals.phrases, ["техническая фраза", "технические фразы", "технических фраз"])} с общей системой повторений.`;
 }
 
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -71,8 +70,23 @@ function isNonNegativeInteger(value: unknown): value is number {
 export function isCatalogMetadataPayload(value: unknown): value is CatalogMetadata {
   if (!isRecord(value) || typeof value.catalogVersion !== "string" || !Number.isFinite(Date.parse(String(value.updatedAt)))) return false;
   if (!isRecord(value.totals) || !isRecord(value.sources) || !Array.isArray(value.topics)) return false;
-  if (![value.totals.items, value.totals.words, value.totals.phrases].every(isNonNegativeInteger)) return false;
-  const sourceKeys = ["mixed", "noun", "verb", "adjective", "phrases", "dailyLife", "travel", "dataEngineering", "backend"];
-  if (!sourceKeys.every((key) => isNonNegativeInteger(value.sources[key]))) return false;
-  return value.topics.every((entry) => isRecord(entry) && typeof entry.topic === "string" && isNonNegativeInteger(entry.count));
+
+  const totals = value.totals;
+  const sources = value.sources;
+  const topics = value.topics;
+  if (![totals.items, totals.words, totals.phrases].every(isNonNegativeInteger)) return false;
+
+  const sourceKeys: Array<keyof CatalogMetadata["sources"]> = [
+    "mixed",
+    "noun",
+    "verb",
+    "adjective",
+    "phrases",
+    "dailyLife",
+    "travel",
+    "dataEngineering",
+    "backend",
+  ];
+  if (!sourceKeys.every((key) => isNonNegativeInteger(sources[key]))) return false;
+  return topics.every((entry) => isRecord(entry) && typeof entry.topic === "string" && isNonNegativeInteger(entry.count));
 }
