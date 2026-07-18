@@ -1,0 +1,83 @@
+name: Fix issue 44 lesson test
+
+on:
+  push:
+    branches:
+      - automation/fix-issue-44-lesson-test
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    name: Update lesson async-state regression
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/issue-44-async-states
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply deterministic test update
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('frontend/e2e/lesson-flow.spec.ts')
+          content = path.read_text(encoding='utf-8')
+
+          old = '  await expect(second.locator(".lx-error[role=\\"alert\\"]")).toContainText("Урок изменён на другом устройстве");'
+          new = '  await expect(second.getByRole("alert", { name: "Ошибка текущего действия" })).toContainText("Урок изменён на другом устройстве");'
+          if content.count(old) != 1:
+              raise SystemExit(f'legacy error selector matches: {content.count(old)}')
+          content = content.replace(old, new, 1)
+
+          old = '''    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
+    if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
+    if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });'''
+          new = '''    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname;
+    if (path === "/api/v1/catalog/metadata") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      catalogVersion: "sha256:shared-lesson-e2e",
+      updatedAt: "2026-07-18T00:00:00Z",
+      totals: { items: 4, words: 4, phrases: 0 },
+      sources: { mixed: 4, noun: 1, verb: 1, adjective: 2, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 1 },
+      topics: [{ topic: "General", count: 1 }],
+    }) });
+    if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
+    if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
+    if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
+    if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS.map((item) => ({ ...item, kind: "word" })), count: WORDS.length }) });'''
+          if content.count(old) != 1:
+              raise SystemExit(f'shared mock block matches: {content.count(old)}')
+          content = content.replace(old, new, 1)
+
+          path.write_text(content, encoding='utf-8')
+          PY
+
+      - name: Validate diff
+        run: |
+          git diff --check
+          grep -q 'Ошибка текущего действия' frontend/e2e/lesson-flow.spec.ts
+          grep -q 'shared-lesson-e2e' frontend/e2e/lesson-flow.spec.ts
+
+      - name: Commit test correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/e2e/lesson-flow.spec.ts
+          git commit -m "test(ux): follow accessible async error contract"
+          git push origin HEAD:fix/issue-44-async-states
+
+      - name: Remove automation branch
+        if: always()
+        run: git push origin --delete automation/fix-issue-44-lesson-test || true
