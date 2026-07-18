@@ -1,0 +1,1 @@
+frontend/components/lexigo-premium-app.tsx: no unique indentation variant: '  function handleStudyTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, view: StudyView) {\n  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;\n  event.preventDefault();\n  const currentIndex = STUDY_TABS.findIndex((tab) => tab.value === view);\n  const direction = event.key '
