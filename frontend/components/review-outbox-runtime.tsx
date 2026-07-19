@@ -137,21 +137,15 @@ function bannerCopy(online: boolean, summary: ReviewOutboxSummary, syncing: bool
   return null;
 }
 
-export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
+export function ReviewOutboxRuntime({ session: initialSession }: { session: Session | null }) {
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
   const [summary, setSummary] = useState<ReviewOutboxSummary>(EMPTY_SUMMARY);
   const [syncing, setSyncing] = useState(false);
-  const [activeUserID, setActiveUserID] = useState(session?.user.id ?? "");
-  const sessionRef = useRef(session);
+  const [activeUserID, setActiveUserID] = useState(initialSession?.user.id ?? "");
+  const sessionRef = useRef(initialSession);
   const originalFetchRef = useRef<typeof globalThis.fetch | null>(null);
   const syncInFlightRef = useRef<Promise<void> | null>(null);
   const reloadScheduledRef = useRef(false);
-
-  useEffect(() => {
-    sessionRef.current = session;
-    setActiveUserID(session?.user.id ?? "");
-    if (!session) setSummary(EMPTY_SUMMARY);
-  }, [session]);
 
   const refreshSummary = useCallback(async () => {
     const userId = sessionRef.current?.user.id;
