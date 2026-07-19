@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 const frontendDirectory = process.cwd();
 const componentsDirectory = path.join(frontendDirectory, "components");
 const accessibleDialogFile = "accessible-dialog.tsx";
+const delegatedProductEventPattern = /document\.addEventListener\s*\(\s*["'](?:click|dblclick|input|change|submit|keydown|keyup|pointerdown|pointerup|touchstart|touchend)["']/;
+const focusContainmentPattern = /document\.addEventListener\s*\(\s*["']focusin["']/;
 
 const forbiddenPatterns: Array<{ label: string; pattern: RegExp }> = [
   { label: "global MutationObserver", pattern: /\bMutationObserver\b/ },
@@ -13,7 +15,7 @@ const forbiddenPatterns: Array<{ label: string; pattern: RegExp }> = [
   { label: "imperative appendChild", pattern: /\.appendChild\s*\(/ },
   { label: "imperative insertBefore", pattern: /\.insertBefore\s*\(/ },
   { label: "product textContent rewrite", pattern: /\.textContent\s*=/ },
-  { label: "global document event delegation", pattern: /document\.addEventListener\s*\(/ },
+  { label: "global document event delegation", pattern: delegatedProductEventPattern },
   { label: "imperative React portal host", pattern: /\bcreatePortal\s*\(/ },
 ];
 
@@ -41,16 +43,23 @@ describe("React owns product UI DOM", () => {
     const source = readFileSync(path.join(componentsDirectory, accessibleDialogFile), "utf8");
     expect(source).toMatch(/\bcreatePortal\s*\(/);
     expect(source).toMatch(/document\.createElement\s*\(/);
-    expect(source).toMatch(/document\.addEventListener\s*\(\s*["']focusin["']/);
+    expect(source).toMatch(focusContainmentPattern);
     expect(source).not.toMatch(/\bMutationObserver\b/);
     expect(source).not.toMatch(/\.textContent\s*=/);
     expect(source).not.toMatch(/\.innerHTML\s*=/);
 
     const consumers = componentSources()
       .filter(({ file }) => file !== accessibleDialogFile)
-      .filter(({ source: componentSource }) => /\bcreatePortal\s*\(|document\.addEventListener\s*\(/.test(componentSource))
+      .filter(({ source: componentSource }) => /\bcreatePortal\s*\(/.test(componentSource)
+        || focusContainmentPattern.test(componentSource))
       .map(({ file }) => file);
     expect(consumers).toEqual([]);
+  });
+
+  it("allows non-delegating browser lifecycle listeners", () => {
+    const runtime = readFileSync(path.join(componentsDirectory, "review-outbox-runtime.tsx"), "utf8");
+    expect(runtime).toMatch(/document\.addEventListener\s*\(\s*["']visibilitychange["']/);
+    expect(runtime).not.toMatch(delegatedProductEventPattern);
   });
 
   it("removes legacy interaction patchers and does not bootstrap them", () => {
