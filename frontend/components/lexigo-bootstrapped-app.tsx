@@ -7,6 +7,8 @@ import { describeRequestFailure, type RequestProblem } from "../lib/request-fail
 import { LexigoPremiumApp } from "./lexigo-premium-app";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
+const SESSION_RESTORED_EVENT = "lexigo:session-restored";
+
 function moveToSessionScreen(reason: "expired" | "forbidden" | "invalid"): void {
   const target = new URL(window.location.href);
   target.search = `?view=profile&session=${reason}`;
@@ -45,6 +47,12 @@ export function LexigoBootstrappedApp() {
       cancelled = true;
     };
   }, [restoreAttempt]);
+
+  useEffect(() => {
+    const clearResolvedNotice = () => setNotice(null);
+    window.addEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
+    return () => window.removeEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
+  }, []);
 
   function retryRestore() {
     setInitialSession(undefined);
