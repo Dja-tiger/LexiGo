@@ -1,0 +1,104 @@
+name: Harden Issue 54 bounded hydration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Remove transient full catalog and extend performance regression
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app = Path('frontend/components/lexigo-premium-app.tsx')
+          content = app.read_text(encoding='utf-8')
+          old = '''      setProgress(null);
+      setActiveLesson(null);
+      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      void Promise.all([
+'''
+          new = '''      setProgress(null);
+      setActiveLesson(null);
+      setPhraseCatalog([]);
+      setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
+      setPhrasePage(1);
+      setPhraseCatalogStatus(idleResourceStatus());
+      void Promise.all([
+'''
+          if content.count(old) != 1:
+              raise SystemExit(f'hydration reset matches: {content.count(old)}')
+          app.write_text(content.replace(old, new, 1), encoding='utf-8')
+
+          test = Path('frontend/e2e/catalog-pagination.spec.ts')
+          content = test.read_text(encoding='utf-8')
+          old = '''  const requestedLimits: number[] = [];
+  await installAPI(context, requestedLimits);
+  const errors = captureErrors(page);
+'''
+          new = '''  const requestedLimits: number[] = [];
+  await context.addInitScript(() => {
+    const updateMaximum = () => {
+      const current = document.querySelectorAll(".lx-phrase-grid [role=listitem]").length;
+      const previous = Number(document.documentElement.dataset.lexigoMaxCatalogItems ?? "0");
+      document.documentElement.dataset.lexigoMaxCatalogItems = String(Math.max(previous, current));
+    };
+    new MutationObserver(updateMaximum).observe(document, { childList: true, subtree: true });
+  });
+  await installAPI(context, requestedLimits);
+  const errors = captureErrors(page);
+'''
+          if content.count(old) != 1:
+              raise SystemExit(f'performance setup matches: {content.count(old)}')
+          content = content.replace(old, new, 1)
+          old = '''  expect(requestedLimits.length).toBeGreaterThan(0);
+  expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);
+'''
+          new = '''  expect(requestedLimits.length).toBeGreaterThan(0);
+  expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);
+  expect(await page.evaluate(() => Number(document.documentElement.dataset.lexigoMaxCatalogItems ?? "0"))).toBeLessThanOrEqual(48);
+'''
+          if content.count(old) != 1:
+              raise SystemExit(f'bounded assertion matches: {content.count(old)}')
+          test.write_text(content.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Verify frontend type and unit tests
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run test
+      - name: Commit hardening and remove workflow
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "LexiGo CI"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/issue-54-pr-apply.yml
+          git add frontend/components/lexigo-premium-app.tsx frontend/e2e/catalog-pagination.spec.ts
+          git diff --cached --check
+          git commit -m "fix(catalog): keep hydration DOM bounded"
+          git push origin HEAD:agent/issue-54-catalog-pagination
