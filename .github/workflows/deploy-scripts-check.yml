@@ -104,13 +104,24 @@ jobs:
           docker compose --env-file deploy/env/stage.env -f deploy/compose/docker-compose.stage.yml config >/dev/null
           docker compose --env-file deploy/env/prod.env -f deploy/compose/docker-compose.prod.yml config >/dev/null
 
-      - name: Build and validate custom Caddy
+      - name: Build custom Caddy
         run: |
           set -Eeuo pipefail
-          trap 'docker image rm -f lexigo-caddy:2.11.4-cloudflare >/dev/null 2>&1 || true' EXIT
-          docker build -t lexigo-caddy:2.11.4-cloudflare -f deploy/caddy/Dockerfile deploy
+          set -o pipefail
+          docker build --progress=plain \
+            -t lexigo-caddy:2.11.4-cloudflare \
+            -f deploy/caddy/Dockerfile \
+            deploy \
+            2>&1 | tee caddy-build.log
+
+      - name: Verify Cloudflare DNS module
+        run: |
           docker run --rm --entrypoint caddy lexigo-caddy:2.11.4-cloudflare list-modules \
+            | tee caddy-modules.log \
             | grep -Fxq 'dns.providers.cloudflare'
+
+      - name: Validate Caddyfile
+        run: |
           docker run --rm \
             -e CADDY_SITE_ADDRESS=lexigo.example.com \
             -e CADDY_API_ADDRESS=api.lexigo.example.com \
@@ -119,7 +130,8 @@ jobs:
             -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             --entrypoint caddy \
             lexigo-caddy:2.11.4-cloudflare \
-            validate --config /etc/caddy/Caddyfile --adapter caddyfile
+            validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+            2>&1 | tee caddy-validate.log
 
       - name: Validate systemd units
         run: |
@@ -128,3 +140,19 @@ jobs:
               deploy/systemd/lexigo-certificate-health@.service \
               deploy/systemd/lexigo-certificate-health@.timer
           fi
+
+      - name: Upload Caddy diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: caddy-deployment-diagnostics
+          path: |
+            caddy-build.log
+            caddy-modules.log
+            caddy-validate.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Cleanup Caddy test image
+        if: always()
+        run: docker image rm -f lexigo-caddy:2.11.4-cloudflare >/dev/null 2>&1 || true
