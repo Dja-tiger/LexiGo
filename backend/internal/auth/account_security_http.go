@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
@@ -32,15 +33,15 @@ func (h *Handler) AccountSessions(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := h.refreshToken(r)
 	if err != nil {
 		h.clearSessionCookies(w)
-		h.writeServiceError(w, ErrCurrentSessionNotFound)
+		h.writeAccountSecurityError(w, ErrCurrentSessionNotFound)
 		return
 	}
 	sessions, err := h.service.AccountSessions(r.Context(), userID, refreshToken)
 	if err != nil {
-		if err == ErrCurrentSessionNotFound {
+		if errors.Is(err, ErrCurrentSessionNotFound) {
 			h.clearSessionCookies(w)
 		}
-		h.writeServiceError(w, err)
+		h.writeAccountSecurityError(w, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
@@ -60,7 +61,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := h.refreshToken(r)
 	if err != nil {
 		h.clearSessionCookies(w)
-		h.writeServiceError(w, ErrCurrentSessionNotFound)
+		h.writeAccountSecurityError(w, ErrCurrentSessionNotFound)
 		return
 	}
 	var request changePasswordRequest
@@ -77,10 +78,10 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		r.UserAgent(),
 		clientIP(r),
 	); err != nil {
-		if err == ErrCurrentSessionNotFound {
+		if errors.Is(err, ErrCurrentSessionNotFound) {
 			h.clearSessionCookies(w)
 		}
-		h.writeServiceError(w, err)
+		h.writeAccountSecurityError(w, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
@@ -100,7 +101,7 @@ func (h *Handler) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := h.refreshToken(r)
 	if err != nil {
 		h.clearSessionCookies(w)
-		h.writeServiceError(w, ErrCurrentSessionNotFound)
+		h.writeAccountSecurityError(w, ErrCurrentSessionNotFound)
 		return
 	}
 	var request reauthenticateRequest
@@ -116,10 +117,10 @@ func (h *Handler) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
 		r.UserAgent(),
 		clientIP(r),
 	); err != nil {
-		if err == ErrCurrentSessionNotFound {
+		if errors.Is(err, ErrCurrentSessionNotFound) {
 			h.clearSessionCookies(w)
 		}
-		h.writeServiceError(w, err)
+		h.writeAccountSecurityError(w, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
@@ -134,9 +135,25 @@ func (h *Handler) AccountAudit(w http.ResponseWriter, r *http.Request) {
 	}
 	events, err := h.service.RecentAccountAudit(r.Context(), userID, 50)
 	if err != nil {
-		h.writeServiceError(w, err)
+		h.writeAccountSecurityError(w, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	httpx.WriteJSON(w, http.StatusOK, accountAuditResponse{Events: events})
+}
+
+func (h *Handler) writeAccountSecurityError(w http.ResponseWriter, err error) {
+	var fieldError *FieldError
+	switch {
+	case errors.As(err, &fieldError):
+		httpx.WriteFieldError(w, http.StatusUnprocessableEntity, fieldError.Code, fieldError.Message, fieldError.Field)
+	case errors.Is(err, ErrReauthenticationFailed):
+		httpx.WriteFieldError(w, http.StatusUnauthorized, "reauthentication_failed", "current password is invalid", "currentPassword")
+	case errors.Is(err, ErrCurrentSessionNotFound):
+		httpx.WriteError(w, http.StatusUnauthorized, "current_session_required", "a valid current refresh session is required")
+	case errors.Is(err, ErrAccountSecurityDisabled):
+		httpx.WriteError(w, http.StatusServiceUnavailable, "account_security_unavailable", "account security is temporarily unavailable")
+	default:
+		h.writeServiceError(w, err)
+	}
 }
