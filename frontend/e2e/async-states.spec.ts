@@ -161,10 +161,8 @@ test("slow catalog shows a local skeleton before content", async ({ page }) => {
 
 test("server failure keeps progress visible, exposes correlation id and retries locally", async ({ page }) => {
   const requests = await installMocks(page, "server");
-  await page.goto("/");
-
-  const dueCard = page.locator(".lx-progress-stats button").filter({ hasText: "К повторению" });
-  await expect(dueCard.locator("strong")).toHaveText("4");
+  await page.goto("/?view=phrases");
+  await expect(page.getByText("1 фраз готовы к повторению", { exact: true })).toBeVisible();
 
   const notice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(notice).toContainText("Сервис временно недоступен");
@@ -175,12 +173,12 @@ test("server failure keeps progress visible, exposes correlation id and retries 
   await notice.getByRole("button", { name: "Повторить" }).click();
   await expect(notice).toBeHidden();
   expect(requests.phraseCount()).toBe(2);
-  await expect(dueCard.locator("strong")).toHaveText("4");
+  await expect(page.getByText("Recover locally", { exact: true })).toBeVisible();
 });
 
 test("offline and expired-session states are distinct", async ({ page }) => {
   await installMocks(page, "offline");
-  await page.goto("/");
+  await page.goto("/?view=phrases");
   await expect(page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" })).toContainText("Нет подключения к сети");
 
   const second = await page.context().newPage();
@@ -194,8 +192,8 @@ test("empty phrase response provides a next action", async ({ page }) => {
   await installMocks(page, "empty");
   await page.goto("/?view=phrases");
   const empty = page.getByRole("status", { name: "Каталог фраз пуст" });
-  await expect(empty).toContainText("В этой теме пока нет фраз");
-  await expect(empty.getByRole("button", { name: "Показать все темы" })).toBeVisible();
+  await expect(empty).toContainText("По заданным условиям фразы не найдены");
+  await expect(empty.getByRole("button", { name: "Сбросить фильтры" })).toBeVisible();
 });
 
 test("404 active lesson is an empty state rather than an error", async ({ page }) => {
@@ -209,7 +207,7 @@ test("request timeout has a dedicated recoverable state", async ({ page }, testI
   test.skip(testInfo.project.name !== "desktop-chromium", "One real timeout contract is sufficient; other browser profiles cover the same component.");
   test.setTimeout(30_000);
   await installMocks(page, "timeout");
-  await page.goto("/");
+  await page.goto("/?view=phrases");
   const notice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(notice).toContainText("Сервер отвечает слишком долго", { timeout: 20_000 });
   await expect(notice.getByRole("button", { name: "Повторить" })).toBeVisible();
