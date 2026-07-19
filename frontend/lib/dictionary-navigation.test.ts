@@ -16,7 +16,8 @@ describe("dictionary navigation", () => {
 
       expect(resolvedTarget).toEqual(target);
       expect(url).not.toBeNull();
-      expect(parseNavigation(new URL(url as string, "https://lexigo.local").search)).toEqual(target);
+      const location = new URL(url as string, "https://lexigo.local");
+      expect(parseNavigation(location.search, location.pathname)).toEqual(target);
     },
   );
 
