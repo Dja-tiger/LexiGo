@@ -98,7 +98,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   const errors = captureErrors(page);
 
   const startedAt = Date.now();
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
   await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(48);
   expect(Date.now() - startedAt).toBeLessThan(8000);
@@ -118,6 +118,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   const scrollBeforeDetail = await page.evaluate(() => window.scrollY);
   await target.click();
   await expect(page.locator(".lx-detail-card")).toBeVisible();
+  await expect(page).toHaveURL(/\/phrases\/performance-phrase-/);
   await page.goBack();
   await expect(page.getByText("Страница 2 из 21").first()).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, scrollBeforeDetail - 200));
