@@ -8,12 +8,13 @@ import (
 )
 
 type Service struct {
-	users         UserRepository
-	refresh       RefreshTokenRepository
-	tokens        *TokenManager
-	refreshTTL    time.Duration
-	passwordReset passwordResetConfig
-	now           func() time.Time
+	users           UserRepository
+	refresh         RefreshTokenRepository
+	tokens          *TokenManager
+	refreshTTL      time.Duration
+	passwordReset   passwordResetConfig
+	accountSecurity accountSecurityConfig
+	now             func() time.Time
 }
 
 func NewService(
