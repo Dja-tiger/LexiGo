@@ -194,7 +194,8 @@ test("adopts an in-app login before persisting an offline lesson review", async 
   await page.locator("#auth-password").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Войти", exact: true }).click();
 
-  await expect(page).toHaveURL(/view=home/);
+  await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
+  await expect(page.getByText("Сессия истекла", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Продолжить урок", exact: true }).first().click();
   await expect(page.getByText("Слово 1 из 1")).toBeVisible();
 
