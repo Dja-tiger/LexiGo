@@ -35,7 +35,7 @@ func (r *Repository) CreateLesson(
 
 	wordIDs := request.WordIDs
 	if wordIDs == nil {
-		candidates, candidateErr := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode)
+		candidates, candidateErr := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode, request.Topic)
 		if candidateErr != nil {
 			return LessonSession{}, candidateErr
 		}

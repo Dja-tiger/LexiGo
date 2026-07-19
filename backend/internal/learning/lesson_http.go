@@ -22,7 +22,7 @@ func (h *Handler) PreviewLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
 		return
 	}
-	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize) {
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic) {
 		return
 	}
 	preview, err := h.repository.PreviewLesson(r.Context(), userID, request)
@@ -46,11 +46,11 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
 		return
 	}
-	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize) {
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic) {
 		return
 	}
-	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 1000 || !uniquePositiveWordIDs(request.WordIDs)) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_word_ids", "wordIds must be omitted or contain between 1 and 1000 unique positive ids")
+	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 60 || !uniquePositiveWordIDs(request.WordIDs)) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_word_ids", "wordIds must be omitted or contain between 1 and 60 unique positive ids")
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusCreated, lesson)
 }
 
-func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode AnswerMode, lessonSize string) bool {
+func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode AnswerMode, lessonSize, topic string) bool {
 	if !validLessonSource(source) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
 		return false
@@ -80,7 +80,11 @@ func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode
 		return false
 	}
 	if !validLessonSize(lessonSize) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30, 60 or all")
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30 or 60")
+		return false
+	}
+	if len(strings.TrimSpace(topic)) > 120 {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_topic", "topic must contain at most 120 characters")
 		return false
 	}
 	return true
@@ -245,7 +249,7 @@ func validLessonSource(value string) bool {
 }
 
 func validLessonSize(value string) bool {
-	return value == "15" || value == "30" || value == "60" || value == "all"
+	return value == "15" || value == "30" || value == "60"
 }
 
 func uniquePositiveWordIDs(values []int64) bool {

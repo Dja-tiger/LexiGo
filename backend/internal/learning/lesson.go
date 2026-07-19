@@ -6,6 +6,7 @@ type LessonCreateRequest struct {
 	Source     string     `json:"source"`
 	StudyMode  AnswerMode `json:"studyMode"`
 	LessonSize string     `json:"lessonSize"`
+	Topic      string     `json:"topic,omitempty"`
 	WordIDs    []int64    `json:"wordIds,omitempty"`
 }
 
@@ -13,6 +14,7 @@ type LessonPreviewRequest struct {
 	Source     string     `json:"source"`
 	StudyMode  AnswerMode `json:"studyMode"`
 	LessonSize string     `json:"lessonSize"`
+	Topic      string     `json:"topic,omitempty"`
 }
 
 type LessonComposition struct {

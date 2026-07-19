@@ -24,7 +24,7 @@ export type CatalogMetadata = {
     dataEngineering: number;
     backend: number;
   };
-  topics: Array<{ topic: string; count: number }>;
+  topics: Array<{ topic: string; count: number; words?: number; phrases?: number }>;
 };
 
 export type CatalogMetadataStatus = "loading" | "ready" | "error";
@@ -88,5 +88,9 @@ export function isCatalogMetadataPayload(value: unknown): value is CatalogMetada
     "backend",
   ];
   if (!sourceKeys.every((key) => isNonNegativeInteger(sources[key]))) return false;
-  return topics.every((entry) => isRecord(entry) && typeof entry.topic === "string" && isNonNegativeInteger(entry.count));
+  return topics.every((entry) => isRecord(entry)
+    && typeof entry.topic === "string"
+    && isNonNegativeInteger(entry.count)
+    && (entry.words === undefined || isNonNegativeInteger(entry.words))
+    && (entry.phrases === undefined || isNonNegativeInteger(entry.phrases)));
 }
