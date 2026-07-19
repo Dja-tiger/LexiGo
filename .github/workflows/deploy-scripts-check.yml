@@ -69,7 +69,7 @@ jobs:
           grep -Fq 'upsert_env "$APP_ENV_FILE" SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
           grep -Fq 'deploy/env/stage.caddy.env' scripts/remote-deploy.sh
           grep -Fq 'deploy/env/prod.caddy.env' scripts/remote-deploy.sh
-          grep -Fq 'chmod 0600 "$CADDY_ENV_FILE"' scripts/remote-deploy.sh
+          grep -Fq 'install -m 0600 "$CADDY_ENV_TEMP" "$CADDY_ENV_FILE"' scripts/remote-deploy.sh
           grep -Fq 'printf '\''%s\n%s\n'\'' "$GHCR_TOKEN" "$CLOUDFLARE_API_TOKEN"' scripts/ci/deploy-over-ssh.sh
 
           if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
