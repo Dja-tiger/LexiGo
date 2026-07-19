@@ -18,7 +18,6 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - name: Apply bounded catalog pagination
         shell: bash
@@ -28,25 +27,23 @@ jobs:
           git clone --quiet --depth 1 --branch agent/issue-54-catalog-pagination \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bootstrap-repo
           cd bootstrap-repo
+
+          if [[ ! -f .github/scripts/issue54.payload.ready ]]; then
+            echo 'Issue 54 payload is not complete yet; skipping bootstrap.'
+            exit 0
+          fi
+
           mkdir -p .github/scripts
+          cat .github/scripts/issue54.payload.?? > /tmp/issue54.payload.b64
           python3 - <<'PY'
           import base64
+          import gzip
           from pathlib import Path
 
-          source = Path('.github/workflows/apply-issue-54.yml').read_text()
-          payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
-          Path('.github/scripts/issue54-payload.bin').write_bytes(base64.b64decode(payload))
+          payload = Path('/tmp/issue54.payload.b64').read_text().strip()
+          script = gzip.decompress(base64.b64decode(payload))
+          Path('.github/scripts/apply_issue54.py').write_bytes(script)
           PY
-          docker run --rm -i \
-            --volume "$PWD:/workspace" \
-            --workdir /workspace \
-            "$PLAYWRIGHT_IMAGE" \
-            node - <<'NODE'
-          const fs = require('node:fs');
-          const zlib = require('node:zlib');
-          const compressed = fs.readFileSync('.github/scripts/issue54-payload.bin');
-          fs.writeFileSync('.github/scripts/apply_issue54.py', zlib.brotliDecompressSync(compressed));
-          NODE
 
           if ! python3 .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
             cat /tmp/issue-54-bootstrap.log
@@ -62,10 +59,15 @@ jobs:
             backend/internal/learning/lesson_repository.go \
             backend/integration/catalog_pagination_test.go
           git diff --check
-          rm -f .github/scripts/apply_issue54.py .github/scripts/issue54-payload.bin
+          rm -f .github/scripts/apply_issue54.py
           git rm --force \
             .github/workflows/apply-issue-54.yml \
             .github/workflows/apply-issue-54-pr.yml \
+            .github/scripts/issue54.payload.00 \
+            .github/scripts/issue54.payload.01 \
+            .github/scripts/issue54.payload.02 \
+            .github/scripts/issue54.payload.03 \
+            .github/scripts/issue54.payload.ready \
             .issue-54-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
