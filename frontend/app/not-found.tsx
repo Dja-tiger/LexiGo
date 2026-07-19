@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Страница не найдена · LexiGo",
@@ -11,7 +12,7 @@ export default function NotFound() {
       <div className="lx-bootstrap-mark" aria-hidden="true">404</div>
       <strong>Такого раздела нет</strong>
       <span>Адрес устарел или был введён с ошибкой.</span>
-      <a className="lx-button primary" href="/">Открыть главную</a>
+      <Link className="lx-button primary" href="/">Открыть главную</Link>
     </main>
   );
 }
