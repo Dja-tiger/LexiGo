@@ -24,13 +24,29 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 25
+    timeout-minutes: 40
     environment: production
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
+
+      - name: Verify Cloudflare API token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          response="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          RESPONSE="$response" python3 - <<'PY'
+          import json
+          import os
+          payload = json.loads(os.environ["RESPONSE"])
+          if payload.get("success") is not True or payload.get("result", {}).get("status") != "active":
+              raise SystemExit("Cloudflare API token is not active")
+          PY
 
       - name: Deploy production
         id: deploy
@@ -40,6 +56,10 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           IMAGE_TAG: ${{ inputs.image_tag }}
           GHCR_USER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
