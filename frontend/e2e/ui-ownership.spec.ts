@@ -112,7 +112,20 @@ async function installBrowserMocks(page: Page) {
       return;
     }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: PHRASES, count: PHRASES.length }) });
+      const sort = url.searchParams.get("sort") ?? "default";
+      const items = [...PHRASES];
+      if (sort === "az") items.sort((left, right) => left.lemma.localeCompare(right.lemma, "en"));
+      if (sort === "za") items.sort((left, right) => right.lemma.localeCompare(left.lemma, "en"));
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        items,
+        count: items.length,
+        total: items.length,
+        page: 1,
+        pageSize: 48,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      }) });
       return;
     }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
@@ -175,7 +188,7 @@ function watchRuntimeErrors(page: Page) {
 }
 
 async function phrasePrompts(page: Page) {
-  return page.locator(".lx-phrase-grid > button strong").allTextContents();
+  return page.locator(".lx-phrase-grid > [role=listitem] > button strong").allTextContents();
 }
 
 test.describe.configure({ timeout: 60_000 });
@@ -226,19 +239,19 @@ test("phrase sorting is React state, persists across reload and creates one tool
 
   const sorting = page.getByRole("combobox", { name: "Сортировка каталога" });
   await sorting.selectOption("az");
-  expect(await phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
+  await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
   await visibleNavigation(page).getByRole("button", { name: "Главная", exact: true }).click();
   await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
   await expect(page.locator('.lx-catalog-sort[data-lexigo-sort-for="phrases"]')).toHaveCount(1);
-  expect(await phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
+  await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
   await page.reload();
   await expect(sorting).toHaveValue("az");
-  expect(await phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
+  await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
   await sorting.selectOption("za");
-  expect(await phrasePrompts(page)).toEqual(["Zulu cache", "Build release", "alpha pipeline"]);
+  await expect.poll(() => phrasePrompts(page)).toEqual(["Zulu cache", "Build release", "alpha pipeline"]);
   expect(runtimeErrors).toEqual([]);
 });
 
