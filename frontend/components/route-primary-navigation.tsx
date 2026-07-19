@@ -1,7 +1,8 @@
 "use client";
 
-import type { AriaAttributes, MouseEvent, ReactNode } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AriaAttributes, MouseEvent, ReactNode } from "react";
 
 import {
   PRIMARY_NAVIGATION,
@@ -93,7 +94,7 @@ function pushRoute(requestedTarget: NavigationTarget): void {
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
 
-function RouteAnchor({
+function RouteLink({
   target,
   children,
   className,
@@ -109,7 +110,7 @@ function RouteAnchor({
   navigationView?: AppView;
 }) {
   return (
-    <a
+    <Link
       href={navigationURL(target)}
       className={className}
       aria-label={ariaLabel}
@@ -122,7 +123,7 @@ function RouteAnchor({
       }}
     >
       {children}
-    </a>
+    </Link>
   );
 }
 
@@ -132,10 +133,10 @@ function currentView(pathname: string): AppView {
 
 export function RouteBrand() {
   return (
-    <RouteAnchor target={{ view: "home" }} className="lx-route-brand" ariaLabel="LexiGo — открыть главную">
+    <RouteLink target={{ view: "home" }} className="lx-route-brand" ariaLabel="LexiGo — открыть главную">
       <span className="lx-logo-mark"><span>L</span></span>
       <strong>LexiGo</strong>
-    </RouteAnchor>
+    </RouteLink>
   );
 }
 
@@ -154,7 +155,7 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
       {PRIMARY_NAVIGATION.map((entry) => {
         const active = activeView === entry.view;
         return (
-          <RouteAnchor
+          <RouteLink
             key={entry.view}
             target={{ view: entry.view }}
             className={active ? "active" : undefined}
@@ -165,7 +166,7 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
               <RouteIcon name={entry.view as RouteIconName} />
               <span>{labelMode === "short" ? entry.shortLabel : entry.label}</span>
             </span>
-          </RouteAnchor>
+          </RouteLink>
         );
       })}
     </nav>
