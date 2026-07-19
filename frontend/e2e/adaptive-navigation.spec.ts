@@ -114,6 +114,12 @@ const METADATA = {
   ],
 };
 
+const NAVIGATION_SELECTORS = [
+  ".lx-route-nav--header",
+  ".lx-route-nav--rail",
+  ".lx-route-nav--mobile",
+] as const;
+
 async function fulfillJSON(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -204,8 +210,7 @@ function navigation(page: Page, selector: string) {
 }
 
 async function clickNavigationView(page: Page, view: string) {
-  const candidates = [".lx-nav", ".lx-navigation-rail", ".lx-mobile-nav"];
-  for (const selector of candidates) {
+  for (const selector of NAVIGATION_SELECTORS) {
     const host = navigation(page, selector);
     if (await host.isVisible()) {
       await host.locator(`[data-navigation-view="${view}"]`).click();
@@ -216,8 +221,8 @@ async function clickNavigationView(page: Page, view: string) {
 }
 
 async function expectMinimumNavigationTargets(page: Page, selector: string, minimum = 48) {
-  const sizes = await page.locator(`${selector} button`).evaluateAll((buttons) => buttons.map((button) => {
-    const box = button.getBoundingClientRect();
+  const sizes = await page.locator(`${selector} > a`).evaluateAll((links) => links.map((link) => {
+    const box = link.getBoundingClientRect();
     return { width: box.width, height: box.height };
   }));
   expect(sizes).toHaveLength(5);
@@ -237,22 +242,23 @@ test.beforeEach(async ({ page }) => {
   await installAPI(page);
 });
 
-test("expanded width keeps all header navigation labels visible", async ({ page }, testInfo) => {
+test("expanded width keeps all semantic header navigation labels visible", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Expanded layout is asserted once in Chromium.");
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
-  const headerNavigation = navigation(page, ".lx-nav");
+  const headerNavigation = navigation(page, ".lx-route-nav--header");
   await expect(headerNavigation).toBeVisible();
-  await expect(navigation(page, ".lx-navigation-rail")).toBeHidden();
-  await expect(navigation(page, ".lx-mobile-nav")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--rail")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--mobile")).toBeHidden();
   await expect(headerNavigation.getByText("Главная", { exact: true })).toBeVisible();
   await expect(headerNavigation.getByText("Обучение", { exact: true })).toBeVisible();
   await expect(headerNavigation.getByText("Фразы", { exact: true })).toBeVisible();
   await expect(headerNavigation.getByText("Словарь", { exact: true })).toBeVisible();
   await expect(headerNavigation.getByText("Прогресс", { exact: true })).toBeVisible();
-  await expectMinimumNavigationTargets(page, ".lx-nav");
+  await expect(headerNavigation.getByRole("link", { name: "Обучение" })).toHaveAttribute("href", "/learn");
+  await expectMinimumNavigationTargets(page, ".lx-route-nav--header");
   await expectNoHorizontalOverflow(page);
 });
 
@@ -262,15 +268,15 @@ test("breakpoint boundaries expose exactly one labelled primary navigation", asy
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
   const cases = [
-    { width: 719, expected: ".lx-mobile-nav" },
-    { width: 720, expected: ".lx-navigation-rail" },
-    { width: 1099, expected: ".lx-navigation-rail" },
-    { width: 1100, expected: ".lx-nav" },
+    { width: 719, expected: ".lx-route-nav--mobile" },
+    { width: 720, expected: ".lx-route-nav--rail" },
+    { width: 1099, expected: ".lx-route-nav--rail" },
+    { width: 1100, expected: ".lx-route-nav--header" },
   ];
 
   for (const current of cases) {
     await page.setViewportSize({ width: current.width, height: 800 });
-    const visibility = await page.locator(".lx-nav, .lx-navigation-rail, .lx-mobile-nav")
+    const visibility = await page.locator(NAVIGATION_SELECTORS.join(", "))
       .evaluateAll((elements) => elements.map((element) => ({
         className: element.className,
         visible: window.getComputedStyle(element).display !== "none",
@@ -284,16 +290,16 @@ test("breakpoint boundaries expose exactly one labelled primary navigation", asy
 test("medium width uses a labelled rail and restores the previous tab target and scroll", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-webkit", "Tablet rail and WebKit behavior are asserted once.");
   await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
 
-  const rail = navigation(page, ".lx-navigation-rail");
+  const rail = navigation(page, ".lx-route-nav--rail");
   await expect(rail).toBeVisible();
-  await expect(navigation(page, ".lx-nav")).toBeHidden();
-  await expect(navigation(page, ".lx-mobile-nav")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--header")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--mobile")).toBeHidden();
   await expect(rail.getByText("Обучение", { exact: true })).toBeVisible();
   await expect(rail.getByText("Словарь", { exact: true })).toBeVisible();
-  await expectMinimumNavigationTargets(page, ".lx-navigation-rail");
+  await expectMinimumNavigationTargets(page, ".lx-route-nav--rail");
 
   const railBox = await rail.boundingBox();
   const mainBox = await page.locator("#lexigo-main-content").boundingBox();
@@ -307,19 +313,19 @@ test("medium width uses a labelled rail and restores the previous tab target and
   await page.waitForTimeout(100);
 
   await clickNavigationView(page, "progress");
-  await expect(page).toHaveURL(/view=progress/);
+  await expect(page).toHaveURL(/\/progress$/);
   await clickNavigationView(page, "phrases");
-  await expect(page).toHaveURL(/view=phrases/);
+  await expect(page).toHaveURL(/\/phrases$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(savedScroll - 100);
 
   const firstPhrase = page.locator(".lx-phrase-grid button").first();
   await firstPhrase.click();
-  await expect(page).toHaveURL(/detail=adaptive-navigation-1/);
+  await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
 
   await clickNavigationView(page, "progress");
   await clickNavigationView(page, "phrases");
-  await expect(page).toHaveURL(/detail=adaptive-navigation-1/);
+  await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
@@ -330,13 +336,13 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
-  const bottomNavigation = navigation(page, ".lx-mobile-nav");
+  const bottomNavigation = navigation(page, ".lx-route-nav--mobile");
   await expect(bottomNavigation).toBeVisible();
-  await expect(navigation(page, ".lx-nav")).toBeHidden();
-  await expect(navigation(page, ".lx-navigation-rail")).toBeHidden();
-  await expectMinimumNavigationTargets(page, ".lx-mobile-nav");
+  await expect(navigation(page, ".lx-route-nav--header")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--rail")).toBeHidden();
+  await expectMinimumNavigationTargets(page, ".lx-route-nav--mobile");
 
-  const labelSizes = await bottomNavigation.locator("button span").evaluateAll((labels) => labels.map((label) => (
+  const labelSizes = await bottomNavigation.locator("a > span > span").evaluateAll((labels) => labels.map((label) => (
     Number.parseFloat(window.getComputedStyle(label).fontSize)
   )));
   expect(labelSizes.every((size) => size >= 11)).toBe(true);
@@ -354,14 +360,14 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
 test("mobile landscape switches to the medium rail without clipping content", async ({ page }, testInfo) => {
   test.skip(!["ios-webkit", "android-chromium"].includes(testInfo.project.name), "Landscape mobile contract.");
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
-  const rail = navigation(page, ".lx-navigation-rail");
+  const rail = navigation(page, ".lx-route-nav--rail");
   await expect(rail).toBeVisible();
-  await expect(navigation(page, ".lx-nav")).toBeHidden();
-  await expect(navigation(page, ".lx-mobile-nav")).toBeHidden();
-  await expectMinimumNavigationTargets(page, ".lx-navigation-rail");
+  await expect(navigation(page, ".lx-route-nav--header")).toBeHidden();
+  await expect(navigation(page, ".lx-route-nav--mobile")).toBeHidden();
+  await expectMinimumNavigationTargets(page, ".lx-route-nav--rail");
   await expect(rail.getByText("Прогресс", { exact: true })).toBeVisible();
   const railBox = await rail.boundingBox();
   expect(railBox).not.toBeNull();
@@ -373,30 +379,30 @@ test("mobile landscape switches to the medium rail without clipping content", as
 test("an active lesson removes top-level navigation and blocks browser history exit", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Focused lesson behavior is asserted once.");
   await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
   const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled();
   await start.click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active/);
   await expect(page.getByRole("heading", { name: "viewport" })).toBeVisible();
   await expect(page.getByText("Урок в процессе", { exact: true })).toBeVisible();
-  await expect(page.locator(".lx-nav, .lx-navigation-rail, .lx-mobile-nav")).toHaveCount(0);
+  await expect(page.locator(NAVIGATION_SELECTORS.join(", "))).toHaveCount(0);
 
   await page.evaluate(() => window.history.back());
-  await expect.poll(() => new URL(page.url()).searchParams.get("view")).toBe("lesson");
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/lesson/active");
   await expect(page.locator(".lx-queue-notice")).toContainText("Сохранить и выйти");
   await expect(page.getByRole("heading", { name: "viewport" })).toBeVisible();
 
   await page.getByRole("button", { name: "Сохранить и выйти", exact: true }).click();
   await expect(page).toHaveURL("http://127.0.0.1:3000/");
-  await expect(navigation(page, ".lx-navigation-rail")).toBeVisible();
+  await expect(navigation(page, ".lx-route-nav--rail")).toBeVisible();
 
   await page.goBack();
-  await expect(page).toHaveURL(/view=learn/);
+  await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
-  await expect(page).not.toHaveURL(/view=lesson/);
+  await expect(page).not.toHaveURL(/\/lesson\//);
 });
 
 test("the PWA manifest no longer restricts the app to portrait", async ({ request }, testInfo) => {
