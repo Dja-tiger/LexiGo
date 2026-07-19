@@ -111,6 +111,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 		Topic: topic, Query: search, Status: status, Sort: sortMode,
 	}
 	var result Page
+	var err error
 	if dueOnly {
 		result, err = h.repository.ListDuePage(r.Context(), userID, options)
 	} else {
