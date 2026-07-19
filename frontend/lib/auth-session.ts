@@ -103,7 +103,7 @@ export function isRetryableSessionRefreshError(error: unknown): error is Session
 
 export function isDefinitiveSessionRefreshError(error: unknown): error is SessionRefreshError {
   return error instanceof SessionRefreshError
-    && (error.kind === "unauthorized" || error.kind === "forbidden" || error.kind === "malformed");
+    && (error.kind === "unauthorized" || error.kind === "forbidden");
 }
 
 export function cookieValue(cookieHeader: string, name: string): string {
