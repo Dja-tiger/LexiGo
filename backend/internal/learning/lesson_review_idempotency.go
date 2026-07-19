@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var ErrIdempotencyKeyReused = errors.New("idempotency key was reused with a different request")
@@ -27,12 +26,10 @@ type lessonReviewFingerprint struct {
 	TimezoneOffsetMinutes int        `json:"timezoneOffsetMinutes"`
 }
 
-// ReviewLessonWordIdempotent serializes retries for one client operation and
-// returns the first committed response for every identical replay. The durable
-// response record is intentionally stored separately from the learning
-// transaction: if the process stops after the review commit but before the
-// response record is inserted, recoverCommittedLessonReview verifies the exact
-// persisted event and reconstructs the same response without a duplicate event.
+// ReviewLessonWordIdempotent returns the first committed response for every
+// identical replay. Concurrent requests are already serialized by the row lock
+// in ReviewLessonWord. A losing request reconstructs the committed result from
+// the exact review event and therefore never inserts a duplicate learning event.
 func (r *Repository) ReviewLessonWordIdempotent(
 	ctx context.Context,
 	userID string,
@@ -49,23 +46,7 @@ func (r *Repository) ReviewLessonWordIdempotent(
 	if err != nil {
 		return LessonReviewResult{}, err
 	}
-	connection, err := r.pool.Acquire(ctx)
-	if err != nil {
-		return LessonReviewResult{}, fmt.Errorf("acquire idempotency connection: %w", err)
-	}
-	defer connection.Release()
-
-	lockName := userID + ":" + idempotencyKey
-	if _, err := connection.Exec(ctx, "select pg_advisory_lock(hashtextextended($1, 0))", lockName); err != nil {
-		return LessonReviewResult{}, fmt.Errorf("lock idempotent lesson review: %w", err)
-	}
-	defer func() {
-		unlockContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		_, _ = connection.Exec(unlockContext, "select pg_advisory_unlock(hashtextextended($1, 0))", lockName)
-	}()
-
-	stored, found, err := loadIdempotentLessonReview(ctx, connection, userID, idempotencyKey, requestHash)
+	stored, found, err := r.loadIdempotentLessonReview(ctx, userID, idempotencyKey, requestHash)
 	if err != nil {
 		return LessonReviewResult{}, err
 	}
@@ -75,9 +56,8 @@ func (r *Repository) ReviewLessonWordIdempotent(
 
 	result, reviewErr := r.ReviewLessonWord(ctx, userID, lessonID, wordID, request)
 	if reviewErr != nil && recoverableIdempotencyConflict(reviewErr) {
-		recovered, recoveredOK, recoverErr := recoverCommittedLessonReview(
+		recovered, recoveredOK, recoverErr := r.recoverCommittedLessonReview(
 			ctx,
-			connection,
 			userID,
 			lessonID,
 			wordID,
@@ -95,9 +75,8 @@ func (r *Repository) ReviewLessonWordIdempotent(
 		return LessonReviewResult{}, reviewErr
 	}
 
-	if err := storeIdempotentLessonReview(
+	if err := r.storeIdempotentLessonReview(
 		ctx,
-		connection,
 		userID,
 		idempotencyKey,
 		requestHash,
@@ -133,16 +112,15 @@ func lessonReviewRequestHash(
 	return digest[:], nil
 }
 
-func loadIdempotentLessonReview(
+func (r *Repository) loadIdempotentLessonReview(
 	ctx context.Context,
-	connection *pgxpool.Conn,
 	userID string,
 	idempotencyKey string,
 	requestHash []byte,
 ) (LessonReviewResult, bool, error) {
 	var storedHash []byte
 	var response []byte
-	err := connection.QueryRow(ctx, `
+	err := r.pool.QueryRow(ctx, `
 		select request_hash, response
 		from lesson_review_idempotency
 		where user_id = $1::uuid and idempotency_key = $2::uuid
@@ -163,9 +141,8 @@ func loadIdempotentLessonReview(
 	return result, true, nil
 }
 
-func storeIdempotentLessonReview(
+func (r *Repository) storeIdempotentLessonReview(
 	ctx context.Context,
-	connection *pgxpool.Conn,
 	userID string,
 	idempotencyKey string,
 	requestHash []byte,
@@ -177,7 +154,7 @@ func storeIdempotentLessonReview(
 	if err != nil {
 		return fmt.Errorf("encode idempotent lesson review response: %w", err)
 	}
-	command, err := connection.Exec(ctx, `
+	command, err := r.pool.Exec(ctx, `
 		insert into lesson_review_idempotency(
 			user_id, idempotency_key, request_hash, lesson_id, word_id, response
 		) values ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::jsonb)
@@ -189,7 +166,7 @@ func storeIdempotentLessonReview(
 	if command.RowsAffected() == 1 {
 		return nil
 	}
-	stored, found, err := loadIdempotentLessonReview(ctx, connection, userID, idempotencyKey, requestHash)
+	stored, found, err := r.loadIdempotentLessonReview(ctx, userID, idempotencyKey, requestHash)
 	if err != nil {
 		return err
 	}
@@ -207,9 +184,8 @@ func recoverableIdempotencyConflict(err error) bool {
 		|| errors.Is(err, ErrNoActiveLesson)
 }
 
-func recoverCommittedLessonReview(
+func (r *Repository) recoverCommittedLessonReview(
 	ctx context.Context,
-	connection *pgxpool.Conn,
 	userID string,
 	lessonID string,
 	wordID int64,
@@ -222,7 +198,7 @@ func recoverCommittedLessonReview(
 	var reviewedAt time.Time
 	var eventMatches bool
 
-	err := connection.QueryRow(ctx, `
+	err := r.pool.QueryRow(ctx, `
 		select user_word.status,
 		       user_word.easiness::float8,
 		       user_word.interval_days,
