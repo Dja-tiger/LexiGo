@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { csrfTokenFromCookie, refreshSession, type Session } from "../lib/auth-session";
+import {
+  csrfTokenFromCookie,
+  isSessionPayload,
+  refreshSession,
+  type Session,
+} from "../lib/auth-session";
 import {
   enqueueLessonReview,
   listLessonReviews,
@@ -30,6 +35,8 @@ type ErrorPayload = {
   code: string;
   message: string;
 };
+
+type AuthSessionAction = "adopt" | "clear";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -72,6 +79,20 @@ function requestWithIdempotency(request: Request, idempotencyKey: string): Reque
 function authorizationToken(request: Request): string {
   const authorization = request.headers.get("Authorization")?.trim() ?? "";
   return authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+}
+
+function authSessionAction(request: Request): AuthSessionAction | null {
+  if (request.method.toUpperCase() !== "POST") return null;
+  const pathname = new URL(request.url).pathname;
+  if (pathname === "/api/v1/auth/logout") return "clear";
+  if (
+    pathname === "/api/v1/auth/login"
+    || pathname === "/api/v1/auth/register"
+    || pathname === "/api/v1/auth/refresh"
+  ) {
+    return "adopt";
+  }
+  return null;
 }
 
 function currentNetworkFailureCode(): "network_offline" | "network_request_failed" {
@@ -120,6 +141,7 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
   const [summary, setSummary] = useState<ReviewOutboxSummary>(EMPTY_SUMMARY);
   const [syncing, setSyncing] = useState(false);
+  const [activeUserID, setActiveUserID] = useState(session?.user.id ?? "");
   const sessionRef = useRef(session);
   const originalFetchRef = useRef<typeof globalThis.fetch | null>(null);
   const syncInFlightRef = useRef<Promise<void> | null>(null);
@@ -127,6 +149,8 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
 
   useEffect(() => {
     sessionRef.current = session;
+    setActiveUserID(session?.user.id ?? "");
+    if (!session) setSummary(EMPTY_SUMMARY);
   }, [session]);
 
   const refreshSummary = useCallback(async () => {
@@ -169,6 +193,7 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
             try {
               activeSession = await refreshSession({ redirectOnInvalid: false });
               sessionRef.current = activeSession;
+              setActiveUserID(activeSession.user.id);
               if (activeSession.user.id !== record.userId) break;
               response = await sendQueuedReview(originalFetch, record, activeSession);
             } catch (error) {
@@ -231,6 +256,29 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
 
     const interceptedFetch: typeof globalThis.fetch = async (input, init) => {
       const request = new Request(input, init);
+      const authAction = authSessionAction(request);
+      if (authAction) {
+        const response = await originalFetch(request);
+        if (!response.ok) return response;
+        if (authAction === "clear") {
+          sessionRef.current = null;
+          setActiveUserID("");
+          setSummary(EMPTY_SUMMARY);
+          return response;
+        }
+        try {
+          const payload: unknown = await response.clone().json();
+          if (isSessionPayload(payload)) {
+            sessionRef.current = payload;
+            setActiveUserID(payload.user.id);
+            void refreshSummary().then(() => syncPendingReviews());
+          }
+        } catch (error) {
+          console.error("[LexiGo] Unable to adopt refreshed session for review outbox", error);
+        }
+        return response;
+      }
+
       if (request.method.toUpperCase() !== "POST") return originalFetch(request);
       const endpoint = parseLessonReviewEndpoint(request.url);
       if (!endpoint) return originalFetch(request);
@@ -353,7 +401,7 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
   }, [refreshSummary, syncPendingReviews]);
 
   const copy = bannerCopy(online, summary, syncing);
-  if (!session || !copy) return null;
+  if (!activeUserID || !copy) return null;
 
   return (
     <aside className={`lx-review-sync lx-review-sync--${copy.tone}`} role="status" aria-live="polite" aria-atomic="true">
