@@ -29,7 +29,6 @@ import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } f
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import {
   catalogCountText,
-  catalogSummaryText,
   isCatalogMetadataPayload,
   type CatalogMetadata,
   type CatalogMetadataStatus,

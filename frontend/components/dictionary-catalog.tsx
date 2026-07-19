@@ -140,65 +140,83 @@ export function DictionaryCatalog({
   const [items, setItems] = useState<LearningItem[]>([]);
   const [pageInfo, setPageInfo] = useState<CatalogPageInfo>(EMPTY_PAGE);
   const [pageStatus, setPageStatus] = useState<ResourceStatus>(idleResourceStatus);
-  const [remoteDetail, setRemoteDetail] = useState<LearningItem | null>(null);
-  const [detailStatus, setDetailStatus] = useState<ResourceStatus>(idleResourceStatus);
+  const [remoteDetail, setRemoteDetail] = useState<{ key: string; item: LearningItem } | null>(null);
+  const [detailStatus, setDetailStatus] = useState<{ key: string; status: ResourceStatus }>({
+    key: "",
+    status: idleResourceStatus(),
+  });
   const resultsRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    setSearchInput(filters.query);
+    const frame = window.requestAnimationFrame(() => setSearchInput(filters.query));
+    return () => window.cancelAnimationFrame(frame);
   }, [filters.query]);
 
   useEffect(() => {
-    if (!authenticated) {
-      setItems([]);
-      setPageInfo(EMPTY_PAGE);
-      setPageStatus(idleResourceStatus());
-      return;
-    }
+    if (!authenticated) return;
     const controller = new AbortController();
-    setPageStatus(loadingResourceStatus());
-    void loadPage(filters, controller.signal).then((result) => {
+
+    async function run() {
+      await Promise.resolve();
       if (controller.signal.aborted) return;
-      setItems(result.items);
-      setPageInfo(result.info);
-      setPageStatus(readyResourceStatus());
-    }).catch((error) => {
-      if (controller.signal.aborted) return;
-      setItems([]);
-      setPageInfo(EMPTY_PAGE);
-      setPageStatus(failedResourceStatus(error, "словарь"));
-    });
+      setPageStatus(loadingResourceStatus());
+      try {
+        const result = await loadPage(filters, controller.signal);
+        if (controller.signal.aborted) return;
+        setItems(result.items);
+        setPageInfo(result.info);
+        setPageStatus(readyResourceStatus());
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setItems([]);
+        setPageInfo(EMPTY_PAGE);
+        setPageStatus(failedResourceStatus(error, "словарь"));
+      }
+    }
+
+    void run();
     return () => controller.abort();
   }, [authenticated, filters, loadPage]);
 
   const localDetail = navigation.detail
     ? items.find((item) => String(item.wordId) === navigation.detail) ?? null
     : null;
-  const selectedItem = localDetail ?? remoteDetail;
+  const selectedItem = localDetail
+    ?? (remoteDetail?.key === navigation.detail ? remoteDetail.item : null);
+  const activeDetailStatus = detailStatus.key === navigation.detail
+    ? detailStatus.status
+    : idleResourceStatus();
 
   useEffect(() => {
-    if (!authenticated || !navigation.detail || localDetail) {
-      setRemoteDetail(null);
-      setDetailStatus(localDetail ? readyResourceStatus() : idleResourceStatus());
-      return;
-    }
-    const wordID = Number(navigation.detail);
-    if (!Number.isSafeInteger(wordID) || wordID <= 0) {
-      setRemoteDetail(null);
-      setDetailStatus(failedResourceStatus(new Error("Некорректная ссылка на слово"), "карточку слова"));
-      return;
-    }
+    if (!authenticated || !navigation.detail || localDetail) return;
+    const detailKey = navigation.detail;
     const controller = new AbortController();
-    setRemoteDetail(null);
-    setDetailStatus(loadingResourceStatus());
-    void loadDetail(wordID, controller.signal).then((item) => {
+
+    async function run() {
+      await Promise.resolve();
       if (controller.signal.aborted) return;
-      setRemoteDetail(item);
-      setDetailStatus(readyResourceStatus());
-    }).catch((error) => {
-      if (controller.signal.aborted) return;
-      setDetailStatus(failedResourceStatus(error, "карточку слова"));
-    });
+      const wordID = Number(detailKey);
+      if (!Number.isSafeInteger(wordID) || wordID <= 0) {
+        setDetailStatus({
+          key: detailKey,
+          status: failedResourceStatus(new Error("Некорректная ссылка на слово"), "карточку слова"),
+        });
+        return;
+      }
+
+      setDetailStatus({ key: detailKey, status: loadingResourceStatus() });
+      try {
+        const item = await loadDetail(wordID, controller.signal);
+        if (controller.signal.aborted) return;
+        setRemoteDetail({ key: detailKey, item });
+        setDetailStatus({ key: detailKey, status: readyResourceStatus() });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setDetailStatus({ key: detailKey, status: failedResourceStatus(error, "карточку слова") });
+      }
+    }
+
+    void run();
     return () => controller.abort();
   }, [authenticated, loadDetail, localDetail, navigation.detail]);
 
@@ -257,8 +275,8 @@ export function DictionaryCatalog({
   }
 
   if (navigation.detail) {
-    const loading = detailStatus.phase === "loading" || (detailStatus.phase === "idle" && !selectedItem);
-    const problem = detailStatus.problem;
+    const loading = !localDetail && (activeDetailStatus.phase === "loading" || (activeDetailStatus.phase === "idle" && !selectedItem));
+    const problem = activeDetailStatus.problem;
     return (
       <section className="lx-dictionary-detail">
         <button className="lx-button ghost" type="button" onClick={onBackToResults}>← К результатам</button>
