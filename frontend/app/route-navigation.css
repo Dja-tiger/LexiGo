@@ -1,5 +1,6 @@
 .lx-routed-app .lx-primary-navigation,
-.lx-routed-app .lx-brand {
+.lx-routed-app .lx-brand,
+.lx-routed-app .lx-app > .lx-skip-link {
   display: none !important;
 }
 
