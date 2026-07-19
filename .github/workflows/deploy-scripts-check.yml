@@ -5,6 +5,13 @@ on:
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
+      - "deploy/Caddyfile"
+      - "deploy/caddy/Dockerfile"
+      - "deploy/compose/docker-compose.stage.yml"
+      - "deploy/compose/docker-compose.prod.yml"
+      - "deploy/certificate-health.sh"
+      - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/remote-deploy.sh"
   push:
@@ -12,6 +19,13 @@ on:
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
+      - "deploy/Caddyfile"
+      - "deploy/caddy/Dockerfile"
+      - "deploy/compose/docker-compose.stage.yml"
+      - "deploy/compose/docker-compose.prod.yml"
+      - "deploy/certificate-health.sh"
+      - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/remote-deploy.sh"
 
@@ -28,12 +42,89 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
       - name: Validate Bash syntax
         run: |
           bash -n scripts/ci/deploy-over-ssh.sh
           bash -n scripts/remote-deploy.sh
+          bash -n deploy/certificate-health.sh
+
+      - name: Validate deployment security invariants
+        run: |
+          set -Eeuo pipefail
+
+          grep -Fq 'CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}' .github/workflows/deploy-prod.yml
+          grep -Fq 'API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}' .github/workflows/deploy-prod.yml
+          grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-prod.yml
+
+          grep -Fq 'SESSION_COOKIE_SECURE=true' scripts/remote-deploy.sh
+          grep -Fq 'upsert_env "$APP_ENV_FILE" SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
+          grep -Fq 'deploy/env/stage.caddy.env' scripts/remote-deploy.sh
+          grep -Fq 'deploy/env/prod.caddy.env' scripts/remote-deploy.sh
+          grep -Fq 'chmod 0600 "$CADDY_ENV_FILE"' scripts/remote-deploy.sh
+          grep -Fq 'printf '\''%s\n%s\n'\'' "$GHCR_TOKEN" "$CLOUDFLARE_API_TOKEN"' scripts/ci/deploy-over-ssh.sh
+
+          if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
+            echo 'A Cloudflare token-like value must never be committed.' >&2
+            exit 1
+          fi
+
+      - name: Validate Compose rendering
+        run: |
+          set -Eeuo pipefail
+          trap 'rm -f deploy/env/stage.env deploy/env/prod.env deploy/env/stage.caddy.env deploy/env/prod.caddy.env' EXIT
+          mkdir -p deploy/env
+
+          for environment in stage prod; do
+            cat > "deploy/env/${environment}.env" <<EOF
+          APP_ENV=${environment}
+          IMAGE_TAG=test
+          POSTGRES_DB=lexigo_${environment}
+          POSTGRES_USER=lexigo_${environment}
+          POSTGRES_PASSWORD=test-password
+          POSTGRES_DSN=postgres://lexigo_${environment}:test-password@postgres:5432/lexigo_${environment}?sslmode=disable
+          REDIS_PASSWORD=test-password
+          EOF
+            cat > "deploy/env/${environment}.caddy.env" <<EOF
+          CADDY_SITE_ADDRESS=lexigo-${environment}.example.com
+          CADDY_API_ADDRESS=api.lexigo-${environment}.example.com
+          ACME_EMAIL=operations@example.com
+          CLOUDFLARE_API_TOKEN=test-token
+          EOF
+          done
+
+          docker compose --env-file deploy/env/stage.env -f deploy/compose/docker-compose.stage.yml config >/dev/null
+          docker compose --env-file deploy/env/prod.env -f deploy/compose/docker-compose.prod.yml config >/dev/null
+
+      - name: Build and validate custom Caddy
+        run: |
+          set -Eeuo pipefail
+          trap 'docker image rm -f lexigo-caddy:2.11.4-cloudflare >/dev/null 2>&1 || true' EXIT
+          docker build -t lexigo-caddy:2.11.4-cloudflare -f deploy/caddy/Dockerfile deploy
+          docker run --rm --entrypoint caddy lexigo-caddy:2.11.4-cloudflare list-modules \
+            | grep -Fxq 'dns.providers.cloudflare'
+          docker run --rm \
+            -e CADDY_SITE_ADDRESS=lexigo.example.com \
+            -e CADDY_API_ADDRESS=api.lexigo.example.com \
+            -e ACME_EMAIL=operations@example.com \
+            -e CLOUDFLARE_API_TOKEN=test-token \
+            -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            --entrypoint caddy \
+            lexigo-caddy:2.11.4-cloudflare \
+            validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Validate systemd units
+        run: |
+          if command -v systemd-analyze >/dev/null 2>&1; then
+            systemd-analyze verify \
+              deploy/systemd/lexigo-certificate-health@.service \
+              deploy/systemd/lexigo-certificate-health@.timer
+          fi
