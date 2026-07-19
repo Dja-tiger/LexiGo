@@ -49,7 +49,12 @@
 }
 
 .lx-phrase-grid > [role="listitem"] {
-  display: contents;
+  min-width: 0;
+}
+
+.lx-phrase-grid > [role="listitem"] > button {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 680px) {

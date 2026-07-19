@@ -86,6 +86,14 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   const cdp = await context.newCDPSession(page);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
   const requestedLimits: number[] = [];
+  await context.addInitScript(() => {
+    const updateMaximum = () => {
+      const current = document.querySelectorAll(".lx-phrase-grid [role=listitem]").length;
+      const previous = Number(document.documentElement.dataset.lexigoMaxCatalogItems ?? "0");
+      document.documentElement.dataset.lexigoMaxCatalogItems = String(Math.max(previous, current));
+    };
+    new MutationObserver(updateMaximum).observe(document, { childList: true, subtree: true });
+  });
   await installAPI(context, requestedLimits);
   const errors = captureErrors(page);
 
@@ -97,6 +105,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   await expect(page.getByText("Показано 1–48 из 1 000").first()).toBeVisible();
   expect(requestedLimits.length).toBeGreaterThan(0);
   expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);
+  expect(await page.evaluate(() => Number(document.documentElement.dataset.lexigoMaxCatalogItems ?? "0"))).toBeLessThanOrEqual(48);
 
   await page.getByRole("button", { name: "Следующая →" }).first().click();
   await expect(page.getByText("Страница 2 из 21").first()).toBeVisible();

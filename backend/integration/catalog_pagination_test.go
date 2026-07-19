@@ -54,7 +54,7 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 		t.Fatalf("catalog.Seed() error = %v", err)
 	}
 	if _, err := pg.Exec(ctx, `
-		insert into words (lemma, translation, part_of_speech, topic, examples, note, source, kind, slug)
+		insert into words (lemma, translation, part_of_speech, topic, examples, note, source, kind, slug, cloze, cloze_answer)
 		select format('page phrase %s', lpad(series::text, 3, '0')),
 		       format('страничная фраза %s', series),
 		       'phrase',
@@ -63,7 +63,9 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 		       '',
 		       'integration-pagination',
 		       'phrase',
-		       format('page-phrase-%s', lpad(series::text, 3, '0'))
+		       format('page-phrase-%s', lpad(series::text, 3, '0')),
+		       format('page phrase _____ %s', lpad(series::text, 3, '0')),
+		       'test'
 		from generate_series(1, 125) as series
 	`); err != nil {
 		t.Fatalf("insert pagination phrases: %v", err)

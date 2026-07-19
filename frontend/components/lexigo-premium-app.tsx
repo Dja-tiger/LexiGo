@@ -48,8 +48,6 @@ import {
   exercisePromptLabel,
   normalizeAnswer,
   normalizePartOfSpeech,
-  prepareWordItems,
-  takeLessonBlock,
   type LearningItem,
   type LessonSize,
   type WordSection,
@@ -702,7 +700,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const reviewInFlightRef = useRef(false);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
-  const phraseListScrollRef = useRef<NavigationScrollPosition>({ x: 0, y: 0 });
   const navigationRef = useRef(navigation);
   const lessonNavigationLockRef = useRef(false);
   const announcementCounterRef = useRef(0);
@@ -1146,7 +1143,10 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       if (cancelled) return;
       setProgress(null);
       setActiveLesson(null);
-      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      setPhraseCatalog([]);
+      setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
+      setPhrasePage(1);
+      setPhraseCatalogStatus(idleResourceStatus());
       void Promise.all([
         loadProgressResource(activeSession, controller.signal, false),
         loadActiveLessonResource(activeSession, controller.signal, false),
@@ -1464,7 +1464,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     setError("");
     setLessonQueueNotice("");
     try {
-      let currentSession = activeSession;
+      const currentSession = activeSession;
       if (resolvedMode !== "all") {
         const explicitItems = overrides.items?.filter((item) => typeof item.wordId === "number") ?? [];
         if (overrides.items && explicitItems.length !== overrides.items.length) {
@@ -2186,12 +2186,12 @@ navigate({ view: "lesson", source: resolvedSource });
   }
 
   function openPhraseDetail(phrase: LearningItem) {
-    phraseListScrollRef.current = { x: window.scrollX, y: window.scrollY };
     navigate({ view: "phrases", detail: itemKey(phrase) });
   }
 
   function backToPhraseCatalog() {
-    navigate({ view: "phrases" }, true, { scroll: phraseListScrollRef.current });
+    const destination = navigationTabs.destination("phrases");
+    navigate({ view: "phrases" }, true, { scroll: destination.scroll });
   }
 
   function changePhrasePage(page: number) {
