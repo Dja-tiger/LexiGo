@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Dja-tiger/New-project/backend/internal/account"
 	"github.com/Dja-tiger/New-project/backend/internal/auth"
 	"github.com/Dja-tiger/New-project/backend/internal/config"
 	"github.com/Dja-tiger/New-project/backend/internal/health"
@@ -62,6 +63,8 @@ func NewWithOptions(
 		Secure:     cfg.SessionCookieSecure,
 		RefreshTTL: cfg.RefreshTokenTTL,
 	}, logger)
+	accountRepository := account.NewPostgresRepository(pg)
+	accountHandler := account.NewHandler(account.NewService(accountRepository))
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
@@ -84,6 +87,7 @@ func NewWithOptions(
 	mux.Handle("POST /api/v1/auth/sessions/revoke-others", limiter.Middleware(10, authenticated(http.HandlerFunc(authHandler.RevokeOtherSessions))))
 	mux.Handle("PUT /api/v1/auth/password", limiter.Middleware(10, authenticated(http.HandlerFunc(authHandler.ChangePassword))))
 	mux.Handle("GET /api/v1/auth/audit-events", authenticated(http.HandlerFunc(authHandler.AccountAudit)))
+	mux.Handle("POST /api/v1/account/export", limiter.Middleware(5, authenticated(http.HandlerFunc(accountHandler.Export))))
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
