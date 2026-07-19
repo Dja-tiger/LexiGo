@@ -13,6 +13,7 @@
   background: rgba(17, 23, 36, 0.97);
   box-shadow: 0 22px 64px rgba(0, 0, 0, 0.48);
   backdrop-filter: blur(18px);
+  pointer-events: none;
 }
 
 .lx-sw-update > div:first-child {
@@ -35,6 +36,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+  pointer-events: auto;
 }
 
 .lx-sw-update button {
@@ -45,6 +47,7 @@
   color: #fff;
   background: linear-gradient(135deg, #7c3aed, #0891b2);
   font-weight: 800;
+  pointer-events: auto;
 }
 
 .lx-sw-update button.secondary {
