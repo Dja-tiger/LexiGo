@@ -188,7 +188,7 @@ test("adopts an in-app login before persisting an offline lesson review", async 
   };
   await installAPI(context, state);
 
-  await page.goto("/?view=profile");
+  await page.goto("/profile");
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
   await page.locator("#auth-email").fill(SESSION.user.email);
   await page.locator("#auth-password").fill("correct horse battery staple");
@@ -218,7 +218,7 @@ test("blocks a new network lesson with an explicit offline state", async ({ cont
   };
   await installAPI(context, state);
 
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
   await context.setOffline(true);
   await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
