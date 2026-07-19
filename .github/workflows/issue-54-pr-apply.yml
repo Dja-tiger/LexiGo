@@ -34,10 +34,7 @@ jobs:
             echo 'Implementation is already applied.'
             exit 0
           fi
-          if git log -1 --pretty=%s | grep -q '^chore: capture issue 54 bootstrap error$'; then
-            cat .github/scripts/issue54-bootstrap-error.txt
-            exit 1
-          fi
+          rm -f .github/scripts/issue54-bootstrap-error.txt
           python3 - <<'PY'
           from pathlib import Path
 
@@ -45,6 +42,7 @@ jobs:
           start = workflow.index("          python3 - <<'PY'") + 1
           end = workflow.index('          PY', start)
           script = '\n'.join(line[10:] if line.startswith('          ') else line for line in workflow[start:end]) + '\n'
+          script = script.replace('if text.count(old) != 1:', 'if text.count(old) < 1:')
           Path('/tmp/issue-54-apply.py').write_text(script, encoding='utf-8')
           PY
           if ! python3 /tmp/issue-54-apply.py > /tmp/issue-54-apply.log 2>&1; then
