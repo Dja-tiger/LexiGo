@@ -1,14 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  canonicalURLFromLegacySearch,
+  isCanonicalRoutePath,
   isRestorableNavigation,
   LEGACY_NAVIGATION_STORAGE_KEY,
   NAVIGATION_STORAGE_KEY,
   navigationURL,
   parseLegacyStoredNavigation,
   parseNavigation,
+  parseNavigationLocation,
   parseStoredNavigation,
   readPersistedNavigation,
+  routePath,
   serializeStoredNavigation,
   viewTitle,
   writePersistedNavigation,
@@ -16,20 +20,30 @@ import {
 
 describe("product navigation", () => {
   it("uses the home view for an empty or invalid URL", () => {
-    expect(parseNavigation("")).toEqual({ view: "home" });
-    expect(parseNavigation("?view=unknown")).toEqual({ view: "home" });
+    expect(parseNavigation("", "/")).toEqual({ view: "home" });
+    expect(parseNavigation("?view=unknown", "/")).toEqual({ view: "home" });
+    expect(parseNavigation("", "/unknown-route")).toEqual({ view: "home" });
   });
 
-  it("parses supported views, sources and details", () => {
-    expect(parseNavigation("?view=phrases&source=phrases&detail=phrase-root-cause")).toEqual({
+  it("parses canonical primary routes", () => {
+    expect(parseNavigation("", "/learn")).toEqual({ view: "learn" });
+    expect(parseNavigation("", "/phrases")).toEqual({ view: "phrases" });
+    expect(parseNavigation("", "/dictionary")).toEqual({ view: "library" });
+    expect(parseNavigation("", "/progress")).toEqual({ view: "progress" });
+    expect(parseNavigation("", "/profile")).toEqual({ view: "profile" });
+    expect(parseNavigation("", "/lesson/active")).toEqual({ view: "lesson", detail: "active" });
+  });
+
+  it("parses canonical detail routes and filter state", () => {
+    expect(parseNavigation("?source=phrases", "/phrases/phrase-root-cause")).toEqual({
       view: "phrases",
       source: "phrases",
       detail: "phrase-root-cause",
     });
-  });
-
-  it("parses complete dictionary state from a shareable URL", () => {
-    expect(parseNavigation("?view=library&source=backend&topic=Backend%20Development&status=review&query=temporary%20storage&sort=az&page=3&detail=101")).toEqual({
+    expect(parseNavigation(
+      "?source=backend&topic=Backend%20Development&status=review&query=temporary%20storage&sort=az&page=3",
+      "/words/101",
+    )).toEqual({
       view: "library",
       source: "backend",
       topic: "Backend Development",
@@ -41,22 +55,47 @@ describe("product navigation", () => {
     });
   });
 
+  it("parses a browser location without coupling callers to query-only routing", () => {
+    expect(parseNavigationLocation({
+      pathname: "/dictionary",
+      search: "?source=data-engineering&query=pipeline",
+    } as Location)).toEqual({
+      view: "library",
+      source: "data-engineering",
+      query: "pipeline",
+    });
+  });
+
+  it("parses legacy view URLs for backward-compatible redirects", () => {
+    expect(parseNavigation("?view=phrases&source=phrases&detail=phrase-root-cause", "/")).toEqual({
+      view: "phrases",
+      source: "phrases",
+      detail: "phrase-root-cause",
+    });
+    expect(canonicalURLFromLegacySearch("?view=library&source=backend&status=review&detail=101")).toBe(
+      "/words/101?source=backend&status=review",
+    );
+    expect(canonicalURLFromLegacySearch("?source=backend")).toBeNull();
+  });
+
   it("parses all themed vocabulary collections", () => {
     for (const source of ["daily-life", "travel", "data-engineering", "backend"] as const) {
-      expect(parseNavigation(`?view=learn&source=${source}`)).toEqual({ view: "learn", source });
-      expect(navigationURL({ view: "learn", source })).toBe(`/?view=learn&source=${source}`);
+      expect(parseNavigation(`?source=${source}`, "/learn")).toEqual({ view: "learn", source });
+      expect(navigationURL({ view: "learn", source })).toBe(`/learn?source=${source}`);
     }
   });
 
-  it("drops invalid catalog filters without losing the selected view", () => {
-    expect(parseNavigation("?view=library&source=adverb&status=unknown&sort=random&page=zero")).toEqual({ view: "library" });
+  it("drops invalid catalog filters without losing the selected route", () => {
+    expect(parseNavigation("?source=adverb&status=unknown&sort=random&page=zero", "/dictionary")).toEqual({
+      view: "library",
+    });
   });
 
-  it("builds stable URLs for browser history", () => {
+  it("builds stable canonical URLs for browser history", () => {
     expect(navigationURL({ view: "home" })).toBe("/");
-    expect(navigationURL({ view: "learn", source: "noun" })).toBe("/?view=learn&source=noun");
+    expect(navigationURL({ view: "learn", source: "noun" })).toBe("/learn?source=noun");
     expect(navigationURL({ view: "phrases", detail: "phrase-root-cause" })).toBe(
-      "/?view=phrases&detail=phrase-root-cause",
+      "/phrases/phrase-root-cause",
     );
     expect(navigationURL({
       view: "library",
@@ -67,11 +106,23 @@ describe("product navigation", () => {
       sort: "za",
       page: 2,
       detail: "101",
-    })).toBe("/?view=library&source=backend&topic=Backend+Development&status=review&query=temporary+storage&sort=za&page=2&detail=101");
+    })).toBe("/words/101?source=backend&topic=Backend+Development&status=review&query=temporary+storage&sort=za&page=2");
   });
 
-  it("omits default dictionary sort and first page from canonical URLs", () => {
-    expect(navigationURL({ view: "library", sort: "default", page: 1 })).toBe("/?view=library");
+  it("omits default sort and first page from canonical URLs", () => {
+    expect(navigationURL({ view: "library", sort: "default", page: 1 })).toBe("/dictionary");
+  });
+
+  it("keeps only supported detail route shapes canonical", () => {
+    expect(routePath({ view: "lesson" })).toBe("/lesson/active");
+    expect(routePath({ view: "library", detail: "101" })).toBe("/words/101");
+    expect(routePath({ view: "library", detail: "not-a-word-id" })).toBe("/dictionary");
+    expect(isCanonicalRoutePath("/learn")).toBe(true);
+    expect(isCanonicalRoutePath("/phrases/root-cause")).toBe(true);
+    expect(isCanonicalRoutePath("/words/101")).toBe(true);
+    expect(isCanonicalRoutePath("/lesson/active")).toBe(true);
+    expect(isCanonicalRoutePath("/lesson/another-users-session")).toBe(false);
+    expect(isCanonicalRoutePath("/unknown")).toBe(false);
   });
 
   it("provides human-readable page titles", () => {
@@ -82,14 +133,14 @@ describe("product navigation", () => {
 
 describe("standalone navigation persistence", () => {
   it.each([
-    ["mixed", "/?view=learn&source=mixed"],
-    ["noun", "/?view=learn&source=noun"],
-    ["verb", "/?view=learn&source=verb"],
-    ["adjective", "/?view=learn&source=adjective"],
-    ["daily-life", "/?view=learn&source=daily-life"],
-    ["travel", "/?view=learn&source=travel"],
-    ["data-engineering", "/?view=learn&source=data-engineering"],
-    ["backend", "/?view=learn&source=backend"],
+    ["mixed", "/learn?source=mixed"],
+    ["noun", "/learn?source=noun"],
+    ["verb", "/learn?source=verb"],
+    ["adjective", "/learn?source=adjective"],
+    ["daily-life", "/learn?source=daily-life"],
+    ["travel", "/learn?source=travel"],
+    ["data-engineering", "/learn?source=data-engineering"],
+    ["backend", "/learn?source=backend"],
   ] as const)("restores the versioned %s dictionary source", (source, expectedURL) => {
     const target = parseStoredNavigation(serializeStoredNavigation({ view: "learn", source }));
     expect(target).toEqual({ view: "learn", source });
@@ -120,7 +171,7 @@ describe("standalone navigation persistence", () => {
   it("restores the phrases section from a versioned envelope", () => {
     const target = parseStoredNavigation(serializeStoredNavigation({ view: "phrases" }));
     expect(target).toEqual({ view: "phrases" });
-    expect(target && navigationURL(target)).toBe("/?view=phrases");
+    expect(target && navigationURL(target)).toBe("/phrases");
   });
 
   it.each([
