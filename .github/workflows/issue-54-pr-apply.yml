@@ -1,4 +1,4 @@
-name: Bootstrap Issue 54 from PR
+name: Cleanup Issue 54 bootstrap
 
 on:
   pull_request:
@@ -9,114 +9,42 @@ permissions:
   contents: write
 
 jobs:
-  apply:
+  cleanup:
     if: github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
     runs-on:
       - self-hosted
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: actions/setup-go@v7
-        with:
-          go-version: "1.26.5"
-          cache-dependency-path: backend/go.sum
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Apply implementation from bootstrap script
+      - name: Remove bootstrap artifacts
         shell: bash
         run: |
           set -Eeuo pipefail
-          if git log -1 --pretty=%s | grep -q '^feat(catalog): paginate large catalog views$'; then
-            echo 'Implementation is already applied.'
-            exit 0
-          fi
-          rm -f .github/scripts/issue54-bootstrap-error.txt
-          python3 - <<'PY'
-          from pathlib import Path
-
-          workflow = Path('.github/workflows/issue-54-apply.yml').read_text(encoding='utf-8').splitlines()
-          start = workflow.index("          python3 - <<'PY'") + 1
-          end = workflow.index('          PY', start)
-          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in workflow[start:end]) + '\n'
-          script = script.replace('if text.count(old) != 1:', 'if text.count(old) < 1:')
-          script = script.replace('len(strings.TrimSpace(topic)) > maxCatalogFilterLength', 'len(strings.TrimSpace(topic)) > 120')
-          Path('/tmp/issue-54-apply.py').write_text(script, encoding='utf-8')
-          PY
-          if ! python3 /tmp/issue-54-apply.py > /tmp/issue-54-apply.log 2>&1; then
-            mkdir -p .github/scripts
-            tail -n 80 /tmp/issue-54-apply.log > .github/scripts/issue54-bootstrap-error.txt
-            git config user.name "LexiGo CI"
-            git config user.email "actions@users.noreply.github.com"
-            git add .github/scripts/issue54-bootstrap-error.txt
-            git commit -m "chore: capture issue 54 bootstrap error"
-            git push origin HEAD:agent/issue-54-catalog-pagination
-            exit 1
-          fi
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('frontend/components/lexigo-premium-app.tsx')
-          content = path.read_text(encoding='utf-8')
-          repairs = {
-              '  function clearAuthFieldError  function clearAuthFieldError': '  function clearAuthFieldError',
-              '  function renderLibrary()  function renderLibrary()': '  function renderLibrary()',
-              '  function renderLesson()  function renderLesson()': '  function renderLesson()',
-          }
-          for broken, fixed in repairs.items():
-              if broken not in content:
-                  raise SystemExit(f'generated boundary not found: {broken}')
-              content = content.replace(broken, fixed, 1)
-          path.write_text(content, encoding='utf-8')
-          PY
-          gofmt -w backend/internal/words/repository.go backend/internal/words/http.go backend/internal/words/metadata.go backend/internal/learning/lesson.go backend/internal/learning/lesson_http.go backend/internal/learning/lesson_composer.go backend/internal/learning/lesson_repository.go backend/integration/catalog_pagination_test.go
-      - name: Backend unit tests
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if ! (cd backend && go test ./...) > /tmp/issue-54-backend.log 2>&1; then
-            mkdir -p .github/scripts
-            tail -n 120 /tmp/issue-54-backend.log > .github/scripts/issue54-bootstrap-error.txt
-            git config user.name "LexiGo CI"
-            git config user.email "actions@users.noreply.github.com"
-            git add .github/scripts/issue54-bootstrap-error.txt
-            git commit -m "chore: capture issue 54 backend test error"
-            git push origin HEAD:agent/issue-54-catalog-pagination
-            exit 1
-          fi
-      - name: Frontend type and unit tests
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if ! (cd frontend && npm ci --no-audit --no-fund && npm run typecheck && npm run test) > /tmp/issue-54-frontend.log 2>&1; then
-            mkdir -p .github/scripts
-            tail -n 160 /tmp/issue-54-frontend.log > .github/scripts/issue54-bootstrap-error.txt
-            git config user.name "LexiGo CI"
-            git config user.email "actions@users.noreply.github.com"
-            git add .github/scripts/issue54-bootstrap-error.txt
-            git commit -m "chore: capture issue 54 frontend test error"
-            git push origin HEAD:agent/issue-54-catalog-pagination
-            exit 1
-          fi
-      - name: Commit implementation
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if git diff --quiet -- backend frontend api docs; then
-            echo 'No implementation diff to commit.'
-            exit 0
-          fi
           git config user.name "LexiGo CI"
           git config user.email "actions@users.noreply.github.com"
-          git add backend frontend api docs
+          git rm --ignore-unmatch --force \
+            .github/scripts/issue54-bootstrap-error.txt \
+            .github/scripts/issue54.payload.00 \
+            .github/scripts/issue54.payload.01 \
+            .github/scripts/issue54.payload.02 \
+            .github/scripts/issue54.payload.03 \
+            .github/scripts/issue54.payload.ready \
+            .github/workflows/apply-issue-54-pr.yml \
+            .github/workflows/apply-issue-54.yml \
+            .github/workflows/issue-54-apply.yml \
+            .github/workflows/issue-54-pr-apply.yml \
+            .issue-54-trigger \
+            frontend/tsconfig.tsbuildinfo
           git diff --cached --check
-          git commit -m "feat(catalog): paginate large catalog views"
+          if git diff --cached --quiet; then
+            echo 'Bootstrap artifacts already removed.'
+            exit 0
+          fi
+          git commit -m "chore: remove issue 54 bootstrap artifacts"
           git push origin HEAD:agent/issue-54-catalog-pagination
