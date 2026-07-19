@@ -141,10 +141,12 @@ export function clearLegacyAuthStorage(): void {
 }
 
 export function expiredSessionURL(currentURL: string, reason = "expired"): string {
-  const target = new URL(currentURL);
-  target.search = `?view=profile&session=${encodeURIComponent(reason)}`;
-  target.hash = "";
-  return target.pathname + target.search;
+  const current = new URL(currentURL);
+  const params = new URLSearchParams({ session: reason });
+  if (current.pathname.startsWith("/lesson/")) {
+    params.set("return_to", `${current.pathname}${current.search}`);
+  }
+  return `/profile?${params.toString()}`;
 }
 
 export function redirectToExpiredSession(reason = "expired"): void {
