@@ -19,6 +19,8 @@ The response includes the current `items`, page-local `count`, global `total`, `
 
 Catalog pages request 48 entries. Changing page replaces the current entries instead of appending them, so the number of mounted cards remains bounded. Search, topic filtering and sorting are sent to the API. Guest phrase browsing applies the same 48-entry boundary to the bundled fallback catalog.
 
+Authenticated hydration clears the bundled fallback before requesting the server page, preventing a transient full-catalog DOM between session restoration and the first API response.
+
 The UI announces the visible range, exposes previous/next navigation, and supplies global position and set size to result items. Browser history retains the selected page and restores scroll when returning from a phrase card.
 
 The “Все и сразу” study mode is now a paginated reference view. It does not create a lesson session and never sends the entire catalog as `wordIds`. Normal server lessons are capped at 60 items.
@@ -26,4 +28,4 @@ The “Все и сразу” study mode is now a paginated reference view. It 
 ## Regression coverage
 
 - backend integration verifies 125 filtered phrase records across three pages, A–Z/Z–A sorting, search and the 100-record API cap;
-- Android Playwright coverage uses four-times CPU throttling with a mocked 1,000-entry catalog, verifies a maximum of 48 mounted records, page navigation, history/scroll restoration, accessible result positions and paginated reference mode.
+- Android Playwright coverage uses four-times CPU throttling with a mocked 1,000-entry catalog, verifies a maximum of 48 mounted records throughout hydration, page navigation, history/scroll restoration, accessible result positions and paginated reference mode.
