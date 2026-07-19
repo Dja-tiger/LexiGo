@@ -19,7 +19,7 @@ The response includes the current `items`, page-local `count`, global `total`, `
 
 Catalog pages request 48 entries. Changing page replaces the current entries instead of appending them, so the number of mounted cards remains bounded. Search, topic filtering and sorting are sent to the API. Guest phrase browsing applies the same 48-entry boundary to the bundled fallback catalog.
 
-Authenticated hydration clears the bundled fallback before requesting the server page, preventing a transient full-catalog DOM between session restoration and the first API response.
+Authenticated hydration clears the bundled fallback before requesting the server page, preventing a transient full-catalog DOM between session restoration and the first API response. Resource status hydration uses the same bounded page and is deduplicated with the visible phrase-catalog request.
 
 The UI announces the visible range, exposes previous/next navigation, and supplies global position and set size to result items. Browser history retains the selected page and restores scroll when returning from a phrase card.
 
