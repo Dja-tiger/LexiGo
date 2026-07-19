@@ -11,6 +11,7 @@ type Word struct {
 	Phonetic     string   `json:"phonetic"`
 	PartOfSpeech string   `json:"partOfSpeech"`
 	Topic        string   `json:"topic"`
+	Aliases      []string `json:"aliases,omitempty"`
 	Examples     []string `json:"examples"`
 	Note         string   `json:"note"`
 	Cloze        string   `json:"cloze,omitempty"`
