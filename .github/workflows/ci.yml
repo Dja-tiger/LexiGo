@@ -184,13 +184,14 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 35
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: frontend
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
       FRONTEND_CI_VOLUME: lexigo-frontend-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BUILD_ID: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
 
@@ -224,6 +225,9 @@ jobs:
 
       - name: iOS PWA dictionary tests
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:pwa
+
+      - name: Controlled service worker update tests
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:sw
 
       - name: Dictionary navigation browser smoke
         run: |
@@ -324,6 +328,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: ${{ matrix.component == 'web' && format('APP_BUILD_ID={0}', github.sha) || '' }}
           tags: |
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:${{ github.sha }}
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:main

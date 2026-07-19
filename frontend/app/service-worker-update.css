@@ -1,0 +1,90 @@
+.lx-sw-update {
+  position: fixed;
+  z-index: 1000;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: grid;
+  width: min(520px, calc(100vw - 36px));
+  gap: 16px;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 20px;
+  padding: 18px;
+  color: var(--text);
+  background: rgba(17, 23, 36, 0.97);
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(18px);
+  pointer-events: none;
+}
+
+.lx-sw-update > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.lx-sw-update strong {
+  font-size: 16px;
+}
+
+.lx-sw-update span {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lx-sw-update__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.lx-sw-update button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #0891b2);
+  font-weight: 800;
+  pointer-events: auto;
+}
+
+.lx-sw-update button.secondary {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.lx-sw-update button.quiet,
+.lx-sw-update--success > button,
+.lx-sw-update--error > button {
+  justify-self: end;
+  color: #cbd5e1;
+  background: transparent;
+}
+
+.lx-sw-update--success {
+  border-color: rgba(134, 239, 172, 0.38);
+}
+
+.lx-sw-update--error {
+  border-color: rgba(252, 165, 165, 0.42);
+}
+
+@media (max-width: 600px) {
+  .lx-sw-update {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+    padding: 16px;
+  }
+
+  .lx-sw-update__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .lx-sw-update button {
+    width: 100%;
+  }
+}

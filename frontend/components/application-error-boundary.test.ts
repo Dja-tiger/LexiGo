@@ -24,11 +24,22 @@ describe("global application error recovery", () => {
     expect(component).toContain("window.location.reload()");
     expect(component).toContain('window.location.assign("/")');
     expect(component).toContain('window.localStorage.removeItem("lexigo.navigation.v1")');
+    expect(component).toContain('window.localStorage.removeItem("lexigo.navigation.v2")');
   });
 
-  it("loads the diagnostic screen styles globally", () => {
+  it("classifies stale chunks and offers a controlled service worker recovery", () => {
+    const component = readFileSync(componentPath, "utf8");
+    expect(component).toContain("isVersionMismatchError");
+    expect(component).toContain("UI_VERSION_MISMATCH");
+    expect(component).toContain("SERVICE_WORKER_SKIP_WAITING");
+    expect(component).toContain("Обновить приложение");
+    expect(component).toContain("createServiceWorkerRecoverySnapshot");
+  });
+
+  it("loads the diagnostic and update screen styles globally", () => {
     const layout = readFileSync(layoutPath, "utf8");
     expect(layout).toContain('import "./error-boundary.css"');
+    expect(layout).toContain('import "./service-worker-update.css"');
   });
 
   it("contains no capture-phase dictionary click interception", () => {
