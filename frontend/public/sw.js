@@ -52,10 +52,11 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request, { cacheName: CACHE }).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).then((response) => {
+      return fetch(event.request).then(async (response) => {
         if (!response || response.status !== 200 || response.type !== "basic") return response;
         const copy = response.clone();
-        event.waitUntil(caches.open(CACHE).then((cache) => cache.put(event.request, copy)));
+        const cache = await caches.open(CACHE);
+        await cache.put(event.request, copy);
         return response;
       });
     }),
