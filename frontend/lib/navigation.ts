@@ -50,6 +50,16 @@ const SOURCES = new Set<NavigationSource>([
 ]);
 const CATALOG_STATUSES = new Set<CatalogStatus>(["new", "learning", "review", "mastered"]);
 const CATALOG_SORTS = new Set<CatalogSort>(["default", "az", "za"]);
+const MAX_ROUTE_VALUE_LENGTH = 120;
+
+const PRIMARY_PATHS: Record<Exclude<AppView, "lesson">, string> = {
+  home: "/",
+  learn: "/learn",
+  phrases: "/phrases",
+  library: "/dictionary",
+  progress: "/progress",
+  profile: "/profile",
+};
 
 export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabel: string }> = [
   { view: "home", label: "Главная", shortLabel: "Главная" },
@@ -66,7 +76,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizedText(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const normalized = value.trim();
-  return normalized && normalized.length <= 120 ? normalized : undefined;
+  return normalized && normalized.length <= MAX_ROUTE_VALUE_LENGTH ? normalized : undefined;
 }
 
 function normalizedPage(value: unknown): number | undefined {
@@ -126,27 +136,125 @@ function restorableTarget(candidate: unknown): NavigationTarget | null {
   return target && RESTORABLE_VIEWS.has(target.view) ? target : null;
 }
 
-export function parseNavigation(search: string): NavigationTarget {
-  const params = new URLSearchParams(search);
+function normalizePathname(value: string): string {
+  const pathname = value.trim() || "/";
+  if (pathname === "/") return pathname;
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
+function safeDecodePathSegment(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return "";
+  }
+}
+
+function encodedPathSegment(value: string): string {
+  const normalized = normalizedText(value);
+  return normalized ? encodeURIComponent(normalized) : "";
+}
+
+function pathnameTarget(pathname: string): NavigationTarget {
+  const normalized = normalizePathname(pathname);
+  if (normalized === "/") return { view: "home" };
+  if (normalized === "/learn") return { view: "learn" };
+  if (normalized === "/phrases") return { view: "phrases" };
+  if (normalized === "/dictionary") return { view: "library" };
+  if (normalized === "/progress") return { view: "progress" };
+  if (normalized === "/profile") return { view: "profile" };
+
+  const phraseDetail = normalized.match(/^\/phrases\/([^/]+)$/);
+  if (phraseDetail) {
+    const detail = normalizedText(safeDecodePathSegment(phraseDetail[1]));
+    return detail ? { view: "phrases", detail } : { view: "phrases" };
+  }
+
+  const wordDetail = normalized.match(/^\/words\/([1-9]\d*)$/);
+  if (wordDetail) return { view: "library", detail: wordDetail[1] };
+
+  const lessonDetail = normalized.match(/^\/lesson\/([^/]+)$/);
+  if (lessonDetail) {
+    const detail = normalizedText(safeDecodePathSegment(lessonDetail[1]));
+    return { view: "lesson", ...(detail ? { detail } : {}) };
+  }
+
+  return { view: "home" };
+}
+
+function browserPathname(): string {
+  return typeof window === "undefined" ? "/" : window.location.pathname;
+}
+
+export function parseNavigation(search: string, pathname = browserPathname()): NavigationTarget {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const fromPath = pathnameTarget(pathname);
   const rawView = params.get("view") as AppView | null;
   const rawSource = params.get("source") as NavigationSource | null;
   const rawStatus = params.get("status") as CatalogStatus | null;
   const rawSort = params.get("sort") as CatalogSort | null;
-  const topic = normalizedText(params.get("topic"));
-  const query = normalizedText(params.get("query"));
-  const detail = normalizedText(params.get("detail"));
-  const page = normalizedPage(params.get("page"));
+  const topic = normalizedText(params.get("topic")) ?? fromPath.topic;
+  const query = normalizedText(params.get("query")) ?? fromPath.query;
+  const detail = normalizedText(params.get("detail")) ?? fromPath.detail;
+  const page = normalizedPage(params.get("page")) ?? fromPath.page;
 
   return {
-    view: rawView && VIEWS.has(rawView) ? rawView : "home",
-    ...(rawSource && SOURCES.has(rawSource) ? { source: rawSource } : {}),
+    view: rawView && VIEWS.has(rawView) ? rawView : fromPath.view,
+    ...(rawSource && SOURCES.has(rawSource) ? { source: rawSource } : fromPath.source ? { source: fromPath.source } : {}),
     ...(topic ? { topic } : {}),
-    ...(rawStatus && CATALOG_STATUSES.has(rawStatus) ? { status: rawStatus } : {}),
+    ...(rawStatus && CATALOG_STATUSES.has(rawStatus) ? { status: rawStatus } : fromPath.status ? { status: fromPath.status } : {}),
     ...(query ? { query } : {}),
-    ...(rawSort && CATALOG_SORTS.has(rawSort) ? { sort: rawSort } : {}),
+    ...(rawSort && CATALOG_SORTS.has(rawSort) ? { sort: rawSort } : fromPath.sort ? { sort: fromPath.sort } : {}),
     ...(page && page > 1 ? { page } : {}),
     ...(detail ? { detail } : {}),
   };
+}
+
+export function parseNavigationLocation(location: Pick<Location, "pathname" | "search">): NavigationTarget {
+  return parseNavigation(location.search, location.pathname);
+}
+
+export function routePath(target: NavigationTarget): string {
+  const normalized = normalizeNavigation(target) ?? { view: "home" };
+  if (normalized.view === "lesson") {
+    return `/lesson/${encodedPathSegment(normalized.detail || "active")}`;
+  }
+  if (normalized.view === "library" && normalized.detail && /^\d+$/.test(normalized.detail)) {
+    return `/words/${normalized.detail}`;
+  }
+  if (normalized.view === "phrases" && normalized.detail) {
+    return `/phrases/${encodedPathSegment(normalized.detail)}`;
+  }
+  return PRIMARY_PATHS[normalized.view];
+}
+
+export function navigationURL(target: NavigationTarget): string {
+  const normalized = normalizeNavigation(target) ?? { view: "home" };
+  const params = new URLSearchParams();
+  if (normalized.source) params.set("source", normalized.source);
+  if (normalized.topic) params.set("topic", normalized.topic);
+  if (normalized.status) params.set("status", normalized.status);
+  if (normalized.query) params.set("query", normalized.query);
+  if (normalized.sort && normalized.sort !== "default") params.set("sort", normalized.sort);
+  if (normalized.page && normalized.page > 1) params.set("page", String(normalized.page));
+  const query = params.toString();
+  const pathname = routePath(normalized);
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+export function canonicalURLFromLegacySearch(search: string): string | null {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  if (!params.has("view")) return null;
+  return navigationURL(parseNavigation(search, "/"));
+}
+
+export function isCanonicalRoutePath(pathname: string): boolean {
+  const normalized = normalizePathname(pathname);
+  return normalized === "/"
+    || Object.values(PRIMARY_PATHS).includes(normalized)
+    || /^\/phrases\/[^/]+$/.test(normalized)
+    || /^\/words\/[1-9]\d*$/.test(normalized)
+    || normalized === "/lesson/active";
 }
 
 export function serializeStoredNavigation(target: NavigationTarget): string {
@@ -206,20 +314,6 @@ export function writePersistedNavigation(storage: NavigationStorage, target: Nav
 
 export function isRestorableNavigation(target: NavigationTarget): boolean {
   return RESTORABLE_VIEWS.has(target.view);
-}
-
-export function navigationURL(target: NavigationTarget): string {
-  const params = new URLSearchParams();
-  if (target.view !== "home") params.set("view", target.view);
-  if (target.source) params.set("source", target.source);
-  if (target.topic) params.set("topic", target.topic);
-  if (target.status) params.set("status", target.status);
-  if (target.query) params.set("query", target.query);
-  if (target.sort && target.sort !== "default") params.set("sort", target.sort);
-  if (target.page && target.page > 1) params.set("page", String(target.page));
-  if (target.detail) params.set("detail", target.detail);
-  const query = params.toString();
-  return query ? `/?${query}` : "/";
 }
 
 export function viewTitle(view: AppView): string {
