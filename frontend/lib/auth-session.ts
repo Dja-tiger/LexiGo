@@ -28,11 +28,19 @@ export type Session = {
 
 type RefreshOptions = {
   redirectOnInvalid?: boolean;
+  retryDelaysMs?: readonly number[];
+  retryTransient?: boolean;
+};
+
+type RestoreOptions = {
+  retryDelaysMs?: readonly number[];
 };
 
 const CSRF_COOKIE_NAME = "lexigo_csrf";
 const LEGACY_SESSION_KEY = "lexigo.session.v1";
 const REFRESH_LOCK_NAME = "lexigo.auth.refresh";
+const CONFLICT_RETRY_DELAYS_MS = [100, 300] as const;
+const RESTORE_RETRY_DELAYS_MS = [150, 500, 1500] as const;
 
 let activeRefresh: Promise<Session> | null = null;
 
@@ -73,14 +81,29 @@ export class SessionRefreshError extends RequestFailure {
     message: string,
     kind: RequestFailureKind = kindForStatus(status),
     cause?: unknown,
+    code = "session_refresh_failed",
   ) {
     super(kind, message, {
       status,
-      code: "session_refresh_failed",
+      code,
       cause,
     });
     this.name = "SessionRefreshError";
   }
+}
+
+export function isRetryableSessionRefreshError(error: unknown): error is SessionRefreshError {
+  if (!(error instanceof SessionRefreshError)) return false;
+  return error.code === "refresh_conflict"
+    || error.kind === "offline"
+    || error.kind === "timeout"
+    || error.kind === "server"
+    || error.kind === "unknown";
+}
+
+export function isDefinitiveSessionRefreshError(error: unknown): error is SessionRefreshError {
+  return error instanceof SessionRefreshError
+    && (error.kind === "unauthorized" || error.kind === "forbidden");
 }
 
 export function cookieValue(cookieHeader: string, name: string): string {
@@ -129,7 +152,11 @@ export function redirectToExpiredSession(reason = "expired"): void {
   window.location.replace(expiredSessionURL(window.location.href, reason));
 }
 
-async function performRefresh(): Promise<Session> {
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => globalThis.setTimeout(resolve, Math.max(0, milliseconds)));
+}
+
+async function performRefreshAttempt(): Promise<Session> {
   const csrfToken = csrfTokenFromCookie();
   if (!csrfToken) throw new SessionRefreshError(401, "Session marker is missing", "unauthorized");
 
@@ -145,12 +172,18 @@ async function performRefresh(): Promise<Session> {
     });
   } catch (error) {
     const failure = toRequestFailure(error);
-    throw new SessionRefreshError(failure.status, failure.message, failure.kind, failure);
+    throw new SessionRefreshError(failure.status, failure.message, failure.kind, failure, failure.code);
   }
 
   if (!response.ok) {
     const failure = await failureFromResponse(response);
-    throw new SessionRefreshError(response.status, failure.message, failure.kind, failure);
+    throw new SessionRefreshError(
+      response.status,
+      failure.message,
+      failure.kind,
+      failure,
+      failure.code,
+    );
   }
 
   try {
@@ -161,17 +194,34 @@ async function performRefresh(): Promise<Session> {
   }
 }
 
-async function refreshWithCrossTabLock(): Promise<Session> {
-  if (typeof navigator === "undefined") return performRefresh();
+async function performRefresh(options: RefreshOptions): Promise<Session> {
+  const configuredDelays = options.retryDelaysMs ?? CONFLICT_RETRY_DELAYS_MS;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await performRefreshAttempt();
+    } catch (error) {
+      const retryable = isRetryableSessionRefreshError(error)
+        && (error.code === "refresh_conflict" || options.retryTransient === true);
+      const retryDelay = configuredDelays[attempt];
+      if (!retryable || retryDelay === undefined) throw error;
+      await delay(retryDelay);
+    }
+  }
+}
+
+async function refreshWithCrossTabLock(options: RefreshOptions): Promise<Session> {
+  if (typeof navigator === "undefined") return performRefresh(options);
   const lockManager = (navigator as Navigator & {
     locks?: { request<T>(name: string, callback: () => Promise<T>): Promise<T> };
   }).locks;
-  return lockManager ? lockManager.request(REFRESH_LOCK_NAME, performRefresh) : performRefresh();
+  return lockManager
+    ? lockManager.request(REFRESH_LOCK_NAME, () => performRefresh(options))
+    : performRefresh(options);
 }
 
 export function refreshSession(options: RefreshOptions = {}): Promise<Session> {
   if (!activeRefresh) {
-    activeRefresh = refreshWithCrossTabLock().finally(() => {
+    activeRefresh = refreshWithCrossTabLock(options).finally(() => {
       activeRefresh = null;
     });
   }
@@ -186,8 +236,12 @@ export function refreshSession(options: RefreshOptions = {}): Promise<Session> {
   });
 }
 
-export async function restoreSession(): Promise<Session | null> {
+export async function restoreSession(options: RestoreOptions = {}): Promise<Session | null> {
   clearLegacyAuthStorage();
   if (!csrfTokenFromCookie()) return null;
-  return refreshSession({ redirectOnInvalid: false });
+  return refreshSession({
+    redirectOnInvalid: false,
+    retryDelaysMs: options.retryDelaysMs ?? RESTORE_RETRY_DELAYS_MS,
+    retryTransient: true,
+  });
 }

@@ -10,6 +10,7 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrEmailTaken        = errors.New("email already registered")
 	ErrInvalidRefresh    = errors.New("invalid refresh token")
+	ErrRefreshInProgress = errors.New("refresh token was rotated concurrently")
 	ErrRefreshTokenReuse = errors.New("refresh token reuse detected")
 	ErrInvalidLogin      = errors.New("invalid email or password")
 	ErrInvalidAccess     = errors.New("invalid access token")

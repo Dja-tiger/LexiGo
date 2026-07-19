@@ -11,12 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const refreshRotationGrace = 10 * time.Second
+
 type PostgresRepository struct {
 	pool *pgxpool.Pool
+	now  func() time.Time
 }
 
 func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
-	return &PostgresRepository{pool: pool}
+	return &PostgresRepository{pool: pool, now: time.Now}
 }
 
 func (r *PostgresRepository) Create(ctx context.Context, email, passwordHash, displayName string) (User, error) {
@@ -85,17 +88,18 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var (
-		userID    string
-		familyID  string
-		expiresAt time.Time
-		revokedAt *time.Time
+		userID         string
+		familyID       string
+		expiresAt      time.Time
+		revokedAt      *time.Time
+		replacedByHash []byte
 	)
 	err = tx.QueryRow(ctx, `
-		select user_id::text, family_id::text, expires_at, revoked_at
+		select user_id::text, family_id::text, expires_at, revoked_at, replaced_by_hash
 		from refresh_tokens
 		where token_hash = $1
 		for update
-	`, oldHash).Scan(&userID, &familyID, &expiresAt, &revokedAt)
+	`, oldHash).Scan(&userID, &familyID, &expiresAt, &revokedAt, &replacedByHash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", ErrInvalidRefresh
 	}
@@ -103,7 +107,11 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 		return "", fmt.Errorf("read refresh token for rotation: %w", err)
 	}
 
+	now := r.now().UTC()
 	if revokedAt != nil {
+		if len(replacedByHash) > 0 && revokedAt.UTC().After(now.Add(-refreshRotationGrace)) {
+			return "", ErrRefreshInProgress
+		}
 		if _, err := tx.Exec(ctx, `
 			update refresh_tokens
 			set revoked_at = coalesce(revoked_at, now()),
@@ -118,7 +126,7 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 		return "", ErrRefreshTokenReuse
 	}
 
-	if !expiresAt.After(time.Now().UTC()) {
+	if !expiresAt.After(now) {
 		if _, err := tx.Exec(ctx, `
 			update refresh_tokens
 			set revoked_at = coalesce(revoked_at, now())
@@ -234,6 +242,7 @@ func (r *PostgresRepository) ConsumePasswordReset(
 	if err != nil {
 		return fmt.Errorf("read password reset token: %w", err)
 	}
+
 	if usedAt != nil || !expiresAt.After(now) {
 		return ErrInvalidPasswordReset
 	}

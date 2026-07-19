@@ -7,19 +7,30 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
 
-func newTestAuthHandler(t *testing.T, users *fakeUsers, resetRepository *fakePasswordResetRepository, sender *fakePasswordResetSender) *Handler {
+func newTestAuthHandler(
+	t *testing.T,
+	users *fakeUsers,
+	resetRepository *fakePasswordResetRepository,
+	sender *fakePasswordResetSender,
+	refreshRepositories ...RefreshTokenRepository,
+) *Handler {
 	t.Helper()
 	manager, err := NewTokenManager("01234567890123456789012345678901", 15*time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
+	refreshRepository := RefreshTokenRepository(&fakeRefresh{})
+	if len(refreshRepositories) > 0 && refreshRepositories[0] != nil {
+		refreshRepository = refreshRepositories[0]
+	}
 	service := NewService(
 		users,
-		&fakeRefresh{},
+		refreshRepository,
 		manager,
 		time.Hour,
 		WithPasswordReset(resetRepository, sender, "https://lexigo.example", 30*time.Minute),
@@ -92,6 +103,33 @@ func TestPasswordResetRequestRejectsMalformedJSONWithoutAccountLookup(t *testing
 	response := performJSONRequest(t, http.HandlerFunc(handler.RequestPasswordReset), `{"email":`)
 	if response.Code != http.StatusBadRequest || !bytes.Contains(response.Body.Bytes(), []byte(`"code":"invalid_request"`)) {
 		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestRefreshConflictDoesNotClearRotatedSessionCookies(t *testing.T) {
+	handler := newTestAuthHandler(
+		t,
+		&fakeUsers{},
+		&fakePasswordResetRepository{},
+		&fakePasswordResetSender{},
+		&fakeRefresh{rotateErr: ErrRefreshInProgress},
+	)
+	request := httptest.NewRequest(http.MethodPost, "https://lexigo.example/api/v1/auth/refresh", nil)
+	request.AddCookie(&http.Cookie{Name: refreshCookieName, Value: "old-refresh"})
+	request.AddCookie(&http.Cookie{Name: csrfCookieName, Value: "csrf-token"})
+	request.Header.Set(csrfHeaderName, "csrf-token")
+	response := httptest.NewRecorder()
+
+	handler.Refresh(response, request)
+
+	if response.Code != http.StatusConflict || !strings.Contains(response.Body.String(), `"code":"refresh_conflict"`) {
+		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+	if response.Header().Get("Retry-After") != "1" {
+		t.Fatalf("Retry-After = %q", response.Header().Get("Retry-After"))
+	}
+	if cookies := response.Result().Cookies(); len(cookies) != 0 {
+		t.Fatalf("refresh conflict must not overwrite the winner's cookies: %+v", cookies)
 	}
 }
 
