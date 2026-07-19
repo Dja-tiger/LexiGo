@@ -57,8 +57,12 @@ for entry in "${routes[@]}"; do
       }
       ;;
     dictionary)
-      grep -Fq 'id="dictionary-results"' <<<"$html" || {
-        echo "Dictionary catalog did not render for ${url}" >&2
+      # The personalized dictionary is intentionally protected. In this
+      # unauthenticated shell smoke test the correct production state is the
+      # canonical route plus its explicit authentication gate, not a private
+      # catalog list populated without a session.
+      grep -Fq 'aria-label="Словарь доступен после входа"' <<<"$html" || {
+        echo "Dictionary authentication gate did not render for ${url}" >&2
         exit 1
       }
       ;;
