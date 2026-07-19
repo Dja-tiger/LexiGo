@@ -74,11 +74,11 @@ async function installSessionMocks(page: Page, initialFailure: InitialRefreshFai
     sameSite: "Lax",
   }]);
 
-  if (initialFailure === "offline") {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
-    });
-  }
+  // Keep the bounded automatic timer dormant until the test emits the exact
+  // lifecycle signal under test. This avoids a race on slow CI runners.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+  });
 
   await page.route("**/api/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -153,7 +153,10 @@ test("iOS pageshow resumes a recoverable session after a transient server failur
   await expectRecoverableBootstrap(page);
   expect(requests.refreshRequests()).toBe(1);
 
-  await page.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+    window.dispatchEvent(new Event("pageshow"));
+  });
 
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
   await expect.poll(requests.refreshRequests).toBe(2);
