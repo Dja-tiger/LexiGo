@@ -21,6 +21,7 @@ export type LearningItem = {
   partOfSpeech: string;
   section: PartOfSpeechSection | "phrase";
   topic: string;
+  aliases?: string[];
   examples: string[];
   note: string;
   status: string;

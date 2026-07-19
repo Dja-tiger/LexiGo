@@ -33,6 +33,11 @@ function copyTarget(target: NavigationTarget): NavigationTarget {
   return {
     view: target.view,
     ...(target.source ? { source: target.source } : {}),
+    ...(target.topic ? { topic: target.topic } : {}),
+    ...(target.status ? { status: target.status } : {}),
+    ...(target.query ? { query: target.query } : {}),
+    ...(target.sort ? { sort: target.sort } : {}),
+    ...(target.page ? { page: target.page } : {}),
     ...(target.detail ? { detail: target.detail } : {}),
   };
 }
@@ -74,7 +79,6 @@ export function navigationTabDestination(
     scroll: copyScroll(saved.scroll),
   };
 }
-
 
 export type NavigationTabStore = {
   remember: (target: NavigationTarget, scroll: NavigationScrollPosition) => void;

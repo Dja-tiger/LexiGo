@@ -11,15 +11,15 @@ const SESSION = {
 };
 
 const PROGRESS = {
-  dueNow: 0,
-  dueWords: 0,
+  dueNow: 12,
+  dueWords: 12,
   duePhrases: 0,
-  totalWords: 799,
-  totalPhrases: 3,
-  newWords: 3,
-  learningWords: 0,
-  reviewWords: 0,
-  masteredWords: 0,
+  totalWords: 60,
+  totalPhrases: 0,
+  newWords: 36,
+  learningWords: 8,
+  reviewWords: 12,
+  masteredWords: 4,
   masteredPhrases: 0,
   reviewsToday: 0,
   successfulToday: 0,
@@ -32,37 +32,36 @@ const PROGRESS = {
   retainedPhrasesWeek: 0,
 };
 
-const WORDS = [
-  { id: 101, kind: "word", lemma: "absolute", translation: "абсолютный", phonetic: "/ˈæbsəluːt/", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "new" },
-  { id: 102, kind: "word", lemma: "build", translation: "собирать", phonetic: "/bɪld/", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" },
-  { id: 103, kind: "word", lemma: "cache", translation: "кэш", phonetic: "/kæʃ/", partOfSpeech: "noun", topic: "Backend", examples: ["Clear the cache."], note: "", status: "new" },
-];
+const WORDS = Array.from({ length: 60 }, (_, index) => {
+  const id = 101 + index;
+  const number = String(index + 1).padStart(2, "0");
+  const status = index < 36 ? "new" : index < 44 ? "learning" : index < 56 ? "review" : "mastered";
+  return {
+    id,
+    kind: "word",
+    lemma: index === 0 ? "cache" : `backend term ${number}`,
+    translation: index === 0 ? "кэш" : `бэкенд-термин ${number}`,
+    aliases: index === 0 ? ["temporary storage", "fast storage"] : [`alias ${number}`],
+    phonetic: index === 0 ? "/kæʃ/" : "",
+    partOfSpeech: index === 0 ? "noun" : "term",
+    topic: "Backend Development",
+    examples: index === 0 ? ["Clear the cache before deployment."] : [`Use backend term ${number} in the incident update.`],
+    note: index === 0 ? "Temporary fast storage used by the service." : "Technical catalog entry.",
+    status,
+  };
+});
 
-const PHRASES = [
-  { id: 201, kind: "phrase", slug: "root-cause", lemma: "root cause", translation: "корневая причина", phonetic: "", partOfSpeech: "phrase", topic: "Incident", examples: ["We found the root cause."], note: "", status: "new" },
-  { id: 202, kind: "phrase", slug: "data-pipeline", lemma: "data pipeline", translation: "пайплайн данных", phonetic: "", partOfSpeech: "phrase", topic: "Data Engineering", examples: ["The data pipeline is healthy."], note: "", status: "new" },
-  { id: 203, kind: "phrase", slug: "deploy-service", lemma: "deploy the service", translation: "развернуть сервис", phonetic: "", partOfSpeech: "phrase", topic: "Release", examples: ["Deploy the service."], note: "", status: "new" },
-];
-
-const CATEGORIES = [
-  { source: "mixed", label: "Все слова", view: "learn" },
-  { source: "noun", label: "Существительные", view: "learn" },
-  { source: "verb", label: "Глаголы", view: "learn" },
-  { source: "adjective", label: "Прилагательные", view: "learn" },
-  { source: "phrases", label: "Технические фразы", view: "phrases" },
-  { source: "daily-life", label: "Бытовой английский", view: "learn" },
-  { source: "travel", label: "Для путешествий", view: "learn" },
-  { source: "data-engineering", label: "Data Engineer", view: "learn" },
-  { source: "backend", label: "Backend Development", view: "learn" },
-] as const;
+const METADATA = {
+  catalogVersion: "sha256:dictionary-catalog-e2e",
+  updatedAt: "2026-07-19T00:00:00Z",
+  totals: { items: 60, words: 60, phrases: 0 },
+  sources: { mixed: 60, noun: 1, verb: 0, adjective: 0, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 60 },
+  topics: [{ topic: "Backend Development", count: 60, words: 60, phrases: 0 }],
+};
 
 async function emulateStandaloneMode(context: BrowserContext) {
   await context.addInitScript(() => {
-    Object.defineProperty(navigator, "standalone", {
-      configurable: true,
-      get: () => true,
-    });
-
+    Object.defineProperty(navigator, "standalone", { configurable: true, get: () => true });
     const nativeMatchMedia = window.matchMedia.bind(window);
     window.matchMedia = (query: string) => {
       if (query !== "(display-mode: standalone)") return nativeMatchMedia(query);
@@ -81,6 +80,8 @@ async function emulateStandaloneMode(context: BrowserContext) {
 }
 
 async function installAPI(context: BrowserContext) {
+  const catalogRequests: string[] = [];
+  const lessonRequests: Array<Record<string, unknown>> = [];
   await context.addCookies([{
     name: "lexigo_csrf",
     value: "pwa-dictionary-csrf",
@@ -94,13 +95,7 @@ async function installAPI(context: BrowserContext) {
     const path = url.pathname;
 
     if (path === "/api/v1/catalog/metadata") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-        catalogVersion: "sha256:e2e-catalog",
-        updatedAt: "2026-07-18T00:00:00Z",
-        totals: { items: 6, words: 3, phrases: 3 },
-        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
-        topics: [{ topic: "Backend", count: 2 }],
-      }) });
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(METADATA) });
       return;
     }
     if (path === "/api/v1/auth/refresh") {
@@ -111,28 +106,75 @@ async function installAPI(context: BrowserContext) {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
       return;
     }
-    if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: PHRASES, count: PHRASES.length }) });
+    if (path === "/api/v1/lessons/active") {
+      await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }) });
       return;
     }
-    if (path === "/api/v1/words" || path === "/api/v1/words/due") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
+    if (path === "/api/v1/words" && request.method() === "GET") {
+      catalogRequests.push(url.search);
+      const query = url.searchParams.get("query")?.toLowerCase() ?? "";
+      const status = url.searchParams.get("status") ?? "";
+      const page = Number(url.searchParams.get("page") ?? "1");
+      const limit = Number(url.searchParams.get("limit") ?? "48");
+      let filtered = WORDS.filter((item) => !status || item.status === status);
+      if (query) {
+        filtered = filtered.filter((item) => [item.lemma, item.translation, item.topic, ...item.aliases]
+          .some((value) => value.toLowerCase().includes(query)));
+      }
+      const offset = (page - 1) * limit;
+      const items = filtered.slice(offset, offset + limit);
+      const totalPages = filtered.length === 0 ? 0 : Math.ceil(filtered.length / limit);
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        items,
+        count: items.length,
+        total: filtered.length,
+        page,
+        pageSize: limit,
+        totalPages,
+        hasPrevious: page > 1,
+        hasNext: page < totalPages,
+      }) });
+      return;
+    }
+    if (/^\/api\/v1\/words\/\d+$/.test(path) && request.method() === "GET") {
+      const id = Number(path.split("/").at(-1));
+      const item = WORDS.find((candidate) => candidate.id === id);
+      await route.fulfill({ status: item ? 200 : 404, contentType: "application/json", body: JSON.stringify(item ?? { error: { code: "not_found", message: "missing" } }) });
       return;
     }
     if (path === "/api/v1/lessons/preview") {
-      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
-      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-        source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30",
-        composition: { total: 2, words: 1, phrases: 1, due: 2, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 },
+      const input = request.postDataJSON() as Record<string, unknown>;
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "study",
+        lessonSize: input.lessonSize ?? "15",
+        composition: { total: 15, words: 15, phrases: 0, due: 0, new: 15, scheduled: 0, availableWords: 48, availablePhrases: 0 },
       }) });
+      return;
     }
-    if (path === "/api/v1/lessons/active") {
-      await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }) });
+    if (path === "/api/v1/lessons" && request.method() === "POST") {
+      const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string; wordIds?: number[] };
+      lessonRequests.push(input);
+      const selected = WORDS.filter((item) => input.wordIds?.includes(item.id)).slice(0, 15);
+      await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
+        id: "00000000-0000-0000-0000-000000000055",
+        source: input.source,
+        studyMode: input.studyMode,
+        lessonSize: input.lessonSize,
+        currentIndex: 0,
+        version: 1,
+        status: "active",
+        items: selected.map((item, position) => ({ ...item, position })),
+        createdAt: "2026-07-19T00:00:00Z",
+        updatedAt: "2026-07-19T00:00:00Z",
+      }) });
       return;
     }
 
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
+
+  return { catalogRequests, lessonRequests };
 }
 
 function watchRuntimeErrors(page: Page) {
@@ -147,61 +189,90 @@ function watchRuntimeErrors(page: Page) {
   return errors;
 }
 
-async function expectLibrary(page: Page) {
+async function expectDictionary(page: Page) {
   await expect(page).toHaveURL(/view=library/);
-  await expect(page.getByRole("heading", { name: "Материалы, организованные по учебной задаче" })).toBeVisible();
-  await expect(page.locator("[data-lexigo-dictionary-source]")).toHaveCount(9);
+  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(48);
   await expect(page.locator(".lx-app")).toBeVisible();
-  await expect(page.locator(".lx-view")).not.toBeEmpty();
-}
-
-async function expectCategory(page: Page, category: typeof CATEGORIES[number]) {
-  if (category.view === "phrases") {
-    await expect(page).toHaveURL(/view=phrases/);
-    await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
-  } else {
-    await expect(page).toHaveURL(new RegExp(`view=learn&source=${category.source}`));
-    await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
-    await expect(page.locator(`[data-lexigo-source="${category.source}"]`)).toHaveAttribute("aria-checked", "true");
-  }
-  await expect(page.locator(".lx-app")).toBeVisible();
-  await expect(page.locator(".lx-view")).not.toBeEmpty();
   await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
 }
 
-test("iOS standalone dictionary opens every category, preserves history and restores the last source", async ({ context, page }, testInfo) => {
-  test.skip(testInfo.project.name !== "ios-webkit", "Dedicated iOS PWA regression");
+test("dictionary filters, alias search, deep link and bounded lesson are URL-driven", async ({ context, page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Dedicated desktop catalog contract");
+  const api = await installAPI(context);
+  const runtimeErrors = watchRuntimeErrors(page);
 
+  await page.goto("/?view=library");
+  await expectDictionary(page);
+  await expect(page.getByText("Показаны 1–48 из 60", { exact: false })).toBeVisible();
+
+  await page.getByRole("combobox", { name: "Раздел словаря" }).selectOption("backend");
+  await page.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
+  await page.getByRole("combobox", { name: "Статус изучения" }).selectOption("new");
+  await expect(page).toHaveURL(/source=backend/);
+  await expect(page).toHaveURL(/topic=Backend\+Development/);
+  await expect(page).toHaveURL(/status=new/);
+
+  const search = page.getByRole("searchbox", { name: "Поиск по словарю" });
+  await search.fill("temporary storage");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/query=temporary\+storage/);
+  await expect(page.getByRole("listitem")).toHaveCount(1);
+  await expect(page.getByText("cache", { exact: true })).toBeVisible();
+  expect(api.catalogRequests.some((query) => query.includes("status=new") && query.includes("query=temporary+storage"))).toBe(true);
+
+  await page.getByRole("button", { name: "Открыть карточку: cache" }).click();
+  await expect(page).toHaveURL(/detail=101/);
+  await expect(page.getByRole("heading", { name: "cache" })).toBeVisible();
+  await expect(page.getByText("Temporary fast storage used by the service.")).toBeVisible();
+  await expect(page.getByText("temporary storage, fast storage")).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "cache" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/query=temporary\+storage/);
+  await expect(page.getByRole("listitem")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
+  await expectDictionary(page);
+  await page.getByRole("button", { name: "Изучить текущую страницу" }).click();
+  await expect(page).toHaveURL(/view=lesson/);
+  expect(api.lessonRequests).toHaveLength(1);
+  expect(api.lessonRequests[0].wordIds).toHaveLength(48);
+  expect(new Set(api.lessonRequests[0].wordIds as number[]).size).toBe(48);
+  expect(runtimeErrors).toEqual([]);
+});
+
+test("iOS standalone dictionary restores filters and result scroll across relaunch", async ({ context, page }, testInfo) => {
+  test.skip(testInfo.project.name !== "ios-webkit", "Dedicated iOS PWA regression");
   await emulateStandaloneMode(context);
   await installAPI(context);
   let runtimeErrors = watchRuntimeErrors(page);
 
-  await page.goto("/?view=library");
-  await expectLibrary(page);
+  await page.goto("/?view=library&source=backend&status=review&page=1");
+  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Раздел словаря" })).toHaveValue("backend");
+  await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
+  await expect(page.getByRole("listitem")).toHaveCount(12);
 
-  for (const category of CATEGORIES) {
-    await page.locator(`[data-lexigo-dictionary-source="${category.source}"]`).click();
-    await expectCategory(page, category);
-
-    await page.goBack();
-    await expectLibrary(page);
-
-    await page.goForward();
-    await expectCategory(page, category);
-
-    await page.goBack();
-    await expectLibrary(page);
-  }
-
-  await page.locator('[data-lexigo-dictionary-source="travel"]').click();
-  await expectCategory(page, CATEGORIES.find((category) => category.source === "travel")!);
+  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
+  await expect(page).toHaveURL(/detail=/);
+  await page.goBack();
+  await expect(page).toHaveURL(/source=backend/);
+  await expect(page).toHaveURL(/status=review/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
   expect(runtimeErrors).toEqual([]);
 
   await page.close();
-  const relaunchedPage = await context.newPage();
-  runtimeErrors = watchRuntimeErrors(relaunchedPage);
-  await relaunchedPage.goto("/");
-
-  await expectCategory(relaunchedPage, CATEGORIES.find((category) => category.source === "travel")!);
+  const relaunched = await context.newPage();
+  runtimeErrors = watchRuntimeErrors(relaunched);
+  await relaunched.goto("/");
+  await expect(relaunched).toHaveURL(/view=library/);
+  await expect(relaunched).toHaveURL(/source=backend/);
+  await expect(relaunched).toHaveURL(/status=review/);
+  await expect(relaunched.getByRole("listitem")).toHaveCount(12);
   expect(runtimeErrors).toEqual([]);
 });

@@ -28,6 +28,19 @@ describe("product navigation", () => {
     });
   });
 
+  it("parses complete dictionary state from a shareable URL", () => {
+    expect(parseNavigation("?view=library&source=backend&topic=Backend%20Development&status=review&query=temporary%20storage&sort=az&page=3&detail=101")).toEqual({
+      view: "library",
+      source: "backend",
+      topic: "Backend Development",
+      status: "review",
+      query: "temporary storage",
+      sort: "az",
+      page: 3,
+      detail: "101",
+    });
+  });
+
   it("parses all themed vocabulary collections", () => {
     for (const source of ["daily-life", "travel", "data-engineering", "backend"] as const) {
       expect(parseNavigation(`?view=learn&source=${source}`)).toEqual({ view: "learn", source });
@@ -35,8 +48,8 @@ describe("product navigation", () => {
     }
   });
 
-  it("drops invalid sources without losing the selected view", () => {
-    expect(parseNavigation("?view=learn&source=adverb")).toEqual({ view: "learn" });
+  it("drops invalid catalog filters without losing the selected view", () => {
+    expect(parseNavigation("?view=library&source=adverb&status=unknown&sort=random&page=zero")).toEqual({ view: "library" });
   });
 
   it("builds stable URLs for browser history", () => {
@@ -45,6 +58,20 @@ describe("product navigation", () => {
     expect(navigationURL({ view: "phrases", detail: "phrase-root-cause" })).toBe(
       "/?view=phrases&detail=phrase-root-cause",
     );
+    expect(navigationURL({
+      view: "library",
+      source: "backend",
+      topic: "Backend Development",
+      status: "review",
+      query: "temporary storage",
+      sort: "za",
+      page: 2,
+      detail: "101",
+    })).toBe("/?view=library&source=backend&topic=Backend+Development&status=review&query=temporary+storage&sort=za&page=2&detail=101");
+  });
+
+  it("omits default dictionary sort and first page from canonical URLs", () => {
+    expect(navigationURL({ view: "library", sort: "default", page: 1 })).toBe("/?view=library");
   });
 
   it("provides human-readable page titles", () => {
@@ -69,6 +96,27 @@ describe("standalone navigation persistence", () => {
     expect(target && navigationURL(target)).toBe(expectedURL);
   });
 
+  it("restores the complete dictionary query from a versioned envelope", () => {
+    const stored = serializeStoredNavigation({
+      view: "library",
+      source: "data-engineering",
+      topic: "Data Engineering",
+      status: "learning",
+      query: "pipeline",
+      sort: "az",
+      page: 2,
+    });
+    expect(parseStoredNavigation(stored)).toEqual({
+      view: "library",
+      source: "data-engineering",
+      topic: "Data Engineering",
+      status: "learning",
+      query: "pipeline",
+      sort: "az",
+      page: 2,
+    });
+  });
+
   it("restores the phrases section from a versioned envelope", () => {
     const target = parseStoredNavigation(serializeStoredNavigation({ view: "phrases" }));
     expect(target).toEqual({ view: "phrases" });
@@ -82,6 +130,7 @@ describe("standalone navigation persistence", () => {
     JSON.stringify({ version: 99, target: { view: "home" } }),
     JSON.stringify({ version: 2, target: { view: "unknown" } }),
     JSON.stringify({ version: 2, target: { view: "lesson", source: "mixed" } }),
+    JSON.stringify({ version: 2, target: { view: "library", status: "unknown" } }),
   ])("rejects unsupported or corrupted versioned value %s", (raw) => {
     expect(parseStoredNavigation(raw)).toBeNull();
   });
@@ -129,8 +178,8 @@ describe("standalone navigation persistence", () => {
       removeItem: (key: string) => values.delete(key),
     };
 
-    writePersistedNavigation(storage, { view: "library" });
-    expect(parseStoredNavigation(values.get(NAVIGATION_STORAGE_KEY) ?? null)).toEqual({ view: "library" });
+    writePersistedNavigation(storage, { view: "library", status: "review", query: "cache" });
+    expect(parseStoredNavigation(values.get(NAVIGATION_STORAGE_KEY) ?? null)).toEqual({ view: "library", status: "review", query: "cache" });
     writePersistedNavigation(storage, { view: "lesson" });
     expect(values.get(NAVIGATION_STORAGE_KEY)).toBeUndefined();
 

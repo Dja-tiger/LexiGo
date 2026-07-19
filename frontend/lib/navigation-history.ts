@@ -35,15 +35,16 @@ function normalizeUnknownTarget(value: unknown): NavigationTarget | null {
 
   const params = new URLSearchParams();
   params.set("view", value.view);
-  if (typeof value.source === "string") params.set("source", value.source);
-  if (typeof value.detail === "string") params.set("detail", value.detail);
+  for (const key of ["source", "topic", "status", "query", "sort", "detail"] as const) {
+    if (typeof value[key] === "string") params.set(key, value[key]);
+  }
+  if (typeof value.page === "number") params.set("page", String(value.page));
 
   const normalized = parseNavigation(`?${params.toString()}`);
   if (normalized.view !== value.view) return null;
-  if (value.source !== undefined && normalized.source !== value.source) return null;
-
-  const rawDetail = typeof value.detail === "string" ? value.detail.trim() : undefined;
-  if (rawDetail && normalized.detail !== rawDetail) return null;
+  for (const key of ["source", "topic", "status", "query", "sort", "detail", "page"] as const) {
+    if (value[key] !== undefined && normalized[key] !== value[key]) return null;
+  }
 
   return normalized;
 }

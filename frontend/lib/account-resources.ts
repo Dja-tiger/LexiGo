@@ -49,11 +49,15 @@ function isOptionalString(value: unknown): boolean {
   return value === undefined || isString(value);
 }
 
+function isOptionalStringArray(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every(isString));
+}
+
 function isTimestamp(value: unknown): boolean {
   return isString(value) && Number.isFinite(Date.parse(value));
 }
 
-function isLearningItem(value: unknown): boolean {
+export function isLearningItemPayload(value: unknown): boolean {
   if (!isRecord(value)) return false;
   return Number.isInteger(value.id)
     && (value.kind === "word" || value.kind === "phrase")
@@ -62,6 +66,7 @@ function isLearningItem(value: unknown): boolean {
     && isString(value.phonetic)
     && isString(value.partOfSpeech)
     && isString(value.topic)
+    && isOptionalStringArray(value.aliases)
     && Array.isArray(value.examples)
     && value.examples.every(isString)
     && isString(value.note)
@@ -73,7 +78,7 @@ function isLearningItem(value: unknown): boolean {
 }
 
 export function isItemsResponsePayload(value: unknown): boolean {
-  if (!isRecord(value) || !Array.isArray(value.items) || !value.items.every(isLearningItem) || !isNonNegativeNumber(value.count)) return false;
+  if (!isRecord(value) || !Array.isArray(value.items) || !value.items.every(isLearningItemPayload) || !isNonNegativeNumber(value.count)) return false;
   const optionalNonNegative = [value.total, value.totalPages].every((entry) => entry === undefined || isNonNegativeNumber(entry));
   const optionalPositive = [value.page, value.pageSize].every((entry) => entry === undefined || (isFiniteNumber(entry) && entry > 0));
   const optionalFlags = [value.hasPrevious, value.hasNext].every((entry) => entry === undefined || typeof entry === "boolean");
@@ -90,7 +95,7 @@ export function isActiveLessonPayload(value: unknown): boolean {
     && isNonNegativeNumber(value.version)
     && value.status === "active"
     && Array.isArray(value.items)
-    && value.items.every((item) => isLearningItem(item) && isRecord(item) && isNonNegativeNumber(item.position))
+    && value.items.every((item) => isLearningItemPayload(item) && isRecord(item) && isNonNegativeNumber(item.position))
     && isTimestamp(value.createdAt)
     && isTimestamp(value.updatedAt);
 }

@@ -1,5 +1,8 @@
 export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "profile" | "lesson";
 
+export type CatalogStatus = "new" | "learning" | "review" | "mastered";
+export type CatalogSort = "default" | "az" | "za";
+
 export type NavigationTarget = {
   view: AppView;
   source?:
@@ -12,6 +15,11 @@ export type NavigationTarget = {
     | "travel"
     | "data-engineering"
     | "backend";
+  topic?: string;
+  status?: CatalogStatus;
+  query?: string;
+  sort?: CatalogSort;
+  page?: number;
   detail?: string;
 };
 
@@ -40,6 +48,8 @@ const SOURCES = new Set<NavigationSource>([
   "data-engineering",
   "backend",
 ]);
+const CATALOG_STATUSES = new Set<CatalogStatus>(["new", "learning", "review", "mastered"]);
+const CATALOG_SORTS = new Set<CatalogSort>(["default", "az", "za"]);
 
 export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabel: string }> = [
   { view: "home", label: "Главная", shortLabel: "Главная" },
@@ -53,19 +63,51 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function normalizedText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim();
+  return normalized && normalized.length <= 120 ? normalized : undefined;
+}
+
+function normalizedPage(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) return value;
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    const parsed = Number(value);
+    if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+  }
+  return undefined;
+}
+
 function normalizeNavigation(candidate: unknown): NavigationTarget | null {
   if (!isRecord(candidate)) return null;
-  const value = candidate as { view?: unknown; source?: unknown; detail?: unknown };
+  const value = candidate as Record<string, unknown>;
   if (typeof value.view !== "string" || !VIEWS.has(value.view as AppView)) return null;
   if (value.source !== undefined && (typeof value.source !== "string" || !SOURCES.has(value.source as NavigationSource))) {
     return null;
   }
-  if (value.detail !== undefined && typeof value.detail !== "string") return null;
+  if (value.status !== undefined && (typeof value.status !== "string" || !CATALOG_STATUSES.has(value.status as CatalogStatus))) {
+    return null;
+  }
+  if (value.sort !== undefined && (typeof value.sort !== "string" || !CATALOG_SORTS.has(value.sort as CatalogSort))) {
+    return null;
+  }
+  if (value.page !== undefined && normalizedPage(value.page) === undefined) return null;
+  for (const key of ["topic", "query", "detail"] as const) {
+    if (value[key] !== undefined && normalizedText(value[key]) === undefined) return null;
+  }
 
-  const detail = typeof value.detail === "string" ? value.detail.trim() || undefined : undefined;
+  const topic = normalizedText(value.topic);
+  const query = normalizedText(value.query);
+  const detail = normalizedText(value.detail);
+  const page = normalizedPage(value.page);
   return {
     view: value.view as AppView,
     ...(value.source ? { source: value.source as NavigationSource } : {}),
+    ...(topic ? { topic } : {}),
+    ...(value.status ? { status: value.status as CatalogStatus } : {}),
+    ...(query ? { query } : {}),
+    ...(value.sort ? { sort: value.sort as CatalogSort } : {}),
+    ...(page && page > 1 ? { page } : {}),
     ...(detail ? { detail } : {}),
   };
 }
@@ -88,11 +130,21 @@ export function parseNavigation(search: string): NavigationTarget {
   const params = new URLSearchParams(search);
   const rawView = params.get("view") as AppView | null;
   const rawSource = params.get("source") as NavigationSource | null;
-  const detail = params.get("detail")?.trim() || undefined;
+  const rawStatus = params.get("status") as CatalogStatus | null;
+  const rawSort = params.get("sort") as CatalogSort | null;
+  const topic = normalizedText(params.get("topic"));
+  const query = normalizedText(params.get("query"));
+  const detail = normalizedText(params.get("detail"));
+  const page = normalizedPage(params.get("page"));
 
   return {
     view: rawView && VIEWS.has(rawView) ? rawView : "home",
     ...(rawSource && SOURCES.has(rawSource) ? { source: rawSource } : {}),
+    ...(topic ? { topic } : {}),
+    ...(rawStatus && CATALOG_STATUSES.has(rawStatus) ? { status: rawStatus } : {}),
+    ...(query ? { query } : {}),
+    ...(rawSort && CATALOG_SORTS.has(rawSort) ? { sort: rawSort } : {}),
+    ...(page && page > 1 ? { page } : {}),
     ...(detail ? { detail } : {}),
   };
 }
@@ -160,6 +212,11 @@ export function navigationURL(target: NavigationTarget): string {
   const params = new URLSearchParams();
   if (target.view !== "home") params.set("view", target.view);
   if (target.source) params.set("source", target.source);
+  if (target.topic) params.set("topic", target.topic);
+  if (target.status) params.set("status", target.status);
+  if (target.query) params.set("query", target.query);
+  if (target.sort && target.sort !== "default") params.set("sort", target.sort);
+  if (target.page && target.page > 1) params.set("page", String(target.page));
   if (target.detail) params.set("detail", target.detail);
   const query = params.toString();
   return query ? `/?${query}` : "/";

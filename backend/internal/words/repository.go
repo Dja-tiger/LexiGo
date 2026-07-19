@@ -3,11 +3,21 @@ package words
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrCatalogItemNotFound = errors.New("catalog item not found")
+
+const catalogSelectFields = `
+		w.id, w.kind, coalesce(w.slug, ''), w.lemma, w.translation, w.phonetic,
+		w.part_of_speech, w.topic, coalesce(w.aliases, '{}'::text[]), w.examples, w.note,
+		w.cloze, w.cloze_answer, uw.status, uw.easiness::float8, uw.interval_days,
+		uw.repetitions, uw.due_at, uw.last_reviewed_at
+`
 
 const catalogListFilter = `
 		from user_words uw
@@ -33,7 +43,13 @@ const catalogListFilter = `
 		      or lower(w.lemma) like ('%' || lower($6) || '%')
 		      or lower(w.translation) like ('%' || lower($6) || '%')
 		      or lower(w.topic) like ('%' || lower($6) || '%')
+		      or exists (
+		          select 1
+		          from unnest(w.aliases) as alias
+		          where lower(alias) like ('%' || lower($6) || '%')
+		      )
 		  )
+		  and ($7 = '' or uw.status = $7)
 `
 
 type Repository struct{ pool *pgxpool.Pool }
@@ -47,6 +63,7 @@ type ListOptions struct {
 	Source string
 	Topic  string
 	Query  string
+	Status string
 	Sort   string
 }
 
@@ -59,6 +76,43 @@ type Page struct {
 	TotalPages  int        `json:"totalPages"`
 	HasPrevious bool       `json:"hasPrevious"`
 	HasNext     bool       `json:"hasNext"`
+}
+
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanUserWord(row rowScanner) (UserWord, error) {
+	var item UserWord
+	var examples []byte
+	if err := row.Scan(
+		&item.ID, &item.Kind, &item.Slug, &item.Lemma, &item.Translation, &item.Phonetic,
+		&item.PartOfSpeech, &item.Topic, &item.Aliases, &examples, &item.Note,
+		&item.Cloze, &item.ClozeAnswer, &item.Status, &item.Easiness, &item.IntervalDays,
+		&item.Repetitions, &item.DueAt, &item.LastReviewedAt,
+	); err != nil {
+		return UserWord{}, err
+	}
+	if err := json.Unmarshal(examples, &item.Examples); err != nil {
+		return UserWord{}, fmt.Errorf("decode examples: %w", err)
+	}
+	return item, nil
+}
+
+func (r *Repository) Get(ctx context.Context, userID string, wordID int64) (UserWord, error) {
+	item, err := scanUserWord(r.pool.QueryRow(ctx, `
+		select `+catalogSelectFields+`
+		from user_words uw
+		join words w on w.id = uw.word_id
+		where uw.user_id = $1::uuid and w.id = $2
+	`, userID, wordID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return UserWord{}, ErrCatalogItemNotFound
+	}
+	if err != nil {
+		return UserWord{}, fmt.Errorf("query catalog item: %w", err)
+	}
+	return item, nil
 }
 
 func (r *Repository) ListPage(ctx context.Context, userID string, options ListOptions) (Page, error) {
@@ -89,7 +143,7 @@ func (r *Repository) listPage(ctx context.Context, userID string, options ListOp
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	args := []any{userID, options.Kind, dueOnly, options.Source, options.Topic, options.Query}
+	args := []any{userID, options.Kind, dueOnly, options.Source, options.Topic, options.Query, options.Status}
 	var total int
 	if err := tx.QueryRow(ctx, "select count(*)::int "+catalogListFilter, args...).Scan(&total); err != nil {
 		return Page{}, fmt.Errorf("count learning items: %w", err)
@@ -107,19 +161,15 @@ func (r *Repository) listPage(ctx context.Context, userID string, options ListOp
 	offset := (options.Page - 1) * options.Limit
 
 	rows, err := tx.Query(ctx, `
-		select w.id, w.kind, coalesce(w.slug, ''), w.lemma, w.translation, w.phonetic,
-		       w.part_of_speech, w.topic, w.examples, w.note, w.cloze, w.cloze_answer,
-		       uw.status, uw.easiness::float8, uw.interval_days, uw.repetitions,
-		       uw.due_at, uw.last_reviewed_at
-	`+catalogListFilter+`
+		select `+catalogSelectFields+catalogListFilter+`
 		order by
-		  case when $7 = 'az' then lower(w.lemma) end asc,
-		  case when $7 = 'za' then lower(w.lemma) end desc,
-		  case when $7 = 'default' and $3 then uw.due_at end asc,
-		  case when $7 = 'default' then w.topic end asc,
+		  case when $8 = 'az' then lower(w.lemma) end asc,
+		  case when $8 = 'za' then lower(w.lemma) end desc,
+		  case when $8 = 'default' and $3 then uw.due_at end asc,
+		  case when $8 = 'default' then w.topic end asc,
 		  w.id asc
-		limit $8 offset $9
-	`, userID, options.Kind, dueOnly, options.Source, options.Topic, options.Query, options.Sort, options.Limit, offset)
+		limit $9 offset $10
+	`, userID, options.Kind, dueOnly, options.Source, options.Topic, options.Query, options.Status, options.Sort, options.Limit, offset)
 	if err != nil {
 		return Page{}, fmt.Errorf("query learning items page: %w", err)
 	}
@@ -127,18 +177,9 @@ func (r *Repository) listPage(ctx context.Context, userID string, options ListOp
 
 	items := make([]UserWord, 0, options.Limit)
 	for rows.Next() {
-		var item UserWord
-		var examples []byte
-		if err := rows.Scan(
-			&item.ID, &item.Kind, &item.Slug, &item.Lemma, &item.Translation, &item.Phonetic,
-			&item.PartOfSpeech, &item.Topic, &examples, &item.Note, &item.Cloze, &item.ClozeAnswer,
-			&item.Status, &item.Easiness, &item.IntervalDays, &item.Repetitions,
-			&item.DueAt, &item.LastReviewedAt,
-		); err != nil {
+		item, err := scanUserWord(rows)
+		if err != nil {
 			return Page{}, fmt.Errorf("scan learning item: %w", err)
-		}
-		if err := json.Unmarshal(examples, &item.Examples); err != nil {
-			return Page{}, fmt.Errorf("decode examples: %w", err)
 		}
 		items = append(items, item)
 	}

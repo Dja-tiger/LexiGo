@@ -380,7 +380,7 @@ for (const target of [
   { name: "home", url: "/", heading: /Продолжайте учиться/ },
   { name: "learn", url: "/?view=learn", heading: "Настройте урок под текущую задачу" },
   { name: "phrases", url: "/?view=phrases", heading: "Готовые формулировки для работы" },
-  { name: "library", url: "/?view=library", heading: "Материалы, организованные по учебной задаче" },
+  { name: "library", url: "/?view=library", heading: "Каталог слов и терминов" },
   { name: "progress", url: "/?view=progress", heading: "Смотрите, что действительно сохранилось" },
   { name: "profile", url: "/?view=profile", heading: "Keyboard User" },
 ] as const) {
@@ -471,6 +471,31 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   await page.goto("/?view=progress");
   const goalGroup = page.getByRole("radiogroup", { name: "Дневная цель" });
   await expect(goalGroup.getByRole("radio", { name: "30", exact: true })).toHaveAttribute("aria-checked", "true");
+  await expectNoPositiveTabIndex(page);
+});
+
+test("dictionary filters and item cards remain keyboard operable", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Native select and deep-link focus flow are asserted once in Chromium.");
+  await page.goto("/?view=library");
+  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+
+  const source = page.getByRole("combobox", { name: "Раздел словаря" });
+  await source.focus();
+  await source.selectOption("backend");
+  await expect(page).toHaveURL(/source=backend/);
+
+  const firstCard = page.getByRole("button", { name: /Открыть карточку:/ }).first();
+  await firstCard.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/detail=/);
+  await expect(page.locator(".lx-dictionary-detail-card h1")).toHaveAttribute("lang", "en");
+
+  const back = page.getByRole("button", { name: "← К результатам" });
+  await back.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/source=backend/);
+  await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
   await expectNoPositiveTabIndex(page);
 });
 
