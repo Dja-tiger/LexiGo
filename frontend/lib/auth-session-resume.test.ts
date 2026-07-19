@@ -9,6 +9,7 @@ import {
   restoreSession,
   SessionRefreshError,
 } from "./auth-session";
+import { subscribeToSessionResume, type SessionResumeEnvironment } from "./session-resume";
 
 const SESSION = {
   user: {
@@ -82,6 +83,50 @@ describe("PWA session resume resilience", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("subscribes to online, pageshow and visible-state resume signals with cleanup", () => {
+    const windowListeners = new Map<string, EventListenerOrEventListenerObject>();
+    const documentListeners = new Map<string, EventListenerOrEventListenerObject>();
+    const environment = {
+      windowTarget: {
+        addEventListener: vi.fn((type: string, listener: EventListenerOrEventListenerObject) => {
+          windowListeners.set(type, listener);
+        }),
+        removeEventListener: vi.fn((type: string) => {
+          windowListeners.delete(type);
+        }),
+      },
+      documentTarget: {
+        visibilityState: "hidden" as DocumentVisibilityState,
+        addEventListener: vi.fn((type: string, listener: EventListenerOrEventListenerObject) => {
+          documentListeners.set(type, listener);
+        }),
+        removeEventListener: vi.fn((type: string) => {
+          documentListeners.delete(type);
+        }),
+      },
+    } as unknown as SessionResumeEnvironment;
+    const onResume = vi.fn();
+
+    const unsubscribe = subscribeToSessionResume(onResume, environment);
+    const invoke = (listener: EventListenerOrEventListenerObject | undefined) => {
+      if (typeof listener === "function") listener(new Event("resume"));
+      else listener?.handleEvent(new Event("resume"));
+    };
+
+    invoke(windowListeners.get("online"));
+    invoke(windowListeners.get("pageshow"));
+    invoke(documentListeners.get("visibilitychange"));
+    expect(onResume).toHaveBeenCalledTimes(2);
+
+    environment.documentTarget.visibilityState = "visible";
+    invoke(documentListeners.get("visibilitychange"));
+    expect(onResume).toHaveBeenCalledTimes(3);
+
+    unsubscribe();
+    expect(windowListeners.size).toBe(0);
+    expect(documentListeners.size).toBe(0);
+  });
+
   it("keeps retryable bootstrap failures outside the guest login state", async () => {
     const source = await readFile(
       new URL("../components/lexigo-bootstrapped-app.tsx", import.meta.url),
@@ -91,8 +136,7 @@ describe("PWA session resume resilience", () => {
     expect(source).toContain("isDefinitiveSessionRefreshError");
     expect(source).toContain("setRestoreRecoverable(true)");
     expect(source).toContain("Сессия не удалена. Пароль вводить заново не нужно.");
-    expect(source).toContain('window.addEventListener("online", requestRetry)');
-    expect(source).toContain('window.addEventListener("pageshow", requestRetry)');
-    expect(source).toContain('document.addEventListener("visibilitychange", handleVisibility)');
+    expect(source).toContain("subscribeToSessionResume(requestRetry)");
+    expect(source).not.toContain("document.addEventListener");
   });
 });
