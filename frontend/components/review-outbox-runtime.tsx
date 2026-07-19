@@ -29,6 +29,7 @@ const EMPTY_SUMMARY: ReviewOutboxSummary = {
 };
 
 const REVIEW_SYNCED_EVENT = "lexigo:lesson-reviews-synced";
+const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 const BACKGROUND_RELOAD_DELAY_MS = 1500;
 
 type ErrorPayload = {
@@ -217,6 +218,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
               activeSession = await refreshSession({ redirectOnInvalid: false });
               sessionRef.current = activeSession;
               setActiveUserID(activeSession.user.id);
+              window.dispatchEvent(new Event(SESSION_RESTORED_EVENT));
               if (activeSession.user.id !== record.userId) break;
               response = await sendQueuedReview(originalFetch, record, activeSession);
             } catch (error) {
@@ -298,6 +300,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
           if (isSessionPayload(payload)) {
             sessionRef.current = payload;
             setActiveUserID(payload.user.id);
+            window.dispatchEvent(new Event(SESSION_RESTORED_EVENT));
             void refreshSummary().then(() => syncPendingReviews());
           }
         } catch (error) {
