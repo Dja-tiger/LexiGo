@@ -14,6 +14,7 @@ DEPLOY_KNOWN_HOSTS="${DEPLOY_KNOWN_HOSTS:?DEPLOY_KNOWN_HOSTS is required}"
 DEPLOY_HOST="${DEPLOY_HOST:?DEPLOY_HOST is required}"
 DEPLOY_USER="${DEPLOY_USER:?DEPLOY_USER is required}"
 DEPLOY_PATH="${DEPLOY_PATH:?DEPLOY_PATH is required}"
+PUBLIC_URL="${PUBLIC_URL:?PUBLIC_URL is required}"
 GHCR_USER="${GHCR_USER:?GHCR_USER is required}"
 GHCR_TOKEN="${GHCR_TOKEN:?GHCR_TOKEN is required}"
 
@@ -25,7 +26,6 @@ ARCHIVE_FILE="$RUN_DIR/lexigo-deploy.tgz"
 AGENT_SOCKET="$RUN_DIR/agent.sock"
 LOG_FILE="$RUNNER_TEMP/lexigo-${ENVIRONMENT}-deploy.log"
 REMOTE_ARCHIVE="/tmp/lexigo-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.tgz"
-PUBLIC_URL="http://${DEPLOY_HOST}"
 TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
 SSH_AGENT_PID=""
 
@@ -71,6 +71,9 @@ esac
 
 [[ "$DEPLOY_PATH" =~ ^/opt(/[A-Za-z0-9._-]+)+$ ]] || \
   die "DEPLOY_PATH must be a normalized path below /opt"
+
+[[ "$PUBLIC_URL" =~ ^https://[A-Za-z0-9.-]+$ ]] || \
+  die "PUBLIC_URL must be one HTTPS origin without a path, for example https://lexigo.example.com"
 
 [[ "$GHCR_USER" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]] || \
   die "GHCR_USER contains unsupported characters"
@@ -122,7 +125,7 @@ log "extracting deployment bundle"
 ssh "${SSH_OPTIONS[@]}" "$TARGET" \
   "set -Eeuo pipefail; trap 'rm -f \"$REMOTE_ARCHIVE\"' EXIT; install -d -m 755 '$DEPLOY_PATH'; tar -xzf '$REMOTE_ARCHIVE' -C '$DEPLOY_PATH'"
 
-log "deploying $ENVIRONMENT image $IMAGE_TAG"
+log "deploying $ENVIRONMENT image $IMAGE_TAG to $PUBLIC_URL"
 set -o pipefail
 printf '%s' "$GHCR_TOKEN" \
   | ssh "${SSH_OPTIONS[@]}" "$TARGET" \
