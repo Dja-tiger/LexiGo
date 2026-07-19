@@ -75,9 +75,9 @@ func TestLessonReviewIdempotencySurvivesConcurrentReplay(t *testing.T) {
 			ID int64 `json:"id"`
 		} `json:"items"`
 	}
-	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words/due?limit=1", registered.Tokens.AccessToken, http.StatusOK, &due)
-	if len(due.Items) != 1 {
-		t.Fatalf("due items = %d, want 1", len(due.Items))
+	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words/due?limit=2", registered.Tokens.AccessToken, http.StatusOK, &due)
+	if len(due.Items) < 2 {
+		t.Fatalf("due items = %d, want at least 2", len(due.Items))
 	}
 
 	var lesson struct {
@@ -157,6 +157,52 @@ func TestLessonReviewIdempotencySurvivesConcurrentReplay(t *testing.T) {
 	}
 	if invalid.status != http.StatusUnprocessableEntity || responseErrorCode(t, invalid.body) != "invalid_idempotency_key" {
 		t.Fatalf("invalid key status=%d body=%s", invalid.status, invalid.body)
+	}
+
+	if _, err := pg.Exec(ctx, `
+		update lesson_review_idempotency
+		set created_at = now() - interval '31 days',
+		    expires_at = now() - interval '1 minute'
+		where idempotency_key = $1::uuid
+	`, idempotencyKey); err != nil {
+		t.Fatalf("expire idempotency row: %v", err)
+	}
+
+	var secondLesson struct {
+		ID      string `json:"id"`
+		Version int64  `json:"version"`
+	}
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
+		"source":     "mixed",
+		"studyMode":  "recall",
+		"lessonSize": "15",
+		"wordIds":    []int64{due.Items[1].ID},
+	}, http.StatusCreated, &secondLesson)
+	secondEndpoint := fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, secondLesson.ID, due.Items[1].ID)
+	reusedAfterExpiry := sendIdempotentLessonReview(
+		secondEndpoint,
+		registered.Tokens.AccessToken,
+		idempotencyKey,
+		lessonReviewPayload("known", secondLesson.Version),
+	)
+	if reusedAfterExpiry.err != nil {
+		t.Fatalf("expired key reuse request: %v", reusedAfterExpiry.err)
+	}
+	if reusedAfterExpiry.status != http.StatusOK {
+		t.Fatalf("expired key reuse status=%d body=%s", reusedAfterExpiry.status, reusedAfterExpiry.body)
+	}
+
+	var storedLessonID string
+	var expiresInFuture bool
+	if err := pg.QueryRow(ctx, `
+		select lesson_id::text, expires_at > now()
+		from lesson_review_idempotency
+		where user_id = $1::uuid and idempotency_key = $2::uuid
+	`, registered.User.ID, idempotencyKey).Scan(&storedLessonID, &expiresInFuture); err != nil {
+		t.Fatalf("load replaced idempotency row: %v", err)
+	}
+	if storedLessonID != secondLesson.ID || !expiresInFuture {
+		t.Fatalf("stored lesson=%s expires_in_future=%t, want lesson=%s and true", storedLessonID, expiresInFuture, secondLesson.ID)
 	}
 }
 
