@@ -1,0 +1,112 @@
+from pathlib import Path
+
+path = Path("frontend/components/lexigo-premium-app.tsx")
+text = path.read_text()
+
+replacements = [
+    (
+        "  isActiveLessonPayload,\n  isItemsResponsePayload,",
+        "  isActiveLessonPayload,\n  isItemsResponsePayload,\n  isLearningItemPayload,",
+    ),
+    (
+        'import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { SpeechPlayerButton } from "./speech-player-button";',
+        'import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";\nimport { SpeechPlayerButton } from "./speech-player-button";',
+    ),
+    (
+        "  topic: string;\n  examples: string[];",
+        "  topic: string;\n  aliases?: string[];\n  examples: string[];",
+    ),
+    (
+        "    topic: item.topic,\n    examples: item.examples,",
+        "    topic: item.topic,\n    aliases: item.aliases,\n    examples: item.examples,",
+    ),
+    (
+        "    options: { source?: LessonSource; topic?: string; query?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},",
+        "    options: { source?: LessonSource; topic?: string; query?: string; status?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},",
+    ),
+    (
+        '    if (options.query) parameters.set("query", options.query);\n    const result = await authorizedRequest<ItemsResponse>(',
+        '    if (options.query) parameters.set("query", options.query);\n    if (options.status) parameters.set("status", options.status);\n    const result = await authorizedRequest<ItemsResponse>(',
+    ),
+]
+
+for old, new in replacements:
+    if old not in text:
+        raise SystemExit(f"Expected integration fragment was not found: {old[:80]!r}")
+    text = text.replace(old, new, 1)
+
+marker = "  }, []);\n\n  const loadProgressResource = useCallback(async ("
+if marker not in text:
+    raise SystemExit("loadItems insertion marker was not found")
+
+callbacks = '''  }, []);
+
+  const loadDictionaryPage = useCallback(async (
+    filters: DictionaryFilters,
+    signal: AbortSignal,
+  ): Promise<DictionaryPageResult> => {
+    if (!session) throw new Error("Войдите, чтобы открыть словарь");
+    const result = await loadItems(session, "word", false, {
+      source: filters.source,
+      topic: filters.topic,
+      query: filters.query,
+      status: filters.status,
+      sort: filters.sort,
+      page: filters.page,
+    }, signal);
+    setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+    return { items: result.response.items, info: catalogPageInfo(result.response) };
+  }, [loadItems, session]);
+
+  const loadDictionaryDetail = useCallback(async (
+    wordID: number,
+    signal: AbortSignal,
+  ): Promise<LearningItem> => {
+    if (!session) throw new Error("Войдите, чтобы открыть карточку слова");
+    const result = await authorizedRequest<APIItem>(
+      session,
+      `/api/v1/words/${wordID}`,
+      { signal },
+      isLearningItemPayload,
+    );
+    setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+    return toLearningItem(result.data);
+  }, [session]);
+
+  const loadProgressResource = useCallback(async ('''
+text = text.replace(marker, callbacks, 1)
+
+start = text.find("  function renderLibrary() {")
+end = text.find("\n\n  function renderProgress() {", start)
+if start < 0 or end < 0:
+    raise SystemExit("renderLibrary block was not found")
+
+new_render = '''  function renderLibrary() {
+    const dictionarySource: LessonSource = navigation.source && navigation.source !== "phrases"
+      ? navigation.source
+      : "mixed";
+    return (
+      <DictionaryCatalog
+        authenticated={Boolean(session)}
+        navigation={navigation}
+        metadata={catalogMetadata}
+        metadataStatus={catalogMetadataStatus}
+        progress={progress}
+        loadPage={loadDictionaryPage}
+        loadDetail={loadDictionaryDetail}
+        onNavigate={(target, replace, scroll) => navigate(target, replace, { scroll })}
+        onBackToResults={() => {
+          const destination = navigationTabs.destination("library");
+          const target = { ...navigation };
+          delete target.detail;
+          navigate(target, true, { scroll: destination.target.detail ? { x: 0, y: 0 } : destination.scroll });
+        }}
+        onStartLesson={(selectedItems, mode) => {
+          void startLesson(session, { source: dictionarySource, size: 15, mode, items: selectedItems });
+        }}
+        onRequireAuthentication={() => requestAuthentication("library")}
+      />
+    );
+  }'''
+
+path.write_text(text[:start] + new_render + text[end:])
