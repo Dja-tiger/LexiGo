@@ -82,6 +82,7 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
+	mux.Handle("GET /api/v1/words/{wordID}", authenticated(http.HandlerFunc(wordsHandler.Detail)))
 	mux.Handle("POST /api/v1/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewWord)))
 	mux.Handle("POST /api/v1/lessons/preview", authenticated(http.HandlerFunc(learningHandler.PreviewLesson)))
 	mux.Handle("POST /api/v1/lessons", authenticated(http.HandlerFunc(learningHandler.CreateLesson)))
