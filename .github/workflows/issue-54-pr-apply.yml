@@ -1,6 +1,8 @@
 name: Harden Issue 54 bounded hydration
 
 on:
+  push:
+    branches: [agent/issue-54-catalog-pagination]
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]
@@ -10,7 +12,7 @@ permissions:
 
 jobs:
   harden:
-    if: github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
+    if: github.event_name == 'push' || github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
     runs-on:
       - self-hosted
       - linux
@@ -20,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
