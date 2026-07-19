@@ -55,7 +55,7 @@ describe("navigation history accessibility state", () => {
     })).toBeNull();
   });
 
-  it("reads current entries, migrates legacy targets and falls back to the URL", () => {
+  it("reads current entries, migrates legacy targets and falls back to legacy URL state", () => {
     const current = createNavigationHistoryState({ view: "library", status: "review", page: 2 }, { x: 0, y: 310 });
     expect(navigationTargetFromHistory(current, "?view=home")).toEqual({ view: "library", status: "review", page: 2 });
     expect(navigationScrollFromHistory(current)).toEqual({ x: 0, y: 310 });
@@ -74,10 +74,11 @@ describe("navigation history accessibility state", () => {
     expect(navigationScrollFromHistory(null)).toEqual({ x: 0, y: 0 });
   });
 
-  it("uses the canonical URL as the navigation identity", () => {
+  it("uses the canonical pathname URL as the navigation identity", () => {
     expect(navigationIdentity({ view: "home" })).toBe("/");
     expect(navigationIdentity({ view: "library", source: "data-engineering", status: "mastered", page: 3 }))
-      .toBe("/?view=library&source=data-engineering&status=mastered&page=3");
+      .toBe("/dictionary?source=data-engineering&status=mastered&page=3");
+    expect(navigationIdentity({ view: "library", detail: "101" })).toBe("/words/101");
   });
 });
 
