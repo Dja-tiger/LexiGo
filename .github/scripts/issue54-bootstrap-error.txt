@@ -1,1 +1,16 @@
-backend/internal/learning/lesson_http.go: expected exactly one match, found 2 for 'if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.Le'
+# github.com/Dja-tiger/New-project/backend/internal/learning
+internal/learning/lesson_http.go:86:37: undefined: maxCatalogFilterLength
+FAIL	github.com/Dja-tiger/New-project/backend/cmd/api [build failed]
+ok  	github.com/Dja-tiger/New-project/backend/internal/auth	2.119s
+ok  	github.com/Dja-tiger/New-project/backend/internal/catalog	0.019s
+ok  	github.com/Dja-tiger/New-project/backend/internal/config	(cached)
+ok  	github.com/Dja-tiger/New-project/backend/internal/health	0.015s
+ok  	github.com/Dja-tiger/New-project/backend/internal/httpx	(cached)
+FAIL	github.com/Dja-tiger/New-project/backend/internal/learning [build failed]
+?   	github.com/Dja-tiger/New-project/backend/internal/platform/migrate	[no test files]
+?   	github.com/Dja-tiger/New-project/backend/internal/platform/postgres	[no test files]
+?   	github.com/Dja-tiger/New-project/backend/internal/platform/redis	[no test files]
+?   	github.com/Dja-tiger/New-project/backend/internal/ratelimit	[no test files]
+FAIL	github.com/Dja-tiger/New-project/backend/internal/server [build failed]
+ok  	github.com/Dja-tiger/New-project/backend/internal/words	0.011s
+FAIL
