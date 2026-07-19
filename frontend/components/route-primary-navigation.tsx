@@ -12,9 +12,22 @@ import {
   type NavigationTarget,
 } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
+import {
+  rememberRouteTab,
+  routeTabDestination,
+  type PrimaryRouteView,
+} from "../lib/route-tab-snapshots";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "phrases" | "library" | "progress";
+
+const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
+  "home",
+  "learn",
+  "phrases",
+  "library",
+  "progress",
+]);
 
 function RouteIcon({ name }: { name: RouteIconName }) {
   const common = {
@@ -46,23 +59,36 @@ function shouldUseNativeNavigation(event: MouseEvent<HTMLAnchorElement>): boolea
     || event.currentTarget.target === "_blank";
 }
 
-function pushRoute(target: NavigationTarget): void {
+function isPrimaryRouteView(value: AppView): value is PrimaryRouteView {
+  return PRIMARY_ROUTE_VIEWS.has(value as PrimaryRouteView);
+}
+
+function destinationFor(target: NavigationTarget) {
+  return isPrimaryRouteView(target.view)
+    ? routeTabDestination(target.view)
+    : { target, scroll: { x: 0, y: 0 } };
+}
+
+function pushRoute(requestedTarget: NavigationTarget): void {
   const current = parseNavigationLocation(window.location);
+  const currentScroll = { x: window.scrollX, y: window.scrollY };
+  rememberRouteTab(current, currentScroll);
+
+  const destination = destinationFor(requestedTarget);
   const currentURL = navigationURL(current);
-  const nextURL = navigationURL(target);
+  const nextURL = navigationURL(destination.target);
   if (currentURL === nextURL) {
     document.querySelector<HTMLElement>("#lexigo-main-content")?.focus({ preventScroll: false });
     return;
   }
 
-  const currentScroll = { x: window.scrollX, y: window.scrollY };
   window.history.replaceState(
     createNavigationHistoryState(current, currentScroll),
     "",
     window.location.href,
   );
 
-  const nextState = createNavigationHistoryState(target, { x: 0, y: 0 });
+  const nextState = createNavigationHistoryState(destination.target, destination.scroll);
   window.history.pushState(nextState, "", nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
