@@ -56,6 +56,7 @@ func NewWithOptions(
 		tokenManager,
 		cfg.RefreshTokenTTL,
 		auth.WithPasswordReset(authRepository, resetSender, cfg.CORSAllowedOrigin, resetTTL),
+		auth.WithAccountSecurity(authRepository),
 	)
 	authHandler := auth.NewHandler(authService, auth.CookieConfig{
 		Secure:     cfg.SessionCookieSecure,
@@ -79,6 +80,10 @@ func NewWithOptions(
 	mux.Handle("POST /api/v1/auth/password-reset/confirm", limiter.Middleware(10, http.HandlerFunc(authHandler.ConfirmPasswordReset)))
 	mux.Handle("POST /api/v1/auth/refresh", limiter.Middleware(30, http.HandlerFunc(authHandler.Refresh)))
 	mux.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
+	mux.Handle("GET /api/v1/auth/sessions", authenticated(http.HandlerFunc(authHandler.AccountSessions)))
+	mux.Handle("POST /api/v1/auth/sessions/revoke-others", limiter.Middleware(10, authenticated(http.HandlerFunc(authHandler.RevokeOtherSessions))))
+	mux.Handle("PUT /api/v1/auth/password", limiter.Middleware(10, authenticated(http.HandlerFunc(authHandler.ChangePassword))))
+	mux.Handle("GET /api/v1/auth/audit-events", authenticated(http.HandlerFunc(authHandler.AccountAudit)))
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
