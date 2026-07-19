@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
+import { useLayoutEffect } from "react";
 
 import { canonicalURLFromLegacySearch, isCanonicalRoutePath, navigationURL, parseNavigationLocation } from "../lib/navigation";
 import { createNavigationHistoryState, readNavigationHistoryState } from "../lib/navigation-history";
@@ -32,12 +32,10 @@ function initializeRouteEntry(): void {
 
 export function RoutedLexigoApp() {
   const pathname = usePathname();
-  const initialized = useRef(false);
 
-  if (!initialized.current && typeof window !== "undefined") {
+  useLayoutEffect(() => {
     initializeRouteEntry();
-    initialized.current = true;
-  }
+  }, [pathname]);
 
   if (!isCanonicalRoutePath(pathname)) return null;
 
