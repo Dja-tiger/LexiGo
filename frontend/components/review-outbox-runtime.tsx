@@ -74,6 +74,10 @@ function authorizationToken(request: Request): string {
   return authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
 }
 
+function currentNetworkFailureCode(): "network_offline" | "network_request_failed" {
+  return navigator.onLine === false ? "network_offline" : "network_request_failed";
+}
+
 function bannerCopy(online: boolean, summary: ReviewOutboxSummary, syncing: boolean): {
   title: string;
   message: string;
@@ -306,7 +310,7 @@ export function ReviewOutboxRuntime({ session }: { session: Session | null }) {
         await updateLessonReview(record.operationKey, {
           status: "pending",
           attempts: record.attempts + 1,
-          lastErrorCode: navigator.onLine === false ? "network_offline" : "network_request_failed",
+          lastErrorCode: currentNetworkFailureCode(),
           lastErrorMessage: error instanceof Error ? error.message : "Network request failed",
         });
         await refreshSummary();
