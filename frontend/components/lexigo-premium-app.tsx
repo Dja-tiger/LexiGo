@@ -8,6 +8,7 @@ import {
   idleResourceStatus,
   isActiveLessonPayload,
   isItemsResponsePayload,
+  isLearningItemPayload,
   isProgressSummaryPayload,
   loadingResourceStatus,
   readyResourceStatus,
@@ -92,6 +93,7 @@ import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
 import { AsyncResourceNotice, AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
+import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";
 import { SpeechPlayerButton } from "./speech-player-button";
 
 type APIItem = {
@@ -103,6 +105,7 @@ type APIItem = {
   phonetic: string;
   partOfSpeech: string;
   topic: string;
+  aliases?: string[];
   examples: string[];
   note: string;
   cloze?: string;
@@ -536,6 +539,7 @@ function toLearningItem(item: APIItem): LearningItem {
     partOfSpeech: item.partOfSpeech,
     section: kind === "phrase" ? "phrase" : normalizePartOfSpeech(item.partOfSpeech),
     topic: item.topic,
+    aliases: item.aliases,
     examples: item.examples,
     note: item.note,
     status: item.status,
@@ -1023,7 +1027,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     activeSession: Session,
     kind: "word" | "phrase" | "all",
     dueOnly: boolean,
-    options: { source?: LessonSource; topic?: string; query?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},
+    options: { source?: LessonSource; topic?: string; query?: string; status?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},
     signal?: AbortSignal,
   ) => {
     const endpoint = dueOnly ? "/api/v1/words/due" : "/api/v1/words";
@@ -1036,6 +1040,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     if (options.source) parameters.set("source", options.source);
     if (options.topic) parameters.set("topic", options.topic);
     if (options.query) parameters.set("query", options.query);
+    if (options.status) parameters.set("status", options.status);
     const result = await authorizedRequest<ItemsResponse>(
       activeSession,
       `${endpoint}?${parameters.toString()}`,
@@ -1047,6 +1052,38 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       response: { ...result.data, items: result.data.items.map(toLearningItem) },
     };
   }, []);
+
+  const loadDictionaryPage = useCallback(async (
+    filters: DictionaryFilters,
+    signal: AbortSignal,
+  ): Promise<DictionaryPageResult> => {
+    if (!session) throw new Error("Войдите, чтобы открыть словарь");
+    const result = await loadItems(session, "word", false, {
+      source: filters.source,
+      topic: filters.topic,
+      query: filters.query,
+      status: filters.status,
+      sort: filters.sort,
+      page: filters.page,
+    }, signal);
+    setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+    return { items: result.response.items, info: catalogPageInfo(result.response) };
+  }, [loadItems, session]);
+
+  const loadDictionaryDetail = useCallback(async (
+    wordID: number,
+    signal: AbortSignal,
+  ): Promise<LearningItem> => {
+    if (!session) throw new Error("Войдите, чтобы открыть карточку слова");
+    const result = await authorizedRequest<APIItem>(
+      session,
+      `/api/v1/words/${wordID}`,
+      { signal },
+      isLearningItemPayload,
+    );
+    setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+    return toLearningItem(result.data);
+  }, [session]);
 
   const loadProgressResource = useCallback(async (
     activeSession: Session,
@@ -2289,33 +2326,30 @@ return <button key={topic} type="button" role="radio" aria-checked={selected} ta
   }
 
   function renderLibrary() {
+    const dictionarySource: LessonSource = navigation.source && navigation.source !== "phrases"
+      ? navigation.source
+      : "mixed";
     return (
-      <>
-        {catalogMetadataResourceStatus.phase === "loading" ? <AsyncSkeletonGrid label="Загружаем состав словаря" count={3} /> : null}
-        <section className="lx-page-heading"><div><span>СЛОВАРЬ</span><h1>Материалы, организованные по учебной задаче</h1><p>{catalogSummaryText(catalogMetadata, catalogMetadataStatus)}</p></div><div className="lx-heading-badge"><Icon name="library"/><span>{progress ? `${progress.masteredWords + progress.masteredPhrases} освоено` : "Откройте раздел"}</span></div></section>
-        <section className="lx-library-grid">
-          {SOURCE_OPTIONS.map((option) => <button key={option.value} type="button" data-lexigo-dictionary-source={option.value} aria-label={`Открыть раздел: ${option.label}`} onClick={() => option.value === "phrases" ? navigate({ view: "phrases" }) : navigate({ view: "learn", source: option.value })}><span className={`lx-section-icon ${option.value}`}><Icon name={option.icon}/></span><strong>{option.label}</strong><small>{catalogCountText(
-                      catalogMetadata,
-                      catalogMetadataStatus,
-                      option.value,
-                      option.value === "mixed"
-                        ? ["элемент", "элемента", "элементов"]
-                        : option.value === "phrases"
-                          ? ["фраза", "фразы", "фраз"]
-                          : ["слово", "слова", "слов"],
-                    )}</small><p>{option.hint}</p><em>Открыть <Icon name="arrow" size={15}/></em></button>)}
-          {COLLECTIONS.map((definition) => (
-            <CollectionCard
-              key={definition.source}
-              definition={definition}
-              variant="library"
-              countText={catalogCountText(catalogMetadata, catalogMetadataStatus, definition.source, ["слово и термин", "слова и термина", "слов и терминов"])}
-              onSelect={() => navigate({ view: "learn", source: definition.source })}
-            />
-          ))}
-        </section>
-        {session && progress ? <section className="lx-summary-panel"><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong><small>{catalogMetadataStatus === "ready" && catalogMetadata ? `из ${catalogMetadata.totals.words.toLocaleString("ru-RU")}` : catalogMetadataStatus === "loading" ? "каталог загружается" : "общее количество недоступно"}</small></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong><small>{catalogMetadataStatus === "ready" && catalogMetadata ? `из ${catalogMetadata.totals.phrases.toLocaleString("ru-RU")}` : catalogMetadataStatus === "loading" ? "каталог загружается" : "общее количество недоступно"}</small></div><div><span>Due-слова</span><strong>{progress.dueWords}</strong><small>готовы сейчас</small></div><div><span>Due-фразы</span><strong>{progress.duePhrases}</strong><small>готовы сейчас</small></div></section> : null}
-      </>
+      <DictionaryCatalog
+        authenticated={Boolean(session)}
+        navigation={navigation}
+        metadata={catalogMetadata}
+        metadataStatus={catalogMetadataStatus}
+        progress={progress}
+        loadPage={loadDictionaryPage}
+        loadDetail={loadDictionaryDetail}
+        onNavigate={(target, replace, scroll) => navigate(target, replace, { scroll })}
+        onBackToResults={() => {
+          const destination = navigationTabs.destination("library");
+          const target = { ...navigation };
+          delete target.detail;
+          navigate(target, true, { scroll: destination.target.detail ? { x: 0, y: 0 } : destination.scroll });
+        }}
+        onStartLesson={(selectedItems, mode) => {
+          void startLesson(session, { source: dictionarySource, size: 15, mode, items: selectedItems });
+        }}
+        onRequireAuthentication={() => requestAuthentication("library")}
+      />
     );
   }
 
