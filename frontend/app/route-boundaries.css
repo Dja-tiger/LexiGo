@@ -15,7 +15,9 @@
   text-align: center;
 }
 
-.lx-route-boundary strong {
+.lx-route-boundary strong,
+.lx-route-boundary h1 {
+  margin: 0;
   font-size: clamp(24px, 4vw, 36px);
   letter-spacing: -0.035em;
 }
