@@ -1,7 +1,8 @@
 const CACHE_PREFIX = "lexigo-shell-";
 const BUILD_ID = new URL(self.location.href).searchParams.get("build") || "local";
 const CACHE = `${CACHE_PREFIX}${BUILD_ID.replace(/[^a-zA-Z0-9._-]+/g, "-")}`;
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
+const ROUTE_SHELLS = ["/", "/learn", "/phrases", "/dictionary", "/progress", "/profile", "/lesson/active"];
+const APP_SHELL = [...ROUTE_SHELLS, "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
 const SKIP_WAITING_MESSAGE = "LEXIGO_SKIP_WAITING";
 const ACTIVATED_MESSAGE = "LEXIGO_SW_ACTIVATED";
 let activationRequested = false;
@@ -32,6 +33,12 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
+async function cachedRouteDocument(request) {
+  const exact = await caches.match(request, { cacheName: CACHE, ignoreSearch: true });
+  if (exact) return exact;
+  return caches.match("/", { cacheName: CACHE });
+}
+
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
@@ -40,11 +47,11 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok) return response;
-          return caches.match("/", { cacheName: CACHE }).then((cached) => cached || response);
+          return (await cachedRouteDocument(event.request)) || response;
         })
-        .catch(() => caches.match("/", { cacheName: CACHE }).then((cached) => cached || Response.error())),
+        .catch(async () => (await cachedRouteDocument(event.request)) || Response.error()),
     );
     return;
   }
