@@ -154,7 +154,31 @@ func TestCompleteAuthenticationFlow(t *testing.T) {
 	}
 	requireSessionCookies(t, loggedInResult.Cookies)
 
+	// A delayed request carrying the token that just lost a rotation race is
+	// recoverable. It must not revoke the winner's fresh cookie family.
 	currentDeviceACSRF := cookieFromJar(t, deviceA, testServer.URL, integrationCSRFCookieName)
+	replayRefreshToken(t, testServer, oldDeviceARefresh, currentDeviceACSRF, http.StatusConflict)
+	winnerRefreshResult := postJSONWithClient(
+		t,
+		deviceA,
+		testServer.URL+"/api/v1/auth/refresh",
+		nil,
+		currentDeviceACSRF,
+		http.StatusOK,
+	)
+	requireSessionCookies(t, winnerRefreshResult.Cookies)
+
+	// Outside the short rotation grace window the same token is a real replay.
+	// Confirmed reuse revokes only this device family.
+	if _, err := pg.Exec(ctx, `
+		update refresh_tokens
+		set revoked_at = now() - interval '1 minute'
+		where replaced_by_hash is not null
+		  and user_id = (select id from users where email = $1)
+	`, email); err != nil {
+		t.Fatalf("age replaced refresh tokens: %v", err)
+	}
+	currentDeviceACSRF = cookieFromJar(t, deviceA, testServer.URL, integrationCSRFCookieName)
 	replayRefreshToken(t, testServer, oldDeviceARefresh, currentDeviceACSRF, http.StatusUnauthorized)
 	postJSONWithClient(t, deviceA, testServer.URL+"/api/v1/auth/refresh", nil, currentDeviceACSRF, http.StatusUnauthorized)
 
