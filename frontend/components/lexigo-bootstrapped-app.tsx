@@ -12,6 +12,7 @@ import {
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { subscribeToSessionResume } from "../lib/session-resume";
+import { AccountSecurityPanel } from "./account-security-panel";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
@@ -170,6 +171,9 @@ export function LexigoBootstrappedApp() {
         key={initialSession?.tokens.accessToken ?? "guest"}
         initialSession={initialSession}
       />
+      {initialSession ? (
+        <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
+      ) : null}
     </>
   );
 }
