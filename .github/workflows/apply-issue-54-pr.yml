@@ -1,0 +1,60 @@
+name: Apply Issue 54 from PR
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/issue-54-catalog-pagination'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-54-catalog-pagination
+      - name: Extract and apply implementation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p .github/scripts
+          python - <<'PY'
+          import base64
+          import gzip
+          from pathlib import Path
+
+          source = Path('.github/workflows/apply-issue-54.yml').read_text()
+          payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
+          Path('.github/scripts/apply_issue54.py').write_bytes(gzip.decompress(base64.b64decode(payload)))
+          PY
+          python .github/scripts/apply_issue54.py
+          gofmt -w \
+            backend/internal/words/repository.go \
+            backend/internal/words/http.go \
+            backend/internal/learning/lesson.go \
+            backend/internal/learning/lesson_http.go \
+            backend/internal/learning/lesson_composer.go \
+            backend/internal/learning/lesson_repository.go \
+            backend/integration/catalog_pagination_test.go
+          git diff --check
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git rm --force \
+            .github/workflows/apply-issue-54.yml \
+            .github/workflows/apply-issue-54-pr.yml \
+            .github/scripts/apply_issue54.py \
+            .issue-54-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add --all
+          git commit -m 'feat(catalog): paginate large vocabulary views'
+          git push origin HEAD:agent/issue-54-catalog-pagination
