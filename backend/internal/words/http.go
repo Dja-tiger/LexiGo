@@ -1,9 +1,11 @@
 package words
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 )
@@ -20,6 +22,29 @@ func (h *Handler) All(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Due(w http.ResponseWriter, r *http.Request) {
 	h.list(w, r, true)
+}
+
+func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.UserID(r.Context())
+	if !ok {
+		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
+		return
+	}
+	wordID, err := strconv.ParseInt(r.PathValue("wordID"), 10, 64)
+	if err != nil || wordID <= 0 {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "catalog item id must be a positive integer")
+		return
+	}
+	item, err := h.repository.Get(r.Context(), userID, wordID)
+	if errors.Is(err, ErrCatalogItemNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "catalog_item_not_found", "catalog item is not assigned to the current user")
+		return
+	}
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, item)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
@@ -63,8 +88,13 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 	if search == "" {
 		search = strings.TrimSpace(queryValues.Get("q"))
 	}
-	if len(topic) > maxCatalogFilterLength || len(search) > maxCatalogFilterLength {
+	if utf8.RuneCountInString(topic) > maxCatalogFilterLength || utf8.RuneCountInString(search) > maxCatalogFilterLength {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_catalog_filter", "topic and query must contain at most 120 characters")
+		return
+	}
+	status := strings.TrimSpace(queryValues.Get("status"))
+	if !validCatalogStatus(status) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_status", "status must be new, learning, review or mastered")
 		return
 	}
 	sortMode := strings.TrimSpace(queryValues.Get("sort"))
@@ -78,10 +108,9 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 
 	options := ListOptions{
 		Page: page, Limit: limit, Kind: kind, Source: source,
-		Topic: topic, Query: search, Sort: sortMode,
+		Topic: topic, Query: search, Status: status, Sort: sortMode,
 	}
 	var result Page
-	var err error
 	if dueOnly {
 		result, err = h.repository.ListDuePage(r.Context(), userID, options)
 	} else {
@@ -108,6 +137,15 @@ func positiveQueryInteger(raw string, defaultValue, maximum int) (int, bool) {
 func validCatalogSource(value string) bool {
 	switch value {
 	case "", "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend":
+		return true
+	default:
+		return false
+	}
+}
+
+func validCatalogStatus(value string) bool {
+	switch value {
+	case "", "new", "learning", "review", "mastered":
 		return true
 	default:
 		return false
