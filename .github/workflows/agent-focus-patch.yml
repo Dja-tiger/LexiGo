@@ -30,58 +30,59 @@ jobs:
 
           path = Path("frontend/components/lexigo-premium-app.tsx")
           source = path.read_text(encoding="utf-8")
-
-          old_start = '''    reviewInFlightRef.current = true;
-              setReviewing(true);
-              setError("");
-              try {
-          '''
-          new_start = '''    reviewInFlightRef.current = true;
-              setReviewing(true);
-              setError("");
-              let reviewPersisted = false;
-              try {
-          '''
-
-          old_success = '''      setSession(result.activeSession);
-              setRatings((current) => ({ ...current, [currentItem.id]: rating }));
-              if (restoreFocusAfterSave) {
-                window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
-              }
-              setServerLessonCompleted(result.data.lessonCompleted);
-          '''
-          new_success = '''      setSession(result.activeSession);
-              setRatings((current) => ({ ...current, [currentItem.id]: rating }));
-              reviewPersisted = true;
-              setServerLessonCompleted(result.data.lessonCompleted);
-          '''
-
-          old_finally = '''    } finally {
-              reviewInFlightRef.current = false;
-              setReviewing(false);
-            }
-          '''
-          new_finally = '''    } finally {
-              reviewInFlightRef.current = false;
-              setReviewing(false);
-              if (reviewPersisted && restoreFocusAfterSave) {
-                window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
-              }
-            }
-          '''
+          start = source.index("  async function rateCurrent(")
+          end = source.index("\n  function renderHeader()", start)
+          block = source[start:end]
 
           replacements = (
-              (old_start, new_start, "rateCurrent start"),
-              (old_success, new_success, "successful review state"),
-              (old_finally, new_finally, "rateCurrent finally"),
+              (
+                  '    reviewInFlightRef.current = true;\n'
+                  '    setReviewing(true);\n'
+                  '    setError("");\n'
+                  '    try {\n',
+                  '    reviewInFlightRef.current = true;\n'
+                  '    setReviewing(true);\n'
+                  '    setError("");\n'
+                  '    let reviewPersisted = false;\n'
+                  '    try {\n',
+                  "rateCurrent start",
+              ),
+              (
+                  '      setSession(result.activeSession);\n'
+                  '      setRatings((current) => ({ ...current, [currentItem.id]: rating }));\n'
+                  '      if (restoreFocusAfterSave) {\n'
+                  '        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));\n'
+                  '      }\n'
+                  '      setServerLessonCompleted(result.data.lessonCompleted);\n',
+                  '      setSession(result.activeSession);\n'
+                  '      setRatings((current) => ({ ...current, [currentItem.id]: rating }));\n'
+                  '      reviewPersisted = true;\n'
+                  '      setServerLessonCompleted(result.data.lessonCompleted);\n',
+                  "successful review state",
+              ),
+              (
+                  '    } finally {\n'
+                  '      reviewInFlightRef.current = false;\n'
+                  '      setReviewing(false);\n'
+                  '    }\n',
+                  '    } finally {\n'
+                  '      reviewInFlightRef.current = false;\n'
+                  '      setReviewing(false);\n'
+                  '      if (reviewPersisted && restoreFocusAfterSave) {\n'
+                  '        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));\n'
+                  '      }\n'
+                  '    }\n',
+                  "rateCurrent finally",
+              ),
           )
+
           for old, new, label in replacements:
-              count = source.count(old)
+              count = block.count(old)
               if count != 1:
                   raise SystemExit(f"Expected exactly one {label} block, found {count}")
-              source = source.replace(old, new, 1)
+              block = block.replace(old, new, 1)
 
-          path.write_text(source, encoding="utf-8")
+          path.write_text(source[:start] + block + source[end:], encoding="utf-8")
           PY
 
       - name: Commit patch
