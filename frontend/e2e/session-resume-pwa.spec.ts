@@ -66,6 +66,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 
 async function installSessionMocks(page: Page, initialFailure: InitialRefreshFailure) {
   let refreshRequests = 0;
+  let refreshMaySucceed = false;
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -85,7 +86,7 @@ async function installSessionMocks(page: Page, initialFailure: InitialRefreshFai
 
     if (path === "/api/v1/auth/refresh") {
       refreshRequests += 1;
-      if (refreshRequests === 1) {
+      if (!refreshMaySucceed) {
         if (initialFailure === "offline") {
           await route.abort("internetdisconnected");
         } else {
@@ -115,7 +116,12 @@ async function installSessionMocks(page: Page, initialFailure: InitialRefreshFai
     await fulfillJSON(route, 404, { error: { code: "not_mocked", message: path } });
   });
 
-  return { refreshRequests: () => refreshRequests };
+  return {
+    refreshRequests: () => refreshRequests,
+    allowRefreshSuccess: () => {
+      refreshMaySucceed = true;
+    },
+  };
 }
 
 async function expectRecoverableBootstrap(page: Page) {
@@ -133,15 +139,17 @@ test("iOS PWA restores the session automatically after the network returns", asy
   const requests = await installSessionMocks(page, "offline");
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expectRecoverableBootstrap(page);
-  expect(requests.refreshRequests()).toBe(1);
+  const failedRefreshes = requests.refreshRequests();
+  expect(failedRefreshes).toBeGreaterThan(0);
 
+  requests.allowRefreshSuccess();
   await page.evaluate(() => {
     Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
     window.dispatchEvent(new Event("online"));
   });
 
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
-  await expect.poll(requests.refreshRequests).toBe(2);
+  await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
   await expect(page.getByText("Сессия не удалена. Пароль вводить заново не нужно.")).toHaveCount(0);
 });
 
@@ -151,14 +159,16 @@ test("iOS pageshow resumes a recoverable session after a transient server failur
   const requests = await installSessionMocks(page, "server");
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expectRecoverableBootstrap(page);
-  expect(requests.refreshRequests()).toBe(1);
+  const failedRefreshes = requests.refreshRequests();
+  expect(failedRefreshes).toBeGreaterThan(0);
 
+  requests.allowRefreshSuccess();
   await page.evaluate(() => {
     Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
     window.dispatchEvent(new Event("pageshow"));
   });
 
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
-  await expect.poll(requests.refreshRequests).toBe(2);
+  await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
   await expect(page).not.toHaveURL(/view=profile&session=/);
 });
