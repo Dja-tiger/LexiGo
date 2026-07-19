@@ -1,6 +1,11 @@
 name: Issue 55 app integration
 
 on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
   push:
     branches:
       - agent/issue-55-real-dictionary-catalog
@@ -26,7 +31,7 @@ jobs:
           ref: agent/issue-55-real-dictionary-catalog
           fetch-depth: 0
 
-      - name: Connect dictionary catalog to the application shell
+      - name: Apply app integration patch
         shell: bash
         run: |
           python3 - <<'PY'
@@ -36,32 +41,13 @@ jobs:
           text = path.read_text()
 
           replacements = [
-              (
-                  '  isActiveLessonPayload,\n  isItemsResponsePayload,',
-                  '  isActiveLessonPayload,\n  isItemsResponsePayload,\n  isLearningItemPayload,',
-              ),
-              (
-                  'import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { SpeechPlayerButton } from "./speech-player-button";',
-                  'import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";\nimport { SpeechPlayerButton } from "./speech-player-button";',
-              ),
-              (
-                  '  topic: string;\n  examples: string[];',
-                  '  topic: string;\n  aliases?: string[];\n  examples: string[];',
-              ),
-              (
-                  '    topic: item.topic,\n    examples: item.examples,',
-                  '    topic: item.topic,\n    aliases: item.aliases,\n    examples: item.examples,',
-              ),
-              (
-                  '    options: { source?: LessonSource; topic?: string; query?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},',
-                  '    options: { source?: LessonSource; topic?: string; query?: string; status?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},',
-              ),
-              (
-                  '    if (options.query) parameters.set("query", options.query);\n    const result = await authorizedRequest<ItemsResponse>(',
-                  '    if (options.query) parameters.set("query", options.query);\n    if (options.status) parameters.set("status", options.status);\n    const result = await authorizedRequest<ItemsResponse>(',
-              ),
+              ('  isActiveLessonPayload,\n  isItemsResponsePayload,', '  isActiveLessonPayload,\n  isItemsResponsePayload,\n  isLearningItemPayload,'),
+              ('import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { SpeechPlayerButton } from "./speech-player-button";', 'import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";\nimport { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";\nimport { SpeechPlayerButton } from "./speech-player-button";'),
+              ('  topic: string;\n  examples: string[];', '  topic: string;\n  aliases?: string[];\n  examples: string[];'),
+              ('    topic: item.topic,\n    examples: item.examples,', '    topic: item.topic,\n    aliases: item.aliases,\n    examples: item.examples,'),
+              ('    options: { source?: LessonSource; topic?: string; query?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},', '    options: { source?: LessonSource; topic?: string; query?: string; status?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},'),
+              ('    if (options.query) parameters.set("query", options.query);\n    const result = await authorizedRequest<ItemsResponse>(', '    if (options.query) parameters.set("query", options.query);\n    if (options.status) parameters.set("status", options.status);\n    const result = await authorizedRequest<ItemsResponse>('),
           ]
-
           for old, new in replacements:
               if old not in text:
                   raise SystemExit(f'Expected integration fragment was not found: {old[:80]!r}')
@@ -86,10 +72,7 @@ jobs:
       page: filters.page,
     }, signal);
     setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
-    return {
-      items: result.response.items,
-      info: catalogPageInfo(result.response),
-    };
+    return { items: result.response.items, info: catalogPageInfo(result.response) };
   }, [loadItems, session]);
 
   const loadDictionaryDetail = useCallback(async (
@@ -132,17 +115,10 @@ jobs:
           const destination = navigationTabs.destination("library");
           const target = { ...navigation };
           delete target.detail;
-          navigate(target, true, {
-            scroll: destination.target.detail ? { x: 0, y: 0 } : destination.scroll,
-          });
+          navigate(target, true, { scroll: destination.target.detail ? { x: 0, y: 0 } : destination.scroll });
         }}
         onStartLesson={(selectedItems, mode) => {
-          void startLesson(session, {
-            source: dictionarySource,
-            size: 15,
-            mode,
-            items: selectedItems,
-          });
+          void startLesson(session, { source: dictionarySource, size: 15, mode, items: selectedItems });
         }}
         onRequireAuthentication={() => requestAuthentication("library")}
       />
