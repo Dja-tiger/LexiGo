@@ -226,15 +226,15 @@ paths:
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
       responses:
         "200":
-description: One bounded catalog page.
-content:
-  application/json:
-    schema:
-      $ref: "#/components/schemas/CatalogPage"
+          description: One bounded catalog page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogPage"
         "401":
-$ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/Unauthorized"
         "422":
-$ref: "#/components/responses/ValidationError"
+          $ref: "#/components/responses/ValidationError"
   /api/v1/words/due:
     get:
       operationId: listDueWords
@@ -252,15 +252,15 @@ $ref: "#/components/responses/ValidationError"
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
       responses:
         "200":
-description: One bounded due page.
-content:
-  application/json:
-    schema:
-      $ref: "#/components/schemas/CatalogPage"
+          description: One bounded due page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogPage"
         "401":
-$ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/Unauthorized"
         "422":
-$ref: "#/components/responses/ValidationError"
+          $ref: "#/components/responses/ValidationError"
   /api/v1/words/{wordID}/review:
     post:
       operationId: reviewWord
