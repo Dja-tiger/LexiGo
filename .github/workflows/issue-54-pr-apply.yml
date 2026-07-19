@@ -43,7 +43,11 @@ jobs:
           script = '\n'.join(line[10:] if line.startswith('          ') else line for line in workflow[start:end]) + '\n'
           Path('/tmp/issue-54-apply.py').write_text(script, encoding='utf-8')
           PY
-          python3 /tmp/issue-54-apply.py
+          if ! python3 /tmp/issue-54-apply.py > /tmp/issue-54-apply.log 2>&1; then
+            echo '--- issue 54 bootstrap error ---'
+            tail -n 120 /tmp/issue-54-apply.log
+            exit 1
+          fi
           gofmt -w backend/internal/words/repository.go backend/internal/words/http.go backend/internal/words/metadata.go backend/internal/learning/lesson.go backend/internal/learning/lesson_http.go backend/internal/learning/lesson_composer.go backend/internal/learning/lesson_repository.go backend/integration/catalog_pagination_test.go
       - name: Backend unit tests
         working-directory: backend
