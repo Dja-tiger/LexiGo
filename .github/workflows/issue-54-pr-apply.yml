@@ -61,6 +61,22 @@ jobs:
             git push origin HEAD:agent/issue-54-catalog-pagination
             exit 1
           fi
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('frontend/components/lexigo-premium-app.tsx')
+          content = path.read_text(encoding='utf-8')
+          repairs = {
+              '  function clearAuthFieldError  function clearAuthFieldError': '  function clearAuthFieldError',
+              '  function renderLibrary()  function renderLibrary()': '  function renderLibrary()',
+              '  function renderLesson()  function renderLesson()': '  function renderLesson()',
+          }
+          for broken, fixed in repairs.items():
+              if broken not in content:
+                  raise SystemExit(f'generated boundary not found: {broken}')
+              content = content.replace(broken, fixed, 1)
+          path.write_text(content, encoding='utf-8')
+          PY
           gofmt -w backend/internal/words/repository.go backend/internal/words/http.go backend/internal/words/metadata.go backend/internal/learning/lesson.go backend/internal/learning/lesson_http.go backend/internal/learning/lesson_composer.go backend/internal/learning/lesson_repository.go backend/integration/catalog_pagination_test.go
       - name: Backend unit tests
         shell: bash
