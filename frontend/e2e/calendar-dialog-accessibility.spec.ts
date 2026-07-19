@@ -99,7 +99,7 @@ test.describe.configure({ timeout: 60_000 });
 
 test.beforeEach(async ({ page }) => {
   await installMocks(page);
-  await page.goto("/?view=progress");
+  await page.goto("/progress");
   await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
 });
 
@@ -133,7 +133,7 @@ test("calendar dialog isolates the application and contains keyboard and program
   await expect(close).toBeFocused();
 
   const activeBeforeAttempt = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
-  await page.locator(".lx-nav button").first().evaluate((element) => (element as HTMLElement).focus());
+  await page.locator(".lx-route-nav a").first().evaluate((element) => (element as HTMLElement).focus());
   expect(await page.evaluate(() => document.activeElement?.getAttribute("aria-label"))).toBe(activeBeforeAttempt);
   await expect(close).toBeFocused();
   expect(await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)).toBe(true);
