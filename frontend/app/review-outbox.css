@@ -99,13 +99,17 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 719px) {
   .lx-review-sync {
     right: max(10px, env(safe-area-inset-right));
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: calc(var(--lx-compact-navigation-height, 76px) + 24px + env(safe-area-inset-bottom));
     grid-template-columns: auto minmax(0, 1fr);
     width: calc(100vw - 20px);
     padding: 13px;
+  }
+
+  body:has(.lx-lesson-focus-mode) .lx-review-sync {
+    bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .lx-review-sync button {
