@@ -69,7 +69,7 @@ const METADATA = {
 };
 
 function visibleNavigation(page: Page) {
-  return page.locator(".lx-nav:visible, .lx-mobile-nav:visible");
+  return page.locator(".lx-route-nav:visible");
 }
 
 async function installAccountMocks(page: Page, options: { failPhrasesOnce?: boolean } = {}) {
@@ -96,8 +96,7 @@ async function installAccountMocks(page: Page, options: { failPhrasesOnce?: bool
   }]);
 
   await page.route("**/api/v1/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
+    const url = new URL(route.request().url());
     const path = url.pathname;
 
     if (path === "/api/v1/auth/refresh") {
@@ -164,7 +163,8 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
   await expect(dueCard.locator("strong")).toHaveText("7");
   await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
-  await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();
+  await expect(page).toHaveURL(/\/phrases$/);
   await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
 
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
@@ -173,7 +173,8 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
   await expect(phraseNotice).toBeHidden();
   await expect(page.locator(".lx-phrase-grid").getByText("Independent retry", { exact: true })).toBeVisible();
 
-  await visibleNavigation(page).getByRole("button", { name: "Главная", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
   await expect(dueCard.locator("strong")).toHaveText("7");
   await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
