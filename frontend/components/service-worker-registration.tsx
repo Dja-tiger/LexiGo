@@ -173,17 +173,12 @@ export function ServiceWorkerRegistration() {
           });
         });
       };
-      const handleVisibility = () => {
-        if (document.visibilityState === "visible") checkForUpdate();
-      };
       window.addEventListener("online", checkForUpdate);
       window.addEventListener("focus", checkForUpdate);
-      document.addEventListener("visibilitychange", handleVisibility);
       const updateTimer = window.setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
       workerStateCleanups.push(() => {
         window.removeEventListener("online", checkForUpdate);
         window.removeEventListener("focus", checkForUpdate);
-        document.removeEventListener("visibilitychange", handleVisibility);
         window.clearInterval(updateTimer);
       });
     }).catch((registrationError) => {
