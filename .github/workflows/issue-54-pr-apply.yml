@@ -1,14 +1,16 @@
 name: Apply Issue 54 CI fixes
 
 on:
-  push:
-    branches: [agent/issue-54-catalog-pagination]
+  pull_request:
+    types: [opened]
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   fix:
+    if: github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
     runs-on:
       - self-hosted
       - linux
@@ -18,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
