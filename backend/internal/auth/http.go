@@ -291,6 +291,9 @@ func (h *Handler) writeServiceError(w http.ResponseWriter, err error) {
 		httpx.WriteFieldError(w, http.StatusBadRequest, "password_reset_invalid", "password reset token is invalid or expired", "token")
 	case errors.Is(err, ErrPasswordResetDisabled):
 		httpx.WriteError(w, http.StatusServiceUnavailable, "password_reset_unavailable", "password reset is temporarily unavailable")
+	case errors.Is(err, ErrRefreshInProgress):
+		w.Header().Set("Retry-After", "1")
+		httpx.WriteError(w, http.StatusConflict, "refresh_conflict", "session refresh is already in progress")
 	case errors.Is(err, ErrRefreshTokenReuse):
 		httpx.WriteError(w, http.StatusUnauthorized, "session_compromised", "refresh token reuse detected")
 	case errors.Is(err, ErrInvalidRefresh), errors.Is(err, ErrInvalidAccess):
