@@ -1,0 +1,23 @@
+name: Issue 55 browser updater
+on:
+  pull_request_target:
+    types: [synchronize]
+permissions:
+  contents: write
+jobs:
+  update:
+    if: github.event.pull_request.number == 111
+    runs-on: [self-hosted, linux, x64, lexigo-ci]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-55-real-dictionary-catalog
+          fetch-depth: 0
+      - run: python3 scripts/issue55_update_browser_contracts.py
+      - run: |
+          git rm scripts/issue55_update_browser_contracts.py
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add frontend/e2e
+          git commit -m 'test(dictionary): align browser contracts'
+          git push origin HEAD:agent/issue-55-real-dictionary-catalog
