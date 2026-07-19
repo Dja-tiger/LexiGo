@@ -123,7 +123,9 @@ func (r *Repository) loadIdempotentLessonReview(
 	err := r.pool.QueryRow(ctx, `
 		select request_hash, response
 		from lesson_review_idempotency
-		where user_id = $1::uuid and idempotency_key = $2::uuid
+		where user_id = $1::uuid
+		  and idempotency_key = $2::uuid
+		  and expires_at > now()
 	`, userID, idempotencyKey).Scan(&storedHash, &response)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return LessonReviewResult{}, false, nil
@@ -155,10 +157,46 @@ func (r *Repository) storeIdempotentLessonReview(
 		return fmt.Errorf("encode idempotent lesson review response: %w", err)
 	}
 	command, err := r.pool.Exec(ctx, `
+		with expired as (
+			select user_id, idempotency_key
+			from lesson_review_idempotency
+			where expires_at <= now()
+			order by expires_at
+			limit 8
+			for update skip locked
+		), deleted as (
+			delete from lesson_review_idempotency target
+			using expired
+			where target.user_id = expired.user_id
+			  and target.idempotency_key = expired.idempotency_key
+		)
 		insert into lesson_review_idempotency(
-			user_id, idempotency_key, request_hash, lesson_id, word_id, response
-		) values ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::jsonb)
-		on conflict (user_id, idempotency_key) do nothing
+			user_id,
+			idempotency_key,
+			request_hash,
+			lesson_id,
+			word_id,
+			response,
+			created_at,
+			expires_at
+		) values (
+			$1::uuid,
+			$2::uuid,
+			$3,
+			$4::uuid,
+			$5,
+			$6::jsonb,
+			now(),
+			now() + interval '30 days'
+		)
+		on conflict (user_id, idempotency_key) do update
+		set request_hash = excluded.request_hash,
+		    lesson_id = excluded.lesson_id,
+		    word_id = excluded.word_id,
+		    response = excluded.response,
+		    created_at = excluded.created_at,
+		    expires_at = excluded.expires_at
+		where lesson_review_idempotency.expires_at <= now()
 	`, userID, idempotencyKey, requestHash, lessonID, wordID, response)
 	if err != nil {
 		return fmt.Errorf("store idempotent lesson review: %w", err)
