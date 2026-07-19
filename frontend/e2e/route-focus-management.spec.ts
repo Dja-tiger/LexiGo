@@ -223,7 +223,7 @@ async function installAPI(page: Page) {
 }
 
 async function clickPrimaryNavigation(page: Page, view: "learn" | "phrases" | "progress") {
-  const links = page.locator(`[data-navigation-view="${view}"]`);
+  const links = page.locator(`.lx-route-nav [data-navigation-view="${view}"]`);
   const count = await links.count();
   for (let index = 0; index < count; index += 1) {
     const link = links.nth(index);
@@ -262,7 +262,7 @@ test("skip link reaches the main landmark and route navigation announces the new
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
   await expectMainFocus(page, "Обучение");
 
-  const activeLinks = page.locator('[data-navigation-view="learn"]');
+  const activeLinks = page.locator('.lx-route-nav [data-navigation-view="learn"]');
   await expect(activeLinks).toHaveCount(3);
   expect(await activeLinks.evaluateAll((links) => links.every((link) => link.getAttribute("aria-current") === "page"))).toBe(true);
   await expect(page.locator(".lx-route-announcement"))
