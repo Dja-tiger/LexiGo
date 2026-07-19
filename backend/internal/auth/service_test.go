@@ -20,14 +20,17 @@ func (f *fakeUsers) Create(context.Context, string, string, string) (User, error
 func (f *fakeUsers) ByEmail(context.Context, string) (User, error) { return f.byEmail, f.err }
 func (f *fakeUsers) ByID(context.Context, string) (User, error)    { return f.byID, f.err }
 
-type fakeRefresh struct{ stored bool }
+type fakeRefresh struct {
+	stored    bool
+	rotateErr error
+}
 
 func (f *fakeRefresh) Store(context.Context, string, []byte, time.Time, string, string) error {
 	f.stored = true
 	return nil
 }
 func (f *fakeRefresh) Rotate(context.Context, []byte, []byte, time.Time, string, string) (string, error) {
-	return "user-1", nil
+	return "user-1", f.rotateErr
 }
 func (f *fakeRefresh) Revoke(context.Context, []byte) error { return nil }
 
