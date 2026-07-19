@@ -116,11 +116,12 @@ export function reviewResponseDisposition(status: number): ReviewResponseDisposi
 }
 
 function createUUID(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
+  const cryptography = globalThis.crypto;
+  if (!cryptography) throw new Error("Secure random generation is unavailable");
+  if (typeof cryptography.randomUUID === "function") return cryptography.randomUUID();
+
   const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
+  cryptography.getRandomValues(bytes);
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
@@ -172,7 +173,7 @@ function transactionResult<T>(
   return openReviewDatabase().then((database) => new Promise<T>((resolve, reject) => {
     const transaction = database.transaction(REVIEW_STORE, mode);
     const store = transaction.objectStore(REVIEW_STORE);
-    let result: T;
+    let result: T | undefined;
     let resolved = false;
 
     const capture = (value: T) => {
@@ -182,7 +183,7 @@ function transactionResult<T>(
     transaction.oncomplete = () => {
       database.close();
       if (!resolved) reject(new Error("Review outbox transaction completed without a result"));
-      else resolve(result);
+      else resolve(result as T);
     };
     transaction.onerror = () => {
       database.close();
