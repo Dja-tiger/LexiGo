@@ -8,7 +8,7 @@ The `library` view stores the selected section, topic, learning status, search q
 
 ## API
 
-`GET /api/v1/words` accepts the existing pagination filters plus `status=new|learning|review|mastered`. Search covers lemma, translation, topic and configured aliases. `GET /api/v1/words/{wordID}` returns the authenticated user's full item card.
+`GET /api/v1/words` accepts the existing pagination filters plus `status=new|learning|review|mastered`. Search covers lemma, translation, topic and configured aliases. `GET /api/v1/words/{wordID}` returns the authenticated user's full item card and rejects items that are not assigned to that user.
 
 Aliases are optional metadata: they improve discovery but do not replace the canonical lemma displayed in results and lessons.
 
