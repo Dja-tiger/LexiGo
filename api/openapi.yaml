@@ -221,6 +221,7 @@ paths:
         - { name: source, in: query, schema: { type: string, enum: [mixed, noun, verb, adjective, phrases, daily-life, travel, data-engineering, backend] } }
         - { name: topic, in: query, schema: { type: string, maxLength: 120 } }
         - { name: query, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: status, in: query, schema: { type: string, enum: [new, learning, review, mastered] } }
         - { name: sort, in: query, schema: { type: string, enum: [default, az, za], default: default } }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
@@ -247,6 +248,7 @@ paths:
         - { name: source, in: query, schema: { type: string, enum: [mixed, noun, verb, adjective, phrases, daily-life, travel, data-engineering, backend] } }
         - { name: topic, in: query, schema: { type: string, maxLength: 120 } }
         - { name: query, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: status, in: query, schema: { type: string, enum: [new, learning, review, mastered] } }
         - { name: sort, in: query, schema: { type: string, enum: [default, az, za], default: default } }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
@@ -261,6 +263,34 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/words/{wordID}:
+    get:
+      operationId: getWord
+      tags: [learning]
+      summary: Full catalog card assigned to the current user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Full word or term card with the current learning status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWord"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Catalog item is not assigned to the current user.
   /api/v1/words/{wordID}/review:
     post:
       operationId: reviewWord
@@ -695,6 +725,10 @@ components:
           type: string
         topic:
           type: string
+        aliases:
+          type: array
+          items:
+            type: string
         examples:
           type: array
           items:
@@ -839,6 +873,9 @@ components:
         phonetic: { type: string }
         partOfSpeech: { type: string }
         topic: { type: string }
+        aliases:
+          type: array
+          items: { type: string }
         examples:
           type: array
           items: { type: string }
