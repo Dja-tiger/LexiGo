@@ -1,0 +1,73 @@
+name: Issue 54 finalizer
+
+on:
+  push:
+    branches:
+      - agent/issue-54-catalog-pagination
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-54-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-54-catalog-pagination
+          fetch-depth: 0
+
+      - name: Apply final test and documentation corrections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          accessibility = Path('frontend/e2e/accessibility-keyboard.spec.ts')
+          text = accessibility.read_text()
+          old = '.lx-phrase-grid > button'
+          new = '.lx-phrase-grid > [role=listitem] > button'
+          if old in text:
+              text = text.replace(old, new)
+              accessibility.write_text(text)
+          elif new not in text:
+              raise SystemExit('Expected phrase selector was not found')
+
+          docs = Path('docs/catalog-pagination.md')
+          text = docs.read_text()
+          old_paragraph = (
+              'Authenticated hydration clears the bundled fallback before requesting the server page, '
+              'preventing a transient full-catalog DOM between session restoration and the first API response. '
+              'Resource status hydration uses the same bounded page and is deduplicated with the visible '
+              'phrase-catalog request. A retry reloads only that bounded resource and does not restart '
+              'successful account resources.'
+          )
+          new_paragraph = (
+              'Authenticated phrase pages are requested only when the user enters the phrase catalog; unrelated '
+              'views do not start a background catalog request. Session restoration clears the bundled fallback '
+              'before the authenticated page is shown, and both authenticated and guest views keep at most 48 '
+              'phrase cards mounted. A retry reloads only the failed bounded catalog request and does not restart '
+              'successful account resources.'
+          )
+          if old_paragraph in text:
+              docs.write_text(text.replace(old_paragraph, new_paragraph))
+          elif new_paragraph not in text:
+              raise SystemExit('Expected documentation paragraph was not found')
+          PY
+
+          git rm .github/workflows/issue-54-finalize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/e2e/accessibility-keyboard.spec.ts docs/catalog-pagination.md
+          git diff --cached --check
+          git commit -m 'test(frontend): finalize paginated catalog regressions'
+          git push origin HEAD:agent/issue-54-catalog-pagination
