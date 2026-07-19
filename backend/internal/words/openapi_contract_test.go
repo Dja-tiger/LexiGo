@@ -15,8 +15,12 @@ func TestOpenAPICatalogPaginationResponsesRemainNested(t *testing.T) {
 	required := []string{
 		"  /api/v1/words:\n",
 		"  /api/v1/words/due:\n",
+		"  /api/v1/words/{wordID}:\n",
+		"        - { name: status, in: query, schema: { type: string, enum: [new, learning, review, mastered] } }",
 		"          description: One bounded catalog page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
 		"          description: One bounded due page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
+		"          description: Full word or term card with the current learning status.",
+		"        aliases:\n          type: array",
 		"        \"422\":\n          $ref: \"#/components/responses/ValidationError\"",
 	}
 	for _, fragment := range required {
