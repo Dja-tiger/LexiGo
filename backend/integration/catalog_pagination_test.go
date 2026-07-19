@@ -23,8 +23,10 @@ import (
 
 type catalogPagePayload struct {
 	Items []struct {
-		ID    int64  `json:"id"`
-		Lemma string `json:"lemma"`
+		ID      int64    `json:"id"`
+		Lemma   string   `json:"lemma"`
+		Aliases []string `json:"aliases"`
+		Status  string   `json:"status"`
 	} `json:"items"`
 	Count       int  `json:"count"`
 	Total       int  `json:"total"`
@@ -33,6 +35,14 @@ type catalogPagePayload struct {
 	TotalPages  int  `json:"totalPages"`
 	HasPrevious bool `json:"hasPrevious"`
 	HasNext     bool `json:"hasNext"`
+}
+
+type catalogItemPayload struct {
+	ID          int64    `json:"id"`
+	Lemma       string   `json:"lemma"`
+	Translation string   `json:"translation"`
+	Aliases     []string `json:"aliases"`
+	Status      string   `json:"status"`
 }
 
 func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
@@ -54,11 +64,12 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 		t.Fatalf("catalog.Seed() error = %v", err)
 	}
 	if _, err := pg.Exec(ctx, `
-		insert into words (lemma, translation, part_of_speech, topic, examples, note, source, kind, slug, cloze, cloze_answer)
+		insert into words (lemma, translation, part_of_speech, topic, aliases, examples, note, source, kind, slug, cloze, cloze_answer)
 		select format('page phrase %s', lpad(series::text, 3, '0')),
 		       format('страничная фраза %s', series),
 		       'phrase',
 		       'Pagination Test',
+		       array[format('catalog alias %s', lpad(series::text, 3, '0'))],
 		       '[]'::jsonb,
 		       '',
 		       'integration-pagination',
@@ -107,6 +118,14 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 	`, registered.User.ID); err != nil {
 		t.Fatalf("enroll pagination phrases: %v", err)
 	}
+	if _, err := pg.Exec(ctx, `
+		update user_words
+		set status = 'mastered'
+		where user_id = $1::uuid
+		  and word_id = (select id from words where slug = 'page-phrase-007')
+	`, registered.User.ID); err != nil {
+		t.Fatalf("mark pagination phrase mastered: %v", err)
+	}
 
 	readPage := func(rawQuery string, expectedStatus int) catalogPagePayload {
 		t.Helper()
@@ -140,6 +159,22 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 	if searched.Total != 1 || len(searched.Items) != 1 || searched.Items[0].Lemma != "page phrase 007" {
 		t.Fatalf("unexpected search page: %+v", searched)
 	}
+	aliasSearch := readPage(filter+"&query="+url.QueryEscape("catalog alias 007")+"&limit=48", http.StatusOK)
+	if aliasSearch.Total != 1 || len(aliasSearch.Items) != 1 || aliasSearch.Items[0].Lemma != "page phrase 007" {
+		t.Fatalf("unexpected alias search page: %+v", aliasSearch)
+	}
+	mastered := readPage(filter+"&status=mastered&limit=48", http.StatusOK)
+	if mastered.Total != 1 || len(mastered.Items) != 1 || mastered.Items[0].Status != "mastered" {
+		t.Fatalf("unexpected mastered page: %+v", mastered)
+	}
+
+	var detail catalogItemPayload
+	getAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/words/%d", testServer.URL, mastered.Items[0].ID), registered.Tokens.AccessToken, http.StatusOK, &detail)
+	if detail.Lemma != "page phrase 007" || detail.Status != "mastered" || len(detail.Aliases) != 1 || detail.Aliases[0] != "catalog alias 007" {
+		t.Fatalf("unexpected catalog detail: %+v", detail)
+	}
 
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words?kind=phrase&limit=1000", registered.Tokens.AccessToken, http.StatusUnprocessableEntity, nil)
+	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words?kind=phrase&status=unknown", registered.Tokens.AccessToken, http.StatusUnprocessableEntity, nil)
+	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words/999999999", registered.Tokens.AccessToken, http.StatusNotFound, nil)
 }
