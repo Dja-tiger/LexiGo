@@ -1,0 +1,36 @@
+name: Issue 55 lint controller
+
+on:
+  pull_request_target:
+    types: [synchronize]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  fix:
+    if: github.event.pull_request.number == 111
+    runs-on: [self-hosted, linux, x64, lexigo-ci]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-55-real-dictionary-catalog
+          fetch-depth: 0
+      - name: Apply lint correction
+        run: |
+          python3 scripts/issue55_fix_lint.py
+          git rm scripts/issue55_fix_lint.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/components/dictionary-catalog.tsx frontend/components/lexigo-premium-app.tsx
+          git diff --cached --check
+          git commit -m 'fix(dictionary): make catalog effects compiler-safe'
+          git push origin HEAD:agent/issue-55-real-dictionary-catalog
+      - name: Remove controller
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+          git rm .github/workflows/issue-55-lint-controller.yml
+          git commit -m 'chore(ci): remove issue 55 lint controller [skip ci]'
+          git push origin HEAD:main
