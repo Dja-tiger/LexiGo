@@ -86,6 +86,7 @@ describe("PWA session resume resilience", () => {
   it("subscribes to online, pageshow and visible-state resume signals with cleanup", () => {
     const windowListeners = new Map<string, EventListenerOrEventListenerObject>();
     const documentListeners = new Map<string, EventListenerOrEventListenerObject>();
+    let visibilityState: DocumentVisibilityState = "hidden";
     const environment = {
       windowTarget: {
         addEventListener: vi.fn((type: string, listener: EventListenerOrEventListenerObject) => {
@@ -96,7 +97,9 @@ describe("PWA session resume resilience", () => {
         }),
       },
       documentTarget: {
-        visibilityState: "hidden" as DocumentVisibilityState,
+        get visibilityState() {
+          return visibilityState;
+        },
         addEventListener: vi.fn((type: string, listener: EventListenerOrEventListenerObject) => {
           documentListeners.set(type, listener);
         }),
@@ -118,7 +121,7 @@ describe("PWA session resume resilience", () => {
     invoke(documentListeners.get("visibilitychange"));
     expect(onResume).toHaveBeenCalledTimes(2);
 
-    environment.documentTarget.visibilityState = "visible";
+    visibilityState = "visible";
     invoke(documentListeners.get("visibilitychange"));
     expect(onResume).toHaveBeenCalledTimes(3);
 
