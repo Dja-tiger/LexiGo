@@ -6,6 +6,7 @@ COMMAND="${1:-}"
 PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.61.1-noble}"
 FRONTEND_CI_VOLUME="${FRONTEND_CI_VOLUME:?FRONTEND_CI_VOLUME is required}"
 GITHUB_WORKSPACE="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
+APP_BUILD_ID="${APP_BUILD_ID:-local}"
 SOURCE_DIR="${GITHUB_WORKSPACE}/frontend"
 DEPLOY_DIR="${GITHUB_WORKSPACE}/deploy"
 WORK_DIR="/workspace"
@@ -35,6 +36,7 @@ container_run() {
     --init \
     --ipc=host \
     --env CI=true \
+    --env APP_BUILD_ID="$APP_BUILD_ID" \
     --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
     --volume "$DEPLOY_DIR:/deploy:ro" \
