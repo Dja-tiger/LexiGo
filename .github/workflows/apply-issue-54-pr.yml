@@ -30,12 +30,14 @@ jobs:
           mkdir -p .github/scripts
           python3 - <<'PY'
           import base64
-          import gzip
+          import zlib
           from pathlib import Path
 
           source = Path('.github/workflows/apply-issue-54.yml').read_text()
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
-          Path('.github/scripts/apply_issue54.py').write_bytes(gzip.decompress(base64.b64decode(payload)))
+          compressed = base64.b64decode(payload)
+          script = zlib.decompress(compressed, -zlib.MAX_WBITS)
+          Path('.github/scripts/apply_issue54.py').write_bytes(script)
           PY
 
           if ! python3 .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
