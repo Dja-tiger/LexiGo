@@ -159,7 +159,7 @@ async function outboxRecords(page: Page): Promise<Array<{ status: string; idempo
   }));
 }
 
-test("queues a rating made offline before any server mutation", async ({ context, page }) => {
+test("queues a rating offline and replays it automatically when connectivity returns", async ({ context, page }) => {
   const state: ReviewServer = {
     logicalEvents: 0,
     attempts: 0,
@@ -181,6 +181,13 @@ test("queues a rating made offline before any server mutation", async ({ context
   ]);
   expect(state.attempts).toBe(0);
   expect(state.logicalEvents).toBe(0);
+
+  await context.setOffline(false);
+  await expect.poll(() => outboxRecords(page), { timeout: 15_000 }).toEqual([
+    expect.objectContaining({ status: "synced", idempotencyKey: expect.any(String) }),
+  ]);
+  expect(state.attempts).toBe(1);
+  expect(state.logicalEvents).toBe(1);
 });
 
 test("replays the same idempotency key after a lost response and tab close", async ({ context, page }) => {
