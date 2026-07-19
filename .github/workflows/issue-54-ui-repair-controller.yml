@@ -1,8 +1,8 @@
 name: Issue 54 UI repair controller
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request_target:
+    types: [synchronize]
 
 permissions:
   contents: write
@@ -14,8 +14,9 @@ concurrency:
 jobs:
   repair:
     if: >-
-      github.event.issue.number == 54 &&
-      github.event.comment.body == '/run-issue-54-ui-repair'
+      github.event.pull_request.number == 110 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
     runs-on:
       - self-hosted
       - linux
