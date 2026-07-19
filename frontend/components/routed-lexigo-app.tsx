@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, type MouseEvent } from "react";
 
 import { canonicalURLFromLegacySearch, isCanonicalRoutePath, navigationURL, parseNavigationLocation } from "../lib/navigation";
 import { createNavigationHistoryState, readNavigationHistoryState } from "../lib/navigation-history";
@@ -13,8 +13,9 @@ function initializeRouteEntry(): void {
   const target = parseNavigationLocation(window.location);
   const currentState = readNavigationHistoryState(window.history.state);
   const canonicalLegacyURL = canonicalURLFromLegacySearch(window.location.search);
-  const currentURL = `${window.location.pathname}${window.location.search}`;
-  const targetURL = canonicalLegacyURL ?? currentURL;
+  const hash = window.location.hash;
+  const currentURL = `${window.location.pathname}${window.location.search}${hash}`;
+  const targetURL = canonicalLegacyURL ? `${canonicalLegacyURL}${hash}` : currentURL;
 
   if (!currentState || navigationURL(currentState.target) !== navigationURL(target)) {
     window.history.replaceState(
@@ -25,9 +26,25 @@ function initializeRouteEntry(): void {
     return;
   }
 
-  if (canonicalLegacyURL && canonicalLegacyURL !== currentURL) {
-    window.history.replaceState(currentState, "", canonicalLegacyURL);
+  if (canonicalLegacyURL && targetURL !== currentURL) {
+    window.history.replaceState(currentState, "", targetURL);
   }
+}
+
+function RouteSkipLink() {
+  function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    const main = document.querySelector<HTMLElement>("#lexigo-main-content");
+    if (!main) return;
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ block: "start", behavior: "auto" });
+  }
+
+  return (
+    <a className="lx-skip-link lx-route-skip-link" href="#lexigo-main-content" onClick={skipToMainContent}>
+      Перейти к основному содержимому
+    </a>
+  );
 }
 
 export function RoutedLexigoApp() {
@@ -41,10 +58,11 @@ export function RoutedLexigoApp() {
 
   return (
     <div className="lx-routed-app" data-app-router-shell="true">
+      <RouteSkipLink />
+      <RouteChrome />
       <ApplicationErrorBoundary>
         <LexigoBootstrappedApp />
       </ApplicationErrorBoundary>
-      <RouteChrome />
     </div>
   );
 }
