@@ -8,6 +8,7 @@ import {
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
+import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { subscribeToSessionResume } from "../lib/session-resume";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
@@ -17,9 +18,9 @@ const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 
 function moveToSessionScreen(reason: "expired" | "forbidden"): void {
-  const target = new URL(window.location.href);
-  target.search = `?view=profile&session=${reason}`;
-  window.history.replaceState({ lexigo: true, view: "profile" }, "", target.pathname + target.search);
+  const target = { view: "profile" as const };
+  const state = createNavigationHistoryState(target, { x: 0, y: 0 });
+  window.history.replaceState(state, "", `/profile?session=${reason}`);
 }
 
 export function LexigoBootstrappedApp() {
