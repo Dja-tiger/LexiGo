@@ -177,11 +177,11 @@ func (r *Repository) storeIdempotentLessonReview(
 }
 
 func recoverableIdempotencyConflict(err error) bool {
-	return errors.Is(err, ErrLessonVersionConflict)
-		|| errors.Is(err, ErrLessonItemAlreadyReviewed)
-		|| errors.Is(err, ErrLessonItemOutOfOrder)
-		|| errors.Is(err, ErrLessonItemNotFound)
-		|| errors.Is(err, ErrNoActiveLesson)
+	return errors.Is(err, ErrLessonVersionConflict) ||
+		errors.Is(err, ErrLessonItemAlreadyReviewed) ||
+		errors.Is(err, ErrLessonItemOutOfOrder) ||
+		errors.Is(err, ErrLessonItemNotFound) ||
+		errors.Is(err, ErrNoActiveLesson)
 }
 
 func (r *Repository) recoverCommittedLessonReview(
