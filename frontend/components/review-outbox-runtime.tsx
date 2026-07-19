@@ -29,7 +29,7 @@ const EMPTY_SUMMARY: ReviewOutboxSummary = {
 };
 
 const REVIEW_SYNCED_EVENT = "lexigo:lesson-reviews-synced";
-const BACKGROUND_RELOAD_DELAY_MS = 500;
+const BACKGROUND_RELOAD_DELAY_MS = 1500;
 
 type ErrorPayload = {
   code: string;
@@ -99,7 +99,12 @@ function currentNetworkFailureCode(): "network_offline" | "network_request_faile
   return navigator.onLine === false ? "network_offline" : "network_request_failed";
 }
 
-function bannerCopy(online: boolean, summary: ReviewOutboxSummary, syncing: boolean): {
+function bannerCopy(
+  online: boolean,
+  summary: ReviewOutboxSummary,
+  syncing: boolean,
+  recoverySynced: boolean,
+): {
   title: string;
   message: string;
   tone: "offline" | "pending" | "failed" | "synced";
@@ -127,7 +132,7 @@ function bannerCopy(online: boolean, summary: ReviewOutboxSummary, syncing: bool
       tone: "pending",
     };
   }
-  if (summary.synced > 0 && summary.latestSyncedAt) {
+  if (recoverySynced) {
     return {
       title: "Ответ синхронизирован",
       message: "Прогресс и позиция урока подтверждены сервером.",
@@ -141,6 +146,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
   const [summary, setSummary] = useState<ReviewOutboxSummary>(EMPTY_SUMMARY);
   const [syncing, setSyncing] = useState(false);
+  const [recoverySynced, setRecoverySynced] = useState(false);
   const [activeUserID, setActiveUserID] = useState(initialSession?.user.id ?? "");
   const sessionRef = useRef(initialSession);
   const originalFetchRef = useRef<typeof globalThis.fetch | null>(null);
@@ -175,12 +181,18 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
     if (!currentSession || !originalFetch || navigator.onLine === false) return Promise.resolve();
 
     const synchronization = (async () => {
-      setSyncing(true);
-      let activeSession = currentSession;
       let synchronized = 0;
       try {
-        const records = (await listLessonReviews(activeSession.user.id))
+        const records = (await listLessonReviews(currentSession.user.id))
           .filter((record) => record.status === "pending");
+        if (records.length === 0) {
+          await refreshSummary();
+          return;
+        }
+
+        setRecoverySynced(false);
+        setSyncing(true);
+        let activeSession = currentSession;
         for (const record of records) {
           let response = await sendQueuedReview(originalFetch, record, activeSession);
           if (response.status === 401) {
@@ -236,7 +248,10 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         setSyncing(false);
         await refreshSummary();
       }
-      if (synchronized > 0) scheduleStateReload();
+      if (synchronized > 0) {
+        setRecoverySynced(true);
+        scheduleStateReload();
+      }
     })().finally(() => {
       syncInFlightRef.current = null;
     });
@@ -257,6 +272,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         if (authAction === "clear") {
           sessionRef.current = null;
           setActiveUserID("");
+          setRecoverySynced(false);
           setSummary(EMPTY_SUMMARY);
           return response;
         }
@@ -299,6 +315,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
 
       let record: ReviewOutboxRecord;
       try {
+        setRecoverySynced(false);
         record = await enqueueLessonReview({
           userId: activeSession.user.id,
           endpoint: request.url,
@@ -376,6 +393,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
     };
     const handleOffline = () => {
       setOnline(false);
+      setRecoverySynced(false);
       void refreshSummary();
     };
     const handleVisibility = () => {
@@ -394,7 +412,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
     };
   }, [refreshSummary, syncPendingReviews]);
 
-  const copy = bannerCopy(online, summary, syncing);
+  const copy = bannerCopy(online, summary, syncing, recoverySynced);
   if (!activeUserID || !copy) return null;
 
   return (
