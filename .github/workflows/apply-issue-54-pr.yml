@@ -18,6 +18,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - name: Apply bounded catalog pagination
         shell: bash
@@ -34,12 +35,16 @@ jobs:
 
           source = Path('.github/workflows/apply-issue-54.yml').read_text()
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
-          Path('/tmp/issue-54-payload.bin').write_bytes(base64.b64decode(payload))
+          Path('.github/scripts/issue54-payload.bin').write_bytes(base64.b64decode(payload))
           PY
-          node - <<'NODE'
+          docker run --rm -i \
+            --volume "$PWD:/workspace" \
+            --workdir /workspace \
+            "$PLAYWRIGHT_IMAGE" \
+            node - <<'NODE'
           const fs = require('node:fs');
           const zlib = require('node:zlib');
-          const compressed = fs.readFileSync('/tmp/issue-54-payload.bin');
+          const compressed = fs.readFileSync('.github/scripts/issue54-payload.bin');
           fs.writeFileSync('.github/scripts/apply_issue54.py', zlib.brotliDecompressSync(compressed));
           NODE
 
@@ -57,10 +62,10 @@ jobs:
             backend/internal/learning/lesson_repository.go \
             backend/integration/catalog_pagination_test.go
           git diff --check
+          rm -f .github/scripts/apply_issue54.py .github/scripts/issue54-payload.bin
           git rm --force \
             .github/workflows/apply-issue-54.yml \
             .github/workflows/apply-issue-54-pr.yml \
-            .github/scripts/apply_issue54.py \
             .issue-54-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
