@@ -1,1 +1,10 @@
-/opt/actions-runner/_work/_temp/59187dd9-b52c-46eb-bd5b-2f4a2e4a3290.sh: line 2: npm: command not found
+npm warn deprecated tsconfck@3.1.6: unmaintained
+
+added 399 packages in 15s
+
+> lexigo-web@0.1.0 typecheck
+> tsc --noEmit
+
+components/lexigo-premium-app.tsx(1517,33): error TS1005: '(' expected.
+components/lexigo-premium-app.tsx(2291,29): error TS1144: '{' or ';' expected.
+components/lexigo-premium-app.tsx(2599,28): error TS1144: '{' or ';' expected.
