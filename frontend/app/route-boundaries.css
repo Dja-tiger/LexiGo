@@ -1,0 +1,39 @@
+.lx-route-boundary {
+  position: fixed;
+  z-index: 400;
+  inset: 0;
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: var(--lx-text);
+  background:
+    radial-gradient(circle at 50% 25%, rgba(109, 93, 252, 0.18), transparent 34%),
+    rgba(5, 9, 20, 0.97);
+  text-align: center;
+}
+
+.lx-route-boundary strong {
+  font-size: clamp(24px, 4vw, 36px);
+  letter-spacing: -0.035em;
+}
+
+.lx-route-boundary span,
+.lx-route-boundary small {
+  max-width: 560px;
+  color: var(--lx-muted);
+  line-height: 1.55;
+}
+
+.lx-route-boundary .lx-bootstrap-mark {
+  width: 58px;
+  height: 58px;
+  font-size: 17px;
+}
+
+.lx-route-boundary .lx-button {
+  margin-top: 8px;
+  text-decoration: none;
+}
