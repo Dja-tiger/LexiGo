@@ -1,0 +1,11 @@
+[Unit]
+Description=Run LexiGo TLS certificate health check twice daily (%i)
+
+[Timer]
+OnCalendar=*-*-* 04,16:15:00
+RandomizedDelaySec=30m
+Persistent=true
+Unit=lexigo-certificate-health@%i.service
+
+[Install]
+WantedBy=timers.target
