@@ -5,7 +5,6 @@ umask 077
 
 ENVIRONMENT="${1:?environment is required: stage or prod}"
 CONFIG_FILE="/etc/lexigo/certificate-health-${ENVIRONMENT}.conf"
-RENEW_BEFORE_SECONDS="${CERT_RENEW_BEFORE_SECONDS:-1814400}"
 
 log() {
   printf '[certificate-health] %s\n' "$*"
@@ -31,6 +30,7 @@ source "$CONFIG_FILE"
 : "${APP_ENV_FILE:?APP_ENV_FILE is required}"
 : "${SITE_HOST:?SITE_HOST is required}"
 : "${API_HOST:?API_HOST is required}"
+RENEW_BEFORE_SECONDS="${CERT_RENEW_BEFORE_SECONDS:-1814400}"
 
 [[ "$PROJECT_ROOT" == /opt/* ]] || die "PROJECT_ROOT must be below /opt"
 [[ "$COMPOSE_FILE" == "$PROJECT_ROOT/"* ]] || die "COMPOSE_FILE must be below PROJECT_ROOT"
@@ -61,15 +61,6 @@ check_host() (
   local certificate_file
   certificate_file="$(mktemp)"
   trap 'rm -f -- "$certificate_file"' EXIT
-
-  curl \
-    --fail \
-    --silent \
-    --show-error \
-    --max-time 20 \
-    --resolve "$host:443:127.0.0.1" \
-    "https://$host/health/ready" \
-    >/dev/null
 
   certificate_pem "$host" > "$certificate_file"
   [[ -s "$certificate_file" ]] || return 1
