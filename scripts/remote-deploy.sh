@@ -42,8 +42,8 @@ fi
   exit 1
 }
 
-[[ "$PUBLIC_URL" == http://* || "$PUBLIC_URL" == https://* ]] || {
-  echo "public URL must use http or https" >&2
+[[ "$PUBLIC_URL" =~ ^https://[A-Za-z0-9.-]+$ ]] || {
+  echo "public URL must be one HTTPS origin without a path" >&2
   exit 1
 }
 
@@ -129,6 +129,7 @@ REDIS_DB=0
 JWT_SECRET=$JWT_SECRET
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=720h
+SESSION_COOKIE_SECURE=true
 API_INTERNAL_URL=http://api:8080
 NEXT_PUBLIC_API_BASE_URL=
 EOF
@@ -138,6 +139,7 @@ else
   upsert_env IMAGE_TAG "$IMAGE_TAG"
   upsert_env LOG_LEVEL "$LOG_LEVEL"
   upsert_env CORS_ALLOWED_ORIGIN "$PUBLIC_URL"
+  upsert_env SESSION_COOKIE_SECURE "true"
 fi
 
 chmod 600 "$ENV_FILE"
@@ -159,11 +161,16 @@ if ! "${COMPOSE[@]}" up -d --remove-orphans; then
   exit 1
 fi
 
-SITE_HOST="${PUBLIC_URL#*://}"
-SITE_HOST="${SITE_HOST%%/*}"
+SITE_HOST="${PUBLIC_URL#https://}"
 
 for attempt in $(seq 1 30); do
-  if curl -fsS -H "Host: $SITE_HOST" http://127.0.0.1/health/ready >/dev/null; then
+  if curl \
+    --fail \
+    --silent \
+    --show-error \
+    --resolve "$SITE_HOST:443:127.0.0.1" \
+    "$PUBLIC_URL/health/ready" \
+    >/dev/null; then
     "${COMPOSE[@]}" ps
     echo "$ENVIRONMENT deployment is healthy at $PUBLIC_URL"
     exit 0
