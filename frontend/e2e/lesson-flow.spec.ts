@@ -129,8 +129,9 @@ test("study: persists exposure with the current lesson version", async ({ page }
 
   await page.getByRole("button", { name: "Дальше", exact: true }).click();
   await page.getByRole("button", { name: "Не знал", exact: true }).click();
-  expect(api.reviewRequests()[1]).toMatchObject({ lessonVersion: 2 });
   await expect(page.getByRole("button", { name: "К результатам", exact: true })).toBeEnabled();
+  await expect.poll(() => api.reviewRequests().length).toBe(2);
+  expect(api.reviewRequests()[1]).toMatchObject({ lessonVersion: 2 });
 });
 
 test("recall and choice send versioned objective payloads", async ({ page }) => {
@@ -139,6 +140,7 @@ test("recall and choice send versioned objective payloads", async ({ page }) => 
   await page.locator("#premium-answer").fill("абсолютный");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Почти", exact: true }).click();
+  await expect.poll(() => recall.reviewRequests().length).toBe(1);
   expect(recall.reviewRequests()[0]).toMatchObject({ lessonVersion: 1, answerMode: "recall", correct: true });
 });
 
@@ -195,7 +197,7 @@ test("stale device resynchronizes to the server position without duplicate revie
   await expect(second.getByText("Слово 1 из 2")).toBeVisible();
 
   await first.getByRole("button", { name: "Знал", exact: true }).click();
-  expect(state.reviewEvents).toBe(1);
+  await expect.poll(() => state.reviewEvents).toBe(1);
 
   await second.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(second.getByRole("alert", { name: "Ошибка текущего действия" })).toContainText("Урок изменён на другом устройстве");

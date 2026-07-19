@@ -1621,6 +1621,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     reviewInFlightRef.current = true;
     setReviewing(true);
     setError("");
+    let reviewPersisted = false;
     try {
       const correct = selectedAnswer
         ? normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer)
@@ -1645,9 +1646,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       });
       setSession(result.activeSession);
       setRatings((current) => ({ ...current, [currentItem.id]: rating }));
-      if (restoreFocusAfterSave) {
-        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
-      }
+      reviewPersisted = true;
       setServerLessonCompleted(result.data.lessonCompleted);
       setServerNextIndex(result.data.lessonCompleted ? null : result.data.lessonCurrentIndex);
       setServerSkippedItems(result.data.lessonSkippedItems);
@@ -1683,6 +1682,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     } finally {
       reviewInFlightRef.current = false;
       setReviewing(false);
+      if (reviewPersisted && restoreFocusAfterSave) {
+        window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
+      }
     }
   }
 

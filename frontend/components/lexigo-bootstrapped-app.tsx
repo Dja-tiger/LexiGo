@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import { restoreSession, SessionRefreshError, type Session } from "../lib/auth-session";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
+import { ReviewOutboxRuntime } from "./review-outbox-runtime";
+
+const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 
 function moveToSessionScreen(reason: "expired" | "forbidden" | "invalid"): void {
   const target = new URL(window.location.href);
@@ -45,6 +48,12 @@ export function LexigoBootstrappedApp() {
     };
   }, [restoreAttempt]);
 
+  useEffect(() => {
+    const clearResolvedNotice = () => setNotice(null);
+    window.addEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
+    return () => window.removeEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
+  }, []);
+
   function retryRestore() {
     setInitialSession(undefined);
     setNotice(null);
@@ -63,6 +72,7 @@ export function LexigoBootstrappedApp() {
 
   return (
     <>
+      <ReviewOutboxRuntime session={initialSession} />
       {notice ? (
         <div className={`lx-session-notice ${notice.kind}`} role="alert">
           <div>
