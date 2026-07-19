@@ -112,6 +112,7 @@ function RouteLink({
   return (
     <Link
       href={navigationURL(target)}
+      prefetch={false}
       className={className}
       aria-label={ariaLabel}
       aria-current={ariaCurrent}
