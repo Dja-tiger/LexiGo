@@ -1,0 +1,144 @@
+name: Repair Issue 54 OpenAPI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.ref == 'agent/issue-54-catalog-pagination'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: backend/go.sum
+      - name: Repair contract and add regression test
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('api/openapi.yaml')
+          content = path.read_text(encoding='utf-8')
+          broken = '''      responses:
+        "200":
+description: One bounded catalog page.
+content:
+  application/json:
+    schema:
+      $ref: "#/components/schemas/CatalogPage"
+        "401":
+$ref: "#/components/responses/Unauthorized"
+        "422":
+$ref: "#/components/responses/ValidationError"
+'''
+          fixed = '''      responses:
+        "200":
+          description: One bounded catalog page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+'''
+          if content.count(broken) != 1:
+              raise SystemExit(f'catalog response block matches: {content.count(broken)}')
+          content = content.replace(broken, fixed, 1)
+
+          broken = '''      responses:
+        "200":
+description: One bounded due page.
+content:
+  application/json:
+    schema:
+      $ref: "#/components/schemas/CatalogPage"
+        "401":
+$ref: "#/components/responses/Unauthorized"
+        "422":
+$ref: "#/components/responses/ValidationError"
+'''
+          fixed = '''      responses:
+        "200":
+          description: One bounded due page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+'''
+          if content.count(broken) != 1:
+              raise SystemExit(f'due response block matches: {content.count(broken)}')
+          path.write_text(content.replace(broken, fixed, 1), encoding='utf-8')
+          PY
+          cat > backend/internal/words/openapi_contract_test.go <<'EOF'
+          package words
+
+          import (
+          	"os"
+          	"strings"
+          	"testing"
+          )
+
+          func TestOpenAPICatalogPaginationResponsesRemainNested(t *testing.T) {
+          	contract, err := os.ReadFile("../../../api/openapi.yaml")
+          	if err != nil {
+          		t.Fatalf("read OpenAPI contract: %v", err)
+          	}
+          	content := string(contract)
+
+          	required := []string{
+          		"  /api/v1/words:\n",
+          		"  /api/v1/words/due:\n",
+          		"          description: One bounded catalog page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
+          		"          description: One bounded due page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
+          		"        \"422\":\n          $ref: \"#/components/responses/ValidationError\"",
+          	}
+          	for _, fragment := range required {
+          		if !strings.Contains(content, fragment) {
+          			t.Errorf("OpenAPI catalog contract is missing correctly nested fragment %q", fragment)
+          		}
+          	}
+
+          	for _, malformed := range []string{"\ndescription: One bounded", "\ncontent:\n  application/json:", "\n$ref: \"#/components/responses/"} {
+          		if strings.Contains(content, malformed) {
+          			t.Errorf("OpenAPI catalog contract contains a top-level malformed fragment %q", malformed)
+          		}
+          	}
+          }
+          EOF
+          gofmt -w backend/internal/words/openapi_contract_test.go
+      - name: Verify backend tests
+        working-directory: backend
+        run: go test ./...
+      - name: Commit repair and remove workflow
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "LexiGo CI"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/fix-issue-54-openapi.yml
+          git add api/openapi.yaml backend/internal/words/openapi_contract_test.go
+          git diff --cached --check
+          git commit -m "fix(api): keep catalog pagination responses valid"
+          git push origin HEAD:agent/issue-54-catalog-pagination
