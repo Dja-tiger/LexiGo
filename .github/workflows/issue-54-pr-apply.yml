@@ -3,6 +3,7 @@ name: Issue 54 repair marker
 on:
   workflow_dispatch:
 
+# Connector-triggered synchronization marker for the temporary repair CI.
 jobs:
   marker:
     if: false
