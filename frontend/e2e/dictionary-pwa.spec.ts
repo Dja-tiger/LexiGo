@@ -190,7 +190,7 @@ function watchRuntimeErrors(page: Page) {
 }
 
 async function expectDictionary(page: Page) {
-  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/\/dictionary(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(48);
@@ -203,7 +203,7 @@ test("dictionary filters, alias search, deep link and bounded lesson are URL-dri
   const api = await installAPI(context);
   const runtimeErrors = watchRuntimeErrors(page);
 
-  await page.goto("/?view=library");
+  await page.goto("/dictionary");
   await expectDictionary(page);
   await expect(page.getByText("Показаны 1–48 из 60", { exact: false })).toBeVisible();
 
@@ -223,7 +223,7 @@ test("dictionary filters, alias search, deep link and bounded lesson are URL-dri
   expect(api.catalogRequests.some((query) => query.includes("status=new") && query.includes("query=temporary+storage"))).toBe(true);
 
   await page.getByRole("button", { name: "Открыть карточку: cache" }).click();
-  await expect(page).toHaveURL(/detail=101/);
+  await expect(page).toHaveURL(/\/words\/101(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "cache" })).toBeVisible();
   await expect(page.getByText("Temporary fast storage used by the service.")).toBeVisible();
   await expect(page.getByText("temporary storage, fast storage")).toBeVisible();
@@ -231,13 +231,14 @@ test("dictionary filters, alias search, deep link and bounded lesson are URL-dri
   await page.reload();
   await expect(page.getByRole("heading", { name: "cache" })).toBeVisible();
   await page.goBack();
+  await expect(page).toHaveURL(/\/dictionary\?/);
   await expect(page).toHaveURL(/query=temporary\+storage/);
   await expect(page.getByRole("listitem")).toHaveCount(1);
 
   await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
   await expectDictionary(page);
   await page.getByRole("button", { name: "Изучить текущую страницу" }).click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
   expect(api.lessonRequests).toHaveLength(1);
   expect(api.lessonRequests[0].wordIds).toHaveLength(48);
   expect(new Set(api.lessonRequests[0].wordIds as number[]).size).toBe(48);
@@ -250,7 +251,7 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   await installAPI(context);
   let runtimeErrors = watchRuntimeErrors(page);
 
-  await page.goto("/?view=library&source=backend&status=review&page=1");
+  await page.goto("/dictionary?source=backend&status=review");
   await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Раздел словаря" })).toHaveValue("backend");
   await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
@@ -259,8 +260,9 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
   const scrollBefore = await page.evaluate(() => window.scrollY);
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
-  await expect(page).toHaveURL(/detail=/);
+  await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
   await page.goBack();
+  await expect(page).toHaveURL(/\/dictionary\?/);
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/status=review/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
@@ -270,7 +272,7 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   const relaunched = await context.newPage();
   runtimeErrors = watchRuntimeErrors(relaunched);
   await relaunched.goto("/");
-  await expect(relaunched).toHaveURL(/view=library/);
+  await expect(relaunched).toHaveURL(/\/dictionary\?/);
   await expect(relaunched).toHaveURL(/source=backend/);
   await expect(relaunched).toHaveURL(/status=review/);
   await expect(relaunched.getByRole("listitem")).toHaveCount(12);
