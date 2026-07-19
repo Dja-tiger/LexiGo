@@ -135,10 +135,19 @@ jobs:
 
       - name: Validate systemd units
         run: |
+          set -Eeuo pipefail
           if command -v systemd-analyze >/dev/null 2>&1; then
-            systemd-analyze verify \
+            unit_dir="$(mktemp -d)"
+            trap 'rm -rf -- "$unit_dir"' EXIT
+            install -m 0755 deploy/certificate-health.sh "$unit_dir/lexigo-certificate-health"
+            sed \
+              "s#/usr/local/sbin/lexigo-certificate-health#$unit_dir/lexigo-certificate-health#" \
               deploy/systemd/lexigo-certificate-health@.service \
-              deploy/systemd/lexigo-certificate-health@.timer
+              > "$unit_dir/lexigo-certificate-health@.service"
+            cp deploy/systemd/lexigo-certificate-health@.timer "$unit_dir/lexigo-certificate-health@.timer"
+            systemd-analyze verify \
+              "$unit_dir/lexigo-certificate-health@.service" \
+              "$unit_dir/lexigo-certificate-health@.timer"
           fi
 
       - name: Upload Caddy diagnostics
