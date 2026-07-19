@@ -174,7 +174,8 @@ test("queues a rating made offline before any server mutation", async ({ context
 
   await context.setOffline(true);
   await page.getByRole("button", { name: "Знал", exact: true }).click();
-  await expect(page.getByText("Ответ сохранён на устройстве", { exact: false })).toBeVisible();
+  await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
+    .toContainText("Ответ сохранён на устройстве.");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
@@ -196,7 +197,8 @@ test("replays the same idempotency key after a lost response and tab close", asy
   await openPersistedLesson(page);
 
   await page.getByRole("button", { name: "Знал", exact: true }).click();
-  await expect(page.getByText("Ответ сохранён на устройстве", { exact: false })).toBeVisible();
+  await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
+    .toContainText("Ответ сохранён на устройстве.");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
