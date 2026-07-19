@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/remote-deploy.sh"
   push:
@@ -12,6 +13,7 @@ on:
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/remote-deploy.sh"
 
@@ -33,7 +35,27 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
       - name: Validate Bash syntax
         run: |
           bash -n scripts/ci/deploy-over-ssh.sh
           bash -n scripts/remote-deploy.sh
+
+      - name: Validate secure session deployment topology
+        run: |
+          set -Eeuo pipefail
+
+          grep -Fq 'PUBLIC_URL="${PUBLIC_URL:?PUBLIC_URL is required}"' scripts/ci/deploy-over-ssh.sh
+          grep -Fq 'PUBLIC_URL must be one HTTPS origin' scripts/ci/deploy-over-ssh.sh
+
+          if grep -Fq 'PUBLIC_URL="http://${DEPLOY_HOST}"' scripts/ci/deploy-over-ssh.sh; then
+            echo 'Public browser origin must not be derived from the SSH host over HTTP.' >&2
+            exit 1
+          fi
+
+          grep -Fq 'SESSION_COOKIE_SECURE=true' scripts/remote-deploy.sh
+          grep -Fq 'upsert_env SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
+          grep -Fq -- '--resolve "$SITE_HOST:443:127.0.0.1"' scripts/remote-deploy.sh
+
+          grep -Fq 'PUBLIC_URL: ${{ vars.PUBLIC_URL }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'PUBLIC_URL: ${{ vars.PUBLIC_URL }}' .github/workflows/deploy-prod.yml
