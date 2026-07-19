@@ -88,10 +88,10 @@ func (r *PostgresRepository) Rotate(ctx context.Context, oldHash, newHash []byte
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var (
-		userID        string
-		familyID      string
-		expiresAt     time.Time
-		revokedAt     *time.Time
+		userID         string
+		familyID       string
+		expiresAt      time.Time
+		revokedAt      *time.Time
 		replacedByHash []byte
 	)
 	err = tx.QueryRow(ctx, `
