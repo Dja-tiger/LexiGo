@@ -279,13 +279,9 @@ func (r *PostgresRepository) currentActiveFamily(
 	return familyID, nil
 }
 
-type accountSecurityExecer interface {
-	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
-}
-
 func (r *PostgresRepository) insertAccountAudit(
 	ctx context.Context,
-	execer accountSecurityExecer,
+	tx pgx.Tx,
 	userID,
 	eventType,
 	userAgent,
@@ -297,7 +293,7 @@ func (r *PostgresRepository) insertAccountAudit(
 	if err != nil {
 		return fmt.Errorf("encode account audit metadata: %w", err)
 	}
-	if _, err := execer.Exec(ctx, `
+	if _, err := tx.Exec(ctx, `
 		insert into account_audit_events(
 			user_id,
 			event_type,
