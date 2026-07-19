@@ -9,6 +9,7 @@ import {
   type Session,
 } from "../lib/auth-session";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
+import { subscribeToSessionResume } from "../lib/session-resume";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
@@ -79,22 +80,15 @@ export function LexigoBootstrappedApp() {
       retryScheduled = true;
       retryRestore();
     };
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") requestRetry();
-    };
     const timer = window.setTimeout(
       requestRetry,
       AUTO_RESTORE_DELAYS_MS[Math.min(restoreAttempt, AUTO_RESTORE_DELAYS_MS.length - 1)],
     );
+    const unsubscribe = subscribeToSessionResume(requestRetry);
 
-    window.addEventListener("online", requestRetry);
-    window.addEventListener("pageshow", requestRetry);
-    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener("online", requestRetry);
-      window.removeEventListener("pageshow", requestRetry);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      unsubscribe();
     };
   }, [restoreAttempt, restoreRecoverable, retryRestore]);
 
