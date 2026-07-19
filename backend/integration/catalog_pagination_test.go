@@ -98,6 +98,15 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 		"email":    fmt.Sprintf("pagination-%d@example.com", time.Now().UnixNano()),
 		"password": "strong-password", "displayName": "Pagination Learner",
 	}, http.StatusCreated)
+	if _, err := pg.Exec(ctx, `
+		insert into user_words (user_id, word_id)
+		select $1::uuid, id
+		from words
+		where source = 'integration-pagination'
+		on conflict (user_id, word_id) do nothing
+	`, registered.User.ID); err != nil {
+		t.Fatalf("enroll pagination phrases: %v", err)
+	}
 
 	readPage := func(rawQuery string, expectedStatus int) catalogPagePayload {
 		t.Helper()
