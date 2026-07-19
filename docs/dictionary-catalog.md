@@ -13,3 +13,5 @@ The `library` view stores the selected section, topic, learning status, search q
 ## Rendering and lessons
 
 The frontend mounts at most 48 result cards. Opening a detail creates a shareable URL. Starting a lesson from the dictionary sends only the currently visible page, preserving the 60-item server limit and avoiding an unbounded catalog payload.
+
+The catalog is loaded only while the Dictionary view is active; home, progress and lesson screens do not start background dictionary requests.
