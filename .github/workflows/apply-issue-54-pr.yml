@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/issue-54-catalog-pagination'
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/issue-54-catalog-pagination'
     runs-on:
       - self-hosted
       - linux
@@ -20,12 +20,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: agent/issue-54-catalog-pagination
+          show-progress: false
+
       - name: Extract and apply implementation
+        id: apply
+        continue-on-error: true
         shell: bash
         run: |
           set -Eeuo pipefail
-          mkdir -p .github/scripts
-          python - <<'PY'
+          {
+            mkdir -p .github/scripts
+            python - <<'PY'
           import base64
           import gzip
           from pathlib import Path
@@ -34,17 +39,36 @@ jobs:
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
           Path('.github/scripts/apply_issue54.py').write_bytes(gzip.decompress(base64.b64decode(payload)))
           PY
-          python .github/scripts/apply_issue54.py
-          gofmt -w \
-            backend/internal/words/repository.go \
-            backend/internal/words/http.go \
-            backend/internal/learning/lesson.go \
-            backend/internal/learning/lesson_http.go \
-            backend/internal/learning/lesson_composer.go \
-            backend/internal/learning/lesson_repository.go \
-            backend/integration/catalog_pagination_test.go
-          git diff --check
+            python .github/scripts/apply_issue54.py
+            gofmt -w \
+              backend/internal/words/repository.go \
+              backend/internal/words/http.go \
+              backend/internal/learning/lesson.go \
+              backend/internal/learning/lesson_http.go \
+              backend/internal/learning/lesson_composer.go \
+              backend/internal/learning/lesson_repository.go \
+              backend/integration/catalog_pagination_test.go
+            git diff --check
+          } > .issue-54-bootstrap.log 2>&1
+
+      - name: Persist bootstrap failure
+        if: steps.apply.outcome == 'failure'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cp .issue-54-bootstrap.log /tmp/issue-54-bootstrap.log
+          git reset --hard HEAD
+          git clean -ffdx
+          cp /tmp/issue-54-bootstrap.log .issue-54-bootstrap.log
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .issue-54-bootstrap.log
+          git commit -m 'chore: record issue 54 bootstrap failure'
+          git push origin HEAD:agent/issue-54-catalog-pagination
+          exit 1
+
       - name: Commit implementation
+        if: steps.apply.outcome == 'success'
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -53,6 +77,7 @@ jobs:
             .github/workflows/apply-issue-54-pr.yml \
             .github/scripts/apply_issue54.py \
             .issue-54-trigger
+          rm -f .issue-54-bootstrap.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add --all
