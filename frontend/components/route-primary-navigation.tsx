@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import type { AriaAttributes, MouseEvent, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import {
@@ -14,7 +14,6 @@ import {
 import { createNavigationHistoryState } from "../lib/navigation-history";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
-
 type RouteIconName = "home" | "learn" | "phrases" | "library" | "progress";
 
 function RouteIcon({ name }: { name: RouteIconName }) {
@@ -49,6 +48,13 @@ function shouldUseNativeNavigation(event: MouseEvent<HTMLAnchorElement>): boolea
 
 function pushRoute(target: NavigationTarget): void {
   const current = parseNavigationLocation(window.location);
+  const currentURL = navigationURL(current);
+  const nextURL = navigationURL(target);
+  if (currentURL === nextURL) {
+    document.querySelector<HTMLElement>("#lexigo-main-content")?.focus({ preventScroll: false });
+    return;
+  }
+
   const currentScroll = { x: window.scrollX, y: window.scrollY };
   window.history.replaceState(
     createNavigationHistoryState(current, currentScroll),
@@ -57,7 +63,7 @@ function pushRoute(target: NavigationTarget): void {
   );
 
   const nextState = createNavigationHistoryState(target, { x: 0, y: 0 });
-  window.history.pushState(nextState, "", navigationURL(target));
+  window.history.pushState(nextState, "", nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
 
@@ -66,17 +72,23 @@ function RouteAnchor({
   children,
   className,
   ariaLabel,
+  ariaCurrent,
+  navigationView,
 }: {
   target: NavigationTarget;
   children: ReactNode;
   className?: string;
   ariaLabel?: string;
+  ariaCurrent?: AriaAttributes["aria-current"];
+  navigationView?: AppView;
 }) {
   return (
     <a
       href={navigationURL(target)}
       className={className}
       aria-label={ariaLabel}
+      aria-current={ariaCurrent}
+      data-navigation-view={navigationView}
       onClick={(event) => {
         if (shouldUseNativeNavigation(event)) return;
         event.preventDefault();
@@ -120,11 +132,10 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
             key={entry.view}
             target={{ view: entry.view }}
             className={active ? "active" : undefined}
+            ariaCurrent={active ? "page" : undefined}
+            navigationView={entry.view}
           >
-            <span
-              data-navigation-view={entry.view}
-              aria-current={active ? "page" : undefined}
-            >
+            <span>
               <RouteIcon name={entry.view as RouteIconName} />
               <span>{labelMode === "short" ? entry.shortLabel : entry.label}</span>
             </span>
