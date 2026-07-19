@@ -143,7 +143,15 @@ export function ServiceWorkerRegistration() {
       scope: "/",
       updateViaCache: "none",
     }).then((registration) => {
-      if (disposed) return;
+      if (
+        disposed ||
+        !registration ||
+        typeof registration.addEventListener !== "function" ||
+        typeof registration.removeEventListener !== "function" ||
+        typeof registration.update !== "function"
+      ) {
+        return;
+      }
       registrationRef.current = registration;
 
       const watchInstallingWorker = () => {
