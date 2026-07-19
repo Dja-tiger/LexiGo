@@ -229,11 +229,11 @@ test("word and phrase deep links survive reload and remain shareable", async ({ 
   await page.reload();
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
 
-  await page.goto("/phrases/route-contract");
-  await expect(page).toHaveURL(/\/phrases\/route-contract$/);
-  await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+  await page.goto("/phrases/phrase-root-cause");
+  await expect(page).toHaveURL(/\/phrases\/phrase-root-cause$/);
+  await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
 });
 
 test("a guest lesson deep link is protected and preserves its return target", async ({ browser }) => {
