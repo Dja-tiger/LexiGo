@@ -168,7 +168,8 @@ test("server failure keeps progress visible, exposes correlation id and retries 
   await expect(notice).toContainText("Сервис временно недоступен");
   await expect(notice).toContainText("req-phrase-500");
   await expect(notice).not.toContainText("database stack trace");
-  await expect(notice).toBeFocused();
+  await expect(notice).toHaveAttribute("aria-live", "assertive");
+  await expect(notice).toHaveAttribute("aria-atomic", "true");
 
   await notice.getByRole("button", { name: "Повторить" }).click();
   await expect(notice).toBeHidden();
