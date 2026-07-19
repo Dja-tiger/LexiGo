@@ -235,8 +235,16 @@ func recoverCommittedLessonReview(
 		       item.position,
 		       item.rating,
 		       item.reviewed_at,
-		       count(*) over ()::int,
-		       count(item.rating) over ()::int,
+		       (
+		           select count(*)::int
+		           from lesson_session_items total_item
+		           where total_item.session_id = lesson.id
+		       ),
+		       (
+		           select count(reviewed_item.rating)::int
+		           from lesson_session_items reviewed_item
+		           where reviewed_item.session_id = lesson.id
+		       ),
 		       exists (
 		           select 1
 		           from review_events event
