@@ -38,7 +38,7 @@ jobs:
           wc -c /tmp/issue-54-payload.bin
           file /tmp/issue-54-payload.bin
           printf '%s\n' '--- first 32 bytes ---'
-          xxd -l 32 /tmp/issue-54-payload.bin
+          od -An -tx1 -N32 /tmp/issue-54-payload.bin
           printf '%s\n' '--- last 32 bytes ---'
-          tail -c 32 /tmp/issue-54-payload.bin | xxd
+          tail -c 32 /tmp/issue-54-payload.bin | od -An -tx1
           exit 1
