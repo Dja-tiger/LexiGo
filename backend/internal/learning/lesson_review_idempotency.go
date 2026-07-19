@@ -161,6 +161,7 @@ func (r *Repository) storeIdempotentLessonReview(
 			select user_id, idempotency_key
 			from lesson_review_idempotency
 			where expires_at <= now()
+			  and (user_id, idempotency_key) <> ($1::uuid, $2::uuid)
 			order by expires_at
 			limit 8
 			for update skip locked
