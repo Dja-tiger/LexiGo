@@ -1,0 +1,97 @@
+name: Agent Focus Patch
+
+on:
+  push:
+    branches:
+      - agent/issue-53-offline-review-outbox
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[agent-patch]') }}
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-53-offline-review-outbox
+          fetch-depth: 0
+
+      - name: Apply exact focus transition patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/components/lexigo-premium-app.tsx")
+          source = path.read_text(encoding="utf-8")
+
+          old_start = '''    reviewInFlightRef.current = true;
+              setReviewing(true);
+              setError("");
+              try {
+          '''
+          new_start = '''    reviewInFlightRef.current = true;
+              setReviewing(true);
+              setError("");
+              let reviewPersisted = false;
+              try {
+          '''
+
+          old_success = '''      setSession(result.activeSession);
+              setRatings((current) => ({ ...current, [currentItem.id]: rating }));
+              if (restoreFocusAfterSave) {
+                window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
+              }
+              setServerLessonCompleted(result.data.lessonCompleted);
+          '''
+          new_success = '''      setSession(result.activeSession);
+              setRatings((current) => ({ ...current, [currentItem.id]: rating }));
+              reviewPersisted = true;
+              setServerLessonCompleted(result.data.lessonCompleted);
+          '''
+
+          old_finally = '''    } finally {
+              reviewInFlightRef.current = false;
+              setReviewing(false);
+            }
+          '''
+          new_finally = '''    } finally {
+              reviewInFlightRef.current = false;
+              setReviewing(false);
+              if (reviewPersisted && restoreFocusAfterSave) {
+                window.requestAnimationFrame(() => lessonAdvanceRef.current?.focus({ preventScroll: true }));
+              }
+            }
+          '''
+
+          replacements = (
+              (old_start, new_start, "rateCurrent start"),
+              (old_success, new_success, "successful review state"),
+              (old_finally, new_finally, "rateCurrent finally"),
+          )
+          for old, new, label in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one {label} block, found {count}")
+              source = source.replace(old, new, 1)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- frontend/components/lexigo-premium-app.tsx; then
+            echo "Focus patch is already applied"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          git commit -m "fix(a11y): focus lesson advance after review settles [agent-patch]"
+          git push origin HEAD:agent/issue-53-offline-review-outbox
