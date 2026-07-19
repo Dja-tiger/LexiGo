@@ -158,6 +158,11 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "learning item id must be a positive integer")
 		return
 	}
+	idempotencyKey := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	if idempotencyKey != "" && !validUUID(idempotencyKey) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_idempotency_key", "Idempotency-Key must be a UUID")
+		return
+	}
 
 	var request LessonReviewRequest
 	if err := httpx.DecodeJSON(w, r, &request); err != nil {
@@ -181,9 +186,18 @@ func (h *Handler) ReviewLessonWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.repository.ReviewLessonWord(r.Context(), userID, lessonID, wordID, request)
+	result, err := h.repository.ReviewLessonWordIdempotent(
+		r.Context(),
+		userID,
+		lessonID,
+		wordID,
+		request,
+		idempotencyKey,
+	)
 	if err != nil {
 		switch {
+		case errors.Is(err, ErrIdempotencyKeyReused):
+			httpx.WriteError(w, http.StatusConflict, "idempotency_key_reused", "Idempotency-Key was already used for a different lesson review")
 		case errors.Is(err, ErrLessonVersionConflict):
 			httpx.WriteError(w, http.StatusConflict, "lesson_version_conflict", "lesson changed on another device; reload the active lesson")
 		case errors.Is(err, ErrLessonItemNotFound):
