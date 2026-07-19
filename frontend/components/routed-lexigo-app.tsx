@@ -41,10 +41,10 @@ export function RoutedLexigoApp() {
 
   return (
     <div className="lx-routed-app" data-app-router-shell="true">
-      <RouteChrome />
       <ApplicationErrorBoundary>
         <LexigoBootstrappedApp />
       </ApplicationErrorBoundary>
+      <RouteChrome />
     </div>
   );
 }
