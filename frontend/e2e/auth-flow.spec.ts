@@ -58,7 +58,7 @@ test("registration has accessible validation, password visibility and stable fie
     });
   });
 
-  await page.goto("/?view=profile");
+  await page.goto("/profile");
   const email = page.locator("#auth-email");
   await email.fill("existing@example.com");
   await page.getByRole("tab", { name: "Регистрация" }).click();
@@ -113,7 +113,7 @@ test("forgot password preserves email and always renders a generic accepted stat
     });
   });
 
-  await page.goto("/?view=profile");
+  await page.goto("/profile");
   await page.locator("#auth-email").fill("recovery@example.com");
   await page.getByRole("button", { name: "Забыли пароль?" }).click();
   await expect(page.getByRole("heading", { name: "Восстановите доступ" })).toBeVisible();
@@ -134,9 +134,9 @@ test("one-time reset link validates confirmation and returns to login without ex
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/?view=profile#reset_token=one-time-token");
+  await page.goto("/profile#reset_token=one-time-token");
   await expect(page.getByRole("heading", { name: "Создайте новый пароль" })).toBeVisible();
-  await expect(page).toHaveURL(/\?view=profile$/);
+  await expect(page).toHaveURL(/\/profile$/);
   await expect(page.locator("#auth-password")).toHaveAttribute("name", "password");
   await expect(page.locator("#auth-password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.locator("#auth-passwordConfirmation")).toHaveAttribute("autocomplete", "new-password");
@@ -153,6 +153,6 @@ test("one-time reset link validates confirmation and returns to login without ex
   await expect(page.getByRole("status")).toContainText("Пароль изменён");
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
   await expect(page).not.toHaveURL(/reset_token=/);
-  await expect(page).toHaveURL(/\?view=profile$/);
+  await expect(page).toHaveURL(/\/profile$/);
   expect(resetPayload).toEqual({ token: "one-time-token", newPassword: "new-strong-password" });
 });
