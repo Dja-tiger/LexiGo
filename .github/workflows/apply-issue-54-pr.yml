@@ -19,7 +19,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Apply bounded catalog pagination
+      - name: Inspect bootstrap payload
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -27,40 +27,18 @@ jobs:
           git clone --quiet --depth 1 --branch agent/issue-54-catalog-pagination \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bootstrap-repo
           cd bootstrap-repo
-          mkdir -p .github/scripts
           python3 - <<'PY'
           import base64
-          import zlib
           from pathlib import Path
 
           source = Path('.github/workflows/apply-issue-54.yml').read_text()
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
-          compressed = base64.b64decode(payload)
-          script = zlib.decompress(compressed[::-1], -zlib.MAX_WBITS)
-          Path('.github/scripts/apply_issue54.py').write_bytes(script)
+          Path('/tmp/issue-54-payload.bin').write_bytes(base64.b64decode(payload))
           PY
-
-          if ! python3 .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
-            cat /tmp/issue-54-bootstrap.log
-            exit 1
-          fi
-
-          gofmt -w \
-            backend/internal/words/repository.go \
-            backend/internal/words/http.go \
-            backend/internal/learning/lesson.go \
-            backend/internal/learning/lesson_http.go \
-            backend/internal/learning/lesson_composer.go \
-            backend/internal/learning/lesson_repository.go \
-            backend/integration/catalog_pagination_test.go
-          git diff --check
-          git rm --force \
-            .github/workflows/apply-issue-54.yml \
-            .github/workflows/apply-issue-54-pr.yml \
-            .github/scripts/apply_issue54.py \
-            .issue-54-trigger
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add --all
-          git commit -m 'feat(catalog): paginate large vocabulary views'
-          git push origin HEAD:agent/issue-54-catalog-pagination
+          wc -c /tmp/issue-54-payload.bin
+          file /tmp/issue-54-payload.bin
+          printf '%s\n' '--- first 32 bytes ---'
+          xxd -l 32 /tmp/issue-54-payload.bin
+          printf '%s\n' '--- last 32 bytes ---'
+          tail -c 32 /tmp/issue-54-payload.bin | xxd
+          exit 1
