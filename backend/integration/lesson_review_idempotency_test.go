@@ -65,8 +65,8 @@ func TestLessonReviewIdempotencySurvivesConcurrentReplay(t *testing.T) {
 	defer testServer.Close()
 
 	registered := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
-		"email": fmt.Sprintf("idempotency-%d@example.com", time.Now().UnixNano()),
-		"password": "strong-password",
+		"email":       fmt.Sprintf("idempotency-%d@example.com", time.Now().UnixNano()),
+		"password":    "strong-password",
 		"displayName": "Learner",
 	}, http.StatusCreated)
 
@@ -85,10 +85,10 @@ func TestLessonReviewIdempotencySurvivesConcurrentReplay(t *testing.T) {
 		Version int64  `json:"version"`
 	}
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
-		"source": "mixed",
-		"studyMode": "recall",
+		"source":     "mixed",
+		"studyMode":  "recall",
 		"lessonSize": "15",
-		"wordIds": []int64{due.Items[0].ID},
+		"wordIds":    []int64{due.Items[0].ID},
 	}, http.StatusCreated, &lesson)
 
 	endpoint := fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, lesson.ID, due.Items[0].ID)
