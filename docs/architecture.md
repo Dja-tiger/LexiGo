@@ -39,6 +39,7 @@ LexiGo должен одновременно быть рабочим инстр�
 - устаревшие ссылки вида `/?view=...` принимаются только как migration input и заменяются каноническим URL;
 - произвольный идентификатор lesson session не публикуется: маршрут `/lesson/active` разрешает backend определить активную сессию по аутентифицированному пользователю;
 - гостевой вход в активный урок перенаправляется на `/profile` с причиной и `return_to`;
+- `/dictionary` доступен как канонический shell без сессии, но персональный список, learning status и due queue не отдаются до успешной аутентификации; guest smoke проверяет явный authentication gate, а не приватные данные;
 - App Router предоставляет route-level loading, error и not-found boundaries;
 - Service Worker кэширует HTML shell канонических маршрутов и использует `/` как fallback для динамических detail routes при offline navigation.
 
