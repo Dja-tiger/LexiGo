@@ -19,7 +19,7 @@ The response includes the current `items`, page-local `count`, global `total`, `
 
 Catalog pages request 48 entries. Changing page replaces the current entries instead of appending them, so the number of mounted cards remains bounded. Search, topic filtering and sorting are sent to the API. Guest phrase browsing applies the same 48-entry boundary to the bundled fallback catalog.
 
-Authenticated phrase pages are requested only when the user enters the phrase catalog; unrelated views do not start a background catalog request. Session restoration clears the bundled fallback before the authenticated page is shown, and both authenticated and guest views keep at most 48 phrase cards mounted. A retry reloads only the failed bounded catalog request and does not restart successful account resources.
+Authenticated phrase pages are requested only when the user enters the phrase catalog; home, library and progress views do not start a background catalog request. Session restoration clears the bundled fallback before the authenticated page is shown, and both authenticated and guest views keep at most 48 phrase cards mounted. A retry reloads only the failed bounded catalog request and does not restart successful account resources.
 
 The UI announces the visible range, exposes previous/next navigation, and supplies global position and set size to result items. Browser history retains the selected page and restores scroll when returning from a phrase card.
 
