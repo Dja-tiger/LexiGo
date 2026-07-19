@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	ErrAccountSecurityDisabled  = errors.New("account security is not configured")
+	ErrAccountSecurityDisabled = errors.New("account security is not configured")
 	ErrReauthenticationFailed  = errors.New("current password is invalid")
-	ErrCurrentSessionNotFound   = errors.New("current session is unavailable")
+	ErrCurrentSessionNotFound  = errors.New("current session is unavailable")
 )
 
 const (
-	AuditPasswordChanged       = "password_changed"
+	AuditPasswordChanged      = "password_changed"
 	AuditOtherSessionsRevoked = "other_sessions_revoked"
 )
 
@@ -23,13 +23,13 @@ const (
 // rotated token. Rotation therefore does not create duplicate devices in the
 // account UI.
 type AccountSession struct {
-	ID        string    `json:"id"`
-	Current   bool      `json:"current"`
-	UserAgent string    `json:"userAgent"`
-	IPAddress string    `json:"ipAddress,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID         string    `json:"id"`
+	Current    bool      `json:"current"`
+	UserAgent  string    `json:"userAgent"`
+	IPAddress  string    `json:"ipAddress,omitempty"`
+	CreatedAt  time.Time `json:"createdAt"`
 	LastSeenAt time.Time `json:"lastSeenAt"`
-	ExpiresAt time.Time `json:"expiresAt"`
+	ExpiresAt  time.Time `json:"expiresAt"`
 }
 
 type AccountAuditEvent struct {
