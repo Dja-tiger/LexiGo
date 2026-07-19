@@ -14,6 +14,7 @@ import "./adaptive-navigation.css";
 import "./speech-player.css";
 import "./service-worker-update.css";
 import "./review-outbox.css";
+import "./catalog-pagination.css";
 
 export const metadata: Metadata = {
   title: "LexiGo",

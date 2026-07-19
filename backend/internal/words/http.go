@@ -3,9 +3,12 @@ package words
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 )
+
+const maxCatalogFilterLength = 120
 
 type Handler struct{ repository *Repository }
 
@@ -25,28 +28,88 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
 		return
 	}
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	kind := r.URL.Query().Get("kind")
-	if kind == "" {
-		kind = "word"
+
+	queryValues := r.URL.Query()
+	page, ok := positiveQueryInteger(queryValues.Get("page"), 1, 1_000_000)
+	if !ok {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_page", "page must be a positive integer")
+		return
 	}
-	if kind != "word" && kind != "phrase" {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_kind", "kind must be word or phrase")
+	limit, ok := positiveQueryInteger(queryValues.Get("limit"), 30, 100)
+	if !ok {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_limit", "limit must be between 1 and 100")
 		return
 	}
 
-	var (
-		items []UserWord
-		err   error
-	)
+	kind := strings.TrimSpace(queryValues.Get("kind"))
+	if kind == "" {
+		kind = "word"
+	}
+	if kind != "word" && kind != "phrase" && kind != "all" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_kind", "kind must be word, phrase or all")
+		return
+	}
+	if kind == "all" {
+		kind = ""
+	}
+
+	source := strings.TrimSpace(queryValues.Get("source"))
+	if !validCatalogSource(source) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported catalog section")
+		return
+	}
+	topic := strings.TrimSpace(queryValues.Get("topic"))
+	search := strings.TrimSpace(queryValues.Get("query"))
+	if search == "" {
+		search = strings.TrimSpace(queryValues.Get("q"))
+	}
+	if len(topic) > maxCatalogFilterLength || len(search) > maxCatalogFilterLength {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_catalog_filter", "topic and query must contain at most 120 characters")
+		return
+	}
+	sortMode := strings.TrimSpace(queryValues.Get("sort"))
+	if sortMode == "" {
+		sortMode = "default"
+	}
+	if sortMode != "default" && sortMode != "az" && sortMode != "za" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_sort", "sort must be default, az or za")
+		return
+	}
+
+	options := ListOptions{
+		Page: page, Limit: limit, Kind: kind, Source: source,
+		Topic: topic, Query: search, Sort: sortMode,
+	}
+	var result Page
+	var err error
 	if dueOnly {
-		items, err = h.repository.ListDue(r.Context(), userID, limit, kind)
+		result, err = h.repository.ListDuePage(r.Context(), userID, options)
 	} else {
-		items, err = h.repository.List(r.Context(), userID, limit, kind)
+		result, err = h.repository.ListPage(r.Context(), userID, options)
 	}
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"items": items, "count": len(items)})
+	httpx.WriteJSON(w, http.StatusOK, result)
+}
+
+func positiveQueryInteger(raw string, defaultValue, maximum int) (int, bool) {
+	if strings.TrimSpace(raw) == "" {
+		return defaultValue, true
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value <= 0 || value > maximum {
+		return 0, false
+	}
+	return value, true
+}
+
+func validCatalogSource(value string) bool {
+	switch value {
+	case "", "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend":
+		return true
+	default:
+		return false
+	}
 }

@@ -154,7 +154,7 @@ async function installAccountMocks(page: Page, options: { failPhrasesOnce?: bool
   };
 }
 
-test("a failed phrase catalog does not hide progress and retries only its own resource", async ({ page }) => {
+test("an on-demand phrase catalog failure preserves progress and retries only its own resource", async ({ page }) => {
   test.setTimeout(60_000);
   const requests = await installAccountMocks(page, { failPhrasesOnce: true });
 
@@ -164,14 +164,18 @@ test("a failed phrase catalog does not hide progress and retries only its own re
   await expect(dueCard.locator("strong")).toHaveText("7");
   await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
+  await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(phraseNotice).toContainText("Сервис временно недоступен");
   await phraseNotice.getByRole("button", { name: "Повторить" }).click();
   await expect(phraseNotice).toBeHidden();
-
-  await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
   await expect(page.locator(".lx-phrase-grid").getByText("Independent retry", { exact: true })).toBeVisible();
+
+  await visibleNavigation(page).getByRole("button", { name: "Главная", exact: true }).click();
+  await expect(dueCard.locator("strong")).toHaveText("7");
+  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
   expect(requests.progressRequests()).toBe(1);
   expect(requests.phraseRequests()).toBe(2);

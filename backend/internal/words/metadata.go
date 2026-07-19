@@ -29,8 +29,10 @@ type CatalogSourceTotals struct {
 }
 
 type CatalogTopicTotal struct {
-	Topic string `json:"topic"`
-	Count int    `json:"count"`
+	Topic   string `json:"topic"`
+	Count   int    `json:"count"`
+	Words   int    `json:"words"`
+	Phrases int    `json:"phrases"`
 }
 
 type CatalogMetadata struct {
@@ -81,7 +83,10 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 	metadata.Sources.Phrases = metadata.Totals.Phrases
 
 	rows, err := tx.Query(ctx, `
-		select topic, count(*)::int
+		select topic,
+		       count(*)::int,
+		       count(*) filter (where kind = 'word')::int,
+		       count(*) filter (where kind = 'phrase')::int
 		from words
 		group by topic
 		order by topic
@@ -92,7 +97,7 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 	metadata.Topics = make([]CatalogTopicTotal, 0)
 	for rows.Next() {
 		var topic CatalogTopicTotal
-		if err := rows.Scan(&topic.Topic, &topic.Count); err != nil {
+		if err := rows.Scan(&topic.Topic, &topic.Count, &topic.Words, &topic.Phrases); err != nil {
 			rows.Close()
 			return CatalogMetadata{}, fmt.Errorf("scan catalog topic total: %w", err)
 		}

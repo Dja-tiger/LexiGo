@@ -33,6 +33,7 @@ import {
   type CatalogMetadata,
   type CatalogMetadataStatus,
 } from "../lib/catalog-metadata";
+import { CATALOG_PAGE_SIZE, catalogPageInfo, paginateCatalogEntries, type CatalogPageInfo } from "../lib/catalog-page";
 import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
 import {
   lessonCompositionDescription,
@@ -47,8 +48,6 @@ import {
   exercisePromptLabel,
   normalizeAnswer,
   normalizePartOfSpeech,
-  prepareWordItems,
-  takeLessonBlock,
   type LearningItem,
   type LessonSize,
   type WordSection,
@@ -92,6 +91,7 @@ import {
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
 import { AsyncResourceNotice, AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
+import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { SpeechPlayerButton } from "./speech-player-button";
 
 type APIItem = {
@@ -113,6 +113,12 @@ type APIItem = {
 type ItemsResponse = {
   items: APIItem[];
   count: number;
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 };
 
 type LessonItemResponse = APIItem & {
@@ -182,11 +188,19 @@ type AuthorizedResult<T> = {
   data: T;
 };
 
+type CatalogBrowseQuery = {
+  topic?: string;
+  query?: string;
+  sort?: CatalogSortMode;
+};
+
 type StartOverrides = {
   source?: LessonSource;
   size?: LessonSize;
   mode?: StudyMode;
+  topic?: string;
   items?: LearningItem[];
+  catalogQuery?: CatalogBrowseQuery;
 };
 
 type IconName =
@@ -304,7 +318,6 @@ const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
   { value: 15, label: "15" },
   { value: 30, label: "30" },
   { value: 60, label: "60" },
-  { value: "all", label: "Все" },
 ];
 
 const GOAL_OPTIONS = [15, 30, 60];
@@ -632,8 +645,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
   const [activeLessonStatus, setActiveLessonStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [hydratedUserID, setHydratedUserID] = useState("");
-  const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>(DEFAULT_PHRASE_CATALOG);
+  const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>([]);
   const [phraseCatalogStatus, setPhraseCatalogStatus] = useState<ResourceStatus>(idleResourceStatus);
+  const [phraseCatalogPageInfo, setPhraseCatalogPageInfo] = useState<CatalogPageInfo>(() => paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
+  const [phrasePage, setPhrasePage] = useState(1);
+  const [phraseSearchInput, setPhraseSearchInput] = useState("");
+  const [phraseSearch, setPhraseSearch] = useState("");
 
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -653,6 +670,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [phraseTopic, setPhraseTopic] = useState("all");
   const [phraseSortMode, setPhraseSortMode] = useState<CatalogSortMode>("default");
   const [allItemsSortMode, setAllItemsSortMode] = useState<CatalogSortMode>("default");
+  const [allItemsPageInfo, setAllItemsPageInfo] = useState<CatalogPageInfo>(() => paginateCatalogEntries([], 1).info);
+  const [allItemsPage, setAllItemsPage] = useState(1);
+  const [allItemsSearchInput, setAllItemsSearchInput] = useState("");
+  const [allItemsSearch, setAllItemsSearch] = useState("");
+  const [allItemsQuery, setAllItemsQuery] = useState<CatalogBrowseQuery>({});
+  const [allItemsStatus, setAllItemsStatus] = useState<ResourceStatus>(idleResourceStatus);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const [items, setItems] = useState<LearningItem[]>([]);
@@ -896,22 +919,30 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     () => (currentItem ? buildAnswerOptions(currentItem, items) : []),
     [currentItem, items],
   );
-  const phraseTopics = useMemo(
-    () => ["all", ...Array.from(new Set(phraseCatalog.map((phrase) => phrase.topic)))],
-    [phraseCatalog],
-  );
-  const visiblePhrases = useMemo(
-    () => phraseTopic === "all" ? phraseCatalog : phraseCatalog.filter((phrase) => phrase.topic === phraseTopic),
-    [phraseCatalog, phraseTopic],
-  );
-  const sortedVisiblePhrases = useMemo(
-    () => sortLearningItems(visiblePhrases, phraseSortMode),
-    [visiblePhrases, phraseSortMode],
-  );
-  const sortedAllItems = useMemo(
-    () => sortLearningItems(items, allItemsSortMode),
-    [items, allItemsSortMode],
-  );
+  const phraseTopics = useMemo(() => {
+    const metadataTopics = catalogMetadata?.topics
+      .filter((entry) => (entry.phrases ?? 0) > 0)
+      .map((entry) => entry.topic) ?? [];
+    return ["all", ...Array.from(new Set([
+      ...metadataTopics,
+      ...DEFAULT_PHRASE_CATALOG.map((phrase) => phrase.topic),
+      ...phraseCatalog.map((phrase) => phrase.topic),
+    ]))];
+  }, [catalogMetadata, phraseCatalog]);
+  const guestPhrasePage = useMemo(() => {
+    let available = phraseTopic === "all"
+      ? DEFAULT_PHRASE_CATALOG
+      : DEFAULT_PHRASE_CATALOG.filter((phrase) => phrase.topic === phraseTopic);
+    const normalizedQuery = phraseSearch.trim().toLocaleLowerCase("en");
+    if (normalizedQuery) {
+      available = available.filter((phrase) => [phrase.prompt, phrase.answer, phrase.topic]
+        .some((value) => value.toLocaleLowerCase("en").includes(normalizedQuery)));
+    }
+    return paginateCatalogEntries(sortLearningItems(available, phraseSortMode), phrasePage);
+  }, [phrasePage, phraseSearch, phraseSortMode, phraseTopic]);
+  const sortedVisiblePhrases = session ? phraseCatalog : guestPhrasePage.items;
+  const activePhrasePageInfo = session ? phraseCatalogPageInfo : guestPhrasePage.info;
+  const sortedAllItems = items;
   const selectedPhrase = navigation.detail
     ? phraseCatalog.find((phrase) => itemKey(phrase) === navigation.detail)
       ?? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === navigation.detail)
@@ -990,18 +1021,31 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   const loadItems = useCallback(async (
     activeSession: Session,
-    kind: "word" | "phrase",
+    kind: "word" | "phrase" | "all",
     dueOnly: boolean,
+    options: { source?: LessonSource; topic?: string; query?: string; sort?: CatalogSortMode; page?: number; limit?: number } = {},
     signal?: AbortSignal,
   ) => {
     const endpoint = dueOnly ? "/api/v1/words/due" : "/api/v1/words";
+    const parameters = new URLSearchParams({
+      kind,
+      page: String(options.page ?? 1),
+      limit: String(options.limit ?? CATALOG_PAGE_SIZE),
+      sort: options.sort ?? "default",
+    });
+    if (options.source) parameters.set("source", options.source);
+    if (options.topic) parameters.set("topic", options.topic);
+    if (options.query) parameters.set("query", options.query);
     const result = await authorizedRequest<ItemsResponse>(
       activeSession,
-      `${endpoint}?kind=${kind}&limit=1000`,
+      `${endpoint}?${parameters.toString()}`,
       { signal },
       isItemsResponsePayload,
     );
-    return { activeSession: result.activeSession, items: result.data.items.map(toLearningItem) };
+    return {
+      activeSession: result.activeSession,
+      response: { ...result.data, items: result.data.items.map(toLearningItem) },
+    };
   }, []);
 
   const loadProgressResource = useCallback(async (
@@ -1031,16 +1075,27 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   const loadPhraseCatalogResource = useCallback(async (
     activeSession: Session,
+    options: { page: number; topic: string; query: string; sort: CatalogSortMode },
     signal?: AbortSignal,
     adoptSession = true,
   ): Promise<Session | null> => {
     setPhraseCatalogStatus(loadingResourceStatus());
     try {
-      const result = await loadItems(activeSession, "phrase", false, signal);
+      const result = await loadItems(activeSession, "phrase", false, {
+        source: "phrases",
+        page: options.page,
+        topic: options.topic === "all" ? "" : options.topic,
+        query: options.query,
+        sort: options.sort,
+      }, signal);
       if (signal?.aborted) return null;
-      setPhraseCatalog(result.items);
+      setPhraseCatalog(result.response.items);
+      setPhraseCatalogPageInfo(catalogPageInfo(result.response));
+      setPhrasePage(catalogPageInfo(result.response).page);
       setPhraseCatalogStatus(readyResourceStatus());
-      if (adoptSession) setSession(result.activeSession);
+      if (adoptSession) {
+        setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+      }
       return result.activeSession;
     } catch (requestError) {
       if (signal?.aborted) return null;
@@ -1088,10 +1143,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       if (cancelled) return;
       setProgress(null);
       setActiveLesson(null);
-      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      setPhraseCatalog([]);
+      setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
+      setPhrasePage(1);
+      setPhraseCatalogStatus(idleResourceStatus());
       void Promise.all([
         loadProgressResource(activeSession, controller.signal, false),
-        loadPhraseCatalogResource(activeSession, controller.signal, false),
         loadActiveLessonResource(activeSession, controller.signal, false),
       ]).then((sessions) => {
         if (cancelled) return;
@@ -1109,8 +1166,33 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     session,
     hydratedUserID,
     loadActiveLessonResource,
-    loadPhraseCatalogResource,
     loadProgressResource,
+  ]);
+
+  useEffect(() => {
+    if (!session || navigation.view !== "phrases" || navigation.detail) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void loadPhraseCatalogResource(session, {
+        page: phrasePage,
+        topic: phraseTopic,
+        query: phraseSearch,
+        sort: phraseSortMode,
+      }, controller.signal);
+    }, 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [
+    loadPhraseCatalogResource,
+    navigation.detail,
+    navigation.view,
+    phrasePage,
+    phraseSearch,
+    phraseSortMode,
+    phraseTopic,
+    session,
   ]);
 
   useEffect(() => {
@@ -1314,10 +1396,57 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
   }
 
+  async function loadCatalogBrowsePage(
+    activeSession: Session | null,
+    resolvedSource: LessonSource,
+    requestedPage: number,
+    query: CatalogBrowseQuery,
+  ): Promise<Session | null> {
+    setAllItemsStatus(loadingResourceStatus());
+    try {
+      if (!activeSession && resolvedSource === "phrases") {
+        let available = query.topic
+? DEFAULT_PHRASE_CATALOG.filter((item) => item.topic === query.topic)
+: DEFAULT_PHRASE_CATALOG;
+        const normalizedQuery = query.query?.trim().toLocaleLowerCase("en") ?? "";
+        if (normalizedQuery) {
+available = available.filter((item) => [item.prompt, item.answer, item.topic]
+  .some((value) => value.toLocaleLowerCase("en").includes(normalizedQuery)));
+        }
+        const page = paginateCatalogEntries(sortLearningItems(available, query.sort ?? "default"), requestedPage);
+        setItems(page.items);
+        setAllItemsPage(page.info.page);
+        setAllItemsPageInfo(page.info);
+        setAllItemsStatus(readyResourceStatus());
+        return null;
+      }
+      if (!activeSession) throw new Error("Войдите, чтобы открыть каталог слов");
+      const kind = resolvedSource === "phrases" ? "phrase" : resolvedSource === "mixed" ? "all" : "word";
+      const result = await loadItems(activeSession, kind, false, {
+        source: resolvedSource,
+        page: requestedPage,
+        topic: query.topic,
+        query: query.query,
+        sort: query.sort ?? "default",
+      });
+      setItems(result.response.items);
+      const info = catalogPageInfo(result.response);
+      setAllItemsPage(info.page);
+      setAllItemsPageInfo(info);
+      setAllItemsStatus(readyResourceStatus());
+      setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+      return result.activeSession;
+    } catch (requestError) {
+      setAllItemsStatus(failedResourceStatus(requestError, "страницу каталога"));
+      throw requestError;
+    }
+  }
+
   async function startLesson(activeSession = session, overrides: StartOverrides = {}) {
     const resolvedSource = overrides.source ?? source;
     const resolvedSize = overrides.size ?? lessonSize;
     const resolvedMode = overrides.mode ?? studyMode;
+    const resolvedTopic = overrides.topic?.trim() ?? "";
     setSource(resolvedSource);
     setLessonSize(resolvedSize);
     setStudyMode(resolvedMode);
@@ -1335,57 +1464,46 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setError("");
     setLessonQueueNotice("");
     try {
-      let currentSession = activeSession;
+      const currentSession = activeSession;
       if (resolvedMode !== "all") {
         const explicitItems = overrides.items?.filter((item) => typeof item.wordId === "number") ?? [];
         if (overrides.items && explicitItems.length !== overrides.items.length) {
-          throw new Error("Выбранные элементы ещё не синхронизированы с сервером");
+throw new Error("Выбранные элементы ещё не синхронизированы с сервером");
         }
         const result = await authorizedRequest<LessonSessionResponse>(
-          currentSession as Session,
-          "/api/v1/lessons",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              source: resolvedSource,
-              studyMode: resolvedMode,
-              lessonSize: String(resolvedSize),
-              ...(overrides.items ? { wordIds: explicitItems.map((item) => item.wordId) } : {}),
-            }),
-          },
+currentSession as Session,
+"/api/v1/lessons",
+{
+  method: "POST",
+  body: JSON.stringify({
+    source: resolvedSource,
+    studyMode: resolvedMode,
+    lessonSize: String(resolvedSize),
+    ...(resolvedTopic ? { topic: resolvedTopic } : {}),
+    ...(overrides.items ? { wordIds: explicitItems.map((item) => item.wordId) } : {}),
+  }),
+},
         );
         setSession(result.activeSession);
         if (applyLesson(result.data)) {
-          setLessonQueueNotice(mixedLessonFallbackMessage(result.data));
-          navigate({ view: "lesson", source: resolvedSource });
+setLessonQueueNotice(mixedLessonFallbackMessage(result.data));
+navigate({ view: "lesson", source: resolvedSource });
         }
         return;
       }
 
-      let available: LearningItem[];
-      if (resolvedSource === "phrases") {
-        available = overrides.items ?? phraseCatalog;
-      } else if (resolvedSource === "mixed") {
-        const wordsResult = await loadItems(currentSession as Session, "word", false);
-        currentSession = wordsResult.activeSession;
-        const phrasesResult = await loadItems(currentSession, "phrase", false);
-        currentSession = phrasesResult.activeSession;
-        available = [...prepareWordItems(wordsResult.items, "mixed"), ...phrasesResult.items];
-      } else {
-        const result = await loadItems(currentSession as Session, "word", false);
-        currentSession = result.activeSession;
-        available = prepareWordItems(result.items, resolvedSource);
-      }
-
-      const lessonItems = takeLessonBlock(available, resolvedSize);
-      setSession(currentSession as Session);
+      const browseQuery = overrides.catalogQuery ?? {};
+      setAllItemsQuery(browseQuery);
+      setAllItemsSearchInput(browseQuery.query ?? "");
+      setAllItemsSearch(browseQuery.query ?? "");
+      setAllItemsSortMode(browseQuery.sort ?? "default");
+      await loadCatalogBrowsePage(currentSession, resolvedSource, 1, browseQuery);
       setActiveLesson(null);
-      setItems(lessonItems);
       setCurrentIndex(0);
       setRatings({});
       resetCardState(resolvedMode);
       setLessonStarted(true);
-      setLessonComplete(lessonItems.length === 0);
+      setLessonComplete(false);
       setServerLessonCompleted(false);
       setServerNextIndex(null);
       setServerSkippedItems(0);
@@ -1510,7 +1628,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setProgressStatus(idleResourceStatus());
       setActiveLesson(null);
       setActiveLessonStatus(idleResourceStatus());
-      setPhraseCatalog(DEFAULT_PHRASE_CATALOG);
+      setPhraseCatalog([]);
+      setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
+      setPhrasePage(1);
+      setPhraseSearchInput("");
+      setPhraseSearch("");
       setPhraseCatalogStatus(idleResourceStatus());
       setHydratedUserID("");
       clearLessonState();
@@ -2063,46 +2185,105 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     void startLesson(session, { source: "phrases", size: 15, mode: "study", items: [selectedPhrase] });
   }
 
+  function openPhraseDetail(phrase: LearningItem) {
+    navigate({ view: "phrases", detail: itemKey(phrase) });
+  }
+
+  function backToPhraseCatalog() {
+    const destination = navigationTabs.destination("phrases");
+    navigate({ view: "phrases" }, true, { scroll: destination.scroll });
+  }
+
+  function changePhrasePage(page: number) {
+    setPhrasePage(page);
+    window.requestAnimationFrame(() => document.getElementById("phrase-catalog-results")?.scrollIntoView({ block: "start", behavior: navigationScrollBehavior(window) }));
+  }
+
+  function applyPhraseSearch() {
+    setPhrasePage(1);
+    setPhraseSearch(phraseSearchInput.trim());
+  }
+
+  function clearPhraseSearch() {
+    setPhraseSearchInput("");
+    setPhraseSearch("");
+    setPhrasePage(1);
+  }
+
+  async function changeAllItemsPage(page: number, query = allItemsQuery) {
+    setBusy(true);
+    setError("");
+    try {
+      await loadCatalogBrowsePage(session, source, page, query);
+      window.requestAnimationFrame(() => document.getElementById("all-items-results")?.scrollIntoView({ block: "start", behavior: navigationScrollBehavior(window) }));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить страницу каталога");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function applyAllItemsSearch() {
+    const query = { ...allItemsQuery, query: allItemsSearchInput.trim() };
+    setAllItemsSearch(query.query ?? "");
+    setAllItemsQuery(query);
+    void changeAllItemsPage(1, query);
+  }
+
+  function clearAllItemsSearch() {
+    setAllItemsSearchInput("");
+    setAllItemsSearch("");
+    const query = { ...allItemsQuery, query: "" };
+    setAllItemsQuery(query);
+    void changeAllItemsPage(1, query);
+  }
+
+  function changeAllItemsSort(mode: CatalogSortMode) {
+    updateCatalogSort("all-items", mode);
+    const query = { ...allItemsQuery, sort: mode };
+    setAllItemsQuery(query);
+    void changeAllItemsPage(1, query);
+  }
+
   function renderPhrases() {
     if (selectedPhrase) {
       return (
         <section className="lx-detail-card">
-          <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "phrases" })}>← Все фразы</button>
-          <div className="lx-detail-content">
-            <span lang="en">{selectedPhrase.topic}</span>
-            <div className="lx-detail-speech-row">
-              <h1 lang="en">{selectedPhrase.prompt}</h1>
-              <SpeechPlayerButton text={selectedPhrase.prompt}><Icon name="volume" /></SpeechPlayerButton>
-            </div>
-            <strong lang="ru">{selectedPhrase.answer}</strong>
-            {selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}
-            {selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}
-            {selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}
-            <div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div>
-          </div>
+<button className="lx-button ghost" type="button" onClick={backToPhraseCatalog}>← Все фразы</button>
+<div className="lx-detail-content">
+  <span lang="en">{selectedPhrase.topic}</span>
+  <div className="lx-detail-speech-row">
+    <h1 lang="en">{selectedPhrase.prompt}</h1>
+    <SpeechPlayerButton text={selectedPhrase.prompt}><Icon name="volume" /></SpeechPlayerButton>
+  </div>
+  <strong lang="ru">{selectedPhrase.answer}</strong>
+  {selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}
+  {selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}
+  {selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}
+  <div className="lx-hero-actions"><button className="lx-button primary" type="button" onClick={startSelectedPhraseLesson}>Изучить эту фразу</button><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "recall" })}>Повторить due-фразы</button></div>
+</div>
         </section>
       );
     }
     const phrasesPending = Boolean(session && (phraseCatalogStatus.phase === "idle" || phraseCatalogStatus.phase === "loading"));
-    if (phrasesPending) {
-      return <><section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Загружаем актуальный каталог и доступные темы.</p></div></section><AsyncSkeletonGrid label="Загружаем каталог фраз" /></>;
-    }
-    if (session && phraseCatalogStatus.phase === "error" && phraseCatalogStatus.problem) {
-      return <AsyncStatePanel label="Каталог фраз недоступен" kind="error" title={phraseCatalogStatus.problem.title} message={phraseCatalogStatus.problem.message} reference={phraseCatalogStatus.problem.correlationId} actionLabel={phraseCatalogStatus.problem.retryable ? "Повторить" : undefined} onAction={phraseCatalogStatus.problem.retryable ? () => void loadPhraseCatalogResource(session) : undefined} />;
-    }
-    if (sortedVisiblePhrases.length === 0) {
-      return <AsyncStatePanel label="Каталог фраз пуст" kind="empty" title="В этой теме пока нет фраз" message={phraseTopic === "all" ? "Каталог синхронизирован, но доступные фразы отсутствуют." : "Сбросьте фильтр темы или выберите другой раздел."} actionLabel="Показать все темы" onAction={() => setPhraseTopic("all")} />;
-    }
+    const phrasePageInfo = activePhrasePageInfo;
+    const topicValue = phraseTopic === "all" ? "" : phraseTopic;
     return (
       <>
         <section className="lx-page-heading"><div><span>ТЕХНИЧЕСКИЕ ФРАЗЫ</span><h1>Готовые формулировки для работы</h1><p>Incident updates, architecture review, data engineering, performance и release communication. <span data-catalog-count-state={catalogMetadataStatus}>{catalogCountText(catalogMetadata, catalogMetadataStatus, "phrases", ["фраза", "фразы", "фраз"])} в каталоге.</span></p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
         <div className="lx-topic-filter" role="radiogroup" aria-label="Тема фраз" aria-orientation="horizontal">{phraseTopics.map((topic) => {
-          const selected = phraseTopic === topic;
-          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => setPhraseTopic(topic)} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, setPhraseTopic, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
+const selected = phraseTopic === topic;
+return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => { setPhraseTopic(topic); setPhrasePage(1); }} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, (next) => { setPhraseTopic(next); setPhrasePage(1); }, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
         })}</div>
-        <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => updateCatalogSort("phrases", mode)} />
-        <section className="lx-phrase-grid">{sortedVisiblePhrases.map((phrase) => <button key={itemKey(phrase)} type="button" onClick={() => navigate({ view: "phrases", detail: itemKey(phrase) })}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button>)}</section>
-        <div className="lx-page-actions"><button className="lx-button ghost" type="button" onClick={() => startLesson(session, { source: "phrases", size: "all", mode: "all", items: sortedVisiblePhrases })}>Посмотреть выбранные</button><button className="lx-button primary" type="button" onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "study", items: sortedVisiblePhrases })}>Изучать выбранную тему</button></div>
+        <CatalogSearchForm value={phraseSearchInput} onChange={setPhraseSearchInput} onSubmit={applyPhraseSearch} onClear={clearPhraseSearch} label="Поиск по каталогу фраз" />
+        <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => { updateCatalogSort("phrases", mode); setPhrasePage(1); }} />
+        {session && phraseCatalogStatus.phase === "error" && phraseCatalogStatus.problem ? <AsyncStatePanel label="Каталог фраз недоступен" kind="error" title={phraseCatalogStatus.problem.title} message={phraseCatalogStatus.problem.message} reference={phraseCatalogStatus.problem.correlationId} actionLabel={phraseCatalogStatus.problem.retryable ? "Повторить" : undefined} onAction={phraseCatalogStatus.problem.retryable ? () => void loadPhraseCatalogResource(session, { page: phrasePage, topic: phraseTopic, query: phraseSearch, sort: phraseSortMode }) : undefined} /> : null}
+        {phrasesPending && sortedVisiblePhrases.length === 0 ? <AsyncSkeletonGrid label="Загружаем каталог фраз" /> : null}
+        {!phrasesPending && sortedVisiblePhrases.length === 0 ? <AsyncStatePanel label="Каталог фраз пуст" kind="empty" title="По заданным условиям фразы не найдены" message="Сбросьте поиск или выберите другую тему." actionLabel="Сбросить фильтры" onAction={() => { setPhraseTopic("all"); clearPhraseSearch(); }} /> : null}
+        <CatalogPagination info={phrasePageInfo} busy={phrasesPending} onPageChange={changePhrasePage} />
+        <section id="phrase-catalog-results" className="lx-phrase-grid" role="list" aria-label="Результаты каталога фраз" aria-busy={phrasesPending}>{sortedVisiblePhrases.map((phrase, index) => <div key={itemKey(phrase)} role="listitem" aria-posinset={(phrasePageInfo.page - 1) * phrasePageInfo.pageSize + index + 1} aria-setsize={phrasePageInfo.total}><button type="button" onClick={() => openPhraseDetail(phrase)}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button></div>)}</section>
+        <CatalogPagination info={phrasePageInfo} busy={phrasesPending} onPageChange={changePhrasePage} label="Навигация под списком фраз" />
+        <div className="lx-page-actions"><button className="lx-button ghost" type="button" disabled={phrasePageInfo.total === 0} onClick={() => startLesson(session, { source: "phrases", size: "all", mode: "all", catalogQuery: { topic: topicValue, query: phraseSearch, sort: phraseSortMode } })}>Посмотреть выбранные</button><button className="lx-button primary" type="button" disabled={phrasePageInfo.total === 0} onClick={() => startLesson(session, { source: "phrases", size: 30, mode: "study", topic: topicValue, ...(phraseSearch ? { items: sortedVisiblePhrases } : {}) })}>Изучать выбранную тему</button></div>
       </>
     );
   }
@@ -2399,11 +2580,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function renderAllItems() {
+    const loading = allItemsStatus.phase === "loading" || allItemsStatus.phase === "idle";
     return (
       <section className="lx-all-items">
-        <div className="lx-lesson-top"><button className="lx-button ghost" type="button" onClick={() => navigate({ view: source === "phrases" ? "phrases" : "learn", source })}>← Назад</button><strong>{items.length} элементов · {sourceLabel(source)}</strong></div>
-        <CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={(mode) => updateCatalogSort("all-items", mode)} />
-        <div>{sortedAllItems.map((item, index) => <article key={item.id}><span>{index + 1}</span><div><small>{item.partOfSpeech} · {item.topic}</small><h3 lang="en">{item.prompt}</h3>{item.cloze ? <p lang="en">{item.cloze}</p> : null}<strong lang="ru">{item.answer}</strong>{item.examples[0] ? <p lang="en">{item.examples[0]}</p> : null}</div></article>)}</div>
+        <div className="lx-lesson-top"><button className="lx-button ghost" type="button" onClick={() => navigate({ view: source === "phrases" ? "phrases" : "learn", source })}>← Назад</button><strong>{allItemsPageInfo.total.toLocaleString("ru-RU")} элементов · {sourceLabel(source)}</strong></div>
+        <CatalogSearchForm value={allItemsSearchInput} onChange={setAllItemsSearchInput} onSubmit={applyAllItemsSearch} onClear={clearAllItemsSearch} label="Поиск по открытому каталогу" />
+        <CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={changeAllItemsSort} />
+        {allItemsStatus.phase === "error" && allItemsStatus.problem ? <AsyncStatePanel label="Каталог недоступен" kind="error" title={allItemsStatus.problem.title} message={allItemsStatus.problem.message} reference={allItemsStatus.problem.correlationId} actionLabel={allItemsStatus.problem.retryable ? "Повторить" : undefined} onAction={allItemsStatus.problem.retryable ? () => void changeAllItemsPage(allItemsPage) : undefined} /> : null}
+        {loading && sortedAllItems.length === 0 ? <AsyncSkeletonGrid label="Загружаем страницу каталога" /> : null}
+        {!loading && sortedAllItems.length === 0 ? <AsyncStatePanel label="Каталог пуст" kind="empty" title="По заданным условиям ничего не найдено" message={allItemsSearch ? "Сбросьте поиск или измените раздел." : "В этом разделе пока нет доступных элементов."} actionLabel={allItemsSearch ? "Сбросить поиск" : undefined} onAction={allItemsSearch ? clearAllItemsSearch : undefined} /> : null}
+        <CatalogPagination info={allItemsPageInfo} busy={loading || busy} onPageChange={(page) => void changeAllItemsPage(page)} />
+        <div id="all-items-results" role="list" aria-label="Страница элементов каталога" aria-busy={loading}>{sortedAllItems.map((item, index) => <article key={item.id} role="listitem" aria-posinset={(allItemsPageInfo.page - 1) * allItemsPageInfo.pageSize + index + 1} aria-setsize={allItemsPageInfo.total}><span>{(allItemsPageInfo.page - 1) * allItemsPageInfo.pageSize + index + 1}</span><div><small>{item.partOfSpeech} · {item.topic}</small><h3 lang="en">{item.prompt}</h3>{item.cloze ? <p lang="en">{item.cloze}</p> : null}<strong lang="ru">{item.answer}</strong>{item.examples[0] ? <p lang="en">{item.examples[0]}</p> : null}</div></article>)}</div>
+        <CatalogPagination info={allItemsPageInfo} busy={loading || busy} onPageChange={(page) => void changeAllItemsPage(page)} label="Навигация под открытым каталогом" />
       </section>
     );
   }
@@ -2543,7 +2731,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         {session ? <div className="lx-resource-stack">
           {navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}
           <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
-          <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session)} />
+          <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session, { page: phrasePage, topic: phraseTopic, query: phraseSearch, sort: phraseSortMode })} />
           <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
         </div> : null}
         {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}

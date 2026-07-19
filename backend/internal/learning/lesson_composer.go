@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -31,7 +32,7 @@ func (r *Repository) PreviewLesson(ctx context.Context, userID string, request L
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	candidates, err := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode)
+	candidates, err := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode, request.Topic)
 	if err != nil {
 		return LessonPreview{}, err
 	}
@@ -53,6 +54,7 @@ func queryLessonCandidates(
 	userID string,
 	source string,
 	studyMode AnswerMode,
+	topic string,
 ) ([]lessonCandidate, error) {
 	dueOnly := studyMode == AnswerModeRecall || studyMode == AnswerModeChoice
 	rows, err := tx.Query(ctx, `
@@ -76,8 +78,9 @@ func queryLessonCandidates(
 		      or ($2 = 'data-engineering' and word.kind = 'word' and word.topic = 'Data Engineering')
 		      or ($2 = 'backend' and word.kind = 'word' and word.topic = 'Backend Development')
 		  )
+		  and ($4 = '' or word.topic = $4)
 		order by user_word.due_at, word.id
-	`, userID, source, dueOnly)
+	`, userID, source, dueOnly, strings.TrimSpace(topic))
 	if err != nil {
 		return nil, fmt.Errorf("query lesson candidates: %w", err)
 	}
@@ -246,9 +249,6 @@ func alternateLessonKinds(words, phrases []lessonCandidate, limit int, startKind
 }
 
 func lessonSizeLimit(value string) int {
-	if value == "all" {
-		return 1000
-	}
 	limit, _ := strconv.Atoi(value)
 	return limit
 }

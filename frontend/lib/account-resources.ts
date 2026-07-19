@@ -73,10 +73,11 @@ function isLearningItem(value: unknown): boolean {
 }
 
 export function isItemsResponsePayload(value: unknown): boolean {
-  return isRecord(value)
-    && Array.isArray(value.items)
-    && value.items.every(isLearningItem)
-    && isNonNegativeNumber(value.count);
+  if (!isRecord(value) || !Array.isArray(value.items) || !value.items.every(isLearningItem) || !isNonNegativeNumber(value.count)) return false;
+  const optionalNonNegative = [value.total, value.totalPages].every((entry) => entry === undefined || isNonNegativeNumber(entry));
+  const optionalPositive = [value.page, value.pageSize].every((entry) => entry === undefined || (isFiniteNumber(entry) && entry > 0));
+  const optionalFlags = [value.hasPrevious, value.hasNext].every((entry) => entry === undefined || typeof entry === "boolean");
+  return optionalNonNegative && optionalPositive && optionalFlags;
 }
 
 export function isActiveLessonPayload(value: unknown): boolean {
