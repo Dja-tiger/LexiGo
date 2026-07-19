@@ -32,6 +32,8 @@ const WORD = {
 
 type ServerState = {
   authenticated: boolean;
+  activeLesson: boolean;
+  lessonCreateAttempts: number;
   reviewAttempts: number;
 };
 
@@ -112,7 +114,28 @@ async function installAPI(context: BrowserContext, state: ServerState) {
       const phraseRequest = url.searchParams.get("kind") === "phrase";
       return json(route, 200, phraseRequest ? { items: [], count: 0 } : { items: [WORD], count: 1 });
     }
+    if (path === "/api/v1/lessons/preview") {
+      return json(route, 200, {
+        source: "mixed",
+        studyMode: "study",
+        lessonSize: "30",
+        composition: {
+          total: 1,
+          words: 1,
+          phrases: 0,
+          due: 1,
+          new: 0,
+          scheduled: 0,
+          availableWords: 1,
+          availablePhrases: 0,
+          fallback: "words_only",
+        },
+      });
+    }
     if (path === "/api/v1/lessons/active") {
+      if (!state.activeLesson) {
+        return json(route, 404, { error: { code: "active_lesson_not_found", message: "none" } });
+      }
       return json(route, 200, {
         id: LESSON_ID,
         source: "mixed",
@@ -125,6 +148,10 @@ async function installAPI(context: BrowserContext, state: ServerState) {
         createdAt: "2026-07-19T00:00:00Z",
         updatedAt: "2026-07-19T00:00:00Z",
       });
+    }
+    if (path === "/api/v1/lessons" && request.method() === "POST") {
+      state.lessonCreateAttempts += 1;
+      return json(route, 500, { error: { code: "unexpected_online_request", message: "lesson start must remain local" } });
     }
     if (path.endsWith(`/lessons/${LESSON_ID}/words/${WORD.id}/review`)) {
       state.reviewAttempts += 1;
@@ -153,7 +180,12 @@ async function queuedReviews(page: Page): Promise<Array<{ userId: string; status
 }
 
 test("adopts an in-app login before persisting an offline lesson review", async ({ context, page }) => {
-  const state: ServerState = { authenticated: false, reviewAttempts: 0 };
+  const state: ServerState = {
+    authenticated: false,
+    activeLesson: true,
+    lessonCreateAttempts: 0,
+    reviewAttempts: 0,
+  };
   await installAPI(context, state);
 
   await page.goto("/?view=profile");
@@ -174,4 +206,23 @@ test("adopts an in-app login before persisting an offline lesson review", async 
     { userId: USER_ID, status: "pending" },
   ]);
   expect(state.reviewAttempts).toBe(0);
+});
+
+test("blocks a new network lesson with an explicit offline state", async ({ context, page }) => {
+  const state: ServerState = {
+    authenticated: true,
+    activeLesson: false,
+    lessonCreateAttempts: 0,
+    reviewAttempts: 0,
+  };
+  await installAPI(context, state);
+
+  await page.goto("/?view=learn");
+  await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
+  await context.setOffline(true);
+  await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Начать урок", exact: true }).click();
+  await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
+    .toContainText("Начните новый урок после восстановления соединения.");
+  expect(state.lessonCreateAttempts).toBe(0);
 });
