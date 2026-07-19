@@ -6,7 +6,9 @@ RUN npm ci --no-audit --no-fund
 FROM node:22-alpine AS build
 WORKDIR /app
 ARG API_INTERNAL_URL=http://api:8080
+ARG APP_BUILD_ID=local
 ENV API_INTERNAL_URL=$API_INTERNAL_URL
+ENV APP_BUILD_ID=$APP_BUILD_ID
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
