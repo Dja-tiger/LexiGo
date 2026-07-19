@@ -73,6 +73,14 @@ execute() {
     return
   fi
 
+  if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "typecheck" ]]; then
+    container_run bash -Eeuo pipefail -c '
+      set -o pipefail
+      npm run typecheck 2>&1 | tee typecheck.log
+    '
+    return
+  fi
+
   container_run "$@"
 }
 
@@ -97,7 +105,7 @@ extract_artifacts() {
     "$PLAYWRIGHT_IMAGE" \
     bash -Eeuo pipefail -c '
       paths=()
-      for path in eslint.log vitest.log next-start.log playwright-report test-results; do
+      for path in eslint.log typecheck.log vitest.log next-start.log playwright-report test-results; do
         if [[ -e "$path" ]]; then
           paths+=("$path")
         fi
