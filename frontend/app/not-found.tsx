@@ -10,9 +10,9 @@ export default function NotFound() {
   return (
     <main className="lx-route-boundary" role="main">
       <div className="lx-bootstrap-mark" aria-hidden="true">404</div>
-      <strong>Такого раздела нет</strong>
+      <h1>Такого раздела нет</h1>
       <span>Адрес устарел или был введён с ошибкой.</span>
-      <Link className="lx-button primary" href="/">Открыть главную</Link>
+      <Link className="lx-button primary" href="/" prefetch={false}>Открыть главную</Link>
     </main>
   );
 }
