@@ -40,8 +40,10 @@ export function serviceWorkerBuildFromURL(scriptURL: string | null | undefined):
   }
 }
 
-export function isLessonRoute(search: string): boolean {
-  return new URLSearchParams(search).get("view") === "lesson";
+export function isLessonRoute(search: string, pathname?: string): boolean {
+  const resolvedPathname = pathname ?? (typeof window === "undefined" ? "" : window.location.pathname);
+  return /^\/lesson\/[^/]+\/?$/.test(resolvedPathname)
+    || new URLSearchParams(search).get("view") === "lesson";
 }
 
 export function isVersionMismatchError(value: unknown): boolean {
@@ -68,7 +70,7 @@ export function createServiceWorkerRecoverySnapshot(input: {
     requestedAt: (input.requestedAt ?? new Date()).toISOString(),
     fromBuild: normalizeBuildID(input.buildID),
     href: input.href,
-    resumeHref: input.lessonActive ? "/" : input.href,
+    resumeHref: input.lessonActive ? "/lesson/active" : input.href,
     lessonActive: input.lessonActive,
   };
 }
