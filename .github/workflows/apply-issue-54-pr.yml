@@ -28,7 +28,7 @@ jobs:
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bootstrap-repo
           cd bootstrap-repo
           mkdir -p .github/scripts
-          python - <<'PY'
+          python3 - <<'PY'
           import base64
           import gzip
           from pathlib import Path
@@ -38,7 +38,7 @@ jobs:
           Path('.github/scripts/apply_issue54.py').write_bytes(gzip.decompress(base64.b64decode(payload)))
           PY
 
-          if ! python .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
+          if ! python3 .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
             cat /tmp/issue-54-bootstrap.log
             exit 1
           fi
