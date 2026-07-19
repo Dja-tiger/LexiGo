@@ -63,6 +63,18 @@ function queuedResponse(message: string, code = "lesson_review_queued"): Respons
   });
 }
 
+function offlineLessonStartResponse(): Response {
+  return new Response(JSON.stringify({
+    error: {
+      code: "lesson_start_offline",
+      message: "Нет подключения к сети. Начните новый урок после восстановления соединения.",
+    },
+  }), {
+    status: 503,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 function conflictResponse(message: string): Response {
   return new Response(JSON.stringify({ error: { code: "lesson_review_already_queued", message } }), {
     status: 409,
@@ -93,6 +105,11 @@ function authSessionAction(request: Request): AuthSessionAction | null {
     return "adopt";
   }
   return null;
+}
+
+function isNetworkLessonStart(request: Request): boolean {
+  return request.method.toUpperCase() === "POST"
+    && new URL(request.url).pathname === "/api/v1/lessons";
 }
 
 function currentNetworkFailureCode(): "network_offline" | "network_request_failed" {
@@ -289,6 +306,9 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         return response;
       }
 
+      if (navigator.onLine === false && isNetworkLessonStart(request)) {
+        return offlineLessonStartResponse();
+      }
       if (request.method.toUpperCase() !== "POST") return originalFetch(request);
       const endpoint = parseLessonReviewEndpoint(request.url);
       if (!endpoint) return originalFetch(request);
@@ -312,6 +332,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         return originalFetch(request);
       }
       if (!payload) return originalFetch(request);
+      const durableRequestBody = JSON.stringify(payload);
 
       let record: ReviewOutboxRecord;
       try {
@@ -321,7 +342,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
           endpoint: request.url,
           reviewEndpoint: endpoint,
           payload,
-          requestBody,
+          requestBody: durableRequestBody,
         });
         await refreshSummary();
       } catch (error) {
@@ -329,7 +350,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         return queuedResponse("Не удалось безопасно сохранить ответ на устройстве. Освободите место в браузере и повторите попытку.", "lesson_review_storage_failed");
       }
 
-      if (record.requestBody !== requestBody) {
+      if (record.requestBody !== durableRequestBody) {
         return conflictResponse("Для этой карточки уже сохранена другая оценка. Дождитесь синхронизации исходного ответа.");
       }
       if (navigator.onLine === false) {
