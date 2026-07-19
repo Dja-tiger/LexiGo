@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { restoreSession, SessionRefreshError, type Session } from "../lib/auth-session";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { LexigoPremiumApp } from "./lexigo-premium-app";
+import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 function moveToSessionScreen(reason: "expired" | "forbidden" | "invalid"): void {
   const target = new URL(window.location.href);
@@ -63,6 +64,7 @@ export function LexigoBootstrappedApp() {
 
   return (
     <>
+      <ReviewOutboxRuntime session={initialSession} />
       {notice ? (
         <div className={`lx-session-notice ${notice.kind}`} role="alert">
           <div>
