@@ -1,0 +1,36 @@
+name: Issue 55 integration controller
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  integrate:
+    if: github.event.pull_request.number == 111 && github.event.label.name == 'type: ux'
+    runs-on: [self-hosted, linux, x64, lexigo-ci]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-55-real-dictionary-catalog
+          fetch-depth: 0
+      - name: Integrate dictionary catalog
+        run: |
+          python3 scripts/issue55_integrate.py
+          git rm scripts/issue55_integrate.py .github/workflows/issue-55-app-integration.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/components/lexigo-premium-app.tsx
+          git diff --cached --check
+          git commit -m 'feat(dictionary): integrate catalog with session and lessons'
+          git push origin HEAD:agent/issue-55-real-dictionary-catalog
+      - name: Remove controller
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+          git rm .github/workflows/issue-55-integration-controller.yml
+          git commit -m 'chore(ci): remove issue 55 integration controller [skip ci]'
+          git push origin HEAD:main
