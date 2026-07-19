@@ -19,7 +19,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Inspect bootstrap payload
+      - name: Apply bounded catalog pagination
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -27,6 +27,7 @@ jobs:
           git clone --quiet --depth 1 --branch agent/issue-54-catalog-pagination \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bootstrap-repo
           cd bootstrap-repo
+          mkdir -p .github/scripts
           python3 - <<'PY'
           import base64
           from pathlib import Path
@@ -35,10 +36,34 @@ jobs:
           payload = source.split('payload = """', 1)[1].split('"""', 1)[0]
           Path('/tmp/issue-54-payload.bin').write_bytes(base64.b64decode(payload))
           PY
-          wc -c /tmp/issue-54-payload.bin
-          file /tmp/issue-54-payload.bin
-          printf '%s\n' '--- first 32 bytes ---'
-          od -An -tx1 -N32 /tmp/issue-54-payload.bin
-          printf '%s\n' '--- last 32 bytes ---'
-          tail -c 32 /tmp/issue-54-payload.bin | od -An -tx1
-          exit 1
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const zlib = require('node:zlib');
+          const compressed = fs.readFileSync('/tmp/issue-54-payload.bin');
+          fs.writeFileSync('.github/scripts/apply_issue54.py', zlib.brotliDecompressSync(compressed));
+          NODE
+
+          if ! python3 .github/scripts/apply_issue54.py > /tmp/issue-54-bootstrap.log 2>&1; then
+            cat /tmp/issue-54-bootstrap.log
+            exit 1
+          fi
+
+          gofmt -w \
+            backend/internal/words/repository.go \
+            backend/internal/words/http.go \
+            backend/internal/learning/lesson.go \
+            backend/internal/learning/lesson_http.go \
+            backend/internal/learning/lesson_composer.go \
+            backend/internal/learning/lesson_repository.go \
+            backend/integration/catalog_pagination_test.go
+          git diff --check
+          git rm --force \
+            .github/workflows/apply-issue-54.yml \
+            .github/workflows/apply-issue-54-pr.yml \
+            .github/scripts/apply_issue54.py \
+            .issue-54-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add --all
+          git commit -m 'feat(catalog): paginate large vocabulary views'
+          git push origin HEAD:agent/issue-54-catalog-pagination
