@@ -16,6 +16,7 @@ func TestOpenAPICatalogPaginationResponsesRemainNested(t *testing.T) {
 		"  /api/v1/words:\n",
 		"  /api/v1/words/due:\n",
 		"  /api/v1/words/{wordID}:\n",
+		"      operationId: getWord",
 		"        - { name: status, in: query, schema: { type: string, enum: [new, learning, review, mastered] } }",
 		"          description: One bounded catalog page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
 		"          description: One bounded due page.\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/CatalogPage\"",
