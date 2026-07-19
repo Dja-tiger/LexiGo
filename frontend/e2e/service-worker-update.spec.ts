@@ -163,7 +163,7 @@ test("a waiting incompatible build activates only after explicit confirmation", 
 test("an update can wait until the active lesson route is left", async ({ page }) => {
   await installServiceWorkerMock(page);
   await page.goto("/");
-  await page.evaluate(() => window.history.pushState({}, "", "/?view=lesson&source=mixed"));
+  await page.evaluate(() => window.history.pushState({}, "", "/lesson/active?source=mixed"));
 
   const update = page.getByTestId("service-worker-update");
   const defer = update.getByRole("button", { name: "После урока" });

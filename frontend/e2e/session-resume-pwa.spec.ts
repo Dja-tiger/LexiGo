@@ -130,7 +130,7 @@ async function expectRecoverableBootstrap(page: Page) {
   });
   await expect(recoverable).toBeVisible();
   await expect(recoverable.getByRole("button", { name: "Повторить восстановление" })).toBeVisible();
-  await expect(page).not.toHaveURL(/view=profile&session=/);
+  await expect(page).not.toHaveURL(/\/profile\?session=/);
 }
 
 test("iOS PWA restores the session automatically after the network returns", async ({ page }, testInfo) => {
@@ -151,6 +151,7 @@ test("iOS PWA restores the session automatically after the network returns", asy
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
   await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
   await expect(page.getByText("Сессия не удалена. Пароль вводить заново не нужно.")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test("iOS pageshow resumes a recoverable session after a transient server failure", async ({ page }, testInfo) => {
@@ -170,5 +171,6 @@ test("iOS pageshow resumes a recoverable session after a transient server failur
 
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
   await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
-  await expect(page).not.toHaveURL(/view=profile&session=/);
+  await expect(page).not.toHaveURL(/\/profile\?session=/);
+  await expect(page).toHaveURL(/\/$/);
 });

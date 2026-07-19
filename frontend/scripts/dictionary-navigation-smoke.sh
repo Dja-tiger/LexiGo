@@ -17,15 +17,16 @@ if [[ -z "$chrome" ]]; then
 fi
 
 routes=(
-  "learn|/?view=learn&source=mixed"
-  "learn|/?view=learn&source=noun"
-  "learn|/?view=learn&source=verb"
-  "learn|/?view=learn&source=adjective"
-  "phrases|/?view=phrases"
-  "learn|/?view=learn&source=daily-life"
-  "learn|/?view=learn&source=travel"
-  "learn|/?view=learn&source=data-engineering"
-  "learn|/?view=learn&source=backend"
+  "learn|/learn?source=mixed"
+  "learn|/learn?source=noun"
+  "learn|/learn?source=verb"
+  "learn|/learn?source=adjective"
+  "phrases|/phrases"
+  "learn|/learn?source=daily-life"
+  "learn|/learn?source=travel"
+  "learn|/learn?source=data-engineering"
+  "learn|/learn?source=backend"
+  "dictionary|/dictionary"
 )
 
 for entry in "${routes[@]}"; do
@@ -48,17 +49,30 @@ for entry in "${routes[@]}"; do
     exit 1
   fi
 
-  if [[ "$expected" == "phrases" ]]; then
-    grep -Fq 'class="lx-phrase-grid"' <<<"$html" || {
-      echo "Phrase catalog did not render for ${url}" >&2
-      exit 1
-    }
-  else
-    grep -Fq 'class="lx-setup-card"' <<<"$html" || {
-      echo "Lesson setup did not render for ${url}" >&2
-      exit 1
-    }
-  fi
+  case "$expected" in
+    phrases)
+      grep -Fq 'class="lx-phrase-grid"' <<<"$html" || {
+        echo "Phrase catalog did not render for ${url}" >&2
+        exit 1
+      }
+      ;;
+    dictionary)
+      # The personalized dictionary is intentionally protected. In this
+      # unauthenticated shell smoke test the correct production state is the
+      # canonical route plus its explicit authentication gate, not a private
+      # catalog list populated without a session.
+      grep -Fq 'aria-label="Словарь доступен после входа"' <<<"$html" || {
+        echo "Dictionary authentication gate did not render for ${url}" >&2
+        exit 1
+      }
+      ;;
+    *)
+      grep -Fq 'class="lx-setup-card"' <<<"$html" || {
+        echo "Lesson setup did not render for ${url}" >&2
+        exit 1
+      }
+      ;;
+  esac
 done
 
-echo "All dictionary destinations rendered successfully"
+echo "All canonical dictionary destinations rendered successfully"

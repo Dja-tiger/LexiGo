@@ -172,7 +172,7 @@ async function installBrowserMocks(page: Page) {
 }
 
 function visibleNavigation(page: Page) {
-  return page.locator(".lx-nav:visible, .lx-mobile-nav:visible");
+  return page.locator(".lx-route-nav:visible");
 }
 
 function watchRuntimeErrors(page: Page) {
@@ -216,17 +216,19 @@ test("home collections and the dictionary catalog remain unique through React na
   for (let cycle = 0; cycle < 3; cycle += 1) {
     await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
 
-    await visibleNavigation(page).getByRole("button", { name: "Словарь", exact: true }).click();
+    await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
+    await expect(page).toHaveURL(/\/dictionary$/);
     await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
     await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
 
-    await visibleNavigation(page).getByRole("button", { name: "Главная", exact: true }).click();
+    await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
+    await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
   }
 
   await page.getByRole("button", { name: /Путешествия/ }).click();
-  await expect(page).toHaveURL(/view=learn&source=travel/);
+  await expect(page).toHaveURL(/\/learn\?source=travel/);
   await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
   await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
   expect(runtimeErrors).toEqual([]);
@@ -234,7 +236,7 @@ test("home collections and the dictionary catalog remain unique through React na
 
 test("phrase sorting is React state, persists across reload and creates one toolbar", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
   await expect(page.locator('.lx-catalog-sort[data-lexigo-sort-for="phrases"]')).toHaveCount(1);
 
@@ -242,8 +244,8 @@ test("phrase sorting is React state, persists across reload and creates one tool
   await sorting.selectOption("az");
   await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
-  await visibleNavigation(page).getByRole("button", { name: "Главная", exact: true }).click();
-  await visibleNavigation(page).getByRole("button", { name: "Фразы", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();
   await expect(page.locator('.lx-catalog-sort[data-lexigo-sort-for="phrases"]')).toHaveCount(1);
   await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
@@ -258,12 +260,12 @@ test("phrase sorting is React state, persists across reload and creates one tool
 
 test("lesson tabs and speech stay declarative through repeated state transitions", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   await page.getByRole("button", { name: "Начать урок" }).click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 
   const tabs = page.locator(".lx-study-tabs").getByRole("tab");
   await expect(tabs).toHaveCount(3);
@@ -300,9 +302,8 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   expect(runtimeErrors).toEqual([]);
 });
 
-
 test("dictionary counts come from authenticated resources without fallback DOM rewriting", async ({ page }) => {
-  await page.goto("/?view=library");
+  await page.goto("/dictionary");
   await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
   await expect(page.getByText("0 слов освоено", { exact: true })).toBeVisible();

@@ -157,33 +157,21 @@ async function installMocks(page: Page) {
     const url = new URL(request.url());
     const path = url.pathname;
 
-    if (path === "/api/v1/auth/refresh") {
-      await fulfillJSON(route, 200, SESSION);
-      return;
-    }
-    if (path === "/api/v1/catalog/metadata") {
-      await fulfillJSON(route, 200, METADATA);
-      return;
-    }
-    if (path === "/api/v1/progress") {
-      await fulfillJSON(route, 200, PROGRESS);
-      return;
-    }
+    if (path === "/api/v1/auth/refresh") return fulfillJSON(route, 200, SESSION);
+    if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
+    if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
-      await fulfillJSON(route, 404, { error: { code: "not_found", message: "not found" } });
-      return;
+      return fulfillJSON(route, 404, { error: { code: "not_found", message: "not found" } });
     }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
-      await fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
-      return;
+      return fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
     }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
-      await fulfillJSON(route, 200, { items: WORDS, count: WORDS.length });
-      return;
+      return fulfillJSON(route, 200, { items: WORDS, count: WORDS.length });
     }
     if (path === "/api/v1/lessons/preview") {
       const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
-      await fulfillJSON(route, 200, {
+      return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
         lessonSize: input.lessonSize ?? "30",
@@ -198,11 +186,10 @@ async function installMocks(page: Page) {
           availablePhrases: 2,
         },
       });
-      return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string };
-      await fulfillJSON(route, 201, {
+      return fulfillJSON(route, 201, {
         id: "00000000-0000-0000-0000-000000000450",
         source: input.source,
         studyMode: input.studyMode,
@@ -214,12 +201,11 @@ async function installMocks(page: Page) {
         createdAt: "2026-07-18T00:00:00Z",
         updatedAt: "2026-07-18T00:00:00Z",
       });
-      return;
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
       lessonVersion += 1;
-      await fulfillJSON(route, 200, {
+      return fulfillJSON(route, 200, {
         wordId: reviewCount === 1 ? WORDS[0].id : PHRASES[0].id,
         status: "learning",
         easiness: 2.5,
@@ -235,10 +221,9 @@ async function installMocks(page: Page) {
         lessonSkippedItems: 0,
         lessonTotalItems: 2,
       });
-      return;
     }
 
-    await fulfillJSON(route, 404, { error: { code: "not_mocked", message: path } });
+    return fulfillJSON(route, 404, { error: { code: "not_mocked", message: path } });
   });
 }
 
@@ -287,6 +272,10 @@ async function expectNoPositiveTabIndex(page: Page) {
   expect(positive).toEqual([]);
 }
 
+function headerRoute(page: Page, view: "home" | "learn" | "phrases" | "library" | "progress") {
+  return page.locator(`[data-route-navigation="header"] [data-navigation-view="${view}"]`);
+}
+
 test.describe.configure({ timeout: 60_000 });
 
 test.beforeEach(async ({ page }) => {
@@ -309,12 +298,12 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
 
   const expected = [
     page.getByRole("link", { name: "Перейти к основному содержимому" }),
-    page.locator(".lx-brand"),
-    page.locator(".lx-nav").getByRole("button", { name: "Главная", exact: true }),
-    page.locator(".lx-nav").getByRole("button", { name: "Обучение", exact: true }),
-    page.locator(".lx-nav").getByRole("button", { name: "Фразы", exact: true }),
-    page.locator(".lx-nav").getByRole("button", { name: "Словарь", exact: true }),
-    page.locator(".lx-nav").getByRole("button", { name: "Прогресс", exact: true }),
+    page.locator(".lx-route-brand"),
+    headerRoute(page, "home"),
+    headerRoute(page, "learn"),
+    headerRoute(page, "phrases"),
+    headerRoute(page, "library"),
+    headerRoute(page, "progress"),
   ];
 
   for (const target of expected) {
@@ -325,15 +314,16 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
   await expectNoPositiveTabIndex(page);
 });
 
-test("primary flows work with Enter and Space and the calendar dialog contains and restores focus", async ({ page }, testInfo) => {
+test("primary flows work with native links, Space controls, and a focus-trapped calendar dialog", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Keyboard activation and focus containment use one deterministic desktop profile.");
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
-  const learnNavigation = page.locator(".lx-nav").getByRole("button", { name: "Обучение", exact: true });
+  const learnNavigation = headerRoute(page, "learn");
+  await expect(learnNavigation).toHaveAttribute("href", "/learn");
   await learnNavigation.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/view=learn/);
+  await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
   const recallMode = page.getByRole("radio", { name: /Вспомнить самому/ });
@@ -378,11 +368,11 @@ test("primary flows work with Enter and Space and the calendar dialog contains a
 
 for (const target of [
   { name: "home", url: "/", heading: /Продолжайте учиться/ },
-  { name: "learn", url: "/?view=learn", heading: "Настройте урок под текущую задачу" },
-  { name: "phrases", url: "/?view=phrases", heading: "Готовые формулировки для работы" },
-  { name: "library", url: "/?view=library", heading: "Каталог слов и терминов" },
-  { name: "progress", url: "/?view=progress", heading: "Смотрите, что действительно сохранилось" },
-  { name: "profile", url: "/?view=profile", heading: "Keyboard User" },
+  { name: "learn", url: "/learn", heading: "Настройте урок под текущую задачу" },
+  { name: "phrases", url: "/phrases", heading: "Готовые формулировки для работы" },
+  { name: "library", url: "/dictionary", heading: "Каталог слов и терминов" },
+  { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
+  { name: "profile", url: "/profile", heading: "Keyboard User" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
@@ -393,7 +383,7 @@ for (const target of [
 }
 
 test("axe keyboard baseline: calendar dialog", async ({ page }) => {
-  await page.goto("/?view=progress");
+  await page.goto("/progress");
   await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
 
   const headerTrigger = page.getByRole("button", { name: "Уведомления" });
@@ -408,10 +398,10 @@ test("axe keyboard baseline: calendar dialog", async ({ page }) => {
 
 test("lesson tabs remain reachable and expose an unclipped inner focus ring", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Focused lesson geometry is deterministic in the desktop Chromium release profile.");
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await page.getByRole("radio", { name: /Простое изучение слов/ }).press("Space");
   await page.getByRole("button", { name: "Начать урок" }).press("Enter");
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 
   const cardTab = page.getByRole("tab", { name: "Карточка", exact: true });
   await cardTab.focus();
@@ -425,10 +415,9 @@ test("lesson tabs remain reachable and expose an unclipped inner focus ring", as
   await expectKeyboardAxeBaseline(page);
 });
 
-
 test("single-choice controls expose radio semantics and roving keyboard navigation", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Roving focus is deterministic in the desktop Chromium profile.");
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
   const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });
@@ -459,7 +448,7 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   await expect(size60).toBeFocused();
   await expect(size60).toHaveAttribute("aria-checked", "true");
 
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   const topicGroup = page.getByRole("radiogroup", { name: "Тема фраз" });
   const allTopics = topicGroup.getByRole("radio", { name: "Все темы" });
   await expect(allTopics).toHaveAttribute("aria-checked", "true");
@@ -468,7 +457,7 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   await expect(topicGroup.getByRole("radio").nth(1)).toBeFocused();
   await expect(topicGroup.getByRole("radio").nth(1)).toHaveAttribute("aria-checked", "true");
 
-  await page.goto("/?view=progress");
+  await page.goto("/progress");
   const goalGroup = page.getByRole("radiogroup", { name: "Дневная цель" });
   await expect(goalGroup.getByRole("radio", { name: "30", exact: true })).toHaveAttribute("aria-checked", "true");
   await expectNoPositiveTabIndex(page);
@@ -476,7 +465,7 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
 
 test("dictionary filters and item cards remain keyboard operable", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Native select and deep-link focus flow are asserted once in Chromium.");
-  await page.goto("/?view=library");
+  await page.goto("/dictionary");
   await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
 
   const source = page.getByRole("combobox", { name: "Раздел словаря" });
@@ -487,96 +476,14 @@ test("dictionary filters and item cards remain keyboard operable", async ({ page
   const firstCard = page.getByRole("button", { name: /Открыть карточку:/ }).first();
   await firstCard.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/detail=/);
+  await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
   await expect(page.locator(".lx-dictionary-detail-card h1")).toHaveAttribute("lang", "en");
 
   const back = page.getByRole("button", { name: "← К результатам" });
   await back.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/\/dictionary\?/);
   await expect(page).toHaveURL(/source=backend/);
   await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
   await expectNoPositiveTabIndex(page);
-});
-
-test("progress indicators expose names, ranges and current values", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
-  const overall = page.getByRole("progressbar", { name: "Общий прогресс каталога" });
-  const daily = page.getByRole("progressbar", { name: "Дневная цель на главной" });
-  await expect(overall).toHaveAttribute("aria-valuemin", "0");
-  await expect(overall).toHaveAttribute("aria-valuemax", "100");
-  await expect(overall).toHaveAttribute("aria-valuenow", "0");
-  await expect(daily).toHaveAttribute("aria-valuenow", "0");
-
-  await page.goto("/?view=progress");
-  const goal = page.getByRole("progressbar", { name: "Выполнение дневной цели" });
-  await expect(goal).toHaveAttribute("aria-valuemin", "0");
-  await expect(goal).toHaveAttribute("aria-valuemax", "100");
-  await expect(goal).toHaveAttribute("aria-valuetext", "0 из 30 ответов");
-
-  await page.goto("/?view=learn");
-  await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
-  await page.getByRole("button", { name: "Начать урок" }).click();
-  const lesson = page.getByRole("progressbar", { name: "Прогресс урока" });
-  await expect(lesson).toHaveAttribute("aria-valuenow", "50");
-  await expect(lesson).toHaveAttribute("aria-valuetext", "1 из 2 элементов");
-});
-
-test("tabs expose controls, tabpanel ownership and complete keyboard navigation", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chromium", "Tab focus order is asserted once in Chromium.");
-  await page.goto("/?view=learn");
-  await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
-  await page.getByRole("button", { name: "Начать урок" }).click();
-
-  const card = page.getByRole("tab", { name: "Карточка", exact: true });
-  const context = page.getByRole("tab", { name: "Контекст", exact: true });
-  const panel = page.getByRole("tabpanel");
-  await expect(card).toHaveAttribute("aria-controls", "lesson-study-panel");
-  await expect(panel).toHaveAttribute("id", "lesson-study-panel");
-  await expect(panel).toHaveAttribute("aria-labelledby", "lesson-study-tab-card");
-  await card.focus();
-  await card.press("End");
-  await expect(context).toBeFocused();
-  await expect(context).toHaveAttribute("aria-selected", "true");
-  await expect(panel).toHaveAttribute("aria-labelledby", "lesson-study-tab-context");
-  await context.press("Home");
-  await expect(card).toBeFocused();
-
-  await page.route("**/api/v1/auth/refresh", (route) => fulfillJSON(route, 401, {
-    error: { code: "unauthorized", message: "session expired" },
-  }));
-  await page.goto("/?view=profile");
-  const login = page.getByRole("tab", { name: "Вход", exact: true });
-  const register = page.getByRole("tab", { name: "Регистрация", exact: true });
-  const authPanel = page.getByRole("tabpanel");
-  await expect(login).toHaveAttribute("aria-controls", "auth-mode-panel");
-  await expect(authPanel).toHaveAttribute("aria-labelledby", "auth-mode-tab-login");
-  await login.focus();
-  await login.press("ArrowRight");
-  await expect(register).toBeFocused();
-  await expect(register).toHaveAttribute("aria-selected", "true");
-  await expect(authPanel).toHaveAttribute("aria-labelledby", "auth-mode-tab-register");
-});
-
-test("learning content declares language and dynamic feedback uses polite live regions", async ({ page }) => {
-  await page.goto("/?view=phrases");
-  const firstPhrase = page.locator(".lx-phrase-grid > [role=listitem] > button").first();
-  await expect(firstPhrase.locator("strong")).toHaveAttribute("lang", "en");
-  await expect(firstPhrase.locator("small")).toHaveAttribute("lang", "ru");
-  await firstPhrase.click();
-  await expect(page.locator(".lx-detail-content h1")).toHaveAttribute("lang", "en");
-  await expect(page.locator(".lx-detail-content > strong")).toHaveAttribute("lang", "ru");
-  await expect(page.locator(".lx-detail-content p").filter({ hasText: /focus|keyboard/i }).first()).toHaveAttribute("lang", "en");
-
-  await page.goto("/?view=learn");
-  await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
-  await page.getByRole("button", { name: "Начать урок" }).click();
-  const panel = page.getByRole("tabpanel");
-  await expect(panel.locator("h1")).toHaveAttribute("lang", "en");
-  await expect(panel.locator("dd").first()).toHaveAttribute("lang", "ru");
-  await expect(panel.locator("dd.example")).toHaveAttribute("lang", "en");
-
-  await page.getByRole("button", { name: "Знал", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Оценка сохранена: Знал." })).toHaveText("Оценка сохранена: Знал.");
 });

@@ -154,14 +154,14 @@ async function installMocks(page: Page, phraseMode: PhraseMode, options: { refre
 
 test("slow catalog shows a local skeleton before content", async ({ page }) => {
   await installMocks(page, "slow");
-  await page.goto("/?view=phrases", { waitUntil: "domcontentloaded" });
+  await page.goto("/phrases", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("status", { name: "Загружаем каталог фраз" })).toBeVisible();
   await expect(page.getByText("Recover locally", { exact: true })).toBeVisible();
 });
 
 test("server failure keeps progress visible, exposes correlation id and retries locally", async ({ page }) => {
   const requests = await installMocks(page, "server");
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   await expect(page.getByText("1 фраз готовы к повторению", { exact: true })).toBeVisible();
 
   const notice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
@@ -179,19 +179,19 @@ test("server failure keeps progress visible, exposes correlation id and retries 
 
 test("offline and expired-session states are distinct", async ({ page }) => {
   await installMocks(page, "offline");
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   await expect(page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" })).toContainText("Нет подключения к сети");
 
   const second = await page.context().newPage();
   await installMocks(second, "success", { refreshExpires: true });
   await second.goto("/");
-  await expect(second).toHaveURL(/view=profile&session=expired/);
+  await expect(second).toHaveURL(/\/profile\?session=expired/);
   await expect(second.getByRole("alert").filter({ hasText: "Сессия истекла" })).toContainText("Войдите снова, чтобы загрузить сессию аккаунта");
 });
 
 test("empty phrase response provides a next action", async ({ page }) => {
   await installMocks(page, "empty");
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   const empty = page.getByRole("status", { name: "Каталог фраз пуст" });
   await expect(empty).toContainText("По заданным условиям фразы не найдены");
   await expect(empty.getByRole("button", { name: "Сбросить фильтры" })).toBeVisible();
@@ -199,7 +199,7 @@ test("empty phrase response provides a next action", async ({ page }) => {
 
 test("404 active lesson is an empty state rather than an error", async ({ page }) => {
   await installMocks(page, "success");
-  await page.goto("/?view=lesson");
+  await page.goto("/lesson/active");
   await expect(page.getByRole("status", { name: "Активный урок отсутствует" })).toContainText("Активного урока нет");
   await expect(page.getByRole("alert", { name: "Незавершённый урок: ошибка загрузки" })).toHaveCount(0);
 });
@@ -208,7 +208,7 @@ test("request timeout has a dedicated recoverable state", async ({ page }, testI
   test.skip(testInfo.project.name !== "desktop-chromium", "One real timeout contract is sufficient; other browser profiles cover the same component.");
   test.setTimeout(30_000);
   await installMocks(page, "timeout");
-  await page.goto("/?view=phrases");
+  await page.goto("/phrases");
   const notice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(notice).toContainText("Сервер отвечает слишком долго", { timeout: 20_000 });
   await expect(notice.getByRole("button", { name: "Повторить" })).toBeVisible();

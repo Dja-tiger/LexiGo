@@ -146,7 +146,7 @@ async function disableFileSharing(context: BrowserContext) {
 }
 
 async function openCalendarDialog(page: Page) {
-  await page.goto("/?view=progress");
+  await page.goto("/progress");
   await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
   await page.getByRole("button", { name: "Настроить календарь" }).click();
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
@@ -190,7 +190,7 @@ test("installed iOS PWA shares one real ICS file without opening an error page",
   expect(shared.text).toContain("BEGIN:VALARM\r\n");
   expect(shared.text).toMatch(/END:VCALENDAR\r\n$/);
   expect(attachmentRequests).toEqual([]);
-  await expect(page).toHaveURL(/view=progress/);
+  await expect(page).toHaveURL(/\/progress$/);
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("status")).toContainText("Файл передан выбранному приложению");
 });

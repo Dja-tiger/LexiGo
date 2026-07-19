@@ -105,12 +105,12 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
 }
 
 async function openLesson(page: Page, mode: LessonMode) {
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByText("0 элементов готовы")).toBeVisible();
   const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";
   await page.getByRole("radio", { name: new RegExp(label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 }
 
 test("study: persists exposure with the current lesson version", async ({ page }) => {
@@ -181,7 +181,7 @@ async function installSharedAPI(page: Page, state: SharedState) {
 async function resumeFromHome(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Продолжить урок", exact: true }).first().click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 }
 
 test("stale device resynchronizes to the server position without duplicate review", async ({ context }) => {
@@ -220,7 +220,7 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
     { ...PHRASE, position: 1 },
   ];
   const api = await installLessonAPI(page, 2, 0, mixedItems);
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
   await page.getByRole("radio", { name: /Вспомнить самому/ }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
@@ -242,7 +242,7 @@ test("home review CTA requests a server-composed mixed due queue", async ({ page
   const api = await installLessonAPI(page, 2, 0, mixedItems);
   await page.goto("/");
   await page.getByRole("button", { name: "Начать повторение", exact: true }).click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
   expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
   await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();

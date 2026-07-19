@@ -136,7 +136,7 @@ async function json(route: Route, status: number, body: unknown) {
 }
 
 async function openPersistedLesson(page: Page) {
-  await page.goto("/?view=lesson");
+  await page.goto("/lesson/active");
   await page.getByRole("button", { name: "Продолжить урок", exact: true }).click();
   await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeVisible();
 }
@@ -213,7 +213,7 @@ test("replays the same idempotency key after a lost response and tab close", asy
 
   await page.close();
   const restoredPage = await context.newPage();
-  await restoredPage.goto("/?view=home");
+  await restoredPage.goto("/");
   await expect(restoredPage.getByText("Ответ ожидает синхронизации", { exact: false })).toBeVisible();
   await expect.poll(() => outboxRecords(restoredPage)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),

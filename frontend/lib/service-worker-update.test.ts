@@ -40,10 +40,11 @@ describe("service worker update helpers", () => {
     expect(serviceWorkerBuildFromURL("https://lexigo.example/sw.js?build=release-42")).toBe("release-42");
   });
 
-  it("recognizes the canonical active lesson route", () => {
-    expect(isLessonRoute("?view=lesson&source=mixed")).toBe(true);
-    expect(isLessonRoute("?view=learn&source=mixed")).toBe(false);
-    expect(isLessonRoute("")).toBe(false);
+  it("recognizes canonical and legacy active lesson routes", () => {
+    expect(isLessonRoute("", "/lesson/active")).toBe(true);
+    expect(isLessonRoute("?view=lesson&source=mixed", "/")).toBe(true);
+    expect(isLessonRoute("?view=learn&source=mixed", "/learn")).toBe(false);
+    expect(isLessonRoute("", "/progress")).toBe(false);
   });
 
   it.each([
@@ -64,12 +65,12 @@ describe("service worker update helpers", () => {
     const snapshot = createServiceWorkerRecoverySnapshot({
       reason: "service-worker-update",
       buildID: "build-a",
-      href: "https://lexigo.example/?view=lesson&source=mixed",
+      href: "https://lexigo.example/lesson/active?source=mixed",
       lessonActive: true,
       requestedAt: new Date("2026-07-19T00:00:00.000Z"),
     });
 
-    expect(snapshot.resumeHref).toBe("/");
+    expect(snapshot.resumeHref).toBe("/lesson/active");
     expect(writeServiceWorkerRecovery(storage, snapshot)).toBe(true);
     expect(storage.getItem(SERVICE_WORKER_RECOVERY_KEY)).not.toBeNull();
     expect(consumeServiceWorkerRecovery(storage)).toEqual(snapshot);

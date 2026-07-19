@@ -215,14 +215,14 @@ test("end and error restore state while navigation cancels the owned utterance",
 
   await speech.click();
   await page.locator('[data-navigation-view="phrases"]:visible').click();
-  await expect(page).toHaveURL(/view=phrases/);
+  await expect(page).toHaveURL(/\/phrases$/);
   expect((await speechSnapshot(page)).cancelCount).toBeGreaterThanOrEqual(1);
 });
 
 test("phrase detail speaks the text supplied through props", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Phrase binding is asserted once.");
   await installSpeechMock(page, [{ lang: "en-US", name: "English US", localService: true }]);
-  await page.goto("/?view=phrases&detail=phrase-root-cause");
+  await page.goto("/phrases/phrase-root-cause");
   await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
 
   const speech = page.locator('[data-speech-text="We need to identify the root cause."] button');

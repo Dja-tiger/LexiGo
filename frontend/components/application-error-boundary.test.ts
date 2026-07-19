@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 
 const frontendDirectory = process.cwd();
 const componentPath = path.join(frontendDirectory, "components", "application-error-boundary.tsx");
-const pagePath = path.join(frontendDirectory, "app", "page.tsx");
+const routedAppPath = path.join(frontendDirectory, "components", "routed-lexigo-app.tsx");
 const layoutPath = path.join(frontendDirectory, "app", "layout.tsx");
 
 describe("global application error recovery", () => {
-  it("wraps the bootstrapped application at the route root", () => {
-    const page = readFileSync(pagePath, "utf8");
-    expect(page).toContain('import { ApplicationErrorBoundary } from "../components/application-error-boundary"');
-    expect(page).toMatch(/<ApplicationErrorBoundary>[\s\S]*<LexigoBootstrappedApp \/>[\s\S]*<\/ApplicationErrorBoundary>/);
+  it("wraps the persistent bootstrapped application shell", () => {
+    const routedApp = readFileSync(routedAppPath, "utf8");
+    expect(routedApp).toContain('import { ApplicationErrorBoundary } from "./application-error-boundary"');
+    expect(routedApp).toMatch(/<ApplicationErrorBoundary>[\s\S]*<LexigoBootstrappedApp \/>[\s\S]*<\/ApplicationErrorBoundary>/);
   });
 
   it("implements React error lifecycle diagnostics and two recovery actions", () => {

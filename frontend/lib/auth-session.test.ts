@@ -39,10 +39,10 @@ describe("auth session", () => {
   });
 
   it("builds deterministic authorization routes for expired and forbidden sessions", () => {
-    expect(expiredSessionURL("https://lexigo.example/lesson?view=lesson#card-2"))
-      .toBe("/lesson?view=profile&session=expired");
-    expect(expiredSessionURL("https://lexigo.example/lesson?view=lesson#card-2", "forbidden"))
-      .toBe("/lesson?view=profile&session=forbidden");
+    expect(expiredSessionURL("https://lexigo.example/progress#weekly"))
+      .toBe("/profile?session=expired");
+    expect(expiredSessionURL("https://lexigo.example/lesson/active?source=mixed#card-2", "forbidden"))
+      .toBe("/profile?session=forbidden&return_to=%2Flesson%2Factive%3Fsource%3Dmixed");
   });
 
   it("removes the legacy persisted session without failing when storage is restricted", () => {

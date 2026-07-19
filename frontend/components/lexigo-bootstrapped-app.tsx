@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -8,18 +9,45 @@ import {
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
+import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { subscribeToSessionResume } from "../lib/session-resume";
-import { LexigoPremiumApp } from "./lexigo-premium-app";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 
-function moveToSessionScreen(reason: "expired" | "forbidden"): void {
-  const target = new URL(window.location.href);
-  target.search = `?view=profile&session=${reason}`;
-  window.history.replaceState({ lexigo: true, view: "profile" }, "", target.pathname + target.search);
+type SessionScreenReason = "required" | "expired" | "forbidden";
+
+function ProductShellLoading() {
+  return (
+    <main className="lx-bootstrap" aria-live="polite" aria-busy="true">
+      <div className="lx-bootstrap-mark">L</div>
+      <strong>LexiGo</strong>
+      <span>Загружаем интерфейс…</span>
+    </main>
+  );
+}
+
+const LexigoPremiumApp = dynamic(
+  () => import("./lexigo-premium-app").then((module) => module.LexigoPremiumApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
+function currentReturnTo(): string | null {
+  if (!window.location.pathname.startsWith("/lesson/")) return null;
+  return `${window.location.pathname}${window.location.search}`;
+}
+
+function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | null = currentReturnTo()): void {
+  const target = { view: "profile" as const };
+  const state = createNavigationHistoryState(target, { x: 0, y: 0 });
+  const params = new URLSearchParams({ session: reason });
+  if (returnTo) params.set("return_to", returnTo);
+  window.history.replaceState(state, "", `/profile?${params.toString()}`);
 }
 
 export function LexigoBootstrappedApp() {
@@ -42,6 +70,9 @@ export function LexigoBootstrappedApp() {
       try {
         const restored = await restoreSession();
         if (cancelled) return;
+        if (restored === null && window.location.pathname.startsWith("/lesson/")) {
+          moveToSessionScreen("required");
+        }
         setInitialSession(restored);
         setNotice(null);
         setRestoreRecoverable(false);
@@ -115,7 +146,7 @@ export function LexigoBootstrappedApp() {
     }
 
     return (
-      <main className="lx-bootstrap" aria-live="polite">
+      <main className="lx-bootstrap" aria-live="polite" aria-busy="true">
         <div className="lx-bootstrap-mark">L</div>
         <strong>LexiGo</strong>
         <span>Восстанавливаем сессию…</span>

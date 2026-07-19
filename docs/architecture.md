@@ -12,6 +12,37 @@ LexiGo должен одновременно быть рабочим инстр�
 4. **Redis** — rate limiting, кэш, краткоживущие состояния и будущие фоновые очереди.
 5. **Caddy** — TLS termination и reverse proxy для stage/prod.
 
+## Frontend routing
+
+Публичная навигация построена на Next.js App Router и использует канонические pathname-маршруты:
+
+| Экран | Маршрут |
+| --- | --- |
+| Главная | `/` |
+| Настройка урока | `/learn` |
+| Каталог фраз | `/phrases` |
+| Карточка фразы | `/phrases/[slug]` |
+| Словарь | `/dictionary` |
+| Карточка слова | `/words/[id]` |
+| Прогресс | `/progress` |
+| Профиль и авторизация | `/profile` |
+| Активный урок текущего пользователя | `/lesson/active` |
+
+Принципы маршрутизации:
+
+- верхнеуровневая навигация использует нативные ссылки Next.js `Link`, поэтому поддерживает открытие в новой вкладке, копирование адреса и стандартные browser controls;
+- root layout содержит persistent client shell: переключение маршрута не перезапускает refresh-session preflight, outbox runtime и PWA lifecycle;
+- тяжёлый product graph загружается отдельным client chunk только после восстановления сессии;
+- текущая React state-модель экранов остаётся внутренним compatibility layer и синхронизируется с pathname/history;
+- фильтры, сортировка, страница и detail identifier кодируются в URL; Back/Forward восстанавливают соответствующий экран и scroll position;
+- отдельные per-tab snapshots хранят вложенный маршрут и scroll в `sessionStorage`; повреждённый snapshot удаляется локально без очистки остальных данных;
+- устаревшие ссылки вида `/?view=...` принимаются только как migration input и заменяются каноническим URL;
+- произвольный идентификатор lesson session не публикуется: маршрут `/lesson/active` разрешает backend определить активную сессию по аутентифицированному пользователю;
+- гостевой вход в активный урок перенаправляется на `/profile` с причиной и `return_to`;
+- `/dictionary` доступен как канонический shell без сессии, но персональный список, learning status и due queue не отдаются до успешной аутентификации; guest smoke проверяет явный authentication gate, а не приватные данные;
+- App Router предоставляет route-level loading, error и not-found boundaries;
+- Service Worker кэширует HTML shell канонических маршрутов и использует `/` как fallback для динамических detail routes при offline navigation.
+
 ## Границы модулей backend
 
 - `auth` — identity, пароли, access/refresh tokens;

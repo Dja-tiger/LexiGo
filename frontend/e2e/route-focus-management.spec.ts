@@ -138,32 +138,20 @@ async function installAPI(page: Page) {
     const url = new URL(request.url());
     const path = url.pathname;
 
-    if (path === "/api/v1/auth/refresh") {
-      await fulfillJSON(route, 200, SESSION);
-      return;
-    }
-    if (path === "/api/v1/catalog/metadata") {
-      await fulfillJSON(route, 200, METADATA);
-      return;
-    }
-    if (path === "/api/v1/progress") {
-      await fulfillJSON(route, 200, PROGRESS);
-      return;
-    }
+    if (path === "/api/v1/auth/refresh") return fulfillJSON(route, 200, SESSION);
+    if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
+    if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
-      await fulfillJSON(route, 404, {
+      return fulfillJSON(route, 404, {
         error: { code: "active_lesson_not_found", message: "active lesson was not found" },
       });
-      return;
     }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due")
       && url.searchParams.get("kind") === "phrase") {
-      await fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
-      return;
+      return fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
     }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
-      await fulfillJSON(route, 200, { items: WORDS, count: WORDS.length });
-      return;
+      return fulfillJSON(route, 200, { items: WORDS, count: WORDS.length });
     }
     if (path === "/api/v1/lessons/preview") {
       const input = request.postDataJSON() as {
@@ -171,7 +159,7 @@ async function installAPI(page: Page) {
         studyMode?: string;
         lessonSize?: string;
       };
-      await fulfillJSON(route, 200, {
+      return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
         lessonSize: input.lessonSize ?? "30",
@@ -187,7 +175,6 @@ async function installAPI(page: Page) {
           fallback: "words_only",
         },
       });
-      return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as {
@@ -195,7 +182,7 @@ async function installAPI(page: Page) {
         studyMode?: string;
         lessonSize?: string;
       };
-      await fulfillJSON(route, 201, {
+      return fulfillJSON(route, 201, {
         id: "00000000-0000-0000-0000-000000000460",
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
@@ -207,12 +194,11 @@ async function installAPI(page: Page) {
         createdAt: "2026-07-18T00:00:00Z",
         updatedAt: "2026-07-18T00:00:00Z",
       });
-      return;
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
       lessonVersion += 1;
-      await fulfillJSON(route, 200, {
+      return fulfillJSON(route, 200, {
         wordId: WORDS[Math.min(reviewCount - 1, WORDS.length - 1)].id,
         status: "learning",
         easiness: 2.5,
@@ -228,40 +214,25 @@ async function installAPI(page: Page) {
         lessonSkippedItems: 0,
         lessonTotalItems: WORDS.length,
       });
-      return;
     }
 
-    await fulfillJSON(route, 404, {
+    return fulfillJSON(route, 404, {
       error: { code: "not_mocked", message: path },
     });
   });
 }
 
 async function clickPrimaryNavigation(page: Page, view: "learn" | "phrases" | "progress") {
-  const desktopLabels = {
-    learn: "Обучение",
-    phrases: "Фразы",
-    progress: "Прогресс",
-  } as const;
-  const mobileLabels = {
-    learn: "Учить",
-    phrases: "Фразы",
-    progress: "Прогресс",
-  } as const;
-
-  const desktop = page.locator(".lx-nav").getByRole("button", {
-    name: desktopLabels[view],
-    exact: true,
-  });
-  if (await desktop.isVisible()) {
-    await desktop.click();
-    return;
+  const links = page.locator(`.lx-route-nav [data-navigation-view="${view}"]`);
+  const count = await links.count();
+  for (let index = 0; index < count; index += 1) {
+    const link = links.nth(index);
+    if (await link.isVisible()) {
+      await link.click();
+      return;
+    }
   }
-
-  await page.locator(".lx-mobile-nav").getByRole("button", {
-    name: mobileLabels[view],
-    exact: true,
-  }).click();
+  throw new Error(`No visible route link for ${view}`);
 }
 
 async function expectMainFocus(page: Page, label: string) {
@@ -287,20 +258,13 @@ test("skip link reaches the main landmark and route navigation announces the new
   await expectMainFocus(page, "Главная");
 
   await clickPrimaryNavigation(page, "learn");
-  await expect(page).toHaveURL(/view=learn/);
+  await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
   await expectMainFocus(page, "Обучение");
 
-  await expect(page.locator(".lx-nav").getByRole("button", {
-    name: "Обучение",
-    exact: true,
-    includeHidden: true,
-  })).toHaveAttribute("aria-current", "page");
-  await expect(page.locator(".lx-mobile-nav").getByRole("button", {
-    name: "Учить",
-    exact: true,
-    includeHidden: true,
-  })).toHaveAttribute("aria-current", "page");
+  const activeLinks = page.locator('.lx-route-nav [data-navigation-view="learn"]');
+  await expect(activeLinks).toHaveCount(3);
+  expect(await activeLinks.evaluateAll((links) => links.every((link) => link.getAttribute("aria-current") === "page"))).toBe(true);
   await expect(page.locator(".lx-route-announcement"))
     .toHaveText("Обучение. Экран загружен.");
 });
@@ -322,6 +286,7 @@ test("back and forward restore the matching scroll position and main focus", asy
   await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
 
   await clickPrimaryNavigation(page, "phrases");
+  await expect(page).toHaveURL(/\/phrases$/);
   await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
   await expectMainFocus(page, "Технические фразы");
 
@@ -330,20 +295,19 @@ test("back and forward restore the matching scroll position and main focus", asy
   const savedScroll = await page.evaluate(() => window.scrollY);
   await page.waitForTimeout(100);
 
-  await page.locator(".lx-nav").getByRole("button", { name: "Прогресс", exact: true })
-    .evaluate((element) => (element as HTMLButtonElement).click());
-  await expect(page).toHaveURL(/view=progress/);
+  await clickPrimaryNavigation(page, "progress");
+  await expect(page).toHaveURL(/\/progress$/);
   await expectMainFocus(page, "Прогресс");
 
   await page.goBack();
-  await expect(page).toHaveURL(/view=phrases/);
+  await expect(page).toHaveURL(/\/phrases$/);
   await expectMainFocus(page, "Технические фразы");
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(savedScroll - 80);
   await expect(page.locator(".lx-route-announcement"))
     .toHaveText("Технические фразы. Экран загружен.");
 
   await page.goForward();
-  await expect(page).toHaveURL(/view=progress/);
+  await expect(page).toHaveURL(/\/progress$/);
   await expectMainFocus(page, "Прогресс");
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(80);
   await expect(page.locator(".lx-route-announcement"))
@@ -385,14 +349,14 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
 
 test("saving a review transfers focus locally without generating a route announcement", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Keyboard review focus is deterministic in the desktop release profile.");
-  await page.goto("/?view=learn");
+  await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled();
   await start.click();
-  await expect(page).toHaveURL(/view=lesson/);
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
   await expectMainFocus(page, "Урок");
 
   const announcement = page.locator(".lx-route-announcement");
