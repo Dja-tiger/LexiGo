@@ -2,7 +2,7 @@ name: Issue 55 integration controller
 
 on:
   pull_request_target:
-    types: [labeled]
+    types: [synchronize]
 
 permissions:
   contents: write
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   integrate:
-    if: github.event.pull_request.number == 111 && github.event.label.name == 'type: ux'
+    if: github.event.pull_request.number == 111 && github.event.pull_request.head.ref == 'agent/issue-55-real-dictionary-catalog'
     runs-on: [self-hosted, linux, x64, lexigo-ci]
     steps:
       - uses: actions/checkout@v7
