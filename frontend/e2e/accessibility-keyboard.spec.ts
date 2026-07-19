@@ -536,7 +536,7 @@ test("tabs expose controls, tabpanel ownership and complete keyboard navigation"
 
 test("learning content declares language and dynamic feedback uses polite live regions", async ({ page }) => {
   await page.goto("/?view=phrases");
-  const firstPhrase = page.locator(".lx-phrase-grid > button").first();
+  const firstPhrase = page.locator(".lx-phrase-grid > [role=listitem] > button").first();
   await expect(firstPhrase.locator("strong")).toHaveAttribute("lang", "en");
   await expect(firstPhrase.locator("small")).toHaveAttribute("lang", "ru");
   await firstPhrase.click();
