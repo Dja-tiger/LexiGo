@@ -182,7 +182,7 @@ export function DictionaryCatalog({
     ? items.find((item) => String(item.wordId) === navigation.detail) ?? null
     : null;
   const selectedItem = localDetail
-    ?? (remoteDetail?.key === navigation.detail ? remoteDetail.item : null);
+    ?? (remoteDetail && remoteDetail.key === navigation.detail ? remoteDetail.item : null);
   const activeDetailStatus = detailStatus.key === navigation.detail
     ? detailStatus.status
     : idleResourceStatus();
