@@ -21,10 +21,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: agent/issue-59-performance-budgets
-      - name: Apply reviewed fixes
+      - id: patch
+        name: Apply reviewed fixes
         run: |
-          set -Eeuo pipefail
-          python3 scripts/issue59_self_review.py
+          set -o pipefail
+          python3 scripts/issue59_self_review.py 2>&1 | tee issue59-patch.log
           rm scripts/issue59_self_review.py
           rm .github/workflows/issue-59-self-review-fixes.yml
           git diff --check
@@ -33,3 +34,11 @@ jobs:
           git add -A
           git commit -m "fix(performance): harden telemetry privacy and API contract"
           git push origin HEAD:agent/issue-59-performance-budgets
+      - name: Upload patch diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-59-self-review-patch-log
+          path: issue59-patch.log
+          if-no-files-found: error
+          retention-days: 1
