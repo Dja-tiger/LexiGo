@@ -55,6 +55,10 @@ type PrivacyAwareNavigator = Navigator & {
   globalPrivacyControl?: boolean;
 };
 
+type PrivacyAwareWindow = Window & {
+  doNotTrack?: string | null;
+};
+
 const REPORT_ENDPOINT = "/api/v1/performance/rum";
 const SESSION_SAMPLE_KEY = "lexigo:rum-sampled:v1";
 const MAX_BATCH_SIZE = 16;
@@ -244,7 +248,8 @@ export function installActionTimingObserver(): () => void {
 export function isCollectionEnabled(): boolean {
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
   const privacyNavigator = navigator as PrivacyAwareNavigator;
-  if (privacyNavigator.globalPrivacyControl === true || navigator.doNotTrack === "1" || window.doNotTrack === "1") {
+  const privacyWindow = window as PrivacyAwareWindow;
+  if (privacyNavigator.globalPrivacyControl === true || navigator.doNotTrack === "1" || privacyWindow.doNotTrack === "1") {
     return false;
   }
   if (samplingDecision !== null) return samplingDecision;
