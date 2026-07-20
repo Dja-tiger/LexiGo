@@ -110,7 +110,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	loggedIn := decodeJSON[integrationAuthResponse](t, loggedInResult.Body)
 	requireSessionCookies(t, loggedInResult.Cookies)
 
-	sessions := authenticatedJSONRequest[integrationAccountSessionsResponse](
+	sessions := accountSecurityJSONRequest[integrationAccountSessionsResponse](
 		t,
 		deviceA,
 		http.MethodGet,
@@ -134,7 +134,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	}
 
 	deviceACSRF := cookieFromJar(t, deviceA, testServer.URL, integrationCSRFCookieName)
-	authenticatedJSONRequest[map[string]any](
+	accountSecurityJSONRequest[map[string]any](
 		t,
 		deviceA,
 		http.MethodPost,
@@ -145,7 +145,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 		http.StatusUnauthorized,
 	)
 
-	authenticatedJSONRequest[map[string]any](
+	accountSecurityJSONRequest[map[string]any](
 		t,
 		deviceA,
 		http.MethodPost,
@@ -159,7 +159,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	deviceBCSRF := cookieFromJar(t, deviceB, testServer.URL, integrationCSRFCookieName)
 	postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/refresh", nil, deviceBCSRF, http.StatusUnauthorized)
 
-	sessions = authenticatedJSONRequest[integrationAccountSessionsResponse](
+	sessions = accountSecurityJSONRequest[integrationAccountSessionsResponse](
 		t,
 		deviceA,
 		http.MethodGet,
@@ -179,7 +179,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	loggedIn = decodeJSON[integrationAuthResponse](t, loggedInResult.Body)
 	requireSessionCookies(t, loggedInResult.Cookies)
 
-	authenticatedJSONRequest[map[string]any](
+	accountSecurityJSONRequest[map[string]any](
 		t,
 		deviceA,
 		http.MethodPut,
@@ -204,7 +204,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/refresh", nil, deviceBCSRF, http.StatusUnauthorized)
 	postJSONWithClient(t, deviceA, testServer.URL+"/api/v1/auth/refresh", nil, deviceACSRF, http.StatusOK)
 
-	audit := authenticatedJSONRequest[integrationAccountAuditResponse](
+	audit := accountSecurityJSONRequest[integrationAccountAuditResponse](
 		t,
 		deviceA,
 		http.MethodGet,
@@ -236,7 +236,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	_ = loggedIn
 }
 
-func authenticatedJSONRequest[T any](
+func accountSecurityJSONRequest[T any](
 	t *testing.T,
 	client *http.Client,
 	method,
