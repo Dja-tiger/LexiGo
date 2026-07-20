@@ -43,22 +43,22 @@ jobs:
           replace_once(
               "api/openapi.yaml",
               '''        "429":
-                    $ref: "#/components/responses/TooManyRequests"
-                  "500":
-                    description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''.replace("\n          ", "\n"),
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.''',
               '''        "429":
-                    $ref: "#/components/responses/TooManyRequests"
-                  "503":
-                    description: Redis rate limiter недоступен; пакет не передан в PostgreSQL.
-                    headers:
-                      Retry-After:
-                        schema: { type: integer, const: 60 }
-                    content:
-                      application/json:
-                        schema:
-                          $ref: "#/components/schemas/Error"
-                  "500":
-                    description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''.replace("\n          ", "\n"),
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: Redis rate limiter недоступен; пакет не передан в PostgreSQL.
+          headers:
+            Retry-After:
+              schema: { type: integer, const: 60 }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.''',
           )
           PY
 
