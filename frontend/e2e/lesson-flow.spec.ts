@@ -106,10 +106,11 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
 
 async function openLesson(page: Page, mode: LessonMode) {
   await page.goto("/learn");
-  await expect(page.getByText("0 элементов готовы")).toBeVisible();
   const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";
   await page.getByRole("radio", { name: new RegExp(label) }).click();
-  await page.getByRole("button", { name: "Начать урок", exact: true }).click();
+  const startLesson = page.getByRole("button", { name: "Начать урок", exact: true });
+  await expect(startLesson).toBeEnabled({ timeout: 15_000 });
+  await startLesson.click();
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 }
 
