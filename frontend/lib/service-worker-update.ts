@@ -2,6 +2,7 @@ export const SERVICE_WORKER_SKIP_WAITING = "LEXIGO_SKIP_WAITING";
 export const SERVICE_WORKER_ACTIVATED = "LEXIGO_SW_ACTIVATED";
 export const SERVICE_WORKER_RECOVERY_KEY = "lexigo.service-worker.recovery.v1";
 export const SERVICE_WORKER_DEFERRED_KEY = "lexigo.service-worker.deferred.v1";
+export const LEXIGO_RUNTIME_CACHE_PREFIX = "lexigo-shell-";
 
 export type ServiceWorkerRecoveryReason = "service-worker-update" | "version-mismatch";
 
@@ -17,6 +18,13 @@ export type ServiceWorkerRecoverySnapshot = {
 
 type ReadableStorage = Pick<Storage, "getItem" | "removeItem">;
 type WritableStorage = Pick<Storage, "setItem">;
+type UnregisterableServiceWorker = Pick<ServiceWorkerRegistration, "unregister">;
+type RuntimeCacheStorage = Pick<CacheStorage, "keys" | "delete">;
+
+export type RuntimeCleanupResult = {
+  unregisteredWorkers: number;
+  deletedCaches: string[];
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -55,6 +63,37 @@ export function isVersionMismatchError(value: unknown): boolean {
         ? `${String(value.name ?? "")}: ${String(value.message ?? "")}`
         : "";
   return /ChunkLoadError|Loading chunk [^ ]+ failed|Failed to fetch dynamically imported module|Importing a module script failed|CSS_CHUNK_LOAD_FAILED|Unable to preload CSS/i.test(candidate);
+}
+
+export async function clearLexigoRuntimeState(
+  registrations: readonly UnregisterableServiceWorker[],
+  cacheStorage?: RuntimeCacheStorage,
+): Promise<RuntimeCleanupResult> {
+  const unregisterResults = await Promise.allSettled(
+    registrations.map((registration) => registration.unregister()),
+  );
+  const unregisteredWorkers = unregisterResults.filter(
+    (result) => result.status === "fulfilled" && result.value,
+  ).length;
+
+  if (!cacheStorage) return { unregisteredWorkers, deletedCaches: [] };
+
+  let cacheNames: string[] = [];
+  try {
+    cacheNames = await cacheStorage.keys();
+  } catch {
+    return { unregisteredWorkers, deletedCaches: [] };
+  }
+
+  const candidates = cacheNames.filter((name) => name.startsWith(LEXIGO_RUNTIME_CACHE_PREFIX));
+  const deleteResults = await Promise.allSettled(
+    candidates.map(async (name) => ({ name, deleted: await cacheStorage.delete(name) })),
+  );
+  const deletedCaches = deleteResults.flatMap((result) => (
+    result.status === "fulfilled" && result.value.deleted ? [result.value.name] : []
+  ));
+
+  return { unregisteredWorkers, deletedCaches };
 }
 
 export function createServiceWorkerRecoverySnapshot(input: {
