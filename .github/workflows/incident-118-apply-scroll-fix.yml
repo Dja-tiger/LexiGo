@@ -1,9 +1,6 @@
 name: Apply incident 118 scroll fix
 
 on:
-  push:
-    branches:
-      - agent/incident-118-ios-scroll-history
   pull_request:
     branches:
       - main
@@ -43,133 +40,130 @@ jobs:
           replace_once(
               premium,
               '} from "../lib/navigation-history";\n',
-              '} from "../lib/navigation-history";\nimport { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";\n',
+              '} from "../lib/navigation-history";\n'
+              'import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";\n',
           )
           replace_once(premium, "    let scrollFrame = 0;\n\n", "")
-          replace_once(
-              premium,
-              '''    const scheduleScrollSnapshot = () => {
-                if (scrollFrame) return;
-                scrollFrame = window.requestAnimationFrame(() => {
-                  scrollFrame = 0;
-                  persistCurrentEntry();
-                });
-              };
-          ''',
-              '''    const scrollSnapshots = createScrollSnapshotScheduler(
-                persistCurrentEntry,
-                {
-                  setTimeout: (callback, delayMilliseconds) => window.setTimeout(callback, delayMilliseconds),
-                  clearTimeout: (timerID) => window.clearTimeout(timerID),
-                },
-              );
-              const scheduleScrollSnapshot = () => scrollSnapshots.schedule();
-              const flushScrollSnapshot = () => scrollSnapshots.flush();
-              const flushScrollSnapshotWhenHidden = () => {
-                if (document.visibilityState === "hidden") flushScrollSnapshot();
-              };
-          ''',
+
+          old_scheduler = (
+              "    const scheduleScrollSnapshot = () => {\n"
+              "      if (scrollFrame) return;\n"
+              "      scrollFrame = window.requestAnimationFrame(() => {\n"
+              "        scrollFrame = 0;\n"
+              "        persistCurrentEntry();\n"
+              "      });\n"
+              "    };\n"
           )
-          replace_once(
-              premium,
-              '''    window.addEventListener("popstate", syncNavigationFromHistory);
-              window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
-              return () => {
-                if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
-                window.history.scrollRestoration = previousScrollRestoration;
-                window.removeEventListener("popstate", syncNavigationFromHistory);
-                window.removeEventListener("scroll", scheduleScrollSnapshot);
-              };
-          ''',
-              '''    window.addEventListener("popstate", syncNavigationFromHistory);
-              window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
-              window.addEventListener("pagehide", flushScrollSnapshot);
-              document.addEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
-              return () => {
-                flushScrollSnapshot();
-                scrollSnapshots.cancel();
-                window.history.scrollRestoration = previousScrollRestoration;
-                window.removeEventListener("popstate", syncNavigationFromHistory);
-                window.removeEventListener("scroll", scheduleScrollSnapshot);
-                window.removeEventListener("pagehide", flushScrollSnapshot);
-                document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
-              };
-          ''',
+          new_scheduler = (
+              "    const scrollSnapshots = createScrollSnapshotScheduler(\n"
+              "      persistCurrentEntry,\n"
+              "      {\n"
+              "        setTimeout: (callback, delayMilliseconds) => window.setTimeout(callback, delayMilliseconds),\n"
+              "        clearTimeout: (timerID) => window.clearTimeout(timerID),\n"
+              "      },\n"
+              "    );\n"
+              "    const scheduleScrollSnapshot = () => scrollSnapshots.schedule();\n"
+              "    const flushScrollSnapshot = () => scrollSnapshots.flush();\n"
+              "    const flushScrollSnapshotWhenHidden = () => {\n"
+              "      if (document.visibilityState === \"hidden\") flushScrollSnapshot();\n"
+              "    };\n"
           )
+          replace_once(premium, old_scheduler, new_scheduler)
+
+          old_listeners = (
+              '    window.addEventListener("popstate", syncNavigationFromHistory);\n'
+              '    window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });\n'
+              '    return () => {\n'
+              '      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);\n'
+              '      window.history.scrollRestoration = previousScrollRestoration;\n'
+              '      window.removeEventListener("popstate", syncNavigationFromHistory);\n'
+              '      window.removeEventListener("scroll", scheduleScrollSnapshot);\n'
+              '    };\n'
+          )
+          new_listeners = (
+              '    window.addEventListener("popstate", syncNavigationFromHistory);\n'
+              '    window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });\n'
+              '    window.addEventListener("pagehide", flushScrollSnapshot);\n'
+              '    document.addEventListener("visibilitychange", flushScrollSnapshotWhenHidden);\n'
+              '    return () => {\n'
+              '      flushScrollSnapshot();\n'
+              '      scrollSnapshots.cancel();\n'
+              '      window.history.scrollRestoration = previousScrollRestoration;\n'
+              '      window.removeEventListener("popstate", syncNavigationFromHistory);\n'
+              '      window.removeEventListener("scroll", scheduleScrollSnapshot);\n'
+              '      window.removeEventListener("pagehide", flushScrollSnapshot);\n'
+              '      document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);\n'
+              '    };\n'
+          )
+          replace_once(premium, old_listeners, new_listeners)
 
           routes = Path("frontend/e2e/app-router-routes.spec.ts")
           replace_once(
               routes,
-              '''  const errors: string[] = [];
-              page.on("pageerror", (error) => {
-          ''',
-              '''  const errors: string[] = [];
-              page.on("crash", () => errors.push("pagecrash: WebKit renderer terminated"));
-              page.on("pageerror", (error) => {
-          ''',
+              '  const errors: string[] = [];\n  page.on("pageerror", (error) => {\n',
+              '  const errors: string[] = [];\n'
+              '  page.on("crash", () => errors.push("pagecrash: WebKit renderer terminated"));\n'
+              '  page.on("pageerror", (error) => {\n',
           )
-          replace_once(
-              routes,
-              '''    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-                await page.waitForTimeout(1_250);
-                await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
-          ''',
-              '''    await page.evaluate(async () => {
-                type CountedHistory = History & { __lexigoReplaceStateCalls?: number };
-                const countedHistory = window.history as CountedHistory;
-                const originalReplaceState = countedHistory.replaceState.bind(countedHistory);
-                countedHistory.__lexigoReplaceStateCalls = 0;
-                countedHistory.replaceState = (data, unused, url) => {
-                  countedHistory.__lexigoReplaceStateCalls = (countedHistory.__lexigoReplaceStateCalls ?? 0) + 1;
-                  originalReplaceState(data, unused, url);
-                };
-
-                const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-                for (let index = 0; index < 48; index += 1) {
-                  window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
-                  window.dispatchEvent(new Event("scroll"));
-                  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-                }
-              });
-              await page.waitForTimeout(750);
-              const historyWrites = await page.evaluate(() => (
-                window.history as History & { __lexigoReplaceStateCalls?: number }
-              ).__lexigoReplaceStateCalls ?? 0);
-              expect(historyWrites).toBeLessThanOrEqual(3);
-              await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
-          ''',
+          old_route_scroll = (
+              '    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));\n'
+              '    await page.waitForTimeout(1_250);\n'
+              '    await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);\n'
           )
+          new_route_scroll = (
+              '    await page.evaluate(async () => {\n'
+              '      type CountedHistory = History & { __lexigoReplaceStateCalls?: number };\n'
+              '      const countedHistory = window.history as CountedHistory;\n'
+              '      const originalReplaceState = countedHistory.replaceState.bind(countedHistory);\n'
+              '      countedHistory.__lexigoReplaceStateCalls = 0;\n'
+              '      countedHistory.replaceState = (data, unused, url) => {\n'
+              '        countedHistory.__lexigoReplaceStateCalls = (countedHistory.__lexigoReplaceStateCalls ?? 0) + 1;\n'
+              '        originalReplaceState(data, unused, url);\n'
+              '      };\n\n'
+              '      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);\n'
+              '      for (let index = 0; index < 48; index += 1) {\n'
+              '        window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });\n'
+              '        window.dispatchEvent(new Event("scroll"));\n'
+              '        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));\n'
+              '      }\n'
+              '    });\n'
+              '    await page.waitForTimeout(750);\n'
+              '    const historyWrites = await page.evaluate(() => (\n'
+              '      window.history as History & { __lexigoReplaceStateCalls?: number }\n'
+              '    ).__lexigoReplaceStateCalls ?? 0);\n'
+              '    expect(historyWrites).toBeLessThanOrEqual(3);\n'
+              '    await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);\n'
+          )
+          replace_once(routes, old_route_scroll, new_route_scroll)
 
           public_smoke = Path("frontend/e2e/public-runtime-smoke.spec.ts")
           replace_once(
               public_smoke,
-              '''  const errors: string[] = [];
-              page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
-          ''',
-              '''  const errors: string[] = [];
-              page.on("crash", () => errors.push("pagecrash: browser renderer terminated"));
-              page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
-          ''',
+              '  const errors: string[] = [];\n'
+              '  page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));\n',
+              '  const errors: string[] = [];\n'
+              '  page.on("crash", () => errors.push("pagecrash: browser renderer terminated"));\n'
+              '  page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));\n',
           )
-          replace_once(
-              public_smoke,
-              '''    await page.evaluate(() => {
-                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "auto" });
-                window.dispatchEvent(new Event("scroll"));
-              });
-              await page.waitForTimeout(1_750);
-          ''',
-              '''    await page.evaluate(async () => {
-                const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-                for (let index = 0; index < 48; index += 1) {
-                  window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
-                  window.dispatchEvent(new Event("scroll"));
-                  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-                }
-              });
-              await page.waitForTimeout(2_000);
-          ''',
+          old_public_scroll = (
+              '    await page.evaluate(() => {\n'
+              '      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "auto" });\n'
+              '      window.dispatchEvent(new Event("scroll"));\n'
+              '    });\n'
+              '    await page.waitForTimeout(1_750);\n'
           )
+          new_public_scroll = (
+              '    await page.evaluate(async () => {\n'
+              '      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);\n'
+              '      for (let index = 0; index < 48; index += 1) {\n'
+              '        window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });\n'
+              '        window.dispatchEvent(new Event("scroll"));\n'
+              '        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));\n'
+              '      }\n'
+              '    });\n'
+              '    await page.waitForTimeout(2_000);\n'
+          )
+          replace_once(public_smoke, old_public_scroll, new_public_scroll)
           PY
 
           git diff --check
