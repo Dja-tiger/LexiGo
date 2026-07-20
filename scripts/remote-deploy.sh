@@ -38,6 +38,11 @@ trap 'exit 130' HUP INT TERM
 die() { printf '[remote-deploy] ERROR: %s\n' "$*" >&2; exit 1; }
 log() { printf '[remote-deploy] %s\n' "$*"; }
 
+HTTP_READINESS_LIBRARY="$PROJECT_ROOT/deploy/http-readiness.sh"
+[[ -r "$HTTP_READINESS_LIBRARY" ]] || die "HTTP readiness library is missing: $HTTP_READINESS_LIBRARY"
+# shellcheck source=../deploy/http-readiness.sh
+source "$HTTP_READINESS_LIBRARY"
+
 [[ "$(id -u)" -eq 0 ]] || die "remote deployment must run as root"
 [[ -n "$GHCR_TOKEN" ]] || die "GHCR token is empty"
 [[ -n "$CLOUDFLARE_API_TOKEN" ]] || die "Cloudflare API token is empty"
@@ -185,10 +190,11 @@ EOF
 fi
 
 check_frontend_endpoint() {
-  curl --fail --silent --show-error --max-time 20 \
-    --resolve "$SITE_HOST:443:127.0.0.1" \
+  lexigo_http_response_contains \
+    'LexiGo' \
     "https://$SITE_HOST/?lexigo_readiness=$REQUESTED_IMAGE_TAG" \
-    | grep -Fq 'LexiGo'
+    --max-time 20 \
+    --resolve "$SITE_HOST:443:127.0.0.1"
 }
 
 check_api_endpoint() {

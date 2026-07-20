@@ -11,6 +11,8 @@ on:
       - "deploy/compose/docker-compose.stage.yml"
       - "deploy/compose/docker-compose.prod.yml"
       - "deploy/certificate-health.sh"
+      - "deploy/http-readiness.sh"
+      - "deploy/http-readiness.test.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/ci/public-smoke.sh"
@@ -27,6 +29,8 @@ on:
       - "deploy/compose/docker-compose.stage.yml"
       - "deploy/compose/docker-compose.prod.yml"
       - "deploy/certificate-health.sh"
+      - "deploy/http-readiness.sh"
+      - "deploy/http-readiness.test.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
       - "scripts/ci/public-smoke.sh"
@@ -59,9 +63,14 @@ jobs:
           bash -n scripts/ci/public-smoke.test.sh
           bash -n scripts/remote-deploy.sh
           bash -n deploy/certificate-health.sh
+          bash -n deploy/http-readiness.sh
+          bash -n deploy/http-readiness.test.sh
 
       - name: Test public endpoint smoke checks
         run: bash scripts/ci/public-smoke.test.sh
+
+      - name: Test HTTP readiness probes
+        run: bash deploy/http-readiness.test.sh
 
       - name: Validate deployment security and readiness invariants
         run: |
@@ -88,10 +97,18 @@ jobs:
           grep -Fq 'previous image $PREVIOUS_IMAGE_TAG was restored' scripts/remote-deploy.sh
 
           grep -Fq 'check_frontend_endpoint()' scripts/remote-deploy.sh
+          grep -Fq 'HTTP_READINESS_LIBRARY="$PROJECT_ROOT/deploy/http-readiness.sh"' scripts/remote-deploy.sh
+          grep -Fq 'source "$HTTP_READINESS_LIBRARY"' scripts/remote-deploy.sh
+          grep -Fq 'lexigo_http_response_contains \' scripts/remote-deploy.sh
           grep -Fq '"https://$SITE_HOST/?lexigo_readiness=$REQUESTED_IMAGE_TAG"' scripts/remote-deploy.sh
-          grep -Fq "grep -Fq 'LexiGo'" scripts/remote-deploy.sh
+          grep -Fq 'grep -Fq -- "$expected_text" "$body_file"' deploy/http-readiness.sh
           grep -Fq 'check_api_endpoint()' scripts/remote-deploy.sh
           grep -Fq 'print_http_diagnostic "frontend root"' scripts/remote-deploy.sh
+
+          if grep -Fq "| grep -Fq 'LexiGo'" scripts/remote-deploy.sh; then
+            echo 'Frontend readiness must not pipe curl into grep -q.' >&2
+            exit 1
+          fi
 
           grep -Fq 'name: Verify public stage endpoints' .github/workflows/deploy-stage.yml
           grep -Fq 'name: Verify public production endpoints' .github/workflows/deploy-prod.yml
