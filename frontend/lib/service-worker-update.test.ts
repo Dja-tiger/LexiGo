@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  LEXIGO_RUNTIME_CACHE_PREFIX,
   SERVICE_WORKER_DEFERRED_KEY,
   SERVICE_WORKER_RECOVERY_KEY,
   clearDeferredServiceWorkerBuild,
+  clearLexigoRuntimeState,
   consumeServiceWorkerRecovery,
   createServiceWorkerRecoverySnapshot,
   isLessonRoute,
@@ -58,6 +60,44 @@ describe("service worker update helpers", () => {
 
   it("does not classify unrelated render failures as version mismatches", () => {
     expect(isVersionMismatchError(new Error("Cannot read properties of undefined"))).toBe(false);
+  });
+
+  it("unregisters stale workers and removes only LexiGo runtime caches", async () => {
+    const unregisterCalls: string[] = [];
+    const registrations = [
+      { unregister: async () => { unregisterCalls.push("first"); return true; } },
+      { unregister: async () => { unregisterCalls.push("second"); return false; } },
+      { unregister: async () => { unregisterCalls.push("third"); throw new Error("already gone"); } },
+    ];
+    const deleted: string[] = [];
+    const cacheStorage = {
+      keys: async () => [
+        `${LEXIGO_RUNTIME_CACHE_PREFIX}old-build`,
+        `${LEXIGO_RUNTIME_CACHE_PREFIX}current-build`,
+        "unrelated-cache",
+      ],
+      delete: async (name: string) => {
+        deleted.push(name);
+        return name !== `${LEXIGO_RUNTIME_CACHE_PREFIX}current-build`;
+      },
+    };
+
+    await expect(clearLexigoRuntimeState(registrations, cacheStorage)).resolves.toEqual({
+      unregisteredWorkers: 1,
+      deletedCaches: [`${LEXIGO_RUNTIME_CACHE_PREFIX}old-build`],
+    });
+    expect(unregisterCalls).toEqual(["first", "second", "third"]);
+    expect(deleted).toEqual([
+      `${LEXIGO_RUNTIME_CACHE_PREFIX}old-build`,
+      `${LEXIGO_RUNTIME_CACHE_PREFIX}current-build`,
+    ]);
+  });
+
+  it("continues recovery when CacheStorage is unavailable", async () => {
+    const result = await clearLexigoRuntimeState([
+      { unregister: async () => true },
+    ]);
+    expect(result).toEqual({ unregisteredWorkers: 1, deletedCaches: [] });
   });
 
   it("persists a lesson-safe recovery target and consumes it once", () => {
