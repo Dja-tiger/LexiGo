@@ -38,9 +38,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -Eeuo pipefail
-          response="$(curl --fail --silent --show-error \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          response="$(curl --fail --silent --show-error -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
           RESPONSE="$response" python3 - <<'PY'
           import json
           import os
@@ -74,8 +72,29 @@ jobs:
         run: |
           set -Eeuo pipefail
           set -o pipefail
-          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" \
-            2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install browser smoke dependencies
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: npm ci
+
+      - name: Verify public stage UI
+        id: public_browser
+        working-directory: frontend
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          npm exec playwright test -- --config=playwright.public.config.ts 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
 
       - name: Report stage deployment
         if: always()
@@ -86,12 +105,13 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
           PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}
+          PUBLIC_BROWSER_OUTCOME: ${{ steps.public_browser.outcome }}
           DEPLOY_LOG: ${{ runner.temp }}/lexigo-stage-deploy.log
         with:
           script: |
             const fs = require('fs');
             const log = fs.existsSync(process.env.DEPLOY_LOG)
-              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-10000)
+              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-14000)
               : 'deploy log was not created';
             const body = [
               '# LexiGo current deployment status',
@@ -101,6 +121,7 @@ jobs:
               `- run_id: \`${process.env.RUN_ID}\``,
               `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
               `- public smoke: \`${process.env.PUBLIC_SMOKE_OUTCOME}\``,
+              `- public browser: \`${process.env.PUBLIC_BROWSER_OUTCOME}\``,
               '',
               '```text',
               log,
