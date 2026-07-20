@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { AccountRequestError, accountRequest, accountResponse } from "../lib/account-api";
 import type { Session } from "../lib/auth-session";
@@ -12,17 +12,10 @@ function exportFilename(response: Response): string {
   return match?.[1]?.trim() || `lexigo-export-${new Date().toISOString().slice(0, 10)}.json`;
 }
 
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = "noopener";
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
-}
+type PendingDownload = {
+  url: string;
+  filename: string;
+};
 
 export function AccountDataPanel({
   session,
@@ -34,6 +27,8 @@ export function AccountDataPanel({
   onAccountDeleted: () => void;
 }) {
   const pathname = usePathname();
+  const downloadAnchorRef = useRef<HTMLAnchorElement>(null);
+  const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null);
   const [exportPassword, setExportPassword] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
   const [confirmationEmail, setConfirmationEmail] = useState("");
@@ -42,6 +37,17 @@ export function AccountDataPanel({
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!pendingDownload) return;
+    const { url } = pendingDownload;
+    downloadAnchorRef.current?.click();
+    const timer = window.setTimeout(() => setPendingDownload(null), 0);
+    return () => {
+      window.clearTimeout(timer);
+      URL.revokeObjectURL(url);
+    };
+  }, [pendingDownload]);
 
   if (pathname !== "/profile") return null;
 
@@ -78,7 +84,10 @@ export function AccountDataPanel({
         body: JSON.stringify({ currentPassword: exportPassword }),
       });
       const blob = await response.blob();
-      downloadBlob(blob, exportFilename(response));
+      setPendingDownload({
+        url: URL.createObjectURL(blob),
+        filename: exportFilename(response),
+      });
       setExportPassword("");
       setNotice("Выгрузка сформирована и передана браузеру.");
     } catch (requestError) {
@@ -141,6 +150,15 @@ export function AccountDataPanel({
 
   return (
     <section className="lx-account-security lx-account-data" aria-labelledby="account-data-title">
+      <a
+        ref={downloadAnchorRef}
+        href={pendingDownload?.url}
+        download={pendingDownload?.filename}
+        rel="noopener"
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <div className="lx-account-security-heading">
         <div>
           <span>ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ</span>
