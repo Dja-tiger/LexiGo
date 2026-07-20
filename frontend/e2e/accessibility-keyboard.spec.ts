@@ -228,9 +228,9 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await startLesson.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
-  await expect(page.getByRole("button", { name: "Знал" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeVisible();
 
-  const known = page.getByRole("button", { name: "Знал" });
+  const known = page.getByRole("button", { name: "Знал", exact: true });
   await known.focus();
   await page.keyboard.press("Space");
   await expect(page.getByRole("button", { name: "Дальше" })).toBeEnabled();
