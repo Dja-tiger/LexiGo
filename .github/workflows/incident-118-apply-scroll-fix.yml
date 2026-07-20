@@ -1,0 +1,180 @@
+name: Apply incident 118 scroll fix
+
+on:
+  push:
+    branches:
+      - agent/incident-118-ios-scroll-history
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/incident-118-ios-scroll-history
+          fetch-depth: 0
+
+      - name: Apply bounded scroll snapshot patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str) -> None:
+              content = path.read_text()
+              count = content.count(old)
+              if count != 1:
+                  raise SystemExit(f"expected exactly one match in {path}, found {count}")
+              path.write_text(content.replace(old, new, 1))
+
+          premium = Path("frontend/components/lexigo-premium-app.tsx")
+          replace_once(
+              premium,
+              '} from "../lib/navigation-history";\n',
+              '} from "../lib/navigation-history";\nimport { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";\n',
+          )
+          replace_once(premium, "    let scrollFrame = 0;\n\n", "")
+          replace_once(
+              premium,
+              '''    const scheduleScrollSnapshot = () => {
+                if (scrollFrame) return;
+                scrollFrame = window.requestAnimationFrame(() => {
+                  scrollFrame = 0;
+                  persistCurrentEntry();
+                });
+              };
+          ''',
+              '''    const scrollSnapshots = createScrollSnapshotScheduler(
+                persistCurrentEntry,
+                {
+                  setTimeout: (callback, delayMilliseconds) => window.setTimeout(callback, delayMilliseconds),
+                  clearTimeout: (timerID) => window.clearTimeout(timerID),
+                },
+              );
+              const scheduleScrollSnapshot = () => scrollSnapshots.schedule();
+              const flushScrollSnapshot = () => scrollSnapshots.flush();
+              const flushScrollSnapshotWhenHidden = () => {
+                if (document.visibilityState === "hidden") flushScrollSnapshot();
+              };
+          ''',
+          )
+          replace_once(
+              premium,
+              '''    window.addEventListener("popstate", syncNavigationFromHistory);
+              window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
+              return () => {
+                if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
+                window.history.scrollRestoration = previousScrollRestoration;
+                window.removeEventListener("popstate", syncNavigationFromHistory);
+                window.removeEventListener("scroll", scheduleScrollSnapshot);
+              };
+          ''',
+              '''    window.addEventListener("popstate", syncNavigationFromHistory);
+              window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
+              window.addEventListener("pagehide", flushScrollSnapshot);
+              document.addEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
+              return () => {
+                flushScrollSnapshot();
+                scrollSnapshots.cancel();
+                window.history.scrollRestoration = previousScrollRestoration;
+                window.removeEventListener("popstate", syncNavigationFromHistory);
+                window.removeEventListener("scroll", scheduleScrollSnapshot);
+                window.removeEventListener("pagehide", flushScrollSnapshot);
+                document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
+              };
+          ''',
+          )
+
+          routes = Path("frontend/e2e/app-router-routes.spec.ts")
+          replace_once(
+              routes,
+              '''  const errors: string[] = [];
+              page.on("pageerror", (error) => {
+          ''',
+              '''  const errors: string[] = [];
+              page.on("crash", () => errors.push("pagecrash: WebKit renderer terminated"));
+              page.on("pageerror", (error) => {
+          ''',
+          )
+          replace_once(
+              routes,
+              '''    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+                await page.waitForTimeout(1_250);
+                await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
+          ''',
+              '''    await page.evaluate(async () => {
+                type CountedHistory = History & { __lexigoReplaceStateCalls?: number };
+                const countedHistory = window.history as CountedHistory;
+                const originalReplaceState = countedHistory.replaceState.bind(countedHistory);
+                countedHistory.__lexigoReplaceStateCalls = 0;
+                countedHistory.replaceState = (data, unused, url) => {
+                  countedHistory.__lexigoReplaceStateCalls = (countedHistory.__lexigoReplaceStateCalls ?? 0) + 1;
+                  originalReplaceState(data, unused, url);
+                };
+
+                const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+                for (let index = 0; index < 48; index += 1) {
+                  window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
+                  window.dispatchEvent(new Event("scroll"));
+                  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+                }
+              });
+              await page.waitForTimeout(750);
+              const historyWrites = await page.evaluate(() => (
+                window.history as History & { __lexigoReplaceStateCalls?: number }
+              ).__lexigoReplaceStateCalls ?? 0);
+              expect(historyWrites).toBeLessThanOrEqual(3);
+              await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
+          ''',
+          )
+
+          public_smoke = Path("frontend/e2e/public-runtime-smoke.spec.ts")
+          replace_once(
+              public_smoke,
+              '''  const errors: string[] = [];
+              page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
+          ''',
+              '''  const errors: string[] = [];
+              page.on("crash", () => errors.push("pagecrash: browser renderer terminated"));
+              page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
+          ''',
+          )
+          replace_once(
+              public_smoke,
+              '''    await page.evaluate(() => {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "auto" });
+                window.dispatchEvent(new Event("scroll"));
+              });
+              await page.waitForTimeout(1_750);
+          ''',
+              '''    await page.evaluate(async () => {
+                const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+                for (let index = 0; index < 48; index += 1) {
+                  window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
+                  window.dispatchEvent(new Event("scroll"));
+                  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+                }
+              });
+              await page.waitForTimeout(2_000);
+          ''',
+          )
+          PY
+
+          git diff --check
+
+      - name: Commit patch
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx frontend/e2e/app-router-routes.spec.ts frontend/e2e/public-runtime-smoke.spec.ts
+          git commit -m "fix(navigation): bound scroll history writes on WebKit"
+          git push origin HEAD:agent/incident-118-ios-scroll-history
