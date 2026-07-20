@@ -91,7 +91,7 @@ The profile uses:
 - deterministic backend fixtures;
 - Service Worker disabled to measure the application rather than a pre-warmed cache.
 
-The gate writes `test-results/performance-budget-report.json`. CI uploads it for 30 days even when a budget fails.
+The gate writes `test-results/performance-budget-report.json`. CI uploads it for 30 days even when a budget fails. The JSON report is the review artifact for every release-budget decision.
 
 Initial budgets:
 
