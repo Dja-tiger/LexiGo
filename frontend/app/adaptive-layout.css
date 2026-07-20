@@ -1,0 +1,39 @@
+@media (min-width: 720px) and (max-width: 1099px) {
+  .lx-main-content,
+  .lx-page-heading,
+  .lx-setup-card,
+  .lx-setup-block,
+  .lx-source-selector,
+  .lx-setup-footer,
+  .lx-setup-actions,
+  .lx-setup-submit {
+    min-width: 0;
+  }
+
+  .lx-source-selector {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lx-source-selector > button {
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lx-source-selector > button > div {
+    min-width: 0;
+  }
+
+  .lx-source-selector strong,
+  .lx-source-selector small {
+    overflow-wrap: anywhere;
+  }
+
+  .lx-setup-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .lx-setup-submit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

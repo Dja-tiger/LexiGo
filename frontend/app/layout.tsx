@@ -15,6 +15,7 @@ import "./error-boundary.css";
 import "./accessibility-focus.css";
 import "./accessibility-navigation.css";
 import "./adaptive-navigation.css";
+import "./adaptive-layout.css";
 import "./route-navigation.css";
 import "./route-boundaries.css";
 import "./legal.css";

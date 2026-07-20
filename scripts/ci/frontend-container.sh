@@ -95,7 +95,7 @@ execute_shell() {
 }
 
 extract_artifacts() {
-  log "extracting frontend diagnostics"
+  log "extracting frontend diagnostics and visual baselines"
 
   rm -rf -- "$ARTIFACT_DIR"
   mkdir -p "$ARTIFACT_DIR"
@@ -107,7 +107,14 @@ extract_artifacts() {
     "$PLAYWRIGHT_IMAGE" \
     bash -Eeuo pipefail -c '
       paths=()
-      for path in eslint.log typecheck.log vitest.log next-start.log playwright-report test-results; do
+      for path in \
+        eslint.log \
+        typecheck.log \
+        vitest.log \
+        next-start.log \
+        playwright-report \
+        test-results \
+        e2e/visual-regression.spec.ts-snapshots; do
         if [[ -e "$path" ]]; then
           paths+=("$path")
         fi
