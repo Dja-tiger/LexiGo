@@ -4,16 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
 type Service struct {
-	users         UserRepository
-	refresh       RefreshTokenRepository
-	tokens        *TokenManager
-	refreshTTL    time.Duration
-	passwordReset passwordResetConfig
-	now           func() time.Time
+	users                 UserRepository
+	refresh               RefreshTokenRepository
+	tokens                *TokenManager
+	refreshTTL            time.Duration
+	passwordReset         passwordResetConfig
+	accountSecurity       accountSecurityConfig
+	securityNotifications SecurityNotificationSender
+	now                   func() time.Time
+	logger                *slog.Logger
 }
 
 func NewService(
@@ -29,11 +33,20 @@ func NewService(
 		tokens:     tokens,
 		refreshTTL: refreshTTL,
 		now:        time.Now,
+		logger:     slog.Default(),
 	}
 	for _, option := range options {
 		option(service)
 	}
 	return service
+}
+
+func WithLogger(logger *slog.Logger) ServiceOption {
+	return func(service *Service) {
+		if logger != nil {
+			service.logger = logger
+		}
+	}
 }
 
 func (s *Service) Register(ctx context.Context, email, password, displayName, userAgent, ip string) (User, TokenPair, error) {
