@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, type MouseEvent } from "react";
 
+import { installHistoryWriteGuard } from "../lib/history-write-guard";
 import { canonicalURLFromLegacySearch, isCanonicalRoutePath, navigationURL, parseNavigationLocation } from "../lib/navigation";
 import { createNavigationHistoryState, readNavigationHistoryState } from "../lib/navigation-history";
 import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
@@ -48,6 +49,8 @@ function RouteSkipLink() {
 
 export function RoutedLexigoApp() {
   const pathname = usePathname();
+
+  useLayoutEffect(() => installHistoryWriteGuard(), []);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
