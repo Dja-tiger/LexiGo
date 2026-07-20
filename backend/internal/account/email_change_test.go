@@ -16,10 +16,10 @@ type fakeEmailChangeRepository struct {
 	replacedOldEmail string
 	replacedNewEmail string
 	replacedHash     []byte
-	cancelledHash   []byte
-	consumeHash     []byte
-	result          EmailChangeResult
-	err             error
+	cancelledHash    []byte
+	consumeHash      []byte
+	result           EmailChangeResult
+	err              error
 }
 
 func (f *fakeEmailChangeRepository) ReplaceEmailChange(
