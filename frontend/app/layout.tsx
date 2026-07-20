@@ -3,6 +3,7 @@ import { ApplicationErrorBoundary } from "@/components/application-error-boundar
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
 import "./product-navigation.css";
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
+          <WebVitalsReporter />
           <ServiceWorkerRegistration />
           <RoutedLexigoApp />
           {children}
