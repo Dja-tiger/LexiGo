@@ -45,7 +45,7 @@ test.describe("critical visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();
     await expectStableScreenshot(page, "dictionary.png");
     expect(runtimeErrors).toEqual([]);
   });
