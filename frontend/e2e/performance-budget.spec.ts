@@ -136,6 +136,7 @@ async function createThrottledPage(browser: Browser): Promise<{ context: Browser
 
   const cdp = await context.newCDPSession(page);
   await cdp.send("Network.enable");
+  await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
   await cdp.send("Network.emulateNetworkConditions", {
     offline: false,
     latency: 100,
@@ -164,12 +165,13 @@ async function readScenarioMetrics(page: Page): Promise<Omit<ScenarioResult, "sc
     const scope = window as Window & { __lexigoPerformanceBudget?: BrowserCollector };
     const collector = scope.__lexigoPerformanceBudget ?? { lcpMs: 0, cls: 0, longTasks: [] };
     const resources = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+    const transferredBytes = (resource: PerformanceResourceTiming) => Math.max(resource.transferSize, resource.encodedBodySize);
     const javascriptBytes = resources
-      .filter((resource) => resource.initiatorType === "script" || resource.name.includes("/_next/static/chunks/"))
-      .reduce((total, resource) => total + resource.encodedBodySize, 0);
+      .filter((resource) => resource.initiatorType === "script" || /\/_next\/static\/chunks\/.*\.js(?:\?|$)/.test(resource.name))
+      .reduce((total, resource) => total + transferredBytes(resource), 0);
     const cssBytes = resources
-      .filter((resource) => resource.initiatorType === "link" && resource.name.includes("/_next/static/css/"))
-      .reduce((total, resource) => total + resource.encodedBodySize, 0);
+      .filter((resource) => /\/_next\/static\/css\/.*\.css(?:\?|$)/.test(resource.name) || /\.css(?:\?|$)/.test(resource.name))
+      .reduce((total, resource) => total + transferredBytes(resource), 0);
     const longTaskTotalMs = collector.longTasks.reduce((total, duration) => total + duration, 0);
     return {
       initialRequests: resources.length + 1,
@@ -221,14 +223,17 @@ async function writePerformanceReport(results: ScenarioResult[]): Promise<void> 
   await mkdir("test-results", { recursive: true });
   await writeFile(
     "test-results/performance-budget-report.json",
-    `${JSON.stringify({ generatedAt: new Date().toISOString(), profile: "4x CPU + simulated 3G", budgets: BUDGETS, results }, null, 2)}\n`,
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), profile: "4x CPU + simulated 3G, cache disabled", budgets: BUDGETS, results }, null, 2)}\n`,
     "utf8",
   );
 }
 
 function enforceBudgets(result: ScenarioResult): void {
+  expect.soft(result.initialRequests, `${result.scenario}: initial request count`).toBeGreaterThan(0);
   expect.soft(result.initialRequests, `${result.scenario}: initial request count`).toBeLessThanOrEqual(BUDGETS.initialRequests);
+  expect.soft(result.javascriptBytes, `${result.scenario}: initial JavaScript bytes`).toBeGreaterThan(0);
   expect.soft(result.javascriptBytes, `${result.scenario}: initial JavaScript bytes`).toBeLessThanOrEqual(BUDGETS.javascriptBytes);
+  expect.soft(result.cssBytes, `${result.scenario}: initial CSS bytes`).toBeGreaterThan(0);
   expect.soft(result.cssBytes, `${result.scenario}: initial CSS bytes`).toBeLessThanOrEqual(BUDGETS.cssBytes);
   expect.soft(result.lcpMs, `${result.scenario}: low-end mobile LCP`).toBeGreaterThan(0);
   expect.soft(result.lcpMs, `${result.scenario}: low-end mobile LCP`).toBeLessThanOrEqual(BUDGETS.lcpMs);
