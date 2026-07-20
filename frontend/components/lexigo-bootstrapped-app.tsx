@@ -12,6 +12,7 @@ import {
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { subscribeToSessionResume } from "../lib/session-resume";
+import { AccountDataPanel } from "./account-data-panel";
 import { AccountSecurityPanel } from "./account-security-panel";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
@@ -172,7 +173,10 @@ export function LexigoBootstrappedApp() {
         initialSession={initialSession}
       />
       {initialSession ? (
-        <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
+        <>
+          <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
+          <AccountDataPanel session={initialSession} onSessionExpired={retryRestore} />
+        </>
       ) : null}
     </>
   );
