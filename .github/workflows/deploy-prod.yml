@@ -65,6 +65,17 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/deploy-over-ssh.sh prod "$IMAGE_TAG"
 
+      - name: Verify public production endpoints
+        id: public_smoke
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" \
+            2>&1 | tee -a "$RUNNER_TEMP/lexigo-prod-deploy.log"
+
       - name: Report production deployment
         if: always()
         uses: actions/github-script@v9
@@ -73,12 +84,13 @@ jobs:
           IMAGE_SHA: ${{ inputs.image_tag }}
           RUN_ID: ${{ github.run_id }}
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}
           DEPLOY_LOG: ${{ runner.temp }}/lexigo-prod-deploy.log
         with:
           script: |
             const fs = require('fs');
             const log = fs.existsSync(process.env.DEPLOY_LOG)
-              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-10000)
+              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-12000)
               : 'deploy log was not created';
             const body = [
               '# LexiGo production deployment',
@@ -87,6 +99,7 @@ jobs:
               `- image SHA: \`${process.env.IMAGE_SHA}\``,
               `- run_id: \`${process.env.RUN_ID}\``,
               `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
+              `- public smoke: \`${process.env.PUBLIC_SMOKE_OUTCOME}\``,
               '',
               '```text',
               log,
