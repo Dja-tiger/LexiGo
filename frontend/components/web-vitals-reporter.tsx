@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useReportWebVitals, type Metric } from "next/web-vitals";
+import { useReportWebVitals } from "next/web-vitals";
 import { useEffect } from "react";
 
 import {
@@ -9,9 +9,10 @@ import {
   installActionTimingObserver,
   reportWebVitalMetric,
   startLongTaskMonitoring,
+  type WebVitalMetricLike,
 } from "@/lib/performance-rum";
 
-function handleWebVital(metric: Metric): void {
+function handleWebVital(metric: WebVitalMetricLike): void {
   reportWebVitalMetric(metric);
 }
 
