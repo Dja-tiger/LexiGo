@@ -18,7 +18,7 @@ type AccountSession = {
 
 type AccountAuditEvent = {
   id: number;
-  type: "password_changed" | "other_sessions_revoked" | string;
+  type: "password_changed" | "other_sessions_revoked" | "email_changed" | string;
   userAgent: string;
   ipAddress?: string;
   metadata: Record<string, string>;
@@ -50,6 +50,7 @@ function browserLabel(userAgent: string): string {
 function auditLabel(type: string): string {
   if (type === "password_changed") return "Пароль изменён";
   if (type === "other_sessions_revoked") return "Остальные сессии завершены";
+  if (type === "email_changed") return "Email изменён";
   return type;
 }
 
