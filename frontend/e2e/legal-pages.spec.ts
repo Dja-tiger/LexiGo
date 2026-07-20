@@ -17,7 +17,7 @@ test("terms are public and legal navigation works without an account", async ({ 
 
   await expect(page).toHaveURL(/\/terms$/);
   await expect(page.getByRole("heading", { name: "Условия использования" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Аккаунт" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Аккаунт", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Конфиденциальность" }).click();
   await expect(page).toHaveURL(/\/privacy$/);
   await expect(page.getByRole("heading", { name: "Политика конфиденциальности" })).toBeVisible();
