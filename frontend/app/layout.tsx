@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ApplicationErrorBoundary } from "@/components/application-error-boundary";
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
@@ -51,10 +52,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ru">
       <body>
-        <ServiceWorkerRegistration />
-        <RoutedLexigoApp />
-        {children}
-        <LegalFooter />
+        <ApplicationErrorBoundary>
+          <ServiceWorkerRegistration />
+          <RoutedLexigoApp />
+          {children}
+          <LegalFooter />
+        </ApplicationErrorBoundary>
       </body>
     </html>
   );

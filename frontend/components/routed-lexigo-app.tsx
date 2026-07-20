@@ -5,7 +5,6 @@ import { useLayoutEffect, type MouseEvent } from "react";
 
 import { canonicalURLFromLegacySearch, isCanonicalRoutePath, navigationURL, parseNavigationLocation } from "../lib/navigation";
 import { createNavigationHistoryState, readNavigationHistoryState } from "../lib/navigation-history";
-import { ApplicationErrorBoundary } from "./application-error-boundary";
 import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
@@ -60,9 +59,7 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true">
       <RouteSkipLink />
       <RouteChrome />
-      <ApplicationErrorBoundary>
-        <LexigoBootstrappedApp />
-      </ApplicationErrorBoundary>
+      <LexigoBootstrappedApp />
     </div>
   );
 }
