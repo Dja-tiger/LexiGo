@@ -1,0 +1,104 @@
+name: Visual baseline bootstrap
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-baseline-bootstrap-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  commit-reviewed-baselines:
+    name: Commit reviewed visual baselines
+    if: >-
+      github.repository == 'Dja-tiger/LexiGo' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/issue-58-quality-gates'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-visual-bootstrap-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BUILD_ID: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 1
+
+      - name: Detect completed bootstrap
+        id: bootstrap
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          subject="$(git log -1 --pretty=%s)"
+          if [ "$subject" = "test(visual): commit reviewed responsive baselines" ]; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare isolated frontend workspace
+        if: steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        if: steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Build production frontend
+        if: steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Generate reviewed baselines
+        if: steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+
+      - name: Extract generated baselines
+        if: steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Commit baseline files
+        if: steps.bootstrap.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          source_dir="frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots"
+          target_dir="frontend/e2e/visual-regression.spec.ts-snapshots"
+
+          test -d "$source_dir"
+          file_count="$(find "$source_dir" -maxdepth 1 -type f -name '*.png' | wc -l | tr -d ' ')"
+          test "$file_count" -eq 15
+
+          rm -rf -- "$target_dir"
+          mkdir -p -- "$target_dir"
+          cp -a -- "$source_dir"/. "$target_dir"/
+
+          git add -- "$target_dir"
+          git diff --cached --quiet && {
+            echo "Reviewed baselines are already committed."
+            exit 0
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(visual): commit reviewed responsive baselines"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Cleanup isolated frontend workspace
+        if: always() && steps.bootstrap.outputs.skip != 'true'
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh cleanup
