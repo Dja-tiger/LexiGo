@@ -44,25 +44,37 @@ function currentReturnTo(): string | null {
   return `${window.location.pathname}${window.location.search}`;
 }
 
+function profileHistoryState() {
+  return createNavigationHistoryState({ view: "profile" }, { x: 0, y: 0 });
+}
+
 function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | null = currentReturnTo()): void {
-  const target = { view: "profile" as const };
-  const state = createNavigationHistoryState(target, { x: 0, y: 0 });
   const params = new URLSearchParams({ session: reason });
   if (returnTo) params.set("return_to", returnTo);
-  window.history.replaceState(state, "", `/profile?${params.toString()}`);
+  window.history.replaceState(profileHistoryState(), "", `/profile?${params.toString()}`);
 }
 
 export function LexigoBootstrappedApp() {
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
+  const [accountNotice, setAccountNotice] = useState("");
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
 
   const retryRestore = useCallback(() => {
     setInitialSession(undefined);
     setNotice(null);
+    setAccountNotice("");
     setRestoreRecoverable(false);
     setRestoreAttempt((current) => current + 1);
+  }, []);
+
+  const handleAccountDeleted = useCallback(() => {
+    setInitialSession(null);
+    setNotice(null);
+    setRestoreRecoverable(false);
+    setAccountNotice("Аккаунт и связанные учебные данные удалены.");
+    window.history.replaceState(profileHistoryState(), "", "/profile?account=deleted");
   }, []);
 
   useEffect(() => {
@@ -168,6 +180,14 @@ export function LexigoBootstrappedApp() {
           {notice.retryable ? <button type="button" onClick={retryRestore}>Повторить</button> : null}
         </div>
       ) : null}
+      {accountNotice ? (
+        <div className="lx-session-notice success" role="status">
+          <div>
+            <strong>Аккаунт удалён</strong>
+            <span>{accountNotice}</span>
+          </div>
+        </div>
+      ) : null}
       <LexigoPremiumApp
         key={initialSession?.tokens.accessToken ?? "guest"}
         initialSession={initialSession}
@@ -175,7 +195,11 @@ export function LexigoBootstrappedApp() {
       {initialSession ? (
         <>
           <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
-          <AccountDataPanel session={initialSession} onSessionExpired={retryRestore} />
+          <AccountDataPanel
+            session={initialSession}
+            onSessionExpired={retryRestore}
+            onAccountDeleted={handleAccountDeleted}
+          />
         </>
       ) : null}
     </>
