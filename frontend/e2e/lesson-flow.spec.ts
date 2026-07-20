@@ -221,6 +221,10 @@ test("stale device resynchronizes to the server position without duplicate revie
 
   await second.reload({ waitUntil: "domcontentloaded" });
   await expect(second).toHaveURL(/\/lesson\/active(?:\?|$)/);
+  const continueSavedLesson = second.getByRole("button", { name: "Продолжить урок", exact: true });
+  await expect(continueSavedLesson).toBeVisible();
+  await expect(second.getByText("Смешанная практика · позиция 2 из 2", { exact: true })).toBeVisible();
+  await continueSavedLesson.click();
   await expect(second.getByText("Слово 2 из 2")).toBeVisible();
   expect(state.reviewEvents).toBe(1);
 });
