@@ -40,7 +40,11 @@ func NewWithOptions(
 	if err != nil {
 		return nil, err
 	}
-	authRepository := auth.NewPostgresRepository(pg)
+	resetTTL := cfg.PasswordResetTTL
+	if resetTTL <= 0 {
+		resetTTL = 30 * time.Minute
+	}
+
 	resetSender := options.PasswordResetSender
 	if resetSender == nil {
 		resetSender, err = configuredPasswordResetSender(cfg, logger)
@@ -48,24 +52,6 @@ func NewWithOptions(
 			return nil, err
 		}
 	}
-	resetTTL := cfg.PasswordResetTTL
-	if resetTTL <= 0 {
-		resetTTL = 30 * time.Minute
-	}
-	authService := auth.NewService(
-		authRepository,
-		authRepository,
-		tokenManager,
-		cfg.RefreshTokenTTL,
-		auth.WithPasswordReset(authRepository, resetSender, cfg.CORSAllowedOrigin, resetTTL),
-		auth.WithAccountSecurity(authRepository),
-	)
-	authHandler := auth.NewHandler(authService, auth.CookieConfig{
-		Secure:     cfg.SessionCookieSecure,
-		RefreshTTL: cfg.RefreshTokenTTL,
-	}, logger)
-
-	accountRepository := account.NewPostgresRepository(pg)
 	emailChangeSender := options.EmailChangeSender
 	if emailChangeSender == nil {
 		emailChangeSender, err = configuredEmailChangeSender(cfg, logger)
@@ -73,8 +59,30 @@ func NewWithOptions(
 			return nil, err
 		}
 	}
-	accountService := account.NewService(
-		accountRepository,
+
+	authRepository := auth.NewPostgresRepository(pg)
+	authOptions := []auth.ServiceOption{
+		auth.WithPasswordReset(authRepository, resetSender, cfg.CORSAllowedOrigin, resetTTL),
+		auth.WithAccountSecurity(authRepository),
+		auth.WithLogger(logger),
+	}
+	if sender, ok := emailChangeSender.(auth.SecurityNotificationSender); ok {
+		authOptions = append(authOptions, auth.WithSecurityNotifications(sender))
+	}
+	authService := auth.NewService(
+		authRepository,
+		authRepository,
+		tokenManager,
+		cfg.RefreshTokenTTL,
+		authOptions...,
+	)
+	authHandler := auth.NewHandler(authService, auth.CookieConfig{
+		Secure:     cfg.SessionCookieSecure,
+		RefreshTTL: cfg.RefreshTokenTTL,
+	}, logger)
+
+	accountRepository := account.NewPostgresRepository(pg)
+	accountOptions := []account.ServiceOption{
 		account.WithLogger(logger),
 		account.WithEmailChange(
 			accountRepository,
@@ -82,7 +90,11 @@ func NewWithOptions(
 			cfg.CORSAllowedOrigin,
 			resetTTL,
 		),
-	)
+	}
+	if sender, ok := emailChangeSender.(account.CriticalNotificationSender); ok {
+		accountOptions = append(accountOptions, account.WithCriticalNotifications(sender))
+	}
+	accountService := account.NewService(accountRepository, accountOptions...)
 	accountHandler := account.NewHandler(accountService, cfg.SessionCookieSecure)
 
 	healthHandler := health.NewHandler(pg, rdb)
