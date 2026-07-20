@@ -115,7 +115,7 @@ func (s *Service) ChangePassword(
 	if err != nil {
 		return fmt.Errorf("hash new password: %w", err)
 	}
-	return repository.ChangePasswordAndRevokeOtherSessions(
+	if err := repository.ChangePasswordAndRevokeOtherSessions(
 		ctx,
 		userID,
 		tokenHash,
@@ -123,7 +123,22 @@ func (s *Service) ChangePassword(
 		s.now().UTC(),
 		strings.TrimSpace(userAgent),
 		strings.TrimSpace(ip),
-	)
+	); err != nil {
+		return err
+	}
+	if s.securityNotifications != nil {
+		if err := s.securityNotifications.SendPasswordChangedNotification(
+			ctx,
+			user.Email,
+			user.DisplayName,
+		); err != nil {
+			s.logger.ErrorContext(ctx, "password changed notification failed",
+				"user_id", user.ID,
+				"error", err,
+			)
+		}
+	}
+	return nil
 }
 
 func (s *Service) RevokeOtherSessions(
