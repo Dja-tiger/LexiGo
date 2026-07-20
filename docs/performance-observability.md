@@ -9,7 +9,7 @@ LexiGo collects enough field data to detect performance regressions without crea
 
 ## Privacy contract
 
-`post /api/v1/performance/rum` is public because guest sessions also affect release quality. The endpoint is same-origin protected, limited to 120 requests per minute per source address, accepts at most 32 KiB, and stores at most 16 samples per report.
+`post /api/v1/performance/rum` is public because guest sessions also affect release quality. The endpoint is same-origin protected, limited to 120 requests per minute per source address, accepts at most 32 KiB, and stores at most 16 samples per report. Its limiter is fail-closed: when Redis is unavailable, telemetry returns `503` instead of creating an unbounded PostgreSQL write path. Authentication and account endpoints retain their existing fail-open policy so a Redis incident does not block core account operations.
 
 The payload contains only:
 
