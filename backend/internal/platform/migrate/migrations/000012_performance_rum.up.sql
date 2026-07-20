@@ -35,7 +35,7 @@ create table performance_samples (
             'ACTION_START_LESSON', 'ACTION_REVIEW_ANSWER'
         )),
     constraint performance_samples_metric_value_check
-        check (isfinite(metric_value) and metric_value >= 0),
+        check (metric_value >= 0 and metric_value < 'Infinity'::double precision),
     constraint performance_samples_metric_rating_check
         check (metric_rating in ('good', 'needs-improvement', 'poor', 'unknown')),
     constraint performance_samples_navigation_type_check
