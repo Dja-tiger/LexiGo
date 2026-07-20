@@ -9,11 +9,13 @@ import { SERVICE_WORKER_ACTIVATED, SERVICE_WORKER_SKIP_WAITING } from "./service
 type WorkerListener = (event: Record<string, unknown>) => void;
 
 type WorkerHarness = {
+  addedAssets: string[];
   cacheNames: Set<string>;
   claimed: () => number;
   messages: Array<unknown>;
   skipped: () => number;
-  dispatch: (type: string, data?: Record<string, unknown>) => Promise<void>;
+  dispatch: (type: string, data?: Record<string, unknown>) => Promise<unknown>;
+  setFetch: (implementation: (request: unknown) => Promise<unknown>) => void;
 };
 
 const workerSource = readFileSync(resolve(process.cwd(), "public/sw.js"), "utf8");
@@ -21,15 +23,23 @@ const workerSource = readFileSync(resolve(process.cwd(), "public/sw.js"), "utf8"
 function createWorkerHarness(buildID: string, cacheNames = new Set<string>()): WorkerHarness {
   const listeners = new Map<string, WorkerListener>();
   const messages: Array<unknown> = [];
+  const addedAssets: string[] = [];
+  const offlineResponse = { ok: true, status: 200, type: "basic", source: "offline" };
   let claimCount = 0;
   let skipCount = 0;
+  let fetchImplementation: (request: unknown) => Promise<unknown> = async () => ({
+    ok: true,
+    status: 200,
+    type: "basic",
+    source: "network",
+  });
 
   const caches = {
     async open(name: string) {
       cacheNames.add(name);
       return {
-        async addAll() {
-          return undefined;
+        async addAll(assets: string[]) {
+          addedAssets.push(...assets);
         },
         async put() {
           return undefined;
@@ -42,8 +52,13 @@ function createWorkerHarness(buildID: string, cacheNames = new Set<string>()): W
     async delete(name: string) {
       return cacheNames.delete(name);
     },
-    async match() {
-      return undefined;
+    async match(request: unknown) {
+      const requestURL = typeof request === "string"
+        ? request
+        : String((request as { url?: string } | null)?.url ?? "");
+      return requestURL.endsWith("/offline.html") || requestURL === "/offline.html"
+        ? offlineResponse
+        : undefined;
     },
   };
 
@@ -71,39 +86,52 @@ function createWorkerHarness(buildID: string, cacheNames = new Set<string>()): W
   runInNewContext(workerSource, {
     URL,
     Promise,
-    Response: { error: () => ({ status: 0 }) },
+    Response: { error: () => ({ ok: false, status: 0, source: "error" }) },
     caches,
-    fetch: async () => ({ ok: true }),
+    fetch: (request: unknown) => fetchImplementation(request),
     self,
   });
 
   return {
+    addedAssets,
     cacheNames,
     claimed: () => claimCount,
     messages,
     skipped: () => skipCount,
+    setFetch(implementation) {
+      fetchImplementation = implementation;
+    },
     async dispatch(type, data = {}) {
       const listener = listeners.get(type);
       if (!listener) throw new Error(`Missing ${type} listener`);
       const pending: Array<Promise<unknown>> = [];
+      let response: Promise<unknown> | null = null;
       listener({
         ...data,
         waitUntil(value: Promise<unknown>) {
           pending.push(Promise.resolve(value));
         },
+        respondWith(value: Promise<unknown>) {
+          response = Promise.resolve(value);
+        },
       });
       await Promise.all(pending);
+      return response ? await response : undefined;
     },
   };
 }
 
 describe("public service worker", () => {
-  it("installs without taking over the active application", async () => {
+  it("precaches only independent offline assets without taking over the active application", async () => {
     const worker = createWorkerHarness("build-a");
 
     await worker.dispatch("install");
 
     expect(worker.cacheNames).toContain("lexigo-shell-build-a");
+    expect(worker.addedAssets).toContain("/offline.html");
+    expect(worker.addedAssets).not.toContain("/");
+    expect(worker.addedAssets).not.toContain("/learn");
+    expect(worker.addedAssets).not.toContain("/dictionary");
     expect(worker.skipped()).toBe(0);
     expect(worker.claimed()).toBe(0);
   });
@@ -139,5 +167,39 @@ describe("public service worker", () => {
     await buildB.dispatch("activate");
 
     expect(caches).toEqual(new Set(["lexigo-shell-incompatible-b"]));
+  });
+
+  it("returns the independent offline document when a navigation cannot reach the network", async () => {
+    const worker = createWorkerHarness("build-a");
+    await worker.dispatch("install");
+    worker.setFetch(async () => {
+      throw new Error("network unavailable");
+    });
+
+    const response = await worker.dispatch("fetch", {
+      request: {
+        method: "GET",
+        mode: "navigate",
+        url: "https://lexigo.example/dictionary?source=mixed",
+      },
+    });
+
+    expect(response).toMatchObject({ status: 200, source: "offline" });
+  });
+
+  it("does not replace valid not-found navigation responses with an offline page", async () => {
+    const worker = createWorkerHarness("build-a");
+    const networkResponse = { ok: false, status: 404, source: "network" };
+    worker.setFetch(async () => networkResponse);
+
+    const response = await worker.dispatch("fetch", {
+      request: {
+        method: "GET",
+        mode: "navigate",
+        url: "https://lexigo.example/missing",
+      },
+    });
+
+    expect(response).toBe(networkResponse);
   });
 });
