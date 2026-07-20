@@ -27,7 +27,7 @@ async function expectNoBlockingAxeViolations(page: Page): Promise<void> {
     .withTags(WCAG_TAGS)
     .analyze();
   const blocking = result.violations.filter((violation) => (
-    violation.impact !== null && BLOCKING_IMPACTS.has(violation.impact)
+    typeof violation.impact === "string" && BLOCKING_IMPACTS.has(violation.impact)
   ));
   expect(blocking, formatViolations(blocking)).toEqual([]);
 }
