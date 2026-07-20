@@ -13,6 +13,8 @@ on:
       - "deploy/certificate-health.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/public-smoke.sh"
+      - "scripts/ci/public-smoke.test.sh"
       - "scripts/remote-deploy.sh"
   push:
     branches: [main]
@@ -27,6 +29,8 @@ on:
       - "deploy/certificate-health.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/public-smoke.sh"
+      - "scripts/ci/public-smoke.test.sh"
       - "scripts/remote-deploy.sh"
 
 permissions:
@@ -51,10 +55,15 @@ jobs:
       - name: Validate Bash syntax
         run: |
           bash -n scripts/ci/deploy-over-ssh.sh
+          bash -n scripts/ci/public-smoke.sh
+          bash -n scripts/ci/public-smoke.test.sh
           bash -n scripts/remote-deploy.sh
           bash -n deploy/certificate-health.sh
 
-      - name: Validate deployment security invariants
+      - name: Test public endpoint smoke checks
+        run: bash scripts/ci/public-smoke.test.sh
+
+      - name: Validate deployment security and readiness invariants
         run: |
           set -Eeuo pipefail
 
@@ -77,6 +86,19 @@ jobs:
           grep -Fq 'upsert_env "$APP_ENV_FILE" IMAGE_TAG "$PREVIOUS_IMAGE_TAG"' scripts/remote-deploy.sh
           grep -Fq 'if ! wait_for_readiness; then' scripts/remote-deploy.sh
           grep -Fq 'previous image $PREVIOUS_IMAGE_TAG was restored' scripts/remote-deploy.sh
+
+          grep -Fq 'check_frontend_endpoint()' scripts/remote-deploy.sh
+          grep -Fq '"https://$SITE_HOST/?lexigo_readiness=$REQUESTED_IMAGE_TAG"' scripts/remote-deploy.sh
+          grep -Fq "grep -Fq 'LexiGo'" scripts/remote-deploy.sh
+          grep -Fq 'check_api_endpoint()' scripts/remote-deploy.sh
+          grep -Fq 'print_http_diagnostic "frontend root"' scripts/remote-deploy.sh
+
+          grep -Fq 'name: Verify public stage endpoints' .github/workflows/deploy-stage.yml
+          grep -Fq 'name: Verify public production endpoints' .github/workflows/deploy-prod.yml
+          grep -Fq 'bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL"' .github/workflows/deploy-stage.yml
+          grep -Fq 'bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL"' .github/workflows/deploy-prod.yml
+          grep -Fq 'PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}' .github/workflows/deploy-prod.yml
 
           if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
             echo 'A Cloudflare token-like value must never be committed.' >&2

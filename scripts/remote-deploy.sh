@@ -184,25 +184,61 @@ EOF
   systemctl enable --now "lexigo-certificate-health@${ENVIRONMENT}.timer"
 fi
 
-check_endpoint() {
-  local host="$1"
+check_frontend_endpoint() {
   curl --fail --silent --show-error --max-time 20 \
-    --resolve "$host:443:127.0.0.1" "https://$host/health/ready" >/dev/null
+    --resolve "$SITE_HOST:443:127.0.0.1" \
+    "https://$SITE_HOST/?lexigo_readiness=$REQUESTED_IMAGE_TAG" \
+    | grep -Fq 'LexiGo'
+}
+
+check_api_endpoint() {
+  curl --fail --silent --show-error --max-time 20 \
+    --resolve "$API_HOST:443:127.0.0.1" \
+    "https://$API_HOST/health/ready" >/dev/null
 }
 
 wait_for_readiness() {
   local attempt
   for attempt in $(seq 1 60); do
-    if check_endpoint "$SITE_HOST" && check_endpoint "$API_HOST"; then
+    if check_frontend_endpoint && check_api_endpoint; then
       return 0
+    fi
+    if (( attempt == 1 || attempt % 10 == 0 )); then
+      log "waiting for frontend UI and API readiness ($attempt/60)"
     fi
     sleep 5
   done
   return 1
 }
 
+print_http_diagnostic() (
+  local label="$1" host="$2" path="$3"
+  local body_file headers_file
+  body_file="$(mktemp)"
+  headers_file="$(mktemp)"
+  trap 'rm -f -- "$body_file" "$headers_file"' EXIT
+
+  local status
+  status="$(curl \
+    --silent \
+    --show-error \
+    --max-time 15 \
+    --resolve "$host:443:127.0.0.1" \
+    --output "$body_file" \
+    --dump-header "$headers_file" \
+    --write-out '%{http_code}' \
+    "https://$host$path" || true)"
+
+  log "$label local Caddy probe returned HTTP ${status:-000}"
+  sed -n '1,30p' "$headers_file" || true
+  head -c 2000 "$body_file" || true
+  printf '\n'
+)
+
 print_deployment_diagnostics() {
   "${COMPOSE[@]}" ps || true
+  print_http_diagnostic "frontend root" "$SITE_HOST" "/?lexigo_diagnostic=$REQUESTED_IMAGE_TAG" || true
+  print_http_diagnostic "API readiness" "$API_HOST" "/health/ready" || true
   "${COMPOSE[@]}" logs --tail=200 caddy api web || true
 }
 
@@ -227,12 +263,12 @@ rollback_to_previous_image() {
     return 1
   fi
   if ! wait_for_readiness; then
-    log "rollback did not restore healthy endpoints"
+    log "rollback did not restore healthy frontend and API endpoints"
     print_deployment_diagnostics
     return 1
   fi
 
-  log "rollback restored healthy endpoints with image $PREVIOUS_IMAGE_TAG"
+  log "rollback restored healthy frontend and API endpoints with image $PREVIOUS_IMAGE_TAG"
   "${COMPOSE[@]}" ps
   return 0
 }
@@ -250,7 +286,7 @@ if wait_for_readiness; then
   "${COMPOSE[@]}" ps
   /usr/local/sbin/lexigo-certificate-health "$ENVIRONMENT"
   systemctl list-timers "lexigo-certificate-health@${ENVIRONMENT}.timer" --no-pager
-  echo "$ENVIRONMENT deployment is healthy at $PUBLIC_URL and $API_PUBLIC_URL"
+  echo "$ENVIRONMENT deployment has a healthy frontend UI and API at $PUBLIC_URL and $API_PUBLIC_URL"
   exit 0
 fi
 
