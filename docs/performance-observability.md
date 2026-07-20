@@ -38,7 +38,7 @@ Runtime diagnostics:
 - total and maximum duration of long-task observer callbacks;
 - action-to-next-paint timings for lesson start and answer rating.
 
-Reports are batched and sent with `fetch(..., { keepalive: true, credentials: "omit" })`. Session cookies and authorization headers are not sent, including during page exit.
+Reports are batched and sent with `fetch(..., { keepalive: true, credentials: "omit" })`. Session cookies and authorization headers are not sent, including during page exit. The fail-closed `503` response and `Retry-After` contract are documented in the central OpenAPI specification.
 
 ## p75 production queries
 
