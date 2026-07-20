@@ -173,7 +173,11 @@ export function AccountSecurityPanel({
       setNotice("Остальные сессии завершены.");
       await loadSecurityData();
     } catch (requestError) {
-      handleRequestError(requestError);
+      if (requestError instanceof AccountRequestError && requestError.field === "currentPassword") {
+        setPasswordErrors({ sessionsPassword: requestError.message });
+      } else {
+        handleRequestError(requestError);
+      }
     } finally {
       setBusyAction("");
     }
