@@ -1,0 +1,379 @@
+name: Finalize account contracts
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'agent/issue-57-account-management'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache: false
+      - name: Format account and notification code
+        run: |
+          gofmt -w \
+            backend/internal/account/email_change.go \
+            backend/internal/account/email_change_repository.go \
+            backend/internal/account/email_sender.go \
+            backend/internal/account/email_sender_security_notifications.go \
+            backend/internal/account/critical_notifications.go \
+            backend/internal/account/service.go \
+            backend/internal/account/http.go \
+            backend/internal/account/email_change_test.go \
+            backend/internal/account/email_sender_test.go \
+            backend/internal/account/critical_notifications_test.go \
+            backend/internal/auth/service.go \
+            backend/internal/auth/account_security.go \
+            backend/internal/auth/security_notifications.go \
+            backend/internal/auth/security_notifications_test.go \
+            backend/internal/server/server.go \
+            backend/integration/account_email_change_test.go
+      - name: Update OpenAPI account contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          specification = Path('api/openapi.yaml')
+          source = specification.read_text()
+          source = source.replace('  version: 0.8.0', '  version: 0.9.0', 1)
+
+          path_anchor = '  /api/v1/me:\n'
+          if source.count(path_anchor) != 1:
+              raise SystemExit(f'OpenAPI /me anchor count: {source.count(path_anchor)}')
+          path_block = '''  /api/v1/auth/sessions:
+    get:
+      operationId: listAccountSessions
+      tags: [account]
+      summary: Получить активные refresh-token families пользователя.
+      security:
+        - bearerAuth: []
+          refreshCookie: []
+      responses:
+        "200":
+          description: Активные устройства; ровно одна запись может быть текущей.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions]
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/sessions/revoke-others:
+    post:
+      operationId: revokeOtherAccountSessions
+      tags: [account]
+      summary: Завершить все refresh-сессии, кроме текущей family.
+      security:
+        - bearerAuth: []
+          refreshCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthenticationRequest"
+      responses:
+        "204":
+          description: Остальные сессии отозваны, событие записано в security audit.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/auth/password:
+    put:
+      operationId: changeAccountPassword
+      tags: [account]
+      summary: Изменить пароль и завершить остальные refresh-сессии.
+      security:
+        - bearerAuth: []
+          refreshCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: Пароль изменён, password-reset tokens аннулированы, критичное уведомление поставлено на отправку.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/auth/audit-events:
+    get:
+      operationId: listAccountAuditEvents
+      tags: [account]
+      summary: Последние security audit events текущего пользователя.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: До 50 последних критичных событий.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountAuditEvent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/account/export:
+    post:
+      operationId: exportAccountData
+      tags: [account]
+      summary: Скачать versioned JSON с основными персональными и учебными данными.
+      security:
+        - bearerAuth: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthenticationRequest"
+      responses:
+        "200":
+          description: Машиночитаемый export без password hashes и token secrets.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountExport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/account:
+    delete:
+      operationId: deleteAccount
+      tags: [account]
+      summary: Необратимо удалить аккаунт и каскадно зависимые пользовательские данные.
+      security:
+        - bearerAuth: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAccountRequest"
+      responses:
+        "204":
+          description: Аккаунт удалён; cookies очищены, browser cache/storage получают Clear-Site-Data.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/account/email-change/request:
+    post:
+      operationId: requestAccountEmailChange
+      tags: [account]
+      summary: Отправить одноразовую verification link на новый email.
+      description: Raw token передаётся только во fragment URL и не сохраняется в PostgreSQL.
+      security:
+        - bearerAuth: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailChangeRequest"
+      responses:
+        "202":
+          description: Одноразовая ссылка отправлена на новый адрес.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/v1/account/email-change/confirm:
+    post:
+      operationId: confirmAccountEmailChange
+      tags: [account]
+      summary: Подтвердить новый email одноразовым bearer token.
+      description: Успешная transaction меняет login identifier, использует token, отзывает все refresh-сессии и пишет audit event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailChangeConfirmRequest"
+      responses:
+        "204":
+          description: Email изменён; session cookies очищены.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+'''
+          source = source.replace(path_anchor, path_block + path_anchor, 1)
+
+          schema_anchor = '    AuthResponse:\n'
+          if source.count(schema_anchor) != 1:
+              raise SystemExit(f'OpenAPI AuthResponse anchor count: {source.count(schema_anchor)}')
+          schema_block = '''    ReauthenticationRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 72
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 72
+        newPassword:
+          type: string
+          minLength: 10
+          maxLength: 72
+    DeleteAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, confirmationEmail]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 72
+        confirmationEmail:
+          type: string
+          format: email
+    EmailChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newEmail]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 72
+        newEmail:
+          type: string
+          format: email
+    EmailChangeConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 43
+          maxLength: 43
+          description: Одноразовый base64url bearer token из URL fragment.
+    AccountSession:
+      type: object
+      required: [id, current, userAgent, createdAt, lastSeenAt, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        current: { type: boolean }
+        userAgent: { type: string }
+        ipAddress: { type: string }
+        createdAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+    AccountAuditEvent:
+      type: object
+      required: [id, type, userAgent, metadata, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        type:
+          type: string
+          enum: [password_changed, other_sessions_revoked, email_changed]
+        userAgent: { type: string }
+        ipAddress: { type: string }
+        metadata:
+          type: object
+          additionalProperties: { type: string }
+        createdAt: { type: string, format: date-time }
+    AccountExport:
+      type: object
+      required: [schemaVersion, generatedAt, account, words, reviewHistory, securityAudit]
+      properties:
+        schemaVersion: { type: integer, const: 1 }
+        generatedAt: { type: string, format: date-time }
+        account: { type: object, additionalProperties: true }
+        learningPreferences: { type: [object, "null"], additionalProperties: true }
+        words:
+          type: array
+          items: { type: object, additionalProperties: true }
+        reviewHistory:
+          type: array
+          items: { type: object, additionalProperties: true }
+        securityAudit:
+          type: array
+          items: { type: object, additionalProperties: true }
+'''
+          source = source.replace(schema_anchor, schema_block + schema_anchor, 1)
+          specification.write_text(source)
+          PY
+
+          git rm .github/workflows/account-contract-finalize.yml
+      - name: Commit finalized contracts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend api/openapi.yaml
+          git commit -m "docs(api): document complete account management contract"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
