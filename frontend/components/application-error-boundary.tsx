@@ -4,6 +4,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import {
   SERVICE_WORKER_SKIP_WAITING,
+  clearLexigoRuntimeState,
   createServiceWorkerRecoverySnapshot,
   isLessonRoute,
   isVersionMismatchError,
@@ -49,6 +50,20 @@ export class ApplicationErrorBoundary extends Component<
     window.location.reload();
   };
 
+  private clearStaleRuntimeState = async () => {
+    if (!("serviceWorker" in navigator)) {
+      if ("caches" in window) await clearLexigoRuntimeState([], window.caches);
+      return;
+    }
+
+    const registrations = typeof navigator.serviceWorker.getRegistrations === "function"
+      ? await navigator.serviceWorker.getRegistrations()
+      : await navigator.serviceWorker.getRegistration("/").then((registration) => (
+        registration ? [registration] : []
+      ));
+    await clearLexigoRuntimeState(registrations, "caches" in window ? window.caches : undefined);
+  };
+
   private recoverVersionMismatch = async () => {
     const lessonActive = isLessonRoute(window.location.search);
     const snapshot = createServiceWorkerRecoverySnapshot({
@@ -69,6 +84,7 @@ export class ApplicationErrorBoundary extends Component<
 
     try {
       if (!("serviceWorker" in navigator)) {
+        await this.clearStaleRuntimeState();
         reload();
         return;
       }
@@ -77,18 +93,24 @@ export class ApplicationErrorBoundary extends Component<
       await registration?.update();
       const waiting = registration?.waiting;
       if (!waiting) {
+        await this.clearStaleRuntimeState();
         reload();
         return;
       }
 
       navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
       waiting.postMessage({ type: SERVICE_WORKER_SKIP_WAITING });
-      window.setTimeout(reload, 5000);
+      window.setTimeout(async () => {
+        if (reloading) return;
+        await this.clearStaleRuntimeState();
+        reload();
+      }, 5000);
     } catch (recoveryError) {
       console.error("[LexiGo] Version mismatch recovery failed", {
         buildID: BUILD_ID,
         error: recoveryError,
       });
+      await this.clearStaleRuntimeState();
       reload();
     }
   };
@@ -114,7 +136,7 @@ export class ApplicationErrorBoundary extends Component<
         <h1>{versionMismatch ? "Открыта устаревшая версия LexiGo" : "LexiGo не смог отобразить этот экран"}</h1>
         <p>
           {versionMismatch
-            ? "Браузер загрузил файлы разных версий. LexiGo активирует согласованный набор ресурсов и безопасно перезапустит приложение."
+            ? "Браузер загрузил файлы разных версий. LexiGo очистит устаревшие ресурсы и безопасно перезапустит приложение."
             : "Приложение остановило повреждённый render, чтобы не показывать пустой экран. Учебный прогресс хранится на сервере и не удалён."}
         </p>
         <code>{versionMismatch ? "UI_VERSION_MISMATCH" : "UI_RENDER_FAILURE"}</code>
