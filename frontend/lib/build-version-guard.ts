@@ -117,15 +117,32 @@ export function createBuildVersionGuardScript(buildID: string): string {
     return;
   }
 
-  const storedBuildRaw = readStorage(window.localStorage, MARKER_KEY);
-  if (!storedBuildRaw) {
-    completeCurrentBuild();
-    return;
+  const markerBuildRaw = readStorage(window.localStorage, MARKER_KEY);
+  const markerBuild = markerBuildRaw ? normalizeBuild(markerBuildRaw) : null;
+  let controllerBuild = null;
+  try {
+    const controllerScriptURL = window.navigator.serviceWorker &&
+      window.navigator.serviceWorker.controller &&
+      window.navigator.serviceWorker.controller.scriptURL;
+    if (controllerScriptURL) {
+      const controllerBuildRaw = new URL(
+        controllerScriptURL,
+        window.location.origin,
+      ).searchParams.get("build");
+      // A controlling worker without an explicit build belongs to the legacy
+      // registration contract and must also be replaced.
+      controllerBuild = controllerBuildRaw
+        ? normalizeBuild(controllerBuildRaw)
+        : "legacy-service-worker";
+    }
+  } catch {
+    controllerBuild = null;
   }
 
-  const storedBuild = normalizeBuild(storedBuildRaw);
-  if (storedBuild === CURRENT_BUILD) {
-    removeStorage(window.sessionStorage, RECOVERY_KEY);
+  const markerMismatch = markerBuild !== null && markerBuild !== CURRENT_BUILD;
+  const controllerMismatch = controllerBuild !== null && controllerBuild !== CURRENT_BUILD;
+  if (!markerMismatch && !controllerMismatch) {
+    completeCurrentBuild();
     return;
   }
 
