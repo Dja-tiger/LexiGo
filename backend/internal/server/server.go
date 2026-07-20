@@ -64,7 +64,10 @@ func NewWithOptions(
 		RefreshTTL: cfg.RefreshTokenTTL,
 	}, logger)
 	accountRepository := account.NewPostgresRepository(pg)
-	accountHandler := account.NewHandler(account.NewService(accountRepository))
+	accountHandler := account.NewHandler(
+		account.NewService(accountRepository),
+		cfg.SessionCookieSecure,
+	)
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
@@ -88,6 +91,7 @@ func NewWithOptions(
 	mux.Handle("PUT /api/v1/auth/password", limiter.Middleware(10, authenticated(http.HandlerFunc(authHandler.ChangePassword))))
 	mux.Handle("GET /api/v1/auth/audit-events", authenticated(http.HandlerFunc(authHandler.AccountAudit)))
 	mux.Handle("POST /api/v1/account/export", limiter.Middleware(5, authenticated(http.HandlerFunc(accountHandler.Export))))
+	mux.Handle("DELETE /api/v1/account", limiter.Middleware(3, authenticated(http.HandlerFunc(accountHandler.Delete))))
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
