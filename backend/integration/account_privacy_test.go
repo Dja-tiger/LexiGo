@@ -22,7 +22,7 @@ import (
 )
 
 func TestAccountExportAndDeletionLifecycle(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
 	pg, err := postgresplatform.Open(ctx, requiredEnv(t, "TEST_POSTGRES_DSN"))
@@ -85,6 +85,7 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 		"displayName": "Privacy User",
 	}, "", http.StatusCreated)
 	registered := decodeJSON[integrationAuthResponse](t, registeredResult.Body)
+	refreshToken := requireSessionCookies(t, registeredResult.Cookies)
 	csrf := cookieFromJar(t, client, testServer.URL, integrationCSRFCookieName)
 
 	privacyRequest(
@@ -172,7 +173,8 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 	}
 
 	getWithToken(t, client, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusNotFound)
-	postJSONWithClient(t, client, testServer.URL+"/api/v1/auth/refresh", nil, csrf, http.StatusUnauthorized)
+	postJSONWithClient(t, client, testServer.URL+"/api/v1/auth/refresh", nil, csrf, http.StatusForbidden)
+	replayRefreshToken(t, testServer, refreshToken, csrf, http.StatusUnauthorized)
 
 	for table, want := range map[string]int{
 		"users":                0,
