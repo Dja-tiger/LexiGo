@@ -8,7 +8,7 @@ import (
 
 const (
 	MaxSamplesPerReport = 16
-	MaxReportBytes       = 32 << 10
+	MaxReportBytes      = 32 << 10
 )
 
 const (
