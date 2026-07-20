@@ -97,6 +97,7 @@ Initial budgets:
 
 | Signal | Budget |
 |---|---:|
+| Initial requests per cold route | `<= 50` |
 | Initial JavaScript per cold route | `<= 700000 bytes` |
 | Initial CSS per cold route | `<= 180000 bytes` |
 | Lab LCP under the throttled profile | `<= 5000 ms` |
