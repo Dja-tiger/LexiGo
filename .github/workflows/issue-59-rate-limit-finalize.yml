@@ -1,8 +1,9 @@
 name: Issue 59 rate limit finalize
 
 on:
-  push:
-    branches: [agent/issue-59-performance-budgets]
+  pull_request:
+    branches: [main]
+    types: [synchronize]
 
 permissions:
   contents: write
@@ -26,26 +27,13 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
-              file = Path(path)
-              text = file.read_text()
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected one replacement, found {count}: {old!r}")
-              file.write_text(text.replace(old, new, 1))
-
-          replace_once(
-              "docs/performance-observability.md",
-              "`post /api/v1/performance/rum` is public because guest sessions also affect release quality. The endpoint is same-origin protected, limited to 120 requests per minute per source address, accepts at most 32 KiB, and stores at most 16 samples per report.",
-              "`post /api/v1/performance/rum` is public because guest sessions also affect release quality. The endpoint is same-origin protected, limited to 120 requests per minute per source address, accepts at most 32 KiB, and stores at most 16 samples per report. Its limiter is fail-closed: when Redis is unavailable, telemetry returns `503` instead of creating an unbounded PostgreSQL write path. Authentication and account endpoints retain their existing fail-open policy so a Redis incident does not block core account operations.",
-          )
-          replace_once(
-              "api/openapi.yaml",
-              '''        "429":
+          path = Path("api/openapi.yaml")
+          text = path.read_text()
+          old = '''        "429":
           $ref: "#/components/responses/TooManyRequests"
         "500":
-          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.''',
-              '''        "429":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''
+          new = '''        "429":
           $ref: "#/components/responses/TooManyRequests"
         "503":
           description: Redis rate limiter недоступен; пакет не передан в PostgreSQL.
@@ -57,8 +45,11 @@ jobs:
               schema:
                 $ref: "#/components/schemas/Error"
         "500":
-          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.''',
-          )
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"api/openapi.yaml: expected one performance response block, found {count}")
+          path.write_text(text.replace(old, new, 1))
           PY
 
           gofmt -w \
