@@ -19,6 +19,7 @@ CLOUDFLARE_API_TOKEN=""
 DOCKER_CONFIG_DIR=""
 CADDY_ENV_TEMP=""
 PREVIOUS_IMAGE_TAG=""
+DEPLOY_START_FAILED=0
 
 IFS= read -r GHCR_TOKEN
 IFS= read -r CLOUDFLARE_API_TOKEN
@@ -163,16 +164,14 @@ COMPOSE=(docker compose --env-file "$APP_ENV_FILE" -f "$COMPOSE_FILE")
 docker run --rm --entrypoint caddy lexigo-caddy:2.11.4-cloudflare list-modules | grep -Fxq 'dns.providers.cloudflare'
 
 if ! "${COMPOSE[@]}" up -d --remove-orphans; then
-  "${COMPOSE[@]}" ps || true
-  "${COMPOSE[@]}" logs --tail=200 || true
-  exit 1
-fi
-"${COMPOSE[@]}" exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+  DEPLOY_START_FAILED=1
+else
+  "${COMPOSE[@]}" exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
-install -m 0750 deploy/certificate-health.sh /usr/local/sbin/lexigo-certificate-health
-install -m 0644 deploy/systemd/lexigo-certificate-health@.service /etc/systemd/system/
-install -m 0644 deploy/systemd/lexigo-certificate-health@.timer /etc/systemd/system/
-cat > "/etc/lexigo/certificate-health-${ENVIRONMENT}.conf" <<EOF
+  install -m 0750 deploy/certificate-health.sh /usr/local/sbin/lexigo-certificate-health
+  install -m 0644 deploy/systemd/lexigo-certificate-health@.service /etc/systemd/system/
+  install -m 0644 deploy/systemd/lexigo-certificate-health@.timer /etc/systemd/system/
+  cat > "/etc/lexigo/certificate-health-${ENVIRONMENT}.conf" <<EOF
 PROJECT_ROOT=$PROJECT_ROOT
 COMPOSE_FILE=$PROJECT_ROOT/$COMPOSE_FILE
 APP_ENV_FILE=$PROJECT_ROOT/$APP_ENV_FILE
@@ -180,9 +179,10 @@ SITE_HOST=$SITE_HOST
 API_HOST=$API_HOST
 CERT_RENEW_BEFORE_SECONDS=1814400
 EOF
-chmod 0600 "/etc/lexigo/certificate-health-${ENVIRONMENT}.conf"
-systemctl daemon-reload
-systemctl enable --now "lexigo-certificate-health@${ENVIRONMENT}.timer"
+  chmod 0600 "/etc/lexigo/certificate-health-${ENVIRONMENT}.conf"
+  systemctl daemon-reload
+  systemctl enable --now "lexigo-certificate-health@${ENVIRONMENT}.timer"
+fi
 
 check_endpoint() {
   local host="$1"
@@ -212,7 +212,7 @@ rollback_to_previous_image() {
     return 1
   fi
 
-  log "readiness failed for $REQUESTED_IMAGE_TAG; rolling back to $PREVIOUS_IMAGE_TAG"
+  log "deployment of $REQUESTED_IMAGE_TAG failed; rolling back to $PREVIOUS_IMAGE_TAG"
   upsert_env "$APP_ENV_FILE" IMAGE_TAG "$PREVIOUS_IMAGE_TAG"
   export IMAGE_TAG="$PREVIOUS_IMAGE_TAG"
 
@@ -236,6 +236,15 @@ rollback_to_previous_image() {
   "${COMPOSE[@]}" ps
   return 0
 }
+
+if [[ "$DEPLOY_START_FAILED" -eq 1 ]]; then
+  log "docker compose failed while starting image $REQUESTED_IMAGE_TAG"
+  print_deployment_diagnostics
+  if rollback_to_previous_image; then
+    die "deployment failed during compose startup; previous image $PREVIOUS_IMAGE_TAG was restored"
+  fi
+  die "deployment failed during compose startup and automatic rollback could not restore service"
+fi
 
 if wait_for_readiness; then
   "${COMPOSE[@]}" ps
