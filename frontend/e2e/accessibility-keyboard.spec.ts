@@ -224,6 +224,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(size15).toHaveAttribute("aria-checked", "true");
 
   const startLesson = page.getByRole("button", { name: "Начать урок" });
+  await expect(startLesson).toBeEnabled();
   await startLesson.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
