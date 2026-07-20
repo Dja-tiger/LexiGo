@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - agent/incident-118-ios-scroll-history
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
