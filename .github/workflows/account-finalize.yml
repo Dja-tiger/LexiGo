@@ -1,0 +1,43 @@
+name: Account contract finalizer
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'agent/issue-57-account-management'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache: false
+      - name: Format backend and update OpenAPI
+        run: |
+          find backend -name '*.go' -type f -print0 | xargs -0 gofmt -w
+          python3 scripts/finalize_account_openapi.py
+          git rm \
+            .github/workflows/account-finalize.yml \
+            .github/workflows/account-contract-finalize.yml \
+            scripts/finalize_account_openapi.py
+      - name: Commit finalized account contract
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend api/openapi.yaml
+          git commit -m "docs(api): finalize account management contract"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
