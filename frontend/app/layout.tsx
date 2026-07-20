@@ -3,6 +3,7 @@ import { ApplicationErrorBoundary } from "@/components/application-error-boundar
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
 import "./product-navigation.css";
 import "./premium-ui.css";
@@ -25,6 +26,9 @@ import "./service-worker-update.css";
 import "./review-outbox.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
+
+const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
+const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
 
 export const metadata: Metadata = {
   title: "LexiGo",
@@ -50,7 +54,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" data-lexigo-build={BUILD_ID}>
+      <head>
+        <script
+          id="lexigo-build-version-guard"
+          dangerouslySetInnerHTML={{ __html: BUILD_VERSION_GUARD }}
+        />
+      </head>
       <body>
         <ApplicationErrorBoundary>
           <ServiceWorkerRegistration />
