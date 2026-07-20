@@ -22,6 +22,7 @@ type Server struct{ handler http.Handler }
 
 type Options struct {
 	PasswordResetSender auth.PasswordResetSender
+	EmailChangeSender   account.EmailChangeSender
 }
 
 func New(cfg config.Config, logger *slog.Logger, pg *pgxpool.Pool, rdb *redis.Client) (*Server, error) {
@@ -63,11 +64,27 @@ func NewWithOptions(
 		Secure:     cfg.SessionCookieSecure,
 		RefreshTTL: cfg.RefreshTokenTTL,
 	}, logger)
+
 	accountRepository := account.NewPostgresRepository(pg)
-	accountHandler := account.NewHandler(
-		account.NewService(accountRepository),
-		cfg.SessionCookieSecure,
+	emailChangeSender := options.EmailChangeSender
+	if emailChangeSender == nil {
+		emailChangeSender, err = configuredEmailChangeSender(cfg, logger)
+		if err != nil {
+			return nil, err
+		}
+	}
+	accountService := account.NewService(
+		accountRepository,
+		account.WithLogger(logger),
+		account.WithEmailChange(
+			accountRepository,
+			emailChangeSender,
+			cfg.CORSAllowedOrigin,
+			resetTTL,
+		),
 	)
+	accountHandler := account.NewHandler(accountService, cfg.SessionCookieSecure)
+
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
@@ -92,6 +109,8 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/auth/audit-events", authenticated(http.HandlerFunc(authHandler.AccountAudit)))
 	mux.Handle("POST /api/v1/account/export", limiter.Middleware(5, authenticated(http.HandlerFunc(accountHandler.Export))))
 	mux.Handle("DELETE /api/v1/account", limiter.Middleware(3, authenticated(http.HandlerFunc(accountHandler.Delete))))
+	mux.Handle("POST /api/v1/account/email-change/request", limiter.Middleware(5, authenticated(http.HandlerFunc(accountHandler.RequestEmailChange))))
+	mux.Handle("POST /api/v1/account/email-change/confirm", limiter.Middleware(10, http.HandlerFunc(accountHandler.ConfirmEmailChange)))
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
@@ -140,6 +159,35 @@ func configuredPasswordResetSender(cfg config.Config, logger *slog.Logger) (auth
 		})
 	default:
 		return nil, fmt.Errorf("unsupported password reset delivery %q", delivery)
+	}
+}
+
+func configuredEmailChangeSender(cfg config.Config, logger *slog.Logger) (account.EmailChangeSender, error) {
+	delivery := cfg.PasswordResetDelivery
+	if delivery == "" {
+		if cfg.AppEnv == "local" || cfg.AppEnv == "test" {
+			delivery = "log"
+		} else {
+			delivery = "smtp"
+		}
+	}
+	switch delivery {
+	case "log":
+		if cfg.AppEnv != "local" && cfg.AppEnv != "test" {
+			return nil, fmt.Errorf("log email change delivery is forbidden outside local and test environments")
+		}
+		return account.NewLogEmailChangeSender(logger), nil
+	case "smtp":
+		return account.NewSMTPEmailChangeSender(account.SMTPEmailChangeConfig{
+			Host:     cfg.SMTP.Host,
+			Port:     cfg.SMTP.Port,
+			Username: cfg.SMTP.Username,
+			Password: cfg.SMTP.Password,
+			From:     cfg.SMTP.From,
+			Timeout:  cfg.SMTP.Timeout,
+		})
+	default:
+		return nil, fmt.Errorf("unsupported email change delivery %q", delivery)
 	}
 }
 
