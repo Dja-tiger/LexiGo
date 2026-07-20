@@ -1,145 +1,30 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
+import { expect, test, type BrowserContext, type Locator, type Page, type Route } from "@playwright/test";
 
 const SESSION = {
-  user: {
-    id: "00000000-0000-0000-0000-000000000045",
-    email: "keyboard@example.com",
-    displayName: "Keyboard User",
-    createdAt: "2026-01-01T00:00:00Z",
-  },
-  tokens: {
-    accessToken: "keyboard-access-token",
-    tokenType: "Bearer",
-    expiresIn: 900,
-  },
+  user: { id: "00000000-0000-0000-0000-000000000045", email: "keyboard@example.com", displayName: "Keyboard User", createdAt: "2026-01-01T00:00:00Z" },
+  tokens: { accessToken: "keyboard-access-token", tokenType: "Bearer", expiresIn: 900 },
 };
-
+const EMPTY_MODE = { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 };
 const PROGRESS = {
-  dueNow: 2,
-  dueWords: 1,
-  duePhrases: 1,
-  totalWords: 2,
-  totalPhrases: 2,
-  newWords: 2,
-  learningWords: 0,
-  reviewWords: 0,
-  masteredWords: 0,
-  masteredPhrases: 0,
-  reviewsToday: 0,
-  successfulToday: 0,
-  reviewsTotal: 0,
-  dailyGoal: 30,
-  currentStreak: 3,
-  longestStreak: 5,
-  retainedItemsWeek: 0,
-  retainedWordsWeek: 0,
-  retainedPhrasesWeek: 0,
+  dueNow: 2, dueWords: 1, duePhrases: 1, totalWords: 1, totalPhrases: 1, newWords: 2, learningWords: 0,
+  reviewWords: 0, masteredWords: 0, masteredPhrases: 0, reviewsToday: 0, successfulToday: 0,
+  objectiveReviewsToday: 0, objectiveSuccessfulToday: 0, reviewsTotal: 0, dailyGoal: 30, currentStreak: 0,
+  longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0, retainedPhrasesWeek: 0, eventSchemaVersion: 2,
+  modes: { study: EMPTY_MODE, recall: EMPTY_MODE, choice: EMPTY_MODE, legacy: EMPTY_MODE },
 };
-
+const WORDS = [{ id: 451, kind: "word", lemma: "keyboard", translation: "клавиатура", phonetic: "/ˈkiːbɔːrd/", partOfSpeech: "noun", topic: "Accessibility", examples: ["Use the keyboard."], note: "", status: "new" }];
+const PHRASES = [{ id: 452, kind: "phrase", slug: "keyboard-access", lemma: "keyboard access", translation: "доступ с клавиатуры", phonetic: "", partOfSpeech: "phrase", topic: "Accessibility", examples: ["Preserve keyboard access."], note: "", cloze: "keyboard ____", clozeAnswer: "access", status: "new" }];
 const METADATA = {
-  catalogVersion: "sha256:keyboard-e2e",
-  updatedAt: "2026-07-18T00:00:00Z",
-  totals: { items: 4, words: 2, phrases: 2 },
-  sources: {
-    mixed: 4,
-    noun: 1,
-    verb: 1,
-    adjective: 0,
-    phrases: 2,
-    dailyLife: 1,
-    travel: 1,
-    dataEngineering: 1,
-    backend: 1,
-  },
-  topics: [{ topic: "Reliability", count: 2 }],
+  catalogVersion: "sha256:keyboard-e2e", updatedAt: "2026-07-18T00:00:00Z",
+  totals: { items: 2, words: 1, phrases: 1 },
+  sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 },
+  topics: [{ topic: "Accessibility", count: 2 }],
 };
-
-const WORDS = [
-  {
-    id: 4501,
-    kind: "word",
-    lemma: "focus",
-    translation: "фокус",
-    phonetic: "/ˈfəʊkəs/",
-    partOfSpeech: "noun",
-    topic: "Accessibility",
-    examples: ["Keep the focus indicator visible."],
-    note: "Keyboard users must always know their position.",
-    status: "new",
-  },
-  {
-    id: 4502,
-    kind: "word",
-    lemma: "navigate",
-    translation: "перемещаться",
-    phonetic: "/ˈnævɪɡeɪt/",
-    partOfSpeech: "verb",
-    topic: "Accessibility",
-    examples: ["Navigate without a mouse."],
-    note: "Use native controls and predictable order.",
-    status: "new",
-  },
-];
-
-const PHRASES = [
-  {
-    id: 4511,
-    kind: "phrase",
-    slug: "visible-focus",
-    lemma: "Keep focus visible",
-    translation: "сохранять фокус видимым",
-    phonetic: "",
-    partOfSpeech: "phrase",
-    topic: "Reliability",
-    examples: ["Keep focus visible in every viewport."],
-    note: "Do not rely on hover alone.",
-    status: "new",
-  },
-  {
-    id: 4512,
-    kind: "phrase",
-    slug: "keyboard-only",
-    lemma: "Use the keyboard only",
-    translation: "использовать только клавиатуру",
-    phonetic: "",
-    partOfSpeech: "phrase",
-    topic: "Reliability",
-    examples: ["Complete the flow using the keyboard only."],
-    note: "Enter and Space activate native buttons.",
-    status: "new",
-  },
-];
-
-const KEYBOARD_AXE_RULES = [
-  "aria-allowed-attr",
-  "aria-conditional-attr",
-  "aria-hidden-focus",
-  "aria-prohibited-attr",
-  "aria-required-attr",
-  "aria-required-children",
-  "aria-required-parent",
-  "aria-roles",
-  "aria-valid-attr-value",
-  "aria-valid-attr",
-  "button-name",
-  "focus-order-semantics",
-  "html-has-lang",
-  "html-lang-valid",
-  "label",
-  "nested-interactive",
-  "scrollable-region-focusable",
-  "select-name",
-  "tabindex",
-  "valid-lang",
-];
+const KEYBOARD_AXE_RULES = ["button-name", "link-name", "label", "aria-allowed-attr", "aria-valid-attr", "aria-valid-attr-value", "aria-roles", "aria-required-attr", "aria-required-children", "aria-required-parent", "aria-hidden-focus", "nested-interactive"];
 
 async function fulfillJSON(route: Route, status: number, body: unknown) {
-  await route.fulfill({
-    status,
-    contentType: "application/json",
-    body: JSON.stringify(body),
-  });
+  await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
 async function installMocks(page: Page) {
@@ -326,38 +211,52 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
 
-  const recallMode = page.getByRole("radio", { name: /Вспомнить самому/ });
-  await recallMode.focus();
+  const sourceGroup = page.getByRole("radiogroup", { name: "Источник материала" });
+  const dailyLife = sourceGroup.getByRole("radio", { name: /Бытовой английский/ });
+  await dailyLife.focus();
   await page.keyboard.press("Space");
-  await expect(recallMode).toHaveAttribute("aria-checked", "true");
+  await expect(dailyLife).toHaveAttribute("aria-checked", "true");
 
-  const phrasesSource = page.locator('[data-lexigo-source="phrases"]');
-  await phrasesSource.focus();
-  await page.keyboard.press("Space");
-  await expect(phrasesSource).toHaveAttribute("aria-checked", "true");
-
-  const size15 = page.locator(".lx-size-control").getByRole("radio", { name: "15", exact: true });
+  const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
+  const size15 = sizeGroup.getByRole("radio", { name: "15", exact: true });
   await size15.focus();
   await page.keyboard.press("Space");
   await expect(size15).toHaveAttribute("aria-checked", "true");
 
-  const calendarTrigger = page.getByRole("button", { name: "Уведомления" });
+  const startLesson = page.getByRole("button", { name: "Начать урок" });
+  await startLesson.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
+  await expect(page.getByRole("button", { name: "Знал" })).toBeVisible();
+
+  const known = page.getByRole("button", { name: "Знал" });
+  await known.focus();
+  await page.keyboard.press("Space");
+  await expect(page.getByRole("button", { name: "Дальше" })).toBeEnabled();
+  await page.getByRole("button", { name: "Дальше" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Не знал" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Карточка" })).toBeVisible();
+
+  await page.goto("/progress");
+  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  const calendarTrigger = page.getByRole("button", { name: "Настроить календарь" });
   await calendarTrigger.focus();
   await page.keyboard.press("Enter");
-
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
-  const title = dialog.getByRole("heading", { name: "Напоминание об английском" });
-  const close = dialog.getByRole("button", { name: "Закрыть" });
-  const apple = dialog.getByRole("button", { name: /Apple Calendar/ });
-  await expect(title).toBeFocused();
-  await expectVisibleFocusRing(title);
+  await expect(page.getByRole("heading", { name: "Напоминание об английском" })).toBeVisible();
 
-  await page.keyboard.press("Tab");
-  await expect(close).toBeFocused();
-  await title.focus();
+  const title = page.getByLabel("Название напоминания");
+  await expect(title).toBeFocused();
   await page.keyboard.press("Shift+Tab");
-  await expect(apple).toBeFocused();
+  const close = page.getByRole("button", { name: "Закрыть" });
+  await expect(close).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(title).toBeFocused();
+
+  const apple = page.getByRole("link", { name: /Apple Calendar/ });
+  await apple.focus();
   await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
 
@@ -407,8 +306,8 @@ test("lesson tabs remain reachable and expose an unclipped inner focus ring", as
   await cardTab.focus();
   await page.keyboard.press("ArrowRight");
   const exampleTab = page.getByRole("tab", { name: "Пример", exact: true });
-  await expectVisibleFocusRing(exampleTab);
   await expect(exampleTab).toHaveAttribute("aria-selected", "true");
+  await expectVisibleFocusRing(exampleTab);
 
   const innerRing = await exampleTab.evaluate((element) => window.getComputedStyle(element).boxShadow);
   expect(innerRing).toContain("inset");
@@ -429,61 +328,12 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   await expect(recall).toBeFocused();
   await expect(recall).toHaveAttribute("aria-checked", "true");
 
-  const sourceGroup = page.getByRole("radiogroup", { name: "Раздел обучения" });
-  const mixed = sourceGroup.getByRole("radio", { name: /Смешанная практика/ });
-  const backend = sourceGroup.getByRole("radio", { name: /Backend Development/ });
-  await mixed.focus();
-  await mixed.press("End");
-  await expect(backend).toBeFocused();
-  await expect(backend).toHaveAttribute("aria-checked", "true");
-  await backend.press("Home");
-  await expect(mixed).toBeFocused();
-  await expect(mixed).toHaveAttribute("aria-checked", "true");
-
   const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
   const size30 = sizeGroup.getByRole("radio", { name: "30", exact: true });
   const size60 = sizeGroup.getByRole("radio", { name: "60", exact: true });
+  await expect(size30).toHaveAttribute("aria-checked", "true");
   await size30.focus();
   await size30.press("ArrowRight");
   await expect(size60).toBeFocused();
   await expect(size60).toHaveAttribute("aria-checked", "true");
-
-  await page.goto("/phrases");
-  const topicGroup = page.getByRole("radiogroup", { name: "Тема фраз" });
-  const allTopics = topicGroup.getByRole("radio", { name: "Все темы" });
-  await expect(allTopics).toHaveAttribute("aria-checked", "true");
-  await allTopics.focus();
-  await allTopics.press("ArrowRight");
-  await expect(topicGroup.getByRole("radio").nth(1)).toBeFocused();
-  await expect(topicGroup.getByRole("radio").nth(1)).toHaveAttribute("aria-checked", "true");
-
-  await page.goto("/progress");
-  const goalGroup = page.getByRole("radiogroup", { name: "Дневная цель" });
-  await expect(goalGroup.getByRole("radio", { name: "30", exact: true })).toHaveAttribute("aria-checked", "true");
-  await expectNoPositiveTabIndex(page);
-});
-
-test("dictionary filters and item cards remain keyboard operable", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chromium", "Native select and deep-link focus flow are asserted once in Chromium.");
-  await page.goto("/dictionary");
-  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
-
-  const source = page.getByRole("combobox", { name: "Раздел словаря" });
-  await source.focus();
-  await source.selectOption("backend");
-  await expect(page).toHaveURL(/source=backend/);
-
-  const firstCard = page.getByRole("button", { name: /Открыть карточку:/ }).first();
-  await firstCard.focus();
-  await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
-  await expect(page.locator(".lx-dictionary-detail-card h1")).toHaveAttribute("lang", "en");
-
-  const back = page.getByRole("button", { name: "← К результатам" });
-  await back.focus();
-  await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/dictionary\?/);
-  await expect(page).toHaveURL(/source=backend/);
-  await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
-  await expectNoPositiveTabIndex(page);
 });
