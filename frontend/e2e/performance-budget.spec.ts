@@ -197,7 +197,8 @@ async function profileScenario(browser: Browser, scenario: ScenarioName): Promis
       await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();
     } else {
       const continueLesson = page.getByRole("button", { name: "Продолжить урок" });
-      if (await continueLesson.isVisible()) await continueLesson.click();
+      await expect(continueLesson).toBeVisible();
+      await continueLesson.click();
       await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
     }
 
@@ -214,6 +215,15 @@ async function profileScenario(browser: Browser, scenario: ScenarioName): Promis
   } finally {
     await context.close();
   }
+}
+
+async function writePerformanceReport(results: ScenarioResult[]): Promise<void> {
+  await mkdir("test-results", { recursive: true });
+  await writeFile(
+    "test-results/performance-budget-report.json",
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), profile: "4x CPU + simulated 3G", budgets: BUDGETS, results }, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 function enforceBudgets(result: ScenarioResult): void {
@@ -233,16 +243,12 @@ function enforceBudgets(result: ScenarioResult): void {
 test("critical routes stay within the low-end mobile performance budget", async ({ browser }) => {
   test.setTimeout(120_000);
   const results: ScenarioResult[] = [];
+  await writePerformanceReport(results);
+
   for (const scenario of ["home", "dictionary", "lesson"] as const) {
     results.push(await profileScenario(browser, scenario));
+    await writePerformanceReport(results);
   }
-
-  await mkdir("test-results", { recursive: true });
-  await writeFile(
-    "test-results/performance-budget-report.json",
-    `${JSON.stringify({ generatedAt: new Date().toISOString(), profile: "4x CPU + simulated 3G", budgets: BUDGETS, results }, null, 2)}\n`,
-    "utf8",
-  );
 
   for (const result of results) enforceBudgets(result);
 });
