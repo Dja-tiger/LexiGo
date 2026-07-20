@@ -232,19 +232,8 @@ jobs:
       - name: Controlled service worker update tests
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:sw
 
-      - name: Generate visual regression baselines
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-      - name: Extract generated visual baselines
-        run: bash ../scripts/ci/frontend-container.sh extract
-
-      - name: Upload generated visual baselines
-        uses: actions/upload-artifact@v7
-        with:
-          name: visual-regression-baselines-${{ github.sha }}
-          path: frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots
-          if-no-files-found: error
-          retention-days: 7
+      - name: Visual regression comparison
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual
 
       - name: Dictionary navigation browser smoke
         run: |
