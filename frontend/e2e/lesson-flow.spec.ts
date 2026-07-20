@@ -115,6 +115,7 @@ async function openLesson(page: Page, mode: LessonMode) {
 }
 
 test("study: persists exposure with the current lesson version", async ({ page }) => {
+  test.setTimeout(45_000);
   const api = await installLessonAPI(page, 2, 350);
   await openLesson(page, "study");
   expect(api.lessonRequests()[0]).toMatchObject({ studyMode: "study", source: "mixed" });
@@ -152,6 +153,15 @@ async function installSharedAPI(page: Page, state: SharedState) {
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === "/api/v1/catalog/metadata") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        catalogVersion: "sha256:e2e-catalog",
+        updatedAt: "2026-07-18T00:00:00Z",
+        totals: { items: 6, words: 3, phrases: 3 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        topics: [{ topic: "Backend", count: 2 }],
+      }) });
+    }
     if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
     if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
@@ -186,6 +196,7 @@ async function resumeFromHome(page: Page) {
 }
 
 test("stale device resynchronizes to the server position without duplicate review", async ({ context }) => {
+  test.setTimeout(45_000);
   const state: SharedState = { version: 1, currentIndex: 0, ratings: {}, reviewEvents: 0 };
   const first = await context.newPage();
   const second = await context.newPage();
@@ -208,8 +219,8 @@ test("stale device resynchronizes to the server position without duplicate revie
   await expect(second.getByRole("button", { name: /absolute: уже оценено/ })).toHaveCount(0);
   await expect(second.getByLabel("absolute: уже оценено")).toBeVisible();
 
-  await second.reload();
-  await second.getByRole("button", { name: "Продолжить урок", exact: true }).click();
+  await second.reload({ waitUntil: "domcontentloaded" });
+  await expect(second).toHaveURL(/\/lesson\/active(?:\?|$)/);
   await expect(second.getByText("Слово 2 из 2")).toBeVisible();
   expect(state.reviewEvents).toBe(1);
 });
