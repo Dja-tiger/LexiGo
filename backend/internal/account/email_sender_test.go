@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	_ EmailChangeSender                 = (*SMTPEmailChangeSender)(nil)
-	_ CriticalNotificationSender       = (*SMTPEmailChangeSender)(nil)
+	_ EmailChangeSender               = (*SMTPEmailChangeSender)(nil)
+	_ CriticalNotificationSender      = (*SMTPEmailChangeSender)(nil)
 	_ auth.SecurityNotificationSender = (*SMTPEmailChangeSender)(nil)
 )
 
