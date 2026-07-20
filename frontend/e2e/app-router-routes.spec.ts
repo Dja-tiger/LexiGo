@@ -38,6 +38,7 @@ async function installAuthenticatedAPI(context: BrowserContext) {
 
 function runtimeErrors(page: Page) {
   const errors: string[] = [];
+  page.on("crash", () => errors.push("pagecrash: WebKit renderer terminated"));
   page.on("pageerror", (error) => {
     if (/\/api\/v1\/lessons\/preview due to access control checks\.$/.test(error.message)) return;
     errors.push(`pageerror: ${error.message}`);
@@ -55,7 +56,27 @@ function visibleRouteLink(page: Page, view: "home" | "learn" | "phrases" | "libr
   return page.locator(`.lx-route-nav:visible [data-navigation-view="${view}"]`);
 }
 
-test.describe.configure({ timeout: 60_000 });
+async function exerciseScrollBursts(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const pause = (milliseconds: number) => new Promise<void>((resolve) => {
+      window.setTimeout(resolve, milliseconds);
+    });
+    const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+    // Six bounded bursts model repeated finger swipes without tying the test to
+    // requestAnimationFrame scheduling, which WebKit may throttle in headless CI.
+    for (let burst = 0; burst < 6; burst += 1) {
+      for (let step = 0; step < 6; step += 1) {
+        const moveDown = (burst + step) % 2 === 0;
+        window.scrollTo({ top: moveDown ? maximumScroll : 0, behavior: "auto" });
+        window.dispatchEvent(new Event("scroll"));
+      }
+      await pause(35);
+    }
+  });
+}
+
+test.describe.configure({ timeout: 90_000 });
 test.beforeEach(async ({ context }) => installAuthenticatedAPI(context));
 
 test("direct primary routes render, remain canonical and expose the active semantic link", async ({ page }) => {
@@ -81,25 +102,33 @@ test("direct primary routes render, remain canonical and expose the active seman
   expect(errors).toEqual([]);
 });
 
-test("scrolling primary routes never falls into the root error fallback", async ({ page }, testInfo) => {
+test("scrolling primary routes never terminates the browser renderer", async ({ context }, testInfo) => {
   test.skip(!["desktop-chromium", "ios-webkit"].includes(testInfo.project.name), "Scroll stability is covered in desktop Chromium and iOS WebKit.");
-  const errors = runtimeErrors(page);
+
   for (const entry of [
     { path: "/", heading: /Продолжайте учиться/ },
     { path: "/learn", heading: "Настройте урок под текущую задачу" },
     { path: "/dictionary", heading: "Каталог слов и терминов" },
     { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const) {
-    await page.goto(entry.path);
-    const heading = page.getByRole("heading", { name: entry.heading });
-    await expect(heading).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await page.waitForTimeout(1_250);
-    await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
-    await expect(page.getByText("LexiGo не смог открыть страницу", { exact: true })).toHaveCount(0);
-    await expect(heading).toBeAttached();
+    const page = await context.newPage();
+    const errors = runtimeErrors(page);
+    try {
+      await page.goto(entry.path, { waitUntil: "domcontentloaded" });
+      const heading = page.getByRole("heading", { name: entry.heading });
+      await expect(heading).toBeVisible({ timeout: 15_000 });
+
+      await exerciseScrollBursts(page);
+      await page.waitForTimeout(750);
+
+      await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
+      await expect(page.getByText("LexiGo не смог открыть страницу", { exact: true })).toHaveCount(0);
+      await expect(heading).toBeAttached();
+      expect(errors).toEqual([]);
+    } finally {
+      await page.close();
+    }
   }
-  expect(errors).toEqual([]);
 });
 
 test("legacy query URLs redirect once to canonical paths without losing filters", async ({ page }) => {
