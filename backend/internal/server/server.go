@@ -111,7 +111,7 @@ func NewWithOptions(
 	mux.HandleFunc("GET /health/live", healthHandler.Live)
 	mux.HandleFunc("GET /health/ready", healthHandler.Ready)
 	mux.HandleFunc("GET /api/v1/catalog/metadata", wordsHandler.Metadata)
-	mux.Handle("POST /api/v1/performance/rum", limiter.Middleware(120, http.HandlerFunc(performanceHandler.Report)))
+	mux.Handle("POST /api/v1/performance/rum", limiter.MiddlewareFailClosed("performance", 120, http.HandlerFunc(performanceHandler.Report)))
 	mux.Handle("POST /api/v1/auth/register", limiter.Middleware(10, http.HandlerFunc(authHandler.Register)))
 	mux.Handle("POST /api/v1/auth/login", limiter.Middleware(20, http.HandlerFunc(authHandler.Login)))
 	mux.Handle("POST /api/v1/auth/password-reset/request", limiter.Middleware(5, http.HandlerFunc(authHandler.RequestPasswordReset)))
