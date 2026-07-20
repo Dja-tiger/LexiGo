@@ -13,13 +13,20 @@ import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import { subscribeToSessionResume } from "../lib/session-resume";
 import { AccountDataPanel } from "./account-data-panel";
+import { AccountEmailPanel } from "./account-email-panel";
 import { AccountSecurityPanel } from "./account-security-panel";
+import { EmailChangeConfirmation } from "./email-change-confirmation";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 
 type SessionScreenReason = "required" | "expired" | "forbidden";
+
+type AccountNotice = {
+  title: string;
+  message: string;
+};
 
 function ProductShellLoading() {
   return (
@@ -57,14 +64,14 @@ function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | nul
 export function LexigoBootstrappedApp() {
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
-  const [accountNotice, setAccountNotice] = useState("");
+  const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
 
   const retryRestore = useCallback(() => {
     setInitialSession(undefined);
     setNotice(null);
-    setAccountNotice("");
+    setAccountNotice(null);
     setRestoreRecoverable(false);
     setRestoreAttempt((current) => current + 1);
   }, []);
@@ -73,8 +80,22 @@ export function LexigoBootstrappedApp() {
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
-    setAccountNotice("Аккаунт и связанные учебные данные удалены.");
+    setAccountNotice({
+      title: "Аккаунт удалён",
+      message: "Аккаунт и связанные учебные данные удалены.",
+    });
     window.history.replaceState(profileHistoryState(), "", "/profile?account=deleted");
+  }, []);
+
+  const handleEmailChanged = useCallback(() => {
+    setInitialSession(null);
+    setNotice(null);
+    setRestoreRecoverable(false);
+    setAccountNotice({
+      title: "Email изменён",
+      message: "Все активные сессии завершены. Войдите с новым адресом.",
+    });
+    window.history.replaceState(profileHistoryState(), "", "/profile?account=email-changed");
   }, []);
 
   useEffect(() => {
@@ -183,11 +204,12 @@ export function LexigoBootstrappedApp() {
       {accountNotice ? (
         <div className="lx-session-notice success" role="status">
           <div>
-            <strong>Аккаунт удалён</strong>
-            <span>{accountNotice}</span>
+            <strong>{accountNotice.title}</strong>
+            <span>{accountNotice.message}</span>
           </div>
         </div>
       ) : null}
+      <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
       <LexigoPremiumApp
         key={initialSession?.tokens.accessToken ?? "guest"}
         initialSession={initialSession}
@@ -195,6 +217,7 @@ export function LexigoBootstrappedApp() {
       {initialSession ? (
         <>
           <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
+          <AccountEmailPanel session={initialSession} onSessionExpired={retryRestore} />
           <AccountDataPanel
             session={initialSession}
             onSessionExpired={retryRestore}
