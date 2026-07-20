@@ -114,7 +114,10 @@ export function AccountSecurityPanel({
 
   useEffect(() => {
     if (pathname !== "/profile") return;
-    void loadSecurityData();
+    const timer = window.setTimeout(() => {
+      void loadSecurityData();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadSecurityData, pathname]);
 
   async function changePassword(event: FormEvent<HTMLFormElement>) {
