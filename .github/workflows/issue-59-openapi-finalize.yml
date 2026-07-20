@@ -1,0 +1,61 @@
+name: Issue 59 OpenAPI finalize
+
+on:
+  pull_request:
+    branches: [main]
+    types: [reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-59-performance-budgets
+      - name: Document fail-closed telemetry response
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("api/openapi.yaml")
+          text = path.read_text()
+          old = '''        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''
+          new = '''        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: Redis rate limiter недоступен; пакет не передан в PostgreSQL.
+          headers:
+            Retry-After:
+              schema: { type: integer, const: 60 }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.'''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"api/openapi.yaml: expected one performance response block, found {count}")
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+          rm .github/workflows/issue-59-openapi-finalize.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(api): document telemetry limiter outage response"
+          git push origin HEAD:agent/issue-59-performance-budgets
