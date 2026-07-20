@@ -248,16 +248,15 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(dialog).toBeVisible();
   await expect(page.getByRole("heading", { name: "Напоминание об английском" })).toBeVisible();
 
-  const title = page.getByLabel("Название напоминания");
+  const title = dialog.getByRole("heading", { name: "Напоминание об английском" });
+  const close = dialog.getByRole("button", { name: "Закрыть" });
+  const apple = dialog.getByRole("button", { name: /Apple Calendar/ });
   await expect(title).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  const close = page.getByRole("button", { name: "Закрыть" });
-  await expect(close).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(title).toBeFocused();
-
-  const apple = page.getByRole("link", { name: /Apple Calendar/ });
-  await apple.focus();
+  await expect(close).toBeFocused();
+  await title.focus();
+  await page.keyboard.press("Shift+Tab");
+  await expect(apple).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(close).toBeFocused();
 
