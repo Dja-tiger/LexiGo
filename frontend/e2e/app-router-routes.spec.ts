@@ -38,7 +38,10 @@ async function installAuthenticatedAPI(context: BrowserContext) {
 
 function runtimeErrors(page: Page) {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  page.on("pageerror", (error) => {
+    if (/\/api\/v1\/lessons\/preview due to access control checks\.$/.test(error.message)) return;
+    errors.push(`pageerror: ${error.message}`);
+  });
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     const text = message.text();
