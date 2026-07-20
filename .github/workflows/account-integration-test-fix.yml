@@ -68,7 +68,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             backend/integration/account_security_test.go \
-            backend/integration/account_privacy_test.go \
-            .github/workflows/account-integration-test-fix.yml
+            backend/integration/account_privacy_test.go
           git commit -m "test(account): fix deletion and race timing contracts"
           git push origin "HEAD:${GITHUB_HEAD_REF}"
