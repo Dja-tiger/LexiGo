@@ -1,0 +1,55 @@
+name: Email change Go formatting
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'agent/issue-57-account-management'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache: false
+      - name: Format email change implementation
+        run: |
+          gofmt -w \
+            backend/internal/account/email_change.go \
+            backend/internal/account/email_change_repository.go \
+            backend/internal/account/email_sender.go \
+            backend/internal/account/email_change_test.go \
+            backend/internal/account/http.go \
+            backend/internal/account/service.go \
+            backend/internal/server/server.go \
+            backend/integration/account_email_change_test.go
+          git rm .github/workflows/email-change-gofmt.yml
+      - name: Commit formatting-only changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            backend/internal/account/email_change.go \
+            backend/internal/account/email_change_repository.go \
+            backend/internal/account/email_sender.go \
+            backend/internal/account/email_change_test.go \
+            backend/internal/account/http.go \
+            backend/internal/account/service.go \
+            backend/internal/server/server.go \
+            backend/integration/account_email_change_test.go
+          git commit -m "style(go): format verified email change flow"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
