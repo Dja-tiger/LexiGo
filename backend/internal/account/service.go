@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrReauthenticationFailed   = errors.New("current password is invalid")
+	ErrReauthenticationFailed  = errors.New("current password is invalid")
 	ErrEmailConfirmationFailed = errors.New("account email confirmation does not match")
 	ErrAccountChanged          = errors.New("account credentials changed during the operation")
 )

@@ -43,18 +43,18 @@ type ExportWord struct {
 }
 
 type ExportReviewEvent struct {
-	ID                 int64      `json:"id"`
-	WordID             int64      `json:"wordId"`
-	Lemma              string     `json:"lemma"`
-	Translation        string     `json:"translation"`
-	Grade              int16      `json:"grade"`
-	Rating             *string    `json:"rating,omitempty"`
-	AnswerMode         *string    `json:"answerMode,omitempty"`
-	Correct            *bool      `json:"correct,omitempty"`
-	AnswerRevealed     *bool      `json:"answerRevealed,omitempty"`
-	EventSchemaVersion int16      `json:"eventSchemaVersion"`
-	ResponseMS         *int       `json:"responseMs,omitempty"`
-	ReviewedAt         time.Time  `json:"reviewedAt"`
+	ID                 int64     `json:"id"`
+	WordID             int64     `json:"wordId"`
+	Lemma              string    `json:"lemma"`
+	Translation        string    `json:"translation"`
+	Grade              int16     `json:"grade"`
+	Rating             *string   `json:"rating,omitempty"`
+	AnswerMode         *string   `json:"answerMode,omitempty"`
+	Correct            *bool     `json:"correct,omitempty"`
+	AnswerRevealed     *bool     `json:"answerRevealed,omitempty"`
+	EventSchemaVersion int16     `json:"eventSchemaVersion"`
+	ResponseMS         *int      `json:"responseMs,omitempty"`
+	ReviewedAt         time.Time `json:"reviewedAt"`
 }
 
 type ExportAuditEvent struct {
@@ -67,11 +67,11 @@ type ExportAuditEvent struct {
 }
 
 type ExportData struct {
-	SchemaVersion       int                       `json:"schemaVersion"`
-	GeneratedAt         time.Time                 `json:"generatedAt"`
-	Account             ExportAccount             `json:"account"`
+	SchemaVersion       int                        `json:"schemaVersion"`
+	GeneratedAt         time.Time                  `json:"generatedAt"`
+	Account             ExportAccount              `json:"account"`
 	LearningPreferences *ExportLearningPreferences `json:"learningPreferences,omitempty"`
-	Words               []ExportWord              `json:"words"`
+	Words               []ExportWord               `json:"words"`
 	ReviewHistory       []ExportReviewEvent        `json:"reviewHistory"`
 	SecurityAudit       []ExportAuditEvent         `json:"securityAudit"`
 }

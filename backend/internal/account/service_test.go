@@ -10,13 +10,13 @@ import (
 )
 
 type fakeRepository struct {
-	identity       Identity
-	export         ExportData
-	err            error
-	exportCalls    int
-	deleteCalls    int
-	deletedHash    string
-	deletedUserID  string
+	identity      Identity
+	export        ExportData
+	err           error
+	exportCalls   int
+	deleteCalls   int
+	deletedHash   string
+	deletedUserID string
 }
 
 func (f *fakeRepository) Identity(context.Context, string) (Identity, error) {

@@ -80,8 +80,8 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 
 	email := "privacy-export-delete@example.com"
 	registeredResult := postJSONWithClient(t, client, testServer.URL+"/api/v1/auth/register", map[string]string{
-		"email": email,
-		"password": "strong-password",
+		"email":       email,
+		"password":    "strong-password",
 		"displayName": "Privacy User",
 	}, "", http.StatusCreated)
 	registered := decodeJSON[integrationAuthResponse](t, registeredResult.Body)
@@ -138,7 +138,7 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 		http.MethodDelete,
 		testServer.URL+"/api/v1/account",
 		map[string]string{
-			"currentPassword": "strong-password",
+			"currentPassword":   "strong-password",
 			"confirmationEmail": "different@example.com",
 		},
 		registered.Tokens.AccessToken,
@@ -152,7 +152,7 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 		http.MethodDelete,
 		testServer.URL+"/api/v1/account",
 		map[string]string{
-			"currentPassword": "strong-password",
+			"currentPassword":   "strong-password",
 			"confirmationEmail": email,
 		},
 		registered.Tokens.AccessToken,
@@ -175,8 +175,8 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 	postJSONWithClient(t, client, testServer.URL+"/api/v1/auth/refresh", nil, csrf, http.StatusUnauthorized)
 
 	for table, want := range map[string]int{
-		"users": 0,
-		"refresh_tokens": 0,
+		"users":                0,
+		"refresh_tokens":       0,
 		"account_audit_events": 0,
 	} {
 		var count int
