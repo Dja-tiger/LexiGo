@@ -29,6 +29,7 @@ type GuardHarnessOptions = {
   currentBuild: string;
   href?: string;
   storedBuild?: string;
+  controllerBuild?: string | null;
   recovery?: Record<string, unknown>;
   cacheNames?: string[];
 };
@@ -62,6 +63,14 @@ function createGuardHarness(options: GuardHarnessOptions) {
     },
   };
 
+  const controller = options.controllerBuild === undefined
+    ? null
+    : {
+        scriptURL: options.controllerBuild === null
+          ? "https://lexigo.example/sw.js"
+          : `https://lexigo.example/sw.js?build=${encodeURIComponent(options.controllerBuild)}`,
+      };
+
   const windowObject = {
     location,
     localStorage,
@@ -75,6 +84,7 @@ function createGuardHarness(options: GuardHarnessOptions) {
     },
     navigator: {
       serviceWorker: {
+        controller,
         async getRegistrations() {
           return [{
             async unregister() {
@@ -161,10 +171,53 @@ describe("pre-runtime build version guard", () => {
     });
   });
 
+  it("recovers a legacy controlled session that has no local build marker", async () => {
+    const harness = createGuardHarness({
+      currentBuild: "build-b",
+      controllerBuild: "build-a",
+      cacheNames: ["lexigo-shell-build-a"],
+    });
+
+    await vi.waitFor(() => expect(harness.replacements).toHaveLength(1));
+
+    expect(harness.localStorage.getItem(BUILD_MARKER_STORAGE_KEY)).toBeNull();
+    expect(harness.stopped()).toBe(1);
+    expect(harness.unregistered()).toBe(1);
+    expect(harness.deletedCaches).toEqual(["lexigo-shell-build-a"]);
+    expect(new URL(harness.replacements[0]).searchParams.get(BUILD_CACHE_BUSTER_QUERY)).toBe("build-b");
+  });
+
+  it("treats a controlling legacy worker without a build query as incompatible", async () => {
+    const harness = createGuardHarness({
+      currentBuild: "build-b",
+      controllerBuild: null,
+      cacheNames: ["lexigo-shell-legacy"],
+    });
+
+    await vi.waitFor(() => expect(harness.replacements).toHaveLength(1));
+
+    expect(harness.stopped()).toBe(1);
+    expect(harness.unregistered()).toBe(1);
+    expect(harness.deletedCaches).toEqual(["lexigo-shell-legacy"]);
+  });
+
+  it("does not reload when marker and controlling worker already match", () => {
+    const harness = createGuardHarness({
+      currentBuild: "build-a",
+      storedBuild: "build-a",
+      controllerBuild: "build-a",
+    });
+
+    expect(harness.localStorage.getItem(BUILD_MARKER_STORAGE_KEY)).toBe("build-a");
+    expect(harness.replacements).toEqual([]);
+    expect(harness.stopped()).toBe(0);
+  });
+
   it("completes a successful recovery and removes only the internal query parameter", () => {
     const harness = createGuardHarness({
       currentBuild: "build-b",
       storedBuild: "build-a",
+      controllerBuild: "build-a",
       href: "https://lexigo.example/dictionary?source=mixed&__lexigo_build=build-b#catalog",
       recovery: {
         version: 1,
