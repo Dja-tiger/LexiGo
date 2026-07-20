@@ -9,6 +9,7 @@ cd "$PROJECT_ROOT"
 
 ENVIRONMENT="${1:?environment is required: stage or prod}"
 IMAGE_TAG="${2:?image tag is required}"
+REQUESTED_IMAGE_TAG="$IMAGE_TAG"
 PUBLIC_URL="${3:?frontend public URL is required}"
 API_PUBLIC_URL="${4:?API public URL is required}"
 ACME_EMAIL="${5:?ACME email is required}"
@@ -17,6 +18,7 @@ GHCR_TOKEN=""
 CLOUDFLARE_API_TOKEN=""
 DOCKER_CONFIG_DIR=""
 CADDY_ENV_TEMP=""
+PREVIOUS_IMAGE_TAG=""
 
 IFS= read -r GHCR_TOKEN
 IFS= read -r CLOUDFLARE_API_TOKEN
@@ -33,6 +35,7 @@ trap cleanup EXIT
 trap 'exit 130' HUP INT TERM
 
 die() { printf '[remote-deploy] ERROR: %s\n' "$*" >&2; exit 1; }
+log() { printf '[remote-deploy] %s\n' "$*"; }
 
 [[ "$(id -u)" -eq 0 ]] || die "remote deployment must run as root"
 [[ -n "$GHCR_TOKEN" ]] || die "GHCR token is empty"
@@ -94,6 +97,14 @@ upsert_env() {
     printf '%s=%s\n' "$key" "$value" >> "$file"
   fi
 }
+
+if [[ -s "$APP_ENV_FILE" ]]; then
+  PREVIOUS_IMAGE_TAG="$(sed -n 's/^IMAGE_TAG=//p' "$APP_ENV_FILE" | tail -n 1)"
+  if [[ -n "$PREVIOUS_IMAGE_TAG" && ! "$PREVIOUS_IMAGE_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]; then
+    log "ignoring invalid previous image tag from $APP_ENV_FILE"
+    PREVIOUS_IMAGE_TAG=""
+  fi
+fi
 
 if [[ ! -s "$APP_ENV_FILE" ]]; then
   POSTGRES_PASSWORD="$(openssl rand -hex 32)"
@@ -178,17 +189,65 @@ check_endpoint() {
   curl --fail --silent --show-error --max-time 20 \
     --resolve "$host:443:127.0.0.1" "https://$host/health/ready" >/dev/null
 }
-for attempt in $(seq 1 60); do
-  if check_endpoint "$SITE_HOST" && check_endpoint "$API_HOST"; then
-    "${COMPOSE[@]}" ps
-    /usr/local/sbin/lexigo-certificate-health "$ENVIRONMENT"
-    systemctl list-timers "lexigo-certificate-health@${ENVIRONMENT}.timer" --no-pager
-    echo "$ENVIRONMENT deployment is healthy at $PUBLIC_URL and $API_PUBLIC_URL"
-    exit 0
-  fi
-  sleep 5
-done
 
-"${COMPOSE[@]}" ps
-"${COMPOSE[@]}" logs --tail=200 caddy api web
-exit 1
+wait_for_readiness() {
+  local attempt
+  for attempt in $(seq 1 60); do
+    if check_endpoint "$SITE_HOST" && check_endpoint "$API_HOST"; then
+      return 0
+    fi
+    sleep 5
+  done
+  return 1
+}
+
+print_deployment_diagnostics() {
+  "${COMPOSE[@]}" ps || true
+  "${COMPOSE[@]}" logs --tail=200 caddy api web || true
+}
+
+rollback_to_previous_image() {
+  if [[ -z "$PREVIOUS_IMAGE_TAG" || "$PREVIOUS_IMAGE_TAG" == "$REQUESTED_IMAGE_TAG" ]]; then
+    log "no distinct previous image tag is available for rollback"
+    return 1
+  fi
+
+  log "readiness failed for $REQUESTED_IMAGE_TAG; rolling back to $PREVIOUS_IMAGE_TAG"
+  upsert_env "$APP_ENV_FILE" IMAGE_TAG "$PREVIOUS_IMAGE_TAG"
+  export IMAGE_TAG="$PREVIOUS_IMAGE_TAG"
+
+  if ! "${COMPOSE[@]}" pull api web; then
+    log "rollback image pull failed"
+    print_deployment_diagnostics
+    return 1
+  fi
+  if ! "${COMPOSE[@]}" up -d --remove-orphans; then
+    log "rollback compose update failed"
+    print_deployment_diagnostics
+    return 1
+  fi
+  if ! wait_for_readiness; then
+    log "rollback did not restore healthy endpoints"
+    print_deployment_diagnostics
+    return 1
+  fi
+
+  log "rollback restored healthy endpoints with image $PREVIOUS_IMAGE_TAG"
+  "${COMPOSE[@]}" ps
+  return 0
+}
+
+if wait_for_readiness; then
+  "${COMPOSE[@]}" ps
+  /usr/local/sbin/lexigo-certificate-health "$ENVIRONMENT"
+  systemctl list-timers "lexigo-certificate-health@${ENVIRONMENT}.timer" --no-pager
+  echo "$ENVIRONMENT deployment is healthy at $PUBLIC_URL and $API_PUBLIC_URL"
+  exit 0
+fi
+
+log "deployment health check failed for image $REQUESTED_IMAGE_TAG"
+print_deployment_diagnostics
+if rollback_to_previous_image; then
+  die "deployment failed; previous image $PREVIOUS_IMAGE_TAG was restored"
+fi
+die "deployment failed and automatic rollback could not restore service"
