@@ -12,6 +12,7 @@ import (
 	"github.com/Dja-tiger/New-project/backend/internal/health"
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 	"github.com/Dja-tiger/New-project/backend/internal/learning"
+	"github.com/Dja-tiger/New-project/backend/internal/performance"
 	"github.com/Dja-tiger/New-project/backend/internal/ratelimit"
 	"github.com/Dja-tiger/New-project/backend/internal/words"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -100,6 +101,7 @@ func NewWithOptions(
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
+	performanceHandler := performance.NewHandler(performance.NewRepository(pg))
 	limiter := ratelimit.New(rdb)
 	authenticated := func(handler http.HandlerFunc) http.Handler {
 		return httpx.Authenticate(authService.ParseAccess, handler)
@@ -109,6 +111,7 @@ func NewWithOptions(
 	mux.HandleFunc("GET /health/live", healthHandler.Live)
 	mux.HandleFunc("GET /health/ready", healthHandler.Ready)
 	mux.HandleFunc("GET /api/v1/catalog/metadata", wordsHandler.Metadata)
+	mux.Handle("POST /api/v1/performance/rum", limiter.MiddlewareFailClosed("performance", 120, http.HandlerFunc(performanceHandler.Report)))
 	mux.Handle("POST /api/v1/auth/register", limiter.Middleware(10, http.HandlerFunc(authHandler.Register)))
 	mux.Handle("POST /api/v1/auth/login", limiter.Middleware(20, http.HandlerFunc(authHandler.Login)))
 	mux.Handle("POST /api/v1/auth/password-reset/request", limiter.Middleware(5, http.HandlerFunc(authHandler.RequestPasswordReset)))

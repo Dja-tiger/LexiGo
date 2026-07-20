@@ -51,6 +51,38 @@ paths:
                 $ref: "#/components/schemas/CatalogMetadata"
         "304":
           description: Версия каталога не изменилась.
+  /api/v1/performance/rum:
+    post:
+      operationId: reportPerformanceRUM
+      tags: [performance]
+      summary: Принять анонимный пакет performance-метрик.
+      description: Принимает только allow-listed агрегаты без user ID, IP, raw URL, query, referrer, cookie, session ID и raw User-Agent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PerformanceRUMReport"
+      responses:
+        "202":
+          description: Пакет принят и сохранён.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /api/v1/auth/register:
     post:
       operationId: register
@@ -764,6 +796,67 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    PerformanceRUMReport:
+      type: object
+      additionalProperties: false
+      required: [appVersion, route, deviceClass, browserFamily, displayMode, samples]
+      properties:
+        appVersion:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '^[A-Za-z0-9._-]+$'
+        route:
+          type: string
+          enum: [/, /learn, /dictionary, /phrases, /progress, /profile, /lesson, /word, /phrase, /privacy, /terms, /legal, /not-found]
+        deviceClass:
+          type: string
+          enum: [mobile, tablet, desktop]
+        browserFamily:
+          type: string
+          enum: [chromium, webkit, firefox, other]
+        displayMode:
+          type: string
+          enum: [browser, standalone, fullscreen, minimal-ui, unknown]
+        samples:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items:
+            $ref: "#/components/schemas/PerformanceRUMSample"
+    PerformanceRUMSample:
+      type: object
+      additionalProperties: false
+      required: [name, value, rating, navigationType]
+      properties:
+        name:
+          type: string
+          enum:
+            - CLS
+            - LCP
+            - INP
+            - FCP
+            - TTFB
+            - NEXT_HYDRATION
+            - NEXT_ROUTE_CHANGE
+            - NEXT_RENDER
+            - LONG_TASK_COUNT
+            - LONG_TASK_TOTAL
+            - LONG_TASK_MAX
+            - OBSERVER_CALLBACK_TOTAL
+            - OBSERVER_CALLBACK_MAX
+            - ACTION_START_LESSON
+            - ACTION_REVIEW_ANSWER
+        value:
+          type: number
+          minimum: 0
+          maximum: 600000
+        rating:
+          type: string
+          enum: [good, needs-improvement, poor, unknown]
+        navigationType:
+          type: string
+          enum: [navigate, reload, back-forward, back-forward-cache, prerender, restore, unknown]
     CatalogMetadata:
       type: object
       required: [catalogVersion, updatedAt, totals, sources, topics]

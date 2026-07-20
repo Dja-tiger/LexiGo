@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const defaultJSONLimit int64 = 1 << 20
+
 type ErrorResponse struct {
 	Error struct {
 		Code    string `json:"code"`
@@ -16,7 +18,14 @@ type ErrorResponse struct {
 }
 
 func DecodeJSON(w http.ResponseWriter, r *http.Request, target any) error {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	return DecodeJSONLimit(w, r, target, defaultJSONLimit)
+}
+
+func DecodeJSONLimit(w http.ResponseWriter, r *http.Request, target any, maxBytes int64) error {
+	if maxBytes <= 0 {
+		maxBytes = defaultJSONLimit
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
