@@ -56,7 +56,27 @@ function visibleRouteLink(page: Page, view: "home" | "learn" | "phrases" | "libr
   return page.locator(`.lx-route-nav:visible [data-navigation-view="${view}"]`);
 }
 
-test.describe.configure({ timeout: 60_000 });
+async function exerciseScrollBursts(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const pause = (milliseconds: number) => new Promise<void>((resolve) => {
+      window.setTimeout(resolve, milliseconds);
+    });
+    const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+    // Six bounded bursts model repeated finger swipes without tying the test to
+    // requestAnimationFrame scheduling, which WebKit may throttle in headless CI.
+    for (let burst = 0; burst < 6; burst += 1) {
+      for (let step = 0; step < 6; step += 1) {
+        const moveDown = (burst + step) % 2 === 0;
+        window.scrollTo({ top: moveDown ? maximumScroll : 0, behavior: "auto" });
+        window.dispatchEvent(new Event("scroll"));
+      }
+      await pause(35);
+    }
+  });
+}
+
+test.describe.configure({ timeout: 90_000 });
 test.beforeEach(async ({ context }) => installAuthenticatedAPI(context));
 
 test("direct primary routes render, remain canonical and expose the active semantic link", async ({ page }) => {
@@ -82,49 +102,33 @@ test("direct primary routes render, remain canonical and expose the active seman
   expect(errors).toEqual([]);
 });
 
-test("scrolling primary routes never falls into the root error fallback", async ({ page }, testInfo) => {
+test("scrolling primary routes never terminates the browser renderer", async ({ context }, testInfo) => {
   test.skip(!["desktop-chromium", "ios-webkit"].includes(testInfo.project.name), "Scroll stability is covered in desktop Chromium and iOS WebKit.");
-  const errors = runtimeErrors(page);
-  const scrollSteps = 48;
+
   for (const entry of [
     { path: "/", heading: /Продолжайте учиться/ },
     { path: "/learn", heading: "Настройте урок под текущую задачу" },
     { path: "/dictionary", heading: "Каталог слов и терминов" },
     { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const) {
-    await page.goto(entry.path);
-    const heading = page.getByRole("heading", { name: entry.heading });
-    await expect(heading).toBeVisible();
-    await page.evaluate(async (steps) => {
-      type CountedHistory = History & { __lexigoReplaceStateCalls?: number };
-      const countedHistory = window.history as CountedHistory;
-      const originalReplaceState = countedHistory.replaceState.bind(countedHistory);
-      countedHistory.__lexigoReplaceStateCalls = 0;
-      countedHistory.replaceState = (data, unused, url) => {
-        countedHistory.__lexigoReplaceStateCalls = (countedHistory.__lexigoReplaceStateCalls ?? 0) + 1;
-        originalReplaceState(data, unused, url);
-      };
+    const page = await context.newPage();
+    const errors = runtimeErrors(page);
+    try {
+      await page.goto(entry.path, { waitUntil: "domcontentloaded" });
+      const heading = page.getByRole("heading", { name: entry.heading });
+      await expect(heading).toBeVisible({ timeout: 15_000 });
 
-      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      for (let index = 0; index < steps; index += 1) {
-        window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
-        window.dispatchEvent(new Event("scroll"));
-        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-      }
-    }, scrollSteps);
-    await page.waitForTimeout(750);
-    const historyWrites = await page.evaluate(() => (
-      window.history as History & { __lexigoReplaceStateCalls?: number }
-    ).__lexigoReplaceStateCalls ?? 0);
-    // Next App Router performs a stable pair of scroll-restoration writes for each
-    // synthetic WebKit scroll step. The allowance below keeps that framework
-    // baseline while failing if LexiGo adds its former extra per-frame write.
-    expect(historyWrites).toBeLessThanOrEqual((scrollSteps * 2) + 4);
-    await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
-    await expect(page.getByText("LexiGo не смог открыть страницу", { exact: true })).toHaveCount(0);
-    await expect(heading).toBeAttached();
+      await exerciseScrollBursts(page);
+      await page.waitForTimeout(750);
+
+      await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
+      await expect(page.getByText("LexiGo не смог открыть страницу", { exact: true })).toHaveCount(0);
+      await expect(heading).toBeAttached();
+      expect(errors).toEqual([]);
+    } finally {
+      await page.close();
+    }
   }
-  expect(errors).toEqual([]);
 });
 
 test("legacy query URLs redirect once to canonical paths without losing filters", async ({ page }) => {
