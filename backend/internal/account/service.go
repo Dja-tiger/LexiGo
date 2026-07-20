@@ -22,10 +22,11 @@ type PrivacyRepository interface {
 }
 
 type Service struct {
-	repository  PrivacyRepository
-	emailChange emailChangeConfig
-	now         func() time.Time
-	logger      *slog.Logger
+	repository            PrivacyRepository
+	emailChange           emailChangeConfig
+	criticalNotifications CriticalNotificationSender
+	now                   func() time.Time
+	logger                *slog.Logger
 }
 
 func NewService(repository PrivacyRepository, options ...ServiceOption) *Service {
@@ -75,5 +76,9 @@ func (s *Service) Delete(
 	if !strings.EqualFold(strings.TrimSpace(confirmationEmail), identity.Email) {
 		return ErrEmailConfirmationFailed
 	}
-	return s.repository.Delete(ctx, identity.ID, identity.PasswordHash)
+	if err := s.repository.Delete(ctx, identity.ID, identity.PasswordHash); err != nil {
+		return err
+	}
+	s.notifyAccountDeleted(ctx, identity)
+	return nil
 }
