@@ -8,6 +8,7 @@ import {
 } from "./support/quality-gates";
 
 const BUDGETS = {
+  initialRequests: 50,
   javascriptBytes: 700_000,
   cssBytes: 180_000,
   lcpMs: 5_000,
@@ -22,6 +23,7 @@ type ScenarioName = "home" | "dictionary" | "lesson";
 type ScenarioResult = {
   scenario: ScenarioName;
   route: string;
+  initialRequests: number;
   javascriptBytes: number;
   cssBytes: number;
   lcpMs: number;
@@ -170,6 +172,7 @@ async function readScenarioMetrics(page: Page): Promise<Omit<ScenarioResult, "sc
       .reduce((total, resource) => total + resource.encodedBodySize, 0);
     const longTaskTotalMs = collector.longTasks.reduce((total, duration) => total + duration, 0);
     return {
+      initialRequests: resources.length + 1,
       javascriptBytes,
       cssBytes,
       lcpMs: collector.lcpMs,
@@ -214,6 +217,7 @@ async function profileScenario(browser: Browser, scenario: ScenarioName): Promis
 }
 
 function enforceBudgets(result: ScenarioResult): void {
+  expect.soft(result.initialRequests, `${result.scenario}: initial request count`).toBeLessThanOrEqual(BUDGETS.initialRequests);
   expect.soft(result.javascriptBytes, `${result.scenario}: initial JavaScript bytes`).toBeLessThanOrEqual(BUDGETS.javascriptBytes);
   expect.soft(result.cssBytes, `${result.scenario}: initial CSS bytes`).toBeLessThanOrEqual(BUDGETS.cssBytes);
   expect.soft(result.lcpMs, `${result.scenario}: low-end mobile LCP`).toBeGreaterThan(0);
