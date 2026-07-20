@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useReportWebVitals } from "next/web-vitals";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import {
   flushPerformanceQueue,
@@ -12,12 +12,22 @@ import {
   type WebVitalMetricLike,
 } from "@/lib/performance-rum";
 
-function handleWebVital(metric: WebVitalMetricLike): void {
-  reportWebVitalMetric(metric);
+function usesCurrentRoute(metric: WebVitalMetricLike): boolean {
+  return metric.name === "Next.js-route-change-to-render" || metric.name === "Next.js-render";
 }
 
 export function WebVitalsReporter() {
   const pathname = usePathname();
+  const initialPathname = useRef(pathname);
+  const currentPathname = useRef(pathname);
+
+  useEffect(() => {
+    currentPathname.current = pathname;
+  }, [pathname]);
+
+  const handleWebVital = useCallback((metric: WebVitalMetricLike) => {
+    reportWebVitalMetric(metric, usesCurrentRoute(metric) ? currentPathname.current : initialPathname.current);
+  }, []);
 
   useReportWebVitals(handleWebVital);
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyBrowser,
   classifyDevice,
+  isPrivacyOptOutValue,
   mapWebVitalMetric,
   normalizeNavigationType,
   normalizePerformanceRoute,
@@ -67,6 +68,16 @@ describe("mapWebVitalMetric", () => {
     });
     expect(mapWebVitalMetric({ name: "USER_EMAIL", value: 1 })).toBeNull();
     expect(mapWebVitalMetric({ name: "LCP", value: Number.NaN })).toBeNull();
+  });
+});
+
+describe("privacy opt-out values", () => {
+  it("recognizes browser DNT variants without accepting arbitrary values", () => {
+    expect(isPrivacyOptOutValue("1")).toBe(true);
+    expect(isPrivacyOptOutValue("yes")).toBe(true);
+    expect(isPrivacyOptOutValue("YES")).toBe(true);
+    expect(isPrivacyOptOutValue("0")).toBe(false);
+    expect(isPrivacyOptOutValue(null)).toBe(false);
   });
 });
 

@@ -53,6 +53,7 @@ type RumReport = RumContext & {
 
 type PrivacyAwareNavigator = Navigator & {
   globalPrivacyControl?: boolean;
+  msDoNotTrack?: string | null;
 };
 
 type PrivacyAwareWindow = Window & {
@@ -145,9 +146,9 @@ export function mapWebVitalMetric(metric: WebVitalMetricLike): RumSample | null 
   };
 }
 
-export function reportWebVitalMetric(metric: WebVitalMetricLike): void {
+export function reportWebVitalMetric(metric: WebVitalMetricLike, route?: string): void {
   const sample = mapWebVitalMetric(metric);
-  if (sample) enqueueSample(sample);
+  if (sample) enqueueSample(sample, createContext(route));
 }
 
 export function flushPerformanceQueue(): void {
@@ -160,11 +161,6 @@ export function flushPerformanceQueue(): void {
   if (!report || report.samples.length === 0 || typeof navigator === "undefined") return;
 
   const body = JSON.stringify(report);
-  if (typeof navigator.sendBeacon === "function") {
-    const accepted = navigator.sendBeacon(REPORT_ENDPOINT, new Blob([body], { type: "application/json" }));
-    if (accepted) return;
-  }
-
   if (typeof fetch === "function") {
     void fetch(REPORT_ENDPOINT, {
       method: "POST",
@@ -245,11 +241,20 @@ export function installActionTimingObserver(): () => void {
   return () => document.removeEventListener("click", onClick, true);
 }
 
+export function isPrivacyOptOutValue(value: string | null | undefined): boolean {
+  return value === "1" || value?.toLowerCase() === "yes";
+}
+
 export function isCollectionEnabled(): boolean {
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
   const privacyNavigator = navigator as PrivacyAwareNavigator;
   const privacyWindow = window as PrivacyAwareWindow;
-  if (privacyNavigator.globalPrivacyControl === true || navigator.doNotTrack === "1" || privacyWindow.doNotTrack === "1") {
+  if (
+    privacyNavigator.globalPrivacyControl === true
+    || isPrivacyOptOutValue(navigator.doNotTrack)
+    || isPrivacyOptOutValue(privacyNavigator.msDoNotTrack)
+    || isPrivacyOptOutValue(privacyWindow.doNotTrack)
+  ) {
     return false;
   }
   if (samplingDecision !== null) return samplingDecision;

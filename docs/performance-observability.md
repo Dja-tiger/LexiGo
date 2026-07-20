@@ -38,7 +38,7 @@ Runtime diagnostics:
 - total and maximum duration of long-task observer callbacks;
 - action-to-next-paint timings for lesson start and answer rating.
 
-Reports are batched, sent with `navigator.sendBeacon` when possible, and fall back to `fetch(..., { keepalive: true })`. Session cookies and authorization headers are not sent.
+Reports are batched and sent with `fetch(..., { keepalive: true, credentials: "omit" })`. Session cookies and authorization headers are not sent, including during page exit.
 
 ## p75 production queries
 
