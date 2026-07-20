@@ -39,23 +39,25 @@ jobs:
 
           path = Path('.github/workflows/ci.yml')
           text = path.read_text(encoding='utf-8')
-          old = '''      - name: Generate visual regression baselines
-                run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-              - name: Extract generated visual baselines
-                run: bash ../scripts/ci/frontend-container.sh extract
-
-              - name: Upload generated visual baselines
-                uses: actions/upload-artifact@v7
-                with:
-                  name: visual-regression-baselines-${{ github.sha }}
-                  path: frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots
-                  if-no-files-found: error
-                  retention-days: 7
-          '''
-          new = '''      - name: Visual regression comparison
-                run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual
-          '''
+          old = (
+              "      - name: Generate visual regression baselines\n"
+              "        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update\n"
+              "\n"
+              "      - name: Extract generated visual baselines\n"
+              "        run: bash ../scripts/ci/frontend-container.sh extract\n"
+              "\n"
+              "      - name: Upload generated visual baselines\n"
+              "        uses: actions/upload-artifact@v7\n"
+              "        with:\n"
+              "          name: visual-regression-baselines-${{ github.sha }}\n"
+              "          path: frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots\n"
+              "          if-no-files-found: error\n"
+              "          retention-days: 7\n"
+          )
+          new = (
+              "      - name: Visual regression comparison\n"
+              "        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual\n"
+          )
 
           occurrences = text.count(old)
           if occurrences != 1:
