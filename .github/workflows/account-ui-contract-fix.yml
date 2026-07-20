@@ -2,6 +2,7 @@ name: Account UI contract fix
 
 on:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -9,8 +10,9 @@ permissions:
 jobs:
   apply-fix:
     if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.head_ref == 'agent/issue-57-account-management'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'agent/issue-57-account-management')
     runs-on:
       - self-hosted
       - linux
@@ -20,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref }}
+          ref: agent/issue-57-account-management
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
@@ -87,4 +89,4 @@ jobs:
             frontend/components/account-security-panel.tsx \
             frontend/e2e/legal-pages.spec.ts
           git commit -m "fix(account): map session errors and disambiguate legal heading"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
+          git push origin "HEAD:agent/issue-57-account-management"
