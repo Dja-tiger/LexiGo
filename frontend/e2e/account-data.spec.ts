@@ -90,6 +90,7 @@ async function json(route: Route, status: number, body: unknown, headers?: Recor
 
 async function installAPI(page: Page) {
   const exportRequests: Array<{ csrf: string; body: Record<string, string> }> = [];
+  const deleteRequests: Array<{ csrf: string; body: Record<string, string> }> = [];
   await page.context().addCookies([{
     name: "lexigo_csrf",
     value: "account-export-csrf",
@@ -125,28 +126,41 @@ async function installAPI(page: Page) {
         "Cache-Control": "no-store",
       });
     }
+    if (path === "/api/v1/account" && request.method() === "DELETE") {
+      const body = request.postDataJSON() as Record<string, string>;
+      deleteRequests.push({ csrf: request.headers()["x-csrf-token"] ?? "", body });
+      await route.fulfill({
+        status: 204,
+        headers: {
+          "Clear-Site-Data": "\"cache\", \"storage\"",
+          "Cache-Control": "no-store",
+        },
+      });
+      return;
+    }
     return json(route, 404, { error: { code: "not_mocked", message: path } });
   });
-  return exportRequests;
+  return { exportRequests, deleteRequests };
 }
 
 test("data export requires the current password and downloads versioned JSON", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Browser download contract is asserted once in Chromium.");
-  const exportRequests = await installAPI(page);
+  const api = await installAPI(page);
 
   await page.goto("/profile");
-  const panel = page.getByRole("region", { name: "Выгрузка данных аккаунта" });
+  const panel = page.getByRole("region", { name: "Данные и удаление аккаунта" });
   await expect(panel).toBeVisible();
-  await panel.getByRole("button", { name: "Скачать мои данные" }).click();
-  await expect(panel.getByRole("alert")).toHaveText("Введите текущий пароль");
+  const exportCard = panel.getByRole("article").filter({ hasText: "Скачать JSON" });
+  await exportCard.getByRole("button", { name: "Скачать мои данные" }).click();
+  await expect(exportCard.getByRole("alert")).toHaveText("Введите текущий пароль");
 
-  await panel.getByLabel("Текущий пароль").fill("wrong-password");
-  await panel.getByRole("button", { name: "Скачать мои данные" }).click();
-  await expect(panel.getByRole("alert")).toHaveText("current password is invalid");
+  await exportCard.getByLabel("Текущий пароль").fill("wrong-password");
+  await exportCard.getByRole("button", { name: "Скачать мои данные" }).click();
+  await expect(exportCard.getByRole("alert")).toHaveText("current password is invalid");
 
-  await panel.getByLabel("Текущий пароль").fill("current-password");
+  await exportCard.getByLabel("Текущий пароль").fill("current-password");
   const downloadPromise = page.waitForEvent("download");
-  await panel.getByRole("button", { name: "Скачать мои данные" }).click();
+  await exportCard.getByRole("button", { name: "Скачать мои данные" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("lexigo-export-20260720.json");
   const stream = await download.createReadStream();
@@ -155,8 +169,43 @@ test("data export requires the current password and downloads versioned JSON", a
   expect(JSON.parse(Buffer.concat(chunks).toString("utf8"))).toEqual(EXPORT_PAYLOAD);
   await expect(panel.getByRole("status")).toHaveText("Выгрузка сформирована и передана браузеру.");
 
-  expect(exportRequests).toEqual([
+  expect(api.exportRequests).toEqual([
     { csrf: "account-export-csrf", body: { currentPassword: "wrong-password" } },
     { csrf: "account-export-csrf", body: { currentPassword: "current-password" } },
   ]);
+});
+
+test("account deletion requires email, password and irreversible-action acknowledgement", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Destructive account form is asserted once in Chromium.");
+  const api = await installAPI(page);
+
+  await page.goto("/profile");
+  const panel = page.getByRole("region", { name: "Данные и удаление аккаунта" });
+  const dangerCard = panel.getByRole("article").filter({ hasText: "Удалить аккаунт" });
+  await dangerCard.getByRole("button", { name: "Удалить аккаунт навсегда" }).click();
+  await expect(dangerCard.getByText("Введите текущий пароль")).toBeVisible();
+  await expect(dangerCard.getByText("Введите email аккаунта")).toBeVisible();
+  await expect(dangerCard.getByText("Подтвердите, что понимаете последствия")).toBeVisible();
+
+  await dangerCard.getByLabel("Текущий пароль").fill("current-password");
+  await dangerCard.getByLabel(`Введите ${SESSION.user.email}`).fill("different@example.com");
+  await dangerCard.getByRole("checkbox").check();
+  await dangerCard.getByRole("button", { name: "Удалить аккаунт навсегда" }).click();
+  await expect(dangerCard.getByText("Email не совпадает с адресом аккаунта")).toBeVisible();
+  expect(api.deleteRequests).toEqual([]);
+
+  await dangerCard.getByLabel(`Введите ${SESSION.user.email}`).fill(SESSION.user.email);
+  await dangerCard.getByRole("button", { name: "Удалить аккаунт навсегда" }).click();
+  await expect(page).toHaveURL(/\/profile\?account=deleted$/);
+  await expect(page.getByRole("status")).toContainText("Аккаунт и связанные учебные данные удалены.");
+  await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Данные и удаление аккаунта" })).toHaveCount(0);
+
+  expect(api.deleteRequests).toEqual([{
+    csrf: "account-export-csrf",
+    body: {
+      currentPassword: "current-password",
+      confirmationEmail: SESSION.user.email,
+    },
+  }]);
 });
