@@ -7,10 +7,22 @@ import {
 } from "./support/quality-gates";
 
 async function expectStableScreenshot(page: Page, name: string): Promise<void> {
-  await page.evaluate(async () => {
+  const dimensions = await page.evaluate(async () => {
     await document.fonts.ready;
     window.scrollTo({ top: 0, behavior: "auto" });
+
+    const root = document.documentElement;
+    return {
+      viewportWidth: root.clientWidth,
+      contentWidth: Math.max(root.scrollWidth, document.body.scrollWidth),
+    };
   });
+
+  expect(
+    dimensions.contentWidth,
+    `Страница не должна иметь горизонтальный overflow: viewport=${dimensions.viewportWidth}px, content=${dimensions.contentWidth}px`,
+  ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+
   await page.waitForTimeout(100);
   await expect(page).toHaveScreenshot(name, {
     fullPage: true,
