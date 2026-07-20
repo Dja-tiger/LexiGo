@@ -1,0 +1,67 @@
+import { expect, test, type Page } from "@playwright/test";
+
+import {
+  BUILD_CACHE_BUSTER_QUERY,
+  BUILD_MARKER_STORAGE_KEY,
+  BUILD_RECOVERY_STORAGE_KEY,
+} from "../lib/build-version-guard";
+
+function captureRuntimeFailures(page: Page): string[] {
+  const failures: string[] = [];
+  page.on("crash", () => failures.push("pagecrash: browser renderer terminated"));
+  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
+  return failures;
+}
+
+async function tolerateGuardNavigation(operation: Promise<unknown>): Promise<void> {
+  try {
+    await operation;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/aborted|interrupted by another navigation|frame was detached/i.test(message)) throw error;
+  }
+}
+
+test.describe.configure({ timeout: 45_000 });
+
+test("an existing browser context recovers an old build marker without losing its route", async ({ page }) => {
+  const failures = captureRuntimeFailures(page);
+  const route = "/dictionary?source=mixed#catalog";
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
+
+  const currentBuild = await page.locator("html").getAttribute("data-lexigo-build");
+  expect(currentBuild).toBeTruthy();
+
+  await page.evaluate(async ({ markerKey }) => {
+    window.localStorage.setItem(markerKey, "stale-existing-client-build");
+    const staleCache = await window.caches.open("lexigo-shell-stale-existing-client-build");
+    await staleCache.put(
+      "/stale-existing-client-document",
+      new Response("stale", { status: 200, headers: { "Content-Type": "text/html" } }),
+    );
+  }, { markerKey: BUILD_MARKER_STORAGE_KEY });
+
+  await tolerateGuardNavigation(page.reload({ waitUntil: "domcontentloaded" }));
+  await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible({ timeout: 20_000 });
+
+  await expect.poll(() => page.evaluate(({ markerKey }) => (
+    window.localStorage.getItem(markerKey)
+  ), { markerKey: BUILD_MARKER_STORAGE_KEY })).toBe(currentBuild);
+
+  const recoveryState = await page.evaluate(({ recoveryKey }) => (
+    window.sessionStorage.getItem(recoveryKey)
+  ), { recoveryKey: BUILD_RECOVERY_STORAGE_KEY });
+  expect(recoveryState).toBeNull();
+
+  const cacheNames = await page.evaluate(() => window.caches.keys());
+  expect(cacheNames).not.toContain("lexigo-shell-stale-existing-client-build");
+
+  const finalURL = new URL(page.url());
+  expect(finalURL.pathname).toBe("/dictionary");
+  expect(finalURL.searchParams.get("source")).toBe("mixed");
+  expect(finalURL.searchParams.has(BUILD_CACHE_BUSTER_QUERY)).toBe(false);
+  expect(finalURL.hash).toBe("#catalog");
+  await expect(page.locator("html")).toHaveAttribute("data-lexigo-build", currentBuild ?? "");
+  expect(failures).toEqual([]);
+});
