@@ -1,0 +1,68 @@
+name: Issue 118 iOS scroll hotfix controller
+
+on:
+  push:
+    branches:
+      - fix/incident-118-ios-scroll-history
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: ${{ !contains(github.event.head_commit.message, '[controller-applied]') }}
+    runs-on: [self-hosted, linux, x64, lexigo-ci]
+    timeout-minutes: 45
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-issue-118-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BUILD_ID: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/incident-118-ios-scroll-history
+          fetch-depth: 0
+
+      - name: Apply scroll/history fix
+        run: python3 scripts/issue118_fix_ios_scroll_history.py
+
+      - name: Prepare frontend workspace
+        run: bash scripts/ci/frontend-container.sh prepare
+
+      - name: Install frontend dependencies
+        run: bash scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Lint frontend
+        run: bash scripts/ci/frontend-container.sh exec npm run lint
+
+      - name: Typecheck frontend
+        run: bash scripts/ci/frontend-container.sh exec npm run typecheck
+
+      - name: Run frontend unit tests
+        run: bash scripts/ci/frontend-container.sh exec npm run test
+
+      - name: Run route stability regression
+        run: |
+          bash scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -o pipefail
+          npm exec playwright test -- e2e/app-router-routes.spec.ts --project=desktop-chromium --project=ios-webkit
+          CONTAINER_SCRIPT
+
+      - name: Cleanup frontend workspace
+        if: always()
+        run: bash scripts/ci/frontend-container.sh cleanup
+
+      - name: Commit verified hotfix
+        run: |
+          set -Eeuo pipefail
+          git rm scripts/issue118_fix_ios_scroll_history.py
+          git rm .github/workflows/issue-118-ios-scroll-hotfix-controller.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            frontend/components/lexigo-premium-app.tsx \
+            frontend/e2e/app-router-routes.spec.ts \
+            frontend/e2e/public-runtime-smoke.spec.ts
+          git diff --cached --check
+          git commit -m 'fix(navigation): debounce scroll history persistence [controller-applied]'
+          git push origin HEAD:fix/incident-118-ios-scroll-history
