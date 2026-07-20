@@ -1,0 +1,34 @@
+.lx-account-data {
+  margin-top: -24px;
+}
+
+.lx-account-export-card {
+  margin-top: 22px;
+}
+
+.lx-account-schema {
+  flex: 0 0 auto;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(139, 92, 246, 0.12);
+  color: #ddd6fe;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.lx-account-export-card .lx-account-form {
+  max-width: 560px;
+}
+
+.lx-account-export-card .lx-account-form > small:not([role="alert"]) {
+  color: var(--lx-muted, #94a3b8);
+  line-height: 1.5;
+}
+
+@media (max-width: 719px) {
+  .lx-account-data {
+    margin-top: 0;
+  }
+}
