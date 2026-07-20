@@ -3,6 +3,9 @@ name: Issue 59 self-review fixes
 on:
   push:
     branches: [agent/issue-59-performance-budgets]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
