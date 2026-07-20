@@ -1,0 +1,90 @@
+name: Account UI contract fix
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'agent/issue-57-account-management'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Apply exact UI contract corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          component = Path('frontend/components/account-security-panel.tsx')
+          source = component.read_text()
+          old = '''      await accountRequest<void>("/api/v1/auth/sessions/revoke-others", session.tokens.accessToken, {
+            method: "POST",
+            body: JSON.stringify({ currentPassword: sessionsPassword }),
+          });
+          setSessionsPassword("");
+          setNotice("Остальные сессии завершены.");
+          await loadSecurityData();
+        } catch (requestError) {
+          handleRequestError(requestError);
+        } finally {'''
+          new = '''      await accountRequest<void>("/api/v1/auth/sessions/revoke-others", session.tokens.accessToken, {
+            method: "POST",
+            body: JSON.stringify({ currentPassword: sessionsPassword }),
+          });
+          setSessionsPassword("");
+          setNotice("Остальные сессии завершены.");
+          await loadSecurityData();
+        } catch (requestError) {
+          if (requestError instanceof AccountRequestError && requestError.field === "currentPassword") {
+            setPasswordErrors({ sessionsPassword: requestError.message });
+          } else {
+            handleRequestError(requestError);
+          }
+        } finally {'''
+          if source.count(old) != 1:
+              raise SystemExit(f'account sessions catch anchor count: {source.count(old)}')
+          component.write_text(source.replace(old, new))
+
+          legal = Path('frontend/e2e/legal-pages.spec.ts')
+          source = legal.read_text()
+          old = 'page.getByRole("heading", { name: "Аккаунт" })'
+          new = 'page.getByRole("heading", { name: "Аккаунт", exact: true })'
+          if source.count(old) != 1:
+              raise SystemExit(f'legal heading anchor count: {source.count(old)}')
+          legal.write_text(source.replace(old, new))
+          PY
+
+          git rm .github/workflows/account-ui-contract-fix.yml
+      - name: Validate focused frontend contracts
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm test -- --run components/react-dom-ownership.test.ts
+      - name: Commit UI contract changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/components/account-security-panel.tsx \
+            frontend/e2e/legal-pages.spec.ts
+          git commit -m "fix(account): map session errors and disambiguate legal heading"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
