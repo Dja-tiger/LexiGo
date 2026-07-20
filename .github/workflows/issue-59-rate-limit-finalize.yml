@@ -1,9 +1,8 @@
 name: Issue 59 rate limit finalize
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  push:
+    branches: [agent/issue-59-performance-budgets]
 
 permissions:
   contents: write
