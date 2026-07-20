@@ -27,6 +27,10 @@ jobs:
       - lexigo-ci
     timeout-minutes: 40
     environment: stage
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-stage-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BUILD_ID: ${{ github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -74,27 +78,36 @@ jobs:
           set -o pipefail
           bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Prepare public browser workspace
+        run: bash scripts/ci/frontend-container.sh prepare
 
-      - name: Install browser smoke dependencies
-        working-directory: frontend
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
-        run: npm ci
+      - name: Install public browser dependencies
+        run: bash scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
 
       - name: Verify public stage UI
         id: public_browser
-        working-directory: frontend
         env:
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
         run: |
           set -Eeuo pipefail
           set -o pipefail
-          npm exec playwright test -- --config=playwright.public.config.ts 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+          bash scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT' 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+          set -o pipefail
+          npm exec playwright test -- --config=playwright.public.config.ts
+          CONTAINER_SCRIPT
+
+      - name: Extract public browser diagnostics
+        if: failure()
+        run: bash scripts/ci/frontend-container.sh extract
+
+      - name: Upload public browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: stage-public-browser-diagnostics
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Report stage deployment
         if: always()
@@ -133,6 +146,10 @@ jobs:
               issue_number: 12,
               body
             });
+
+      - name: Cleanup public browser workspace
+        if: always()
+        run: bash scripts/ci/frontend-container.sh cleanup
 
       - name: Cleanup deployment log
         if: always()
