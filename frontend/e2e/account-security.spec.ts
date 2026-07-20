@@ -193,8 +193,8 @@ test("account security panel lists devices, reauthenticates mutations and update
 
   const passwordCard = page.getByRole("article").filter({ hasText: "Сменить пароль" });
   await passwordCard.getByLabel("Текущий пароль").fill("current-password");
-  await passwordCard.getByLabel("Новый пароль").fill("new-strong-password");
-  await passwordCard.getByLabel("Повторите новый пароль").fill("new-strong-password");
+  await passwordCard.getByLabel("Новый пароль", { exact: true }).fill("new-strong-password");
+  await passwordCard.getByLabel("Повторите новый пароль", { exact: true }).fill("new-strong-password");
   await passwordCard.getByRole("button", { name: "Изменить пароль" }).click();
   await expect(page.getByRole("status")).toHaveText("Пароль изменён. Остальные сессии завершены.");
   await expect(page.getByText("Пароль изменён", { exact: true })).toBeVisible();
