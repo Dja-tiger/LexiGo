@@ -45,12 +45,25 @@ LexiGo должен одновременно быть рабочим инстр�
 
 ## Границы модулей backend
 
-- `auth` — identity, пароли, access/refresh tokens;
+- `auth` — identity, пароли, access/refresh tokens и операции над refresh-token families;
+- `account` — экспорт персональных данных, удаление аккаунта и privacy-oriented flows;
 - `words` — словарь и пользовательское состояние слов;
 - `review` — будущий алгоритм интервальных повторений;
 - `lesson` — формирование дневной сессии;
 - `ai` — будущая интеграция с моделью;
 - `platform` — PostgreSQL, Redis, migrations с PostgreSQL advisory lock.
+
+## Управление аккаунтом и данными
+
+- одно устройство представлено одной refresh-token family; ротация токена не создаёт дубликаты устройств в профиле;
+- смена пароля и завершение остальных сессий требуют bearer-аутентификацию, CSRF и повторный ввод текущего пароля;
+- смена пароля, отзыв чужих session families и запись security audit выполняются внутри одной PostgreSQL-транзакции;
+- текущая session family сохраняется при смене пароля, остальные активные families отзываются;
+- JSON-export имеет версионированную схему и включает профиль, настройки обучения, состояния слов, review history и security audit без password hash и token secrets;
+- удаление требует текущий пароль и точное подтверждение email; `delete from users` каскадно удаляет зависимые пользовательские данные;
+- delete-запрос использует optimistic credential check по актуальному password hash, чтобы не удалить аккаунт после конкурентной смены credentials;
+- успешное удаление очищает refresh/CSRF cookies и возвращает `Clear-Site-Data` для browser cache и storage;
+- все чувствительные ответы используют `Cache-Control: no-store`.
 
 ## Безопасность
 
@@ -58,6 +71,8 @@ LexiGo должен одновременно быть рабочим инстр�
 - refresh token хранится только как SHA-256 hash;
 - refresh rotation выполняется транзакционно;
 - access token подписывается HS256;
+- state-changing cookie-authenticated операции защищены synchronizer CSRF token;
+- security audit хранит тип события, время, user agent, IP и безопасные metadata без secrets;
 - секреты находятся только в environment/GitHub Secrets;
 - production deploy требует ручного подтверждения GitHub Environment;
 - SSH host key передаётся через проверенный GitHub Secret `DEPLOY_KNOWN_HOSTS`.
