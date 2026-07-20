@@ -3,6 +3,7 @@ package account
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -21,12 +22,30 @@ type PrivacyRepository interface {
 }
 
 type Service struct {
-	repository PrivacyRepository
-	now        func() time.Time
+	repository  PrivacyRepository
+	emailChange emailChangeConfig
+	now         func() time.Time
+	logger      *slog.Logger
 }
 
-func NewService(repository PrivacyRepository) *Service {
-	return &Service{repository: repository, now: time.Now}
+func NewService(repository PrivacyRepository, options ...ServiceOption) *Service {
+	service := &Service{
+		repository: repository,
+		now:        time.Now,
+		logger:     slog.Default(),
+	}
+	for _, option := range options {
+		option(service)
+	}
+	return service
+}
+
+func WithLogger(logger *slog.Logger) ServiceOption {
+	return func(service *Service) {
+		if logger != nil {
+			service.logger = logger
+		}
+	}
 }
 
 func (s *Service) Export(ctx context.Context, userID, currentPassword string) (ExportData, error) {
