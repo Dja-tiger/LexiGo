@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: "1.26.5"
-          cache-dependency-path: backend/go.sum
+          cache: false
       - name: Verify dependency files
         run: |
           go mod verify
@@ -47,8 +47,21 @@ jobs:
           fi
       - name: Static analysis
         run: go vet ./...
-      - name: Unit tests with race detector
-        run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - id: unit-tests
+        name: Unit tests with race detector
+        run: |
+          set -o pipefail
+          go test -race -count=1 -coverprofile=coverage.out ./... 2>&1 | tee unit-test.log
+
+      - name: Upload backend unit diagnostics
+        if: always() && steps.unit-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-unit-test-log
+          path: backend/unit-test.log
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Coverage summary
         run: go tool cover -func=coverage.out
       - name: Vulnerability scan
@@ -79,7 +92,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: "1.26.5"
-          cache-dependency-path: backend/go.sum
+          cache: false
 
       - name: Start isolated integration services
         run: |
