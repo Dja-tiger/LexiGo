@@ -5,6 +5,7 @@ const FATAL_RUNTIME_PATTERN = /ChunkLoadError|Loading chunk .* failed|Failed to 
 
 function captureFatalRuntimeErrors(page: Page): string[] {
   const errors: string[] = [];
+  page.on("crash", () => errors.push("pagecrash: browser renderer terminated"));
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
   page.on("console", (message) => {
     if (message.type() !== "error") return;
@@ -26,11 +27,15 @@ for (const route of ROUTES) {
     await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
     await expect(page.getByRole("link", { name: /LexiGo/ })).toBeVisible();
 
-    await page.evaluate(() => {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "auto" });
-      window.dispatchEvent(new Event("scroll"));
+    await page.evaluate(async () => {
+      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      for (let index = 0; index < 48; index += 1) {
+        window.scrollTo({ top: index % 2 === 0 ? maximumScroll : 0, behavior: "auto" });
+        window.dispatchEvent(new Event("scroll"));
+        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+      }
     });
-    await page.waitForTimeout(1_750);
+    await page.waitForTimeout(2_000);
 
     await expect(page.locator('[data-testid="application-error-boundary"]')).toHaveCount(0);
     await expect(page.getByText("LexiGo не смог открыть страницу", { exact: false })).toHaveCount(0);

@@ -69,6 +69,7 @@ import {
   navigationTargetFromHistory,
   type NavigationScrollPosition,
 } from "../lib/navigation-history";
+import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";
 import {
   createNavigationTabStore,
   type PrimaryNavigationView,
@@ -748,8 +749,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
-    let scrollFrame = 0;
-
     const applyNavigation = (
       next: NavigationTarget,
       scroll: NavigationScrollPosition = { x: 0, y: 0 },
@@ -772,12 +771,17 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       );
     };
 
-    const scheduleScrollSnapshot = () => {
-      if (scrollFrame) return;
-      scrollFrame = window.requestAnimationFrame(() => {
-        scrollFrame = 0;
-        persistCurrentEntry();
-      });
+    const scrollSnapshots = createScrollSnapshotScheduler(
+      persistCurrentEntry,
+      {
+        setTimeout: (callback, delayMilliseconds) => window.setTimeout(callback, delayMilliseconds),
+        clearTimeout: (timerID) => window.clearTimeout(timerID),
+      },
+    );
+    const scheduleScrollSnapshot = () => scrollSnapshots.schedule();
+    const flushScrollSnapshot = () => scrollSnapshots.flush();
+    const flushScrollSnapshotWhenHidden = () => {
+      if (document.visibilityState === "hidden") flushScrollSnapshot();
     };
 
     const syncNavigationFromHistory = (event: PopStateEvent) => {
@@ -822,11 +826,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
     window.addEventListener("popstate", syncNavigationFromHistory);
     window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
+    window.addEventListener("pagehide", flushScrollSnapshot);
+    document.addEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
     return () => {
-      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
+      flushScrollSnapshot();
+      scrollSnapshots.cancel();
       window.history.scrollRestoration = previousScrollRestoration;
       window.removeEventListener("popstate", syncNavigationFromHistory);
       window.removeEventListener("scroll", scheduleScrollSnapshot);
+      window.removeEventListener("pagehide", flushScrollSnapshot);
+      document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
     };
   }, [navigationTabs]);
 
