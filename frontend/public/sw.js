@@ -1,14 +1,20 @@
 const CACHE_PREFIX = "lexigo-shell-";
 const BUILD_ID = new URL(self.location.href).searchParams.get("build") || "local";
 const CACHE = `${CACHE_PREFIX}${BUILD_ID.replace(/[^a-zA-Z0-9._-]+/g, "-")}`;
-const ROUTE_SHELLS = ["/", "/learn", "/phrases", "/dictionary", "/progress", "/profile", "/lesson/active"];
-const APP_SHELL = [...ROUTE_SHELLS, "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
+const OFFLINE_DOCUMENT = "/offline.html";
+const OFFLINE_ASSETS = [
+  OFFLINE_DOCUMENT,
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+];
 const SKIP_WAITING_MESSAGE = "LEXIGO_SKIP_WAITING";
 const ACTIVATED_MESSAGE = "LEXIGO_SW_ACTIVATED";
 let activationRequested = false;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));
 });
 
 self.addEventListener("message", (event) => {
@@ -33,10 +39,8 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-async function cachedRouteDocument(request) {
-  const exact = await caches.match(request, { cacheName: CACHE, ignoreSearch: true });
-  if (exact) return exact;
-  return caches.match("/", { cacheName: CACHE });
+async function staticOfflineDocument() {
+  return caches.match(OFFLINE_DOCUMENT, { cacheName: CACHE, ignoreSearch: true });
 }
 
 self.addEventListener("fetch", (event) => {
@@ -45,14 +49,15 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/health/")) return;
 
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then(async (response) => {
-          if (response.ok) return response;
-          return (await cachedRouteDocument(event.request)) || response;
-        })
-        .catch(async () => (await cachedRouteDocument(event.request)) || Response.error()),
-    );
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request);
+        if (response.ok || response.status < 500) return response;
+        return (await staticOfflineDocument()) || response;
+      } catch {
+        return (await staticOfflineDocument()) || Response.error();
+      }
+    })());
     return;
   }
 
