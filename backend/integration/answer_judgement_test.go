@@ -98,7 +98,7 @@ func TestObjectiveAnswerJudgementAndSuggestion(t *testing.T) {
 	if _, err := pg.Exec(ctx, `
 		update words
 		set translation = 'инцидент, происшествие',
-		    accepted_answers = array['инцидент', 'происшествие', 'инцидента']::text[]
+		    accepted_answers = array['инцидента']::text[]
 		where id = any($1::bigint[])
 	`, wordIDs); err != nil {
 		t.Fatalf("curate accepted answers: %v", err)
@@ -124,6 +124,10 @@ func TestObjectiveAnswerJudgementAndSuggestion(t *testing.T) {
 	if rejected.Status != "learning" || rejected.IntervalDays != 0 || rejected.Repetitions != 0 {
 		t.Fatalf("incorrect answer advanced scheduler: %+v", rejected)
 	}
+
+	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/words/%d/answer-suggestions", testServer.URL, wordIDs[0]), registered.Tokens.AccessToken, map[string]any{
+		"reviewEventId": rejected.ReviewEventID, "exerciseKind": "translation", "submittedAnswer": "подменённый вариант",
+	}, http.StatusConflict, nil)
 
 	var suggestion struct {
 		Status          string `json:"status"`
