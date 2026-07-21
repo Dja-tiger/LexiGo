@@ -1,6 +1,9 @@
 package learning
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestNormalizeSubmittedAnswerIsPredictable(t *testing.T) {
 	cases := map[string]string{
@@ -81,6 +84,21 @@ func TestAssessReviewSeparatesConfidenceFromSchedulerRating(t *testing.T) {
 	}
 	if !assessment.SuggestionAvailable {
 		t.Fatal("rejected non-empty server-judged answer must allow a moderation suggestion")
+	}
+}
+
+func TestNormalizeAndValidateReviewRequestRejectsAmbiguousAndOversizedAnswers(t *testing.T) {
+	answer := "accepted"
+	legacyCorrect := true
+	request := ReviewRequest{AnswerMode: AnswerModeRecall, SubmittedAnswer: &answer, Correct: &legacyCorrect}
+	if code, _ := normalizeAndValidateReviewRequest(&request); code != "ambiguous_objective_answer" {
+		t.Fatalf("validation code = %q, want ambiguous_objective_answer", code)
+	}
+
+	oversized := strings.Repeat("я", MaxSubmittedAnswerRunes+1)
+	request = ReviewRequest{AnswerMode: AnswerModeRecall, SubmittedAnswer: &oversized}
+	if code, _ := normalizeAndValidateReviewRequest(&request); code != "invalid_submitted_answer" {
+		t.Fatalf("validation code = %q, want invalid_submitted_answer", code)
 	}
 }
 

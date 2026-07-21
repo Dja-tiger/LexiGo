@@ -13,14 +13,14 @@ const (
 	JudgementSourceServer       = "server"
 	JudgementSourceLegacyClient = "legacy_client"
 
-	JudgementReasonPassiveExposure   = "passive_exposure"
-	JudgementReasonAcceptedExact     = "accepted_exact"
+	JudgementReasonPassiveExposure    = "passive_exposure"
+	JudgementReasonAcceptedExact      = "accepted_exact"
 	JudgementReasonAcceptedNormalized = "accepted_normalized"
-	JudgementReasonRejectedNoAnswer  = "rejected_no_answer"
-	JudgementReasonRejectedNoMatch   = "rejected_no_match"
-	JudgementReasonLegacyCorrect     = "legacy_client_correct"
-	JudgementReasonLegacyIncorrect   = "legacy_client_incorrect"
-	JudgementReasonLegacyNoAnswer    = "legacy_client_no_answer"
+	JudgementReasonRejectedNoAnswer   = "rejected_no_answer"
+	JudgementReasonRejectedNoMatch    = "rejected_no_match"
+	JudgementReasonLegacyCorrect      = "legacy_client_correct"
+	JudgementReasonLegacyIncorrect    = "legacy_client_incorrect"
+	JudgementReasonLegacyNoAnswer     = "legacy_client_no_answer"
 )
 
 type AnswerDefinition struct {
@@ -31,13 +31,13 @@ type AnswerDefinition struct {
 }
 
 type ReviewAssessment struct {
-	RequestedRating    Rating
-	EffectiveRating    Rating
-	Correct            *bool
-	SubmittedAnswer    *string
-	JudgementSource    string
-	JudgementReason    string
-	MatchedAnswer      string
+	RequestedRating     Rating
+	EffectiveRating     Rating
+	Correct             *bool
+	SubmittedAnswer     *string
+	JudgementSource     string
+	JudgementReason     string
+	MatchedAnswer       string
 	SuggestionAvailable bool
 }
 

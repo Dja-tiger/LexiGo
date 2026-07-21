@@ -7,6 +7,7 @@ type MockLesson = {
   reviewCalls: () => number;
   lessonRequests: () => RequestRecord[];
   reviewRequests: () => RequestRecord[];
+  suggestionRequests: () => RequestRecord[];
 };
 
 const SESSION = {
@@ -24,7 +25,7 @@ const PROGRESS = {
 const PHRASE = { id: 201, kind: "phrase" as const, slug: "roll-back", lemma: "roll back", translation: "откатить", phonetic: "", partOfSpeech: "phrase", topic: "Release", examples: ["Roll back the release."], note: "", cloze: "roll ____", clozeAnswer: "back", status: "new" };
 
 const WORDS = [
-  { id: 101, lemma: "absolute", translation: "абсолютный", phonetic: "/ˈæbsəluːt/", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "new" },
+  { id: 101, lemma: "absolute", translation: "абсолютный", acceptedAnswers: ["абсолютный", "полный"], phonetic: "/ˈæbsəluːt/", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "new" },
   { id: 102, lemma: "build", translation: "собирать", phonetic: "/bɪld/", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" },
   { id: 103, lemma: "cache", translation: "кэш", phonetic: "/kæʃ/", partOfSpeech: "noun", topic: "Backend", examples: ["Clear the cache."], note: "", status: "new" },
   { id: 104, lemma: "durable", translation: "надёжный", phonetic: "/ˈdjʊərəbl/", partOfSpeech: "adjective", topic: "Data", examples: ["Use durable storage."], note: "", status: "new" },
@@ -45,6 +46,7 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
   const selectedItems = itemOverride ?? lessonItems(itemCount);
   const lessonRequests: RequestRecord[] = [];
   const reviewRequests: RequestRecord[] = [];
+  const suggestionRequests: RequestRecord[] = [];
   await installBaseRoutes(page);
 
   await page.route("**/api/v1/**", async (route) => {
@@ -83,25 +85,42 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
         currentIndex: 0, version: 1, status: "active", items: selectedItems, createdAt: "2026-07-17T00:00:00Z", updatedAt: "2026-07-17T00:00:00Z",
       }) });
     }
+    if (path.endsWith("/answer-suggestions") && request.method() === "POST") {
+      const payload = request.postDataJSON() as RequestRecord;
+      suggestionRequests.push(payload);
+      return route.fulfill({ status: 202, contentType: "application/json", body: JSON.stringify({
+        id: suggestionRequests.length, wordId: selectedItems[Math.max(0, reviewedItems - 1)].id, reviewEventId: payload.reviewEventId,
+        exerciseKind: payload.exerciseKind, submittedAnswer: payload.submittedAnswer, status: "pending", createdAt: "2026-07-17T00:00:00Z",
+      }) });
+    }
     if (path.endsWith("/review") && request.method() === "POST") {
       const payload = request.postDataJSON() as RequestRecord;
       reviewCalls += 1;
       reviewRequests.push(payload);
       if (payload.lessonVersion !== version) return route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: { code: "lesson_version_conflict", message: "stale" } }) });
       if (reviewDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, reviewDelayMs));
+      const reviewedItem = selectedItems[Math.min(reviewedItems, selectedItems.length - 1)];
+      const submittedAnswer = typeof payload.submittedAnswer === "string" ? payload.submittedAnswer.trim().toLocaleLowerCase("ru-RU") : "";
+      const acceptedAnswers = [reviewedItem.translation, ...(reviewedItem.acceptedAnswers ?? [])].map((answer) => answer.toLocaleLowerCase("ru-RU"));
+      const objectiveCorrect = payload.answerMode === "study" ? undefined : acceptedAnswers.includes(submittedAnswer);
+      const effectiveRating = objectiveCorrect === false ? "again" : payload.rating;
       reviewedItems += 1;
       version += 1;
       const completed = reviewedItems === itemCount;
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-        wordId: selectedItems[Math.min(reviewedItems - 1, selectedItems.length - 1)].id, status: "learning", easiness: 2.5,
-        intervalDays: 1, repetitions: reviewedItems, dueAt: "2026-07-18T00:00:00Z", lastReviewedAt: "2026-07-17T00:00:00Z",
+        wordId: reviewedItem.id, status: "learning", easiness: 2.5, intervalDays: objectiveCorrect === false ? 0 : 1,
+        repetitions: objectiveCorrect === false ? 0 : reviewedItems, dueAt: "2026-07-18T00:00:00Z", lastReviewedAt: "2026-07-17T00:00:00Z",
+        requestedRating: payload.rating, effectiveRating, ...(objectiveCorrect === undefined ? {} : { correct: objectiveCorrect }),
+        judgementSource: payload.answerMode === "study" ? "study" : "server",
+        judgementReason: payload.answerMode === "study" ? "passive_exposure" : objectiveCorrect ? "accepted_exact" : submittedAnswer ? "rejected_no_match" : "rejected_no_answer",
+        ...(objectiveCorrect ? { matchedAnswer: submittedAnswer } : {}), reviewEventId: reviewedItems, suggestionAvailable: objectiveCorrect === false && Boolean(submittedAnswer),
         lessonId: "00000000-0000-0000-0000-000000000350", lessonCurrentIndex: reviewedItems, lessonVersion: version,
         lessonCompleted: completed, lessonReviewedItems: reviewedItems, lessonSkippedItems: 0, lessonTotalItems: itemCount,
       }) });
     }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
-  return { reviewCalls: () => reviewCalls, lessonRequests: () => lessonRequests, reviewRequests: () => reviewRequests };
+  return { reviewCalls: () => reviewCalls, lessonRequests: () => lessonRequests, reviewRequests: () => reviewRequests, suggestionRequests: () => suggestionRequests };
 }
 
 async function openLesson(page: Page, mode: LessonMode) {
@@ -143,7 +162,25 @@ test("recall and choice send versioned objective payloads", async ({ page }) => 
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Почти", exact: true }).click();
   await expect.poll(() => recall.reviewRequests().length).toBe(1);
-  expect(recall.reviewRequests()[0]).toMatchObject({ lessonVersion: 1, answerMode: "recall", correct: true });
+  expect(recall.reviewRequests()[0]).toMatchObject({ lessonVersion: 1, answerMode: "recall", submittedAnswer: "абсолютный" });
+  expect(recall.reviewRequests()[0]).not.toHaveProperty("correct");
+});
+
+test("wrong confidence cannot master an item and supports a safe answer suggestion", async ({ page }) => {
+  const api = await installLessonAPI(page, 1);
+  await openLesson(page, "recall");
+  await page.locator("#premium-answer").fill("непринятый вариант");
+  await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
+  await page.getByRole("button", { name: "Знал", exact: true }).click();
+
+  await expect(page.getByText("Ответ не принят", { exact: true })).toBeVisible();
+  await expect(page.getByText(/для расписания применено «Не знал»/)).toBeVisible();
+  expect(api.reviewRequests()[0]).toMatchObject({ rating: "known", submittedAnswer: "непринятый вариант" });
+
+  await page.getByRole("button", { name: "Мой вариант тоже верный", exact: true }).click();
+  await expect(page.getByText(/Вариант отправлен на проверку/)).toBeVisible();
+  await expect.poll(() => api.suggestionRequests().length).toBe(1);
+  expect(api.suggestionRequests()[0]).toMatchObject({ exerciseKind: "translation", submittedAnswer: "непринятый вариант" });
 });
 
 type SharedState = { version: number; currentIndex: number; ratings: Record<number, "known">; reviewEvents: number };

@@ -19,8 +19,8 @@ var (
 )
 
 type AnswerSuggestionRequest struct {
-	ReviewEventID  int64  `json:"reviewEventId"`
-	ExerciseKind   string `json:"exerciseKind"`
+	ReviewEventID   int64  `json:"reviewEventId"`
+	ExerciseKind    string `json:"exerciseKind"`
 	SubmittedAnswer string `json:"submittedAnswer"`
 }
 

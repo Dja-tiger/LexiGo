@@ -46,6 +46,7 @@ import {
   buildAnswerOptions,
   exerciseAnswer,
   exercisePromptLabel,
+  judgeLearningAnswer,
   normalizeAnswer,
   normalizePartOfSpeech,
   type LearningItem,
@@ -106,6 +107,7 @@ type APIItem = {
   partOfSpeech: string;
   topic: string;
   aliases?: string[];
+  acceptedAnswers?: string[];
   examples: string[];
   note: string;
   cloze?: string;
@@ -169,6 +171,15 @@ type LessonSessionResponse = {
 };
 
 type LessonReviewResponse = {
+  wordId: number;
+  requestedRating: ReviewRating;
+  effectiveRating: ReviewRating;
+  correct?: boolean;
+  judgementSource: "study" | "server" | "legacy_client";
+  judgementReason: string;
+  matchedAnswer?: string;
+  reviewEventId: number;
+  suggestionAvailable: boolean;
   lessonId: string;
   lessonCurrentIndex: number;
   lessonVersion: number;
@@ -540,6 +551,7 @@ function toLearningItem(item: APIItem): LearningItem {
     section: kind === "phrase" ? "phrase" : normalizePartOfSpeech(item.partOfSpeech),
     topic: item.topic,
     aliases: item.aliases,
+    acceptedAnswers: item.acceptedAnswers,
     examples: item.examples,
     note: item.note,
     status: item.status,
@@ -696,6 +708,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [serverSkippedItems, setServerSkippedItems] = useState(0);
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [reviewFeedback, setReviewFeedback] = useState<LessonReviewResponse | null>(null);
+  const [suggestionStatus, setSuggestionStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
+  const [suggestionError, setSuggestionError] = useState("");
   const [error, setError] = useState("");
   const [lessonQueueNotice, setLessonQueueNotice] = useState("");
   const [lessonPreview, setLessonPreview] = useState<LessonPreviewResponse | null>(null);
@@ -924,9 +939,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const currentItem = items[currentIndex];
   const currentRating = currentItem ? ratings[currentItem.id] : undefined;
   const expectedAnswer = currentItem ? exerciseAnswer(currentItem) : "";
-  const literalMatch = Boolean(
-    currentItem && typedAnswer.trim() && normalizeAnswer(typedAnswer) === normalizeAnswer(expectedAnswer),
-  );
+  const submittedAnswer = selectedAnswer || typedAnswer;
+  const localJudgement = currentItem && submittedAnswer.trim()
+    ? judgeLearningAnswer(currentItem, submittedAnswer)
+    : null;
+  const literalMatch = Boolean(localJudgement?.correct);
   const answerOptions = useMemo(
     () => (currentItem ? buildAnswerOptions(currentItem, items) : []),
     [currentItem, items],
@@ -1332,6 +1349,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     setShowChoices(!rated && mode === "choice");
     setSelectedAnswer("");
     setTypedAnswer("");
+    setReviewFeedback(null);
+    setSuggestionStatus("idle");
+    setSuggestionError("");
   }
 
   function applyLesson(lesson: LessonSessionResponse) {
@@ -1723,6 +1743,9 @@ navigate({ view: "lesson", source: resolvedSource });
     setServerLessonCompleted(false);
     setServerNextIndex(null);
     setServerSkippedItems(0);
+    setReviewFeedback(null);
+    setSuggestionStatus("idle");
+    setSuggestionError("");
     reviewInFlightRef.current = false;
     setError("");
     setLessonQueueNotice("");
@@ -1788,13 +1811,11 @@ navigate({ view: "lesson", source: resolvedSource });
     reviewInFlightRef.current = true;
     setReviewing(true);
     setError("");
+    setReviewFeedback(null);
+    setSuggestionStatus("idle");
+    setSuggestionError("");
     let reviewPersisted = false;
     try {
-      const correct = selectedAnswer
-        ? normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer)
-        : typedAnswer.trim()
-          ? literalMatch
-          : undefined;
       const reviewMode: AnswerMode = studyMode === "all" ? "study" : studyMode;
       const path = activeLesson
         ? `/api/v1/lessons/${activeLesson.id}/words/${currentItem.wordId}/review`
@@ -1807,12 +1828,13 @@ navigate({ view: "lesson", source: resolvedSource });
           responseMs: Math.max(0, Math.round(submittedAt - cardStartedAt)),
           answerMode: reviewMode,
           answerRevealed: revealed || reviewMode === "study",
-          ...(reviewMode === "study" ? {} : { correct }),
+          ...(reviewMode === "study" ? {} : { submittedAnswer }),
           timezoneOffsetMinutes: timezoneOffsetMinutes(),
         }),
       });
       setSession(result.activeSession);
       setRatings((current) => ({ ...current, [currentItem.id]: rating }));
+      setReviewFeedback(result.data);
       reviewPersisted = true;
       setServerLessonCompleted(result.data.lessonCompleted);
       setServerNextIndex(result.data.lessonCompleted ? null : result.data.lessonCurrentIndex);
@@ -1855,6 +1877,29 @@ navigate({ view: "lesson", source: resolvedSource });
     }
   }
 
+  async function submitAnswerSuggestion() {
+    if (!session || !currentItem || currentItem.wordId === undefined || !reviewFeedback) return;
+    const answer = submittedAnswer.trim();
+    if (!answer || !reviewFeedback.suggestionAvailable || reviewFeedback.reviewEventId <= 0) return;
+
+    setSuggestionStatus("submitting");
+    setSuggestionError("");
+    try {
+      const result = await authorizedRequest(session, `/api/v1/words/${currentItem.wordId}/answer-suggestions`, {
+        method: "POST",
+        body: JSON.stringify({
+          reviewEventId: reviewFeedback.reviewEventId,
+          exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation",
+          submittedAnswer: answer,
+        }),
+      });
+      setSession(result.activeSession);
+      setSuggestionStatus("submitted");
+    } catch (requestError) {
+      setSuggestionStatus("error");
+      setSuggestionError(requestError instanceof Error ? requestError.message : "Не удалось отправить вариант на проверку");
+    }
+  }
   function renderHeader() {
     const initial = session?.user.displayName?.trim().charAt(0).toUpperCase()
       || session?.user.email.charAt(0).toUpperCase()
@@ -2719,7 +2764,25 @@ return <button key={topic} type="button" role="radio" aria-checked={selected} ta
 
             <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled title="Активный урок проходит в серверном порядке">← Предыдущее недоступно</button><button ref={lessonAdvanceRef} className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
 
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Оценка сохранена: {ratingLabel(currentRating)}. Используйте единственную кнопку перехода выше.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знаете элемент?</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Самооценка сохранена: {ratingLabel(currentRating)}. Объективный результат показан ниже.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знали ответ? Самооценка хранится отдельно от объективной проверки.</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
+            {currentRating && reviewFeedback ? (
+              <section className={`lx-judgement ${reviewFeedback.correct === false ? "error" : reviewFeedback.correct === true ? "success" : "study"}`} role="status" aria-live="polite" aria-atomic="true">
+                <strong>{reviewFeedback.correct === true ? "Ответ принят" : reviewFeedback.correct === false ? "Ответ не принят" : "Изучение сохранено"}</strong>
+                <p>{reviewFeedback.correct === true
+                  ? reviewFeedback.judgementReason === "accepted_normalized"
+                    ? "Ответ принят после нормализации регистра, пробелов и пунктуации."
+                    : "Ответ совпал с принятой формой."
+                  : reviewFeedback.correct === false
+                    ? reviewFeedback.judgementReason === "rejected_no_answer"
+                      ? "Ответ не был введён. Для расписания применено «Не знал»."
+                      : `Вариант отсутствует в списке принятых ответов. Самооценка «${ratingLabel(reviewFeedback.requestedRating)}» сохранена, для расписания применено «${ratingLabel(reviewFeedback.effectiveRating)}».`
+                    : "Пассивное изучение не считается объективным воспроизведением и не повышает mastery."}</p>
+                {reviewFeedback.matchedAnswer ? <small>Принятая форма: <span lang={phraseCloze ? "en" : "ru"}>{reviewFeedback.matchedAnswer}</span></small> : null}
+                {reviewFeedback.suggestionAvailable && suggestionStatus !== "submitted" ? <button className="lx-button ghost" type="button" disabled={suggestionStatus === "submitting"} onClick={() => void submitAnswerSuggestion()}>{suggestionStatus === "submitting" ? "Отправляем…" : "Мой вариант тоже верный"}</button> : null}
+                {suggestionStatus === "submitted" ? <small className="lx-suggestion-success">Вариант отправлен на проверку. Текущий результат и расписание не изменены.</small> : null}
+                {suggestionStatus === "error" ? <small className="lx-suggestion-error" role="alert">{suggestionError}</small> : null}
+              </section>
+            ) : null}
             <p className="lx-visually-hidden" role="status" aria-live="polite" aria-atomic="true">{reviewing ? "Сохраняем оценку." : currentRating ? `Оценка сохранена: ${ratingLabel(currentRating)}.` : ""}</p>
 
             {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong lang="en">{item.prompt}</strong><small lang="ru">{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
