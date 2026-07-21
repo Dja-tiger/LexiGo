@@ -70,16 +70,31 @@ jobs:
         working-directory: frontend
         run: |
           set -Eeuo pipefail
-          bash ../scripts/ci/frontend-container.sh prepare
+          : > ../issue61-frontend.log
+          bash ../scripts/ci/frontend-container.sh prepare 2>&1 | tee -a ../issue61-frontend.log
           cleanup() {
             bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
-          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-          bash ../scripts/ci/frontend-container.sh exec npm run lint
-          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
-          bash ../scripts/ci/frontend-container.sh exec npm run test
-          bash ../scripts/ci/frontend-container.sh exec npm run build
+          for command in \
+            "npm ci --no-audit --no-fund" \
+            "npm run lint" \
+            "npm run typecheck" \
+            "npm run test" \
+            "npm run build"
+          do
+            printf '\n=== %s ===\n' "$command" | tee -a ../issue61-frontend.log
+            bash ../scripts/ci/frontend-container.sh exec bash -lc "$command" 2>&1 | tee -a ../issue61-frontend.log
+          done
+
+      - name: Upload frontend diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue61-frontend-diagnostic-${{ github.run_id }}
+          path: issue61-frontend.log
+          if-no-files-found: warn
+          retention-days: 3
 
       - name: Verify generated diff
         run: |
@@ -95,7 +110,7 @@ jobs:
       - name: Commit verified implementation
         run: |
           set -Eeuo pipefail
-          rm -f scripts/issue61_apply.py scripts/issue61_fixup.py .github/workflows/issue-61-apply.yml issue61-patch.log
+          rm -f scripts/issue61_apply.py scripts/issue61_fixup.py .github/workflows/issue-61-apply.yml issue61-patch.log issue61-frontend.log
           git add -A
           git diff --cached --check
           git config user.name "github-actions[bot]"
