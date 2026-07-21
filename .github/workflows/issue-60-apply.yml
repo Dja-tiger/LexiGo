@@ -33,7 +33,13 @@ jobs:
           cache: false
 
       - name: Apply deterministic patch
-        run: python3 scripts/issue60_apply.py
+        run: |
+          set -Eeuo pipefail
+          if ! python3 scripts/issue60_apply.py > issue60-patch.log 2>&1; then
+            tail -n 40 issue60-patch.log
+            exit 1
+          fi
+          tail -n 5 issue60-patch.log
 
       - name: Format and verify backend
         working-directory: backend
@@ -71,7 +77,7 @@ jobs:
       - name: Commit verified implementation
         run: |
           set -Eeuo pipefail
-          rm -f scripts/issue60_apply.py .github/workflows/issue-60-apply.yml
+          rm -f scripts/issue60_apply.py .github/workflows/issue-60-apply.yml issue60-patch.log
           git add -A
           git diff --cached --check
           git config user.name "github-actions[bot]"
