@@ -898,13 +898,16 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   useEffect(() => {
     if (navigation.view !== "phrases") return;
-    const filters = phraseCatalogFilters(navigation);
-    setPhraseTopic(filters.topic);
-    setPhrasePage(filters.page);
-    setPhraseSearchInput(filters.query);
-    setPhraseSearch(filters.query);
-    setPhraseSortMode(filters.sort);
-  }, [navigation.page, navigation.query, navigation.sort, navigation.topic, navigation.view]);
+    const timer = window.setTimeout(() => {
+      const filters = phraseCatalogFilters(navigation);
+      setPhraseTopic(filters.topic);
+      setPhrasePage(filters.page);
+      setPhraseSearchInput(filters.query);
+      setPhraseSearch(filters.query);
+      setPhraseSortMode(filters.sort);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [navigation]);
 
   useEffect(() => {
     if (!lessonStarted) return;
