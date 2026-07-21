@@ -28,6 +28,19 @@ describe("navigation tab snapshots", () => {
     });
   });
 
+  it("stores phrases as the current Dictionary catalog destination", () => {
+    const snapshots = rememberNavigationTabSnapshot(
+      {},
+      { view: "phrases", topic: "Incident communication", detail: "incident-update" },
+      { x: 0, y: 618 },
+    );
+
+    expect(navigationTabDestination(snapshots, "library")).toEqual({
+      target: { view: "phrases", topic: "Incident communication", detail: "incident-update" },
+      scroll: { x: 0, y: 618 },
+    });
+  });
+
   it("returns a clean root destination for a tab without a snapshot", () => {
     expect(navigationTabDestination({}, "progress")).toEqual({
       target: { view: "progress" },
@@ -79,12 +92,12 @@ describe("navigation tab snapshots", () => {
     });
   });
 
-  it("recognizes only the five primary destinations", () => {
+  it("recognizes only the four primary destinations", () => {
     expect(isPrimaryNavigationView("home")).toBe(true);
     expect(isPrimaryNavigationView("learn")).toBe(true);
-    expect(isPrimaryNavigationView("phrases")).toBe(true);
     expect(isPrimaryNavigationView("library")).toBe(true);
     expect(isPrimaryNavigationView("progress")).toBe(true);
+    expect(isPrimaryNavigationView("phrases")).toBe(false);
     expect(isPrimaryNavigationView("profile")).toBe(false);
     expect(isPrimaryNavigationView("lesson")).toBe(false);
   });
