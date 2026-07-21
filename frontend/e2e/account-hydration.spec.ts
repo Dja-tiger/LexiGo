@@ -165,7 +165,7 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
 
   await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();
   await expect(page).toHaveURL(/\/phrases$/);
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(phraseNotice).toContainText("Сервис временно недоступен");
@@ -195,7 +195,7 @@ test("standalone startup migrates away from corrupted navigation without clearin
   await installAccountMocks(page);
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
 
   const persisted = await page.evaluate(() => ({
     navigation: JSON.parse(window.localStorage.getItem("lexigo.navigation.v2") ?? "null") as unknown,

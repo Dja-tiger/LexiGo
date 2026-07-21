@@ -2174,7 +2174,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
   }
 
   function backToPhraseCatalog() {
-    const destination = navigationTabs.destination("phrases");
+    const destination = navigationTabs.destination("library");
     navigate({ view: "phrases" }, true, { scroll: destination.scroll });
   }
 

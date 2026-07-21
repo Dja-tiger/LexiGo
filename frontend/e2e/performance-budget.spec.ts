@@ -193,7 +193,7 @@ async function profileScenario(browser: Browser, scenario: ScenarioName): Promis
     await page.goto(route, { waitUntil: "domcontentloaded" });
 
     if (scenario === "home") {
-      await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
     } else if (scenario === "dictionary") {
       await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();

@@ -99,7 +99,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
 
   const startedAt = Date.now();
   await page.goto("/phrases");
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
   await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(48);
   expect(Date.now() - startedAt).toBeLessThan(8000);
   await expect(page.getByText("Показано 1–48 из 1 000").first()).toBeVisible();

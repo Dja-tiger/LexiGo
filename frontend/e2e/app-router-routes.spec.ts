@@ -82,9 +82,9 @@ test.beforeEach(async ({ context }) => installAuthenticatedAPI(context));
 test("direct primary routes render, remain canonical and expose the active semantic link", async ({ page }) => {
   const errors = runtimeErrors(page);
   const routes = [
-    { path: "/", view: "home", heading: /Продолжайте учиться/ },
-    { path: "/learn", view: "learn", heading: "Настройте урок под текущую задачу" },
-    { path: "/phrases", view: "phrases", heading: "Готовые формулировки для работы" },
+    { path: "/", view: "home", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ },
+    { path: "/learn", view: "learn", heading: "Соберите один сфокусированный урок" },
+    { path: "/phrases", view: "phrases", heading: "Находите готовые формулировки" },
     { path: "/dictionary", view: "library", heading: "Каталог слов и терминов" },
     { path: "/progress", view: "progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const;
@@ -106,8 +106,8 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
   test.skip(!["desktop-chromium", "ios-webkit"].includes(testInfo.project.name), "Scroll stability is covered in desktop Chromium and iOS WebKit.");
 
   for (const entry of [
-    { path: "/", heading: /Продолжайте учиться/ },
-    { path: "/learn", heading: "Настройте урок под текущую задачу" },
+    { path: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ },
+    { path: "/learn", heading: "Соберите один сфокусированный урок" },
     { path: "/dictionary", heading: "Каталог слов и терминов" },
     { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const) {
@@ -147,7 +147,7 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   const tab = await tabPromise;
   await tab.waitForLoadState("domcontentloaded");
   await expect(tab).toHaveURL(/\/learn$/);
-  await expect(tab.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(tab.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await tab.close();
   await learn.click();
   await expect(page).toHaveURL(/\/learn$/);
@@ -155,10 +155,10 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   await expect(page).toHaveURL(/\/phrases$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/\/phrases$/);
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 });
 
 test("word and phrase deep links survive reload and remain shareable", async ({ page }) => {

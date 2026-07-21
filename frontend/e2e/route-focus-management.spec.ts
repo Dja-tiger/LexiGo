@@ -249,7 +249,7 @@ test.beforeEach(async ({ page }) => {
 
 test("skip link reaches the main landmark and route navigation announces the new screen", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
 
   const skipLink = page.getByRole("link", { name: "Перейти к основному содержимому" });
   await skipLink.focus();
@@ -259,7 +259,7 @@ test("skip link reaches the main landmark and route navigation announces the new
 
   await clickPrimaryNavigation(page, "learn");
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await expectMainFocus(page, "Обучение");
 
   const activeLinks = page.locator('.lx-route-nav [data-navigation-view="learn"]');
@@ -272,7 +272,7 @@ test("skip link reaches the main landmark and route navigation announces the new
 test("the skip link is the first desktop Tab stop", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Deterministic desktop Tab order is asserted once.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
 
   await page.keyboard.press("Tab");
   const skipLink = page.getByRole("link", { name: "Перейти к основному содержимому" });
@@ -283,11 +283,11 @@ test("the skip link is the first desktop Tab stop", async ({ page }, testInfo) =
 test("back and forward restore the matching scroll position and main focus", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Scroll restoration uses one deterministic desktop viewport.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
 
   await clickPrimaryNavigation(page, "phrases");
   await expect(page).toHaveURL(/\/phrases$/);
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
   await expectMainFocus(page, "Технические фразы");
 
   await page.evaluate(() => window.scrollTo({ top: 1_100, behavior: "auto" }));
@@ -328,7 +328,7 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
   });
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
   await clickPrimaryNavigation(page, "learn");
   await expectMainFocus(page, "Обучение");
 
@@ -350,7 +350,7 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
 test("saving a review transfers focus locally without generating a route announcement", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Keyboard review focus is deterministic in the desktop release profile.");
   await page.goto("/learn");
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
 
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   const start = page.getByRole("button", { name: "Начать урок", exact: true });

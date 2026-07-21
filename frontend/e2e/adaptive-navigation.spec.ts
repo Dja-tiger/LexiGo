@@ -290,7 +290,7 @@ test("medium width uses a labelled rail and restores the previous tab target and
   test.skip(testInfo.project.name !== "desktop-webkit", "Tablet rail and WebKit behavior are asserted once.");
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/phrases");
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 
   const rail = navigation(page, ".lx-route-nav--rail");
   await expect(rail).toBeVisible();
@@ -313,7 +313,7 @@ test("medium width uses a labelled rail and restores the previous tab target and
 
   await clickNavigationView(page, "progress");
   await expect(page).toHaveURL(/\/progress$/);
-  await page.getByRole("button", { name: "Рабочие фразы" }).click();
+  await clickNavigationView(page, "library");
   await expect(page).toHaveURL(/\/phrases$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(savedScroll - 100);
 
@@ -323,7 +323,7 @@ test("medium width uses a labelled rail and restores the previous tab target and
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
 
   await clickNavigationView(page, "progress");
-  await clickNavigationView(page, "phrases");
+  await clickNavigationView(page, "library");
   await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -333,7 +333,7 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
   test.skip(!["ios-webkit", "android-chromium"].includes(testInfo.project.name), "Compact mobile contract.");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
 
   const bottomNavigation = navigation(page, ".lx-route-nav--mobile");
   await expect(bottomNavigation).toBeVisible();
@@ -360,7 +360,7 @@ test("mobile landscape switches to the medium rail without clipping content", as
   test.skip(!["ios-webkit", "android-chromium"].includes(testInfo.project.name), "Landscape mobile contract.");
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/learn");
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
 
   const rail = navigation(page, ".lx-route-nav--rail");
   await expect(rail).toBeVisible();
@@ -379,7 +379,7 @@ test("an active lesson removes top-level navigation and blocks browser history e
   test.skip(testInfo.project.name !== "desktop-chromium", "Focused lesson behavior is asserted once.");
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/learn");
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
 
   const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled();
@@ -400,7 +400,7 @@ test("an active lesson removes top-level navigation and blocks browser history e
 
   await page.goBack();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await expect(page).not.toHaveURL(/\/lesson\//);
 });
 

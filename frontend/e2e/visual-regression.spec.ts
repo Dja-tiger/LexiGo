@@ -40,7 +40,7 @@ test.describe("critical visual baselines", () => {
   test("home", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
     await expectStableScreenshot(page, "home.png");
     expect(runtimeErrors).toEqual([]);
   });
@@ -48,7 +48,7 @@ test.describe("critical visual baselines", () => {
   test("lesson composer", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
     await expectStableScreenshot(page, "lesson-composer.png");
     expect(runtimeErrors).toEqual([]);
   });
