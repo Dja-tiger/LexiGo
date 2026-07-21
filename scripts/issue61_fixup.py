@@ -49,4 +49,39 @@ if text.count(source_selector_old) != 1:
     raise RuntimeError(f"expected one source selector patch block, found {text.count(source_selector_old)}")
 text = text.replace(source_selector_old, source_selector_new, 1)
 
+home_plural_old = 'title: `${dueNow} ${plural(dueNow, ["элемент готов", "элемента готовы", "элементов готовы"])} к повторению`,'
+home_plural_new = 'title: `${dueNow} ${russianPlural(dueNow, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,'
+if text.count(home_plural_old) != 1:
+    raise RuntimeError(f"expected one Home pluralization call, found {text.count(home_plural_old)}")
+text = text.replace(home_plural_old, home_plural_new, 1)
+
+anchor = '''# Primary navigation exposes four user intentions. Phrases remain a canonical
+# catalog route and are reached from the Dictionary catalog switch.
+'''
+shared_plural_patch = '''# Reuse one Russian pluralization implementation across lesson composition and Home.
+replace_once(
+    "frontend/lib/lesson-composition.ts",
+    "function plural(value: number, one: string, few: string, many: string): string {",
+    "export function russianPlural(value: number, one: string, few: string, many: string): string {",
+)
+lesson_composition = read("frontend/lib/lesson-composition.ts")
+if lesson_composition.count("plural(") != 3:
+    raise RuntimeError(f"frontend/lib/lesson-composition.ts: expected three internal plural calls, found {lesson_composition.count('plural(')}")
+write("frontend/lib/lesson-composition.ts", lesson_composition.replace("plural(", "russianPlural(", 3))
+replace_once(
+    "frontend/components/lexigo-premium-app.tsx",
+    "  lessonPriorityDescription,\\n  type LessonComposition,\\n",
+    "  lessonPriorityDescription,\\n  russianPlural,\\n  type LessonComposition,\\n",
+)
+replace_once(
+    "frontend/components/lexigo-premium-app.tsx",
+    "  const overallPercent = progress && catalogMetadata && catalogMetadata.totals.items > 0\\n    ? Math.round(((progress.masteredWords + progress.masteredPhrases) / catalogMetadata.totals.items) * 100)\\n    : 0;\\n",
+    "",
+)
+
+'''
+if text.count(anchor) != 1:
+    raise RuntimeError(f"expected one primary navigation anchor, found {text.count(anchor)}")
+text = text.replace(anchor, shared_plural_patch + anchor, 1)
+
 path.write_text(text, encoding="utf-8")
