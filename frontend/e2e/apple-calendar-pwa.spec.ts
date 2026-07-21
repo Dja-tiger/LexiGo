@@ -161,6 +161,29 @@ test.beforeEach(async ({ page }) => {
   await installMocks(page);
 });
 
+test("Google Calendar action creates a safe external event template", async ({ page }) => {
+  const dialog = await openCalendarDialog(page);
+  await page.evaluate(() => {
+    Object.defineProperty(window, "open", {
+      configurable: true,
+      value: (url?: string | URL) => {
+        Reflect.set(window, "__googleCalendarURL", String(url ?? ""));
+        return null;
+      },
+    });
+  });
+
+  await dialog.getByRole("button", { name: /Google Calendar/ }).click();
+
+  const target = await page.evaluate(() => Reflect.get(window, "__googleCalendarURL") as string);
+  const calendarURL = new URL(target);
+  expect(calendarURL.origin).toBe("https://calendar.google.com");
+  expect(calendarURL.pathname).toBe("/calendar/render");
+  expect(calendarURL.searchParams.get("action")).toBe("TEMPLATE");
+  expect(calendarURL.searchParams.get("recur")).toBeTruthy();
+  await expect(dialog.getByRole("status")).toContainText("Подтвердите сохранение");
+});
+
 test("installed iOS PWA shares one real ICS file without opening an error page", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "ios-webkit", "Dedicated installed iOS PWA file-share regression.");
   await emulateStandaloneShare(context);

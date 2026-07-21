@@ -259,6 +259,9 @@ jobs:
       - name: React-owned UI browser tests
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui
 
+      - name: Content security browser journeys
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:security
+
       - name: Blocking accessibility audit
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:axe
 

@@ -22,9 +22,11 @@ export default defineConfig({
     contextOptions: {
       reducedMotion: "reduce",
     },
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    // Playwright recorders inject a transient inline stylesheet in Chromium
+    // and WebKit. Public rollout checks must not create false CSP telemetry.
+    trace: "off",
+    screenshot: "off",
+    video: "off",
   },
   projects: [
     { name: "public-desktop-chromium", use: { ...devices["Desktop Chrome"] } },

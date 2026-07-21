@@ -7,7 +7,43 @@ import {
 } from "../lib/build-version-guard";
 
 const ROUTES = ["/", "/learn", "/phrases", "/dictionary", "/progress"] as const;
-const FATAL_RUNTIME_PATTERN = /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed|hydration failed|UI_RENDER_FAILURE|UI_VERSION_MISMATCH|ROOT_RENDER_FAILURE|ROOT_VERSION_MISMATCH/i;
+const FATAL_RUNTIME_PATTERN = /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed|hydration failed|UI_RENDER_FAILURE|UI_VERSION_MISMATCH|ROOT_RENDER_FAILURE|ROOT_VERSION_MISMATCH|Content Security Policy/i;
+const EXPECTED_CSP_MODE = process.env.EXPECTED_CSP_MODE?.trim();
+
+if (EXPECTED_CSP_MODE !== "report-only" && EXPECTED_CSP_MODE !== "enforce") {
+  throw new Error("EXPECTED_CSP_MODE must be report-only or enforce");
+}
+
+async function captureCSPViolations(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const violations: string[] = [];
+    Object.defineProperty(window, "__lexigoCSPViolations", {
+      configurable: true,
+      value: violations,
+    });
+    document.addEventListener("securitypolicyviolation", (event) => {
+      violations.push(`${event.effectiveDirective}:${event.blockedURI}`);
+    });
+  });
+}
+
+async function expectCSPContract(page: Page, headers: Record<string, string>): Promise<void> {
+  const expectedHeader = EXPECTED_CSP_MODE === "enforce"
+    ? "content-security-policy"
+    : "content-security-policy-report-only";
+  const unexpectedHeader = EXPECTED_CSP_MODE === "enforce"
+    ? "content-security-policy-report-only"
+    : "content-security-policy";
+  const policy = headers[expectedHeader] ?? "";
+
+  expect(policy).toContain("script-src 'self' 'nonce-");
+  expect(policy).toContain("frame-ancestors 'none'");
+  expect(policy).toContain("report-uri /api/v1/security/csp-report");
+  expect(policy).not.toContain("'unsafe-eval'");
+  expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+  expect(headers[unexpectedHeader]).toBeUndefined();
+  expect(await page.evaluate(() => Reflect.get(window, "__lexigoCSPViolations") as string[] ?? [])).toEqual([]);
+}
 
 function captureFatalRuntimeErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -55,6 +91,7 @@ test.describe.configure({ mode: "serial" });
 for (const route of ROUTES) {
   test(`${route} remains usable after hydration and scrolling`, async ({ page }) => {
     const fatalErrors = captureFatalRuntimeErrors(page);
+    await captureCSPViolations(page);
     const response = await page.goto(route, { waitUntil: "domcontentloaded" });
 
     expect(response).not.toBeNull();
@@ -68,12 +105,14 @@ for (const route of ROUTES) {
     await expect(page.locator('[data-testid="application-error-boundary"]')).toHaveCount(0);
     await expect(page.getByText("LexiGo не смог открыть страницу", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Загружены файлы разных версий", { exact: false })).toHaveCount(0);
+    await expectCSPContract(page, response?.headers() ?? {});
     expect(fatalErrors).toEqual([]);
   });
 }
 
 test("an existing public browser context recovers after its build marker becomes stale", async ({ page }) => {
   const fatalErrors = captureFatalRuntimeErrors(page);
+  await captureCSPViolations(page);
   await page.goto("/dictionary?source=mixed#catalog", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
 
@@ -108,5 +147,6 @@ test("an existing public browser context recovers after its build marker becomes
   expect(finalURL.searchParams.get("source")).toBe("mixed");
   expect(finalURL.searchParams.has(BUILD_CACHE_BUSTER_QUERY)).toBe(false);
   expect(finalURL.hash).toBe("#catalog");
+  expect(await page.evaluate(() => Reflect.get(window, "__lexigoCSPViolations") as string[] ?? [])).toEqual([]);
   expect(fatalErrors).toEqual([]);
 });

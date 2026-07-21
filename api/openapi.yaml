@@ -83,6 +83,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /api/v1/security/csp-report:
+    post:
+      operationId: reportContentSecurityPolicyViolation
+      tags: [security]
+      summary: Принять browser CSP violation без query, fragment, script sample и иных потенциальных secrets в operational log.
+      requestBody:
+        required: true
+        content:
+          application/csp-report:
+            schema:
+              type: object
+              additionalProperties: true
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "204":
+          description: Санитизированные metadata нарушения записаны в structured log.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "415":
+          description: Content-Type должен быть `application/csp-report` или `application/json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: Fail-closed rate limiter недоступен; report отброшен без влияния на пользовательский запрос.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /api/v1/product/journey:
     post:
       operationId: reportProductJourney

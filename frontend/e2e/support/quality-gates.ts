@@ -181,6 +181,7 @@ export async function installDeterministicRuntime(page: Page): Promise<void> {
       if (document.getElementById("lexigo-quality-gates-runtime")) return;
       const style = document.createElement("style");
       style.id = "lexigo-quality-gates-runtime";
+      style.nonce = document.querySelector<HTMLElement>("[nonce]")?.nonce ?? "";
       style.textContent = [
         "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; caret-color: transparent !important; }",
         "html { color-scheme: light !important; }",

@@ -73,7 +73,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           set -o pipefail
-          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" \
+          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" enforce \
             2>&1 | tee -a "$RUNNER_TEMP/lexigo-prod-deploy.log"
 
       - name: Report production deployment
