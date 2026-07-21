@@ -129,6 +129,10 @@ jobs:
           grep -Fq 'com.lexigo.ci.repository=${GITHUB_REPOSITORY}' .github/workflows/ci.yml
           grep -Fq 'com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}' .github/workflows/ci.yml
           grep -Fq 'com.lexigo.ci.kind=lease' scripts/ci/frontend-container.sh
+          grep -Fq 'FRONTEND_CI_SLOT="${FRONTEND_CI_SLOT:-$GITHUB_JOB}"' scripts/ci/frontend-container.sh
+          grep -Fq 'suite: [journeys, ui-accessibility, ui-runtime]' .github/workflows/ci.yml
+          grep -Fq -- '-- --shard=1/2' .github/workflows/ci.yml
+          grep -Fq -- '-- --shard=2/2' .github/workflows/ci.yml
           grep -Fq 'BUILDER_NAME: lexigo-buildx-' .github/workflows/ci.yml
           grep -Fq 'group: lexigo-runner-resource-cleanup' .github/workflows/runner-resource-cleanup.yml
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 )
 
 const maxCatalogFilterLength = 120

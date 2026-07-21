@@ -35,6 +35,16 @@ jobs:
           cache: false
       - name: Verify dependency files
         run: |
+          expected_module="github.com/Dja-tiger/LexiGo/backend"
+          actual_module="$(go list -m)"
+          if [ "$actual_module" != "$expected_module" ]; then
+            echo "Unexpected backend module path: $actual_module (expected $expected_module)" >&2
+            exit 1
+          fi
+          if git grep -n --fixed-strings 'github.com/Dja-tiger/New-project/backend' -- '*.go' go.mod; then
+            echo "Legacy backend module path must not be used" >&2
+            exit 1
+          fi
           go mod verify
           go mod tidy
           git diff --exit-code -- go.mod go.sum
@@ -209,8 +219,8 @@ jobs:
             docker rm --force "$container" >/dev/null 2>&1 || true
           done
 
-  frontend:
-    name: Frontend quality
+  frontend-core:
+    name: Frontend core quality
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
@@ -219,13 +229,14 @@ jobs:
       - linux
       - x64
       - lexigo-ci
-    timeout-minutes: 60
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_VOLUME: lexigo-frontend-core-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
     steps:
@@ -253,37 +264,109 @@ jobs:
       - name: Production build
         run: bash ../scripts/ci/frontend-container.sh exec npm run build
 
+      - name: Production dependency audit
+        run: bash ../scripts/ci/frontend-container.sh exec npm audit --omit=dev --audit-level=high
+
+      - name: Extract frontend core diagnostics
+        if: failure()
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload frontend core diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-core-diagnostics
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
+
+  frontend-browser:
+    name: Frontend browser (${{ matrix.suite }})
+    needs: [frontend-core]
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    strategy:
+      fail-fast: false
+      # Three runner services share the host. Keep one balanced browser group
+      # per runner after the core job has completed.
+      max-parallel: 3
+      matrix:
+        suite: [journeys, ui-accessibility, ui-runtime]
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: ${{ matrix.suite }}
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
       - name: Lesson completion browser tests
+        if: matrix.suite == 'journeys'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:lesson
 
-      - name: React-owned UI browser tests
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui
-
       - name: Content security browser journeys
+        if: matrix.suite == 'journeys'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:security
 
-      - name: Blocking accessibility audit
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:axe
-
       - name: iOS PWA dictionary tests
+        if: matrix.suite == 'journeys'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:pwa
 
+      - name: React-owned UI browser tests (shard 1/2)
+        if: matrix.suite == 'ui-accessibility'
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui -- --shard=1/2
+
+      - name: Blocking accessibility audit
+        if: matrix.suite == 'ui-accessibility'
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:axe
+
+      - name: React-owned UI browser tests (shard 2/2)
+        if: matrix.suite == 'ui-runtime'
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui -- --shard=2/2
+
       - name: Controlled service worker update tests
+        if: matrix.suite == 'ui-runtime'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:sw
 
       - name: Visual regression comparison
+        if: matrix.suite == 'ui-runtime'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual
 
       - id: performance
         name: Low-end mobile performance budgets
+        if: matrix.suite == 'ui-runtime'
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:performance
 
       - name: Extract performance report
-        if: always() && steps.performance.outcome != 'skipped'
+        if: always() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
         run: bash ../scripts/ci/frontend-container.sh extract
 
       - name: Upload performance budget report
-        if: always() && steps.performance.outcome != 'skipped'
+        if: always() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
         uses: actions/upload-artifact@v7
         with:
           name: performance-budget-${{ github.sha }}
@@ -292,6 +375,7 @@ jobs:
           retention-days: 30
 
       - name: Dictionary navigation browser smoke
+        if: matrix.suite == 'ui-runtime'
         run: |
           bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
           npm run start -- --hostname 127.0.0.1 > next-start.log 2>&1 &
@@ -325,9 +409,6 @@ jobs:
           bash scripts/dictionary-navigation-smoke.sh
           CONTAINER_SCRIPT
 
-      - name: Production dependency audit
-        run: bash ../scripts/ci/frontend-container.sh exec npm audit --omit=dev --audit-level=high
-
       - name: Extract frontend diagnostics
         if: failure()
         run: bash ../scripts/ci/frontend-container.sh extract
@@ -336,7 +417,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: frontend-playwright-report
+          name: frontend-playwright-report-${{ matrix.suite }}
           path: frontend/ci-artifacts
           if-no-files-found: ignore
           retention-days: 7
@@ -344,6 +425,29 @@ jobs:
       - name: Cleanup isolated frontend workspace
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
+
+  frontend:
+    name: Frontend quality
+    needs: [frontend-core, frontend-browser]
+    if: >-
+      always() &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 5
+    steps:
+      - name: Verify all frontend groups passed
+        env:
+          CORE_RESULT: ${{ needs['frontend-core'].result }}
+          BROWSER_RESULT: ${{ needs['frontend-browser'].result }}
+        run: |
+          set -Eeuo pipefail
+          test "$CORE_RESULT" = success
+          test "$BROWSER_RESULT" = success
 
   container-build:
     name: Container build (${{ matrix.component }})

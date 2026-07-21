@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Dja-tiger/New-project/backend/internal/config"
+	"github.com/Dja-tiger/LexiGo/backend/internal/config"
 	redisclient "github.com/redis/go-redis/v9"
 )
 

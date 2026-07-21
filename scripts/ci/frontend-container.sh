@@ -10,6 +10,7 @@ GITHUB_REPOSITORY="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 GITHUB_RUN_ID="${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
 GITHUB_RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
 GITHUB_JOB="${GITHUB_JOB:?GITHUB_JOB is required}"
+FRONTEND_CI_SLOT="${FRONTEND_CI_SLOT:-$GITHUB_JOB}"
 APP_BUILD_ID="${APP_BUILD_ID:-local}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 EXPECTED_CSP_MODE="${EXPECTED_CSP_MODE:-}"
@@ -18,10 +19,10 @@ SOURCE_DIR="${GITHUB_WORKSPACE}/frontend"
 DEPLOY_DIR="${GITHUB_WORKSPACE}/deploy"
 WORK_DIR="/workspace"
 ARTIFACT_DIR="${SOURCE_DIR}/ci-artifacts"
-LEASE_CONTAINER="lexigo-frontend-lease-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-TASK_CONTAINER="lexigo-frontend-task-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-COPY_CONTAINER="lexigo-frontend-copy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-EXTRACT_CONTAINER="lexigo-frontend-extract-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+LEASE_CONTAINER="lexigo-frontend-lease-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+TASK_CONTAINER="lexigo-frontend-task-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+COPY_CONTAINER="lexigo-frontend-copy-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+EXTRACT_CONTAINER="lexigo-frontend-extract-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 OWNERSHIP_LABELS=(
   --label "com.lexigo.ci=true"
   --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}"
@@ -41,6 +42,9 @@ die() {
 
 [[ "$FRONTEND_CI_VOLUME" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]+$ ]] || \
   die "invalid Docker volume name: $FRONTEND_CI_VOLUME"
+
+[[ "$FRONTEND_CI_SLOT" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]+$ ]] || \
+  die "invalid frontend CI slot: $FRONTEND_CI_SLOT"
 
 for container_name in \
   "$LEASE_CONTAINER" \

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 )
 
 type Handler struct{ repository *Repository }

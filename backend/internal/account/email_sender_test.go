@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Dja-tiger/New-project/backend/internal/auth"
+	"github.com/Dja-tiger/LexiGo/backend/internal/auth"
 )
 
 var (

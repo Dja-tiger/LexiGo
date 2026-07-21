@@ -22,6 +22,7 @@ GITHUB_REPOSITORY="Dja-tiger/LexiGo" \
 GITHUB_RUN_ID="123" \
 GITHUB_RUN_ATTEMPT="1" \
 GITHUB_JOB="deploy" \
+FRONTEND_CI_SLOT="stage-public" \
 FRONTEND_CI_VOLUME="lexigo-frontend-test" \
 PUBLIC_URL="https://stage.example.test" \
 EXPECTED_CSP_MODE="report-only" \
@@ -31,5 +32,25 @@ CONTAINER_SCRIPT
 
 grep -Fq -- '--env PUBLIC_URL=https://stage.example.test' "$TMP_DIR/docker.calls"
 grep -Fq -- '--env EXPECTED_CSP_MODE=report-only' "$TMP_DIR/docker.calls"
+grep -Fq -- '--name lexigo-frontend-task-stage-public-123-1' "$TMP_DIR/docker.calls"
+
+if DOCKER_CALLS="$TMP_DIR/docker.calls" \
+  PATH="$TMP_DIR/bin:$PATH" \
+  GITHUB_WORKSPACE="$TMP_DIR/workspace" \
+  GITHUB_REPOSITORY="Dja-tiger/LexiGo" \
+  GITHUB_RUN_ID="123" \
+  GITHUB_RUN_ATTEMPT="1" \
+  GITHUB_JOB="frontend-browser" \
+  FRONTEND_CI_SLOT="../shared" \
+  FRONTEND_CI_VOLUME="lexigo-frontend-test" \
+  bash "$ROOT_DIR/scripts/ci/frontend-container.sh" shell \
+    >"$TMP_DIR/invalid-slot.log" 2>&1 <<'CONTAINER_SCRIPT'; then
+printf 'container must not start\n'
+CONTAINER_SCRIPT
+  printf '[frontend-container-test] invalid CI slot was accepted\n' >&2
+  exit 1
+fi
+
+grep -Fq 'invalid frontend CI slot: ../shared' "$TMP_DIR/invalid-slot.log"
 
 printf '[frontend-container-test] public browser environment forwarding passed\n'

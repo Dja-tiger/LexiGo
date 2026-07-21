@@ -1,4 +1,4 @@
-module github.com/Dja-tiger/New-project/backend
+module github.com/Dja-tiger/LexiGo/backend
 
 go 1.25.0
 

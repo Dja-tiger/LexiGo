@@ -14,11 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Dja-tiger/New-project/backend/internal/config"
-	"github.com/Dja-tiger/New-project/backend/internal/platform/migrate"
-	postgresplatform "github.com/Dja-tiger/New-project/backend/internal/platform/postgres"
-	redisplatform "github.com/Dja-tiger/New-project/backend/internal/platform/redis"
-	"github.com/Dja-tiger/New-project/backend/internal/server"
+	"github.com/Dja-tiger/LexiGo/backend/internal/config"
+	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
+	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
+	redisplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/redis"
+	"github.com/Dja-tiger/LexiGo/backend/internal/server"
 )
 
 func TestAccountExportAndDeletionLifecycle(t *testing.T) {
