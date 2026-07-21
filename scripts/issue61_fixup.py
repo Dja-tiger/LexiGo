@@ -33,4 +33,20 @@ if text.count(lesson_old) != 1:
     raise RuntimeError(f"expected one lesson navigation patch block, found {text.count(lesson_old)}")
 text = text.replace(lesson_old, lesson_new, 1)
 
+source_selector_old = '''replace_once(
+    "frontend/components/lexigo-premium-app.tsx",
+    'onClick={() => setSource(option.value)} onKeyDown={(event) => selectRovingControl(event, SOURCE_VALUES, option.value, setSource)}',
+    'onClick={() => selectLessonSource(option.value)} onKeyDown={(event) => selectRovingControl(event, SOURCE_VALUES, option.value, selectLessonSource)}',
+)
+'''
+source_selector_new = '''replace_once(
+    "frontend/components/lexigo-premium-app.tsx",
+    '                    onClick={() => setSource(option.value)}\\n                    onKeyDown={(event) => selectRovingControl(event, SOURCE_VALUES, option.value, setSource)}\\n',
+    '                    onClick={() => selectLessonSource(option.value)}\\n                    onKeyDown={(event) => selectRovingControl(event, SOURCE_VALUES, option.value, selectLessonSource)}\\n',
+)
+'''
+if text.count(source_selector_old) != 1:
+    raise RuntimeError(f"expected one source selector patch block, found {text.count(source_selector_old)}")
+text = text.replace(source_selector_old, source_selector_new, 1)
+
 path.write_text(text, encoding="utf-8")
