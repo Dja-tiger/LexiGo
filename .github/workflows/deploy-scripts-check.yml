@@ -5,7 +5,10 @@ on:
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/ci.yml"
       - ".github/workflows/deploy-scripts-check.yml"
+      - ".github/workflows/runner-resource-cleanup.yml"
+      - ".github/workflows/self-hosted-runner-smoke.yml"
       - "deploy/Caddyfile"
       - "deploy/caddy/Dockerfile"
       - "deploy/compose/docker-compose.stage.yml"
@@ -15,15 +18,22 @@ on:
       - "deploy/http-readiness.test.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/frontend-container.sh"
       - "scripts/ci/public-smoke.sh"
       - "scripts/ci/public-smoke.test.sh"
+      - "scripts/ci/runner_resource_cleanup.py"
+      - "scripts/ci/runner_resource_cleanup_test.py"
       - "scripts/remote-deploy.sh"
+      - "docs/self-hosted-runner-resource-lifecycle.md"
   push:
     branches: [main]
     paths:
       - ".github/workflows/deploy-stage.yml"
       - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/ci.yml"
       - ".github/workflows/deploy-scripts-check.yml"
+      - ".github/workflows/runner-resource-cleanup.yml"
+      - ".github/workflows/self-hosted-runner-smoke.yml"
       - "deploy/Caddyfile"
       - "deploy/caddy/Dockerfile"
       - "deploy/compose/docker-compose.stage.yml"
@@ -33,9 +43,13 @@ on:
       - "deploy/http-readiness.test.sh"
       - "deploy/systemd/**"
       - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/frontend-container.sh"
       - "scripts/ci/public-smoke.sh"
       - "scripts/ci/public-smoke.test.sh"
+      - "scripts/ci/runner_resource_cleanup.py"
+      - "scripts/ci/runner_resource_cleanup_test.py"
       - "scripts/remote-deploy.sh"
+      - "docs/self-hosted-runner-resource-lifecycle.md"
 
 permissions:
   contents: read
@@ -51,14 +65,43 @@ jobs:
       - x64
       - lexigo-ci
     timeout-minutes: 20
+    env:
+      CI_LEASE_CONTAINER: lexigo-deploy-check-lease-${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-caddy
+      CADDY_IMAGE: lexigo-caddy:${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_MODULES_CONTAINER: lexigo-caddy-modules-${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_VALIDATE_CONTAINER: lexigo-caddy-validate-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
+      - name: Start bounded cleanup lease
+        run: |
+          set -Eeuo pipefail
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            1500 >/dev/null
+
+      - name: Set up owned Caddy builder
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ${{ env.CADDY_BUILDER_NAME }}
+          cleanup: true
+
       - name: Validate Bash syntax
         run: |
           bash -n scripts/ci/deploy-over-ssh.sh
+          bash -n scripts/ci/frontend-container.sh
           bash -n scripts/ci/public-smoke.sh
           bash -n scripts/ci/public-smoke.test.sh
           bash -n scripts/remote-deploy.sh
@@ -71,6 +114,27 @@ jobs:
 
       - name: Test HTTP readiness probes
         run: bash deploy/http-readiness.test.sh
+
+      - name: Test runner cleanup planner
+        run: python3 scripts/ci/runner_resource_cleanup_test.py
+
+      - name: Validate runner resource ownership invariants
+        run: |
+          set -Eeuo pipefail
+
+          grep -Fq 'com.lexigo.ci.repository=${GITHUB_REPOSITORY}' .github/workflows/ci.yml
+          grep -Fq 'com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}' .github/workflows/ci.yml
+          grep -Fq 'com.lexigo.ci.kind=lease' scripts/ci/frontend-container.sh
+          grep -Fq 'BUILDER_NAME: lexigo-buildx-' .github/workflows/ci.yml
+          grep -Fq 'group: lexigo-runner-resource-cleanup' .github/workflows/runner-resource-cleanup.yml
+
+          if grep -R --line-number -E \
+            'docker (system|container|image|network|volume) prune|docker buildx rm --all-inactive' \
+            --exclude=deploy-scripts-check.yml \
+            .github scripts; then
+            echo 'Daemon-wide Docker cleanup is prohibited on shared runners.' >&2
+            exit 1
+          fi
 
       - name: Validate deployment security and readiness invariants
         run: |
@@ -153,28 +217,52 @@ jobs:
         run: |
           set -Eeuo pipefail
           set -o pipefail
-          docker build --progress=plain \
-            -t lexigo-caddy:2.11.4-cloudflare \
+          docker buildx build --progress=plain \
+            --builder "$CADDY_BUILDER_NAME" \
+            --load \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=image" \
+            -t "$CADDY_IMAGE" \
             -f deploy/caddy/Dockerfile \
             deploy \
             2>&1 | tee caddy-build.log
 
       - name: Verify Cloudflare DNS module
         run: |
-          docker run --rm --entrypoint caddy lexigo-caddy:2.11.4-cloudflare list-modules \
+          docker run --rm \
+            --name "$CADDY_MODULES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=validation" \
+            --entrypoint caddy \
+            "$CADDY_IMAGE" list-modules \
             | tee caddy-modules.log \
             | grep -Fxq 'dns.providers.cloudflare'
 
       - name: Validate Caddyfile
         run: |
           docker run --rm \
+            --name "$CADDY_VALIDATE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=validation" \
             -e CADDY_SITE_ADDRESS=lexigo.example.com \
             -e CADDY_API_ADDRESS=api.lexigo.example.com \
             -e ACME_EMAIL=operations@example.com \
             -e CLOUDFLARE_API_TOKEN=test-token \
             -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             --entrypoint caddy \
-            lexigo-caddy:2.11.4-cloudflare \
+            "$CADDY_IMAGE" \
             validate --config /etc/caddy/Caddyfile --adapter caddyfile \
             2>&1 | tee caddy-validate.log
 
@@ -209,4 +297,11 @@ jobs:
 
       - name: Cleanup Caddy test image
         if: always()
-        run: docker image rm -f lexigo-caddy:2.11.4-cloudflare >/dev/null 2>&1 || true
+        run: |
+          docker rm --force \
+            "$CADDY_MODULES_CONTAINER" \
+            "$CADDY_VALIDATE_CONTAINER" \
+            "$CI_LEASE_CONTAINER" \
+            >/dev/null 2>&1 || true
+          docker image rm "$CADDY_IMAGE" >/dev/null 2>&1 || true
+          docker buildx rm --force "$CADDY_BUILDER_NAME" >/dev/null 2>&1 || true

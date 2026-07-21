@@ -87,6 +87,7 @@ jobs:
     env:
       POSTGRES_CONTAINER: lexigo-postgres-${{ github.run_id }}-${{ github.run_attempt }}
       REDIS_CONTAINER: lexigo-redis-${{ github.run_id }}-${{ github.run_attempt }}
+      CI_LEASE_CONTAINER: lexigo-backend-lease-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -126,11 +127,28 @@ jobs:
 
           cleanup_container "$POSTGRES_CONTAINER"
           cleanup_container "$REDIS_CONTAINER"
+          cleanup_container "$CI_LEASE_CONTAINER"
+
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            postgres:18.4-alpine \
+            1500 >/dev/null
 
           docker run --detach --rm \
             --name "$POSTGRES_CONTAINER" \
             --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
             --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
             --env POSTGRES_DB=lexigo_test \
             --env POSTGRES_USER=lexigo \
             --env POSTGRES_PASSWORD=lexigo_test \
@@ -144,7 +162,11 @@ jobs:
           docker run --detach --rm \
             --name "$REDIS_CONTAINER" \
             --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
             --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
             --publish 127.0.0.1::6379 \
             --health-cmd "redis-cli ping" \
             --health-interval 5s \
@@ -183,7 +205,7 @@ jobs:
       - name: Cleanup integration services
         if: always()
         run: |
-          for container in "$POSTGRES_CONTAINER" "$REDIS_CONTAINER"; do
+          for container in "$POSTGRES_CONTAINER" "$REDIS_CONTAINER" "$CI_LEASE_CONTAINER"; do
             docker rm --force "$container" >/dev/null 2>&1 || true
           done
 
@@ -332,6 +354,9 @@ jobs:
       - lexigo-ci
     timeout-minutes: 30
     needs: [backend-unit, backend-integration, frontend]
+    env:
+      BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
+      CI_LEASE_CONTAINER: lexigo-buildx-lease-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
     permissions:
       contents: read
       packages: write
@@ -349,9 +374,25 @@ jobs:
             context: frontend
     steps:
       - uses: actions/checkout@v7
+      - name: Start bounded cleanup lease
+        run: |
+          set -Eeuo pipefail
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            2100 >/dev/null
       - id: buildx
         uses: docker/setup-buildx-action@v4
         with:
+          name: ${{ env.BUILDER_NAME }}
           cleanup: true
       - name: Login to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -376,12 +417,14 @@ jobs:
 
       - name: Cleanup Buildx builder
         if: always()
-        env:
-          BUILDER_NAME: ${{ steps.buildx.outputs.name }}
         run: |
           if [ -n "${BUILDER_NAME:-}" ]; then
             docker buildx rm --force "$BUILDER_NAME" >/dev/null 2>&1 || true
           fi
+
+      - name: Stop bounded cleanup lease
+        if: always()
+        run: docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
 
   ci-resource-cleanup:
     name: Cleanup CI Docker resources
@@ -393,23 +436,30 @@ jobs:
       - x64
       - lexigo-ci
     timeout-minutes: 10
-    env:
-      FRONTEND_CI_VOLUME: lexigo-frontend-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Test cleanup planner
+        run: python3 scripts/ci/runner_resource_cleanup_test.py
+
       - name: Remove resources owned by this workflow run
+        id: cleanup
+        if: always()
         run: |
           set -Eeuo pipefail
+          python3 scripts/ci/runner_resource_cleanup.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --target-run-id "$GITHUB_RUN_ID" \
+            --target-run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --summary-file "$RUNNER_TEMP/lexigo-runner-cleanup.json"
 
-          mapfile -t containers < <(
-            docker ps --all --quiet --filter "label=com.lexigo.ci.run=${GITHUB_RUN_ID}"
-          )
-          if ((${#containers[@]} > 0)); then
-            docker rm --force "${containers[@]}" >/dev/null 2>&1 || true
-          fi
-
-          docker volume rm --force "$FRONTEND_CI_VOLUME" >/dev/null 2>&1 || true
-          docker volume prune --force \
-            --filter "label=com.lexigo.ci.run=${GITHUB_RUN_ID}" >/dev/null 2>&1 || true
-
-          printf 'Docker usage after run cleanup:\n'
-          docker system df
+      - name: Upload cleanup summary
+        if: always() && steps.cleanup.outcome != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: runner-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lexigo-runner-cleanup.json
+          if-no-files-found: error
+          retention-days: 30

@@ -15,6 +15,10 @@ frontend/.next/
 frontend/coverage/
 frontend/.env.local
 
+# Python CI tooling
+__pycache__/
+*.py[cod]
+
 # IDE and OS
 .idea/
 .vscode/
