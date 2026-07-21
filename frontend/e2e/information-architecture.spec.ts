@@ -34,6 +34,9 @@ test("Home exposes one dominant next action and three unambiguous destinations",
   const nextAction = page.getByRole("region", { name: "Следующее рекомендуемое действие" });
   await expect(nextAction.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
   await expect(nextAction.locator(".lx-button.primary")).toHaveCount(1);
+  const staticWordPreview = nextAction.locator(".lx-word-preview");
+  await expect(staticWordPreview).toHaveCount(1);
+  await expect(staticWordPreview.locator(".lx-dots, [role='tablist'], [aria-roledescription='carousel']")).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Настройте урок");
   await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Найдите материал");
   await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Проверьте результат");
