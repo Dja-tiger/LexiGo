@@ -78,21 +78,22 @@ func (r *Repository) SubmitAnswerSuggestion(
 		return AnswerSuggestion{}, ErrSuggestionKindMismatch
 	}
 
-	var rejected bool
+	var rejectedAnswer *string
 	if err := tx.QueryRow(ctx, `
-		select exists (
-			select 1
-			from review_events
-			where id = $1
-			  and user_id = $2::uuid
-			  and word_id = $3
-			  and correct is false
-			  and judgement_source = 'server'
-		)
-	`, request.ReviewEventID, userID, wordID).Scan(&rejected); err != nil {
+		select submitted_answer
+		from review_events
+		where id = $1
+		  and user_id = $2::uuid
+		  and word_id = $3
+		  and correct is false
+		  and judgement_source = 'server'
+	`, request.ReviewEventID, userID, wordID).Scan(&rejectedAnswer); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return AnswerSuggestion{}, ErrSuggestionReviewNotFound
+		}
 		return AnswerSuggestion{}, fmt.Errorf("validate rejected review event: %w", err)
 	}
-	if !rejected {
+	if rejectedAnswer == nil || NormalizeSubmittedAnswer(*rejectedAnswer) != normalized {
 		return AnswerSuggestion{}, ErrSuggestionReviewNotFound
 	}
 
@@ -164,7 +165,7 @@ func (h *Handler) SubmitAnswerSuggestion(w http.ResponseWriter, r *http.Request)
 		case errors.Is(err, ErrWordNotFound):
 			httpx.WriteError(w, http.StatusNotFound, "word_not_found", "learning item is not assigned to the current user")
 		case errors.Is(err, ErrSuggestionReviewNotFound):
-			httpx.WriteError(w, http.StatusConflict, "suggestion_review_not_found", "a server-rejected review event is required")
+			httpx.WriteError(w, http.StatusConflict, "suggestion_review_not_found", "a matching server-rejected review event is required")
 		case errors.Is(err, ErrSuggestionKindMismatch):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "suggestion_kind_mismatch", "exerciseKind does not match the learning item")
 		default:
