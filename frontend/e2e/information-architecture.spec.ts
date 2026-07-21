@@ -20,7 +20,7 @@ test("guest Home presents an account benefit instead of an endless progress load
   await installQualityGateAPI(context, { authenticated: false });
 
   await page.goto("/");
-  await expect(page.getByRole("region", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Войти" })).toBeVisible();
   await expect(page.getByText("Синхронизируем очередь", { exact: true })).toHaveCount(0);
 
@@ -53,7 +53,7 @@ test("a new user can find a word without entering a duplicate lesson setup", asy
   await page.getByRole("searchbox", { name: "Поиск по словарю" }).fill("rollback");
   await page.getByRole("button", { name: "Найти" }).click();
   await page.getByRole("button", { name: "Открыть карточку: rollback" }).click();
-  await expect(page).toHaveURL(/\/word\/101/);
+  await expect(page).toHaveURL(/\/words\/101/);
   await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Изучить это слово|Повторить это слово/ })).toHaveCount(0);
 

@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type BrowserContext, type Locator, type Page, type Route } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 
 const SESSION = {
   user: { id: "00000000-0000-0000-0000-000000000045", email: "keyboard@example.com", displayName: "Keyboard User", createdAt: "2026-01-01T00:00:00Z" },
@@ -179,14 +179,13 @@ test.beforeEach(async ({ page }) => {
 test("desktop Tab order is semantic and every header stop has a visible WCAG-sized indicator", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Deterministic desktop Tab-order contract is covered once; cross-browser axe coverage runs separately.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const expected = [
     page.getByRole("link", { name: "Перейти к основному содержимому" }),
     page.locator(".lx-route-brand"),
     headerRoute(page, "home"),
     headerRoute(page, "learn"),
-    headerRoute(page, "phrases"),
     headerRoute(page, "library"),
     headerRoute(page, "progress"),
   ];
@@ -202,7 +201,7 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
 test("primary flows work with native links, Space controls, and a focus-trapped calendar dialog", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Keyboard activation and focus containment use one deterministic desktop profile.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const learnNavigation = headerRoute(page, "learn");
   await expect(learnNavigation).toHaveAttribute("href", "/learn");
@@ -266,16 +265,16 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
 });
 
 for (const target of [
-  { name: "home", url: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ },
+  { name: "home", url: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
-  { name: "library", url: "/dictionary", heading: "Каталог слов и терминов" },
+  { name: "library", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
   { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
   { name: "profile", url: "/profile", heading: "Keyboard User" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
-    await expect(page.getByRole("heading", { name: target.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: target.heading })).toBeVisible();
     await expectKeyboardAxeBaseline(page);
     await expectNoPositiveTabIndex(page);
   });

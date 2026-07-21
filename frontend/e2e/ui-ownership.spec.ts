@@ -208,28 +208,27 @@ test.beforeEach(async ({ page }) => {
   await installBrowserMocks(page);
 });
 
-test("home collections and the dictionary catalog remain unique through React navigation", async ({ page }) => {
+test("home intent cards, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
-    await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
-
+    await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
     await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
     await expect(page).toHaveURL(/\/dictionary$/);
-    await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
     await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
-
     await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+    await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
   }
 
-  await page.getByRole("button", { name: /Путешествия/ }).click();
-  await expect(page).toHaveURL(/\/learn\?source=travel/);
+  await page.locator(".lx-home-paths").getByRole("button", { name: "Настроить урок" }).click();
+  await expect(page).toHaveURL(/\/learn$/);
   await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
+  await page.locator('[data-lexigo-collection="travel"]').click();
   await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
   expect(runtimeErrors).toEqual([]);
 });
@@ -245,7 +244,7 @@ test("phrase sorting is React state, persists across reload and creates one tool
   await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
   await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
-  await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
   await expect(page.locator('.lx-catalog-sort[data-lexigo-sort-for="phrases"]')).toHaveCount(1);
   await expect.poll(() => phrasePrompts(page)).toEqual(["alpha pipeline", "Build release", "Zulu cache"]);
 
@@ -304,7 +303,7 @@ test("lesson tabs and speech stay declarative through repeated state transitions
 
 test("dictionary counts come from authenticated resources without fallback DOM rewriting", async ({ page }) => {
   await page.goto("/dictionary");
-  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
   await expect(page.getByText("0 слов освоено", { exact: true })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("799");

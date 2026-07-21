@@ -191,21 +191,21 @@ function watchRuntimeErrors(page: Page) {
 
 async function expectDictionary(page: Page) {
   await expect(page).toHaveURL(/\/dictionary(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(48);
   await expect(page.locator(".lx-app")).toBeVisible();
   await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
 }
 
-test("dictionary filters, alias search, deep link and bounded lesson are URL-driven", async ({ context, page }, testInfo) => {
+test("dictionary filters, alias search, deep link and composer delegation are URL-driven", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Dedicated desktop catalog contract");
   const api = await installAPI(context);
   const runtimeErrors = watchRuntimeErrors(page);
 
   await page.goto("/dictionary");
   await expectDictionary(page);
-  await expect(page.getByText("Показаны 1–48 из 60", { exact: false })).toBeVisible();
+  await expect(page.getByText("Показано 1–48 из 60", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("combobox", { name: "Раздел словаря" }).selectOption("backend");
   await page.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
@@ -237,11 +237,11 @@ test("dictionary filters, alias search, deep link and bounded lesson are URL-dri
 
   await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
   await expectDictionary(page);
-  await page.getByRole("button", { name: "Изучить текущую страницу" }).click();
-  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
-  expect(api.lessonRequests).toHaveLength(1);
-  expect(api.lessonRequests[0].wordIds).toHaveLength(48);
-  expect(new Set(api.lessonRequests[0].wordIds as number[]).size).toBe(48);
+  await page.getByRole("button", { name: "Настроить урок по текущей выборке" }).click();
+  await expect(page).toHaveURL(/\/learn(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Смешанная практика/ })).toHaveAttribute("aria-checked", "true");
+  expect(api.lessonRequests).toHaveLength(0);
   expect(runtimeErrors).toEqual([]);
 });
 
@@ -252,7 +252,7 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   let runtimeErrors = watchRuntimeErrors(page);
 
   await page.goto("/dictionary?source=backend&status=review");
-  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Раздел словаря" })).toHaveValue("backend");
   await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
   await expect(page.getByRole("listitem")).toHaveCount(12);

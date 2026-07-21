@@ -40,7 +40,7 @@ test.describe("critical visual baselines", () => {
   test("home", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
     await expectStableScreenshot(page, "home.png");
     expect(runtimeErrors).toEqual([]);
   });
@@ -56,7 +56,7 @@ test.describe("critical visual baselines", () => {
   test("dictionary", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();
     await expectStableScreenshot(page, "dictionary.png");
     expect(runtimeErrors).toEqual([]);

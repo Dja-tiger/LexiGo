@@ -52,7 +52,7 @@ function runtimeErrors(page: Page) {
   return errors;
 }
 
-function visibleRouteLink(page: Page, view: "home" | "learn" | "phrases" | "library" | "progress") {
+function visibleRouteLink(page: Page, view: "home" | "learn" | "library" | "progress") {
   return page.locator(`.lx-route-nav:visible [data-navigation-view="${view}"]`);
 }
 
@@ -79,22 +79,22 @@ async function exerciseScrollBursts(page: Page): Promise<void> {
 test.describe.configure({ timeout: 90_000 });
 test.beforeEach(async ({ context }) => installAuthenticatedAPI(context));
 
-test("direct primary routes render, remain canonical and expose the active semantic link", async ({ page }) => {
+test("direct routes render, remain canonical and expose the owning semantic link", async ({ page }) => {
   const errors = runtimeErrors(page);
   const routes = [
-    { path: "/", view: "home", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ },
+    { path: "/", view: "home", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", view: "learn", heading: "Соберите один сфокусированный урок" },
-    { path: "/phrases", view: "phrases", heading: "Находите готовые формулировки" },
-    { path: "/dictionary", view: "library", heading: "Каталог слов и терминов" },
+    { path: "/phrases", view: "library", navigationPath: "/dictionary", heading: "Находите готовые формулировки" },
+    { path: "/dictionary", view: "library", heading: "Находите и изучайте материал в контексте" },
     { path: "/progress", view: "progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const;
   for (const entry of routes) {
     await page.goto(entry.path);
     await expect(page).toHaveURL((url) => url.pathname === entry.path && url.search === "");
-    await expect(page.getByRole("heading", { name: entry.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: entry.heading })).toBeVisible();
     const link = visibleRouteLink(page, entry.view);
     await expect(link).toHaveAttribute("aria-current", "page");
-    await expect(link).toHaveAttribute("href", entry.path);
+    await expect(link).toHaveAttribute("href", "navigationPath" in entry ? entry.navigationPath : entry.path);
   }
   await page.goto("/profile");
   await expect(page).toHaveURL(/\/profile$/);
@@ -106,16 +106,18 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
   test.skip(!["desktop-chromium", "ios-webkit"].includes(testInfo.project.name), "Scroll stability is covered in desktop Chromium and iOS WebKit.");
 
   for (const entry of [
-    { path: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ },
+    { path: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", heading: "Соберите один сфокусированный урок" },
-    { path: "/dictionary", heading: "Каталог слов и терминов" },
+    { path: "/dictionary", heading: "Находите и изучайте материал в контексте" },
     { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
   ] as const) {
     const page = await context.newPage();
     const errors = runtimeErrors(page);
     try {
       await page.goto(entry.path, { waitUntil: "domcontentloaded" });
-      const heading = page.getByRole("heading", { name: entry.heading });
+      const heading = entry.path === "/"
+        ? page.locator(".lx-home-next-action h1")
+        : page.getByRole("heading", { level: 1, name: entry.heading });
       await expect(heading).toBeVisible({ timeout: 15_000 });
 
       await exerciseScrollBursts(page);
@@ -134,7 +136,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
 test("legacy query URLs redirect once to canonical paths without losing filters", async ({ page }) => {
   await page.goto("/?view=library&source=backend&topic=Frontend%20Architecture&status=new");
   await expect(page).toHaveURL(/\/dictionary\?source=backend&topic=Frontend\+Architecture&status=new$/);
-  await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
 });
 
 test("semantic route links support a real new tab and browser Back/Forward", async ({ context, page }, testInfo) => {
@@ -149,16 +151,23 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   await expect(tab).toHaveURL(/\/learn$/);
   await expect(tab.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await tab.close();
-  await learn.click();
-  await expect(page).toHaveURL(/\/learn$/);
-  await visibleRouteLink(page, "phrases").click();
-  await expect(page).toHaveURL(/\/phrases$/);
-  await page.goBack();
-  await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-  await page.goForward();
-  await expect(page).toHaveURL(/\/phrases$/);
-  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
+await learn.click();
+await expect(page).toHaveURL(/\/learn$/);
+await visibleRouteLink(page, "library").click();
+await expect(page).toHaveURL(/\/dictionary$/);
+await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+await expect(page).toHaveURL(/\/phrases$/);
+await page.goBack();
+await expect(page).toHaveURL(/\/dictionary$/);
+await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+await page.goBack();
+await expect(page).toHaveURL(/\/learn$/);
+await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+await page.goForward();
+await expect(page).toHaveURL(/\/dictionary$/);
+await page.goForward();
+await expect(page).toHaveURL(/\/phrases$/);
+await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 });
 
 test("word and phrase deep links survive reload and remain shareable", async ({ page }) => {
