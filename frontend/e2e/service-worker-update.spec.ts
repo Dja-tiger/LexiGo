@@ -26,6 +26,88 @@ async function installCatalogMock(page: Page) {
   });
 }
 
+async function installActiveLessonMock(page: Page) {
+  await page.context().addCookies([{
+    name: "lexigo_csrf",
+    value: "service-worker-e2e-csrf",
+    url: "http://127.0.0.1:3000",
+    sameSite: "Lax",
+  }]);
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/v1/catalog/metadata") return route.fallback();
+    if (path === "/api/v1/auth/refresh") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          user: {
+            id: "00000000-0000-0000-0000-000000000078",
+            email: "service-worker@example.com",
+            displayName: "Service Worker Tester",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          tokens: { accessToken: "service-worker-e2e-token", tokenType: "Bearer", expiresIn: 900 },
+        }),
+      });
+    }
+    if (path === "/api/v1/progress") {
+      const emptyMode = { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 };
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          dueNow: 0, dueWords: 0, duePhrases: 0, totalWords: 1, totalPhrases: 0, newWords: 1,
+          learningWords: 0, reviewWords: 0, masteredWords: 0, masteredPhrases: 0, reviewsToday: 0,
+          successfulToday: 0, objectiveReviewsToday: 0, objectiveSuccessfulToday: 0, reviewsTotal: 0,
+          dailyGoal: 30, currentStreak: 0, longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0,
+          retainedPhrasesWeek: 0, eventSchemaVersion: 2,
+          modes: { study: emptyMode, recall: emptyMode, choice: emptyMode, legacy: emptyMode },
+        }),
+      });
+    }
+    if (path === "/api/v1/lessons/active") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "00000000-0000-0000-0000-000000000780",
+          source: "mixed",
+          studyMode: "study",
+          lessonSize: "1",
+          currentIndex: 0,
+          version: 1,
+          status: "active",
+          items: [{
+            id: 78,
+            kind: "word",
+            position: 0,
+            lemma: "secure",
+            translation: "безопасный",
+            phonetic: "/sɪˈkjʊr/",
+            partOfSpeech: "adjective",
+            topic: "Security",
+            examples: ["Keep the session secure."],
+            note: "",
+            status: "new",
+          }],
+          createdAt: "2026-07-21T00:00:00Z",
+          updatedAt: "2026-07-21T00:00:00Z",
+        }),
+      });
+    }
+    if (path === "/api/v1/words" || path === "/api/v1/words/due") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
+    }
+    if (path === "/api/v1/performance/rum") return route.fulfill({ status: 202, body: "" });
+    return route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "not_mocked", message: path } }),
+    });
+  });
+}
+
 async function installServiceWorkerMock(page: Page, options: { registrationError?: boolean } = {}) {
   await page.addInitScript(({ registrationError }) => {
     type MockSnapshot = {
@@ -129,16 +211,6 @@ async function serviceWorkerSnapshot(page: Page) {
   ).__serviceWorkerMock.snapshot());
 }
 
-async function setObservedRoute(page: Page, href: string) {
-  await page.evaluate((nextHref) => {
-    // Next.js patches window.history.pushState and would render the protected
-    // lesson route, redirecting this isolated service-worker test back home.
-    // Use the browser primitive so only the URL observed by the update guard
-    // changes; its bounded route poll then exercises the real deferral logic.
-    History.prototype.pushState.call(window.history, {}, "", nextHref);
-  }, href);
-}
-
 test.describe.configure({ timeout: 45_000 });
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -172,8 +244,9 @@ test("a waiting incompatible build activates only after explicit confirmation", 
 
 test("an update can wait until the active lesson route is left", async ({ page }) => {
   await installServiceWorkerMock(page);
-  await page.goto("/");
-  await setObservedRoute(page, "/lesson/active?source=mixed");
+  await installActiveLessonMock(page);
+  await page.goto("/lesson/active?source=mixed");
+  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 
   const update = page.getByTestId("service-worker-update");
   const defer = update.getByRole("button", { name: "После урока" });
@@ -182,7 +255,8 @@ test("an update can wait until the active lesson route is left", async ({ page }
   await expect(update).toContainText("автоматически после выхода из урока");
   expect((await serviceWorkerSnapshot(page)).messages).toEqual([]);
 
-  await setObservedRoute(page, "/");
+  await page.getByRole("button", { name: "Открыть профиль", exact: true }).click();
+  await expect(page).toHaveURL(/\/profile(?:\?|$)/);
 
   await expect.poll(async () => (await serviceWorkerSnapshot(page)).messages, { timeout: 5000 }).toEqual([
     { type: "LEXIGO_SKIP_WAITING" },
