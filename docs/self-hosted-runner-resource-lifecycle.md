@@ -60,9 +60,10 @@ protected.
 ## Scheduled and manual cleanup
 
 `.github/workflows/runner-resource-cleanup.yml` runs every day at 02:17 UTC.
-Scheduled runs apply the 24-hour retention policy. A workflow concurrency group
-and a host-level file lock prevent two cleaners from mutating the shared daemon
-at the same time.
+Scheduled runs apply a 24-hour runtime-resource retention policy and a separate
+168-hour Buildx/BuildKit cache retention policy. A workflow concurrency group and
+a host-level file lock prevent two cleaners from mutating the shared daemon at
+the same time.
 
 Manual dispatch defaults to `dry-run`. Review its `runner-cleanup-*` JSON artifact
 before dispatching `apply`. The summary includes:
@@ -107,6 +108,7 @@ asserts that:
    python3 scripts/ci/runner_resource_cleanup.py \
      --repository Dja-tiger/LexiGo \
      --retention-hours 24 \
+     --build-cache-retention-hours 168 \
      --dry-run \
      --summary-file /tmp/lexigo-runner-cleanup.json
    ```
@@ -121,6 +123,7 @@ asserts that:
    python3 scripts/ci/runner_resource_cleanup.py \
      --repository Dja-tiger/LexiGo \
      --retention-hours 24 \
+     --build-cache-retention-hours 168 \
      --summary-file /tmp/lexigo-runner-cleanup-applied.json
    ```
 

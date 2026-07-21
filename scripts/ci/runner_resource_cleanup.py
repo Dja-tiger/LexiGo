@@ -444,11 +444,20 @@ def builder_metadata_mtime(name: str) -> datetime | None:
         return None
 
 
+def is_build_cache_resource(resource: Resource) -> bool:
+    return (
+        resource.kind == "builder"
+        or resource.name.startswith("buildx_buildkit_lexigo-buildx-")
+        or resource.labels.get(KIND_LABEL) in {"builder", "build-cache"}
+    )
+
+
 def plan_cleanup(
     resources: Sequence[Resource],
     repository: str,
     now: datetime,
     retention: timedelta,
+    build_cache_retention: timedelta | None = None,
     target_run_id: str | None = None,
     target_run_attempt: str | None = None,
     run_id_prefix: str | None = None,
@@ -459,6 +468,8 @@ def plan_cleanup(
         raise ValueError("target run and run id prefix are mutually exclusive")
 
     plan = CleanupPlan()
+    if build_cache_retention is None:
+        build_cache_retention = retention
     active_runs = {
         resource.run_key
         for resource in resources
@@ -493,8 +504,18 @@ def plan_cleanup(
             if resource.created_at is None:
                 preliminary[key] = Decision(resource, "skip", "unknown-age")
                 continue
-            if now - resource.created_at < retention:
-                preliminary[key] = Decision(resource, "skip", "inside-retention")
+            resource_retention = (
+                build_cache_retention
+                if is_build_cache_resource(resource)
+                else retention
+            )
+            if now - resource.created_at < resource_retention:
+                reason = (
+                    "inside-build-cache-retention"
+                    if is_build_cache_resource(resource)
+                    else "inside-retention"
+                )
+                preliminary[key] = Decision(resource, "skip", reason)
                 continue
 
         preliminary[key] = Decision(
@@ -660,6 +681,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY"))
     parser.add_argument("--retention-hours", type=float, default=24.0)
+    parser.add_argument("--build-cache-retention-hours", type=float, default=168.0)
     parser.add_argument("--target-run-id")
     parser.add_argument("--target-run-attempt")
     parser.add_argument("--run-id-prefix")
@@ -680,6 +702,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         parser.error("--repository must be OWNER/REPO")
     if args.retention_hours < 0:
         parser.error("--retention-hours must be non-negative")
+    if args.build_cache_retention_hours < 0:
+        parser.error("--build-cache-retention-hours must be non-negative")
     if args.lock_wait_seconds < 0:
         parser.error("--lock-wait-seconds must be non-negative")
     if not 0 <= args.critical_free_percent <= args.warn_free_percent <= 100:
@@ -701,6 +725,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mode": "dry-run" if args.dry_run else "apply",
         "started_at": isoformat(started_at),
         "retention_hours": args.retention_hours,
+        "build_cache_retention_hours": args.build_cache_retention_hours,
         "target_run": (
             {"run_id": args.target_run_id, "run_attempt": args.target_run_attempt}
             if args.target_run_id
@@ -733,6 +758,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     repository=args.repository,
                     now=started_at,
                     retention=timedelta(hours=args.retention_hours),
+                    build_cache_retention=timedelta(
+                        hours=args.build_cache_retention_hours
+                    ),
                     target_run_id=args.target_run_id,
                     target_run_attempt=args.target_run_attempt,
                     run_id_prefix=args.run_id_prefix,

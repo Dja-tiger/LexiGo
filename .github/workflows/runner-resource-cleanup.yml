@@ -18,6 +18,11 @@ on:
         required: true
         default: 24
         type: number
+      build_cache_retention_hours:
+        description: "Minimum Buildx/BuildKit cache age before cleanup"
+        required: true
+        default: 168
+        type: number
 
 permissions:
   contents: read
@@ -38,6 +43,7 @@ jobs:
     env:
       CLEANUP_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'apply' }}
       RETENTION_HOURS: ${{ github.event_name == 'workflow_dispatch' && inputs.retention_hours || 24 }}
+      BUILD_CACHE_RETENTION_HOURS: ${{ github.event_name == 'workflow_dispatch' && inputs.build_cache_retention_hours || 168 }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -54,6 +60,7 @@ jobs:
           args=(
             --repository "$GITHUB_REPOSITORY"
             --retention-hours "$RETENTION_HOURS"
+            --build-cache-retention-hours "$BUILD_CACHE_RETENTION_HOURS"
             --summary-file "$RUNNER_TEMP/lexigo-runner-cleanup.json"
           )
           if [ "$CLEANUP_MODE" = "dry-run" ]; then

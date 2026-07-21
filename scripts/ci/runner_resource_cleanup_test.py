@@ -228,6 +228,36 @@ class CleanupPlannerTest(unittest.TestCase):
         self.assertIsNone(BUILDER_PATTERN.fullmatch("other-buildx-123-2-api"))
         self.assertIsNone(BUILDER_PATTERN.fullmatch("lexigo-buildx-current-api"))
 
+    def test_build_cache_uses_independent_retention(self) -> None:
+        runtime_volume = resource("volume", "runtime", age_hours=48)
+        recent_builder = resource(
+            "builder",
+            "lexigo-buildx-100-1-api",
+            age_hours=48,
+            resource_kind="builder",
+        )
+        expired_builder = resource(
+            "builder",
+            "lexigo-buildx-101-1-web",
+            run_id="101",
+            age_hours=200,
+            resource_kind="builder",
+        )
+
+        plan = plan_cleanup(
+            [runtime_volume, recent_builder, expired_builder],
+            REPOSITORY,
+            NOW,
+            timedelta(hours=24),
+            build_cache_retention=timedelta(hours=168),
+        )
+
+        self.assertEqual(
+            [item.name for item in plan.removals],
+            ["lexigo-buildx-101-1-web", "runtime"],
+        )
+        self.assertEqual(plan.skipped[0].reason, "inside-build-cache-retention")
+
     def test_disk_thresholds_are_machine_readable(self) -> None:
         self.assertEqual(disk_status({"free_percent": 25}, 20, 10), "ok")
         self.assertEqual(disk_status({"free_percent": 15}, 20, 10), "warning")
