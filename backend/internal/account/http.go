@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Dja-tiger/New-project/backend/internal/auth"
-	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/LexiGo/backend/internal/auth"
+	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 )
 
 type Handler struct {

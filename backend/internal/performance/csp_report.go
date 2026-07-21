@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 )
 
 const maxCSPReportBytes int64 = 16 << 10

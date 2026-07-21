@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Dja-tiger/New-project/backend/internal/httpx"
+	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 )
 
 type Handler struct {
