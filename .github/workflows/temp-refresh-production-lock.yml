@@ -37,8 +37,8 @@ jobs:
           docker run --rm \
             -e APP_BUILD_ID="${GITHUB_SHA}" \
             -e NEXT_PUBLIC_RUM_SAMPLE_RATE=1 \
-            -v "$SECURITY_WORKDIR/frontend:/workspace" \
-            -w /workspace \
+            -v "$SECURITY_WORKDIR:/repo" \
+            -w /repo/frontend \
             "$NODE_IMAGE" \
             bash -lc '
               set -euo pipefail
@@ -80,8 +80,8 @@ jobs:
         run: |
           if [ -n "${SECURITY_WORKDIR:-}" ] && [ -d "$SECURITY_WORKDIR" ]; then
             docker run --rm \
-              -v "$SECURITY_WORKDIR:/workspace" \
+              -v "$SECURITY_WORKDIR:/repo" \
               alpine:3.20 \
-              sh -lc 'rm -rf /workspace/frontend/node_modules /workspace/frontend/.next'
+              sh -lc 'rm -rf /repo/frontend/node_modules /repo/frontend/.next'
             rm -rf "$SECURITY_WORKDIR"
           fi
