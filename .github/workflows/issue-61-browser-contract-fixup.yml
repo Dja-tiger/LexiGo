@@ -59,37 +59,66 @@ jobs:
           cat issue61-browser-fixup.log
           exit 1
 
-      - name: Verify focused browser contracts
+      - id: browser
+        name: Verify focused browser contracts
+        if: steps.align.outcome == 'success'
+        continue-on-error: true
         working-directory: frontend
         run: |
-          set -Eeuo pipefail
-          bash ../scripts/ci/frontend-container.sh prepare
+          set +e
+          bash ../scripts/ci/frontend-container.sh prepare > ../issue61-browser-tests.log 2>&1
+          prepare_status=$?
+          if [ "$prepare_status" -ne 0 ]; then
+            exit "$prepare_status"
+          fi
           cleanup() {
-            bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
+            bash ../scripts/ci/frontend-container.sh cleanup >> ../issue61-browser-tests.log 2>&1 || true
           }
           trap cleanup EXIT
-          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-          bash ../scripts/ci/frontend-container.sh exec npm run lint
-          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
-          bash ../scripts/ci/frontend-container.sh exec npm run test
-          bash ../scripts/ci/frontend-container.sh exec npm run build
-          bash ../scripts/ci/frontend-container.sh exec npx playwright test \
-            e2e/information-architecture.spec.ts \
-            e2e/accessibility-keyboard.spec.ts \
-            e2e/route-focus-management.spec.ts \
-            e2e/app-router-routes.spec.ts \
-            e2e/ui-ownership.spec.ts \
-            e2e/account-hydration.spec.ts \
-            e2e/adaptive-navigation.spec.ts \
-            e2e/dictionary-pwa.spec.ts \
-            --project=desktop-chromium \
-            --project=desktop-webkit \
-            --project=ios-webkit
+          {
+            bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund &&
+            bash ../scripts/ci/frontend-container.sh exec npm run lint &&
+            bash ../scripts/ci/frontend-container.sh exec npm run typecheck &&
+            bash ../scripts/ci/frontend-container.sh exec npm run test &&
+            bash ../scripts/ci/frontend-container.sh exec npm run build &&
+            bash ../scripts/ci/frontend-container.sh exec npx playwright test \
+              e2e/information-architecture.spec.ts \
+              e2e/accessibility-keyboard.spec.ts \
+              e2e/route-focus-management.spec.ts \
+              e2e/app-router-routes.spec.ts \
+              e2e/ui-ownership.spec.ts \
+              e2e/account-hydration.spec.ts \
+              e2e/adaptive-navigation.spec.ts \
+              e2e/dictionary-pwa.spec.ts \
+              --project=desktop-chromium \
+              --project=desktop-webkit \
+              --project=ios-webkit
+          } >> ../issue61-browser-tests.log 2>&1
+          exit $?
+
+      - name: Upload focused browser diagnostics
+        if: steps.browser.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue61-focused-browser-diagnostics
+          path: |
+            issue61-browser-tests.log
+            frontend/test-results
+            frontend/playwright-report
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop after focused browser failure
+        if: steps.browser.outcome == 'failure'
+        run: |
+          tail -n 160 issue61-browser-tests.log
+          exit 1
 
       - name: Commit verified browser contracts
+        if: steps.align.outcome == 'success' && steps.browser.outcome == 'success'
         run: |
           set -Eeuo pipefail
-          rm -f issue61-browser-fixup.log scripts/issue61_browser_fix.py scripts/issue61_browser_fix_v2.py .github/workflows/issue-61-browser-contract-fixup.yml
+          rm -f issue61-browser-fixup.log issue61-browser-tests.log scripts/issue61_browser_fix.py scripts/issue61_browser_fix_v2.py .github/workflows/issue-61-browser-contract-fixup.yml
           git add -A
           git diff --cached --check
           git config user.name "github-actions[bot]"
