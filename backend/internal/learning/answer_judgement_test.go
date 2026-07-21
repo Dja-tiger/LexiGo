@@ -18,16 +18,29 @@ func TestNormalizeSubmittedAnswerIsPredictable(t *testing.T) {
 	}
 }
 
-func TestJudgeSubmittedAnswerAcceptsCuratedTranslationsAndMorphology(t *testing.T) {
+func TestJudgeSubmittedAnswerAcceptsCanonicalAlternativesAndCuratedMorphology(t *testing.T) {
 	definition := AnswerDefinition{
 		Kind:            "word",
 		Translation:     "инцидент, происшествие",
-		AcceptedAnswers: []string{"инцидент", "происшествие", "инцидента"},
+		AcceptedAnswers: []string{"инцидента"},
 	}
 	for _, answer := range []string{"Инцидент", "происшествие!", "инцидента"} {
 		correct, reason, matched := JudgeSubmittedAnswer(definition, answer)
 		if !correct || matched == "" {
 			t.Fatalf("answer %q correct=%v reason=%q matched=%q", answer, correct, reason, matched)
+		}
+	}
+}
+
+func TestCanonicalTranslationCandidatesPreserveFullValueAndSplitSupportedDelimiters(t *testing.T) {
+	actual := canonicalTranslationCandidates("инцидент, происшествие; событие / случай")
+	expected := []string{"инцидент, происшествие; событие / случай", "инцидент", "происшествие", "событие", "случай"}
+	if len(actual) != len(expected) {
+		t.Fatalf("candidates = %#v, want %#v", actual, expected)
+	}
+	for index := range expected {
+		if actual[index] != expected[index] {
+			t.Fatalf("candidate %d = %q, want %q", index, actual[index], expected[index])
 		}
 	}
 }
