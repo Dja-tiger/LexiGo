@@ -111,10 +111,20 @@ order by
     transition_count desc;
 ```
 
+## Release gate
+
+Автоматический gate и human validation являются двумя независимыми обязательными слоями:
+
+1. Полная CI-матрица должна пройти backend unit и integration, frontend lint, typecheck, unit, production build, browser e2e, WebKit/PWA, accessibility, visual regression, performance budgets, container builds и очистку self-hosted runner.
+2. После развёртывания проверенной сборки должны быть проведены 5–7 модерируемых сессий по протоколу выше.
+3. Зелёный CI подтверждает техническую корректность реализации, но сам по себе не закрывает Acceptance Criteria, связанные с пониманием интерфейса реальными новыми пользователями.
+4. Issue #61 и связанный PR остаются открытыми до появления обезличенного human evidence и выполнения порогов принятия.
+
 ## Release evidence
 
 К Issue приложить:
 
+- ссылку на зелёный CI итогового commit SHA;
 - обезличенную таблицу результатов 5–7 сессий;
 - агрегированные показатели по задачам;
 - список обнаруженных неоднозначностей;
