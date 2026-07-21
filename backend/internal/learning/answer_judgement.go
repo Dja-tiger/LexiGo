@@ -76,12 +76,37 @@ func SubmittedAnswerWithinLimit(value string) bool {
 	return utf8.RuneCountInString(value) <= MaxSubmittedAnswerRunes
 }
 
+// canonicalTranslationCandidates preserves the complete catalog translation
+// and also exposes alternatives separated by the catalog's supported
+// delimiters. This is evaluated at request time so a clean database seeded
+// after migrations behaves identically to an upgraded database backfilled by
+// migration 000013.
+func canonicalTranslationCandidates(value string) []string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	candidates := []string{trimmed}
+	parts := strings.FieldsFunc(trimmed, func(current rune) bool {
+		return current == ',' || current == ';' || current == '/'
+	})
+	if len(parts) <= 1 {
+		return candidates
+	}
+	for _, part := range parts {
+		if alternative := strings.TrimSpace(part); alternative != "" {
+			candidates = append(candidates, alternative)
+		}
+	}
+	return candidates
+}
+
 func acceptedAnswerCandidates(definition AnswerDefinition) []string {
-	candidates := make([]string, 0, len(definition.AcceptedAnswers)+1)
+	candidates := make([]string, 0, len(definition.AcceptedAnswers)+4)
 	if definition.Kind == "phrase" && strings.TrimSpace(definition.ClozeAnswer) != "" {
 		candidates = append(candidates, definition.ClozeAnswer)
-	} else if strings.TrimSpace(definition.Translation) != "" {
-		candidates = append(candidates, definition.Translation)
+	} else {
+		candidates = append(candidates, canonicalTranslationCandidates(definition.Translation)...)
 	}
 	candidates = append(candidates, definition.AcceptedAnswers...)
 
