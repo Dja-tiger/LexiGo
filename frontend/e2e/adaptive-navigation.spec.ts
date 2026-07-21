@@ -340,6 +340,8 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
   await expect(navigation(page, ".lx-route-nav--header")).toBeHidden();
   await expect(navigation(page, ".lx-route-nav--rail")).toBeHidden();
   await expectMinimumNavigationTargets(page, ".lx-route-nav--mobile");
+  const mobileGridTracks = await bottomNavigation.evaluate((element) => window.getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length);
+  expect(mobileGridTracks).toBe(4);
 
   const labelSizes = await bottomNavigation.locator("a > span > span").evaluateAll((labels) => labels.map((label) => (
     Number.parseFloat(window.getComputedStyle(label).fontSize)

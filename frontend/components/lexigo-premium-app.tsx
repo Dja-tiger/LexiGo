@@ -1050,7 +1050,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   function requestAuthentication(afterLogin: AppView) {
     setReturnView(afterLogin);
-    navigate({ view: "profile" });
+    navigate({ view: "profile" }, false, { intent: "authentication" });
   }
 
   const loadItems = useCallback(async (
@@ -1980,7 +1980,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
   }
 
   function renderHome() {
-    const progressPending = progressStatus.phase === "idle" || progressStatus.phase === "loading";
+    const progressPending = Boolean(session && (progressStatus.phase === "idle" || progressStatus.phase === "loading"));
     const dueNow = progress?.dueNow ?? 0;
     const nextAction = activeLesson
       ? {
@@ -2037,14 +2037,14 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
             </div>
           </article>
           <aside className="lx-progress-panel" aria-label="Краткий прогресс">
-            <div className="lx-panel-heading"><div><span>Учебный статус</span><strong>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal}` : progressPending ? "Загружаем…" : "Недоступно"}</strong></div><Icon name="chart" /></div>
+            <div className="lx-panel-heading"><div><span>Учебный статус</span><strong>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal}` : progressPending ? "Загружаем…" : session ? "Недоступно" : "После входа"}</strong></div><Icon name="chart" /></div>
             {progress ? (
               <>
                 <div className="lx-progress-ring" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span>{goalPercent(progress)}%</span></div>
                 <div className="lx-progress-list"><div><span>К повторению</span><strong>{progress.dueNow}</strong></div><div><span>Retained за неделю</span><strong>{progress.retainedItemsWeek}</strong></div><div><span>Серия</span><strong>{progress.currentStreak} дн.</strong></div></div>
               </>
             ) : (
-              <AsyncStatePanel label={progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={progressPending ? "loading" : "error"} title={progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={progressStatus.problem?.message ?? "Получаем due-очередь и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={progressStatus.problem?.retryable && session ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />
+              <AsyncStatePanel label={!session ? "Персональный прогресс доступен после входа" : progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={!session ? "empty" : progressPending ? "loading" : "error"} title={!session ? "Войдите, чтобы видеть учебную очередь" : progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={!session ? "Due-очередь, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем due-очередь и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={!session ? () => requestAuthentication("home") : progressStatus.problem?.retryable ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />
             )}
             <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Открыть прогресс</button>
           </aside>

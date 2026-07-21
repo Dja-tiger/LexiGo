@@ -13,7 +13,7 @@ import {
   type NavigationTarget,
 } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
-import { queueProductJourneyIntent } from "../lib/product-journey";
+import { queueProductJourneyIntent, type ProductJourneyIntent } from "../lib/product-journey";
 import {
   rememberRouteTab,
   routeTabDestination,
@@ -69,7 +69,7 @@ function destinationFor(target: NavigationTarget) {
     : { target, scroll: { x: 0, y: 0 } };
 }
 
-function pushRoute(requestedTarget: NavigationTarget): void {
+function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
   const current = parseNavigationLocation(window.location);
   const currentScroll = { x: window.scrollX, y: window.scrollY };
   rememberRouteTab(current, currentScroll);
@@ -89,7 +89,7 @@ function pushRoute(requestedTarget: NavigationTarget): void {
   );
 
   const nextState = createNavigationHistoryState(destination.target, destination.scroll);
-  queueProductJourneyIntent("primary_navigation");
+  queueProductJourneyIntent(intent);
   window.history.pushState(nextState, "", nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
@@ -120,7 +120,7 @@ function RouteLink({
       onClick={(event) => {
         if (shouldUseNativeNavigation(event)) return;
         event.preventDefault();
-        pushRoute(target);
+        pushRoute(target, navigationView ? "primary_navigation" : "in_app_navigation");
       }}
     >
       {children}

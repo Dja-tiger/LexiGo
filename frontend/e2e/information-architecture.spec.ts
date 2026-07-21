@@ -13,6 +13,20 @@ test.beforeEach(async ({ context, page }) => {
   await installQualityGateAPI(context);
 });
 
+test("guest Home presents an account benefit instead of an endless progress loader", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await installDeterministicRuntime(page);
+  await installQualityGateAPI(context, { authenticated: false });
+
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Войти" })).toBeVisible();
+  await expect(page.getByText("Синхронизируем очередь", { exact: true })).toHaveCount(0);
+
+  await context.close();
+});
+
 test("Home exposes one dominant next action and three unambiguous destinations", async ({ page }) => {
   const runtimeErrors = captureRuntimeErrors(page);
   await page.goto("/");
