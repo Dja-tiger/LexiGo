@@ -119,6 +119,31 @@ func TestPhraseSlugLookup(t *testing.T) {
 		t.Fatalf("personalized learning state was not returned: %+v", phrase)
 	}
 
+	if _, err := pg.Exec(ctx, `
+		insert into words(
+			lemma, translation, part_of_speech, topic, examples, source, note,
+			kind, slug, cloze, cloze_answer
+		) values (
+			'Duplicate route.', 'Дубликат маршрута.', 'phrase', 'Frontend Architecture',
+			'[]'::jsonb, 'lexigo-technical-phrases-v1', '',
+			'phrase', 'backend-route-contract', 'Duplicate _____.', 'route'
+		)
+	`); err == nil {
+		t.Fatal("duplicate canonical phrase slug was accepted")
+	}
+	if _, err := pg.Exec(ctx, `
+		insert into words(
+			lemma, translation, part_of_speech, topic, examples, source, note,
+			kind, slug, cloze, cloze_answer
+		) values (
+			'Invalid route.', 'Некорректный маршрут.', 'phrase', 'Frontend Architecture',
+			'[]'::jsonb, 'lexigo-technical-phrases-v1', '',
+			'phrase', 'Invalid-Route', 'Invalid _____.', 'route'
+		)
+	`); err == nil {
+		t.Fatal("non-canonical phrase slug was accepted")
+	}
+
 	assertPhraseLookupError(t, testServer.URL+"/api/v1/phrases/Backend-route-contract", registered.Tokens.AccessToken, "phrase_not_found")
 	assertPhraseLookupError(t, testServer.URL+"/api/v1/phrases/missing-route-contract", registered.Tokens.AccessToken, "phrase_not_found")
 
