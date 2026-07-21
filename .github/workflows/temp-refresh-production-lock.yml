@@ -15,20 +15,28 @@ jobs:
     timeout-minutes: 30
     env:
       NODE_IMAGE: node:22.16.0-bookworm-slim
+      SECURITY_BRANCH: codex/security-production-dependency-audit
     steps:
-      - name: Checkout security branch
-        uses: actions/checkout@v7
-        with:
-          ref: codex/security-production-dependency-audit
-          fetch-depth: 0
-          clean: false
+      - name: Clone security branch into isolated runner temp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          workdir="${RUNNER_TEMP}/lexigo-lock-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          rm -rf "$workdir"
+          git clone \
+            --branch "$SECURITY_BRANCH" \
+            --single-branch \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$workdir"
+          printf 'SECURITY_WORKDIR=%s\n' "$workdir" >> "$GITHUB_ENV"
 
       - name: Refresh lockfile and run frontend core gate
         run: |
           docker run --rm \
             -e APP_BUILD_ID="${GITHUB_SHA}" \
             -e NEXT_PUBLIC_RUM_SAMPLE_RATE=1 \
-            -v "$PWD/frontend:/workspace" \
+            -v "$SECURITY_WORKDIR/frontend:/workspace" \
             -w /workspace \
             "$NODE_IMAGE" \
             sh -lc '
@@ -45,10 +53,23 @@ jobs:
 
       - name: Commit generated lockfile and remove temporary workflow
         run: |
+          set -eu
+          cd "$SECURITY_WORKDIR"
           rm .github/workflows/temp-refresh-production-lock.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add frontend/package-lock.json .github/workflows/temp-refresh-production-lock.yml
           git diff --cached --check
           git commit -m "chore(security): refresh production dependency lock"
-          git push origin HEAD:codex/security-production-dependency-audit
+          git push origin "HEAD:${SECURITY_BRANCH}"
+
+      - name: Cleanup isolated runner temp
+        if: always()
+        run: |
+          if [ -n "${SECURITY_WORKDIR:-}" ] && [ -d "$SECURITY_WORKDIR" ]; then
+            docker run --rm \
+              -v "$SECURITY_WORKDIR:/workspace" \
+              alpine:3.20 \
+              sh -lc 'rm -rf /workspace/frontend/node_modules /workspace/frontend/.next'
+            rm -rf "$SECURITY_WORKDIR"
+          fi
