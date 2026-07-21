@@ -33,7 +33,7 @@ jobs:
           if ! python3 scripts/issue60_apply.py > issue60-patch.log 2>&1; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add issue60-patch.log
+            git add -f issue60-patch.log
             git commit -m "chore(issue-60): persist patch diagnostic"
             git push origin HEAD:agent/issue-60-answer-judgement
             exit 1
