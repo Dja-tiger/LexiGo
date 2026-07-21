@@ -127,10 +127,10 @@ describe("learning helpers", () => {
     expect(normalizeAnswer("DON'T")).toBe("dont");
   });
 
-  it("accepts curated synonyms and explicit morphological forms", () => {
+  it("accepts canonical translation alternatives without relying on migration backfill", () => {
     const current = {
       ...item("incident", "noun", "инцидент, происшествие"),
-      acceptedAnswers: ["инцидент", "происшествие", "инцидента"],
+      acceptedAnswers: ["инцидента"],
     };
 
     expect(acceptedAnswersForItem(current)).toEqual([
@@ -139,8 +139,18 @@ describe("learning helpers", () => {
       "происшествие",
       "инцидента",
     ]);
-    expect(judgeLearningAnswer(current, "Происшествие!")).toMatchObject({ correct: true });
+    expect(judgeLearningAnswer(current, "Происшествие!")).toMatchObject({ correct: true, matchedAnswer: "происшествие" });
     expect(judgeLearningAnswer(current, "инцидента")).toMatchObject({ correct: true });
+  });
+
+  it("splits all supported canonical translation delimiters", () => {
+    const current = item("event", "noun", "инцидент; событие / случай");
+    expect(acceptedAnswersForItem(current)).toEqual([
+      "инцидент; событие / случай",
+      "инцидент",
+      "событие",
+      "случай",
+    ]);
   });
 
   it("accepts curated cloze variants but rejects substring and fuzzy matches", () => {
