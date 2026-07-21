@@ -341,13 +341,57 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
   });
   expect(behavior).toBe("auto");
 
-  const transitionDuration = await page.getByRole("link", {
+  await expect(page.locator(".lx-view")).toHaveCSS("animation-name", "none");
+  await expect(page.getByRole("link", {
     name: "Перейти к основному содержимому",
-  }).evaluate((element) => window.getComputedStyle(element).transitionDuration);
-  const maximumTransitionSeconds = Math.max(
-    ...transitionDuration.split(",").map((duration) => Number.parseFloat(duration)),
-  );
-  expect(maximumTransitionSeconds).toBeLessThanOrEqual(0.00001);
+  })).toHaveCSS("transition-duration", "0s");
+
+  const progressNavigation = page.locator('.lx-route-nav--header [data-navigation-view="progress"]');
+  await expect(progressNavigation).toBeVisible();
+  await progressNavigation.hover();
+  const routeFeedbackAfterHover = await progressNavigation.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      transform: style.transform,
+      transitionDuration: style.transitionDuration,
+    };
+  });
+  expect(routeFeedbackAfterHover.transform).toBe("none");
+  expect(routeFeedbackAfterHover.transitionDuration).toBe("0s");
+
+  await progressNavigation.click();
+  await expectMainFocus(page, "Прогресс");
+  const progressFill = page.getByRole("progressbar", {
+    name: "Выполнение дневной цели",
+  }).locator("span");
+  await expect(progressFill).toHaveCSS("transition-duration", "0s");
+  expect(await progressFill.evaluate((element) => element.getAnimations().length)).toBe(0);
+
+  await page.getByRole("button", { name: "Настроить календарь" }).click();
+  const calendarBackdrop = page.locator(".lx-calendar-modal-backdrop");
+  const calendarDialog = page.getByRole("dialog", { name: "Напоминание об английском" });
+  await expect(calendarDialog).toBeVisible();
+  await expect(calendarBackdrop).toHaveCSS("animation-name", "none");
+  await expect(calendarDialog).toHaveCSS("animation-name", "none");
+  expect(await calendarBackdrop.evaluate((element) => element.getAnimations().length)).toBe(0);
+  expect(await calendarDialog.evaluate((element) => element.getAnimations().length)).toBe(0);
+
+  const calendarProvider = calendarDialog.getByRole("button", { name: /Google Calendar/ });
+  const providerFeedbackBeforeHover = await calendarProvider.evaluate((element) => (
+    window.getComputedStyle(element).backgroundColor
+  ));
+  await calendarProvider.hover();
+  const providerFeedbackAfterHover = await calendarProvider.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      transform: style.transform,
+      transitionDuration: style.transitionDuration,
+    };
+  });
+  expect(providerFeedbackAfterHover.backgroundColor).not.toBe(providerFeedbackBeforeHover);
+  expect(providerFeedbackAfterHover.transform).toBe("none");
+  expect(providerFeedbackAfterHover.transitionDuration).toBe("0s");
 });
 
 test("saving a review transfers focus locally without generating a route announcement", async ({ page }, testInfo) => {
