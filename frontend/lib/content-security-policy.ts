@@ -2,6 +2,9 @@ export const CSP_REPORT_PATH = "/api/v1/security/csp-report";
 
 export type ContentSecurityPolicyMode = "disabled" | "report-only" | "enforce";
 
+const REPORT_ONLY_FRAME_ANCESTORS_DIAGNOSTIC =
+  "The Content Security Policy directive 'frame-ancestors' is ignored when delivered in a report-only policy.";
+
 type PolicyEnvironment = {
   CONTENT_SECURITY_POLICY_MODE?: string;
   NODE_ENV?: string;
@@ -18,6 +21,13 @@ export function resolveContentSecurityPolicyMode(
     throw new Error(`unsupported CONTENT_SECURITY_POLICY_MODE: ${configured}`);
   }
   return environment.NODE_ENV === "production" ? "enforce" : "disabled";
+}
+
+export function isExpectedContentSecurityPolicyConsoleDiagnostic(
+  message: string,
+  mode: ContentSecurityPolicyMode,
+): boolean {
+  return mode === "report-only" && message === REPORT_ONLY_FRAME_ANCESTORS_DIAGNOSTIC;
 }
 
 export function createContentSecurityPolicy(nonce: string, development = false): string {
