@@ -194,7 +194,7 @@ test("standalone startup migrates away from corrupted navigation without clearin
   await installAccountMocks(page);
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const persisted = await page.evaluate(() => ({
     navigation: JSON.parse(window.localStorage.getItem("lexigo.navigation.v2") ?? "null") as unknown,

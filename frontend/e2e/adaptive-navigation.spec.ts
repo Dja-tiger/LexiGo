@@ -246,7 +246,7 @@ test("expanded width keeps all semantic header navigation labels visible", async
   test.skip(testInfo.project.name !== "desktop-chromium", "Expanded layout is asserted once in Chromium.");
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const headerNavigation = navigation(page, ".lx-route-nav--header");
   await expect(headerNavigation).toBeVisible();
@@ -264,7 +264,7 @@ test("expanded width keeps all semantic header navigation labels visible", async
 test("breakpoint boundaries expose exactly one labelled primary navigation", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Breakpoint boundaries are asserted once.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const cases = [
     { width: 719, expected: ".lx-route-nav--mobile" },
@@ -336,7 +336,7 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
   test.skip(!["ios-webkit", "android-chromium"].includes(testInfo.project.name), "Compact mobile contract.");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const bottomNavigation = navigation(page, ".lx-route-nav--mobile");
   await expect(bottomNavigation).toBeVisible();

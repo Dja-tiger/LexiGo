@@ -215,7 +215,7 @@ test.beforeEach(async ({ page }) => {
 test("home intent cards, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
     await expect(page.locator(".lx-home-paths article")).toHaveCount(3);

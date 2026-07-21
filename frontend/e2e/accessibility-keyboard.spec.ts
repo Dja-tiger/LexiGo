@@ -179,7 +179,7 @@ test.beforeEach(async ({ page }) => {
 test("desktop Tab order is semantic and every header stop has a visible WCAG-sized indicator", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Deterministic desktop Tab-order contract is covered once; cross-browser axe coverage runs separately.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const expected = [
     page.getByRole("link", { name: "Перейти к основному содержимому" }),
@@ -201,7 +201,7 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
 test("primary flows work with native links, Space controls, and a focus-trapped calendar dialog", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Keyboard activation and focus containment use one deterministic desktop profile.");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const learnNavigation = headerRoute(page, "learn");
   await expect(learnNavigation).toHaveAttribute("href", "/learn");
@@ -265,7 +265,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
 });
 
 for (const target of [
-  { name: "home", url: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
+  { name: "home", url: "/", heading: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "library", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
