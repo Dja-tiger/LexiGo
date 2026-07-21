@@ -16,18 +16,18 @@ type JourneyEvent struct {
 }
 
 var allowedJourneyIntents = map[string]struct{}{
-	"primary_navigation":      {},
-	"home_next_action":        {},
-	"home_configure_lesson":   {},
-	"home_find_material":      {},
-	"catalog_switch":          {},
-	"catalog_open_detail":     {},
+	"primary_navigation":       {},
+	"home_next_action":         {},
+	"home_configure_lesson":    {},
+	"home_find_material":       {},
+	"catalog_switch":           {},
+	"catalog_open_detail":      {},
 	"catalog_configure_lesson": {},
-	"lesson_start":            {},
-	"lesson_exit":             {},
-	"authentication":          {},
-	"browser_history":         {},
-	"in_app_navigation":       {},
+	"lesson_start":             {},
+	"lesson_exit":              {},
+	"authentication":           {},
+	"browser_history":          {},
+	"in_app_navigation":        {},
 }
 
 func (event JourneyEvent) Validate() error {

@@ -64,7 +64,6 @@ const PRIMARY_PATHS: Record<Exclude<AppView, "lesson">, string> = {
 export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabel: string }> = [
   { view: "home", label: "Главная", shortLabel: "Главная" },
   { view: "learn", label: "Обучение", shortLabel: "Учить" },
-  { view: "phrases", label: "Фразы", shortLabel: "Фразы" },
   { view: "library", label: "Словарь", shortLabel: "Словарь" },
   { view: "progress", label: "Прогресс", shortLabel: "Прогресс" },
 ];

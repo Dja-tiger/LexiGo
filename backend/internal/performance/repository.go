@@ -10,6 +10,7 @@ import (
 
 type Store interface {
 	StoreReport(ctx context.Context, report Report) error
+	StoreJourney(ctx context.Context, event JourneyEvent) error
 }
 
 type Repository struct {
@@ -57,6 +58,37 @@ func (repository *Repository) StoreReport(ctx context.Context, report Report) er
 	}
 	if inserted != int64(len(rows)) {
 		return fmt.Errorf("store performance report: inserted %d of %d samples", inserted, len(rows))
+	}
+	return nil
+}
+
+func (repository *Repository) StoreJourney(ctx context.Context, event JourneyEvent) error {
+	command, err := repository.pool.Exec(
+		ctx,
+		`insert into product_navigation_events (
+			app_version,
+			from_route,
+			to_route,
+			intent,
+			is_backtrack,
+			device_class,
+			browser_family,
+			display_mode
+		) values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		event.AppVersion,
+		event.FromRoute,
+		event.ToRoute,
+		event.Intent,
+		event.Backtrack,
+		event.DeviceClass,
+		event.BrowserFamily,
+		event.DisplayMode,
+	)
+	if err != nil {
+		return fmt.Errorf("store product journey: %w", err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("store product journey: inserted %d rows", command.RowsAffected())
 	}
 	return nil
 }

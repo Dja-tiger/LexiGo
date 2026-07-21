@@ -13,6 +13,7 @@ import {
   type NavigationTarget,
 } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
+import { queueProductJourneyIntent } from "../lib/product-journey";
 import {
   rememberRouteTab,
   routeTabDestination,
@@ -90,6 +91,7 @@ function pushRoute(requestedTarget: NavigationTarget): void {
   );
 
   const nextState = createNavigationHistoryState(destination.target, destination.scroll);
+  queueProductJourneyIntent("primary_navigation");
   window.history.pushState(nextState, "", nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }

@@ -13,9 +13,11 @@ import type { CatalogMetadata, CatalogMetadataStatus } from "../lib/catalog-meta
 import { CATALOG_PAGE_SIZE, type CatalogPageInfo } from "../lib/catalog-page";
 import type { LearningItem, WordSection } from "../lib/learning";
 import type { CatalogSort, CatalogStatus, NavigationTarget } from "../lib/navigation";
+import type { ProductJourneyIntent } from "../lib/product-journey";
 import type { NavigationScrollPosition } from "../lib/navigation-history";
 import type { ProgressSummary } from "../lib/progress";
 import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
+import { CatalogKindNavigation } from "./catalog-kind-navigation";
 import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { SpeechPlayerButton } from "./speech-player-button";
 
@@ -47,9 +49,10 @@ type DictionaryCatalogProps = {
     target: NavigationTarget,
     replace?: boolean,
     scroll?: NavigationScrollPosition,
+    intent?: ProductJourneyIntent,
   ) => void;
   onBackToResults: () => void;
-  onStartLesson: (items: LearningItem[], mode: "study" | "recall") => void;
+  onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
   onRequireAuthentication: () => void;
 };
 
@@ -132,7 +135,7 @@ export function DictionaryCatalog({
   loadDetail,
   onNavigate,
   onBackToResults,
-  onStartLesson,
+  onConfigureLesson,
   onRequireAuthentication,
 }: DictionaryCatalogProps) {
   const filters = useMemo(() => dictionaryFilters(navigation), [navigation]);
@@ -228,12 +231,12 @@ export function DictionaryCatalog({
 
   function updateFilters(patch: Partial<DictionaryFilters>) {
     const next = { ...filters, ...patch };
-    onNavigate(cleanTarget(next));
+    onNavigate(cleanTarget(next), false, undefined, "in_app_navigation");
   }
 
   function resetFilters() {
     setSearchInput("");
-    onNavigate({ view: "library" });
+    onNavigate({ view: "library" }, false, undefined, "in_app_navigation");
   }
 
   function retryPage() {
@@ -253,14 +256,15 @@ export function DictionaryCatalog({
 
   function openDetail(item: LearningItem) {
     if (!item.wordId) return;
-    onNavigate(cleanTarget(filters, String(item.wordId)));
+    onNavigate(cleanTarget(filters, String(item.wordId)), false, undefined, "catalog_open_detail");
   }
 
   if (!authenticated) {
     return (
       <>
+        <CatalogKindNavigation active="words" onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")} />
         <section className="lx-page-heading">
-          <div><span>СЛОВАРЬ</span><h1>Каталог слов и терминов</h1><p>Ищите слова по английскому написанию, переводу и синонимам, затем открывайте карточку или запускайте урок.</p></div>
+          <div><span>СЛОВАРЬ</span><h1>Каталог слов и терминов</h1><p>Ищите слова по английскому написанию, переводу и синонимам. Настройка урока находится в отдельном разделе «Обучение».</p></div>
         </section>
         <AsyncStatePanel
           label="Словарь доступен после входа"
@@ -308,8 +312,8 @@ export function DictionaryCatalog({
             {selectedItem.examples.length ? <div className="lx-dictionary-detail-section"><h2>Примеры</h2>{selectedItem.examples.map((example) => <p key={example} lang="en">{example}</p>)}</div> : null}
             {selectedItem.note ? <div className="lx-dictionary-detail-section"><h2>Контекст</h2><p>{selectedItem.note}</p></div> : null}
             <div className="lx-page-actions">
-              <button className="lx-button primary" type="button" onClick={() => onStartLesson([selectedItem], selectedItem.status === "new" ? "study" : "recall")}>
-                {selectedItem.status === "new" ? "Изучить это слово" : "Повторить это слово"}
+              <button className="lx-button primary" type="button" onClick={() => onConfigureLesson({ source: filters.source, topic: selectedItem.topic })}>
+                Настроить урок по этой теме
               </button>
             </div>
           </article>
@@ -324,11 +328,12 @@ export function DictionaryCatalog({
 
   return (
     <>
+      <CatalogKindNavigation active="words" onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")} />
       <section className="lx-page-heading">
         <div>
           <span>СЛОВАРЬ</span>
-          <h1>Каталог слов и терминов</h1>
-          <p>Поиск по английскому слову, переводу и aliases. Фильтры и текущая страница сохраняются в адресе.</p>
+          <h1>Находите и изучайте материал в контексте</h1>
+          <p>Поиск по английскому слову, переводу и aliases. Здесь вы просматриваете материал; состав урока настраивается в «Обучении».</p>
         </div>
         <div className="lx-heading-badge"><span>{progress ? `${progress.masteredWords} слов освоено` : metadataStatus === "ready" && metadata ? `${metadata.totals.words} слов` : "Каталог"}</span></div>
       </section>
@@ -392,10 +397,10 @@ export function DictionaryCatalog({
       <CatalogPagination info={pageInfo} busy={pending} onPageChange={changePage} label="Навигация под результатами словаря" />
 
       <div className="lx-page-actions">
-        <button className="lx-button primary" type="button" disabled={pending || items.length === 0} onClick={() => onStartLesson(items, filters.status === "review" || filters.status === "mastered" ? "recall" : "study")}>
-          {filters.status === "review" || filters.status === "mastered" ? "Повторить текущую страницу" : "Изучить текущую страницу"}
+        <button className="lx-button primary" type="button" disabled={pending || items.length === 0} onClick={() => onConfigureLesson({ source: filters.source, ...(filters.topic ? { topic: filters.topic } : {}) })}>
+          Настроить урок по текущей выборке
         </button>
-        <small>В урок попадут только показанные {items.length.toLocaleString("ru-RU")} элементов; весь каталог не загружается.</small>
+        <small>Раздел и тема будут перенесены в composer; повторно выбирать их не потребуется.</small>
       </div>
     </>
   );
