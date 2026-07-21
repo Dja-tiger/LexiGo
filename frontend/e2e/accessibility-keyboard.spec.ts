@@ -167,6 +167,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const install = () => {
       const style = document.createElement("style");
+      style.nonce = document.querySelector<HTMLElement>("[nonce]")?.nonce ?? "";
       style.textContent = "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }";
       (document.head ?? document.documentElement).append(style);
     };

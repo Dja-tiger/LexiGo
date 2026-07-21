@@ -101,8 +101,9 @@ func NewWithOptions(
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
 	learningHandler := learning.NewHandler(learning.NewRepository(pg))
-	performanceHandler := performance.NewHandler(performance.NewRepository(pg))
+	performanceHandler := performance.NewHandler(performance.NewRepository(pg), logger)
 	limiter := ratelimit.New(rdb)
+	cspReportHandler := limiter.MiddlewareFailClosed("csp-report", 60, http.HandlerFunc(performanceHandler.CSPReport))
 	authenticated := func(handler http.HandlerFunc) http.Handler {
 		return httpx.Authenticate(authService.ValidateAccess, handler)
 	}
@@ -142,8 +143,14 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/progress", authenticated(http.HandlerFunc(learningHandler.Progress)))
 	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
 
-	var handler http.Handler = mux
-	handler = httpx.SameOrigin(cfg.CORSAllowedOrigin, handler)
+	// CSP report delivery may carry an opaque Origin ("null") even when the
+	// document is same-origin. Keep only this credential-free, media-type-
+	// constrained and rate-limited endpoint outside the CSRF origin guard.
+	root := http.NewServeMux()
+	root.Handle("POST /api/v1/security/csp-report", cspReportHandler)
+	root.Handle("/", httpx.SameOrigin(cfg.CORSAllowedOrigin, mux))
+
+	var handler http.Handler = root
 	handler = httpx.CORS(cfg.CORSAllowedOrigin, handler)
 	handler = httpx.AccessLog(logger, handler)
 	handler = httpx.RequestID(handler)

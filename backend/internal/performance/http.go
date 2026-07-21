@@ -2,17 +2,23 @@ package performance
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 )
 
 type Handler struct {
-	store Store
+	store  Store
+	logger *slog.Logger
 }
 
-func NewHandler(store Store) *Handler {
-	return &Handler{store: store}
+func NewHandler(store Store, loggers ...*slog.Logger) *Handler {
+	logger := slog.Default()
+	if len(loggers) > 0 && loggers[0] != nil {
+		logger = loggers[0]
+	}
+	return &Handler{store: store, logger: logger}
 }
 
 func (handler *Handler) Report(w http.ResponseWriter, r *http.Request) {

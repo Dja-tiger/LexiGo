@@ -76,7 +76,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           set -o pipefail
-          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" report-only 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
 
       - name: Prepare public browser workspace
         run: bash scripts/ci/frontend-container.sh prepare
@@ -88,6 +88,7 @@ jobs:
         id: public_browser
         env:
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          EXPECTED_CSP_MODE: report-only
         run: |
           set -Eeuo pipefail
           set -o pipefail

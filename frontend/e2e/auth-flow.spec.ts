@@ -24,6 +24,7 @@ async function installGuestMocks(page: Page) {
       if (document.getElementById("lexigo-auth-e2e-motion")) return;
       const style = document.createElement("style");
       style.id = "lexigo-auth-e2e-motion";
+      style.nonce = document.querySelector<HTMLElement>("[nonce]")?.nonce ?? "";
       style.textContent = "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }";
       (document.head ?? document.documentElement).append(style);
     };

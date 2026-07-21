@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { ApplicationErrorBoundary } from "@/components/application-error-boundary";
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
@@ -55,12 +56,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="ru" data-lexigo-build={BUILD_ID}>
       <head>
         <script
           id="lexigo-build-version-guard"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: BUILD_VERSION_GUARD }}
         />
       </head>

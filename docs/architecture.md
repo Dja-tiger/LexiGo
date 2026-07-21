@@ -83,6 +83,9 @@ LexiGo должен одновременно быть рабочим инстр�
 - state-changing cookie-authenticated операции защищены synchronizer CSRF token;
 - security audit хранит тип события, время, user agent, IP и безопасные metadata без secrets;
 - SMTP transport требует STARTTLS и TLS 1.2+; log delivery разрешён только в local/test;
+- HTML-ответы stage/prod получают per-response nonce CSP: stage наблюдает ту же политику через Report-Only, production применяет её в enforcing-режиме без `unsafe-eval` и inline scripts;
+- Caddy централизованно добавляет HSTS, `nosniff`, Referrer Policy, минимальную Permissions Policy и запрет встраивания для frontend/API; безопасный rollout и исключения описаны в `docs/security-headers.md`;
+- CSP reports принимаются отдельным rate-limited endpoint и логируются только как очищенные origins/directive metadata без query, fragment и script sample;
 - секреты находятся только в environment/GitHub Secrets;
 - production deploy требует ручного подтверждения GitHub Environment;
 - SSH host key передаётся через проверенный GitHub Secret `DEPLOY_KNOWN_HOSTS`.

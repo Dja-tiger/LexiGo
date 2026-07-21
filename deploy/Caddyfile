@@ -9,8 +9,20 @@
     }
 }
 
+(browser_security_headers) {
+    header {
+        Strict-Transport-Security "max-age={$HSTS_MAX_AGE:86400}"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+        X-Frame-Options "DENY"
+        -Server
+    }
+}
+
 {$CADDY_SITE_ADDRESS} {
     import cloudflare_tls
+    import browser_security_headers
     encode zstd gzip
 
     # The Apple Calendar iCalendar endpoint is implemented by Next.js.
@@ -34,6 +46,7 @@
 
 {$CADDY_API_ADDRESS} {
     import cloudflare_tls
+    import browser_security_headers
     encode zstd gzip
 
     handle /health/* {

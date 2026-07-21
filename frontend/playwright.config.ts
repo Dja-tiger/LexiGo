@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const securityJourneyMode = process.env.CSP_SECURITY_E2E === "1";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -15,9 +17,9 @@ export default defineConfig({
     contextOptions: {
       reducedMotion: "reduce",
     },
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    trace: securityJourneyMode ? "off" : "retain-on-failure",
+    screenshot: securityJourneyMode ? "off" : "only-on-failure",
+    video: securityJourneyMode ? "off" : "retain-on-failure",
   },
   projects: [
     { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
