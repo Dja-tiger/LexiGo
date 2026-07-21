@@ -1,0 +1,242 @@
+name: Align Issue 61 browser contracts
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+
+permissions:
+  contents: write
+
+jobs:
+  fixup:
+    name: Align and verify browser contracts
+    if: github.head_ref == 'agent/issue-61-information-architecture'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 60
+    env:
+      FRONTEND_CI_VOLUME: lexigo-issue61-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-61-information-architecture
+          fetch-depth: 0
+
+      - name: Align stale browser scenarios with the new IA
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file_path = Path(path)
+              content = file_path.read_text(encoding="utf-8")
+              count = content.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}: {old[:140]!r}")
+              file_path.write_text(content.replace(old, new, 1), encoding="utf-8")
+
+          replace_once(
+              "frontend/e2e/accessibility-keyboard.spec.ts",
+              '    headerRoute(page, "learn"),\n    headerRoute(page, "phrases"),\n    headerRoute(page, "library"),',
+              '    headerRoute(page, "learn"),\n    headerRoute(page, "library"),',
+          )
+
+          replace_once(
+              "frontend/e2e/route-focus-management.spec.ts",
+              '''  await clickPrimaryNavigation(page, "phrases");
+            await expect(page).toHaveURL(/\/phrases$/);
+            await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
+            await expectMainFocus(page, "Технические фразы");''',
+              '''  await clickPrimaryNavigation(page, "library");
+            await expect(page).toHaveURL(/\/dictionary$/);
+            await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+            await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+            await expect(page).toHaveURL(/\/phrases$/);
+            await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
+            await expectMainFocus(page, "Технические фразы");''',
+          )
+
+          replace_once(
+              "frontend/e2e/app-router-routes.spec.ts",
+              'function visibleRouteLink(page: Page, view: "home" | "learn" | "phrases" | "library" | "progress") {',
+              'function visibleRouteLink(page: Page, view: "home" | "learn" | "library" | "progress") {',
+          )
+          replace_once(
+              "frontend/e2e/app-router-routes.spec.ts",
+              'test("direct primary routes render, remain canonical and expose the active semantic link", async ({ page }) => {',
+              'test("direct routes render, remain canonical and expose the owning semantic link", async ({ page }) => {',
+          )
+          replace_once(
+              "frontend/e2e/app-router-routes.spec.ts",
+              '    { path: "/phrases", view: "phrases", heading: "Находите готовые формулировки" },',
+              '    { path: "/phrases", view: "library", navigationPath: "/dictionary", heading: "Находите готовые формулировки" },',
+          )
+          replace_once(
+              "frontend/e2e/app-router-routes.spec.ts",
+              '    await expect(link).toHaveAttribute("href", entry.path);',
+              '    await expect(link).toHaveAttribute("href", "navigationPath" in entry ? entry.navigationPath : entry.path);',
+          )
+          replace_once(
+              "frontend/e2e/app-router-routes.spec.ts",
+              '''  await learn.click();
+            await expect(page).toHaveURL(/\/learn$/);
+            await visibleRouteLink(page, "phrases").click();
+            await expect(page).toHaveURL(/\/phrases$/);
+            await page.goBack();
+            await expect(page).toHaveURL(/\/learn$/);
+            await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+            await page.goForward();
+            await expect(page).toHaveURL(/\/phrases$/);
+            await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();''',
+              '''  await learn.click();
+            await expect(page).toHaveURL(/\/learn$/);
+            await visibleRouteLink(page, "library").click();
+            await expect(page).toHaveURL(/\/dictionary$/);
+            await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+            await expect(page).toHaveURL(/\/phrases$/);
+            await page.goBack();
+            await expect(page).toHaveURL(/\/dictionary$/);
+            await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+            await page.goBack();
+            await expect(page).toHaveURL(/\/learn$/);
+            await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+            await page.goForward();
+            await expect(page).toHaveURL(/\/dictionary$/);
+            await page.goForward();
+            await expect(page).toHaveURL(/\/phrases$/);
+            await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();''',
+          )
+
+          old_ui_test = '''test("home collections and the dictionary catalog remain unique through React navigation", async ({ page }) => {
+            const runtimeErrors = watchRuntimeErrors(page);
+            await page.goto("/");
+            await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+
+            for (let cycle = 0; cycle < 3; cycle += 1) {
+              await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
+
+              await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
+              await expect(page).toHaveURL(/\/dictionary$/);
+              await expect(page.getByRole("heading", { name: "Каталог слов и терминов" })).toBeVisible();
+              await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
+              await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
+
+              await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
+              await expect(page).toHaveURL(/\/$/);
+              await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+            }
+
+            await page.getByRole("button", { name: /Путешествия/ }).click();
+            await expect(page).toHaveURL(/\/learn\?source=travel/);
+            await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
+            await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
+            expect(runtimeErrors).toEqual([]);
+          });'''
+          new_ui_test = '''test("home intent cards, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
+            const runtimeErrors = watchRuntimeErrors(page);
+            await page.goto("/");
+            await expect(page.getByRole("heading", { name: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок/ })).toBeVisible();
+
+            for (let cycle = 0; cycle < 3; cycle += 1) {
+              await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
+
+              await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
+              await expect(page).toHaveURL(/\/dictionary$/);
+              await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+              await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
+              await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
+
+              await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
+              await expect(page).toHaveURL(/\/$/);
+              await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
+            }
+
+            await page.locator(".lx-home-paths").getByRole("button", { name: "Настроить урок" }).click();
+            await expect(page).toHaveURL(/\/learn$/);
+            await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
+            await page.locator('[data-lexigo-collection="travel"]').click();
+            await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
+            expect(runtimeErrors).toEqual([]);
+          });'''
+          replace_once("frontend/e2e/ui-ownership.spec.ts", old_ui_test, new_ui_test)
+          replace_once(
+              "frontend/e2e/ui-ownership.spec.ts",
+              '    await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();',
+              '    await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();',
+          )
+
+          replace_once(
+              "frontend/e2e/account-hydration.spec.ts",
+              '  const dueCard = page.locator(".lx-progress-stats button").filter({ hasText: "К повторению" });\n  await expect(dueCard.locator("strong")).toHaveText("7");\n  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");',
+              '  const dueCard = page.locator(".lx-progress-list div").filter({ hasText: "К повторению" });\n  await expect(dueCard.locator("strong")).toHaveText("7");',
+          )
+          replace_once(
+              "frontend/e2e/account-hydration.spec.ts",
+              '  await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();\n  await expect(page).toHaveURL(/\\/phrases$/);',
+              '  await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();\n  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();\n  await expect(page).toHaveURL(/\\/phrases$/);',
+          )
+          replace_once(
+              "frontend/e2e/account-hydration.spec.ts",
+              '  await expect(dueCard.locator("strong")).toHaveText("7");\n  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");\n\n  expect(requests.progressRequests()).toBe(1);',
+              '  await expect(dueCard.locator("strong")).toHaveText("7");\n\n  expect(requests.progressRequests()).toBe(1);',
+          )
+
+          stale_patterns = {
+              'headerRoute(page, "phrases")': "removed primary phrase link",
+              'clickPrimaryNavigation(page, "phrases")': "removed primary phrase link",
+              'visibleRouteLink(page, "phrases")': "removed primary phrase link",
+              'getByRole("link", { name: "Фразы", exact: true })': "removed primary phrase link",
+          }
+          for file_path in Path("frontend/e2e").glob("*.spec.ts"):
+              content = file_path.read_text(encoding="utf-8")
+              for pattern, reason in stale_patterns.items():
+                  if pattern in content:
+                      raise SystemExit(f"{file_path}: stale {reason}: {pattern}")
+          PY
+
+          git diff --check
+
+      - name: Verify focused browser contracts
+        working-directory: frontend
+        run: |
+          set -Eeuo pipefail
+          bash ../scripts/ci/frontend-container.sh prepare
+          cleanup() {
+            bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+          bash ../scripts/ci/frontend-container.sh exec npm run lint
+          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+          bash ../scripts/ci/frontend-container.sh exec npm run test
+          bash ../scripts/ci/frontend-container.sh exec npm run build
+          bash ../scripts/ci/frontend-container.sh exec npx playwright test \
+            e2e/information-architecture.spec.ts \
+            e2e/accessibility-keyboard.spec.ts \
+            e2e/route-focus-management.spec.ts \
+            e2e/app-router-routes.spec.ts \
+            e2e/ui-ownership.spec.ts \
+            e2e/account-hydration.spec.ts \
+            e2e/adaptive-navigation.spec.ts \
+            --project=desktop-chromium \
+            --project=desktop-webkit \
+            --project=ios-webkit
+
+      - name: Commit verified browser contracts
+        run: |
+          set -Eeuo pipefail
+          rm -f .github/workflows/issue-61-browser-contract-fixup.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(ux): align browser contracts with focused IA"
+          git push origin HEAD:agent/issue-61-information-architecture
