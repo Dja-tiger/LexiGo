@@ -33,23 +33,35 @@ jobs:
 
       - name: Refresh lockfile and run frontend core gate
         run: |
+          mkdir -p "$SECURITY_WORKDIR/frontend/ci-artifacts"
           docker run --rm \
             -e APP_BUILD_ID="${GITHUB_SHA}" \
             -e NEXT_PUBLIC_RUM_SAMPLE_RATE=1 \
             -v "$SECURITY_WORKDIR/frontend:/workspace" \
             -w /workspace \
             "$NODE_IMAGE" \
-            sh -lc '
-              set -eu
-              npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-              npm ci --no-audit --no-fund
-              npm ls next postcss sharp
-              npm audit --omit=dev --audit-level=high
-              npm run lint
-              npm run typecheck
-              npm run test
-              npm run build
+            bash -lc '
+              set -euo pipefail
+              {
+                npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+                npm ci --no-audit --no-fund
+                npm ls next postcss sharp
+                npm audit --omit=dev --audit-level=high
+                npm run lint
+                npm run typecheck
+                npm run test
+                npm run build
+              } 2>&1 | tee ci-artifacts/security-core.log
             '
+
+      - name: Upload security core diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-core-diagnostics-${{ github.run_id }}
+          path: ${{ env.SECURITY_WORKDIR }}/frontend/ci-artifacts
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Commit generated lockfile and remove temporary workflow
         run: |
