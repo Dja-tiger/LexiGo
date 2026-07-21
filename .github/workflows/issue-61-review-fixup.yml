@@ -1,0 +1,148 @@
+name: Apply Issue 61 review fixes
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+
+permissions:
+  contents: write
+
+jobs:
+  fixup:
+    name: Apply and verify review fixes
+    if: github.head_ref == 'agent/issue-61-information-architecture'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 45
+    env:
+      FRONTEND_CI_VOLUME: lexigo-issue61-review-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-61-information-architecture
+          fetch-depth: 0
+
+      - name: Apply deterministic review fixes
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file_path = Path(path)
+              content = file_path.read_text(encoding="utf-8")
+              count = content.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}: {old[:120]!r}")
+              file_path.write_text(content.replace(old, new, 1), encoding="utf-8")
+
+          replace_once(
+              "frontend/app/route-navigation.css",
+              "grid-template-columns: repeat(5, minmax(48px, 1fr));",
+              "grid-template-columns: repeat(4, minmax(48px, 1fr));",
+          )
+
+          replace_once(
+              "frontend/components/lexigo-premium-app.tsx",
+              '    const progressPending = progressStatus.phase === "idle" || progressStatus.phase === "loading";',
+              '    const progressPending = Boolean(session && (progressStatus.phase === "idle" || progressStatus.phase === "loading"));',
+          )
+          replace_once(
+              "frontend/components/lexigo-premium-app.tsx",
+              '<div className="lx-panel-heading"><div><span>Учебный статус</span><strong>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal}` : progressPending ? "Загружаем…" : "Недоступно"}</strong></div><Icon name="chart" /></div>',
+              '<div className="lx-panel-heading"><div><span>Учебный статус</span><strong>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal}` : progressPending ? "Загружаем…" : session ? "Недоступно" : "После входа"}</strong></div><Icon name="chart" /></div>',
+          )
+          replace_once(
+              "frontend/components/lexigo-premium-app.tsx",
+              '<AsyncStatePanel label={progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={progressPending ? "loading" : "error"} title={progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={progressStatus.problem?.message ?? "Получаем due-очередь и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={progressStatus.problem?.retryable && session ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />',
+              '<AsyncStatePanel label={!session ? "Персональный прогресс доступен после входа" : progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={!session ? "empty" : progressPending ? "loading" : "error"} title={!session ? "Войдите, чтобы видеть учебную очередь" : progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={!session ? "Due-очередь, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем due-очередь и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={!session ? () => requestAuthentication("home") : progressStatus.problem?.retryable ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />',
+          )
+          replace_once(
+              "frontend/components/lexigo-premium-app.tsx",
+              '    navigate({ view: "profile" });',
+              '    navigate({ view: "profile" }, false, { intent: "authentication" });',
+          )
+
+          replace_once(
+              "frontend/components/route-primary-navigation.tsx",
+              'import { queueProductJourneyIntent } from "../lib/product-journey";',
+              'import { queueProductJourneyIntent, type ProductJourneyIntent } from "../lib/product-journey";',
+          )
+          replace_once(
+              "frontend/components/route-primary-navigation.tsx",
+              'function pushRoute(requestedTarget: NavigationTarget): void {',
+              'function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {',
+          )
+          replace_once(
+              "frontend/components/route-primary-navigation.tsx",
+              '  queueProductJourneyIntent("primary_navigation");',
+              '  queueProductJourneyIntent(intent);',
+          )
+          replace_once(
+              "frontend/components/route-primary-navigation.tsx",
+              '        pushRoute(target);',
+              '        pushRoute(target, navigationView ? "primary_navigation" : "in_app_navigation");',
+          )
+
+          replace_once(
+              "frontend/e2e/adaptive-navigation.spec.ts",
+              '  await expectMinimumNavigationTargets(page, ".lx-route-nav--mobile");\n\n  const labelSizes =',
+              '  await expectMinimumNavigationTargets(page, ".lx-route-nav--mobile");\n  const mobileGridTracks = await bottomNavigation.evaluate((element) => window.getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length);\n  expect(mobileGridTracks).toBe(4);\n\n  const labelSizes =',
+          )
+
+          information_architecture = Path("frontend/e2e/information-architecture.spec.ts")
+          content = information_architecture.read_text(encoding="utf-8")
+          marker = 'test("Home exposes one dominant next action and three unambiguous destinations", async ({ page }) => {'
+          guest_test = '''test("guest Home presents an account benefit instead of an endless progress loader", async ({ browser }) => {
+            const context = await browser.newContext();
+            const page = await context.newPage();
+            await installDeterministicRuntime(page);
+            await installQualityGateAPI(context, { authenticated: false });
+
+            await page.goto("/");
+            await expect(page.getByRole("region", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
+            await expect(page.getByRole("button", { name: "Войти" })).toBeVisible();
+            await expect(page.getByText("Синхронизируем очередь", { exact: true })).toHaveCount(0);
+
+            await context.close();
+          });
+
+          '''
+          if content.count(marker) != 1:
+              raise SystemExit("information-architecture.spec.ts: Home test marker not found exactly once")
+          information_architecture.write_text(content.replace(marker, guest_test + marker, 1), encoding="utf-8")
+          PY
+
+          git diff --check
+
+      - name: Verify frontend contracts
+        working-directory: frontend
+        run: |
+          set -Eeuo pipefail
+          bash ../scripts/ci/frontend-container.sh prepare
+          cleanup() {
+            bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+          bash ../scripts/ci/frontend-container.sh exec npm run lint
+          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+          bash ../scripts/ci/frontend-container.sh exec npm run test
+          bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Commit verified review fixes
+        run: |
+          set -Eeuo pipefail
+          rm -f .github/workflows/issue-61-review-fixup.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(ux): complete information architecture review"
+          git push origin HEAD:agent/issue-61-information-architecture
