@@ -21,6 +21,7 @@ jobs:
         with:
           ref: codex/security-production-dependency-audit
           fetch-depth: 0
+          clean: false
 
       - name: Refresh lockfile and run frontend core gate
         run: |
