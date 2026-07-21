@@ -1,0 +1,59 @@
+name: Apply Issue 61 browser contracts
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    name: Update and verify browser contracts
+    if: github.head_ref == 'agent/issue-61-information-architecture'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 35
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-issue61-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-61-information-architecture
+          fetch-depth: 0
+
+      - name: Update deterministic browser contracts
+        run: python3 scripts/issue61_e2e_fix.py
+
+      - name: Verify frontend contracts
+        working-directory: frontend
+        run: |
+          set -Eeuo pipefail
+          bash ../scripts/ci/frontend-container.sh prepare
+          cleanup() {
+            bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+          bash ../scripts/ci/frontend-container.sh exec npm run lint
+          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+          bash ../scripts/ci/frontend-container.sh exec npm run test
+          bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Commit verified browser contracts
+        run: |
+          set -Eeuo pipefail
+          rm -f scripts/issue61_e2e_fix.py .github/workflows/issue-61-e2e-fix.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(ux): align browser gates with catalog hierarchy"
+          git push origin HEAD:agent/issue-61-information-architecture
