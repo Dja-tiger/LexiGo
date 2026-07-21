@@ -1,22 +1,22 @@
 name: Temporary production lock refresh
 
 on:
-  push:
+  pull_request:
     branches:
-      - codex/security-production-dependency-audit
+      - main
 
 permissions:
   contents: write
 
 jobs:
   refresh-lock:
-    if: contains(github.event.head_commit.message, '[refresh-lock]')
+    if: github.head_ref == 'codex/security-production-dependency-audit'
     runs-on: self-hosted
     timeout-minutes: 30
     env:
       NODE_IMAGE: node:22.16.0-bookworm-slim
     steps:
-      - name: Checkout branch
+      - name: Checkout security branch
         uses: actions/checkout@v7
         with:
           ref: codex/security-production-dependency-audit
