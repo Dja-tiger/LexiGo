@@ -1,7 +1,7 @@
 import type { AppView, NavigationTarget } from "./navigation";
 import type { NavigationScrollPosition } from "./navigation-history";
 
-export type PrimaryNavigationView = Exclude<AppView, "profile" | "lesson">;
+export type PrimaryNavigationView = Extract<AppView, "home" | "learn" | "library" | "progress">;
 
 export type NavigationTabSnapshot = {
   target: NavigationTarget;
@@ -13,7 +13,6 @@ export type NavigationTabSnapshots = Partial<Record<PrimaryNavigationView, Navig
 const PRIMARY_VIEWS = new Set<PrimaryNavigationView>([
   "home",
   "learn",
-  "phrases",
   "library",
   "progress",
 ]);
@@ -42,6 +41,13 @@ function copyTarget(target: NavigationTarget): NavigationTarget {
   };
 }
 
+function navigationTabView(view: AppView): PrimaryNavigationView | null {
+  if (view === "phrases") return "library";
+  return PRIMARY_VIEWS.has(view as PrimaryNavigationView)
+    ? view as PrimaryNavigationView
+    : null;
+}
+
 export function isPrimaryNavigationView(view: AppView): view is PrimaryNavigationView {
   return PRIMARY_VIEWS.has(view as PrimaryNavigationView);
 }
@@ -51,11 +57,12 @@ export function rememberNavigationTabSnapshot(
   target: NavigationTarget,
   scroll: NavigationScrollPosition,
 ): NavigationTabSnapshots {
-  if (!isPrimaryNavigationView(target.view)) return snapshots;
+  const view = navigationTabView(target.view);
+  if (!view) return snapshots;
 
   return {
     ...snapshots,
-    [target.view]: {
+    [view]: {
       target: copyTarget(target),
       scroll: copyScroll(scroll),
     },
