@@ -47,6 +47,33 @@ func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, item)
 }
 
+func (h *Handler) PhraseDetail(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.UserID(r.Context())
+	if !ok {
+		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
+		return
+	}
+
+	slug := r.PathValue("slug")
+	if !ValidPhraseSlug(slug) {
+		// Invalid and absent identifiers deliberately share one response. This
+		// keeps the public route contract simple and avoids exposing catalog shape.
+		httpx.WriteError(w, http.StatusNotFound, "phrase_not_found", "phrase is not available to the current user")
+		return
+	}
+
+	item, err := h.repository.GetPhraseBySlug(r.Context(), userID, slug)
+	if errors.Is(err, ErrCatalogItemNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "phrase_not_found", "phrase is not available to the current user")
+		return
+	}
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, item)
+}
+
 func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 	userID, ok := httpx.UserID(r.Context())
 	if !ok {
