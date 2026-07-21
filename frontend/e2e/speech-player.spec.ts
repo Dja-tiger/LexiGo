@@ -13,6 +13,8 @@ type SpeechSnapshot = {
   spoken: Array<{ lang: string; text: string; voice: string | null }>;
 };
 
+const SPEECH_FIXTURE_TEXT = "We need to identify the root cause.";
+
 async function installCatalogMock(page: Page) {
   await page.route("**/api/v1/catalog/metadata", async (route) => {
     await route.fulfill({
@@ -157,6 +159,12 @@ async function speechSnapshot(page: Page): Promise<SpeechSnapshot> {
   ).__speechMock.snapshot());
 }
 
+async function openSpeechFixture(page: Page) {
+  await page.goto("/phrases/phrase-root-cause");
+  await expect(page.getByRole("heading", { name: SPEECH_FIXTURE_TEXT })).toBeVisible();
+  return page.locator(`[data-speech-text="${SPEECH_FIXTURE_TEXT}"] button`);
+}
+
 test.describe.configure({ timeout: 60_000 });
 
 test.beforeEach(async ({ page }) => {
@@ -165,9 +173,8 @@ test.beforeEach(async ({ page }) => {
 
 test("voiceschanged selects a deterministic English voice and a second click stops playback", async ({ page }) => {
   await installSpeechMock(page);
-  await page.goto("/");
-  const speech = page.locator('[data-speech-text="incident"] button');
-  await expect(speech).toHaveAttribute("aria-label", "Произнести: incident");
+  const speech = await openSpeechFixture(page);
+  await expect(speech).toHaveAttribute("aria-label", `Произнести: ${SPEECH_FIXTURE_TEXT}`);
 
   await page.evaluate(() => (
     window as unknown as { __speechMock: { setVoices: (voices: VoiceInput[]) => void } }
@@ -178,16 +185,16 @@ test("voiceschanged selects a deterministic English voice and a second click sto
   ]));
 
   await speech.click();
-  await expect(speech).toHaveAttribute("aria-label", "Остановить произношение: incident");
+  await expect(speech).toHaveAttribute("aria-label", `Остановить произношение: ${SPEECH_FIXTURE_TEXT}`);
   await expect(speech).toHaveAttribute("aria-pressed", "true");
   expect(await speechSnapshot(page)).toEqual({
     cancelCount: 0,
     speakCount: 1,
-    spoken: [{ lang: "en-GB", text: "incident", voice: "Local British" }],
+    spoken: [{ lang: "en-GB", text: SPEECH_FIXTURE_TEXT, voice: "Local British" }],
   });
 
   await speech.click();
-  await expect(speech).toHaveAttribute("aria-label", "Произнести: incident");
+  await expect(speech).toHaveAttribute("aria-label", `Произнести: ${SPEECH_FIXTURE_TEXT}`);
   await expect(speech).toHaveAttribute("aria-pressed", "false");
   const stopped = await speechSnapshot(page);
   expect(stopped.speakCount).toBe(1);
@@ -197,25 +204,24 @@ test("voiceschanged selects a deterministic English voice and a second click sto
 test("end and error restore state while navigation cancels the owned utterance", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-webkit", "Lifecycle regression is asserted in WebKit.");
   await installSpeechMock(page, [{ lang: "en-US", name: "English US", localService: true }]);
-  await page.goto("/");
-  const speech = page.locator('[data-speech-text="incident"] button');
+  const speech = await openSpeechFixture(page);
 
   await speech.click();
   await page.evaluate(() => (
     window as unknown as { __speechMock: { finish: () => void } }
   ).__speechMock.finish());
-  await expect(speech).toHaveAttribute("aria-label", "Произнести: incident");
+  await expect(speech).toHaveAttribute("aria-label", `Произнести: ${SPEECH_FIXTURE_TEXT}`);
 
   await speech.click();
   await page.evaluate(() => (
     window as unknown as { __speechMock: { fail: (error: string) => void } }
   ).__speechMock.fail("audio-busy"));
-  await expect(speech).toHaveAttribute("aria-label", "Повторить произношение: incident");
+  await expect(speech).toHaveAttribute("aria-label", `Повторить произношение: ${SPEECH_FIXTURE_TEXT}`);
   await expect(page.locator(".lx-speech-feedback.error")).toContainText("Не удалось воспроизвести");
 
   await speech.click();
-  await page.locator('[data-navigation-view="phrases"]:visible').click();
-  await expect(page).toHaveURL(/\/phrases$/);
+  await page.locator('[data-navigation-view="home"]:visible').click();
+  await expect(page).toHaveURL(/\/$/);
   expect((await speechSnapshot(page)).cancelCount).toBeGreaterThanOrEqual(1);
 });
 
@@ -236,9 +242,9 @@ test("unsupported browsers expose a disabled control and a visible explanation",
     Object.defineProperty(window, "speechSynthesis", { configurable: true, value: undefined });
     Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: undefined });
   });
-  await page.goto("/");
+  await page.goto("/phrases/phrase-root-cause");
 
-  const player = page.locator('[data-speech-text="incident"]');
+  const player = page.locator(`[data-speech-text="${SPEECH_FIXTURE_TEXT}"]`);
   await expect(player).toHaveAttribute("data-speech-state", "unsupported");
   await expect(player.getByRole("button")).toBeDisabled();
   await expect(player.locator(".lx-speech-feedback.unsupported")).toContainText("Озвучивание недоступно");
