@@ -102,6 +102,7 @@ jobs:
         run: |
           bash -n scripts/ci/deploy-over-ssh.sh
           bash -n scripts/ci/frontend-container.sh
+          bash -n scripts/ci/frontend-container.test.sh
           bash -n scripts/ci/public-smoke.sh
           bash -n scripts/ci/public-smoke.test.sh
           bash -n scripts/remote-deploy.sh
@@ -111,6 +112,9 @@ jobs:
 
       - name: Test public endpoint smoke checks
         run: bash scripts/ci/public-smoke.test.sh
+
+      - name: Test frontend container environment forwarding
+        run: bash scripts/ci/frontend-container.test.sh
 
       - name: Test HTTP readiness probes
         run: bash deploy/http-readiness.test.sh
