@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.10.0
+  version: 0.11.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -530,6 +530,33 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Catalog item is not assigned to the current user.
+  /api/v1/phrases/{slug}:
+    get:
+      operationId: getPhraseBySlug
+      tags: [learning]
+      summary: Full phrase card assigned to the current user, addressed by canonical slug.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+            pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+      responses:
+        "200":
+          description: Full phrase card with the current user learning status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Slug is invalid, absent, or the phrase is not assigned to the current user.
   /api/v1/words/{wordID}/review:
     post:
       operationId: reviewWord

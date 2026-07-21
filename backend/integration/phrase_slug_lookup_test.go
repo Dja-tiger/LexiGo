@@ -91,8 +91,8 @@ func TestPhraseSlugLookup(t *testing.T) {
 	defer testServer.Close()
 
 	registered := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
-		"email": fmt.Sprintf("phrase-slug-%d@example.com", time.Now().UnixNano()),
-		"password": "strong-password",
+		"email":       fmt.Sprintf("phrase-slug-%d@example.com", time.Now().UnixNano()),
+		"password":    "strong-password",
 		"displayName": "Phrase Slug Tester",
 	}, http.StatusCreated)
 	if _, err := pg.Exec(ctx, `
@@ -123,8 +123,8 @@ func TestPhraseSlugLookup(t *testing.T) {
 	assertPhraseLookupError(t, testServer.URL+"/api/v1/phrases/missing-route-contract", registered.Tokens.AccessToken, "phrase_not_found")
 
 	other := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
-		"email": fmt.Sprintf("phrase-other-%d@example.com", time.Now().UnixNano()),
-		"password": "strong-password",
+		"email":       fmt.Sprintf("phrase-other-%d@example.com", time.Now().UnixNano()),
+		"password":    "strong-password",
 		"displayName": "Other Phrase User",
 	}, http.StatusCreated)
 	if _, err := pg.Exec(ctx, "delete from user_words where user_id = $1::uuid and word_id = $2", other.User.ID, phraseID); err != nil {
