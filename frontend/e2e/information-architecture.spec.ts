@@ -75,6 +75,9 @@ test("phrases are a dictionary catalog kind rather than a competing top-level se
 
 test("catalog context reaches the composer and analytics sends only allow-listed dimensions", async ({ context, page }) => {
   let payload: Record<string, unknown> | null = null;
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("lexigo:rum-sampled:v1", "1");
+  });
   await context.route("**/api/v1/product/journey", async (route) => {
     payload = route.request().postDataJSON() as Record<string, unknown>;
     await route.fulfill({ status: 202, body: "" });

@@ -5,7 +5,7 @@ const SESSION = {
   tokens: { accessToken: "route-contract-access-token", tokenType: "Bearer", expiresIn: 900 },
 };
 const WORD = { id: 101, kind: "word", lemma: "route", translation: "маршрут", aliases: ["path"], phonetic: "/ruːt/", partOfSpeech: "noun", topic: "Frontend Architecture", examples: ["Open the route in a new tab."], note: "A canonical application location.", status: "new" };
-const PHRASE = { id: 201, kind: "phrase", slug: "route-contract", lemma: "Keep the route stable", translation: "сохранять маршрут стабильным", phonetic: "", partOfSpeech: "phrase", topic: "Frontend Architecture", examples: ["Keep the route stable across reloads."], note: "Back and Forward must restore the screen.", status: "new" };
+const PHRASE = { id: 201, kind: "phrase", slug: "backend-route-contract", lemma: "Keep the route stable", translation: "сохранять маршрут стабильным", phonetic: "", partOfSpeech: "phrase", topic: "Frontend Architecture", examples: ["Keep the route stable across reloads."], note: "Back and Forward must restore the screen.", status: "review" };
 const PROGRESS = { dueNow: 1, dueWords: 1, duePhrases: 0, totalWords: 1, totalPhrases: 1, newWords: 1, learningWords: 0, reviewWords: 0, masteredWords: 0, masteredPhrases: 0, reviewsToday: 0, successfulToday: 0, reviewsTotal: 0, dailyGoal: 30, currentStreak: 0, longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0, retainedPhrasesWeek: 0 };
 const METADATA = { catalogVersion: "sha256:app-router-e2e", updatedAt: "2026-07-19T00:00:00Z", totals: { items: 2, words: 1, phrases: 1 }, sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 1 }, topics: [{ topic: "Frontend Architecture", count: 2, words: 1, phrases: 1 }] };
 
@@ -28,9 +28,13 @@ async function installAuthenticatedAPI(context: BrowserContext) {
       return json(route, 200, { source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30", composition: { total: 1, words: 1, phrases: 0, due: 1, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 } });
     }
     if (path === "/api/v1/words/101") return json(route, 200, WORD);
+    if (path === "/api/v1/phrases/backend-route-contract") return json(route, 200, PHRASE);
+    if (path.startsWith("/api/v1/phrases/")) return json(route, 404, { error: { code: "phrase_not_found", message: "not found" } });
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
       const items = url.searchParams.get("kind") === "phrase" ? [PHRASE] : [WORD];
-      return json(route, 200, { items, count: items.length, total: items.length, page: 1, pageSize: 48, totalPages: 1, hasPrevious: false, hasNext: false });
+      const requestedPage = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+      const totalPages = requestedPage > 1 ? requestedPage : 1;
+      return json(route, 200, { items, count: items.length, total: Math.max(items.length, totalPages * items.length), page: requestedPage, pageSize: 48, totalPages, hasPrevious: requestedPage > 1, hasNext: false });
     }
     return json(route, 404, { error: { code: "not_mocked", message: path } });
   });
@@ -82,7 +86,7 @@ test.beforeEach(async ({ context }) => installAuthenticatedAPI(context));
 test("direct routes render, remain canonical and expose the owning semantic link", async ({ page }) => {
   const errors = runtimeErrors(page);
   const routes = [
-    { path: "/", view: "home", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
+    { path: "/", view: "home", heading: /готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", view: "learn", heading: "Соберите один сфокусированный урок" },
     { path: "/phrases", view: "library", navigationPath: "/dictionary", heading: "Находите готовые формулировки" },
     { path: "/dictionary", view: "library", heading: "Находите и изучайте материал в контексте" },
@@ -106,7 +110,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
   test.skip(!["desktop-chromium", "ios-webkit"].includes(testInfo.project.name), "Scroll stability is covered in desktop Chromium and iOS WebKit.");
 
   for (const entry of [
-    { path: "/", heading: /готовы к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
+    { path: "/", heading: /готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", heading: "Соберите один сфокусированный урок" },
     { path: "/dictionary", heading: "Находите и изучайте материал в контексте" },
     { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
@@ -151,23 +155,23 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   await expect(tab).toHaveURL(/\/learn$/);
   await expect(tab.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await tab.close();
-await learn.click();
-await expect(page).toHaveURL(/\/learn$/);
-await visibleRouteLink(page, "library").click();
-await expect(page).toHaveURL(/\/dictionary$/);
-await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
-await expect(page).toHaveURL(/\/phrases$/);
-await page.goBack();
-await expect(page).toHaveURL(/\/dictionary$/);
-await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
-await page.goBack();
-await expect(page).toHaveURL(/\/learn$/);
-await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-await page.goForward();
-await expect(page).toHaveURL(/\/dictionary$/);
-await page.goForward();
-await expect(page).toHaveURL(/\/phrases$/);
-await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
+  await learn.click();
+  await expect(page).toHaveURL(/\/learn$/);
+  await visibleRouteLink(page, "library").click();
+  await expect(page).toHaveURL(/\/dictionary$/);
+  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+  await expect(page).toHaveURL(/\/phrases$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dictionary$/);
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/learn$/);
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/dictionary$/);
+  await page.goForward();
+  await expect(page).toHaveURL(/\/phrases$/);
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 });
 
 test("word and phrase deep links survive reload and remain shareable", async ({ page }) => {
@@ -176,11 +180,46 @@ test("word and phrase deep links survive reload and remain shareable", async ({ 
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
-  await page.goto("/phrases/phrase-root-cause");
-  await expect(page).toHaveURL(/\/phrases\/phrase-root-cause$/);
-  await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
+  await page.goto("/phrases/backend-route-contract");
+  await expect(page).toHaveURL(/\/phrases\/backend-route-contract$/);
+  await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+});
+
+
+
+test("backend phrase links open in a new tab without a catalog warm-up", async ({ context, page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Native middle-click tab creation is deterministic in Chromium.");
+  await page.goto("/phrases?topic=Frontend+Architecture&query=stable&sort=az&page=2");
+  const link = page.getByRole("link", { name: /Keep the route stable/ });
+  await expect(link).toHaveAttribute("href", "/phrases/backend-route-contract?topic=Frontend+Architecture&query=stable&sort=az&page=2");
+
+  const tabPromise = context.waitForEvent("page");
+  await link.click({ button: "middle" });
+  const tab = await tabPromise;
+  await tab.waitForLoadState("domcontentloaded");
+  await expect(tab).toHaveURL(/\/phrases\/backend-route-contract\?topic=Frontend\+Architecture&query=stable&sort=az&page=2$/);
+  await expect(tab.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+  await tab.close();
+});
+
+test("phrase Back restores catalog filters, page and scroll", async ({ page }) => {
+  await page.goto("/phrases?topic=Frontend+Architecture&query=stable&sort=az&page=2");
+  const link = page.getByRole("link", { name: /Keep the route stable/ });
+  await expect(link).toBeVisible();
+  await page.evaluate(() => {
+    document.body.style.minHeight = "2800px";
+    window.scrollTo({ top: 720, behavior: "auto" });
+    window.dispatchEvent(new Event("scroll"));
+  });
+  await page.waitForTimeout(120);
+  await link.click();
+  await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/phrases\?topic=Frontend\+Architecture&query=stable&sort=az&page=2$/);
+  await expect(page.getByRole("link", { name: /Keep the route stable/ })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeGreaterThan(500);
 });
 
 test("a guest lesson deep link is protected and preserves its return target", async ({ browser }) => {

@@ -116,6 +116,24 @@ func (r *Repository) Get(ctx context.Context, userID string, wordID int64) (User
 	return item, nil
 }
 
+func (r *Repository) GetPhraseBySlug(ctx context.Context, userID, slug string) (UserWord, error) {
+	item, err := scanUserWord(r.pool.QueryRow(ctx, `
+		select `+catalogSelectFields+`
+		from user_words uw
+		join words w on w.id = uw.word_id
+		where uw.user_id = $1::uuid
+		  and w.kind = 'phrase'
+		  and lower(w.slug) = $2
+	`, userID, slug))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return UserWord{}, ErrCatalogItemNotFound
+	}
+	if err != nil {
+		return UserWord{}, fmt.Errorf("query phrase by slug: %w", err)
+	}
+	return item, nil
+}
+
 func (r *Repository) ListPage(ctx context.Context, userID string, options ListOptions) (Page, error) {
 	return r.listPage(ctx, userID, options, false)
 }

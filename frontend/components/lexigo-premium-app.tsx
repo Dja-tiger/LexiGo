@@ -81,6 +81,7 @@ import {
   createNavigationTabStore,
   type PrimaryNavigationView,
 } from "../lib/navigation-tabs";
+import { phraseCatalogFilters, phraseCatalogTarget } from "../lib/phrase-navigation";
 import {
   goalPercent,
   normalizedProgressModes,
@@ -666,6 +667,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [hydratedUserID, setHydratedUserID] = useState("");
   const [phraseCatalog, setPhraseCatalog] = useState<LearningItem[]>([]);
   const [phraseCatalogStatus, setPhraseCatalogStatus] = useState<ResourceStatus>(idleResourceStatus);
+  const [remotePhraseDetail, setRemotePhraseDetail] = useState<{ slug: string; item: LearningItem } | null>(null);
+  const [phraseDetailStatus, setPhraseDetailStatus] = useState<{ slug: string; status: ResourceStatus }>({
+    slug: "",
+    status: idleResourceStatus(),
+  });
   const [phraseCatalogPageInfo, setPhraseCatalogPageInfo] = useState<CatalogPageInfo>(() => paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
   const [phrasePage, setPhrasePage] = useState(1);
   const [phraseSearchInput, setPhraseSearchInput] = useState("");
@@ -897,6 +903,19 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, []);
 
   useEffect(() => {
+    if (navigation.view !== "phrases") return;
+    const timer = window.setTimeout(() => {
+      const filters = phraseCatalogFilters(navigation);
+      setPhraseTopic(filters.topic);
+      setPhrasePage(filters.page);
+      setPhraseSearchInput(filters.query);
+      setPhraseSearch(filters.query);
+      setPhraseSortMode(filters.sort);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [navigation]);
+
+  useEffect(() => {
     if (!lessonStarted) return;
     const timer = window.setTimeout(() => setCardStartedAt(window.performance.now()), 0);
     return () => window.clearTimeout(timer);
@@ -981,6 +1000,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const selectedPhrase = navigation.detail
     ? phraseCatalog.find((phrase) => itemKey(phrase) === navigation.detail)
       ?? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === navigation.detail)
+      ?? (remotePhraseDetail?.slug === navigation.detail ? remotePhraseDetail.item : undefined)
     : undefined;
   const ratingValues = Object.values(ratings);
   const lessonSummary = summarizePersistedLesson(ratings, items.length);
@@ -1171,6 +1191,34 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     }
   }, [loadItems]);
 
+  const loadPhraseDetailResource = useCallback(async (
+    activeSession: Session,
+    slug: string,
+    signal?: AbortSignal,
+  ): Promise<Session | null> => {
+    setPhraseDetailStatus({ slug, status: loadingResourceStatus() });
+    try {
+      const result = await authorizedRequest<APIItem>(
+        activeSession,
+        `/api/v1/phrases/${encodeURIComponent(slug)}`,
+        { signal },
+        (value) => isLearningItemPayload(value)
+          && (value as APIItem).kind === "phrase"
+          && (value as APIItem).slug === slug,
+      );
+      if (signal?.aborted) return null;
+      setRemotePhraseDetail({ slug, item: toLearningItem(result.data) });
+      setPhraseDetailStatus({ slug, status: readyResourceStatus() });
+      setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken ? current : result.activeSession);
+      return result.activeSession;
+    } catch (requestError) {
+      if (signal?.aborted) return null;
+      setRemotePhraseDetail((current) => current?.slug === slug ? null : current);
+      setPhraseDetailStatus({ slug, status: failedResourceStatus(requestError, "карточку фразы") });
+      return null;
+    }
+  }, []);
+
   const loadActiveLessonResource = useCallback(async (
     activeSession: Session,
     signal?: AbortSignal,
@@ -1211,6 +1259,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setProgress(null);
       setActiveLesson(null);
       setPhraseCatalog([]);
+      setRemotePhraseDetail(null);
+      setPhraseDetailStatus({ slug: "", status: idleResourceStatus() });
       setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
       setPhrasePage(1);
       setPhraseCatalogStatus(idleResourceStatus());
@@ -1259,6 +1309,30 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     phraseSearch,
     phraseSortMode,
     phraseTopic,
+    session,
+  ]);
+
+  useEffect(() => {
+    if (!session || navigation.view !== "phrases" || !navigation.detail) return;
+    const slug = navigation.detail;
+    const availableLocally = phraseCatalog.some((phrase) => itemKey(phrase) === slug)
+      || DEFAULT_PHRASE_CATALOG.some((phrase) => phrase.id === slug);
+    if (availableLocally || remotePhraseDetail?.slug === slug) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void loadPhraseDetailResource(session, slug, controller.signal);
+    }, 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [
+    loadPhraseDetailResource,
+    navigation.detail,
+    navigation.view,
+    phraseCatalog,
+    remotePhraseDetail?.slug,
     session,
   ]);
 
@@ -1700,6 +1774,8 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       setActiveLesson(null);
       setActiveLessonStatus(idleResourceStatus());
       setPhraseCatalog([]);
+      setRemotePhraseDetail(null);
+      setPhraseDetailStatus({ slug: "", status: idleResourceStatus() });
       setPhraseCatalogPageInfo(paginateCatalogEntries(DEFAULT_PHRASE_CATALOG, 1).info);
       setPhrasePage(1);
       setPhraseSearchInput("");
@@ -2170,28 +2246,36 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
   }
 
   function openPhraseDetail(phrase: LearningItem) {
-    navigate({ view: "phrases", detail: itemKey(phrase) }, false, { intent: "catalog_open_detail" });
+    navigate(
+      phraseCatalogTarget(phraseCatalogFilters(navigation), itemKey(phrase)),
+      false,
+      { intent: "catalog_open_detail" },
+    );
   }
 
   function backToPhraseCatalog() {
     const destination = navigationTabs.destination("library");
-    navigate({ view: "phrases" }, true, { scroll: destination.scroll });
+    navigate(phraseCatalogTarget(phraseCatalogFilters(navigation)), true, { scroll: destination.scroll });
   }
 
   function changePhrasePage(page: number) {
     setPhrasePage(page);
+    navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), page }));
     window.requestAnimationFrame(() => document.getElementById("phrase-catalog-results")?.scrollIntoView({ block: "start", behavior: navigationScrollBehavior(window) }));
   }
 
   function applyPhraseSearch() {
+    const query = phraseSearchInput.trim();
     setPhrasePage(1);
-    setPhraseSearch(phraseSearchInput.trim());
+    setPhraseSearch(query);
+    navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), query, page: 1 }));
   }
 
   function clearPhraseSearch() {
     setPhraseSearchInput("");
     setPhraseSearch("");
     setPhrasePage(1);
+    navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), query: "", page: 1 }));
   }
 
   async function changeAllItemsPage(page: number, query = allItemsQuery) {
@@ -2233,6 +2317,41 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     const openCatalog = (kind: "words" | "phrases") => {
       if (kind === "words") navigate({ view: "library" }, false, { intent: "catalog_switch" });
     };
+    if (navigation.detail && !selectedPhrase) {
+      const activeStatus = phraseDetailStatus.slug === navigation.detail
+        ? phraseDetailStatus.status
+        : idleResourceStatus();
+      const loading = Boolean(session) && (activeStatus.phase === "idle" || activeStatus.phase === "loading");
+      return (
+        <>
+          <CatalogKindNavigation active="phrases" onSelect={openCatalog} />
+          <section className="lx-detail-card">
+            <button className="lx-button ghost" type="button" onClick={backToPhraseCatalog}>← Все фразы</button>
+            {loading ? <AsyncSkeletonGrid label="Загружаем карточку фразы" count={1} /> : null}
+            {!session ? (
+              <AsyncStatePanel
+                label="Карточка фразы доступна после входа"
+                kind="empty"
+                title="Войдите, чтобы открыть персональную фразу"
+                message="Backend-каталог и текущий learning status доступны только владельцу аккаунта."
+                actionLabel="Войти"
+                onAction={() => requestAuthentication("phrases")}
+              />
+            ) : !loading ? (
+              <AsyncStatePanel
+                label="Карточка фразы недоступна"
+                kind="error"
+                title={activeStatus.problem?.title ?? "Фраза не найдена"}
+                message={activeStatus.problem?.message ?? "Проверьте ссылку или вернитесь к каталогу фраз."}
+                reference={activeStatus.problem?.correlationId}
+                actionLabel="К каталогу фраз"
+                onAction={backToPhraseCatalog}
+              />
+            ) : null}
+          </section>
+        </>
+      );
+    }
     if (selectedPhrase) {
       return (
         <>
@@ -2263,15 +2382,28 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         <section className="lx-page-heading"><div><span>РАБОЧИЕ ФРАЗЫ</span><h1>Находите готовые формулировки</h1><p>Поиск и просмотр incident updates, architecture review, data engineering, performance и release communication. Настройка учебной сессии находится в «Обучении».</p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
         <div className="lx-topic-filter" role="radiogroup" aria-label="Тема фраз" aria-orientation="horizontal">{phraseTopics.map((topic) => {
           const selected = phraseTopic === topic;
-          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => { setPhraseTopic(topic); setPhrasePage(1); }} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, (next) => { setPhraseTopic(next); setPhrasePage(1); }, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
+          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => { setPhraseTopic(topic); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic, page: 1 })); }} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, (next) => { setPhraseTopic(next); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic: next, page: 1 })); }, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
         })}</div>
         <CatalogSearchForm value={phraseSearchInput} onChange={setPhraseSearchInput} onSubmit={applyPhraseSearch} onClear={clearPhraseSearch} label="Поиск по каталогу фраз" />
-        <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => { updateCatalogSort("phrases", mode); setPhrasePage(1); }} />
+        <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => { updateCatalogSort("phrases", mode); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), sort: mode, page: 1 })); }} />
         {session && phraseCatalogStatus.phase === "error" && phraseCatalogStatus.problem ? <AsyncStatePanel label="Каталог фраз недоступен" kind="error" title={phraseCatalogStatus.problem.title} message={phraseCatalogStatus.problem.message} reference={phraseCatalogStatus.problem.correlationId} actionLabel={phraseCatalogStatus.problem.retryable ? "Повторить" : undefined} onAction={phraseCatalogStatus.problem.retryable ? () => void loadPhraseCatalogResource(session, { page: phrasePage, topic: phraseTopic, query: phraseSearch, sort: phraseSortMode }) : undefined} /> : null}
         {phrasesPending && sortedVisiblePhrases.length === 0 ? <AsyncSkeletonGrid label="Загружаем каталог фраз" /> : null}
-        {!phrasesPending && sortedVisiblePhrases.length === 0 ? <AsyncStatePanel label="Каталог фраз пуст" kind="empty" title="По заданным условиям фразы не найдены" message="Сбросьте поиск или выберите другую тему." actionLabel="Сбросить фильтры" onAction={() => { setPhraseTopic("all"); clearPhraseSearch(); }} /> : null}
+        {!phrasesPending && sortedVisiblePhrases.length === 0 ? <AsyncStatePanel label="Каталог фраз пуст" kind="empty" title="По заданным условиям фразы не найдены" message="Сбросьте поиск или выберите другую тему." actionLabel="Сбросить фильтры" onAction={() => {
+          setPhraseTopic("all");
+          setPhraseSearchInput("");
+          setPhraseSearch("");
+          setPhrasePage(1);
+          navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic: "all", query: "", page: 1 }));
+        }} /> : null}
         <CatalogPagination info={phrasePageInfo} busy={phrasesPending} onPageChange={changePhrasePage} />
-        <section id="phrase-catalog-results" className="lx-phrase-grid" role="list" aria-label="Результаты каталога фраз" aria-busy={phrasesPending}>{sortedVisiblePhrases.map((phrase, index) => <div key={itemKey(phrase)} role="listitem" aria-posinset={(phrasePageInfo.page - 1) * phrasePageInfo.pageSize + index + 1} aria-setsize={phrasePageInfo.total}><button type="button" onClick={() => openPhraseDetail(phrase)}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></button></div>)}</section>
+        <section id="phrase-catalog-results" className="lx-phrase-grid" role="list" aria-label="Результаты каталога фраз" aria-busy={phrasesPending}>{sortedVisiblePhrases.map((phrase, index) => {
+          const detailTarget = phraseCatalogTarget(phraseCatalogFilters(navigation), itemKey(phrase));
+          return <div key={itemKey(phrase)} role="listitem" aria-posinset={(phrasePageInfo.page - 1) * phrasePageInfo.pageSize + index + 1} aria-setsize={phrasePageInfo.total}><a href={navigationURL(detailTarget)} onClick={(event) => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            openPhraseDetail(phrase);
+          }}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></a></div>;
+        })}</section>
         <CatalogPagination info={phrasePageInfo} busy={phrasesPending} onPageChange={changePhrasePage} label="Навигация под списком фраз" />
         <div className="lx-page-actions"><button className="lx-button primary" type="button" disabled={phrasePageInfo.total === 0} onClick={() => navigate({ view: "learn", source: "phrases", ...(phraseTopic !== "all" ? { topic: phraseTopic } : {}) }, false, { intent: "catalog_configure_lesson" })}>Настроить урок по текущей теме</button><small>Фразы остаются каталогом; режим и размер выбираются на следующем экране.</small></div>
       </>

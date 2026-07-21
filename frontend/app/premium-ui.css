@@ -698,8 +698,10 @@ button, input { font: inherit; }
 .lx-topic-filter button.selected { border-color: rgba(120, 94, 255, 0.55); color: white; background: rgba(104, 73, 220, 0.18); }
 
 .lx-phrase-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-top: 18px; }
-.lx-phrase-grid button { display: flex; min-height: 205px; flex-direction: column; align-items: flex-start; border-radius: 20px; padding: 20px; color: var(--lx-text); text-align: left; transition: transform 150ms ease, border-color 150ms ease; }
-.lx-phrase-grid button:hover { transform: translateY(-3px); border-color: rgba(120, 94, 255, .38); }
+.lx-phrase-grid button,
+.lx-phrase-grid a { display: flex; min-height: 205px; flex-direction: column; align-items: flex-start; border: 1px solid var(--lx-border); border-radius: 20px; padding: 20px; color: var(--lx-text); background: rgba(255,255,255,.025); text-align: left; text-decoration: none; transition: transform 150ms ease, border-color 150ms ease; }
+.lx-phrase-grid button:hover,
+.lx-phrase-grid a:hover { transform: translateY(-3px); border-color: rgba(120, 94, 255, .38); }
 .lx-phrase-grid span { color: #66bfff; font-size: 11px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
 .lx-phrase-grid strong { margin-top: 15px; font-size: 18px; line-height: 1.4; }
 .lx-phrase-grid small { margin-top: 10px; color: #8491a8; line-height: 1.45; }
