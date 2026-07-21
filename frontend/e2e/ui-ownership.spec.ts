@@ -188,7 +188,11 @@ function watchRuntimeErrors(page: Page) {
 }
 
 async function phrasePrompts(page: Page) {
-  return page.locator(".lx-phrase-grid > [role=listitem] > button strong").allTextContents();
+  return page
+    .getByRole("list", { name: "Результаты каталога фраз" })
+    .getByRole("link")
+    .locator("strong")
+    .allTextContents();
 }
 
 test.describe.configure({ timeout: 60_000 });

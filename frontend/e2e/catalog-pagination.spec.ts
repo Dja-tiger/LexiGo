@@ -113,7 +113,10 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   await expect(page.locator(".lx-phrase-grid [role=listitem]").first()).toHaveAttribute("aria-posinset", "49");
   await expect(page.locator(".lx-phrase-grid [role=listitem]").first()).toHaveAttribute("aria-setsize", "1000");
 
-  const target = page.locator(".lx-phrase-grid button").nth(40);
+  const target = page
+    .getByRole("list", { name: "Результаты каталога фраз" })
+    .getByRole("link")
+    .nth(40);
   await target.scrollIntoViewIfNeeded();
   const scrollBeforeDetail = await page.evaluate(() => window.scrollY);
   await target.click();

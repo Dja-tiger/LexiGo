@@ -318,7 +318,10 @@ test("medium width uses a labelled rail and restores the previous tab target and
   await expect(page).toHaveURL(/\/phrases$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(savedScroll - 100);
 
-  const firstPhrase = page.locator(".lx-phrase-grid button").first();
+  const firstPhrase = page
+    .getByRole("list", { name: "Результаты каталога фраз" })
+    .getByRole("link")
+    .first();
   await firstPhrase.click();
   await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
