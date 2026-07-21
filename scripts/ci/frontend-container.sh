@@ -6,6 +6,10 @@ COMMAND="${1:-}"
 PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.61.1-noble}"
 FRONTEND_CI_VOLUME="${FRONTEND_CI_VOLUME:?FRONTEND_CI_VOLUME is required}"
 GITHUB_WORKSPACE="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
+GITHUB_REPOSITORY="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
+GITHUB_RUN_ID="${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
+GITHUB_RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
+GITHUB_JOB="${GITHUB_JOB:?GITHUB_JOB is required}"
 APP_BUILD_ID="${APP_BUILD_ID:-local}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 NEXT_PUBLIC_RUM_SAMPLE_RATE="${NEXT_PUBLIC_RUM_SAMPLE_RATE:-0.1}"
@@ -13,6 +17,17 @@ SOURCE_DIR="${GITHUB_WORKSPACE}/frontend"
 DEPLOY_DIR="${GITHUB_WORKSPACE}/deploy"
 WORK_DIR="/workspace"
 ARTIFACT_DIR="${SOURCE_DIR}/ci-artifacts"
+LEASE_CONTAINER="lexigo-frontend-lease-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+TASK_CONTAINER="lexigo-frontend-task-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+COPY_CONTAINER="lexigo-frontend-copy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+EXTRACT_CONTAINER="lexigo-frontend-extract-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+OWNERSHIP_LABELS=(
+  --label "com.lexigo.ci=true"
+  --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}"
+  --label "com.lexigo.ci.run=${GITHUB_RUN_ID}"
+  --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}"
+  --label "com.lexigo.ci.job=${GITHUB_JOB}"
+)
 
 log() {
   printf '[frontend-ci] %s\n' "$*"
@@ -26,6 +41,15 @@ die() {
 [[ "$FRONTEND_CI_VOLUME" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]+$ ]] || \
   die "invalid Docker volume name: $FRONTEND_CI_VOLUME"
 
+for container_name in \
+  "$LEASE_CONTAINER" \
+  "$TASK_CONTAINER" \
+  "$COPY_CONTAINER" \
+  "$EXTRACT_CONTAINER"; do
+  [[ "$container_name" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]+$ ]] || \
+    die "invalid Docker container name: $container_name"
+done
+
 [[ -d "$SOURCE_DIR" ]] || \
   die "frontend source directory does not exist: $SOURCE_DIR"
 
@@ -33,9 +57,13 @@ die() {
   die "deploy directory does not exist: $DEPLOY_DIR"
 
 container_run() {
+  docker rm --force "$TASK_CONTAINER" >/dev/null 2>&1 || true
   docker run \
     --rm \
     --init \
+    --name "$TASK_CONTAINER" \
+    "${OWNERSHIP_LABELS[@]}" \
+    --label "com.lexigo.ci.kind=task" \
     --ipc=host \
     --env CI=true \
     --env APP_BUILD_ID="$APP_BUILD_ID" \
@@ -52,16 +80,39 @@ container_run() {
 prepare() {
   log "preparing isolated Docker volume $FRONTEND_CI_VOLUME"
 
+  docker rm --force \
+    "$LEASE_CONTAINER" \
+    "$TASK_CONTAINER" \
+    "$COPY_CONTAINER" \
+    "$EXTRACT_CONTAINER" \
+    >/dev/null 2>&1 || true
   docker volume rm --force "$FRONTEND_CI_VOLUME" >/dev/null 2>&1 || true
-  docker volume create "$FRONTEND_CI_VOLUME" >/dev/null
+  docker volume create \
+    "${OWNERSHIP_LABELS[@]}" \
+    --label "com.lexigo.ci.kind=workspace" \
+    "$FRONTEND_CI_VOLUME" >/dev/null
 
   docker run \
     --rm \
     --init \
+    --name "$COPY_CONTAINER" \
+    "${OWNERSHIP_LABELS[@]}" \
+    --label "com.lexigo.ci.kind=copy" \
     --volume "$SOURCE_DIR:/source:ro" \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
     "$PLAYWRIGHT_IMAGE" \
     bash -Eeuo pipefail -c 'cp -a /source/. /workspace/'
+
+  docker run \
+    --detach \
+    --rm \
+    --name "$LEASE_CONTAINER" \
+    "${OWNERSHIP_LABELS[@]}" \
+    --label "com.lexigo.ci.kind=lease" \
+    --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
+    --entrypoint sleep \
+    "$PLAYWRIGHT_IMAGE" \
+    3900 >/dev/null
 }
 
 execute() {
@@ -104,6 +155,9 @@ extract_artifacts() {
 
   docker run \
     --rm \
+    --name "$EXTRACT_CONTAINER" \
+    "${OWNERSHIP_LABELS[@]}" \
+    --label "com.lexigo.ci.kind=extract" \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR:ro" \
     --workdir "$WORK_DIR" \
     "$PLAYWRIGHT_IMAGE" \
@@ -133,6 +187,12 @@ extract_artifacts() {
 
 cleanup() {
   log "removing isolated Docker volume $FRONTEND_CI_VOLUME"
+  docker rm --force \
+    "$LEASE_CONTAINER" \
+    "$TASK_CONTAINER" \
+    "$COPY_CONTAINER" \
+    "$EXTRACT_CONTAINER" \
+    >/dev/null 2>&1 || true
   docker volume rm --force "$FRONTEND_CI_VOLUME" >/dev/null 2>&1 || true
 }
 
