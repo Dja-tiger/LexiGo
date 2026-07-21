@@ -9,7 +9,13 @@
   min-height: 360px;
 }
 
+.lx-home-next-action .lx-hero-card::before {
+  pointer-events: none;
+}
+
 .lx-home-next-action-copy {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
