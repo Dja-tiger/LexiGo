@@ -99,7 +99,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
 
   const startedAt = Date.now();
   await page.goto("/phrases");
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
   await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(48);
   expect(Date.now() - startedAt).toBeLessThan(8000);
   await expect(page.getByText("Показано 1–48 из 1 000").first()).toBeVisible();
@@ -126,10 +126,10 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   await expect(page.getByText("Страница 2 из 21").first()).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, scrollBeforeDetail - 200));
 
-  await page.getByRole("button", { name: "Посмотреть выбранные" }).click();
-  await expect(page.locator(".lx-all-items article")).toHaveCount(48);
-  await expect(page.getByText("Показано 1–48 из 1 000").first()).toBeVisible();
-  expect(await page.locator(".lx-all-items article").count()).toBeLessThanOrEqual(48);
+  await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
+  await expect(page).toHaveURL(/\/learn\?source=phrases/);
+  await expect(page.getByRole("radio", { name: /Технические фразы/ })).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(0);
   expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);
   expect(errors).toEqual([]);
 });

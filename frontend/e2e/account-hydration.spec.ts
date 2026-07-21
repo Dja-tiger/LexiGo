@@ -159,13 +159,13 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
 
   await page.goto("/");
 
-  const dueCard = page.locator(".lx-progress-stats button").filter({ hasText: "К повторению" });
+  const dueCard = page.locator(".lx-progress-list div").filter({ hasText: "К повторению" });
   await expect(dueCard.locator("strong")).toHaveText("7");
-  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
-  await visibleNavigation(page).getByRole("link", { name: "Фразы", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
+  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
   await expect(page).toHaveURL(/\/phrases$/);
-  await expect(page.getByRole("heading", { name: "Готовые формулировки для работы" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(phraseNotice).toContainText("Сервис временно недоступен");
@@ -176,7 +176,6 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
   await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(dueCard.locator("strong")).toHaveText("7");
-  await expect(dueCard.locator("small")).toHaveText("4 слов · 3 фраз");
 
   expect(requests.progressRequests()).toBe(1);
   expect(requests.phraseRequests()).toBe(2);
@@ -195,7 +194,7 @@ test("standalone startup migrates away from corrupted navigation without clearin
   await installAccountMocks(page);
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   const persisted = await page.evaluate(() => ({
     navigation: JSON.parse(window.localStorage.getItem("lexigo.navigation.v2") ?? "null") as unknown,

@@ -140,7 +140,7 @@ test("logout invalidates the browser session and returns to the guest account st
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
 
   await expect(page).toHaveURL((url) => url.pathname === "/");
-  await expect(page.getByText("Войдите для персональной статистики", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
 
   await page.goto("/profile");
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();

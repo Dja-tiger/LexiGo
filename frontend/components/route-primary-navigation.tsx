@@ -13,6 +13,7 @@ import {
   type NavigationTarget,
 } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
+import { queueProductJourneyIntent, type ProductJourneyIntent } from "../lib/product-journey";
 import {
   rememberRouteTab,
   routeTabDestination,
@@ -20,12 +21,11 @@ import {
 } from "../lib/route-tab-snapshots";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
-type RouteIconName = "home" | "learn" | "phrases" | "library" | "progress";
+type RouteIconName = "home" | "learn" | "library" | "progress";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
   "learn",
-  "phrases",
   "library",
   "progress",
 ]);
@@ -45,7 +45,6 @@ function RouteIcon({ name }: { name: RouteIconName }) {
 
   if (name === "home") return <svg {...common}><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>;
   if (name === "learn") return <svg {...common}><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M7 9.5V15c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5"/><path d="M21 7v6"/></svg>;
-  if (name === "phrases") return <svg {...common}><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 12h5"/></svg>;
   if (name === "library") return <svg {...common}><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"/></svg>;
   return <svg {...common}><path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/></svg>;
 }
@@ -70,7 +69,7 @@ function destinationFor(target: NavigationTarget) {
     : { target, scroll: { x: 0, y: 0 } };
 }
 
-function pushRoute(requestedTarget: NavigationTarget): void {
+function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
   const current = parseNavigationLocation(window.location);
   const currentScroll = { x: window.scrollX, y: window.scrollY };
   rememberRouteTab(current, currentScroll);
@@ -90,6 +89,7 @@ function pushRoute(requestedTarget: NavigationTarget): void {
   );
 
   const nextState = createNavigationHistoryState(destination.target, destination.scroll);
+  queueProductJourneyIntent(intent);
   window.history.pushState(nextState, "", nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
@@ -120,7 +120,7 @@ function RouteLink({
       onClick={(event) => {
         if (shouldUseNativeNavigation(event)) return;
         event.preventDefault();
-        pushRoute(target);
+        pushRoute(target, navigationView ? "primary_navigation" : "in_app_navigation");
       }}
     >
       {children}
@@ -154,7 +154,8 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
   return (
     <nav className={`lx-route-nav lx-route-nav--${variant}`} aria-label={ariaLabel} data-route-navigation={variant}>
       {PRIMARY_NAVIGATION.map((entry) => {
-        const active = activeView === entry.view;
+        const active = activeView === entry.view
+          || (entry.view === "library" && activeView === "phrases");
         return (
           <RouteLink
             key={entry.view}

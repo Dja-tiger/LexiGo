@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.11.0
+  version: 0.12.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -66,6 +66,38 @@ paths:
       responses:
         "202":
           description: Пакет принят и сохранён.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/product/journey:
+    post:
+      operationId: reportProductJourney
+      tags: [analytics]
+      summary: Принять анонимный переход между allow-listed экранами.
+      description: Событие не содержит user ID, session ID, IP, raw URL, query, referrer, search text, cookie или raw User-Agent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductJourneyEvent"
+      responses:
+        "202":
+          description: Переход принят и сохранён.
           headers:
             Cache-Control:
               schema: { type: string, const: no-store }
@@ -859,6 +891,48 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    ProductJourneyEvent:
+      type: object
+      additionalProperties: false
+      required: [appVersion, fromRoute, toRoute, intent, backtrack, deviceClass, browserFamily, displayMode]
+      properties:
+        appVersion:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '^[A-Za-z0-9._-]+$'
+        fromRoute:
+          type: string
+          enum: [/, /learn, /dictionary, /phrases, /progress, /profile, /lesson, /word, /phrase, /privacy, /terms, /legal, /not-found]
+        toRoute:
+          type: string
+          enum: [/, /learn, /dictionary, /phrases, /progress, /profile, /lesson, /word, /phrase, /privacy, /terms, /legal, /not-found]
+        intent:
+          type: string
+          enum:
+            - primary_navigation
+            - home_next_action
+            - home_configure_lesson
+            - home_find_material
+            - catalog_switch
+            - catalog_open_detail
+            - catalog_configure_lesson
+            - lesson_start
+            - lesson_exit
+            - authentication
+            - browser_history
+            - in_app_navigation
+        backtrack:
+          type: boolean
+        deviceClass:
+          type: string
+          enum: [mobile, tablet, desktop]
+        browserFamily:
+          type: string
+          enum: [chromium, webkit, firefox, other]
+        displayMode:
+          type: string
+          enum: [browser, standalone, fullscreen, minimal-ui, unknown]
     PerformanceRUMReport:
       type: object
       additionalProperties: false

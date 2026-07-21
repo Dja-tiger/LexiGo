@@ -33,10 +33,10 @@ async function expectNoBlockingAxeViolations(page: Page): Promise<void> {
 }
 
 const AUTHENTICATED_ROUTES = [
-  { name: "home", url: "/", heading: /Продолжайте учиться/ },
-  { name: "learn", url: "/learn", heading: "Настройте урок под текущую задачу" },
-  { name: "phrases", url: "/phrases", heading: "Готовые формулировки для работы" },
-  { name: "dictionary", url: "/dictionary", heading: "Каталог слов и терминов" },
+  { name: "home", url: "/", heading: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
+  { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
+  { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
+  { name: "dictionary", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
   { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
   { name: "profile", url: "/profile", heading: "Quality Gates" },
   { name: "word detail", url: "/words/101", heading: "rollback" },

@@ -12,7 +12,7 @@ export type LessonComposition = {
   fallback?: LessonCompositionFallback;
 };
 
-function plural(value: number, one: string, few: string, many: string): string {
+export function russianPlural(value: number, one: string, few: string, many: string): string {
   const mod100 = value % 100;
   const mod10 = value % 10;
   if (mod100 >= 11 && mod100 <= 14) return many;
@@ -22,9 +22,9 @@ function plural(value: number, one: string, few: string, many: string): string {
 }
 
 export function lessonCompositionDescription(composition: LessonComposition): string {
-  const itemLabel = plural(composition.total, "элемент", "элемента", "элементов");
-  const wordLabel = plural(composition.words, "слово", "слова", "слов");
-  const phraseLabel = plural(composition.phrases, "фраза", "фразы", "фраз");
+  const itemLabel = russianPlural(composition.total, "элемент", "элемента", "элементов");
+  const wordLabel = russianPlural(composition.words, "слово", "слова", "слов");
+  const phraseLabel = russianPlural(composition.phrases, "фраза", "фразы", "фраз");
   return `${composition.total} ${itemLabel} · ${composition.words} ${wordLabel} · ${composition.phrases} ${phraseLabel}`;
 }
 

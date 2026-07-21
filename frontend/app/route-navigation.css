@@ -217,7 +217,7 @@
     left: max(10px, env(safe-area-inset-left));
     display: grid;
     min-height: var(--lx-compact-navigation-height);
-    grid-template-columns: repeat(5, minmax(48px, 1fr));
+    grid-template-columns: repeat(4, minmax(48px, 1fr));
     gap: 4px;
     border: 1px solid rgba(126, 146, 185, 0.2);
     border-radius: 20px;

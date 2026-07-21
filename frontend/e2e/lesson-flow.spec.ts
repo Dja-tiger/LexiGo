@@ -39,7 +39,13 @@ async function installBaseRoutes(page: Page) {
   await page.context().addCookies([{ name: "lexigo_csrf", value: "e2e-csrf-token", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
 }
 
-async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0, itemOverride?: ReturnType<typeof lessonItems>): Promise<MockLesson> {
+async function installLessonAPI(
+  page: Page,
+  itemCount: number,
+  reviewDelayMs = 0,
+  itemOverride?: ReturnType<typeof lessonItems>,
+  progress = PROGRESS,
+): Promise<MockLesson> {
   let reviewCalls = 0;
   let reviewedItems = 0;
   let version = 1;
@@ -64,7 +70,7 @@ async function installLessonAPI(page: Page, itemCount: number, reviewDelayMs = 0
       return;
     }
     if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
-    if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
+    if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(progress) });
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
     if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
     if (path === "/api/v1/lessons/preview") {
@@ -292,9 +298,15 @@ test("home review CTA requests a server-composed mixed due queue", async ({ page
     lessonItems(1)[0],
     { ...PHRASE, position: 1 },
   ];
-  const api = await installLessonAPI(page, 2, 0, mixedItems);
+  const api = await installLessonAPI(page, 2, 0, mixedItems, {
+    ...PROGRESS,
+    dueNow: 2,
+    dueWords: 1,
+    duePhrases: 1,
+    newWords: 2,
+  });
   await page.goto("/");
-  await page.getByRole("button", { name: "Начать повторение", exact: true }).click();
+  await page.getByRole("button", { name: "Повторить сейчас", exact: true }).click();
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
   expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");

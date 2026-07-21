@@ -148,7 +148,7 @@ test("iOS PWA restores the session automatically after the network returns", asy
     window.dispatchEvent(new Event("online"));
   });
 
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
   await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
   await expect(page.getByText("Сессия не удалена. Пароль вводить заново не нужно.")).toHaveCount(0);
   await expect(page).toHaveURL(/\/$/);
@@ -169,7 +169,7 @@ test("iOS pageshow resumes a recoverable session after a transient server failur
     window.dispatchEvent(new Event("pageshow"));
   });
 
-  await expect(page.getByRole("heading", { name: /Продолжайте учиться/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
   await expect.poll(requests.refreshRequests).toBeGreaterThan(failedRefreshes);
   await expect(page).not.toHaveURL(/\/profile\?session=/);
   await expect(page).toHaveURL(/\/$/);
