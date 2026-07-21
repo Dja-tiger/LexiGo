@@ -67,6 +67,7 @@ export function isLearningItemPayload(value: unknown): boolean {
     && isString(value.partOfSpeech)
     && isString(value.topic)
     && isOptionalStringArray(value.aliases)
+    && isOptionalStringArray(value.acceptedAnswers)
     && Array.isArray(value.examples)
     && value.examples.every(isString)
     && isString(value.note)

@@ -8,6 +8,7 @@ export type LessonReviewPayload = {
   rating: LessonReviewRating;
   responseMs?: number;
   answerMode: LessonReviewAnswerMode;
+  submittedAnswer?: string;
   correct?: boolean;
   answerRevealed?: boolean;
   timezoneOffsetMinutes: number;
@@ -49,6 +50,7 @@ const DATABASE_VERSION = 1;
 const REVIEW_STORE = "lesson-reviews";
 const SYNCED_RETENTION_MS = 24 * 60 * 60 * 1000;
 const REVIEW_ENDPOINT_PATTERN = /\/api\/v1\/lessons\/([0-9a-f-]{36})\/words\/(\d+)\/review\/?$/i;
+const MAX_SUBMITTED_ANSWER_CHARACTERS = 500;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -66,20 +68,31 @@ function isAnswerMode(value: unknown): value is LessonReviewAnswerMode {
   return value === "study" || value === "recall" || value === "choice";
 }
 
+function submittedAnswerLength(value: string): number {
+  return Array.from(value).length;
+}
+
 export function parseLessonReviewPayload(value: unknown): LessonReviewPayload | null {
   if (!isRecord(value)) return null;
   if (!isFiniteInteger(value.lessonVersion) || value.lessonVersion <= 0) return null;
   if (!isRating(value.rating) || !isAnswerMode(value.answerMode)) return null;
   if (!isFiniteInteger(value.timezoneOffsetMinutes)) return null;
   if (value.responseMs !== undefined && (!isFiniteInteger(value.responseMs) || value.responseMs < 0)) return null;
+  if (value.submittedAnswer !== undefined && (
+    typeof value.submittedAnswer !== "string"
+    || submittedAnswerLength(value.submittedAnswer) > MAX_SUBMITTED_ANSWER_CHARACTERS
+  )) return null;
   if (value.correct !== undefined && typeof value.correct !== "boolean") return null;
   if (value.answerRevealed !== undefined && typeof value.answerRevealed !== "boolean") return null;
+  if (value.answerMode === "study" && (value.submittedAnswer !== undefined || value.correct !== undefined)) return null;
+  if (value.submittedAnswer !== undefined && value.correct !== undefined) return null;
 
   return {
     lessonVersion: value.lessonVersion,
     rating: value.rating,
     ...(value.responseMs === undefined ? {} : { responseMs: value.responseMs }),
     answerMode: value.answerMode,
+    ...(value.submittedAnswer === undefined ? {} : { submittedAnswer: value.submittedAnswer }),
     ...(value.correct === undefined ? {} : { correct: value.correct }),
     ...(value.answerRevealed === undefined ? {} : { answerRevealed: value.answerRevealed }),
     timezoneOffsetMinutes: value.timezoneOffsetMinutes,

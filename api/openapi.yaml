@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.9.0
+  version: 0.10.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -563,6 +563,42 @@ paths:
           description: Слово не назначено текущему пользователю.
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/words/{wordID}/answer-suggestions:
+    post:
+      operationId: submitAnswerSuggestion
+      tags: [learning]
+      summary: Submit a server-rejected answer to the moderation queue without changing learning state.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerSuggestionRequest"
+      responses:
+        "202":
+          description: Suggestion was accepted for moderation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerSuggestion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Learning item is not assigned to the current user.
+        "409":
+          description: The referenced review was not a server-rejected objective attempt.
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/lessons/preview:
     post:
       operationId: previewLesson
@@ -1104,7 +1140,7 @@ components:
         hasNext: { type: boolean }
     UserWord:
       type: object
-      required: [id, lemma, translation, status, dueAt]
+      required: [id, lemma, translation, acceptedAnswers, status, dueAt]
       properties:
         id:
           type: integer
@@ -1121,6 +1157,11 @@ components:
           type: string
         aliases:
           type: array
+          items:
+            type: string
+        acceptedAnswers:
+          type: array
+          description: Curated answers accepted by the deterministic objective judge.
           items:
             type: string
         examples:
@@ -1151,6 +1192,7 @@ components:
         rating:
           type: string
           enum: [again, almost, known]
+          description: Learner confidence. It is stored independently from objective correctness.
         responseMs:
           type: integer
           minimum: 0
@@ -1158,9 +1200,14 @@ components:
         answerMode:
           type: string
           enum: [study, recall, choice]
+        submittedAnswer:
+          type: string
+          maxLength: 500
+          description: Raw recall or choice answer judged by the server. Forbidden for study.
         correct:
           type: [boolean, "null"]
-          description: Objective correctness for recall/choice. Must be null or omitted for study.
+          deprecated: true
+          description: Legacy client correctness fallback. Cannot be sent together with submittedAnswer.
         answerRevealed:
           type: [boolean, "null"]
           description: Whether the answer was visible before persistence. Required as true for study.
@@ -1170,7 +1217,7 @@ components:
           maximum: 840
     ReviewResult:
       type: object
-      required: [wordId, status, easiness, intervalDays, repetitions, dueAt, lastReviewedAt]
+      required: [wordId, status, easiness, intervalDays, repetitions, dueAt, lastReviewedAt, requestedRating, effectiveRating, judgementSource, judgementReason, reviewEventId, suggestionAvailable]
       properties:
         wordId:
           type: integer
@@ -1190,6 +1237,58 @@ components:
         lastReviewedAt:
           type: string
           format: date-time
+        requestedRating:
+          type: string
+          enum: [again, almost, known]
+          description: Learner confidence persisted for analytics.
+        effectiveRating:
+          type: string
+          enum: [again, almost, known]
+          description: Rating applied to the scheduler. Incorrect objective answers are forced to again.
+        correct:
+          type: [boolean, "null"]
+          description: Server objective result for recall/choice; omitted for passive study.
+        judgementSource:
+          type: string
+          enum: [study, server, legacy_client]
+        judgementReason:
+          type: string
+          enum: [passive_exposure, accepted_exact, accepted_normalized, rejected_no_answer, rejected_no_match, legacy_client_correct, legacy_client_incorrect, legacy_client_no_answer]
+        matchedAnswer:
+          type: string
+          description: Curated accepted answer matched after deterministic normalization.
+        reviewEventId:
+          type: integer
+          format: int64
+          minimum: 1
+        suggestionAvailable:
+          type: boolean
+    AnswerSuggestionRequest:
+      type: object
+      required: [reviewEventId, exerciseKind, submittedAnswer]
+      properties:
+        reviewEventId:
+          type: integer
+          format: int64
+          minimum: 1
+        exerciseKind:
+          type: string
+          enum: [translation, cloze]
+        submittedAnswer:
+          type: string
+          minLength: 1
+          maxLength: 500
+    AnswerSuggestion:
+      type: object
+      required: [id, wordId, reviewEventId, exerciseKind, submittedAnswer, status, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        wordId: { type: integer, format: int64 }
+        reviewEventId: { type: integer, format: int64 }
+        exerciseKind: { type: string, enum: [translation, cloze] }
+        submittedAnswer: { type: string }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        createdAt: { type: string, format: date-time }
     LessonCreateRequest:
       type: object
       required: [source, studyMode, lessonSize]
@@ -1256,7 +1355,7 @@ components:
           $ref: "#/components/schemas/LessonComposition"
     LessonItem:
       type: object
-      required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, examples, note, status]
+      required: [position, id, kind, lemma, translation, phonetic, partOfSpeech, topic, acceptedAnswers, examples, note, status]
       properties:
         position: { type: integer, minimum: 0 }
         id: { type: integer, format: int64 }
@@ -1269,6 +1368,10 @@ components:
         topic: { type: string }
         aliases:
           type: array
+          items: { type: string }
+        acceptedAnswers:
+          type: array
+          description: Curated answers accepted by the deterministic objective judge.
           items: { type: string }
         examples:
           type: array

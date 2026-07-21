@@ -205,19 +205,40 @@ func (r *Repository) ReviewLessonWord(
 	}
 
 	var state ReviewState
+	var definition AnswerDefinition
 	if err := tx.QueryRow(ctx, `
-		select status, easiness::float8, interval_days, repetitions, due_at
-		from user_words
-		where user_id = $1::uuid and word_id = $2
-		for update
-	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions, &state.DueAt); err != nil {
+		select user_word.status,
+		       user_word.easiness::float8,
+		       user_word.interval_days,
+		       user_word.repetitions,
+		       user_word.due_at,
+		       word.kind,
+		       word.translation,
+		       word.cloze_answer,
+		       coalesce(word.accepted_answers, '{}'::text[])
+		from user_words user_word
+		join words word on word.id = user_word.word_id
+		where user_word.user_id = $1::uuid and user_word.word_id = $2
+		for update of user_word
+	`, userID, wordID).Scan(
+		&state.Status,
+		&state.Easiness,
+		&state.IntervalDays,
+		&state.Repetitions,
+		&state.DueAt,
+		&definition.Kind,
+		&definition.Translation,
+		&definition.ClozeAnswer,
+		&definition.AcceptedAnswers,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrWordNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock user word: %w", err)
 	}
 
-	schedule, err := ScheduleAttempt(state, request.Rating, request.AnswerMode)
+	assessment := AssessReview(request.ReviewRequest, definition)
+	schedule, err := ScheduleAttempt(state, assessment.EffectiveRating, request.AnswerMode)
 	if err != nil {
 		return LessonReviewResult{}, err
 	}
@@ -241,12 +262,33 @@ func (r *Repository) ReviewLessonWord(
 		return LessonReviewResult{}, fmt.Errorf("update user word: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx, `
+	var reviewEventID int64
+	if err := tx.QueryRow(ctx, `
 		insert into review_events(
 			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
-			answer_revealed, event_schema_version
-		) values ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, 2)
-	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct, request.AnswerRevealed); err != nil {
+			answer_revealed, event_schema_version, submitted_answer, effective_rating,
+			judgement_source, judgement_reason, matched_answer
+		) values (
+			$1::uuid, $2, $3, $4, $5, $6, $7, $8,
+			$9, 2, $10, $11, $12, $13, nullif($14, '')
+		)
+		returning id
+	`,
+		userID,
+		wordID,
+		schedule.Grade,
+		request.ResponseMS,
+		now,
+		request.Rating,
+		request.AnswerMode,
+		assessment.Correct,
+		request.AnswerRevealed,
+		assessment.SubmittedAnswer,
+		assessment.EffectiveRating,
+		assessment.JudgementSource,
+		assessment.JudgementReason,
+		assessment.MatchedAnswer,
+	).Scan(&reviewEventID); err != nil {
 		return LessonReviewResult{}, fmt.Errorf("insert review event: %w", err)
 	}
 
@@ -297,13 +339,21 @@ func (r *Repository) ReviewLessonWord(
 
 	return LessonReviewResult{
 		ReviewResult: ReviewResult{
-			WordID:         wordID,
-			Status:         schedule.Status,
-			Easiness:       schedule.Easiness,
-			IntervalDays:   schedule.IntervalDays,
-			Repetitions:    schedule.Repetitions,
-			DueAt:          dueAt,
-			LastReviewedAt: now,
+			WordID:              wordID,
+			Status:              schedule.Status,
+			Easiness:            schedule.Easiness,
+			IntervalDays:        schedule.IntervalDays,
+			Repetitions:         schedule.Repetitions,
+			DueAt:               dueAt,
+			LastReviewedAt:      now,
+			RequestedRating:     assessment.RequestedRating,
+			EffectiveRating:     assessment.EffectiveRating,
+			Correct:             assessment.Correct,
+			JudgementSource:     assessment.JudgementSource,
+			JudgementReason:     assessment.JudgementReason,
+			MatchedAnswer:       assessment.MatchedAnswer,
+			ReviewEventID:       reviewEventID,
+			SuggestionAvailable: assessment.SuggestionAvailable,
 		},
 		LessonID:            lockedLessonID,
 		LessonCurrentIndex:  nextIndex,
@@ -314,7 +364,6 @@ func (r *Repository) ReviewLessonWord(
 		LessonTotalItems:    totalItems,
 	}, nil
 }
-
 func (r *Repository) lessonByID(
 	ctx context.Context,
 	userID string,
@@ -354,13 +403,19 @@ func (r *Repository) lessonByID(
 	rows, err := tx.Query(ctx, `
 		select item.position,
 		       word.id,
+		       word.kind,
+		       coalesce(word.slug, ''),
 		       word.lemma,
 		       word.translation,
 		       word.phonetic,
 		       word.part_of_speech,
 		       word.topic,
+		       coalesce(word.aliases, '{}'::text[]),
+		       coalesce(word.accepted_answers, '{}'::text[]),
 		       word.examples,
 		       word.note,
+		       word.cloze,
+		       word.cloze_answer,
 		       user_word.status,
 		       item.rating,
 		       item.reviewed_at
@@ -384,13 +439,19 @@ func (r *Repository) lessonByID(
 		if err := rows.Scan(
 			&item.Position,
 			&item.WordID,
+			&item.Kind,
+			&item.Slug,
 			&item.Lemma,
 			&item.Translation,
 			&item.Phonetic,
 			&item.PartOfSpeech,
 			&item.Topic,
+			&item.Aliases,
+			&item.AcceptedAnswers,
 			&examples,
 			&item.Note,
+			&item.Cloze,
+			&item.ClozeAnswer,
 			&item.Status,
 			&rating,
 			&item.ReviewedAt,
@@ -403,11 +464,6 @@ func (r *Repository) lessonByID(
 		if rating != nil {
 			parsed := Rating(*rating)
 			item.Rating = &parsed
-		}
-		item.Kind = "word"
-		if item.PartOfSpeech == "phrase" {
-			item.Kind = "phrase"
-			item.Slug = item.Lemma
 		}
 		lesson.Items = append(lesson.Items, item)
 	}

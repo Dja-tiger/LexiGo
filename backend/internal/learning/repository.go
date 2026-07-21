@@ -29,19 +29,40 @@ func (r *Repository) ReviewWord(
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var state ReviewState
+	var definition AnswerDefinition
 	if err := tx.QueryRow(ctx, `
-		select status, easiness::float8, interval_days, repetitions, due_at
-		from user_words
-		where user_id = $1::uuid and word_id = $2
-		for update
-	`, userID, wordID).Scan(&state.Status, &state.Easiness, &state.IntervalDays, &state.Repetitions, &state.DueAt); err != nil {
+		select user_word.status,
+		       user_word.easiness::float8,
+		       user_word.interval_days,
+		       user_word.repetitions,
+		       user_word.due_at,
+		       word.kind,
+		       word.translation,
+		       word.cloze_answer,
+		       coalesce(word.accepted_answers, '{}'::text[])
+		from user_words user_word
+		join words word on word.id = user_word.word_id
+		where user_word.user_id = $1::uuid and user_word.word_id = $2
+		for update of user_word
+	`, userID, wordID).Scan(
+		&state.Status,
+		&state.Easiness,
+		&state.IntervalDays,
+		&state.Repetitions,
+		&state.DueAt,
+		&definition.Kind,
+		&definition.Translation,
+		&definition.ClozeAnswer,
+		&definition.AcceptedAnswers,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ReviewResult{}, ErrWordNotFound
 		}
 		return ReviewResult{}, fmt.Errorf("lock user learning item: %w", err)
 	}
 
-	schedule, err := ScheduleAttempt(state, request.Rating, request.AnswerMode)
+	assessment := AssessReview(request, definition)
+	schedule, err := ScheduleAttempt(state, assessment.EffectiveRating, request.AnswerMode)
 	if err != nil {
 		return ReviewResult{}, err
 	}
@@ -65,12 +86,33 @@ func (r *Repository) ReviewWord(
 		return ReviewResult{}, fmt.Errorf("update user learning item: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx, `
+	var reviewEventID int64
+	if err := tx.QueryRow(ctx, `
 		insert into review_events(
 			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
-			answer_revealed, event_schema_version
-		) values ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, 2)
-	`, userID, wordID, schedule.Grade, request.ResponseMS, now, request.Rating, request.AnswerMode, request.Correct, request.AnswerRevealed); err != nil {
+			answer_revealed, event_schema_version, submitted_answer, effective_rating,
+			judgement_source, judgement_reason, matched_answer
+		) values (
+			$1::uuid, $2, $3, $4, $5, $6, $7, $8,
+			$9, 2, $10, $11, $12, $13, nullif($14, '')
+		)
+		returning id
+	`,
+		userID,
+		wordID,
+		schedule.Grade,
+		request.ResponseMS,
+		now,
+		request.Rating,
+		request.AnswerMode,
+		assessment.Correct,
+		request.AnswerRevealed,
+		assessment.SubmittedAnswer,
+		assessment.EffectiveRating,
+		assessment.JudgementSource,
+		assessment.JudgementReason,
+		assessment.MatchedAnswer,
+	).Scan(&reviewEventID); err != nil {
 		return ReviewResult{}, fmt.Errorf("insert review event: %w", err)
 	}
 
@@ -79,16 +121,23 @@ func (r *Repository) ReviewWord(
 	}
 
 	return ReviewResult{
-		WordID:         wordID,
-		Status:         schedule.Status,
-		Easiness:       schedule.Easiness,
-		IntervalDays:   schedule.IntervalDays,
-		Repetitions:    schedule.Repetitions,
-		DueAt:          dueAt,
-		LastReviewedAt: now,
+		WordID:              wordID,
+		Status:              schedule.Status,
+		Easiness:            schedule.Easiness,
+		IntervalDays:        schedule.IntervalDays,
+		Repetitions:         schedule.Repetitions,
+		DueAt:               dueAt,
+		LastReviewedAt:      now,
+		RequestedRating:     assessment.RequestedRating,
+		EffectiveRating:     assessment.EffectiveRating,
+		Correct:             assessment.Correct,
+		JudgementSource:     assessment.JudgementSource,
+		JudgementReason:     assessment.JudgementReason,
+		MatchedAnswer:       assessment.MatchedAnswer,
+		ReviewEventID:       reviewEventID,
+		SuggestionAvailable: assessment.SuggestionAvailable,
 	}, nil
 }
-
 func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffsetMinutes int) (ProgressSummary, error) {
 	timezoneOffsetMinutes = clampOffset(timezoneOffsetMinutes)
 	result := ProgressSummary{EventSchemaVersion: 2}

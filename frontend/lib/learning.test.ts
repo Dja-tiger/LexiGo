@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  acceptedAnswersForItem,
   buildAnswerOptions,
   exerciseAnswer,
   exercisePromptLabel,
   inferClozeAnswer,
+  judgeLearningAnswer,
   normalizeAnswer,
   normalizePartOfSpeech,
   prepareWordItems,
@@ -119,7 +121,46 @@ describe("learning helpers", () => {
     expect(buildAnswerOptions(current, pool)).not.toContain(current.answer);
   });
 
-  it("normalizes punctuation, spaces and Russian yo", () => {
+  it("normalizes punctuation, spaces, hyphens, apostrophes and Russian yo", () => {
     expect(normalizeAnswer("  Ёмкость,  системы! ")).toBe("емкость системы");
+    expect(normalizeAnswer("backward-compatible")).toBe("backward compatible");
+    expect(normalizeAnswer("DON'T")).toBe("dont");
+  });
+
+  it("accepts canonical translation alternatives without relying on migration backfill", () => {
+    const current = {
+      ...item("incident", "noun", "инцидент, происшествие"),
+      acceptedAnswers: ["инцидента"],
+    };
+
+    expect(acceptedAnswersForItem(current)).toEqual([
+      "инцидент, происшествие",
+      "инцидент",
+      "происшествие",
+      "инцидента",
+    ]);
+    expect(judgeLearningAnswer(current, "Происшествие!")).toMatchObject({ correct: true, matchedAnswer: "происшествие" });
+    expect(judgeLearningAnswer(current, "инцидента")).toMatchObject({ correct: true });
+  });
+
+  it("splits all supported canonical translation delimiters", () => {
+    const current = item("event", "noun", "инцидент; событие / случай");
+    expect(acceptedAnswersForItem(current)).toEqual([
+      "инцидент; событие / случай",
+      "инцидент",
+      "событие",
+      "случай",
+    ]);
+  });
+
+  it("accepts curated cloze variants but rejects substring and fuzzy matches", () => {
+    const current = {
+      ...phrase("backward", "This change is backward-compatible.", "This change is _____-compatible.", "Это изменение обратно совместимо."),
+      clozeAnswer: "backward",
+      acceptedAnswers: ["backwards"],
+    };
+
+    expect(judgeLearningAnswer(current, "Backwards")).toMatchObject({ correct: true, matchedAnswer: "backwards" });
+    expect(judgeLearningAnswer(current, "back")).toEqual({ correct: false, reason: "rejected_no_match", matchedAnswer: "" });
   });
 });

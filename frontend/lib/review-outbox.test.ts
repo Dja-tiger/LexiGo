@@ -20,22 +20,22 @@ describe("lesson review outbox contracts", () => {
     )).toBeNull();
   });
 
-  it("validates the complete payload before it can be persisted", () => {
+  it("validates the complete server-judged payload before it can be persisted", () => {
     expect(parseLessonReviewPayload({
       lessonVersion: 3,
       rating: "known",
       responseMs: 420,
       answerMode: "recall",
-      correct: true,
-      answerRevealed: false,
+      submittedAnswer: "происшествие",
+      answerRevealed: true,
       timezoneOffsetMinutes: -120,
     })).toEqual({
       lessonVersion: 3,
       rating: "known",
       responseMs: 420,
       answerMode: "recall",
-      correct: true,
-      answerRevealed: false,
+      submittedAnswer: "происшествие",
+      answerRevealed: true,
       timezoneOffsetMinutes: -120,
     });
     expect(parseLessonReviewPayload({
@@ -48,6 +48,38 @@ describe("lesson review outbox contracts", () => {
       lessonVersion: 1,
       rating: "excellent",
       answerMode: "recall",
+      timezoneOffsetMinutes: 0,
+    })).toBeNull();
+  });
+
+  it("retains legacy correctness but rejects ambiguous or invalid objective sources", () => {
+    expect(parseLessonReviewPayload({
+      lessonVersion: 3,
+      rating: "known",
+      answerMode: "recall",
+      correct: true,
+      timezoneOffsetMinutes: 0,
+    })).toMatchObject({ correct: true });
+    expect(parseLessonReviewPayload({
+      lessonVersion: 3,
+      rating: "known",
+      answerMode: "recall",
+      submittedAnswer: "answer",
+      correct: true,
+      timezoneOffsetMinutes: 0,
+    })).toBeNull();
+    expect(parseLessonReviewPayload({
+      lessonVersion: 3,
+      rating: "known",
+      answerMode: "study",
+      submittedAnswer: "answer",
+      timezoneOffsetMinutes: 0,
+    })).toBeNull();
+    expect(parseLessonReviewPayload({
+      lessonVersion: 3,
+      rating: "known",
+      answerMode: "recall",
+      submittedAnswer: "x".repeat(501),
       timezoneOffsetMinutes: 0,
     })).toBeNull();
   });

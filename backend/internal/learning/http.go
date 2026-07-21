@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Dja-tiger/New-project/backend/internal/httpx"
 )
@@ -111,13 +112,24 @@ func normalizeAndValidateReviewRequest(request *ReviewRequest) (code, message st
 	if !validAnswerMode(request.AnswerMode) {
 		return "invalid_answer_mode", "answerMode must be study, recall or choice"
 	}
+	if request.SubmittedAnswer != nil {
+		trimmed := strings.TrimSpace(*request.SubmittedAnswer)
+		request.SubmittedAnswer = &trimmed
+		if !SubmittedAnswerWithinLimit(trimmed) {
+			return "invalid_submitted_answer", "submittedAnswer must not exceed 500 characters"
+		}
+	}
 	if request.AnswerMode == AnswerModeStudy {
-		if request.Correct != nil {
-			return "invalid_study_correctness", "study attempts cannot report objective correctness"
+		if request.Correct != nil || request.SubmittedAnswer != nil {
+			return "invalid_study_correctness", "study attempts cannot report an objective answer"
 		}
 		if request.AnswerRevealed == nil || !*request.AnswerRevealed {
 			return "invalid_answer_revealed", "study attempts must report answerRevealed=true"
 		}
+		return "", ""
+	}
+	if request.SubmittedAnswer != nil && request.Correct != nil {
+		return "ambiguous_objective_answer", "submit submittedAnswer or legacy correct, not both"
 	}
 	return "", ""
 }

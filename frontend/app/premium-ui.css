@@ -864,6 +864,17 @@ button, input { font: inherit; }
 .lx-rating-row .almost { border: 1px solid rgba(255, 179, 75, .28); background: rgba(115, 72, 21, .22); }
 .lx-rating-row .known { border: 1px solid rgba(59, 219, 147, .28); background: rgba(19, 104, 68, .22); }
 
+.lx-judgement { display: grid; gap: 9px; margin: 0 16px 16px; border: 1px solid var(--lx-border); border-radius: 15px; padding: 15px; background: rgba(255,255,255,.025); }
+.lx-judgement.success { border-color: rgba(59, 219, 147, .3); background: rgba(19, 104, 68, .13); }
+.lx-judgement.error { border-color: rgba(255, 102, 122, .3); background: rgba(126, 30, 47, .14); }
+.lx-judgement.study { border-color: rgba(101, 191, 255, .28); background: rgba(24, 92, 145, .12); }
+.lx-judgement strong { font-size: 15px; }
+.lx-judgement p { margin: 0; color: #aeb8ca; line-height: 1.5; }
+.lx-judgement small { color: #8794aa; line-height: 1.45; }
+.lx-judgement .lx-button { width: fit-content; margin-top: 3px; }
+.lx-suggestion-success { color: #70e7b5 !important; }
+.lx-suggestion-error { color: #ff98a6 !important; }
+
 .lx-related { border-top: 1px solid var(--lx-border); padding: 16px; }
 .lx-related > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 11px; color: #9ca7ba; font-weight: 720; }
 .lx-related > div:first-child small { color: #68758b; font-weight: 450; }

@@ -14,7 +14,8 @@ var ErrCatalogItemNotFound = errors.New("catalog item not found")
 
 const catalogSelectFields = `
 		w.id, w.kind, coalesce(w.slug, ''), w.lemma, w.translation, w.phonetic,
-		w.part_of_speech, w.topic, coalesce(w.aliases, '{}'::text[]), w.examples, w.note,
+		w.part_of_speech, w.topic, coalesce(w.aliases, '{}'::text[]),
+		coalesce(w.accepted_answers, '{}'::text[]), w.examples, w.note,
 		w.cloze, w.cloze_answer, uw.status, uw.easiness::float8, uw.interval_days,
 		uw.repetitions, uw.due_at, uw.last_reviewed_at
 `
@@ -87,7 +88,7 @@ func scanUserWord(row rowScanner) (UserWord, error) {
 	var examples []byte
 	if err := row.Scan(
 		&item.ID, &item.Kind, &item.Slug, &item.Lemma, &item.Translation, &item.Phonetic,
-		&item.PartOfSpeech, &item.Topic, &item.Aliases, &examples, &item.Note,
+		&item.PartOfSpeech, &item.Topic, &item.Aliases, &item.AcceptedAnswers, &examples, &item.Note,
 		&item.Cloze, &item.ClozeAnswer, &item.Status, &item.Easiness, &item.IntervalDays,
 		&item.Repetitions, &item.DueAt, &item.LastReviewedAt,
 	); err != nil {

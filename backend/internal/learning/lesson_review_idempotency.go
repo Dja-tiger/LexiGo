@@ -21,6 +21,7 @@ type lessonReviewFingerprint struct {
 	Rating                Rating     `json:"rating"`
 	ResponseMS            *int       `json:"responseMs,omitempty"`
 	AnswerMode            AnswerMode `json:"answerMode"`
+	SubmittedAnswer       *string    `json:"submittedAnswer,omitempty"`
 	Correct               *bool      `json:"correct,omitempty"`
 	AnswerRevealed        *bool      `json:"answerRevealed,omitempty"`
 	TimezoneOffsetMinutes int        `json:"timezoneOffsetMinutes"`
@@ -101,6 +102,7 @@ func lessonReviewRequestHash(
 		Rating:                request.Rating,
 		ResponseMS:            request.ResponseMS,
 		AnswerMode:            request.AnswerMode,
+		SubmittedAnswer:       request.SubmittedAnswer,
 		Correct:               request.Correct,
 		AnswerRevealed:        request.AnswerRevealed,
 		TimezoneOffsetMinutes: request.TimezoneOffsetMinutes,
@@ -235,7 +237,7 @@ func (r *Repository) recoverCommittedLessonReview(
 	var itemPosition int
 	var itemRating string
 	var reviewedAt time.Time
-	var eventMatches bool
+	var effectiveRating string
 
 	err := r.pool.QueryRow(ctx, `
 		select user_word.status,
@@ -260,22 +262,42 @@ func (r *Repository) recoverCommittedLessonReview(
 		           from lesson_session_items reviewed_item
 		           where reviewed_item.session_id = lesson.id
 		       ),
-		       exists (
-		           select 1
-		           from review_events event
-		           where event.user_id = $1::uuid
-		             and event.word_id = $3
-		             and event.reviewed_at = item.reviewed_at
-		             and event.rating = $5
-		             and event.answer_mode = $6
-		             and event.response_ms is not distinct from $7
-		             and event.correct is not distinct from $8
-		             and event.answer_revealed is not distinct from $9
-		       )
+		       event.id,
+		       event.correct,
+		       event.effective_rating,
+		       event.judgement_source,
+		       event.judgement_reason,
+		       coalesce(event.matched_answer, '')
 		from lesson_sessions lesson
 		join lesson_session_items item on item.session_id = lesson.id
 		join user_words user_word
 		  on user_word.user_id = lesson.user_id and user_word.word_id = item.word_id
+		join lateral (
+			select review_event.id,
+			       review_event.correct,
+			       review_event.effective_rating,
+			       review_event.judgement_source,
+			       review_event.judgement_reason,
+			       review_event.matched_answer
+			from review_events review_event
+			where review_event.user_id = $1::uuid
+			  and review_event.word_id = $3
+			  and review_event.reviewed_at = item.reviewed_at
+			  and review_event.rating = $5
+			  and review_event.answer_mode = $6
+			  and review_event.response_ms is not distinct from $7
+			  and review_event.answer_revealed is not distinct from $10
+			  and (
+			      ($8::text is not null and review_event.submitted_answer is not distinct from $8)
+			      or (
+			          $8::text is null
+			          and review_event.submitted_answer is null
+			          and review_event.correct is not distinct from $9
+			      )
+			  )
+			order by review_event.id desc
+			limit 1
+		) event on true
 		where lesson.user_id = $1::uuid
 		  and lesson.id = $2::uuid
 		  and item.word_id = $3
@@ -288,6 +310,7 @@ func (r *Repository) recoverCommittedLessonReview(
 		request.Rating,
 		request.AnswerMode,
 		request.ResponseMS,
+		request.SubmittedAnswer,
 		request.Correct,
 		request.AnswerRevealed,
 	).Scan(
@@ -305,7 +328,12 @@ func (r *Repository) recoverCommittedLessonReview(
 		&reviewedAt,
 		&result.LessonTotalItems,
 		&result.LessonReviewedItems,
-		&eventMatches,
+		&result.ReviewEventID,
+		&result.Correct,
+		&effectiveRating,
+		&result.JudgementSource,
+		&result.JudgementReason,
+		&result.MatchedAnswer,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return LessonReviewResult{}, false, nil
@@ -313,11 +341,16 @@ func (r *Repository) recoverCommittedLessonReview(
 	if err != nil {
 		return LessonReviewResult{}, false, fmt.Errorf("recover committed lesson review: %w", err)
 	}
-	if itemRating != string(request.Rating) || !eventMatches || result.LessonCurrentIndex <= itemPosition {
+	if itemRating != string(request.Rating) || result.LessonCurrentIndex <= itemPosition {
 		return LessonReviewResult{}, false, nil
 	}
 	result.WordID = wordID
 	result.LastReviewedAt = reviewedAt
+	result.RequestedRating = request.Rating
+	result.EffectiveRating = Rating(effectiveRating)
+	result.SuggestionAvailable = result.JudgementSource == JudgementSourceServer &&
+		result.Correct != nil && !*result.Correct &&
+		request.SubmittedAnswer != nil && NormalizeSubmittedAnswer(*request.SubmittedAnswer) != ""
 	result.LessonCompleted = lessonStatus == "completed"
 	result.LessonSkippedItems = 0
 	return result, true, nil
