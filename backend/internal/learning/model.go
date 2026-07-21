@@ -26,19 +26,28 @@ type ReviewRequest struct {
 	Rating                Rating     `json:"rating"`
 	ResponseMS            *int       `json:"responseMs,omitempty"`
 	AnswerMode            AnswerMode `json:"answerMode,omitempty"`
+	SubmittedAnswer       *string    `json:"submittedAnswer,omitempty"`
 	Correct               *bool      `json:"correct,omitempty"`
 	AnswerRevealed        *bool      `json:"answerRevealed,omitempty"`
 	TimezoneOffsetMinutes int        `json:"timezoneOffsetMinutes"`
 }
 
 type ReviewResult struct {
-	WordID         int64     `json:"wordId"`
-	Status         string    `json:"status"`
-	Easiness       float64   `json:"easiness"`
-	IntervalDays   int       `json:"intervalDays"`
-	Repetitions    int       `json:"repetitions"`
-	DueAt          time.Time `json:"dueAt"`
-	LastReviewedAt time.Time `json:"lastReviewedAt"`
+	WordID              int64     `json:"wordId"`
+	Status              string    `json:"status"`
+	Easiness            float64   `json:"easiness"`
+	IntervalDays        int       `json:"intervalDays"`
+	Repetitions         int       `json:"repetitions"`
+	DueAt               time.Time `json:"dueAt"`
+	LastReviewedAt      time.Time `json:"lastReviewedAt"`
+	RequestedRating     Rating    `json:"requestedRating"`
+	EffectiveRating     Rating    `json:"effectiveRating"`
+	Correct             *bool     `json:"correct,omitempty"`
+	JudgementSource     string    `json:"judgementSource"`
+	JudgementReason     string    `json:"judgementReason"`
+	MatchedAnswer       string    `json:"matchedAnswer,omitempty"`
+	ReviewEventID       int64     `json:"reviewEventId"`
+	SuggestionAvailable bool      `json:"suggestionAvailable"`
 }
 
 type ModeProgress struct {
