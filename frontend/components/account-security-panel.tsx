@@ -57,9 +57,11 @@ function auditLabel(type: string): string {
 export function AccountSecurityPanel({
   session,
   onSessionExpired,
+  onSessionUpdated,
 }: {
   session: Session;
   onSessionExpired: () => void;
+  onSessionUpdated: (session: Session) => void;
 }) {
   const pathname = usePathname();
   const [sessions, setSessions] = useState<AccountSession[]>([]);
@@ -90,18 +92,18 @@ export function AccountSecurityPanel({
     setError(requestError instanceof Error ? requestError.message : "Не удалось выполнить операцию");
   }, [onSessionExpired]);
 
-  const loadSecurityData = useCallback(async () => {
+  const loadSecurityData = useCallback(async (accessToken = session.tokens.accessToken) => {
     setLoading(true);
     setError("");
     try {
       const [sessionPayload, auditPayload] = await Promise.all([
         accountRequest<{ sessions: AccountSession[] }>(
           "/api/v1/auth/sessions",
-          session.tokens.accessToken,
+          accessToken,
         ),
         accountRequest<{ events: AccountAuditEvent[] }>(
           "/api/v1/auth/audit-events",
-          session.tokens.accessToken,
+          accessToken,
         ),
       ]);
       setSessions(sessionPayload.sessions);
@@ -138,15 +140,20 @@ export function AccountSecurityPanel({
 
     setBusyAction("password");
     try {
-      await accountRequest<void>("/api/v1/auth/password", session.tokens.accessToken, {
-        method: "PUT",
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const updatedSession = await accountRequest<Session>(
+        "/api/v1/auth/password",
+        session.tokens.accessToken,
+        {
+          method: "PUT",
+          body: JSON.stringify({ currentPassword, newPassword }),
+        },
+      );
+      onSessionUpdated(updatedSession);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setNotice("Пароль изменён. Остальные сессии завершены.");
-      await loadSecurityData();
+      await loadSecurityData(updatedSession.tokens.accessToken);
     } catch (requestError) {
       handleRequestError(requestError);
     } finally {
@@ -166,13 +173,18 @@ export function AccountSecurityPanel({
 
     setBusyAction("sessions");
     try {
-      await accountRequest<void>("/api/v1/auth/sessions/revoke-others", session.tokens.accessToken, {
-        method: "POST",
-        body: JSON.stringify({ currentPassword: sessionsPassword }),
-      });
+      const updatedSession = await accountRequest<Session>(
+        "/api/v1/auth/sessions/revoke-others",
+        session.tokens.accessToken,
+        {
+          method: "POST",
+          body: JSON.stringify({ currentPassword: sessionsPassword }),
+        },
+      );
+      onSessionUpdated(updatedSession);
       setSessionsPassword("");
       setNotice("Остальные сессии завершены.");
-      await loadSecurityData();
+      await loadSecurityData(updatedSession.tokens.accessToken);
     } catch (requestError) {
       if (requestError instanceof AccountRequestError && requestError.field === "currentPassword") {
         setPasswordErrors({ sessionsPassword: requestError.message });

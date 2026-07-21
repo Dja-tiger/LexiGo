@@ -19,11 +19,17 @@ type TokenManager struct {
 }
 
 type accessClaims struct {
-	Subject   string `json:"sub"`
-	Email     string `json:"email"`
-	IssuedAt  int64  `json:"iat"`
-	ExpiresAt int64  `json:"exp"`
-	Issuer    string `json:"iss"`
+	Subject     string `json:"sub"`
+	Email       string `json:"email"`
+	AuthVersion int64  `json:"auth_version"`
+	IssuedAt    int64  `json:"iat"`
+	ExpiresAt   int64  `json:"exp"`
+	Issuer      string `json:"iss"`
+}
+
+type AccessIdentity struct {
+	UserID      string
+	AuthVersion int64
 }
 
 func NewTokenManager(secret string, ttl time.Duration) (*TokenManager, error) {
@@ -37,11 +43,15 @@ func NewTokenManager(secret string, ttl time.Duration) (*TokenManager, error) {
 }
 
 func (m *TokenManager) IssueAccess(user User) (string, time.Time, error) {
+	if user.ID == "" || user.AuthVersion <= 0 {
+		return "", time.Time{}, ErrInvalidAccess
+	}
 	now := m.now().UTC()
 	expiresAt := now.Add(m.ttl)
 	header, _ := json.Marshal(map[string]string{"alg": "HS256", "typ": "JWT"})
 	claims, err := json.Marshal(accessClaims{
-		Subject: user.ID, Email: user.Email, IssuedAt: now.Unix(), ExpiresAt: expiresAt.Unix(), Issuer: "lexigo",
+		Subject: user.ID, Email: user.Email, AuthVersion: user.AuthVersion,
+		IssuedAt: now.Unix(), ExpiresAt: expiresAt.Unix(), Issuer: "lexigo",
 	})
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("marshal access claims: %w", err)
@@ -53,42 +63,50 @@ func (m *TokenManager) IssueAccess(user User) (string, time.Time, error) {
 }
 
 func (m *TokenManager) ParseAccess(token string) (string, error) {
+	identity, err := m.ParseAccessIdentity(token)
+	if err != nil {
+		return "", err
+	}
+	return identity.UserID, nil
+}
+
+func (m *TokenManager) ParseAccessIdentity(token string) (AccessIdentity, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 	unsigned := parts[0] + "." + parts[1]
 	provided, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 	mac := hmac.New(sha256.New, m.secret)
 	_, _ = mac.Write([]byte(unsigned))
 	if !hmac.Equal(provided, mac.Sum(nil)) {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 
 	headerPayload, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 	var header map[string]string
 	if err := json.Unmarshal(headerPayload, &header); err != nil || header["alg"] != "HS256" || header["typ"] != "JWT" {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
 	var claims accessClaims
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return "", ErrInvalidAccess
+		return AccessIdentity{}, ErrInvalidAccess
 	}
-	if claims.Issuer != "lexigo" || claims.Subject == "" || m.now().Unix() >= claims.ExpiresAt {
-		return "", ErrInvalidAccess
+	if claims.Issuer != "lexigo" || claims.Subject == "" || claims.AuthVersion <= 0 || m.now().Unix() >= claims.ExpiresAt {
+		return AccessIdentity{}, ErrInvalidAccess
 	}
-	return claims.Subject, nil
+	return AccessIdentity{UserID: claims.Subject, AuthVersion: claims.AuthVersion}, nil
 }
 
 func NewRefreshToken() (plain string, hash []byte, err error) {

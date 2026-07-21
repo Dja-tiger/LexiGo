@@ -87,34 +87,71 @@ func (r *PostgresRepository) ChangePasswordAndRevokeOtherSessions(
 	ctx context.Context,
 	userID string,
 	currentTokenHash []byte,
+	expectedPasswordHash string,
 	passwordHash string,
 	now time.Time,
 	userAgent,
 	ip string,
-) error {
+) (int64, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin password change: %w", err)
+		return 0, fmt.Errorf("begin password change: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	var (
+		previousAuthVersion int64
+		currentPasswordHash string
+	)
+	err = tx.QueryRow(ctx, `
+		select auth_version, password_hash
+		from users
+		where id = $1::uuid
+		for update
+	`, userID).Scan(&previousAuthVersion, &currentPasswordHash)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, ErrUserNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("lock user credential version for password change: %w", err)
+	}
+	if currentPasswordHash != expectedPasswordHash {
+		return 0, ErrReauthenticationFailed
+	}
+
 	currentFamilyID, err := r.currentActiveFamily(ctx, tx, userID, currentTokenHash, now, true)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	var authVersion int64
+	err = tx.QueryRow(ctx, `
+		update users
+		set password_hash = $2,
+			updated_at = $3,
+			auth_version = auth_version + 1
+		where id = $1::uuid
+		returning auth_version
+	`, userID, passwordHash, now).Scan(&authVersion)
+	if err != nil {
+		return 0, fmt.Errorf("update account password and credential version: %w", err)
+	}
+	if authVersion != previousAuthVersion+1 {
+		return 0, fmt.Errorf("unexpected password credential version transition")
 	}
 	if _, err := tx.Exec(ctx, `
-		update users
-		set password_hash = $2, updated_at = $3
-		where id = $1::uuid
-	`, userID, passwordHash, now); err != nil {
-		return fmt.Errorf("update account password: %w", err)
+		update refresh_tokens
+		set auth_version = $3
+		where user_id = $1::uuid
+		  and family_id = $2::uuid
+	`, userID, currentFamilyID, authVersion); err != nil {
+		return 0, fmt.Errorf("advance current refresh family credential version: %w", err)
 	}
 	if _, err := tx.Exec(ctx, `
 		update password_reset_tokens
 		set used_at = coalesce(used_at, $2)
 		where user_id = $1::uuid and used_at is null
 	`, userID, now); err != nil {
-		return fmt.Errorf("invalidate password reset tokens after password change: %w", err)
+		return 0, fmt.Errorf("invalidate password reset tokens after password change: %w", err)
 	}
 	revoked, err := tx.Exec(ctx, `
 		update refresh_tokens
@@ -124,7 +161,7 @@ func (r *PostgresRepository) ChangePasswordAndRevokeOtherSessions(
 		  and revoked_at is null
 	`, userID, currentFamilyID, now)
 	if err != nil {
-		return fmt.Errorf("revoke other sessions after password change: %w", err)
+		return 0, fmt.Errorf("revoke other sessions after password change: %w", err)
 	}
 	if err := r.insertAccountAudit(
 		ctx,
@@ -136,31 +173,74 @@ func (r *PostgresRepository) ChangePasswordAndRevokeOtherSessions(
 		map[string]any{"revokedRefreshTokens": revoked.RowsAffected()},
 		now,
 	); err != nil {
-		return err
+		return 0, err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit password change: %w", err)
+		return 0, fmt.Errorf("commit password change: %w", err)
 	}
-	return nil
+	return authVersion, nil
 }
 
 func (r *PostgresRepository) RevokeOtherSessions(
 	ctx context.Context,
 	userID string,
 	currentTokenHash []byte,
+	expectedPasswordHash string,
 	now time.Time,
 	userAgent,
 	ip string,
-) error {
+) (int64, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin other-session revocation: %w", err)
+		return 0, fmt.Errorf("begin other-session revocation: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	var (
+		previousAuthVersion int64
+		currentPasswordHash string
+	)
+	err = tx.QueryRow(ctx, `
+		select auth_version, password_hash
+		from users
+		where id = $1::uuid
+		for update
+	`, userID).Scan(&previousAuthVersion, &currentPasswordHash)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, ErrUserNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("lock user credential version for session revocation: %w", err)
+	}
+	if currentPasswordHash != expectedPasswordHash {
+		return 0, ErrReauthenticationFailed
+	}
+
 	currentFamilyID, err := r.currentActiveFamily(ctx, tx, userID, currentTokenHash, now, true)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	var authVersion int64
+	err = tx.QueryRow(ctx, `
+		update users
+		set auth_version = auth_version + 1,
+			updated_at = $2
+		where id = $1::uuid
+		returning auth_version
+	`, userID, now).Scan(&authVersion)
+	if err != nil {
+		return 0, fmt.Errorf("advance credential version for session revocation: %w", err)
+	}
+	if authVersion != previousAuthVersion+1 {
+		return 0, fmt.Errorf("unexpected session revocation credential version transition")
+	}
+	if _, err := tx.Exec(ctx, `
+		update refresh_tokens
+		set auth_version = $3
+		where user_id = $1::uuid
+		  and family_id = $2::uuid
+	`, userID, currentFamilyID, authVersion); err != nil {
+		return 0, fmt.Errorf("advance current refresh family after session revocation: %w", err)
 	}
 	revoked, err := tx.Exec(ctx, `
 		update refresh_tokens
@@ -170,7 +250,7 @@ func (r *PostgresRepository) RevokeOtherSessions(
 		  and revoked_at is null
 	`, userID, currentFamilyID, now)
 	if err != nil {
-		return fmt.Errorf("revoke other account sessions: %w", err)
+		return 0, fmt.Errorf("revoke other account sessions: %w", err)
 	}
 	if err := r.insertAccountAudit(
 		ctx,
@@ -182,12 +262,12 @@ func (r *PostgresRepository) RevokeOtherSessions(
 		map[string]any{"revokedRefreshTokens": revoked.RowsAffected()},
 		now,
 	); err != nil {
-		return err
+		return 0, err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit other-session revocation: %w", err)
+		return 0, fmt.Errorf("commit other-session revocation: %w", err)
 	}
-	return nil
+	return authVersion, nil
 }
 
 func (r *PostgresRepository) RecentAccountAudit(

@@ -15,6 +15,7 @@ type fakeAccountSecurity struct {
 	revokedTokenHash    []byte
 	changeCalls         int
 	revokeCalls         int
+	nextAuthVersion     int64
 	err                 error
 }
 
@@ -31,26 +32,35 @@ func (f *fakeAccountSecurity) ChangePasswordAndRevokeOtherSessions(
 	_ context.Context,
 	_ string,
 	currentTokenHash []byte,
+	_ string,
 	passwordHash string,
 	_ time.Time,
 	_, _ string,
-) error {
+) (int64, error) {
 	f.changeCalls++
 	f.changedPasswordHash = passwordHash
 	f.changedTokenHash = append([]byte(nil), currentTokenHash...)
-	return f.err
+	return f.version(), f.err
 }
 
 func (f *fakeAccountSecurity) RevokeOtherSessions(
 	_ context.Context,
 	_ string,
 	currentTokenHash []byte,
+	_ string,
 	_ time.Time,
 	_, _ string,
-) error {
+) (int64, error) {
 	f.revokeCalls++
 	f.revokedTokenHash = append([]byte(nil), currentTokenHash...)
-	return f.err
+	return f.version(), f.err
+}
+
+func (f *fakeAccountSecurity) version() int64 {
+	if f.nextAuthVersion > 0 {
+		return f.nextAuthVersion
+	}
+	return 2
 }
 
 func (f *fakeAccountSecurity) RecentAccountAudit(context.Context, string, int) ([]AccountAuditEvent, error) {
@@ -68,7 +78,7 @@ func accountSecurityService(t *testing.T, password string, repository *fakeAccou
 		t.Fatal(err)
 	}
 	return NewService(
-		&fakeUsers{byID: User{ID: "user-1", Email: "user@example.com", PasswordHash: passwordHash}},
+		&fakeUsers{byID: User{ID: "user-1", Email: "user@example.com", PasswordHash: passwordHash, AuthVersion: 1}},
 		&fakeRefresh{},
 		manager,
 		30*24*time.Hour,
@@ -80,7 +90,7 @@ func TestChangePasswordRequiresCurrentPassword(t *testing.T) {
 	repository := &fakeAccountSecurity{}
 	service := accountSecurityService(t, "current-password", repository)
 
-	err := service.ChangePassword(
+	_, _, err := service.ChangePassword(
 		context.Background(),
 		"user-1",
 		"refresh-token",
@@ -101,7 +111,7 @@ func TestChangePasswordHashesNewPasswordAndPreservesCurrentFamily(t *testing.T) 
 	repository := &fakeAccountSecurity{}
 	service := accountSecurityService(t, "current-password", repository)
 
-	err := service.ChangePassword(
+	user, pair, err := service.ChangePassword(
 		context.Background(),
 		"user-1",
 		"refresh-token",
@@ -112,6 +122,13 @@ func TestChangePasswordHashesNewPasswordAndPreservesCurrentFamily(t *testing.T) 
 	)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if user.AuthVersion != 2 || pair.AccessToken == "" {
+		t.Fatalf("credential version was not advanced: user=%+v pair=%+v", user, pair)
+	}
+	identity, err := service.tokens.ParseAccessIdentity(pair.AccessToken)
+	if err != nil || identity.AuthVersion != 2 {
+		t.Fatalf("replacement access token = %+v, %v", identity, err)
 	}
 	if repository.changeCalls != 1 {
 		t.Fatalf("expected one password transaction, got %d", repository.changeCalls)
@@ -132,7 +149,7 @@ func TestChangePasswordRejectsUnchangedPassword(t *testing.T) {
 	repository := &fakeAccountSecurity{}
 	service := accountSecurityService(t, "current-password", repository)
 
-	err := service.ChangePassword(
+	_, _, err := service.ChangePassword(
 		context.Background(),
 		"user-1",
 		"refresh-token",
@@ -154,7 +171,7 @@ func TestRevokeOtherSessionsRequiresReauthentication(t *testing.T) {
 	repository := &fakeAccountSecurity{}
 	service := accountSecurityService(t, "current-password", repository)
 
-	err := service.RevokeOtherSessions(
+	_, _, err := service.RevokeOtherSessions(
 		context.Background(),
 		"user-1",
 		"refresh-token",

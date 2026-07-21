@@ -172,7 +172,7 @@ func TestAccountExportAndDeletionLifecycle(t *testing.T) {
 		}
 	}
 
-	getWithToken(t, client, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusNotFound)
+	getWithToken(t, client, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusUnauthorized)
 	postJSONWithClient(t, client, testServer.URL+"/api/v1/auth/refresh", nil, csrf, http.StatusForbidden)
 	replayRefreshToken(t, testServer, refreshToken, csrf, http.StatusUnauthorized)
 

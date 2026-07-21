@@ -134,6 +134,7 @@ func TestPasswordRecoveryRevokesSessionsAndPreventsEnumeration(t *testing.T) {
 		"",
 		http.StatusOK,
 	)
+	loggedInSession := decodeJSON[integrationAuthResponse](t, loggedIn.Body)
 	requireSessionCookies(t, loggedIn.Cookies)
 
 	knownResponse := postJSONWithForwardedIP(t, deviceA, testServer.URL+"/api/v1/auth/password-reset/request", map[string]string{
@@ -160,6 +161,8 @@ func TestPasswordRecoveryRevokesSessionsAndPreventsEnumeration(t *testing.T) {
 	postJSONWithForwardedIP(t, deviceA, testServer.URL+"/api/v1/auth/password-reset/confirm", map[string]string{
 		"token": token, "newPassword": newPassword,
 	}, "198.51.100.13", http.StatusNoContent)
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceB, testServer.URL+"/api/v1/me", loggedInSession.Tokens.AccessToken, http.StatusUnauthorized)
 
 	deviceACSRF := cookieFromJar(t, deviceA, testServer.URL, integrationCSRFCookieName)
 	postJSONWithClient(t, deviceA, testServer.URL+"/api/v1/auth/refresh", nil, deviceACSRF, http.StatusUnauthorized)
@@ -198,6 +201,13 @@ func TestPasswordRecoveryRevokesSessionsAndPreventsEnumeration(t *testing.T) {
 	}
 	if activeResets != 0 {
 		t.Fatalf("active reset tokens = %d", activeResets)
+	}
+	var authVersion int64
+	if err := pg.QueryRow(ctx, `select auth_version from users where id = $1::uuid`, registered.User.ID).Scan(&authVersion); err != nil {
+		t.Fatal(err)
+	}
+	if authVersion != 2 {
+		t.Fatalf("auth_version = %d, want 2 after password reset", authVersion)
 	}
 }
 

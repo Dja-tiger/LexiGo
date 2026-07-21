@@ -281,6 +281,8 @@ paths:
                       $ref: "#/components/schemas/AccountSession"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/auth/sessions/revoke-others:
     post:
       operationId: revokeOtherAccountSessions
@@ -297,14 +299,20 @@ paths:
             schema:
               $ref: "#/components/schemas/ReauthenticationRequest"
       responses:
-        "204":
-          description: Остальные сессии отозваны, событие записано в security audit.
+        "200":
+          description: Остальные сессии отозваны, credential epoch увеличен; текущей family выдан replacement access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/auth/password:
     put:
       operationId: changeAccountPassword
@@ -321,8 +329,12 @@ paths:
             schema:
               $ref: "#/components/schemas/ChangePasswordRequest"
       responses:
-        "204":
-          description: Пароль изменён, password-reset tokens аннулированы; после commit выполняется попытка критичного уведомления.
+        "200":
+          description: Пароль и credential epoch изменены, password-reset tokens аннулированы; текущей family выдан replacement access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -331,6 +343,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/auth/audit-events:
     get:
       operationId: listAccountAuditEvents
@@ -353,6 +367,8 @@ paths:
                       $ref: "#/components/schemas/AccountAuditEvent"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/account/export:
     post:
       operationId: exportAccountData
@@ -385,6 +401,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/account:
     delete:
       operationId: deleteAccount
@@ -412,6 +430,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/account/email-change/request:
     post:
       operationId: requestAccountEmailChange
@@ -444,6 +464,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/account/email-change/confirm:
     post:
       operationId: confirmAccountEmailChange
@@ -480,6 +502,8 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words:
     get:
       operationId: listWords
@@ -507,6 +531,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/due:
     get:
       operationId: listDueWords
@@ -534,6 +560,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}:
     get:
       operationId: getWord
@@ -562,6 +590,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Catalog item is not assigned to the current user.
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/phrases/{slug}:
     get:
       operationId: getPhraseBySlug
@@ -589,6 +619,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Slug is invalid, absent, or the phrase is not assigned to the current user.
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}/review:
     post:
       operationId: reviewWord
@@ -622,6 +654,8 @@ paths:
           description: Слово не назначено текущему пользователю.
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}/answer-suggestions:
     post:
       operationId: submitAnswerSuggestion
@@ -658,6 +692,8 @@ paths:
           description: The referenced review was not a server-rejected objective attempt.
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons/preview:
     post:
       operationId: previewLesson
@@ -679,6 +715,10 @@ paths:
                 $ref: "#/components/schemas/LessonPreview"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons:
     post:
       operationId: createLesson
@@ -700,6 +740,10 @@ paths:
                 $ref: "#/components/schemas/LessonSession"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons/active:
     get:
       operationId: getActiveLesson
@@ -715,6 +759,10 @@ paths:
                 $ref: "#/components/schemas/LessonSession"
         "404":
           description: Активный урок отсутствует.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons/{lessonID}:
     delete:
       operationId: discardLesson
@@ -742,6 +790,10 @@ paths:
                 $ref: "#/components/schemas/Error"
         "428":
           description: If-Match отсутствует.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons/{lessonID}/words/{wordID}/review:
     post:
       operationId: reviewLessonWord
@@ -774,6 +826,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/progress:
     get:
       operationId: getProgress
@@ -791,6 +847,8 @@ paths:
                 $ref: "#/components/schemas/ProgressSummary"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/progress/goal:
     put:
       operationId: setDailyGoal
@@ -816,12 +874,15 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: JWT содержит auth_version. Каждый защищённый запрос fail-closed сверяет его с PostgreSQL; stale epoch возвращает 401, недоступное хранилище — 503.
     refreshCookie:
       type: apiKey
       in: cookie
@@ -867,7 +928,7 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
     Unauthorized:
-      description: Неверные учётные данные или токен.
+      description: Неверные учётные данные, подпись/TTL токена или устаревший credential epoch.
       content:
         application/json:
           schema:
@@ -886,6 +947,15 @@ components:
             $ref: "#/components/schemas/Error"
     ValidationError:
       description: Ошибка валидации.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    AuthenticationUnavailable:
+      description: Авторитетная проверка credential epoch временно недоступна; запрос не передаётся приложению.
+      headers:
+        Retry-After:
+          schema: { type: integer, const: 1 }
       content:
         application/json:
           schema:
@@ -1201,7 +1271,7 @@ components:
       properties:
         accessToken:
           type: string
-          description: Короткоживущий bearer token. Клиент хранит его только в памяти процесса.
+          description: Короткоживущий bearer token с auth_version. Клиент хранит его только в памяти процесса.
         tokenType:
           type: string
           const: Bearer

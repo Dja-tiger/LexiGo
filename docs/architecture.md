@@ -61,7 +61,7 @@ LexiGo должен одновременно быть рабочим инстр�
 - одно устройство представлено одной refresh-token family; ротация токена не создаёт дубликаты устройств в профиле;
 - смена пароля и завершение остальных сессий требуют bearer-аутентификацию, CSRF и повторный ввод текущего пароля;
 - смена пароля, отзыв чужих session families и запись security audit выполняются внутри одной PostgreSQL-транзакции;
-- текущая session family сохраняется при смене пароля, остальные активные families отзываются;
+- текущая session family сохраняется при смене пароля и отзыве остальных devices, получает новый credential epoch и replacement access token; остальные активные families отзываются;
 - смена email начинается только после re-authentication текущим паролем и отправляет verification link исключительно на новый адрес;
 - email-change token сохраняется только как SHA-256 digest, имеет TTL, является одноразовым и заменяет ранее выпущенные активные tokens пользователя;
 - confirmation transaction блокирует token row, проверяет прежний identity, меняет login email, использует все pending tokens, отзывает все refresh families и пишет `email_changed` audit event;
@@ -78,7 +78,8 @@ LexiGo должен одновременно быть рабочим инстр�
 - пароли хэшируются bcrypt cost 12;
 - refresh token и одноразовые email/reset tokens хранятся только как SHA-256 hashes;
 - refresh rotation выполняется транзакционно;
-- access token подписывается HS256;
+- access token подписывается HS256, содержит `auth_version` и на каждом защищённом запросе fail-closed сверяется с PostgreSQL;
+- смена пароля, password reset, подтверждение email и отзыв остальных sessions немедленно увеличивают credential epoch; детали lock order и отказоустойчивости описаны в `docs/access-token-revocation.md`;
 - state-changing cookie-authenticated операции защищены synchronizer CSRF token;
 - security audit хранит тип события, время, user agent, IP и безопасные metadata без secrets;
 - SMTP transport требует STARTTLS и TLS 1.2+; log delivery разрешён только в local/test;

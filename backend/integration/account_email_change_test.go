@@ -219,6 +219,8 @@ func TestVerifiedEmailChangeRevokesSessionsAndChangesLoginIdentity(t *testing.T)
 	if sender.notificationRecipient != oldEmail || sender.notificationNewEmail != newEmail {
 		t.Fatalf("unexpected email changed notification: %+v", sender)
 	}
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceB, testServer.URL+"/api/v1/me", deviceBSession.Tokens.AccessToken, http.StatusUnauthorized)
 
 	replayRefreshToken(t, testServer, deviceARefresh, deviceACSRF, http.StatusUnauthorized)
 	deviceBCSRF := cookieFromJar(t, deviceB, testServer.URL, integrationCSRFCookieName)
@@ -253,10 +255,14 @@ func TestVerifiedEmailChangeRevokesSessionsAndChangesLoginIdentity(t *testing.T)
 
 	var (
 		persistedEmail string
+		authVersion    int64
 		emailAudit     int
 		activeTokens   int
 	)
 	if err := pg.QueryRow(ctx, `select email from users where id = $1::uuid`, registered.User.ID).Scan(&persistedEmail); err != nil {
+		t.Fatal(err)
+	}
+	if err := pg.QueryRow(ctx, `select auth_version from users where id = $1::uuid`, registered.User.ID).Scan(&authVersion); err != nil {
 		t.Fatal(err)
 	}
 	if err := pg.QueryRow(ctx, `
@@ -275,8 +281,8 @@ func TestVerifiedEmailChangeRevokesSessionsAndChangesLoginIdentity(t *testing.T)
 	`, registered.User.ID).Scan(&activeTokens); err != nil {
 		t.Fatal(err)
 	}
-	if persistedEmail != newEmail || emailAudit != 1 || activeTokens != 0 {
-		t.Fatalf("persisted email state: email=%q audit=%d active_tokens=%d", persistedEmail, emailAudit, activeTokens)
+	if persistedEmail != newEmail || authVersion != 2 || emailAudit != 1 || activeTokens != 0 {
+		t.Fatalf("persisted email state: email=%q auth_version=%d audit=%d active_tokens=%d", persistedEmail, authVersion, emailAudit, activeTokens)
 	}
 
 	_ = deviceBSession

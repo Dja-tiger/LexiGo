@@ -20,6 +20,22 @@ type Service struct {
 	logger                *slog.Logger
 }
 
+type accessValidationUnavailableError struct {
+	cause error
+}
+
+func (e *accessValidationUnavailableError) Error() string {
+	return "access credential validation is unavailable: " + e.cause.Error()
+}
+
+func (e *accessValidationUnavailableError) Unwrap() error {
+	return e.cause
+}
+
+func (e *accessValidationUnavailableError) AuthenticationUnavailable() bool {
+	return true
+}
+
 func NewService(
 	users UserRepository,
 	refresh RefreshTokenRepository,
@@ -102,7 +118,7 @@ func (s *Service) Refresh(ctx context.Context, oldToken, userAgent, ip string) (
 		return User{}, TokenPair{}, err
 	}
 	expiresAt := s.now().UTC().Add(s.refreshTTL)
-	userID, err := s.refresh.Rotate(ctx, oldHash, newHash, expiresAt, userAgent, ip)
+	userID, rotatedAuthVersion, err := s.refresh.Rotate(ctx, oldHash, newHash, expiresAt, userAgent, ip)
 	if err != nil {
 		return User{}, TokenPair{}, err
 	}
@@ -110,16 +126,15 @@ func (s *Service) Refresh(ctx context.Context, oldToken, userAgent, ip string) (
 	if err != nil {
 		return User{}, TokenPair{}, err
 	}
-	access, accessExpiry, err := s.tokens.IssueAccess(user)
-	if err != nil {
-		return User{}, TokenPair{}, err
-	}
-	return user, TokenPair{
-		AccessToken:  access,
-		RefreshToken: newPlain,
-		TokenType:    "Bearer",
-		ExpiresIn:    int64(time.Until(accessExpiry).Seconds()),
-	}, nil
+	// Bind the response to the version locked by Rotate. A credential change
+	// may commit between rotation and this read. Minting the newer version here
+	// would let the just-rotated request escape that revocation. Returning the
+	// rotated refresh token with a now-stale access token is safe: a preserved
+	// current family can refresh again, while a revoked family remains closed.
+	user.AuthVersion = rotatedAuthVersion
+	pair, err := s.issueAccess(user)
+	pair.RefreshToken = newPlain
+	return user, pair, err
 }
 
 func (s *Service) Logout(ctx context.Context, refreshToken string) error {
@@ -138,8 +153,30 @@ func (s *Service) ParseAccess(token string) (string, error) {
 	return s.tokens.ParseAccess(token)
 }
 
+func (s *Service) ValidateAccess(ctx context.Context, token string) (string, error) {
+	identity, err := s.tokens.ParseAccessIdentity(token)
+	if err != nil {
+		return "", ErrInvalidAccess
+	}
+	currentVersion, err := s.users.AuthVersion(ctx, identity.UserID)
+	if errors.Is(err, ErrUserNotFound) {
+		return "", ErrInvalidAccess
+	}
+	if err != nil {
+		s.logger.ErrorContext(ctx, "access credential validation failed",
+			"user_id", identity.UserID,
+			"error", err,
+		)
+		return "", &accessValidationUnavailableError{cause: err}
+	}
+	if currentVersion != identity.AuthVersion {
+		return "", ErrInvalidAccess
+	}
+	return identity.UserID, nil
+}
+
 func (s *Service) issuePair(ctx context.Context, user User, userAgent, ip string) (TokenPair, error) {
-	access, accessExpiry, err := s.tokens.IssueAccess(user)
+	pair, err := s.issueAccess(user)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -147,13 +184,29 @@ func (s *Service) issuePair(ctx context.Context, user User, userAgent, ip string
 	if err != nil {
 		return TokenPair{}, err
 	}
-	if err := s.refresh.Store(ctx, user.ID, refreshHash, s.now().UTC().Add(s.refreshTTL), userAgent, ip); err != nil {
+	if err := s.refresh.Store(
+		ctx,
+		user.ID,
+		user.AuthVersion,
+		refreshHash,
+		s.now().UTC().Add(s.refreshTTL),
+		userAgent,
+		ip,
+	); err != nil {
+		return TokenPair{}, err
+	}
+	pair.RefreshToken = refreshPlain
+	return pair, nil
+}
+
+func (s *Service) issueAccess(user User) (TokenPair, error) {
+	access, accessExpiry, err := s.tokens.IssueAccess(user)
+	if err != nil {
 		return TokenPair{}, err
 	}
 	return TokenPair{
-		AccessToken:  access,
-		RefreshToken: refreshPlain,
-		TokenType:    "Bearer",
-		ExpiresIn:    int64(time.Until(accessExpiry).Seconds()),
+		AccessToken: access,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(time.Until(accessExpiry).Seconds()),
 	}, nil
 }

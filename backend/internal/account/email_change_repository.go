@@ -151,7 +151,8 @@ func (r *PostgresRepository) ConsumeEmailChange(
 	err = tx.QueryRow(ctx, `
 		update users
 		set email = $3,
-			updated_at = $4
+			updated_at = $4,
+			auth_version = auth_version + 1
 		where id = $1::uuid
 		  and email = $2
 		returning display_name

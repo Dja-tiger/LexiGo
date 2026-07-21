@@ -104,7 +104,7 @@ func NewWithOptions(
 	performanceHandler := performance.NewHandler(performance.NewRepository(pg))
 	limiter := ratelimit.New(rdb)
 	authenticated := func(handler http.HandlerFunc) http.Handler {
-		return httpx.Authenticate(authService.ParseAccess, handler)
+		return httpx.Authenticate(authService.ValidateAccess, handler)
 	}
 
 	mux := http.NewServeMux()

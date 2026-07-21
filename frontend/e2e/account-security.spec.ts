@@ -68,6 +68,7 @@ async function json(route: Route, status: number, body: unknown) {
 }
 
 async function installAPI(page: Page) {
+  let credentialVersion = 1;
   let sessions = [
     {
       id: "family-current",
@@ -135,8 +136,14 @@ async function installAPI(page: Page) {
         metadata: { revokedRefreshTokens: "1" },
         createdAt: "2026-07-20T00:15:00Z",
       });
-      await route.fulfill({ status: 204 });
-      return;
+      credentialVersion += 1;
+      return json(route, 200, {
+        ...SESSION,
+        tokens: {
+          ...SESSION.tokens,
+          accessToken: `account-security-access-token-v${credentialVersion}`,
+        },
+      });
     }
     if (path === "/api/v1/auth/password" && request.method() === "PUT") {
       const body = request.postDataJSON() as Record<string, string>;
@@ -158,8 +165,14 @@ async function installAPI(page: Page) {
         metadata: { revokedRefreshTokens: "0" },
         createdAt: "2026-07-20T00:20:00Z",
       });
-      await route.fulfill({ status: 204 });
-      return;
+      credentialVersion += 1;
+      return json(route, 200, {
+        ...SESSION,
+        tokens: {
+          ...SESSION.tokens,
+          accessToken: `account-security-access-token-v${credentialVersion}`,
+        },
+      });
     }
 
     return json(route, 404, { error: { code: "not_mocked", message: path } });
@@ -187,7 +200,9 @@ test("account security panel lists devices, reauthenticates mutations and update
 
   await sessionsCard.getByLabel("Текущий пароль").fill("current-password");
   await sessionsCard.getByRole("button", { name: "Завершить остальные сессии" }).click();
-  await expect(page.getByRole("status")).toHaveText("Остальные сессии завершены.");
+  await expect(page.getByRole("status").filter({ hasText: "Остальные сессии завершены." })).toHaveText(
+    "Остальные сессии завершены.",
+  );
   await expect(page.getByText("Safari на iOS", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Остальные сессии завершены", { exact: true })).toBeVisible();
 
@@ -196,7 +211,9 @@ test("account security panel lists devices, reauthenticates mutations and update
   await passwordCard.getByLabel("Новый пароль", { exact: true }).fill("new-strong-password");
   await passwordCard.getByLabel("Повторите новый пароль", { exact: true }).fill("new-strong-password");
   await passwordCard.getByRole("button", { name: "Изменить пароль" }).click();
-  await expect(page.getByRole("status")).toHaveText("Пароль изменён. Остальные сессии завершены.");
+  await expect(page.getByRole("status").filter({ hasText: "Пароль изменён. Остальные сессии завершены." })).toHaveText(
+    "Пароль изменён. Остальные сессии завершены.",
+  );
   await expect(page.getByText("Пароль изменён", { exact: true })).toBeVisible();
 
   expect(api.requests).toHaveLength(3);
