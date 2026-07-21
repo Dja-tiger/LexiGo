@@ -5,7 +5,7 @@ import {
 } from "./navigation-history";
 import type { AppView, NavigationTarget } from "./navigation";
 
-export type PrimaryRouteView = Extract<AppView, "home" | "learn" | "phrases" | "library" | "progress">;
+export type PrimaryRouteView = Extract<AppView, "home" | "learn" | "library" | "progress">;
 
 export type RouteTabSnapshot = {
   target: NavigationTarget;
@@ -18,13 +18,13 @@ const SNAPSHOT_PREFIX = "lexigo.route-tab.v1.";
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
   "learn",
-  "phrases",
   "library",
   "progress",
 ]);
 const memorySnapshots = new Map<PrimaryRouteView, RouteTabSnapshot>();
 
 function routeView(target: NavigationTarget): PrimaryRouteView | null {
+  if (target.view === "phrases") return "library";
   return PRIMARY_ROUTE_VIEWS.has(target.view as PrimaryRouteView)
     ? target.view as PrimaryRouteView
     : null;
@@ -47,7 +47,7 @@ function decodeSnapshot(raw: string | null, expectedView: PrimaryRouteView): Rou
   if (!raw) return null;
   try {
     const state = readNavigationHistoryState(JSON.parse(raw) as unknown);
-    if (!state || state.target.view !== expectedView) return null;
+    if (!state || routeView(state.target) !== expectedView) return null;
     return { target: state.target, scroll: state.scroll };
   } catch {
     return null;
