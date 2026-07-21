@@ -40,6 +40,7 @@ func TestPasswordChangeNotificationRunsOnlyAfterCommittedTransaction(t *testing.
 			Email:        "user@example.com",
 			DisplayName:  "Security User",
 			PasswordHash: passwordHash,
+			AuthVersion:  1,
 		}},
 		&fakeRefresh{},
 		manager,
@@ -48,7 +49,7 @@ func TestPasswordChangeNotificationRunsOnlyAfterCommittedTransaction(t *testing.
 		WithSecurityNotifications(sender),
 	)
 
-	err = service.ChangePassword(
+	_, _, err = service.ChangePassword(
 		context.Background(),
 		"user-1",
 		"refresh-token",
@@ -66,7 +67,7 @@ func TestPasswordChangeNotificationRunsOnlyAfterCommittedTransaction(t *testing.
 
 	repository.err = errors.New("transaction failed")
 	sender.recipient = ""
-	err = service.ChangePassword(
+	_, _, err = service.ChangePassword(
 		context.Background(),
 		"user-1",
 		"refresh-token",

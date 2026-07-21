@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -13,7 +14,15 @@ import (
 
 type contextKey string
 
-const userIDKey contextKey = "user_id"
+const (
+	userIDKey           contextKey = "user_id"
+	requestTelemetryKey contextKey = "request_telemetry"
+)
+
+type requestTelemetry struct {
+	authenticationAttempted bool
+	authenticationDuration  time.Duration
+}
 
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +52,18 @@ func Recover(logger *slog.Logger, next http.Handler) http.Handler {
 func AccessLog(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
-		next.ServeHTTP(w, r)
-		logger.Info("http request", slog.String("method", r.Method), slog.String("path", r.URL.Path), slog.Duration("duration", time.Since(started)))
+		telemetry := &requestTelemetry{}
+		ctx := context.WithValue(r.Context(), requestTelemetryKey, telemetry)
+		next.ServeHTTP(w, r.WithContext(ctx))
+		attributes := []any{
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Duration("duration", time.Since(started)),
+		}
+		if telemetry.authenticationAttempted {
+			attributes = append(attributes, slog.Duration("auth_validation_duration", telemetry.authenticationDuration))
+		}
+		logger.Info("http request", attributes...)
 	})
 }
 
@@ -91,7 +110,11 @@ func SameOrigin(allowedOrigin string, next http.Handler) http.Handler {
 	})
 }
 
-func Authenticate(parse func(string) (string, error), next http.Handler) http.Handler {
+type authenticationUnavailable interface {
+	AuthenticationUnavailable() bool
+}
+
+func Authenticate(validate func(context.Context, string) (string, error), next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		parts := strings.Fields(header)
@@ -99,8 +122,19 @@ func Authenticate(parse func(string) (string, error), next http.Handler) http.Ha
 			WriteError(w, http.StatusUnauthorized, "unauthorized", "valid bearer token is required")
 			return
 		}
-		userID, err := parse(parts[1])
+		validationStarted := time.Now()
+		userID, err := validate(r.Context(), parts[1])
+		if telemetry, ok := r.Context().Value(requestTelemetryKey).(*requestTelemetry); ok {
+			telemetry.authenticationAttempted = true
+			telemetry.authenticationDuration = time.Since(validationStarted)
+		}
 		if err != nil {
+			var unavailable authenticationUnavailable
+			if errors.As(err, &unavailable) && unavailable.AuthenticationUnavailable() {
+				w.Header().Set("Retry-After", "1")
+				WriteError(w, http.StatusServiceUnavailable, "authentication_unavailable", "authentication validation is temporarily unavailable")
+				return
+			}
 			WriteError(w, http.StatusUnauthorized, "unauthorized", "valid bearer token is required")
 			return
 		}

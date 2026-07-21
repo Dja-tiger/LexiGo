@@ -21,6 +21,9 @@ func TestOpenAPIUsesCookieBackedRefreshSessions(t *testing.T) {
 		"name: lexigo_refresh",
 		"name: X-CSRF-Token",
 		"$ref: \"#/components/schemas/AuthResponse\"",
+		"AuthenticationUnavailable:",
+		"JWT содержит auth_version",
+		"replacement access token",
 		"ProgressSummary:",
 		"Error:",
 	}

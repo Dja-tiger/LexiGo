@@ -14,7 +14,7 @@ func TestAccessTokenRoundTripAndExpiry(t *testing.T) {
 	now := time.Date(2026, 7, 16, 0, 0, 0, 0, time.UTC)
 	manager.now = func() time.Time { return now }
 
-	token, _, err := manager.IssueAccess(User{ID: "user-1", Email: "test@example.com"})
+	token, _, err := manager.IssueAccess(User{ID: "user-1", Email: "test@example.com", AuthVersion: 7})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,10 +22,24 @@ func TestAccessTokenRoundTripAndExpiry(t *testing.T) {
 	if err != nil || id != "user-1" {
 		t.Fatalf("ParseAccess() = %q, %v", id, err)
 	}
+	identity, err := manager.ParseAccessIdentity(token)
+	if err != nil || identity.UserID != "user-1" || identity.AuthVersion != 7 {
+		t.Fatalf("ParseAccessIdentity() = %+v, %v", identity, err)
+	}
 
 	manager.now = func() time.Time { return now.Add(2 * time.Minute) }
 	if _, err := manager.ParseAccess(token); !errors.Is(err, ErrInvalidAccess) {
 		t.Fatalf("expected expiry error, got %v", err)
+	}
+}
+
+func TestAccessTokenRequiresCredentialVersion(t *testing.T) {
+	manager, err := NewTokenManager("01234567890123456789012345678901", time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := manager.IssueAccess(User{ID: "user-1", Email: "test@example.com"}); !errors.Is(err, ErrInvalidAccess) {
+		t.Fatalf("expected invalid access version error, got %v", err)
 	}
 }
 

@@ -50,19 +50,21 @@ type AccountSecurityRepository interface {
 		ctx context.Context,
 		userID string,
 		currentTokenHash []byte,
+		expectedPasswordHash string,
 		passwordHash string,
 		now time.Time,
 		userAgent,
 		ip string,
-	) error
+	) (int64, error)
 	RevokeOtherSessions(
 		ctx context.Context,
 		userID string,
 		currentTokenHash []byte,
+		expectedPasswordHash string,
 		now time.Time,
 		userAgent,
 		ip string,
-	) error
+	) (int64, error)
 	RecentAccountAudit(ctx context.Context, userID string, limit int) ([]AccountAuditEvent, error)
 }
 
@@ -96,35 +98,37 @@ func (s *Service) ChangePassword(
 	newPassword,
 	userAgent,
 	ip string,
-) error {
+) (User, TokenPair, error) {
 	repository, tokenHash, err := s.accountSecurityContext(refreshToken)
 	if err != nil {
-		return err
+		return User{}, TokenPair{}, err
 	}
 	user, err := s.reauthenticate(ctx, userID, currentPassword)
 	if err != nil {
-		return err
+		return User{}, TokenPair{}, err
 	}
 	if err := validatePassword(newPassword); err != nil {
-		return err
+		return User{}, TokenPair{}, err
 	}
 	if VerifyPassword(user.PasswordHash, newPassword) {
-		return &FieldError{Field: "newPassword", Code: "password_unchanged", Message: "new password must differ from the current password"}
+		return User{}, TokenPair{}, &FieldError{Field: "newPassword", Code: "password_unchanged", Message: "new password must differ from the current password"}
 	}
 	passwordHash, err := HashPassword(newPassword)
 	if err != nil {
-		return fmt.Errorf("hash new password: %w", err)
+		return User{}, TokenPair{}, fmt.Errorf("hash new password: %w", err)
 	}
-	if err := repository.ChangePasswordAndRevokeOtherSessions(
+	authVersion, err := repository.ChangePasswordAndRevokeOtherSessions(
 		ctx,
 		userID,
 		tokenHash,
+		user.PasswordHash,
 		passwordHash,
 		s.now().UTC(),
 		strings.TrimSpace(userAgent),
 		strings.TrimSpace(ip),
-	); err != nil {
-		return err
+	)
+	if err != nil {
+		return User{}, TokenPair{}, err
 	}
 	if s.securityNotifications != nil {
 		if err := s.securityNotifications.SendPasswordChangedNotification(
@@ -138,7 +142,13 @@ func (s *Service) ChangePassword(
 			)
 		}
 	}
-	return nil
+	user.PasswordHash = passwordHash
+	user.AuthVersion = authVersion
+	pair, err := s.issueAccess(user)
+	if err != nil {
+		return User{}, TokenPair{}, err
+	}
+	return user, pair, nil
 }
 
 func (s *Service) RevokeOtherSessions(
@@ -148,22 +158,33 @@ func (s *Service) RevokeOtherSessions(
 	currentPassword,
 	userAgent,
 	ip string,
-) error {
+) (User, TokenPair, error) {
 	repository, tokenHash, err := s.accountSecurityContext(refreshToken)
 	if err != nil {
-		return err
+		return User{}, TokenPair{}, err
 	}
-	if _, err := s.reauthenticate(ctx, userID, currentPassword); err != nil {
-		return err
+	user, err := s.reauthenticate(ctx, userID, currentPassword)
+	if err != nil {
+		return User{}, TokenPair{}, err
 	}
-	return repository.RevokeOtherSessions(
+	authVersion, err := repository.RevokeOtherSessions(
 		ctx,
 		userID,
 		tokenHash,
+		user.PasswordHash,
 		s.now().UTC(),
 		strings.TrimSpace(userAgent),
 		strings.TrimSpace(ip),
 	)
+	if err != nil {
+		return User{}, TokenPair{}, err
+	}
+	user.AuthVersion = authVersion
+	pair, err := s.issueAccess(user)
+	if err != nil {
+		return User{}, TokenPair{}, err
+	}
+	return user, pair, nil
 }
 
 func (s *Service) RecentAccountAudit(ctx context.Context, userID string, limit int) ([]AccountAuditEvent, error) {

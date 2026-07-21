@@ -9,7 +9,7 @@ LexiGo password recovery uses a one-time bearer token delivered outside the brow
 3. For an existing account, the API generates 32 random bytes, encodes them with base64url and stores only the SHA-256 digest in PostgreSQL.
 4. The raw token is placed in the URL fragment as `#reset_token=...` and delivered by SMTP. Fragments are not sent in HTTP requests or Referer headers.
 5. The client submits the token and new password to `POST /api/v1/auth/password-reset/confirm`.
-6. PostgreSQL locks and consumes the token, updates the bcrypt password hash, invalidates every unused reset token for that user and revokes all refresh-token families in one transaction.
+6. PostgreSQL locks and consumes the token, updates the bcrypt password hash, increments `auth_version`, invalidates every unused reset token and revokes all refresh-token families in one transaction. Previously issued access tokens fail their next authoritative version check.
 7. The user signs in again with the new password.
 
 ## Security properties

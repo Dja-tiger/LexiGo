@@ -216,7 +216,11 @@ export function LexigoBootstrappedApp() {
       />
       {initialSession ? (
         <>
-          <AccountSecurityPanel session={initialSession} onSessionExpired={retryRestore} />
+          <AccountSecurityPanel
+            session={initialSession}
+            onSessionExpired={retryRestore}
+            onSessionUpdated={setInitialSession}
+          />
           <AccountEmailPanel session={initialSession} onSessionExpired={retryRestore} />
           <AccountDataPanel
             session={initialSession}

@@ -145,7 +145,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 		http.StatusUnauthorized,
 	)
 
-	accountSecurityJSONRequest[map[string]any](
+	updatedCurrentSession := accountSecurityJSONRequest[integrationAuthResponse](
 		t,
 		deviceA,
 		http.MethodPost,
@@ -153,8 +153,14 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 		map[string]string{"currentPassword": "strong-password"},
 		registered.Tokens.AccessToken,
 		deviceACSRF,
-		http.StatusNoContent,
+		http.StatusOK,
 	)
+	if updatedCurrentSession.Tokens.AccessToken == "" {
+		t.Fatal("revoke-others response did not replace the current access token")
+	}
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", registered.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceB, testServer.URL+"/api/v1/me", loggedIn.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", updatedCurrentSession.Tokens.AccessToken, http.StatusOK)
 
 	deviceBCSRF := cookieFromJar(t, deviceB, testServer.URL, integrationCSRFCookieName)
 	postJSONWithClient(t, deviceB, testServer.URL+"/api/v1/auth/refresh", nil, deviceBCSRF, http.StatusUnauthorized)
@@ -165,7 +171,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 		http.MethodGet,
 		testServer.URL+"/api/v1/auth/sessions",
 		nil,
-		registered.Tokens.AccessToken,
+		updatedCurrentSession.Tokens.AccessToken,
 		"",
 		http.StatusOK,
 	)
@@ -179,7 +185,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	loggedIn = decodeJSON[integrationAuthResponse](t, loggedInResult.Body)
 	requireSessionCookies(t, loggedInResult.Cookies)
 
-	accountSecurityJSONRequest[map[string]any](
+	passwordChangedSession := accountSecurityJSONRequest[integrationAuthResponse](
 		t,
 		deviceA,
 		http.MethodPut,
@@ -188,10 +194,16 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 			"currentPassword": "strong-password",
 			"newPassword":     "new-strong-password",
 		},
-		registered.Tokens.AccessToken,
+		updatedCurrentSession.Tokens.AccessToken,
 		deviceACSRF,
-		http.StatusNoContent,
+		http.StatusOK,
 	)
+	if passwordChangedSession.Tokens.AccessToken == "" {
+		t.Fatal("password-change response did not replace the current access token")
+	}
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", updatedCurrentSession.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceB, testServer.URL+"/api/v1/me", loggedIn.Tokens.AccessToken, http.StatusUnauthorized)
+	getWithBearer(t, deviceA, testServer.URL+"/api/v1/me", passwordChangedSession.Tokens.AccessToken, http.StatusOK)
 
 	postJSONWithClient(t, newIntegrationClient(t, testServer), testServer.URL+"/api/v1/auth/login", map[string]string{
 		"email": email, "password": "strong-password",
@@ -210,7 +222,7 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 		http.MethodGet,
 		testServer.URL+"/api/v1/auth/audit-events",
 		nil,
-		registered.Tokens.AccessToken,
+		passwordChangedSession.Tokens.AccessToken,
 		"",
 		http.StatusOK,
 	)
@@ -231,6 +243,29 @@ func TestAccountPasswordAndSessionSecurity(t *testing.T) {
 	}
 	if persistedAudit != 2 {
 		t.Fatalf("persisted audit events = %d, want 2", persistedAudit)
+	}
+	var (
+		authVersion           int64
+		activeVersionMismatch int
+	)
+	if err := pg.QueryRow(ctx, `
+		select auth_version
+		from users
+		where id = $1::uuid
+	`, registered.User.ID).Scan(&authVersion); err != nil {
+		t.Fatalf("read credential version: %v", err)
+	}
+	if err := pg.QueryRow(ctx, `
+		select count(*)
+		from refresh_tokens
+		where user_id = $1::uuid
+		  and revoked_at is null
+		  and auth_version <> $2
+	`, registered.User.ID, authVersion).Scan(&activeVersionMismatch); err != nil {
+		t.Fatalf("count mismatched refresh versions: %v", err)
+	}
+	if authVersion != 3 || activeVersionMismatch != 0 {
+		t.Fatalf("credential state: auth_version=%d active_mismatches=%d", authVersion, activeVersionMismatch)
 	}
 
 	_ = loggedIn

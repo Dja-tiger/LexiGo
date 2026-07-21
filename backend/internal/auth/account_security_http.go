@@ -69,7 +69,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		h.writeInvalidRequest(w)
 		return
 	}
-	if err := h.service.ChangePassword(
+	user, pair, err := h.service.ChangePassword(
 		r.Context(),
 		userID,
 		refreshToken,
@@ -77,15 +77,15 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		request.NewPassword,
 		r.UserAgent(),
 		clientIP(r),
-	); err != nil {
+	)
+	if err != nil {
 		if errors.Is(err, ErrCurrentSessionNotFound) {
 			h.clearSessionCookies(w)
 		}
 		h.writeAccountSecurityError(w, err)
 		return
 	}
-	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(http.StatusNoContent)
+	h.writeAuthJSON(w, http.StatusOK, authResponse{User: user, Tokens: pair})
 }
 
 func (h *Handler) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
@@ -109,22 +109,22 @@ func (h *Handler) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
 		h.writeInvalidRequest(w)
 		return
 	}
-	if err := h.service.RevokeOtherSessions(
+	user, pair, err := h.service.RevokeOtherSessions(
 		r.Context(),
 		userID,
 		refreshToken,
 		request.CurrentPassword,
 		r.UserAgent(),
 		clientIP(r),
-	); err != nil {
+	)
+	if err != nil {
 		if errors.Is(err, ErrCurrentSessionNotFound) {
 			h.clearSessionCookies(w)
 		}
 		h.writeAccountSecurityError(w, err)
 		return
 	}
-	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(http.StatusNoContent)
+	h.writeAuthJSON(w, http.StatusOK, authResponse{User: user, Tokens: pair})
 }
 
 func (h *Handler) AccountAudit(w http.ResponseWriter, r *http.Request) {
