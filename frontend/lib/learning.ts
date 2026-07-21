@@ -22,11 +22,20 @@ export type LearningItem = {
   section: PartOfSpeechSection | "phrase";
   topic: string;
   aliases?: string[];
+  acceptedAnswers?: string[];
   examples: string[];
   note: string;
   status: string;
   cloze?: string;
   clozeAnswer?: string;
+};
+
+export type AnswerJudgementReason = "accepted_exact" | "accepted_normalized" | "rejected_no_answer" | "rejected_no_match";
+
+export type AnswerJudgement = {
+  correct: boolean;
+  reason: AnswerJudgementReason;
+  matchedAnswer: string;
 };
 
 export function normalizePartOfSpeech(value: string): PartOfSpeechSection {
@@ -113,10 +122,48 @@ export function buildAnswerOptions(current: LearningItem, pool: LearningItem[], 
 }
 
 export function normalizeAnswer(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[ё]/g, "е")
-    .replace(/[.,;:!?()[\]{}"'«»]/g, "")
-    .replace(/\s+/g, " ");
+  let normalized = "";
+  let spacePending = false;
+  for (const inputCharacter of value.trim()) {
+    const character = inputCharacter.toLocaleLowerCase("ru-RU") === "ё"
+      ? "е"
+      : inputCharacter.toLocaleLowerCase("ru-RU");
+    if (/^[\p{L}\p{N}]$/u.test(character)) {
+      if (spacePending && normalized) normalized += " ";
+      normalized += character;
+      spacePending = false;
+    } else if (character === "'" || character === "’" || character === "ʼ") {
+      // Apostrophes do not create a token boundary: don't and dont are equal.
+    } else {
+      spacePending = Boolean(normalized);
+    }
+  }
+  return normalized.trim();
+}
+
+export function acceptedAnswersForItem(item: LearningItem): string[] {
+  const candidates = [exerciseAnswer(item), ...(item.acceptedAnswers ?? [])];
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    const normalized = normalizeAnswer(candidate);
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+export function judgeLearningAnswer(item: LearningItem, submittedAnswer: string): AnswerJudgement {
+  const trimmed = submittedAnswer.trim();
+  const normalized = normalizeAnswer(trimmed);
+  if (!normalized) return { correct: false, reason: "rejected_no_answer", matchedAnswer: "" };
+
+  for (const candidate of acceptedAnswersForItem(item)) {
+    if (trimmed.toLocaleLowerCase("ru-RU") === candidate.trim().toLocaleLowerCase("ru-RU")) {
+      return { correct: true, reason: "accepted_exact", matchedAnswer: candidate };
+    }
+    if (normalized === normalizeAnswer(candidate)) {
+      return { correct: true, reason: "accepted_normalized", matchedAnswer: candidate };
+    }
+  }
+  return { correct: false, reason: "rejected_no_match", matchedAnswer: "" };
 }
