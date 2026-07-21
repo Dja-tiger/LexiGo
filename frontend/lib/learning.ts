@@ -141,8 +141,18 @@ export function normalizeAnswer(value: string): string {
   return normalized.trim();
 }
 
+function canonicalTranslationCandidates(value: string): string[] {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  const alternatives = trimmed.split(/[,;/]/).map((candidate) => candidate.trim()).filter(Boolean);
+  return alternatives.length > 1 ? [trimmed, ...alternatives] : [trimmed];
+}
+
 export function acceptedAnswersForItem(item: LearningItem): string[] {
-  const candidates = [exerciseAnswer(item), ...(item.acceptedAnswers ?? [])];
+  const primaryCandidates = item.kind === "word"
+    ? canonicalTranslationCandidates(exerciseAnswer(item))
+    : [exerciseAnswer(item)];
+  const candidates = [...primaryCandidates, ...(item.acceptedAnswers ?? [])];
   const seen = new Set<string>();
   return candidates.filter((candidate) => {
     const normalized = normalizeAnswer(candidate);
