@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createContentSecurityPolicy,
+  isExpectedContentSecurityPolicyConsoleDiagnostic,
   resolveContentSecurityPolicyMode,
 } from "./content-security-policy";
 
@@ -44,5 +45,17 @@ describe("content security policy", () => {
 
   it("allows unsafe-eval only when a developer explicitly enables CSP in development", () => {
     expect(createContentSecurityPolicy("ZGV2LW5vbmNl", true)).toContain("'unsafe-eval'");
+  });
+
+  it("ignores only WebKit's non-actionable frame-ancestors report-only diagnostic", () => {
+    const diagnostic =
+      "The Content Security Policy directive 'frame-ancestors' is ignored when delivered in a report-only policy.";
+
+    expect(isExpectedContentSecurityPolicyConsoleDiagnostic(diagnostic, "report-only")).toBe(true);
+    expect(isExpectedContentSecurityPolicyConsoleDiagnostic(diagnostic, "enforce")).toBe(false);
+    expect(isExpectedContentSecurityPolicyConsoleDiagnostic(
+      "Refused to execute a script because it violates the Content Security Policy directive.",
+      "report-only",
+    )).toBe(false);
   });
 });

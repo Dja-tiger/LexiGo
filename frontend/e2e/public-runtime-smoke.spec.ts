@@ -5,14 +5,17 @@ import {
   BUILD_MARKER_STORAGE_KEY,
   BUILD_RECOVERY_STORAGE_KEY,
 } from "../lib/build-version-guard";
+import { isExpectedContentSecurityPolicyConsoleDiagnostic } from "../lib/content-security-policy";
 
 const ROUTES = ["/", "/learn", "/phrases", "/dictionary", "/progress"] as const;
 const FATAL_RUNTIME_PATTERN = /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed|hydration failed|UI_RENDER_FAILURE|UI_VERSION_MISMATCH|ROOT_RENDER_FAILURE|ROOT_VERSION_MISMATCH|Content Security Policy/i;
-const EXPECTED_CSP_MODE = process.env.EXPECTED_CSP_MODE?.trim();
-
-if (EXPECTED_CSP_MODE !== "report-only" && EXPECTED_CSP_MODE !== "enforce") {
-  throw new Error("EXPECTED_CSP_MODE must be report-only or enforce");
-}
+const EXPECTED_CSP_MODE = (() => {
+  const configured = process.env.EXPECTED_CSP_MODE?.trim();
+  if (configured !== "report-only" && configured !== "enforce") {
+    throw new Error("EXPECTED_CSP_MODE must be report-only or enforce");
+  }
+  return configured;
+})();
 
 async function captureCSPViolations(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -52,7 +55,12 @@ function captureFatalRuntimeErrors(page: Page): string[] {
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     const text = message.text();
-    if (FATAL_RUNTIME_PATTERN.test(text)) errors.push(`console: ${text}`);
+    if (
+      FATAL_RUNTIME_PATTERN.test(text)
+      && !isExpectedContentSecurityPolicyConsoleDiagnostic(text, EXPECTED_CSP_MODE)
+    ) {
+      errors.push(`console: ${text}`);
+    }
   });
   return errors;
 }
