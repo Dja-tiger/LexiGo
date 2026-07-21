@@ -52,6 +52,23 @@ describe("route tab snapshots", () => {
     });
   });
 
+  it("persists phrase catalog state under the Dictionary route tab", () => {
+    rememberRouteTab({
+      view: "phrases",
+      topic: "Incident communication",
+      detail: "incident-update",
+    }, { x: 0, y: 620 }, storage);
+
+    expect(routeTabDestination("library", storage)).toEqual({
+      target: {
+        view: "phrases",
+        topic: "Incident communication",
+        detail: "incident-update",
+      },
+      scroll: { x: 0, y: 620 },
+    });
+  });
+
   it("returns a stable top-level destination for an unseen route", () => {
     expect(routeTabDestination("progress", storage)).toEqual({
       target: { view: "progress" },
