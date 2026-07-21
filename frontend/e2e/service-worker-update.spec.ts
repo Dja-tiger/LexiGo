@@ -129,6 +129,16 @@ async function serviceWorkerSnapshot(page: Page) {
   ).__serviceWorkerMock.snapshot());
 }
 
+async function setObservedRoute(page: Page, href: string) {
+  await page.evaluate((nextHref) => {
+    // Next.js patches window.history.pushState and would render the protected
+    // lesson route, redirecting this isolated service-worker test back home.
+    // Use the browser primitive so only the URL observed by the update guard
+    // changes; its bounded route poll then exercises the real deferral logic.
+    History.prototype.pushState.call(window.history, {}, "", nextHref);
+  }, href);
+}
+
 test.describe.configure({ timeout: 45_000 });
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -163,7 +173,7 @@ test("a waiting incompatible build activates only after explicit confirmation", 
 test("an update can wait until the active lesson route is left", async ({ page }) => {
   await installServiceWorkerMock(page);
   await page.goto("/");
-  await page.evaluate(() => window.history.pushState({}, "", "/lesson/active?source=mixed"));
+  await setObservedRoute(page, "/lesson/active?source=mixed");
 
   const update = page.getByTestId("service-worker-update");
   const defer = update.getByRole("button", { name: "После урока" });
@@ -172,7 +182,7 @@ test("an update can wait until the active lesson route is left", async ({ page }
   await expect(update).toContainText("автоматически после выхода из урока");
   expect((await serviceWorkerSnapshot(page)).messages).toEqual([]);
 
-  await page.evaluate(() => window.history.pushState({}, "", "/"));
+  await setObservedRoute(page, "/");
 
   await expect.poll(async () => (await serviceWorkerSnapshot(page)).messages, { timeout: 5000 }).toEqual([
     { type: "LEXIGO_SKIP_WAITING" },
