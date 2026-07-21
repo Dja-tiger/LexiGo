@@ -1,6 +1,6 @@
 Traceback (most recent call last):
-  File "/opt/actions-runner-2/_work/LexiGo/LexiGo/scripts/issue60_apply.py", line 882, in <module>
+  File "/opt/actions-runner/_work/LexiGo/LexiGo/scripts/issue60_apply.py", line 890, in <module>
     replace_once(
-  File "/opt/actions-runner-2/_work/LexiGo/LexiGo/scripts/issue60_apply.py", line 22, in replace_once
+  File "/opt/actions-runner/_work/LexiGo/LexiGo/scripts/issue60_apply.py", line 22, in replace_once
     raise RuntimeError(f"{path}: expected one literal match, found {count}")
 RuntimeError: frontend/e2e/lesson-flow.spec.ts: expected one literal match, found 2
