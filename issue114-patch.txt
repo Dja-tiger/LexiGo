@@ -1,6 +1,6 @@
 Traceback (most recent call last):
-  File "/opt/actions-runner-2/_work/LexiGo/LexiGo/scripts/issue114_apply.py", line 72, in <module>
+  File "/opt/actions-runner/_work/LexiGo/LexiGo/scripts/issue114_apply.py", line 83, in <module>
     replace_once(
-  File "/opt/actions-runner-2/_work/LexiGo/LexiGo/scripts/issue114_apply.py", line 22, in replace_once
+  File "/opt/actions-runner/_work/LexiGo/LexiGo/scripts/issue114_apply.py", line 22, in replace_once
     raise RuntimeError(f"{path}: expected one literal match, found {count}")
 RuntimeError: frontend/components/lexigo-premium-app.tsx: expected one literal match, found 2
