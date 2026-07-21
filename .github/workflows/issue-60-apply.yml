@@ -64,11 +64,23 @@ jobs:
             bash ../scripts/ci/frontend-container.sh cleanup >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
-          bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-          bash ../scripts/ci/frontend-container.sh exec npm run lint
-          bash ../scripts/ci/frontend-container.sh exec npm run typecheck
-          bash ../scripts/ci/frontend-container.sh exec npm run test
-          bash ../scripts/ci/frontend-container.sh exec npm run build
+          if ! {
+            bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+            bash ../scripts/ci/frontend-container.sh exec npm run lint
+            bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+            bash ../scripts/ci/frontend-container.sh exec npm run test
+            bash ../scripts/ci/frontend-container.sh exec npm run build
+          } > ../issue60-frontend.log 2>&1; then
+            cleanup
+            trap - EXIT
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -f ../issue60-frontend.log
+            git commit -m "chore(issue-60): persist frontend diagnostic"
+            git push origin HEAD:agent/issue-60-answer-judgement
+            exit 1
+          fi
+          tail -n 20 ../issue60-frontend.log
 
       - name: Verify generated diff
         run: |
@@ -82,7 +94,7 @@ jobs:
       - name: Commit verified implementation
         run: |
           set -Eeuo pipefail
-          rm -f scripts/issue60_apply.py scripts/issue60_fixup.py .github/workflows/issue-60-apply.yml issue60-patch.log
+          rm -f scripts/issue60_apply.py scripts/issue60_fixup.py .github/workflows/issue-60-apply.yml issue60-patch.log issue60-frontend.log
           git add -A
           git diff --cached --check
           git config user.name "github-actions[bot]"
