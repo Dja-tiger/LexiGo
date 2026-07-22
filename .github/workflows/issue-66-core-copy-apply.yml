@@ -66,8 +66,27 @@ jobs:
       - name: Production build
         run: cd frontend && bash ../scripts/ci/frontend-container.sh exec npm run build
 
-      - name: Interface copy browser contract
-        run: cd frontend && bash ../scripts/ci/frontend-container.sh exec npx playwright test e2e/interface-copy.spec.ts --project=desktop-chromium
+      - id: interface-copy-browser
+        name: Interface copy browser contract
+        run: |
+          cd frontend
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -o pipefail
+          npx playwright test e2e/interface-copy.spec.ts --project=desktop-chromium --reporter=line 2>&1 | tee interface-copy-browser.log
+          CONTAINER_SCRIPT
+
+      - name: Extract browser diagnostics
+        if: failure() && steps.interface-copy-browser.outcome == 'failure'
+        run: cd frontend && bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload browser diagnostics
+        if: failure() && steps.interface-copy-browser.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-66-interface-copy-browser-${{ github.sha }}
+          path: frontend/ci-artifacts
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Refresh deterministic visual baselines
         run: cd frontend && bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
