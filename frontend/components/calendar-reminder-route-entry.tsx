@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import {
   describeCalendarSchedule,
@@ -42,31 +42,21 @@ export function CalendarReminderRouteEntry() {
   useEffect(() => {
     const timer = window.setTimeout(() => setSettings(readCalendarReminderSettings()), 0);
     const unsubscribe = subscribeCalendarReminderSettings(setSettings);
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      const details = detailsRef.current;
-      if (!details?.open || details.contains(event.target as Node)) return;
-      details.open = false;
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      const details = detailsRef.current;
-      if (event.key !== "Escape" || !details?.open) return;
-      event.preventDefault();
-      details.open = false;
-      summaryRef.current?.focus();
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    document.addEventListener("keydown", closeOnEscape);
     return () => {
       window.clearTimeout(timer);
       unsubscribe();
-      document.removeEventListener("pointerdown", closeOnOutsidePointer);
-      document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
 
   const schedule = describeCalendarSchedule(settings);
+
+  function closePreviewOnEscape(event: KeyboardEvent<HTMLDetailsElement>) {
+    const details = detailsRef.current;
+    if (event.key !== "Escape" || !details?.open) return;
+    event.preventDefault();
+    details.open = false;
+    summaryRef.current?.focus();
+  }
 
   function openDialog() {
     if (detailsRef.current) detailsRef.current.open = false;
@@ -75,7 +65,11 @@ export function CalendarReminderRouteEntry() {
 
   return (
     <>
-      <details ref={detailsRef} className="lx-route-reminder-entry">
+      <details
+        ref={detailsRef}
+        className="lx-route-reminder-entry"
+        onKeyDown={closePreviewOnEscape}
+      >
         <summary
           ref={summaryRef}
           aria-label={`Напоминание о занятии. ${schedule}`}
