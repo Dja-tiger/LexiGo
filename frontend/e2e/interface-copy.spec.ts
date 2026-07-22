@@ -6,7 +6,7 @@ import {
   installQualityGateAPI,
 } from "./support/quality-gates";
 
-const FORBIDDEN_UI_TERMS = /\b(?:due|retained items?|active recall|cloze practice|chunks|learning status|incident updates)\b/i;
+const FORBIDDEN_UI_TERMS = /\b(?:due|retained items?|active recall|recall|cloze practice|chunks|learning status|incident updates|composer|server lesson session|legacy)\b/i;
 
 async function expectNoUnexplainedTechnicalUI(pageText: string): Promise<void> {
   expect(pageText).not.toMatch(FORBIDDEN_UI_TERMS);
