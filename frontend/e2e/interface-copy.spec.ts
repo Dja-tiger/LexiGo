@@ -55,7 +55,8 @@ test.describe("interface copy contract", () => {
     await expect(page.getByRole("radio", { name: "Релизы" })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
-    await page.goto("/phrases/identify-root-cause", { waitUntil: "domcontentloaded" });
+    await page.getByRole("link", { name: /We need to identify the root cause\./ }).click();
+    await expect(page).toHaveURL(/\/phrases\/identify-root-cause$/);
     await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
     await expect(page.getByText("Инциденты", { exact: true })).toBeVisible();
     await expect(page.getByText(cloze.label, { exact: true })).toBeVisible();
