@@ -11,6 +11,7 @@ GITHUB_RUN_ID="${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
 GITHUB_RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
 GITHUB_JOB="${GITHUB_JOB:?GITHUB_JOB is required}"
 FRONTEND_CI_SLOT="${FRONTEND_CI_SLOT:-$GITHUB_JOB}"
+FRONTEND_RESOURCE_LOCK="${FRONTEND_RESOURCE_LOCK:-/tmp/lexigo-frontend-resource.lock}"
 APP_BUILD_ID="${APP_BUILD_ID:-local}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 EXPECTED_CSP_MODE="${EXPECTED_CSP_MODE:-}"
@@ -46,6 +47,12 @@ die() {
 [[ "$FRONTEND_CI_SLOT" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]+$ ]] || \
   die "invalid frontend CI slot: $FRONTEND_CI_SLOT"
 
+[[ "$FRONTEND_RESOURCE_LOCK" == /* ]] || \
+  die "frontend resource lock must be an absolute path: $FRONTEND_RESOURCE_LOCK"
+
+command -v flock >/dev/null 2>&1 || \
+  die "flock is required for deterministic frontend resource scheduling"
+
 for container_name in \
   "$LEASE_CONTAINER" \
   "$TASK_CONTAINER" \
@@ -60,6 +67,32 @@ done
 
 [[ -d "$DEPLOY_DIR" ]] || \
   die "deploy directory does not exist: $DEPLOY_DIR"
+
+with_frontend_resource_lock() {
+  local mode="$1"
+  shift
+
+  local flock_mode
+  case "$mode" in
+    shared)
+      flock_mode="--shared"
+      ;;
+    exclusive)
+      flock_mode="--exclusive"
+      ;;
+    *)
+      die "unsupported frontend resource lock mode: $mode"
+      ;;
+  esac
+
+  (
+    if ! flock "$flock_mode" --timeout 900 9; then
+      die "timed out waiting for $mode frontend resource lock: $FRONTEND_RESOURCE_LOCK"
+    fi
+    log "acquired $mode frontend resource lock"
+    "$@"
+  ) 9>"$FRONTEND_RESOURCE_LOCK"
+}
 
 container_run() {
   docker rm --force "$TASK_CONTAINER" >/dev/null 2>&1 || true
@@ -125,8 +158,13 @@ execute() {
   shift
   (($# > 0)) || die "exec requires a command"
 
+  local lock_mode="shared"
+  if [[ "$#" -ge 3 && "$1" == "npm" && "$2" == "run" && "$3" == "test:e2e:performance" ]]; then
+    lock_mode="exclusive"
+  fi
+
   if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "test" ]]; then
-    container_run bash -Eeuo pipefail -c '
+    with_frontend_resource_lock "$lock_mode" container_run bash -Eeuo pipefail -c '
       node --version
       npm --version
       npm run test 2>&1 | tee vitest.log
@@ -135,7 +173,7 @@ execute() {
   fi
 
   if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "typecheck" ]]; then
-    container_run bash -Eeuo pipefail -c '
+    with_frontend_resource_lock "$lock_mode" container_run bash -Eeuo pipefail -c '
       set -o pipefail
       npm run typecheck 2>&1 | tee typecheck.log
     '
@@ -143,14 +181,14 @@ execute() {
   fi
 
   if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "build" ]]; then
-    container_run bash -Eeuo pipefail -c '
+    with_frontend_resource_lock "$lock_mode" container_run bash -Eeuo pipefail -c '
       set -o pipefail
       npm run build 2>&1 | tee build.log
     '
     return
   fi
 
-  container_run "$@"
+  with_frontend_resource_lock "$lock_mode" container_run "$@"
 }
 
 execute_shell() {
@@ -158,7 +196,7 @@ execute_shell() {
   script="$(cat)"
   [[ -n "$script" ]] || die "shell requires a script on stdin"
 
-  container_run bash -Eeuo pipefail -c "$script"
+  with_frontend_resource_lock shared container_run bash -Eeuo pipefail -c "$script"
 }
 
 extract_artifacts() {
