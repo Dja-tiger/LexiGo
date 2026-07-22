@@ -37,7 +37,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git merge --no-ff --no-commit origin/main
+          git merge --no-ff --no-commit FETCH_HEAD
           rm .github/workflows/temp-sync-reduced-motion-main.yml
           git add -A
           git diff --cached --check
