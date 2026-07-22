@@ -4,6 +4,7 @@ import { learningTermCopy } from "../lib/interface-copy";
 import {
   installDeterministicRuntime,
   installQualityGateAPI,
+  QUALITY_PROGRESS,
 } from "./support/quality-gates";
 
 const FORBIDDEN_UI_TERMS = /\b(?:due|retained items?|active recall|recall|cloze practice|chunks|learning status|incident updates|composer|server lesson session|legacy)\b/i;
@@ -32,7 +33,7 @@ test.describe("interface copy contract", () => {
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
     await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();
     await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
-    await expect(page.getByText(new RegExp(`${due.label}: \\d+`))).toBeVisible();
+    await expect(page.getByText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
@@ -48,7 +49,9 @@ test.describe("interface copy contract", () => {
 
     await page.goto("/phrases", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "Инциденты" })).toBeVisible();
+    const incidentTopic = page.getByRole("radio", { name: "Инциденты" });
+    await expect(incidentTopic).toHaveCount(1);
+    await expect(incidentTopic).toBeVisible();
     await expect(page.getByRole("radio", { name: "Релизы" })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
