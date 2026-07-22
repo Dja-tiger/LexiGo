@@ -183,10 +183,10 @@ export function RouteChrome() {
   return (
     <>
       <RouteBrand />
-      <CalendarReminderRouteEntry />
       <RoutePrimaryNavigation variant="header" />
       <RoutePrimaryNavigation variant="rail" />
       <RoutePrimaryNavigation variant="mobile" />
+      <CalendarReminderRouteEntry />
     </>
   );
 }
