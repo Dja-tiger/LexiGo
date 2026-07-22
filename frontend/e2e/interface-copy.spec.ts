@@ -18,7 +18,7 @@ test.describe("interface copy contract", () => {
     await installQualityGateAPI(context);
   });
 
-  test("home and progress use the same Russian learning terms", async ({ page }) => {
+  test("home, lesson composer and progress use the same Russian learning terms", async ({ page }) => {
     const due = learningTermCopy("due");
     const recall = learningTermCopy("recall");
     const retained = learningTermCopy("retained");
@@ -26,6 +26,13 @@ test.describe("interface copy contract", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /готов(?:ы)? к повторению/ })).toBeVisible();
     await expect(page.getByText(due.explanation, { exact: true })).toBeVisible();
+    await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
+
+    await page.goto("/learn", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();
+    await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
+    await expect(page.getByText(new RegExp(`${due.label}: \\d+`))).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
