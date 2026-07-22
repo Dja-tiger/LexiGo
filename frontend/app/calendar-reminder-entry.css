@@ -100,7 +100,7 @@
 @media (min-width: 720px) and (max-width: 1099px) {
   .lx-route-reminder-entry {
     top: calc(14px + env(safe-area-inset-top));
-    right: max(20px, calc((100vw - 1540px) / 2 + 28px));
+    right: max(150px, calc((100vw - 1540px) / 2 + 150px));
   }
 
   .lx-route-reminder-entry > summary > span {
