@@ -1,3 +1,5 @@
+import { learningTermCopy } from "./interface-copy";
+
 export type LessonCompositionFallback = "words_only" | "phrases_only" | "empty";
 
 export type LessonComposition = {
@@ -29,8 +31,11 @@ export function lessonCompositionDescription(composition: LessonComposition): st
 }
 
 export function lessonPriorityDescription(composition: LessonComposition): string {
-  const parts = [`${composition.due} due`, `${composition.new} новых`];
-  if (composition.scheduled > 0) parts.push(`${composition.scheduled} запланированных`);
+  const parts = [
+    `${learningTermCopy("due").label}: ${composition.due}`,
+    `Новых: ${composition.new}`,
+  ];
+  if (composition.scheduled > 0) parts.push(`Запланировано: ${composition.scheduled}`);
   return parts.join(" · ");
 }
 
