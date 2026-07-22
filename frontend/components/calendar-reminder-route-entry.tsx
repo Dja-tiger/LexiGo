@@ -35,15 +35,34 @@ function CalendarReminderIcon() {
 
 export function CalendarReminderRouteEntry() {
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const summaryRef = useRef<HTMLElement | null>(null);
   const [settings, setSettings] = useState<CalendarReminderSettings>(defaultCalendarReminderSettings);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSettings(readCalendarReminderSettings()), 0);
     const unsubscribe = subscribeCalendarReminderSettings(setSettings);
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const details = detailsRef.current;
+      if (!details?.open || details.contains(event.target as Node)) return;
+      details.open = false;
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      const details = detailsRef.current;
+      if (event.key !== "Escape" || !details?.open) return;
+      event.preventDefault();
+      details.open = false;
+      summaryRef.current?.focus();
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
     return () => {
       window.clearTimeout(timer);
       unsubscribe();
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
 
@@ -57,7 +76,11 @@ export function CalendarReminderRouteEntry() {
   return (
     <>
       <details ref={detailsRef} className="lx-route-reminder-entry">
-        <summary aria-label={`Напоминание о занятии. ${schedule}`} title="Напоминание о занятии">
+        <summary
+          ref={summaryRef}
+          aria-label={`Напоминание о занятии. ${schedule}`}
+          title="Напоминание о занятии"
+        >
           <CalendarReminderIcon />
           <span>Напоминание</span>
         </summary>
