@@ -1,0 +1,88 @@
+name: Refresh PR 157 dictionary snapshots
+
+on:
+  push:
+    branches:
+      - agent/issue-66-ux-writing
+    paths:
+      - .github/workflows/refresh-pr157-dictionary-snapshots.yml
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: refresh-pr157-dictionary-snapshots
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/issue-66-ux-writing
+          fetch-depth: 0
+
+      - name: Download validated Playwright artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir"' EXIT
+
+          curl --fail --silent --show-error --location \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/Dja-tiger/LexiGo/actions/artifacts/8546362644/zip" \
+            --output "$workdir/playwright-report.zip"
+
+          unzip -q "$workdir/playwright-report.zip" -d "$workdir/report"
+
+          compact="$workdir/report/test-results/visual-regression-critical-visual-baselines-dictionary-visual-compact-retry1/dictionary-actual.png"
+          medium="$workdir/report/test-results/visual-regression-critical-visual-baselines-dictionary-visual-medium-retry1/dictionary-actual.png"
+          desktop="$workdir/report/test-results/visual-regression-critical-visual-baselines-dictionary-visual-desktop-retry1/dictionary-actual.png"
+
+          test -f "$compact"
+          test -f "$medium"
+          test -f "$desktop"
+
+          printf '%s  %s\n' \
+            'a6505045057d6fae3e91fe69d8387756987f6911e2756696fe04159a0b5db5e6' "$compact" \
+            '5d414fab34997fb4f76f41476f0154759252479a7ac1e12c3c02bbd26a45395e' "$medium" \
+            '390d056ec8e50b041a73204bc1fc50ff7defac474c2be85381ec3cadae024498' "$desktop" \
+            | sha256sum --check --status
+
+          snapshots='frontend/e2e/visual-regression.spec.ts-snapshots'
+          install -m 0644 "$compact" "$snapshots/dictionary-visual-compact-linux.png"
+          install -m 0644 "$medium" "$snapshots/dictionary-visual-medium-linux.png"
+          install -m 0644 "$desktop" "$snapshots/dictionary-visual-desktop-linux.png"
+
+      - name: Commit only refreshed baselines
+        run: |
+          set -euo pipefail
+
+          rm -f \
+            .github/workflows/refresh-pr157-dictionary-snapshots.yml \
+            tmp/ci-tree-probe.txt \
+            tmp/ci-tree-probe-2.txt \
+            tmp/ci-tree-probe-3.txt
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all -- \
+            frontend/e2e/visual-regression.spec.ts-snapshots/dictionary-visual-compact-linux.png \
+            frontend/e2e/visual-regression.spec.ts-snapshots/dictionary-visual-medium-linux.png \
+            frontend/e2e/visual-regression.spec.ts-snapshots/dictionary-visual-desktop-linux.png \
+            .github/workflows/refresh-pr157-dictionary-snapshots.yml \
+            tmp/ci-tree-probe.txt \
+            tmp/ci-tree-probe-2.txt \
+            tmp/ci-tree-probe-3.txt
+
+          git diff --cached --check
+          git commit -m 'test(frontend): refresh dictionary visual baselines'
+          git push origin HEAD:agent/issue-66-ux-writing
