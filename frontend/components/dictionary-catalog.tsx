@@ -11,6 +11,7 @@ import {
 } from "../lib/account-resources";
 import type { CatalogMetadata, CatalogMetadataStatus } from "../lib/catalog-metadata";
 import { CATALOG_PAGE_SIZE, type CatalogPageInfo } from "../lib/catalog-page";
+import { catalogStatusLabel, partOfSpeechLabel, topicLabel } from "../lib/interface-copy";
 import type { LearningItem, WordSection } from "../lib/learning";
 import type { CatalogSort, CatalogStatus, NavigationTarget } from "../lib/navigation";
 import type { ProductJourneyIntent } from "../lib/product-journey";
@@ -72,8 +73,8 @@ const SOURCE_OPTIONS: Array<{ value: DictionarySource; label: string }> = [
   { value: "adjective", label: "Прилагательные" },
   { value: "daily-life", label: "Бытовой английский" },
   { value: "travel", label: "Путешествия" },
-  { value: "data-engineering", label: "Data Engineering" },
-  { value: "backend", label: "Backend Development" },
+  { value: "data-engineering", label: "Инженерия данных" },
+  { value: "backend", label: "Backend-разработка" },
 ];
 
 const SOURCE_VALUES = new Set(SOURCE_OPTIONS.map((option) => option.value));
@@ -98,14 +99,6 @@ function dictionaryFilters(navigation: NavigationTarget): DictionaryFilters {
     sort: navigation.sort ?? "default",
     page: navigation.page ?? 1,
   };
-}
-
-function statusLabel(status: string): string {
-  if (status === "new") return "Новое";
-  if (status === "learning") return "Изучается";
-  if (status === "review") return "На повторении";
-  if (status === "mastered") return "Освоено";
-  return status || "Статус не указан";
 }
 
 function sectionLabel(source: DictionarySource): string {
@@ -227,7 +220,7 @@ export function DictionaryCatalog({
     .filter((entry) => (entry.words ?? entry.count) > 0)
     .map((entry) => entry.topic)
     .filter((topic, index, values) => values.indexOf(topic) === index)
-    .sort((left, right) => left.localeCompare(right, "en")) ?? [], [metadata]);
+    .sort((left, right) => topicLabel(left).localeCompare(topicLabel(right), "ru")) ?? [], [metadata]);
 
   function updateFilters(patch: Partial<DictionaryFilters>) {
     const next = { ...filters, ...patch };
@@ -270,7 +263,7 @@ export function DictionaryCatalog({
           label="Словарь доступен после входа"
           kind="empty"
           title="Войдите, чтобы открыть персональный каталог"
-          message="Статусы изучения, due-очередь и быстрый запуск урока привязаны к вашему аккаунту."
+          message="Статусы изучения, материал для запланированного повторения и быстрый запуск урока привязаны к вашему аккаунту."
           actionLabel="Войти и открыть словарь"
           onAction={onRequireAuthentication}
         />
@@ -299,16 +292,16 @@ export function DictionaryCatalog({
         {selectedItem ? (
           <article className="lx-dictionary-detail-card">
             <div className="lx-dictionary-detail-meta">
-              <span>{selectedItem.topic}</span>
-              <span>{selectedItem.partOfSpeech || "word"}</span>
-              <span data-status={selectedItem.status}>{statusLabel(selectedItem.status)}</span>
+              <span>{topicLabel(selectedItem.topic)}</span>
+              <span>{partOfSpeechLabel(selectedItem.partOfSpeech || "word")}</span>
+              <span data-status={selectedItem.status}>{catalogStatusLabel(selectedItem.status)}</span>
             </div>
             <div className="lx-dictionary-detail-title">
               <div><h1 lang="en">{selectedItem.prompt}</h1>{selectedItem.phonetic ? <p>{selectedItem.phonetic}</p> : null}</div>
               <SpeechPlayerButton text={selectedItem.prompt}>Произнести</SpeechPlayerButton>
             </div>
             <strong className="lx-dictionary-translation" lang="ru">{selectedItem.answer}</strong>
-            {selectedItem.aliases?.length ? <div className="lx-dictionary-detail-section"><h2>Также ищется как</h2><p>{selectedItem.aliases.join(", ")}</p></div> : null}
+            {selectedItem.aliases?.length ? <div className="lx-dictionary-detail-section"><h2>Другие варианты написания</h2><p>{selectedItem.aliases.join(", ")}</p></div> : null}
             {selectedItem.examples.length ? <div className="lx-dictionary-detail-section"><h2>Примеры</h2>{selectedItem.examples.map((example) => <p key={example} lang="en">{example}</p>)}</div> : null}
             {selectedItem.note ? <div className="lx-dictionary-detail-section"><h2>Контекст</h2><p>{selectedItem.note}</p></div> : null}
             <div className="lx-page-actions">
@@ -333,14 +326,14 @@ export function DictionaryCatalog({
         <div>
           <span>СЛОВАРЬ</span>
           <h1>Находите и изучайте материал в контексте</h1>
-          <p>Поиск по английскому слову, переводу и aliases. Здесь вы просматриваете материал; состав урока настраивается в «Обучении».</p>
+          <p>Ищите по английскому слову, переводу и дополнительным вариантам написания. Здесь вы просматриваете материал; состав урока настраивается в разделе «Обучение».</p>
         </div>
         <div className="lx-heading-badge"><span>{progress ? `${progress.masteredWords} слов освоено` : metadataStatus === "ready" && metadata ? `${metadata.totals.words} слов` : "Каталог"}</span></div>
       </section>
 
       <section className="lx-dictionary-toolbar" aria-label="Фильтры словаря">
         <label><span>Раздел</span><select aria-label="Раздел словаря" value={filters.source} onChange={(event) => updateFilters({ source: event.target.value as DictionarySource, page: 1 })}>{SOURCE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label><span>Тема</span><select aria-label="Тема словаря" value={filters.topic} onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}><option value="">Все темы</option>{topics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}</select></label>
+        <label><span>Тема</span><select aria-label="Тема словаря" value={filters.topic} onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}><option value="">Все темы</option>{topics.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}</select></label>
         <label><span>Статус</span><select aria-label="Статус изучения" value={filters.status} onChange={(event) => updateFilters({ status: event.target.value as CatalogStatus | "", page: 1 })}>{STATUS_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}</select></label>
         <label><span>Сортировка</span><select aria-label="Сортировка словаря" value={filters.sort} onChange={(event) => updateFilters({ sort: event.target.value as CatalogSort, page: 1 })}><option value="default">Порядок обучения</option><option value="az">A–Z</option><option value="za">Z–A</option></select></label>
       </section>
@@ -353,7 +346,7 @@ export function DictionaryCatalog({
         label="Поиск по словарю"
       />
       <div className="lx-dictionary-filter-summary">
-        <p><strong>{sectionLabel(filters.source)}</strong>{filters.topic ? ` · ${filters.topic}` : ""}{filters.status ? ` · ${statusLabel(filters.status)}` : ""}</p>
+        <p><strong>{sectionLabel(filters.source)}</strong>{filters.topic ? ` · ${topicLabel(filters.topic)}` : ""}{filters.status ? ` · ${catalogStatusLabel(filters.status)}` : ""}</p>
         {filtersActive ? <button className="lx-button ghost" type="button" onClick={resetFilters}>Сбросить все фильтры</button> : null}
       </div>
 
@@ -385,10 +378,10 @@ export function DictionaryCatalog({
         {items.map((item, index) => (
           <article key={item.id} role="listitem" aria-posinset={(pageInfo.page - 1) * pageInfo.pageSize + index + 1} aria-setsize={pageInfo.total} className="lx-dictionary-result">
             <button type="button" onClick={() => openDetail(item)} aria-label={`Открыть карточку: ${item.prompt}`}>
-              <div className="lx-dictionary-result-heading"><span>{item.topic}</span><span data-status={item.status}>{statusLabel(item.status)}</span></div>
+              <div className="lx-dictionary-result-heading"><span>{topicLabel(item.topic)}</span><span data-status={item.status}>{catalogStatusLabel(item.status)}</span></div>
               <strong lang="en">{item.prompt}</strong>
               <small lang="ru">{item.answer}</small>
-              <p>{item.partOfSpeech || "word"}{item.phonetic ? ` · ${item.phonetic}` : ""}</p>
+              <p>{partOfSpeechLabel(item.partOfSpeech || "word")}{item.phonetic ? ` · ${item.phonetic}` : ""}</p>
               <em>Открыть карточку →</em>
             </button>
           </article>
@@ -400,7 +393,7 @@ export function DictionaryCatalog({
         <button className="lx-button primary" type="button" disabled={pending || items.length === 0} onClick={() => onConfigureLesson({ source: filters.source, ...(filters.topic ? { topic: filters.topic } : {}) })}>
           Настроить урок по текущей выборке
         </button>
-        <small>Раздел и тема будут перенесены в composer; повторно выбирать их не потребуется.</small>
+        <small>Раздел и тема будут перенесены в настройки урока; повторно выбирать их не потребуется.</small>
       </div>
     </>
   );
