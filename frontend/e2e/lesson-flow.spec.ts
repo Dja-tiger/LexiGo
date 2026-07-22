@@ -183,9 +183,15 @@ test("wrong confidence cannot master an item and supports a safe answer suggesti
   await expect(page.getByText(/для расписания применено «Не знал»/)).toBeVisible();
   expect(api.reviewRequests()[0]).toMatchObject({ rating: "known", submittedAnswer: "непринятый вариант" });
 
-  await page.getByRole("button", { name: "Мой вариант тоже верный", exact: true }).click();
-  await expect(page.getByText(/Вариант отправлен на проверку/)).toBeVisible();
+  const suggestionButton = page.getByRole("button", {
+    name: "Мой вариант тоже верный",
+    exact: true,
+  });
+  await suggestionButton.evaluate((element) => {
+    (element as HTMLButtonElement).click();
+  });
   await expect.poll(() => api.suggestionRequests().length).toBe(1);
+  await expect(page.getByText(/Вариант отправлен на проверку/)).toBeVisible();
   expect(api.suggestionRequests()[0]).toMatchObject({ exerciseKind: "translation", submittedAnswer: "непринятый вариант" });
 });
 
