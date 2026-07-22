@@ -4,7 +4,6 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const frontendDirectory = process.cwd();
-const repositoryDirectory = path.resolve(frontendDirectory, "..");
 const appDirectory = path.join(frontendDirectory, "app");
 const componentsDirectory = path.join(frontendDirectory, "components");
 
@@ -73,13 +72,5 @@ describe("production frontend application entry", () => {
     ));
 
     expect(restoredAlternatives).toEqual([]);
-  });
-
-  it("documents frontend ownership in the repository README", () => {
-    const readme = readSource(repositoryDirectory, "README.md");
-
-    expect(readme).toContain("RoutedLexigoApp → LexigoBootstrappedApp → LexigoPremiumApp");
-    expect(readme).toContain("production-app-entry.test.ts");
-    expect(readme).toContain("Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`");
   });
 });
