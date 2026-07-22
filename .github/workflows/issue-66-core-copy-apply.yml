@@ -112,6 +112,7 @@ jobs:
       - name: Verify focused diff
         run: |
           set -Eeuo pipefail
+          rm -rf frontend/ci-artifacts
           git diff --check
 
           allowed='^(frontend/components/lexigo-premium-app\.tsx|frontend/lib/interface-copy\.ts|frontend/lib/interface-copy\.test\.ts|frontend/lib/lesson-composition\.ts|frontend/lib/lesson-composition\.test\.ts|frontend/e2e/interface-copy\.spec\.ts|frontend/package\.json|frontend/e2e/visual-regression\.spec\.ts-snapshots/(home|lesson-composer|progress|calendar-dialog)-visual-(compact|medium|desktop)-linux\.png|scripts/apply_issue_66_core_copy\.py|scripts/apply_issue_66_phrase_topic_source_fix\.py|\.github/workflows/issue-66-core-copy-apply\.yml)$'
