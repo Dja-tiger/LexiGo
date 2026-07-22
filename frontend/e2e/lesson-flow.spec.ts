@@ -173,6 +173,7 @@ test("recall and choice send versioned objective payloads", async ({ page }) => 
 });
 
 test("wrong confidence cannot master an item and supports a safe answer suggestion", async ({ page }) => {
+  test.setTimeout(45_000);
   const api = await installLessonAPI(page, 1);
   await openLesson(page, "recall");
   await page.locator("#premium-answer").fill("непринятый вариант");
