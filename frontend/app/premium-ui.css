@@ -19,15 +19,6 @@
   --lx-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
 }
 
-body {
-  background:
-    radial-gradient(circle at 8% 2%, rgba(93, 75, 245, 0.15), transparent 32%),
-    radial-gradient(circle at 92% 18%, rgba(35, 146, 255, 0.09), transparent 32%),
-    linear-gradient(180deg, #050914 0%, #07101d 52%, #050914 100%);
-}
-
-button, input { font: inherit; }
-
 .lx-app {
   width: min(1540px, 100%);
   min-height: 100vh;

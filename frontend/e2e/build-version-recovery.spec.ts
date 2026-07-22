@@ -5,6 +5,7 @@ import {
   BUILD_MARKER_STORAGE_KEY,
   BUILD_RECOVERY_STORAGE_KEY,
 } from "../lib/build-version-guard";
+import { installQualityGateAPI } from "./support/quality-gates";
 
 function captureRuntimeFailures(page: Page): string[] {
   const failures: string[] = [];
@@ -24,7 +25,8 @@ async function tolerateGuardNavigation(operation: Promise<unknown>): Promise<voi
 
 test.describe.configure({ timeout: 45_000 });
 
-test("an existing browser context recovers an old build marker without losing its route", async ({ page }) => {
+test("an existing browser context recovers an old build marker without losing its route", async ({ context, page }) => {
+  await installQualityGateAPI(context);
   const failures = captureRuntimeFailures(page);
   const route = "/dictionary?source=mixed#catalog";
   await page.goto(route, { waitUntil: "domcontentloaded" });
