@@ -147,6 +147,12 @@ test("route chrome exposes the saved schedule before opening the calendar dialog
   await expect(preview).toContainText("Каждый день в 18:30");
   await expect(preview).toContainText("хранится только в этом браузере");
 
+  await page.keyboard.press("Escape");
+  await expect(preview).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await expect(preview).toBeVisible();
   await preview.getByRole("button", { name: "Настроить календарь" }).click();
   await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
 });
