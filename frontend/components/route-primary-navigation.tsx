@@ -19,6 +19,7 @@ import {
   routeTabDestination,
   type PrimaryRouteView,
 } from "../lib/route-tab-snapshots";
+import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
@@ -182,6 +183,7 @@ export function RouteChrome() {
   return (
     <>
       <RouteBrand />
+      <CalendarReminderRouteEntry />
       <RoutePrimaryNavigation variant="header" />
       <RoutePrimaryNavigation variant="rail" />
       <RoutePrimaryNavigation variant="mobile" />
