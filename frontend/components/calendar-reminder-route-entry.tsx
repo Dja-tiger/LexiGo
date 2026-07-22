@@ -3,35 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  DEFAULT_CALENDAR_REMINDER,
   describeCalendarSchedule,
-  normalizeCalendarReminderSettings,
   type CalendarReminderSettings,
 } from "../lib/calendar-reminder";
+import {
+  defaultCalendarReminderSettings,
+  readCalendarReminderSettings,
+  subscribeCalendarReminderSettings,
+} from "../lib/calendar-reminder-storage";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
-
-// This key is the public browser-storage contract owned by CalendarReminderIntegration.
-// Keeping it explicit here lets the route-level entry preview the saved schedule without
-// opening the modal or introducing a second persistence format.
-const CALENDAR_REMINDER_STORAGE_KEY = "lexigo.calendar.reminder.v1";
-
-function defaultSettings(): CalendarReminderSettings {
-  return {
-    ...DEFAULT_CALENDAR_REMINDER,
-    weekdays: [...DEFAULT_CALENDAR_REMINDER.weekdays],
-  };
-}
-
-function readSavedSettings(): CalendarReminderSettings {
-  try {
-    const raw = window.localStorage.getItem(CALENDAR_REMINDER_STORAGE_KEY);
-    return raw
-      ? normalizeCalendarReminderSettings(JSON.parse(raw))
-      : defaultSettings();
-  } catch {
-    return defaultSettings();
-  }
-}
 
 function CalendarReminderIcon() {
   return (
@@ -55,12 +35,16 @@ function CalendarReminderIcon() {
 
 export function CalendarReminderRouteEntry() {
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
-  const [settings, setSettings] = useState<CalendarReminderSettings>(defaultSettings);
+  const [settings, setSettings] = useState<CalendarReminderSettings>(defaultCalendarReminderSettings);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSettings(readSavedSettings()), 0);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => setSettings(readCalendarReminderSettings()), 0);
+    const unsubscribe = subscribeCalendarReminderSettings(setSettings);
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   const schedule = describeCalendarSchedule(settings);
@@ -68,13 +52,6 @@ export function CalendarReminderRouteEntry() {
   function openDialog() {
     if (detailsRef.current) detailsRef.current.open = false;
     setDialogOpen(true);
-  }
-
-  function closeDialog() {
-    setDialogOpen(false);
-    // CalendarReminderIntegration persists settings before provider hand-off. Re-reading
-    // keeps the route-level preview synchronized after every dialog interaction.
-    setSettings(readSavedSettings());
   }
 
   return (
@@ -98,7 +75,7 @@ export function CalendarReminderRouteEntry() {
         open={dialogOpen}
         showCard={false}
         onOpen={openDialog}
-        onClose={closeDialog}
+        onClose={() => setDialogOpen(false)}
       />
     </>
   );
