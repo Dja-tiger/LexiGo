@@ -8,7 +8,6 @@ import {
   buildGoogleCalendarURL,
   CALENDAR_ICS_FILE_NAME,
   CALENDAR_WEEKDAYS,
-  DEFAULT_CALENDAR_REMINDER,
   describeCalendarSchedule,
   nextCalendarOccurrence,
   normalizeCalendarReminderSettings,
@@ -16,9 +15,15 @@ import {
   type CalendarReminderSettings,
   type CalendarWeekday,
 } from "../lib/calendar-reminder";
+import {
+  defaultCalendarReminderSettings,
+  persistCalendarReminderSettings,
+  readCalendarReminderSettings,
+  subscribeCalendarReminderSettings,
+  type CalendarReminderPersistenceResult,
+} from "../lib/calendar-reminder-storage";
 import { AccessibleDialog } from "./accessible-dialog";
 
-const STORAGE_KEY = "lexigo.calendar.reminder.v1";
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60];
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60];
 
@@ -28,27 +33,6 @@ type CalendarReminderIntegrationProps = {
   onOpen: () => void;
   onClose: () => void;
 };
-
-function copyDefaultSettings(): CalendarReminderSettings {
-  return {
-    ...DEFAULT_CALENDAR_REMINDER,
-    weekdays: [...DEFAULT_CALENDAR_REMINDER.weekdays],
-  };
-}
-
-function readSettings(): CalendarReminderSettings {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? normalizeCalendarReminderSettings(JSON.parse(raw)) : copyDefaultSettings();
-  } catch {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Restricted storage keeps the in-memory defaults.
-    }
-    return copyDefaultSettings();
-  }
-}
 
 function browserTimeZone(): string {
   try {
@@ -96,21 +80,31 @@ function appleCalendarStatus(method: AppleCalendarDeliveryMethod): string {
   return "Добавление отменено. Apple Calendar не изменён.";
 }
 
+function sessionOnlyStatus(message: string, persisted: boolean): string {
+  return persisted
+    ? message
+    : `${message} Браузер запретил локальное сохранение, поэтому настройки действуют только в текущей сессии.`;
+}
+
 export function CalendarReminderIntegration({
   open,
   showCard,
   onOpen,
   onClose,
 }: CalendarReminderIntegrationProps) {
-  const [settings, setSettings] = useState<CalendarReminderSettings>(copyDefaultSettings);
+  const [settings, setSettings] = useState<CalendarReminderSettings>(defaultCalendarReminderSettings);
   const [status, setStatus] = useState("");
   const [appleCalendarPending, setAppleCalendarPending] = useState(false);
   const appleCalendarPendingRef = useRef(false);
   const dialogTitleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSettings(readSettings()), 0);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => setSettings(readCalendarReminderSettings()), 0);
+    const unsubscribe = subscribeCalendarReminderSettings(setSettings);
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   function openSettings() {
@@ -135,27 +129,25 @@ export function CalendarReminderIntegration({
     setStatus("");
   }
 
-  function persistSettings(): CalendarReminderSettings {
-    const normalized = normalizeCalendarReminderSettings(settings);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-    } catch {
-      setStatus("Настройки применены для текущей сессии, но браузер запретил локальное сохранение.");
-    }
-    setSettings(normalized);
-    return normalized;
+  function persistSettings(): CalendarReminderPersistenceResult {
+    const result = persistCalendarReminderSettings(settings);
+    setSettings(result.settings);
+    return result;
   }
 
   function addToGoogleCalendar() {
-    const normalized = persistSettings();
-    const start = nextCalendarOccurrence(normalized);
-    const url = buildGoogleCalendarURL(normalized, {
+    const persistence = persistSettings();
+    const start = nextCalendarOccurrence(persistence.settings);
+    const url = buildGoogleCalendarURL(persistence.settings, {
       start,
       timeZone: browserTimeZone(),
       appURL: window.location.origin,
     });
     window.open(url, "_blank", "noopener,noreferrer");
-    setStatus("Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.");
+    setStatus(sessionOnlyStatus(
+      "Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.",
+      persistence.persisted,
+    ));
   }
 
   async function addToAppleCalendar() {
@@ -165,19 +157,19 @@ export function CalendarReminderIntegration({
     setStatus("");
 
     try {
-      const normalized = persistSettings();
-      const start = nextCalendarOccurrence(normalized);
+      const persistence = persistSettings();
+      const start = nextCalendarOccurrence(persistence.settings);
       const timeZone = browserTimeZone();
-      const calendar = buildCalendarICS(normalized, {
+      const calendar = buildCalendarICS(persistence.settings, {
         start,
         timeZone,
         appURL: window.location.origin,
       });
       const method = await deliverAppleCalendarFile(
         calendar,
-        createCalendarDownloadURL(normalized, start),
+        createCalendarDownloadURL(persistence.settings, start),
       );
-      setStatus(appleCalendarStatus(method));
+      setStatus(sessionOnlyStatus(appleCalendarStatus(method), persistence.persisted));
     } catch {
       setStatus("Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.");
     } finally {

@@ -1,0 +1,156 @@
+/*
+ * Predictable route-level entry for lesson calendar reminders.
+ * The legacy product-header bell is hidden because it duplicates this action and uses
+ * an inaccurate label. The contextual card on Progress remains the single secondary entry.
+ */
+.lx-routed-app .lx-header-tools > .lx-icon-button {
+  display: none !important;
+}
+
+.lx-route-reminder-entry {
+  position: fixed;
+  z-index: 185;
+  top: calc(17px + env(safe-area-inset-top));
+  right: max(150px, calc((100vw - 1540px) / 2 + 150px));
+  color: var(--lx-text);
+}
+
+.lx-route-reminder-entry > summary {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(145, 168, 211, 0.2);
+  border-radius: 14px;
+  padding: 0 13px;
+  color: #cbd4e4;
+  background: rgba(8, 14, 27, 0.9);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.15;
+  list-style: none;
+  touch-action: manipulation;
+}
+
+.lx-route-reminder-entry > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lx-route-reminder-entry > summary:hover,
+.lx-route-reminder-entry[open] > summary {
+  border-color: rgba(139, 92, 246, 0.42);
+  color: #fff;
+  background: rgba(35, 31, 73, 0.96);
+}
+
+.lx-route-reminder-entry > summary:focus-visible {
+  outline: 3px solid #7dd3fc;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(37, 200, 232, 0.18);
+}
+
+.lx-route-reminder-entry > summary svg {
+  flex: 0 0 auto;
+  color: #9f8cff;
+}
+
+.lx-route-reminder-preview {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  width: min(340px, calc(100vw - 28px));
+  gap: 10px;
+  border: 1px solid rgba(145, 168, 211, 0.22);
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(8, 15, 29, 0.98);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.46);
+}
+
+.lx-route-reminder-preview > span {
+  color: #8aa0c3;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.lx-route-reminder-preview > strong {
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.lx-route-reminder-preview > p {
+  margin: 0;
+  color: #aab5c8;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.lx-route-reminder-preview .lx-button {
+  width: 100%;
+  margin-top: 2px;
+}
+
+@media (min-width: 720px) and (max-width: 1099px) {
+  .lx-route-reminder-entry {
+    top: calc(14px + env(safe-area-inset-top));
+    right: max(150px, calc((100vw - 1540px) / 2 + 150px));
+  }
+
+  .lx-route-reminder-entry > summary > span {
+    display: none;
+  }
+}
+
+@media (max-width: 719px) {
+  .lx-route-reminder-entry {
+    top: calc(10px + env(safe-area-inset-top));
+    right: max(68px, calc(env(safe-area-inset-right) + 68px));
+  }
+
+  .lx-route-reminder-entry > summary {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0 10px;
+  }
+
+  .lx-route-reminder-preview {
+    position: fixed;
+    top: calc(68px + env(safe-area-inset-top));
+    right: max(14px, env(safe-area-inset-right));
+    left: max(14px, env(safe-area-inset-left));
+    width: auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .lx-route-reminder-entry > summary > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-route-reminder-entry,
+  .lx-route-reminder-entry *,
+  .lx-route-reminder-entry *::before,
+  .lx-route-reminder-entry *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

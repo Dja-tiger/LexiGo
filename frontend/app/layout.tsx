@@ -30,6 +30,7 @@ import "./review-outbox.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
 import "./information-architecture.css";
+import "./calendar-reminder-entry.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
