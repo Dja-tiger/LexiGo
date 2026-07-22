@@ -58,12 +58,13 @@ jobs:
           from __future__ import annotations
 
           import hashlib
+          import os
           import shutil
           import struct
           import zlib
           from pathlib import Path
 
-          artifact_dir = Path("${BASELINE_ARTIFACT_DIR}")
+          artifact_dir = Path(os.environ["BASELINE_ARTIFACT_DIR"])
           candidates = sorted(
               artifact_dir.glob(
                   "test-results/visual-regression-critical-visual-baselines-home-visual-compact*/home-actual.png"
