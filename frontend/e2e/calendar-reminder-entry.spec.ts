@@ -177,3 +177,33 @@ test("calendar reminder entry keeps a 44px target and an in-viewport preview at 
   await preview.getByRole("button", { name: "Настроить календарь" }).click();
   await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
 });
+
+test("contextual and route-level entries share one persisted schedule", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.open = () => null;
+  });
+  await page.goto("/progress");
+
+  const routeTrigger = reminderEntry(page).locator(":scope > summary");
+  await expect(routeTrigger).toHaveAttribute("aria-label", /Каждый день в 18:30/);
+
+  const contextualCard = page.locator(".lx-calendar-reminder-card");
+  await expect(contextualCard).toBeVisible();
+  await contextualCard.getByRole("button", { name: "Настроить календарь" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Время занятия").fill("20:15");
+  await dialog.getByRole("button", { name: /Google Calendar/ }).click();
+  await expect(dialog.getByRole("status")).toContainText("Подтвердите сохранение");
+  await dialog.getByRole("button", { name: "Закрыть" }).click();
+
+  await expect(routeTrigger).toHaveAttribute(
+    "aria-label",
+    "Напоминание о занятии. Каждый день в 20:15",
+  );
+  await routeTrigger.click();
+  await expect(
+    reminderEntry(page).getByRole("region", { name: "Текущее напоминание о занятии" }),
+  ).toContainText("Каждый день в 20:15");
+});
