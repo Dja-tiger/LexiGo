@@ -1,1 +1,0 @@
-Trigger full CI after verified Issue #66 source generation.
