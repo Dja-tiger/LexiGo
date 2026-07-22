@@ -12,6 +12,7 @@ on:
     paths:
       - .github/workflows/issue-66-core-copy-apply.yml
       - scripts/apply_issue_66_core_copy.py
+      - scripts/apply_issue_66_phrase_topic_source_fix.py
       - frontend/e2e/interface-copy.spec.ts
       - frontend/lib/interface-copy.ts
       - frontend/lib/interface-copy.test.ts
@@ -49,7 +50,9 @@ jobs:
           ref: agent/issue-66-core-interface-copy
 
       - name: Apply guarded source transformation
-        run: python3 scripts/apply_issue_66_core_copy.py
+        run: |
+          python3 scripts/apply_issue_66_core_copy.py
+          python3 scripts/apply_issue_66_phrase_topic_source_fix.py
 
       - name: Prepare isolated frontend workspace
         run: bash scripts/ci/frontend-container.sh prepare
@@ -111,7 +114,7 @@ jobs:
           set -Eeuo pipefail
           git diff --check
 
-          allowed='^(frontend/components/lexigo-premium-app\.tsx|frontend/lib/interface-copy\.ts|frontend/lib/interface-copy\.test\.ts|frontend/lib/lesson-composition\.ts|frontend/lib/lesson-composition\.test\.ts|frontend/e2e/interface-copy\.spec\.ts|frontend/package\.json|frontend/e2e/visual-regression\.spec\.ts-snapshots/(home|lesson-composer|progress|calendar-dialog)-visual-(compact|medium|desktop)-linux\.png|scripts/apply_issue_66_core_copy\.py|\.github/workflows/issue-66-core-copy-apply\.yml)$'
+          allowed='^(frontend/components/lexigo-premium-app\.tsx|frontend/lib/interface-copy\.ts|frontend/lib/interface-copy\.test\.ts|frontend/lib/lesson-composition\.ts|frontend/lib/lesson-composition\.test\.ts|frontend/e2e/interface-copy\.spec\.ts|frontend/package\.json|frontend/e2e/visual-regression\.spec\.ts-snapshots/(home|lesson-composer|progress|calendar-dialog)-visual-(compact|medium|desktop)-linux\.png|scripts/apply_issue_66_core_copy\.py|scripts/apply_issue_66_phrase_topic_source_fix\.py|\.github/workflows/issue-66-core-copy-apply\.yml)$'
           unexpected="$(git status --short | awk '{print $2}' | grep -Ev "$allowed" || true)"
           if [ -n "$unexpected" ]; then
             printf 'Unexpected changed files:\n%s\n' "$unexpected" >&2
@@ -123,7 +126,10 @@ jobs:
       - name: Commit verified source and tests
         run: |
           set -Eeuo pipefail
-          rm -f scripts/apply_issue_66_core_copy.py .github/workflows/issue-66-core-copy-apply.yml
+          rm -f \
+            scripts/apply_issue_66_core_copy.py \
+            scripts/apply_issue_66_phrase_topic_source_fix.py \
+            .github/workflows/issue-66-core-copy-apply.yml
           git add -A
           git diff --cached --check
           git config user.name "github-actions[bot]"
