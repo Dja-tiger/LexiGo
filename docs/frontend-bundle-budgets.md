@@ -28,6 +28,8 @@ The covered routes are `/`, `/learn`, `/phrases`, `/dictionary`, `/progress`, `/
 
 `playwright.performance.config.ts` runs both the existing interaction/Core Web Vitals budget and the route JavaScript budget. The performance browser job is part of the required frontend matrix, so a route that exceeds its ceiling fails the PR.
 
+Three self-hosted runner services share one physical host. Normal frontend install, build and browser commands acquire a shared host lock through `scripts/ci/frontend-container.sh`; the performance command acquires the same lock exclusively. Performance measurement therefore waits until competing frontend workloads finish, while ordinary browser groups retain parallel execution. The lock behavior is covered by `scripts/ci/frontend-container.test.sh`. Timing ceilings are not raised to absorb host contention.
+
 The route report is written to:
 
 ```text
@@ -88,3 +90,5 @@ npm run test:e2e:performance
 - `performance-budget.spec.ts` continues to own LCP, CLS, long-task, CSS and interaction budgets.
 - `performance-global-teardown.ts` owns the combined performance artifact contract.
 - `playwright.performance.config.ts` owns the production low-end mobile execution profile.
+- `frontend-container.sh` owns host-level shared/exclusive scheduling for frontend workloads.
+- `frontend-container.test.sh` owns the concurrency contract for that scheduling.
