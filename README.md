@@ -12,6 +12,26 @@ LexiGo — персональный тренажёр английской лек
 - GitHub Actions — CI, интеграционные тесты и шаблоны CD;
 - `deploy/` — stage/prod-конфигурации.
 
+## Frontend: production source of truth
+
+Единственная production-цепочка приложения:
+
+`frontend/app/layout.tsx` → `RoutedLexigoApp → LexigoBootstrappedApp → LexigoPremiumApp`.
+
+Ownership компонентов разделён следующим образом:
+
+- `frontend/app/layout.tsx` владеет глобальным runtime-контуром: error boundary, Web Vitals, Service Worker, persistent route shell и legal footer;
+- `frontend/components/routed-lexigo-app.tsx` владеет канонической route shell, skip-link и persistent navigation chrome;
+- `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, account runtime и единственной динамической загрузкой product graph;
+- `frontend/components/lexigo-premium-app.tsx` является единственным product UI graph и не должен импортироваться напрямую из других компонентов;
+- feature-компоненты расширяют product graph, но не создают альтернативные application roots.
+
+Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`. Feature styles не должны добавлять скрытые root-level imports или зависеть от альтернативной точки входа. Консолидация существующих глобальных CSS выполняется отдельными небольшими PR с visual regression gate, без смешивания с redesign.
+
+Контракт защищён unit-тестом `frontend/components/production-app-entry.test.ts`, который запрещает возврат retired app roots и прямые обходные импорты product graph.
+
+Подробности маршрутизации и runtime boundaries находятся в [docs/architecture.md](docs/architecture.md).
+
 ## Текущая итерация
 
 - регистрация, вход, refresh и logout;
