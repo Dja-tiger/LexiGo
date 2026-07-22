@@ -71,7 +71,16 @@ export function subscribeCalendarReminderSettings(
       ? normalizeCalendarReminderSettings(detail)
       : readCalendarReminderSettings());
   };
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === CALENDAR_REMINDER_STORAGE_KEY || event.key === null) {
+      listener(readCalendarReminderSettings());
+    }
+  };
 
   window.addEventListener(CALENDAR_REMINDER_UPDATED_EVENT, handleUpdate);
-  return () => window.removeEventListener(CALENDAR_REMINDER_UPDATED_EVENT, handleUpdate);
+  window.addEventListener("storage", handleStorage);
+  return () => {
+    window.removeEventListener(CALENDAR_REMINDER_UPDATED_EVENT, handleUpdate);
+    window.removeEventListener("storage", handleStorage);
+  };
 }
