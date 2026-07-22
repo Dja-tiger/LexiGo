@@ -142,6 +142,14 @@ execute() {
     return
   fi
 
+  if [[ "$#" -eq 3 && "$1" == "npm" && "$2" == "run" && "$3" == "build" ]]; then
+    container_run bash -Eeuo pipefail -c '
+      set -o pipefail
+      npm run build 2>&1 | tee build.log
+    '
+    return
+  fi
+
   container_run "$@"
 }
 
@@ -173,6 +181,7 @@ extract_artifacts() {
         eslint.log \
         typecheck.log \
         vitest.log \
+        build.log \
         next-start.log \
         playwright-report \
         test-results \

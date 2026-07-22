@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "performance-budget.spec.ts",
+  testMatch: ["performance-budget.spec.ts", "route-bundle-budget.spec.ts"],
+  globalTeardown: "./e2e/performance-global-teardown.ts",
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
