@@ -11,7 +11,10 @@ describe("interface copy", () => {
   it("localizes canonical catalog topics without changing filter values", () => {
     expect(topicLabel("academic-technical-english")).toBe("Технический английский");
     expect(topicLabel("Data Engineering")).toBe("Инженерия данных");
+    expect(topicLabel("Incident")).toBe("Инциденты");
     expect(topicLabel("Incidents")).toBe("Инциденты");
+    expect(topicLabel("Release")).toBe("Релизы");
+    expect(topicLabel("Storage")).toBe("Хранение данных");
     expect(topicLabel("  Travel  ")).toBe("Путешествия");
   });
 
@@ -28,14 +31,26 @@ describe("interface copy", () => {
     expect(catalogStatusLabel("mastered")).toBe("Освоено");
   });
 
-  it("provides plain-language explanations for learning mechanics", () => {
+  it("provides stable plain-language labels and explanations for learning mechanics", () => {
     expect(learningTermCopy("recall")).toEqual({
       label: "Вспомнить самостоятельно",
       explanation: "Ответ нужно восстановить по памяти, не открывая подсказку заранее.",
     });
-    expect(learningTermCopy("due").label).toBe("Готово к повторению");
-    expect(learningTermCopy("retained").explanation).toContain("после интервала");
-    expect(learningTermCopy("cloze").label).toBe("Восстановить пропуск");
-    expect(learningTermCopy("chunk").label).toBe("Готовая фраза");
+    expect(learningTermCopy("due")).toEqual({
+      label: "Готово к повторению",
+      explanation: "Материал, для которого наступило запланированное время следующего повторения.",
+    });
+    expect(learningTermCopy("retained")).toEqual({
+      label: "Закреплено",
+      explanation: "Материал, который был успешно воспроизведён после интервала и сохранился в памяти.",
+    });
+    expect(learningTermCopy("cloze")).toEqual({
+      label: "Восстановить пропуск",
+      explanation: "Нужно вписать пропущенное английское слово или фрагмент фразы.",
+    });
+    expect(learningTermCopy("chunk")).toEqual({
+      label: "Готовая фраза",
+      explanation: "Устойчивый фрагмент речи, который полезно запоминать целиком.",
+    });
   });
 });
