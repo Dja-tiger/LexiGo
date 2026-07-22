@@ -54,6 +54,7 @@ import {
   type LessonSize,
   type WordSection,
 } from "../lib/learning";
+import { learningTermCopy, topicLabel } from "../lib/interface-copy";
 import {
   navigationURL,
   PRIMARY_NAVIGATION,
@@ -255,6 +256,11 @@ const SORT_STORAGE_PREFIX = "lexigo.catalog.sort.";
 const DEFAULT_PHRASE_CATALOG = Array.from(
   new Map([...TECHNICAL_PHRASES, ...EXPANDED_PHRASES].map((item) => [item.id, item])).values(),
 );
+const RECALL_COPY = learningTermCopy("recall");
+const DUE_COPY = learningTermCopy("due");
+const RETAINED_COPY = learningTermCopy("retained");
+const CLOZE_COPY = learningTermCopy("cloze");
+const CHUNK_COPY = learningTermCopy("chunk");
 
 const COLLECTIONS: CollectionDefinition[] = [
   {
@@ -273,14 +279,14 @@ const COLLECTIONS: CollectionDefinition[] = [
   },
   {
     source: "data-engineering",
-    label: "Data Engineer",
-    shortLabel: "Data Engineer",
+    label: "Инженерия данных",
+    shortLabel: "Инженерия данных",
     description: "Моделирование, пайплайны, Kafka, качество и хранение данных",
     symbol: "DB",
   },
   {
     source: "backend",
-    label: "Backend Development",
+    label: "Backend-разработка",
     shortLabel: "Backend",
     description: "API, архитектура, базы данных, конкурентность и надёжность",
     symbol: "</>",
@@ -303,7 +309,7 @@ const SOURCE_OPTIONS: Array<{
   { value: "noun", label: "Существительные", hint: "Системы, объекты и метрики", icon: "cube" },
   { value: "verb", label: "Глаголы", hint: "Действия, процессы и операции", icon: "bolt" },
   { value: "adjective", label: "Прилагательные", hint: "Состояния и характеристики", icon: "spark" },
-  { value: "phrases", label: "Технические фразы", hint: "Рабочие chunks и cloze", icon: "code" },
+  { value: "phrases", label: "Технические фразы", hint: `${CHUNK_COPY.label}: устойчивые выражения; ${CLOZE_COPY.label.toLocaleLowerCase("ru")}: задания с пропуском`, icon: "code" },
 ];
 
 const MODE_OPTIONS: Array<{
@@ -320,8 +326,8 @@ const MODE_OPTIONS: Array<{
   },
   {
     value: "recall",
-    label: "Вспомнить самому",
-    hint: "Введите перевод или восстановите пропуск",
+    label: RECALL_COPY.label,
+    hint: RECALL_COPY.explanation,
     icon: "spark",
   },
   {
@@ -977,12 +983,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     const metadataTopics = catalogMetadata?.topics
       .filter((entry) => (entry.phrases ?? 0) > 0)
       .map((entry) => entry.topic) ?? [];
-    return ["all", ...Array.from(new Set([
-      ...metadataTopics,
-      ...DEFAULT_PHRASE_CATALOG.map((phrase) => phrase.topic),
-      ...phraseCatalog.map((phrase) => phrase.topic),
-    ]))];
-  }, [catalogMetadata, phraseCatalog]);
+    const availableTopics = session
+      ? [...metadataTopics, ...phraseCatalog.map((phrase) => phrase.topic)]
+      : DEFAULT_PHRASE_CATALOG.map((phrase) => phrase.topic);
+    return ["all", ...Array.from(new Set(availableTopics))
+      .sort((left, right) => topicLabel(left).localeCompare(topicLabel(right), "ru"))];
+  }, [catalogMetadata, phraseCatalog, session]);
   const guestPhrasePage = useMemo(() => {
     let available = phraseTopic === "all"
       ? DEFAULT_PHRASE_CATALOG
@@ -2070,7 +2076,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         ? {
             eyebrow: "СЕЙЧАС ЛУЧШЕ ПОВТОРИТЬ",
             title: `${dueNow} ${russianPlural(dueNow, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,
-            description: "LexiGo соберёт due-очередь автоматически — режим и состав уже определены вашим прогрессом.",
+            description: DUE_COPY.explanation,
             label: "Повторить сейчас",
             action: () => void startLesson(session, { source: "mixed", size: 30, mode: "recall", journeyIntent: "home_next_action" }),
           }
@@ -2078,7 +2084,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
           ? {
               eyebrow: "СЛЕДУЮЩИЙ ШАГ",
               title: "Добавьте новые слова в учебный цикл",
-              description: "Откройте короткий блок знакомства; ответы будут показаны сразу и не исказят active recall.",
+              description: "Откройте короткий блок знакомства: ответы будут видны сразу, а самостоятельное воспроизведение начнётся на следующих повторениях.",
               label: "Начать изучение",
               action: () => void startLesson(session, { source: "mixed", size: 15, mode: "study", journeyIntent: "home_next_action" }),
             }
@@ -2117,19 +2123,19 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
             {progress ? (
               <>
                 <div className="lx-progress-ring" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span>{goalPercent(progress)}%</span></div>
-                <div className="lx-progress-list"><div><span>К повторению</span><strong>{progress.dueNow}</strong></div><div><span>Retained за неделю</span><strong>{progress.retainedItemsWeek}</strong></div><div><span>Серия</span><strong>{progress.currentStreak} дн.</strong></div></div>
+                <div className="lx-progress-list"><div><span>{DUE_COPY.label}</span><strong>{progress.dueNow}</strong></div><div><span>{RETAINED_COPY.label} за неделю</span><strong>{progress.retainedItemsWeek}</strong></div><div><span>Серия</span><strong>{progress.currentStreak} дн.</strong></div></div>
               </>
             ) : (
-              <AsyncStatePanel label={!session ? "Персональный прогресс доступен после входа" : progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={!session ? "empty" : progressPending ? "loading" : "error"} title={!session ? "Войдите, чтобы видеть учебную очередь" : progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={!session ? "Due-очередь, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем due-очередь и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={!session ? () => requestAuthentication("home") : progressStatus.problem?.retryable ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />
+              <AsyncStatePanel label={!session ? "Персональный прогресс доступен после входа" : progressPending ? "Загрузка краткого прогресса" : "Краткий прогресс недоступен"} kind={!session ? "empty" : progressPending ? "loading" : "error"} title={!session ? "Войдите, чтобы видеть учебную очередь" : progressPending ? "Синхронизируем очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={!session ? "Материал к повторению, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем материал к повторению и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={!session ? () => requestAuthentication("home") : progressStatus.problem?.retryable ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />
             )}
             <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Открыть прогресс</button>
           </aside>
         </section>
 
         <section className="lx-home-paths" aria-label="Назначение основных разделов">
-          <article><span>Обучение</span><h2>Настройте урок</h2><p>Режим, раздел, размер и предварительный состав находятся в одном composer.</p><button className="lx-button ghost" type="button" data-journey-intent="home_configure_lesson" onClick={() => navigate({ view: "learn" }, false, { intent: "home_configure_lesson" })}>Настроить урок</button></article>
+          <article><span>Обучение</span><h2>Настройте урок</h2><p>Режим, раздел, размер и предварительный состав настраиваются на одном экране.</p><button className="lx-button ghost" type="button" data-journey-intent="home_configure_lesson" onClick={() => navigate({ view: "learn" }, false, { intent: "home_configure_lesson" })}>Настроить урок</button></article>
           <article><span>Словарь</span><h2>Найдите материал</h2><p>Ищите слова, термины и рабочие фразы, открывайте карточки и сохраняйте контекст.</p><button className="lx-button ghost" type="button" data-journey-intent="home_find_material" onClick={() => navigate({ view: "library" }, false, { intent: "home_find_material" })}>Найти материал</button></article>
-          <article><span>Прогресс</span><h2>Проверьте результат</h2><p>Due-очередь, retained items, объективная успешность и дневная цель собраны отдельно.</p><button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Посмотреть результат</button></article>
+          <article><span>Прогресс</span><h2>Проверьте результат</h2><p>Материал к повторению, закреплённые знания, объективная успешность и дневная цель собраны отдельно.</p><button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Посмотреть результат</button></article>
         </section>
       </>
     );
@@ -2151,10 +2157,10 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       <>
         <section className="lx-page-heading">
           <div><span>ОБУЧЕНИЕ</span><h1>Соберите один сфокусированный урок</h1><p>Здесь находятся только параметры учебной сессии: режим, раздел, размер и предварительный состав.</p></div>
-          <div className="lx-heading-badge"><Icon name="learn"/><span>{session && progress ? `${progress.dueNow} элементов готовы` : "Прогресс сохраняется после входа"}</span></div>
+          <div className="lx-heading-badge"><Icon name="learn"/><span>{session && progress ? `${DUE_COPY.label}: ${progress.dueNow}` : "Прогресс сохраняется после входа"}</span></div>
         </section>
         {renderResumeStrip()}
-        {lessonTopic ? <section className="lx-composer-context" aria-label="Контекст из каталога"><div><span>Перенесено из словаря</span><strong>{sourceLabel(source)} · {lessonTopic}</strong><small>Раздел и тема уже выбраны; повторная настройка не требуется.</small></div><button className="lx-button ghost" type="button" onClick={() => { setLessonTopic(""); navigate({ view: "learn", source }, true, { intent: "in_app_navigation" }); }}>Очистить тему</button></section> : null}
+        {lessonTopic ? <section className="lx-composer-context" aria-label="Контекст из каталога"><div><span>Перенесено из словаря</span><strong>{sourceLabel(source)} · {topicLabel(lessonTopic)}</strong><small>Раздел и тема уже выбраны; повторная настройка не требуется.</small></div><button className="lx-button ghost" type="button" onClick={() => { setLessonTopic(""); navigate({ view: "learn", source }, true, { intent: "in_app_navigation" }); }}>Очистить тему</button></section> : null}
         <section className="lx-setup-card">
           <div className="lx-setup-block">
             <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Главный режим — простое изучение с открытой карточкой</small></div></div>
@@ -2229,11 +2235,11 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     })}</div></fieldset>
             <div className="lx-setup-actions">
               {studyMode === "all" ? (
-                <div className="lx-lesson-preview"><span>Состав списка</span><strong>Все доступные элементы раздела</strong><small>Справочный режим не создаёт server lesson session.</small></div>
+                <div className="lx-lesson-preview"><span>Состав списка</span><strong>Все доступные элементы раздела</strong><small>Справочный режим открывает список без создания учебной сессии.</small></div>
               ) : !session ? (
-                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Войдите для расчёта</strong><small>Composer учитывает вашу due-очередь и доступные фразы.</small></div>
+                <div className="lx-lesson-preview"><span>Состав урока</span><strong>Войдите для расчёта</strong><small>При расчёте учитываются материал к повторению и доступные фразы.</small></div>
               ) : previewingLesson || !matchingLessonPreview ? (
-                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем due, new и доступность обоих типов.</small></div>
+                <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>Рассчитываем…</strong><small>Проверяем материал к повторению, новые элементы и доступность слов и фраз.</small></div>
               ) : (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(matchingLessonPreview.composition)}</strong><small>{lessonPriorityDescription(matchingLessonPreview.composition)}</small>{lessonCompositionFallbackMessage(matchingLessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(matchingLessonPreview.composition)}</em> : null}</div>
               )}
@@ -2333,7 +2339,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
                 label="Карточка фразы доступна после входа"
                 kind="empty"
                 title="Войдите, чтобы открыть персональную фразу"
-                message="Backend-каталог и текущий learning status доступны только владельцу аккаунта."
+                message="Персональный каталог и текущий статус изучения доступны только владельцу аккаунта."
                 actionLabel="Войти"
                 onAction={() => requestAuthentication("phrases")}
               />
@@ -2359,13 +2365,13 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
           <section className="lx-detail-card">
             <button className="lx-button ghost" type="button" onClick={backToPhraseCatalog}>← Все фразы</button>
             <div className="lx-detail-content">
-              <span lang="en">{selectedPhrase.topic}</span>
+              <span>{topicLabel(selectedPhrase.topic)}</span>
               <div className="lx-detail-speech-row">
                 <h1 lang="en">{selectedPhrase.prompt}</h1>
                 <SpeechPlayerButton text={selectedPhrase.prompt}><Icon name="volume" /></SpeechPlayerButton>
               </div>
               <strong lang="ru">{selectedPhrase.answer}</strong>
-              {selectedPhrase.cloze ? <div><small>Cloze practice</small><p lang="en">{selectedPhrase.cloze}</p></div> : null}
+              {selectedPhrase.cloze ? <div><small>{CLOZE_COPY.label}</small><p>{CLOZE_COPY.explanation}</p><p lang="en">{selectedPhrase.cloze}</p></div> : null}
               {selectedPhrase.examples[0] ? <div><small>Рабочий пример</small><p lang="en">{selectedPhrase.examples[0]}</p></div> : null}
               {selectedPhrase.note ? <div><small>Как использовать</small><p>{selectedPhrase.note}</p></div> : null}
               <div className="lx-page-actions"><button className="lx-button primary" type="button" onClick={() => navigate({ view: "learn", source: "phrases", topic: selectedPhrase.topic }, false, { intent: "catalog_configure_lesson" })}>Настроить урок по этой теме</button><small>Тип материала и тема будут перенесены в «Обучение».</small></div>
@@ -2379,10 +2385,10 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     return (
       <>
         <CatalogKindNavigation active="phrases" onSelect={openCatalog} />
-        <section className="lx-page-heading"><div><span>РАБОЧИЕ ФРАЗЫ</span><h1>Находите готовые формулировки</h1><p>Поиск и просмотр incident updates, architecture review, data engineering, performance и release communication. Настройка учебной сессии находится в «Обучении».</p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
+        <section className="lx-page-heading"><div><span>РАБОЧИЕ ФРАЗЫ</span><h1>Находите готовые формулировки</h1><p>Ищите формулировки для инцидентов, архитектурных обсуждений, инженерии данных, производительности и релизов. Настройка учебной сессии находится в разделе «Обучение».</p></div><div className="lx-heading-badge"><Icon name="phrases"/><span>{progress ? `${progress.duePhrases} фраз готовы к повторению` : progressStatus.phase === "loading" || progressStatus.phase === "idle" ? "Загружаем очередь…" : "Очередь недоступна"}</span></div></section>
         <div className="lx-topic-filter" role="radiogroup" aria-label="Тема фраз" aria-orientation="horizontal">{phraseTopics.map((topic) => {
           const selected = phraseTopic === topic;
-          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} lang={topic === "all" ? "ru" : "en"} onClick={() => { setPhraseTopic(topic); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic, page: 1 })); }} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, (next) => { setPhraseTopic(next); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic: next, page: 1 })); }, "horizontal")}>{topic === "all" ? "Все темы" : topic}</button>;
+          return <button key={topic} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} className={selected ? "selected" : ""} onClick={() => { setPhraseTopic(topic); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic, page: 1 })); }} onKeyDown={(event) => selectRovingControl(event, phraseTopics, topic, (next) => { setPhraseTopic(next); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), topic: next, page: 1 })); }, "horizontal")}>{topic === "all" ? "Все темы" : topicLabel(topic)}</button>;
         })}</div>
         <CatalogSearchForm value={phraseSearchInput} onChange={setPhraseSearchInput} onSubmit={applyPhraseSearch} onClear={clearPhraseSearch} label="Поиск по каталогу фраз" />
         <CatalogSortControl kind="phrases" mode={phraseSortMode} onChange={(mode) => { updateCatalogSort("phrases", mode); setPhrasePage(1); navigate(phraseCatalogTarget({ ...phraseCatalogFilters(navigation), sort: mode, page: 1 })); }} />
@@ -2402,7 +2408,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             event.preventDefault();
             openPhraseDetail(phrase);
-          }}><span lang="en">{phrase.topic}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></a></div>;
+          }}><span>{topicLabel(phrase.topic)}</span><strong lang="en">{phrase.prompt}</strong><small lang="ru">{phrase.answer}</small><em>Открыть карточку <Icon name="arrow" size={15}/></em></a></div>;
         })}</section>
         <CatalogPagination info={phrasePageInfo} busy={phrasesPending} onPageChange={changePhrasePage} label="Навигация под списком фраз" />
         <div className="lx-page-actions"><button className="lx-button primary" type="button" disabled={phrasePageInfo.total === 0} onClick={() => navigate({ view: "learn", source: "phrases", ...(phraseTopic !== "all" ? { topic: phraseTopic } : {}) }, false, { intent: "catalog_configure_lesson" })}>Настроить урок по текущей теме</button><small>Фразы остаются каталогом; режим и размер выбираются на следующем экране.</small></div>
@@ -2440,7 +2446,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
 
   function renderProgress() {
     if (!session) {
-      return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, due-очередь, retained items и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
+      return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, материал к повторению, закреплённые знания и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
     }
     if (!progress) {
       const problem = progressStatus.problem;
@@ -2452,19 +2458,19 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     const cards = [
       { label: "Сегодня", value: `${progress.reviewsToday} / ${progress.dailyGoal}`, hint: `${goalPercent(progress)}% цели`, color: "purple" },
       { label: "Объективная успешность", value: `${successRate}%`, hint: `${progress.objectiveSuccessfulToday ?? progress.successfulToday} из ${progress.objectiveReviewsToday ?? progress.reviewsToday} попыток`, color: "green" },
-      { label: "Retained items", value: String(progress.retainedItemsWeek), hint: `${progress.retainedWordsWeek} слов · ${progress.retainedPhrasesWeek} фраз`, color: "blue" },
+      { label: RETAINED_COPY.label, value: String(progress.retainedItemsWeek), hint: `${progress.retainedWordsWeek} слов · ${progress.retainedPhrasesWeek} фраз`, color: "blue" },
       { label: "Текущая серия", value: `${progress.currentStreak} дн.`, hint: `рекорд ${progress.longestStreak}`, color: "orange" },
     ];
     return (
       <>
-        <section className="lx-page-heading"><div><span>ПРОГРЕСС</span><h1>Смотрите, что действительно сохранилось</h1><p>Retained item засчитывается после повторного успешного воспроизведения.</p></div><div className="lx-heading-badge"><Icon name="progress"/><span>Следующее повторение: {nextDueLabel(progress.nextDueAt)}</span></div></section>
+        <section className="lx-page-heading"><div><span>ПРОГРЕСС</span><h1>Смотрите, что действительно сохранилось</h1><p>{RETAINED_COPY.explanation}</p></div><div className="lx-heading-badge"><Icon name="progress"/><span>Следующее повторение: {nextDueLabel(progress.nextDueAt)}</span></div></section>
         {progressIsEmpty ? <AsyncStatePanel label="Прогресс пока пуст" kind="empty" title="Начните первый учебный блок" message="После первой сохранённой оценки здесь появятся очередь, серия и объективная успешность." actionLabel="Настроить урок" onAction={() => navigate({ view: "learn" })} compact /> : null}
         <section className="lx-stat-grid">{cards.map((card) => <article key={card.label}><span>{card.label}</span><strong className={card.color}>{card.value}</strong><small>{card.hint}</small></article>)}</section>
         <section className="lx-summary-panel" aria-label="Попытки по режимам">
-          <div><span>Изучение</span><strong>{modes.study.attemptsToday}</strong><small>показ ответа · не active recall</small></div>
-          <div><span>Recall</span><strong>{modes.recall.successfulToday} / {modes.recall.attemptsToday}</strong><small>объективно верные сегодня</small></div>
+          <div><span>Изучение</span><strong>{modes.study.attemptsToday}</strong><small>ответ показан сразу · без самостоятельного воспроизведения</small></div>
+          <div><span>{RECALL_COPY.label}</span><strong>{modes.recall.successfulToday} / {modes.recall.attemptsToday}</strong><small>{RECALL_COPY.explanation}</small></div>
           <div><span>Выбор варианта</span><strong>{modes.choice.successfulToday} / {modes.choice.attemptsToday}</strong><small>объективно верные сегодня</small></div>
-          <div><span>Legacy</span><strong>{modes.legacy.attemptsTotal}</strong><small>исторические события без точного режима</small></div>
+          <div><span>Без указанного режима</span><strong>{modes.legacy.attemptsTotal}</strong><small>Исторические события, сохранённые до появления точного режима.</small></div>
         </section>
         <section className="lx-progress-detail"><div className="lx-detail-main"><span>Дневная цель</span><h2>{progress.reviewsToday >= progress.dailyGoal ? "Цель выполнена" : "Продолжайте учебный цикл"}</h2><div className="lx-goal-track large" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span style={{ width: `${goalPercent(progress)}%` }}/></div><div className="lx-goal-options" role="radiogroup" aria-label="Дневная цель" aria-orientation="horizontal">{GOAL_OPTIONS.map((goal, index) => {
         const selected = progress.dailyGoal === goal;
@@ -2808,7 +2814,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
                     ? reviewFeedback.judgementReason === "rejected_no_answer"
                       ? "Ответ не был введён. Для расписания применено «Не знал»."
                       : `Вариант отсутствует в списке принятых ответов. Самооценка «${ratingLabel(reviewFeedback.requestedRating)}» сохранена, для расписания применено «${ratingLabel(reviewFeedback.effectiveRating)}».`
-                    : "Пассивное изучение не считается объективным воспроизведением и не повышает mastery."}</p>
+                    : "Пассивное изучение не считается объективным воспроизведением и не повышает уровень освоения."}</p>
                 {reviewFeedback.matchedAnswer ? <small>Принятая форма: <span lang={phraseCloze ? "en" : "ru"}>{reviewFeedback.matchedAnswer}</span></small> : null}
                 {reviewFeedback.suggestionAvailable && suggestionStatus !== "submitted" ? <button className="lx-button ghost" type="button" disabled={suggestionStatus === "submitting"} onClick={() => void submitAnswerSuggestion()}>{suggestionStatus === "submitting" ? "Отправляем…" : "Мой вариант тоже верный"}</button> : null}
                 {suggestionStatus === "submitted" ? <small className="lx-suggestion-success">Вариант отправлен на проверку. Текущий результат и расписание не изменены.</small> : null}
