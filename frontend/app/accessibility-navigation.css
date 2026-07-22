@@ -58,14 +58,39 @@
   }
 
   .lx-skip-link,
+  .lx-app,
   .lx-app *,
   .lx-app *::before,
-  .lx-app *::after {
+  .lx-app *::after,
+  .lx-route-brand,
+  .lx-route-brand *,
+  .lx-route-brand *::before,
+  .lx-route-brand *::after,
+  .lx-route-nav,
+  .lx-route-nav *,
+  .lx-route-nav *::before,
+  .lx-route-nav *::after,
+  [data-accessible-dialog-portal="true"],
+  [data-accessible-dialog-portal="true"] *,
+  [data-accessible-dialog-portal="true"] *::before,
+  [data-accessible-dialog-portal="true"] *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-delay: 0ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0ms !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .lx-button:hover:not(:disabled),
+  .lx-mode-selector > button:hover,
+  .lx-source-selector > button:hover,
+  .lx-phrase-grid button:hover,
+  .lx-phrase-grid a:hover,
+  .lx-route-nav--header a:hover,
+  .lx-themed-home:hover .lx-themed-arrow,
+  .lx-themed-library:hover .lx-themed-arrow,
+  .lx-dictionary-result > button:hover,
+  .lx-dictionary-list a:hover,
+  .lx-dictionary-list a:focus-visible,
+  .lx-calendar-provider-grid > button:hover {
+    transform: none !important;
   }
 }
