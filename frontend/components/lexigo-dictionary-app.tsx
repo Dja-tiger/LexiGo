@@ -103,7 +103,7 @@ function navigationWithoutDetail(target: NavigationTarget): NavigationTarget {
 function FlameIcon() {
   return (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 22c4.1 0 7-2.8 7-6.7 0-3-1.7-5.3-4.7-8.1.1 2.2-.7 3.5-2 4.4.1-3.6-1.8-6.2-5-9.1.2 3.4-2.3 5.4-2.3 9.3C5 17.6 7.8 22 12 22Z" />
+      <path d="M12 22c4 0 7-2.9 7-7 0-3.2-1.8-5.8-4.5-8.4.1 2.4-.8 3.8-2 4.7.1-3.7-1.7-6.7-4.4-9.3.1 4.4-3.1 6.5-3.1 10.8C5 18 8 22 12 22Z" />
     </svg>
   );
 }
@@ -118,23 +118,20 @@ function BellIcon() {
 }
 
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
-  const [session, setSession] = useState<Session | null>(initialSession);
+  const session = initialSession;
   const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
   const [metadata, setMetadata] = useState<CatalogMetadata | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [metadataResourceStatus, setMetadataResourceStatus] = useState<ResourceStatus>(loadingResourceStatus);
   const [progress, setProgress] = useState<ProgressSummary | null>(null);
-  const [progressStatus, setProgressStatus] = useState<ResourceStatus>(loadingResourceStatus);
+  const [progressStatus, setProgressStatus] = useState<ResourceStatus>(() => (
+    initialSession ? loadingResourceStatus() : readyResourceStatus()
+  ));
   const mainContentRef = useRef<HTMLElement | null>(null);
 
   const adoptSession = useCallback((next: Session) => {
-    setSession((current) => current?.tokens.accessToken === next.tokens.accessToken ? current : next);
-    onSessionUpdated(next);
-  }, [onSessionUpdated]);
-
-  useEffect(() => {
-    setSession(initialSession);
-  }, [initialSession]);
+    if (initialSession?.tokens.accessToken !== next.tokens.accessToken) onSessionUpdated(next);
+  }, [initialSession?.tokens.accessToken, onSessionUpdated]);
 
   useEffect(() => {
     const syncNavigation = () => {
@@ -173,8 +170,11 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadMetadata(controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => void loadMetadata(controller.signal), 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [loadMetadata]);
 
   const loadProgress = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
@@ -198,14 +198,19 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   }, [adoptSession]);
 
   useEffect(() => {
-    if (!session) {
-      setProgress(null);
-      setProgressStatus(readyResourceStatus());
-      return;
-    }
     const controller = new AbortController();
-    void loadProgress(session, controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => {
+      if (!session) {
+        setProgress(null);
+        setProgressStatus(readyResourceStatus());
+        return;
+      }
+      void loadProgress(session, controller.signal);
+    }, 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [loadProgress, session]);
 
   const loadPage = useCallback(async (
