@@ -1,16 +1,15 @@
 name: Fix CI 1325
 
 on:
-  pull_request:
-    branches: [main]
-    types: [synchronize]
+  push:
+    branches:
+      - agent/issue-178-academic-technical-english
 
 permissions:
   contents: write
 
 jobs:
   fix:
-    if: github.event.pull_request.head.ref == 'agent/issue-178-academic-technical-english'
     runs-on:
       - self-hosted
       - linux
@@ -20,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: agent/issue-178-academic-technical-english
           fetch-depth: 0
       - name: Patch navigation and database contracts
         shell: bash
@@ -90,4 +89,4 @@ alter table lesson_sessions
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add frontend/lib/navigation.ts frontend/lib/navigation.test.ts backend/internal/platform/migrate/migrations/000014_academic_technical_english_lessons.up.sql
           git commit -m "fix(learning): align academic lesson contracts"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:agent/issue-178-academic-technical-english
