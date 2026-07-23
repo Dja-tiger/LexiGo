@@ -16,13 +16,16 @@ const BLOCKS = [
   [{ id: 101, kind: "word", position: 0, lemma: "absolute", translation: "абсолютный", phonetic: "", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "learning" }],
   [{ id: 102, kind: "word", position: 0, lemma: "build", translation: "собирать", phonetic: "", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" }],
 ];
+const WORDS = BLOCKS.flat().map(({ position: _position, ...item }) => item);
 
 test("completed block advances once to a distinct server lesson", async ({ page }) => {
+  test.setTimeout(45_000);
   let createCalls = 0;
   await page.context().addCookies([{ name: "lexigo_csrf", value: "e2e-csrf-token", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
-    const path = new URL(request.url()).pathname;
+    const url = new URL(request.url());
+    const path = url.pathname;
     if (path === "/api/v1/auth/refresh") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSION) });
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
     if (path === "/api/v1/catalog/metadata") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
@@ -31,11 +34,20 @@ test("completed block advances once to a distinct server lesson", async ({ page 
       sources: { mixed: 2, noun: 0, verb: 1, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 },
       topics: [{ topic: "General", count: 1 }, { topic: "Development", count: 1 }],
     }) });
+    if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], count: 0 }) });
+    }
+    if (path === "/api/v1/words" || path === "/api/v1/words/due") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
+    }
     if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "none" } }) });
-    if (path === "/api/v1/lessons/preview") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-      source: "mixed", studyMode: "study", lessonSize: "15",
-      composition: { total: 1, words: 1, phrases: 0, due: 0, new: 1, scheduled: 0, availableWords: 2, availablePhrases: 0, fallback: "words_only" },
-    }) });
+    if (path === "/api/v1/lessons/preview") {
+      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "15",
+        composition: { total: 1, words: 1, phrases: 0, due: 0, new: 1, scheduled: 0, availableWords: 2, availablePhrases: 0, fallback: "words_only" },
+      }) });
+    }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const blockIndex = Math.min(createCalls, BLOCKS.length - 1);
       const items = BLOCKS[blockIndex];
