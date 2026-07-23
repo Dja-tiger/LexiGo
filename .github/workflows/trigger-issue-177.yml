@@ -1,0 +1,39 @@
+name: Trigger issue 177 implementation
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  trigger:
+    if: github.event.pull_request.head.ref == 'agent/issue-177-next-lesson-progression'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Execute implementation script
+        shell: bash
+        run: |
+          if [ -f backend/internal/learning/lesson_progression.go ]; then
+            exit 0
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+
+          lines = Path('.github/workflows/apply-issue-177.yml').read_text().splitlines()
+          start = next(index for index, line in enumerate(lines) if line == '        run: |') + 1
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:]) + '\n'
+          Path('/tmp/apply-issue-177.sh').write_text(script)
+          PY
+          bash -euxo pipefail /tmp/apply-issue-177.sh
