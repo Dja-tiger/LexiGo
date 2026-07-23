@@ -1,5 +1,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+import { learningTermCopy } from "../lib/interface-copy";
+
 const SESSION = {
   user: {
     id: "00000000-0000-0000-0000-000000000063",
@@ -170,24 +172,31 @@ test.describe("compact mobile home priority", () => {
     await page.goto("/");
 
     const hero = page.locator(".lx-home-next-action .lx-hero-card");
+    const progressPanel = page.locator(".lx-home-next-action .lx-progress-panel");
     await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
     const pendingHero = await boundingBoxOrFail(hero);
+    const pendingProgressPanel = await boundingBoxOrFail(progressPanel);
+    const pendingDueRow = progressPanel.locator(".lx-progress-list > div").first();
+    await expect(pendingDueRow).toContainText(learningTermCopy("due").label);
+    await expect(pendingDueRow.getByText("—", { exact: true })).toBeVisible();
 
     const primaryCTA = page.getByRole("button", { name: "Повторить сейчас" });
     await expect(primaryCTA).toBeVisible();
     const readyHero = await boundingBoxOrFail(hero);
+    const readyProgressPanel = await boundingBoxOrFail(progressPanel);
     const ctaBox = await boundingBoxOrFail(primaryCTA);
 
     expect(Math.abs(readyHero.y - pendingHero.y)).toBeLessThanOrEqual(1);
     expect(Math.abs(readyHero.height - pendingHero.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs(readyProgressPanel.y - pendingProgressPanel.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(readyProgressPanel.height - pendingProgressPanel.height)).toBeLessThanOrEqual(1);
     expect(readyHero.height).toBeLessThanOrEqual(320);
     expect(ctaBox.y + ctaBox.height).toBeLessThan(844 - 82);
     await expect(page.locator(".lx-home-next-action .lx-hero-art")).toBeHidden();
 
-    const progressPanel = page.locator(".lx-home-next-action .lx-progress-panel");
     await expect(progressPanel).toContainText("7 из 30");
     const dueRow = progressPanel.locator(".lx-progress-list > div").first();
-    await expect(dueRow).toContainText("К повторению");
+    await expect(dueRow).toContainText(learningTermCopy("due").label);
     await expect(dueRow.getByText("12", { exact: true })).toBeVisible();
 
     for (const locator of [progressPanel.getByText("7 из 30", { exact: true }), dueRow]) {

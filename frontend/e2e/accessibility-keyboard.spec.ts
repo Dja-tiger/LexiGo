@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 
+import { learningTermCopy } from "../lib/interface-copy";
+
 const SESSION = {
   user: { id: "00000000-0000-0000-0000-000000000045", email: "keyboard@example.com", displayName: "Keyboard User", createdAt: "2026-01-01T00:00:00Z" },
   tokens: { accessToken: "keyboard-access-token", tokenType: "Bearer", expiresIn: 900 },
@@ -321,7 +323,7 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
 
   const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });
   const study = modeGroup.getByRole("radio", { name: /Простое изучение слов/ });
-  const recall = modeGroup.getByRole("radio", { name: /Вспомнить самому/ });
+  const recall = modeGroup.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) });
   await expect(study).toHaveAttribute("aria-checked", "true");
   await study.focus();
   await study.press("ArrowDown");
