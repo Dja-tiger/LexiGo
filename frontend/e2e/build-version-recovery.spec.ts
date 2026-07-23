@@ -7,11 +7,32 @@ import {
 } from "../lib/build-version-guard";
 import { installQualityGateAPI } from "./support/quality-gates";
 
-function captureRuntimeFailures(page: Page): string[] {
+const EXPECTED_WEBKIT_GUARD_ABORT =
+  /^\/127\.0\.0\.1:\d+\/api\/v1\/\S+ due to access control checks\.$/;
+
+function shouldIgnoreRuntimePageError(message: string, guardRecoveryActive: boolean): boolean {
+  return guardRecoveryActive && EXPECTED_WEBKIT_GUARD_ABORT.test(message);
+}
+
+function captureRuntimeFailures(page: Page): {
+  failures: string[];
+  setGuardRecoveryActive: (active: boolean) => void;
+} {
   const failures: string[] = [];
+  let guardRecoveryActive = false;
+
   page.on("crash", () => failures.push("pagecrash: browser renderer terminated"));
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-  return failures;
+  page.on("pageerror", (error) => {
+    if (shouldIgnoreRuntimePageError(error.message, guardRecoveryActive)) return;
+    failures.push(`pageerror: ${error.message}`);
+  });
+
+  return {
+    failures,
+    setGuardRecoveryActive(active) {
+      guardRecoveryActive = active;
+    },
+  };
 }
 
 async function tolerateGuardNavigation(operation: Promise<unknown>): Promise<void> {
@@ -25,9 +46,21 @@ async function tolerateGuardNavigation(operation: Promise<unknown>): Promise<voi
 
 test.describe.configure({ timeout: 45_000 });
 
+test("runtime error filtering is limited to guarded WebKit API cancellations", () => {
+  const expectedAbort = "/127.0.0.1:3000/api/v1/auth/refresh due to access control checks.";
+
+  expect(shouldIgnoreRuntimePageError(expectedAbort, true)).toBe(true);
+  expect(shouldIgnoreRuntimePageError(expectedAbort, false)).toBe(false);
+  expect(shouldIgnoreRuntimePageError(
+    "/127.0.0.1:3000/not-api/v1/auth/refresh due to access control checks.",
+    true,
+  )).toBe(false);
+  expect(shouldIgnoreRuntimePageError("Unexpected application error", true)).toBe(false);
+});
+
 test("an existing browser context recovers an old build marker without losing its route", async ({ context, page }) => {
   await installQualityGateAPI(context);
-  const failures = captureRuntimeFailures(page);
+  const runtimeFailures = captureRuntimeFailures(page);
   const route = "/dictionary?source=mixed#catalog";
   await page.goto(route, { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
@@ -44,6 +77,7 @@ test("an existing browser context recovers an old build marker without losing it
     );
   }, { markerKey: BUILD_MARKER_STORAGE_KEY });
 
+  runtimeFailures.setGuardRecoveryActive(true);
   await tolerateGuardNavigation(page.reload({ waitUntil: "domcontentloaded" }));
   await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible({ timeout: 20_000 });
 
@@ -65,5 +99,7 @@ test("an existing browser context recovers an old build marker without losing it
   expect(finalURL.searchParams.has(BUILD_CACHE_BUSTER_QUERY)).toBe(false);
   expect(finalURL.hash).toBe("#catalog");
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-build", currentBuild ?? "");
-  expect(failures).toEqual([]);
+
+  runtimeFailures.setGuardRecoveryActive(false);
+  expect(runtimeFailures.failures).toEqual([]);
 });
