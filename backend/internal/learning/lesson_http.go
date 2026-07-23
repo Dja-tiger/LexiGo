@@ -241,7 +241,7 @@ func lessonVersionFromIfMatch(value string) (int64, string) {
 
 func validLessonSource(value string) bool {
 	switch value {
-	case "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend":
+	case "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend", "academic-technical-english":
 		return true
 	default:
 		return false

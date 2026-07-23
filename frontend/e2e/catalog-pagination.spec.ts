@@ -45,7 +45,7 @@ async function installAPI(context: BrowserContext, requestedLimits: number[]) {
     if (path === "/api/v1/catalog/metadata") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       catalogVersion: "sha256:catalog-performance", updatedAt: "2026-07-19T00:00:00Z",
       totals: { items: 1000, words: 0, phrases: 1000 },
-      sources: { mixed: 1000, noun: 0, verb: 0, adjective: 0, phrases: 1000, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 },
+      sources: { mixed: 1000, noun: 0, verb: 0, adjective: 0, phrases: 1000, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 , academicTechnicalEnglish: 0},
       topics: [{ topic: "Performance", count: 500, words: 0, phrases: 500 }, { topic: "Reliability", count: 500, words: 0, phrases: 500 }],
     }) });
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });

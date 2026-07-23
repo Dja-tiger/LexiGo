@@ -55,7 +55,7 @@ const METADATA = {
   catalogVersion: "sha256:dictionary-catalog-e2e",
   updatedAt: "2026-07-19T00:00:00Z",
   totals: { items: 60, words: 60, phrases: 0 },
-  sources: { mixed: 60, noun: 1, verb: 0, adjective: 0, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 60 },
+  sources: { mixed: 60, noun: 1, verb: 0, adjective: 0, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 60, academicTechnicalEnglish: 0 },
   topics: [{ topic: "Backend Development", count: 60, words: 60, phrases: 0 }],
 };
 

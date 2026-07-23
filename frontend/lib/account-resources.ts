@@ -26,6 +26,7 @@ const LESSON_SOURCES = new Set([
   "travel",
   "data-engineering",
   "backend",
+  "academic-technical-english",
 ]);
 const STUDY_MODES = new Set(["study", "recall", "choice"]);
 

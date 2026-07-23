@@ -79,7 +79,7 @@ describe("product navigation", () => {
   });
 
   it("parses all themed vocabulary collections", () => {
-    for (const source of ["daily-life", "travel", "data-engineering", "backend"] as const) {
+    for (const source of ["daily-life", "travel", "data-engineering", "backend", "academic-technical-english"] as const) {
       expect(parseNavigation(`?source=${source}`, "/learn")).toEqual({ view: "learn", source });
       expect(navigationURL({ view: "learn", source })).toBe(`/learn?source=${source}`);
     }
@@ -141,6 +141,7 @@ describe("standalone navigation persistence", () => {
     ["travel", "/learn?source=travel"],
     ["data-engineering", "/learn?source=data-engineering"],
     ["backend", "/learn?source=backend"],
+    ["academic-technical-english", "/learn?source=academic-technical-english"],
   ] as const)("restores the versioned %s dictionary source", (source, expectedURL) => {
     const target = parseStoredNavigation(serializeStoredNavigation({ view: "learn", source }));
     expect(target).toEqual({ view: "learn", source });

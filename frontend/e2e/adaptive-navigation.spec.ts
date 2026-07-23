@@ -106,7 +106,7 @@ const METADATA = {
     dailyLife: 4,
     travel: 4,
     dataEngineering: 4,
-    backend: 4,
+    backend: 4, academicTechnicalEnglish: 0,
   },
   topics: [
     { topic: "Responsive UI", count: 22 },

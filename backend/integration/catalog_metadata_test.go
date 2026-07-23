@@ -27,15 +27,16 @@ type catalogMetadataTotals struct {
 }
 
 type catalogMetadataSources struct {
-	Mixed           int `json:"mixed"`
-	Noun            int `json:"noun"`
-	Verb            int `json:"verb"`
-	Adjective       int `json:"adjective"`
-	Phrases         int `json:"phrases"`
-	DailyLife       int `json:"dailyLife"`
-	Travel          int `json:"travel"`
-	DataEngineering int `json:"dataEngineering"`
-	Backend         int `json:"backend"`
+	Mixed                    int `json:"mixed"`
+	Noun                     int `json:"noun"`
+	Verb                     int `json:"verb"`
+	Adjective                int `json:"adjective"`
+	Phrases                  int `json:"phrases"`
+	DailyLife                int `json:"dailyLife"`
+	Travel                   int `json:"travel"`
+	DataEngineering          int `json:"dataEngineering"`
+	Backend                  int `json:"backend"`
+	AcademicTechnicalEnglish int `json:"academicTechnicalEnglish"`
 }
 
 type catalogMetadataTopic struct {
@@ -83,9 +84,10 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 		       count(*) filter (where kind = 'word' and topic = 'Daily Life')::int,
 		       count(*) filter (where kind = 'word' and topic = 'Travel')::int,
 		       count(*) filter (where kind = 'word' and topic = 'Data Engineering')::int,
-		       count(*) filter (where kind = 'word' and topic = 'Backend Development')::int
+		       count(*) filter (where kind = 'word' and topic = 'Backend Development')::int,
+		       count(*) filter (where kind = 'word' and source = $1)::int
 		from words
-	`).Scan(
+	`, catalog.Source).Scan(
 		&expectedTotals.Items,
 		&expectedTotals.Words,
 		&expectedTotals.Phrases,
@@ -96,6 +98,7 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 		&expectedSources.Travel,
 		&expectedSources.DataEngineering,
 		&expectedSources.Backend,
+		&expectedSources.AcademicTechnicalEnglish,
 	); err != nil {
 		t.Fatalf("query expected catalog metadata: %v", err)
 	}
@@ -155,6 +158,9 @@ func TestCatalogMetadataIsPublicCacheableAndTracksCatalogChanges(t *testing.T) {
 	}
 	if first.Sources != expectedSources {
 		t.Fatalf("catalog source totals = %+v, want %+v", first.Sources, expectedSources)
+	}
+	if first.Sources.AcademicTechnicalEnglish != catalog.ExpectedCount {
+		t.Fatalf("academic source count = %d, want %d", first.Sources.AcademicTechnicalEnglish, catalog.ExpectedCount)
 	}
 	if first.Totals.Words != catalog.ExpectedCount || first.Totals.Items != first.Totals.Words+first.Totals.Phrases {
 		t.Fatalf("unexpected totals: %+v", first.Totals)

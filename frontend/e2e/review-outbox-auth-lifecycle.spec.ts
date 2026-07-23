@@ -95,7 +95,7 @@ async function installAPI(context: BrowserContext, state: ServerState) {
           dailyLife: 0,
           travel: 0,
           dataEngineering: 0,
-          backend: 1,
+          backend: 1, academicTechnicalEnglish: 0,
         },
         topics: [{ topic: "Reliability", count: 1 }],
       });

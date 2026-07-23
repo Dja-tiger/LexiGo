@@ -7,7 +7,8 @@ export type CatalogSource =
   | "daily-life"
   | "travel"
   | "data-engineering"
-  | "backend";
+  | "backend"
+  | "academic-technical-english";
 
 export type CatalogMetadata = {
   catalogVersion: string;
@@ -23,6 +24,7 @@ export type CatalogMetadata = {
     travel: number;
     dataEngineering: number;
     backend: number;
+    academicTechnicalEnglish: number;
   };
   topics: Array<{ topic: string; count: number; words?: number; phrases?: number }>;
 };
@@ -32,6 +34,7 @@ export type CatalogMetadataStatus = "loading" | "ready" | "error";
 export function catalogSourceCount(metadata: CatalogMetadata, source: CatalogSource): number {
   if (source === "daily-life") return metadata.sources.dailyLife;
   if (source === "data-engineering") return metadata.sources.dataEngineering;
+  if (source === "academic-technical-english") return metadata.sources.academicTechnicalEnglish;
   return metadata.sources[source];
 }
 
@@ -86,6 +89,7 @@ export function isCatalogMetadataPayload(value: unknown): value is CatalogMetada
     "travel",
     "dataEngineering",
     "backend",
+    "academicTechnicalEnglish",
   ];
   if (!sourceKeys.every((key) => isNonNegativeInteger(sources[key]))) return false;
   return topics.every((entry) => isRecord(entry)

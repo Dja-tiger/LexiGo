@@ -80,7 +80,7 @@ const METADATA = {
     dailyLife: 0,
     travel: 0,
     dataEngineering: 0,
-    backend: 0,
+    backend: 0, academicTechnicalEnglish: 0,
   },
   topics: [{ topic: "Mobile UX", count: 1, words: 1, phrases: 0 }],
 };

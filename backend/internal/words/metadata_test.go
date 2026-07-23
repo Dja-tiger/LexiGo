@@ -12,7 +12,7 @@ func TestCatalogMetadataVersionIsStableAndContentSensitive(t *testing.T) {
 		Totals:    CatalogTotals{Items: 10, Words: 8, Phrases: 2},
 		Sources: CatalogSourceTotals{
 			Mixed: 10, Noun: 3, Verb: 2, Adjective: 2, Phrases: 2,
-			DailyLife: 1, Travel: 1, DataEngineering: 1, Backend: 1,
+			DailyLife: 1, Travel: 1, DataEngineering: 1, Backend: 1, AcademicTechnicalEnglish: 2,
 		},
 		Topics: []CatalogTopicTotal{{Topic: "Backend Development", Count: 1}, {Topic: "Data Engineering", Count: 2}},
 	}
@@ -27,6 +27,12 @@ func TestCatalogMetadataVersionIsStableAndContentSensitive(t *testing.T) {
 	changedCount.Totals.Items++
 	if catalogMetadataVersion(changedCount) == first {
 		t.Fatal("catalog version did not change after totals changed")
+	}
+
+	changedAcademic := metadata
+	changedAcademic.Sources.AcademicTechnicalEnglish++
+	if catalogMetadataVersion(changedAcademic) == first {
+		t.Fatal("catalog version did not change after academic source total changed")
 	}
 
 	changedTopic := metadata

@@ -18,7 +18,7 @@ async function installCatalogMock(page: Page) {
           dailyLife: 100,
           travel: 100,
           dataEngineering: 100,
-          backend: 100,
+          backend: 100, academicTechnicalEnglish: 0,
         },
         topics: [],
       }),

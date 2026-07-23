@@ -49,7 +49,7 @@ const METADATA = {
     dailyLife: 3,
     travel: 3,
     dataEngineering: 3,
-    backend: 3,
+    backend: 3, academicTechnicalEnglish: 0,
   },
   topics: [],
 };

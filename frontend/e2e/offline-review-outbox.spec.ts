@@ -70,7 +70,7 @@ async function installReviewServer(context: BrowserContext, state: ReviewServer)
       catalogVersion: "sha256:offline-e2e",
       updatedAt: "2026-07-19T00:00:00Z",
       totals: { items: 1, words: 1, phrases: 0 },
-      sources: { mixed: 1, noun: 0, verb: 0, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 1, backend: 0 },
+      sources: { mixed: 1, noun: 0, verb: 0, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 1, backend: 0 , academicTechnicalEnglish: 0},
       topics: [{ topic: "Data", count: 1 }],
     });
     if (path === "/api/v1/progress") return json(route, 200, progress(state.logicalEvents));

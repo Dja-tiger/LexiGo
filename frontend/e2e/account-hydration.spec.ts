@@ -63,7 +63,7 @@ const METADATA = {
     dailyLife: 10,
     travel: 10,
     dataEngineering: 10,
-    backend: 10,
+    backend: 10, academicTechnicalEnglish: 0,
   },
   topics: [{ topic: "Reliability", count: 1 }],
 };
