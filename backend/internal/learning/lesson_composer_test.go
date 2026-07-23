@@ -87,3 +87,28 @@ func TestComposeEmptyLessonReportsEmptyFallback(t *testing.T) {
 		t.Fatalf("unexpected empty composition: %+v", composition)
 	}
 }
+
+func TestExcludeLessonCandidatesPreservesQueueOrderAndMetadata(t *testing.T) {
+	now := time.Date(2026, 7, 23, 9, 0, 0, 0, time.UTC)
+	candidates := []lessonCandidate{
+		{WordID: 10, Kind: "word", Status: "learning", DueAt: now, Due: true},
+		{WordID: 11, Kind: "phrase", Status: "new", DueAt: now.Add(time.Hour)},
+		{WordID: 12, Kind: "word", Status: "review", DueAt: now.Add(2 * time.Hour)},
+	}
+
+	filtered := excludeLessonCandidates(candidates, map[int64]struct{}{10: {}, 12: {}})
+	if len(filtered) != 1 {
+		t.Fatalf("filtered candidates = %d, want 1", len(filtered))
+	}
+	if !reflect.DeepEqual(filtered[0], candidates[1]) {
+		t.Fatalf("filtered candidate = %+v, want %+v", filtered[0], candidates[1])
+	}
+}
+
+func TestExcludeLessonCandidatesWithoutPreviousLessonReturnsOriginalQueue(t *testing.T) {
+	candidates := []lessonCandidate{{WordID: 1}, {WordID: 2}}
+	filtered := excludeLessonCandidates(candidates, nil)
+	if len(filtered) != 2 || &filtered[0] != &candidates[0] {
+		t.Fatal("queue without exclusions should be returned unchanged")
+	}
+}

@@ -56,6 +56,10 @@ func queryLessonCandidates(
 	studyMode AnswerMode,
 	topic string,
 ) ([]lessonCandidate, error) {
+	excludedWordIDs, err := recentCompletedLessonWordIDs(ctx, tx, userID, source, studyMode)
+	if err != nil {
+		return nil, err
+	}
 	dueOnly := studyMode == AnswerModeRecall || studyMode == AnswerModeChoice
 	rows, err := tx.Query(ctx, `
 		select word.id,
@@ -97,7 +101,65 @@ func queryLessonCandidates(
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate lesson candidates: %w", err)
 	}
-	return candidates, nil
+	return excludeLessonCandidates(candidates, excludedWordIDs), nil
+}
+
+const immediateLessonContinuationWindow = 30 * time.Minute
+
+func recentCompletedLessonWordIDs(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	source string,
+	studyMode AnswerMode,
+) (map[int64]struct{}, error) {
+	rows, err := tx.Query(ctx, `
+		with latest_completed as (
+			select id
+			from lesson_sessions
+			where user_id = $1::uuid
+			  and status = 'completed'
+			  and source = $2
+			  and study_mode = $3
+			  and completed_at >= now() - ($4::bigint * interval '1 second')
+			order by completed_at desc, id desc
+			limit 1
+		)
+		select item.word_id
+		from latest_completed completed
+		join lesson_session_items item on item.session_id = completed.id
+	`, userID, source, studyMode, int64(immediateLessonContinuationWindow/time.Second))
+	if err != nil {
+		return nil, fmt.Errorf("query recent completed lesson items: %w", err)
+	}
+	defer rows.Close()
+
+	excluded := make(map[int64]struct{})
+	for rows.Next() {
+		var wordID int64
+		if err := rows.Scan(&wordID); err != nil {
+			return nil, fmt.Errorf("scan recent completed lesson item: %w", err)
+		}
+		excluded[wordID] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate recent completed lesson items: %w", err)
+	}
+	return excluded, nil
+}
+
+func excludeLessonCandidates(candidates []lessonCandidate, excluded map[int64]struct{}) []lessonCandidate {
+	if len(excluded) == 0 {
+		return candidates
+	}
+	filtered := make([]lessonCandidate, 0, len(candidates))
+	for _, candidate := range candidates {
+		if _, found := excluded[candidate.WordID]; found {
+			continue
+		}
+		filtered = append(filtered, candidate)
+	}
+	return filtered
 }
 
 func composeLessonCandidates(candidates []lessonCandidate, source string, limit int) ([]lessonCandidate, LessonComposition) {

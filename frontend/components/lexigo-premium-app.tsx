@@ -733,6 +733,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [previewingLesson, setPreviewingLesson] = useState(false);
   const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
+  const lessonCreateInFlightRef = useRef(false);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
   const navigationRef = useRef(navigation);
@@ -1593,6 +1594,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
   }
 
   async function startLesson(activeSession = session, overrides: StartOverrides = {}) {
+    if (lessonCreateInFlightRef.current) return;
     const resolvedSource = overrides.source ?? source;
     const resolvedSize = overrides.size ?? lessonSize;
     const resolvedMode = overrides.mode ?? studyMode;
@@ -1611,6 +1613,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
       return;
     }
 
+    lessonCreateInFlightRef.current = true;
     setBusy(true);
     setError("");
     setLessonQueueNotice("");
@@ -1662,6 +1665,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось сформировать учебный блок");
     } finally {
+      lessonCreateInFlightRef.current = false;
       setBusy(false);
     }
   }
