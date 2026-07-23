@@ -56,14 +56,32 @@ jobs:
       - name: Production build
         run: cd frontend && bash ../scripts/ci/frontend-container.sh exec npm run build
 
-      - name: Focused browser regression tests
-        run: >-
-          cd frontend && bash ../scripts/ci/frontend-container.sh exec
-          npx playwright test
-          e2e/accessibility-keyboard.spec.ts
-          e2e/mobile-home-priority.spec.ts
-          --project=desktop-chromium
-          --project=desktop-webkit
+      - id: focused-browser
+        name: Focused browser regression tests
+        run: |
+          cd frontend
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -o pipefail
+          npx playwright test \
+            e2e/accessibility-keyboard.spec.ts \
+            e2e/mobile-home-priority.spec.ts \
+            --project=desktop-chromium \
+            --project=desktop-webkit \
+            --reporter=line 2>&1 | tee issue-66-focused-browser.log
+          CONTAINER_SCRIPT
+
+      - name: Extract focused browser diagnostics
+        if: failure() && steps.focused-browser.outcome == 'failure'
+        run: cd frontend && bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload focused browser diagnostics
+        if: failure() && steps.focused-browser.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-66-shared-copy-browser-${{ github.sha }}
+          path: frontend/ci-artifacts
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Cleanup isolated frontend workspace
         if: always()
@@ -72,6 +90,7 @@ jobs:
       - name: Verify focused diff
         run: |
           set -Eeuo pipefail
+          rm -rf frontend/ci-artifacts
           git diff --check
           changed="$(git status --short | awk '{print $2}')"
           unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(frontend/e2e/accessibility-keyboard\.spec\.ts|frontend/e2e/mobile-home-priority\.spec\.ts|scripts/apply_issue_66_shared_copy_test_fix\.py|\.github/workflows/issue-66-shared-copy-test-fix\.yml)$' || true)"
