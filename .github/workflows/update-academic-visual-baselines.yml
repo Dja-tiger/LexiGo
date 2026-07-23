@@ -1,5 +1,6 @@
 name: Update academic lesson visual baselines
 
+# One-shot branch workflow. Removed after the three reviewed baselines are committed.
 on:
   push:
     branches:
