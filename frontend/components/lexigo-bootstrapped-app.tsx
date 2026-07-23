@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -23,10 +22,15 @@ const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
 
 type SessionScreenReason = "required" | "expired" | "forbidden";
+type RouteGraph = "dictionary" | "product";
 
 type AccountNotice = {
   title: string;
   message: string;
+};
+
+type LexigoBootstrappedAppProps = {
+  pathname: string;
 };
 
 function ProductShellLoading() {
@@ -74,13 +78,15 @@ function isDictionaryRoute(pathname: string): boolean {
   return pathname === "/dictionary" || pathname.startsWith("/words/");
 }
 
-export function LexigoBootstrappedApp() {
-  const pathname = usePathname();
+export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
   const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
+  const [routeGraph, setRouteGraph] = useState<RouteGraph>(() => (
+    isDictionaryRoute(pathname) ? "dictionary" : "product"
+  ));
 
   const retryRestore = useCallback(() => {
     setInitialSession(undefined);
@@ -179,6 +185,14 @@ export function LexigoBootstrappedApp() {
     return () => window.removeEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
   }, []);
 
+  useEffect(() => {
+    const preserveLoadedProductGraph = () => {
+      if (!isDictionaryRoute(window.location.pathname)) setRouteGraph("product");
+    };
+    window.addEventListener("popstate", preserveLoadedProductGraph);
+    return () => window.removeEventListener("popstate", preserveLoadedProductGraph);
+  }, []);
+
   if (initialSession === undefined) {
     if (restoreRecoverable && notice) {
       return (
@@ -203,7 +217,8 @@ export function LexigoBootstrappedApp() {
     );
   }
 
-  const routeKey = `${initialSession?.user.id ?? "guest"}:${isDictionaryRoute(pathname) ? "dictionary" : "product"}`;
+  const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
+  const routeKey = initialSession?.user.id ?? "guest";
 
   return (
     <>
@@ -226,7 +241,7 @@ export function LexigoBootstrappedApp() {
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      {isDictionaryRoute(pathname) ? (
+      {useDictionaryIsland ? (
         <LexigoDictionaryApp
           key={routeKey}
           initialSession={initialSession}
