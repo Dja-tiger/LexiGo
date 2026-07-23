@@ -139,7 +139,8 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 test.describe("Adaptive Knowledge Coach application shell and Home", () => {
-  test("uses a persistent desktop rail and one dominant Home action", async ({ page }) => {
+  test("uses a persistent desktop rail and one dominant Home action", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop geometry is deterministic in Chromium; cross-browser shell coverage lives in adaptive-navigation.spec.ts.");
     await page.setViewportSize({ width: 1440, height: 1024 });
     await page.emulateMedia({ colorScheme: "light" });
     await installAPI(page);
@@ -177,7 +178,8 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("uses edge-to-edge mobile navigation and reflows at 200% text size", async ({ page }) => {
+  test("uses edge-to-edge mobile navigation and reflows at 200% text size", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "android-chromium", "Mobile Home geometry is asserted once; iOS and cross-browser navigation remain covered by adaptive-navigation.spec.ts.");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: "dark" });
     await installAPI(page);
@@ -210,7 +212,8 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("removes optional motion when reduced motion is requested", async ({ page }) => {
+  test("removes optional motion when reduced motion is requested", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Reduced-motion style ownership is asserted once; accessibility audits cover the full project matrix.");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
     await installAPI(page);
