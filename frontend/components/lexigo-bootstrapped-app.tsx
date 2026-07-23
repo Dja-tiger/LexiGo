@@ -5,12 +5,16 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   isDefinitiveSessionRefreshError,
-  restoreSession,
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
+import {
+  adoptBootstrappedSession,
+  invalidateBootstrappedSession,
+  restoreBootstrappedSession,
+} from "../lib/session-bootstrap";
 import { subscribeToSessionResume } from "../lib/session-resume";
 import { AccountDataPanel } from "./account-data-panel";
 import { AccountEmailPanel } from "./account-email-panel";
@@ -88,7 +92,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     isDictionaryRoute(pathname) ? "dictionary" : "product"
   ));
 
+  const handleSessionUpdated = useCallback((nextSession: Session) => {
+    adoptBootstrappedSession(nextSession);
+    setInitialSession(nextSession);
+  }, []);
+
   const retryRestore = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(undefined);
     setNotice(null);
     setAccountNotice(null);
@@ -97,6 +107,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   const handleAccountDeleted = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -108,6 +119,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   const handleEmailChanged = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -123,7 +135,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
     async function preflightSession() {
       try {
-        const restored = await restoreSession();
+        const restored = await restoreBootstrappedSession();
         if (cancelled) return;
         if (restored === null && window.location.pathname.startsWith("/lesson/")) {
           moveToSessionScreen("required");
@@ -137,6 +149,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
         setNotice(problem);
 
         if (isDefinitiveSessionRefreshError(requestError)) {
+          invalidateBootstrappedSession();
           setInitialSession(null);
           setRestoreRecoverable(false);
           if (requestError instanceof SessionRefreshError) {
@@ -245,7 +258,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
         <LexigoDictionaryApp
           key={routeKey}
           initialSession={initialSession}
-          onSessionUpdated={setInitialSession}
+          onSessionUpdated={handleSessionUpdated}
         />
       ) : (
         <LexigoPremiumApp
@@ -258,7 +271,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
           <AccountSecurityPanel
             session={initialSession}
             onSessionExpired={retryRestore}
-            onSessionUpdated={setInitialSession}
+            onSessionUpdated={handleSessionUpdated}
           />
           <AccountEmailPanel session={initialSession} onSessionExpired={retryRestore} />
           <AccountDataPanel
