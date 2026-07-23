@@ -5,10 +5,6 @@ import {
   installQualityGateAPI,
 } from "./support/quality-gates";
 
-function visibleNavigation(page: Parameters<typeof test>[0] extends never ? never : never) {
-  return page;
-}
-
 test("dictionary route island keeps one session bootstrap across route transitions", async ({ context, page }) => {
   await installQualityGateAPI(context);
   const runtimeErrors = captureRuntimeErrors(page);
