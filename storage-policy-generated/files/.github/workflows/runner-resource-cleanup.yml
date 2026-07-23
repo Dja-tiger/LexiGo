@@ -1,0 +1,79 @@
+name: Runner resource cleanup
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Preview candidates or remove them"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - apply
+      retention_hours:
+        description: "Minimum resource age before cleanup"
+        required: true
+        default: 24
+        type: number
+      build_cache_retention_hours:
+        description: "Minimum Buildx/BuildKit cache age before cleanup"
+        required: true
+        default: 168
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lexigo-runner-resource-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Safely clean LexiGo runner resources
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
+    env:
+      CLEANUP_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'apply' }}
+      RETENTION_HOURS: ${{ github.event_name == 'workflow_dispatch' && inputs.retention_hours || 24 }}
+      BUILD_CACHE_RETENTION_HOURS: ${{ github.event_name == 'workflow_dispatch' && inputs.build_cache_retention_hours || 168 }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Test cleanup planner
+        run: python3 scripts/ci/runner_resource_cleanup_test.py
+
+      - name: Inventory and clean expired resources
+        id: cleanup
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          args=(
+            --repository "$GITHUB_REPOSITORY"
+            --retention-hours "$RETENTION_HOURS"
+            --build-cache-retention-hours "$BUILD_CACHE_RETENTION_HOURS"
+            --summary-file "$RUNNER_TEMP/lexigo-runner-cleanup.json"
+          )
+          if [ "$CLEANUP_MODE" = "dry-run" ]; then
+            args+=(--dry-run)
+          fi
+          python3 scripts/ci/runner_resource_cleanup.py "${args[@]}"
+
+      - name: Upload machine-readable cleanup summary
+        if: always() && steps.cleanup.outcome != 'skipped'
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: runner-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lexigo-runner-cleanup.json
+          if-no-files-found: error
+          retention-days: 3

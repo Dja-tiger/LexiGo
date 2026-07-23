@@ -1,0 +1,157 @@
+name: Deploy Stage
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+concurrency:
+  group: deploy-stage
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read
+  issues: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 40
+    environment: stage
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-stage-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BUILD_ID: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Verify Cloudflare API token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          response="$(curl --fail --silent --show-error -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          RESPONSE="$response" python3 - <<'PY'
+          import json
+          import os
+          payload = json.loads(os.environ["RESPONSE"])
+          if payload.get("success") is not True or payload.get("result", {}).get("status") != "active":
+              raise SystemExit("Cloudflare API token is not active")
+          PY
+
+      - name: Deploy stage
+        id: deploy
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_USER: ${{ github.repository_owner }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/deploy-over-ssh.sh stage "$IMAGE_TAG"
+
+      - name: Verify public stage endpoints
+        id: public_smoke
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" report-only 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+
+      - name: Prepare public browser workspace
+        run: bash scripts/ci/frontend-container.sh prepare
+
+      - name: Install public browser dependencies
+        run: bash scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Verify public stage UI
+        id: public_browser
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          EXPECTED_CSP_MODE: report-only
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          bash scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT' 2>&1 | tee -a "$RUNNER_TEMP/lexigo-stage-deploy.log"
+          set -o pipefail
+          npm exec playwright test -- --config=playwright.public.config.ts
+          CONTAINER_SCRIPT
+
+      - name: Extract public browser diagnostics
+        if: failure()
+        run: bash scripts/ci/frontend-container.sh extract
+
+      - name: Upload public browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: stage-public-browser-diagnostics
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Report stage deployment
+        if: always()
+        uses: actions/github-script@v9
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+          IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.run_id }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}
+          PUBLIC_BROWSER_OUTCOME: ${{ steps.public_browser.outcome }}
+          DEPLOY_LOG: ${{ runner.temp }}/lexigo-stage-deploy.log
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.existsSync(process.env.DEPLOY_LOG)
+              ? fs.readFileSync(process.env.DEPLOY_LOG, 'utf8').slice(-14000)
+              : 'deploy log was not created';
+            const body = [
+              '# LexiGo current deployment status',
+              '',
+              `## Stage: **${process.env.DEPLOY_STATUS}**`,
+              `- image SHA: \`${process.env.IMAGE_SHA}\``,
+              `- run_id: \`${process.env.RUN_ID}\``,
+              `- deploy: \`${process.env.DEPLOY_OUTCOME}\``,
+              `- public smoke: \`${process.env.PUBLIC_SMOKE_OUTCOME}\``,
+              `- public browser: \`${process.env.PUBLIC_BROWSER_OUTCOME}\``,
+              '',
+              '```text',
+              log,
+              '```'
+            ].join('\n');
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 12,
+              body
+            });
+
+      - name: Cleanup public browser workspace
+        if: always()
+        run: bash scripts/ci/frontend-container.sh cleanup
+
+      - name: Cleanup deployment log
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/lexigo-stage-deploy.log"

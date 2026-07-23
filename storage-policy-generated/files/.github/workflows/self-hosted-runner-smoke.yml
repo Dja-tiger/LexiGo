@@ -1,0 +1,371 @@
+name: Self-hosted runner smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-hosted-runner-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Selectel runner smoke (${{ matrix.slot }})
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        slot: [1, 2, 3]
+    env:
+      SMOKE_SLOT: ${{ matrix.slot }}
+      BARRIER_DIR: /tmp/lexigo-runner-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+      POSTGRES_CONTAINER: lexigo-runner-smoke-postgres-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.slot }}
+      REDIS_CONTAINER: lexigo-runner-smoke-redis-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.slot }}
+      CI_LEASE_CONTAINER: lexigo-runner-smoke-lease-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.slot }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Verify host
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          test "$(id -un)" = "github-runner"
+          test "$(uname -m)" = "x86_64"
+
+          docker version
+          docker compose version
+
+          printf '\n=== RUNNER ===\n'
+          printf 'name=%s slot=%s\n' "$RUNNER_NAME" "$SMOKE_SLOT"
+
+          printf '\n=== CPU ===\n'
+          nproc
+
+          printf '\n=== MEMORY ===\n'
+          free -h
+
+          printf '\n=== DISK ===\n'
+          df -h /
+
+      - name: Require three distinct concurrent runners
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          install -d -m 0755 "$BARRIER_DIR"
+
+          marker="$BARRIER_DIR/ready-${SMOKE_SLOT}"
+          marker_tmp="${marker}.tmp.$$"
+          printf '%s\n' "$RUNNER_NAME" > "$marker_tmp"
+          mv -f -- "$marker_tmp" "$marker"
+
+          for attempt in $(seq 1 300); do
+            ready_count="$(find "$BARRIER_DIR" -maxdepth 1 -type f -name 'ready-[123]' | wc -l)"
+
+            if [ "$ready_count" -eq 3 ]; then
+              unique_runner_count="$({
+                cat "$BARRIER_DIR"/ready-1 \
+                    "$BARRIER_DIR"/ready-2 \
+                    "$BARRIER_DIR"/ready-3
+              } | sort -u | wc -l)"
+
+              if [ "$unique_runner_count" -eq 3 ]; then
+                printf 'Three distinct runners reached the barrier concurrently:\n'
+                for ready_marker in "$BARRIER_DIR"/ready-1 "$BARRIER_DIR"/ready-2 "$BARRIER_DIR"/ready-3; do
+                  printf '%s=%s\n' \
+                    "$(basename "$ready_marker")" \
+                    "$(cat "$ready_marker")"
+                done
+                exit 0
+              fi
+            fi
+
+            sleep 1
+          done
+
+          printf 'Expected 3 distinct concurrent runners, observed:\n' >&2
+          find "$BARRIER_DIR" -maxdepth 1 -type f -name 'ready-*' -print -exec cat {} \; >&2 || true
+          exit 1
+
+      - name: Verify Docker services and port isolation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          docker rm --force \
+            "$POSTGRES_CONTAINER" \
+            "$REDIS_CONTAINER" \
+            "$CI_LEASE_CONTAINER" \
+            >/dev/null 2>&1 || true
+
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --label "com.lexigo.ci.slot=${SMOKE_SLOT}" \
+            --entrypoint sleep \
+            redis:8.0-alpine \
+            1200 >/dev/null
+
+          docker run --detach --rm \
+            --name "$POSTGRES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
+            --label "com.lexigo.ci.slot=${SMOKE_SLOT}" \
+            --env POSTGRES_DB=lexigo_test \
+            --env POSTGRES_USER=lexigo \
+            --env POSTGRES_PASSWORD=lexigo_test \
+            --health-cmd='pg_isready -U lexigo -d lexigo_test' \
+            --health-interval=2s \
+            --health-timeout=3s \
+            --health-retries=30 \
+            --publish 127.0.0.1::5432 \
+            postgres:18.4-alpine
+
+          docker run --detach --rm \
+            --name "$REDIS_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
+            --label "com.lexigo.ci.slot=${SMOKE_SLOT}" \
+            --health-cmd='redis-cli ping' \
+            --health-interval=2s \
+            --health-timeout=3s \
+            --health-retries=30 \
+            --publish 127.0.0.1::6379 \
+            redis:8.0-alpine
+
+          for container in "$POSTGRES_CONTAINER" "$REDIS_CONTAINER"; do
+            for attempt in $(seq 1 60); do
+              status="$(docker inspect --format '{{.State.Health.Status}}' "$container")"
+
+              if [ "$status" = healthy ]; then
+                break
+              fi
+
+              if [ "$status" = unhealthy ]; then
+                docker logs "$container"
+                exit 1
+              fi
+
+              sleep 1
+            done
+
+            test "$(docker inspect --format '{{.State.Health.Status}}' "$container")" = healthy
+          done
+
+          docker exec "$POSTGRES_CONTAINER" pg_isready -U lexigo -d lexigo_test
+          test "$(docker exec "$REDIS_CONTAINER" redis-cli ping)" = PONG
+
+          postgres_host_ip="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostIp}}' "$POSTGRES_CONTAINER")"
+          postgres_host_port="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}' "$POSTGRES_CONTAINER")"
+          redis_host_ip="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "6379/tcp") 0).HostIp}}' "$REDIS_CONTAINER")"
+          redis_host_port="$(docker inspect --format '{{(index (index .NetworkSettings.Ports "6379/tcp") 0).HostPort}}' "$REDIS_CONTAINER")"
+
+          test "$postgres_host_ip" = 127.0.0.1
+          test "$redis_host_ip" = 127.0.0.1
+          test -n "$postgres_host_port"
+          test -n "$redis_host_port"
+          test "$postgres_host_port" != "$redis_host_port"
+
+          printf 'postgres=127.0.0.1:%s redis=127.0.0.1:%s\n' \
+            "$postgres_host_port" \
+            "$redis_host_port"
+
+          printf '\n=== CONCURRENT RESOURCE SNAPSHOT ===\n'
+          uptime
+          free -h
+          docker stats --no-stream
+
+          service_marker="$BARRIER_DIR/services-${SMOKE_SLOT}"
+          service_marker_tmp="${service_marker}.tmp.$$"
+          printf '%s\n' "$RUNNER_NAME" > "$service_marker_tmp"
+          mv -f -- "$service_marker_tmp" "$service_marker"
+
+          for attempt in $(seq 1 180); do
+            service_count="$(find "$BARRIER_DIR" -maxdepth 1 -type f -name 'services-[123]' | wc -l)"
+            if [ "$service_count" -eq 3 ]; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo 'All three service pairs did not become ready.' >&2
+          exit 1
+
+      - name: Exercise cleanup while three runners are active
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          cleanup_marker="$BARRIER_DIR/cleanup-finished"
+          write_cleanup_status() {
+            local status="$1"
+            local marker_tmp="${cleanup_marker}.tmp.$$"
+            printf '%s\n' "$status" > "$marker_tmp"
+            mv -f -- "$marker_tmp" "$cleanup_marker"
+          }
+          if [ "$SMOKE_SLOT" = "1" ]; then
+            trap 'status=$?; write_cleanup_status "$status"; exit "$status"' ERR
+            fixture_prefix="cleanup-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-"
+            active_run="${fixture_prefix}active"
+            expired_run="${fixture_prefix}expired"
+            active_volume="lexigo-cleanup-smoke-active-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            expired_volume="lexigo-cleanup-smoke-expired-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            active_lease="lexigo-cleanup-smoke-lease-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+            docker rm --force "$active_lease" >/dev/null 2>&1 || true
+            docker volume rm --force "$active_volume" "$expired_volume" >/dev/null 2>&1 || true
+
+            docker volume create \
+              --label "com.lexigo.ci=true" \
+              --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+              --label "com.lexigo.ci.run=${active_run}" \
+              --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+              --label "com.lexigo.ci.job=cleanup-smoke" \
+              --label "com.lexigo.ci.kind=workspace" \
+              "$active_volume" >/dev/null
+            docker volume create \
+              --label "com.lexigo.ci=true" \
+              --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+              --label "com.lexigo.ci.run=${expired_run}" \
+              --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+              --label "com.lexigo.ci.job=cleanup-smoke" \
+              --label "com.lexigo.ci.kind=workspace" \
+              "$expired_volume" >/dev/null
+            docker run --detach --rm \
+              --name "$active_lease" \
+              --label "com.lexigo.ci=true" \
+              --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+              --label "com.lexigo.ci.run=${active_run}" \
+              --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+              --label "com.lexigo.ci.job=cleanup-smoke" \
+              --label "com.lexigo.ci.kind=lease" \
+              --entrypoint sleep \
+              redis:8.0-alpine \
+              1200 >/dev/null
+
+            cleanup_status=0
+            python3 scripts/ci/runner_resource_cleanup.py \
+              --repository "$GITHUB_REPOSITORY" \
+              --retention-hours 0 \
+              --run-id-prefix "$fixture_prefix" \
+              --summary-file "$RUNNER_TEMP/lexigo-cleanup-smoke.json" || cleanup_status=$?
+
+            if [ "$cleanup_status" -ne 0 ]; then
+              write_cleanup_status "$cleanup_status"
+              exit "$cleanup_status"
+            fi
+            docker volume inspect "$active_volume" >/dev/null
+            docker inspect "$active_lease" >/dev/null
+            if docker volume inspect "$expired_volume" >/dev/null 2>&1; then
+              echo 'Expired cleanup fixture volume was not removed.' >&2
+              exit 1
+            fi
+            write_cleanup_status 0
+            trap - ERR
+          else
+            for attempt in $(seq 1 180); do
+              if [ -f "$cleanup_marker" ]; then
+                test "$(cat "$cleanup_marker")" = "0"
+                break
+              fi
+              sleep 1
+            done
+            test -f "$cleanup_marker"
+          fi
+
+          docker inspect "$CI_LEASE_CONTAINER" >/dev/null
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$POSTGRES_CONTAINER")" = healthy
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$REDIS_CONTAINER")" = healthy
+          docker exec "$POSTGRES_CONTAINER" pg_isready -U lexigo -d lexigo_test
+          test "$(docker exec "$REDIS_CONTAINER" redis-cli ping)" = PONG
+
+          verified_marker="$BARRIER_DIR/verified-${SMOKE_SLOT}"
+          : > "$verified_marker"
+          verification_release="$BARRIER_DIR/verification-release"
+          if [ "$SMOKE_SLOT" = "1" ]; then
+            for attempt in $(seq 1 180); do
+              verified_count="$(find "$BARRIER_DIR" -maxdepth 1 -type f -name 'verified-[123]' | wc -l)"
+              if [ "$verified_count" -eq 3 ]; then
+                : > "$verification_release"
+                break
+              fi
+              sleep 1
+            done
+          else
+            for attempt in $(seq 1 180); do
+              if [ -f "$verification_release" ]; then
+                break
+              fi
+              sleep 1
+            done
+          fi
+          test -f "$verification_release"
+
+      - name: Upload cleanup smoke summary
+        if: always() && matrix.slot == 1
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: runner-cleanup-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lexigo-cleanup-smoke.json
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Cleanup smoke resources
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          install -d -m 0755 "$BARRIER_DIR"
+
+          docker rm -f \
+            "$POSTGRES_CONTAINER" \
+            "$REDIS_CONTAINER" \
+            "$CI_LEASE_CONTAINER" \
+            >/dev/null 2>&1 || true
+
+          if [ "$SMOKE_SLOT" = "1" ]; then
+            docker rm --force \
+              "lexigo-cleanup-smoke-lease-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              >/dev/null 2>&1 || true
+            docker volume rm --force \
+              "lexigo-cleanup-smoke-active-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              "lexigo-cleanup-smoke-expired-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              >/dev/null 2>&1 || true
+          fi
+
+          : > "$BARRIER_DIR/cleanup-ready-${SMOKE_SLOT}"
+          if [ "$SMOKE_SLOT" = "1" ]; then
+            for attempt in $(seq 1 180); do
+              cleanup_count="$(find "$BARRIER_DIR" -maxdepth 1 -type f -name 'cleanup-ready-[123]' | wc -l)"
+              if [ "$cleanup_count" -eq 3 ]; then
+                break
+              fi
+              sleep 1
+            done
+            rm -rf -- "$BARRIER_DIR"
+          fi
