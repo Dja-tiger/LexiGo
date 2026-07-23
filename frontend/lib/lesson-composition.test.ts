@@ -19,9 +19,14 @@ const composition: LessonComposition = {
 };
 
 describe("lesson composition copy", () => {
-  it("describes the expected mixed lesson", () => {
+  it("describes the expected mixed lesson without backend terminology", () => {
     expect(lessonCompositionDescription(composition)).toBe("15 элементов · 8 слов · 7 фраз");
-    expect(lessonPriorityDescription(composition)).toBe("6 due · 7 новых · 2 запланированных");
+    expect(lessonPriorityDescription(composition)).toBe("Готово к повторению: 6 · Новых: 7 · Запланировано: 2");
+    expect(lessonPriorityDescription(composition)).not.toMatch(/\bdue\b/i);
+  });
+
+  it("omits the scheduled segment when it is empty", () => {
+    expect(lessonPriorityDescription({ ...composition, scheduled: 0 })).toBe("Готово к повторению: 6 · Новых: 7");
   });
 
   it("explains one-kind fallback and empty queues", () => {
