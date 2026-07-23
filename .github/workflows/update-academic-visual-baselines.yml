@@ -2,15 +2,16 @@ name: Update academic lesson visual baselines
 
 # One-shot branch workflow. Removed after the three reviewed baselines are committed.
 on:
-  push:
-    branches:
-      - agent/issue-178-academic-technical-english
+  pull_request:
+    branches: [main]
+    types: [synchronize]
 
 permissions:
   contents: write
 
 jobs:
   update:
+    if: github.event.pull_request.head.ref == 'agent/issue-178-academic-technical-english'
     runs-on:
       - self-hosted
       - linux
@@ -21,12 +22,12 @@ jobs:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
       FRONTEND_CI_VOLUME: lexigo-visual-update-${{ github.run_id }}-${{ github.run_attempt }}
       FRONTEND_CI_SLOT: visual-update
-      APP_BUILD_ID: academic-visual-${{ github.sha }}
+      APP_BUILD_ID: academic-visual-${{ github.event.pull_request.head.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: 1
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-178-academic-technical-english
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Prepare isolated frontend workspace
         run: bash scripts/ci/frontend-container.sh prepare
@@ -61,7 +62,7 @@ jobs:
             exit 0
           fi
           git commit -m "test(frontend): update academic lesson visual baselines"
-          git push origin HEAD:agent/issue-178-academic-technical-english
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
       - name: Cleanup isolated frontend workspace
         if: always()
         run: bash scripts/ci/frontend-container.sh cleanup
