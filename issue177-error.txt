@@ -1,1 +1,0 @@
-/tmp/apply-issue-177.sh: line 589: gofmt: command not found
