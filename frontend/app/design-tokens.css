@@ -1,0 +1,220 @@
+:root {
+  /* Primitive colors: stable palette values, never consume directly in product components. */
+  --lx-primitive-neutral-0: #ffffff;
+  --lx-primitive-neutral-50: #f7f8ff;
+  --lx-primitive-neutral-100: #e8ebf5;
+  --lx-primitive-neutral-200: #c8cfdd;
+  --lx-primitive-neutral-300: #a8b1c4;
+  --lx-primitive-neutral-400: #8f9bb1;
+  --lx-primitive-neutral-500: #657187;
+  --lx-primitive-neutral-700: #1d2940;
+  --lx-primitive-neutral-800: #111c31;
+  --lx-primitive-neutral-850: #0e182b;
+  --lx-primitive-neutral-900: #0c1526;
+  --lx-primitive-neutral-950: #091120;
+  --lx-primitive-neutral-1000: #050914;
+  --lx-primitive-purple-400: #9a42ef;
+  --lx-primitive-purple-500: #8b5cf6;
+  --lx-primitive-violet-500: #6d5dfc;
+  --lx-primitive-blue-400: #4fb9ff;
+  --lx-primitive-blue-500: #33a8ff;
+  --lx-primitive-cyan-500: #25c8e8;
+  --lx-primitive-green-500: #35d28b;
+  --lx-primitive-orange-500: #ff9f3f;
+  --lx-primitive-pink-500: #e85da9;
+  --lx-primitive-red-400: #ffb1bd;
+  --lx-primitive-red-500: #ff7d8e;
+
+  /* Semantic color roles: dark theme is the production baseline. */
+  --lx-color-bg-canvas: var(--lx-primitive-neutral-1000);
+  --lx-color-bg-soft: var(--lx-primitive-neutral-950);
+  --lx-color-surface-default: rgba(12, 21, 38, 0.82);
+  --lx-color-surface-strong: rgba(14, 24, 43, 0.96);
+  --lx-color-surface-elevated: linear-gradient(145deg, rgba(13, 23, 42, 0.93), rgba(8, 16, 30, 0.94));
+  --lx-color-surface-header: rgba(5, 9, 20, 0.82);
+  --lx-color-surface-hover: rgba(255, 255, 255, 0.05);
+  --lx-color-surface-ghost: rgba(255, 255, 255, 0.025);
+  --lx-color-border-subtle: rgba(145, 168, 211, 0.15);
+  --lx-color-border-control: rgba(150, 166, 201, 0.2);
+  --lx-color-border-focus: rgba(130, 105, 255, 0.48);
+  --lx-color-text-primary: var(--lx-primitive-neutral-50);
+  --lx-color-text-secondary: var(--lx-primitive-neutral-300);
+  --lx-color-text-muted: var(--lx-primitive-neutral-400);
+  --lx-color-text-subtle: var(--lx-primitive-neutral-500);
+  --lx-color-text-accent: #a184ff;
+  --lx-color-action-primary-start: var(--lx-primitive-blue-500);
+  --lx-color-action-primary-middle: var(--lx-primitive-violet-500);
+  --lx-color-action-primary-end: var(--lx-primitive-purple-400);
+  --lx-color-action-success: var(--lx-primitive-green-500);
+  --lx-color-action-warning: var(--lx-primitive-orange-500);
+  --lx-color-feedback-danger: var(--lx-primitive-red-500);
+  --lx-color-feedback-danger-text: var(--lx-primitive-red-400);
+  --lx-color-feedback-danger-border: rgba(255, 91, 119, 0.25);
+  --lx-color-feedback-danger-surface: rgba(108, 20, 41, 0.3);
+
+  /* Typography scale. */
+  --lx-font-family-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --lx-font-family-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --lx-font-weight-regular: 400;
+  --lx-font-weight-medium: 500;
+  --lx-font-weight-semibold: 650;
+  --lx-font-weight-bold: 760;
+  --lx-font-weight-heavy: 850;
+  --lx-text-xs: 0.6875rem;
+  --lx-text-sm: 0.75rem;
+  --lx-text-body-sm: 0.875rem;
+  --lx-text-body: 1rem;
+  --lx-text-body-lg: 1.125rem;
+  --lx-text-heading-sm: 1.25rem;
+  --lx-text-heading-md: 1.5rem;
+  --lx-text-heading-lg: 1.75rem;
+  --lx-text-display-sm: 2.25rem;
+  --lx-text-display-md: 3rem;
+  --lx-text-display-lg: 3.875rem;
+  --lx-leading-tight: 1.08;
+  --lx-leading-heading: 1.2;
+  --lx-leading-body: 1.55;
+  --lx-leading-relaxed: 1.65;
+
+  /* Four-pixel spacing grid. */
+  --lx-space-0: 0;
+  --lx-space-1: 0.25rem;
+  --lx-space-2: 0.5rem;
+  --lx-space-3: 0.75rem;
+  --lx-space-4: 1rem;
+  --lx-space-5: 1.25rem;
+  --lx-space-6: 1.5rem;
+  --lx-space-7: 1.75rem;
+  --lx-space-8: 2rem;
+  --lx-space-10: 2.5rem;
+  --lx-space-12: 3rem;
+  --lx-space-16: 4rem;
+  --lx-space-20: 5rem;
+  --lx-space-24: 6rem;
+
+  /* Shape and control sizing. */
+  --lx-radius-sm: 0.5rem;
+  --lx-radius-md: 0.75rem;
+  --lx-radius-lg: 0.875rem;
+  --lx-radius-xl: 1rem;
+  --lx-radius-2xl: 1.25rem;
+  --lx-radius-3xl: 1.5rem;
+  --lx-radius-4xl: 1.75rem;
+  --lx-radius-pill: 999px;
+  --lx-size-touch-min: 2.75rem;
+  --lx-size-touch-comfortable: 3rem;
+  --lx-size-content-max: 96.25rem;
+
+  /* Elevation levels. */
+  --lx-shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.18);
+  --lx-shadow-md: 0 10px 28px rgba(0, 0, 0, 0.24);
+  --lx-shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --lx-shadow-xl: 0 24px 80px rgba(0, 0, 0, 0.34);
+
+  /* Motion tokens. */
+  --lx-duration-fast: 150ms;
+  --lx-duration-normal: 180ms;
+  --lx-duration-slow: 300ms;
+  --lx-ease-standard: ease;
+  --lx-ease-enter: ease-out;
+  --lx-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --lx-motion-distance-subtle: 1px;
+  --lx-motion-distance-enter: 5px;
+
+  /* Compatibility aliases while legacy CSS is migrated component by component. */
+  --lx-bg: var(--lx-color-bg-canvas);
+  --lx-bg-soft: var(--lx-color-bg-soft);
+  --lx-panel: var(--lx-color-surface-default);
+  --lx-panel-strong: var(--lx-color-surface-strong);
+  --lx-border: var(--lx-color-border-subtle);
+  --lx-border-bright: var(--lx-color-border-focus);
+  --lx-text: var(--lx-color-text-primary);
+  --lx-muted: var(--lx-color-text-muted);
+  --lx-subtle: var(--lx-color-text-subtle);
+  --lx-purple: var(--lx-primitive-purple-500);
+  --lx-violet: var(--lx-primitive-violet-500);
+  --lx-blue: var(--lx-primitive-blue-500);
+  --lx-cyan: var(--lx-primitive-cyan-500);
+  --lx-green: var(--lx-primitive-green-500);
+  --lx-orange: var(--lx-primitive-orange-500);
+  --lx-pink: var(--lx-primitive-pink-500);
+  --lx-danger: var(--lx-color-feedback-danger);
+  --lx-shadow: var(--lx-shadow-xl);
+}
+
+/* Initial semantic-token adoption. Values intentionally match the legacy UI. */
+.lx-app {
+  max-width: var(--lx-size-content-max);
+  padding-right: var(--lx-space-7);
+  padding-left: var(--lx-space-7);
+  color: var(--lx-color-text-primary);
+}
+
+.lx-header {
+  border-bottom-color: rgba(121, 143, 184, 0.13);
+  background: var(--lx-color-surface-header);
+}
+
+.lx-view {
+  padding-top: var(--lx-space-6);
+  animation-duration: var(--lx-duration-normal);
+  animation-timing-function: var(--lx-ease-enter);
+}
+
+.lx-button {
+  min-height: var(--lx-size-touch-min);
+  border-radius: var(--lx-radius-lg);
+  transition-duration: var(--lx-duration-fast);
+}
+
+.lx-button.ghost {
+  border-color: var(--lx-color-border-control);
+  background: var(--lx-color-surface-ghost);
+}
+
+.lx-progress-panel {
+  padding: var(--lx-space-7);
+}
+
+.lx-kicker,
+.lx-page-heading > div > span,
+.lx-detail-content > span,
+.lx-empty > span,
+.lx-auth-card > div:first-child > span,
+.lx-progress-stats span {
+  font-size: var(--lx-text-sm);
+}
+
+.lx-hero-copy p {
+  font-size: var(--lx-text-body);
+  line-height: var(--lx-leading-relaxed);
+}
+
+.lx-panel-heading > div > span,
+.lx-section-heading > div > span,
+.lx-preview-heading > span {
+  font-size: var(--lx-text-body-lg);
+}
+
+.lx-error {
+  border-color: var(--lx-color-feedback-danger-border);
+  color: var(--lx-color-feedback-danger-text);
+  background: var(--lx-color-feedback-danger-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lx-duration-fast: 0ms;
+    --lx-duration-normal: 0ms;
+    --lx-duration-slow: 0ms;
+    --lx-motion-distance-subtle: 0px;
+    --lx-motion-distance-enter: 0px;
+  }
+}
+
+@media (max-width: 760px) {
+  .lx-app {
+    padding-right: var(--lx-space-4);
+    padding-left: var(--lx-space-4);
+  }
+}
