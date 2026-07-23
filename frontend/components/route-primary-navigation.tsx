@@ -31,6 +31,7 @@ const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "progress",
 ]);
 const ROUTE_CLIENT_ISLAND_SELECTOR = "[data-route-client-island]";
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 
 function RouteIcon({ name }: { name: RouteIconName }) {
   const common = {
@@ -146,7 +147,10 @@ function RouteLink({
           // Let the Next App Router swap the route graph without reloading the
           // document; the loaded product graph then resumes internal history.
           const transition = routeTransition(target, intent);
-          if (transition) router.push(transition.nextURL, { scroll: false });
+          if (transition) {
+            window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
+            router.push(transition.nextURL, { scroll: false });
+          }
           return;
         }
 
