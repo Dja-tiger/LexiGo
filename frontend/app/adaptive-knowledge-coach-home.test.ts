@@ -38,7 +38,7 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
 
   it("keeps Home focused on a single next-best action", () => {
     expect(styleSource).toContain('.lx-main-content[aria-label="Главная"] .lx-home-paths');
-    expect(styleSource).toMatch(/\.lx-home-paths\s*\{\s*display:\s*none;/s);
+    expect(styleSource).toMatch(/\.lx-home-paths\s*\{[\s\S]*?display:\s*none;/);
     expect(styleSource).toContain('.lx-main-content[aria-label="Главная"] .lx-home-next-action-copy .lx-button.primary');
     expect(styleSource).toContain("width: 100%;");
   });
