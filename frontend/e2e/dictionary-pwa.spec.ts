@@ -55,7 +55,7 @@ const METADATA = {
   catalogVersion: "sha256:dictionary-catalog-e2e",
   updatedAt: "2026-07-19T00:00:00Z",
   totals: { items: 60, words: 60, phrases: 0 },
-  sources: { mixed: 60, noun: 1, verb: 0, adjective: 0, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 60 },
+  sources: { mixed: 60, noun: 1, verb: 0, adjective: 0, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 60, academicTechnicalEnglish: 0 },
   topics: [{ topic: "Backend Development", count: 60, words: 60, phrases: 0 }],
 };
 
@@ -114,7 +114,7 @@ async function installAPI(context: BrowserContext) {
       catalogRequests.push(url.search);
       const query = url.searchParams.get("query")?.toLowerCase() ?? "";
       const status = url.searchParams.get("status") ?? "";
-      const page = Number(url.searchParams.get("page") ?? "1");
+      page = Number(url.searchParams.get("page") ?? "1");
       const limit = Number(url.searchParams.get("limit") ?? "48");
       let filtered = WORDS.filter((item) => !status || item.status === status);
       if (query) {
@@ -209,7 +209,7 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
 
   await page.getByRole("combobox", { name: "Раздел словаря" }).selectOption("backend");
   await page.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
-  await page.getByRole("combobox", { name: "Статус изучения" }).selectOption("new");
+  await page.getByRole("combobobox", { name: "Статус изучения" }).selectOption("new");
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/topic=Backend\+Development/);
   await expect(page).toHaveURL(/status=new/);
@@ -237,9 +237,9 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
 
   await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
   await expectDictionary(page);
-  await page.getByRole("button", { name: "Настроить урок по текущей выборке" }).click();
+  await page.getByRole("button", { name: "Настроить урок по текущей выборие" }).click();
   await expect(page).toHaveURL(/\/learn(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один фукусированный урок" })).toBeVisible();
   await expect(page.getByRole("radio", { name: /Смешанная практика/ })).toHaveAttribute("aria-checked", "true");
   expect(api.lessonRequests).toHaveLength(0);
   expect(runtimeErrors).toEqual([]);
@@ -257,7 +257,7 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
   await expect(page.getByRole("listitem")).toHaveCount(12);
 
-  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeded();
   const scrollBefore = await page.evaluate(() => window.scrollY);
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
   await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
