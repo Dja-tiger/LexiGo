@@ -25,6 +25,14 @@ type SMTP struct {
 	Timeout  time.Duration
 }
 
+type RUMRetention struct {
+	Enabled         bool
+	TTL             time.Duration
+	CleanupInterval time.Duration
+	BatchSize       int
+	MaxBatches      int
+}
+
 type Config struct {
 	AppEnv                string
 	HTTPAddr              string
@@ -39,6 +47,7 @@ type Config struct {
 	PasswordResetTTL      time.Duration
 	PasswordResetDelivery string
 	SMTP                  SMTP
+	RUMRetention          RUMRetention
 }
 
 func Load() (Config, error) {
@@ -67,6 +76,27 @@ func Load() (Config, error) {
 	smtpPort, err := strconv.Atoi(env("SMTP_PORT", "587"))
 	if err != nil {
 		return Config{}, fmt.Errorf("SMTP_PORT must be an integer: %w", err)
+	}
+
+	rumRetentionEnabled, err := strconv.ParseBool(env("RUM_RETENTION_ENABLED", "true"))
+	if err != nil {
+		return Config{}, fmt.Errorf("RUM_RETENTION_ENABLED must be a boolean: %w", err)
+	}
+	rumRetentionTTL, err := time.ParseDuration(env("RUM_RETENTION_TTL", "720h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("RUM_RETENTION_TTL: %w", err)
+	}
+	rumCleanupInterval, err := time.ParseDuration(env("RUM_RETENTION_CLEANUP_INTERVAL", "1h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("RUM_RETENTION_CLEANUP_INTERVAL: %w", err)
+	}
+	rumBatchSize, err := strconv.Atoi(env("RUM_RETENTION_BATCH_SIZE", "5000"))
+	if err != nil {
+		return Config{}, fmt.Errorf("RUM_RETENTION_BATCH_SIZE must be an integer: %w", err)
+	}
+	rumMaxBatches, err := strconv.Atoi(env("RUM_RETENTION_MAX_BATCHES", "20"))
+	if err != nil {
+		return Config{}, fmt.Errorf("RUM_RETENTION_MAX_BATCHES must be an integer: %w", err)
 	}
 
 	secureDefault := "true"
@@ -110,6 +140,13 @@ func Load() (Config, error) {
 			From:     strings.TrimSpace(os.Getenv("SMTP_FROM")),
 			Timeout:  smtpTimeout,
 		},
+		RUMRetention: RUMRetention{
+			Enabled:         rumRetentionEnabled,
+			TTL:             rumRetentionTTL,
+			CleanupInterval: rumCleanupInterval,
+			BatchSize:       rumBatchSize,
+			MaxBatches:      rumMaxBatches,
+		},
 	}
 
 	if cfg.PostgresDSN == "" {
@@ -134,6 +171,9 @@ func Load() (Config, error) {
 		if err := validateSMTP(cfg.SMTP); err != nil {
 			return Config{}, err
 		}
+	}
+	if err := validateRUMRetention(cfg.RUMRetention); err != nil {
+		return Config{}, err
 	}
 	return cfg, nil
 }
@@ -168,6 +208,22 @@ func validateSMTP(value SMTP) error {
 	}
 	if (value.Username == "") != (value.Password == "") {
 		return fmt.Errorf("SMTP_USERNAME and SMTP_PASSWORD must be configured together")
+	}
+	return nil
+}
+
+func validateRUMRetention(value RUMRetention) error {
+	if value.TTL < 24*time.Hour {
+		return fmt.Errorf("RUM_RETENTION_TTL must be at least 24h")
+	}
+	if value.CleanupInterval < time.Minute {
+		return fmt.Errorf("RUM_RETENTION_CLEANUP_INTERVAL must be at least 1m")
+	}
+	if value.BatchSize < 100 || value.BatchSize > 50_000 {
+		return fmt.Errorf("RUM_RETENTION_BATCH_SIZE must be between 100 and 50000")
+	}
+	if value.MaxBatches < 1 || value.MaxBatches > 100 {
+		return fmt.Errorf("RUM_RETENTION_MAX_BATCHES must be between 1 and 100")
 	}
 	return nil
 }
