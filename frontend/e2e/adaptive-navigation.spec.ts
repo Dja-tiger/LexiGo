@@ -242,22 +242,22 @@ test.beforeEach(async ({ page }) => {
   await installAPI(page);
 });
 
-test("expanded width keeps all semantic header navigation labels visible", async ({ page }, testInfo) => {
+test("expanded width keeps all semantic rail navigation labels visible", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Expanded layout is asserted once in Chromium.");
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
-  const headerNavigation = navigation(page, ".lx-route-nav--header");
-  await expect(headerNavigation).toBeVisible();
-  await expect(navigation(page, ".lx-route-nav--rail")).toBeHidden();
+  const railNavigation = navigation(page, ".lx-route-nav--rail");
+  await expect(railNavigation).toBeVisible();
+  await expect(navigation(page, ".lx-route-nav--header")).toBeHidden();
   await expect(navigation(page, ".lx-route-nav--mobile")).toBeHidden();
-  await expect(headerNavigation.getByText("Главная", { exact: true })).toBeVisible();
-  await expect(headerNavigation.getByText("Обучение", { exact: true })).toBeVisible();
-  await expect(headerNavigation.getByText("Словарь", { exact: true })).toBeVisible();
-  await expect(headerNavigation.getByText("Прогресс", { exact: true })).toBeVisible();
-  await expect(headerNavigation.getByRole("link", { name: "Обучение" })).toHaveAttribute("href", "/learn");
-  await expectMinimumNavigationTargets(page, ".lx-route-nav--header");
+  await expect(railNavigation.getByText("Главная", { exact: true })).toBeVisible();
+  await expect(railNavigation.getByText("Обучение", { exact: true })).toBeVisible();
+  await expect(railNavigation.getByText("Словарь", { exact: true })).toBeVisible();
+  await expect(railNavigation.getByText("Прогресс", { exact: true })).toBeVisible();
+  await expect(railNavigation.getByRole("link", { name: "Обучение" })).toHaveAttribute("href", "/learn");
+  await expectMinimumNavigationTargets(page, ".lx-route-nav--rail");
   await expectNoHorizontalOverflow(page);
 });
 
@@ -269,8 +269,10 @@ test("breakpoint boundaries expose exactly one labelled primary navigation", asy
   const cases = [
     { width: 719, expected: ".lx-route-nav--mobile" },
     { width: 720, expected: ".lx-route-nav--rail" },
-    { width: 1099, expected: ".lx-route-nav--rail" },
-    { width: 1100, expected: ".lx-route-nav--header" },
+    { width: 1023, expected: ".lx-route-nav--rail" },
+    { width: 1024, expected: ".lx-route-nav--rail" },
+    { width: 1100, expected: ".lx-route-nav--rail" },
+    { width: 1440, expected: ".lx-route-nav--rail" },
   ];
 
   for (const current of cases) {
@@ -332,7 +334,7 @@ test("medium width uses a labelled rail and restores the previous tab target and
   await expectNoHorizontalOverflow(page);
 });
 
-test("compact portrait uses a safe-area bottom tab bar with readable labels", async ({ page }, testInfo) => {
+test("compact portrait uses an edge-to-edge safe-area bottom tab bar", async ({ page }, testInfo) => {
   test.skip(!["ios-webkit", "android-chromium"].includes(testInfo.project.name), "Compact mobile contract.");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
@@ -353,11 +355,13 @@ test("compact portrait uses a safe-area bottom tab bar with readable labels", as
 
   const navigationBox = await bottomNavigation.boundingBox();
   expect(navigationBox).not.toBeNull();
-  expect(navigationBox!.y + navigationBox!.height).toBeLessThanOrEqual(844 - 9);
+  const navigationBottom = navigationBox!.y + navigationBox!.height;
+  expect(navigationBottom).toBeGreaterThanOrEqual(843);
+  expect(navigationBottom).toBeLessThanOrEqual(845);
   const appPaddingBottom = await page.locator(".lx-app").evaluate((element) => (
     Number.parseFloat(window.getComputedStyle(element).paddingBottom)
   ));
-  expect(appPaddingBottom).toBeGreaterThan(navigationBox!.height + 20);
+  expect(appPaddingBottom).toBeGreaterThanOrEqual(navigationBox!.height + 20);
   await expectNoHorizontalOverflow(page);
 });
 
