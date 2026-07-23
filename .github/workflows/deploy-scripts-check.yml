@@ -308,6 +308,7 @@ jobs:
       - name: Upload Caddy diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: caddy-deployment-diagnostics
           path: |
@@ -315,8 +316,7 @@ jobs:
             caddy-modules.log
             caddy-validate.log
           if-no-files-found: ignore
-          retention-days: 7
-
+          retention-days: 3
       - name: Cleanup Caddy test image
         if: always()
         run: |

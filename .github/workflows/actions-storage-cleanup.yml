@@ -1,0 +1,164 @@
+name: Actions storage cleanup
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
+      - "scripts/ci/actions_storage_cleanup.py"
+      - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
+      - "docs/github-actions-storage.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
+      - "scripts/ci/actions_storage_cleanup.py"
+      - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
+      - "docs/github-actions-storage.md"
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  schedule:
+    - cron: "43 3 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Preview candidates or remove them"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - apply
+      artifact_retention_days:
+        description: "Keep repository artifacts created within this many days"
+        required: true
+        default: 3
+        type: number
+      delete_all_caches:
+        description: "Delete all repository Actions caches"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lexigo-actions-storage-cleanup-${{ github.event_name }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Actions storage cleanup
+    if: github.event_name == 'pull_request'
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Test cleanup planner
+        run: python3 scripts/ci/actions_storage_cleanup_test.py
+
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
+
+      - name: Preview current storage candidates
+        env:
+          ACTIONS_STORAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/ci/actions_storage_cleanup.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --artifact-retention-days 3 \
+            --delete-all-caches \
+            --dry-run \
+            --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
+            --github-step-summary "$GITHUB_STEP_SUMMARY"
+
+  cleanup:
+    name: Reclaim Actions storage
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      actions: write
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Test cleanup planner
+        run: python3 scripts/ci/actions_storage_cleanup_test.py
+
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
+
+      - name: Resolve cleanup policy
+        id: policy
+        env:
+          DISPATCH_MODE: ${{ inputs.mode }}
+          DISPATCH_ARTIFACT_RETENTION_DAYS: ${{ inputs.artifact_retention_days }}
+          DISPATCH_DELETE_ALL_CACHES: ${{ inputs.delete_all_caches }}
+        run: |
+          set -Eeuo pipefail
+
+          mode=apply
+          artifact_retention_days=3
+          delete_all_caches=true
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && git log -1 --pretty=%B | grep -Fq '[actions-storage-emergency]'; then
+            artifact_retention_days=0
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            mode="${DISPATCH_MODE:-dry-run}"
+            artifact_retention_days="${DISPATCH_ARTIFACT_RETENTION_DAYS:-3}"
+            delete_all_caches="${DISPATCH_DELETE_ALL_CACHES:-true}"
+          fi
+
+          printf 'mode=%s\n' "$mode" >> "$GITHUB_OUTPUT"
+          printf 'artifact_retention_days=%s\n' "$artifact_retention_days" >> "$GITHUB_OUTPUT"
+          printf 'delete_all_caches=%s\n' "$delete_all_caches" >> "$GITHUB_OUTPUT"
+
+      - name: Reclaim repository Actions storage
+        env:
+          ACTIONS_STORAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLEANUP_MODE: ${{ steps.policy.outputs.mode }}
+          ARTIFACT_RETENTION_DAYS: ${{ steps.policy.outputs.artifact_retention_days }}
+          DELETE_ALL_CACHES: ${{ steps.policy.outputs.delete_all_caches }}
+        run: |
+          set -Eeuo pipefail
+
+          args=(
+            --repository "$GITHUB_REPOSITORY"
+            --artifact-retention-days "$ARTIFACT_RETENTION_DAYS"
+            --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json"
+            --github-step-summary "$GITHUB_STEP_SUMMARY"
+          )
+
+          if [ "$DELETE_ALL_CACHES" = "true" ]; then
+            args+=(--delete-all-caches)
+          fi
+          if [ "$CLEANUP_MODE" = "dry-run" ]; then
+            args+=(--dry-run)
+          fi
+
+          python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"
+
