@@ -59,7 +59,7 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true">
       <RouteSkipLink />
       <RouteChrome />
-      <LexigoBootstrappedApp />
+      <LexigoBootstrappedApp pathname={pathname} />
     </div>
   );
 }
