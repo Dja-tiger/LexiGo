@@ -199,6 +199,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => {
+    // The dictionary graph is only a cold-entry optimization. Once App Router
+    // hands the user to any product route, keep the full graph mounted so later
+    // internal Dictionary navigation does not recreate the client island.
+    if (!isDictionaryRoute(pathname)) setRouteGraph("product");
+  }, [pathname]);
+
+  useEffect(() => {
     const preserveLoadedProductGraph = () => {
       if (!isDictionaryRoute(window.location.pathname)) setRouteGraph("product");
     };
