@@ -1,0 +1,129 @@
+name: PR 188 iOS PWA diagnostics
+
+on:
+  push:
+    branches:
+      - fix/serialize-frontend-browser-suites
+    paths:
+      - ".github/workflows/pr-188-ios-pwa-diagnostics.yml"
+      - "frontend/**"
+      - "scripts/ci/frontend-container.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-188-ios-pwa-diagnostics
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: Isolate iOS PWA specs
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-pr188-pwa-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: pr188-pwa-diagnostics
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+      DIAGNOSTIC_INNER_LOCK: /tmp/lexigo-pr188-pwa-inner.lock
+      FRONTEND_HOST_LOCK: /tmp/lexigo-frontend-resource.lock
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - id: dictionary
+        name: PWA — dictionary restore
+        continue-on-error: true
+        run: >-
+          flock --exclusive --timeout 900 "$FRONTEND_HOST_LOCK"
+          env FRONTEND_RESOURCE_LOCK="$DIAGNOSTIC_INNER_LOCK"
+          bash ../scripts/ci/frontend-container.sh exec
+          npx playwright test e2e/dictionary-pwa.spec.ts
+          --project=ios-webkit --workers=1 --reporter=line
+
+      - id: calendar
+        name: PWA — Apple Calendar share
+        if: always()
+        continue-on-error: true
+        run: >-
+          flock --exclusive --timeout 900 "$FRONTEND_HOST_LOCK"
+          env FRONTEND_RESOURCE_LOCK="$DIAGNOSTIC_INNER_LOCK"
+          bash ../scripts/ci/frontend-container.sh exec
+          npx playwright test e2e/apple-calendar-pwa.spec.ts
+          --project=ios-webkit --workers=1 --reporter=line
+
+      - id: navigation
+        name: PWA — adaptive navigation
+        if: always()
+        continue-on-error: true
+        run: >-
+          flock --exclusive --timeout 900 "$FRONTEND_HOST_LOCK"
+          env FRONTEND_RESOURCE_LOCK="$DIAGNOSTIC_INNER_LOCK"
+          bash ../scripts/ci/frontend-container.sh exec
+          npx playwright test e2e/adaptive-navigation.spec.ts
+          --project=ios-webkit --workers=1 --reporter=line
+
+      - id: speech
+        name: PWA — speech fallback
+        if: always()
+        continue-on-error: true
+        run: >-
+          flock --exclusive --timeout 900 "$FRONTEND_HOST_LOCK"
+          env FRONTEND_RESOURCE_LOCK="$DIAGNOSTIC_INNER_LOCK"
+          bash ../scripts/ci/frontend-container.sh exec
+          npx playwright test e2e/speech-player.spec.ts
+          --project=ios-webkit --workers=1 --reporter=line
+
+      - id: session
+        name: PWA — session resume
+        if: always()
+        continue-on-error: true
+        run: >-
+          flock --exclusive --timeout 900 "$FRONTEND_HOST_LOCK"
+          env FRONTEND_RESOURCE_LOCK="$DIAGNOSTIC_INNER_LOCK"
+          bash ../scripts/ci/frontend-container.sh exec
+          npx playwright test e2e/session-resume-pwa.spec.ts
+          --project=ios-webkit --workers=1 --reporter=line
+
+      - name: Verify all isolated PWA specs passed
+        if: always()
+        env:
+          DICTIONARY_OUTCOME: ${{ steps.dictionary.outcome }}
+          CALENDAR_OUTCOME: ${{ steps.calendar.outcome }}
+          NAVIGATION_OUTCOME: ${{ steps.navigation.outcome }}
+          SPEECH_OUTCOME: ${{ steps.speech.outcome }}
+          SESSION_OUTCOME: ${{ steps.session.outcome }}
+        run: |
+          set -Eeuo pipefail
+          printf 'dictionary=%s\ncalendar=%s\nnavigation=%s\nspeech=%s\nsession=%s\n' \
+            "$DICTIONARY_OUTCOME" \
+            "$CALENDAR_OUTCOME" \
+            "$NAVIGATION_OUTCOME" \
+            "$SPEECH_OUTCOME" \
+            "$SESSION_OUTCOME"
+          test "$DICTIONARY_OUTCOME" = success
+          test "$CALENDAR_OUTCOME" = success
+          test "$NAVIGATION_OUTCOME" = success
+          test "$SPEECH_OUTCOME" = success
+          test "$SESSION_OUTCOME" = success
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
