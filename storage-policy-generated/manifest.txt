@@ -1,8 +1,0 @@
-.github/workflows/actions-storage-cleanup.yml
-.github/workflows/ci.yml
-.github/workflows/deploy-scripts-check.yml
-.github/workflows/deploy-stage.yml
-.github/workflows/runner-resource-cleanup.yml
-.github/workflows/self-hosted-runner-smoke.yml
-docs/github-actions-storage.md
-scripts/ci/actions_storage_policy_test.py

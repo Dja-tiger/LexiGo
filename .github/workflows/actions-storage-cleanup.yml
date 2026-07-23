@@ -3,19 +3,21 @@ name: Actions storage cleanup
 on:
   pull_request:
     paths:
-      - ".github/workflows/actions-storage-cleanup.yml"
+      - ".github/workflows/**"
       - ".github/workflows/patch-actions-storage-policy.yml"
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
       - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   push:
     branches: [main]
     paths:
-      - ".github/workflows/actions-storage-cleanup.yml"
+      - ".github/workflows/**"
       - ".github/workflows/patch-actions-storage-policy.yml"
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
       - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   workflow_run:
@@ -49,7 +51,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: lexigo-actions-storage-cleanup
+  group: lexigo-actions-storage-cleanup-${{ github.event_name }}-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -69,6 +71,9 @@ jobs:
 
       - name: Test cleanup planner
         run: python3 scripts/ci/actions_storage_cleanup_test.py
+
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
 
       - name: Preview current storage candidates
         env:
@@ -102,6 +107,9 @@ jobs:
       - name: Test cleanup planner
         run: python3 scripts/ci/actions_storage_cleanup_test.py
 
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
+
       - name: Resolve cleanup policy
         id: policy
         env:
@@ -114,6 +122,10 @@ jobs:
           mode=apply
           artifact_retention_days=3
           delete_all_caches=true
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && git log -1 --pretty=%B | grep -Fq '[actions-storage-emergency]'; then
+            artifact_retention_days=0
+          fi
 
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             mode="${DISPATCH_MODE:-dry-run}"
@@ -150,87 +162,3 @@ jobs:
 
           python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"
 
-  # BEGIN TEMP STORAGE POLICY PATCH
-  patch-storage-policy:
-    name: Generate bounded Actions storage policy
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.head_ref == 'fix/actions-storage-policy' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    permissions:
-      contents: write
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-
-      - name: Apply storage policy patch
-        run: python3 scripts/ci/patch_actions_storage_policy.py
-
-      - name: Remove temporary bootstrap job
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('.github/workflows/actions-storage-cleanup.yml')
-          text = path.read_text(encoding='utf-8')
-          start = text.index('\n  # BEGIN TEMP STORAGE POLICY PATCH\n')
-          end_marker = '\n  # END TEMP STORAGE POLICY PATCH\n'
-          end = text.index(end_marker, start) + len(end_marker)
-          path.write_text(text[:start] + '\n', encoding='utf-8')
-          PY
-
-      - name: Validate generated changes
-        id: generated_validation
-        continue-on-error: true
-        run: |
-          status=0
-          : > storage-policy-validation.log
-          python3 scripts/ci/actions_storage_policy_test.py >> storage-policy-validation.log 2>&1 || status=$?
-          python3 scripts/ci/actions_storage_cleanup_test.py >> storage-policy-validation.log 2>&1 || status=$?
-          git diff --check >> storage-policy-validation.log 2>&1 || status=$?
-          cat storage-policy-validation.log
-          exit "$status"
-
-      - name: Stage generated snapshots
-        if: always()
-        run: |
-          set -Eeuo pipefail
-          snapshot_temp="$RUNNER_TEMP/storage-policy-generated"
-          rm -rf -- "$snapshot_temp"
-          mkdir -p "$snapshot_temp/files"
-
-          git add -A
-          git diff --cached --name-only --diff-filter=ACM \
-            | grep -v '^storage-policy-validation.log$' \
-            > "$snapshot_temp/manifest.txt"
-          git reset
-
-          while IFS= read -r target; do
-            test -n "$target"
-            install -d "$snapshot_temp/files/$(dirname "$target")"
-            cp -- "$target" "$snapshot_temp/files/$target"
-          done < "$snapshot_temp/manifest.txt"
-          cp -- storage-policy-validation.log "$snapshot_temp/validation.log"
-
-          git reset --hard HEAD
-          git clean -ffd
-          rm -rf storage-policy-generated
-          cp -a "$snapshot_temp" storage-policy-generated
-
-      - name: Commit generated snapshots
-        if: always()
-        run: |
-          set -Eeuo pipefail
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add storage-policy-generated
-          git commit -m "ci: stage validated Actions storage policy"
-          git push origin HEAD:fix/actions-storage-policy
-  # END TEMP STORAGE POLICY PATCH

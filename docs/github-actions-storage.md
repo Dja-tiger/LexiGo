@@ -1,6 +1,6 @@
 # GitHub Actions storage policy
 
-LexiGo uses self-hosted runners, but GitHub-hosted Actions storage is still consumed by repository artifacts and caches. The largest storage source is the BuildKit cache exported through `type=gha`; browser and diagnostic artifacts are comparatively small but accumulate across frequent CI runs.
+LexiGo uses self-hosted runners, but GitHub-hosted Actions storage is still consumed by repository artifacts and caches. GitHub Actions BuildKit cache export is disabled; diagnostic artifacts are non-blocking, failure-oriented and retained for at most three days.
 
 ## Automated cleanup
 
@@ -55,6 +55,8 @@ Every run writes a job summary with:
 
 GitHub billing dashboards may take several hours to reflect deleted storage. The API deletion itself is immediate.
 
-## Follow-up optimization
+A merge commit containing `[actions-storage-emergency]` applies zero-day artifact retention once; ordinary automatic runs keep the three-day policy.
 
-The cleanup workflow prevents persistent accumulation. A separate CI optimization should remove or replace the `type=gha` BuildKit export so the cache is not uploaded before being reclaimed. That change should be measured independently because it can affect container build duration.
+## CI upload policy
+
+`scripts/ci/actions_storage_policy_test.py` scans every workflow. It blocks GitHub Actions cache export, artifact retention above three days, blocking artifact uploads and successful-run performance uploads. Test failures remain blocking; failure diagnostics are best-effort so a full storage quota cannot mask the actual test result.
