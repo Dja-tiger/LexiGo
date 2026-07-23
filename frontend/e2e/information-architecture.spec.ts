@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
   captureRuntimeErrors,
@@ -12,6 +12,19 @@ test.beforeEach(async ({ context, page }) => {
   await installDeterministicRuntime(page);
   await installQualityGateAPI(context);
 });
+
+async function clickPrimaryNavigation(page: Page, view: "learn" | "library" | "progress") {
+  const links = page.locator(`.lx-route-nav [data-navigation-view="${view}"]`);
+  const count = await links.count();
+  for (let index = 0; index < count; index += 1) {
+    const link = links.nth(index);
+    if (await link.isVisible()) {
+      await link.click();
+      return;
+    }
+  }
+  throw new Error(`No visible primary navigation for ${view}`);
+}
 
 test("guest Home presents an account benefit instead of an endless progress loader", async ({ browser }) => {
   const context = await browser.newContext();
@@ -27,29 +40,34 @@ test("guest Home presents an account benefit instead of an endless progress load
   await context.close();
 });
 
-test("Home exposes one dominant next action and three unambiguous destinations", async ({ page }) => {
+test("Home exposes one dominant next action and delegates destinations to the application shell", async ({ page }) => {
   const runtimeErrors = captureRuntimeErrors(page);
   await page.goto("/");
 
   const nextAction = page.getByRole("region", { name: "Следующее рекомендуемое действие" });
   await expect(nextAction.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
   await expect(nextAction.locator(".lx-button.primary")).toHaveCount(1);
-  const staticWordPreview = nextAction.locator(".lx-word-preview");
-  await expect(staticWordPreview).toHaveCount(1);
-  await expect(staticWordPreview.locator(".lx-dots, [role='tablist'], [aria-roledescription='carousel']")).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Настройте урок");
-  await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Найдите материал");
-  await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toContainText("Проверьте результат");
 
-  const primaryLinks = page.locator('.lx-route-nav--header [data-navigation-view], .lx-route-nav--rail [data-navigation-view], .lx-route-nav--mobile [data-navigation-view]');
+  // Home is not a dashboard or a duplicate catalogue. The route shell owns
+  // access to Learn, Dictionary and Progress, while Home owns the next action.
+  await expect(nextAction.locator(".lx-word-preview")).toBeHidden();
+  await expect(page.getByRole("region", { name: "Назначение основных разделов" })).toBeHidden();
+
+  const primaryLinks = page.locator(
+    ".lx-route-nav--header [data-navigation-view], "
+    + ".lx-route-nav--rail [data-navigation-view], "
+    + ".lx-route-nav--mobile [data-navigation-view]",
+  );
   await expect(primaryLinks.first()).toBeAttached();
-  expect(await primaryLinks.evaluateAll((links) => [...new Set(links.map((link) => link.getAttribute("data-navigation-view")))].sort())).toEqual(["home", "learn", "library", "progress"]);
+  expect(await primaryLinks.evaluateAll((links) => (
+    [...new Set(links.map((link) => link.getAttribute("data-navigation-view")))].sort()
+  ))).toEqual(["home", "learn", "library", "progress"]);
   expect(runtimeErrors).toEqual([]);
 });
 
-test("a new user can find a word without entering a duplicate lesson setup", async ({ page }) => {
+test("a new user can find a word through the application shell without entering lesson setup", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Найти материал" }).click();
+  await clickPrimaryNavigation(page, "library");
   await expect(page).toHaveURL(/\/dictionary$/);
   await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
 
@@ -76,7 +94,7 @@ test("phrases are a dictionary catalog kind rather than a competing top-level se
   await expect(page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" })).toHaveAttribute("aria-current", "page");
 });
 
-test("catalog context reaches the composer and analytics sends only allow-listed dimensions", async ({ context, page }) => {
+test("shell navigation analytics sends only allow-listed dimensions", async ({ context, page }) => {
   let payload: Record<string, unknown> | null = null;
   await page.addInitScript(() => {
     window.sessionStorage.setItem("lexigo:rum-sampled:v1", "1");
@@ -87,12 +105,12 @@ test("catalog context reaches the composer and analytics sends only allow-listed
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Найти материал" }).click();
+  await clickPrimaryNavigation(page, "library");
   await expect.poll(() => payload).not.toBeNull();
   expect(payload).toMatchObject({
     fromRoute: "/",
     toRoute: "/dictionary",
-    intent: "home_find_material",
+    intent: "primary_navigation",
     backtrack: false,
   });
   expect(payload).not.toHaveProperty("userId");
