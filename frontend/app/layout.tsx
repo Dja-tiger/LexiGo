@@ -9,6 +9,7 @@ import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
 import "./product-navigation.css";
 import "./premium-ui.css";
+import "./design-tokens.css";
 import "./mobile-pwa-fixes.css";
 import "./themed-vocabulary.css";
 import "./catalog-enhancements.css";
