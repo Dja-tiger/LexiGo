@@ -93,7 +93,7 @@ jobs:
           rm -rf frontend/ci-artifacts
           git diff --check
           changed="$(git status --short | awk '{print $2}')"
-          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(frontend/e2e/accessibility-keyboard\.spec\.ts|frontend/e2e/mobile-home-priority\.spec\.ts|scripts/apply_issue_66_shared_copy_test_fix\.py|\.github/workflows/issue-66-shared-copy-test-fix\.yml)$' || true)"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(frontend/components/lexigo-premium-app\.tsx|frontend/e2e/accessibility-keyboard\.spec\.ts|frontend/e2e/mobile-home-priority\.spec\.ts|scripts/apply_issue_66_shared_copy_test_fix\.py|\.github/workflows/issue-66-shared-copy-test-fix\.yml)$' || true)"
           if [ -n "$unexpected" ]; then
             printf 'Unexpected changed files:\n%s\n' "$unexpected" >&2
             exit 1
@@ -109,5 +109,5 @@ jobs:
           git diff --cached --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "test(frontend): align browser contracts with shared copy"
+          git commit -m "fix(frontend): stabilize compact progress loading"
           git push origin HEAD:agent/issue-66-core-interface-copy
