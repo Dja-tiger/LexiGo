@@ -1,0 +1,164 @@
+name: PR 184 UI diagnostics
+
+on:
+  push:
+    branches:
+      - agent/issue-183-application-shell-home
+    paths:
+      - ".github/workflows/pr-184-ui-diagnostics.yml"
+      - "frontend/**"
+      - "scripts/ci/frontend-container.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: pr-184-ui-diagnostics
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: Diagnose Playwright UI shards
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-pr184-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: pr184-diagnostics
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Run both UI shards and retain complete line logs
+        run: |
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -Eeuo pipefail
+          set +e
+          npm run test:e2e:ui -- --shard=1/2 --reporter=line > pr184-shard-1.log 2>&1
+          shard_1_status=$?
+          npm run test:e2e:ui -- --shard=2/2 --reporter=line > pr184-shard-2.log 2>&1
+          shard_2_status=$?
+          set -e
+
+          mkdir -p test-results/pr184-diagnostics
+          printf '%s\n' "$shard_1_status" > test-results/pr184-diagnostics/shard-1.status
+          printf '%s\n' "$shard_2_status" > test-results/pr184-diagnostics/shard-2.status
+          cp pr184-shard-1.log test-results/pr184-diagnostics/shard-1.log
+          cp pr184-shard-2.log test-results/pr184-diagnostics/shard-2.log
+          CONTAINER_SCRIPT
+
+      - name: Extract diagnostic logs
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Build diagnostic comment
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path("ci-artifacts/test-results/pr184-diagnostics")
+          lines = [
+              "<!-- pr-184-ui-diagnostics -->",
+              "## PR #184 — точная диагностика Playwright UI",
+              "",
+              f"Commit: `{os.environ.get('GITHUB_SHA', 'unknown')}`",
+              "",
+          ]
+          failed = False
+          for shard in (1, 2):
+              status_path = root / f"shard-{shard}.status"
+              log_path = root / f"shard-{shard}.log"
+              status = status_path.read_text().strip() if status_path.exists() else "missing"
+              shard_failed = status != "0"
+              failed = failed or shard_failed
+              lines.append(f"### Shard {shard}/2 — {'failed' if shard_failed else 'passed'}")
+              if log_path.exists():
+                  log_lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                  interesting = [
+                      line for line in log_lines
+                      if re.search(r"(^\s*\d+\)|\[[^]]+\].*›|Error:|Timeout|timed out|failed|expect\()", line, re.I)
+                  ]
+                  selected = interesting[-120:] if interesting else log_lines[-120:]
+                  lines.extend(["", "```text", "\n".join(selected)[-24000:], "```"])
+              else:
+                  lines.append("- Diagnostic log is missing.")
+              lines.append("")
+
+          lines.append("Временный workflow будет удалён после исправления тестов.")
+          Path("pr184-diagnostic-comment.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          Path("pr184-diagnostic-failed.txt").write_text("1\n" if failed else "0\n", encoding="utf-8")
+          PY
+
+      - name: Publish diagnostics to PR 184
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          body = Path("pr184-diagnostic-comment.md").read_text(encoding="utf-8")
+          repository = os.environ["GITHUB_REPOSITORY"]
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+              "Content-Type": "application/json",
+              "User-Agent": "lexigo-pr184-ui-diagnostics",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+
+          def call(method, path, payload=None):
+              data = json.dumps(payload).encode("utf-8") if payload is not None else None
+              request = urllib.request.Request(
+                  f"https://api.github.com{path}",
+                  data=data,
+                  headers=headers,
+                  method=method,
+              )
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  raw = response.read()
+                  return json.loads(raw) if raw else None
+
+          comments = call("GET", f"/repos/{repository}/issues/184/comments?per_page=100") or []
+          existing = next(
+              (item for item in comments if "<!-- pr-184-ui-diagnostics -->" in item.get("body", "")),
+              None,
+          )
+          if existing:
+              call("PATCH", f"/repos/{repository}/issues/comments/{existing['id']}", {"body": body})
+          else:
+              call("POST", f"/repos/{repository}/issues/184/comments", {"body": body})
+          PY
+
+      - name: Fail when a UI shard failed
+        if: always()
+        run: test "$(cat pr184-diagnostic-failed.txt)" = "0"
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
