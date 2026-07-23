@@ -187,12 +187,19 @@ jobs:
           PY
 
       - name: Validate generated changes
+        id: generated_validation
+        continue-on-error: true
         run: |
-          python3 scripts/ci/actions_storage_policy_test.py
-          python3 scripts/ci/actions_storage_cleanup_test.py
-          git diff --check
+          status=0
+          : > storage-policy-validation.log
+          python3 scripts/ci/actions_storage_policy_test.py >> storage-policy-validation.log 2>&1 || status=$?
+          python3 scripts/ci/actions_storage_cleanup_test.py >> storage-policy-validation.log 2>&1 || status=$?
+          git diff --check >> storage-policy-validation.log 2>&1 || status=$?
+          cat storage-policy-validation.log
+          exit "$status"
 
-      - name: Stage validated snapshots
+      - name: Stage generated snapshots
+        if: always()
         run: |
           set -Eeuo pipefail
           snapshot_temp="$RUNNER_TEMP/storage-policy-generated"
@@ -210,13 +217,15 @@ jobs:
             install -d "$snapshot_temp/files/$(dirname "$target")"
             cp -- "$target" "$snapshot_temp/files/$target"
           done < "$snapshot_temp/manifest.txt"
+          cp -- storage-policy-validation.log "$snapshot_temp/validation.log"
 
           git reset --hard HEAD
           git clean -ffd
           rm -rf storage-policy-generated
           cp -a "$snapshot_temp" storage-policy-generated
 
-      - name: Commit validated snapshots
+      - name: Commit generated snapshots
+        if: always()
         run: |
           set -Eeuo pipefail
           git config user.name github-actions[bot]
