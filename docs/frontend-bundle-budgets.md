@@ -46,7 +46,7 @@ The report contains the execution profile, configured budgets, route totals and 
 
 ## Baseline and ceilings
 
-CI run `29954272668` measured every canonical route on the same production build:
+CI run `29954272668` measured every canonical route on the original global product graph:
 
 | Route | JavaScript transfer | Initial requests |
 | --- | ---: | ---: |
@@ -60,9 +60,9 @@ CI run `29954272668` measured every canonical route on the same production build
 
 All routes loaded the same 12 JavaScript chunks. This is the measurable baseline for the original global `RoutedLexigoApp` client graph and the evidence for extracting route-level islands.
 
-`frontend/bundle-budgets.json` owns the canonical route inventory and release ceilings. The first ceiling is `275,000` bytes per route, approximately 15% above the measured transfer, with at most 24 initial requests.
+`frontend/bundle-budgets.json` owns the canonical route inventory and release ceilings. Routes that still use the global product graph retain the original `275,000` byte ceiling and at most 24 initial requests.
 
-These limits are ceilings, not targets. Client-island extraction should reduce route transfer and then tighten the corresponding ceiling.
+These limits are ceilings, not targets. Client-island extraction must reduce route transfer and then tighten the corresponding route-specific ceiling from a successful production CI artifact.
 
 ## First route island: Dictionary
 
@@ -75,9 +75,21 @@ The Dictionary island owns only:
 - paginated word-list and word-detail requests;
 - transitions from the catalog to lesson configuration or authentication.
 
-The shared authenticated JSON client in `frontend/lib/authorized-json.ts` preserves the existing CSRF, timeout, typed-response and refresh-on-401 behavior without importing the monolithic product graph. The browser regression verifies direct entry, Home ↔ Dictionary transitions, Back/Forward and a single `/api/v1/auth/refresh` bootstrap request.
+The shared authenticated JSON client in `frontend/lib/authorized-json.ts` preserves the existing CSRF, timeout, typed-response and refresh-on-401 behavior without importing the monolithic product graph. Browser regressions verify direct entry, Home ↔ Dictionary transitions, Back/Forward, scroll restoration and a single `/api/v1/auth/refresh` bootstrap request.
 
-The existing `/dictionary` ceiling remains unchanged until the production CI artifact records the new cold-route transfer. After that measurement, update both `baselineJavascriptBytes` and `maxJavascriptBytes` from evidence; do not estimate them from source size.
+CI run `30017544470` on head `d803f844e899270b88af3b6fd47e977dd02ad6de` measured the merged island:
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/dictionary` | 238,257 bytes | 205,239 bytes | 33,018 bytes (13.9%) | 18 |
+
+The route-specific budget is therefore locked to:
+
+- `baselineJavascriptBytes`: `205239`;
+- `maxJavascriptBytes`: `235000`;
+- `maxInitialRequests`: `22`.
+
+The ceiling leaves bounded measurement and dependency-update headroom while remaining below the original monolithic transfer. `schemaVersion: 2` allows a route whose baseline differs from the shared original measurement to carry explicit `baselineEvidence` with the source run, capture date and head SHA.
 
 A budget increase requires:
 
@@ -100,8 +112,9 @@ npm run test:e2e:performance
 
 ## Ownership
 
-- `bundle-budgets.json` owns canonical routes, baselines and ceilings.
+- `bundle-budgets.json` owns canonical routes, baselines, evidence and ceilings.
 - `route-bundle-budget.spec.ts` owns cold-route JavaScript measurement and reporting.
+- `bundle-budgets.test.ts` owns configuration invariants for ceilings and route-specific evidence.
 - `performance-budget.spec.ts` continues to own LCP, CLS, long-task, CSS and interaction budgets.
 - `performance-global-teardown.ts` owns the combined performance artifact contract.
 - `playwright.performance.config.ts` owns the production low-end mobile execution profile.
