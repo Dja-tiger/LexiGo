@@ -187,12 +187,23 @@ jobs:
           PY
 
       - name: Validate generated changes
+        id: generated_validation
+        continue-on-error: true
         run: |
-          python3 scripts/ci/actions_storage_policy_test.py
-          python3 scripts/ci/actions_storage_cleanup_test.py
-          git diff --check
+          set +e
+          {
+            python3 scripts/ci/actions_storage_policy_test.py
+            python3 scripts/ci/actions_storage_cleanup_test.py
+            git diff --check
+          } > storage-policy-validation.log 2>&1
+          status=$?
+          cat storage-policy-validation.log
+          exit "$status"
 
-      - name: Commit generated changes
+      - name: Commit generated changes and diagnostics
+        if: always()
+        env:
+          VALIDATION_OUTCOME: ${{ steps.generated_validation.outcome }}
         run: |
           set -Eeuo pipefail
           git config user.name github-actions[bot]
@@ -200,4 +211,5 @@ jobs:
           git add -A
           git commit -m "ci: enforce bounded Actions storage policy"
           git push origin HEAD:fix/actions-storage-policy
+          test "$VALIDATION_OUTCOME" = success
   # END TEMP STORAGE POLICY PATCH
