@@ -1,9 +1,7 @@
 name: PR 188 iOS PWA diagnostics
 
 on:
-  push:
-    branches:
-      - fix/serialize-frontend-browser-suites
+  pull_request:
     paths:
       - ".github/workflows/pr-188-ios-pwa-diagnostics.yml"
       - "frontend/**"
@@ -14,12 +12,13 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-188-ios-pwa-diagnostics
+  group: pr-188-ios-pwa-diagnostics-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   diagnose:
     name: Isolate iOS PWA specs
+    if: github.event.pull_request.head.ref == 'fix/serialize-frontend-browser-suites'
     runs-on:
       - self-hosted
       - linux
