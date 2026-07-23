@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { learningTermCopy } from "../lib/interface-copy";
+
 type LessonMode = "study" | "recall" | "choice";
 type RequestRecord = Record<string, unknown>;
 
@@ -131,7 +133,7 @@ async function installLessonAPI(
 
 async function openLesson(page: Page, mode: LessonMode) {
   await page.goto("/learn");
-  const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";
+  const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? learningTermCopy("recall").label : "Выбрать вариант";
   await page.getByRole("radio", { name: new RegExp(label) }).click();
   const startLesson = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(startLesson).toBeEnabled({ timeout: 15_000 });
@@ -282,7 +284,7 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   const api = await installLessonAPI(page, 2, 0, mixedItems);
   await page.goto("/learn");
   await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
-  await page.getByRole("radio", { name: /Вспомнить самому/ }).click();
+  await page.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
   await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
