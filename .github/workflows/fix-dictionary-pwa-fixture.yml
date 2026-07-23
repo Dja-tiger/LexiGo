@@ -1,4 +1,4 @@
-name: Repair dictionary PWA fixture
+name: Finalize dictionary PWA fixture repair
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
         with:
           ref: agent/issue-178-academic-technical-english
           fetch-depth: 0
-      - name: Repair fixture and push
+      - name: Restore locator copy and remove temporary workflow
         shell: bash
         run: |
           python3 - <<'PY'
@@ -30,31 +30,21 @@ jobs:
           path = Path('frontend/e2e/dictionary-pwa.spec.ts')
           text = path.read_text()
           replacements = {
-              '      page = Number(url.searchParams.get("page") ?? "1");': '      const page = Number(url.searchParams.get("page") ?? "1");',
-              'getByRole("combobobox"': 'getByRole("combobox"',
-              '.scrollIntoViewIfNeded()': '.scrollIntoViewIfNeeded()',
+              'Настроить урок по текущей выборие': 'Настроить урок по текущей выборке',
+              'Соберите один фукусированный урок': 'Соберите один сфокусированный урок',
           }
-          changed = False
           for old, new in replacements.items():
-              if old in text:
-                  text = text.replace(old, new)
-                  changed = True
-          if 'academicTechnicalEnglish: 0' not in text:
-              old = 'dataEngineering: 0, backend: 60 }'
               if old not in text:
-                  raise SystemExit('catalog metadata fixture marker not found')
-              text = text.replace(old, 'dataEngineering: 0, backend: 60, academicTechnicalEnglish: 0 }')
-              changed = True
-          if not changed:
-              raise SystemExit(0)
+                  raise SystemExit(f'missing corrupted locator: {old}')
+              text = text.replace(old, new)
+          if 'academicTechnicalEnglish: 0' not in text:
+              raise SystemExit('academic metadata fixture is missing')
           path.write_text(text)
           PY
 
-          if git diff --quiet -- frontend/e2e/dictionary-pwa.spec.ts; then
-            exit 0
-          fi
+          rm .github/workflows/fix-dictionary-pwa-fixture.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/e2e/dictionary-pwa.spec.ts
-          git commit -m "test(frontend): repair dictionary PWA fixture"
+          git add frontend/e2e/dictionary-pwa.spec.ts .github/workflows/fix-dictionary-pwa-fixture.yml
+          git commit -m "test(frontend): finalize dictionary PWA metadata fixture"
           git push origin HEAD:agent/issue-178-academic-technical-english
