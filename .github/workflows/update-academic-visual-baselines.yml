@@ -1,0 +1,66 @@
+name: Update academic lesson visual baselines
+
+on:
+  push:
+    branches:
+      - agent/issue-178-academic-technical-english
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - lexigo-ci
+    timeout-minutes: 25
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-visual-update-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: visual-update
+      APP_BUILD_ID: academic-visual-${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: 1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-178-academic-technical-english
+          fetch-depth: 0
+      - name: Prepare isolated frontend workspace
+        run: bash scripts/ci/frontend-container.sh prepare
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+      - name: Production build
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+      - name: Update visual snapshots
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+      - name: Extract updated baselines
+        working-directory: frontend
+        run: bash ../scripts/ci/frontend-container.sh extract
+      - name: Commit only lesson composer baselines
+        shell: bash
+        run: |
+          source_dir="frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots"
+          target_dir="frontend/e2e/visual-regression.spec.ts-snapshots"
+          for viewport in compact medium desktop; do
+            source_file="$source_dir/lesson-composer-visual-${viewport}-linux.png"
+            target_file="$target_dir/lesson-composer-visual-${viewport}-linux.png"
+            test -f "$source_file"
+            cp "$source_file" "$target_file"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$target_dir"/lesson-composer-visual-*-linux.png
+          if git diff --cached --quiet; then
+            echo "Visual baselines are already current."
+            exit 0
+          fi
+          git commit -m "test(frontend): update academic lesson visual baselines"
+          git push origin HEAD:agent/issue-178-academic-technical-english
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash scripts/ci/frontend-container.sh cleanup
