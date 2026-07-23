@@ -98,7 +98,7 @@ async function installBrowserMocks(page: Page) {
         catalogVersion: "sha256:e2e-catalog",
         updatedAt: "2026-07-18T00:00:00Z",
         totals: { items: 6, words: 3, phrases: 3 },
-        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 , academicTechnicalEnglish: 0},
         topics: [{ topic: "Backend", count: 2 }],
       }) });
       return;
@@ -232,7 +232,7 @@ test("home intent cards, dictionary catalog and composer collections remain uniq
 
   await page.locator(".lx-home-paths").getByRole("button", { name: "Настроить урок" }).click();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.locator('[data-lexigo-collection]')).toHaveCount(4);
+  await expect(page.locator('[data-lexigo-collection]')).toHaveCount(5);
   await page.locator('[data-lexigo-collection="travel"]').click();
   await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
   expect(runtimeErrors).toEqual([]);

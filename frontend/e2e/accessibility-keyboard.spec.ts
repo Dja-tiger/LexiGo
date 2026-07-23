@@ -20,7 +20,7 @@ const PHRASES = [{ id: 452, kind: "phrase", slug: "keyboard-access", lemma: "key
 const METADATA = {
   catalogVersion: "sha256:keyboard-e2e", updatedAt: "2026-07-18T00:00:00Z",
   totals: { items: 2, words: 1, phrases: 1 },
-  sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 },
+  sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 , academicTechnicalEnglish: 0},
   topics: [{ topic: "Accessibility", count: 2 }],
 };
 const KEYBOARD_AXE_RULES = ["button-name", "link-name", "label", "aria-allowed-attr", "aria-valid-attr", "aria-valid-attr-value", "aria-roles", "aria-required-attr", "aria-required-children", "aria-required-parent", "aria-hidden-focus", "nested-interactive"];

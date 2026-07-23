@@ -144,7 +144,7 @@ export const QUALITY_METADATA = {
     dailyLife: 0,
     travel: 0,
     dataEngineering: 2,
-    backend: 3,
+    backend: 3, academicTechnicalEnglish: 0,
   },
   topics: [
     { topic: "Release", count: 2, words: 1, phrases: 1 },

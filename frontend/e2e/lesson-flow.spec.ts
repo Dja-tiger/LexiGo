@@ -66,7 +66,7 @@ async function installLessonAPI(
         catalogVersion: "sha256:e2e-catalog",
         updatedAt: "2026-07-18T00:00:00Z",
         totals: { items: 6, words: 3, phrases: 3 },
-        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 , academicTechnicalEnglish: 0},
         topics: [{ topic: "Backend", count: 2 }],
       }) });
       return;
@@ -204,7 +204,7 @@ async function installSharedAPI(page: Page, state: SharedState) {
         catalogVersion: "sha256:e2e-catalog",
         updatedAt: "2026-07-18T00:00:00Z",
         totals: { items: 6, words: 3, phrases: 3 },
-        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 },
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 , academicTechnicalEnglish: 0},
         topics: [{ topic: "Backend", count: 2 }],
       }) });
     }

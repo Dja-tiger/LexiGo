@@ -31,7 +31,7 @@ test("completed block advances once to a distinct server lesson", async ({ page 
     if (path === "/api/v1/catalog/metadata") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       catalogVersion: "sha256:next-lesson", updatedAt: "2026-07-23T00:00:00Z",
       totals: { items: 2, words: 2, phrases: 0 },
-      sources: { mixed: 2, noun: 0, verb: 1, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 },
+      sources: { mixed: 2, noun: 0, verb: 1, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 , academicTechnicalEnglish: 0},
       topics: [{ topic: "General", count: 1 }, { topic: "Development", count: 1 }],
     }) });
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
