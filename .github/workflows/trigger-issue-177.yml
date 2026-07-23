@@ -36,4 +36,9 @@ jobs:
           script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:]) + '\n'
           Path('/tmp/apply-issue-177.sh').write_text(script)
           PY
-          bash -euo pipefail /tmp/apply-issue-177.sh
+          set +e
+          bash -euo pipefail /tmp/apply-issue-177.sh >/tmp/issue-177.log 2>&1
+          status=$?
+          set -e
+          tail -n 80 /tmp/issue-177.log
+          exit "$status"
