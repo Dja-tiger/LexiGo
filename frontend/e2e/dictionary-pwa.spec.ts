@@ -114,7 +114,7 @@ async function installAPI(context: BrowserContext) {
       catalogRequests.push(url.search);
       const query = url.searchParams.get("query")?.toLowerCase() ?? "";
       const status = url.searchParams.get("status") ?? "";
-      page = Number(url.searchParams.get("page") ?? "1");
+      const page = Number(url.searchParams.get("page") ?? "1");
       const limit = Number(url.searchParams.get("limit") ?? "48");
       let filtered = WORDS.filter((item) => !status || item.status === status);
       if (query) {
@@ -209,7 +209,7 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
 
   await page.getByRole("combobox", { name: "Раздел словаря" }).selectOption("backend");
   await page.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
-  await page.getByRole("combobobox", { name: "Статус изучения" }).selectOption("new");
+  await page.getByRole("combobox", { name: "Статус изучения" }).selectOption("new");
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/topic=Backend\+Development/);
   await expect(page).toHaveURL(/status=new/);
@@ -257,7 +257,7 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
   await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
   await expect(page.getByRole("listitem")).toHaveCount(12);
 
-  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeded();
+  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
   const scrollBefore = await page.evaluate(() => window.scrollY);
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
   await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
