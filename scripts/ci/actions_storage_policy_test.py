@@ -62,8 +62,7 @@ def main() -> None:
     if upload_count < 1:
         violations.append("No upload-artifact steps found")
     if violations:
-        raise SystemExit("
-".join(violations))
+        raise SystemExit("\n".join(violations))
     print(f"Validated {upload_count} bounded artifact upload steps across {len(paths)} workflows")
 
 
