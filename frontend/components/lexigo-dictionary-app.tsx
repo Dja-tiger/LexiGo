@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import {
   failedResourceStatus,
@@ -27,7 +27,14 @@ import {
   writePersistedNavigation,
   type NavigationTarget,
 } from "../lib/navigation";
-import { createNavigationHistoryState, type NavigationScrollPosition } from "../lib/navigation-history";
+import {
+  createNavigationHistoryState,
+  navigationIdentity,
+  navigationScrollFromHistory,
+  navigationTargetFromHistory,
+  type NavigationScrollPosition,
+} from "../lib/navigation-history";
+import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
 import { AsyncResourceNotice } from "./async-state";
@@ -70,6 +77,11 @@ type ItemsResponse = {
 type DictionaryRouteAppProps = {
   initialSession: Session | null;
   onSessionUpdated: (session: Session) => void;
+};
+
+type PendingNavigation = {
+  identity: string;
+  scroll: NavigationScrollPosition;
 };
 
 function toLearningItem(item: APIItem): LearningItem {
@@ -120,6 +132,7 @@ function BellIcon() {
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
   const session = initialSession;
   const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
   const [metadata, setMetadata] = useState<CatalogMetadata | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [metadataResourceStatus, setMetadataResourceStatus] = useState<ResourceStatus>(loadingResourceStatus);
@@ -128,23 +141,75 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     initialSession ? loadingResourceStatus() : readyResourceStatus()
   ));
   const mainContentRef = useRef<HTMLElement | null>(null);
+  const navigationRef = useRef(navigation);
 
   const adoptSession = useCallback((next: Session) => {
     if (initialSession?.tokens.accessToken !== next.tokens.accessToken) onSessionUpdated(next);
   }, [initialSession?.tokens.accessToken, onSessionUpdated]);
 
   useEffect(() => {
-    const syncNavigation = () => {
-      const next = parseNavigationLocation(window.location);
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    const persistCurrentEntry = () => {
+      const current = navigationRef.current;
+      window.history.replaceState(
+        createNavigationHistoryState(current, { x: window.scrollX, y: window.scrollY }),
+        "",
+        window.location.href,
+      );
+    };
+    const scrollSnapshots = createScrollSnapshotScheduler(
+      persistCurrentEntry,
+      {
+        setTimeout: (callback, delayMilliseconds) => window.setTimeout(callback, delayMilliseconds),
+        clearTimeout: (timerID) => window.clearTimeout(timerID),
+      },
+    );
+    const scheduleScrollSnapshot = () => scrollSnapshots.schedule();
+    const flushScrollSnapshot = () => scrollSnapshots.flush();
+    const flushScrollSnapshotWhenHidden = () => {
+      if (document.visibilityState === "hidden") flushScrollSnapshot();
+    };
+    const syncNavigation = (event: PopStateEvent) => {
+      const next = navigationTargetFromHistory(event.state, window.location.search);
+      const scroll = navigationScrollFromHistory(event.state);
+      navigationRef.current = next;
+      setPendingNavigation({ identity: navigationIdentity(next), scroll });
       setNavigation(next);
       writePersistedNavigation(window.localStorage, next);
-      window.requestAnimationFrame(() => {
-        mainContentRef.current?.focus({ preventScroll: true });
-      });
     };
+
+    navigationRef.current = navigation;
+    writePersistedNavigation(window.localStorage, navigation);
     window.addEventListener("popstate", syncNavigation);
-    return () => window.removeEventListener("popstate", syncNavigation);
+    window.addEventListener("scroll", scheduleScrollSnapshot, { passive: true });
+    window.addEventListener("pagehide", flushScrollSnapshot);
+    document.addEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
+    return () => {
+      flushScrollSnapshot();
+      scrollSnapshots.cancel();
+      window.history.scrollRestoration = previousScrollRestoration;
+      window.removeEventListener("popstate", syncNavigation);
+      window.removeEventListener("scroll", scheduleScrollSnapshot);
+      window.removeEventListener("pagehide", flushScrollSnapshot);
+      document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
+    };
   }, []);
+
+  useLayoutEffect(() => {
+    navigationRef.current = navigation;
+    if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+    const frame = window.requestAnimationFrame(() => {
+      mainContentRef.current?.focus({ preventScroll: true });
+      window.scrollTo({
+        left: pendingNavigation.scroll.x,
+        top: pendingNavigation.scroll.y,
+        behavior: "auto",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [navigation, pendingNavigation]);
 
   const loadMetadata = useCallback(async (signal?: AbortSignal) => {
     setMetadataStatus("loading");
@@ -260,7 +325,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     scroll: NavigationScrollPosition = { x: 0, y: 0 },
     intent: ProductJourneyIntent = "in_app_navigation",
   ) => {
-    const current = parseNavigationLocation(window.location);
+    const current = navigationRef.current;
     const currentScroll = { x: window.scrollX, y: window.scrollY };
     reportProductJourney(current, target, intent);
     window.history.replaceState(
