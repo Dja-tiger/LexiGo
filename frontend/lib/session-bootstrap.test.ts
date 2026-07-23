@@ -53,6 +53,26 @@ describe("document session bootstrap cache", () => {
     expect(mockedRestoreSession).toHaveBeenCalledTimes(1);
   });
 
+  it("shares the resolved session across separately evaluated route chunks", async () => {
+    mockedRestoreSession.mockResolvedValue(SESSION);
+    await expect(restoreBootstrappedSession()).resolves.toEqual(SESSION);
+
+    // Simulate Next.js evaluating the shared bootstrap helper from another
+    // route chunk while the browser document and its globalThis stay alive.
+    vi.resetModules();
+    const duplicateAuthSession = await import("./auth-session");
+    const duplicateCSRFToken = vi.mocked(duplicateAuthSession.csrfTokenFromCookie);
+    const duplicateRestoreSession = vi.mocked(duplicateAuthSession.restoreSession);
+    duplicateCSRFToken.mockReturnValue("csrf-one");
+    duplicateRestoreSession.mockResolvedValue(REFRESHED_SESSION);
+    const restoreCallsBefore = duplicateRestoreSession.mock.calls.length;
+
+    const duplicateBootstrap = await import("./session-bootstrap");
+    await expect(duplicateBootstrap.restoreBootstrappedSession()).resolves.toEqual(SESSION);
+
+    expect(duplicateRestoreSession.mock.calls).toHaveLength(restoreCallsBefore);
+  });
+
   it("deduplicates concurrent bootstrap requests", async () => {
     let resolveRestore: ((session: Session) => void) | undefined;
     mockedRestoreSession.mockImplementation(() => new Promise<Session>((resolve) => {
