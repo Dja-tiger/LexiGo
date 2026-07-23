@@ -85,6 +85,14 @@ const METADATA = {
   topics: [{ topic: "Mobile UX", count: 1, words: 1, phrases: 0 }],
 };
 
+function createDeferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 async function fulfillJSON(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -95,7 +103,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 
 async function installAPI(
   page: Page,
-  options: { activeLesson?: boolean; progressDelayMs?: number } = {},
+  options: { activeLesson?: boolean; progressGate?: Promise<void> } = {},
 ) {
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -112,9 +120,7 @@ async function installAPI(
     if (path === "/api/v1/auth/refresh") return fulfillJSON(route, 200, SESSION);
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
     if (path === "/api/v1/progress") {
-      if (options.progressDelayMs) {
-        await new Promise((resolve) => setTimeout(resolve, options.progressDelayMs));
-      }
+      if (options.progressGate) await options.progressGate;
       return fulfillJSON(route, 200, PROGRESS);
     }
     if (path === "/api/v1/lessons/active") {
@@ -168,7 +174,9 @@ test.describe("compact mobile home priority", () => {
         }
       }).observe({ type: "layout-shift", buffered: true });
     });
-    await installAPI(page, { progressDelayMs: 650 });
+
+    const progressGate = createDeferred();
+    await installAPI(page, { progressGate: progressGate.promise });
     await page.goto("/");
 
     const hero = page.locator(".lx-home-next-action .lx-hero-card");
@@ -179,6 +187,8 @@ test.describe("compact mobile home priority", () => {
     const pendingDueRow = progressPanel.locator(".lx-progress-list > div").first();
     await expect(pendingDueRow).toContainText(learningTermCopy("due").label);
     await expect(pendingDueRow.getByText("—", { exact: true })).toBeVisible();
+
+    progressGate.resolve();
 
     const primaryCTA = page.getByRole("button", { name: "Повторить сейчас" });
     await expect(primaryCTA).toBeVisible();
