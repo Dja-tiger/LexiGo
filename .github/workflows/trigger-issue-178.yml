@@ -37,6 +37,29 @@ jobs:
 
           lines = Path('.github/workflows/apply-issue-178.yml').read_text().splitlines()
           start = next(index for index, line in enumerate(lines) if line == '        run: |') + 1
-          Path('/tmp/apply-issue-178.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:]) + '\n')
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:]) + '\n'
+          repair = r'''python3 - <<'PYFIX'
+          from pathlib import Path
+
+          for path in (
+              Path("backend/internal/words/metadata.go"),
+              Path("backend/integration/catalog_metadata_test.go"),
+          ):
+              text = path.read_text()
+              text = text.replace("\t\tfrom words\n\t`).Scan(", "\t\tfrom words\n\t`, catalog.Source).Scan(", 1)
+              text = text.replace("\n\t, catalog.Source); err != nil {", "\n\t); err != nil {", 1)
+              path.write_text(text)
+          PYFIX
+          '''
+          marker = 'gofmt -w backend/internal/learning/lesson_http.go'
+          if marker not in script:
+              raise SystemExit('gofmt marker missing from prepared implementation')
+          script = script.replace(marker, repair + '\n' + marker, 1)
+          Path('/tmp/apply-issue-178.sh').write_text(script)
           PY
-          bash -euo pipefail /tmp/apply-issue-178.sh
+          set +e
+          bash -euo pipefail /tmp/apply-issue-178.sh >/tmp/issue-178.log 2>&1
+          status=$?
+          set -e
+          tail -n 100 /tmp/issue-178.log
+          exit "$status"
