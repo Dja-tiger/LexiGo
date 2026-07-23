@@ -187,29 +187,41 @@ jobs:
           PY
 
       - name: Validate generated changes
-        id: generated_validation
-        continue-on-error: true
         run: |
-          set +e
-          {
-            python3 scripts/ci/actions_storage_policy_test.py
-            python3 scripts/ci/actions_storage_cleanup_test.py
-            git diff --check
-          } > storage-policy-validation.log 2>&1
-          status=$?
-          cat storage-policy-validation.log
-          exit "$status"
+          python3 scripts/ci/actions_storage_policy_test.py
+          python3 scripts/ci/actions_storage_cleanup_test.py
+          git diff --check
 
-      - name: Commit generated changes and diagnostics
-        if: always()
-        env:
-          VALIDATION_OUTCOME: ${{ steps.generated_validation.outcome }}
+      - name: Stage validated snapshots
+        run: |
+          set -Eeuo pipefail
+          snapshot_temp="$RUNNER_TEMP/storage-policy-generated"
+          rm -rf -- "$snapshot_temp"
+          mkdir -p "$snapshot_temp/files"
+
+          git add -A
+          git diff --cached --name-only --diff-filter=ACM \
+            | grep -v '^storage-policy-validation.log$' \
+            > "$snapshot_temp/manifest.txt"
+          git reset
+
+          while IFS= read -r target; do
+            test -n "$target"
+            install -d "$snapshot_temp/files/$(dirname "$target")"
+            cp -- "$target" "$snapshot_temp/files/$target"
+          done < "$snapshot_temp/manifest.txt"
+
+          git reset --hard HEAD
+          git clean -ffd
+          rm -rf storage-policy-generated
+          cp -a "$snapshot_temp" storage-policy-generated
+
+      - name: Commit validated snapshots
         run: |
           set -Eeuo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git commit -m "ci: enforce bounded Actions storage policy"
+          git add storage-policy-generated
+          git commit -m "ci: stage validated Actions storage policy"
           git push origin HEAD:fix/actions-storage-policy
-          test "$VALIDATION_OUTCOME" = success
   # END TEMP STORAGE POLICY PATCH
