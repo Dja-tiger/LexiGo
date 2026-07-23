@@ -5,7 +5,7 @@ import {
   installQualityGateAPI,
 } from "./support/quality-gates";
 
-test("dictionary route island keeps one session bootstrap across route transitions", async ({ context, page }) => {
+test("cold dictionary island hands off without restarting the session bootstrap", async ({ context, page }) => {
   await installQualityGateAPI(context);
   const runtimeErrors = captureRuntimeErrors(page);
   let refreshRequests = 0;
@@ -31,14 +31,14 @@ test("dictionary route island keeps one session bootstrap across route transitio
 
   await routeNavigation.getByRole("link", { name: "Словарь", exact: true }).click();
   await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(1);
+  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: "Находите и изучайте материал в контексте" })).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
   await page.goForward();
   await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(1);
+  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(0);
 
   expect(refreshRequests).toBe(1);
   expect(runtimeErrors).toEqual([]);
