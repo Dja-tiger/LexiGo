@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { AriaAttributes, MouseEvent, ReactNode } from "react";
 
 import {
@@ -30,6 +30,7 @@ const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "library",
   "progress",
 ]);
+const ROUTE_CLIENT_ISLAND_SELECTOR = "[data-route-client-island]";
 
 function RouteIcon({ name }: { name: RouteIconName }) {
   const common = {
@@ -70,7 +71,7 @@ function destinationFor(target: NavigationTarget) {
     : { target, scroll: { x: 0, y: 0 } };
 }
 
-function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
+function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourneyIntent) {
   const current = parseNavigationLocation(window.location);
   const currentScroll = { x: window.scrollX, y: window.scrollY };
   rememberRouteTab(current, currentScroll);
@@ -80,18 +81,33 @@ function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyInte
   const nextURL = navigationURL(destination.target);
   if (currentURL === nextURL) {
     document.querySelector<HTMLElement>("#lexigo-main-content")?.focus({ preventScroll: false });
-    return;
+    return null;
   }
 
+  queueProductJourneyIntent(intent);
+  return {
+    current,
+    currentScroll,
+    destination,
+    nextURL,
+  };
+}
+
+function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
+  const transition = routeTransition(requestedTarget, intent);
+  if (!transition) return;
+
   window.history.replaceState(
-    createNavigationHistoryState(current, currentScroll),
+    createNavigationHistoryState(transition.current, transition.currentScroll),
     "",
     window.location.href,
   );
 
-  const nextState = createNavigationHistoryState(destination.target, destination.scroll);
-  queueProductJourneyIntent(intent);
-  window.history.pushState(nextState, "", nextURL);
+  const nextState = createNavigationHistoryState(
+    transition.destination.target,
+    transition.destination.scroll,
+  );
+  window.history.pushState(nextState, "", transition.nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
 }
 
@@ -110,6 +126,8 @@ function RouteLink({
   ariaCurrent?: AriaAttributes["aria-current"];
   navigationView?: AppView;
 }) {
+  const router = useRouter();
+
   return (
     <Link
       href={navigationURL(target)}
@@ -121,7 +139,18 @@ function RouteLink({
       onClick={(event) => {
         if (shouldUseNativeNavigation(event)) return;
         event.preventDefault();
-        pushRoute(target, navigationView ? "primary_navigation" : "in_app_navigation");
+
+        const intent = navigationView ? "primary_navigation" : "in_app_navigation";
+        if (document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR)) {
+          // A cold route island does not own the product-wide popstate runtime.
+          // Let the Next App Router swap the route graph without reloading the
+          // document; the loaded product graph then resumes internal history.
+          const transition = routeTransition(target, intent);
+          if (transition) router.push(transition.nextURL, { scroll: false });
+          return;
+        }
+
+        pushRoute(target, intent);
       }}
     >
       {children}
