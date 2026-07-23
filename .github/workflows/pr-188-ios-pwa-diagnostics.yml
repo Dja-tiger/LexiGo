@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: pr-188-ios-pwa-diagnostics
@@ -102,6 +103,66 @@ jobs:
           npx playwright test e2e/session-resume-pwa.spec.ts
           --project=ios-webkit --workers=1 --reporter=line
 
+      - name: Publish isolated PWA outcomes
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DICTIONARY_OUTCOME: ${{ steps.dictionary.outcome }}
+          CALENDAR_OUTCOME: ${{ steps.calendar.outcome }}
+          NAVIGATION_OUTCOME: ${{ steps.navigation.outcome }}
+          SPEECH_OUTCOME: ${{ steps.speech.outcome }}
+          SESSION_OUTCOME: ${{ steps.session.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          marker = "<!-- pr-188-ios-pwa-diagnostics -->"
+          outcomes = {
+              "dictionary restore": os.environ["DICTIONARY_OUTCOME"],
+              "Apple Calendar share": os.environ["CALENDAR_OUTCOME"],
+              "adaptive navigation": os.environ["NAVIGATION_OUTCOME"],
+              "speech fallback": os.environ["SPEECH_OUTCOME"],
+              "session resume": os.environ["SESSION_OUTCOME"],
+          }
+          body = "\n".join([
+              marker,
+              "## iOS PWA diagnostic result",
+              "",
+              f"Commit: `{os.environ['GITHUB_SHA']}`",
+              "",
+              *(f"- **{name}**: `{outcome}`" for name, outcome in outcomes.items()),
+          ])
+          repository = os.environ["GITHUB_REPOSITORY"]
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+              "Content-Type": "application/json",
+              "User-Agent": "lexigo-pr188-pwa-diagnostics",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+
+          def call(method, path, payload=None):
+              data = json.dumps(payload).encode("utf-8") if payload is not None else None
+              request = urllib.request.Request(
+                  f"https://api.github.com{path}",
+                  data=data,
+                  headers=headers,
+                  method=method,
+              )
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  raw = response.read()
+                  return json.loads(raw) if raw else None
+
+          comments = call("GET", f"/repos/{repository}/issues/188/comments?per_page=100") or []
+          existing = next((item for item in comments if marker in item.get("body", "")), None)
+          if existing:
+              call("PATCH", f"/repos/{repository}/issues/comments/{existing['id']}", {"body": body})
+          else:
+              call("POST", f"/repos/{repository}/issues/188/comments", {"body": body})
+          PY
+
       - name: Verify all isolated PWA specs passed
         if: always()
         env:
@@ -112,12 +173,6 @@ jobs:
           SESSION_OUTCOME: ${{ steps.session.outcome }}
         run: |
           set -Eeuo pipefail
-          printf 'dictionary=%s\ncalendar=%s\nnavigation=%s\nspeech=%s\nsession=%s\n' \
-            "$DICTIONARY_OUTCOME" \
-            "$CALENDAR_OUTCOME" \
-            "$NAVIGATION_OUTCOME" \
-            "$SPEECH_OUTCOME" \
-            "$SESSION_OUTCOME"
           test "$DICTIONARY_OUTCOME" = success
           test "$CALENDAR_OUTCOME" = success
           test "$NAVIGATION_OUTCOME" = success
