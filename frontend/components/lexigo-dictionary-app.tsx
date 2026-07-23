@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -84,6 +85,8 @@ type PendingNavigation = {
   scroll: NavigationScrollPosition;
 };
 
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
+
 function toLearningItem(item: APIItem): LearningItem {
   return {
     id: `word-${item.id}`,
@@ -130,6 +133,7 @@ function BellIcon() {
 }
 
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
+  const router = useRouter();
   const session = initialSession;
   const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
@@ -333,11 +337,23 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
       "",
       window.location.href,
     );
+
+    const url = navigationURL(target);
+    if (target.view !== "library") {
+      window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
+      router.push(url, { scroll: false });
+      return;
+    }
+
     const state = createNavigationHistoryState(target, scroll);
-    if (replace) window.history.replaceState(state, "", navigationURL(target));
-    else window.history.pushState(state, "", navigationURL(target));
-    window.dispatchEvent(new PopStateEvent("popstate", { state }));
-  }, []);
+    if (replace) window.history.replaceState(state, "", url);
+    else window.history.pushState(state, "", url);
+
+    navigationRef.current = target;
+    setPendingNavigation({ identity: navigationIdentity(target), scroll });
+    setNavigation(target);
+    writePersistedNavigation(window.localStorage, target);
+  }, [router]);
 
   const configureLesson = useCallback((context: { source: DictionarySource; topic?: string }) => {
     navigate({
