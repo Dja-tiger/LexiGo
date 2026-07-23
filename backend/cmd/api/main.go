@@ -13,6 +13,7 @@ import (
 
 	"github.com/Dja-tiger/LexiGo/backend/internal/catalog"
 	"github.com/Dja-tiger/LexiGo/backend/internal/config"
+	"github.com/Dja-tiger/LexiGo/backend/internal/performance"
 	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
 	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
 	redisplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/redis"
@@ -75,6 +76,26 @@ func run() error {
 	app, err := server.New(cfg, logger, pg, rdb)
 	if err != nil {
 		return fmt.Errorf("build server: %w", err)
+	}
+
+	if cfg.RUMRetention.Enabled {
+		retentionWorker := performance.NewRetentionWorker(
+			performance.NewRepository(pg),
+			logger,
+			performance.RetentionPolicy{
+				TTL:             cfg.RUMRetention.TTL,
+				CleanupInterval: cfg.RUMRetention.CleanupInterval,
+				BatchSize:       cfg.RUMRetention.BatchSize,
+				MaxBatches:      cfg.RUMRetention.MaxBatches,
+			},
+		)
+		go retentionWorker.Run(ctx)
+		logger.Info("RUM retention worker started",
+			slog.Duration("ttl", cfg.RUMRetention.TTL),
+			slog.Duration("interval", cfg.RUMRetention.CleanupInterval),
+			slog.Int("batch_size", cfg.RUMRetention.BatchSize),
+			slog.Int("max_batches", cfg.RUMRetention.MaxBatches),
+		)
 	}
 
 	httpServer := &http.Server{
