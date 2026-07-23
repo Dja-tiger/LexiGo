@@ -14,7 +14,8 @@ export type NavigationTarget = {
     | "daily-life"
     | "travel"
     | "data-engineering"
-    | "backend";
+    | "backend"
+    | "academic-technical-english";
   topic?: string;
   status?: CatalogStatus;
   query?: string;
@@ -47,6 +48,7 @@ const SOURCES = new Set<NavigationSource>([
   "travel",
   "data-engineering",
   "backend",
+  "academic-technical-english",
 ]);
 const CATALOG_STATUSES = new Set<CatalogStatus>(["new", "learning", "review", "mastered"]);
 const CATALOG_SORTS = new Set<CatalogSort>(["default", "az", "za"]);
