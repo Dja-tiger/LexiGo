@@ -329,12 +329,12 @@ jobs:
       - name: Upload cleanup smoke summary
         if: always() && matrix.slot == 1
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: runner-cleanup-smoke-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/lexigo-cleanup-smoke.json
           if-no-files-found: ignore
-          retention-days: 30
-
+          retention-days: 3
       - name: Cleanup smoke resources
         if: always()
         shell: bash

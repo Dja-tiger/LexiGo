@@ -71,8 +71,9 @@ jobs:
       - name: Upload machine-readable cleanup summary
         if: always() && steps.cleanup.outcome != 'skipped'
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: runner-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/lexigo-runner-cleanup.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3

@@ -66,12 +66,12 @@ jobs:
       - name: Upload backend unit diagnostics
         if: always() && steps.unit-tests.outcome == 'failure'
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: backend-unit-test-log
           path: backend/unit-test.log
           if-no-files-found: error
-          retention-days: 7
-
+          retention-days: 3
       - name: Coverage summary
         run: go tool cover -func=coverage.out
       - name: Vulnerability scan
@@ -206,12 +206,12 @@ jobs:
       - name: Upload integration diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: integration-test-log
           path: backend/integration-test.log
           if-no-files-found: error
-          retention-days: 7
-
+          retention-days: 3
       - name: Cleanup integration services
         if: always()
         run: |
@@ -274,12 +274,12 @@ jobs:
       - name: Upload frontend core diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: frontend-core-diagnostics
           path: frontend/ci-artifacts
           if-no-files-found: ignore
-          retention-days: 7
-
+          retention-days: 3
       - name: Cleanup isolated frontend workspace
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
@@ -366,14 +366,14 @@ jobs:
         run: bash ../scripts/ci/frontend-container.sh extract
 
       - name: Upload performance budget report
-        if: always() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
+        if: failure() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: performance-budget-${{ github.sha }}
           path: frontend/ci-artifacts/test-results/performance-budget-report.json
           if-no-files-found: error
-          retention-days: 30
-
+          retention-days: 3
       - name: Dictionary navigation browser smoke
         if: matrix.suite == 'ui-runtime'
         run: |
@@ -416,12 +416,12 @@ jobs:
       - name: Upload browser diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: frontend-playwright-report-${{ matrix.suite }}
           path: frontend/ci-artifacts
           if-no-files-found: ignore
-          retention-days: 7
-
+          retention-days: 3
       - name: Cleanup isolated frontend workspace
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
@@ -517,8 +517,6 @@ jobs:
           tags: |
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:${{ github.sha }}
             ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:main
-          cache-from: type=gha,scope=${{ matrix.component }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.component }},ignore-error=true
           provenance: mode=max
           sbom: true
 
@@ -565,8 +563,9 @@ jobs:
       - name: Upload cleanup summary
         if: always() && steps.cleanup.outcome != 'skipped'
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: runner-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/lexigo-runner-cleanup.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3

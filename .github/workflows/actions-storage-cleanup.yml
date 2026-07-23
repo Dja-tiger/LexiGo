@@ -3,16 +3,22 @@ name: Actions storage cleanup
 on:
   pull_request:
     paths:
-      - ".github/workflows/actions-storage-cleanup.yml"
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   push:
     branches: [main]
     paths:
-      - ".github/workflows/actions-storage-cleanup.yml"
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   workflow_run:
     workflows: [CI]
@@ -45,7 +51,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: lexigo-actions-storage-cleanup
+  group: lexigo-actions-storage-cleanup-${{ github.event_name }}-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -65,6 +71,9 @@ jobs:
 
       - name: Test cleanup planner
         run: python3 scripts/ci/actions_storage_cleanup_test.py
+
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
 
       - name: Preview current storage candidates
         env:
@@ -98,6 +107,9 @@ jobs:
       - name: Test cleanup planner
         run: python3 scripts/ci/actions_storage_cleanup_test.py
 
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
+
       - name: Resolve cleanup policy
         id: policy
         env:
@@ -110,6 +122,10 @@ jobs:
           mode=apply
           artifact_retention_days=3
           delete_all_caches=true
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && git log -1 --pretty=%B | grep -Fq '[actions-storage-emergency]'; then
+            artifact_retention_days=0
+          fi
 
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             mode="${DISPATCH_MODE:-dry-run}"
@@ -145,3 +161,4 @@ jobs:
           fi
 
           python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"
+
