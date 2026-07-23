@@ -9,6 +9,7 @@ const componentsDirectory = path.join(frontendDirectory, "components");
 
 const productionAppFiles = [
   "lexigo-bootstrapped-app.tsx",
+  "lexigo-dictionary-app.tsx",
   "lexigo-premium-app.tsx",
   "routed-lexigo-app.tsx",
 ] as const;
@@ -42,7 +43,7 @@ describe("production frontend application entry", () => {
     expect(applicationRootFiles).toEqual([...productionAppFiles].sort());
   });
 
-  it("keeps the root chain layout -> routed shell -> bootstrap -> product graph", () => {
+  it("keeps the root chain layout -> routed shell -> bootstrap -> route graph", () => {
     const layout = readSource(appDirectory, "layout.tsx");
     const routedApp = readSource(componentsDirectory, "routed-lexigo-app.tsx");
     const bootstrappedApp = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
@@ -54,16 +55,33 @@ describe("production frontend application entry", () => {
     expect(routedApp.match(/<LexigoBootstrappedApp\s*\/>/g)).toHaveLength(1);
 
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
   });
 
-  it("allows only the bootstrap layer to load the product graph", () => {
-    const productGraphConsumers = componentSources()
+  it("allows only the bootstrap layer to load route application entries", () => {
+    const sources = componentSources();
+    const productGraphConsumers = sources
       .filter(({ source }) => source.includes("lexigo-premium-app"))
+      .map(({ file }) => file)
+      .sort();
+    const dictionaryGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-dictionary-app"))
       .map(({ file }) => file)
       .sort();
 
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+  });
+
+  it("keeps dictionary code inside its route island", () => {
+    const dictionaryApp = readSource(componentsDirectory, "lexigo-dictionary-app.tsx");
+
+    expect(dictionaryApp).toContain('from "./dictionary-catalog"');
+    expect(dictionaryApp).toContain('data-route-client-island="dictionary"');
+    expect(dictionaryApp).not.toContain("lexigo-premium-app");
+    expect(dictionaryApp).not.toContain("restoreSession");
   });
 
   it("keeps retired alternative roots outside the production tree", () => {
