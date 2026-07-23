@@ -37,6 +37,11 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	t.Setenv("REDIS_ADDR", "")
 	t.Setenv("SESSION_COOKIE_SECURE", "")
 	t.Setenv("PASSWORD_RESET_DELIVERY", "")
+	t.Setenv("RUM_RETENTION_ENABLED", "")
+	t.Setenv("RUM_RETENTION_TTL", "")
+	t.Setenv("RUM_RETENTION_CLEANUP_INTERVAL", "")
+	t.Setenv("RUM_RETENTION_BATCH_SIZE", "")
+	t.Setenv("RUM_RETENTION_MAX_BATCHES", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -53,6 +58,12 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	}
 	if cfg.PasswordResetDelivery != "log" || cfg.PasswordResetTTL != 30*time.Minute {
 		t.Fatalf("unexpected local password reset config: delivery=%q ttl=%s", cfg.PasswordResetDelivery, cfg.PasswordResetTTL)
+	}
+	if !cfg.RUMRetention.Enabled || cfg.RUMRetention.TTL != 30*24*time.Hour {
+		t.Fatalf("unexpected RUM retention defaults: %+v", cfg.RUMRetention)
+	}
+	if cfg.RUMRetention.CleanupInterval != time.Hour || cfg.RUMRetention.BatchSize != 5000 || cfg.RUMRetention.MaxBatches != 20 {
+		t.Fatalf("unexpected RUM cleanup bounds: %+v", cfg.RUMRetention)
 	}
 }
 
@@ -135,5 +146,31 @@ func TestLoadNormalizesOriginTrailingSlash(t *testing.T) {
 	}
 	if cfg.CORSAllowedOrigin != "https://lexigo.example" {
 		t.Fatalf("CORSAllowedOrigin = %q", cfg.CORSAllowedOrigin)
+	}
+}
+
+func TestLoadRejectsUnsafeRUMRetentionBounds(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       string
+		value     string
+		errorText string
+	}{
+		{name: "short TTL", key: "RUM_RETENTION_TTL", value: "23h", errorText: "RUM_RETENTION_TTL"},
+		{name: "frequent cleanup", key: "RUM_RETENTION_CLEANUP_INTERVAL", value: "30s", errorText: "RUM_RETENTION_CLEANUP_INTERVAL"},
+		{name: "small batch", key: "RUM_RETENTION_BATCH_SIZE", value: "99", errorText: "RUM_RETENTION_BATCH_SIZE"},
+		{name: "too many batches", key: "RUM_RETENTION_MAX_BATCHES", value: "101", errorText: "RUM_RETENTION_MAX_BATCHES"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			setRequiredEnvironment(t)
+			t.Setenv(test.key, test.value)
+
+			_, err := Load()
+			if err == nil || !strings.Contains(err.Error(), test.errorText) {
+				t.Fatalf("expected %s validation error, got %v", test.errorText, err)
+			}
+		})
 	}
 }
