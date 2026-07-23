@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Dja-tiger/LexiGo/backend/internal/config"
+	"github.com/Dja-tiger/LexiGo/backend/internal/performance"
 	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
 	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
 	redisplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/redis"
@@ -115,8 +116,9 @@ func TestPerformanceRUMIsAnonymousBoundedAndQueryableByP75(t *testing.T) {
 
 	var sampleCount int64
 	var p75 float64
+	var representative bool
 	if err := pg.QueryRow(ctx, `
-		select sample_count, p75_value
+		select sample_count, p75_value, is_representative
 		from performance_core_web_vitals_daily_p75
 		where sample_date = current_date
 		  and app_version = 'integration-release'
@@ -125,11 +127,60 @@ func TestPerformanceRUMIsAnonymousBoundedAndQueryableByP75(t *testing.T) {
 		  and browser_family = 'webkit'
 		  and display_mode = 'standalone'
 		  and metric_name = 'LCP'
-	`).Scan(&sampleCount, &p75); err != nil {
+	`).Scan(&sampleCount, &p75, &representative); err != nil {
 		t.Fatalf("query p75 view: %v", err)
 	}
 	if sampleCount != 4 || p75 != 3250 {
 		t.Fatalf("p75 aggregate = count %d value %.2f, want count 4 value 3250", sampleCount, p75)
+	}
+	if representative {
+		t.Fatal("four samples must be marked as insufficient for alerting")
+	}
+
+	command, err := pg.Exec(ctx, `
+		update performance_samples
+		set sampled_at = now() - interval '31 days'
+		where id = (
+			select min(id)
+			from performance_samples
+			where app_version = 'integration-release'
+		)
+	`)
+	if err != nil {
+		t.Fatalf("age one RUM sample: %v", err)
+	}
+	if command.RowsAffected() != 1 {
+		t.Fatalf("aged rows = %d, want 1", command.RowsAffected())
+	}
+
+	cleanup, err := performance.NewRepository(pg).CleanupExpired(
+		ctx,
+		time.Now().UTC().Add(-30*24*time.Hour),
+		100,
+		2,
+	)
+	if err != nil {
+		t.Fatalf("CleanupExpired() error = %v", err)
+	}
+	if cleanup.Skipped || cleanup.DeletedRows != 1 || cleanup.Batches != 1 || cleanup.LimitReached {
+		t.Fatalf("CleanupExpired() result = %+v", cleanup)
+	}
+
+	var totalSamples int64
+	var samplesLast24h int64
+	var tableBytes int64
+	var indexBytes int64
+	if err := pg.QueryRow(ctx, `
+		select total_samples, samples_last_24h, table_bytes, index_bytes
+		from performance_rum_operational_status
+	`).Scan(&totalSamples, &samplesLast24h, &tableBytes, &indexBytes); err != nil {
+		t.Fatalf("query RUM operational status: %v", err)
+	}
+	if totalSamples != 3 || samplesLast24h != 3 {
+		t.Fatalf("operational counts = total %d last24h %d, want 3 and 3", totalSamples, samplesLast24h)
+	}
+	if tableBytes <= 0 || indexBytes <= 0 {
+		t.Fatalf("operational sizes = table %d index %d, want positive values", tableBytes, indexBytes)
 	}
 
 	forbiddenColumns := []string{"user_id", "ip_address", "url", "query", "referrer", "user_agent", "email"}
