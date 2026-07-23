@@ -301,9 +301,10 @@ jobs:
         working-directory: frontend
     strategy:
       fail-fast: false
-      # Three runner services share the host. Keep one balanced browser group
-      # per runner after the core job has completed.
-      max-parallel: 3
+      # The runner services share one resource-constrained physical host.
+      # Serialize browser suites so Next.js servers and Playwright workers do
+      # not compete for the same CPU and memory pool.
+      max-parallel: 1
       matrix:
         suite: [journeys, ui-accessibility, ui-runtime]
     env:
