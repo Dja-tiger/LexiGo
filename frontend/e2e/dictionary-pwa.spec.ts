@@ -237,9 +237,9 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
 
   await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
   await expectDictionary(page);
-  await page.getByRole("button", { name: "Настроить урок по текущей выборие" }).click();
+  await page.getByRole("button", { name: "Настроить урок по текущей выборке" }).click();
   await expect(page).toHaveURL(/\/learn(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "Соберите один фукусированный урок" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await expect(page.getByRole("radio", { name: /Смешанная практика/ })).toHaveAttribute("aria-checked", "true");
   expect(api.lessonRequests).toHaveLength(0);
   expect(runtimeErrors).toEqual([]);
