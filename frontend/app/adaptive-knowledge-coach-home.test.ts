@@ -3,12 +3,19 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+type PackageManifest = {
+  scripts?: Record<string, string>;
+};
+
 const appDirectory = path.join(process.cwd(), "app");
 const styleSource = readFileSync(
   path.join(appDirectory, "adaptive-knowledge-coach-home.css"),
   "utf8",
 );
 const layoutSource = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
+const packageManifest = JSON.parse(
+  readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+) as PackageManifest;
 
 describe("Adaptive Knowledge Coach shell and Home styles", () => {
   it("loads the design layer after the previous Home presentation layer", () => {
@@ -47,5 +54,15 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
     expect(styleSource).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styleSource).toContain("transition: none !important;");
     expect(styleSource).toContain("animation: none !important;");
+  });
+
+  it("keeps the Home browser contract in the UI gate without weakening PWA isolation", () => {
+    const scripts = packageManifest.scripts ?? {};
+
+    expect(scripts["test:e2e:ui"]).toContain("e2e/adaptive-knowledge-coach-home.spec.ts");
+    expect(scripts["test:e2e:pwa"]).toContain("npm run test:e2e:pwa:dictionary");
+    expect(scripts["test:e2e:pwa"]).toContain("npm run test:e2e:pwa:session");
+    expect(scripts["test:e2e:pwa:dictionary"]).toContain("--workers=1");
+    expect(scripts["test:e2e:pwa:session"]).toContain("--workers=1");
   });
 });
