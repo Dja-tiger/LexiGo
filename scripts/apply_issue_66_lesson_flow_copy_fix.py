@@ -22,15 +22,21 @@ def main() -> None:
     )
     text = replace_exact(
         text,
-        "recall lesson mode label",
+        "recall lesson mode helper label",
         '  const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? "Вспомнить самому" : "Выбрать вариант";',
         '  const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? learningTermCopy("recall").label : "Выбрать вариант";',
+    )
+    text = replace_exact(
+        text,
+        "mixed practice recall selector",
+        '  await page.getByRole("radio", { name: /Вспомнить самому/ }).click();',
+        '  await page.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) }).click();',
     )
 
     if "Вспомнить самому" in text:
         raise RuntimeError("stale recall label remains in lesson flow browser contract")
-    if 'learningTermCopy("recall").label' not in text:
-        raise RuntimeError("lesson flow does not use the shared recall label")
+    if text.count('learningTermCopy("recall").label') != 2:
+        raise RuntimeError("lesson flow must use the shared recall label in both selectors")
 
     TARGET.write_text(text, encoding="utf-8")
 
