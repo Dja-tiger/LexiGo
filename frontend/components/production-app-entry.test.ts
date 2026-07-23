@@ -52,8 +52,9 @@ describe("production frontend application entry", () => {
     expect(layout.match(/<RoutedLexigoApp\s*\/>/g)).toHaveLength(1);
 
     expect(routedApp).toMatch(/import\s+\{\s*LexigoBootstrappedApp\s*\}\s+from\s+["']\.\/lexigo-bootstrapped-app["']/);
-    expect(routedApp.match(/<LexigoBootstrappedApp\s*\/>/g)).toHaveLength(1);
+    expect(routedApp.match(/<LexigoBootstrappedApp\s+pathname=\{pathname\}\s*\/>/g)).toHaveLength(1);
 
+    expect(bootstrappedApp).not.toContain('from "next/navigation"');
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
