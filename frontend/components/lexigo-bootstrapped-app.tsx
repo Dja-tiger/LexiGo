@@ -5,12 +5,16 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   isDefinitiveSessionRefreshError,
-  restoreSession,
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
+import {
+  adoptBootstrappedSession,
+  invalidateBootstrappedSession,
+  restoreBootstrappedSession,
+} from "../lib/session-bootstrap";
 import { subscribeToSessionResume } from "../lib/session-resume";
 import { AccountDataPanel } from "./account-data-panel";
 import { AccountEmailPanel } from "./account-email-panel";
@@ -20,12 +24,18 @@ import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 
 type SessionScreenReason = "required" | "expired" | "forbidden";
+type RouteGraph = "dictionary" | "product";
 
 type AccountNotice = {
   title: string;
   message: string;
+};
+
+type LexigoBootstrappedAppProps = {
+  pathname: string;
 };
 
 function ProductShellLoading() {
@@ -40,6 +50,14 @@ function ProductShellLoading() {
 
 const LexigoPremiumApp = dynamic(
   () => import("./lexigo-premium-app").then((module) => module.LexigoPremiumApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
+const LexigoDictionaryApp = dynamic(
+  () => import("./lexigo-dictionary-app").then((module) => module.LexigoDictionaryApp),
   {
     ssr: false,
     loading: ProductShellLoading,
@@ -61,14 +79,27 @@ function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | nul
   window.history.replaceState(profileHistoryState(), "", `/profile?${params.toString()}`);
 }
 
-export function LexigoBootstrappedApp() {
+function isDictionaryRoute(pathname: string): boolean {
+  return pathname === "/dictionary" || pathname.startsWith("/words/");
+}
+
+export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
   const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
+  const [routeGraph, setRouteGraph] = useState<RouteGraph>(() => (
+    isDictionaryRoute(pathname) ? "dictionary" : "product"
+  ));
+
+  const handleSessionUpdated = useCallback((nextSession: Session) => {
+    adoptBootstrappedSession(nextSession);
+    setInitialSession(nextSession);
+  }, []);
 
   const retryRestore = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(undefined);
     setNotice(null);
     setAccountNotice(null);
@@ -77,6 +108,7 @@ export function LexigoBootstrappedApp() {
   }, []);
 
   const handleAccountDeleted = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -88,6 +120,7 @@ export function LexigoBootstrappedApp() {
   }, []);
 
   const handleEmailChanged = useCallback(() => {
+    invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -103,7 +136,7 @@ export function LexigoBootstrappedApp() {
 
     async function preflightSession() {
       try {
-        const restored = await restoreSession();
+        const restored = await restoreBootstrappedSession();
         if (cancelled) return;
         if (restored === null && window.location.pathname.startsWith("/lesson/")) {
           moveToSessionScreen("required");
@@ -117,6 +150,7 @@ export function LexigoBootstrappedApp() {
         setNotice(problem);
 
         if (isDefinitiveSessionRefreshError(requestError)) {
+          invalidateBootstrappedSession();
           setInitialSession(null);
           setRestoreRecoverable(false);
           if (requestError instanceof SessionRefreshError) {
@@ -165,6 +199,23 @@ export function LexigoBootstrappedApp() {
     return () => window.removeEventListener(SESSION_RESTORED_EVENT, clearResolvedNotice);
   }, []);
 
+  useEffect(() => {
+    // The dictionary graph is only a cold-entry optimization. The route chrome
+    // signals the App Router handoff before navigation, and popstate covers
+    // browser history entries that cross into the already loaded product graph.
+    const loadProductGraph = () => setRouteGraph("product");
+    const preserveLoadedProductGraph = () => {
+      if (!isDictionaryRoute(window.location.pathname)) loadProductGraph();
+    };
+
+    window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
+    window.addEventListener("popstate", preserveLoadedProductGraph);
+    return () => {
+      window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
+      window.removeEventListener("popstate", preserveLoadedProductGraph);
+    };
+  }, []);
+
   if (initialSession === undefined) {
     if (restoreRecoverable && notice) {
       return (
@@ -189,6 +240,9 @@ export function LexigoBootstrappedApp() {
     );
   }
 
+  const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
+  const routeKey = initialSession?.user.id ?? "guest";
+
   return (
     <>
       <ReviewOutboxRuntime session={initialSession} />
@@ -210,16 +264,24 @@ export function LexigoBootstrappedApp() {
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      <LexigoPremiumApp
-        key={initialSession?.tokens.accessToken ?? "guest"}
-        initialSession={initialSession}
-      />
+      {useDictionaryIsland ? (
+        <LexigoDictionaryApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : (
+        <LexigoPremiumApp
+          key={routeKey}
+          initialSession={initialSession}
+        />
+      )}
       {initialSession ? (
         <>
           <AccountSecurityPanel
             session={initialSession}
             onSessionExpired={retryRestore}
-            onSessionUpdated={setInitialSession}
+            onSessionUpdated={handleSessionUpdated}
           />
           <AccountEmailPanel session={initialSession} onSessionExpired={retryRestore} />
           <AccountDataPanel

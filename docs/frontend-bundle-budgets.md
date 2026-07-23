@@ -58,11 +58,26 @@ CI run `29954272668` measured every canonical route on the same production build
 | `/profile` | 238,257 bytes | 20 |
 | `/lesson/active` | 238,257 bytes | 18 |
 
-All routes loaded the same 12 JavaScript chunks. This is the measurable baseline for the current global `RoutedLexigoApp` client graph and the evidence for extracting route-level islands.
+All routes loaded the same 12 JavaScript chunks. This is the measurable baseline for the original global `RoutedLexigoApp` client graph and the evidence for extracting route-level islands.
 
 `frontend/bundle-budgets.json` owns the canonical route inventory and release ceilings. The first ceiling is `275,000` bytes per route, approximately 15% above the measured transfer, with at most 24 initial requests.
 
 These limits are ceilings, not targets. Client-island extraction should reduce route transfer and then tighten the corresponding ceiling.
+
+## First route island: Dictionary
+
+The first production slice of Issue #115 moves `/dictionary` and `/words/:id` into `LexigoDictionaryApp`, a dedicated dynamic client entry. `LexigoBootstrappedApp` remains mounted across route transitions and continues to own session restoration, refresh coordination, review outbox runtime, account controls and session notices.
+
+The Dictionary island owns only:
+
+- dictionary route navigation and filter state;
+- catalog metadata and progress reads required by that screen;
+- paginated word-list and word-detail requests;
+- transitions from the catalog to lesson configuration or authentication.
+
+The shared authenticated JSON client in `frontend/lib/authorized-json.ts` preserves the existing CSRF, timeout, typed-response and refresh-on-401 behavior without importing the monolithic product graph. The browser regression verifies direct entry, Home ↔ Dictionary transitions, Back/Forward and a single `/api/v1/auth/refresh` bootstrap request.
+
+The existing `/dictionary` ceiling remains unchanged until the production CI artifact records the new cold-route transfer. After that measurement, update both `baselineJavascriptBytes` and `maxJavascriptBytes` from evidence; do not estimate them from source size.
 
 A budget increase requires:
 
