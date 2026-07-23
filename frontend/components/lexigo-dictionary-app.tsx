@@ -95,8 +95,26 @@ function toLearningItem(item: APIItem): LearningItem {
 }
 
 function navigationWithoutDetail(target: NavigationTarget): NavigationTarget {
-  const { detail: _detail, ...result } = target;
+  const result = { ...target };
+  delete result.detail;
   return result;
+}
+
+function FlameIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22c4.1 0 7-2.8 7-6.7 0-3-1.7-5.3-4.7-8.1.1 2.2-.7 3.5-2 4.4.1-3.6-1.8-6.2-5-9.1.2 3.4-2.3 5.4-2.3 9.3C5 17.6 7.8 22 12 22Z" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+  );
 }
 
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
@@ -188,7 +206,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     const controller = new AbortController();
     void loadProgress(session, controller.signal);
     return () => controller.abort();
-  }, [loadProgress, session?.user.id]);
+  }, [loadProgress, session]);
 
   const loadPage = useCallback(async (
     filters: DictionaryFilters,
@@ -267,7 +285,15 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     <div className="lx-app" data-route-client-island="dictionary">
       <header className="lx-header">
         <div className="lx-header-tools">
-          {session && progress ? <span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>{progress.currentStreak} дн.</span> : null}
+          {session && progress ? <span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}><FlameIcon /><span>{progress.currentStreak} дн.</span></span> : null}
+          <button
+            className="lx-icon-button"
+            type="button"
+            aria-label="Напоминание о занятии"
+            onClick={() => document.querySelector<HTMLElement>(".lx-route-reminder-entry summary")?.click()}
+          >
+            <BellIcon />
+          </button>
           <button
             className="lx-avatar"
             type="button"
