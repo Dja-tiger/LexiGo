@@ -42,7 +42,7 @@ Reports are batched and sent with `fetch(..., { keepalive: true, credentials: "o
 
 ## p75 production queries
 
-Migration `000012_performance_rum.up.sql` creates `performance_core_web_vitals_daily_p75`. It aggregates each Core Web Vital independently by:
+Migration `000012_performance_rum.up.sql` creates the base RUM schema. Migration `000013_performance_rum_retention.up.sql` extends `performance_core_web_vitals_daily_p75` with `is_representative`. Each Core Web Vital is aggregated independently by:
 
 - date;
 - application version;
@@ -59,7 +59,7 @@ Release targets at p75:
 | INP | `<= 200 ms` |
 | CLS | `<= 0.1` |
 
-Example release query:
+Example dashboard query:
 
 ```sql
 select
@@ -71,13 +71,73 @@ select
     display_mode,
     metric_name,
     sample_count,
-    p75_value
+    p75_value,
+    is_representative
 from performance_core_web_vitals_daily_p75
 where sample_date >= current_date - 7
 order by sample_date desc, app_version, route, metric_name;
 ```
 
-A production alert should require a representative sample count before paging. A low-volume segment should remain visible on a dashboard but must not produce a release-blocking alert from one browser session.
+A production alert must include `is_representative = true`. The fixed threshold is 75 samples for one complete segment. Low-volume segments remain visible on dashboards but cannot page or block a release.
+
+## Raw-sample retention
+
+Raw `performance_samples` are retained for 30 days by default. The API starts one cleanup worker per replica, but a PostgreSQL session-level advisory lock permits only one replica to delete at a time. Each run uses the `sampled_at` index, deletes the oldest rows in bounded batches with `for update skip locked`, and stops after a configured maximum number of batches. A large backlog is therefore drained across multiple scheduled runs instead of one long transaction.
+
+Runtime configuration:
+
+| Variable | Default | Safety bound |
+|---|---:|---:|
+| `RUM_RETENTION_ENABLED` | `true` | boolean |
+| `RUM_RETENTION_TTL` | `720h` | at least `24h` |
+| `RUM_RETENTION_CLEANUP_INTERVAL` | `1h` | at least `1m` |
+| `RUM_RETENTION_BATCH_SIZE` | `5000` | `100..50000` |
+| `RUM_RETENTION_MAX_BATCHES` | `20` | `1..100` |
+
+At the defaults, one run deletes no more than 100,000 rows. Successful runs emit `RUM retention cleanup completed` with `deleted_rows`, `batches`, `limit_reached`, and duration. Lock contention is logged at debug level. Database failures are logged as `RUM retention cleanup failed`.
+
+The ingest handler emits structured `performance report rejected` events for malformed or invalid reports and `performance report storage failed` for PostgreSQL write failures. Rate-limit and Redis fail-closed responses remain visible through the existing HTTP access logs as `429` and `503` for `/api/v1/performance/rum`.
+
+Operational size and ingest query:
+
+```sql
+select
+    observed_at,
+    total_samples,
+    samples_last_24h,
+    oldest_sample_at,
+    newest_sample_at,
+    table_bytes,
+    index_bytes,
+    total_bytes
+from performance_rum_operational_status;
+```
+
+Daily accepted-sample rate:
+
+```sql
+select
+    sample_date,
+    sample_count,
+    app_versions,
+    first_sample_at,
+    last_sample_at
+from performance_rum_ingest_daily
+where sample_date >= current_date - 14
+order by sample_date desc;
+```
+
+### Retention change and rollback runbook
+
+1. Check `performance_rum_operational_status`, daily ingest, PostgreSQL capacity, and recent cleanup logs.
+2. Change only one retention variable per rollout. Keep batch and maximum-batch limits within the validated bounds.
+3. Deploy to stage and confirm that account, lesson, and RUM integration tests remain green.
+4. In production, verify `deleted_rows`, query latency, table size, and `/api/v1/performance/rum` error rate after the first cleanup.
+5. To stop deletion immediately, set `RUM_RETENTION_ENABLED=false` and restart API replicas. In-flight statements are cancelled during graceful shutdown.
+6. To preserve more future data, increase `RUM_RETENTION_TTL`. Increasing the TTL cannot restore rows already deleted.
+7. Restore deleted raw samples only from a PostgreSQL backup and only after disabling the worker. Validate the restored time range before re-enabling cleanup.
+
+Cleanup is idempotent: rerunning it with the same cutoff finds no already-deleted rows. The worker does not modify account, lesson, catalog, review, or aggregate source data.
 
 ## CI mobile profile
 
