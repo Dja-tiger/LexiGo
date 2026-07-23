@@ -8,16 +8,32 @@ File: `LexiGo Design System`
 
 File key: `3xXmBWnf38jbvLjtziwber`
 
-Current product-screen nodes:
+A full plugin-level inventory confirms that the live file already contains:
+
+- Foundations, Components and Interaction Components;
+- Product Patterns for the daily recommendation, focused lesson, knowledge report, scenario and application shell;
+- complete Home, Active Lesson, Progress, Scenario, Learn, Dictionary, Profile and resilient-state screen matrices;
+- the Product Screen Map, native handoff and interactive accessibility prototype;
+- 92 local variables and 92 components/component sets.
+
+The file also contains broader concept matrices and parallel versions of several routes. Production implementation must therefore reference explicit page and node IDs instead of treating every screen in the file as equally canonical.
+
+Selected nodes for PR #184:
 
 - page `13 — Product Screens — Home`: node `70:2`;
-- desktop Home, Light, 1440×1024: node `194:249`;
-- mobile Home, Dark, 390×844: node `196:223`;
-- page `14 — Product Screens — Learn`: node `200:2`;
-- mobile recommended lesson state: node `202:6`;
-- mobile manual-settings state: node `203:5`.
+- production desktop Home, Light, 1440×1024: node `194:249`;
+- production mobile Home, Dark, 390×844: node `196:223`.
 
-The original Issue #183 referenced additional Figma pages that were not present in the live file. The nodes above are the verified product-screen source of truth for this slice. Foundations are represented by the existing local variable collections for semantic colors, spacing, radius, motion and typography.
+The existing Home matrix on the same page remains useful as product exploration and state coverage. PR #184 intentionally selects the production frames above because they enforce one dominant next-best action and a compact evidence surface.
+
+Prepared design slice for Issue #162:
+
+- page `20 — Production Slice — Learn Composer`: node `200:2`;
+- mobile recommended/collapsed composer: node `202:6`;
+- mobile manual-settings composer: node `203:5`;
+- desktop full composer: node `204:2`.
+
+Research and concept pages `01–08` currently act primarily as section shells in the live file. The approved direction and engineering contract are represented by the populated foundations, patterns, product-screen matrices, screen map and prototype. Do not infer missing production behavior from empty concept pages.
 
 ## Production ownership
 
@@ -48,13 +64,23 @@ The next action resolves in this order:
 3. start recommended new study;
 4. open manual lesson configuration.
 
-The desktop and mobile Figma frames intentionally preserve this order and keep the primary action above mobile bottom navigation.
+The desktop and mobile production frames preserve this order and keep the primary action above mobile bottom navigation.
 
-## Next design slice
+## Next implementation slice
 
 Issue #162 is the next product-screen slice. On mobile, Learn defaults to a recommended lesson with one primary action. Manual mode/source/size controls are disclosed through an explicit `Настроить урок` action. Desktop keeps the full composer visible.
 
-The design must reuse the existing lesson API parameters and session lifecycle. Progressive disclosure is a presentation contract, not a new scheduling or composition algorithm.
+The design reuses the existing lesson API parameters and session lifecycle. Progressive disclosure is a presentation contract, not a new scheduling or composition algorithm.
+
+## Figma source-of-truth maintenance
+
+The following cleanup remains necessary but must not block PR #184:
+
+- identify concept-only and production-ready variants through explicit naming/status metadata;
+- remove page-number collisions when new production slices are added;
+- avoid duplicating route ownership across prototype, matrix and production frames;
+- update the Screen Map when a production slice supersedes an exploratory composition;
+- preserve old variants until their state coverage has been transferred or explicitly archived.
 
 ## Verification gates
 
