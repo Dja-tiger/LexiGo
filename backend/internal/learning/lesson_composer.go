@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Dja-tiger/LexiGo/backend/internal/catalog"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -81,10 +82,11 @@ func queryLessonCandidates(
 		      or ($2 = 'travel' and word.kind = 'word' and word.topic = 'Travel')
 		      or ($2 = 'data-engineering' and word.kind = 'word' and word.topic = 'Data Engineering')
 		      or ($2 = 'backend' and word.kind = 'word' and word.topic = 'Backend Development')
+		      or ($2 = 'academic-technical-english' and word.kind = 'word' and word.source = $5)
 		  )
 		  and ($4 = '' or word.topic = $4)
 		order by user_word.due_at, word.id
-	`, userID, source, dueOnly, strings.TrimSpace(topic))
+	`, userID, source, dueOnly, strings.TrimSpace(topic), catalog.Source)
 	if err != nil {
 		return nil, fmt.Errorf("query lesson candidates: %w", err)
 	}

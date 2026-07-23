@@ -144,7 +144,7 @@ type LessonItemResponse = APIItem & {
 type LessonSource = WordSection | "phrases";
 type StudyMode = AnswerMode | "all";
 type StudyView = "card" | "example" | "context";
-type CollectionSource = Extract<WordSection, "daily-life" | "travel" | "data-engineering" | "backend">;
+type CollectionSource = Extract<WordSection, "daily-life" | "travel" | "data-engineering" | "backend" | "academic-technical-english">;
 type CatalogKind = "phrases" | "all-items";
 
 type PendingNavigationFocus = {
@@ -290,6 +290,13 @@ const COLLECTIONS: CollectionDefinition[] = [
     shortLabel: "Backend",
     description: "API, архитектура, базы данных, конкурентность и надёжность",
     symbol: "</>",
+  },
+  {
+    source: "academic-technical-english",
+    label: "Academic Technical English",
+    shortLabel: "Academic English",
+    description: "Академическая техническая лексика для документации, исследований и инженерной коммуникации",
+    symbol: "AC",
   },
 ];
 

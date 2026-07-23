@@ -1,5 +1,5 @@
 export type PartOfSpeechSection = "noun" | "verb" | "adjective" | "other";
-export type WordCollection = "daily-life" | "travel" | "data-engineering" | "backend";
+export type WordCollection = "daily-life" | "travel" | "data-engineering" | "backend" | "academic-technical-english";
 export type WordSection = "mixed" | Exclude<PartOfSpeechSection, "other"> | WordCollection;
 export type LessonSize = 15 | 30 | 60 | "all";
 
@@ -8,6 +8,7 @@ export const WORD_COLLECTION_TOPICS: Record<WordCollection, string> = {
   travel: "Travel",
   "data-engineering": "Data Engineering",
   backend: "Backend Development",
+  "academic-technical-english": "academic-technical-english",
 };
 
 export type LearningItem = {

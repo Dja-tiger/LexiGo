@@ -6,7 +6,7 @@ const metadata: CatalogMetadata = {
   catalogVersion: "sha256:test",
   updatedAt: "2026-07-18T00:00:00Z",
   totals: { items: 923, words: 799, phrases: 124 },
-  sources: { mixed: 923, noun: 383, verb: 179, adjective: 193, phrases: 124, dailyLife: 55, travel: 55, dataEngineering: 55, backend: 55 },
+  sources: { mixed: 923, noun: 383, verb: 179, adjective: 193, phrases: 124, dailyLife: 55, travel: 55, dataEngineering: 55, backend: 55, academicTechnicalEnglish: 579 },
   topics: [],
 };
 
@@ -21,6 +21,7 @@ describe("catalog metadata helpers", () => {
     expect(catalogSourceCount(metadata, "travel")).toBe(55);
     expect(catalogSourceCount(metadata, "data-engineering")).toBe(55);
     expect(catalogSourceCount(metadata, "backend")).toBe(55);
+    expect(catalogSourceCount(metadata, "academic-technical-english")).toBe(579);
   });
 
   it.each([

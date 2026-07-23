@@ -1497,11 +1497,16 @@ components:
         submittedAnswer: { type: string }
         status: { type: string, enum: [pending, accepted, rejected] }
         createdAt: { type: string, format: date-time }
+    LessonSource:
+      type: string
+      description: Stable lesson-composer source identifier. Academic Technical English maps to the curated hakui-technical-english-2020 catalog source.
+      enum: [mixed, noun, verb, adjective, phrases, daily-life, travel, data-engineering, backend, academic-technical-english]
     LessonCreateRequest:
       type: object
       required: [source, studyMode, lessonSize]
       properties:
-        source: { type: string }
+        source:
+$ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]
@@ -1525,7 +1530,8 @@ components:
       type: object
       required: [source, studyMode, lessonSize]
       properties:
-        source: { type: string }
+        source:
+$ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]
@@ -1554,7 +1560,8 @@ components:
       type: object
       required: [source, studyMode, lessonSize, composition]
       properties:
-        source: { type: string }
+        source:
+          $ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]
@@ -1597,7 +1604,8 @@ components:
       required: [id, source, studyMode, lessonSize, currentIndex, version, status, items, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
-        source: { type: string }
+        source:
+          $ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]

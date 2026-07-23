@@ -15,6 +15,7 @@ func TestValidLessonSource(t *testing.T) {
 		"travel",
 		"data-engineering",
 		"backend",
+		"academic-technical-english",
 	}
 	for _, source := range valid {
 		if !validLessonSource(source) {

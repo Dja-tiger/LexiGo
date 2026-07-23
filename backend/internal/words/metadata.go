@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Dja-tiger/LexiGo/backend/internal/catalog"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -17,15 +18,16 @@ type CatalogTotals struct {
 }
 
 type CatalogSourceTotals struct {
-	Mixed           int `json:"mixed"`
-	Noun            int `json:"noun"`
-	Verb            int `json:"verb"`
-	Adjective       int `json:"adjective"`
-	Phrases         int `json:"phrases"`
-	DailyLife       int `json:"dailyLife"`
-	Travel          int `json:"travel"`
-	DataEngineering int `json:"dataEngineering"`
-	Backend         int `json:"backend"`
+	Mixed                    int `json:"mixed"`
+	Noun                     int `json:"noun"`
+	Verb                     int `json:"verb"`
+	Adjective                int `json:"adjective"`
+	Phrases                  int `json:"phrases"`
+	DailyLife                int `json:"dailyLife"`
+	Travel                   int `json:"travel"`
+	DataEngineering          int `json:"dataEngineering"`
+	Backend                  int `json:"backend"`
+	AcademicTechnicalEnglish int `json:"academicTechnicalEnglish"`
 }
 
 type CatalogTopicTotal struct {
@@ -62,9 +64,10 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 		       count(*) filter (where kind = 'word' and topic = 'Travel')::int,
 		       count(*) filter (where kind = 'word' and topic = 'Data Engineering')::int,
 		       count(*) filter (where kind = 'word' and topic = 'Backend Development')::int,
+		       count(*) filter (where kind = 'word' and source = $1)::int,
 		       coalesce(max(updated_at), to_timestamp(0))
 		from words
-	`).Scan(
+	`, catalog.Source).Scan(
 		&metadata.Totals.Items,
 		&metadata.Totals.Words,
 		&metadata.Totals.Phrases,
@@ -75,6 +78,7 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 		&metadata.Sources.Travel,
 		&metadata.Sources.DataEngineering,
 		&metadata.Sources.Backend,
+		&metadata.Sources.AcademicTechnicalEnglish,
 		&metadata.UpdatedAt,
 	); err != nil {
 		return CatalogMetadata{}, fmt.Errorf("query catalog totals: %w", err)
@@ -120,7 +124,7 @@ func catalogMetadataVersion(metadata CatalogMetadata) string {
 	var value strings.Builder
 	_, _ = fmt.Fprintf(
 		&value,
-		"%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
+		"%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
 		metadata.UpdatedAt.UTC().Format(time.RFC3339Nano),
 		metadata.Totals.Items,
 		metadata.Totals.Words,
@@ -132,6 +136,7 @@ func catalogMetadataVersion(metadata CatalogMetadata) string {
 		metadata.Sources.Travel,
 		metadata.Sources.DataEngineering,
 		metadata.Sources.Backend,
+		metadata.Sources.AcademicTechnicalEnglish,
 	)
 	for _, topic := range metadata.Topics {
 		_, _ = fmt.Fprintf(&value, "|%s:%d", topic.Topic, topic.Count)

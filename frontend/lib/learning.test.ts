@@ -75,7 +75,7 @@ describe("learning helpers", () => {
     expect(takeLessonBlock(items, "all")).toHaveLength(3);
   });
 
-  it("filters the four product collections by their catalog topic", () => {
+  it("filters all product collections by their catalog topic", () => {
     const items = [
       item("receipt", "noun", "чек", "Daily Life"),
       item("passport", "noun", "паспорт", "Travel"),
@@ -88,6 +88,7 @@ describe("learning helpers", () => {
     expect(prepareWordItems(items, "travel").map((entry) => entry.id)).toEqual(["passport"]);
     expect(prepareWordItems(items, "data-engineering").map((entry) => entry.id)).toEqual(["lineage"]);
     expect(prepareWordItems(items, "backend").map((entry) => entry.id)).toEqual(["middleware"]);
+    expect(prepareWordItems(items, "academic-technical-english").map((entry) => entry.id)).toEqual(["academic"]);
   });
 
   it("builds stable unique answer options containing the correct answer", () => {
