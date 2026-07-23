@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { catalogCountText, catalogSourceCount, catalogSummaryText, russianCount, type CatalogMetadata } from "./catalog-metadata";
+import {
+  catalogCountText,
+  catalogSourceCount,
+  catalogSummaryText,
+  isCatalogMetadataPayload,
+  russianCount,
+  type CatalogMetadata,
+} from "./catalog-metadata";
 
 const metadata: CatalogMetadata = {
   catalogVersion: "sha256:test",
@@ -22,6 +29,17 @@ describe("catalog metadata helpers", () => {
     expect(catalogSourceCount(metadata, "data-engineering")).toBe(55);
     expect(catalogSourceCount(metadata, "backend")).toBe(55);
     expect(catalogSourceCount(metadata, "academic-technical-english")).toBe(579);
+  });
+
+  it("requires the academic source counter in authoritative payloads", () => {
+    expect(isCatalogMetadataPayload(metadata)).toBe(true);
+    const legacyPayload = {
+      ...metadata,
+      sources: Object.fromEntries(
+        Object.entries(metadata.sources).filter(([key]) => key !== "academicTechnicalEnglish"),
+      ),
+    };
+    expect(isCatalogMetadataPayload(legacyPayload)).toBe(false);
   });
 
   it.each([
