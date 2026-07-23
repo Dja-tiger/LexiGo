@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -46,6 +47,14 @@ const LexigoPremiumApp = dynamic(
   },
 );
 
+const LexigoDictionaryApp = dynamic(
+  () => import("./lexigo-dictionary-app").then((module) => module.LexigoDictionaryApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
 function currentReturnTo(): string | null {
   if (!window.location.pathname.startsWith("/lesson/")) return null;
   return `${window.location.pathname}${window.location.search}`;
@@ -61,7 +70,12 @@ function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | nul
   window.history.replaceState(profileHistoryState(), "", `/profile?${params.toString()}`);
 }
 
+function isDictionaryRoute(pathname: string): boolean {
+  return pathname === "/dictionary" || pathname.startsWith("/words/");
+}
+
 export function LexigoBootstrappedApp() {
+  const pathname = usePathname();
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
   const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
@@ -189,6 +203,8 @@ export function LexigoBootstrappedApp() {
     );
   }
 
+  const routeKey = `${initialSession?.user.id ?? "guest"}:${isDictionaryRoute(pathname) ? "dictionary" : "product"}`;
+
   return (
     <>
       <ReviewOutboxRuntime session={initialSession} />
@@ -210,10 +226,18 @@ export function LexigoBootstrappedApp() {
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      <LexigoPremiumApp
-        key={initialSession?.tokens.accessToken ?? "guest"}
-        initialSession={initialSession}
-      />
+      {isDictionaryRoute(pathname) ? (
+        <LexigoDictionaryApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={setInitialSession}
+        />
+      ) : (
+        <LexigoPremiumApp
+          key={routeKey}
+          initialSession={initialSession}
+        />
+      )}
       {initialSession ? (
         <>
           <AccountSecurityPanel
