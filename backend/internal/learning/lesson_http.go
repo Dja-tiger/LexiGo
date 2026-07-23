@@ -54,7 +54,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lesson, err := h.repository.CreateLesson(r.Context(), userID, request)
+	lesson, err := h.repository.CreateProgressiveLesson(r.Context(), userID, request)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInvalidLessonWords):
