@@ -24,19 +24,29 @@ func NewHandler(store Store, loggers ...*slog.Logger) *Handler {
 func (handler *Handler) Report(w http.ResponseWriter, r *http.Request) {
 	var report Report
 	if err := httpx.DecodeJSONLimit(w, r, &report, MaxReportBytes); err != nil {
+		handler.logger.Warn("performance report rejected",
+			slog.String("reason", "invalid_json"),
+			slog.String("error", err.Error()),
+		)
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "request body must contain one valid performance report")
 		return
 	}
 	if err := report.Validate(); err != nil {
 		var validationError *ValidationError
 		if errors.As(err, &validationError) {
+			handler.logger.Warn("performance report rejected",
+				slog.String("reason", "validation"),
+				slog.String("field", validationError.Field),
+			)
 			httpx.WriteFieldError(w, http.StatusUnprocessableEntity, "invalid_performance_report", validationError.Message, validationError.Field)
 			return
 		}
+		handler.logger.Warn("performance report rejected", slog.String("reason", "validation"))
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_performance_report", "performance report is invalid")
 		return
 	}
 	if err := handler.store.StoreReport(r.Context(), report); err != nil {
+		handler.logger.Error("performance report storage failed", slog.String("error", err.Error()))
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		return
 	}
