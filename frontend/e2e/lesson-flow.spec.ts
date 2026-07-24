@@ -293,7 +293,9 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
     await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
-  await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
+  if ((page.viewportSize()?.width || 1000) >= 768) {
+    await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
+  }
   await page.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");

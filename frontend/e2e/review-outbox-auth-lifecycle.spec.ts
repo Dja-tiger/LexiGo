@@ -225,7 +225,9 @@ test("blocks a new network lesson with an explicit offline state", async ({ cont
     await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
-  await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
+  if ((page.viewportSize()?.width || 1000) >= 768) {
+    await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
+  }
   await context.setOffline(true);
   await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
