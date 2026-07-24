@@ -19,11 +19,7 @@ permissions:
 
 jobs:
   deploy:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 40
     environment: production
     steps:
