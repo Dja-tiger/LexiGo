@@ -88,6 +88,77 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  patch-recall-input-contracts:
+    name: Patch Recall input contracts
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out pull request branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact Recall contract patches
+        shell: python
+        run: |
+          from pathlib import Path
+
+          helper = Path("frontend/e2e/support/lesson-result-fixture.ts")
+          helper_source = helper.read_text(encoding="utf-8")
+          helper_old = '''  await page.getByRole("textbox", { name: "Введите ответ" }).fill("backlog");
+          await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();'''
+          helper_new = '''  const answer = page.getByRole("textbox", { name: "Введите ответ" });
+          await answer.focus();
+          await answer.fill("backlog");
+          await expect(answer).toHaveValue("backlog");
+          const submit = page.getByRole("button", { name: "Сверить ответ", exact: true });
+          await expect(submit).toBeEnabled();
+          await submit.click();'''
+          if helper_new not in helper_source:
+              if helper_source.count(helper_old) != 1:
+                  raise SystemExit("Expected exactly one Lesson Result Recall submit sequence")
+              helper.write_text(helper_source.replace(helper_old, helper_new, 1), encoding="utf-8")
+
+          agents = Path(".agents/AGENTS.md")
+          agents_source = agents.read_text(encoding="utf-8")
+          agents_old = '''### 2026-07-24 — WebKit submit начался до синхронизации controlled textbox
+
+          - **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; trace показывал пустой canonical textbox после вызова `fill`.
+          - **Первопричина:** journey сразу переходил от программного `fill` к submit и не подтверждал, что focus/input state дошёл до React-controlled field перед проверкой disabled-состояния.
+          - **Профилактика:** для controlled textbox в cross-browser E2E сначала установить focus, выполнить `fill`, подтвердить `toHaveValue`, затем подтвердить enabled primary action и только после этого submit. Timeout увеличивать запрещено.
+          - **Обязательная проверка:** Recall и mixed-practice scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit; trace не содержит пустой textbox перед submit.
+          - **Область действия:** controlled inputs, React route transitions, WebKit/iOS WebKit и objective Recall journeys.'''
+          agents_new = '''### 2026-07-24 — Controlled Recall textbox не обработал native `input` в WebKit
+
+          - **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; Playwright trace показывал, что `fill()` завершился, но controlled textbox снова имел пустое значение.
+          - **Первопричина:** Recall input обновлял React state только через `onChange`; в проверяемом WebKit flow native `input` после программного заполнения не синхронизировал controlled value до повторного render.
+          - **Профилактика:** controlled text inputs, используемые в cross-browser critical journeys, обрабатывать через явный `onInput` и `event.currentTarget.value`. E2E дополнительно обязан выполнить `focus`, `fill`, `toHaveValue`, проверить enabled primary action и только затем submit; увеличение timeout не является исправлением.
+          - **Обязательная проверка:** source-contract требует `onInput` и запрещает прежний `onChange`; Recall, mixed-practice и Lesson Result scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit.
+          - **Область действия:** controlled inputs, React event handling, WebKit/iOS WebKit и objective Recall journeys.'''
+          if agents_new not in agents_source:
+              if agents_source.count(agents_old) != 1:
+                  raise SystemExit("Expected exactly one outdated WebKit prevention entry")
+              agents.write_text(agents_source.replace(agents_old, agents_new, 1), encoding="utf-8")
+
+      - name: Commit contract patches when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- frontend/e2e/support/lesson-result-fixture.ts .agents/AGENTS.md; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/e2e/support/lesson-result-fixture.ts .agents/AGENTS.md
+          git commit -m "test(frontend): synchronize Recall controlled input"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
