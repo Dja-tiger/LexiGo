@@ -1,0 +1,43 @@
+name: Patch Lesson Result
+
+on:
+  push:
+    branches:
+      - agent/issue-194-lesson-result
+    paths:
+      - scripts/ci/patch-lesson-result.py
+      - .github/workflows/patch-lesson-result.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Apply Issue 194 integration patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-194-lesson-result
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply deterministic codemod
+        run: python3 scripts/ci/patch-lesson-result.py
+
+      - name: Commit integration patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/components/lexigo-premium-app.tsx \
+            frontend/app/layout.tsx \
+            frontend/package.json \
+            frontend/e2e/next-lesson-progression.spec.ts
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "Integration patch already applied."
+          else
+            git commit -m "feat(frontend): integrate canonical Lesson Result"
+            git push origin HEAD:agent/issue-194-lesson-result
+          fi
