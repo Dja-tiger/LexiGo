@@ -1,0 +1,259 @@
+name: Migrate CI to GitHub-hosted runners
+
+on:
+  push:
+    branches:
+      - ci/github-hosted-public-repo
+    paths:
+      - ".github/workflows/migrate-public-hosted-runners.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: migrate-public-hosted-runners
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    name: Apply hosted runner profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ci/github-hosted-public-repo
+          fetch-depth: 0
+
+      - name: Rewrite runner policy
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          from pathlib import Path
+
+          root = Path.cwd()
+
+          def replace_exact(text: str, old: str, new: str, expected: int, label: str) -> str:
+              actual = text.count(old)
+              if actual != expected:
+                  raise SystemExit(f"{label}: expected {expected} occurrence(s), found {actual}")
+              return text.replace(old, new)
+
+          ci_path = root / ".github/workflows/ci.yml"
+          ci = ci_path.read_text(encoding="utf-8")
+
+          cleanup_marker = "\n  ci-resource-cleanup:\n"
+          if ci.count(cleanup_marker) != 1:
+              raise SystemExit("ci.yml: expected one self-hosted ci-resource-cleanup job")
+          ci = ci.split(cleanup_marker, 1)[0].rstrip() + "\n"
+
+          self_hosted_block = """    runs-on:
+              - self-hosted
+              - linux
+              - x64
+              - lexigo-ci
+          """
+          hosted_runner = "    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}\n"
+          ci = replace_exact(
+              ci,
+              self_hosted_block,
+              hosted_runner,
+              6,
+              "ci.yml runner blocks",
+          )
+
+          browser_serialization = """      # The runner services share one resource-constrained physical host.
+                # Serialize browser suites so Next.js servers and Playwright workers do
+                # not compete for the same CPU and memory pool.
+                max-parallel: 1
+          """
+          ci = replace_exact(
+              ci,
+              browser_serialization,
+              "",
+              1,
+              "ci.yml browser serialization",
+          )
+
+          build_serialization = """      # BuildKit jobs share one resource-constrained self-hosted host.
+                # Serialize image builds to prevent host-wide memory pressure and runner loss.
+                max-parallel: 1
+          """
+          ci = replace_exact(
+              ci,
+              build_serialization,
+              "",
+              1,
+              "ci.yml container serialization",
+          )
+
+          frontend_anchor = """      - uses: actions/checkout@v7
+
+                - name: Prepare isolated frontend workspace
+          """
+          frontend_replacement = """      - uses: actions/checkout@v7
+
+                - name: Validate CI runner policy
+                  run: python3 ../scripts/ci/runner_policy_test.py
+
+                - name: Prepare isolated frontend workspace
+          """
+          if ci.count(frontend_anchor) < 1:
+              raise SystemExit("ci.yml: frontend-core checkout anchor was not found")
+          ci = ci.replace(frontend_anchor, frontend_replacement, 1)
+          ci_path.write_text(ci, encoding="utf-8")
+
+          storage_path = root / ".github/workflows/actions-storage-cleanup.yml"
+          storage = storage_path.read_text(encoding="utf-8")
+          storage = replace_exact(
+              storage,
+              self_hosted_block,
+              hosted_runner,
+              2,
+              "actions-storage-cleanup.yml runner blocks",
+          )
+
+          policy_path = '      - "scripts/ci/actions_storage_policy_test.py"\n'
+          storage = replace_exact(
+              storage,
+              policy_path,
+              policy_path + '      - "scripts/ci/runner_policy_test.py"\n',
+              2,
+              "actions-storage-cleanup.yml path filters",
+          )
+
+          policy_step = """      - name: Validate Actions storage policy
+                run: python3 scripts/ci/actions_storage_policy_test.py
+          """
+          runner_step = """
+
+                - name: Validate CI runner policy
+                  run: python3 scripts/ci/runner_policy_test.py
+          """
+          storage = replace_exact(
+              storage,
+              policy_step,
+              policy_step + runner_step,
+              2,
+              "actions-storage-cleanup.yml validation steps",
+          )
+          storage_path.write_text(storage, encoding="utf-8")
+
+          runner_cleanup_path = root / ".github/workflows/runner-resource-cleanup.yml"
+          runner_cleanup = runner_cleanup_path.read_text(encoding="utf-8")
+          scheduled_trigger = """on:
+            schedule:
+              - cron: "17 2 * * *"
+            workflow_dispatch:
+          """
+          manual_trigger = """on:
+            # Dormant while CI uses GitHub-hosted runners. Restore a schedule only
+            # after CI_RUNNER is switched back to the self-hosted lexigo-ci pool.
+            workflow_dispatch:
+          """
+          runner_cleanup = replace_exact(
+              runner_cleanup,
+              scheduled_trigger,
+              manual_trigger,
+              1,
+              "runner-resource-cleanup.yml schedule",
+          )
+          runner_cleanup_path.write_text(runner_cleanup, encoding="utf-8")
+
+          policy_test = '''#!/usr/bin/env python3
+          """Regression contract for the active GitHub Actions runner profile."""
+
+          from __future__ import annotations
+
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[2]
+          WORKFLOWS = ROOT / ".github" / "workflows"
+          HOSTED_RUNNER = "runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}"
+
+
+          def require(condition: bool, message: str, violations: list[str]) -> None:
+              if not condition:
+                  violations.append(message)
+
+
+          def main() -> None:
+              violations: list[str] = []
+
+              ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
+              require(ci.count(HOSTED_RUNNER) == 6, "ci.yml: expected six configurable hosted runner jobs", violations)
+              require("self-hosted" not in ci, "ci.yml: hard-coded self-hosted runner labels are forbidden", violations)
+              require("max-parallel: 1" not in ci, "ci.yml: hosted matrices must not be serialized", violations)
+              require("ci-resource-cleanup:" not in ci, "ci.yml: shared-host Docker cleanup job must be absent", violations)
+
+              storage = (WORKFLOWS / "actions-storage-cleanup.yml").read_text(encoding="utf-8")
+              require(storage.count(HOSTED_RUNNER) == 2, "actions-storage-cleanup.yml: expected two hosted runner jobs", violations)
+              require("self-hosted" not in storage, "actions-storage-cleanup.yml: must not require Selectel runners", violations)
+
+              runner_cleanup = (WORKFLOWS / "runner-resource-cleanup.yml").read_text(encoding="utf-8")
+              require("schedule:" not in runner_cleanup, "runner-resource-cleanup.yml: scheduled Selectel cleanup must remain disabled", violations)
+              require("workflow_dispatch:" in runner_cleanup, "runner-resource-cleanup.yml: manual recovery entry point is required", violations)
+
+              if violations:
+                  raise SystemExit("\n".join(violations))
+              print("Validated GitHub-hosted CI profile with unrestricted job matrices")
+
+
+          if __name__ == "__main__":
+              main()
+          '''
+          (root / "scripts/ci/runner_policy_test.py").write_text(policy_test, encoding="utf-8")
+
+          documentation = '''# GitHub Actions runner policy
+
+          ## Active profile: public repository
+
+          LexiGo uses standard GitHub-hosted Linux runners for build, test, browser and container jobs while the repository is public. Standard GitHub-hosted runner minutes are free for public repositories. The workflow resolves its runner with:
+
+          ```yaml
+          runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+          ```
+
+          The repository variable `CI_RUNNER` is intentionally unset in the public profile, so `ubuntu-latest` is selected. Browser suites and API/web image builds run as normal parallel matrix jobs; there is no `max-parallel: 1` host throttle.
+
+          GitHub-hosted jobs use isolated ephemeral virtual machines. The former final `ci-resource-cleanup` job was removed because it could not clean Docker resources created on other hosted VMs and is unnecessary after VM disposal. Per-job cleanup remains in place for deterministic logs and local failure handling.
+
+          The `Actions storage cleanup` workflow also uses GitHub-hosted runners. Artifact uploads remain failure-oriented, non-blocking and retained for no more than three days. Public runner minutes are free, but artifact and package storage still require the existing bounded-storage policy.
+
+          ## Dormant self-hosted profile
+
+          `Self-hosted runner smoke` and the manual `Runner resource cleanup` workflow are retained. The daily Selectel cleanup schedule is disabled while CI does not use the physical host.
+
+          To return to self-hosted execution after the repository becomes private:
+
+          1. Start and verify the Selectel runner services with the `lexigo-ci` label.
+          2. Run `Self-hosted runner smoke` and require all slots to pass.
+          3. Set the repository Actions variable `CI_RUNNER` to `lexigo-ci`.
+          4. Re-enable the schedule in `runner-resource-cleanup.yml` through a reviewed pull request.
+          5. Confirm one full CI run, both container builds and cleanup behavior before relying on the private profile.
+
+          Do not point a public repository at persistent self-hosted infrastructure. Pull-request code must not receive execution access to a long-lived host.
+          '''
+          (root / "docs/github-actions-runners.md").write_text(documentation, encoding="utf-8")
+          PY
+
+          rm -- .github/workflows/migrate-public-hosted-runners.yml
+
+          python3 scripts/ci/runner_policy_test.py
+          python3 scripts/ci/actions_storage_policy_test.py
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/ci.yml \
+            .github/workflows/actions-storage-cleanup.yml \
+            .github/workflows/runner-resource-cleanup.yml \
+            scripts/ci/runner_policy_test.py \
+            docs/github-actions-runners.md \
+            .github/workflows/migrate-public-hosted-runners.yml
+          git commit -m "ci: use GitHub-hosted runners for public repository"
+          git push origin HEAD:ci/github-hosted-public-repo
