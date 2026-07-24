@@ -59,7 +59,7 @@ jobs:
           else
             git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
 
-          Regenerated via 'Update visual snapshots' workflow after shell and Home
-          redesign in the Adaptive Knowledge Coach PR."
+Regenerated via 'Update visual snapshots' workflow after shell and Home
+redesign in the Adaptive Knowledge Coach PR."
             git push origin HEAD:${{ inputs.branch }}
           fi
