@@ -6,51 +6,51 @@
  * lesson creation remain owned by LexigoPremiumApp and the backend APIs.
  */
 :root {
-  --ak-bg: #f4f7f5;
-  --ak-bg-muted: #edf3f0;
-  --ak-surface: #ffffff;
-  --ak-surface-muted: #e7f0ec;
+  --ak-bg: var(--ak-color-canvas);
+  --ak-bg-muted: var(--ak-color-subtle);
+  --ak-surface: var(--ak-color-surface);
+  --ak-surface-muted: var(--ak-color-subtle);
   --ak-surface-strong: #14362e;
   --ak-border: #c7d8d1;
-  --ak-text: #10231e;
-  --ak-text-muted: #42564f;
+  --ak-text: var(--ak-color-text-main);
+  --ak-text-muted: var(--ak-color-text-muted);
   --ak-text-subtle: #72857e;
-  --ak-brand: #159b73;
+  --ak-brand: var(--ak-color-retained);
   --ak-brand-strong: #087456;
-  --ak-primary: #2557c7;
-  --ak-primary-hover: #1d48aa;
-  --ak-primary-soft: #dce7ff;
-  --ak-coral: #f26868;
+  --ak-primary: var(--ak-color-primary);
+  --ak-primary-hover: var(--ak-color-primary-hover);
+  --ak-primary-soft: var(--ak-color-primary-soft);
+  --ak-coral: var(--ak-color-weak);
   --ak-coral-soft: #fde5e5;
   --ak-gold: #d89b22;
   --ak-gold-soft: #f9edc8;
-  --ak-shadow-sm: 0 1px 2px rgb(16 35 30 / 0.06);
-  --ak-shadow-md: 0 12px 32px rgb(16 35 30 / 0.08);
+  --ak-shadow-sm: var(--ak-elevation-1);
+  --ak-shadow-md: var(--ak-elevation-2);
   --ak-shell-rail-width: 220px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ak-bg: #0b211b;
+    --ak-bg: var(--ak-color-canvas);
     --ak-bg-muted: #102b23;
-    --ak-surface: #15372f;
-    --ak-surface-muted: #204b40;
+    --ak-surface: var(--ak-color-surface);
+    --ak-surface-muted: var(--ak-color-subtle);
     --ak-surface-strong: #f3f7f5;
     --ak-border: #2e6557;
-    --ak-text: #f5f8f7;
-    --ak-text-muted: #c6d4cf;
+    --ak-text: var(--ak-color-text-main);
+    --ak-text-muted: var(--ak-color-text-muted);
     --ak-text-subtle: #91aaa1;
-    --ak-brand: #4fc7a1;
+    --ak-brand: var(--ak-color-retained);
     --ak-brand-strong: #7cdbbd;
-    --ak-primary: #6c93ef;
-    --ak-primary-hover: #82a4f3;
-    --ak-primary-soft: #203b69;
-    --ak-coral: #ff7575;
+    --ak-primary: var(--ak-color-primary);
+    --ak-primary-hover: var(--ak-color-primary-hover);
+    --ak-primary-soft: var(--ak-color-primary-soft);
+    --ak-coral: var(--ak-color-weak);
     --ak-coral-soft: #542d2d;
     --ak-gold: #e7ae38;
     --ak-gold-soft: #4a3b1d;
-    --ak-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18);
-    --ak-shadow-md: 0 18px 44px rgb(0 0 0 / 0.2);
+    --ak-shadow-sm: var(--ak-elevation-1);
+    --ak-shadow-md: var(--ak-elevation-2);
   }
 }
 

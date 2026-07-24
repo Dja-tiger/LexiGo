@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/components/service-worker-registrat
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
+import "./design-tokens.css";
 import "./product-navigation.css";
 import "./premium-ui.css";
 import "./mobile-pwa-fixes.css";
