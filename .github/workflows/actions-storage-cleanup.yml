@@ -88,6 +88,45 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  patch-pr-184-mobile-dictionary:
+    name: Preserve Dictionary mobile geometry
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 184
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Scope mobile shell overrides
+        run: python3 scripts/ci/patch_pr184_mobile_dictionary_boundary.py
+
+      - name: Validate CSS ownership contract
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run test -- app/adaptive-knowledge-coach-home.test.ts
+          npm run typecheck
+
+      - name: Commit source-only fix
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git diff --quiet; then
+            echo "Mobile Dictionary boundary is already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/app/adaptive-knowledge-coach-home.css \
+            frontend/app/adaptive-knowledge-coach-home.test.ts
+          git commit -m "fix(frontend): preserve Dictionary mobile route geometry"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
