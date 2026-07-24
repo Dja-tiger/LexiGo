@@ -189,3 +189,12 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** feature CSS может использовать только объявленные semantic tokens и утверждённые foreground/background pairs. Для текущей Foundation palette primary CTA использует `surface` поверх `primary`; неизвестный token должен блокироваться source-contract test.
 - **Обязательная проверка:** `app/lesson-result.test.ts` запрещает `--ak-color-on-primary`, фиксирует пару `surface/primary`, а blocking axe audit проходит в Light и Dark appearance.
 - **Область действия:** semantic design tokens, primary CTA, CSS custom properties и accessibility audits.
+
+
+### 2026-07-24 — WebKit submit начался до синхронизации controlled textbox
+
+- **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; trace показывал пустой canonical textbox после вызова `fill`.
+- **Первопричина:** journey сразу переходил от программного `fill` к submit и не подтверждал, что focus/input state дошёл до React-controlled field перед проверкой disabled-состояния.
+- **Профилактика:** для controlled textbox в cross-browser E2E сначала установить focus, выполнить `fill`, подтвердить `toHaveValue`, затем подтвердить enabled primary action и только после этого submit. Timeout увеличивать запрещено.
+- **Обязательная проверка:** Recall и mixed-practice scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit; trace не содержит пустой textbox перед submit.
+- **Область действия:** controlled inputs, React route transitions, WebKit/iOS WebKit и objective Recall journeys.
