@@ -36,6 +36,12 @@ import {
   type NavigationScrollPosition,
 } from "../lib/navigation-history";
 import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";
+import {
+  readNavigationScrollSnapshot,
+  removeNavigationScrollSnapshot,
+  scheduleNavigationScrollRestoration,
+  writeNavigationScrollSnapshot,
+} from "../lib/navigation-scroll-restoration";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
 import { AsyncResourceNotice } from "./async-state";
@@ -135,8 +141,23 @@ function BellIcon() {
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
   const router = useRouter();
   const session = initialSession;
-  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
-  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
+  const [initialNavigationState] = useState(() => {
+    const target = parseNavigationLocation(window.location);
+    const identity = navigationIdentity(target);
+    const historyScroll = navigationScrollFromHistory(window.history.state);
+    const fallbackScroll = readNavigationScrollSnapshot(window.sessionStorage, identity);
+    const scroll = historyScroll.x === 0 && historyScroll.y === 0
+      ? fallbackScroll ?? historyScroll
+      : historyScroll;
+    return {
+      target,
+      pending: scroll.x === 0 && scroll.y === 0
+        ? null
+        : { identity, scroll },
+    } satisfies { target: NavigationTarget; pending: PendingNavigation | null };
+  });
+  const [navigation, setNavigation] = useState<NavigationTarget>(initialNavigationState.target);
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(initialNavigationState.pending);
   const [metadata, setMetadata] = useState<CatalogMetadata | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [metadataResourceStatus, setMetadataResourceStatus] = useState<ResourceStatus>(loadingResourceStatus);
@@ -204,15 +225,30 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   useLayoutEffect(() => {
     navigationRef.current = navigation;
     if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
-    const frame = window.requestAnimationFrame(() => {
-      mainContentRef.current?.focus({ preventScroll: true });
-      window.scrollTo({
-        left: pendingNavigation.scroll.x,
-        top: pendingNavigation.scroll.y,
-        behavior: "auto",
-      });
-    });
-    return () => window.cancelAnimationFrame(frame);
+
+    const pending = pendingNavigation;
+    mainContentRef.current?.focus({ preventScroll: true });
+    return scheduleNavigationScrollRestoration(
+      pending.scroll,
+      {
+        readPosition: () => ({ x: window.scrollX, y: window.scrollY }),
+        writePosition: (position) => {
+          window.scrollTo({
+            left: position.x,
+            top: position.y,
+            behavior: "auto",
+          });
+        },
+        requestFrame: (callback) => window.requestAnimationFrame(callback),
+        cancelFrame: (frameID) => window.cancelAnimationFrame(frameID),
+      },
+      (result) => {
+        if (result.restored) {
+          removeNavigationScrollSnapshot(window.sessionStorage, pending.identity);
+        }
+        setPendingNavigation((current) => (current === pending ? null : current));
+      },
+    );
   }, [navigation, pendingNavigation]);
 
   const loadMetadata = useCallback(async (signal?: AbortSignal) => {
@@ -340,6 +376,11 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
 
     const url = navigationURL(target);
     if (target.view !== "library") {
+      writeNavigationScrollSnapshot(
+        window.sessionStorage,
+        navigationIdentity(current),
+        currentScroll,
+      );
       window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
       router.push(url, { scroll: false });
       return;
