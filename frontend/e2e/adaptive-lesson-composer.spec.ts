@@ -230,7 +230,7 @@ test.describe("progressive Lesson Composer", () => {
 
     await expect(page.getByRole("article", { name: "Рекомендуемый урок" })).toBeHidden();
     await expect(page.getByRole("radiogroup", { name: "Режим обучения" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: /Воспроизведение/ })).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByRole("radio", { name: /Вспомнить самостоятельно/ })).toHaveAttribute("aria-checked", "true");
     await expect(page.getByRole("button", { name: "Начать урок", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Начать рекомендуемый урок" })).toBeHidden();
 
