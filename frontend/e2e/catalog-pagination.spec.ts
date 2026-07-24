@@ -128,6 +128,8 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
 
   await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
   await expect(page).toHaveURL(/\/learn\?source=phrases/);
+  const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+  if (await configureLesson.isVisible()) await configureLesson.click();
   await expect(page.getByRole("radio", { name: /Технические фразы/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(0);
   expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);
