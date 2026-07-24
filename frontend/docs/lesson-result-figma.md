@@ -20,3 +20,5 @@ Production matrix:
 `LessonResultPresentation` owns only the result presentation and interaction hierarchy. `LexigoPremiumApp` remains responsible for authenticated lesson lifecycle, review persistence, progress refresh, distinct next-lesson creation, route navigation, and recovery state.
 
 The result distinguishes objective recall evidence from recognition and passive activity, restores after reload/history without resubmitting a review, prevents reopening the completed lesson through the continuation action, and presents one primary action for each result state.
+
+Final validation must run from a normal developer-authored head after all one-time integration commits are removed. The required gate includes lint, typecheck, unit tests, production build, dependency audit, browser projects, accessibility, visual regression, performance budgets, and container builds.
