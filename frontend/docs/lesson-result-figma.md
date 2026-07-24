@@ -30,3 +30,11 @@ The two compiler-oriented React lint exceptions remain scoped to the monolithic 
 Canonical E2E contracts target the visible textbox and the actual continuation CTA accessible name rather than removed implementation IDs or state copy. Cross-browser Recall submission additionally confirms focus, the controlled input value, and the enabled primary action before submit. The final matrix is evaluated only after these contracts are committed on the PR head.
 
 The compact Next Block, desktop Due Review and desktop Daily Goal Dark baselines were generated in the project Linux Playwright container and manually reviewed against the canonical result hierarchy before being committed. Subsequent visual runs compare against these fixed baselines without update mode.
+
+Committed Linux baselines:
+
+- `lesson-result-next-compact-visual-compact-linux.png`;
+- `lesson-result-due-desktop-visual-desktop-linux.png`;
+- `lesson-result-daily-goal-dark-desktop-visual-desktop-linux.png`.
+
+These filenames are part of the visual contract. Renaming a state, viewport project or snapshot is a deliberate baseline migration and must not be performed as an incidental test repair.
