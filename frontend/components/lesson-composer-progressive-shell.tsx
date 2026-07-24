@@ -5,8 +5,8 @@ type LessonComposerProgressiveShellProps = {
   sourceLabel: string;
   modeLabel: string;
   sizeLabel: string;
-  dueCount?: number;
-  newCount?: number;
+  dueCount: number | undefined;
+  newCount: number | undefined;
   estimatedMinutes: string;
   previewPending: boolean;
   startDisabled: boolean;
