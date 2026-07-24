@@ -27,4 +27,4 @@ Before validation, the reconstruction gate verifies that the complete production
 
 The two compiler-oriented React lint exceptions remain scoped to the monolithic runtime owner. Reload, browser-history restoration, duplicate-submit prevention, focus ownership and retry behavior remain mandatory executable contracts; the rules stay enabled for every presentation component and all new code outside that owner.
 
-Canonical E2E contracts target the visible textbox and the actual continuation CTA accessible name rather than removed implementation IDs or state copy. The final matrix is evaluated only after these selectors are committed on the PR head.
+Canonical E2E contracts target the visible textbox and the actual continuation CTA accessible name rather than removed implementation IDs or state copy. Cross-browser Recall submission additionally confirms focus, the controlled input value, and the enabled primary action before submit. The final matrix is evaluated only after these contracts are committed on the PR head.
