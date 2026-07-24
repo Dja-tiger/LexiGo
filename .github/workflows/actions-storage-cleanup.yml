@@ -88,43 +88,6 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
-  patch-dictionary-history:
-    name: Initialize dictionary history scroll
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 189
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Apply initial history state patch
-        run: python3 scripts/ci/patch_dictionary_initial_scroll.py
-
-      - name: Validate source contract
-        working-directory: frontend
-        run: |
-          npm ci --no-audit --no-fund
-          npm run test -- lib/navigation-scroll-restoration.test.ts
-          npm run typecheck
-
-      - name: Commit source-only fix
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if git diff --quiet; then
-            echo "Dictionary history initialization is already applied."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/components/lexigo-dictionary-app.tsx
-          git commit -m "fix(frontend): initialize dictionary scroll from history entry"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
