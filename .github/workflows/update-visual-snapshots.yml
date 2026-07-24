@@ -7,9 +7,13 @@ on:
         description: Branch to update snapshots on
         required: true
         default: agent/issue-183-application-shell-home
+  pull_request:
+    paths:
+      - .github/workflows/update-visual-snapshots.yml
 
 jobs:
   update-snapshots:
+    if: github.event_name == 'workflow_dispatch'
     name: Regenerate visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -59,7 +63,80 @@ jobs:
           else
             git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
 
-Regenerated via 'Update visual snapshots' workflow after shell and Home
-redesign in the Adaptive Knowledge Coach PR."
+          Regenerated via 'Update visual snapshots' workflow after shell and Home
+          redesign in the Adaptive Knowledge Coach PR."
             git push origin HEAD:${{ inputs.branch }}
+          fi
+
+  apply-issue-162-codemod:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.number == 192 &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    name: Apply Issue 162 component codemod
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply guarded source transformation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/components/lexigo-premium-app.tsx")
+          source = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  'import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";\nimport { SpeechPlayerButton } from "./speech-player-button";',
+                  'import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";\nimport { LessonComposerProgressiveShell } from "./lesson-composer-progressive-shell";\nimport { SpeechPlayerButton } from "./speech-player-button";',
+              ),
+              (
+                  '  const [source, setSource] = useState<LessonSource>("mixed");\n  const [lessonSize, setLessonSize] = useState<LessonSize>(30);\n  const [studyMode, setStudyMode] = useState<StudyMode>("study");\n  const [lessonTopic, setLessonTopic] = useState("");',
+                  '  const [source, setSource] = useState<LessonSource>("mixed");\n  const [lessonSize, setLessonSize] = useState<LessonSize>(30);\n  const [studyMode, setStudyMode] = useState<StudyMode>("recall");\n  const [mobileComposerExpanded, setMobileComposerExpanded] = useState(false);\n  const [lessonTopic, setLessonTopic] = useState("");',
+              ),
+              (
+                  '    const matchingLessonPreview = lessonPreview\n      && lessonPreview.source === source\n      && lessonPreview.studyMode === studyMode\n      && lessonPreview.lessonSize === String(lessonSize)\n      ? lessonPreview\n      : null;\n    return (',
+                  '    const matchingLessonPreview = lessonPreview\n      && lessonPreview.source === source\n      && lessonPreview.studyMode === studyMode\n      && lessonPreview.lessonSize === String(lessonSize)\n      ? lessonPreview\n      : null;\n    const selectedModeLabel = studyMode === "study"\n      ? "Изучение"\n      : studyMode === "recall"\n        ? "Воспроизведение"\n        : studyMode === "choice"\n          ? "Варианты"\n          : "Список";\n    const selectedSizeLabel = lessonSize === "all" ? "Все элементы" : `${lessonSize} элементов`;\n    const estimatedMinutes = lessonSize === 15\n      ? "≈7м"\n      : lessonSize === 30\n        ? "≈14м"\n        : lessonSize === 60\n          ? "≈28м"\n          : "—";\n    const lessonPreviewPending = Boolean(session && studyMode !== "all" && (previewingLesson || !matchingLessonPreview));\n    const lessonStartDisabled = busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0));\n    return (',
+              ),
+              (
+                  '        <section className="lx-setup-card">',
+                  '        <LessonComposerProgressiveShell\n          expanded={mobileComposerExpanded}\n          sourceLabel={sourceLabel(source)}\n          modeLabel={selectedModeLabel}\n          sizeLabel={selectedSizeLabel}\n          dueCount={matchingLessonPreview?.composition.due}\n          newCount={matchingLessonPreview?.composition.new}\n          estimatedMinutes={estimatedMinutes}\n          previewPending={lessonPreviewPending}\n          startDisabled={lessonStartDisabled}\n          startLabel={studyMode === "all" ? "Открыть список" : "Начать рекомендуемый урок"}\n          busy={busy}\n          onToggle={() => setMobileComposerExpanded((current) => !current)}\n          onStart={() => void startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}\n        >\n          <section className="lx-setup-card">',
+              ),
+              (
+                  '        </section>\n      </>\n    );\n  }\n\n  function openPhraseDetail',
+                  '          </section>\n        </LessonComposerProgressiveShell>\n      </>\n    );\n  }\n\n  function openPhraseDetail',
+              ),
+          ]
+
+          changed = False
+          for needle, replacement in replacements:
+              if replacement in source:
+                  continue
+              count = source.count(needle)
+              if count != 1:
+                  raise SystemExit(f"guard failed: expected one occurrence, found {count}: {needle[:80]!r}")
+              source = source.replace(needle, replacement, 1)
+              changed = True
+
+          if changed:
+              path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Commit transformed component
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          if git diff --cached --quiet; then
+            echo "Issue 162 codemod already applied."
+          else
+            git commit -m "feat(frontend): integrate progressive Lesson Composer state"
+            git push origin HEAD:${{ github.head_ref }}
           fi
