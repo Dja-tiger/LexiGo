@@ -26,3 +26,5 @@ Final validation must run from a normal developer-authored head after all one-ti
 Before validation, the reconstruction gate verifies that the complete production app is present, required Lesson Result ownership imports exist, and the file terminates normally rather than accepting a partial generated artifact.
 
 The two compiler-oriented React lint exceptions remain scoped to the monolithic runtime owner. Reload, browser-history restoration, duplicate-submit prevention, focus ownership and retry behavior remain mandatory executable contracts; the rules stay enabled for every presentation component and all new code outside that owner.
+
+Canonical E2E contracts target the visible textbox and the actual continuation CTA accessible name rather than removed implementation IDs or state copy.
