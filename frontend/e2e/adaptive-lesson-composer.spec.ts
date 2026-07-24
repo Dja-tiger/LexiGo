@@ -189,7 +189,9 @@ test.describe("progressive Lesson Composer", () => {
 
     await configure.focus();
     await page.keyboard.press("Enter");
-    await expect(configure).toHaveAttribute("aria-expanded", "true");
+    const manualSummary = page.getByRole("button", { name: /Ручная настройка/ });
+    await expect(manualSummary).toBeVisible();
+    await expect(manualSummary).toHaveAttribute("aria-expanded", "true");
     await expect(modeGroup).toBeVisible();
 
     await modeGroup.getByRole("radio", { name: /Выбрать вариант/ }).click();
@@ -200,7 +202,6 @@ test.describe("progressive Lesson Composer", () => {
       .getByRole("radio", { name: "15", exact: true })
       .click();
 
-    const manualSummary = page.getByRole("button", { name: /Ручная настройка/ });
     await expect(manualSummary).toContainText("Academic Technical English · Варианты · 15 элементов");
     await manualSummary.focus();
     await page.keyboard.press("Space");
