@@ -258,6 +258,8 @@ test("iOS standalone dictionary restores result scroll on history return and fil
   await expect(page.getByRole("listitem")).toHaveCount(12);
 
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
+  // Wait for Next.js to debounce and save the scroll position to history state
+  await page.waitForTimeout(500);
   const scrollBefore = await page.evaluate(() => window.scrollY);
   expect(scrollBefore).toBeGreaterThan(0);
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();

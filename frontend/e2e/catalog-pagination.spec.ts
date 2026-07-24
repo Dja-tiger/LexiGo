@@ -118,6 +118,8 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
     .getByRole("link")
     .nth(40);
   await target.scrollIntoViewIfNeeded();
+  // Wait for Next.js to debounce and save the scroll position
+  await page.waitForTimeout(500);
   const scrollBeforeDetail = await page.evaluate(() => window.scrollY);
   await target.click();
   await expect(page.locator(".lx-detail-card")).toBeVisible();
@@ -128,6 +130,8 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
 
   await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
   await expect(page).toHaveURL(/\/learn\?source=phrases/);
+  const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+  if (await configureLesson.isVisible()) await configureLesson.click();
   await expect(page.getByRole("radio", { name: /Технические фразы/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.locator(".lx-phrase-grid [role=listitem]")).toHaveCount(0);
   expect(requestedLimits.every((limit) => limit <= 48)).toBe(true);

@@ -53,6 +53,13 @@ test("Academic Technical English is selectable and preserved for the next block"
 
   await page.goto("/learn");
   const academic = page.locator('[data-lexigo-source="academic-technical-english"]');
+
+  // On mobile (<768px) the source controls are inside the progressive settings panel;
+  // open it before interacting with source selectors.
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
+  }
+
   await expect(academic).toContainText("Academic Technical English");
   await expect(academic).toContainText("579");
   await academic.click();
@@ -68,3 +75,4 @@ test("Academic Technical English is selectable and preserved for the next block"
   expect(createSources).toEqual(["academic-technical-english", "academic-technical-english"]);
   expect(previewSources).toContain("academic-technical-english");
 });
+

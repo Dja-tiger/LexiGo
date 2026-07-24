@@ -133,6 +133,11 @@ async function installLessonAPI(
 
 async function openLesson(page: Page, mode: LessonMode) {
   await page.goto("/learn");
+
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
+  }
+
   const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? learningTermCopy("recall").label : "Выбрать вариант";
   await page.getByRole("radio", { name: new RegExp(label) }).click();
   const startLesson = page.getByRole("button", { name: "Начать урок", exact: true });
@@ -283,7 +288,14 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   ];
   const api = await installLessonAPI(page, 2, 0, mixedItems);
   await page.goto("/learn");
-  await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
+
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
+  }
+
+  if ((page.viewportSize()?.width || 1000) >= 768) {
+    await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();
+  }
   await page.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");

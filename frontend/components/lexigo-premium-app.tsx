@@ -104,6 +104,7 @@ import { CatalogKindNavigation } from "./catalog-kind-navigation";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";
+import { LessonComposerProgressiveShell } from "./lesson-composer-progressive-shell";
 import { SpeechPlayerButton } from "./speech-player-button";
 
 type APIItem = {
@@ -703,7 +704,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
 
   const [source, setSource] = useState<LessonSource>("mixed");
   const [lessonSize, setLessonSize] = useState<LessonSize>(30);
-  const [studyMode, setStudyMode] = useState<StudyMode>("study");
+  const [studyMode, setStudyMode] = useState<StudyMode>("recall");
+  const [mobileComposerExpanded, setMobileComposerExpanded] = useState(false);
   const [lessonTopic, setLessonTopic] = useState("");
   const [studyView, setStudyView] = useState<StudyView>("card");
   const [phraseTopic, setPhraseTopic] = useState("all");
@@ -2169,6 +2171,23 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       && lessonPreview.lessonSize === String(lessonSize)
       ? lessonPreview
       : null;
+    const selectedModeLabel = studyMode === "study"
+      ? "Изучение"
+      : studyMode === "recall"
+        ? "Воспроизведение"
+        : studyMode === "choice"
+          ? "Варианты"
+          : "Список";
+    const selectedSizeLabel = lessonSize === "all" ? "Все элементы" : `${lessonSize} элементов`;
+    const estimatedMinutes = lessonSize === 15
+      ? "≈7м"
+      : lessonSize === 30
+        ? "≈14м"
+        : lessonSize === 60
+          ? "≈28м"
+          : "—";
+    const lessonPreviewPending = Boolean(session && studyMode !== "all" && (previewingLesson || !matchingLessonPreview));
+    const lessonStartDisabled = busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0));
     return (
       <>
         <section className="lx-page-heading">
@@ -2177,9 +2196,24 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         </section>
         {renderResumeStrip()}
         {lessonTopic ? <section className="lx-composer-context" aria-label="Контекст из каталога"><div><span>Перенесено из словаря</span><strong>{sourceLabel(source)} · {topicLabel(lessonTopic)}</strong><small>Раздел и тема уже выбраны; повторная настройка не требуется.</small></div><button className="lx-button ghost" type="button" onClick={() => { setLessonTopic(""); navigate({ view: "learn", source }, true, { intent: "in_app_navigation" }); }}>Очистить тему</button></section> : null}
-        <section className="lx-setup-card">
+        <LessonComposerProgressiveShell
+          expanded={mobileComposerExpanded}
+          sourceLabel={sourceLabel(source)}
+          modeLabel={selectedModeLabel}
+          sizeLabel={selectedSizeLabel}
+          dueCount={matchingLessonPreview?.composition.due}
+          newCount={matchingLessonPreview?.composition.new}
+          estimatedMinutes={estimatedMinutes}
+          previewPending={lessonPreviewPending}
+          startDisabled={lessonStartDisabled}
+          startLabel={studyMode === "all" ? "Открыть список" : "Начать рекомендуемый урок"}
+          busy={busy}
+          onToggle={() => setMobileComposerExpanded((current) => !current)}
+          onStart={() => void startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}
+        >
+          <section className="lx-setup-card">
           <div className="lx-setup-block">
-            <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Главный режим — простое изучение с открытой карточкой</small></div></div>
+            <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Рекомендуемый режим — объективное воспроизведение без подсказки</small></div></div>
             <div className="lx-mode-selector" role="radiogroup" aria-label="Режим обучения" aria-orientation="vertical">
               {MODE_OPTIONS.map((option) => {
                 const selected = studyMode === option.value;
@@ -2259,10 +2293,11 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
               ) : (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(matchingLessonPreview.composition)}</strong><small>{lessonPriorityDescription(matchingLessonPreview.composition)}</small>{lessonCompositionFallbackMessage(matchingLessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(matchingLessonPreview.composition)}</em> : null}</div>
               )}
-              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0))} onClick={() => startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
+              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={lessonStartDisabled} onClick={() => startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
             </div>
           </div>
-        </section>
+          </section>
+        </LessonComposerProgressiveShell>
       </>
     );
   }

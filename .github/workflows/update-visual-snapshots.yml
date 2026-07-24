@@ -1,16 +1,18 @@
 name: Update visual snapshots
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to update snapshots on
-        required: true
-        default: agent/issue-183-application-shell-home
+  push:
+    branches:
+      - agent/issue-162-progressive-lesson-composer
+    paths:
+      - .github/workflows/update-visual-snapshots.yml
+
+permissions:
+  contents: write
 
 jobs:
   update-snapshots:
-    name: Regenerate visual baselines
+    name: Regenerate Issue 162 visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -25,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.branch }}
+          ref: agent/issue-162-progressive-lesson-composer
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare isolated frontend workspace
@@ -43,23 +45,24 @@ jobs:
       - name: Extract updated snapshots from container
         run: |
           container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
+          test -n "$container"
           docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
       - name: Cleanup container
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
 
-      - name: Commit updated snapshots
+      - name: Commit Issue 162 baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add e2e/visual-regression.spec.ts-snapshots/
+          git add \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
           if git diff --cached --quiet; then
-            echo "No snapshot changes — baselines already match."
+            echo "Composer baselines already match."
           else
-            git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
-
-Regenerated via 'Update visual snapshots' workflow after shell and Home
-redesign in the Adaptive Knowledge Coach PR."
-            git push origin HEAD:${{ inputs.branch }}
+            git commit -m "test(visual): update Lesson Composer baselines"
+            git push origin HEAD:agent/issue-162-progressive-lesson-composer
           fi

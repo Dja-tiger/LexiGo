@@ -31,9 +31,12 @@ test.describe("interface copy contract", () => {
 
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();
-    await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
-    await expect(page.getByText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`, { exact: true })).toBeVisible();
+    const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+    if (await configureLesson.isVisible()) await configureLesson.click();
+    const recallMode = page.getByRole("radio", { name: new RegExp(recall.label) });
+    await expect(recallMode).toBeVisible();
+    await expect(recallMode).toContainText(recall.explanation);
+    await expect(page.locator(".lx-heading-badge")).toContainText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`);
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.goto("/progress", { waitUntil: "domcontentloaded" });

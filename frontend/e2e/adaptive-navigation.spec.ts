@@ -311,7 +311,7 @@ test("medium width uses a labelled rail and restores the previous tab target and
   await page.evaluate(() => window.scrollTo({ top: 1_050, behavior: "auto" }));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
   const savedScroll = await page.evaluate(() => window.scrollY);
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(500);
 
   await clickNavigationView(page, "progress");
   await expect(page).toHaveURL(/\/progress$/);

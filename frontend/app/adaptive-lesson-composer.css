@@ -1,0 +1,519 @@
+/*
+ * Adaptive Knowledge Coach — progressive Lesson Composer.
+ *
+ * Source of truth: Figma page 20, nodes 202:6, 203:5 and 204:2.
+ * The layer changes presentation and disclosure only. Existing lesson state,
+ * preview requests and session creation remain owned by LexigoPremiumApp.
+ */
+.lx-main-content[aria-label="Обучение"] {
+  --lx-bg: var(--ak-color-canvas);
+  --lx-bg-soft: var(--ak-color-subtle);
+  --lx-panel: var(--ak-color-surface);
+  --lx-panel-strong: var(--ak-color-surface);
+  --lx-border: color-mix(in srgb, var(--ak-color-text-muted) 24%, transparent);
+  --lx-text: var(--ak-color-text-main);
+  --lx-muted: var(--ak-color-text-muted);
+  --lx-green: var(--ak-color-retained);
+  --lx-blue: var(--ak-color-primary);
+  --lx-danger: var(--ak-color-weak);
+  color: var(--ak-color-text-main);
+}
+
+.lx-progressive-lesson-composer {
+  margin-top: var(--ak-space-lg);
+}
+
+.lx-recommended-lesson,
+.lx-recommended-lesson-reason,
+.lx-manual-lesson-composer__summary {
+  display: none;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: auto auto auto;
+  gap: var(--ak-space-xl) var(--ak-space-2xl);
+  margin-top: 0;
+  border: 1px solid var(--lx-border);
+  border-radius: var(--ak-radius-xl);
+  padding: 22px;
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-block {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-block + .lx-setup-block {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-block-heading > span {
+  display: none;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-block-heading strong {
+  color: var(--ak-color-text-main);
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-block-heading small,
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector small,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector small {
+  color: var(--ak-color-text-muted);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-sm);
+  margin-top: var(--ak-space-sm);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector > button {
+  min-height: 0;
+  border-color: var(--lx-border);
+  border-radius: var(--ak-radius-md);
+  padding: var(--ak-space-md) var(--ak-space-lg);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: none;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ak-space-sm);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button > span,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector .lx-section-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: var(--ak-color-text-muted);
+  background: transparent;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button.selected,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector > button.selected,
+.lx-main-content[aria-label="Обучение"] .lx-size-control button.selected {
+  border-color: var(--ak-color-primary);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-primary-soft);
+  box-shadow: none;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button.selected > span,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector > button.selected .lx-section-icon {
+  color: var(--ak-color-primary);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector > button:hover,
+.lx-main-content[aria-label="Обучение"] .lx-source-selector > button:hover {
+  transform: none;
+  border-color: var(--ak-color-primary);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-mode-selector i {
+  display: none !important;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-source-selector > button {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-source-selector b {
+  display: none;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-footer {
+  display: contents;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-footer fieldset {
+  grid-column: 1;
+  min-width: 0;
+  align-self: start;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-footer legend {
+  color: var(--ak-color-text-main);
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-size-control {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-sm);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-size-control button {
+  min-height: 48px;
+  border-color: var(--lx-border);
+  border-radius: var(--ak-radius-md);
+  color: var(--ak-color-text-muted);
+  background: var(--ak-color-surface);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-actions {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  display: flex;
+  min-width: 0;
+  min-height: 100%;
+  flex-direction: column;
+  gap: var(--ak-space-lg);
+  border-radius: var(--ak-radius-xl);
+  padding: 22px;
+  color: #ffffff;
+  background: #18302b;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-lesson-preview {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-lesson-preview span {
+  color: var(--ak-color-retained);
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-lesson-preview strong,
+.lx-main-content[aria-label="Обучение"] .lx-lesson-preview small {
+  color: #ffffff;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-submit {
+  display: grid;
+  gap: var(--ak-space-md);
+  margin-top: auto;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-submit p {
+  color: #e6efeb;
+  font: var(--ak-text-caption);
+  text-align: center;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-setup-submit .lx-button {
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .lx-main-content[aria-label="Обучение"] {
+    padding-top: var(--ak-space-sm);
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-page-heading {
+    display: block;
+    border: 0;
+    padding: var(--ak-space-sm) 2px var(--ak-space-md);
+    background: transparent;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-page-heading h1 {
+    margin-top: 2px;
+    font: var(--ak-text-title-small);
+    color: var(--ak-color-text-main);
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-page-heading p,
+  .lx-main-content[aria-label="Обучение"] .lx-heading-badge {
+    display: none;
+  }
+
+  .lx-progressive-lesson-composer {
+    margin-top: 0;
+  }
+
+  .lx-recommended-lesson {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ak-space-md);
+    border: 1px solid color-mix(in srgb, var(--ak-color-retained) 42%, transparent);
+    border-radius: var(--ak-radius-xl);
+    padding: 22px var(--ak-space-xl) var(--ak-space-xl);
+    background: var(--ak-color-surface);
+    box-shadow: var(--ak-elevation-1);
+  }
+
+  .lx-recommended-lesson__eyebrow,
+  .lx-recommended-lesson-reason strong {
+    color: var(--ak-color-retained);
+    font: var(--ak-text-caption);
+    font-weight: 750;
+    letter-spacing: 0.04em;
+  }
+
+  .lx-recommended-lesson h2 {
+    margin: 0;
+    color: var(--ak-color-text-main);
+    font: var(--ak-text-title-large);
+    letter-spacing: var(--ak-letter-spacing-title-large);
+  }
+
+  .lx-recommended-lesson > p {
+    margin: 0;
+    color: var(--ak-color-text-muted);
+    font: var(--ak-text-label);
+  }
+
+  .lx-recommended-lesson__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .lx-recommended-lesson__chips span {
+    border-radius: 999px;
+    padding: 7px 10px;
+    color: var(--ak-color-text-muted);
+    background: var(--ak-color-subtle);
+    font: var(--ak-text-caption);
+    font-weight: 650;
+  }
+
+  .lx-recommended-lesson__chips span:first-child {
+    color: var(--ak-color-primary);
+    background: var(--ak-color-primary-soft);
+  }
+
+  .lx-recommended-lesson__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ak-space-sm);
+    margin-top: var(--ak-space-sm);
+  }
+
+  .lx-recommended-lesson__metrics > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    border-radius: var(--ak-radius-md);
+    padding: 10px;
+    background: color-mix(in srgb, var(--ak-color-subtle) 58%, transparent);
+  }
+
+  .lx-recommended-lesson__metrics strong {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .lx-recommended-lesson__metrics strong.weak { color: var(--ak-color-weak); }
+  .lx-recommended-lesson__metrics strong.retained { color: var(--ak-color-retained); }
+  .lx-recommended-lesson__metrics strong.milestone { color: #d6a63d; }
+
+  .lx-recommended-lesson__metrics span {
+    overflow-wrap: anywhere;
+    color: var(--ak-color-text-muted);
+    font: var(--ak-text-caption);
+  }
+
+  .lx-recommended-lesson__start {
+    width: 100%;
+    margin-top: var(--ak-space-sm);
+  }
+
+  .lx-recommended-lesson__toggle,
+  .lx-manual-lesson-composer__summary {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ak-space-sm);
+    border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 62%, transparent);
+    border-radius: var(--ak-radius-md);
+    padding: 10px var(--ak-space-lg);
+    color: var(--ak-color-text-main);
+    background: transparent;
+    font: var(--ak-text-label);
+    font-weight: 650;
+  }
+
+  .lx-recommended-lesson-reason {
+    display: grid;
+    gap: 6px;
+    margin-top: 14px;
+    border-radius: var(--ak-radius-lg);
+    padding: var(--ak-space-lg);
+    background: var(--ak-color-subtle);
+  }
+
+  .lx-recommended-lesson-reason p {
+    margin: 0;
+    color: var(--ak-color-text-muted);
+    font: var(--ak-text-caption);
+  }
+
+  .lx-manual-lesson-composer {
+    display: none;
+  }
+
+  .lx-progressive-lesson-composer[data-mobile-expanded="true"] .lx-recommended-lesson,
+  .lx-progressive-lesson-composer[data-mobile-expanded="true"] .lx-recommended-lesson-reason {
+    display: none;
+  }
+
+  .lx-progressive-lesson-composer[data-mobile-expanded="true"] .lx-manual-lesson-composer {
+    display: block;
+  }
+
+  .lx-manual-lesson-composer__summary {
+    justify-content: space-between;
+    border: 0;
+    border-radius: var(--ak-radius-lg);
+    padding: 12px 14px;
+    background: var(--ak-color-subtle);
+    text-align: left;
+  }
+
+  .lx-manual-lesson-composer__summary > span:first-child {
+    display: grid;
+    gap: 2px;
+  }
+
+  .lx-manual-lesson-composer__summary strong,
+  .lx-manual-lesson-composer__summary small {
+    display: block;
+  }
+
+  .lx-manual-lesson-composer__summary small {
+    color: var(--ak-color-text-muted);
+    font: var(--ak-text-caption);
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-card {
+    display: block;
+    margin-top: var(--ak-space-md);
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-block + .lx-setup-block {
+    margin-top: var(--ak-space-lg);
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-block-heading strong {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-block-heading small {
+    font-size: 9px;
+    line-height: 13px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector > button {
+    display: flex;
+    min-height: 44px;
+    justify-content: center;
+    padding: 9px 6px;
+    text-align: center;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector > button > span,
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector small {
+    display: none;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector strong {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector > button {
+    min-height: 44px;
+    padding: 9px 10px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector strong {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector small {
+    font-size: 9px;
+    line-height: 13px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ak-space-lg);
+    margin-top: var(--ak-space-lg);
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-size-control {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-size-control button {
+    min-height: 44px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-actions {
+    position: sticky;
+    z-index: 5;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    display: grid;
+    min-height: 0;
+    gap: 7px;
+    border-radius: var(--ak-radius-lg);
+    padding: 10px 0 0;
+    color: var(--ak-color-text-main);
+    background: color-mix(in srgb, var(--ak-color-canvas) 94%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-lesson-preview {
+    display: none;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-submit {
+    gap: 7px;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-submit p {
+    color: var(--ak-color-text-muted);
+    font-size: 10px;
+    line-height: 14px;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-progressive-lesson-composer *,
+  .lx-progressive-lesson-composer *::before,
+  .lx-progressive-lesson-composer *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

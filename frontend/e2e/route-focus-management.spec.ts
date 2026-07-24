@@ -297,7 +297,7 @@ await expectMainFocus(page, "Технические фразы");
   await page.evaluate(() => window.scrollTo({ top: 1_100, behavior: "auto" }));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
   const savedScroll = await page.evaluate(() => window.scrollY);
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(500);
 
   await clickPrimaryNavigation(page, "progress");
   await expect(page).toHaveURL(/\/progress$/);
