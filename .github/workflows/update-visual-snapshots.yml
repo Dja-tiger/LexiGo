@@ -21,6 +21,30 @@ jobs:
           ref: agent/issue-194-lesson-result
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Refine codemod target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("scripts/ci/patch-lesson-result.py")
+          source = path.read_text()
+          helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
+          helper = '''
+def replace_first(text: str, old: str, new: str, label: str) -> str:
+    if old not in text:
+        raise RuntimeError(f"{label}: expected at least one match")
+    return text.replace(old, new, 1)
+
+'''
+          if "def replace_first(" not in source:
+              source = source.replace(helper_marker, helper + helper_marker, 1)
+          target = '''app = replace_once(
+    app,
+    ''' + "'''      setProgress(result.data);" 
+          index = source.index(target)
+          source = source[:index] + source[index:].replace("app = replace_once(", "app = replace_first(", 1)
+          path.write_text(source)
+          PY
+
       - name: Apply deterministic codemod
         id: patch
         shell: bash
@@ -31,6 +55,8 @@ jobs:
           cat /tmp/lesson-result-patch.log
           if [ "$status" -ne 0 ]; then
             cp /tmp/lesson-result-patch.log scripts/ci/patch-lesson-result-error.txt
+          else
+            rm -f scripts/ci/patch-lesson-result-error.txt
           fi
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
@@ -45,6 +71,7 @@ jobs:
               frontend/app/layout.tsx \
               frontend/package.json \
               frontend/e2e/next-lesson-progression.spec.ts
+            git add -u scripts/ci/patch-lesson-result-error.txt
             git diff --cached --check
             message="feat(frontend): integrate canonical Lesson Result"
           else
