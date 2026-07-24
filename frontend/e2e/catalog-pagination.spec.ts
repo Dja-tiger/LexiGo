@@ -118,6 +118,8 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
     .getByRole("link")
     .nth(40);
   await target.scrollIntoViewIfNeeded();
+  // Wait for Next.js to debounce and save the scroll position
+  await page.waitForTimeout(500);
   const scrollBeforeDetail = await page.evaluate(() => window.scrollY);
   await target.click();
   await expect(page.locator(".lx-detail-card")).toBeVisible();
