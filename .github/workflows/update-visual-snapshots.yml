@@ -1,104 +1,68 @@
 name: Update visual snapshots
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - agent/issue-162-progressive-lesson-composer
+    paths:
+      - .github/workflows/update-visual-snapshots.yml
 
 permissions:
   contents: write
 
 jobs:
-  patch-lesson-result:
-    name: Apply Issue 194 integration patch
-    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+  update-snapshots:
+    name: Regenerate Issue 162 visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-194-lesson-result
+          ref: agent/issue-162-progressive-lesson-composer
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Record workflow execution
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Regenerate visual snapshots
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+
+      - name: Extract updated snapshots from container
+        run: |
+          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
+          test -n "$container"
+          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
+
+      - name: Cleanup container
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
+
+      - name: Commit Issue 162 baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          printf 'run=%s attempt=%s sha=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA" "$GITHUB_EVENT_NAME" > scripts/ci/patch-lesson-result-workflow.txt
-          git add scripts/ci/patch-lesson-result-workflow.txt
-          git commit -m "chore(ci): record Lesson Result patch execution"
-          git push origin HEAD:agent/issue-194-lesson-result
-
-      - name: Refine codemod target
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("scripts/ci/patch-lesson-result.py")
-          source = path.read_text()
-          helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
-          helper = '''
-def replace_first(text: str, old: str, new: str, label: str) -> str:
-    if old not in text:
-        raise RuntimeError(f"{label}: expected at least one match")
-    return text.replace(old, new, 1)
-
-'''
-          if "def replace_first(" not in source:
-              if helper_marker not in source:
-                  raise RuntimeError("replace_regex helper marker missing")
-              source = source.replace(helper_marker, helper + helper_marker, 1)
-
-          lines = source.splitlines()
-          label_index = next(
-              index for index, line in enumerate(lines)
-              if '"progress resource ref"' in line
-          )
-          call_index = max(
-              index for index in range(label_index)
-              if lines[index] == "app = replace_once("
-          )
-          lines[call_index] = "app = replace_first("
-          path.write_text("\n".join(lines) + "\n")
-          PY
-
-      - name: Apply deterministic codemod
-        id: patch
-        shell: bash
-        run: |
-          set +e
-          python3 scripts/ci/patch-lesson-result.py > /tmp/lesson-result-patch.log 2>&1
-          status=$?
-          cat /tmp/lesson-result-patch.log
-          if [ "$status" -ne 0 ]; then
-            cp /tmp/lesson-result-patch.log scripts/ci/patch-lesson-result-error.txt
-          else
-            rm -f scripts/ci/patch-lesson-result-error.txt
-          fi
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Commit patch or diagnostics
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "${{ steps.patch.outputs.status }}" -eq 0 ]; then
-            git add \
-              frontend/components/lexigo-premium-app.tsx \
-              frontend/app/layout.tsx \
-              frontend/package.json \
-              frontend/e2e/next-lesson-progression.spec.ts
-            git add -u scripts/ci/patch-lesson-result-error.txt
-            git diff --cached --check
-            message="feat(frontend): integrate canonical Lesson Result"
-          else
-            git add scripts/ci/patch-lesson-result-error.txt
-            message="chore(ci): record Lesson Result codemod failure"
-          fi
+          git add \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
           if git diff --cached --quiet; then
-            echo "No patch output to commit."
+            echo "Composer baselines already match."
           else
-            git commit -m "$message"
-            git push origin HEAD:agent/issue-194-lesson-result
+            git commit -m "test(visual): update Lesson Composer baselines"
+            git push origin HEAD:agent/issue-162-progressive-lesson-composer
           fi
-          test "${{ steps.patch.outputs.status }}" -eq 0

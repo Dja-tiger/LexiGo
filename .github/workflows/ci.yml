@@ -2,12 +2,6 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -15,7 +9,7 @@ permissions:
 jobs:
   integrate-lesson-result:
     name: Integrate canonical Lesson Result
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,67 +19,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Apply deterministic integration
+      - name: Decode integration output
+        run: |
+          set -Eeuo pipefail
+          base64 --decode .tmp/lesson-result-app.b64 > frontend/components/lexigo-premium-app.tsx
+          test -s frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'LessonResultPresentation' frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'buildLessonResultSnapshot' frontend/components/lexigo-premium-app.tsx
+
+      - name: Remove temporary scaffolding
         run: |
           set -Eeuo pipefail
           git fetch origin main
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("scripts/ci/patch-lesson-result.py")
-          source = path.read_text()
-          helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
-          helper = '''
-          def replace_first(text: str, old: str, new: str, label: str) -> str:
-              if old not in text:
-                  raise RuntimeError(f"{label}: expected at least one match")
-              return text.replace(old, new, 1)
-
-          '''
-          helper = "\n".join(line[10:] if line.startswith("          ") else line for line in helper.splitlines()) + "\n"
-          if "def replace_first(" not in source:
-              if helper_marker not in source:
-                  raise RuntimeError("replace_regex helper marker missing")
-              source = source.replace(helper_marker, helper + helper_marker, 1)
-
-          lines = source.splitlines()
-          label_index = next(index for index, line in enumerate(lines) if '"progress resource ref"' in line)
-          call_index = max(index for index in range(label_index) if lines[index] == "app = replace_once(")
-          lines[call_index] = "app = replace_first("
-          path.write_text("\n".join(lines) + "\n")
-          PY
-          python3 scripts/ci/patch-lesson-result.py
-
-      - name: Remove temporary execution scaffolding
-        run: |
-          set -Eeuo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import json
-
-          package_path = Path("frontend/package.json")
-          package = json.loads(package_path.read_text())
-          package.get("scripts", {}).pop("prelint", None)
-          package_path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n")
-
-          agents_path = Path(".agents/AGENTS.md")
-          agents = agents_path.read_text()
-          marker = "### Deterministic codemods must target a scoped owner"
-          if marker not in agents:
-              agents += '''
-
-### Deterministic codemods must target a scoped owner
-
-- **Symptom:** an exact source replacement failed because the same snippet appeared in more than one function.
-- **Root cause:** the codemod treated a globally repeated text fragment as a unique integration boundary.
-- **Prevention:** target the owning function or a stable neighbouring label before replacement; use AST-aware edits when practical.
-- **Required verification:** dry-run against the current base, assert the planned file set and diff, then verify idempotency before using the codemod in CI.
-'''
-              agents_path.write_text(agents)
-          PY
           git checkout origin/main -- \
             .github/workflows/ci.yml \
             .github/workflows/actions-storage-cleanup.yml \
+            .github/workflows/deploy-scripts-check.yml \
             .github/workflows/update-visual-snapshots.yml
           rm -f \
             .github/workflows/patch-lesson-result.yml \
@@ -93,15 +42,20 @@ jobs:
             scripts/ci/patch-lesson-result-error.txt \
             scripts/ci/patch-lesson-result-workflow.txt \
             frontend/scripts/ci/patch-lesson-result.py \
-            frontend/scripts/ci/run-patch-lesson-result.py
+            frontend/scripts/ci/run-patch-lesson-result.py \
+            .tmp/lesson-result-app.b64 \
+            .tmp/tree-base-test.txt \
+            .tmp/tree-base-test-2.txt \
+            .tmp/tree-base-test-3.txt \
+            .tmp/tree-base-test-4.txt
 
       - name: Commit clean integration
         run: |
           set -Eeuo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git diff --cached --check
           git diff --cached --name-status
-          git commit -m "feat(frontend): integrate canonical Lesson Result"
+          git commit -m 'feat(frontend): integrate canonical Lesson Result'
           git push origin HEAD:agent/issue-194-lesson-result

@@ -3,102 +3,321 @@ name: Deployment scripts check
 on:
   pull_request:
     paths:
-      - ".github/workflows/deploy-scripts-check.yml"
+      - ".github/workflows/deploy-stage.yml"
+      - ".github/workflows/deploy-prod.yml"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
+      - ".github/workflows/runner-resource-cleanup.yml"
+      - ".github/workflows/self-hosted-runner-smoke.yml"
+      - "deploy/Caddyfile"
+      - "deploy/caddy/Dockerfile"
+      - "deploy/compose/docker-compose.stage.yml"
+      - "deploy/compose/docker-compose.prod.yml"
+      - "deploy/certificate-health.sh"
+      - "deploy/http-readiness.sh"
+      - "deploy/http-readiness.test.sh"
+      - "deploy/systemd/**"
+      - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/frontend-container.sh"
+      - "scripts/ci/public-smoke.sh"
+      - "scripts/ci/public-smoke.test.sh"
+      - "scripts/ci/runner_resource_cleanup.py"
+      - "scripts/ci/runner_resource_cleanup_test.py"
+      - "scripts/remote-deploy.sh"
+      - "docs/self-hosted-runner-resource-lifecycle.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-stage.yml"
+      - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/deploy-scripts-check.yml"
+      - ".github/workflows/runner-resource-cleanup.yml"
+      - ".github/workflows/self-hosted-runner-smoke.yml"
+      - "deploy/Caddyfile"
+      - "deploy/caddy/Dockerfile"
+      - "deploy/compose/docker-compose.stage.yml"
+      - "deploy/compose/docker-compose.prod.yml"
+      - "deploy/certificate-health.sh"
+      - "deploy/http-readiness.sh"
+      - "deploy/http-readiness.test.sh"
+      - "deploy/systemd/**"
+      - "scripts/ci/deploy-over-ssh.sh"
+      - "scripts/ci/frontend-container.sh"
+      - "scripts/ci/public-smoke.sh"
+      - "scripts/ci/public-smoke.test.sh"
+      - "scripts/ci/runner_resource_cleanup.py"
+      - "scripts/ci/runner_resource_cleanup_test.py"
+      - "scripts/remote-deploy.sh"
+      - "docs/self-hosted-runner-resource-lifecycle.md"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  integrate-lesson-result:
-    name: Integrate canonical Lesson Result
-    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  validate:
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    env:
+      CI_LEASE_CONTAINER: lexigo-deploy-check-lease-${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-caddy
+      CADDY_IMAGE: lexigo-caddy:${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_MODULES_CONTAINER: lexigo-caddy-modules-${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_VALIDATE_CONTAINER: lexigo-caddy-validate-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-194-lesson-result
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Apply deterministic integration
+      - name: Start bounded cleanup lease
         run: |
           set -Eeuo pipefail
-          git fetch origin main
-          python3 - <<'PY'
-          from pathlib import Path
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            1500 >/dev/null
 
-          path = Path("scripts/ci/patch-lesson-result.py")
-          source = path.read_text()
-          helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
-          helper = '''
-def replace_first(text: str, old: str, new: str, label: str) -> str:
-    if old not in text:
-        raise RuntimeError(f"{label}: expected at least one match")
-    return text.replace(old, new, 1)
+      - name: Set up owned Caddy builder
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ${{ env.CADDY_BUILDER_NAME }}
+          cleanup: true
 
-'''
-          if "def replace_first(" not in source:
-              if helper_marker not in source:
-                  raise RuntimeError("replace_regex helper marker missing")
-              source = source.replace(helper_marker, helper + helper_marker, 1)
+      - name: Validate Bash syntax
+        run: |
+          bash -n scripts/ci/deploy-over-ssh.sh
+          bash -n scripts/ci/frontend-container.sh
+          bash -n scripts/ci/frontend-container.test.sh
+          bash -n scripts/ci/public-smoke.sh
+          bash -n scripts/ci/public-smoke.test.sh
+          bash -n scripts/remote-deploy.sh
+          bash -n deploy/certificate-health.sh
+          bash -n deploy/http-readiness.sh
+          bash -n deploy/http-readiness.test.sh
 
-          lines = source.splitlines()
-          label_index = next(index for index, line in enumerate(lines) if '"progress resource ref"' in line)
-          call_index = max(index for index in range(label_index) if lines[index] == "app = replace_once(")
-          lines[call_index] = "app = replace_first("
-          path.write_text("\n".join(lines) + "\n")
-          PY
-          python3 scripts/ci/patch-lesson-result.py
+      - name: Test public endpoint smoke checks
+        run: bash scripts/ci/public-smoke.test.sh
 
-      - name: Remove temporary execution scaffolding
+      - name: Test frontend container environment forwarding
+        run: bash scripts/ci/frontend-container.test.sh
+
+      - name: Test HTTP readiness probes
+        run: bash deploy/http-readiness.test.sh
+
+      - name: Test runner cleanup planner
+        run: python3 scripts/ci/runner_resource_cleanup_test.py
+
+      - name: Validate runner resource ownership invariants
         run: |
           set -Eeuo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import json
 
-          package_path = Path("frontend/package.json")
-          package = json.loads(package_path.read_text())
-          package.get("scripts", {}).pop("prelint", None)
-          package_path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n")
+          grep -Fq 'com.lexigo.ci.repository=${GITHUB_REPOSITORY}' .github/workflows/ci.yml
+          grep -Fq 'com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}' .github/workflows/ci.yml
+          grep -Fq 'com.lexigo.ci.kind=lease' scripts/ci/frontend-container.sh
+          grep -Fq 'FRONTEND_CI_SLOT="${FRONTEND_CI_SLOT:-$GITHUB_JOB}"' scripts/ci/frontend-container.sh
 
-          agents_path = Path(".agents/AGENTS.md")
-          agents = agents_path.read_text()
-          marker = "### Deterministic codemods must target a scoped owner"
-          if marker not in agents:
-              agents += '''
+          grep -Fq 'BUILDER_NAME: lexigo-buildx-' .github/workflows/ci.yml
+          grep -Fq 'group: lexigo-runner-resource-cleanup' .github/workflows/runner-resource-cleanup.yml
 
-### Deterministic codemods must target a scoped owner
+          if grep -R --line-number -E \
+            'docker (system|container|image|network|volume) prune|docker buildx rm --all-inactive' \
+            --exclude=deploy-scripts-check.yml \
+            .github scripts; then
+            echo 'Daemon-wide Docker cleanup is prohibited on shared runners.' >&2
+            exit 1
+          fi
 
-- **Symptom:** an exact source replacement failed because the same snippet appeared in more than one function.
-- **Root cause:** the codemod treated a globally repeated text fragment as a unique integration boundary.
-- **Prevention:** target the owning function or a stable neighbouring label before replacement; use AST-aware edits when practical.
-- **Required verification:** dry-run against the current base, assert the planned file set and diff, then verify idempotency before using the codemod in CI.
-'''
-              agents_path.write_text(agents)
-          PY
-          git checkout origin/main -- \
-            .github/workflows/ci.yml \
-            .github/workflows/deploy-scripts-check.yml \
-            .github/workflows/actions-storage-cleanup.yml \
-            .github/workflows/update-visual-snapshots.yml
-          rm -f \
-            .github/workflows/patch-lesson-result.yml \
-            scripts/ci/patch-lesson-result.py \
-            scripts/ci/patch-lesson-result-error.txt \
-            scripts/ci/patch-lesson-result-workflow.txt \
-            frontend/scripts/ci/patch-lesson-result.py \
-            frontend/scripts/ci/run-patch-lesson-result.py
-
-      - name: Commit clean integration
+      - name: Validate deployment security and readiness invariants
         run: |
           set -Eeuo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git diff --cached --name-status
-          git commit -m "feat(frontend): integrate canonical Lesson Result"
-          git push origin HEAD:agent/issue-194-lesson-result
+
+          grep -Fq 'CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}' .github/workflows/deploy-prod.yml
+          grep -Fq 'API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}' .github/workflows/deploy-prod.yml
+          grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-prod.yml
+
+          grep -Fq 'SESSION_COOKIE_SECURE=true' scripts/remote-deploy.sh
+          grep -Fq 'upsert_env "$APP_ENV_FILE" SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
+          grep -Fq 'CONTENT_SECURITY_POLICY_MODE="report-only"' scripts/remote-deploy.sh
+          grep -Fq 'CONTENT_SECURITY_POLICY_MODE="enforce"' scripts/remote-deploy.sh
+          grep -Fq 'upsert_env "$APP_ENV_FILE" CONTENT_SECURITY_POLICY_MODE "$CONTENT_SECURITY_POLICY_MODE"' scripts/remote-deploy.sh
+          grep -Fq 'HSTS_MAX_AGE="15552000"' scripts/remote-deploy.sh
+          grep -Fq 'deploy/env/stage.caddy.env' scripts/remote-deploy.sh
+          grep -Fq 'deploy/env/prod.caddy.env' scripts/remote-deploy.sh
+          grep -Fq 'install -m 0600 "$CADDY_ENV_TEMP" "$CADDY_ENV_FILE"' scripts/remote-deploy.sh
+          grep -Fq 'printf '\''%s\n%s\n'\'' "$GHCR_TOKEN" "$CLOUDFLARE_API_TOKEN"' scripts/ci/deploy-over-ssh.sh
+
+          grep -Fq 'PREVIOUS_IMAGE_TAG=' scripts/remote-deploy.sh
+          grep -Fq 'rollback_to_previous_image()' scripts/remote-deploy.sh
+          grep -Fq 'upsert_env "$APP_ENV_FILE" IMAGE_TAG "$PREVIOUS_IMAGE_TAG"' scripts/remote-deploy.sh
+          grep -Fq 'if ! wait_for_readiness; then' scripts/remote-deploy.sh
+          grep -Fq 'previous image $PREVIOUS_IMAGE_TAG was restored' scripts/remote-deploy.sh
+
+          grep -Fq 'check_frontend_endpoint()' scripts/remote-deploy.sh
+          grep -Fq 'HTTP_READINESS_LIBRARY="$PROJECT_ROOT/deploy/http-readiness.sh"' scripts/remote-deploy.sh
+          grep -Fq 'source "$HTTP_READINESS_LIBRARY"' scripts/remote-deploy.sh
+          grep -Fq 'lexigo_http_response_contains \' scripts/remote-deploy.sh
+          grep -Fq '"https://$SITE_HOST/?lexigo_readiness=$REQUESTED_IMAGE_TAG"' scripts/remote-deploy.sh
+          grep -Fq 'grep -Fq -- "$expected_text" "$body_file"' deploy/http-readiness.sh
+          grep -Fq 'check_api_endpoint()' scripts/remote-deploy.sh
+          grep -Fq 'print_http_diagnostic "frontend root"' scripts/remote-deploy.sh
+
+          if grep -Fq "| grep -Fq 'LexiGo'" scripts/remote-deploy.sh; then
+            echo 'Frontend readiness must not pipe curl into grep -q.' >&2
+            exit 1
+          fi
+
+          grep -Fq 'name: Verify public stage endpoints' .github/workflows/deploy-stage.yml
+          grep -Fq 'name: Verify public production endpoints' .github/workflows/deploy-prod.yml
+          grep -Fq 'bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" report-only' .github/workflows/deploy-stage.yml
+          grep -Fq 'bash scripts/ci/public-smoke.sh "$PUBLIC_URL" "$API_PUBLIC_URL" enforce' .github/workflows/deploy-prod.yml
+          grep -Fq 'EXPECTED_CSP_MODE: report-only' .github/workflows/deploy-stage.yml
+          grep -Fq 'PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}' .github/workflows/deploy-stage.yml
+          grep -Fq 'PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}' .github/workflows/deploy-prod.yml
+
+          grep -Fq 'Strict-Transport-Security "max-age={$HSTS_MAX_AGE:86400}"' deploy/Caddyfile
+          grep -Fq 'X-Content-Type-Options "nosniff"' deploy/Caddyfile
+          grep -Fq 'Referrer-Policy "strict-origin-when-cross-origin"' deploy/Caddyfile
+          grep -Fq 'Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"' deploy/Caddyfile
+          grep -Fq 'X-Frame-Options "DENY"' deploy/Caddyfile
+
+          if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
+            echo 'A Cloudflare token-like value must never be committed.' >&2
+            exit 1
+          fi
+
+      - name: Validate Compose rendering
+        run: |
+          set -Eeuo pipefail
+          trap 'rm -f deploy/env/stage.env deploy/env/prod.env deploy/env/stage.caddy.env deploy/env/prod.caddy.env' EXIT
+          mkdir -p deploy/env
+
+          for environment in stage prod; do
+            cat > "deploy/env/${environment}.env" <<EOF
+          APP_ENV=${environment}
+          IMAGE_TAG=test
+          POSTGRES_DB=lexigo_${environment}
+          POSTGRES_USER=lexigo_${environment}
+          POSTGRES_PASSWORD=test-password
+          POSTGRES_DSN=postgres://lexigo_${environment}:test-password@postgres:5432/lexigo_${environment}?sslmode=disable
+          REDIS_PASSWORD=test-password
+          CONTENT_SECURITY_POLICY_MODE=$([[ "$environment" == stage ]] && printf report-only || printf enforce)
+          EOF
+            cat > "deploy/env/${environment}.caddy.env" <<EOF
+          CADDY_SITE_ADDRESS=lexigo-${environment}.example.com
+          CADDY_API_ADDRESS=api.lexigo-${environment}.example.com
+          ACME_EMAIL=operations@example.com
+          CLOUDFLARE_API_TOKEN=test-token
+          HSTS_MAX_AGE=$([[ "$environment" == stage ]] && printf 86400 || printf 15552000)
+          EOF
+          done
+
+          docker compose --env-file deploy/env/stage.env -f deploy/compose/docker-compose.stage.yml config >/dev/null
+          docker compose --env-file deploy/env/prod.env -f deploy/compose/docker-compose.prod.yml config >/dev/null
+
+      - name: Build custom Caddy
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          docker buildx build --progress=plain \
+            --builder "$CADDY_BUILDER_NAME" \
+            --load \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=image" \
+            -t "$CADDY_IMAGE" \
+            -f deploy/caddy/Dockerfile \
+            deploy \
+            2>&1 | tee caddy-build.log
+
+      - name: Verify Cloudflare DNS module
+        run: |
+          docker run --rm \
+            --name "$CADDY_MODULES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=validation" \
+            --entrypoint caddy \
+            "$CADDY_IMAGE" list-modules \
+            | tee caddy-modules.log \
+            | grep -Fxq 'dns.providers.cloudflare'
+
+      - name: Validate Caddyfile
+        run: |
+          docker run --rm \
+            --name "$CADDY_VALIDATE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=validation" \
+            -e CADDY_SITE_ADDRESS=lexigo.example.com \
+            -e CADDY_API_ADDRESS=api.lexigo.example.com \
+            -e ACME_EMAIL=operations@example.com \
+            -e CLOUDFLARE_API_TOKEN=test-token \
+            -e HSTS_MAX_AGE=15552000 \
+            -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            --entrypoint caddy \
+            "$CADDY_IMAGE" \
+            validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+            2>&1 | tee caddy-validate.log
+
+      - name: Validate systemd units
+        run: |
+          set -Eeuo pipefail
+          if command -v systemd-analyze >/dev/null 2>&1; then
+            unit_dir="$(mktemp -d)"
+            trap 'rm -rf -- "$unit_dir"' EXIT
+            install -m 0755 deploy/certificate-health.sh "$unit_dir/lexigo-certificate-health"
+            sed \
+              "s#/usr/local/sbin/lexigo-certificate-health#$unit_dir/lexigo-certificate-health#" \
+              deploy/systemd/lexigo-certificate-health@.service \
+              > "$unit_dir/lexigo-certificate-health@.service"
+            cp deploy/systemd/lexigo-certificate-health@.timer "$unit_dir/lexigo-certificate-health@.timer"
+            systemd-analyze verify \
+              "$unit_dir/lexigo-certificate-health@.service" \
+              "$unit_dir/lexigo-certificate-health@.timer"
+          fi
+
+      - name: Upload Caddy diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: caddy-deployment-diagnostics
+          path: |
+            caddy-build.log
+            caddy-modules.log
+            caddy-validate.log
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Cleanup Caddy test image
+        if: always()
+        run: |
+          docker rm --force \
+            "$CADDY_MODULES_CONTAINER" \
+            "$CADDY_VALIDATE_CONTAINER" \
+            "$CI_LEASE_CONTAINER" \
+            >/dev/null 2>&1 || true
+          docker image rm "$CADDY_IMAGE" >/dev/null 2>&1 || true
+          docker buildx rm --force "$CADDY_BUILDER_NAME" >/dev/null 2>&1 || true
