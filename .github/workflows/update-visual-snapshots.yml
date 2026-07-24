@@ -7,21 +7,9 @@ on:
         description: Branch to update snapshots on
         required: true
         default: agent/issue-183-application-shell-home
-  # Temporary bootstrap: this path filter starts the generator exactly once
-  # when this workflow file is changed in PR #184. The generated PNG commit
-  # does not touch this file, so it cannot create a workflow loop.
-  pull_request:
-    paths:
-      - .github/workflows/update-visual-snapshots.yml
-
-permissions:
-  contents: write
 
 jobs:
   update-snapshots:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'pull_request'
     name: Regenerate visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -34,11 +22,10 @@ jobs:
       FRONTEND_CI_SLOT: core
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
-      SNAPSHOT_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.SNAPSHOT_BRANCH }}
+          ref: ${{ inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare isolated frontend workspace
@@ -70,9 +57,9 @@ jobs:
           if git diff --cached --quiet; then
             echo "No snapshot changes — baselines already match."
           else
-            git commit -m "test(visual): regenerate Linux baselines after canvas ownership fix
+            git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
 
-Generated in the pinned Playwright Linux container after semantic token and
-route canvas ownership corrections."
-            git push origin HEAD:"$SNAPSHOT_BRANCH"
+Regenerated via 'Update visual snapshots' workflow after shell and Home
+redesign in the Adaptive Knowledge Coach PR."
+            git push origin HEAD:${{ inputs.branch }}
           fi
