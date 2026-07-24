@@ -88,6 +88,45 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  patch-dictionary-scroll-fallback:
+    name: Apply dictionary session scroll fallback
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 189
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Patch route island and PWA regression
+        run: python3 scripts/ci/patch_dictionary_scroll_fallback.py
+
+      - name: Validate source contract
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run test -- lib/navigation-scroll-restoration.test.ts
+          npm run typecheck
+
+      - name: Commit source-only fix
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git diff --quiet; then
+            echo "Dictionary session scroll fallback is already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/components/lexigo-dictionary-app.tsx \
+            frontend/e2e/dictionary-pwa.spec.ts
+          git commit -m "fix(frontend): preserve dictionary scroll through route remount"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
