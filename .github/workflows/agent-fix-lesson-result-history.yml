@@ -1,0 +1,46 @@
+name: Agent one-shot Lesson Result history patch
+
+on:
+  push:
+    branches:
+      - agent/issue-194-lesson-result
+
+permissions:
+  contents: write
+
+jobs:
+  patch-history:
+    if: github.actor != 'github-actions[bot]' && contains(github.event.head_commit.message, 'chore(ci): add one-shot Lesson Result history patch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/issue-194-lesson-result
+          fetch-depth: 0
+
+      - name: Preserve Lesson Result browser history
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("frontend/components/lexigo-premium-app.tsx")
+          source = path.read_text(encoding="utf-8")
+          old = 'navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });'
+          new = 'navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });'
+
+          occurrences = source.count(old)
+          if occurrences != 1:
+              raise SystemExit(f"Expected exactly one history replacement target, found {occurrences}")
+
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          git commit -m "fix(frontend): preserve Lesson Result browser history"
+          git push origin HEAD:agent/issue-194-lesson-result
