@@ -1,4 +1,4 @@
-name: Migrate CI to GitHub-hosted runners
+name: Generate GitHub-hosted runner migration
 
 on:
   push:
@@ -10,25 +10,23 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: migrate-public-hosted-runners
+  group: generate-public-hosted-runners
   cancel-in-progress: true
 
 jobs:
-  migrate:
-    name: Apply hosted runner profile
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+  generate:
+    name: Generate hosted runner files
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ci/github-hosted-public-repo
-          fetch-depth: 0
 
-      - name: Rewrite runner policy
+      - name: Generate migration files
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -207,12 +205,19 @@ jobs:
           (root / "docs/github-actions-runners.md").write_text(documentation, encoding="utf-8")
           PY
 
-          rm -- .github/workflows/migrate-public-hosted-runners.yml
           python3 scripts/ci/runner_policy_test.py
           python3 scripts/ci/actions_storage_policy_test.py
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git commit -m "ci: use GitHub-hosted runners for public repository"
-          git push origin HEAD:ci/github-hosted-public-repo
+      - name: Upload generated migration files
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: hosted-runner-migration
+          path: |
+            .github/workflows/ci.yml
+            .github/workflows/actions-storage-cleanup.yml
+            .github/workflows/runner-resource-cleanup.yml
+            scripts/ci/runner_policy_test.py
+            docs/github-actions-runners.md
+          if-no-files-found: error
+          retention-days: 1
