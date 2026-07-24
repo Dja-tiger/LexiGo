@@ -36,6 +36,7 @@ import {
   type NavigationScrollPosition,
 } from "../lib/navigation-history";
 import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";
+import { scheduleNavigationScrollRestoration } from "../lib/navigation-scroll-restoration";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
 import { AsyncResourceNotice } from "./async-state";
@@ -204,15 +205,27 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   useLayoutEffect(() => {
     navigationRef.current = navigation;
     if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
-    const frame = window.requestAnimationFrame(() => {
-      mainContentRef.current?.focus({ preventScroll: true });
-      window.scrollTo({
-        left: pendingNavigation.scroll.x,
-        top: pendingNavigation.scroll.y,
-        behavior: "auto",
-      });
-    });
-    return () => window.cancelAnimationFrame(frame);
+
+    const pending = pendingNavigation;
+    mainContentRef.current?.focus({ preventScroll: true });
+    return scheduleNavigationScrollRestoration(
+      pending.scroll,
+      {
+        readPosition: () => ({ x: window.scrollX, y: window.scrollY }),
+        writePosition: (position) => {
+          window.scrollTo({
+            left: position.x,
+            top: position.y,
+            behavior: "auto",
+          });
+        },
+        requestFrame: (callback) => window.requestAnimationFrame(callback),
+        cancelFrame: (frameID) => window.cancelAnimationFrame(frameID),
+      },
+      () => {
+        setPendingNavigation((current) => (current === pending ? null : current));
+      },
+    );
   }, [navigation, pendingNavigation]);
 
   const loadMetadata = useCallback(async (signal?: AbortSignal) => {
