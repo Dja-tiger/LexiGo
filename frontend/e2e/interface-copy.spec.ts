@@ -33,8 +33,9 @@ test.describe("interface copy contract", () => {
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
     const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
     if (await configureLesson.isVisible()) await configureLesson.click();
-    await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();
-    await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
+    const recallMode = page.getByRole("radio", { name: new RegExp(recall.label) });
+    await expect(recallMode).toBeVisible();
+    await expect(recallMode).toContainText(recall.explanation);
     await expect(page.getByText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
