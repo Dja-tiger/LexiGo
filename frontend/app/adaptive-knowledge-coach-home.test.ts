@@ -8,6 +8,10 @@ type PackageManifest = {
 };
 
 const appDirectory = path.join(process.cwd(), "app");
+const designTokenSource = readFileSync(
+  path.join(appDirectory, "design-tokens.css"),
+  "utf8",
+);
 const styleSource = readFileSync(
   path.join(appDirectory, "adaptive-knowledge-coach-home.css"),
   "utf8",
@@ -18,19 +22,32 @@ const packageManifest = JSON.parse(
 ) as PackageManifest;
 
 describe("Adaptive Knowledge Coach shell and Home styles", () => {
-  it("loads the design layer after the previous Home presentation layer", () => {
+  it("loads formalized design tokens before the presentation layers", () => {
+    expect(layoutSource).toContain('import "./design-tokens.css";');
     expect(layoutSource).toContain('import "./compact-home.css";');
     expect(layoutSource).toContain('import "./adaptive-knowledge-coach-home.css";');
+    expect(layoutSource.indexOf('import "./design-tokens.css";')).toBeLessThan(
+      layoutSource.indexOf('import "./compact-home.css";'),
+    );
     expect(layoutSource.indexOf('import "./adaptive-knowledge-coach-home.css";')).toBeGreaterThan(
       layoutSource.indexOf('import "./compact-home.css";'),
     );
   });
 
-  it("defines semantic Light and Dark tokens without taking ownership of body", () => {
-    expect(styleSource).toContain("--ak-bg: #f4f7f5;");
-    expect(styleSource).toContain("--ak-surface-strong: #14362e;");
-    expect(styleSource).toContain("@media (prefers-color-scheme: dark)");
-    expect(styleSource).toContain("--ak-bg: #0b211b;");
+  it("keeps Foundation V1 values in the token module and consumes them through semantic aliases", () => {
+    expect(designTokenSource).toContain("--ak-color-canvas: #f4f7f5;");
+    expect(designTokenSource).toContain("--ak-color-surface: #ffffff;");
+    expect(designTokenSource).toContain("--ak-color-primary: #2557c7;");
+    expect(designTokenSource).toContain("@media (prefers-color-scheme: dark)");
+    expect(designTokenSource).toContain("--ak-color-canvas: #10211d;");
+    expect(designTokenSource).toContain("--ak-color-surface: #18302b;");
+
+    expect(styleSource).toContain("--ak-bg: var(--ak-color-canvas);");
+    expect(styleSource).toContain("--ak-surface: var(--ak-color-surface);");
+    expect(styleSource).toContain("--ak-primary: var(--ak-color-primary);");
+    expect(styleSource).toContain("--ak-brand: var(--ak-color-retained);");
+
+    expect(designTokenSource).not.toMatch(/(^|})\s*body\s*\{/m);
     expect(styleSource).not.toMatch(/(^|})\s*body\s*\{/m);
   });
 
