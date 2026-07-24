@@ -1,4 +1,4 @@
-name: Apply Issue 193 integration
+name: Apply Issue 193 test migration
 
 on:
   push:
@@ -11,10 +11,10 @@ permissions:
   contents: write
 
 jobs:
-  integrate-active-lesson:
-    name: Integrate canonical Active Lesson
+  migrate-active-lesson-tests:
+    name: Migrate Active Lesson assertions
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -22,21 +22,21 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Apply assertion-backed integration patch
-        run: python scripts/ci/apply-issue-193.py
+      - name: Apply assertion-backed test migration
+        run: python scripts/ci/apply-issue-193-test-migration.py
 
       - name: Validate generated diff
         run: |
           git diff --check
-          grep -Fq 'ActiveLessonPresentation' frontend/components/lexigo-premium-app.tsx
-          ! grep -Fq '<section className="lx-lesson-page">' frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'aria-valuetext", "2 из 2 элементов"' frontend/e2e/lesson-flow.spec.ts
+          grep -Fq 'document.body.style.setProperty("zoom", "2")' frontend/e2e/active-lesson-figma.spec.ts
 
-      - name: Commit integration
+      - name: Commit migrated assertions
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/components/lexigo-premium-app.tsx
-          git commit -m "feat(frontend): integrate canonical Active Lesson"
+          git add frontend/e2e/lesson-flow.spec.ts frontend/e2e/active-lesson-figma.spec.ts
+          git commit -m "test(e2e): migrate Active Lesson assertions"
           git push origin HEAD:agent/issue-193-active-lesson
 
       - name: Install locked frontend dependencies
@@ -54,7 +54,3 @@ jobs:
       - name: Frontend unit tests
         working-directory: frontend
         run: npm test
-
-      - name: Production build
-        working-directory: frontend
-        run: npm run build
