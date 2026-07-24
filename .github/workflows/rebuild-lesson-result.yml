@@ -93,3 +93,5 @@ def replace_first(text: str, old: str, new: str, label: str) -> str:
           git diff --cached --stat
           git commit -m 'fix(frontend): rebuild complete Lesson Result integration'
           git push origin HEAD:agent/issue-194-lesson-result
+
+# Registered through the repository contents API so this one-time workflow runs.
