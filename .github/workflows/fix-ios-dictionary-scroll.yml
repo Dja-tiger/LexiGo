@@ -1,0 +1,217 @@
+name: Apply iOS dictionary scroll restoration fix
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-ios-dictionary-scroll-restoration
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/ios-dictionary-scroll-restoration
+          fetch-depth: 0
+
+      - name: Apply focused restoration fix and regression contract
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path.cwd()
+          app_path = root / "frontend/components/lexigo-dictionary-app.tsx"
+          catalog_path = root / "frontend/components/dictionary-catalog.tsx"
+          app = app_path.read_text(encoding="utf-8")
+          catalog = catalog_path.read_text(encoding="utf-8")
+
+          if "catalogReadyRevision" not in app:
+              old_state = '''  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
+            const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
+          '''
+              new_state = '''  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
+            const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(() => {
+              const initialNavigation = parseNavigationLocation(window.location);
+              const scroll = navigationScrollFromHistory(window.history.state);
+              if (scroll.x === 0 && scroll.y === 0) return null;
+              return { identity: navigationIdentity(initialNavigation), scroll };
+            });
+            const [catalogReadyRevision, setCatalogReadyRevision] = useState(0);
+          '''
+              if app.count(old_state) != 1:
+                  raise SystemExit("lexigo-dictionary-app.tsx: state anchor mismatch")
+              app = app.replace(old_state, new_state)
+
+              old_effect = '''  useLayoutEffect(() => {
+              navigationRef.current = navigation;
+              if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+              const frame = window.requestAnimationFrame(() => {
+                mainContentRef.current?.focus({ preventScroll: true });
+                window.scrollTo({
+                  left: pendingNavigation.scroll.x,
+                  top: pendingNavigation.scroll.y,
+                  behavior: "auto",
+                });
+              });
+              return () => window.cancelAnimationFrame(frame);
+            }, [navigation, pendingNavigation]);
+          '''
+              new_effect = '''  useLayoutEffect(() => {
+              navigationRef.current = navigation;
+              if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+
+              let settleFrame: number | null = null;
+              const frame = window.requestAnimationFrame(() => {
+                mainContentRef.current?.focus({ preventScroll: true });
+                window.scrollTo({
+                  left: pendingNavigation.scroll.x,
+                  top: pendingNavigation.scroll.y,
+                  behavior: "auto",
+                });
+                settleFrame = window.requestAnimationFrame(() => {
+                  const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1
+                    && Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1;
+                  if (!reachedTarget) return;
+                  setPendingNavigation((current) => (
+                    current?.identity === pendingNavigation.identity
+                      && current.scroll.x === pendingNavigation.scroll.x
+                      && current.scroll.y === pendingNavigation.scroll.y
+                      ? null
+                      : current
+                  ));
+                });
+              });
+              return () => {
+                window.cancelAnimationFrame(frame);
+                if (settleFrame !== null) window.cancelAnimationFrame(settleFrame);
+              };
+            }, [catalogReadyRevision, navigation, pendingNavigation]);
+
+            const handleCatalogReady = useCallback(() => {
+              setCatalogReadyRevision((current) => current + 1);
+            }, []);
+          '''
+              if app.count(old_effect) != 1:
+                  raise SystemExit("lexigo-dictionary-app.tsx: restoration effect anchor mismatch")
+              app = app.replace(old_effect, new_effect)
+
+              old_prop = '''              onConfigureLesson={configureLesson}
+                        onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
+          '''
+              new_prop = '''              onConfigureLesson={configureLesson}
+                        onPageReady={handleCatalogReady}
+                        onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
+          '''
+              if app.count(old_prop) != 1:
+                  raise SystemExit("lexigo-dictionary-app.tsx: DictionaryCatalog prop anchor mismatch")
+              app = app.replace(old_prop, new_prop)
+              app_path.write_text(app, encoding="utf-8")
+
+          if "onPageReady?: () => void;" not in catalog:
+              old_type = '''  onBackToResults: () => void;
+            onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
+            onRequireAuthentication: () => void;
+          '''
+              new_type = '''  onBackToResults: () => void;
+            onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
+            onPageReady?: () => void;
+            onRequireAuthentication: () => void;
+          '''
+              if catalog.count(old_type) != 1:
+                  raise SystemExit("dictionary-catalog.tsx: prop type anchor mismatch")
+              catalog = catalog.replace(old_type, new_type)
+
+              old_destructure = '''  onBackToResults,
+            onConfigureLesson,
+            onRequireAuthentication,
+          }: DictionaryCatalogProps) {
+          '''
+              new_destructure = '''  onBackToResults,
+            onConfigureLesson,
+            onPageReady,
+            onRequireAuthentication,
+          }: DictionaryCatalogProps) {
+          '''
+              if catalog.count(old_destructure) != 1:
+                  raise SystemExit("dictionary-catalog.tsx: destructuring anchor mismatch")
+              catalog = catalog.replace(old_destructure, new_destructure)
+
+              load_effect_end = '''    void run();
+              return () => controller.abort();
+            }, [authenticated, filters, loadPage]);
+
+            const localDetail = navigation.detail
+          '''
+              readiness_effect = '''    void run();
+              return () => controller.abort();
+            }, [authenticated, filters, loadPage]);
+
+            useEffect(() => {
+              if (navigation.detail || pageStatus.phase !== "ready") return;
+              onPageReady?.();
+            }, [navigation.detail, onPageReady, pageStatus.phase]);
+
+            const localDetail = navigation.detail
+          '''
+              if catalog.count(load_effect_end) != 1:
+                  raise SystemExit("dictionary-catalog.tsx: page readiness anchor mismatch")
+              catalog = catalog.replace(load_effect_end, readiness_effect)
+              catalog_path.write_text(catalog, encoding="utf-8")
+
+          test_path = root / "frontend/components/dictionary-scroll-restoration.test.ts"
+          test_path.write_text('''import { readFileSync } from "node:fs";
+          import path from "node:path";
+
+          import { describe, expect, it } from "vitest";
+
+          const components = path.join(process.cwd(), "components");
+          const appSource = readFileSync(path.join(components, "lexigo-dictionary-app.tsx"), "utf8");
+          const catalogSource = readFileSync(path.join(components, "dictionary-catalog.tsx"), "utf8");
+
+          describe("dictionary scroll restoration ownership", () => {
+            it("adopts a non-zero history snapshot on cold dictionary mount", () => {
+              expect(appSource).toContain("navigationScrollFromHistory(window.history.state)");
+              expect(appSource).toContain("return { identity: navigationIdentity(initialNavigation), scroll }");
+            });
+
+            it("retains the pending snapshot until WebKit reaches the target", () => {
+              expect(appSource).toContain("catalogReadyRevision");
+              expect(appSource).toContain("const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1");
+              expect(appSource).toContain("Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1");
+              expect(appSource).toContain("onPageReady={handleCatalogReady}");
+            });
+
+            it("signals readiness only after dictionary results have committed", () => {
+              expect(catalogSource).toContain("onPageReady?: () => void;");
+              expect(catalogSource).toContain('if (navigation.detail || pageStatus.phase !== "ready") return;');
+              expect(catalogSource).toContain("onPageReady?.();");
+            });
+          });
+          ''', encoding="utf-8")
+          PY
+
+          cd frontend
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run test -- components/dictionary-scroll-restoration.test.ts
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-dictionary-app.tsx frontend/components/dictionary-catalog.tsx frontend/components/dictionary-scroll-restoration.test.ts
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "fix(frontend): restore dictionary scroll after catalog readiness"
+          git push origin HEAD:fix/ios-dictionary-scroll-restoration
