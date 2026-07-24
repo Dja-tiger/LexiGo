@@ -7,12 +7,10 @@ on:
         description: Branch to update snapshots on
         required: true
         default: agent/issue-183-application-shell-home
-  # Temporary, narrowly scoped bootstrap for environments where workflow
-  # dispatch is unavailable through the connected GitHub client. The job-level
-  # guard below allows only the explicit regeneration commit to execute.
-  push:
-    branches:
-      - agent/issue-183-application-shell-home
+  # Temporary bootstrap: this path filter starts the generator exactly once
+  # when this workflow file is changed in PR #184. The generated PNG commit
+  # does not touch this file, so it cannot create a workflow loop.
+  pull_request:
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -23,7 +21,7 @@ jobs:
   update-snapshots:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.head_commit.message, '[regenerate visual snapshots]')
+      github.event_name == 'pull_request'
     name: Regenerate visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -36,7 +34,7 @@ jobs:
       FRONTEND_CI_SLOT: core
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
-      SNAPSHOT_BRANCH: ${{ inputs.branch || github.ref_name }}
+      SNAPSHOT_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
         with:
