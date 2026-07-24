@@ -46,9 +46,7 @@ import { decideLessonAdvance, resolveActiveLessonIndex, summarizePersistedLesson
 import {
   buildAnswerOptions,
   exerciseAnswer,
-  exercisePromptLabel,
   judgeLearningAnswer,
-  normalizeAnswer,
   normalizePartOfSpeech,
   type LearningItem,
   type LessonSize,
@@ -104,6 +102,7 @@ import { CatalogKindNavigation } from "./catalog-kind-navigation";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";
+import { ActiveLessonPresentation } from "./active-lesson-presentation";
 import { LessonComposerProgressiveShell } from "./lesson-composer-progressive-shell";
 import { SpeechPlayerButton } from "./speech-player-button";
 
@@ -144,7 +143,6 @@ type LessonItemResponse = APIItem & {
 
 type LessonSource = WordSection | "phrases";
 type StudyMode = AnswerMode | "all";
-type StudyView = "card" | "example" | "context";
 type CollectionSource = Extract<WordSection, "daily-life" | "travel" | "data-engineering" | "backend" | "academic-technical-english">;
 type CatalogKind = "phrases" | "all-items";
 
@@ -301,12 +299,6 @@ const COLLECTIONS: CollectionDefinition[] = [
   },
 ];
 
-const STUDY_TABS: Array<{ value: StudyView; label: string; icon: IconName }> = [
-  { value: "card", label: "Карточка", icon: "book" },
-  { value: "example", label: "Пример", icon: "phrases" },
-  { value: "context", label: "Контекст", icon: "library" },
-];
-
 const SOURCE_OPTIONS: Array<{
   value: LessonSource;
   label: string;
@@ -353,7 +345,6 @@ const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
 ];
 
 const GOAL_OPTIONS = [15, 30, 60];
-const STUDY_TAB_VALUES = STUDY_TABS.map((tab) => tab.value);
 const MODE_VALUES = MODE_OPTIONS.map((option) => option.value);
 const SOURCE_VALUES: LessonSource[] = [
   ...SOURCE_OPTIONS.map((option) => option.value),
@@ -707,7 +698,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [studyMode, setStudyMode] = useState<StudyMode>("recall");
   const [mobileComposerExpanded, setMobileComposerExpanded] = useState(false);
   const [lessonTopic, setLessonTopic] = useState("");
-  const [studyView, setStudyView] = useState<StudyView>("card");
   const [phraseTopic, setPhraseTopic] = useState("all");
   const [phraseSortMode, setPhraseSortMode] = useState<CatalogSortMode>("default");
   const [allItemsSortMode, setAllItemsSortMode] = useState<CatalogSortMode>("default");
@@ -722,7 +712,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [items, setItems] = useState<LearningItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [showChoices, setShowChoices] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [typedAnswer, setTypedAnswer] = useState("");
   const [ratings, setRatings] = useState<Record<string, ReviewRating>>({});
@@ -838,6 +827,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
           navigationURL(current),
         );
         setLessonQueueNotice("Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».");
+        window.dispatchEvent(new Event("lexigo:request-lesson-exit"));
         setPendingNavigation({
           identity: navigationIdentity(current),
           scroll: currentScroll,
@@ -1018,7 +1008,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       ?? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === navigation.detail)
       ?? (remotePhraseDetail?.slug === navigation.detail ? remotePhraseDetail.item : undefined)
     : undefined;
-  const ratingValues = Object.values(ratings);
   const lessonSummary = summarizePersistedLesson(ratings, items.length);
   const successRate = objectiveSuccessRate(progress);
 
@@ -1427,10 +1416,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     onSelect(nextValue);
   }
 
-  function handleStudyTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, view: StudyView) {
-    selectRovingControl(event, STUDY_TAB_VALUES, view, setStudyView, "horizontal");
-  }
-
   function handleAuthTabKeyDown(
     event: React.KeyboardEvent<HTMLButtonElement>,
     mode: Extract<AuthMode, "login" | "register">,
@@ -1439,9 +1424,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }
 
   function resetCardState(mode = studyMode, rated = false) {
-    setStudyView("card");
     setRevealed(rated || mode === "study");
-    setShowChoices(!rated && mode === "choice");
     setSelectedAnswer("");
     setTypedAnswer("");
     setReviewFeedback(null);
@@ -1835,7 +1818,6 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     setItems([]);
     setCurrentIndex(0);
     setRevealed(false);
-    setShowChoices(false);
     setSelectedAnswer("");
     setTypedAnswer("");
     setRatings({});
@@ -2006,23 +1988,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       || session?.user.email.charAt(0).toUpperCase()
       || "L";
 
-    if (lessonNavigationLocked) {
-      return (
-        <header className="lx-header lx-header--lesson">
-          <div className="lx-lesson-focus-brand">
-            <span className="lx-logo-mark"><span>L</span></span>
-            <div>
-              <strong>LexiGo</strong>
-              <small>{sourceLabel(source)} · прогресс сохраняется после каждой оценки</small>
-            </div>
-          </div>
-          <div className="lx-lesson-focus-badge" aria-label="Активный урок">
-            <Icon name="learn" />
-            <span>Урок в процессе</span>
-          </div>
-        </header>
-      );
-    }
+    if (lessonNavigationLocked) return null;
 
     return (
       <header className="lx-header">
@@ -2789,8 +2755,6 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     if (!currentItem) return <AsyncStatePanel label="Ошибка учебной карточки" kind="error" title="Карточка урока недоступна" message="Серверная сессия не содержит ожидаемую текущую карточку." actionLabel="Синхронизировать урок" onAction={() => void resynchronizeActiveLesson("Урок синхронизирован с сервером.")} />;
 
     const lessonPercent = Math.round(((currentIndex + 1) / items.length) * 100);
-    const remaining = Math.max(0, items.length - ratingValues.length);
-    const relatedItems = items.filter((item) => item.id !== currentItem.id && Boolean(ratings[item.id])).slice(0, 3);
     const advanceDecision = decideLessonAdvance({
       currentIndex,
       itemCount: items.length,
@@ -2799,94 +2763,40 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       serverCompleted: serverLessonCompleted,
       serverNextIndex,
     });
-    const phraseCloze = currentItem.kind === "phrase" && currentItem.cloze;
-    const simpleStudy = studyMode === "study";
 
     return (
-      <section className="lx-lesson-page">
-        <div className="lx-lesson-progress"><strong>{currentItem.kind === "phrase" ? "Фраза" : "Слово"} {currentIndex + 1} из {items.length}</strong><div className="lx-goal-track" role="progressbar" aria-label="Прогресс урока" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(lessonPercent)} aria-valuetext={`${currentIndex + 1} из ${items.length} элементов`}><span style={{ width: `${lessonPercent}%` }}/></div><span>{lessonPercent}% урока</span><button className="lx-button ghost" type="button" onClick={() => saveAndExitLesson()}>Сохранить и выйти</button></div>
-        <div className="lx-lesson-layout">
-          <div className="lx-study-column" data-study-view={studyView}>
-            <div className="lx-study-tabs" role="tablist" aria-label="Представление учебной карточки">
-              {STUDY_TABS.map((tab) => {
-                const selected = studyView === tab.value;
-                return (
-                  <button
-                    key={tab.value}
-                    id={`lesson-study-tab-${tab.value}`}
-                    type="button"
-                    role="tab"
-                    className={selected ? "active" : ""}
-                    aria-selected={selected}
-                    aria-controls="lesson-study-panel"
-                    tabIndex={selected ? 0 : -1}
-                    onClick={() => setStudyView(tab.value)}
-                    onKeyDown={(event) => handleStudyTabKeyDown(event, tab.value)}
-                  >
-                    <Icon name={tab.icon}/>{tab.label}
-                  </button>
-                );
-              })}
-            </div>
-            <article
-      id="lesson-study-panel"
-      role="tabpanel"
-      aria-labelledby={`lesson-study-tab-${studyView}`}
-      className={`lx-main-word-card ${simpleStudy ? "simple" : "test"}`}
-    >
-              <div className="lx-word-header"><div><span>{currentItem.kind === "phrase" ? "Техническая фраза" : currentItem.partOfSpeech}</span><small>{currentItem.topic || "Общая лексика"}</small></div><b>{currentRating ? ratingLabel(currentRating) : currentItem.status === "new" ? "Новое" : "Повторение"}</b></div>
-              {simpleStudy ? (
-                <div className="lx-simple-word">
-                  <div className="lx-word-title-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><SpeechPlayerButton text={currentItem.prompt}><Icon name="volume"/></SpeechPlayerButton></div>
-                  <dl><dt>Перевод</dt><dd lang="ru">{currentItem.answer}</dd>{currentItem.examples[0] ? <><dt>Пример</dt><dd className="example" lang="en">{currentItem.examples[0]}</dd></> : null}{currentItem.note ? <><dt>Примечание</dt><dd className="note">{currentItem.note}</dd></> : null}</dl>
-                  {currentItem.cloze ? <div className="lx-cloze-note"><span>Тренировка пропуска</span><strong lang="en">{currentItem.cloze}</strong></div> : null}
-                </div>
-              ) : (
-                <div className="lx-test-word">
-                  {phraseCloze && !revealed ? <><span>ВОССТАНОВИТЕ АНГЛИЙСКИЙ ПРОПУСК</span><div className="lx-test-prompt-row"><h1 lang="en">{currentItem.cloze}</h1></div></> : <><span>{currentItem.kind === "phrase" ? "ТЕХНИЧЕСКАЯ ФРАЗА" : "ПЕРЕВЕДИТЕ СЛОВО"}</span><div className="lx-test-prompt-row"><div><h1 lang="en">{currentItem.prompt}</h1>{currentItem.phonetic ? <p lang="en">{currentItem.phonetic}</p> : null}</div><SpeechPlayerButton text={currentItem.prompt}><Icon name="volume"/></SpeechPlayerButton></div></>}
-                  {!revealed && studyMode === "recall" ? <div className="lx-recall-box"><label htmlFor="premium-answer">{exercisePromptLabel(currentItem)}</label><input id="premium-answer" lang={phraseCloze ? "en" : "ru"} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && typedAnswer.trim()) setRevealed(true); }} placeholder={currentItem.kind === "phrase" ? "Например: root" : "Ваш ответ"} autoComplete="off"/><div><button className="lx-button ghost" type="button" aria-expanded={showChoices} aria-controls="lesson-answer-choices" onClick={() => setShowChoices((value) => !value)}>{showChoices ? "Скрыть варианты" : "Показать варианты"}</button><button className="lx-button primary" type="button" onClick={() => setRevealed(true)}>{typedAnswer.trim() ? "Сверить ответ" : "Показать ответ"}</button></div></div> : null}
-                  {!revealed && showChoices ? <div id="lesson-answer-choices" className="lx-answer-grid">{answerOptions.map((answer) => <button key={answer} type="button" lang={phraseCloze ? "en" : "ru"} onClick={() => { setSelectedAnswer(answer); setRevealed(true); }}>{answer}</button>)}</div> : null}
-                  {revealed ? <div className="lx-answer-reveal" role="status" aria-live="polite" aria-atomic="true">{currentItem.kind === "phrase" ? <><h2 lang="en">{currentItem.prompt}</h2><span>Пропуск: <span lang="en">{expectedAnswer}</span></span></> : null}<strong lang="ru">{currentItem.answer}</strong>{typedAnswer.trim() ? <p className={literalMatch ? "success" : "error"}>{literalMatch ? "Ответ совпал." : <>Ваш ответ: <span lang={phraseCloze ? "en" : "ru"}>{typedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{selectedAnswer ? <p className={normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "success" : "error"}>{normalizeAnswer(selectedAnswer) === normalizeAnswer(expectedAnswer) ? "Верный вариант." : <>Вы выбрали: <span lang={phraseCloze ? "en" : "ru"}>{selectedAnswer}</span>. Правильно: <span lang={phraseCloze ? "en" : "ru"}>{expectedAnswer}</span></>}</p> : null}{currentItem.examples[0] ? <blockquote lang="en">{currentItem.examples[0]}</blockquote> : null}{currentItem.note ? <small>{currentItem.note}</small> : null}</div> : null}
-                </div>
-              )}
-            </article>
-
-            <div className="lx-lesson-navigation"><button className="lx-button ghost" type="button" disabled title="Активный урок проходит в серверном порядке">← Предыдущее недоступно</button><button ref={lessonAdvanceRef} className="lx-button primary wide" type="button" disabled={!advanceDecision.canAdvance} onClick={nextItem}>{advanceDecision.label} <Icon name="arrow"/></button></div>
-
-            {(simpleStudy || revealed) ? currentRating ? <div className="lx-rating-row"><span>Самооценка сохранена: {ratingLabel(currentRating)}. Объективный результат показан ниже.</span></div> : <div className="lx-rating-row" aria-busy={reviewing}><span>Насколько уверенно вы знали ответ? Самооценка хранится отдельно от объективной проверки.</span><div><button className="again" type="button" disabled={reviewing} data-rating="again" onClick={handleRatingClick}>Не знал</button><button className="almost" type="button" disabled={reviewing} data-rating="almost" onClick={handleRatingClick}>Почти</button><button className="known" type="button" disabled={reviewing} data-rating="known" onClick={handleRatingClick}>{reviewing ? "Сохраняем…" : "Знал"}</button></div></div> : null}
-            {currentRating && reviewFeedback ? (
-              <section className={`lx-judgement ${reviewFeedback.correct === false ? "error" : reviewFeedback.correct === true ? "success" : "study"}`} role="status" aria-live="polite" aria-atomic="true">
-                <strong>{reviewFeedback.correct === true ? "Ответ принят" : reviewFeedback.correct === false ? "Ответ не принят" : "Изучение сохранено"}</strong>
-                <p>{reviewFeedback.correct === true
-                  ? reviewFeedback.judgementReason === "accepted_normalized"
-                    ? "Ответ принят после нормализации регистра, пробелов и пунктуации."
-                    : "Ответ совпал с принятой формой."
-                  : reviewFeedback.correct === false
-                    ? reviewFeedback.judgementReason === "rejected_no_answer"
-                      ? "Ответ не был введён. Для расписания применено «Не знал»."
-                      : `Вариант отсутствует в списке принятых ответов. Самооценка «${ratingLabel(reviewFeedback.requestedRating)}» сохранена, для расписания применено «${ratingLabel(reviewFeedback.effectiveRating)}».`
-                    : "Пассивное изучение не считается объективным воспроизведением и не повышает уровень освоения."}</p>
-                {reviewFeedback.matchedAnswer ? <small>Принятая форма: <span lang={phraseCloze ? "en" : "ru"}>{reviewFeedback.matchedAnswer}</span></small> : null}
-                {reviewFeedback.suggestionAvailable && suggestionStatus !== "submitted" ? <button className="lx-button ghost" type="button" disabled={suggestionStatus === "submitting"} onClick={() => void submitAnswerSuggestion()}>{suggestionStatus === "submitting" ? "Отправляем…" : "Мой вариант тоже верный"}</button> : null}
-                {suggestionStatus === "submitted" ? <small className="lx-suggestion-success">Вариант отправлен на проверку. Текущий результат и расписание не изменены.</small> : null}
-                {suggestionStatus === "error" ? <small className="lx-suggestion-error" role="alert">{suggestionError}</small> : null}
-              </section>
-            ) : null}
-            <p className="lx-visually-hidden" role="status" aria-live="polite" aria-atomic="true">{reviewing ? "Сохраняем оценку." : currentRating ? `Оценка сохранена: ${ratingLabel(currentRating)}.` : ""}</p>
-
-            {relatedItems.length ? <section className="lx-related"><div><span>Уже оценённые элементы</span><small>Просмотр доступен после завершения урока</small></div><div>{relatedItems.map((item) => <article key={item.id} aria-label={`${item.prompt}: уже оценено`}><strong lang="en">{item.prompt}</strong><small lang="ru">{item.answer}</small><span>Сохранено</span></article>)}</div></section> : null}
-          </div>
-
-          <aside className="lx-lesson-stats">
-            <h2>Статистика урока</h2>
-            <div><span className="purple"><Icon name="spark"/></span><p>Новые элементы<strong>{items.filter((item) => item.status === "new").length}</strong></p></div>
-            <div><span className="orange"><Icon name="repeat"/></span><p>На повторении<strong>{items.filter((item) => item.status !== "new").length}</strong></p></div>
-            <div><span className="green"><Icon name="check"/></span><p>Оценено<strong>{ratingValues.length}</strong></p></div>
-            <div><span className="blue"><Icon name="clock"/></span><p>Осталось<strong>{remaining}</strong></p></div>
-            <button type="button" onClick={() => saveAndExitLesson("progress")}><Icon name="bolt"/><span><strong>Сохранить и открыть прогресс</strong><small>Урок останется доступен для продолжения с текущей позиции.</small></span><Icon name="arrow" size={16}/></button>
-          </aside>
-        </div>
-      </section>
+      <ActiveLessonPresentation
+        mode={studyMode}
+        item={currentItem}
+        currentIndex={currentIndex}
+        itemCount={items.length}
+        progressPercent={normalizeProgressValue(lessonPercent)}
+        typedAnswer={typedAnswer}
+        selectedAnswer={selectedAnswer}
+        expectedAnswer={expectedAnswer}
+        answerOptions={answerOptions}
+        revealed={revealed}
+        localCorrect={literalMatch}
+        currentRating={currentRating}
+        reviewing={reviewing}
+        reviewFeedback={reviewFeedback}
+        suggestionStatus={suggestionStatus}
+        suggestionError={suggestionError}
+        advance={advanceDecision}
+        advanceButtonRef={lessonAdvanceRef}
+        onTypedAnswerChange={setTypedAnswer}
+        onReveal={() => setRevealed(true)}
+        onChoice={(answer) => {
+          setSelectedAnswer(answer);
+          setRevealed(true);
+        }}
+        onRate={(rating, submittedAt, restoreFocusAfterSave) => {
+          void rateCurrent(rating, submittedAt, restoreFocusAfterSave);
+        }}
+        onAdvance={nextItem}
+        onExit={() => saveAndExitLesson()}
+        onSubmitSuggestion={() => void submitAnswerSuggestion()}
+      />
     );
   }
 
