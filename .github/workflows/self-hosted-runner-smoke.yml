@@ -13,11 +13,7 @@ concurrency:
 jobs:
   smoke:
     name: Selectel runner smoke (${{ matrix.slot }})
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false

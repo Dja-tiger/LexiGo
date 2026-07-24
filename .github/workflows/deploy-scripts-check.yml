@@ -59,11 +59,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     env:
       CI_LEASE_CONTAINER: lexigo-deploy-check-lease-${{ github.run_id }}-${{ github.run_attempt }}

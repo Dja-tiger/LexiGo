@@ -34,11 +34,7 @@ concurrency:
 jobs:
   cleanup:
     name: Safely clean LexiGo runner resources
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     env:
       CLEANUP_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'apply' }}

@@ -5,6 +5,11 @@ on:
     workflows: [CI]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Immutable image tag to deploy (leave empty to use latest commit SHA)"
+        required: false
+        type: string
 
 concurrency:
   group: deploy-stage
@@ -28,7 +33,7 @@ jobs:
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
       FRONTEND_CI_VOLUME: lexigo-stage-browser-${{ github.run_id }}-${{ github.run_attempt }}
-      APP_BUILD_ID: ${{ github.event.workflow_run.head_sha }}
+      APP_BUILD_ID: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -61,7 +66,7 @@ jobs:
           API_PUBLIC_URL: ${{ vars.API_PUBLIC_URL }}
           ACME_EMAIL: ${{ vars.ACME_EMAIL }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
           GHCR_USER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/deploy-over-ssh.sh stage "$IMAGE_TAG"
@@ -113,7 +118,7 @@ jobs:
         uses: actions/github-script@v9
         env:
           DEPLOY_STATUS: ${{ job.status }}
-          IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          IMAGE_SHA: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
           RUN_ID: ${{ github.run_id }}
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
           PUBLIC_SMOKE_OUTCOME: ${{ steps.public_smoke.outcome }}
