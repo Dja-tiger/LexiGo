@@ -20,7 +20,7 @@ on:
       - "scripts/ci/actions_storage_cleanup_test.py"
       - "scripts/ci/actions_storage_policy_test.py"
       - "scripts/ci/runner_policy_test.py"
-      - "scripts/ci/patch-actions-storage-policy.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   workflow_run:
     workflows: [CI]
