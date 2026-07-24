@@ -88,6 +88,53 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  patch-lesson-result-history:
+    name: Patch Lesson Result browser history
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out pull request branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Preserve Lesson Result history entry
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("frontend/components/lexigo-premium-app.tsx")
+          source = path.read_text(encoding="utf-8")
+          old = 'navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });'
+          new = 'navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });'
+
+          if new in source and old not in source:
+              raise SystemExit(0)
+          occurrences = source.count(old)
+          if occurrences != 1:
+              raise SystemExit(f"Expected exactly one history replacement target, found {occurrences}")
+
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+      - name: Commit history patch when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- frontend/components/lexigo-premium-app.tsx; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx
+          git commit -m "fix(frontend): preserve Lesson Result browser history"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
