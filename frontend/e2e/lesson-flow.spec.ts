@@ -256,19 +256,19 @@ test("stale device resynchronizes to the server position without duplicate revie
 
   await resumeFromHome(first);
   await resumeFromHome(second);
-  await expect(first.getByText("Слово 1 из 2")).toBeVisible();
-  await expect(second.getByText("Слово 1 из 2")).toBeVisible();
+  await expect(first.getByRole("progressbar", { name: "Прогресс урока" })).toHaveAttribute("aria-valuetext", "1 из 2 элементов");
+  await expect(second.getByRole("progressbar", { name: "Прогресс урока" })).toHaveAttribute("aria-valuetext", "1 из 2 элементов");
 
   await first.getByRole("button", { name: "Знал", exact: true }).click();
   await expect.poll(() => state.reviewEvents).toBe(1);
 
   await second.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(second.getByRole("alert", { name: "Ошибка текущего действия" })).toContainText("Урок изменён на другом устройстве");
-  await expect(second.getByText("Слово 2 из 2")).toBeVisible();
+  await expect(second.getByRole("progressbar", { name: "Прогресс урока" })).toHaveAttribute("aria-valuetext", "2 из 2 элементов");
   expect(state.reviewEvents).toBe(1);
   await expect(second.getByRole("button", { name: "← Предыдущее недоступно", exact: true })).toBeDisabled();
-  await expect(second.getByRole("button", { name: /absolute: уже оценено/ })).toHaveCount(0);
-  await expect(second.getByLabel("absolute: уже оценено")).toBeVisible();
+  await expect(second.getByRole("heading", { name: "build" })).toBeVisible();
+  await expect(second.getByText("absolute: уже оценено")).toHaveCount(0);
 
   await second.reload({ waitUntil: "domcontentloaded" });
   await expect(second).toHaveURL(/\/lesson\/active(?:\?|$)/);
@@ -276,7 +276,7 @@ test("stale device resynchronizes to the server position without duplicate revie
   await expect(continueSavedLesson).toBeVisible();
   await expect(second.getByText("Смешанная практика · позиция 2 из 2", { exact: true })).toBeVisible();
   await continueSavedLesson.click();
-  await expect(second.getByText("Слово 2 из 2")).toBeVisible();
+  await expect(second.getByRole("progressbar", { name: "Прогресс урока" })).toHaveAttribute("aria-valuetext", "2 из 2 элементов");
   expect(state.reviewEvents).toBe(1);
 });
 
@@ -299,12 +299,12 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   await page.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) }).click();
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
-  await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
+  await expect(page.getByText("ВВЕДИТЕ ОТВЕТ", { exact: true })).toBeVisible();
   await page.locator("#premium-answer").fill("абсолютный");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "Дальше", exact: true }).click();
-  await expect(page.getByText("Техническая фраза", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "roll ____" })).toBeVisible();
 });
 
 
@@ -325,5 +325,5 @@ test("home review CTA requests a server-composed mixed due queue", async ({ page
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
   expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
-  await expect(page.getByText("ПЕРЕВЕДИТЕ СЛОВО")).toBeVisible();
+  await expect(page.getByText("ВВЕДИТЕ ОТВЕТ", { exact: true })).toBeVisible();
 });

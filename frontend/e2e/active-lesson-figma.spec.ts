@@ -180,7 +180,7 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     await page.setViewportSize({ width: 320, height: 800 });
     await openMode(page, "recall");
     await page.evaluate(() => {
-      document.body.style.zoom = "2";
+      document.body.style.setProperty("zoom", "2");
     });
     await expectNoHorizontalOverflow(page);
     await expect(page.getByRole("textbox", { name: "Введите ответ" })).toBeVisible();
