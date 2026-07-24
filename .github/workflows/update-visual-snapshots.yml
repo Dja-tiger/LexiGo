@@ -1,4 +1,4 @@
-name: Apply Issue 193 test migration
+name: Apply Issue 193 core fixes
 
 on:
   push:
@@ -11,8 +11,8 @@ permissions:
   contents: write
 
 jobs:
-  migrate-active-lesson-tests:
-    name: Migrate Active Lesson assertions
+  apply-active-lesson-core-fixes:
+    name: Apply Active Lesson core fixes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -22,21 +22,25 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Apply assertion-backed test migration
-        run: python scripts/ci/apply-issue-193-test-migration.py
+      - name: Apply assertion-backed fixes
+        run: python scripts/ci/apply-issue-193-core-fixes.py
 
       - name: Validate generated diff
         run: |
           git diff --check
-          grep -Fq 'aria-valuetext", "2 из 2 элементов"' frontend/e2e/lesson-flow.spec.ts
-          grep -Fq 'document.body.style.setProperty("zoom", "2")' frontend/e2e/active-lesson-figma.spec.ts
+          ! grep -Fq 'document.addEventListener("keydown"' frontend/components/active-lesson-presentation.tsx
+          grep -Fq 'onKeyDown={handleDialogKeyDown}' frontend/components/active-lesson-presentation.tsx
+          grep -Fq 'cssWithoutComments' frontend/app/active-lesson.test.ts
 
-      - name: Commit migrated assertions
+      - name: Commit fixes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/e2e/lesson-flow.spec.ts frontend/e2e/active-lesson-figma.spec.ts
-          git commit -m "test(e2e): migrate Active Lesson assertions"
+          git add \
+            frontend/components/active-lesson-presentation.tsx \
+            frontend/components/lexigo-premium-app.tsx \
+            frontend/app/active-lesson.test.ts
+          git commit -m "fix(frontend): preserve React ownership in Active Lesson"
           git push origin HEAD:agent/issue-193-active-lesson
 
       - name: Install locked frontend dependencies
