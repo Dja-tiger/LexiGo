@@ -25,6 +25,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           path = Path("scripts/ci/patch-lesson-result.py")
           source = path.read_text()
           helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
@@ -36,13 +37,21 @@ def replace_first(text: str, old: str, new: str, label: str) -> str:
 
 '''
           if "def replace_first(" not in source:
+              if helper_marker not in source:
+                  raise RuntimeError("replace_regex helper marker missing")
               source = source.replace(helper_marker, helper + helper_marker, 1)
-          target = '''app = replace_once(
-    app,
-    ''' + "'''      setProgress(result.data);" 
-          index = source.index(target)
-          source = source[:index] + source[index:].replace("app = replace_once(", "app = replace_first(", 1)
-          path.write_text(source)
+
+          lines = source.splitlines()
+          label_index = next(
+              index for index, line in enumerate(lines)
+              if '"progress resource ref"' in line
+          )
+          call_index = max(
+              index for index in range(label_index)
+              if lines[index] == "app = replace_once("
+          )
+          lines[call_index] = "app = replace_first("
+          path.write_text("\n".join(lines) + "\n")
           PY
 
       - name: Apply deterministic codemod
