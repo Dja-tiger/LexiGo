@@ -1,0 +1,22 @@
+# Canonical Lesson Result
+
+Issue: #194
+
+Figma source of truth: `LexiGo Design System`, file key `3xXmBWnf38jbvLjtziwber`.
+
+Production matrix:
+
+- mobile complete `217:5`;
+- mobile daily goal `217:6`;
+- mobile next block `217:7`;
+- mobile due review `217:8`;
+- mobile sync pending / dark `217:9`;
+- desktop complete `217:10`;
+- desktop daily goal `217:11`;
+- desktop next block `217:12`;
+- desktop due review `217:13`;
+- desktop sync pending / dark `217:14`.
+
+`LessonResultPresentation` owns only the result presentation and interaction hierarchy. `LexigoPremiumApp` remains responsible for authenticated lesson lifecycle, review persistence, progress refresh, distinct next-lesson creation, route navigation, and recovery state.
+
+The result distinguishes objective recall evidence from recognition and passive activity, restores after reload/history without resubmitting a review, prevents reopening the completed lesson through the continuation action, and presents one primary action for each result state.
