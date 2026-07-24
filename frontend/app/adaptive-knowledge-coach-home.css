@@ -447,12 +447,12 @@
     text-overflow: clip;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
     width: 100%;
     padding: 0 24px calc(92px + env(safe-area-inset-bottom));
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header {
     position: static;
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: calc(54px + env(safe-area-inset-top));
@@ -462,7 +462,7 @@
     backdrop-filter: none;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header-tools {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header-tools {
     grid-column: 2;
     gap: 4px;
   }
