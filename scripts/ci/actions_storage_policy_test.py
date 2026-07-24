@@ -49,7 +49,7 @@ def main() -> None:
                 violations.append(f"{path}:{index + 1}: retention-days {days} exceeds 3")
 
     ci = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
-    condition = "if: failure() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'"
+    condition = "if: failure() && matrix.id == 'perf'"
     if condition not in ci:
         violations.append("ci.yml: successful performance runs must not upload an artifact")
 

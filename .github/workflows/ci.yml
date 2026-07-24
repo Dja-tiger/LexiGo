@@ -276,24 +276,54 @@ jobs:
         run: bash ../scripts/ci/frontend-container.sh cleanup
 
   frontend-browser:
-    name: Frontend browser (${{ matrix.suite }})
+    name: Frontend E2E (${{ matrix.name }})
     needs: [frontend-core]
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 30
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
     strategy:
       fail-fast: false
       matrix:
-        suite: [journeys, ui-accessibility, ui-runtime]
+        include:
+          - id: ui-1
+            name: "UI tests (shard 1/2)"
+            cmd: npm run test:e2e:ui -- --shard=1/2
+          - id: ui-2
+            name: "UI tests (shard 2/2)"
+            cmd: npm run test:e2e:ui -- --shard=2/2
+          - id: lesson
+            name: "Lesson completion"
+            cmd: npm run test:e2e:lesson
+          - id: security
+            name: "Content security"
+            cmd: npm run test:e2e:security
+          - id: pwa
+            name: "iOS PWA dictionary"
+            cmd: npm run test:e2e:pwa
+          - id: axe
+            name: "Accessibility audit"
+            cmd: npm run test:e2e:axe
+          - id: sw
+            name: "Controlled service worker"
+            cmd: npm run test:e2e:sw
+          - id: visual
+            name: "Visual regression"
+            cmd: npm run test:e2e:visual
+          - id: perf
+            name: "Performance budgets"
+            cmd: npm run test:e2e:performance
+          - id: smoke
+            name: "Dictionary smoke"
+            cmd: smoke
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: ${{ matrix.suite }}
+      FRONTEND_CI_VOLUME: lexigo-frontend-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: ${{ matrix.id }}
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
     steps:
@@ -308,49 +338,13 @@ jobs:
       - name: Production build
         run: bash ../scripts/ci/frontend-container.sh exec npm run build
 
-      - name: Lesson completion browser tests
-        if: matrix.suite == 'journeys'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:lesson
-
-      - name: Content security browser journeys
-        if: matrix.suite == 'journeys'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:security
-
-      - name: iOS PWA dictionary tests
-        if: matrix.suite == 'journeys'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:pwa
-
-      - name: React-owned UI browser tests (shard 1/2)
-        if: matrix.suite == 'ui-accessibility'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui -- --shard=1/2
-
-      - name: Blocking accessibility audit
-        if: matrix.suite == 'ui-accessibility'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:axe
-
-      - name: React-owned UI browser tests (shard 2/2)
-        if: matrix.suite == 'ui-runtime'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:ui -- --shard=2/2
-
-      - name: Controlled service worker update tests
-        if: matrix.suite == 'ui-runtime'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:sw
-
-      - name: Visual regression comparison
-        if: matrix.suite == 'ui-runtime'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual
+      - name: Run E2E tests
+        if: matrix.id != 'smoke'
+        run: bash ../scripts/ci/frontend-container.sh exec ${{ matrix.cmd }}
 
       - id: performance
-        name: Low-end mobile performance budgets
-        if: matrix.suite == 'ui-runtime'
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:performance
-
-      - name: Extract performance report
-        if: always() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
-        run: bash ../scripts/ci/frontend-container.sh extract
-
-      - name: Upload performance budget report
-        if: failure() && matrix.suite == 'ui-runtime' && steps.performance.outcome != 'skipped'
+        name: Upload performance budget report
+        if: failure() && matrix.id == 'perf'
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
@@ -358,8 +352,13 @@ jobs:
           path: frontend/ci-artifacts/test-results/performance-budget-report.json
           if-no-files-found: error
           retention-days: 3
+
+      - name: Extract performance report
+        if: always() && matrix.id == 'perf' && steps.performance.outcome != 'skipped'
+        run: bash ../scripts/ci/frontend-container.sh extract
+
       - name: Dictionary navigation browser smoke
-        if: matrix.suite == 'ui-runtime'
+        if: matrix.id == 'smoke'
         run: |
           bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
           npm run start -- --hostname 127.0.0.1 > next-start.log 2>&1 &
@@ -402,10 +401,11 @@ jobs:
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
-          name: frontend-playwright-report-${{ matrix.suite }}
+          name: frontend-playwright-report-${{ matrix.id }}
           path: frontend/ci-artifacts
           if-no-files-found: ignore
           retention-days: 3
+
       - name: Cleanup isolated frontend workspace
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
