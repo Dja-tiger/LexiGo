@@ -136,8 +136,18 @@ function BellIcon() {
 export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: DictionaryRouteAppProps) {
   const router = useRouter();
   const session = initialSession;
-  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
-  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
+  const [initialNavigationState] = useState(() => {
+    const target = parseNavigationLocation(window.location);
+    const scroll = navigationScrollFromHistory(window.history.state);
+    return {
+      target,
+      pending: scroll.x === 0 && scroll.y === 0
+        ? null
+        : { identity: navigationIdentity(target), scroll },
+    } satisfies { target: NavigationTarget; pending: PendingNavigation | null };
+  });
+  const [navigation, setNavigation] = useState<NavigationTarget>(initialNavigationState.target);
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(initialNavigationState.pending);
   const [metadata, setMetadata] = useState<CatalogMetadata | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<CatalogMetadataStatus>("loading");
   const [metadataResourceStatus, setMetadataResourceStatus] = useState<ResourceStatus>(loadingResourceStatus);
