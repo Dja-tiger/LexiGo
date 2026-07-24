@@ -69,9 +69,11 @@ describe("canonical Active Lesson production slice", () => {
     expect(premiumAppSource).toContain("<ActiveLessonPresentation");
   });
 
-  it("renders Choice independently from the Recall textbox and exposes semantic option states", () => {
+  it("renders Choice independently from the Recall textbox and handles native input events", () => {
     expect(presentationSource).toContain('mode === "recall"');
     expect(presentationSource).toContain('id="premium-answer"');
+    expect(presentationSource).toContain("onInput={(event) => onTypedAnswerChange(event.currentTarget.value)}");
+    expect(presentationSource).not.toContain("onChange={(event) => onTypedAnswerChange(event.target.value)}");
     expect(presentationSource).toContain('role="group" aria-label="Варианты ответа"');
     expect(presentationSource).toContain("верный вариант");
     expect(presentationSource).toContain("выбран неверно");
