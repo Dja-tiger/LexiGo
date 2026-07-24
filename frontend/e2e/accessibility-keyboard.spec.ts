@@ -20,7 +20,7 @@ const PHRASES = [{ id: 452, kind: "phrase", slug: "keyboard-access", lemma: "key
 const METADATA = {
   catalogVersion: "sha256:keyboard-e2e", updatedAt: "2026-07-18T00:00:00Z",
   totals: { items: 2, words: 1, phrases: 1 },
-  sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 , academicTechnicalEnglish: 0},
+  sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0, academicTechnicalEnglish: 0 },
   topics: [{ topic: "Accessibility", count: 2 }],
 };
 const KEYBOARD_AXE_RULES = ["button-name", "link-name", "label", "aria-allowed-attr", "aria-valid-attr", "aria-valid-attr-value", "aria-roles", "aria-required-attr", "aria-required-children", "aria-required-parent", "aria-hidden-focus", "nested-interactive"];
@@ -159,8 +159,8 @@ async function expectNoPositiveTabIndex(page: Page) {
   expect(positive).toEqual([]);
 }
 
-function headerRoute(page: Page, view: "home" | "learn" | "phrases" | "library" | "progress") {
-  return page.locator(`[data-route-navigation="header"] [data-navigation-view="${view}"]`);
+function visiblePrimaryRoute(page: Page, view: "home" | "learn" | "library" | "progress") {
+  return page.locator(`.lx-route-nav [data-navigation-view="${view}"]:visible`);
 }
 
 test.describe.configure({ timeout: 60_000 });
@@ -179,7 +179,7 @@ test.beforeEach(async ({ page }) => {
   await installMocks(page);
 });
 
-test("desktop Tab order is semantic and every header stop has a visible WCAG-sized indicator", async ({ page }, testInfo) => {
+test("desktop Tab order is semantic and every shell stop has a visible WCAG-sized indicator", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Deterministic desktop Tab-order contract is covered once; cross-browser axe coverage runs separately.");
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
@@ -187,10 +187,10 @@ test("desktop Tab order is semantic and every header stop has a visible WCAG-siz
   const expected = [
     page.getByRole("link", { name: "Перейти к основному содержимому" }),
     page.locator(".lx-route-brand"),
-    headerRoute(page, "home"),
-    headerRoute(page, "learn"),
-    headerRoute(page, "library"),
-    headerRoute(page, "progress"),
+    visiblePrimaryRoute(page, "home"),
+    visiblePrimaryRoute(page, "learn"),
+    visiblePrimaryRoute(page, "library"),
+    visiblePrimaryRoute(page, "progress"),
   ];
 
   for (const target of expected) {
@@ -206,7 +206,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
-  const learnNavigation = headerRoute(page, "learn");
+  const learnNavigation = visiblePrimaryRoute(page, "learn");
   await expect(learnNavigation).toHaveAttribute("href", "/learn");
   await learnNavigation.focus();
   await page.keyboard.press("Enter");

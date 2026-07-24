@@ -98,7 +98,7 @@ async function installBrowserMocks(page: Page) {
         catalogVersion: "sha256:e2e-catalog",
         updatedAt: "2026-07-18T00:00:00Z",
         totals: { items: 6, words: 3, phrases: 3 },
-        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1 , academicTechnicalEnglish: 0},
+        sources: { mixed: 6, noun: 1, verb: 1, adjective: 1, phrases: 3, dailyLife: 1, travel: 1, dataEngineering: 1, backend: 1, academicTechnicalEnglish: 0 },
         topics: [{ topic: "Backend", count: 2 }],
       }) });
       return;
@@ -213,26 +213,28 @@ test.beforeEach(async ({ page }) => {
   await installBrowserMocks(page);
 });
 
-test("home intent cards, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
+test("application shell, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
-    await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
+    await expect(page.locator(".lx-home-paths")).toBeHidden();
+    await expect(visibleNavigation(page)).toHaveCount(1);
     await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
     await expect(page).toHaveURL(/\/dictionary$/);
     await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
     await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
+    await expect(visibleNavigation(page)).toHaveCount(1);
     await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.locator(".lx-home-paths article")).toHaveCount(3);
+    await expect(page.locator(".lx-home-paths")).toBeHidden();
   }
 
-  await page.locator(".lx-home-paths").getByRole("button", { name: "Настроить урок" }).click();
+  await visibleNavigation(page).getByRole("link", { name: /^(Обучение|Учить)$/ }).click();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.locator('[data-lexigo-collection]')).toHaveCount(5);
+  await expect(page.locator("[data-lexigo-collection]")).toHaveCount(5);
   await page.locator('[data-lexigo-collection="travel"]').click();
   await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
   expect(runtimeErrors).toEqual([]);

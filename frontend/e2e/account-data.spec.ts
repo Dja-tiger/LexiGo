@@ -150,6 +150,17 @@ test("data export requires the current password and downloads versioned JSON", a
   await page.goto("/profile");
   const panel = page.getByRole("region", { name: "Данные и удаление аккаунта" });
   await expect(panel).toBeVisible();
+
+  const rail = page.locator('[data-route-navigation="rail"]');
+  const [railBox, panelBox] = await Promise.all([rail.boundingBox(), panel.boundingBox()]);
+  expect(railBox).not.toBeNull();
+  expect(panelBox).not.toBeNull();
+  expect(panelBox!.x).toBeGreaterThanOrEqual(railBox!.x + railBox!.width + 24);
+  const horizontalOverflow = await page.evaluate(() => (
+    Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth
+  ));
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
   const exportCard = panel.getByRole("article").filter({ hasText: "Скачать JSON" });
   await exportCard.getByRole("button", { name: "Скачать мои данные" }).click();
   await expect(exportCard.getByRole("alert")).toHaveText("Введите текущий пароль");

@@ -1,0 +1,577 @@
+/*
+ * Adaptive Knowledge Coach — Application Shell + Home.
+ *
+ * This layer intentionally consumes the existing route graph and Home state
+ * resolution. It changes presentation only: active lesson, due queue and
+ * lesson creation remain owned by LexigoPremiumApp and the backend APIs.
+ */
+:root {
+  --ak-bg: var(--ak-color-canvas);
+  --ak-bg-muted: var(--ak-color-subtle);
+  --ak-surface: var(--ak-color-surface);
+  --ak-surface-muted: var(--ak-color-subtle);
+  --ak-surface-strong: #14362e;
+  --ak-border: #c7d8d1;
+  --ak-text: var(--ak-color-text-main);
+  --ak-text-muted: var(--ak-color-text-muted);
+  --ak-text-subtle: #72857e;
+  --ak-brand: var(--ak-color-retained);
+  --ak-brand-strong: #087456;
+  --ak-primary: var(--ak-color-primary);
+  --ak-primary-hover: var(--ak-color-primary-hover);
+  --ak-primary-soft: var(--ak-color-primary-soft);
+  --ak-coral: var(--ak-color-weak);
+  --ak-coral-soft: #fde5e5;
+  --ak-gold: #d89b22;
+  --ak-gold-soft: #f9edc8;
+  --ak-shadow-sm: var(--ak-elevation-1);
+  --ak-shadow-md: var(--ak-elevation-2);
+  --ak-shell-rail-width: 220px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ak-bg: var(--ak-color-canvas);
+    --ak-bg-muted: #102b23;
+    --ak-surface: var(--ak-color-surface);
+    --ak-surface-muted: var(--ak-color-subtle);
+    --ak-surface-strong: #f3f7f5;
+    --ak-border: #2e6557;
+    --ak-text: var(--ak-color-text-main);
+    --ak-text-muted: var(--ak-color-text-muted);
+    --ak-text-subtle: #91aaa1;
+    --ak-brand: var(--ak-color-retained);
+    --ak-brand-strong: #7cdbbd;
+    --ak-primary: var(--ak-color-primary);
+    --ak-primary-hover: var(--ak-color-primary-hover);
+    --ak-primary-soft: var(--ak-color-primary-soft);
+    --ak-coral: var(--ak-color-weak);
+    --ak-coral-soft: #542d2d;
+    --ak-gold: #e7ae38;
+    --ak-gold-soft: #4a3b1d;
+    --ak-shadow-sm: var(--ak-elevation-1);
+    --ak-shadow-md: var(--ak-elevation-2);
+  }
+}
+
+.lx-routed-app {
+  min-height: 100vh;
+  background: var(--ak-bg);
+}
+
+/*
+ * The production slice owns Home and route chrome only. Existing Learn,
+ * Dictionary, Progress and Profile surfaces retain their established tokens
+ * until their dedicated Figma slices are implemented.
+ */
+.lx-routed-app .lx-main-content[aria-label="Главная"] {
+  color: var(--ak-text);
+  --lx-bg: var(--ak-bg);
+  --lx-bg-soft: var(--ak-bg-muted);
+  --lx-panel: var(--ak-surface);
+  --lx-panel-strong: var(--ak-surface);
+  --lx-border: var(--ak-border);
+  --lx-border-bright: var(--ak-brand);
+  --lx-text: var(--ak-text);
+  --lx-muted: var(--ak-text-muted);
+  --lx-subtle: var(--ak-text-subtle);
+  --lx-green: var(--ak-brand);
+  --lx-blue: var(--ak-primary);
+  --lx-danger: var(--ak-coral);
+  --lx-orange: var(--ak-gold);
+  --lx-shadow: var(--ak-shadow-md);
+}
+
+.lx-routed-app .lx-logo-mark {
+  width: 34px;
+  height: 34px;
+  transform: none;
+  border-radius: 11px;
+  background: var(--ak-brand-strong);
+  box-shadow: none;
+}
+
+.lx-routed-app .lx-logo-mark::after {
+  display: none;
+}
+
+.lx-routed-app .lx-logo-mark span {
+  transform: none;
+  font-size: 16px;
+}
+
+.lx-routed-app .lx-header {
+  border-color: color-mix(in srgb, var(--ak-border) 72%, transparent);
+  background: color-mix(in srgb, var(--ak-bg) 90%, transparent);
+  box-shadow: none;
+}
+
+.lx-routed-app .lx-avatar {
+  border-color: var(--ak-border);
+  color: var(--ak-brand-strong);
+  background: var(--ak-surface-muted);
+  box-shadow: none;
+}
+
+.lx-routed-app .lx-icon-button,
+.lx-routed-app .lx-streak {
+  color: var(--ak-text-muted);
+}
+
+.lx-routed-app .lx-icon-button:hover {
+  background: var(--ak-surface-muted);
+}
+
+.lx-routed-app .lx-button {
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 12px;
+  color: var(--ak-text);
+  box-shadow: none;
+  white-space: normal;
+}
+
+.lx-routed-app .lx-button.primary {
+  border: 1px solid var(--ak-primary);
+  color: #ffffff;
+  background: var(--ak-primary);
+  box-shadow: none;
+}
+
+.lx-routed-app .lx-button.primary:hover:not(:disabled) {
+  border-color: var(--ak-primary-hover);
+  background: var(--ak-primary-hover);
+}
+
+.lx-routed-app .lx-button.ghost {
+  border-color: var(--ak-border);
+  color: var(--ak-text);
+  background: var(--ak-surface);
+}
+
+.lx-routed-app .lx-button:hover:not(:disabled) {
+  transform: none;
+  filter: none;
+}
+
+.lx-routed-app .lx-view {
+  animation: none;
+}
+
+.lx-routed-app .lx-bootstrap {
+  color: var(--ak-text);
+  background: var(--ak-bg);
+}
+
+/* Home owns the next-best action, not a catalogue of top-level features. */
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-paths {
+  display: none;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action {
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.75fr);
+  gap: 24px;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card,
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {
+  border: 1px solid var(--ak-border);
+  box-shadow: var(--ak-shadow-sm);
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card {
+  min-height: 290px;
+  grid-template-columns: 1fr;
+  overflow: visible;
+  border-radius: 20px;
+  padding: 0;
+  background: var(--ak-surface);
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card::before,
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-art {
+  display: none;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy {
+  max-width: none;
+  min-height: 290px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 28px;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy > span {
+  margin: 0;
+  color: var(--ak-brand-strong);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy h1 {
+  max-width: 26ch;
+  color: var(--ak-text);
+  font-size: clamp(1.85rem, 3.2vw, 2.45rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy p {
+  max-width: 58ch;
+  color: var(--ak-text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy .lx-button.primary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: auto;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {
+  display: grid;
+  min-height: 290px;
+  align-content: start;
+  gap: 18px;
+  border-radius: 20px;
+  padding: 24px;
+  color: #ffffff;
+  background: var(--ak-surface-strong);
+}
+
+@media (prefers-color-scheme: dark) {
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {
+    color: var(--ak-text);
+    background: var(--ak-surface-muted);
+  }
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel .lx-panel-heading span,
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel .lx-progress-list span {
+  color: currentColor;
+  opacity: 0.78;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel .lx-panel-heading strong,
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel .lx-progress-list strong {
+  color: currentColor;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-ring {
+  margin: 0 auto;
+  border-color: color-mix(in srgb, var(--ak-brand) 42%, transparent);
+  background: transparent;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-ring::before {
+  background: color-mix(in srgb, var(--ak-brand) 22%, transparent);
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-button {
+  width: 100%;
+  margin-top: auto;
+  border-color: color-mix(in srgb, currentColor 28%, transparent);
+  color: inherit;
+  background: transparent;
+}
+
+@media (min-width: 1024px) {
+  .lx-routed-app .lx-route-brand {
+    top: 24px;
+    left: 24px;
+    min-height: 36px;
+    color: var(--ak-text);
+  }
+
+  .lx-routed-app .lx-route-brand strong {
+    font-size: 24px;
+  }
+
+  .lx-routed-app .lx-route-nav--header,
+  .lx-routed-app .lx-route-nav--mobile {
+    display: none;
+  }
+
+  .lx-routed-app .lx-route-nav--rail {
+    position: fixed;
+    z-index: 170;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    width: var(--ak-shell-rail-width);
+    flex-direction: column;
+    gap: 4px;
+    border: 0;
+    border-right: 1px solid var(--ak-border);
+    border-radius: 0;
+    padding: 78px 12px 24px;
+    background: var(--ak-surface);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .lx-routed-app .lx-route-nav--rail a {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: 12px;
+    padding: 0 14px;
+    color: var(--ak-text-muted);
+    background: transparent;
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .lx-routed-app .lx-route-nav--rail a > span {
+    display: flex;
+    grid-template-rows: none;
+    place-items: initial;
+    gap: 10px;
+  }
+
+  .lx-routed-app .lx-route-nav--rail a:hover {
+    color: var(--ak-text);
+    background: var(--ak-bg-muted);
+  }
+
+  .lx-routed-app .lx-route-nav--rail a.active {
+    border: 0;
+    color: var(--ak-primary);
+    background: var(--ak-primary-soft);
+    box-shadow: none;
+  }
+
+  .lx-routed-app .lx-route-nav--rail a.active::before {
+    display: none;
+  }
+
+  .lx-routed-app .lx-route-nav--rail a.active svg {
+    color: var(--ak-primary);
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
+    width: auto;
+    margin: 0 0 0 var(--ak-shell-rail-width);
+    padding: 0 40px 80px;
+  }
+
+  .lx-routed-app .lx-app.lx-lesson-focus-mode {
+    width: min(1540px, 100%);
+    margin: 0 auto;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 96px;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header-tools {
+    grid-column: 2;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-app-shell {
+    display: block;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-main-content {
+    width: min(1140px, 100%);
+    margin: 0 auto;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-view {
+    padding-top: 24px;
+  }
+
+  /* Account panels are mounted beside the product app, not inside .lx-app. */
+  .lx-account-security {
+    box-sizing: border-box;
+    width: min(1140px, calc(100vw - var(--ak-shell-rail-width) - 80px));
+    margin-right: 40px;
+    margin-left: max(
+      calc(var(--ak-shell-rail-width) + 40px),
+      calc((100vw + var(--ak-shell-rail-width) - 1140px) / 2)
+    );
+  }
+}
+
+@media (max-width: 719px) {
+  .lx-routed-app .lx-route-brand,
+  .lx-routed-app .lx-route-nav--header,
+  .lx-routed-app .lx-route-nav--rail {
+    display: none;
+  }
+
+  .lx-routed-app .lx-route-nav--mobile {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-height: calc(72px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border: 0;
+    border-top: 1px solid var(--ak-border);
+    border-radius: 0;
+    padding: 6px max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--ak-surface) 96%, transparent);
+    box-shadow: none;
+    backdrop-filter: blur(18px);
+  }
+
+  .lx-routed-app .lx-route-nav--mobile a {
+    min-width: 44px;
+    min-height: 54px;
+    border-radius: 10px;
+    color: var(--ak-text-muted);
+    background: transparent;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .lx-routed-app .lx-route-nav--mobile a.active {
+    color: var(--ak-primary);
+    background: transparent;
+  }
+
+  .lx-routed-app .lx-route-nav--mobile a > span > span {
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
+    width: 100%;
+    padding: 0 24px calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: calc(54px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header-tools {
+    grid-column: 2;
+    gap: 4px;
+  }
+
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-streak,
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-icon-button {
+    display: none;
+  }
+
+  .lx-routed-app .lx-app:not([data-route-client-island="dictionary"]) .lx-main-content {
+    width: 100%;
+    margin: 0;
+  }
+
+  .lx-routed-app .lx-app:not([data-route-client-island="dictionary"]) .lx-view {
+    padding-top: 0;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card {
+    min-height: 0;
+    border-radius: 20px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy {
+    min-height: 286px;
+    gap: 10px;
+    padding: 20px 18px 18px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy h1 {
+    font-size: clamp(1.65rem, 8vw, 2rem);
+    line-height: 1.14;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy p {
+    font-size: 0.94rem;
+    line-height: 1.42;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {
+    min-height: 196px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+    border-radius: 18px;
+    padding: 16px;
+    color: var(--ak-text);
+    background: var(--ak-surface-muted);
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel .lx-panel-heading {
+    grid-column: 1 / -1;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-ring {
+    width: 58px;
+    height: 58px;
+    margin: 0;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-ring::before {
+    width: 44px;
+    height: 44px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list > div {
+    min-height: 28px;
+    gap: 8px;
+    border-color: color-mix(in srgb, var(--ak-border) 72%, transparent);
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list > div:nth-child(3) {
+    display: none;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-button,
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-async-state,
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > [data-async-state] {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 390px) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-routed-app *,
+  .lx-routed-app *::before,
+  .lx-routed-app *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .lx-routed-app .lx-route-nav a,
+  .lx-routed-app .lx-button,
+  .lx-routed-app .lx-view {
+    transition: none !important;
+    animation: none !important;
+  }
+}

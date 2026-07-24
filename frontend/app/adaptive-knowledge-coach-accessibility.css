@@ -1,0 +1,21 @@
+/*
+ * Ownership and accessibility refinements for the Adaptive Knowledge Coach
+ * shell. The first production slice owns the new canvas on Home only; routes
+ * that have not yet been migrated must retain their established dark canvas
+ * so their existing semantic foreground and translucent surface tokens keep
+ * the WCAG contrast ratios they were designed against.
+ */
+.lx-routed-app:not([data-route-path="/"]) {
+  background: transparent;
+}
+
+/*
+ * The Figma contract requires at least 44×44 targets; the web shell keeps
+ * desktop and landscape rail destinations at 48px to preserve the existing
+ * browser accessibility budget.
+ */
+@media (min-width: 720px) {
+  .lx-routed-app .lx-route-nav--rail a {
+    min-height: 48px;
+  }
+}

@@ -56,7 +56,7 @@ export function RoutedLexigoApp() {
   if (!isCanonicalRoutePath(pathname)) return null;
 
   return (
-    <div className="lx-routed-app" data-app-router-shell="true">
+    <div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>
       <RouteSkipLink />
       <RouteChrome />
       <LexigoBootstrappedApp pathname={pathname} />

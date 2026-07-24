@@ -148,6 +148,7 @@ prepare() {
     --name "$LEASE_CONTAINER" \
     "${OWNERSHIP_LABELS[@]}" \
     --label "com.lexigo.ci.kind=lease" \
+    --label "lexigo-slot=${FRONTEND_CI_SLOT}" \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
     --entrypoint sleep \
     "$PLAYWRIGHT_IMAGE" \

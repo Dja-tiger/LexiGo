@@ -1,0 +1,103 @@
+/*
+ * LexiGo Design System — Foundation V1 Tokens
+ * 
+ * Formalized semantic tokens for the Adaptive Knowledge Coach and future product
+ * surfaces. These establish the core visual language, layout rhythms, and 
+ * interaction motion primitives.
+ */
+
+:root {
+  /* 1. Color System (Light Mode) */
+  --ak-color-canvas: #f4f7f5;
+  --ak-color-surface: #ffffff;
+  --ak-color-subtle: #e6efeb;
+  
+  /* WCAG adjustment: Figma's #3d7bf2 has low contrast on canvas/surface. 
+     Adjusted to #2557c7 to meet AA 4.5:1 contrast requirements. */
+  --ak-color-primary: #2557c7;
+  --ak-color-primary-hover: #1d48aa;
+  --ak-color-primary-soft: #dce7ff;
+  
+  --ak-color-retained: #1f9d73;
+  --ak-color-weak: #f06a6a;
+  
+  --ak-color-text-main: #10211d;
+  --ak-color-text-muted: #354944;
+
+  /* 2. Typography */
+  --ak-text-display-large: 700 52px/60px Inter, sans-serif;
+  --ak-letter-spacing-display-large: -0.78px;
+  
+  --ak-text-display-small: 700 40px/48px Inter, sans-serif;
+  --ak-letter-spacing-display-small: -0.6px;
+  
+  --ak-text-title-large: 600 32px/40px Inter, sans-serif;
+  --ak-letter-spacing-title-large: -0.48px;
+  
+  --ak-text-title-medium: 600 24px/32px Inter, sans-serif;
+  --ak-letter-spacing-title-medium: -0.12px;
+  
+  --ak-text-title-small: 600 20px/28px Inter, sans-serif;
+  --ak-letter-spacing-title-small: -0.1px;
+  
+  --ak-text-body-large: 400 18px/28px Inter, sans-serif;
+  --ak-text-body: 400 16px/24px Inter, sans-serif;
+  --ak-text-label: 500 14px/20px Inter, sans-serif;
+  --ak-text-caption: 400 12px/16px Inter, sans-serif;
+
+  /* 3. Spacing Scale */
+  --ak-space-xs: 4px;
+  --ak-space-sm: 8px;
+  --ak-space-md: 12px;
+  --ak-space-lg: 16px;
+  --ak-space-xl: 20px;
+  --ak-space-2xl: 24px;
+  --ak-space-3xl: 32px;
+  --ak-space-4xl: 40px;
+  --ak-space-5xl: 48px;
+  --ak-space-6xl: 64px;
+
+  /* 4. Radius */
+  --ak-radius-sm: 8px;
+  --ak-radius-md: 12px;
+  --ak-radius-lg: 16px;
+  --ak-radius-xl: 20px;
+  --ak-radius-2xl: 24px;
+
+  /* 5. Elevation (Shadows) */
+  --ak-elevation-1: 0 1px 3px rgba(15, 33, 28, 0.08);
+  --ak-elevation-2: 0 8px 24px rgba(15, 33, 28, 0.12);
+  --ak-elevation-3: 0 16px 48px rgba(15, 33, 28, 0.16);
+
+  /* 6. Motion */
+  --ak-motion-feedback-enter: 80ms ease-out;
+  --ak-motion-feedback-exit: 120ms ease-in;
+  --ak-motion-transition-enter: 80ms ease-out;
+  --ak-motion-transition-exit: 160ms ease-in;
+  --ak-motion-emphasized-enter: 120ms ease-out;
+  --ak-motion-emphasized-exit: 220ms ease-in;
+  --ak-motion-deliberate-enter: 120ms ease-out;
+  --ak-motion-deliberate-exit: 320ms ease-in;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ak-color-canvas: #10211d;
+    --ak-color-surface: #18302b;
+    --ak-color-subtle: #204b40;
+    
+    --ak-color-primary: #6c93ef;
+    --ak-color-primary-hover: #82a4f3;
+    --ak-color-primary-soft: #203b69;
+    
+    --ak-color-retained: #4bc09a;
+    --ak-color-weak: #f06a6a;
+    
+    --ak-color-text-main: #ffffff;
+    --ak-color-text-muted: #e6efeb;
+    
+    --ak-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --ak-elevation-2: 0 8px 24px rgba(0, 0, 0, 0.32);
+    --ak-elevation-3: 0 16px 48px rgba(0, 0, 0, 0.36);
+  }
+}

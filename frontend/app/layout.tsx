@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/components/service-worker-registrat
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
+import "./design-tokens.css";
 import "./product-navigation.css";
 import "./premium-ui.css";
 import "./mobile-pwa-fixes.css";
@@ -32,6 +33,8 @@ import "./dictionary-catalog.css";
 import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
 import "./compact-home.css";
+import "./adaptive-knowledge-coach-home.css";
+import "./adaptive-knowledge-coach-accessibility.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
@@ -52,7 +55,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050914",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f7f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b211b" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
