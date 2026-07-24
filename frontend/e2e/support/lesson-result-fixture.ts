@@ -286,8 +286,13 @@ export async function completeRecallLesson(page: Page): Promise<void> {
 
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
-  await page.getByRole("textbox", { name: "Введите ответ" }).fill("backlog");
-  await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
+  const answer = page.getByRole("textbox", { name: "Введите ответ" });
+  await answer.focus();
+  await answer.fill("backlog");
+  await expect(answer).toHaveValue("backlog");
+  const submit = page.getByRole("button", { name: "Сверить ответ", exact: true });
+  await expect(submit).toBeEnabled();
+  await submit.click();
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "К результатам", exact: true }).click();
   await expect(page.locator(".lx-lesson-result")).toBeVisible();

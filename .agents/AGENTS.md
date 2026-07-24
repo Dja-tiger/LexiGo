@@ -191,10 +191,10 @@ PR не считается полностью готовым, если в про
 - **Область действия:** semantic design tokens, primary CTA, CSS custom properties и accessibility audits.
 
 
-### 2026-07-24 — WebKit submit начался до синхронизации controlled textbox
+### 2026-07-24 — Controlled Recall textbox не обработал native `input` в WebKit
 
-- **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; trace показывал пустой canonical textbox после вызова `fill`.
-- **Первопричина:** journey сразу переходил от программного `fill` к submit и не подтверждал, что focus/input state дошёл до React-controlled field перед проверкой disabled-состояния.
-- **Профилактика:** для controlled textbox в cross-browser E2E сначала установить focus, выполнить `fill`, подтвердить `toHaveValue`, затем подтвердить enabled primary action и только после этого submit. Timeout увеличивать запрещено.
-- **Обязательная проверка:** Recall и mixed-practice scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit; trace не содержит пустой textbox перед submit.
-- **Область действия:** controlled inputs, React route transitions, WebKit/iOS WebKit и objective Recall journeys.
+- **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; Playwright trace показывал, что `fill()` завершился, но controlled textbox снова имел пустое значение.
+- **Первопричина:** Recall input обновлял React state только через `onChange`; в проверяемом WebKit flow native `input` после программного заполнения не синхронизировал controlled value до повторного render.
+- **Профилактика:** controlled text inputs, используемые в cross-browser critical journeys, обрабатывать через явный `onInput` и `event.currentTarget.value`. E2E дополнительно обязан выполнить `focus`, `fill`, `toHaveValue`, проверить enabled primary action и только затем submit; увеличение timeout не является исправлением.
+- **Обязательная проверка:** source-contract требует `onInput` и запрещает прежний `onChange`; Recall, mixed-practice и Lesson Result scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit.
+- **Область действия:** controlled inputs, React event handling, WebKit/iOS WebKit и objective Recall journeys.
