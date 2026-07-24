@@ -2,13 +2,14 @@
  * WCAG foreground ownership for the progressive Lesson Composer.
  *
  * The base retained and milestone accents are suitable for borders, icons and
- * large display values, but do not reach 4.5:1 for 12–18px text on the mobile
- * recommendation surfaces. These local semantic foregrounds preserve the
- * intended hue while meeting AA in both system color schemes.
+ * large display values, but do not reach 4.5:1 for small text on every composer
+ * surface. These local semantic foregrounds preserve the intended hue while
+ * meeting AA in both system color schemes and on the fixed dark preview panel.
  */
 .lx-main-content[aria-label="Обучение"] {
   --lx-composer-retained-foreground: #176b50;
   --lx-composer-milestone-foreground: #7d6200;
+  --lx-composer-preview-foreground: #72d7b4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,6 +17,10 @@
     --lx-composer-retained-foreground: #72d7b4;
     --lx-composer-milestone-foreground: #e7c45e;
   }
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-lesson-preview span {
+  color: var(--lx-composer-preview-foreground);
 }
 
 @media (max-width: 767px) {
