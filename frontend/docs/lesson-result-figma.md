@@ -22,3 +22,5 @@ Production matrix:
 The result distinguishes objective recall evidence from recognition and passive activity, restores after reload/history without resubmitting a review, prevents reopening the completed lesson through the continuation action, and presents one primary action for each result state.
 
 Final validation must run from a normal developer-authored head after all one-time integration commits are removed. The required gate includes lint, typecheck, unit tests, production build, dependency audit, browser projects, accessibility, visual regression, performance budgets, and container builds.
+
+Before validation, the reconstruction gate verifies that the complete production app is present, required Lesson Result ownership imports exist, and the file terminates normally rather than accepting a partial generated artifact.
