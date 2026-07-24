@@ -94,3 +94,5 @@ def replace_first(text: str, old: str, new: str, label: str) -> str:
             git push origin HEAD:agent/issue-194-lesson-result
           fi
           test "${{ steps.patch.outputs.status }}" -eq 0
+
+# Hardened target selection is active.
