@@ -20,13 +20,19 @@ describe("canonical Lesson Result production slice", () => {
     );
   });
 
-  it("uses semantic Foundation tokens without feature-level raw colors", () => {
+  it("uses declared semantic Foundation tokens with an accessible primary pair", () => {
     expect(styleSource).toContain("var(--ak-color-canvas)");
     expect(styleSource).toContain("var(--ak-color-surface)");
     expect(styleSource).toContain("var(--ak-color-primary)");
     expect(styleSource).toContain("var(--ak-color-retained)");
     expect(styleSource).toContain("var(--ak-color-weak)");
     expect(styleSource).toContain("var(--ak-color-milestone)");
+    expect(styleSource).toContain(`.lx-lesson-result__primary {
+  border: 1px solid var(--ak-color-primary);
+  color: var(--ak-color-surface);
+  background: var(--ak-color-primary);
+}`);
+    expect(styleSource).not.toContain("var(--ak-color-on-primary)");
     const cssWithoutComments = styleSource.replace(/\/\*[\s\S]*?\*\//g, "");
     expect(cssWithoutComments).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
@@ -42,6 +48,12 @@ describe("canonical Lesson Result production slice", () => {
     expect(premiumAppSource).toContain("isDistinctLessonResultCandidate");
     expect(premiumAppSource).toContain('"/api/v1/lessons/preview"');
     expect(premiumAppSource).toContain('"/api/v1/lessons"');
+    expect(premiumAppSource).toContain(
+      'navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });',
+    );
+    expect(premiumAppSource).not.toContain(
+      'navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });',
+    );
   });
 
   it("separates objective recall, recognition, and activity evidence", () => {
