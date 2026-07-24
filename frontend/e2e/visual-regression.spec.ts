@@ -9,6 +9,10 @@ import {
   installActiveLessonFixture,
   openActiveLesson,
 } from "./support/active-lesson-fixture";
+import {
+  completeRecallLesson,
+  installLessonResultFixture,
+} from "./support/lesson-result-fixture";
 
 async function expectStableScreenshot(page: Page, name: string): Promise<void> {
   const dimensions = await page.evaluate(async () => {
@@ -127,6 +131,42 @@ test.describe("critical visual baselines", () => {
     await page.getByRole("button", { name: "Знал", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
     await expectStableScreenshot(page, "active-lesson-recall-correct-dark.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("lesson result compact Next Block", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact result baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installLessonResultFixture(page, { previewTotal: 1 });
+    await completeRecallLesson(page);
+    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
+    await expectStableScreenshot(page, "lesson-result-next-compact.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("lesson result desktop Due Review", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop result baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installLessonResultFixture(page, { previewTotal: 0, dueNow: 6 });
+    await completeRecallLesson(page);
+    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");
+    await expectStableScreenshot(page, "lesson-result-due-desktop.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("lesson result desktop Daily Goal Dark", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop dark result baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await installLessonResultFixture(page, {
+      previewTotal: 1,
+      reviewsBefore: 14,
+      reviewsAfter: 15,
+      dailyGoal: 15,
+    });
+    await completeRecallLesson(page);
+    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "daily-goal");
+    await expectStableScreenshot(page, "lesson-result-daily-goal-dark-desktop.png");
     expect(runtimeErrors).toEqual([]);
   });
 });
