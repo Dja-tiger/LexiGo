@@ -195,6 +195,14 @@ async function phrasePrompts(page: Page) {
     .allTextContents();
 }
 
+async function revealLessonComposerControls(page: Page) {
+  const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+  if (await configureLesson.isVisible()) {
+    await configureLesson.click();
+    await expect(page.getByRole("button", { name: /Ручная настройка/ })).toBeVisible();
+  }
+}
+
 test.describe.configure({ timeout: 60_000 });
 
 test.beforeEach(async ({ page }) => {
@@ -234,6 +242,7 @@ test("application shell, dictionary catalog and composer collections remain uniq
 
   await visibleNavigation(page).getByRole("link", { name: /^(Обучение|Учить)$/ }).click();
   await expect(page).toHaveURL(/\/learn$/);
+  await revealLessonComposerControls(page);
   await expect(page.locator("[data-lexigo-collection]")).toHaveCount(5);
   await page.locator('[data-lexigo-collection="travel"]').click();
   await expect(page.locator('[data-lexigo-collection="travel"]')).toHaveAttribute("aria-checked", "true");
@@ -268,6 +277,7 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+  await revealLessonComposerControls(page);
 
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   await page.getByRole("button", { name: "Начать урок" }).click();
