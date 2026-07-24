@@ -232,7 +232,7 @@ test("application shell, dictionary catalog and composer collections remain uniq
     await expect(page.locator(".lx-home-paths")).toBeHidden();
   }
 
-  await visibleNavigation(page).getByRole("link", { name: "Обучение", exact: true }).click();
+  await visibleNavigation(page).getByRole("link", { name: /^(Обучение|Учить)$/ }).click();
   await expect(page).toHaveURL(/\/learn$/);
   await expect(page.locator("[data-lexigo-collection]")).toHaveCount(5);
   await page.locator('[data-lexigo-collection="travel"]').click();

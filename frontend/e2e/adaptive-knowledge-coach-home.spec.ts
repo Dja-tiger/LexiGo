@@ -208,7 +208,12 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
     ));
     expect(shellBackground).toBe("rgb(11, 33, 27)");
 
-    await page.addStyleTag({ content: ":root { font-size: 200%; }" });
+    await page.evaluate(() => {
+      const style = document.createElement("style");
+      style.textContent = ":root { font-size: 200%; }";
+      style.nonce = document.querySelector<HTMLElement>("[nonce]")?.nonce ?? "";
+      document.head.appendChild(style);
+    });
     await expectNoHorizontalOverflow(page);
   });
 
