@@ -165,3 +165,27 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.
 - **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.
 - **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.
+
+### 2026-07-24 — Recall E2E раскрыл скрытый ответ вместо проверки prompt contract
+
+- **Симптом:** distinct-next Lesson Result journey успешно открыл новый Recall-урок, но упал в ожидании полного ответа `Verify the checkpoint.`.
+- **Первопричина:** тест проверял скрытый answer text, хотя objective Recall до попытки намеренно показывает только cloze prompt `Verify the ____.`.
+- **Профилактика:** assertions для Recall строить по публичному prompt heading, textbox и состоянию reveal; полный ответ до submit должен отсутствовать. Нельзя менять runtime и раскрывать ответ ради прохождения теста.
+- **Обязательная проверка:** distinct-next E2E видит новый cloze heading, не видит полный ответ и не видит prompt завершённого блока во всех configured Playwright projects.
+- **Область действия:** Active Lesson Recall, cloze exercises, distinct-next transitions и answer-leakage tests.
+
+### 2026-07-24 — `replaceState` уничтожил возврат к сохранённому Lesson Result
+
+- **Симптом:** reload результата работал, но после «На главную» и browser Back пользователь попадал на `/learn`, а не на сохранённый итог.
+- **Первопричина:** terminal action вызывал navigation с `replace=true`, поэтому запись Lesson Result удалялась из browser history.
+- **Профилактика:** переходы с recoverable result/state screen должны использовать `pushState`, если Back является частью поддерживаемого сценария. `replaceState` оставлять только для canonicalization, redirect или намеренной замены текущей записи.
+- **Обязательная проверка:** E2E выполняет complete → reload → Home → Back, восстанавливает результат из `sessionStorage` и подтверждает отсутствие повторного review request.
+- **Область действия:** Lesson Result, history restoration, terminal actions и route-state persistence.
+
+### 2026-07-24 — Необъявленный CSS token сделал primary CTA неконтрастным
+
+- **Симптом:** blocking axe audit обнаружил contrast ratio 2.59:1 у `.lx-lesson-result__primary`.
+- **Первопричина:** CSS использовал отсутствующий `--ak-color-on-primary`; декларация стала invalid at computed-value time, и кнопка унаследовала тёмный foreground на тёмном primary background.
+- **Профилактика:** feature CSS может использовать только объявленные semantic tokens и утверждённые foreground/background pairs. Для текущей Foundation palette primary CTA использует `surface` поверх `primary`; неизвестный token должен блокироваться source-contract test.
+- **Обязательная проверка:** `app/lesson-result.test.ts` запрещает `--ak-color-on-primary`, фиксирует пару `surface/primary`, а blocking axe audit проходит в Light и Dark appearance.
+- **Область действия:** semantic design tokens, primary CTA, CSS custom properties и accessibility audits.
