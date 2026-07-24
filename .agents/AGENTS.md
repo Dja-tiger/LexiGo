@@ -10,6 +10,16 @@
 >
 > Абсолютное отсутствие дефектов нельзя гарантировать, но ошибки из-за неполного анализа, неверных selectors, stale mocks, отсутствующих tokens, неправильной history semantics и неподготовленных visual baselines недопустимы.
 >
+> ### 0. Защити repository до любого write-action
+>
+> 1. Сначала создай отдельную branch от подтверждённого актуального `main` и прочитай её ref/head обратно через GitHub.
+> 2. До первого write выведи `repository`, `base SHA`, `branch` и точные paths, которые разрешено изменять.
+> 3. В каждом `create_file`, `update_file`, `delete_file`, ref update и workflow write указывай branch явно. Использование default branch по умолчанию запрещено.
+> 4. Перед отправкой tool call ещё раз сравни имя вызываемой функции с намерением. Read/search/list-action нельзя подменять write-action.
+> 5. После каждого write прочитай изменённый path из целевой branch и проверь commit SHA. Не выполняй следующий write, пока это не подтверждено.
+> 6. Если write попал не в ту branch или вызвана неверная функция, немедленно останови все дальнейшие writes, проверь `main`, откати только случайный artifact и зафиксируй ошибку в этом файле. Повторять тот же вызов без повторного чтения schema запрещено.
+> 7. Перед PR сравни branch с `main`; diff обязан содержать только разрешённые paths. История default branch также проверяется на accidental placeholder/trigger commits.
+>
 > ### 1. Сначала восстанови фактический контекст
 >
 > До изменения файлов обязательно:
@@ -20,6 +30,7 @@
 > 4. Если задача связана с дизайном, открой точные Figma nodes, состояния, mobile/desktop variants, Light/Dark и Screen Map. Не реализуй экран по памяти, screenshot-фрагменту или приблизительной интерпретации.
 > 5. Найди production entry, runtime owner, presentation owner, API client, state owner, CSS owner и все тесты/моки, которые потребляют изменяемый контракт.
 > 6. Выполни repository-wide search по старым и новым selectors, accessible names, IDs, API paths, tokens, storage keys, events и component names. Удалённый контракт не должен оставаться в соседних suites.
+> 7. GitHub code-search index может отставать от branch head. Dead-code evidence обязательно подтверждай source-level test или чтением фактического PR merge ref; indexed search сам по себе недостаточен.
 >
 > ### 2. До кода составь contract matrix
 >
@@ -360,3 +371,18 @@ PR не считается готовым, если новая категори�
 - **Профилактика:** обязательный prompt раздела 0, contract matrix, repository-wide consumer audit и staged validation до полного CI.
 - **Обязательная проверка:** каждый новый PR содержит заполненный pre-flight record, tests для заявленных invariants и один чистый финальный CI run на developer-authored head.
 - **Область действия:** все production задачи LexiGo.
+### 2026-07-25 — Write-action без явной branch изменил default branch
+
+- **Симптом:** при подготовке рабочей ветки ошибочный `create_file` трижды создавал placeholder `INVALID` в `main`; каждый artifact был сразу удалён, но default-branch history получила лишние commits.
+- **Первопричина:** write-tool был вызван до подтверждённого создания branch, поле `branch` отсутствовало, а после первого неверного вызова execution не был остановлен для повторной проверки schema и recipient.
+- **Профилактика:** выполнить write-safety gate из обязательного prompt: branch создаётся и читается до writes, каждый write содержит явный branch, после любого unexpected mutation все writes останавливаются до проверки `main` и tool schema.
+- **Обязательная проверка:** перед PR `compare_commits(main, branch)` содержит только разрешённые paths; default branch не содержит accidental artifacts; каждый commit/write подтверждён чтением целевого path из ожидаемой branch.
+- **Область действия:** GitHub connector writes, workflow patches, ref updates и любые repository mutations.
+
+### 2026-07-25 — Stale code-search скрыл живого consumer legacy selector
+
+- **Симптом:** source-contract PR #212 обнаружил `lx-lesson-top` в production component graph после того, как предварительный GitHub code search показал только `premium-ui.css`.
+- **Первопричина:** search index отставал от актуального source graph; selector с lesson-названием фактически использовался header справочного каталога `renderAllItems`.
+- **Профилактика:** indexed search использовать только как discovery signal. Перед удалением selector доказать отсутствие consumer через source-level test на PR merge ref или прямое чтение всех production sources; живой selector переносить к семантически верному owner вместо удаления.
+- **Обязательная проверка:** ownership test сканирует production `.tsx`, legacy `lx-lesson-top` отсутствует, а `lx-all-items-top` одновременно присутствует в catalog markup и `premium-ui.css`.
+- **Область действия:** dead-code/CSS cleanup, GitHub code search, generated branches и PR merge refs.

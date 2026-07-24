@@ -33,6 +33,8 @@ const LEGACY_ACTIVE_LESSON_CONTRACTS = [
   ".lx-lesson-navigation",
   ".lx-rating-row",
   ".lx-judgement",
+  ".lx-suggestion-success",
+  ".lx-suggestion-error",
   ".lx-related",
   ".lx-lesson-stats",
 ] as const;
@@ -82,8 +84,16 @@ function typeScriptWithoutComments(source: string): string {
   return executableTokens.join("");
 }
 
+function componentContract(cssContract: string): string {
+  return cssContract.startsWith(".") ? cssContract.slice(1) : cssContract;
+}
+
+function matchingFiles(sources: SourceFile[], contract: string): string[] {
+  return sources.filter(({ source }) => source.includes(contract)).map(({ file }) => file);
+}
+
 describe("legacy Active Lesson style ownership", () => {
-  it("removes selectors that belonged to the retired pre-canonical lesson DOM", () => {
+  it("removes selectors and runtime class contracts from the retired lesson DOM", () => {
     const css = sourceFiles(appDirectory, /\.css$/).map(({ file, source }) => ({
       file,
       source: cssWithoutComments(source),
@@ -93,25 +103,50 @@ describe("legacy Active Lesson style ownership", () => {
       source: typeScriptWithoutComments(source),
     }));
 
-    for (const contract of LEGACY_ACTIVE_LESSON_CONTRACTS) {
+    for (const cssContract of LEGACY_ACTIVE_LESSON_CONTRACTS) {
+      const runtimeContract = componentContract(cssContract);
+
       expect(
-        css.filter(({ source }) => source.includes(contract)).map(({ file }) => file),
-        `legacy CSS contract ${contract}`,
+        matchingFiles(css, cssContract),
+        `legacy CSS contract ${cssContract}`,
       ).toEqual([]);
       expect(
-        components.filter(({ source }) => source.includes(contract)).map(({ file }) => file),
-        `legacy component contract ${contract}`,
+        matchingFiles(components, runtimeContract),
+        `legacy component contract ${runtimeContract}`,
       ).toEqual([]);
     }
+  });
+
+  it("normalizes CSS class selectors before scanning executable TSX", () => {
+    const componentSource = typeScriptWithoutComments(
+      "// .lx-lesson-top\nconst className = 'lx-lesson-top';",
+    );
+
+    expect(componentContract(".lx-lesson-top")).toBe("lx-lesson-top");
+    expect(componentSource).not.toContain(".lx-lesson-top");
+    expect(componentSource).toContain(componentContract(".lx-lesson-top"));
   });
 
   it("ignores retired contract names in comments but retains executable strings", () => {
     expect(cssWithoutComments("/* .lx-recall-box */ .lx-canonical-lesson {}"))
       .toBe(" .lx-canonical-lesson {}");
-    expect(typeScriptWithoutComments("// .lx-answer-grid\nconst className = '.lx-recall-box';"))
-      .not.toContain(".lx-answer-grid");
-    expect(typeScriptWithoutComments("// .lx-answer-grid\nconst className = '.lx-recall-box';"))
-      .toContain(".lx-recall-box");
+    expect(typeScriptWithoutComments("// lx-answer-grid\nconst className = 'lx-recall-box';"))
+      .not.toContain("lx-answer-grid");
+    expect(typeScriptWithoutComments("// lx-answer-grid\nconst className = 'lx-recall-box';"))
+      .toContain("lx-recall-box");
+  });
+
+  it("keeps the live all-items header under catalog ownership", () => {
+    const premiumStyleSource = cssWithoutComments(
+      readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8"),
+    );
+    const componentSource = sourceFiles(componentDirectory, /\.(?:ts|tsx)$/)
+      .map(({ source }) => typeScriptWithoutComments(source))
+      .join("");
+
+    expect(componentSource).toContain("lx-all-items-top");
+    expect(premiumStyleSource).toContain(".lx-all-items-top");
+    expect(componentSource).not.toContain("lx-lesson-top");
   });
 
   it("keeps canonical lesson layers ordered after the base product UI", () => {
