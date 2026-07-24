@@ -1,10 +1,176 @@
 # Указания для агентов и разработчиков LexiGo
 
-Ниже перечислены важные правила по разработке и сквозному (E2E) тестированию, собранные на основе опыта отладки хрупких тестов. Пожалуйста, всегда сверяйтесь с этим гайдом перед внесением изменений.
+Ниже перечислены обязательные правила production-разработки и сквозного тестирования. Перед любым изменением агент должен сначала выполнить pre-flight prompt из раздела 0, а затем применять предметные правила остальных разделов.
+
+## 0. Обязательный pre-flight prompt перед началом любой задачи
+
+Скопируйте этот prompt в рабочий контекст агента без сокращений. Кодирование запрещено, пока не подготовлен и не проверен pre-flight record.
+
+> Ты продолжаешь production-разработку LexiGo. Твоя цель — не просто написать код и затем реагировать на падения CI, а до первой правки устранить непроверенные предположения о runtime, API, responsive UI, браузерах, навигации, CSS и тестах.
+>
+> Абсолютное отсутствие дефектов нельзя гарантировать, но ошибки из-за неполного анализа, неверных selectors, stale mocks, отсутствующих tokens, неправильной history semantics и неподготовленных visual baselines недопустимы.
+>
+> ### 1. Сначала восстанови фактический контекст
+>
+> До изменения файлов обязательно:
+>
+> 1. Прочитай Issue целиком, все комментарии, связанные Issues/PR и acceptance criteria.
+> 2. Прочитай `.agents/AGENTS.md`, архитектурную документацию, README и документы конкретной feature.
+> 3. Проверь живое состояние `main`, открытые PR, последний merge SHA и CI. Не опирайся на старый handoff как на источник текущего состояния.
+> 4. Если задача связана с дизайном, открой точные Figma nodes, состояния, mobile/desktop variants, Light/Dark и Screen Map. Не реализуй экран по памяти, screenshot-фрагменту или приблизительной интерпретации.
+> 5. Найди production entry, runtime owner, presentation owner, API client, state owner, CSS owner и все тесты/моки, которые потребляют изменяемый контракт.
+> 6. Выполни repository-wide search по старым и новым selectors, accessible names, IDs, API paths, tokens, storage keys, events и component names. Удалённый контракт не должен оставаться в соседних suites.
+>
+> ### 2. До кода составь contract matrix
+>
+> Зафиксируй ожидаемое поведение минимум по следующим измерениям:
+>
+> - route и direct entry;
+> - основное состояние, loading, empty, error, retry, offline и restored state;
+> - guest и authenticated session;
+> - desktop Chromium, desktop WebKit, Android Chromium и iOS WebKit;
+> - compact/mobile и full/desktop layout;
+> - Light и Dark appearance;
+> - reduced motion и обычное motion;
+> - mouse/touch и keyboard/screen reader;
+> - reload, Back, Forward, deep link и повторный click/submit;
+> - API request body, response body, version/index/completion fields и mutation sequence;
+> - localStorage/sessionStorage/history state и правила восстановления;
+> - visual baseline и bundle/performance impact.
+>
+> Для каждого перехода явно ответь:
+>
+> - какой элемент видит пользователь;
+> - какое у него фактическое accessible name;
+> - какой semantic container владеет control;
+> - какой API request отправляется;
+> - какое состояние меняется после ответа;
+> - должна ли навигация использовать `pushState`, `replaceState` или App Router navigation;
+> - что произойдёт после reload и browser Back/Forward;
+> - чем поведение отличается на compact UI и в WebKit.
+>
+> Если хотя бы один ответ неизвестен, сначала исследуй код, Figma, тест или runtime artifact. Не заполняй пробел предположением.
+>
+> ### 3. Проведи аудит рисков до реализации
+>
+> Обязательно проверь:
+>
+> 1. Не возвращает ли mock жёсткие значения, расходящиеся с request body. По умолчанию preview/create mock должен echo фактические параметры, если тест намеренно не проверяет server normalization.
+> 2. Не ищет ли тест desktop-only control в compact layout или скрытый элемент с `display: none`.
+> 3. Не проверяет ли тест внутреннюю legacy-разметку, скрытый answer или state-copy вместо пользовательского semantic contract.
+> 4. Объявлен ли каждый используемый CSS custom property и проверена ли foreground/background пара в Light и Dark.
+> 5. Поддерживает ли controlled input native `input` и фактическое поведение Chromium/WebKit.
+> 6. Не уничтожает ли `replaceState` запись, к которой пользователь должен вернуться через Back.
+> 7. Есть ли Linux visual baseline для каждого нового canonical state.
+> 8. Не импортирует ли route код других тяжёлых screens и не расширяет ли общий client graph.
+> 9. Не дублируются ли session bootstrap, refresh coordination, review outbox, API clients или PWA lifecycle.
+> 10. Не осталось ли dead CSS, selectors или components после redesign.
+>
+> ### 4. Сформируй минимальный production slice
+>
+> До первой правки перечисли:
+>
+> - точный scope и non-goals;
+> - изменяемые runtime files;
+> - изменяемые test/fixture files;
+> - инварианты, которые нельзя нарушить;
+> - targeted checks, которые докажут каждый acceptance criterion;
+> - возможный rollback;
+> - ожидаемое изменение bundle/visual/runtime contract.
+>
+> Не смешивай redesign, архитектурный refactoring, CSS cleanup, dependency update и unrelated test repair в одном PR без объективной необходимости.
+>
+> ### 5. Реализуй контракт, а не картинку или отдельный happy path
+>
+> Во время разработки:
+>
+> - сохраняй ownership boundaries между runtime, presentation, session, navigation и API;
+> - используй существующие типизированные clients и validators;
+> - добавляй source-level/unit contract одновременно с runtime-правкой;
+> - выбирай controls через role, точное accessible name и owning container;
+> - не используй `.first()` для скрытия неоднозначности;
+> - не увеличивай timeout вместо исправления synchronization/runtime defect;
+> - не отключай axe rule, browser project, visual assertion или security gate;
+> - не раскрывай скрытый ответ и не меняй production UX ради неверного теста;
+> - не вводи неизвестный CSS token и raw value без design-system justification;
+> - не обновляй snapshot вслепую: сначала проверь actual artifact против Figma;
+> - не создавай временный write-workflow, если изменение можно внести обычным commit. Если one-shot workflow объективно неизбежен, он должен быть минимальным, path-guarded, удалён из diff до финального CI, а bot-authored head не считается финальным.
+>
+> ### 6. Проверяй по нарастающей, а не только полным CI в конце
+>
+> Выполняй gates в таком порядке:
+>
+> 1. repository search и source-contract tests;
+> 2. lint и typecheck затронутой области;
+> 3. targeted unit/integration tests;
+> 4. targeted E2E для каждого состояния в Chromium и WebKit;
+> 5. compact Android и iOS WebKit scenarios;
+> 6. keyboard, screen reader semantics, axe в Light/Dark и reduced motion;
+> 7. reload, Back/Forward, duplicate submit и offline/recovery journeys;
+> 8. visual regression в Linux container;
+> 9. route bundle/performance budgets;
+> 10. полный required CI на обычном developer-authored final head.
+>
+> После каждого failure остановись. Сначала прочитай полный log, screenshot, trace и artifact, сформулируй подтверждённую первопричину и только затем меняй код. Не запускай серию случайных исправлений.
+>
+> ### 7. Перед Ready и merge выполни финальный аудит
+>
+> PR нельзя переводить в Ready, пока не выполнено всё:
+>
+> - diff содержит только целевые файлы;
+> - отсутствуют temporary workflows, trigger files и accidental artifacts;
+> - нет unresolved review threads;
+> - acceptance criteria сопоставлены с конкретными tests;
+> - новые visual baselines перечислены и проверены в Linux;
+> - bundle budget не повышен только ради зелёного CI;
+> - финальный head создан обычным credential, а required CI завершён success;
+> - Issue/PR description содержит source of truth, ownership boundaries, root causes найденных дефектов и полный validation record;
+> - новые знания о предотвращении ошибок добавлены в `.agents/AGENTS.md`.
+>
+> ### 8. Формат обязательного pre-flight record
+>
+> До кодирования выведи и сохрани в рабочем контексте:
+>
+> ```markdown
+> ## Pre-flight
+> - Issue / PR / base SHA:
+> - Source of truth:
+> - Production entry и owners:
+> - Scope / non-goals:
+> - Contract matrix:
+> - API и state transitions:
+> - Responsive/browser differences:
+> - History/storage/recovery semantics:
+> - CSS tokens и visual states:
+> - Existing tests/mocks/legacy consumers:
+> - Risks:
+> - Planned files:
+> - Targeted validation:
+> - Full CI gate:
+> ```
+>
+> Если record неполон, не начинай реализацию. Если в ходе работы обнаружен новый контракт, сначала обнови record и tests, затем продолжай кодирование.
+
+### Почему PR #209 потребовал несколько итераций
+
+Ошибки возникли не из-за одной сложной функции, а из-за реактивного порядка разработки: отдельные контракты проверялись только после очередного падения CI, а не были сведены в общую матрицу до первой правки.
+
+Основные причины:
+
+- responsive CTA contract не был заранее разделён на desktop composer и compact recommendation;
+- API fixture возвращал жёсткие параметры вместо фактического request contract;
+- E2E ожидал скрытый Recall answer вместо публичного cloze prompt;
+- browser history semantics `push`/`replace` не были проверены для полного Home → Back journey;
+- CSS использовал необъявленный token, а Light/Dark contrast audit выполнялся поздно;
+- controlled textbox не был заранее проверен по native event contract в WebKit;
+- Linux visual baselines появились только после функциональной матрицы;
+- временные write-workflows усложнили head/CI lifecycle и создали лишние точки отказа.
+
+Следствие: каждый следующий gate находил новый класс ошибки. Pre-flight prompt выше делает эти проверки обязательными до реализации и запрещает считать частично зелёную матрицу доказательством production readiness.
 
 ## 1. Адаптивность в тестах (Mobile-First UI)
 
-Playwright-тесты в LexiGo запускаются в 3 окружениях (`desktop-chromium`, `desktop-webkit`, `android-chromium`/`ios-webkit`). 
+Playwright-тесты в LexiGo запускаются в 3 окружениях (`desktop-chromium`, `desktop-webkit`, `android-chromium`/`ios-webkit`).
 
 - **Разворачивайте скрытые элементы.** Если в мобильном UI часть настроек скрывается под кнопкой «Настроить урок», тест не сможет с ними взаимодействовать и упадет по таймауту. Перед взаимодействием с контролами внутри Progressive UI определяйте layout по viewport и дожидайтесь semantic disclosure, а не используйте мгновенный snapshot `isVisible()` сразу после navigation:
   ```typescript
@@ -18,183 +184,179 @@ Playwright-тесты в LexiGo запускаются в 3 окружениях
   ```
 - **Выбирайте CTA по layout contract.** Полный desktop composer использует «Начать урок», а compact recommendation card — «Начать рекомендуемый урок». Не ищите desktop-only control в mobile layout и не скрывайте расхождение `.first()`; scope CTA через owning `article`, `region` или composer container.
 - **Пересекающиеся accessible names требуют `exact: true`.** Кнопки «Знал»/«Не знал» и «Сохранить и выйти»/«Назад — сохранить и выйти из урока» намеренно содержат общие фрагменты. Для таких controls всегда используйте точное имя или scope через ближайший `dialog`, `group` или `region`; strict-mode violation нельзя скрывать `.first()`.
-- **Осторожно с `getByText` и `toBeVisible`**. Если элемент скрыт за аккордеоном или полностью вырезан из мобильного Layout через CSS `display: none` (например, блок `lx-lesson-preview`), `expect(locator).toBeVisible()` логично упадёт на мобилках. В таких случаях оборачивайте проверку в условие для десктопа:
-  ```typescript
-  if ((page.viewportSize()?.width || 1000) >= 768) {
-    await expect(page.getByText("... summary ...")).toBeVisible();
-  }
-  ```
+- **Осторожно с `getByText` и `toBeVisible`.** Если элемент скрыт за аккордеоном или полностью вырезан из мобильного Layout через CSS `display: none`, проверяйте только фактически существующий layout contract.
 
 ## 2. Скролл и History API (Next.js)
 
-- **Ожидайте debouncing скролла**. Next.js сохраняет позицию скролла в `sessionStorage` для `next/router`, но делает это с небольшим делей-debouncing'ом (около 100-250ms) после события скролла. Если тест выполняет программный скролл (`scrollIntoViewIfNeeded`, `window.scrollTo`) и **сразу же** кликает по ссылке (переходит на другую страницу), Next.js может не успеть сохранить позицию скролла, и при возврате (`page.goBack()`) позиция будет равна 0.
-- **Всегда добавляйте задержку**:
-  ```typescript
-  await page.getByRole("button", { name: "Открыть" }).scrollIntoViewIfNeeded();
-  await page.waitForTimeout(500); // Обязательно ждём перед навигацией
-  const scrollBefore = await page.evaluate(() => window.scrollY);
-  await page.getByRole("button", { name: "Открыть" }).click();
-  ```
+- **Ожидайте debouncing скролла.** Перед немедленной навигацией после программного scroll необходимо дождаться сохранения snapshot или явно flush-нуть scheduler.
+- `replaceState` допустим для canonicalization, redirect и намеренной замены текущей записи. Для recoverable state, к которому должен возвращать Back, используйте новую history entry.
 
-## 3. API Моки и Дефолтные значения
+## 3. API моки и дефолтные значения
 
-- Если вы меняете дефолтное поведение в UI (например, `studyMode` стал по умолчанию `recall`), обновите API-моки в тестах так, чтобы они либо отражали новое дефолтное поведение, либо возвращали параметры обратно из тела запроса (echoing). Иначе тест сломается на валидации UI состояния после ответа сервера.
+- Если меняется дефолтное поведение UI, синхронизируйте API-моки. Preview/create mocks по умолчанию должны echo параметры request body, если тест не проверяет намеренную server normalization.
+- Multi-step journey обязан мокировать все mutations и возвращать актуальные `lessonVersion`, `lessonCurrentIndex`, completion и judgement fields.
 
 ## 4. Визуальные регрессии
 
-- **Не обновляйте снепшоты на macOS.** Скриншоты, сгенерированные локально, упадут в CI (Linux Ubuntu) из-за разницы в рендеринге шрифтов. Используйте Docker (`scripts/ci/frontend-container.sh`) или GitHub Actions для обновления визуальных тестов.
+- **Не обновляйте snapshots на macOS.** Используйте Linux project container (`scripts/ci/frontend-container.sh`) или GitHub Actions.
+- Сначала проверьте actual artifact против Figma, затем добавляйте только явно перечисленные baselines и повторно запускайте visual test без `--update-snapshots`.
 
-## 5. Доступность (Accessibility)
+## 5. Доступность
 
-- Привязывайтесь к `getByRole` и `getByText`.
-- Соблюдайте семантику (используйте `<button>`, а не `<div>` с `onClick`), чтобы тесты в группе `ui-accessibility` проходили успешно.
+- Привязывайтесь к `getByRole`, фактическому accessible name и owning semantic container.
+- Соблюдайте нативную семантику controls.
+- Проверяйте blocking axe audit в Light и Dark, keyboard navigation и reduced motion.
 
 ## 6. Обязательная фиксация предотвращения повторных ошибок
 
-Каждая обнаруженная ошибка должна завершаться не только исправлением текущего падения, но и документированной профилактикой повторения. Это относится к локальным проверкам, unit/integration/E2E-тестам, GitHub Actions, visual regression, accessibility, performance, stage/production smoke, runtime-дефектам и замечаниям code review.
+Каждая обнаруженная ошибка должна завершаться не только исправлением текущего падения, но и документированной профилактикой повторения. Это относится к unit/integration/E2E, GitHub Actions, visual regression, accessibility, performance, stage/production smoke, runtime-дефектам и замечаниям review.
 
-После появления ошибки агент или разработчик обязан:
+После появления ошибки агент обязан:
 
-1. Сначала установить подтверждённую первопричину по логам, artifact, screenshot, trace или воспроизводимому сценарию. Нельзя делать вывод только по названию упавшего job.
-2. Исправить первопричину, а не скрывать симптом ослаблением assertion, увеличением timeout или исключением проверки без отдельного обоснования.
-3. До перевода PR в Ready или сообщения о завершении обновить этот файл и записать конкретное правило, проверку или технический приём, который предотвращает аналогичную ошибку в будущем.
-4. Если подходящее правило уже существует, дополнить или уточнить его вместо создания дублирующей записи.
-5. Для внешнего или транзиентного сбоя также зафиксировать способ его распознавания и безопасную процедуру повторной проверки, если это может повлиять на будущие решения команды.
+1. Установить подтверждённую первопричину по log, artifact, screenshot, trace или воспроизводимому сценарию.
+2. Исправить первопричину, а не скрывать симптом timeout, ослаблением assertion или исключением gate.
+3. Обновить этот файл до перевода PR в Ready.
+4. Дополнить существующее правило вместо создания дубля.
+5. Для внешнего или транзиентного сбоя зафиксировать способ распознавания и безопасной повторной проверки.
 
-Не копируйте в этот файл длинный лог ошибки. Запись должна содержать применимое знание:
+Формат записи:
 
 ```markdown
 ### YYYY-MM-DD — <категория / краткое название ошибки>
 
 - **Симптом:** какой check, route или сценарий упал.
 - **Первопричина:** подтверждённая техническая причина.
-- **Профилактика:** что необходимо делать или запрещено делать в следующих задачах.
-- **Обязательная проверка:** конкретный test, command, assertion, artifact или CI gate, подтверждающий отсутствие регрессии.
-- **Область действия:** компоненты, routes, viewport, browser или окружения, к которым относится правило.
+- **Профилактика:** что необходимо делать или запрещено делать.
+- **Обязательная проверка:** конкретный test, command, assertion, artifact или CI gate.
+- **Область действия:** components, routes, viewport, browser или environments.
 ```
 
-PR не считается полностью готовым, если в процессе работы возникла новая категория ошибки, но профилактическое знание не добавлено в `.agents/AGENTS.md` и не связано с уже существующим правилом.
+PR не считается готовым, если новая категория ошибки не связана с профилактическим правилом.
 
 ### 2026-07-24 — React DOM ownership в модальных keyboard traps
 
-- **Симптом:** unit gate `components/react-dom-ownership.test.ts` сообщил `global document event delegation` для нового presentation-компонента.
-- **Первопричина:** focus trap диалога подписывался через `document.addEventListener("keydown", ...)`, хотя весь диалог принадлежит React subtree.
-- **Профилактика:** keyboard trap, Escape и циклический Tab обрабатывать через React `onKeyDown` на корневом элементе диалога; глобальные document/window listeners допустимы только для действительно внешних lifecycle-событий с явным обоснованием.
-- **Обязательная проверка:** `npm test -- components/react-dom-ownership.test.ts` и keyboard E2E безопасного выхода.
+- **Симптом:** unit gate сообщил global document event delegation для нового presentation-компонента.
+- **Первопричина:** focus trap подписывался через `document.addEventListener`, хотя dialog принадлежит React subtree.
+- **Профилактика:** keyboard trap, Escape и циклический Tab обрабатывать через React `onKeyDown` на корне dialog; глобальные listeners допустимы только для внешних lifecycle-событий с обоснованием.
+- **Обязательная проверка:** `components/react-dom-ownership.test.ts` и keyboard E2E.
 - **Область действия:** React dialogs, modals, drawers и focused routes.
 
 ### 2026-07-24 — Ложные срабатывания source-contract regex на комментариях
 
-- **Симптом:** `app/active-lesson.test.ts` ошибочно обнаружил raw hex color в CSS, хотя совпадением оказался номер Issue `#193` в комментарии.
-- **Первопричина:** regex анализировал комментарии и исполняемый CSS как один текстовый поток.
-- **Профилактика:** перед проверкой запрещённых CSS literals удалять block/line comments либо использовать parser-aware проверку; не ослаблять запрет на реальные raw values.
-- **Обязательная проверка:** unit contract должен падать на реальном `#rrggbb` в declaration и проходить при `#123` только внутри комментария/документации.
-- **Область действия:** source-contract tests для CSS, TS/TSX и конфигураций.
+- **Симптом:** source contract обнаружил raw hex в номере Issue внутри комментария.
+- **Первопричина:** regex анализировал комментарии и исполняемый CSS как один поток.
+- **Профилактика:** удалять comments перед regex-проверкой или применять parser-aware анализ.
+- **Обязательная проверка:** contract падает на declaration и проходит на том же значении в комментарии.
+- **Область действия:** CSS, TS/TSX и configuration source contracts.
 
 ### 2026-07-24 — PR workflow после commit от `github-actions[bot]`
 
-- **Симптом:** PR workflow завершился как `action_required`, при этом GitHub API вернул пустой список jobs.
-- **Первопричина:** head SHA был создан workflow через `GITHUB_TOKEN`; автоматически возникший PR synchronize run не был обычным исполняемым CI run. Следующий commit через авторизованный GitHub connector создал штатный run с jobs.
-- **Профилактика:** временные write-workflows не считать источником финального CI; после их bot-commit обязательно создать содержательный commit от разработчика/агента через обычный repository credential и проверять новый head SHA.
-- **Обязательная проверка:** `fetch_commit_workflow_runs` должен вернуть CI run со status `queued|in_progress|completed`, а `fetch_workflow_run_jobs` — непустой список jobs.
-- **Область действия:** GitHub Actions workflows с `contents: write`, snapshot generation и автоматические source migrations.
+- **Симптом:** PR workflow получил `action_required` и пустой список jobs.
+- **Первопричина:** head SHA создан workflow через `GITHUB_TOKEN`.
+- **Профилактика:** bot commit не считать финальным head; temporary write-workflow удалить, затем создать содержательный обычный commit и запустить штатный CI.
+- **Обязательная проверка:** финальный CI содержит непустой список jobs и завершён success.
+- **Область действия:** workflows с `contents: write`, snapshots и automated migrations.
 
+### 2026-07-24 — Contrast semantic token недостаточен для мелкого текста
 
-### 2026-07-24 — Contrast semantic token недостаточен для мелкого текста на surface
-
-- **Симптом:** blocking axe audit обнаружил `color-contrast` 3.42:1 у `Сохранено` и eyebrow активного урока.
-- **Первопричина:** базовый retained token предназначен для статуса/акцента, но не обеспечивает WCAG AA 4.5:1 для текста 12–14 px на белой surface.
-- **Профилактика:** сохранять базовый semantic status token для fills/borders, а для мелкого foreground-текста вводить локальный token только после расчёта Light/Dark contrast; не отключать axe rule и не увеличивать шрифт как замену проверке.
-- **Обязательная проверка:** unit-расчёт contrast ratio >= 4.5 для обеих appearance surfaces и blocking axe audit route/dialog.
-- **Область действия:** status labels, eyebrow, compact captions и feedback text на semantic surfaces.
+- **Симптом:** axe обнаружил недостаточный contrast у мелкого foreground text.
+- **Первопричина:** status token использован как text token без расчёта пары.
+- **Профилактика:** вводить foreground token только после расчёта Light/Dark contrast; не отключать axe.
+- **Обязательная проверка:** contrast ratio >= 4.5 и blocking axe audit.
+- **Область действия:** labels, eyebrow, captions и feedback text.
 
 ### 2026-07-24 — Computed CSS duration сериализуется по-разному
 
-- **Симптом:** reduced-motion E2E ожидал строку `0.00001s`, Chromium/WebKit вернули эквивалентную запись `1e-05s`.
-- **Первопричина:** тест сравнивал формат сериализации computed style, а не числовую длительность transition.
-- **Профилактика:** числовые CSS values из `getComputedStyle` нормализовать через `Number.parseFloat` и проверять семантический предел; не менять runtime value под формат одного browser engine.
-- **Обязательная проверка:** reduced-motion test проходит в Chromium и WebKit при duration <= 0.00001s.
-- **Область действия:** motion, duration, opacity, transform и другие computed CSS assertions.
+- **Симптом:** browser engines вернули разные строковые форматы эквивалентной duration.
+- **Первопричина:** тест сравнивал сериализацию, а не числовое значение.
+- **Профилактика:** нормализовать через `Number.parseFloat` и проверять semantic threshold.
+- **Обязательная проверка:** Chromium и WebKit проходят при duration <= установленного предела.
+- **Область действия:** motion и computed CSS assertions.
 
-### 2026-07-24 — Redesign удалил legacy controls, но E2E продолжил искать старую структуру
+### 2026-07-24 — Redesign удалил legacy controls, но E2E искал старую структуру
 
-- **Симптом:** lesson, accessibility и ownership suites искали `Слово N`, `Урок в процессе` и tabs `Карточка/Пример/Контекст`, которых нет в canonical Active Lesson.
-- **Первопричина:** тесты проверяли внутреннюю legacy-разметку и копирайт вместо устойчивых contract semantics новой production slice.
-- **Профилактика:** при замене canonical screen одновременно мигрировать все потребляющие suites на roles/state contracts: progressbar `aria-valuetext`, route region, prompt heading, focusable controls и dialog; удалённый UX не сохранять только ради старого теста.
-- **Обязательная проверка:** repository search не находит удалённые Active Lesson selectors, а lesson/a11y/ui ownership suites проходят во всех configured projects.
-- **Область действия:** route redesign, Playwright selectors, accessibility journeys и React ownership tests.
+- **Симптом:** suites искали удалённые controls и legacy copy.
+- **Первопричина:** tests были связаны с внутренней разметкой вместо устойчивого semantic contract.
+- **Профилактика:** одновременно с canonical screen мигрировать все suites на roles, state contracts, focus и dialog semantics; не сохранять удалённый UX ради теста.
+- **Обязательная проверка:** repository search не находит retired selectors, все configured projects проходят.
+- **Область действия:** route redesign и Playwright selectors.
 
 ### 2026-07-24 — Первичный visual baseline отсутствует
 
-- **Симптом:** visual regression сохранил `*-actual.png` и завершился ошибкой `A snapshot doesn't exist` для новых Active Lesson states.
-- **Первопричина:** production state новый и ещё не имел утверждённого Linux snapshot; отдельный Dark scenario до baseline дополнительно блокировался нестрогим selector.
-- **Профилактика:** сначала устранить runtime/test defects и вручную сверить actual artifact с Figma, затем генерировать baseline только в project Linux container; добавлять в commit только явно перечисленные новые screenshots.
-- **Обязательная проверка:** повторный `npm run test:e2e:visual` сравнивает существующие Linux baselines без `--update-snapshots` и проходит.
-- **Область действия:** visual regression, new canonical frames, Linux rendering environment.
+- **Симптом:** visual test сообщил `A snapshot doesn't exist`.
+- **Первопричина:** новый canonical state не имел утверждённого Linux baseline.
+- **Профилактика:** после runtime validation проверить actual против Figma, сгенерировать baseline в Linux и commit-нуть только approved PNG.
+- **Обязательная проверка:** повторный visual run без update mode проходит.
+- **Область действия:** new canonical frames и Linux rendering.
 
+### 2026-07-24 — UI journey не синхронизировал review API mock
 
-### 2026-07-24 — UI ownership journey не синхронизировал review API mock
+- **Симптом:** journey оставался на первой карточке и получал `not_mocked`/timeout.
+- **Первопричина:** fixture не поддерживал последующую mutation.
+- **Профилактика:** мокировать полный mutation sequence с server-owned position/version/completion.
+- **Обязательная проверка:** multi-step journey проходит во всех configured projects.
+- **Область действия:** Playwright API mocks и lesson review mutations.
 
-- **Симптом:** все browser projects UI ownership test оставались на первой Study-карточке, показывали `Действие не выполнено`, а клик по `Дальше` завершался timeout.
-- **Первопричина:** redesign сделал Study confidence реальным review submit по существующему backend contract, но локальный route mock теста поддерживал только создание lesson session и возвращал 404 для `/review`.
-- **Профилактика:** каждый E2E journey, который выполняет действие пользователя, обязан мокировать не только initial GET/POST, но и все последующие mutation responses с актуальными `lessonVersion`, `lessonCurrentIndex`, completion и judgement fields. Assertions после mutation должны выводиться из фактического mock payload и server-provided position, а не из соседних элементов fixture; 404 `not_mocked` и ожидание другого item считать ошибкой тестового контракта, а не увеличивать timeout.
-- **Обязательная проверка:** UI ownership journey проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit и после rating переходит на server-provided вторую позицию.
-- **Область действия:** Playwright API mocks, Active Lesson review mutations и multi-step journeys.
+### 2026-07-24 — Глобальный role locator стал неоднозначным
 
-### 2026-07-24 — Глобальный role locator стал неоднозначным после появления второго status
-
-- **Симптом:** email-change journey получил strict-mode violation: `getByRole("status")` совпал одновременно с account notice и пустым progress state.
-- **Первопричина:** locator полагался на глобальную уникальность ARIA role, хотя на странице корректно присутствовали несколько независимых live/status regions.
-- **Профилактика:** повторяющиеся roles (`status`, `alert`, `navigation`, `group`) всегда ограничивать accessible name, ожидаемым текстом или ближайшим semantic container; не использовать `.first()` для скрытия неоднозначности.
-- **Обязательная проверка:** account-email-change test выбирает status через `filter({ hasText: "Email изменён" })` и проходит в Chromium/WebKit.
-- **Область действия:** accessibility-first Playwright selectors и страницы с несколькими live regions.
+- **Симптом:** strict-mode violation у повторяющегося role.
+- **Первопричина:** locator полагался на глобальную уникальность role.
+- **Профилактика:** scope через name, text или semantic owner; `.first()` запрещён как маскировка.
+- **Обязательная проверка:** targeted cross-browser test.
+- **Область действия:** pages с несколькими live regions/navigation/groups.
 
 ### 2026-07-24 — Lesson Composer mock и CTA расходились с layout contract
 
-- **Симптом:** все новые Lesson Result journeys падали до начала урока: desktop CTA «Начать урок» оставался disabled, а Android не находил этот control.
-- **Первопричина:** preview/create mock возвращал жёсткие `phrases/recall/15` вместо echo фактических `source/studyMode/lessonSize`, поэтому runtime отвергал stale preview; helper одновременно искал desktop CTA в compact recommendation layout.
-- **Профилактика:** lesson preview/create mocks обязаны echo параметры request body, если сценарий не проверяет намеренную server normalization. Shared helpers должны явно разделять full composer и compact recommendation CTA по viewport и scope control через owning semantic container.
-- **Обязательная проверка:** `e2e/lesson-result.spec.ts` проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit как в UI shards, так и в dedicated Lesson completion group.
-- **Область действия:** Lesson Composer, shared Playwright fixtures, `/api/v1/lessons/preview`, `/api/v1/lessons` и responsive CTA contracts.
-
+- **Симптом:** desktop CTA был disabled, Android не находил control.
+- **Первопричина:** stale hardcoded preview response и desktop locator в compact layout.
+- **Профилактика:** echo request contract; разделять full composer и compact recommendation по viewport и owner.
+- **Обязательная проверка:** Lesson Result E2E проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit.
+- **Область действия:** Lesson Composer fixtures и responsive CTA.
 
 ### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy
 
-- **Симптом:** Lesson completion и UI shards зависали на disabled `Сверить ответ` и не находили продолжение Academic Technical English после результата.
-- **Первопричина:** тесты заполняли удалённый `#premium-answer` вместо видимого canonical textbox и использовали название состояния «Следующий блок» как accessible name CTA, хотя кнопка называется «Следующий урок».
-- **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.
-- **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.
-- **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.
+- **Симптом:** journeys заполняли удалённый control или искали CTA по названию состояния.
+- **Первопричина:** selectors не соответствовали фактическому accessible contract.
+- **Профилактика:** использовать role, exact accessible name и visible owner; heading, eyebrow и CTA считать разными контрактами.
+- **Обязательная проверка:** repository search не находит retired selectors.
+- **Область действия:** Active Lesson, Lesson Result и progressive UI.
 
-### 2026-07-24 — Recall E2E раскрыл скрытый ответ вместо проверки prompt contract
+### 2026-07-24 — Recall E2E раскрыл скрытый ответ
 
-- **Симптом:** distinct-next Lesson Result journey успешно открыл новый Recall-урок, но упал в ожидании полного ответа `Verify the checkpoint.`.
-- **Первопричина:** тест проверял скрытый answer text, хотя objective Recall до попытки намеренно показывает только cloze prompt `Verify the ____.`.
-- **Профилактика:** assertions для Recall строить по публичному prompt heading, textbox и состоянию reveal; полный ответ до submit должен отсутствовать. Нельзя менять runtime и раскрывать ответ ради прохождения теста.
-- **Обязательная проверка:** distinct-next E2E видит новый cloze heading, не видит полный ответ и не видит prompt завершённого блока во всех configured Playwright projects.
-- **Область действия:** Active Lesson Recall, cloze exercises, distinct-next transitions и answer-leakage tests.
+- **Симптом:** test ожидал полный answer до попытки.
+- **Первопричина:** assertion нарушал objective Recall contract.
+- **Профилактика:** до submit проверять только public cloze prompt, textbox и отсутствие answer leakage.
+- **Обязательная проверка:** distinct-next E2E во всех configured projects.
+- **Область действия:** Recall, cloze и answer reveal.
 
-### 2026-07-24 — `replaceState` уничтожил возврат к сохранённому Lesson Result
+### 2026-07-24 — `replaceState` уничтожил возврат к Lesson Result
 
-- **Симптом:** reload результата работал, но после «На главную» и browser Back пользователь попадал на `/learn`, а не на сохранённый итог.
-- **Первопричина:** terminal action вызывал navigation с `replace=true`, поэтому запись Lesson Result удалялась из browser history.
-- **Профилактика:** переходы с recoverable result/state screen должны использовать `pushState`, если Back является частью поддерживаемого сценария. `replaceState` оставлять только для canonicalization, redirect или намеренной замены текущей записи.
-- **Обязательная проверка:** E2E выполняет complete → reload → Home → Back, восстанавливает результат из `sessionStorage` и подтверждает отсутствие повторного review request.
-- **Область действия:** Lesson Result, history restoration, terminal actions и route-state persistence.
+- **Симптом:** после Home и Back пользователь не возвращался к результату.
+- **Первопричина:** recoverable result entry была заменена.
+- **Профилактика:** для поддерживаемого Back journey использовать новую history entry.
+- **Обязательная проверка:** complete → reload → Home → Back без duplicate review.
+- **Область действия:** route-state persistence и terminal actions.
 
-### 2026-07-24 — Необъявленный CSS token сделал primary CTA неконтрастным
+### 2026-07-24 — Необъявленный CSS token сделал CTA неконтрастным
 
-- **Симптом:** blocking axe audit обнаружил contrast ratio 2.59:1 у `.lx-lesson-result__primary`.
-- **Первопричина:** CSS использовал отсутствующий `--ak-color-on-primary`; декларация стала invalid at computed-value time, и кнопка унаследовала тёмный foreground на тёмном primary background.
-- **Профилактика:** feature CSS может использовать только объявленные semantic tokens и утверждённые foreground/background pairs. Для текущей Foundation palette primary CTA использует `surface` поверх `primary`; неизвестный token должен блокироваться source-contract test.
-- **Обязательная проверка:** `app/lesson-result.test.ts` запрещает `--ak-color-on-primary`, фиксирует пару `surface/primary`, а blocking axe audit проходит в Light и Dark appearance.
-- **Область действия:** semantic design tokens, primary CTA, CSS custom properties и accessibility audits.
-
+- **Симптом:** axe обнаружил contrast 2.59:1.
+- **Первопричина:** неизвестный custom property стал invalid и foreground унаследовался.
+- **Профилактика:** feature CSS использует только declared tokens и approved pairs; неизвестный token блокируется source contract.
+- **Обязательная проверка:** source test и axe Light/Dark.
+- **Область действия:** design tokens и primary CTA.
 
 ### 2026-07-24 — Controlled Recall textbox не обработал native `input` в WebKit
 
-- **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; Playwright trace показывал, что `fill()` завершился, но controlled textbox снова имел пустое значение.
-- **Первопричина:** Recall input обновлял React state только через `onChange`; в проверяемом WebKit flow native `input` после программного заполнения не синхронизировал controlled value до повторного render.
-- **Профилактика:** controlled text inputs, используемые в cross-browser critical journeys, обрабатывать через явный `onInput` и `event.currentTarget.value`. E2E дополнительно обязан выполнить `focus`, `fill`, `toHaveValue`, проверить enabled primary action и только затем submit; увеличение timeout не является исправлением.
-- **Обязательная проверка:** source-contract требует `onInput` и запрещает прежний `onChange`; Recall, mixed-practice и Lesson Result scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit.
-- **Область действия:** controlled inputs, React event handling, WebKit/iOS WebKit и objective Recall journeys.
+- **Симптом:** `fill()` завершался, но controlled value снова становился пустым, CTA оставался disabled.
+- **Первопричина:** state обновлялся только через несовместимый для этого flow event contract.
+- **Профилактика:** critical controlled text input обрабатывать через `onInput` и `event.currentTarget.value`; E2E выполняет focus → fill → toHaveValue → enabled → submit.
+- **Обязательная проверка:** source contract и Recall suites во всех Chromium/WebKit projects.
+- **Область действия:** controlled inputs и objective Recall.
+
+### 2026-07-25 — Реактивная валидация вместо pre-flight matrix
+
+- **Симптом:** PR #209 требовал последовательных исправлений responsive CTA, API mocks, Recall assertions, history, CSS contrast, WebKit input и visual baselines.
+- **Первопричина:** contracts проверялись по одному после падений downstream gates, а не были собраны и доказаны до первой реализации.
+- **Профилактика:** обязательный prompt раздела 0, contract matrix, repository-wide consumer audit и staged validation до полного CI.
+- **Обязательная проверка:** каждый новый PR содержит заполненный pre-flight record, tests для заявленных invariants и один чистый финальный CI run на developer-authored head.
+- **Область действия:** все production задачи LexiGo.
