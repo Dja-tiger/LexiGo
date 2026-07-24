@@ -341,7 +341,7 @@ export function ActiveLessonPresentation({
                 value={typedAnswer}
                 readOnly={revealed}
                 aria-describedby={revealed ? "active-lesson-feedback-note" : undefined}
-                onChange={(event) => onTypedAnswerChange(event.target.value)}
+                onInput={(event) => onTypedAnswerChange(event.currentTarget.value)}
                 onKeyDown={handleRecallKeyDown}
                 placeholder="Введите ответ…"
                 autoComplete="off"

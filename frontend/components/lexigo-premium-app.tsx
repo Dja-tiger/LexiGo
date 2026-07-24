@@ -42,7 +42,19 @@ import {
   russianPlural,
   type LessonComposition,
 } from "../lib/lesson-composition";
-import { decideLessonAdvance, resolveActiveLessonIndex, summarizePersistedLesson } from "../lib/lesson-flow";
+import { decideLessonAdvance, resolveActiveLessonIndex } from "../lib/lesson-flow";
+import {
+  buildLessonResultSnapshot,
+  claimDailyGoalCelebration,
+  clearLessonResultSnapshot,
+  isDistinctLessonResultCandidate,
+  readLessonResultSnapshot,
+  resolveLessonResultContinuation,
+  writeLessonResultSnapshot,
+  type LessonResultContinuation,
+  type LessonResultJudgement,
+  type LessonResultSnapshot,
+} from "../lib/lesson-result";
 import {
   buildAnswerOptions,
   exerciseAnswer,
@@ -102,6 +114,7 @@ import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";
 import { ActiveLessonPresentation } from "./active-lesson-presentation";
+import { LessonResultPresentation } from "./lesson-result-presentation";
 import { LessonComposerProgressiveShell } from "./lesson-composer-progressive-shell";
 import { SpeechPlayerButton } from "./speech-player-button";
 
@@ -224,6 +237,7 @@ type StartOverrides = {
   items?: LearningItem[];
   catalogQuery?: CatalogBrowseQuery;
   journeyIntent?: ProductJourneyIntent;
+  previousResult?: LessonResultSnapshot;
 };
 
 type IconName =
@@ -719,6 +733,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [serverLessonCompleted, setServerLessonCompleted] = useState(false);
   const [serverNextIndex, setServerNextIndex] = useState<number | null>(null);
   const [serverSkippedItems, setServerSkippedItems] = useState(0);
+  const [lessonResult, setLessonResult] = useState<LessonResultSnapshot | null>(null);
+  const [lessonResultContinuation, setLessonResultContinuation] = useState<LessonResultContinuation>({ kind: "checking" });
+  const [lessonResultCelebrate, setLessonResultCelebrate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState<LessonReviewResponse | null>(null);
@@ -731,6 +748,9 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [cardStartedAt, setCardStartedAt] = useState(0);
   const reviewInFlightRef = useRef(false);
   const lessonCreateInFlightRef = useRef(false);
+  const lessonJudgementsRef = useRef<Record<string, LessonResultJudgement>>({});
+  const lessonProgressBeforeRef = useRef<number | null>(null);
+  const latestProgressRef = useRef<ProgressSummary | null>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
   const navigationRef = useRef(navigation);
@@ -739,7 +759,8 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   const [navigationTabs] = useState(createNavigationTabStore);
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigationFocus | null>(null);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
-  const lessonNavigationLocked = navigation.view === "lesson" && lessonStarted && !lessonComplete;
+  const lessonFocusMode = navigation.view === "lesson" && lessonStarted;
+  const lessonNavigationLocked = lessonFocusMode && !lessonComplete;
 
   const loadCatalogMetadataResource = useCallback(async (signal?: AbortSignal) => {
     setCatalogMetadataStatus("loading");
@@ -931,6 +952,94 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   }, [navigation.view]);
 
   useEffect(() => {
+    latestProgressRef.current = progress;
+  }, [progress]);
+
+  useEffect(() => {
+    if (
+      !session
+      || navigation.view !== "lesson"
+      || lessonStarted
+      || activeLesson
+      || activeLessonStatus.phase !== "ready"
+    ) return;
+
+    let restored: LessonResultSnapshot | null = null;
+    try {
+      restored = readLessonResultSnapshot(window.sessionStorage, session.user.id);
+    } catch {
+      restored = null;
+    }
+    if (!restored) return;
+
+    const restoredSource = SOURCE_VALUES.includes(restored.source as LessonSource)
+      ? restored.source as LessonSource
+      : "mixed";
+    setSource(restoredSource);
+    setStudyMode(restored.studyMode);
+    setLessonSize(lessonSizeFromAPI(restored.lessonSize));
+    setLessonTopic(restored.topic);
+    setItems([]);
+    setRatings({});
+    lessonJudgementsRef.current = {};
+    lessonProgressBeforeRef.current = restored.reviewsBefore;
+    setLessonResult(restored);
+    setLessonResultContinuation(resolveLessonResultContinuation({ snapshot: restored, previewTotal: null }));
+    setLessonResultCelebrate(false);
+    setLessonStarted(true);
+    setLessonComplete(true);
+    setServerLessonCompleted(true);
+    setServerNextIndex(null);
+    setServerSkippedItems(restored.skipped);
+    setError("");
+  }, [activeLesson, activeLessonStatus.phase, lessonStarted, navigation.view, session]);
+
+  useEffect(() => {
+    if (!session || !lessonResult || !lessonComplete || navigation.view !== "lesson") return;
+    const immediate = resolveLessonResultContinuation({ snapshot: lessonResult, previewTotal: null });
+    if (immediate.kind !== "checking") {
+      setLessonResultContinuation(immediate);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+    setLessonResultContinuation({ kind: "checking" });
+    void authorizedRequest<LessonPreviewResponse>(session, "/api/v1/lessons/preview", {
+      method: "POST",
+      signal: controller.signal,
+      body: JSON.stringify({
+        source: lessonResult.source,
+        studyMode: lessonResult.studyMode,
+        lessonSize: lessonResult.lessonSize,
+        ...(lessonResult.topic ? { topic: lessonResult.topic } : {}),
+      }),
+    }).then((result) => {
+      if (cancelled) return;
+      setSession((current) => current?.tokens.accessToken === result.activeSession.tokens.accessToken
+        ? current
+        : result.activeSession);
+      const sourceName = SOURCE_VALUES.includes(lessonResult.source as LessonSource)
+        ? sourceLabel(lessonResult.source as LessonSource)
+        : "Следующий учебный блок";
+      setLessonResultContinuation(resolveLessonResultContinuation({
+        snapshot: lessonResult,
+        previewTotal: result.data.composition.total,
+        nextTitle: sourceName,
+        estimatedMinutes: Math.max(1, Math.round(result.data.composition.total / 2)),
+      }));
+    }).catch(() => {
+      if (cancelled) return;
+      setLessonResultContinuation(resolveLessonResultContinuation({ snapshot: lessonResult, previewTotal: 0 }));
+    });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [lessonComplete, lessonResult, navigation.view, session]);
+
+  useEffect(() => {
     lessonNavigationLockRef.current = lessonNavigationLocked;
   }, [lessonNavigationLocked]);
 
@@ -1007,7 +1116,6 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       ?? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === navigation.detail)
       ?? (remotePhraseDetail?.slug === navigation.detail ? remotePhraseDetail.item : undefined)
     : undefined;
-  const lessonSummary = summarizePersistedLesson(ratings, items.length);
   const successRate = objectiveSuccessRate(progress);
 
   function navigate(
@@ -1153,6 +1261,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         isProgressSummaryPayload,
       );
       if (signal?.aborted) return null;
+      latestProgressRef.current = result.data;
       setProgress(result.data);
       setProgressStatus(readyResourceStatus());
       if (adoptSession) setSession(result.activeSession);
@@ -1364,7 +1473,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     };
   }, [lessonSize, lessonTopic, navigation.view, session, source, studyMode]);
 
-  async function refreshProgress(activeSession: Session): Promise<Session> {
+  async function refreshProgress(activeSession: Session): Promise<{ activeSession: Session; progress: ProgressSummary }> {
     setProgressStatus(loadingResourceStatus());
     try {
       const result = await authorizedRequest<ProgressSummary>(
@@ -1373,10 +1482,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
         {},
         isProgressSummaryPayload,
       );
+      latestProgressRef.current = result.data;
       setSession(result.activeSession);
       setProgress(result.data);
       setProgressStatus(readyResourceStatus());
-      return result.activeSession;
+      return { activeSession: result.activeSession, progress: result.data };
     } catch (requestError) {
       setProgressStatus(failedResourceStatus(requestError, "прогресс"));
       throw requestError;
@@ -1434,8 +1544,13 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
   function applyLesson(lesson: LessonSessionResponse) {
     const lessonItems = lesson.items.map(toLearningItem);
     const restoredRatings: Record<string, ReviewRating> = {};
+    const restoredJudgements: Record<string, LessonResultJudgement> = {};
     lesson.items.forEach((item, index) => {
-      if (item.rating && lessonItems[index]) restoredRatings[lessonItems[index].id] = item.rating;
+      const learningItem = lessonItems[index];
+      if (item.rating && learningItem) {
+        restoredRatings[learningItem.id] = item.rating;
+        restoredJudgements[learningItem.id] = { mode: lesson.studyMode, correct: null };
+      }
     });
     const candidate = lessonItems[lesson.currentIndex];
     const safeIndex = resolveActiveLessonIndex(
@@ -1450,6 +1565,18 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       return false;
     }
     const presentationMode = lesson.studyMode;
+    if (session) {
+      try {
+        clearLessonResultSnapshot(window.sessionStorage, session.user.id);
+      } catch {
+        // A new active server lesson still replaces the transient result in memory.
+      }
+    }
+    setLessonResult(null);
+    setLessonResultContinuation({ kind: "checking" });
+    setLessonResultCelebrate(false);
+    lessonJudgementsRef.current = restoredJudgements;
+    lessonProgressBeforeRef.current = latestProgressRef.current?.reviewsToday ?? null;
     setActiveLesson(lesson);
     setSource(lesson.source);
     setStudyMode(presentationMode);
@@ -1613,26 +1740,38 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
       if (resolvedMode !== "all") {
         const explicitItems = overrides.items?.filter((item) => typeof item.wordId === "number") ?? [];
         if (overrides.items && explicitItems.length !== overrides.items.length) {
-throw new Error("Выбранные элементы ещё не синхронизированы с сервером");
+          throw new Error("Выбранные элементы ещё не синхронизированы с сервером");
         }
+        lessonProgressBeforeRef.current = latestProgressRef.current?.reviewsToday ?? null;
         const result = await authorizedRequest<LessonSessionResponse>(
-currentSession as Session,
-"/api/v1/lessons",
-{
-  method: "POST",
-  body: JSON.stringify({
-    source: resolvedSource,
-    studyMode: resolvedMode,
-    lessonSize: String(resolvedSize),
-    ...(resolvedTopic ? { topic: resolvedTopic } : {}),
-    ...(overrides.items ? { wordIds: explicitItems.map((item) => item.wordId) } : {}),
-  }),
-},
+          currentSession as Session,
+          "/api/v1/lessons",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              source: resolvedSource,
+              studyMode: resolvedMode,
+              lessonSize: String(resolvedSize),
+              ...(resolvedTopic ? { topic: resolvedTopic } : {}),
+              ...(overrides.items ? { wordIds: explicitItems.map((item) => item.wordId) } : {}),
+            }),
+          },
         );
+        if (overrides.previousResult && !isDistinctLessonResultCandidate(overrides.previousResult, {
+          id: result.data.id,
+          itemIds: result.data.items.map((item) => item.id),
+        })) {
+          throw new Error("Следующий урок совпал с завершённым блоком. Обновите очередь и повторите попытку.");
+        }
+        try {
+          clearLessonResultSnapshot(window.sessionStorage, result.activeSession.user.id);
+        } catch {
+          // The new active server lesson remains authoritative when storage is restricted.
+        }
         setSession(result.activeSession);
         if (applyLesson(result.data)) {
-setLessonQueueNotice(mixedLessonFallbackMessage(result.data));
-navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.journeyIntent ?? "lesson_start" });
+          setLessonQueueNotice(mixedLessonFallbackMessage(result.data));
+          navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.journeyIntent ?? "lesson_start" });
         }
         return;
       }
@@ -1769,6 +1908,11 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     setError("");
     try {
       await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
+      try {
+        clearLessonResultSnapshot(window.sessionStorage, session.user.id);
+      } catch {
+        // Logout still clears in-memory state when storage is restricted.
+      }
       setSession(null);
       setProgress(null);
       setProgressStatus(idleResourceStatus());
@@ -1825,9 +1969,14 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     setServerLessonCompleted(false);
     setServerNextIndex(null);
     setServerSkippedItems(0);
+    setLessonResult(null);
+    setLessonResultContinuation({ kind: "checking" });
+    setLessonResultCelebrate(false);
     setReviewFeedback(null);
     setSuggestionStatus("idle");
     setSuggestionError("");
+    lessonJudgementsRef.current = {};
+    lessonProgressBeforeRef.current = null;
     reviewInFlightRef.current = false;
     setError("");
     setLessonQueueNotice("");
@@ -1892,9 +2041,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     let reviewPersisted = false;
     try {
       const reviewMode: AnswerMode = studyMode === "all" ? "study" : studyMode;
-      const path = activeLesson
-        ? `/api/v1/lessons/${activeLesson.id}/words/${currentItem.wordId}/review`
-        : `/api/v1/words/${currentItem.wordId}/review`;
+      const path = `/api/v1/lessons/${activeLesson.id}/words/${currentItem.wordId}/review`;
       const result = await authorizedRequest<LessonReviewResponse>(session, path, {
         method: "POST",
         body: JSON.stringify({
@@ -1907,31 +2054,76 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
           timezoneOffsetMinutes: timezoneOffsetMinutes(),
         }),
       });
+      const nextRatings = { ...ratings, [currentItem.id]: rating };
+      const nextJudgements = {
+        ...lessonJudgementsRef.current,
+        [currentItem.id]: {
+          mode: reviewMode,
+          correct: typeof result.data.correct === "boolean" ? result.data.correct : null,
+        },
+      } satisfies Record<string, LessonResultJudgement>;
+      lessonJudgementsRef.current = nextJudgements;
       setSession(result.activeSession);
-      setRatings((current) => ({ ...current, [currentItem.id]: rating }));
+      setRatings(nextRatings);
       setReviewFeedback(result.data);
       reviewPersisted = true;
       setServerLessonCompleted(result.data.lessonCompleted);
       setServerNextIndex(result.data.lessonCompleted ? null : result.data.lessonCurrentIndex);
       setServerSkippedItems(result.data.lessonSkippedItems);
-      if (activeLesson) {
-        if (result.data.lessonCompleted) {
-          setActiveLesson(null);
-        } else {
-          setActiveLesson((current) => current ? {
-            ...current,
-            currentIndex: result.data.lessonCurrentIndex,
-            version: result.data.lessonVersion,
-            items: current.items.map((item) => item.id === currentItem.wordId
-              ? { ...item, rating, reviewedAt: result.data.lastReviewedAt }
-              : item),
-          } : current);
-        }
+      if (result.data.lessonCompleted) {
+        setActiveLesson(null);
+      } else {
+        setActiveLesson((current) => current ? {
+          ...current,
+          currentIndex: result.data.lessonCurrentIndex,
+          version: result.data.lessonVersion,
+          items: current.items.map((item) => item.id === currentItem.wordId
+            ? { ...item, rating, reviewedAt: result.data.lastReviewedAt }
+            : item),
+        } : current);
       }
+
+      let completionProgress = latestProgressRef.current;
+      let syncPending = false;
       try {
-        await refreshProgress(result.activeSession);
+        const refreshed = await refreshProgress(result.activeSession);
+        completionProgress = refreshed.progress;
       } catch {
+        syncPending = true;
         setError("Оценка сохранена, но статистика обновится после следующей синхронизации.");
+      }
+
+      if (result.data.lessonCompleted) {
+        const completedSnapshot = buildLessonResultSnapshot({
+          userId: result.activeSession.user.id,
+          lessonId: activeLesson.id,
+          source: activeLesson.source,
+          studyMode: activeLesson.studyMode,
+          lessonSize: activeLesson.lessonSize,
+          topic: lessonTopic,
+          itemIds: activeLesson.items.map((item) => item.id),
+          judgements: nextJudgements,
+          ratings: nextRatings,
+          skipped: result.data.lessonSkippedItems,
+          dueNow: completionProgress?.dueNow ?? 0,
+          dailyGoal: completionProgress?.dailyGoal ?? 0,
+          reviewsBefore: lessonProgressBeforeRef.current,
+          reviewsAfter: completionProgress?.reviewsToday ?? null,
+          syncPending,
+        });
+        let celebrate = false;
+        try {
+          writeLessonResultSnapshot(window.sessionStorage, completedSnapshot);
+          celebrate = claimDailyGoalCelebration(window.sessionStorage, completedSnapshot);
+        } catch {
+          // In-memory result remains available when storage is restricted.
+        }
+        setLessonResult(completedSnapshot);
+        setLessonResultContinuation(resolveLessonResultContinuation({
+          snapshot: completedSnapshot,
+          previewTotal: null,
+        }));
+        setLessonResultCelebrate(celebrate);
       }
     } catch (requestError) {
       if (requestError instanceof RequestFailure && (
@@ -1980,7 +2172,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       || session?.user.email.charAt(0).toUpperCase()
       || "L";
 
-    if (lessonNavigationLocked) return null;
+    if (lessonFocusMode) return null;
 
     return (
       <header className="lx-header">
@@ -2730,6 +2922,36 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
     );
   }
 
+  function leaveLessonResult(target: "home" | "progress") {
+    clearLessonState();
+    navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });
+  }
+
+  function startNextLessonFromResult() {
+    if (!session || !lessonResult) return;
+    const resultSource = SOURCE_VALUES.includes(lessonResult.source as LessonSource)
+      ? lessonResult.source as LessonSource
+      : "mixed";
+    void startLesson(session, {
+      source: resultSource,
+      size: lessonSizeFromAPI(lessonResult.lessonSize),
+      mode: lessonResult.studyMode,
+      topic: lessonResult.topic,
+      previousResult: lessonResult,
+      journeyIntent: "lesson_start",
+    });
+  }
+
+  function startDueReviewFromResult() {
+    if (!session) return;
+    void startLesson(session, {
+      source: "mixed",
+      size: 30,
+      mode: "recall",
+      journeyIntent: "lesson_start",
+    });
+  }
+
   function renderLesson() {
     if (!lessonStarted) {
       if (activeLessonStatus.phase === "idle" || activeLessonStatus.phase === "loading") {
@@ -2743,7 +2965,23 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         : <AsyncStatePanel label="Активный урок отсутствует" kind="empty" title="Активного урока нет" message="Выберите режим, раздел и размер блока." actionLabel="Настроить урок" onAction={() => navigate({ view: "learn" })} />;
     }
     if (studyMode === "all") return renderAllItems();
-    if (lessonComplete) return <section className="lx-empty"><span>СЕССИЯ ЗАВЕРШЕНА</span><h1>{items.length ? "Результаты сохранены" : "Нет доступных элементов"}</h1><p>{items.length ? `Знал: ${lessonSummary.known}. Почти: ${lessonSummary.almost}. Не знал: ${lessonSummary.again}. Пропущено: ${Math.max(lessonSummary.skipped, serverSkippedItems)}.` : "Измените раздел или дождитесь следующего интервала."}</p><div className="lx-hero-actions"><button className="lx-button ghost" type="button" onClick={() => { clearLessonState(); navigate({ view: "progress" }); }}>К прогрессу</button><button className="lx-button primary" type="button" disabled={busy} onClick={() => startLesson()}>Следующий блок</button></div></section>;
+    if (lessonComplete && lessonResult) return (
+      <LessonResultPresentation
+        snapshot={lessonResult}
+        continuation={lessonResultContinuation}
+        sourceLabel={SOURCE_VALUES.includes(lessonResult.source as LessonSource)
+          ? sourceLabel(lessonResult.source as LessonSource)
+          : "Учебный блок"}
+        busy={busy}
+        celebrate={lessonResultCelebrate}
+        onHome={() => leaveLessonResult("home")}
+        onProgress={() => leaveLessonResult("progress")}
+        onNextLesson={startNextLessonFromResult}
+        onDueReview={startDueReviewFromResult}
+        onStay={() => setLessonQueueNotice("Результат сохранён и останется доступен на этом экране.")}
+      />
+    );
+    if (lessonComplete) return <AsyncStatePanel label="Результат урока недоступен" kind="error" title="Не удалось восстановить итог" message="Ответы сохранены, но представление результата не сформировано. Откройте прогресс для проверки." actionLabel="Открыть прогресс" onAction={() => leaveLessonResult("progress")} />;
     if (!currentItem) return <AsyncStatePanel label="Ошибка учебной карточки" kind="error" title="Карточка урока недоступна" message="Серверная сессия не содержит ожидаемую текущую карточку." actionLabel="Синхронизировать урок" onAction={() => void resynchronizeActiveLesson("Урок синхронизирован с сервером.")} />;
 
     const lessonPercent = Math.round(((currentIndex + 1) / items.length) * 100);
@@ -2801,13 +3039,13 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
               : renderLesson();
 
   return (
-    <div className={`lx-app${lessonNavigationLocked ? " lx-lesson-focus-mode" : ""}`}>
+    <div className={`lx-app${lessonFocusMode ? " lx-lesson-focus-mode" : ""}`}>
       <a className="lx-skip-link" href="#lexigo-main-content" onClick={skipToMainContent}>
         Перейти к основному содержимому
       </a>
       {renderHeader()}
       <div className="lx-app-shell">
-        {!lessonNavigationLocked ? (
+        {!lessonFocusMode ? (
           <PrimaryNavigation
             className="lx-navigation-rail lx-primary-navigation"
             ariaLabel="Навигация по разделам"
@@ -2842,7 +3080,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         </div>
         </main>
       </div>
-      {!lessonNavigationLocked ? (
+      {!lessonFocusMode ? (
         <PrimaryNavigation
           className="lx-mobile-nav lx-primary-navigation"
           ariaLabel="Мобильная навигация"

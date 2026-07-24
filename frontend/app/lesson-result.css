@@ -1,0 +1,476 @@
+/*
+ * Issue #194 — canonical Lesson Result presentation.
+ *
+ * Runtime/session ownership stays in LexigoPremiumApp. This stylesheet consumes
+ * the semantic Foundation V1 tokens and owns only the result route layout.
+ */
+
+.lx-lesson-result {
+  --lx-result-border: color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
+  --lx-result-retained-soft: color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface));
+  --lx-result-primary-soft: color-mix(in srgb, var(--ak-color-primary) 16%, var(--ak-color-surface));
+  --lx-result-weak-soft: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
+  --lx-result-milestone-soft: color-mix(in srgb, var(--ak-color-milestone) 18%, var(--ak-color-surface));
+  --lx-result-retained-foreground: color-mix(in srgb, var(--ak-color-retained) 70%, var(--ak-color-text-main));
+
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.lx-lesson-result button {
+  font: inherit;
+  touch-action: manipulation;
+}
+
+.lx-lesson-result__topbar {
+  display: grid;
+  min-height: 78px;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, auto) minmax(120px, 1fr);
+  align-items: center;
+  gap: var(--ak-space-lg);
+  padding: 0 var(--ak-space-3xl);
+  border-bottom: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 14%, transparent);
+  background: var(--ak-color-surface);
+}
+
+.lx-lesson-result__brand {
+  font: var(--ak-text-title-medium);
+  letter-spacing: var(--ak-letter-spacing-title-medium);
+}
+
+.lx-lesson-result__route {
+  justify-self: center;
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-lesson-result__save-status {
+  justify-self: end;
+  color: var(--lx-result-retained-foreground);
+  font: var(--ak-text-label);
+}
+
+.lx-lesson-result--sync-pending .lx-lesson-result__save-status {
+  color: color-mix(in srgb, var(--ak-color-primary) 76%, var(--ak-color-text-main));
+}
+
+.lx-lesson-result__workspace {
+  display: grid;
+  width: min(1116px, calc(100% - (2 * var(--ak-space-3xl))));
+  grid-template-columns: minmax(0, 760px) minmax(280px, 332px);
+  gap: var(--ak-space-xl);
+  margin: 0 auto;
+  padding: 64px 0 max(80px, env(safe-area-inset-bottom));
+}
+
+.lx-lesson-result__evidence-card,
+.lx-lesson-result__action-card {
+  min-width: 0;
+  border: 1px solid var(--lx-result-border);
+  border-radius: var(--ak-radius-xl);
+  background: var(--ak-color-surface);
+}
+
+.lx-lesson-result__evidence-card {
+  display: grid;
+  gap: var(--ak-space-xl);
+  padding: 28px;
+}
+
+.lx-lesson-result__outcome {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ak-space-xl);
+}
+
+.lx-lesson-result__outcome-icon {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--lx-result-retained-foreground);
+  background: var(--lx-result-retained-soft);
+  font-size: 26px;
+  font-weight: 750;
+}
+
+.lx-lesson-result--next .lx-lesson-result__outcome-icon,
+.lx-lesson-result--sync-pending .lx-lesson-result__outcome-icon {
+  color: color-mix(in srgb, var(--ak-color-primary) 78%, var(--ak-color-text-main));
+  background: var(--lx-result-primary-soft);
+}
+
+.lx-lesson-result--due .lx-lesson-result__outcome-icon {
+  color: color-mix(in srgb, var(--ak-color-weak) 76%, var(--ak-color-text-main));
+  background: var(--lx-result-weak-soft);
+}
+
+.lx-lesson-result--daily-goal .lx-lesson-result__outcome-icon {
+  color: color-mix(in srgb, var(--ak-color-milestone) 72%, var(--ak-color-text-main));
+  background: var(--lx-result-milestone-soft);
+}
+
+.lx-lesson-result__outcome > div {
+  display: grid;
+  gap: var(--ak-space-sm);
+}
+
+.lx-lesson-result__eyebrow,
+.lx-lesson-result__action-eyebrow {
+  color: var(--lx-result-retained-foreground);
+  font: var(--ak-text-caption);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.lx-lesson-result--next .lx-lesson-result__eyebrow,
+.lx-lesson-result--next .lx-lesson-result__action-eyebrow,
+.lx-lesson-result--sync-pending .lx-lesson-result__eyebrow,
+.lx-lesson-result--sync-pending .lx-lesson-result__action-eyebrow {
+  color: color-mix(in srgb, var(--ak-color-primary) 76%, var(--ak-color-text-main));
+}
+
+.lx-lesson-result--due .lx-lesson-result__eyebrow,
+.lx-lesson-result--due .lx-lesson-result__action-eyebrow {
+  color: color-mix(in srgb, var(--ak-color-weak) 76%, var(--ak-color-text-main));
+}
+
+.lx-lesson-result--daily-goal .lx-lesson-result__eyebrow,
+.lx-lesson-result--daily-goal .lx-lesson-result__action-eyebrow {
+  color: color-mix(in srgb, var(--ak-color-milestone) 72%, var(--ak-color-text-main));
+}
+
+.lx-lesson-result__outcome h1,
+.lx-lesson-result__action-card h2,
+.lx-lesson-result__evidence h2,
+.lx-lesson-result__outcome p,
+.lx-lesson-result__action-card p,
+.lx-lesson-result__restore-note {
+  margin: 0;
+}
+
+.lx-lesson-result__outcome h1 {
+  font: var(--ak-text-display);
+  letter-spacing: var(--ak-letter-spacing-display);
+}
+
+.lx-lesson-result__outcome p,
+.lx-lesson-result__action-card p {
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-lesson-result__evidence {
+  display: grid;
+  gap: var(--ak-space-lg);
+}
+
+.lx-lesson-result__evidence h2 {
+  font: var(--ak-text-title-small);
+}
+
+.lx-lesson-result__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-md);
+}
+
+.lx-lesson-result__metrics article {
+  display: grid;
+  min-width: 0;
+  gap: var(--ak-space-xs);
+  padding: var(--ak-space-lg);
+  border-radius: var(--ak-radius-lg);
+  background: var(--ak-color-subtle);
+}
+
+.lx-lesson-result__metrics strong {
+  color: var(--lx-result-retained-foreground);
+  font: var(--ak-text-title-large);
+  font-weight: 750;
+}
+
+.lx-lesson-result__metrics article:nth-child(2) strong {
+  color: color-mix(in srgb, var(--ak-color-primary) 78%, var(--ak-color-text-main));
+}
+
+.lx-lesson-result__metrics article:nth-child(3) strong {
+  color: var(--ak-color-text-muted);
+}
+
+.lx-lesson-result__metrics span {
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-lesson-result__metrics small {
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-lesson-result__evidence-note,
+.lx-lesson-result__action-detail {
+  display: grid;
+  gap: var(--ak-space-sm);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-lg);
+  background: var(--ak-color-subtle);
+}
+
+.lx-lesson-result__evidence-note strong,
+.lx-lesson-result__action-detail strong {
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-lesson-result__evidence-note span,
+.lx-lesson-result__action-detail span {
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-lesson-result__action-card {
+  align-self: start;
+  display: grid;
+  gap: var(--ak-space-lg);
+  padding: 24px;
+}
+
+.lx-lesson-result__action-card h2 {
+  font: var(--ak-text-title-large);
+  letter-spacing: var(--ak-letter-spacing-title-large);
+  overflow-wrap: anywhere;
+}
+
+.lx-lesson-result--next .lx-lesson-result__action-detail,
+.lx-lesson-result--sync-pending .lx-lesson-result__action-detail,
+.lx-lesson-result--checking .lx-lesson-result__action-detail {
+  background: var(--lx-result-primary-soft);
+}
+
+.lx-lesson-result--due .lx-lesson-result__action-detail {
+  background: var(--lx-result-weak-soft);
+}
+
+.lx-lesson-result--daily-goal .lx-lesson-result__action-detail {
+  background: var(--lx-result-milestone-soft);
+}
+
+.lx-lesson-result--complete .lx-lesson-result__action-detail {
+  background: var(--lx-result-retained-soft);
+}
+
+.lx-lesson-result__primary,
+.lx-lesson-result__secondary {
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ak-radius-md);
+  padding: 0 var(--ak-space-lg);
+  font: var(--ak-text-label);
+  font-weight: 650;
+  transition:
+    background var(--ak-motion-feedback-exit),
+    border-color var(--ak-motion-feedback-exit),
+    transform var(--ak-motion-feedback-exit);
+}
+
+.lx-lesson-result__primary {
+  border: 1px solid var(--ak-color-primary);
+  color: var(--ak-color-surface);
+  background: var(--ak-color-primary);
+}
+
+.lx-lesson-result__primary:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.lx-lesson-result__secondary {
+  border: 1px solid transparent;
+  color: var(--ak-color-text-main);
+  background: transparent;
+}
+
+.lx-lesson-result__primary:not(:disabled):hover,
+.lx-lesson-result__primary:not(:disabled):focus-visible,
+.lx-lesson-result__secondary:not(:disabled):hover,
+.lx-lesson-result__secondary:not(:disabled):focus-visible {
+  transform: translateY(-1px);
+}
+
+.lx-lesson-result__primary:focus-visible,
+.lx-lesson-result__secondary:focus-visible,
+.lx-lesson-result__outcome h1:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ak-color-primary) 46%, transparent);
+  outline-offset: 3px;
+}
+
+.lx-lesson-result__restore-note {
+  grid-column: 1 / -1;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-lesson-result__celebration {
+  position: fixed;
+  z-index: 2;
+  top: 88px;
+  right: 10vw;
+  display: none;
+  color: var(--ak-color-milestone);
+  font-size: 28px;
+  pointer-events: none;
+}
+
+.lx-lesson-result--celebrate .lx-lesson-result__celebration {
+  display: block;
+  animation: lx-result-celebration 560ms ease-out both;
+}
+
+@keyframes lx-result-celebration {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.72) rotate(-12deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .lx-lesson-result__topbar {
+    min-height: 88px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: max(16px, env(safe-area-inset-top)) 24px 12px;
+  }
+
+  .lx-lesson-result__brand {
+    display: none;
+  }
+
+  .lx-lesson-result__route {
+    justify-self: start;
+  }
+
+  .lx-lesson-result__workspace {
+    width: min(100% - 48px, 620px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 16px 0 max(48px, env(safe-area-inset-bottom));
+  }
+
+  .lx-lesson-result__evidence-card {
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .lx-lesson-result__outcome {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .lx-lesson-result__outcome-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+
+  .lx-lesson-result__outcome h1 {
+    font: var(--ak-text-title-large);
+    font-weight: 750;
+  }
+
+  .lx-lesson-result__metrics {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    border-radius: var(--ak-radius-lg);
+    padding: 10px 14px;
+    background: var(--ak-color-subtle);
+  }
+
+  .lx-lesson-result__metrics article {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 6px 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .lx-lesson-result__metrics strong {
+    grid-column: 2;
+    grid-row: 1;
+    font: var(--ak-text-label);
+    font-weight: 750;
+  }
+
+  .lx-lesson-result__metrics span {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .lx-lesson-result__metrics small {
+    display: none;
+  }
+
+  .lx-lesson-result__evidence-note {
+    padding: 10px 0 0;
+    border-top: 1px solid var(--lx-result-border);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .lx-lesson-result__action-card {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .lx-lesson-result__action-card > .lx-lesson-result__action-eyebrow,
+  .lx-lesson-result__action-card > h2,
+  .lx-lesson-result__action-card > p,
+  .lx-lesson-result__action-detail {
+    display: none;
+  }
+
+  .lx-lesson-result__restore-note {
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .lx-lesson-result__workspace {
+    width: calc(100% - 32px);
+  }
+
+  .lx-lesson-result__topbar {
+    padding-inline: 16px;
+  }
+
+  .lx-lesson-result__evidence-card {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-lesson-result *,
+  .lx-lesson-result *::before,
+  .lx-lesson-result *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.00001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.00001s !important;
+  }
+}

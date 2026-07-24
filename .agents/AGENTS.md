@@ -6,15 +6,17 @@
 
 Playwright-тесты в LexiGo запускаются в 3 окружениях (`desktop-chromium`, `desktop-webkit`, `android-chromium`/`ios-webkit`). 
 
-- **Разворачивайте скрытые элементы.** Если в мобильном UI часть настроек скрывается под кнопкой «Настроить урок», тест не сможет с ними взаимодействовать и упадет по таймауту. Перед взаимодействием с контролами внутри Progressive UI **всегда проверяйте видимость кнопки-expand**:
+- **Разворачивайте скрытые элементы.** Если в мобильном UI часть настроек скрывается под кнопкой «Настроить урок», тест не сможет с ними взаимодействовать и упадет по таймауту. Перед взаимодействием с контролами внутри Progressive UI определяйте layout по viewport и дожидайтесь semantic disclosure, а не используйте мгновенный snapshot `isVisible()` сразу после navigation:
   ```typescript
-  const configureBtn = page.getByRole("button", { name: "Настроить урок" });
-  if (await configureBtn.isVisible()) {
+  const isCompact = (page.viewportSize()?.width ?? 1000) < 768;
+  if (isCompact) {
+    const configureBtn = page.getByRole("button", { name: "Настроить урок" });
+    await expect(configureBtn).toBeVisible();
     await configureBtn.click();
   }
   // Теперь взаимодействуем с раскрытыми элементами...
   ```
-- **Используйте унифицированные элементы.** Если после раскрытия настроек кнопка на мобильном и на десктопе называется одинаково («Начать урок»), используйте единый селектор (`page.getByRole("button", { name: "Начать урок", exact: true })`), а не пытайтесь угадать текст для разных девайсов.
+- **Выбирайте CTA по layout contract.** Полный desktop composer использует «Начать урок», а compact recommendation card — «Начать рекомендуемый урок». Не ищите desktop-only control в mobile layout и не скрывайте расхождение `.first()`; scope CTA через owning `article`, `region` или composer container.
 - **Пересекающиеся accessible names требуют `exact: true`.** Кнопки «Знал»/«Не знал» и «Сохранить и выйти»/«Назад — сохранить и выйти из урока» намеренно содержат общие фрагменты. Для таких controls всегда используйте точное имя или scope через ближайший `dialog`, `group` или `region`; strict-mode violation нельзя скрывать `.first()`.
 - **Осторожно с `getByText` и `toBeVisible`**. Если элемент скрыт за аккордеоном или полностью вырезан из мобильного Layout через CSS `display: none` (например, блок `lx-lesson-preview`), `expect(locator).toBeVisible()` логично упадёт на мобилках. В таких случаях оборачивайте проверку в условие для десктопа:
   ```typescript
@@ -146,3 +148,53 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** повторяющиеся roles (`status`, `alert`, `navigation`, `group`) всегда ограничивать accessible name, ожидаемым текстом или ближайшим semantic container; не использовать `.first()` для скрытия неоднозначности.
 - **Обязательная проверка:** account-email-change test выбирает status через `filter({ hasText: "Email изменён" })` и проходит в Chromium/WebKit.
 - **Область действия:** accessibility-first Playwright selectors и страницы с несколькими live regions.
+
+### 2026-07-24 — Lesson Composer mock и CTA расходились с layout contract
+
+- **Симптом:** все новые Lesson Result journeys падали до начала урока: desktop CTA «Начать урок» оставался disabled, а Android не находил этот control.
+- **Первопричина:** preview/create mock возвращал жёсткие `phrases/recall/15` вместо echo фактических `source/studyMode/lessonSize`, поэтому runtime отвергал stale preview; helper одновременно искал desktop CTA в compact recommendation layout.
+- **Профилактика:** lesson preview/create mocks обязаны echo параметры request body, если сценарий не проверяет намеренную server normalization. Shared helpers должны явно разделять full composer и compact recommendation CTA по viewport и scope control через owning semantic container.
+- **Обязательная проверка:** `e2e/lesson-result.spec.ts` проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit как в UI shards, так и в dedicated Lesson completion group.
+- **Область действия:** Lesson Composer, shared Playwright fixtures, `/api/v1/lessons/preview`, `/api/v1/lessons` и responsive CTA contracts.
+
+
+### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy
+
+- **Симптом:** Lesson completion и UI shards зависали на disabled `Сверить ответ` и не находили продолжение Academic Technical English после результата.
+- **Первопричина:** тесты заполняли удалённый `#premium-answer` вместо видимого canonical textbox и использовали название состояния «Следующий блок» как accessible name CTA, хотя кнопка называется «Следующий урок».
+- **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.
+- **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.
+- **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.
+
+### 2026-07-24 — Recall E2E раскрыл скрытый ответ вместо проверки prompt contract
+
+- **Симптом:** distinct-next Lesson Result journey успешно открыл новый Recall-урок, но упал в ожидании полного ответа `Verify the checkpoint.`.
+- **Первопричина:** тест проверял скрытый answer text, хотя objective Recall до попытки намеренно показывает только cloze prompt `Verify the ____.`.
+- **Профилактика:** assertions для Recall строить по публичному prompt heading, textbox и состоянию reveal; полный ответ до submit должен отсутствовать. Нельзя менять runtime и раскрывать ответ ради прохождения теста.
+- **Обязательная проверка:** distinct-next E2E видит новый cloze heading, не видит полный ответ и не видит prompt завершённого блока во всех configured Playwright projects.
+- **Область действия:** Active Lesson Recall, cloze exercises, distinct-next transitions и answer-leakage tests.
+
+### 2026-07-24 — `replaceState` уничтожил возврат к сохранённому Lesson Result
+
+- **Симптом:** reload результата работал, но после «На главную» и browser Back пользователь попадал на `/learn`, а не на сохранённый итог.
+- **Первопричина:** terminal action вызывал navigation с `replace=true`, поэтому запись Lesson Result удалялась из browser history.
+- **Профилактика:** переходы с recoverable result/state screen должны использовать `pushState`, если Back является частью поддерживаемого сценария. `replaceState` оставлять только для canonicalization, redirect или намеренной замены текущей записи.
+- **Обязательная проверка:** E2E выполняет complete → reload → Home → Back, восстанавливает результат из `sessionStorage` и подтверждает отсутствие повторного review request.
+- **Область действия:** Lesson Result, history restoration, terminal actions и route-state persistence.
+
+### 2026-07-24 — Необъявленный CSS token сделал primary CTA неконтрастным
+
+- **Симптом:** blocking axe audit обнаружил contrast ratio 2.59:1 у `.lx-lesson-result__primary`.
+- **Первопричина:** CSS использовал отсутствующий `--ak-color-on-primary`; декларация стала invalid at computed-value time, и кнопка унаследовала тёмный foreground на тёмном primary background.
+- **Профилактика:** feature CSS может использовать только объявленные semantic tokens и утверждённые foreground/background pairs. Для текущей Foundation palette primary CTA использует `surface` поверх `primary`; неизвестный token должен блокироваться source-contract test.
+- **Обязательная проверка:** `app/lesson-result.test.ts` запрещает `--ak-color-on-primary`, фиксирует пару `surface/primary`, а blocking axe audit проходит в Light и Dark appearance.
+- **Область действия:** semantic design tokens, primary CTA, CSS custom properties и accessibility audits.
+
+
+### 2026-07-24 — Controlled Recall textbox не обработал native `input` в WebKit
+
+- **Симптом:** `Lesson completion` зависал на disabled `Сверить ответ` в desktop WebKit и iOS WebKit; Playwright trace показывал, что `fill()` завершился, но controlled textbox снова имел пустое значение.
+- **Первопричина:** Recall input обновлял React state только через `onChange`; в проверяемом WebKit flow native `input` после программного заполнения не синхронизировал controlled value до повторного render.
+- **Профилактика:** controlled text inputs, используемые в cross-browser critical journeys, обрабатывать через явный `onInput` и `event.currentTarget.value`. E2E дополнительно обязан выполнить `focus`, `fill`, `toHaveValue`, проверить enabled primary action и только затем submit; увеличение timeout не является исправлением.
+- **Обязательная проверка:** source-contract требует `onInput` и запрещает прежний `onChange`; Recall, mixed-practice и Lesson Result scenarios проходят в desktop Chromium/WebKit, Android Chromium и iOS WebKit.
+- **Область действия:** controlled inputs, React event handling, WebKit/iOS WebKit и objective Recall journeys.
