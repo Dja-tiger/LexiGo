@@ -25,7 +25,11 @@ test.describe("canonical Lesson Result", () => {
       button.click();
     });
 
-    await expect(page.getByText("Verify the checkpoint.", { exact: true })).toBeVisible();
+    // Recall intentionally exposes the cloze prompt and keeps the full answer
+    // hidden until the learner submits an attempt. The distinct-next contract
+    // is therefore asserted through the public prompt, not answer leakage.
+    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();
+    await expect(page.getByText("Verify the checkpoint.", { exact: true })).toHaveCount(0);
     await expect(page.getByText("The pipeline is delayed by a backlog.", { exact: true })).toHaveCount(0);
     expect(fixture.reviewRequests()).toBe(1);
     expect(fixture.lessonCreateRequests()).toBe(2);
