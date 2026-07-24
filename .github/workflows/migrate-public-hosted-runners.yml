@@ -2,8 +2,7 @@ name: Migrate CI to GitHub-hosted runners
 
 on:
   push:
-    branches:
-      - ci/github-hosted-public-repo
+    branches: [ci/github-hosted-public-repo]
     paths:
       - ".github/workflows/migrate-public-hosted-runners.yml"
   pull_request:
@@ -46,102 +45,93 @@ jobs:
           def replace_exact(text: str, old: str, new: str, expected: int, label: str) -> str:
               actual = text.count(old)
               if actual != expected:
-                  raise SystemExit(f"{label}: expected {expected} occurrence(s), found {actual}")
+                  raise SystemExit(f"{label}: expected {expected}, found {actual}")
               return text.replace(old, new)
+
+          self_hosted = (
+              "    runs-on:\n"
+              "      - self-hosted\n"
+              "      - linux\n"
+              "      - x64\n"
+              "      - lexigo-ci\n"
+          )
+          hosted = f"    runs-on: {expression}\n"
 
           ci_path = root / ".github/workflows/ci.yml"
           ci = ci_path.read_text(encoding="utf-8")
-
           cleanup_marker = "\n  ci-resource-cleanup:\n"
           if ci.count(cleanup_marker) != 1:
-              raise SystemExit("ci.yml: expected one self-hosted ci-resource-cleanup job")
+              raise SystemExit("ci.yml: expected one ci-resource-cleanup job")
           ci = ci.split(cleanup_marker, 1)[0].rstrip() + "\n"
-
-          self_hosted_block = dedent("""\
-              runs-on:
-                - self-hosted
-                - linux
-                - x64
-                - lexigo-ci
-          """)
-          self_hosted_block = "\n".join("    " + line if line else line for line in self_hosted_block.splitlines()) + "\n"
-          hosted_runner = f"    runs-on: {expression}\n"
-          ci = replace_exact(ci, self_hosted_block, hosted_runner, 6, "ci.yml runner blocks")
-
-          browser_serialization = dedent("""\
-                # The runner services share one resource-constrained physical host.
-                # Serialize browser suites so Next.js servers and Playwright workers do
-                # not compete for the same CPU and memory pool.
-                max-parallel: 1
-          """)
-          ci = replace_exact(ci, browser_serialization, "", 1, "ci.yml browser serialization")
-
-          build_serialization = dedent("""\
-                # BuildKit jobs share one resource-constrained self-hosted host.
-                # Serialize image builds to prevent host-wide memory pressure and runner loss.
-                max-parallel: 1
-          """)
-          ci = replace_exact(ci, build_serialization, "", 1, "ci.yml container serialization")
-
-          frontend_anchor = dedent("""\
-                - uses: actions/checkout@v7
-
-                - name: Prepare isolated frontend workspace
-          """)
-          frontend_replacement = dedent("""\
-                - uses: actions/checkout@v7
-
-                - name: Validate CI runner policy
-                  run: python3 ../scripts/ci/runner_policy_test.py
-
-                - name: Prepare isolated frontend workspace
-          """)
+          ci = replace_exact(ci, self_hosted, hosted, 6, "ci.yml runner blocks")
+          ci = replace_exact(
+              ci,
+              "      # The runner services share one resource-constrained physical host.\n"
+              "      # Serialize browser suites so Next.js servers and Playwright workers do\n"
+              "      # not compete for the same CPU and memory pool.\n"
+              "      max-parallel: 1\n",
+              "",
+              1,
+              "browser serialization",
+          )
+          ci = replace_exact(
+              ci,
+              "      # BuildKit jobs share one resource-constrained self-hosted host.\n"
+              "      # Serialize image builds to prevent host-wide memory pressure and runner loss.\n"
+              "      max-parallel: 1\n",
+              "",
+              1,
+              "container serialization",
+          )
+          frontend_anchor = (
+              "      - uses: actions/checkout@v7\n\n"
+              "      - name: Prepare isolated frontend workspace\n"
+          )
+          frontend_replacement = (
+              "      - uses: actions/checkout@v7\n\n"
+              "      - name: Validate CI runner policy\n"
+              "        run: python3 ../scripts/ci/runner_policy_test.py\n\n"
+              "      - name: Prepare isolated frontend workspace\n"
+          )
           if ci.count(frontend_anchor) < 1:
-              raise SystemExit("ci.yml: frontend-core checkout anchor was not found")
+              raise SystemExit("ci.yml: frontend-core anchor missing")
           ci = ci.replace(frontend_anchor, frontend_replacement, 1)
           ci_path.write_text(ci, encoding="utf-8")
 
           storage_path = root / ".github/workflows/actions-storage-cleanup.yml"
           storage = storage_path.read_text(encoding="utf-8")
-          storage = replace_exact(storage, self_hosted_block, hosted_runner, 2, "storage cleanup runner blocks")
-
-          policy_path = '      - "scripts/ci/actions_storage_policy_test.py"\n'
+          storage = replace_exact(storage, self_hosted, hosted, 2, "storage runner blocks")
+          path_marker = '      - "scripts/ci/actions_storage_policy_test.py"\n'
           storage = replace_exact(
               storage,
-              policy_path,
-              policy_path + '      - "scripts/ci/runner_policy_test.py"\n',
+              path_marker,
+              path_marker + '      - "scripts/ci/runner_policy_test.py"\n',
               2,
-              "storage cleanup path filters",
+              "storage path filters",
           )
-
-          policy_step = dedent("""\
-                - name: Validate Actions storage policy
-                  run: python3 scripts/ci/actions_storage_policy_test.py
-          """)
-          runner_step = dedent("""\
-
-                - name: Validate CI runner policy
-                  run: python3 scripts/ci/runner_policy_test.py
-          """)
+          policy_step = (
+              "      - name: Validate Actions storage policy\n"
+              "        run: python3 scripts/ci/actions_storage_policy_test.py\n"
+          )
+          runner_step = (
+              "\n      - name: Validate CI runner policy\n"
+              "        run: python3 scripts/ci/runner_policy_test.py\n"
+          )
           storage = replace_exact(storage, policy_step, policy_step + runner_step, 2, "storage validation steps")
           storage_path.write_text(storage, encoding="utf-8")
 
-          runner_cleanup_path = root / ".github/workflows/runner-resource-cleanup.yml"
-          runner_cleanup = runner_cleanup_path.read_text(encoding="utf-8")
-          scheduled_trigger = dedent("""\
-          on:
-            schedule:
-              - cron: "17 2 * * *"
-            workflow_dispatch:
-          """)
-          manual_trigger = dedent("""\
-          on:
-            # Dormant while CI uses GitHub-hosted runners. Restore a schedule only
-            # after CI_RUNNER is switched back to the self-hosted lexigo-ci pool.
-            workflow_dispatch:
-          """)
-          runner_cleanup = replace_exact(runner_cleanup, scheduled_trigger, manual_trigger, 1, "runner cleanup schedule")
-          runner_cleanup_path.write_text(runner_cleanup, encoding="utf-8")
+          cleanup_path = root / ".github/workflows/runner-resource-cleanup.yml"
+          cleanup = cleanup_path.read_text(encoding="utf-8")
+          cleanup = replace_exact(
+              cleanup,
+              "on:\n  schedule:\n    - cron: \"17 2 * * *\"\n  workflow_dispatch:\n",
+              "on:\n  # Dormant while CI uses GitHub-hosted runners. Restore a schedule only\n"
+              "  # after CI_RUNNER is switched back to the self-hosted lexigo-ci pool.\n"
+              "  workflow_dispatch:\n",
+              1,
+              "runner cleanup schedule",
+          )
+          cleanup_path.write_text(cleanup, encoding="utf-8")
 
           policy_test = dedent("""\
           #!/usr/bin/env python3
@@ -153,7 +143,7 @@ jobs:
 
           ROOT = Path(__file__).resolve().parents[2]
           WORKFLOWS = ROOT / ".github" / "workflows"
-          HOSTED_RUNNER = "__RUNNER_EXPRESSION__"
+          HOSTED_RUNNER = "__RUNNER__"
 
 
           def require(condition: bool, message: str, violations: list[str]) -> None:
@@ -163,20 +153,19 @@ jobs:
 
           def main() -> None:
               violations: list[str] = []
-
               ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
-              require(ci.count(HOSTED_RUNNER) == 6, "ci.yml: expected six configurable hosted runner jobs", violations)
+              require(ci.count(HOSTED_RUNNER) == 6, "ci.yml: expected six configurable runner jobs", violations)
               require("self-hosted" not in ci, "ci.yml: hard-coded self-hosted labels are forbidden", violations)
               require("max-parallel: 1" not in ci, "ci.yml: hosted matrices must not be serialized", violations)
               require("ci-resource-cleanup:" not in ci, "ci.yml: shared-host cleanup job must be absent", violations)
 
               storage = (WORKFLOWS / "actions-storage-cleanup.yml").read_text(encoding="utf-8")
-              require(storage.count(HOSTED_RUNNER) == 2, "storage cleanup: expected two configurable hosted jobs", violations)
+              require(storage.count(HOSTED_RUNNER) == 2, "storage cleanup: expected two configurable runner jobs", violations)
               require("self-hosted" not in storage, "storage cleanup must not require Selectel", violations)
 
-              runner_cleanup = (WORKFLOWS / "runner-resource-cleanup.yml").read_text(encoding="utf-8")
-              require("schedule:" not in runner_cleanup, "scheduled Selectel cleanup must remain disabled", violations)
-              require("workflow_dispatch:" in runner_cleanup, "manual Selectel cleanup entry point is required", violations)
+              cleanup = (WORKFLOWS / "runner-resource-cleanup.yml").read_text(encoding="utf-8")
+              require("schedule:" not in cleanup, "scheduled Selectel cleanup must remain disabled", violations)
+              require("workflow_dispatch:" in cleanup, "manual Selectel cleanup entry point is required", violations)
 
               if violations:
                   raise SystemExit("\\n".join(violations))
@@ -185,7 +174,7 @@ jobs:
 
           if __name__ == "__main__":
               main()
-          """).replace("__RUNNER_EXPRESSION__", f"runs-on: {expression}")
+          """).replace("__RUNNER__", f"runs-on: {expression}")
           (root / "scripts/ci/runner_policy_test.py").write_text(policy_test, encoding="utf-8")
 
           documentation = dedent("""\
@@ -195,9 +184,9 @@ jobs:
 
           LexiGo uses standard GitHub-hosted Linux runners for build, test, browser and container jobs while the repository is public. Standard GitHub-hosted runner minutes are free for public repositories.
 
-          Runner selection is configurable through the repository variable `CI_RUNNER`. When it is unset, the workflow falls back to `ubuntu-latest`. Browser suites and API/web image builds run as normal parallel matrix jobs without a shared-host `max-parallel: 1` throttle.
+          Runner selection uses the repository variable `CI_RUNNER` with `ubuntu-latest` as the fallback. Browser suites and API/web image builds run as normal parallel matrix jobs without the former shared-host `max-parallel: 1` throttle.
 
-          GitHub-hosted jobs use isolated ephemeral virtual machines. The former final `ci-resource-cleanup` job was removed because it cannot clean Docker resources created on other hosted VMs and is unnecessary after VM disposal. Per-job cleanup remains for deterministic logs and local failure handling.
+          GitHub-hosted jobs use isolated ephemeral virtual machines. The final `ci-resource-cleanup` job was removed because it cannot clean Docker resources created on other hosted VMs and is unnecessary after VM disposal. Per-job cleanup remains for deterministic diagnostics.
 
           `Actions storage cleanup` also uses GitHub-hosted runners. Artifact uploads remain failure-oriented, non-blocking and retained for no more than three days. Public runner minutes are free, but artifact and package storage still require the bounded-storage policy.
 
@@ -207,7 +196,7 @@ jobs:
 
           To return after the repository becomes private:
 
-          1. Start and verify the Selectel services carrying the `lexigo-ci` label.
+          1. Start and verify Selectel runner services with the `lexigo-ci` label.
           2. Run `Self-hosted runner smoke` and require all slots to pass.
           3. Set the repository Actions variable `CI_RUNNER` to `lexigo-ci`.
           4. Re-enable the schedule in `runner-resource-cleanup.yml` through a reviewed PR.
