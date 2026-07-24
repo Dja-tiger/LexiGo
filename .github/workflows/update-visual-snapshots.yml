@@ -22,23 +22,39 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Apply deterministic codemod
-        run: python3 scripts/ci/patch-lesson-result.py
+        id: patch
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/ci/patch-lesson-result.py > /tmp/lesson-result-patch.log 2>&1
+          status=$?
+          cat /tmp/lesson-result-patch.log
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/lesson-result-patch.log scripts/ci/patch-lesson-result-error.txt
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
 
-      - name: Commit integration patch
+      - name: Commit patch or diagnostics
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            frontend/components/lexigo-premium-app.tsx \
-            frontend/app/layout.tsx \
-            frontend/package.json \
-            frontend/e2e/next-lesson-progression.spec.ts
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo "Integration patch already applied."
+          if [ "${{ steps.patch.outputs.status }}" -eq 0 ]; then
+            git add \
+              frontend/components/lexigo-premium-app.tsx \
+              frontend/app/layout.tsx \
+              frontend/package.json \
+              frontend/e2e/next-lesson-progression.spec.ts
+            git diff --cached --check
+            message="feat(frontend): integrate canonical Lesson Result"
           else
-            git commit -m "feat(frontend): integrate canonical Lesson Result"
+            git add scripts/ci/patch-lesson-result-error.txt
+            message="chore(ci): record Lesson Result codemod failure"
+          fi
+          if git diff --cached --quiet; then
+            echo "No patch output to commit."
+          else
+            git commit -m "$message"
             git push origin HEAD:agent/issue-194-lesson-result
           fi
-
-# Triggered after this branch-specific workflow became active.
+          test "${{ steps.patch.outputs.status }}" -eq 0
