@@ -22,6 +22,15 @@ jobs:
           ref: agent/issue-194-lesson-result
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Record workflow execution
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf 'run=%s attempt=%s sha=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA" > scripts/ci/patch-lesson-result-workflow.txt
+          git add scripts/ci/patch-lesson-result-workflow.txt
+          git commit -m "chore(ci): record Lesson Result patch execution"
+          git push origin HEAD:agent/issue-194-lesson-result
+
       - name: Refine duplicate-safe codemod target
         run: |
           python3 - <<'PY'
