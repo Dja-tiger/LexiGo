@@ -51,12 +51,13 @@ export function writeNavigationScrollSnapshot(
   identity: string,
   position: NavigationScrollPosition,
 ): boolean {
+  const key = snapshotKey(identity);
   const normalized = {
     x: finiteCoordinate(position.x, "position.x"),
     y: finiteCoordinate(position.y, "position.y"),
   };
   try {
-    storage.setItem(snapshotKey(identity), JSON.stringify(normalized));
+    storage.setItem(key, JSON.stringify(normalized));
     return true;
   } catch {
     return false;
@@ -67,9 +68,10 @@ export function readNavigationScrollSnapshot(
   storage: NavigationScrollSnapshotStorage,
   identity: string,
 ): NavigationScrollPosition | null {
+  const key = snapshotKey(identity);
   let serialized: string | null;
   try {
-    serialized = storage.getItem(snapshotKey(identity));
+    serialized = storage.getItem(key);
   } catch {
     return null;
   }
@@ -89,8 +91,9 @@ export function removeNavigationScrollSnapshot(
   storage: NavigationScrollSnapshotStorage,
   identity: string,
 ): boolean {
+  const key = snapshotKey(identity);
   try {
-    storage.removeItem(snapshotKey(identity));
+    storage.removeItem(key);
     return true;
   } catch {
     return false;
