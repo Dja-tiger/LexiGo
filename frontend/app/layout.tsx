@@ -36,6 +36,7 @@ import "./compact-home.css";
 import "./adaptive-knowledge-coach-home.css";
 import "./adaptive-knowledge-coach-accessibility.css";
 import "./adaptive-lesson-composer.css";
+import "./adaptive-lesson-composer-accessibility.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
