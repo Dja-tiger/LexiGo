@@ -334,7 +334,9 @@ test("focused lesson and speech stay declarative through repeated state transiti
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "Дальше" }).click();
   await expect(page.locator(".lx-active-lesson")).toHaveCount(1);
-  await expect(page.getByRole("heading", { name: "build" })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Прогресс урока" }))
+    .toHaveAttribute("aria-valuetext", "2 из 2 элементов");
+  await expect(page.getByRole("heading", { name: "Zulu cache" })).toBeVisible();
   expect(runtimeErrors).toEqual([]);
 });
 

@@ -135,7 +135,7 @@ PR не считается полностью готовым, если в про
 
 - **Симптом:** все browser projects UI ownership test оставались на первой Study-карточке, показывали `Действие не выполнено`, а клик по `Дальше` завершался timeout.
 - **Первопричина:** redesign сделал Study confidence реальным review submit по существующему backend contract, но локальный route mock теста поддерживал только создание lesson session и возвращал 404 для `/review`.
-- **Профилактика:** каждый E2E journey, который выполняет действие пользователя, обязан мокировать не только initial GET/POST, но и все последующие mutation responses с актуальными `lessonVersion`, `lessonCurrentIndex`, completion и judgement fields; 404 `not_mocked` считать ошибкой тестового контракта, а не увеличивать timeout.
+- **Профилактика:** каждый E2E journey, который выполняет действие пользователя, обязан мокировать не только initial GET/POST, но и все последующие mutation responses с актуальными `lessonVersion`, `lessonCurrentIndex`, completion и judgement fields. Assertions после mutation должны выводиться из фактического mock payload и server-provided position, а не из соседних элементов fixture; 404 `not_mocked` и ожидание другого item считать ошибкой тестового контракта, а не увеличивать timeout.
 - **Обязательная проверка:** UI ownership journey проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit и после rating переходит на server-provided вторую позицию.
 - **Область действия:** Playwright API mocks, Active Lesson review mutations и multi-step journeys.
 
