@@ -42,7 +42,7 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     await expect(page.getByRole("button", { name: "Сверить ответ" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Не знал" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Почти" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Знал" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeDisabled();
     await expect(page.locator(".lx-active-lesson__primary")).toHaveCount(1);
     await expectNoHorizontalOverflow(page);
   });
@@ -55,10 +55,10 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     await answer.fill("backlog");
     await answer.press("Enter");
     await expect(page.getByRole("status").filter({ hasText: "Ответ подготовлен" })).toBeFocused();
-    await expect(page.getByRole("button", { name: "Знал" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeEnabled();
 
-    await page.getByRole("button", { name: "Знал" }).focus();
-    await page.getByRole("button", { name: "Знал" }).press("Enter");
+    await page.getByRole("button", { name: "Знал", exact: true }).focus();
+    await page.getByRole("button", { name: "Знал", exact: true }).press("Enter");
     await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Дальше" })).toBeFocused();
 
@@ -105,9 +105,9 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     await expect(page.getByText("Изучение", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "The pipeline is delayed by a backlog in the ingestion stage." })).toBeVisible();
     await expect(page.getByText("Пайплайн задерживается из-за очереди на этапе загрузки.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Знал" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeEnabled();
 
-    await page.getByRole("button", { name: "Знал" }).click();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Изучение готово к сохранению" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Дальше" })).toBeVisible();
 
@@ -138,7 +138,9 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     await expect(exitTrigger).toBeFocused();
 
     await exitTrigger.click();
-    await page.getByRole("button", { name: "Сохранить и выйти" }).click();
+    await page.getByRole("dialog", { name: "Закрыть урок?" })
+      .getByRole("button", { name: "Сохранить и выйти", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator(".lx-active-lesson")).toHaveCount(0);
   });
@@ -171,7 +173,7 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     });
 
     await page.goBack();
-    await expect(page).toHaveURL(/\/lesson\/active$/);
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/lesson/active");
     await expect(page.getByRole("dialog", { name: "Закрыть урок?" })).toBeVisible();
     expect(fixture.reviewRequests()).toEqual([]);
   });
@@ -201,6 +203,6 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     });
     expect(styles.tokenCanvas).toBe("#10211d");
     expect(styles.canvas).toBe("rgb(16, 33, 29)");
-    expect(styles.transitionDuration).toBe("0.00001s");
+    expect(Number.parseFloat(styles.transitionDuration)).toBeLessThanOrEqual(0.00001);
   });
 });

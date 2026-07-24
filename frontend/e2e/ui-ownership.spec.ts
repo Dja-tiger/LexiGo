@@ -273,7 +273,7 @@ test("phrase sorting is React state, persists across reload and creates one tool
   expect(runtimeErrors).toEqual([]);
 });
 
-test("lesson tabs and speech stay declarative through repeated state transitions", async ({ page }) => {
+test("focused lesson and speech stay declarative through repeated state transitions", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/learn");
   await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
@@ -282,39 +282,33 @@ test("lesson tabs and speech stay declarative through repeated state transitions
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   await page.getByRole("button", { name: "Начать урок" }).click();
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
+  await expect(page.locator(".lx-active-lesson")).toHaveCount(1);
 
-  const tabs = page.locator(".lx-study-tabs").getByRole("tab");
-  await expect(tabs).toHaveCount(3);
-  await expect(page.locator(".lx-study-column")).toHaveAttribute("data-study-view", "card");
-
-  const exampleTab = page.getByRole("tab", { name: "Пример", exact: true });
-  await exampleTab.click();
-  await expect(exampleTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator(".lx-study-column")).toHaveAttribute("data-study-view", "example");
-
-  await exampleTab.press("ArrowRight");
-  const contextTab = page.getByRole("tab", { name: "Контекст", exact: true });
-  await expect(contextTab).toBeFocused();
-  await expect(contextTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator(".lx-study-column")).toHaveAttribute("data-study-view", "context");
-
-  for (let cycle = 0; cycle < 3; cycle += 1) {
-    await page.getByRole("tab", { name: "Карточка", exact: true }).click();
-    await exampleTab.click();
-    await contextTab.click();
-  }
-  await expect(tabs).toHaveCount(3);
-
-  await page.getByRole("tab", { name: "Карточка", exact: true }).click();
   const speech = page.locator('[data-speech-text="absolute"] > button');
   await expect(speech).toHaveAttribute("aria-label", "Произнести: absolute");
-  await speech.click();
-  await expect(speech).toHaveClass(/speaking/);
-  await expect(speech).toHaveAttribute("aria-label", "Остановить произношение: absolute");
-  await expect(page.locator('[data-speech-text="absolute"] [role="status"]')).toContainText("Воспроизводим: absolute");
-  await expect(speech).not.toHaveClass(/speaking/, { timeout: 3_000 });
-  await expect(speech).toHaveAttribute("aria-label", "Произнести: absolute");
-  await expect(tabs).toHaveCount(3);
+  for (let cycle = 0; cycle < 3; cycle += 1) {
+    await speech.click();
+    await expect(speech).toHaveClass(/speaking/);
+    await expect(speech).toHaveAttribute("aria-label", "Остановить произношение: absolute");
+    await speech.click();
+    await expect(speech).not.toHaveClass(/speaking/);
+  }
+
+  const closeLesson = page.viewportSize()!.width < 768
+    ? page.getByRole("button", { name: "Закрыть", exact: true })
+    : page.getByRole("button", { name: "Закрыть урок" });
+  for (let cycle = 0; cycle < 3; cycle += 1) {
+    await closeLesson.click();
+    const dialog = page.getByRole("dialog", { name: "Закрыть урок?" });
+    await expect(dialog).toHaveCount(1);
+    await dialog.getByRole("button", { name: "Продолжить урок", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+  }
+
+  await page.getByRole("button", { name: "Знал", exact: true }).click();
+  await page.getByRole("button", { name: "Дальше" }).click();
+  await expect(page.locator(".lx-active-lesson")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "build" })).toBeVisible();
   expect(runtimeErrors).toEqual([]);
 });
 

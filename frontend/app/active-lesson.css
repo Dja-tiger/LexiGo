@@ -46,6 +46,8 @@
   --lx-active-retained-soft: color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface));
   --lx-active-weak-soft: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
   --lx-active-primary-soft: color-mix(in srgb, var(--ak-color-primary) 14%, var(--ak-color-surface));
+  /* 5.29:1 on the light surface; see active-lesson.test.ts. */
+  --lx-active-retained-foreground: #187a59;
 
   min-height: 100vh;
   overflow-x: clip;
@@ -87,7 +89,7 @@
 
 .lx-active-lesson__saved {
   justify-self: end;
-  color: var(--ak-color-retained);
+  color: var(--lx-active-retained-foreground);
   font: var(--ak-text-label);
 }
 
@@ -201,7 +203,7 @@
 }
 
 .lx-active-lesson__eyebrow {
-  color: var(--ak-color-retained);
+  color: var(--lx-active-retained-foreground);
   font: var(--ak-text-caption);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -311,7 +313,7 @@
 }
 
 .lx-active-lesson__recall input[readonly] {
-  border-color: var(--ak-color-retained);
+  border-color: var(--lx-active-retained-foreground);
 }
 
 .lx-active-lesson__answer-actions {
@@ -398,8 +400,8 @@
 }
 
 .lx-active-lesson__option--correct {
-  border-color: var(--ak-color-retained);
-  color: var(--ak-color-retained);
+  border-color: var(--lx-active-retained-foreground);
+  color: var(--lx-active-retained-foreground);
   background: var(--lx-active-retained-soft);
 }
 
@@ -450,7 +452,7 @@
 }
 
 .lx-active-lesson__feedback--correct {
-  color: var(--ak-color-retained);
+  color: var(--lx-active-retained-foreground);
   background: var(--lx-active-retained-soft);
 }
 
@@ -527,7 +529,7 @@
 
 .lx-active-lesson__rating--known {
   border-color: color-mix(in srgb, var(--ak-color-retained) 32%, transparent);
-  color: var(--ak-color-retained);
+  color: var(--lx-active-retained-foreground);
   background: var(--lx-active-retained-soft);
 }
 
@@ -750,6 +752,13 @@
 
   .lx-active-lesson__rating {
     padding: 0 var(--ak-space-sm);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .lx-active-lesson {
+    /* 8.08:1 on the dark surface. */
+    --lx-active-retained-foreground: #52d6ad;
   }
 }
 

@@ -124,7 +124,7 @@ test.describe("critical visual baselines", () => {
     await openActiveLesson(page);
     await page.getByRole("textbox", { name: "Введите ответ" }).fill("backlog");
     await page.getByRole("button", { name: "Сверить ответ" }).click();
-    await page.getByRole("button", { name: "Знал" }).click();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
     await expectStableScreenshot(page, "active-lesson-recall-correct-dark.png");
     expect(runtimeErrors).toEqual([]);

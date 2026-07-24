@@ -395,15 +395,17 @@ test("an active lesson removes top-level navigation and blocks browser history e
   await start.click();
   await expect(page).toHaveURL(/\/lesson\/active/);
   await expect(page.getByRole("heading", { name: "viewport" })).toBeVisible();
-  await expect(page.getByText("Урок в процессе", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Воспроизведение" })).toBeVisible();
   await expect(page.locator(NAVIGATION_SELECTORS.join(", "))).toHaveCount(0);
 
   await page.evaluate(() => window.history.back());
   await expect.poll(() => new URL(page.url()).pathname).toBe("/lesson/active");
   await expect(page.locator(".lx-queue-notice")).toContainText("Сохранить и выйти");
+  const exitDialog = page.getByRole("dialog", { name: "Закрыть урок?" });
+  await expect(exitDialog).toBeVisible();
   await expect(page.getByRole("heading", { name: "viewport" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Сохранить и выйти", exact: true }).click();
+  await exitDialog.getByRole("button", { name: "Сохранить и выйти", exact: true }).click();
   await expect(page).toHaveURL("http://127.0.0.1:3000/");
   await expect(navigation(page, ".lx-route-nav--rail")).toBeVisible();
 
