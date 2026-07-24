@@ -247,12 +247,19 @@ test.describe("progressive Lesson Composer", () => {
     await page.goto("/learn");
 
     const configure = page.getByRole("button", { name: "Настроить урок" });
-    const motion = await configure.evaluate((node) => ({
-      transitionDuration: getComputedStyle(node).transitionDuration,
-      animationName: getComputedStyle(node).animationName,
-    }));
+    const motion = await configure.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return {
+        transitionProperty: style.transitionProperty,
+        transitionDuration: style.transitionDuration,
+        animationName: style.animationName,
+        animationDuration: style.animationDuration,
+      };
+    });
 
-    expect(motion.transitionDuration).toBe("0s");
-    expect(motion.animationName).toBe("none");
+    expect(["", "none"]).toContain(motion.transitionProperty);
+    expect(["", "0s"]).toContain(motion.transitionDuration);
+    expect(["", "none"]).toContain(motion.animationName);
+    expect(["", "0s"]).toContain(motion.animationDuration);
   });
 });
