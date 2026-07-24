@@ -6,15 +6,17 @@
 
 Playwright-тесты в LexiGo запускаются в 3 окружениях (`desktop-chromium`, `desktop-webkit`, `android-chromium`/`ios-webkit`). 
 
-- **Разворачивайте скрытые элементы.** Если в мобильном UI часть настроек скрывается под кнопкой «Настроить урок», тест не сможет с ними взаимодействовать и упадет по таймауту. Перед взаимодействием с контролами внутри Progressive UI **всегда проверяйте видимость кнопки-expand**:
+- **Разворачивайте скрытые элементы.** Если в мобильном UI часть настроек скрывается под кнопкой «Настроить урок», тест не сможет с ними взаимодействовать и упадет по таймауту. Перед взаимодействием с контролами внутри Progressive UI определяйте layout по viewport и дожидайтесь semantic disclosure, а не используйте мгновенный snapshot `isVisible()` сразу после navigation:
   ```typescript
-  const configureBtn = page.getByRole("button", { name: "Настроить урок" });
-  if (await configureBtn.isVisible()) {
+  const isCompact = (page.viewportSize()?.width ?? 1000) < 768;
+  if (isCompact) {
+    const configureBtn = page.getByRole("button", { name: "Настроить урок" });
+    await expect(configureBtn).toBeVisible();
     await configureBtn.click();
   }
   // Теперь взаимодействуем с раскрытыми элементами...
   ```
-- **Используйте унифицированные элементы.** Если после раскрытия настроек кнопка на мобильном и на десктопе называется одинаково («Начать урок»), используйте единый селектор (`page.getByRole("button", { name: "Начать урок", exact: true })`), а не пытайтесь угадать текст для разных девайсов.
+- **Выбирайте CTA по layout contract.** Полный desktop composer использует «Начать урок», а compact recommendation card — «Начать рекомендуемый урок». Не ищите desktop-only control в mobile layout и не скрывайте расхождение `.first()`; scope CTA через owning `article`, `region` или composer container.
 - **Пересекающиеся accessible names требуют `exact: true`.** Кнопки «Знал»/«Не знал» и «Сохранить и выйти»/«Назад — сохранить и выйти из урока» намеренно содержат общие фрагменты. Для таких controls всегда используйте точное имя или scope через ближайший `dialog`, `group` или `region`; strict-mode violation нельзя скрывать `.first()`.
 - **Осторожно с `getByText` и `toBeVisible`**. Если элемент скрыт за аккордеоном или полностью вырезан из мобильного Layout через CSS `display: none` (например, блок `lx-lesson-preview`), `expect(locator).toBeVisible()` логично упадёт на мобилках. В таких случаях оборачивайте проверку в условие для десктопа:
   ```typescript
@@ -146,3 +148,11 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** повторяющиеся roles (`status`, `alert`, `navigation`, `group`) всегда ограничивать accessible name, ожидаемым текстом или ближайшим semantic container; не использовать `.first()` для скрытия неоднозначности.
 - **Обязательная проверка:** account-email-change test выбирает status через `filter({ hasText: "Email изменён" })` и проходит в Chromium/WebKit.
 - **Область действия:** accessibility-first Playwright selectors и страницы с несколькими live regions.
+
+### 2026-07-24 — Lesson Composer mock и CTA расходились с layout contract
+
+- **Симптом:** все новые Lesson Result journeys падали до начала урока: desktop CTA «Начать урок» оставался disabled, а Android не находил этот control.
+- **Первопричина:** preview/create mock возвращал жёсткие `phrases/recall/15` вместо echo фактических `source/studyMode/lessonSize`, поэтому runtime отвергал stale preview; helper одновременно искал desktop CTA в compact recommendation layout.
+- **Профилактика:** lesson preview/create mocks обязаны echo параметры request body, если сценарий не проверяет намеренную server normalization. Shared helpers должны явно разделять full composer и compact recommendation CTA по viewport и scope control через owning semantic container.
+- **Обязательная проверка:** `e2e/lesson-result.spec.ts` проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit как в UI shards, так и в dedicated Lesson completion group.
+- **Область действия:** Lesson Composer, shared Playwright fixtures, `/api/v1/lessons/preview`, `/api/v1/lessons` и responsive CTA contracts.
