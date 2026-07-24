@@ -41,6 +41,8 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
     expect(styleSource).toContain("env(safe-area-inset-bottom)");
     expect(styleSource).not.toContain("history.pushState");
     expect(styleSource).toContain(':not([data-route-client-island="dictionary"])');
+    expect(styleSource).toContain('.lx-app:not([data-route-client-island="dictionary"]) .lx-main-content');
+    expect(styleSource).toContain('.lx-app:not([data-route-client-island="dictionary"]) .lx-view');
   });
 
   it("does not recolor unfinished routes and keeps external account panels clear of the rail", () => {
