@@ -1,0 +1,386 @@
+name: Patch navigation scroll restoration
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: patch-navigation-scroll-restoration-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    name: Apply navigation scroll restoration fix
+    if: github.event.pull_request.head.ref == 'ci/github-hosted-public-repo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply deterministic source patch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          from pathlib import Path
+
+          root = Path.cwd()
+          dictionary_path = root / "frontend/components/lexigo-dictionary-app.tsx"
+          e2e_path = root / "frontend/e2e/dictionary-pwa.spec.ts"
+          helper_path = root / "frontend/lib/navigation-scroll-restoration.ts"
+          test_path = root / "frontend/lib/navigation-scroll-restoration.test.ts"
+
+          helper = '''import type { NavigationScrollPosition } from "./navigation-history";
+
+export type NavigationScrollRestorationResult = {
+  restored: boolean;
+  attempts: number;
+};
+
+export type NavigationScrollRestorationEnvironment = {
+  readPosition: () => NavigationScrollPosition;
+  writePosition: (position: NavigationScrollPosition) => void;
+  requestFrame: (callback: () => void) => number;
+  cancelFrame: (frameID: number) => void;
+};
+
+export type NavigationScrollRestorationOptions = {
+  maxFrames?: number;
+  tolerancePixels?: number;
+};
+
+export const DEFAULT_NAVIGATION_SCROLL_RESTORE_MAX_FRAMES = 300;
+export const DEFAULT_NAVIGATION_SCROLL_RESTORE_TOLERANCE_PX = 1;
+
+function finiteCoordinate(value: number, label: string): number {
+  if (!Number.isFinite(value)) throw new RangeError(`${label} must be finite`);
+  return Math.max(0, value);
+}
+
+function positionReached(
+  current: NavigationScrollPosition,
+  target: NavigationScrollPosition,
+  tolerancePixels: number,
+): boolean {
+  return Math.abs(current.x - target.x) <= tolerancePixels
+    && Math.abs(current.y - target.y) <= tolerancePixels;
+}
+
+/**
+ * Re-applies a history scroll position until async route content makes the
+ * target reachable. A single requestAnimationFrame is insufficient when a
+ * catalog reload temporarily collapses the document height to one viewport.
+ */
+export function scheduleNavigationScrollRestoration(
+  target: NavigationScrollPosition,
+  environment: NavigationScrollRestorationEnvironment,
+  onSettled: (result: NavigationScrollRestorationResult) => void = () => undefined,
+  options: NavigationScrollRestorationOptions = {},
+): () => void {
+  const maxFrames = options.maxFrames ?? DEFAULT_NAVIGATION_SCROLL_RESTORE_MAX_FRAMES;
+  const tolerancePixels = options.tolerancePixels ?? DEFAULT_NAVIGATION_SCROLL_RESTORE_TOLERANCE_PX;
+  if (!Number.isInteger(maxFrames) || maxFrames < 1) {
+    throw new RangeError("maxFrames must be a positive integer");
+  }
+  if (!Number.isFinite(tolerancePixels) || tolerancePixels < 0) {
+    throw new RangeError("tolerancePixels must be a finite non-negative number");
+  }
+
+  const normalizedTarget = {
+    x: finiteCoordinate(target.x, "target.x"),
+    y: finiteCoordinate(target.y, "target.y"),
+  };
+  let frameID: number | null = null;
+  let attempts = 0;
+  let cancelled = false;
+
+  const restore = () => {
+    frameID = null;
+    if (cancelled) return;
+
+    environment.writePosition(normalizedTarget);
+    attempts += 1;
+    const restored = positionReached(
+      environment.readPosition(),
+      normalizedTarget,
+      tolerancePixels,
+    );
+    if (restored || attempts >= maxFrames) {
+      onSettled({ restored, attempts });
+      return;
+    }
+    frameID = environment.requestFrame(restore);
+  };
+
+  frameID = environment.requestFrame(restore);
+  return () => {
+    cancelled = true;
+    if (frameID === null) return;
+    environment.cancelFrame(frameID);
+    frameID = null;
+  };
+}
+'''
+
+          tests = '''import { describe, expect, it } from "vitest";
+
+import {
+  scheduleNavigationScrollRestoration,
+  type NavigationScrollRestorationEnvironment,
+  type NavigationScrollRestorationResult,
+} from "./navigation-scroll-restoration";
+
+function createFrameHarness() {
+  let nextFrameID = 1;
+  const frames = new Map<number, () => void>();
+  const cancelled: number[] = [];
+
+  return {
+    frames,
+    cancelled,
+    requestFrame(callback: () => void) {
+      const frameID = nextFrameID;
+      nextFrameID += 1;
+      frames.set(frameID, callback);
+      return frameID;
+    },
+    cancelFrame(frameID: number) {
+      cancelled.push(frameID);
+      frames.delete(frameID);
+    },
+    runNext() {
+      const entry = frames.entries().next().value as [number, () => void] | undefined;
+      if (!entry) throw new Error("No animation frame is scheduled");
+      frames.delete(entry[0]);
+      entry[1]();
+    },
+  };
+}
+
+describe("navigation scroll restoration", () => {
+  it("retries until asynchronous content makes the saved position reachable", () => {
+    const frames = createFrameHarness();
+    let maximumY = 0;
+    let position = { x: 0, y: 0 };
+    let result: NavigationScrollRestorationResult | null = null;
+    const environment: NavigationScrollRestorationEnvironment = {
+      readPosition: () => position,
+      writePosition: (target) => {
+        position = { x: target.x, y: Math.min(target.y, maximumY) };
+      },
+      requestFrame: frames.requestFrame,
+      cancelFrame: frames.cancelFrame,
+    };
+
+    scheduleNavigationScrollRestoration(
+      { x: 0, y: 1200 },
+      environment,
+      (settled) => { result = settled; },
+    );
+
+    frames.runNext();
+    expect(position.y).toBe(0);
+    expect(result).toBeNull();
+    expect(frames.frames.size).toBe(1);
+
+    maximumY = 2400;
+    frames.runNext();
+    expect(position.y).toBe(1200);
+    expect(result).toEqual({ restored: true, attempts: 2 });
+    expect(frames.frames.size).toBe(0);
+  });
+
+  it("settles a zero position on the first frame", () => {
+    const frames = createFrameHarness();
+    let position = { x: 7, y: 9 };
+    let result: NavigationScrollRestorationResult | null = null;
+    scheduleNavigationScrollRestoration(
+      { x: 0, y: 0 },
+      {
+        readPosition: () => position,
+        writePosition: (target) => { position = target; },
+        requestFrame: frames.requestFrame,
+        cancelFrame: frames.cancelFrame,
+      },
+      (settled) => { result = settled; },
+    );
+
+    frames.runNext();
+    expect(position).toEqual({ x: 0, y: 0 });
+    expect(result).toEqual({ restored: true, attempts: 1 });
+  });
+
+  it("cancels a pending restoration without reporting completion", () => {
+    const frames = createFrameHarness();
+    let settled = false;
+    const cancel = scheduleNavigationScrollRestoration(
+      { x: 0, y: 500 },
+      {
+        readPosition: () => ({ x: 0, y: 0 }),
+        writePosition: () => undefined,
+        requestFrame: frames.requestFrame,
+        cancelFrame: frames.cancelFrame,
+      },
+      () => { settled = true; },
+    );
+
+    const [frameID] = frames.frames.keys();
+    cancel();
+    expect(frames.cancelled).toEqual([frameID]);
+    expect(frames.frames.size).toBe(0);
+    expect(settled).toBe(false);
+  });
+
+  it("stops after the configured frame budget", () => {
+    const frames = createFrameHarness();
+    let result: NavigationScrollRestorationResult | null = null;
+    scheduleNavigationScrollRestoration(
+      { x: 0, y: 500 },
+      {
+        readPosition: () => ({ x: 0, y: 0 }),
+        writePosition: () => undefined,
+        requestFrame: frames.requestFrame,
+        cancelFrame: frames.cancelFrame,
+      },
+      (settled) => { result = settled; },
+      { maxFrames: 2 },
+    );
+
+    frames.runNext();
+    frames.runNext();
+    expect(result).toEqual({ restored: false, attempts: 2 });
+    expect(frames.frames.size).toBe(0);
+  });
+
+  it("rejects invalid restoration options and coordinates", () => {
+    const frames = createFrameHarness();
+    const environment: NavigationScrollRestorationEnvironment = {
+      readPosition: () => ({ x: 0, y: 0 }),
+      writePosition: () => undefined,
+      requestFrame: frames.requestFrame,
+      cancelFrame: frames.cancelFrame,
+    };
+
+    expect(() => scheduleNavigationScrollRestoration({ x: 0, y: 0 }, environment, undefined, { maxFrames: 0 })).toThrow(RangeError);
+    expect(() => scheduleNavigationScrollRestoration({ x: 0, y: 0 }, environment, undefined, { tolerancePixels: -1 })).toThrow(RangeError);
+    expect(() => scheduleNavigationScrollRestoration({ x: Number.NaN, y: 0 }, environment)).toThrow(RangeError);
+  });
+});
+'''
+
+          helper_path.write_text(helper, encoding="utf-8")
+          test_path.write_text(tests, encoding="utf-8")
+
+          dictionary = dictionary_path.read_text(encoding="utf-8")
+          import_anchor = 'import { createScrollSnapshotScheduler } from "../lib/navigation-scroll-snapshot";\n'
+          import_line = 'import { scheduleNavigationScrollRestoration } from "../lib/navigation-scroll-restoration";\n'
+          if import_line not in dictionary:
+            if dictionary.count(import_anchor) != 1:
+              raise SystemExit("dictionary import anchor was not found exactly once")
+            dictionary = dictionary.replace(import_anchor, import_anchor + import_line, 1)
+
+          old_effect = '''  useLayoutEffect(() => {
+    navigationRef.current = navigation;
+    if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+    const frame = window.requestAnimationFrame(() => {
+      mainContentRef.current?.focus({ preventScroll: true });
+      window.scrollTo({
+        left: pendingNavigation.scroll.x,
+        top: pendingNavigation.scroll.y,
+        behavior: "auto",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [navigation, pendingNavigation]);
+'''
+          new_effect = '''  useLayoutEffect(() => {
+    navigationRef.current = navigation;
+    if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+
+    const pending = pendingNavigation;
+    mainContentRef.current?.focus({ preventScroll: true });
+    return scheduleNavigationScrollRestoration(
+      pending.scroll,
+      {
+        readPosition: () => ({ x: window.scrollX, y: window.scrollY }),
+        writePosition: (position) => {
+          window.scrollTo({
+            left: position.x,
+            top: position.y,
+            behavior: "auto",
+          });
+        },
+        requestFrame: (callback) => window.requestAnimationFrame(callback),
+        cancelFrame: (frameID) => window.cancelAnimationFrame(frameID),
+      },
+      () => {
+        setPendingNavigation((current) => (current === pending ? null : current));
+      },
+    );
+  }, [navigation, pendingNavigation]);
+'''
+          if old_effect in dictionary:
+            dictionary = dictionary.replace(old_effect, new_effect, 1)
+          elif new_effect not in dictionary:
+            raise SystemExit("dictionary scroll restoration effect did not match expected source")
+          dictionary_path.write_text(dictionary, encoding="utf-8")
+
+          e2e = e2e_path.read_text(encoding="utf-8")
+          old_title = 'test("iOS standalone dictionary restores filters and result scroll across relaunch", async ({ context, page }, testInfo) => {'
+          new_title = 'test("iOS standalone dictionary restores result scroll on history return and filters across relaunch", async ({ context, page }, testInfo) => {'
+          e2e = e2e.replace(old_title, new_title, 1)
+
+          scroll_anchor = '  const scrollBefore = await page.evaluate(() => window.scrollY);\n'
+          scroll_assertion = '  expect(scrollBefore).toBeGreaterThan(0);\n'
+          if scroll_assertion not in e2e:
+            if e2e.count(scroll_anchor) != 1:
+              raise SystemExit("dictionary PWA scroll snapshot anchor was not found exactly once")
+            e2e = e2e.replace(scroll_anchor, scroll_anchor + scroll_assertion, 1)
+
+          history_anchor = '''  await expect(page).toHaveURL(/status=review/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
+'''
+          history_replacement = '''  await expect(page).toHaveURL(/status=review/);
+  await expect(page.getByRole("listitem")).toHaveCount(12);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
+'''
+          if history_anchor in e2e:
+            e2e = e2e.replace(history_anchor, history_replacement, 1)
+          elif history_replacement not in e2e:
+            raise SystemExit("dictionary PWA history assertion anchor was not found")
+          e2e_path.write_text(e2e, encoding="utf-8")
+          PY
+
+      - name: Validate targeted regression
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run test -- lib/navigation-scroll-restoration.test.ts
+          npm run typecheck
+
+      - name: Commit source fix
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git diff --quiet; then
+            echo "Navigation scroll restoration fix is already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/components/lexigo-dictionary-app.tsx \
+            frontend/e2e/dictionary-pwa.spec.ts \
+            frontend/lib/navigation-scroll-restoration.ts \
+            frontend/lib/navigation-scroll-restoration.test.ts
+          git commit -m "fix(frontend): restore dictionary scroll after async history return"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
