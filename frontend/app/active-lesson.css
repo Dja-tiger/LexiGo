@@ -1,0 +1,766 @@
+/*
+ * Issue #193 — canonical Active Lesson presentation.
+ *
+ * The component consumes the semantic Foundation V1 tokens from
+ * design-tokens.css. API/session/navigation ownership intentionally remains in
+ * LexigoPremiumApp; this sheet only owns the focused route presentation.
+ */
+
+.lx-app.lx-lesson-focus-mode {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+}
+
+.lx-lesson-focus-mode > .lx-skip-link {
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+.lx-lesson-focus-mode .lx-app-shell,
+.lx-lesson-focus-mode .lx-main-content,
+.lx-lesson-focus-mode .lx-view {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lx-lesson-focus-mode .lx-view {
+  min-height: 100vh;
+  animation: none;
+}
+
+.lx-lesson-focus-mode .lx-resource-stack {
+  display: none;
+}
+
+.lx-active-lesson {
+  --lx-active-border: color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
+  --lx-active-border-strong: color-mix(in srgb, var(--ak-color-text-muted) 42%, transparent);
+  --lx-active-retained-soft: color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface));
+  --lx-active-weak-soft: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
+  --lx-active-primary-soft: color-mix(in srgb, var(--ak-color-primary) 14%, var(--ak-color-surface));
+
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.lx-active-lesson button,
+.lx-active-lesson input {
+  font: inherit;
+}
+
+.lx-active-lesson button {
+  touch-action: manipulation;
+}
+
+.lx-active-lesson__topbar {
+  display: grid;
+  min-height: 78px;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, auto) minmax(120px, 1fr);
+  align-items: center;
+  gap: var(--ak-space-lg);
+  padding: 0 var(--ak-space-3xl);
+  border-bottom: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 14%, transparent);
+  background: var(--ak-color-surface);
+}
+
+.lx-active-lesson__brand {
+  font: var(--ak-text-title-medium);
+  letter-spacing: var(--ak-letter-spacing-title-medium);
+}
+
+.lx-active-lesson__mode {
+  justify-self: center;
+  font: var(--ak-text-label);
+  font-weight: 650;
+}
+
+.lx-active-lesson__saved {
+  justify-self: end;
+  color: var(--ak-color-retained);
+  font: var(--ak-text-label);
+}
+
+.lx-active-lesson__mobile-back,
+.lx-active-lesson__mobile-close {
+  display: none;
+}
+
+.lx-active-lesson__workspace {
+  width: min(960px, calc(100% - (2 * var(--ak-space-3xl))));
+  margin: 0 auto;
+  padding: var(--ak-space-3xl) 0 max(var(--ak-space-6xl), env(safe-area-inset-bottom));
+}
+
+.lx-active-lesson__progress-row {
+  display: grid;
+  grid-template-columns: minmax(0, 700px) 240px;
+  align-items: start;
+  justify-content: center;
+  gap: var(--ak-space-6xl);
+}
+
+.lx-active-lesson__progress-copy {
+  display: grid;
+  min-width: 0;
+  gap: var(--ak-space-sm);
+}
+
+.lx-active-lesson__progress-copy > span:last-child {
+  justify-self: end;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-active-lesson__progress-track {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ak-color-subtle);
+}
+
+.lx-active-lesson__progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ak-color-primary);
+  transition: width var(--ak-motion-transition-exit);
+}
+
+.lx-active-lesson__desktop-close,
+.lx-active-lesson__secondary,
+.lx-active-lesson__primary {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ak-radius-md);
+  padding: 0 var(--ak-space-lg);
+  font: var(--ak-text-label);
+  font-weight: 650;
+  transition:
+    background var(--ak-motion-feedback-exit),
+    border-color var(--ak-motion-feedback-exit),
+    transform var(--ak-motion-feedback-exit);
+}
+
+.lx-active-lesson__desktop-close,
+.lx-active-lesson__secondary {
+  border: 1px solid var(--lx-active-border);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+.lx-active-lesson__desktop-close:hover:not(:disabled),
+.lx-active-lesson__secondary:hover:not(:disabled) {
+  border-color: var(--lx-active-border-strong);
+  background: var(--ak-color-subtle);
+}
+
+.lx-active-lesson__primary {
+  border: 1px solid var(--ak-color-primary);
+  color: var(--ak-color-surface);
+  background: var(--ak-color-primary);
+}
+
+.lx-active-lesson__primary:hover:not(:disabled) {
+  background: var(--ak-color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.lx-active-lesson__primary:disabled,
+.lx-active-lesson fieldset:disabled button {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.lx-active-lesson__card {
+  display: grid;
+  width: min(760px, 100%);
+  min-width: 0;
+  min-height: 520px;
+  align-content: start;
+  gap: var(--ak-space-2xl);
+  margin: var(--ak-space-4xl) auto 0;
+  border: 1px solid var(--lx-active-border);
+  border-radius: var(--ak-radius-2xl);
+  padding: var(--ak-space-3xl);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
+}
+
+.lx-active-lesson__eyebrow {
+  color: var(--ak-color-retained);
+  font: var(--ak-text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.lx-active-lesson__study,
+.lx-active-lesson__recall,
+.lx-active-lesson__choice {
+  display: grid;
+  min-width: 0;
+  gap: var(--ak-space-lg);
+}
+
+.lx-active-lesson__study h1,
+.lx-active-lesson__recall h1,
+.lx-active-lesson__choice h1 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--ak-color-text-main);
+}
+
+.lx-active-lesson__study h1 {
+  margin: var(--ak-space-sm) 0 0;
+  font: var(--ak-text-display-small);
+  letter-spacing: var(--ak-letter-spacing-display-small);
+}
+
+.lx-active-lesson__phonetic {
+  margin: calc(-1 * var(--ak-space-md)) 0 var(--ak-space-sm);
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-body-large);
+}
+
+.lx-active-lesson__example {
+  display: grid;
+  gap: var(--ak-space-xl);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-2xl);
+  background: var(--ak-color-subtle);
+}
+
+.lx-active-lesson__example strong {
+  overflow-wrap: anywhere;
+  color: var(--ak-color-text-main);
+  font: var(--ak-text-title-small);
+}
+
+.lx-active-lesson__example span {
+  overflow-wrap: anywhere;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-label);
+}
+
+.lx-active-lesson__utilities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ak-space-lg);
+}
+
+.lx-active-lesson__utilities button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 var(--ak-space-lg);
+  color: var(--ak-color-text-muted);
+  background: var(--ak-color-subtle);
+}
+
+.lx-active-lesson__utilities > span {
+  flex: 1 1 240px;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+  line-height: 1.5;
+}
+
+.lx-active-lesson__recall > p:first-child,
+.lx-active-lesson__choice > p {
+  margin: 0;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-active-lesson__recall h1,
+.lx-active-lesson__choice h1 {
+  margin: 0;
+  font: var(--ak-text-title-large);
+  letter-spacing: var(--ak-letter-spacing-title-large);
+  line-height: 1.22;
+}
+
+.lx-active-lesson__recall input {
+  width: 100%;
+  min-height: 78px;
+  border: 1px solid var(--lx-active-border);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-lg) var(--ak-space-xl);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+  outline: none;
+  font: var(--ak-text-body);
+}
+
+.lx-active-lesson__recall input:focus-visible {
+  border-color: var(--ak-color-primary);
+  box-shadow: 0 0 0 3px var(--ak-color-primary-soft);
+}
+
+.lx-active-lesson__recall input[readonly] {
+  border-color: var(--ak-color-retained);
+}
+
+.lx-active-lesson__answer-actions {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(220px, 1fr);
+  align-items: center;
+  gap: var(--ak-space-md);
+}
+
+.lx-active-lesson__text-action {
+  width: fit-content;
+  min-height: 44px;
+  border: 0;
+  padding: 0 var(--ak-space-sm);
+  color: var(--ak-color-primary);
+  background: transparent;
+  font: var(--ak-text-label);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lx-active-lesson__text-action:hover:not(:disabled) {
+  color: var(--ak-color-primary-hover);
+}
+
+.lx-active-lesson__expected-answer {
+  display: grid;
+  gap: var(--ak-space-sm);
+  margin: 0;
+  border: 1px solid var(--lx-active-border);
+  border-radius: var(--ak-radius-md);
+  padding: var(--ak-space-lg);
+  color: var(--ak-color-text-muted);
+  background: var(--ak-color-subtle);
+  font: var(--ak-text-label);
+}
+
+.lx-active-lesson__expected-answer strong {
+  overflow-wrap: anywhere;
+  color: var(--ak-color-text-main);
+}
+
+.lx-active-lesson__expected-answer span {
+  font: var(--ak-text-caption);
+}
+
+.lx-active-lesson__options {
+  display: grid;
+  gap: var(--ak-space-sm);
+}
+
+.lx-active-lesson__option {
+  display: grid;
+  min-height: 52px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ak-space-md);
+  border: 1px solid var(--lx-active-border);
+  border-radius: var(--ak-radius-md);
+  padding: var(--ak-space-md) var(--ak-space-lg);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-subtle);
+  text-align: left;
+}
+
+.lx-active-lesson__option span {
+  overflow-wrap: anywhere;
+}
+
+.lx-active-lesson__option small {
+  color: currentColor;
+  font: var(--ak-text-caption);
+  font-weight: 700;
+}
+
+.lx-active-lesson__option:hover:not(:disabled),
+.lx-active-lesson__option:focus-visible {
+  border-color: var(--ak-color-primary);
+}
+
+.lx-active-lesson__option--selected {
+  border-color: var(--ak-color-primary);
+  background: var(--lx-active-primary-soft);
+}
+
+.lx-active-lesson__option--correct {
+  border-color: var(--ak-color-retained);
+  color: var(--ak-color-retained);
+  background: var(--lx-active-retained-soft);
+}
+
+.lx-active-lesson__option--incorrect {
+  border-color: var(--ak-color-weak);
+  color: var(--ak-color-weak);
+  background: var(--lx-active-weak-soft);
+}
+
+.lx-active-lesson__feedback {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--ak-space-md);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-lg);
+  outline: none;
+}
+
+.lx-active-lesson__feedback > div {
+  display: grid;
+  min-width: 0;
+  gap: var(--ak-space-xs);
+}
+
+.lx-active-lesson__feedback-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ak-color-surface);
+  font: var(--ak-text-label);
+  font-weight: 800;
+}
+
+.lx-active-lesson__feedback strong {
+  font: var(--ak-text-label);
+  font-weight: 700;
+}
+
+.lx-active-lesson__feedback p,
+.lx-active-lesson__feedback small {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+  line-height: 1.45;
+}
+
+.lx-active-lesson__feedback--correct {
+  color: var(--ak-color-retained);
+  background: var(--lx-active-retained-soft);
+}
+
+.lx-active-lesson__feedback--incorrect {
+  color: var(--ak-color-weak);
+  background: var(--lx-active-weak-soft);
+}
+
+.lx-active-lesson__feedback--pending,
+.lx-active-lesson__feedback--study {
+  color: var(--ak-color-primary);
+  background: var(--lx-active-primary-soft);
+}
+
+.lx-active-lesson__suggestion-success {
+  color: var(--ak-color-retained) !important;
+}
+
+.lx-active-lesson__suggestion-error {
+  color: var(--ak-color-weak) !important;
+}
+
+.lx-active-lesson__advance {
+  width: 100%;
+  min-height: 54px;
+  margin-top: auto;
+}
+
+.lx-active-lesson__confidence {
+  display: grid;
+  width: min(420px, 100%);
+  gap: var(--ak-space-lg);
+  margin: var(--ak-space-5xl) auto 0;
+  color: var(--ak-color-text-main);
+  text-align: center;
+}
+
+.lx-active-lesson__confidence legend {
+  width: 100%;
+  margin: 0;
+  color: var(--ak-color-text-main);
+  font: var(--ak-text-label);
+  font-weight: 600;
+  text-align: center;
+}
+
+.lx-active-lesson__confidence > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-lg);
+}
+
+.lx-active-lesson__rating {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 var(--ak-space-md);
+  font: var(--ak-text-caption);
+  font-weight: 650;
+}
+
+.lx-active-lesson__rating--again {
+  border-color: color-mix(in srgb, var(--ak-color-weak) 32%, transparent);
+  color: var(--ak-color-weak);
+  background: var(--lx-active-weak-soft);
+}
+
+.lx-active-lesson__rating--almost {
+  border-color: var(--lx-active-border);
+  color: var(--ak-color-text-muted);
+  background: var(--ak-color-subtle);
+}
+
+.lx-active-lesson__rating--known {
+  border-color: color-mix(in srgb, var(--ak-color-retained) 32%, transparent);
+  color: var(--ak-color-retained);
+  background: var(--lx-active-retained-soft);
+}
+
+.lx-active-lesson__confidence-note {
+  width: min(420px, 100%);
+  margin: var(--ak-space-xl) auto 0;
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-active-lesson__dialog-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--ak-space-2xl);
+  background: color-mix(in srgb, var(--ak-color-text-main) 54%, transparent);
+}
+
+.lx-active-lesson__dialog {
+  display: grid;
+  width: min(520px, 100%);
+  gap: var(--ak-space-lg);
+  border: 1px solid var(--lx-active-border);
+  border-radius: var(--ak-radius-2xl);
+  padding: var(--ak-space-3xl);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-3);
+}
+
+.lx-active-lesson__dialog h2,
+.lx-active-lesson__dialog p {
+  margin: 0;
+}
+
+.lx-active-lesson__dialog h2 {
+  font: var(--ak-text-title-medium);
+}
+
+.lx-active-lesson__dialog p {
+  color: var(--ak-color-text-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-active-lesson__dialog > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ak-space-md);
+  margin-top: var(--ak-space-sm);
+}
+
+.lx-active-lesson :focus-visible {
+  outline: 3px solid var(--ak-color-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1040px) {
+  .lx-active-lesson__workspace {
+    width: min(820px, calc(100% - (2 * var(--ak-space-2xl))));
+  }
+
+  .lx-active-lesson__progress-row {
+    grid-template-columns: minmax(0, 1fr) 200px;
+    gap: var(--ak-space-3xl);
+  }
+}
+
+@media (max-width: 767px) {
+  .lx-active-lesson {
+    min-height: 100svh;
+  }
+
+  .lx-active-lesson__topbar {
+    min-height: calc(72px + env(safe-area-inset-top));
+    grid-template-columns: 40px minmax(0, 1fr) 64px;
+    gap: var(--ak-space-sm);
+    padding: env(safe-area-inset-top) var(--ak-space-2xl) 0;
+    border-bottom: 0;
+    background: var(--ak-color-canvas);
+  }
+
+  .lx-active-lesson__brand,
+  .lx-active-lesson__saved {
+    display: none;
+  }
+
+  .lx-active-lesson__mobile-back,
+  .lx-active-lesson__mobile-close {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    border: 0;
+    color: var(--ak-color-text-main);
+    background: transparent;
+  }
+
+  .lx-active-lesson__mobile-back {
+    justify-content: flex-start;
+    padding: 0;
+    font-size: 28px;
+  }
+
+  .lx-active-lesson__mobile-close {
+    justify-content: flex-end;
+    padding: 0;
+    color: var(--ak-color-text-muted);
+    font: var(--ak-text-label);
+  }
+
+  .lx-active-lesson__mode {
+    justify-self: start;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+  }
+
+  .lx-active-lesson__workspace {
+    width: min(100%, 390px);
+    padding: var(--ak-space-xl) var(--ak-space-2xl) max(var(--ak-space-5xl), env(safe-area-inset-bottom));
+  }
+
+  .lx-active-lesson__progress-row {
+    display: block;
+  }
+
+  .lx-active-lesson__desktop-close {
+    display: none;
+  }
+
+  .lx-active-lesson__card {
+    min-height: 0;
+    gap: var(--ak-space-xl);
+    margin-top: var(--ak-space-xl);
+    border-radius: var(--ak-radius-xl);
+    padding: var(--ak-space-xl);
+  }
+
+  .lx-active-lesson__study h1 {
+    font: var(--ak-text-title-large);
+  }
+
+  .lx-active-lesson__recall h1,
+  .lx-active-lesson__choice h1 {
+    font: var(--ak-text-title-medium);
+    line-height: 1.22;
+  }
+
+  .lx-active-lesson__recall input {
+    min-height: 66px;
+    border-radius: var(--ak-radius-md);
+    padding: var(--ak-space-md);
+    font-size: 14px;
+  }
+
+  .lx-active-lesson__answer-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .lx-active-lesson__answer-actions .lx-active-lesson__primary {
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .lx-active-lesson__answer-actions .lx-active-lesson__text-action {
+    justify-self: center;
+  }
+
+  .lx-active-lesson__option {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .lx-active-lesson__confidence {
+    margin-top: var(--ak-space-4xl);
+    text-align: left;
+  }
+
+  .lx-active-lesson__confidence legend {
+    text-align: left;
+  }
+
+  .lx-active-lesson__confidence > div {
+    gap: var(--ak-space-md);
+  }
+
+  .lx-active-lesson__confidence-note {
+    margin-top: var(--ak-space-2xl);
+  }
+
+  .lx-active-lesson__dialog {
+    padding: var(--ak-space-2xl);
+  }
+
+  .lx-active-lesson__dialog > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 359px) {
+  .lx-active-lesson__topbar {
+    grid-template-columns: 36px minmax(0, 1fr) 58px;
+    padding-right: var(--ak-space-lg);
+    padding-left: var(--ak-space-lg);
+  }
+
+  .lx-active-lesson__workspace {
+    padding-right: var(--ak-space-lg);
+    padding-left: var(--ak-space-lg);
+  }
+
+  .lx-active-lesson__card {
+    padding: var(--ak-space-lg);
+  }
+
+  .lx-active-lesson__confidence > div {
+    gap: var(--ak-space-sm);
+  }
+
+  .lx-active-lesson__rating {
+    padding: 0 var(--ak-space-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-active-lesson,
+  .lx-active-lesson *,
+  .lx-active-lesson *::before,
+  .lx-active-lesson *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
