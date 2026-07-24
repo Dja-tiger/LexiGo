@@ -88,6 +88,52 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  patch-active-lesson-webkit-input:
+    name: Patch Active Lesson WebKit input contract
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out pull request branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact input event patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("frontend/components/active-lesson-presentation.tsx")
+          source = path.read_text(encoding="utf-8")
+          old = '                onChange={(event) => onTypedAnswerChange(event.target.value)}'
+          new = '                onInput={(event) => onTypedAnswerChange(event.currentTarget.value)}'
+
+          if new in source and old not in source:
+              raise SystemExit(0)
+          occurrences = source.count(old)
+          if occurrences != 1:
+              raise SystemExit(f"Expected exactly one Recall input handler, found {occurrences}")
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+      - name: Commit input patch when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- frontend/components/active-lesson-presentation.tsx; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/active-lesson-presentation.tsx
+          git commit -m "fix(frontend): handle Recall input across WebKit"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
