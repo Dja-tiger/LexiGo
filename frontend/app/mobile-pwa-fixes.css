@@ -93,100 +93,6 @@ button.speaking {
   box-shadow: 0 0 0 4px rgba(51, 168, 255, 0.08);
 }
 
-/* The three study tabs are distinct views instead of three scroll shortcuts. */
-.lx-study-column[data-study-view="card"] .lx-simple-word dt:has(+ dd.example),
-.lx-study-column[data-study-view="card"] .lx-simple-word dd.example,
-.lx-study-column[data-study-view="card"] .lx-simple-word dt:has(+ dd.note),
-.lx-study-column[data-study-view="card"] .lx-simple-word dd.note,
-.lx-study-column[data-study-view="card"] .lx-cloze-note {
-  display: none;
-}
-
-.lx-study-column[data-study-view="example"] .lx-simple-word dt:not(:has(+ dd.example)),
-.lx-study-column[data-study-view="example"] .lx-simple-word dd:not(.example),
-.lx-study-column[data-study-view="example"] .lx-cloze-note {
-  display: none;
-}
-
-.lx-study-column[data-study-view="example"] .lx-simple-word dl {
-  grid-template-columns: 1fr;
-  margin-top: 44px;
-}
-
-.lx-study-column[data-study-view="example"] .lx-simple-word dt:has(+ dd.example) {
-  display: block;
-  color: #65bfff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.lx-study-column[data-study-view="example"] .lx-simple-word dd.example {
-  display: block;
-  max-width: 760px;
-  border-left: 3px solid #745dff;
-  padding: 18px 0 18px 22px;
-  color: #eef1f8;
-  font-size: clamp(22px, 4vw, 34px);
-  line-height: 1.45;
-}
-
-.lx-study-column[data-study-view="example"] .lx-simple-word:not(:has(dd.example))::after {
-  display: block;
-  margin-top: 42px;
-  border: 1px dashed rgba(145, 168, 211, 0.24);
-  border-radius: 16px;
-  padding: 22px;
-  color: #8f9bb1;
-  content: "Для этого слова пример пока не добавлен.";
-}
-
-.lx-study-column[data-study-view="context"] .lx-simple-word dt:not(:has(+ dd.note)),
-.lx-study-column[data-study-view="context"] .lx-simple-word dd:not(.note) {
-  display: none;
-}
-
-.lx-study-column[data-study-view="context"] .lx-simple-word dl {
-  grid-template-columns: 1fr;
-  margin-top: 38px;
-}
-
-.lx-study-column[data-study-view="context"] .lx-simple-word dt:has(+ dd.note) {
-  display: block;
-  color: #65bfff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.lx-study-column[data-study-view="context"] .lx-simple-word dd.note {
-  display: block;
-  max-width: 760px;
-  border: 1px solid rgba(124, 95, 255, 0.28);
-  border-radius: 16px;
-  padding: 20px;
-  color: #d5dbea;
-  background: rgba(111, 76, 222, 0.08);
-  font-size: 18px;
-  line-height: 1.6;
-}
-
-.lx-study-column[data-study-view="context"] .lx-cloze-note {
-  display: grid;
-}
-
-.lx-study-column[data-study-view="context"] .lx-simple-word:not(:has(dd.note)):not(:has(+ .lx-cloze-note))::after {
-  display: block;
-  margin-top: 42px;
-  border: 1px dashed rgba(145, 168, 211, 0.24);
-  border-radius: 16px;
-  padding: 22px;
-  color: #8f9bb1;
-  content: "Дополнительный контекст для этого слова пока не добавлен.";
-}
-
 @media (max-width: 760px) {
   .lx-app {
     padding-top: 0;
@@ -222,21 +128,6 @@ button.speaking {
     padding-top: 18px;
   }
 
-  .lx-study-tabs {
-    justify-content: space-between;
-    padding: 0 12px;
-  }
-
-  .lx-study-tabs button {
-    flex: 1 0 auto;
-    justify-content: center;
-    min-height: 58px;
-  }
-
-  .lx-simple-word {
-    min-height: 430px;
-  }
-
   .lx-session-notice {
     top: calc(env(safe-area-inset-top) + 76px);
   }
@@ -247,7 +138,6 @@ button.speaking {
     padding-top: calc(env(safe-area-inset-top) + 16px);
   }
 }
-
 
 /* Issue #44: standard local loading, empty, error and retry states. */
 .lx-async-state {
