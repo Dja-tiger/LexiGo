@@ -6,6 +6,10 @@ import {
   installDeterministicRuntime,
   installQualityGateAPI,
 } from "./support/quality-gates";
+import {
+  installActiveLessonFixture,
+  openActiveLesson,
+} from "./support/active-lesson-fixture";
 
 const BLOCKING_IMPACTS = new Set(["critical", "serious"]);
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -71,6 +75,23 @@ test.describe("blocking accessibility gate", () => {
       await expectNoBlockingAxeViolations(page);
       expect(runtimeErrors).toEqual([]);
     });
+  });
+
+  test("active Recall and safe-exit dialog have no critical or serious WCAG violations", async ({ page }) => {
+    await installDeterministicRuntime(page);
+    await installActiveLessonFixture(page, "recall");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openActiveLesson(page);
+    await expect(page.locator(".lx-active-lesson")).toBeVisible();
+    await expectNoBlockingAxeViolations(page);
+
+    const closeButton = (page.viewportSize()?.width ?? 1440) < 768
+      ? page.getByRole("button", { name: "Закрыть", exact: true })
+      : page.getByRole("button", { name: "Закрыть урок" });
+    await closeButton.click();
+    await expect(page.getByRole("dialog", { name: "Закрыть урок?" })).toBeVisible();
+    await expectNoBlockingAxeViolations(page);
+    expect(runtimeErrors).toEqual([]);
   });
 
   test.describe("guest authentication", () => {
