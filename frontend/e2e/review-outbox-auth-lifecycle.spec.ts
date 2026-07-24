@@ -115,10 +115,11 @@ async function installAPI(context: BrowserContext, state: ServerState) {
       return json(route, 200, phraseRequest ? { items: [], count: 0 } : { items: [WORD], count: 1 });
     }
     if (path === "/api/v1/lessons/preview") {
+      const body = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string };
       return json(route, 200, {
-        source: "mixed",
-        studyMode: "study",
-        lessonSize: "30",
+        source: body.source,
+        studyMode: body.studyMode,
+        lessonSize: body.lessonSize,
         composition: {
           total: 1,
           words: 1,

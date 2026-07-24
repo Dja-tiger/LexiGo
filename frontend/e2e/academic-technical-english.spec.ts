@@ -53,11 +53,21 @@ test("Academic Technical English is selectable and preserved for the next block"
 
   await page.goto("/learn");
   const academic = page.locator('[data-lexigo-source="academic-technical-english"]');
+
+  // On mobile (<768px) the source controls are inside the progressive settings panel;
+  // open it before interacting with source selectors.
+  const configure = page.getByRole("button", { name: "Настроить урок" });
+  if (await configure.isVisible()) {
+    await configure.click();
+  }
+
   await expect(academic).toContainText("Academic Technical English");
   await expect(academic).toContainText("579");
   await academic.click();
   await expect(academic).toHaveAttribute("aria-checked", "true");
-  const start = page.getByRole("button", { name: "Начать урок", exact: true });
+  // On mobile the CTA is "Начать рекомендуемый урок"; on desktop it is "Начать урок".
+  // Match whichever button carries the lesson-start intent.
+  const start = page.locator("button[data-journey-intent='lesson_start']");
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await expect(page.getByText("abstract", { exact: true })).toBeVisible();
@@ -68,3 +78,4 @@ test("Academic Technical English is selectable and preserved for the next block"
   expect(createSources).toEqual(["academic-technical-english", "academic-technical-english"]);
   expect(previewSources).toContain("academic-technical-english");
 });
+
