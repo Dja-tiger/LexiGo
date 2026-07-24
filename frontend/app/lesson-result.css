@@ -286,7 +286,7 @@
 
 .lx-lesson-result__primary {
   border: 1px solid var(--ak-color-primary);
-  color: var(--ak-color-on-primary);
+  color: var(--ak-color-surface);
   background: var(--ak-color-primary);
 }
 
