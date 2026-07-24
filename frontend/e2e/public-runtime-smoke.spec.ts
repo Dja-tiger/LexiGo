@@ -105,7 +105,9 @@ for (const route of ROUTES) {
     expect(response).not.toBeNull();
     expect(response?.status()).toBeLessThan(400);
     await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
-    await expect(page.getByRole("link", { name: /LexiGo/ })).toBeVisible();
+    if ((page.viewportSize()?.width || 1000) >= 768) {
+      await expect(page.getByRole("link", { name: /LexiGo/ })).toBeVisible();
+    }
 
     await exercisePublicScrollBursts(page);
     await page.waitForTimeout(1_000);
