@@ -1,9 +1,9 @@
-name: Update visual snapshots
+name: Apply Issue 193 integration
 
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - agent/issue-193-active-lesson
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -11,58 +11,50 @@ permissions:
   contents: write
 
 jobs:
-  update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+  integrate-active-lesson:
+    name: Integrate canonical Active Lesson
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: core
-      APP_BUILD_ID: ${{ github.sha }}
-      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: agent/issue-193-active-lesson
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: Prepare isolated frontend workspace
-        run: bash ../scripts/ci/frontend-container.sh prepare
+      - name: Apply assertion-backed integration patch
+        run: python scripts/ci/apply-issue-193.py
 
-      - name: Install locked dependencies
-        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-
-      - name: Production build
-        run: bash ../scripts/ci/frontend-container.sh exec npm run build
-
-      - name: Regenerate visual snapshots
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-      - name: Extract updated snapshots from container
+      - name: Validate generated diff
         run: |
-          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
-          test -n "$container"
-          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
+          git diff --check
+          grep -Fq 'ActiveLessonPresentation' frontend/components/lexigo-premium-app.tsx
+          ! grep -Fq '<section className="lx-lesson-page">' frontend/components/lexigo-premium-app.tsx
 
-      - name: Cleanup container
-        if: always()
-        run: bash ../scripts/ci/frontend-container.sh cleanup
-
-      - name: Commit Issue 162 baselines
+      - name: Commit integration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+          git add frontend/components/lexigo-premium-app.tsx
+          git commit -m "feat(frontend): integrate canonical Active Lesson"
+          git push origin HEAD:agent/issue-193-active-lesson
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Frontend lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Frontend typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Frontend unit tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Production build
+        working-directory: frontend
+        run: npm run build
