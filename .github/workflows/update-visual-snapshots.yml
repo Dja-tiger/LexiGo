@@ -1,145 +1,65 @@
 name: Update visual snapshots
 
 on:
-  push:
-    branches:
-      - agent/issue-162-progressive-lesson-composer
-    paths:
-      - .github/workflows/update-visual-snapshots.yml
-
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to update snapshots on
+        required: true
+        default: agent/issue-183-application-shell-home
 
 jobs:
-  align-progressive-disclosure-tests:
-    name: Align mobile composer disclosure tests
+  update-snapshots:
+    name: Regenerate visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: ${{ inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Apply guarded test transformations
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Regenerate visual snapshots
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+
+      - name: Extract updated snapshots from container
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
+          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
-          def replace_once(path: Path, old: str, new: str) -> None:
-              source = path.read_text()
-              count = source.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected exactly one match, found {count}")
-              path.write_text(source.replace(old, new, 1))
+      - name: Cleanup container
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
 
-          adaptive = Path("frontend/e2e/adaptive-lesson-composer.spec.ts")
-          replace_once(
-              adaptive,
-              '''    await configure.focus();
-              await page.keyboard.press("Enter");
-              await expect(configure).toHaveAttribute("aria-expanded", "true");
-              await expect(modeGroup).toBeVisible();''',
-              '''    await configure.focus();
-              await page.keyboard.press("Enter");
-              const manualSummary = page.getByRole("button", { name: /Ручная настройка/ });
-              await expect(manualSummary).toBeVisible();
-              await expect(manualSummary).toHaveAttribute("aria-expanded", "true");
-              await expect(modeGroup).toBeVisible();''',
-          )
-          replace_once(
-              adaptive,
-              '''    const manualSummary = page.getByRole("button", { name: /Ручная настройка/ });
-              await expect(manualSummary).toContainText("Academic Technical English · Варианты · 15 элементов");''',
-              '''    await expect(manualSummary).toContainText("Academic Technical English · Варианты · 15 элементов");''',
-          )
-
-          catalog = Path("frontend/e2e/catalog-pagination.spec.ts")
-          replace_once(
-              catalog,
-              '''  await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
-              await expect(page).toHaveURL(/\/learn\?source=phrases/);
-              await expect(page.getByRole("radio", { name: /Технические фразы/ })).toHaveAttribute("aria-checked", "true");''',
-              '''  await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
-              await expect(page).toHaveURL(/\/learn\?source=phrases/);
-              const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-              if (await configureLesson.isVisible()) await configureLesson.click();
-              await expect(page.getByRole("radio", { name: /Технические фразы/ })).toHaveAttribute("aria-checked", "true");''',
-          )
-
-          copy = Path("frontend/e2e/interface-copy.spec.ts")
-          replace_once(
-              copy,
-              '''    await page.goto("/learn", { waitUntil: "domcontentloaded" });
-              await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-              await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();''',
-              '''    await page.goto("/learn", { waitUntil: "domcontentloaded" });
-              await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-              const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-              if (await configureLesson.isVisible()) await configureLesson.click();
-              await expect(page.getByRole("radio", { name: new RegExp(recall.label) })).toBeVisible();''',
-          )
-
-          ownership = Path("frontend/e2e/ui-ownership.spec.ts")
-          replace_once(
-              ownership,
-              '''async function phrasePrompts(page: Page) {
-              return page
-                .getByRole("list", { name: "Результаты каталога фраз" })
-                .getByRole("link")
-                .locator("strong")
-                .allTextContents();
-            }
-
-            test.describe.configure({ timeout: 60_000 });''',
-              '''async function phrasePrompts(page: Page) {
-              return page
-                .getByRole("list", { name: "Результаты каталога фраз" })
-                .getByRole("link")
-                .locator("strong")
-                .allTextContents();
-            }
-
-            async function revealLessonComposerControls(page: Page) {
-              const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-              if (await configureLesson.isVisible()) {
-                await configureLesson.click();
-                await expect(page.getByRole("button", { name: /Ручная настройка/ })).toBeVisible();
-              }
-            }
-
-            test.describe.configure({ timeout: 60_000 });''',
-          )
-          replace_once(
-              ownership,
-              '''  await visibleNavigation(page).getByRole("link", { name: /^(Обучение|Учить)$/ }).click();
-              await expect(page).toHaveURL(/\/learn$/);
-              await expect(page.locator("[data-lexigo-collection]")).toHaveCount(5);''',
-              '''  await visibleNavigation(page).getByRole("link", { name: /^(Обучение|Учить)$/ }).click();
-              await expect(page).toHaveURL(/\/learn$/);
-              await revealLessonComposerControls(page);
-              await expect(page.locator("[data-lexigo-collection]")).toHaveCount(5);''',
-          )
-          replace_once(
-              ownership,
-              '''  await page.goto("/learn");
-              await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-
-              await page.getByRole("radio", { name: /Простое изучение слов/ }).click();''',
-              '''  await page.goto("/learn");
-              await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-              await revealLessonComposerControls(page);
-
-              await page.getByRole("radio", { name: /Простое изучение слов/ }).click();''',
-          )
-          PY
-
-          git diff --check
-
-      - name: Commit aligned disclosure tests
+      - name: Commit updated snapshots
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/e2e/adaptive-lesson-composer.spec.ts frontend/e2e/catalog-pagination.spec.ts frontend/e2e/interface-copy.spec.ts frontend/e2e/ui-ownership.spec.ts
-          git commit -m "test(frontend): follow mobile composer disclosure"
-          git push origin HEAD:agent/issue-162-progressive-lesson-composer
+          git add e2e/visual-regression.spec.ts-snapshots/
+          if git diff --cached --quiet; then
+            echo "No snapshot changes — baselines already match."
+          else
+            git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
+
+Regenerated via 'Update visual snapshots' workflow after shell and Home
+redesign in the Adaptive Knowledge Coach PR."
+            git push origin HEAD:${{ inputs.branch }}
+          fi
