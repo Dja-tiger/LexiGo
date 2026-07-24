@@ -10,6 +10,7 @@ type LessonComposerProgressiveShellProps = {
   estimatedMinutes: string;
   previewPending: boolean;
   startDisabled: boolean;
+  startLabel: string;
   busy: boolean;
   onToggle: () => void;
   onStart: () => void;
@@ -26,6 +27,7 @@ export function LessonComposerProgressiveShell({
   estimatedMinutes,
   previewPending,
   startDisabled,
+  startLabel,
   busy,
   onToggle,
   onStart,
@@ -73,7 +75,7 @@ export function LessonComposerProgressiveShell({
           data-journey-intent="lesson_start"
           onClick={onStart}
         >
-          {busy ? "Формируем…" : "Начать рекомендуемый урок"}
+          {busy ? "Формируем…" : startLabel}
         </button>
 
         <button
