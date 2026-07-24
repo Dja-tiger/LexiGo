@@ -65,9 +65,7 @@ test("Academic Technical English is selectable and preserved for the next block"
   await expect(academic).toContainText("579");
   await academic.click();
   await expect(academic).toHaveAttribute("aria-checked", "true");
-  // On mobile the CTA is "Начать рекомендуемый урок"; on desktop it is "Начать урок".
-  // Match whichever button carries the lesson-start intent.
-  const start = page.locator("button[data-journey-intent='lesson_start']");
+  const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await expect(page.getByText("abstract", { exact: true })).toBeVisible();

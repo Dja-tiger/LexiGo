@@ -70,6 +70,12 @@ test("completed block advances once to a distinct server lesson", async ({ page 
   });
 
   await page.goto("/learn");
+
+  const configure = page.getByRole("button", { name: "Настроить урок" });
+  if (await configure.isVisible()) {
+    await configure.click();
+  }
+
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();
   const start = page.getByRole("button", { name: "Начать урок", exact: true });
   await expect(start).toBeEnabled({ timeout: 15_000 });

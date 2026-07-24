@@ -220,6 +220,12 @@ test("blocks a new network lesson with an explicit offline state", async ({ cont
   await installAPI(context, state);
 
   await page.goto("/learn");
+
+  const configure = page.getByRole("button", { name: "Настроить урок" });
+  if (await configure.isVisible()) {
+    await configure.click();
+  }
+
   await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
   await context.setOffline(true);
   await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
