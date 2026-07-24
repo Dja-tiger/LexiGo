@@ -88,6 +88,87 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
+  generate-lesson-result-visual-baselines:
+    name: Generate Lesson Result visual baselines
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.ref == 'agent/issue-194-lesson-result' &&
+      github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: visual-baseline
+      APP_BUILD_ID: ${{ github.event.pull_request.head.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - name: Check out pull request branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Prepare isolated frontend workspace
+        run: bash scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Generate Linux visual baselines
+        run: bash scripts/ci/frontend-container.sh exec npm run test:e2e:visual -- --update-snapshots
+
+      - name: Extract generated baselines
+        run: bash scripts/ci/frontend-container.sh extract
+
+      - name: Commit only approved Lesson Result baselines
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          source_dir="frontend/ci-artifacts/e2e/visual-regression.spec.ts-snapshots"
+          target_dir="frontend/e2e/visual-regression.spec.ts-snapshots"
+          files=(
+            lesson-result-next-compact-visual-compact-linux.png
+            lesson-result-due-desktop-visual-desktop-linux.png
+            lesson-result-daily-goal-dark-desktop-visual-desktop-linux.png
+          )
+
+          mkdir -p "$target_dir"
+          for file in "${files[@]}"; do
+            test -s "$source_dir/$file"
+            cp "$source_dir/$file" "$target_dir/$file"
+          done
+
+          git add -- "${files[@]/#/$target_dir/}"
+
+          mapfile -t actual < <(git diff --cached --name-only | sort)
+          expected=(
+            "$target_dir/lesson-result-daily-goal-dark-desktop-visual-desktop-linux.png"
+            "$target_dir/lesson-result-due-desktop-visual-desktop-linux.png"
+            "$target_dir/lesson-result-next-compact-visual-compact-linux.png"
+          )
+          mapfile -t expected < <(printf '%s\n' "${expected[@]}" | sort)
+
+          if [[ "${actual[*]}" != "${expected[*]}" ]]; then
+            printf 'Unexpected staged files:\n%s\n' "${actual[*]}" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(frontend): add Lesson Result Linux baselines"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash scripts/ci/frontend-container.sh cleanup
+
   cleanup:
     name: Reclaim Actions storage
     if: github.event_name != 'pull_request'
