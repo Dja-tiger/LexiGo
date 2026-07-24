@@ -56,8 +56,16 @@
 
 .lx-routed-app {
   min-height: 100vh;
-  color: var(--ak-text);
   background: var(--ak-bg);
+}
+
+/*
+ * The production slice owns Home and route chrome only. Existing Learn,
+ * Dictionary, Progress and Profile surfaces retain their established tokens
+ * until their dedicated Figma slices are implemented.
+ */
+.lx-routed-app .lx-main-content[aria-label="Главная"] {
+  color: var(--ak-text);
   --lx-bg: var(--ak-bg);
   --lx-bg-soft: var(--ak-bg-muted);
   --lx-panel: var(--ak-surface);
@@ -72,10 +80,6 @@
   --lx-danger: var(--ak-coral);
   --lx-orange: var(--ak-gold);
   --lx-shadow: var(--ak-shadow-md);
-}
-
-.lx-routed-app .lx-app {
-  color: var(--ak-text);
 }
 
 .lx-routed-app .lx-logo-mark {
@@ -355,7 +359,7 @@
     color: var(--ak-primary);
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
     width: auto;
     margin: 0 0 0 var(--ak-shell-rail-width);
     padding: 0 40px 80px;
@@ -366,12 +370,12 @@
     margin: 0 auto;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header {
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: 96px;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header-tools {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header-tools {
     grid-column: 2;
   }
 
@@ -386,6 +390,17 @@
 
   .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-view {
     padding-top: 24px;
+  }
+
+  /* Account panels are mounted beside the product app, not inside .lx-app. */
+  .lx-account-security {
+    box-sizing: border-box;
+    width: min(1140px, calc(100vw - var(--ak-shell-rail-width) - 80px));
+    margin-right: 40px;
+    margin-left: max(
+      calc(var(--ak-shell-rail-width) + 40px),
+      calc((100vw + var(--ak-shell-rail-width) - 1140px) / 2)
+    );
   }
 }
 
@@ -432,12 +447,12 @@
     text-overflow: clip;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
     width: 100%;
     padding: 0 24px calc(92px + env(safe-area-inset-bottom));
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header {
     position: static;
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: calc(54px + env(safe-area-inset-top));
@@ -447,13 +462,13 @@
     backdrop-filter: none;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header-tools {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header-tools {
     grid-column: 2;
     gap: 4px;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-streak,
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-icon-button {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-streak,
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-icon-button {
     display: none;
   }
 
@@ -540,7 +555,7 @@
 }
 
 @media (max-width: 390px) {
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
     padding-right: 18px;
     padding-left: 18px;
   }

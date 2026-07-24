@@ -222,17 +222,18 @@ async function installAPI(page: Page) {
   });
 }
 
-async function clickPrimaryNavigation(page: Page, view: "learn" | "library" | "progress") {
+async function visiblePrimaryNavigation(page: Page, view: "learn" | "library" | "progress") {
   const links = page.locator(`.lx-route-nav [data-navigation-view="${view}"]`);
   const count = await links.count();
   for (let index = 0; index < count; index += 1) {
     const link = links.nth(index);
-    if (await link.isVisible()) {
-      await link.click();
-      return;
-    }
+    if (await link.isVisible()) return link;
   }
   throw new Error(`No visible route link for ${view}`);
+}
+
+async function clickPrimaryNavigation(page: Page, view: "learn" | "library" | "progress") {
+  await (await visiblePrimaryNavigation(page, view)).click();
 }
 
 async function expectMainFocus(page: Page, label: string) {
@@ -346,7 +347,7 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
     name: "Перейти к основному содержимому",
   })).toHaveCSS("transition-duration", "0s");
 
-  const progressNavigation = page.locator('.lx-route-nav--header [data-navigation-view="progress"]');
+  const progressNavigation = await visiblePrimaryNavigation(page, "progress");
   await expect(progressNavigation).toBeVisible();
   await progressNavigation.hover();
   const routeFeedbackAfterHover = await progressNavigation.evaluate((element) => {

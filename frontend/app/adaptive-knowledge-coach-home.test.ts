@@ -40,7 +40,15 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
     expect(styleSource).toContain(".lx-route-nav--mobile");
     expect(styleSource).toContain("env(safe-area-inset-bottom)");
     expect(styleSource).not.toContain("history.pushState");
-    expect(styleSource).not.toContain("data-route-client-island");
+    expect(styleSource).toContain(':not([data-route-client-island="dictionary"])');
+  });
+
+  it("does not recolor unfinished routes and keeps external account panels clear of the rail", () => {
+    const routedAppBlock = styleSource.match(/\.lx-routed-app\s*\{[\s\S]*?\}/)?.[0] ?? "";
+    expect(routedAppBlock).not.toContain("--lx-panel:");
+    expect(styleSource).toContain('.lx-main-content[aria-label="Главная"] {');
+    expect(styleSource).toContain("calc(100vw - var(--ak-shell-rail-width) - 80px)");
+    expect(styleSource).toContain("box-sizing: border-box;");
   });
 
   it("keeps Home focused on a single next-best action", () => {
