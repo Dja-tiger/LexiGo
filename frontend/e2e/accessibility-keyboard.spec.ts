@@ -244,8 +244,9 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(page.getByRole("button", { name: "Дальше" })).toBeEnabled();
   await page.getByRole("button", { name: "Дальше" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("button", { name: "Не знал" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Карточка" })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Прогресс урока" }))
+    .toHaveAttribute("aria-valuetext", "2 из 2 элементов");
+  await expect(page.getByRole("heading", { name: "keyboard access" })).toBeVisible();
 
   await page.goto("/progress");
   await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
@@ -303,7 +304,7 @@ test("axe keyboard baseline: calendar dialog", async ({ page }) => {
   await expectNoPositiveTabIndex(page);
 });
 
-test("lesson tabs remain reachable and expose an unclipped inner focus ring", async ({ page }, testInfo) => {
+test("focused Study controls remain reachable and expose an unclipped focus ring", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Focused lesson geometry is deterministic in the desktop Chromium release profile.");
   await page.goto("/learn");
   const studyMode = page.getByRole("radio", { name: /Простое изучение слов/ });
@@ -315,15 +316,10 @@ test("lesson tabs remain reachable and expose an unclipped inner focus ring", as
   await startLesson.press("Enter");
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 
-  const cardTab = page.getByRole("tab", { name: "Карточка", exact: true });
-  await cardTab.focus();
-  await page.keyboard.press("ArrowRight");
-  const exampleTab = page.getByRole("tab", { name: "Пример", exact: true });
-  await expect(exampleTab).toHaveAttribute("aria-selected", "true");
-  await expectVisibleFocusRing(exampleTab);
-
-  const innerRing = await exampleTab.evaluate((element) => window.getComputedStyle(element).boxShadow);
-  expect(innerRing).toContain("inset");
+  const speech = page.getByRole("button", { name: /Произнести: keyboard/ });
+  await speech.focus();
+  await expectVisibleFocusRing(speech);
+  await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeVisible();
   await expectKeyboardAxeBaseline(page);
 });
 

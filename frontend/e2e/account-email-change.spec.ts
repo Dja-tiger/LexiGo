@@ -162,8 +162,9 @@ test("email change token is confirmed publicly and invalidates the local session
 
   await confirmation.getByRole("button", { name: "Подтвердить email" }).click();
   await expect(page).toHaveURL(/\/profile\?account=email-changed$/);
-  await expect(page.getByRole("status")).toContainText("Email изменён");
-  await expect(page.getByRole("status")).toContainText("Войдите с новым адресом");
+  const changedEmailNotice = page.getByRole("status").filter({ hasText: "Email изменён" });
+  await expect(changedEmailNotice).toContainText("Email изменён");
+  await expect(changedEmailNotice).toContainText("Войдите с новым адресом");
 
   expect(confirmations).toEqual([{
     body: { token: "one-time-email-token" },

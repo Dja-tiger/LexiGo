@@ -198,7 +198,8 @@ test("adopts an in-app login before persisting an offline lesson review", async 
   await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
   await expect(page.getByText("Сессия истекла", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Продолжить урок", exact: true }).first().click();
-  await expect(page.getByText("Слово 1 из 1")).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Прогресс урока" }))
+    .toHaveAttribute("aria-valuetext", "1 из 1 элементов");
 
   await context.setOffline(true);
   await page.getByRole("button", { name: "Знал", exact: true }).click();

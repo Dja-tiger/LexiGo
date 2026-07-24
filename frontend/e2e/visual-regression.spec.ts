@@ -5,6 +5,10 @@ import {
   installDeterministicRuntime,
   installQualityGateAPI,
 } from "./support/quality-gates";
+import {
+  installActiveLessonFixture,
+  openActiveLesson,
+} from "./support/active-lesson-fixture";
 
 async function expectStableScreenshot(page: Page, name: string): Promise<void> {
   const dimensions = await page.evaluate(async () => {
@@ -77,6 +81,52 @@ test.describe("critical visual baselines", () => {
     await page.getByRole("button", { name: "Настроить календарь" }).click();
     await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
     await expectStableScreenshot(page, "calendar-dialog.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("active lesson compact Recall default", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installActiveLessonFixture(page, "recall");
+    await openActiveLesson(page);
+    await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-state", "prompt");
+    await expectStableScreenshot(page, "active-lesson-recall-default.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("active lesson medium Choice incorrect", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 768, "medium baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installActiveLessonFixture(page, "choice");
+    await openActiveLesson(page);
+    await page.getByRole("button", { name: "checkpoint", exact: true }).click();
+    await page.getByRole("button", { name: "Не знал" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Ответ не принят" })).toBeVisible();
+    await expectStableScreenshot(page, "active-lesson-choice-incorrect.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("active lesson desktop Study", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installActiveLessonFixture(page, "study");
+    await openActiveLesson(page);
+    await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", "study");
+    await expectStableScreenshot(page, "active-lesson-study.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("active lesson desktop Recall correct Dark", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop dark baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await installActiveLessonFixture(page, "recall");
+    await openActiveLesson(page);
+    await page.getByRole("textbox", { name: "Введите ответ" }).fill("backlog");
+    await page.getByRole("button", { name: "Сверить ответ" }).click();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
+    await expectStableScreenshot(page, "active-lesson-recall-correct-dark.png");
     expect(runtimeErrors).toEqual([]);
   });
 });
