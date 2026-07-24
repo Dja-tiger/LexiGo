@@ -97,16 +97,19 @@ test.describe("canonical Lesson Result", () => {
     expect(fixture.lessonCreateRequests()).toBe(2);
   });
 
-  test("passes the blocking axe audit with semantic evidence and action hierarchy", async ({ page }) => {
+  test("passes the blocking axe audit in light and dark appearance", async ({ page }) => {
     await installLessonResultFixture(page, { previewTotal: 1 });
     await completeRecallLesson(page);
 
-    const results = await new AxeBuilder({ page })
-      .include(".lx-lesson-result")
-      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-      .analyze();
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme });
+      const results = await new AxeBuilder({ page })
+        .include(".lx-lesson-result")
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
 
-    expect(results.violations).toEqual([]);
+      expect(results.violations, `${colorScheme} Lesson Result axe violations`).toEqual([]);
+    }
   });
 
   test("keeps controls reachable at 200 percent zoom and respects reduced motion", async ({ page }) => {
