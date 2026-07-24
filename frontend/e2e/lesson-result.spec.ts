@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import {
@@ -90,6 +91,18 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
     await expect(page.getByRole("alert").filter({ hasText: "Следующий урок совпал" })).toBeVisible();
     expect(fixture.lessonCreateRequests()).toBe(2);
+  });
+
+  test("passes the blocking axe audit with semantic evidence and action hierarchy", async ({ page }) => {
+    await installLessonResultFixture(page, { previewTotal: 1 });
+    await completeRecallLesson(page);
+
+    const results = await new AxeBuilder({ page })
+      .include(".lx-lesson-result")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+
+    expect(results.violations).toEqual([]);
   });
 
   test("keeps controls reachable at 200 percent zoom and respects reduced motion", async ({ page }) => {
