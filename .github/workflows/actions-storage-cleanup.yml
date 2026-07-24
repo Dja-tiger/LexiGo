@@ -88,8 +88,8 @@ jobs:
             --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
             --github-step-summary "$GITHUB_STEP_SUMMARY"
 
-  patch-lesson-result-history:
-    name: Patch Lesson Result browser history
+  patch-lesson-result-contracts:
+    name: Patch Lesson Result contracts
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
@@ -104,35 +104,46 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Preserve Lesson Result history entry
+      - name: Apply exact Lesson Result contract patches
         shell: python
         run: |
           from pathlib import Path
 
-          path = Path("frontend/components/lexigo-premium-app.tsx")
-          source = path.read_text(encoding="utf-8")
-          old = 'navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });'
-          new = 'navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });'
+          replacements = (
+              (
+                  Path("frontend/components/lexigo-premium-app.tsx"),
+                  'navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });',
+                  'navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });',
+              ),
+              (
+                  Path("frontend/app/lesson-result.css"),
+                  "  color: var(--ak-color-on-primary);",
+                  "  color: var(--ak-color-surface);",
+              ),
+          )
 
-          if new in source and old not in source:
-              raise SystemExit(0)
-          occurrences = source.count(old)
-          if occurrences != 1:
-              raise SystemExit(f"Expected exactly one history replacement target, found {occurrences}")
+          for path, old, new in replacements:
+              source = path.read_text(encoding="utf-8")
+              occurrences = source.count(old)
+              if occurrences == 0:
+                  if new not in source:
+                      raise SystemExit(f"Neither old nor expected new contract found in {path}")
+                  continue
+              if occurrences != 1:
+                  raise SystemExit(f"Expected exactly one patch target in {path}, found {occurrences}")
+              path.write_text(source.replace(old, new, 1), encoding="utf-8")
 
-          path.write_text(source.replace(old, new, 1), encoding="utf-8")
-
-      - name: Commit history patch when needed
+      - name: Commit contract patches when needed
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- frontend/components/lexigo-premium-app.tsx; then
+          if git diff --quiet -- frontend/components/lexigo-premium-app.tsx frontend/app/lesson-result.css; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/components/lexigo-premium-app.tsx
-          git commit -m "fix(frontend): preserve Lesson Result browser history"
+          git add frontend/components/lexigo-premium-app.tsx frontend/app/lesson-result.css
+          git commit -m "fix(frontend): preserve Lesson Result navigation and contrast"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
   cleanup:
