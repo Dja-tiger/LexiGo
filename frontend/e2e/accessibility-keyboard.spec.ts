@@ -306,8 +306,13 @@ test("axe keyboard baseline: calendar dialog", async ({ page }) => {
 test("lesson tabs remain reachable and expose an unclipped inner focus ring", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Focused lesson geometry is deterministic in the desktop Chromium release profile.");
   await page.goto("/learn");
-  await page.getByRole("radio", { name: /Простое изучение слов/ }).press("Space");
-  await page.getByRole("button", { name: "Начать урок" }).press("Enter");
+  const studyMode = page.getByRole("radio", { name: /Простое изучение слов/ });
+  await studyMode.press("Space");
+  await expect(studyMode).toHaveAttribute("aria-checked", "true");
+
+  const startLesson = page.getByRole("button", { name: "Начать урок", exact: true });
+  await expect(startLesson).toBeEnabled();
+  await startLesson.press("Enter");
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
 
   const cardTab = page.getByRole("tab", { name: "Карточка", exact: true });
@@ -330,11 +335,11 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });
   const study = modeGroup.getByRole("radio", { name: /Простое изучение слов/ });
   const recall = modeGroup.getByRole("radio", { name: new RegExp(learningTermCopy("recall").label) });
-  await expect(study).toHaveAttribute("aria-checked", "true");
-  await study.focus();
-  await study.press("ArrowDown");
-  await expect(recall).toBeFocused();
   await expect(recall).toHaveAttribute("aria-checked", "true");
+  await recall.focus();
+  await recall.press("ArrowUp");
+  await expect(study).toBeFocused();
+  await expect(study).toHaveAttribute("aria-checked", "true");
 
   const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
   const size30 = sizeGroup.getByRole("radio", { name: "30", exact: true });
