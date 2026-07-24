@@ -8,12 +8,21 @@ type PackageManifest = {
 };
 
 const appDirectory = path.join(process.cwd(), "app");
+const componentDirectory = path.join(process.cwd(), "components");
 const designTokenSource = readFileSync(
   path.join(appDirectory, "design-tokens.css"),
   "utf8",
 );
 const styleSource = readFileSync(
   path.join(appDirectory, "adaptive-knowledge-coach-home.css"),
+  "utf8",
+);
+const accessibilitySource = readFileSync(
+  path.join(appDirectory, "adaptive-knowledge-coach-accessibility.css"),
+  "utf8",
+);
+const routedAppSource = readFileSync(
+  path.join(componentDirectory, "routed-lexigo-app.tsx"),
   "utf8",
 );
 const layoutSource = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
@@ -26,11 +35,15 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
     expect(layoutSource).toContain('import "./design-tokens.css";');
     expect(layoutSource).toContain('import "./compact-home.css";');
     expect(layoutSource).toContain('import "./adaptive-knowledge-coach-home.css";');
+    expect(layoutSource).toContain('import "./adaptive-knowledge-coach-accessibility.css";');
     expect(layoutSource.indexOf('import "./design-tokens.css";')).toBeLessThan(
       layoutSource.indexOf('import "./compact-home.css";'),
     );
     expect(layoutSource.indexOf('import "./adaptive-knowledge-coach-home.css";')).toBeGreaterThan(
       layoutSource.indexOf('import "./compact-home.css";'),
+    );
+    expect(layoutSource.indexOf('import "./adaptive-knowledge-coach-accessibility.css";')).toBeGreaterThan(
+      layoutSource.indexOf('import "./adaptive-knowledge-coach-home.css";'),
     );
   });
 
@@ -66,6 +79,9 @@ describe("Adaptive Knowledge Coach shell and Home styles", () => {
     const routedAppBlock = styleSource.match(/\.lx-routed-app\s*\{[\s\S]*?\}/)?.[0] ?? "";
     expect(routedAppBlock).not.toContain("--lx-panel:");
     expect(styleSource).toContain('.lx-main-content[aria-label="Главная"] {');
+    expect(routedAppSource).toContain("data-route-path={pathname}");
+    expect(accessibilitySource).toContain('.lx-routed-app:not([data-route-path="/"])');
+    expect(accessibilitySource).toMatch(/\.lx-routed-app:not\(\[data-route-path="\/"\]\)\s*\{[\s\S]*?background:\s*transparent;/);
     expect(styleSource).toContain("calc(100vw - var(--ak-shell-rail-width) - 80px)");
     expect(styleSource).toContain("box-sizing: border-box;");
   });
