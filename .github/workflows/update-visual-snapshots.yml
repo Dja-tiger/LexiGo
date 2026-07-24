@@ -1,5 +1,6 @@
 name: Update visual snapshots
 
+# Temporary guarded codemod for PR #192. Restored after the source commit lands.
 on:
   push:
     branches:
