@@ -1,9 +1,9 @@
-name: Update visual snapshots
+name: Rebuild Lesson Result integration
 
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - agent/issue-194-lesson-result
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -11,58 +11,94 @@ permissions:
   contents: write
 
 jobs:
-  update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+  rebuild:
+    name: Rebuild canonical Lesson Result sources
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: core
-      APP_BUILD_ID: ${{ github.sha }}
-      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: agent/issue-194-lesson-result
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: Prepare isolated frontend workspace
-        run: bash ../scripts/ci/frontend-container.sh prepare
-
-      - name: Install locked dependencies
-        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-
-      - name: Production build
-        run: bash ../scripts/ci/frontend-container.sh exec npm run build
-
-      - name: Regenerate visual snapshots
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-      - name: Extract updated snapshots from container
+      - name: Restore canonical integration bases
         run: |
-          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
-          test -n "$container"
-          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
+          set -Eeuo pipefail
+          git fetch origin main
+          git checkout origin/main -- \
+            frontend/components/lexigo-premium-app.tsx \
+            frontend/app/layout.tsx \
+            frontend/package.json \
+            frontend/e2e/next-lesson-progression.spec.ts
 
-      - name: Cleanup container
-        if: always()
-        run: bash ../scripts/ci/frontend-container.sh cleanup
-
-      - name: Commit Issue 162 baselines
+      - name: Apply duplicate-safe deterministic codemod
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/ci/patch-lesson-result.py')
+          source = path.read_text()
+          helper_marker = '\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n'
+          helper = '''
+def replace_first(text: str, old: str, new: str, label: str) -> str:
+    if old not in text:
+        raise RuntimeError(f"{label}: expected at least one match")
+    return text.replace(old, new, 1)
+
+'''
+          if 'def replace_first(' not in source:
+              if helper_marker not in source:
+                  raise RuntimeError('replace_regex helper marker missing')
+              source = source.replace(helper_marker, helper + helper_marker, 1)
+
+          lines = source.splitlines()
+          label_index = next(index for index, line in enumerate(lines) if '"progress resource ref"' in line)
+          call_index = max(index for index in range(label_index) if lines[index] == 'app = replace_once(')
+          lines[call_index] = 'app = replace_first('
+          path.write_text('\n'.join(lines) + '\n')
+          PY
+          python3 scripts/ci/patch-lesson-result.py
+
+      - name: Normalize and verify complete source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          spec_path = Path('frontend/e2e/next-lesson-progression.spec.ts')
+          spec = spec_path.read_text()
+          old = 'const WORDS = BLOCKS.flat().map(({ position: _position, ...item }) => item);'
+          new = '''const WORDS = BLOCKS.flat().map(({ position, ...item }) => {
+  void position;
+  return item;
+});'''
+          if old in spec:
+              spec = spec.replace(old, new, 1)
+          spec_path.write_text(spec)
+          PY
+          lines=$(wc -l < frontend/components/lexigo-premium-app.tsx)
+          test "$lines" -gt 3000
+          grep -Fq 'export function LexigoPremiumApp' frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'LessonResultPresentation' frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'buildLessonResultSnapshot' frontend/components/lexigo-premium-app.tsx
+          grep -Fq 'import "./lesson-result.css";' frontend/app/layout.tsx
+          tail -n 20 frontend/components/lexigo-premium-app.tsx | grep -Fq '}'
+
+      - name: Remove temporary scaffolding and restore workflow
+        run: |
+          set -Eeuo pipefail
+          git checkout origin/main -- .github/workflows/update-visual-snapshots.yml
+          rm -f \
+            .github/workflows/rebuild-lesson-result.yml \
+            scripts/ci/patch-lesson-result.py
+
+      - name: Commit clean rebuilt integration
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(frontend): rebuild complete Lesson Result integration'
+          git push origin HEAD:agent/issue-194-lesson-result
