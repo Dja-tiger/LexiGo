@@ -71,9 +71,8 @@ test("completed block advances once to a distinct server lesson", async ({ page 
 
   await page.goto("/learn");
 
-  const configure = page.getByRole("button", { name: "Настроить урок" });
-  if (await configure.isVisible()) {
-    await configure.click();
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
   await page.getByRole("radio", { name: /Простое изучение слов/ }).click();

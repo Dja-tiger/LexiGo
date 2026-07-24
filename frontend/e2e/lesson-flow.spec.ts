@@ -134,9 +134,8 @@ async function installLessonAPI(
 async function openLesson(page: Page, mode: LessonMode) {
   await page.goto("/learn");
 
-  const configure = page.getByRole("button", { name: "Настроить урок" });
-  if (await configure.isVisible()) {
-    await configure.click();
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
   const label = mode === "study" ? "Простое изучение слов" : mode === "recall" ? learningTermCopy("recall").label : "Выбрать вариант";
@@ -290,9 +289,8 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   const api = await installLessonAPI(page, 2, 0, mixedItems);
   await page.goto("/learn");
 
-  const configure = page.getByRole("button", { name: "Настроить урок" });
-  if (await configure.isVisible()) {
-    await configure.click();
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
   await expect(page.getByText("2 элемента · 1 слово · 1 фраза")).toBeVisible();

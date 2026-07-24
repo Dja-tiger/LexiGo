@@ -56,9 +56,8 @@ test("Academic Technical English is selectable and preserved for the next block"
 
   // On mobile (<768px) the source controls are inside the progressive settings panel;
   // open it before interacting with source selectors.
-  const configure = page.getByRole("button", { name: "Настроить урок" });
-  if (await configure.isVisible()) {
-    await configure.click();
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
   await expect(academic).toContainText("Academic Technical English");

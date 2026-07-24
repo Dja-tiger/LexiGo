@@ -221,9 +221,8 @@ test("blocks a new network lesson with an explicit offline state", async ({ cont
 
   await page.goto("/learn");
 
-  const configure = page.getByRole("button", { name: "Настроить урок" });
-  if (await configure.isVisible()) {
-    await configure.click();
+  if ((page.viewportSize()?.width || 1000) < 768) {
+    await page.getByRole("button", { name: "Настроить урок" }).click();
   }
 
   await expect(page.getByText("1 элемент · 1 слово · 0 фраз")).toBeVisible();
