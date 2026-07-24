@@ -24,7 +24,8 @@ describe("canonical Active Lesson production slice", () => {
     expect(styleSource).toContain("var(--ak-color-primary)");
     expect(styleSource).toContain("var(--ak-color-retained)");
     expect(styleSource).toContain("var(--ak-color-weak)");
-    expect(styleSource).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+    const cssWithoutComments = styleSource.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(cssWithoutComments).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
   it("keeps API, server position, completion and outbox ownership outside presentation", () => {

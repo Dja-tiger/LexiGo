@@ -85,7 +85,6 @@ import {
   goalPercent,
   normalizedProgressModes,
   objectiveSuccessRate,
-  ratingLabel,
   type AnswerMode,
   type ProgressSummary,
   type ReviewRating,
@@ -1872,13 +1871,6 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
       return;
     }
     moveToServerIndex(decision.nextIndex);
-  }
-
-  function handleRatingClick(event: MouseEvent<HTMLButtonElement>) {
-    const rating = event.currentTarget.dataset.rating;
-    if (rating === "again" || rating === "almost" || rating === "known") {
-      void rateCurrent(rating, event.timeStamp, document.activeElement === event.currentTarget);
-    }
   }
 
   async function rateCurrent(

@@ -178,33 +178,7 @@ export function ActiveLessonPresentation({
   useEffect(() => {
     if (!exitOpen) return;
     cancelExitRef.current?.focus({ preventScroll: true });
-    const dialog = exitDialogRef.current;
-    if (!dialog) return;
-
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        cancelExit();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const controls = focusableElements(dialog);
-      if (controls.length === 0) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cancelExit, exitOpen]);
+  }, [exitOpen]);
 
   useEffect(() => {
     if (!revealed || mode === "study") return;
@@ -215,6 +189,29 @@ export function ActiveLessonPresentation({
     if (event.key !== "Enter" || !typedAnswer.trim()) return;
     event.preventDefault();
     onReveal();
+  }
+
+  function handleDialogKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelExit();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const dialog = exitDialogRef.current;
+    if (!dialog) return;
+    const controls = focusableElements(dialog);
+    if (controls.length === 0) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (!first || !last) return;
+    if (event.shiftKey && event.target === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && event.target === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function handleRating(event: MouseEvent<HTMLButtonElement>) {
@@ -484,6 +481,7 @@ export function ActiveLessonPresentation({
             aria-modal="true"
             aria-labelledby="active-lesson-exit-title"
             aria-describedby="active-lesson-exit-description"
+            onKeyDown={handleDialogKeyDown}
           >
             <span className="lx-active-lesson__eyebrow">БЕЗОПАСНЫЙ ВЫХОД</span>
             <h2 id="active-lesson-exit-title">Закрыть урок?</h2>
