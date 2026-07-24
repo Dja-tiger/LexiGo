@@ -2909,7 +2909,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     const loading = allItemsStatus.phase === "loading" || allItemsStatus.phase === "idle";
     return (
       <section className="lx-all-items">
-        <div className="lx-lesson-top"><button className="lx-button ghost" type="button" onClick={() => navigate({ view: source === "phrases" ? "phrases" : "learn", source })}>← Назад</button><strong>{allItemsPageInfo.total.toLocaleString("ru-RU")} элементов · {sourceLabel(source)}</strong></div>
+        <div className="lx-all-items-top"><button className="lx-button ghost" type="button" onClick={() => navigate({ view: source === "phrases" ? "phrases" : "learn", source })}>← Назад</button><strong>{allItemsPageInfo.total.toLocaleString("ru-RU")} элементов · {sourceLabel(source)}</strong></div>
         <CatalogSearchForm value={allItemsSearchInput} onChange={setAllItemsSearchInput} onSubmit={applyAllItemsSearch} onClear={clearAllItemsSearch} label="Поиск по открытому каталогу" />
         <CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={changeAllItemsSort} />
         {allItemsStatus.phase === "error" && allItemsStatus.problem ? <AsyncStatePanel label="Каталог недоступен" kind="error" title={allItemsStatus.problem.title} message={allItemsStatus.problem.message} reference={allItemsStatus.problem.correlationId} actionLabel={allItemsStatus.problem.retryable ? "Повторить" : undefined} onAction={allItemsStatus.problem.retryable ? () => void changeAllItemsPage(allItemsPage) : undefined} /> : null}

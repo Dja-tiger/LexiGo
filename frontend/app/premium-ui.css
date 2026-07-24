@@ -784,6 +784,7 @@
 .lx-all-items article small { color: #65bfff; }
 .lx-all-items article h3 { margin: 7px 0; }
 .lx-all-items article p { color: #8190a6; line-height: 1.5; }
+.lx-all-items-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .lx-mobile-nav { display: none; }
 
 @media (max-width: 1260px) {
