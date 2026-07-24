@@ -359,7 +359,7 @@
     color: var(--ak-primary);
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) {
     width: auto;
     margin: 0 0 0 var(--ak-shell-rail-width);
     padding: 0 40px 80px;
@@ -370,12 +370,12 @@
     margin: 0 auto;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header {
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: 96px;
   }
 
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]) .lx-header-tools {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode) .lx-header-tools {
     grid-column: 2;
   }
 
