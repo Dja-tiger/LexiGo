@@ -2213,7 +2213,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
         >
           <section className="lx-setup-card">
           <div className="lx-setup-block">
-            <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Главный режим — простое изучение с открытой карточкой</small></div></div>
+            <div className="lx-block-heading"><span>1</span><div><strong>Выберите режим</strong><small>Рекомендуемый режим — объективное воспроизведение без подсказки</small></div></div>
             <div className="lx-mode-selector" role="radiogroup" aria-label="Режим обучения" aria-orientation="vertical">
               {MODE_OPTIONS.map((option) => {
                 const selected = studyMode === option.value;
@@ -2293,7 +2293,7 @@ navigate({ view: "lesson", source: resolvedSource }, false, { intent: overrides.
               ) : (
                 <div className="lx-lesson-preview" aria-live="polite"><span>Состав урока</span><strong>{lessonCompositionDescription(matchingLessonPreview.composition)}</strong><small>{lessonPriorityDescription(matchingLessonPreview.composition)}</small>{lessonCompositionFallbackMessage(matchingLessonPreview.composition) ? <em>{lessonCompositionFallbackMessage(matchingLessonPreview.composition)}</em> : null}</div>
               )}
-              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0))} onClick={() => startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
+              <div className="lx-setup-submit"><p>{studyMode === "study" ? "Слово, перевод и пример будут видны сразу." : studyMode === "all" ? "Откроется справочный список без оценок." : "Ответы будут сохранены в интервальную очередь."}</p><button className="lx-button primary large" type="button" disabled={lessonStartDisabled} onClick={() => startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}><Icon name="play"/>{busy ? "Формируем…" : studyMode === "all" ? "Открыть список" : "Начать урок"}</button></div>
             </div>
           </div>
           </section>

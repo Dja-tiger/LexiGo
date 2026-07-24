@@ -213,6 +213,12 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
 
+  const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });
+  const study = modeGroup.getByRole("radio", { name: /Простое изучение слов/ });
+  await study.focus();
+  await page.keyboard.press("Space");
+  await expect(study).toHaveAttribute("aria-checked", "true");
+
   const sourceGroup = page.getByRole("radiogroup", { name: "Раздел обучения" });
   const nouns = sourceGroup.getByRole("radio", { name: /Существительные/ });
   await nouns.focus();
