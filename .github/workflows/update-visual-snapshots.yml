@@ -7,13 +7,9 @@ on:
         description: Branch to update snapshots on
         required: true
         default: agent/issue-183-application-shell-home
-  pull_request:
-    paths:
-      - .github/workflows/update-visual-snapshots.yml
 
 jobs:
   update-snapshots:
-    if: github.event_name == 'workflow_dispatch'
     name: Regenerate visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -63,78 +59,7 @@ jobs:
           else
             git commit -m "test(visual): update baseline snapshots for Adaptive Knowledge Coach shell
 
-          Regenerated via 'Update visual snapshots' workflow after shell and Home
-          redesign in the Adaptive Knowledge Coach PR."
+Regenerated via 'Update visual snapshots' workflow after shell and Home
+redesign in the Adaptive Knowledge Coach PR."
             git push origin HEAD:${{ inputs.branch }}
-          fi
-
-  apply-issue-162-follow-up:
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.number == 192 &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    name: Align Issue 162 copy and fixtures
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Apply guarded source transformations
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          transformations = {
-              Path("frontend/components/lexigo-premium-app.tsx"): [
-                  (
-                      "Главный режим — простое изучение с открытой карточкой",
-                      "Рекомендуемый режим — объективное воспроизведение без подсказки",
-                  ),
-                  (
-                      'disabled={busy || Boolean(session && studyMode !== "all" && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0))}',
-                      "disabled={lessonStartDisabled}",
-                  ),
-              ],
-              Path("frontend/e2e/accessibility-keyboard.spec.ts"): [
-                  (
-                      '  const sourceGroup = page.getByRole("radiogroup", { name: "Раздел обучения" });\n  const nouns = sourceGroup.getByRole("radio", { name: /Существительные/ });',
-                      '  const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });\n  const study = modeGroup.getByRole("radio", { name: /Простое изучение слов/ });\n  await study.focus();\n  await page.keyboard.press("Space");\n  await expect(study).toHaveAttribute("aria-checked", "true");\n\n  const sourceGroup = page.getByRole("radiogroup", { name: "Раздел обучения" });\n  const nouns = sourceGroup.getByRole("radio", { name: /Существительные/ });',
-                  ),
-              ],
-          }
-
-          changed_paths = []
-          for path, replacements in transformations.items():
-              source = path.read_text(encoding="utf-8")
-              changed = False
-              for needle, replacement in replacements:
-                  if replacement in source:
-                      continue
-                  count = source.count(needle)
-                  if count != 1:
-                      raise SystemExit(f"guard failed for {path}: expected one occurrence, found {count}: {needle[:90]!r}")
-                  source = source.replace(needle, replacement, 1)
-                  changed = True
-              if changed:
-                  path.write_text(source, encoding="utf-8")
-                  changed_paths.append(str(path))
-
-          print("changed:", ", ".join(changed_paths) if changed_paths else "none")
-          PY
-
-      - name: Commit aligned source and fixture
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/components/lexigo-premium-app.tsx frontend/e2e/accessibility-keyboard.spec.ts
-          if git diff --cached --quiet; then
-            echo "Issue 162 follow-up already applied."
-          else
-            git commit -m "test(frontend): align keyboard flow with recall-first composer"
-            git push origin HEAD:${{ github.head_ref }}
           fi
