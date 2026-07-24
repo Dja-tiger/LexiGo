@@ -40,3 +40,5 @@ jobs:
             git commit -m "feat(frontend): integrate canonical Lesson Result"
             git push origin HEAD:agent/issue-194-lesson-result
           fi
+
+# Triggered after this branch-specific workflow became active.
