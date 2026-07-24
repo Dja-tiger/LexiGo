@@ -23,6 +23,6 @@ The result distinguishes objective recall evidence from recognition and passive 
 
 Final validation must run from a normal developer-authored head after all one-time integration commits are removed. The required gate includes lint, typecheck, unit tests, production build, dependency audit, browser projects, accessibility, visual regression, performance budgets, and container builds.
 
-Before validation, the reconstruction gate verifies that the complete production app is present, required Lesson Result ownership imports exist, and the file terminates normally rather than accepting a partial generated artifact. One-time workflow scripts keep every heredoc line within the YAML block indentation so GitHub creates an executable run instead of silently rejecting the workflow definition.
+Before validation, the reconstruction gate verifies that the complete production app is present, required Lesson Result ownership imports exist, and the file terminates normally rather than accepting a partial generated artifact.
 
-The reconstruction commit is intentionally followed by a separate source-of-truth commit so GitHub evaluates the already-present workflow definition rather than the workflow-changing commit itself.
+The two compiler-oriented React lint exceptions remain scoped to the monolithic runtime owner. Reload, browser-history restoration, duplicate-submit prevention, focus ownership and retry behavior remain mandatory executable contracts; the rules stay enabled for every presentation component and all new code outside that owner.
