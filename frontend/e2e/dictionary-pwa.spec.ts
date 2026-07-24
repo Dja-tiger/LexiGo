@@ -245,7 +245,7 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
   expect(runtimeErrors).toEqual([]);
 });
 
-test("iOS standalone dictionary restores filters and result scroll across relaunch", async ({ context, page }, testInfo) => {
+test("iOS standalone dictionary restores result scroll on history return and filters across relaunch", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "ios-webkit", "Dedicated iOS PWA regression");
   await emulateStandaloneMode(context);
   await installAPI(context);
@@ -259,13 +259,18 @@ test("iOS standalone dictionary restores filters and result scroll across relaun
 
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
   const scrollBefore = await page.evaluate(() => window.scrollY);
+  expect(scrollBefore).toBeGreaterThan(0);
   await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
   await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
   await page.goBack();
   await expect(page).toHaveURL(/\/dictionary\?/);
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/status=review/);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
+  await expect(page.getByRole("listitem")).toHaveCount(12);
+  await expect.poll(() => page.evaluate(
+    (expected) => Math.abs(window.scrollY - expected),
+    scrollBefore,
+  )).toBeLessThanOrEqual(64);
   expect(runtimeErrors).toEqual([]);
 
   await page.close();

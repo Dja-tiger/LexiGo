@@ -8,6 +8,7 @@ on:
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
       - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/runner_policy_test.py"
       - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   push:
@@ -18,6 +19,7 @@ on:
       - "scripts/ci/actions_storage_cleanup.py"
       - "scripts/ci/actions_storage_cleanup_test.py"
       - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/runner_policy_test.py"
       - "scripts/ci/patch_actions_storage_policy.py"
       - "docs/github-actions-storage.md"
   workflow_run:
@@ -58,11 +60,7 @@ jobs:
   validate:
     name: Validate Actions storage cleanup
     if: github.event_name == 'pull_request'
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -74,6 +72,9 @@ jobs:
 
       - name: Validate Actions storage policy
         run: python3 scripts/ci/actions_storage_policy_test.py
+
+      - name: Validate CI runner policy
+        run: python3 scripts/ci/runner_policy_test.py
 
       - name: Preview current storage candidates
         env:
@@ -93,11 +94,7 @@ jobs:
     permissions:
       contents: read
       actions: write
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -109,6 +106,9 @@ jobs:
 
       - name: Validate Actions storage policy
         run: python3 scripts/ci/actions_storage_policy_test.py
+
+      - name: Validate CI runner policy
+        run: python3 scripts/ci/runner_policy_test.py
 
       - name: Resolve cleanup policy
         id: policy
@@ -161,4 +161,3 @@ jobs:
           fi
 
           python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"
-

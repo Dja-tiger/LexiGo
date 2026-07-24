@@ -18,11 +18,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
@@ -85,11 +81,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
@@ -224,11 +216,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
@@ -241,6 +229,9 @@ jobs:
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
     steps:
       - uses: actions/checkout@v7
+
+      - name: Validate CI runner policy
+        run: python3 ../scripts/ci/runner_policy_test.py
 
       - name: Prepare isolated frontend workspace
         run: bash ../scripts/ci/frontend-container.sh prepare
@@ -290,21 +281,13 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     defaults:
       run:
         working-directory: frontend
     strategy:
       fail-fast: false
-      # The runner services share one resource-constrained physical host.
-      # Serialize browser suites so Next.js servers and Playwright workers do
-      # not compete for the same CPU and memory pool.
-      max-parallel: 1
       matrix:
         suite: [journeys, ui-accessibility, ui-runtime]
     env:
@@ -434,11 +417,7 @@ jobs:
       always() &&
       (github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - name: Verify all frontend groups passed
@@ -455,11 +434,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     needs: [backend-unit, backend-integration, frontend]
     env:
@@ -470,9 +445,6 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
-      # BuildKit jobs share one resource-constrained self-hosted host.
-      # Serialize image builds to prevent host-wide memory pressure and runner loss.
-      max-parallel: 1
       matrix:
         component: [api, web]
         include:
@@ -531,42 +503,3 @@ jobs:
       - name: Stop bounded cleanup lease
         if: always()
         run: docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
-
-  ci-resource-cleanup:
-    name: Cleanup CI Docker resources
-    if: always()
-    needs: [backend-unit, backend-integration, frontend, container-build]
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - lexigo-ci
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Test cleanup planner
-        run: python3 scripts/ci/runner_resource_cleanup_test.py
-
-      - name: Remove resources owned by this workflow run
-        id: cleanup
-        if: always()
-        run: |
-          set -Eeuo pipefail
-          python3 scripts/ci/runner_resource_cleanup.py \
-            --repository "$GITHUB_REPOSITORY" \
-            --target-run-id "$GITHUB_RUN_ID" \
-            --target-run-attempt "$GITHUB_RUN_ATTEMPT" \
-            --summary-file "$RUNNER_TEMP/lexigo-runner-cleanup.json"
-
-      - name: Upload cleanup summary
-        if: always() && steps.cleanup.outcome != 'skipped'
-        uses: actions/upload-artifact@v7
-        continue-on-error: true
-        with:
-          name: runner-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/lexigo-runner-cleanup.json
-          if-no-files-found: error
-          retention-days: 3
