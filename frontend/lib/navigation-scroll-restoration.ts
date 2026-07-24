@@ -17,12 +17,24 @@ export type NavigationScrollRestorationOptions = {
   tolerancePixels?: number;
 };
 
+export type NavigationScrollSnapshotStorage = {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+};
+
 export const DEFAULT_NAVIGATION_SCROLL_RESTORE_MAX_FRAMES = 300;
 export const DEFAULT_NAVIGATION_SCROLL_RESTORE_TOLERANCE_PX = 1;
+const NAVIGATION_SCROLL_SNAPSHOT_PREFIX = "lexigo:navigation-scroll:";
 
 function finiteCoordinate(value: number, label: string): number {
   if (!Number.isFinite(value)) throw new RangeError(`${label} must be finite`);
   return Math.max(0, value);
+}
+
+function snapshotKey(identity: string): string {
+  if (!identity.trim()) throw new RangeError("navigation identity must not be empty");
+  return `${NAVIGATION_SCROLL_SNAPSHOT_PREFIX}${identity}`;
 }
 
 function positionReached(
@@ -32,6 +44,57 @@ function positionReached(
 ): boolean {
   return Math.abs(current.x - target.x) <= tolerancePixels
     && Math.abs(current.y - target.y) <= tolerancePixels;
+}
+
+export function writeNavigationScrollSnapshot(
+  storage: NavigationScrollSnapshotStorage,
+  identity: string,
+  position: NavigationScrollPosition,
+): boolean {
+  const normalized = {
+    x: finiteCoordinate(position.x, "position.x"),
+    y: finiteCoordinate(position.y, "position.y"),
+  };
+  try {
+    storage.setItem(snapshotKey(identity), JSON.stringify(normalized));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readNavigationScrollSnapshot(
+  storage: NavigationScrollSnapshotStorage,
+  identity: string,
+): NavigationScrollPosition | null {
+  let serialized: string | null;
+  try {
+    serialized = storage.getItem(snapshotKey(identity));
+  } catch {
+    return null;
+  }
+  if (!serialized) return null;
+
+  try {
+    const value = JSON.parse(serialized) as { x?: unknown; y?: unknown } | null;
+    if (!value || typeof value.x !== "number" || typeof value.y !== "number") return null;
+    if (!Number.isFinite(value.x) || !Number.isFinite(value.y) || value.x < 0 || value.y < 0) return null;
+    return { x: value.x, y: value.y };
+  } catch {
+    return null;
+  }
+}
+
+export function removeNavigationScrollSnapshot(
+  storage: NavigationScrollSnapshotStorage,
+  identity: string,
+): boolean {
+  try {
+    storage.removeItem(snapshotKey(identity));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
