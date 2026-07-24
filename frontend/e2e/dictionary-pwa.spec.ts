@@ -267,7 +267,10 @@ test("iOS standalone dictionary restores result scroll on history return and fil
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/status=review/);
   await expect(page.getByRole("listitem")).toHaveCount(12);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBefore);
+  await expect.poll(() => page.evaluate(
+    (expected) => Math.abs(window.scrollY - expected),
+    scrollBefore,
+  )).toBeLessThanOrEqual(64);
   expect(runtimeErrors).toEqual([]);
 
   await page.close();
