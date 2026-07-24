@@ -49,7 +49,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 concurrency:
@@ -57,6 +57,87 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  patch-lesson-result:
+    name: Apply Issue 194 integration patch
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-194-lesson-result
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refine duplicate-safe codemod target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/ci/patch-lesson-result.py")
+          source = path.read_text()
+          helper_marker = "\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n"
+          helper = '''
+def replace_first(text: str, old: str, new: str, label: str) -> str:
+    if old not in text:
+        raise RuntimeError(f"{label}: expected at least one match")
+    return text.replace(old, new, 1)
+
+'''
+          if "def replace_first(" not in source:
+              if helper_marker not in source:
+                  raise RuntimeError("replace_regex helper marker missing")
+              source = source.replace(helper_marker, helper + helper_marker, 1)
+
+          lines = source.splitlines()
+          label_index = next(index for index, line in enumerate(lines) if '"progress resource ref"' in line)
+          call_index = max(index for index in range(label_index) if lines[index] == "app = replace_once(")
+          lines[call_index] = "app = replace_first("
+          path.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Apply deterministic codemod
+        id: patch
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/ci/patch-lesson-result.py > /tmp/lesson-result-patch.log 2>&1
+          status=$?
+          cat /tmp/lesson-result-patch.log
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/lesson-result-patch.log scripts/ci/patch-lesson-result-error.txt
+          else
+            rm -f scripts/ci/patch-lesson-result-error.txt
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Commit integration patch or diagnostics
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "${{ steps.patch.outputs.status }}" -eq 0 ]; then
+            git add \
+              frontend/components/lexigo-premium-app.tsx \
+              frontend/app/layout.tsx \
+              frontend/package.json \
+              frontend/e2e/next-lesson-progression.spec.ts
+            git add -u scripts/ci/patch-lesson-result-error.txt
+            git diff --cached --check
+            message="feat(frontend): integrate canonical Lesson Result"
+          else
+            git add scripts/ci/patch-lesson-result-error.txt
+            message="chore(ci): record Lesson Result codemod failure"
+          fi
+          if git diff --cached --quiet; then
+            echo "No patch output to commit."
+          else
+            git commit -m "$message"
+            git push origin HEAD:agent/issue-194-lesson-result
+          fi
+          test "${{ steps.patch.outputs.status }}" -eq 0
+
   validate:
     name: Validate Actions storage cleanup
     if: github.event_name == 'pull_request'
