@@ -167,6 +167,32 @@ async function installBrowserMocks(page: Page) {
       return;
     }
 
+    if (path.endsWith("/review") && request.method() === "POST") {
+      const input = request.postDataJSON() as { rating: "again" | "almost" | "known" };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          wordId: WORDS[0].id,
+          requestedRating: input.rating,
+          effectiveRating: input.rating,
+          judgementSource: "study",
+          judgementReason: "study_exposure",
+          reviewEventId: 1,
+          suggestionAvailable: false,
+          lessonId: "00000000-0000-0000-0000-000000000360",
+          lessonCurrentIndex: 1,
+          lessonVersion: 2,
+          lastReviewedAt: "2026-07-17T00:01:00Z",
+          lessonCompleted: false,
+          lessonReviewedItems: 1,
+          lessonSkippedItems: 0,
+          lessonTotalItems: 2,
+        }),
+      });
+      return;
+    }
+
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
 }

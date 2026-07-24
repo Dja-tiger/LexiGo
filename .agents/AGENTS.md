@@ -129,3 +129,20 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** сначала устранить runtime/test defects и вручную сверить actual artifact с Figma, затем генерировать baseline только в project Linux container; добавлять в commit только явно перечисленные новые screenshots.
 - **Обязательная проверка:** повторный `npm run test:e2e:visual` сравнивает существующие Linux baselines без `--update-snapshots` и проходит.
 - **Область действия:** visual regression, new canonical frames, Linux rendering environment.
+
+
+### 2026-07-24 — UI ownership journey не синхронизировал review API mock
+
+- **Симптом:** все browser projects UI ownership test оставались на первой Study-карточке, показывали `Действие не выполнено`, а клик по `Дальше` завершался timeout.
+- **Первопричина:** redesign сделал Study confidence реальным review submit по существующему backend contract, но локальный route mock теста поддерживал только создание lesson session и возвращал 404 для `/review`.
+- **Профилактика:** каждый E2E journey, который выполняет действие пользователя, обязан мокировать не только initial GET/POST, но и все последующие mutation responses с актуальными `lessonVersion`, `lessonCurrentIndex`, completion и judgement fields; 404 `not_mocked` считать ошибкой тестового контракта, а не увеличивать timeout.
+- **Обязательная проверка:** UI ownership journey проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit и после rating переходит на server-provided вторую позицию.
+- **Область действия:** Playwright API mocks, Active Lesson review mutations и multi-step journeys.
+
+### 2026-07-24 — Глобальный role locator стал неоднозначным после появления второго status
+
+- **Симптом:** email-change journey получил strict-mode violation: `getByRole("status")` совпал одновременно с account notice и пустым progress state.
+- **Первопричина:** locator полагался на глобальную уникальность ARIA role, хотя на странице корректно присутствовали несколько независимых live/status regions.
+- **Профилактика:** повторяющиеся roles (`status`, `alert`, `navigation`, `group`) всегда ограничивать accessible name, ожидаемым текстом или ближайшим semantic container; не использовать `.first()` для скрытия неоднозначности.
+- **Обязательная проверка:** account-email-change test выбирает status через `filter({ hasText: "Email изменён" })` и проходит в Chromium/WebKit.
+- **Область действия:** accessibility-first Playwright selectors и страницы с несколькими live regions.
