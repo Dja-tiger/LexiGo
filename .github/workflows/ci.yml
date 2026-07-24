@@ -37,13 +37,12 @@ jobs:
           path = Path('scripts/ci/patch-lesson-result.py')
           source = path.read_text()
           helper_marker = '\ndef replace_regex(text: str, pattern: str, replacement: str, label: str) -> str:\n'
-          helper = '''
-def replace_first(text: str, old: str, new: str, label: str) -> str:
-    if old not in text:
-        raise RuntimeError(f"{label}: expected at least one match")
-    return text.replace(old, new, 1)
-
-'''
+          helper = (
+              '\ndef replace_first(text: str, old: str, new: str, label: str) -> str:\n'
+              '    if old not in text:\n'
+              '        raise RuntimeError(f"{label}: expected at least one match")\n'
+              '    return text.replace(old, new, 1)\n\n'
+          )
           if 'def replace_first(' not in source:
               if helper_marker not in source:
                   raise RuntimeError('replace_regex helper marker missing')
@@ -65,10 +64,12 @@ def replace_first(text: str, old: str, new: str, label: str) -> str:
           spec_path = Path('frontend/e2e/next-lesson-progression.spec.ts')
           spec = spec_path.read_text()
           old = 'const WORDS = BLOCKS.flat().map(({ position: _position, ...item }) => item);'
-          new = '''const WORDS = BLOCKS.flat().map(({ position, ...item }) => {
-  void position;
-  return item;
-});'''
+          new = '\n'.join([
+              'const WORDS = BLOCKS.flat().map(({ position, ...item }) => {',
+              '  void position;',
+              '  return item;',
+              '});',
+          ])
           if old in spec:
               spec = spec.replace(old, new, 1)
           spec_path.write_text(spec)
