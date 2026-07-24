@@ -36,7 +36,7 @@ test.describe("interface copy contract", () => {
     const recallMode = page.getByRole("radio", { name: new RegExp(recall.label) });
     await expect(recallMode).toBeVisible();
     await expect(recallMode).toContainText(recall.explanation);
-    await expect(page.getByText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`, { exact: true })).toBeVisible();
+    await expect(page.locator(".lx-heading-badge")).toContainText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`);
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
