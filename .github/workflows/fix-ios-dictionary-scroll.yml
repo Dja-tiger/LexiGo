@@ -30,6 +30,7 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
+          from textwrap import dedent
 
           root = Path.cwd()
           app_path = root / "frontend/components/lexigo-dictionary-app.tsx"
@@ -37,169 +38,143 @@ jobs:
           app = app_path.read_text(encoding="utf-8")
           catalog = catalog_path.read_text(encoding="utf-8")
 
+          def replace_once(source: str, old: str, new: str, label: str) -> str:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one match, found {count}")
+              return source.replace(old, new, 1)
+
           if "catalogReadyRevision" not in app:
-              old_state = '''  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
-            const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
-          '''
-              new_state = '''  const [navigation, setNavigation] = useState<NavigationTarget>(() => parseNavigationLocation(window.location));
-            const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(() => {
-              const initialNavigation = parseNavigationLocation(window.location);
-              const scroll = navigationScrollFromHistory(window.history.state);
-              if (scroll.x === 0 && scroll.y === 0) return null;
-              return { identity: navigationIdentity(initialNavigation), scroll };
-            });
-            const [catalogReadyRevision, setCatalogReadyRevision] = useState(0);
-          '''
-              if app.count(old_state) != 1:
-                  raise SystemExit("lexigo-dictionary-app.tsx: state anchor mismatch")
-              app = app.replace(old_state, new_state)
+              app = replace_once(
+                  app,
+                  "  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);\n",
+                  dedent('''\
+                    const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(() => {
+                      const initialNavigation = parseNavigationLocation(window.location);
+                      const scroll = navigationScrollFromHistory(window.history.state);
+                      if (scroll.x === 0 && scroll.y === 0) return null;
+                      return { identity: navigationIdentity(initialNavigation), scroll };
+                    });
+                    const [catalogReadyRevision, setCatalogReadyRevision] = useState(0);
+                  '''),
+                  "dictionary state",
+              )
 
-              old_effect = '''  useLayoutEffect(() => {
-              navigationRef.current = navigation;
-              if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
-              const frame = window.requestAnimationFrame(() => {
-                mainContentRef.current?.focus({ preventScroll: true });
-                window.scrollTo({
-                  left: pendingNavigation.scroll.x,
-                  top: pendingNavigation.scroll.y,
-                  behavior: "auto",
-                });
-              });
-              return () => window.cancelAnimationFrame(frame);
-            }, [navigation, pendingNavigation]);
-          '''
-              new_effect = '''  useLayoutEffect(() => {
-              navigationRef.current = navigation;
-              if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+              old_effect = dedent('''\
+                useLayoutEffect(() => {
+                  navigationRef.current = navigation;
+                  if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
+                  const frame = window.requestAnimationFrame(() => {
+                    mainContentRef.current?.focus({ preventScroll: true });
+                    window.scrollTo({
+                      left: pendingNavigation.scroll.x,
+                      top: pendingNavigation.scroll.y,
+                      behavior: "auto",
+                    });
+                  });
+                  return () => window.cancelAnimationFrame(frame);
+                }, [navigation, pendingNavigation]);
+              ''')
+              new_effect = dedent('''\
+                useLayoutEffect(() => {
+                  navigationRef.current = navigation;
+                  if (!pendingNavigation || pendingNavigation.identity !== navigationIdentity(navigation)) return;
 
-              let settleFrame: number | null = null;
-              const frame = window.requestAnimationFrame(() => {
-                mainContentRef.current?.focus({ preventScroll: true });
-                window.scrollTo({
-                  left: pendingNavigation.scroll.x,
-                  top: pendingNavigation.scroll.y,
-                  behavior: "auto",
-                });
-                settleFrame = window.requestAnimationFrame(() => {
-                  const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1
-                    && Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1;
-                  if (!reachedTarget) return;
-                  setPendingNavigation((current) => (
-                    current?.identity === pendingNavigation.identity
-                      && current.scroll.x === pendingNavigation.scroll.x
-                      && current.scroll.y === pendingNavigation.scroll.y
-                      ? null
-                      : current
-                  ));
-                });
-              });
-              return () => {
-                window.cancelAnimationFrame(frame);
-                if (settleFrame !== null) window.cancelAnimationFrame(settleFrame);
-              };
-            }, [catalogReadyRevision, navigation, pendingNavigation]);
+                  let settleFrame: number | null = null;
+                  const frame = window.requestAnimationFrame(() => {
+                    mainContentRef.current?.focus({ preventScroll: true });
+                    window.scrollTo({
+                      left: pendingNavigation.scroll.x,
+                      top: pendingNavigation.scroll.y,
+                      behavior: "auto",
+                    });
+                    settleFrame = window.requestAnimationFrame(() => {
+                      const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1
+                        && Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1;
+                      if (!reachedTarget) return;
+                      setPendingNavigation((current) => (
+                        current?.identity === pendingNavigation.identity
+                          && current.scroll.x === pendingNavigation.scroll.x
+                          && current.scroll.y === pendingNavigation.scroll.y
+                          ? null
+                          : current
+                      ));
+                    });
+                  });
+                  return () => {
+                    window.cancelAnimationFrame(frame);
+                    if (settleFrame !== null) window.cancelAnimationFrame(settleFrame);
+                  };
+                }, [catalogReadyRevision, navigation, pendingNavigation]);
 
-            const handleCatalogReady = useCallback(() => {
-              setCatalogReadyRevision((current) => current + 1);
-            }, []);
-          '''
-              if app.count(old_effect) != 1:
-                  raise SystemExit("lexigo-dictionary-app.tsx: restoration effect anchor mismatch")
-              app = app.replace(old_effect, new_effect)
-
-              old_prop = '''              onConfigureLesson={configureLesson}
-                        onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
-          '''
-              new_prop = '''              onConfigureLesson={configureLesson}
-                        onPageReady={handleCatalogReady}
-                        onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
-          '''
-              if app.count(old_prop) != 1:
-                  raise SystemExit("lexigo-dictionary-app.tsx: DictionaryCatalog prop anchor mismatch")
-              app = app.replace(old_prop, new_prop)
+                const handleCatalogReady = useCallback(() => {
+                  setCatalogReadyRevision((current) => current + 1);
+                }, []);
+              ''')
+              app = replace_once(app, old_effect, new_effect, "restoration effect")
+              app = replace_once(
+                  app,
+                  "              onConfigureLesson={configureLesson}\n",
+                  "              onConfigureLesson={configureLesson}\n              onPageReady={handleCatalogReady}\n",
+                  "catalog readiness prop",
+              )
               app_path.write_text(app, encoding="utf-8")
 
           if "onPageReady?: () => void;" not in catalog:
-              old_type = '''  onBackToResults: () => void;
-            onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
-            onRequireAuthentication: () => void;
-          '''
-              new_type = '''  onBackToResults: () => void;
-            onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
-            onPageReady?: () => void;
-            onRequireAuthentication: () => void;
-          '''
-              if catalog.count(old_type) != 1:
-                  raise SystemExit("dictionary-catalog.tsx: prop type anchor mismatch")
-              catalog = catalog.replace(old_type, new_type)
+              catalog = replace_once(
+                  catalog,
+                  "  onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;\n",
+                  "  onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;\n  onPageReady?: () => void;\n",
+                  "catalog prop type",
+              )
+              catalog = replace_once(
+                  catalog,
+                  "  onConfigureLesson,\n  onRequireAuthentication,\n",
+                  "  onConfigureLesson,\n  onPageReady,\n  onRequireAuthentication,\n",
+                  "catalog prop destructuring",
+              )
+              anchor = "    void run();\n    return () => controller.abort();\n  }, [authenticated, filters, loadPage]);\n"
+              readiness = anchor + dedent('''\
 
-              old_destructure = '''  onBackToResults,
-            onConfigureLesson,
-            onRequireAuthentication,
-          }: DictionaryCatalogProps) {
-          '''
-              new_destructure = '''  onBackToResults,
-            onConfigureLesson,
-            onPageReady,
-            onRequireAuthentication,
-          }: DictionaryCatalogProps) {
-          '''
-              if catalog.count(old_destructure) != 1:
-                  raise SystemExit("dictionary-catalog.tsx: destructuring anchor mismatch")
-              catalog = catalog.replace(old_destructure, new_destructure)
-
-              load_effect_end = '''    void run();
-              return () => controller.abort();
-            }, [authenticated, filters, loadPage]);
-
-            const localDetail = navigation.detail
-          '''
-              readiness_effect = '''    void run();
-              return () => controller.abort();
-            }, [authenticated, filters, loadPage]);
-
-            useEffect(() => {
-              if (navigation.detail || pageStatus.phase !== "ready") return;
-              onPageReady?.();
-            }, [navigation.detail, onPageReady, pageStatus.phase]);
-
-            const localDetail = navigation.detail
-          '''
-              if catalog.count(load_effect_end) != 1:
-                  raise SystemExit("dictionary-catalog.tsx: page readiness anchor mismatch")
-              catalog = catalog.replace(load_effect_end, readiness_effect)
+                useEffect(() => {
+                  if (navigation.detail || pageStatus.phase !== "ready") return;
+                  onPageReady?.();
+                }, [navigation.detail, onPageReady, pageStatus.phase]);
+              ''')
+              catalog = replace_once(catalog, anchor, readiness, "catalog ready effect")
               catalog_path.write_text(catalog, encoding="utf-8")
 
           test_path = root / "frontend/components/dictionary-scroll-restoration.test.ts"
-          test_path.write_text('''import { readFileSync } from "node:fs";
-          import path from "node:path";
+          test_path.write_text(dedent('''\
+            import { readFileSync } from "node:fs";
+            import path from "node:path";
 
-          import { describe, expect, it } from "vitest";
+            import { describe, expect, it } from "vitest";
 
-          const components = path.join(process.cwd(), "components");
-          const appSource = readFileSync(path.join(components, "lexigo-dictionary-app.tsx"), "utf8");
-          const catalogSource = readFileSync(path.join(components, "dictionary-catalog.tsx"), "utf8");
+            const components = path.join(process.cwd(), "components");
+            const appSource = readFileSync(path.join(components, "lexigo-dictionary-app.tsx"), "utf8");
+            const catalogSource = readFileSync(path.join(components, "dictionary-catalog.tsx"), "utf8");
 
-          describe("dictionary scroll restoration ownership", () => {
-            it("adopts a non-zero history snapshot on cold dictionary mount", () => {
-              expect(appSource).toContain("navigationScrollFromHistory(window.history.state)");
-              expect(appSource).toContain("return { identity: navigationIdentity(initialNavigation), scroll }");
+            describe("dictionary scroll restoration ownership", () => {
+              it("adopts a non-zero history snapshot on cold dictionary mount", () => {
+                expect(appSource).toContain("navigationScrollFromHistory(window.history.state)");
+                expect(appSource).toContain("return { identity: navigationIdentity(initialNavigation), scroll }");
+              });
+
+              it("retains the pending snapshot until WebKit reaches the target", () => {
+                expect(appSource).toContain("catalogReadyRevision");
+                expect(appSource).toContain("const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1");
+                expect(appSource).toContain("Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1");
+                expect(appSource).toContain("onPageReady={handleCatalogReady}");
+              });
+
+              it("signals readiness after dictionary results commit", () => {
+                expect(catalogSource).toContain("onPageReady?: () => void;");
+                expect(catalogSource).toContain('if (navigation.detail || pageStatus.phase !== "ready") return;');
+                expect(catalogSource).toContain("onPageReady?.();");
+              });
             });
-
-            it("retains the pending snapshot until WebKit reaches the target", () => {
-              expect(appSource).toContain("catalogReadyRevision");
-              expect(appSource).toContain("const reachedTarget = Math.abs(window.scrollX - pendingNavigation.scroll.x) <= 1");
-              expect(appSource).toContain("Math.abs(window.scrollY - pendingNavigation.scroll.y) <= 1");
-              expect(appSource).toContain("onPageReady={handleCatalogReady}");
-            });
-
-            it("signals readiness only after dictionary results have committed", () => {
-              expect(catalogSource).toContain("onPageReady?: () => void;");
-              expect(catalogSource).toContain('if (navigation.detail || pageStatus.phase !== "ready") return;');
-              expect(catalogSource).toContain("onPageReady?.();");
-            });
-          });
-          ''', encoding="utf-8")
+          '''), encoding="utf-8")
           PY
 
           cd frontend
