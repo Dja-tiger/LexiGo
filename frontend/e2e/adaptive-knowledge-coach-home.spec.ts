@@ -138,6 +138,26 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
+async function expectShellUsesCanvasToken(page: Page) {
+  const appearance = await page.locator(".lx-routed-app").evaluate((node) => {
+    const styles = getComputedStyle(node);
+    const colorProbe = document.createElement("span");
+    colorProbe.style.color = styles.getPropertyValue("--ak-color-canvas");
+    node.append(colorProbe);
+    const canvasColor = getComputedStyle(colorProbe).color;
+    colorProbe.remove();
+
+    return {
+      backgroundColor: styles.backgroundColor,
+      canvasColor,
+      routePath: node.getAttribute("data-route-path"),
+    };
+  });
+
+  expect(appearance.routePath).toBe("/");
+  expect(appearance.backgroundColor).toBe(appearance.canvasColor);
+}
+
 test.describe("Adaptive Knowledge Coach application shell and Home", () => {
   test("uses a persistent desktop rail and one dominant Home action", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop geometry is deterministic in Chromium; cross-browser shell coverage lives in adaptive-navigation.spec.ts.");
@@ -171,10 +191,7 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
     expect(Math.abs(heroBox.y - evidenceBox.y)).toBeLessThanOrEqual(2);
     expect(evidenceBox.x).toBeGreaterThan(heroBox.x + heroBox.width);
 
-    const shellBackground = await page.locator(".lx-routed-app").evaluate((node) => (
-      getComputedStyle(node).backgroundColor
-    ));
-    expect(shellBackground).toBe("rgb(244, 247, 245)");
+    await expectShellUsesCanvasToken(page);
     await expectNoHorizontalOverflow(page);
   });
 
@@ -203,10 +220,7 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
     expect(navigationBox.y + navigationBox.height).toBeGreaterThanOrEqual(843);
     expect(ctaBox.y + ctaBox.height).toBeLessThan(navigationBox.y);
 
-    const shellBackground = await page.locator(".lx-routed-app").evaluate((node) => (
-      getComputedStyle(node).backgroundColor
-    ));
-    expect(shellBackground).toBe("rgb(11, 33, 27)");
+    await expectShellUsesCanvasToken(page);
 
     await page.evaluate(() => {
       const style = document.createElement("style");
