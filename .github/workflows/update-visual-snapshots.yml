@@ -1,9 +1,9 @@
-name: Fix and regenerate Issue 193 baselines
+name: Update visual snapshots
 
 on:
   push:
     branches:
-      - agent/issue-193-active-lesson
+      - agent/issue-162-progressive-lesson-composer
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -11,122 +11,58 @@ permissions:
   contents: write
 
 jobs:
-  fix-and-update-active-lesson:
-    name: Fix and regenerate Active Lesson
+  update-snapshots:
+    name: Regenerate Issue 162 visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-active-lesson-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: active-lesson
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-193-active-lesson
+          ref: agent/issue-162-progressive-lesson-composer
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: Apply assertion-backed E2E and accessibility fixes
-        run: python scripts/ci/apply-issue-193-e2e-fixes.py
-
-      - name: Validate generated source diff
-        run: |
-          git diff --check
-          grep -Fq -- '--lx-active-retained-foreground: #187a59' frontend/app/active-lesson.css
-          grep -Fq 'contrastRatio("#187a59", "#ffffff")' frontend/app/active-lesson.test.ts
-          grep -Fq 'exact: true' frontend/e2e/active-lesson-figma.spec.ts
-          grep -Fq 'progressbar' frontend/e2e/review-outbox-auth-lifecycle.spec.ts
-          ! grep -Fq 'lesson tabs remain reachable' frontend/e2e/accessibility-keyboard.spec.ts
-
-      - name: Commit confirmed fixes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            .agents/AGENTS.md \
-            frontend/app/active-lesson.css \
-            frontend/app/active-lesson.test.ts \
-            frontend/e2e/active-lesson-figma.spec.ts \
-            frontend/e2e/visual-regression.spec.ts \
-            frontend/e2e/review-outbox-auth-lifecycle.spec.ts \
-            frontend/e2e/adaptive-navigation.spec.ts \
-            frontend/e2e/accessibility-keyboard.spec.ts \
-            frontend/e2e/ui-ownership.spec.ts
-          git commit -m "fix(frontend): harden canonical Active Lesson gates"
-          git push origin HEAD:agent/issue-193-active-lesson
 
       - name: Prepare isolated frontend workspace
-        working-directory: frontend
         run: bash ../scripts/ci/frontend-container.sh prepare
 
       - name: Install locked dependencies
-        working-directory: frontend
         run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
 
-      - name: Frontend lint
-        working-directory: frontend
-        run: bash ../scripts/ci/frontend-container.sh exec npm run lint
-
-      - name: Frontend typecheck
-        working-directory: frontend
-        run: bash ../scripts/ci/frontend-container.sh exec npm run typecheck
-
-      - name: Frontend unit tests
-        working-directory: frontend
-        run: bash ../scripts/ci/frontend-container.sh exec npm test
-
       - name: Production build
-        working-directory: frontend
         run: bash ../scripts/ci/frontend-container.sh exec npm run build
 
-      - name: Regenerate Linux visual snapshots
-        working-directory: frontend
+      - name: Regenerate visual snapshots
         run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
 
       - name: Extract updated snapshots from container
-        working-directory: frontend
         run: |
           container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
           test -n "$container"
           docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
-      - name: Validate snapshot scope
-        working-directory: frontend
-        run: |
-          allowed='^(e2e/visual-regression.spec.ts-snapshots/active-lesson-(recall-default-visual-compact|choice-incorrect-visual-medium|study-visual-desktop|recall-correct-dark-visual-desktop)-linux\.png)$'
-          unexpected=$(git diff --name-only -- e2e/visual-regression.spec.ts-snapshots | grep -Ev "$allowed" || true)
-          if [ -n "$unexpected" ]; then
-            echo "Unexpected snapshot changes:"
-            echo "$unexpected"
-            exit 1
-          fi
-          test -f e2e/visual-regression.spec.ts-snapshots/active-lesson-recall-default-visual-compact-linux.png
-          test -f e2e/visual-regression.spec.ts-snapshots/active-lesson-choice-incorrect-visual-medium-linux.png
-          test -f e2e/visual-regression.spec.ts-snapshots/active-lesson-study-visual-desktop-linux.png
-          test -f e2e/visual-regression.spec.ts-snapshots/active-lesson-recall-correct-dark-visual-desktop-linux.png
-
-      - name: Upload generated baselines for review
-        uses: actions/upload-artifact@v7
-        with:
-          name: active-lesson-linux-baselines
-          path: frontend/e2e/visual-regression.spec.ts-snapshots/active-lesson-*-linux.png
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Commit Issue 193 baselines
-        working-directory: frontend
-        run: |
-          git add \
-            e2e/visual-regression.spec.ts-snapshots/active-lesson-recall-default-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/active-lesson-choice-incorrect-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/active-lesson-study-visual-desktop-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/active-lesson-recall-correct-dark-visual-desktop-linux.png
-          git commit -m "test(visual): add Active Lesson baselines"
-          git push origin HEAD:agent/issue-193-active-lesson
-
       - name: Cleanup container
         if: always()
-        working-directory: frontend
         run: bash ../scripts/ci/frontend-container.sh cleanup
+
+      - name: Commit Issue 162 baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
+          if git diff --cached --quiet; then
+            echo "Composer baselines already match."
+          else
+            git commit -m "test(visual): update Lesson Composer baselines"
+            git push origin HEAD:agent/issue-162-progressive-lesson-composer
+          fi
