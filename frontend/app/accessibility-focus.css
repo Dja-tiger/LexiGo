@@ -54,7 +54,6 @@
   .lx-themed-home,
   .lx-themed-selector,
   .lx-themed-library,
-  .lx-answer-grid > button,
   .lx-calendar-provider-grid > button,
   .lx-calendar-weekdays button
 ):focus-visible {
@@ -71,7 +70,6 @@
   .lx-themed-home,
   .lx-themed-selector,
   .lx-themed-library,
-  .lx-answer-grid > button,
   .lx-calendar-provider-grid > button
 ):focus-visible {
   background-image: linear-gradient(145deg, rgba(124, 92, 246, 0.18), rgba(40, 156, 220, 0.14));
@@ -80,7 +78,6 @@
 /* Input focus must not rely on a subtle border-color change alone. */
 :where(
   .lx-auth-card input,
-  .lx-recall-box input,
   .lx-calendar-form-grid input,
   .lx-calendar-form-grid select,
   .lx-catalog-sort select
