@@ -1,11 +1,9 @@
 name: Update visual snapshots
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/issue-194-lesson-result
-    paths:
-      - .github/workflows/update-visual-snapshots.yml
+      - main
 
 permissions:
   contents: write
@@ -13,6 +11,7 @@ permissions:
 jobs:
   patch-lesson-result:
     name: Apply Issue 194 integration patch
+    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -20,6 +19,15 @@ jobs:
         with:
           ref: agent/issue-194-lesson-result
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record workflow execution
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf 'run=%s attempt=%s sha=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA" "$GITHUB_EVENT_NAME" > scripts/ci/patch-lesson-result-workflow.txt
+          git add scripts/ci/patch-lesson-result-workflow.txt
+          git commit -m "chore(ci): record Lesson Result patch execution"
+          git push origin HEAD:agent/issue-194-lesson-result
 
       - name: Refine codemod target
         run: |
@@ -94,5 +102,3 @@ def replace_first(text: str, old: str, new: str, label: str) -> str:
             git push origin HEAD:agent/issue-194-lesson-result
           fi
           test "${{ steps.patch.outputs.status }}" -eq 0
-
-# Hardened target selection is active.
