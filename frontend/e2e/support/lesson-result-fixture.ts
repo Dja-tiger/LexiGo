@@ -15,6 +15,12 @@ export type LessonResultFixture = {
   previewRequests: () => number;
 };
 
+type LessonRequest = {
+  source?: string;
+  studyMode?: string;
+  lessonSize?: string;
+};
+
 const SESSION = {
   user: {
     id: "00000000-0000-0000-0000-000000000194",
@@ -164,11 +170,12 @@ export async function installLessonResultFixture(
     }
     if (path === "/api/v1/lessons/preview") {
       previewCount += 1;
+      const input = request.postDataJSON() as LessonRequest;
       const total = reviewCount > 0 ? previewTotal : 1;
       return fulfillJSON(route, 200, {
-        source: "phrases",
-        studyMode: "recall",
-        lessonSize: "15",
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "recall",
+        lessonSize: input.lessonSize ?? "30",
         composition: {
           total,
           words: 0,
@@ -183,6 +190,7 @@ export async function installLessonResultFixture(
       });
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
+      const input = request.postDataJSON() as LessonRequest;
       const nextRequest = lessonCreateCount > 0;
       lessonCreateCount += 1;
       const repeat = nextRequest && options.repeatCompletedBlock;
@@ -192,9 +200,9 @@ export async function installLessonResultFixture(
         : "00000000-0000-0000-0000-000000000194";
       return fulfillJSON(route, 201, {
         id: lessonID,
-        source: "phrases",
-        studyMode: "recall",
-        lessonSize: "15",
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "recall",
+        lessonSize: input.lessonSize ?? "30",
         currentIndex: 0,
         version: 1,
         status: "active",
@@ -253,10 +261,29 @@ export async function installLessonResultFixture(
 
 export async function completeRecallLesson(page: Page): Promise<void> {
   await page.goto("/learn", { waitUntil: "domcontentloaded" });
-  const configure = page.getByRole("button", { name: "Настроить урок", exact: true });
-  if (await configure.isVisible()) await configure.click();
 
-  const start = page.getByRole("button", { name: "Начать урок", exact: true });
+  const isCompact = (page.viewportSize()?.width ?? 1000) < 768;
+  let start;
+
+  if (isCompact) {
+    // Compact Progressive UI owns a dedicated recommendation CTA. Interact with
+    // the visible recommendation instead of searching for the desktop-only CTA.
+    const recommendation = page.getByRole("article", { name: "Рекомендуемый урок" });
+    await expect(recommendation).toBeVisible();
+    await expect(page.getByLabel(/Текущие параметры:/)).toContainText("Воспроизведение");
+    start = recommendation.getByRole("button", {
+      name: "Начать рекомендуемый урок",
+      exact: true,
+    });
+  } else {
+    // Desktop exposes the full composer. Verify the deterministic Recall mode
+    // before starting so this helper cannot silently exercise another mode.
+    const modeGroup = page.getByRole("radiogroup", { name: "Режим обучения" });
+    const recall = modeGroup.getByRole("radio", { name: /Вспомнить самостоятельно/ });
+    await expect(recall).toHaveAttribute("aria-checked", "true");
+    start = page.getByRole("button", { name: "Начать урок", exact: true });
+  }
+
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await page.getByRole("textbox", { name: "Введите ответ" }).fill("backlog");
