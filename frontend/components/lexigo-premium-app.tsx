@@ -2924,7 +2924,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
 
   function leaveLessonResult(target: "home" | "progress") {
     clearLessonState();
-    navigate({ view: target }, true, { allowLessonExit: true, intent: "in_app_navigation" });
+    navigate({ view: target }, false, { allowLessonExit: true, intent: "in_app_navigation" });
   }
 
   function startNextLessonFromResult() {
