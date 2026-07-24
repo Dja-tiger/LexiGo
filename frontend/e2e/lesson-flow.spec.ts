@@ -171,7 +171,7 @@ test("study: persists exposure with the current lesson version", async ({ page }
 test("recall and choice send versioned objective payloads", async ({ page }) => {
   const recall = await installLessonAPI(page, 1);
   await openLesson(page, "recall");
-  await page.locator("#premium-answer").fill("абсолютный");
+  await page.getByRole("textbox", { name: "Введите ответ" }).fill("абсолютный");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Почти", exact: true }).click();
   await expect.poll(() => recall.reviewRequests().length).toBe(1);
@@ -183,7 +183,7 @@ test("wrong confidence cannot master an item and supports a safe answer suggesti
   test.setTimeout(45_000);
   const api = await installLessonAPI(page, 1);
   await openLesson(page, "recall");
-  await page.locator("#premium-answer").fill("непринятый вариант");
+  await page.getByRole("textbox", { name: "Введите ответ" }).fill("непринятый вариант");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Знал", exact: true }).click();
 
@@ -300,7 +300,7 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   await page.getByRole("button", { name: "Начать урок", exact: true }).click();
   expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
   await expect(page.getByText("ВВЕДИТЕ ОТВЕТ", { exact: true })).toBeVisible();
-  await page.locator("#premium-answer").fill("абсолютный");
+  await page.getByRole("textbox", { name: "Введите ответ" }).fill("абсолютный");
   await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "Дальше", exact: true }).click();

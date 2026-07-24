@@ -2,69 +2,504 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  repair-canonical-e2e:
-    name: Repair canonical Lesson Result E2E contracts
-    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  backend-unit:
+    name: Backend unit and security
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          ref: agent/issue-194-lesson-result
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: Patch stale selectors and prevention guidance
+          go-version: "1.26.5"
+          cache: false
+      - name: Verify dependency files
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
+          expected_module="github.com/Dja-tiger/LexiGo/backend"
+          actual_module="$(go list -m)"
+          if [ "$actual_module" != "$expected_module" ]; then
+            echo "Unexpected backend module path: $actual_module (expected $expected_module)" >&2
+            exit 1
+          fi
+          if git grep -n --fixed-strings 'github.com/Dja-tiger/New-project/backend' -- '*.go' go.mod; then
+            echo "Legacy backend module path must not be used" >&2
+            exit 1
+          fi
+          go mod verify
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Verify formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'Unformatted Go files:\n%s\n' "$unformatted"
+            exit 1
+          fi
+      - name: Static analysis
+        run: go vet ./...
+      - id: unit-tests
+        name: Unit tests with race detector
+        run: |
+          set -o pipefail
+          go test -race -count=1 -coverprofile=coverage.out ./... 2>&1 | tee unit-test.log
 
-          lesson = Path('frontend/e2e/lesson-flow.spec.ts')
-          text = lesson.read_text()
-          old = 'page.locator("#premium-answer")'
-          new = 'page.getByRole("textbox", { name: "Введите ответ" })'
-          if text.count(old) != 3:
-              raise RuntimeError(f'expected 3 stale answer selectors, found {text.count(old)}')
-          lesson.write_text(text.replace(old, new))
+      - name: Upload backend unit diagnostics
+        if: always() && steps.unit-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: backend-unit-test-log
+          path: backend/unit-test.log
+          if-no-files-found: error
+          retention-days: 3
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out
+      - name: Vulnerability scan
+        run: |
+          install -d "$RUNNER_TEMP/gobin"
+          GOBIN="$RUNNER_TEMP/gobin" go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$RUNNER_TEMP/gobin/govulncheck" ./...
 
-          academic = Path('frontend/e2e/academic-technical-english.spec.ts')
-          text = academic.read_text()
-          old = 'name: "Следующий блок", exact: true'
-          new = 'name: "Следующий урок", exact: true'
-          if text.count(old) != 1:
-              raise RuntimeError(f'expected 1 stale continuation CTA, found {text.count(old)}')
-          academic.write_text(text.replace(old, new, 1))
+  backend-integration:
+    name: Backend integration
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      POSTGRES_CONTAINER: lexigo-postgres-${{ github.run_id }}-${{ github.run_attempt }}
+      REDIS_CONTAINER: lexigo-redis-${{ github.run_id }}-${{ github.run_attempt }}
+      CI_LEASE_CONTAINER: lexigo-backend-lease-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.5"
+          cache: false
 
-          agents = Path('.agents/AGENTS.md')
-          text = agents.read_text()
-          marker = '### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy'
-          if marker not in text:
-              text += (
-                  '\n\n' + marker + '\n\n'
-                  '- **Симптом:** Lesson completion и UI shards зависали на disabled `Сверить ответ` и не находили продолжение Academic Technical English после результата.\n'
-                  '- **Первопричина:** тесты заполняли удалённый `#premium-answer` вместо видимого canonical textbox и использовали название состояния «Следующий блок» как accessible name CTA, хотя кнопка называется «Следующий урок».\n'
-                  '- **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.\n'
-                  '- **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.\n'
-                  '- **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.\n'
-              )
-              agents.write_text(text)
-          PY
-
-      - name: Restore workflows and commit source fix
+      - name: Start isolated integration services
         run: |
           set -Eeuo pipefail
-          git fetch origin main
-          git checkout origin/main -- \
-            .github/workflows/ci.yml \
-            .github/workflows/actions-storage-cleanup.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          git commit -m 'test(frontend): use canonical Lesson Result controls'
-          git push origin HEAD:agent/issue-194-lesson-result
+
+          cleanup_container() {
+            docker rm --force "$1" >/dev/null 2>&1 || true
+          }
+
+          wait_for_healthy() {
+            local container="$1"
+            local status
+
+            for _ in $(seq 1 60); do
+              status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container" 2>/dev/null || true)"
+              case "$status" in
+                healthy)
+                  return 0
+                  ;;
+                unhealthy)
+                  docker logs "$container" || true
+                  return 1
+                  ;;
+              esac
+              sleep 1
+            done
+
+            docker logs "$container" || true
+            return 1
+          }
+
+          cleanup_container "$POSTGRES_CONTAINER"
+          cleanup_container "$REDIS_CONTAINER"
+          cleanup_container "$CI_LEASE_CONTAINER"
+
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            postgres:18.4-alpine \
+            1500 >/dev/null
+
+          docker run --detach --rm \
+            --name "$POSTGRES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
+            --env POSTGRES_DB=lexigo_test \
+            --env POSTGRES_USER=lexigo \
+            --env POSTGRES_PASSWORD=lexigo_test \
+            --publish 127.0.0.1::5432 \
+            --health-cmd "pg_isready -U lexigo -d lexigo_test" \
+            --health-interval 5s \
+            --health-timeout 5s \
+            --health-retries 20 \
+            postgres:18.4-alpine >/dev/null
+
+          docker run --detach --rm \
+            --name "$REDIS_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=service" \
+            --publish 127.0.0.1::6379 \
+            --health-cmd "redis-cli ping" \
+            --health-interval 5s \
+            --health-timeout 5s \
+            --health-retries 20 \
+            redis:8.0-alpine >/dev/null
+
+          wait_for_healthy "$POSTGRES_CONTAINER"
+          wait_for_healthy "$REDIS_CONTAINER"
+
+          postgres_port="$(docker port "$POSTGRES_CONTAINER" 5432/tcp | awk -F: 'END { print $NF }')"
+          redis_port="$(docker port "$REDIS_CONTAINER" 6379/tcp | awk -F: 'END { print $NF }')"
+
+          test -n "$postgres_port"
+          test -n "$redis_port"
+
+          {
+            printf 'TEST_POSTGRES_DSN=postgres://lexigo:lexigo_test@127.0.0.1:%s/lexigo_test?sslmode=disable\n' "$postgres_port"
+            printf 'TEST_REDIS_ADDR=127.0.0.1:%s\n' "$redis_port"
+          } >> "$GITHUB_ENV"
+
+      - name: Integration tests with race detector
+        run: |
+          set -o pipefail
+          go test -race -count=1 -tags=integration ./... 2>&1 | tee integration-test.log
+
+      - name: Upload integration diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: integration-test-log
+          path: backend/integration-test.log
+          if-no-files-found: error
+          retention-days: 3
+      - name: Cleanup integration services
+        if: always()
+        run: |
+          for container in "$POSTGRES_CONTAINER" "$REDIS_CONTAINER" "$CI_LEASE_CONTAINER"; do
+            docker rm --force "$container" >/dev/null 2>&1 || true
+          done
+
+  frontend-core:
+    name: Frontend core quality
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-core-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate CI runner policy
+        run: python3 ../scripts/ci/runner_policy_test.py
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: |
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          set -o pipefail
+          npm run lint 2>&1 | tee eslint.log
+          CONTAINER_SCRIPT
+
+      - name: Type check
+        run: bash ../scripts/ci/frontend-container.sh exec npm run typecheck
+
+      - name: Unit tests
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Production dependency audit
+        run: bash ../scripts/ci/frontend-container.sh exec npm audit --omit=dev --audit-level=high
+
+      - name: Extract frontend core diagnostics
+        if: failure()
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload frontend core diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: frontend-core-diagnostics
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
+
+  frontend-browser:
+    name: Frontend E2E (${{ matrix.name }})
+    needs: [frontend-core]
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ui-1
+            name: "UI tests (shard 1/2)"
+            cmd: npm run test:e2e:ui -- --shard=1/2
+          - id: ui-2
+            name: "UI tests (shard 2/2)"
+            cmd: npm run test:e2e:ui -- --shard=2/2
+          - id: lesson
+            name: "Lesson completion"
+            cmd: npm run test:e2e:lesson
+          - id: security
+            name: "Content security"
+            cmd: npm run test:e2e:security
+          - id: pwa
+            name: "iOS PWA dictionary"
+            cmd: npm run test:e2e:pwa
+          - id: axe
+            name: "Accessibility audit"
+            cmd: npm run test:e2e:axe
+          - id: sw
+            name: "Controlled service worker"
+            cmd: npm run test:e2e:sw
+          - id: visual
+            name: "Visual regression"
+            cmd: npm run test:e2e:visual
+          - id: perf
+            name: "Performance budgets"
+            cmd: npm run test:e2e:performance
+          - id: smoke
+            name: "Dictionary smoke"
+            cmd: smoke
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: ${{ matrix.id }}
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Run E2E tests
+        if: matrix.id != 'smoke'
+        run: bash ../scripts/ci/frontend-container.sh exec ${{ matrix.cmd }}
+
+      - id: performance
+        name: Upload performance budget report
+        if: failure() && matrix.id == 'perf'
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: performance-budget-${{ github.sha }}
+          path: frontend/ci-artifacts/test-results/performance-budget-report.json
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Extract performance report
+        if: always() && matrix.id == 'perf' && steps.performance.outcome != 'skipped'
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Dictionary navigation browser smoke
+        if: matrix.id == 'smoke'
+        run: |
+          bash ../scripts/ci/frontend-container.sh shell <<'CONTAINER_SCRIPT'
+          npm run start -- --hostname 127.0.0.1 > next-start.log 2>&1 &
+          app_pid=$!
+          cleanup() {
+            kill "$app_pid" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in $(seq 1 60); do
+            if node -e '
+              fetch("http://127.0.0.1:3000/")
+                .then((response) => process.exit(response.ok ? 0 : 1))
+                .catch(() => process.exit(1));
+            '; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat next-start.log
+            exit 1
+          fi
+
+          chromium_path="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"
+          test -x "$chromium_path"
+          ln -s "$chromium_path" /usr/local/bin/chromium
+
+          bash scripts/dictionary-navigation-smoke.sh
+          CONTAINER_SCRIPT
+
+      - name: Extract frontend diagnostics
+        if: failure()
+        run: bash ../scripts/ci/frontend-container.sh extract
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: frontend-playwright-report-${{ matrix.id }}
+          path: frontend/ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Cleanup isolated frontend workspace
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
+
+  frontend:
+    name: Frontend quality
+    needs: [frontend-core, frontend-browser]
+    if: >-
+      always() &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - name: Verify all frontend groups passed
+        env:
+          CORE_RESULT: ${{ needs['frontend-core'].result }}
+          BROWSER_RESULT: ${{ needs['frontend-browser'].result }}
+        run: |
+          set -Eeuo pipefail
+          test "$CORE_RESULT" = success
+          test "$BROWSER_RESULT" = success
+
+  container-build:
+    name: Container build (${{ matrix.component }})
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    needs: [backend-unit, backend-integration, frontend]
+    env:
+      BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
+      CI_LEASE_CONTAINER: lexigo-buildx-lease-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [api, web]
+        include:
+          - component: api
+            context: backend
+          - component: web
+            context: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start bounded cleanup lease
+        run: |
+          set -Eeuo pipefail
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            2100 >/dev/null
+      - id: buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ${{ env.BUILDER_NAME }}
+          cleanup: true
+      - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and optionally publish
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: ${{ matrix.component == 'web' && format('APP_BUILD_ID={0}', github.sha) || '' }}
+          tags: |
+            ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:${{ github.sha }}
+            ghcr.io/dja-tiger/lexigo-${{ matrix.component }}:main
+          provenance: mode=max
+          sbom: true
+
+      - name: Cleanup Buildx builder
+        if: always()
+        run: |
+          if [ -n "${BUILDER_NAME:-}" ]; then
+            docker buildx rm --force "$BUILDER_NAME" >/dev/null 2>&1 || true
+          fi
+
+      - name: Stop bounded cleanup lease
+        if: always()
+        run: docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true

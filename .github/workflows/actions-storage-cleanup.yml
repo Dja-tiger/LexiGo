@@ -1,69 +1,163 @@
-name: Repair stale Lesson Result E2E contracts
+name: Actions storage cleanup
 
 on:
   pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
+      - "scripts/ci/actions_storage_cleanup.py"
+      - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/runner_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
+      - "docs/github-actions-storage.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/workflows/patch-actions-storage-policy.yml"
+      - "scripts/ci/actions_storage_cleanup.py"
+      - "scripts/ci/actions_storage_cleanup_test.py"
+      - "scripts/ci/actions_storage_policy_test.py"
+      - "scripts/ci/runner_policy_test.py"
+      - "scripts/ci/patch_actions_storage_policy.py"
+      - "docs/github-actions-storage.md"
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  schedule:
+    - cron: "43 3 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Preview candidates or remove them"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - apply
+      artifact_retention_days:
+        description: "Keep repository artifacts created within this many days"
+        required: true
+        default: 3
+        type: number
+      delete_all_caches:
+        description: "Delete all repository Actions caches"
+        required: true
+        default: true
+        type: boolean
 
 permissions:
-  contents: write
+  contents: read
+  actions: read
+
+concurrency:
+  group: lexigo-actions-storage-cleanup-${{ github.event_name }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
-  repair:
-    if: github.event.pull_request.head.ref == 'agent/issue-194-lesson-result'
-    runs-on: ubuntu-latest
+  validate:
+    name: Validate Actions storage cleanup
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-194-lesson-result
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Patch canonical selectors and prevention guidance
+      - name: Test cleanup planner
+        run: python3 scripts/ci/actions_storage_cleanup_test.py
+
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
+
+      - name: Validate CI runner policy
+        run: python3 scripts/ci/runner_policy_test.py
+
+      - name: Preview current storage candidates
+        env:
+          ACTIONS_STORAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
+          python3 scripts/ci/actions_storage_cleanup.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --artifact-retention-days 3 \
+            --delete-all-caches \
+            --dry-run \
+            --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json" \
+            --github-step-summary "$GITHUB_STEP_SUMMARY"
 
-          lesson = Path('frontend/e2e/lesson-flow.spec.ts')
-          text = lesson.read_text()
-          old = 'page.locator("#premium-answer")'
-          new = 'page.getByRole("textbox", { name: "Введите ответ" })'
-          if text.count(old) != 3:
-              raise RuntimeError(f'expected 3 stale answer selectors, found {text.count(old)}')
-          lesson.write_text(text.replace(old, new))
+  cleanup:
+    name: Reclaim Actions storage
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      actions: write
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-          academic = Path('frontend/e2e/academic-technical-english.spec.ts')
-          text = academic.read_text()
-          old = 'name: "Следующий блок", exact: true'
-          new = 'name: "Следующий урок", exact: true'
-          if text.count(old) != 1:
-              raise RuntimeError(f'expected 1 stale continuation CTA, found {text.count(old)}')
-          academic.write_text(text.replace(old, new, 1))
+      - name: Test cleanup planner
+        run: python3 scripts/ci/actions_storage_cleanup_test.py
 
-          agents = Path('.agents/AGENTS.md')
-          text = agents.read_text()
-          marker = '### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy'
-          if marker not in text:
-              text += '''
+      - name: Validate Actions storage policy
+        run: python3 scripts/ci/actions_storage_policy_test.py
 
-### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy
+      - name: Validate CI runner policy
+        run: python3 scripts/ci/runner_policy_test.py
 
-- **Симптом:** Lesson completion и UI shards зависали на disabled `Сверить ответ` и не находили продолжение Academic Technical English после результата.
-- **Первопричина:** тесты заполняли удалённый `#premium-answer` вместо видимого canonical textbox и использовали название состояния «Следующий блок» как accessible name CTA, хотя кнопка называется «Следующий урок».
-- **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.
-- **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.
-- **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.
-'''
-              agents.write_text(text)
-          PY
-
-      - name: Restore workflow and commit source fix
+      - name: Resolve cleanup policy
+        id: policy
+        env:
+          DISPATCH_MODE: ${{ inputs.mode }}
+          DISPATCH_ARTIFACT_RETENTION_DAYS: ${{ inputs.artifact_retention_days }}
+          DISPATCH_DELETE_ALL_CACHES: ${{ inputs.delete_all_caches }}
         run: |
           set -Eeuo pipefail
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/actions-storage-cleanup.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          git commit -m 'test(frontend): use canonical Lesson Result controls'
-          git push origin HEAD:agent/issue-194-lesson-result
+
+          mode=apply
+          artifact_retention_days=3
+          delete_all_caches=true
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && git log -1 --pretty=%B | grep -Fq '[actions-storage-emergency]'; then
+            artifact_retention_days=0
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            mode="${DISPATCH_MODE:-dry-run}"
+            artifact_retention_days="${DISPATCH_ARTIFACT_RETENTION_DAYS:-3}"
+            delete_all_caches="${DISPATCH_DELETE_ALL_CACHES:-true}"
+          fi
+
+          printf 'mode=%s\n' "$mode" >> "$GITHUB_OUTPUT"
+          printf 'artifact_retention_days=%s\n' "$artifact_retention_days" >> "$GITHUB_OUTPUT"
+          printf 'delete_all_caches=%s\n' "$delete_all_caches" >> "$GITHUB_OUTPUT"
+
+      - name: Reclaim repository Actions storage
+        env:
+          ACTIONS_STORAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLEANUP_MODE: ${{ steps.policy.outputs.mode }}
+          ARTIFACT_RETENTION_DAYS: ${{ steps.policy.outputs.artifact_retention_days }}
+          DELETE_ALL_CACHES: ${{ steps.policy.outputs.delete_all_caches }}
+        run: |
+          set -Eeuo pipefail
+
+          args=(
+            --repository "$GITHUB_REPOSITORY"
+            --artifact-retention-days "$ARTIFACT_RETENTION_DAYS"
+            --summary-file "$RUNNER_TEMP/actions-storage-cleanup.json"
+            --github-step-summary "$GITHUB_STEP_SUMMARY"
+          )
+
+          if [ "$DELETE_ALL_CACHES" = "true" ]; then
+            args+=(--delete-all-caches)
+          fi
+          if [ "$CLEANUP_MODE" = "dry-run" ]; then
+            args+=(--dry-run)
+          fi
+
+          python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"

@@ -156,3 +156,12 @@ PR не считается полностью готовым, если в про
 - **Профилактика:** lesson preview/create mocks обязаны echo параметры request body, если сценарий не проверяет намеренную server normalization. Shared helpers должны явно разделять full composer и compact recommendation CTA по viewport и scope control через owning semantic container.
 - **Обязательная проверка:** `e2e/lesson-result.spec.ts` проходит в desktop Chromium/WebKit, Android Chromium и iOS WebKit как в UI shards, так и в dedicated Lesson completion group.
 - **Область действия:** Lesson Composer, shared Playwright fixtures, `/api/v1/lessons/preview`, `/api/v1/lessons` и responsive CTA contracts.
+
+
+### 2026-07-25 — Canonical controls нельзя искать по legacy ID или state-copy
+
+- **Симптом:** Lesson completion и UI shards зависали на disabled `Сверить ответ` и не находили продолжение Academic Technical English после результата.
+- **Первопричина:** тесты заполняли удалённый `#premium-answer` вместо видимого canonical textbox и использовали название состояния «Следующий блок» как accessible name CTA, хотя кнопка называется «Следующий урок».
+- **Профилактика:** интерактивные canonical controls выбирать через `getByRole` с фактическим accessible name; state heading, eyebrow и CTA label считать разными контрактами. Legacy ID запрещено использовать, если пользователь взаимодействует с другой видимой control.
+- **Обязательная проверка:** `e2e/lesson-flow.spec.ts` и `e2e/academic-technical-english.spec.ts` проходят во всех configured Playwright projects и repository search не находит `#premium-answer` или CTA `Следующий блок`.
+- **Область действия:** Active Lesson, Lesson Result, responsive Lesson Composer и все E2E после canonical redesign.
