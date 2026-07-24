@@ -16,7 +16,10 @@ const BLOCKS = [
   [{ id: 101, kind: "word", position: 0, lemma: "absolute", translation: "абсолютный", phonetic: "", partOfSpeech: "adjective", topic: "General", examples: ["The value is absolute."], note: "", status: "learning" }],
   [{ id: 102, kind: "word", position: 0, lemma: "build", translation: "собирать", phonetic: "", partOfSpeech: "verb", topic: "Development", examples: ["Build the service."], note: "", status: "new" }],
 ];
-const WORDS = BLOCKS.flat().map(({ position: _position, ...item }) => item);
+const WORDS = BLOCKS.flat().map(({ position, ...item }) => {
+  void position;
+  return item;
+});
 
 test("completed block advances once to a distinct server lesson", async ({ page }) => {
   test.setTimeout(45_000);

@@ -38,7 +38,7 @@ import { EXPANDED_PHRASES } from "../lib/expanded-phrases";
 import {
   lessonCompositionDescription,
   lessonCompositionFallbackMessage,
-  lesson@riorityDescription,
+  lessonPriorityDescription,
   russianPlural,
   type LessonComposition,
 } from "../lib/lesson-composition";
