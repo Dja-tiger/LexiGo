@@ -46,7 +46,7 @@ Playwright-тесты в LexiGo запускаются в 3 окружениях
 - Привязывайтесь к `getByRole` и `getByText`.
 - Соблюдайте семантику (используйте `<button>`, а не `<div>` с `onClick`), чтобы тесты в группе `ui-accessibility` проходили успешно.
 
-## 5. Обязательная фиксация предотвращения повторных ошибок
+## 6. Обязательная фиксация предотвращения повторных ошибок
 
 Каждая обнаруженная ошибка должна завершаться не только исправлением текущего падения, но и документированной профилактикой повторения. Это относится к локальным проверкам, unit/integration/E2E-тестам, GitHub Actions, visual regression, accessibility, performance, stage/production smoke, runtime-дефектам и замечаниям code review.
 
@@ -71,3 +71,27 @@ Playwright-тесты в LexiGo запускаются в 3 окружениях
 ```
 
 PR не считается полностью готовым, если в процессе работы возникла новая категория ошибки, но профилактическое знание не добавлено в `.agents/AGENTS.md` и не связано с уже существующим правилом.
+
+### 2026-07-24 — React DOM ownership в модальных keyboard traps
+
+- **Симптом:** unit gate `components/react-dom-ownership.test.ts` сообщил `global document event delegation` для нового presentation-компонента.
+- **Первопричина:** focus trap диалога подписывался через `document.addEventListener("keydown", ...)`, хотя весь диалог принадлежит React subtree.
+- **Профилактика:** keyboard trap, Escape и циклический Tab обрабатывать через React `onKeyDown` на корневом элементе диалога; глобальные document/window listeners допустимы только для действительно внешних lifecycle-событий с явным обоснованием.
+- **Обязательная проверка:** `npm test -- components/react-dom-ownership.test.ts` и keyboard E2E безопасного выхода.
+- **Область действия:** React dialogs, modals, drawers и focused routes.
+
+### 2026-07-24 — Ложные срабатывания source-contract regex на комментариях
+
+- **Симптом:** `app/active-lesson.test.ts` ошибочно обнаружил raw hex color в CSS, хотя совпадением оказался номер Issue `#193` в комментарии.
+- **Первопричина:** regex анализировал комментарии и исполняемый CSS как один текстовый поток.
+- **Профилактика:** перед проверкой запрещённых CSS literals удалять block/line comments либо использовать parser-aware проверку; не ослаблять запрет на реальные raw values.
+- **Обязательная проверка:** unit contract должен падать на реальном `#rrggbb` в declaration и проходить при `#123` только внутри комментария/документации.
+- **Область действия:** source-contract tests для CSS, TS/TSX и конфигураций.
+
+### 2026-07-24 — PR workflow после commit от `github-actions[bot]`
+
+- **Симптом:** PR workflow завершился как `action_required`, при этом GitHub API вернул пустой список jobs.
+- **Первопричина:** head SHA был создан workflow через `GITHUB_TOKEN`; автоматически возникший PR synchronize run не был обычным исполняемым CI run. Следующий commit через авторизованный GitHub connector создал штатный run с jobs.
+- **Профилактика:** временные write-workflows не считать источником финального CI; после их bot-commit обязательно создать содержательный commit от разработчика/агента через обычный repository credential и проверять новый head SHA.
+- **Обязательная проверка:** `fetch_commit_workflow_runs` должен вернуть CI run со status `queued|in_progress|completed`, а `fetch_workflow_run_jobs` — непустой список jobs.
+- **Область действия:** GitHub Actions workflows с `contents: write`, snapshot generation и автоматические source migrations.
