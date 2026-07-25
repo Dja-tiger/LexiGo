@@ -95,7 +95,7 @@ const EMPTY_MODE: ModeProgress = {
   successfulTotal: 0,
 };
 
-const EMPTY_TREND: DailyRecallEvidence[] = Array.from({ length: 7 }, (_, index) => ({
+const EMPTY_TREND: DailyRecallEvidence[] = Array.from({ length: 7 }, () => ({
   date: "",
   attempts: 0,
   successful: 0,
