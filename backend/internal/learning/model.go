@@ -88,24 +88,24 @@ type PartOfSpeechEvidence struct {
 }
 
 type WeeklyProgressEvidence struct {
-	WeekStart                string                   `json:"weekStart"`
-	WeekEnd                  string                   `json:"weekEnd"`
-	RecallAttempts           int                      `json:"recallAttempts"`
-	RecallSuccessful         int                      `json:"recallSuccessful"`
-	RecallRate               int                      `json:"recallRate"`
-	PreviousRecallAttempts   int                      `json:"previousRecallAttempts"`
-	PreviousRecallSuccessful int                      `json:"previousRecallSuccessful"`
-	PreviousRecallRate       int                      `json:"previousRecallRate"`
-	ChoiceAttempts           int                      `json:"choiceAttempts"`
-	ChoiceSuccessful         int                      `json:"choiceSuccessful"`
-	ChoiceRate               int                      `json:"choiceRate"`
-	Reviews                  int                      `json:"reviews"`
-	Lessons                  int                      `json:"lessons"`
-	ActiveMinutes            int                      `json:"activeMinutes"`
-	Trend                    []DailyRecallEvidence    `json:"trend"`
-	WeakTopics               []TopicEvidence          `json:"weakTopics"`
-	WeakPartsOfSpeech        []PartOfSpeechEvidence   `json:"weakPartsOfSpeech"`
-	StrongTopic              *TopicEvidence           `json:"strongTopic,omitempty"`
+	WeekStart                string                 `json:"weekStart"`
+	WeekEnd                  string                 `json:"weekEnd"`
+	RecallAttempts           int                    `json:"recallAttempts"`
+	RecallSuccessful         int                    `json:"recallSuccessful"`
+	RecallRate               int                    `json:"recallRate"`
+	PreviousRecallAttempts   int                    `json:"previousRecallAttempts"`
+	PreviousRecallSuccessful int                    `json:"previousRecallSuccessful"`
+	PreviousRecallRate       int                    `json:"previousRecallRate"`
+	ChoiceAttempts           int                    `json:"choiceAttempts"`
+	ChoiceSuccessful         int                    `json:"choiceSuccessful"`
+	ChoiceRate               int                    `json:"choiceRate"`
+	Reviews                  int                    `json:"reviews"`
+	Lessons                  int                    `json:"lessons"`
+	ActiveMinutes            int                    `json:"activeMinutes"`
+	Trend                    []DailyRecallEvidence  `json:"trend"`
+	WeakTopics               []TopicEvidence        `json:"weakTopics"`
+	WeakPartsOfSpeech        []PartOfSpeechEvidence `json:"weakPartsOfSpeech"`
+	StrongTopic              *TopicEvidence         `json:"strongTopic,omitempty"`
 }
 
 type ProgressSummary struct {
