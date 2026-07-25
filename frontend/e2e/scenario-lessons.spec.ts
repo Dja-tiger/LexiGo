@@ -163,7 +163,9 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
     await installScenarioFixture(page);
     await startScenario(page);
 
-    const closeTrigger = page.getByRole("button", { name: "Закрыть сценарий", exact: true });
+    const closeTrigger = isMobile(page)
+      ? page.getByRole("button", { name: "Закрыть", exact: true })
+      : page.getByRole("button", { name: "Закрыть сценарий", exact: true });
     await closeTrigger.click();
 
     const dialog = page.getByRole("dialog", { name: "Сохранить черновик и закрыть сценарий?" });
