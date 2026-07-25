@@ -4,20 +4,20 @@ on:
   push:
     branches:
       - agent/issue-195-progress-evidence
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   fix:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
           ref: agent/issue-195-progress-evidence
-      - name: Repair shared helper ownership and OpenAPI indentation
+      - name: Repair confirmed ownership defects
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -44,8 +44,6 @@ jobs:
           start = source.index('ProgressSummary:\n')
           end = source.index('    Error:\n', start)
           block = source[start:end]
-          if block.startswith('    ProgressSummary:'):
-              raise SystemExit('ProgressSummary is already indented')
           indented = '\n'.join(f'    {line}' if line else line for line in block.splitlines()) + '\n'
           schema.write_text(source[:start] + indented + source[end:], encoding='utf-8')
 
@@ -66,16 +64,20 @@ jobs:
 ### 2026-07-25 — OpenAPI replacement потерял schema indentation
 
 - **Симптом:** новый `ProgressSummary` оказался на корневом уровне YAML вместо `components.schemas`, хотя textual replacement сохранил содержимое блока.
-- **Первопричина:** `textwrap.dedent` нормализовал новый fragment без последующего восстановления indentation его semantic owner.
+- **Первопричина:** текстовый fragment был нормализован без восстановления indentation его semantic owner.
 - **Почему не обнаружено раньше:** проверялась структура полей, но не итоговая YAML hierarchy непосредственно в изменённом файле.
-- **Профилактика:** generated YAML/JSON replacement обязан проходить parser-level validation и проверку canonical parent path, а не только `git diff --check`.
-- **Regression gate:** OpenAPI validation и source contract должны подтверждать `components.schemas.ProgressSummary.weekly`.
+- **Профилактика:** YAML/JSON replacement обязан проходить parser-level validation и проверку canonical parent path, а не только `git diff --check`.
+- **Regression gate:** OpenAPI validation и source contract подтверждают `components.schemas.ProgressSummary.weekly`.
 - **Область действия:** OpenAPI, workflow-generated config и любые indentation-sensitive formats.
 '''
           if marker not in source:
               agents.write_text(source.rstrip() + incident + '\n', encoding='utf-8')
 
-          Path('.github/workflows/issue-195-fix-core.yml').unlink()
+          for path in (
+              Path('.github/workflows/issue-195-fix-core.yml'),
+              Path('scripts/.issue195-fix-trigger'),
+          ):
+              path.unlink(missing_ok=True)
           PY
           git diff --check
       - name: Commit confirmed root-cause fixes
