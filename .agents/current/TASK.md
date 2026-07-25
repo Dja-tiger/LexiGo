@@ -4,7 +4,7 @@
 
 - Issue: #196 — Scenario Lessons UI; bounded reconciliation with #24
 - Branch: `feat/issue-196-scenario-lessons-ui`
-- Base SHA: `d7dc76c9139beff75d331c2b904f743f381f243d`
+- Base SHA: `96caedb58a289ce13af9862a9258ba007809a73c`
 - Head SHA: resolve from live branch ref
 - PR: #221 — Draft
 
@@ -43,6 +43,7 @@ Implement the production Scenario Lessons route island from approved Figma nodes
 - `frontend/app/layout.tsx`
 - `frontend/app/scenarios/[slug]/page.tsx`
 - `frontend/app/scenario-lessons.css`
+- `frontend/app/scenario-lessons-accessibility.css` only for proven route-local WCAG fixes; this follows the existing route CSS/accessibility CSS ownership pattern and must not redefine global design tokens
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/lexigo-scenario-app.tsx`
 - `frontend/components/route-primary-navigation.tsx`
