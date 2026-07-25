@@ -39,13 +39,13 @@ type scenarioResponse struct {
 }
 
 type scenarioAttemptResponse struct {
-	ID                 string                 `json:"id"`
-	Scenario           scenarioResponse       `json:"scenario"`
-	CurrentPosition    int                    `json:"currentPosition"`
-	Status             string                 `json:"status"`
-	Version            int64                  `json:"version"`
-	CompletedPositions []int                  `json:"completedPositions"`
-	CurrentStep        *scenarioStepResponse  `json:"currentStep"`
+	ID                 string                `json:"id"`
+	Scenario           scenarioResponse      `json:"scenario"`
+	CurrentPosition    int                   `json:"currentPosition"`
+	Status             string                `json:"status"`
+	Version            int64                 `json:"version"`
+	CompletedPositions []int                 `json:"completedPositions"`
+	CurrentStep        *scenarioStepResponse `json:"currentStep"`
 }
 
 type startScenarioResponse struct {
@@ -56,7 +56,7 @@ type startScenarioResponse struct {
 type submitScenarioStepResponse struct {
 	Attempt scenarioAttemptResponse `json:"attempt"`
 	Review  struct {
-		ReviewEventID int64  `json:"reviewEventId"`
+		ReviewEventID   int64  `json:"reviewEventId"`
 		JudgementSource string `json:"judgementSource"`
 		EffectiveRating string `json:"effectiveRating"`
 	} `json:"review"`
@@ -350,7 +350,7 @@ func scenarioStepPayload(
 	review map[string]any,
 ) map[string]any {
 	return map[string]any{
-		"submissionId":  submissionID,
+		"submissionId":   submissionID,
 		"attemptVersion": attemptVersion,
 		"response":       response,
 		"facts":          facts,
