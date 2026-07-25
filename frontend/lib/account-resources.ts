@@ -29,6 +29,20 @@ const LESSON_SOURCES = new Set([
   "academic-technical-english",
 ]);
 const STUDY_MODES = new Set(["study", "recall", "choice"]);
+const SCENARIO_TYPES = new Set([
+  "incident",
+  "troubleshooting",
+  "architecture-review",
+  "data-pipeline",
+  "release",
+  "status-update",
+]);
+const SCENARIO_RECOMMENDATION_REASONS = new Set([
+  "resume_in_progress",
+  "first_uncompleted",
+  "least_recently_completed",
+]);
+const SCENARIO_RECOMMENDATION_ACTIONS = new Set(["start", "resume"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -42,8 +56,20 @@ function isNonNegativeNumber(value: unknown): value is number {
   return isFiniteNumber(value) && value >= 0;
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && isNonNegativeNumber(value);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isInteger(value) && isFiniteNumber(value) && value > 0;
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return isString(value) && value.trim().length > 0;
 }
 
 function isOptionalString(value: unknown): boolean {
@@ -208,6 +234,37 @@ function isWeeklyProgressEvidence(value: unknown): boolean {
     && (value.strongTopic === undefined || isTopicEvidence(value.strongTopic));
 }
 
+function isScenarioRecommendation(value: unknown): boolean {
+  if (!isRecord(value)
+    || !isNonEmptyString(value.slug)
+    || !SCENARIO_TYPES.has(value.type as string)
+    || !isNonEmptyString(value.title)
+    || !isPositiveInteger(value.estimatedMinutes)
+    || !SCENARIO_RECOMMENDATION_REASONS.has(value.reason as string)
+    || !SCENARIO_RECOMMENDATION_ACTIONS.has(value.action as string)
+    || !isNonNegativeInteger(value.completedCount)
+    || (value.lastCompletedAt !== undefined && !isTimestamp(value.lastCompletedAt))) {
+    return false;
+  }
+
+  if (value.reason === "resume_in_progress") return value.action === "resume";
+  if (value.action !== "start") return false;
+  if (value.reason === "first_uncompleted") {
+    return value.completedCount === 0 && value.lastCompletedAt === undefined;
+  }
+  return value.reason === "least_recently_completed"
+    && value.completedCount > 0
+    && isTimestamp(value.lastCompletedAt);
+}
+
+function isScenarioProgressEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isNonNegativeInteger(value.completedThisWeek)
+    && isNonNegativeInteger(value.completedTotal)
+    && value.completedThisWeek <= value.completedTotal
+    && (value.recommendation === undefined || isScenarioRecommendation(value.recommendation));
+}
+
 export function isProgressSummaryPayload(value: unknown): value is ProgressSummary {
   if (!isRecord(value)) return false;
   if (!REQUIRED_PROGRESS_FIELDS.every((field) => isNonNegativeNumber(value[field]))) return false;
@@ -218,5 +275,6 @@ export function isProgressSummaryPayload(value: unknown): value is ProgressSumma
   if (value.eventSchemaVersion !== undefined && !isNonNegativeNumber(value.eventSchemaVersion)) return false;
   if (value.modes !== undefined && !isProgressModes(value.modes)) return false;
   if (value.weekly !== undefined && !isWeeklyProgressEvidence(value.weekly)) return false;
+  if (value.scenarios !== undefined && !isScenarioProgressEvidence(value.scenarios)) return false;
   return true;
 }
