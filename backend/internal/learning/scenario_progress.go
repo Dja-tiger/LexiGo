@@ -76,7 +76,16 @@ func (r *Repository) populateScenarioProgress(
 			       case
 			           when coalesce(history.open_count, 0) > 0 then 'resume'
 			           else 'start'
-			       end as action
+			       end as action,
+			       case scenario.scenario_type
+			           when 'incident' then 1
+			           when 'troubleshooting' then 2
+			           when 'architecture-review' then 3
+			           when 'data-pipeline' then 4
+			           when 'release' then 5
+			           when 'status-update' then 6
+			           else 99
+			       end as catalog_order
 			from scenarios scenario
 			left join attempt_history history on history.scenario_slug = scenario.slug
 			where scenario.is_active is true
@@ -88,17 +97,26 @@ func (r *Repository) populateScenarioProgress(
 				end,
 				case when coalesce(history.has_active_attempt, false) then 0 else 1 end,
 				history.open_updated_at desc nulls last,
-				case scenario.scenario_type
-					when 'incident' then 1
-					when 'troubleshooting' then 2
-					when 'architecture-review' then 3
-					when 'data-pipeline' then 4
-					when 'release' then 5
-					when 'status-update' then 6
-					else 99
-				end,
-				history.last_completed_at asc nulls first,
+				case
+					when coalesce(history.open_count, 0) = 0
+					 and coalesce(history.completed_count, 0) = 0
+					then case scenario.scenario_type
+						when 'incident' then 1
+						when 'troubleshooting' then 2
+						when 'architecture-review' then 3
+						when 'data-pipeline' then 4
+						when 'release' then 5
+						when 'status-update' then 6
+						else 99
+					end
+				end asc nulls last,
+				case
+					when coalesce(history.open_count, 0) = 0
+					 and coalesce(history.completed_count, 0) > 0
+					then history.last_completed_at
+				end asc nulls last,
 				coalesce(history.completed_count, 0),
+				catalog_order,
 				scenario.slug
 			limit 1
 		)
