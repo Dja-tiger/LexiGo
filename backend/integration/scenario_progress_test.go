@@ -191,20 +191,12 @@ func TestScenarioProgressRecommendationContract(t *testing.T) {
 		       step_count.value,
 		       'completed',
 		       1,
-		       now() - make_interval(days => step_count.age_days),
-		       now() - make_interval(days => step_count.age_days),
-		       now() - make_interval(days => step_count.age_days)
+		       now(),
+		       now(),
+		       now()
 		from scenarios scenario
 		join lateral (
-			select count(*)::int as value,
-			       case scenario.slug
-			           when 'troubleshoot-latency' then 5
-			           when 'architecture-review-cache' then 4
-			           when 'data-pipeline-late-arrival' then 3
-			           when 'release-go-no-go' then 2
-			           when 'weekly-status-update' then 1
-			           else 0
-			       end as age_days
+			select count(*)::int as value
 			from scenario_steps step
 			where step.scenario_slug = scenario.slug
 		) step_count on true
@@ -214,7 +206,7 @@ func TestScenarioProgressRecommendationContract(t *testing.T) {
 	}
 
 	allCompleted := getScenarioProgress(t, progressURL, registered.Tokens.AccessToken)
-	assertScenarioRecommendation(t, allCompleted, allCompleted.Scenarios.CompletedThisWeek, 6, "incident-update", "least_recently_completed", "start", 1)
+	assertScenarioRecommendation(t, allCompleted, 5, 6, "incident-update", "least_recently_completed", "start", 1)
 	if allCompleted.Scenarios.Recommendation.LastCompletedAt == nil {
 		t.Fatal("least-recently-completed recommendation must expose lastCompletedAt")
 	}
