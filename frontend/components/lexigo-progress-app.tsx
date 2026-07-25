@@ -20,7 +20,7 @@ import {
   type ProgressSummary,
 } from "../lib/progress";
 import { AsyncResourceNotice, AsyncStatePanel } from "./async-state";
-import { ProgressEvidenceDashboard } from "./progress-evidence-dashboard";
+import { ProgressEvidenceDashboard, type DueReviewFilter } from "./progress-evidence-dashboard";
 
 type DueItem = {
   id: number;
@@ -56,13 +56,24 @@ function boundedLessonSize(count: number): 15 | 30 | 60 {
   return 60;
 }
 
-function dueQuery(progress: ProgressSummary, topic?: string): string {
+function dueQuery(progress: ProgressSummary, filter: DueReviewFilter = {}): string {
   const parameters = new URLSearchParams({
     kind: "all",
     limit: String(Math.max(15, dueReviewLessonCount(progress.dueNow))),
   });
-  if (topic?.trim()) parameters.set("topic", topic.trim());
+  if (filter.source?.trim()) parameters.set("source", filter.source.trim());
+  if (filter.topic?.trim()) parameters.set("topic", filter.topic.trim());
   return `/api/v1/words/due?${parameters.toString()}`;
+}
+
+function emptyQueueMessage(filter: DueReviewFilter): string {
+  if (filter.topic?.trim()) {
+    return `В теме «${filter.topic.trim()}» сейчас нет элементов с наступившим интервалом.`;
+  }
+  if (filter.label?.trim()) {
+    return `Для области «${filter.label.trim()}» сейчас нет элементов с наступившим интервалом.`;
+  }
+  return "Очередь повторения уже пуста.";
 }
 
 export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoProgressAppProps) {
@@ -122,7 +133,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
     router.push("/profile?session=required&return_to=%2Fprogress", { scroll: false });
   }, [router]);
 
-  const startDueReview = useCallback(async (topic?: string) => {
+  const startDueReview = useCallback(async (filter: DueReviewFilter = {}) => {
     if (!session || !progress || busy) return;
 
     setBusy(true);
@@ -130,7 +141,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
     try {
       const due = await authorizedJSON<DueItemsResponse>(
         session,
-        dueQuery(progress, topic),
+        dueQuery(progress, filter),
         {},
         isItemsResponsePayload,
       );
@@ -140,9 +151,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
         .filter((id) => Number.isInteger(id) && id > 0);
 
       if (wordIds.length === 0) {
-        setActionError(topic
-          ? `В теме «${topic}» сейчас нет элементов с наступившим интервалом.`
-          : "Очередь повторения уже пуста.");
+        setActionError(emptyQueueMessage(filter));
         await loadProgress(due.activeSession);
         return;
       }
@@ -154,7 +163,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
         {
           method: "POST",
           body: JSON.stringify({
-            source: "mixed",
+            source: filter.source?.trim() || "mixed",
             studyMode: "recall",
             lessonSize: String(lessonSize),
             wordIds,
@@ -218,7 +227,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
               <section className="lx-empty">
                 <span>ПРОГРЕСС</span>
                 <h1>Войдите, чтобы видеть результат обучения</h1>
-                <p>Недельные доказательства удержания, очередь Recall и слабые темы синхронизируются между устройствами.</p>
+                <p>Недельные доказательства удержания, очередь Recall и слабые области синхронизируются между устройствами.</p>
                 <button className="lx-button primary" type="button" onClick={requireAuthentication}>
                   Войти и открыть прогресс
                 </button>
@@ -238,7 +247,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
               <ProgressEvidenceDashboard
                 progress={progress}
                 busy={busy}
-                onStartDueReview={(topic) => void startDueReview(topic)}
+                onStartDueReview={(filter) => void startDueReview(filter)}
                 onConfigureLesson={configureLesson}
               />
             )}
