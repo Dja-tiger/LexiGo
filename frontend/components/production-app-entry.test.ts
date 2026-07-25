@@ -11,6 +11,7 @@ const productionAppFiles = [
   "lexigo-bootstrapped-app.tsx",
   "lexigo-dictionary-app.tsx",
   "lexigo-premium-app.tsx",
+  "lexigo-progress-app.tsx",
   "routed-lexigo-app.tsx",
 ] as const;
 
@@ -57,8 +58,10 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).not.toContain('from "next/navigation"');
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-progress-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
   });
 
   it("allows only the bootstrap layer to load route application entries", () => {
@@ -71,9 +74,14 @@ describe("production frontend application entry", () => {
       .filter(({ source }) => source.includes("lexigo-dictionary-app"))
       .map(({ file }) => file)
       .sort();
+    const progressGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-progress-app"))
+      .map(({ file }) => file)
+      .sort();
 
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(progressGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
   });
 
   it("keeps dictionary code inside its route island", () => {
@@ -83,6 +91,16 @@ describe("production frontend application entry", () => {
     expect(dictionaryApp).toContain('data-route-client-island="dictionary"');
     expect(dictionaryApp).not.toContain("lexigo-premium-app");
     expect(dictionaryApp).not.toContain("restoreSession");
+  });
+
+  it("keeps Progress API and evidence presentation inside its route island", () => {
+    const progressApp = readSource(componentsDirectory, "lexigo-progress-app.tsx");
+
+    expect(progressApp).toContain('from "./progress-evidence-dashboard"');
+    expect(progressApp).toContain('data-route-client-island="progress"');
+    expect(progressApp).toContain("/api/v1/progress?timezoneOffsetMinutes=");
+    expect(progressApp).not.toContain("lexigo-premium-app");
+    expect(progressApp).not.toContain("restoreSession");
   });
 
   it("keeps retired alternative roots outside the production tree", () => {
