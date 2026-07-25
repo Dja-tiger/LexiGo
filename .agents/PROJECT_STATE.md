@@ -2,15 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 18:04 Europe/Berlin
+- Last verified: 2026-07-25 19:29 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification its latest commit was `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2` from merged PR #219
-- Stage product SHA: `15386321399f5386ff97d7d093c8a3c2777018be`; Issue #12 and run `30163844185` report deploy, public smoke and 12/12 public browser success
+- Live `main` must be resolved from GitHub at agent startup; at this verification its latest commit was `d7dc76c9139beff75d331c2b904f743f381f243d` from merged PR #220
+- Stage image SHA: `d7dc76c9139beff75d331c2b904f743f381f243d`; Issue #12 and run `30165559836` report deploy, public smoke and 12/12 public browser success
 - Latest production merge: #218 `fix(scenarios): own objective review targets on the server`
 - PR #218 validation: final immutable-head CI #1770 (`30163260324`) succeeded on `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`; no unresolved review threads
-- Repository-memory baseline: PR #219 `docs(agent): reconcile state after Scenario contract merge` squash-merged as `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`; final CI #1773 (`30164541561`) succeeded on `b2d150d8e4e175057b2d39638c83eb032d7de7b4`
-- Open PRs: none immediately after PR #219 merge and before this corrective state branch
-- Active product branch/PR: none verified; merged branch `fix/issue-196-scenario-review-contract` still exists but is not active work
+- Repository-memory baseline: PR #220 `docs(agent): make project state durable across docs merges` squash-merged as `d7dc76c9139beff75d331c2b904f743f381f243d`; final CI #1775 (`30164974435`) succeeded on `b6781d30c3438b3daf908c3cb1f6d8eae2b3a0fc`
+- Open PRs: #221 `feat(scenarios): implement focused Scenario Lessons UI` is Draft
+- Active product branch/PR: `feat/issue-196-scenario-lessons-ui`, base `d7dc76c9139beff75d331c2b904f743f381f243d`, head `4dd453b77d171d24a17f148b853f2ebd99f28a66`, PR #221
+- Current PR validation: CI #1803 (`30167307694`) completed with backend unit/security and integration success, but frontend core failed at TypeScript typecheck; diagnosis and a new final-head run are required
 - Active product Issue: #196 Scenario Lessons UI; Issue #24 remains open for final Scenario product reconciliation
 
 ## Completed
@@ -48,6 +49,7 @@
 - PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
 - PR #217 passed full CI #1756 after the confirmed GitHub Actions infrastructure incident was resolved.
 - PR #219 reconciled merged Scenario evidence, reset `.agents/current/**` byte-for-byte from templates and passed full final-head CI #1773.
+- PR #220 removed the self-invalidating current-`main` snapshot from repository memory and passed full final-head CI #1775.
 - Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
@@ -56,7 +58,7 @@ Required contracts include backend unit/race/integration/security; frontend lint
 
 ## In progress
 
-No product implementation branch or PR was active at verification. A one-file documentation correction removes the self-invalidating current-`main` snapshot; the next product slice remains #196.
+PR #221 implements the active #196 Scenario Lessons UI slice on `feat/issue-196-scenario-lessons-ui`. It remains Draft and is not mergeable by process until the confirmed TypeScript failure is fixed, targeted gates pass, Linux visual baselines and measured bundle evidence are approved, full required CI succeeds on the final developer-authored head, and review-thread audit is clean.
 
 ## Remaining roadmap
 
@@ -109,7 +111,7 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Validation pending
 
-- Scenario React route, completion presentation, manual device validation, route-by-route Figma parity and final reconciliation of Issues #196/#24.
+- PR #221: TypeScript correction, keyboard safe-exit dialog contract, Linux compact Light and desktop Dark baselines, measured cold-route bundle evidence, full final-head CI, review audit, squash merge and post-merge stage validation.
 - Progress/recommendation integration for completed Scenario attempts requires an explicit product contract and regression matrix in a later atomic slice.
 - Phrases and First Use design gaps require approved Figma states before implementation.
 - Final moderated usability evidence remains external work under #133.
@@ -121,17 +123,18 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #219 — `docs(agent): reconcile state after Scenario contract merge` → `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`.
-2. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
-3. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
-4. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-5. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
-6. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
+1. #220 — `docs(agent): make project state durable across docs merges` → `d7dc76c9139beff75d331c2b904f743f381f243d`.
+2. #219 — `docs(agent): reconcile state after Scenario contract merge` → `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`.
+3. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
+4. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+5. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
+6. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
+7. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
 
 ## Evidence
 
-- Live `main`, PR #219 merge state, final CI #1773, empty current-task templates, open PR state, retained merged branch, Issues #12/#24/#196 and stage run `30163844185` were re-read at the verification timestamp.
-- Stage remains intentionally on the latest product SHA because PR #219 changed documentation only; API/frontend containers are healthy, public endpoints return HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- Live `main`, merged PR #220, Draft PR #221, current product head, CI #1803, Issues #12/#24/#196 and stage run `30165559836` were re-read at the verification timestamp.
+- Stage currently runs images tagged with documentation-only main SHA `d7dc76c9139beff75d331c2b904f743f381f243d`; the latest product runtime change remains PR #218, while PRs #219/#220 changed repository memory only. API/frontend containers are healthy, public endpoints return HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
 - Exact Scenario runtime, migration, integration and bounded OpenAPI contracts are present in production history through PR #218.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
