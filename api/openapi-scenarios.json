@@ -3,14 +3,10 @@
   "info": {
     "title": "LexiGo Scenario Lessons API",
     "version": "0.13.0",
-    "description": "Bounded machine-readable contract for the authenticated Scenario Lessons routes. The server owns the review target and objective judgement; clients submit production evidence and timing metadata only."
+    "description": "Bounded machine-readable contract for authenticated Scenario Lessons routes. The server owns the review target and objective judgement; clients submit production evidence and optional timing metadata only."
   },
-  "servers": [
-    { "url": "http://localhost:8080", "description": "local" }
-  ],
-  "security": [
-    { "bearerAuth": [] }
-  ],
+  "servers": [{ "url": "http://localhost:8080", "description": "local" }],
+  "security": [{ "bearerAuth": [] }],
   "paths": {
     "/api/v1/scenarios": {
       "get": {
@@ -18,36 +14,20 @@
         "tags": ["scenarios"],
         "summary": "List the active technical Scenario catalog.",
         "responses": {
-          "200": {
-            "description": "Active Scenario catalog.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ScenarioCatalog" }
-              }
-            }
-          },
+          "200": { "description": "Active Scenario catalog.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioCatalog" } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
     },
     "/api/v1/scenarios/{slug}": {
-      "parameters": [
-        { "$ref": "#/components/parameters/ScenarioSlug" }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/ScenarioSlug" }],
       "get": {
         "operationId": "getScenario",
         "tags": ["scenarios"],
         "summary": "Get one Scenario and its ordered production steps.",
         "responses": {
-          "200": {
-            "description": "Scenario detail.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Scenario" }
-              }
-            }
-          },
+          "200": { "description": "Scenario detail.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Scenario" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -56,30 +36,14 @@
       }
     },
     "/api/v1/scenarios/{slug}/attempts": {
-      "parameters": [
-        { "$ref": "#/components/parameters/ScenarioSlug" }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/ScenarioSlug" }],
       "post": {
         "operationId": "startScenarioAttempt",
         "tags": ["scenarios"],
-        "summary": "Start a Scenario attempt or resume the user's current active/paused attempt.",
+        "summary": "Start a Scenario attempt or resume the current active/paused attempt.",
         "responses": {
-          "200": {
-            "description": "An existing active or paused attempt was resumed.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/StartScenarioAttemptResponse" }
-              }
-            }
-          },
-          "201": {
-            "description": "A new attempt was created.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/StartScenarioAttemptResponse" }
-              }
-            }
-          },
+          "200": { "description": "Existing attempt resumed.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StartScenarioAttemptResponse" } } } },
+          "201": { "description": "New attempt created.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StartScenarioAttemptResponse" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -88,22 +52,13 @@
       }
     },
     "/api/v1/scenario-attempts/{attemptID}": {
-      "parameters": [
-        { "$ref": "#/components/parameters/ScenarioAttemptID" }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/ScenarioAttemptID" }],
       "get": {
         "operationId": "getScenarioAttempt",
         "tags": ["scenarios"],
-        "summary": "Reload an owned Scenario attempt with server-owned progress and current step.",
+        "summary": "Reload an owned attempt with server-owned progress and current step.",
         "responses": {
-          "200": {
-            "description": "Scenario attempt.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ScenarioAttempt" }
-              }
-            }
-          },
+          "200": { "description": "Scenario attempt.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioAttempt" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -112,30 +67,14 @@
       }
     },
     "/api/v1/scenario-attempts/{attemptID}/pause": {
-      "parameters": [
-        { "$ref": "#/components/parameters/ScenarioAttemptID" }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/ScenarioAttemptID" }],
       "post": {
         "operationId": "pauseScenarioAttempt",
         "tags": ["scenarios"],
-        "summary": "Pause an active Scenario attempt using optimistic concurrency.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/AttemptVersionRequest" }
-            }
-          }
-        },
+        "summary": "Pause an active attempt using optimistic concurrency.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttemptVersionRequest" } } } },
         "responses": {
-          "200": {
-            "description": "Paused Scenario attempt.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ScenarioAttempt" }
-              }
-            }
-          },
+          "200": { "description": "Paused attempt.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioAttempt" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -146,30 +85,14 @@
       }
     },
     "/api/v1/scenario-attempts/{attemptID}/resume": {
-      "parameters": [
-        { "$ref": "#/components/parameters/ScenarioAttemptID" }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/ScenarioAttemptID" }],
       "post": {
         "operationId": "resumeScenarioAttempt",
         "tags": ["scenarios"],
-        "summary": "Resume a paused Scenario attempt using optimistic concurrency.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/AttemptVersionRequest" }
-            }
-          }
-        },
+        "summary": "Resume a paused attempt using optimistic concurrency.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttemptVersionRequest" } } } },
         "responses": {
-          "200": {
-            "description": "Active Scenario attempt.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ScenarioAttempt" }
-              }
-            }
-          },
+          "200": { "description": "Active attempt.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioAttempt" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -188,24 +111,10 @@
         "operationId": "submitScenarioStep",
         "tags": ["scenarios"],
         "summary": "Accept one ordered production step and atomically persist its server-judged Recall evidence.",
-        "description": "submissionId is an idempotency key. The client cannot select the learning item, rating, submitted answer, correctness, answer-revealed state or judgement. The server resolves the step target, derives objective whole-term evidence from response, writes a schema-v2 Recall event and advances the attempt in one transaction.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/SubmitScenarioStepRequest" }
-            }
-          }
-        },
+        "description": "submissionId is an idempotency key. The client cannot select the learning item, rating, submitted answer, correctness, answer-revealed state or judgement. The server resolves the step target, derives objective whole-term evidence, writes a schema-v2 Recall event and advances the attempt in one transaction.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubmitScenarioStepRequest" } } } },
         "responses": {
-          "200": {
-            "description": "Accepted step or an idempotent replay of the same accepted submission.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/SubmitScenarioStepResponse" }
-              }
-            }
-          },
+          "200": { "description": "Accepted step or idempotent replay.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubmitScenarioStepResponse" } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -218,57 +127,20 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
     },
     "parameters": {
-      "ScenarioSlug": {
-        "name": "slug",
-        "in": "path",
-        "required": true,
-        "schema": { "type": "string", "minLength": 1 }
-      },
-      "ScenarioAttemptID": {
-        "name": "attemptID",
-        "in": "path",
-        "required": true,
-        "schema": { "type": "string", "format": "uuid" }
-      },
-      "ScenarioPosition": {
-        "name": "position",
-        "in": "path",
-        "required": true,
-        "schema": { "type": "integer", "minimum": 0 }
-      }
+      "ScenarioSlug": { "name": "slug", "in": "path", "required": true, "schema": { "type": "string", "minLength": 1 } },
+      "ScenarioAttemptID": { "name": "attemptID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "ScenarioPosition": { "name": "position", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 0 } }
     },
     "responses": {
-      "BadRequest": {
-        "description": "Malformed path parameter or strict JSON body.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      },
-      "Unauthorized": {
-        "description": "Access token is missing or invalid.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      },
-      "NotFound": {
-        "description": "Scenario or owned attempt was not found.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      },
-      "Conflict": {
-        "description": "Attempt version, lifecycle, order or idempotency conflict.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      },
-      "ValidationError": {
-        "description": "Production response or fact/hypothesis evidence is invalid.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      },
-      "InternalError": {
-        "description": "Internal server error.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
-      }
+      "BadRequest": { "description": "Malformed path parameter or strict JSON body.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Access token is missing or invalid.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Scenario or owned attempt was not found.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "Attempt version, lifecycle, order or idempotency conflict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "ValidationError": { "description": "Production response or evidence is invalid.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "InternalError": { "description": "Internal server error.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
     },
     "schemas": {
       "ScenarioCatalog": {
@@ -300,25 +172,30 @@
         }
       },
       "Scenario": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ScenarioSummary" },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["steps"],
-            "properties": {
-              "steps": { "type": "array", "items": { "$ref": "#/components/schemas/ScenarioStep" } }
-            }
-          }
-        ]
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "type", "title", "summary", "userRole", "workplaceGoal", "completionCriterion", "constraints", "requiresFactHypothesis", "estimatedMinutes", "version", "stepCount", "steps"],
+        "properties": {
+          "slug": { "type": "string" },
+          "type": { "type": "string", "enum": ["incident", "troubleshooting", "architecture-review", "data-pipeline", "release", "status-update"] },
+          "title": { "type": "string" },
+          "summary": { "type": "string" },
+          "userRole": { "type": "string" },
+          "workplaceGoal": { "type": "string" },
+          "completionCriterion": { "type": "string" },
+          "constraints": { "type": "array", "items": { "type": "string" } },
+          "requiresFactHypothesis": { "type": "boolean" },
+          "estimatedMinutes": { "type": "integer", "minimum": 1 },
+          "version": { "type": "integer", "minimum": 1 },
+          "stepCount": { "type": "integer", "minimum": 1 },
+          "steps": { "type": "array", "items": { "$ref": "#/components/schemas/ScenarioStep" } }
+        }
       },
       "ScenarioReviewTarget": {
         "type": "object",
         "additionalProperties": false,
         "required": ["term"],
-        "properties": {
-          "term": { "type": "string", "minLength": 1, "description": "Server-owned technical term judged in the production response." }
-        }
+        "properties": { "term": { "type": "string", "minLength": 1, "description": "Server-owned technical term judged in the production response." } }
       },
       "ScenarioStep": {
         "type": "object",
@@ -347,11 +224,11 @@
           "status": { "type": "string", "enum": ["active", "paused", "completed", "discarded"] },
           "version": { "type": "integer", "format": "int64", "minimum": 1 },
           "completedPositions": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
-          "currentStep": { "oneOf": [{ "$ref": "#/components/schemas/ScenarioStep" }, { "type": "null" }] },
+          "currentStep": { "$ref": "#/components/schemas/ScenarioStep" },
           "startedAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
-          "completedAt": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
-          "lastSubmission": { "oneOf": [{ "$ref": "#/components/schemas/ScenarioStepSubmission" }, { "type": "null" }] }
+          "completedAt": { "type": "string", "format": "date-time" },
+          "lastSubmission": { "$ref": "#/components/schemas/ScenarioStepSubmission" }
         }
       },
       "ScenarioStepSubmission": {
@@ -372,18 +249,13 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["attempt", "resumed"],
-        "properties": {
-          "attempt": { "$ref": "#/components/schemas/ScenarioAttempt" },
-          "resumed": { "type": "boolean" }
-        }
+        "properties": { "attempt": { "$ref": "#/components/schemas/ScenarioAttempt" }, "resumed": { "type": "boolean" } }
       },
       "AttemptVersionRequest": {
         "type": "object",
         "additionalProperties": false,
         "required": ["attemptVersion"],
-        "properties": {
-          "attemptVersion": { "type": "integer", "format": "int64", "minimum": 1 }
-        }
+        "properties": { "attemptVersion": { "type": "integer", "format": "int64", "minimum": 1 } }
       },
       "ScenarioStepReviewMetadata": {
         "type": "object",
@@ -396,7 +268,7 @@
       "SubmitScenarioStepRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["submissionId", "attemptVersion", "response", "review"],
+        "required": ["submissionId", "attemptVersion", "response"],
         "properties": {
           "submissionId": { "type": "string", "format": "uuid", "description": "Idempotency key for this exact normalized submission." },
           "attemptVersion": { "type": "integer", "format": "int64", "minimum": 1 },
@@ -447,10 +319,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["code", "message"],
-            "properties": {
-              "code": { "type": "string" },
-              "message": { "type": "string" }
-            }
+            "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
           }
         }
       }
