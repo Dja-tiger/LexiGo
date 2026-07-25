@@ -44,8 +44,10 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
   });
 
   test("invalid Scenario slug resolves through the App Router 404 boundary", async ({ page }) => {
-    const response = await page.goto("/scenarios/Incident_Update", { waitUntil: "domcontentloaded" });
-    expect(response?.status()).toBe(404);
+    await page.goto("/scenarios/Incident_Update", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1, name: "Такого раздела нет" })).toBeVisible();
+    await expect(page.getByText("404", { exact: true })).toBeVisible();
+    await expect(page.locator(".lx-scenario")).toHaveCount(0);
   });
 
   test("direct entry owns the focused route and submits only the bounded server contract", async ({ page }) => {
@@ -102,7 +104,8 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
     fixture.failNextSubmission();
 
     await page.getByRole("button", { name: "Отправить ответ", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("submission id сохранены");
+    const responseCard = page.getByRole("region", { name: "Ответ на текущий шаг" });
+    await expect(responseCard.getByRole("alert")).toContainText("submission id сохранены");
     await expect(page.getByRole("textbox", { name: "Рабочая формулировка на английском" }))
       .toHaveValue(STEP_ZERO_RESPONSE);
 
