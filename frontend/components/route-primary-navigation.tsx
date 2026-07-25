@@ -166,6 +166,10 @@ function currentView(pathname: string): AppView {
   return parseNavigation("", pathname).view;
 }
 
+function isFocusedRoute(pathname: string): boolean {
+  return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+}
+
 export function RouteBrand() {
   return (
     <RouteLink target={{ view: "home" }} className="lx-route-brand" ariaLabel="LexiGo — открыть главную">
@@ -211,7 +215,7 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
 
 export function RouteChrome() {
   const pathname = usePathname();
-  if (pathname.startsWith("/lesson/")) return null;
+  if (isFocusedRoute(pathname)) return null;
 
   return (
     <>
