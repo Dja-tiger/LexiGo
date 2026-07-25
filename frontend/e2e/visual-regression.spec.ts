@@ -37,6 +37,18 @@ async function expectStableScreenshot(page: Page, name: string): Promise<void> {
   });
 }
 
+async function openCalendarDialog(page: Page): Promise<void> {
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const disclosure = reminder.locator(":scope > summary");
+  await expect(disclosure).toBeVisible();
+  await disclosure.click();
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  await preview.getByRole("button", { name: "Настроить календарь" }).click();
+  await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+}
+
 test.describe("critical visual baselines", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -82,8 +94,7 @@ test.describe("critical visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Настроить календарь" }).click();
-    await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+    await openCalendarDialog(page);
     await expectStableScreenshot(page, "calendar-dialog.png");
     expect(runtimeErrors).toEqual([]);
   });
