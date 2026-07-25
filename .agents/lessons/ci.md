@@ -10,5 +10,7 @@ Normative source: [`../AGENTS.base.md`](../AGENTS.base.md) and [`../AGENTS.progr
 - When an overflow assertion fails, attach exact offending elements and computed geometry; do not replace the assertion with `overflow-x: hidden` or a looser tolerance.
 - Before every mutation, compare the exact tool recipient and schema with the intended action; similar write names are not interchangeable.
 - After any wrong-recipient mutation, stop all further writes, verify `main`, clean up only the accidental artifact, run tool discovery again, and inspect the exact intended schema before the next mutation. Repeating the previous write path before rediscovery is prohibited. This rule was reinforced after accidental Issues #223/#224 were created and immediately closed without repository changes.
+- When no repository checkout is available, reconstruct the exact changed Go blobs in a temporary workspace and run the repository formatter before the first CI head. Visual inspection of alignment is not formatter evidence.
+- A hosted-runner failure before repository tests begin must not trigger speculative code or workflow changes. Confirm cleanup and unique service names, retry the exact failed job once on the immutable head, and treat it as infrastructure-transient only when the identical retry passes.
 - Final required CI must run on the developer-authored final head after canonical workflows are restored.
 - Green PR CI and green stage deployment are separate evidence; record both.
