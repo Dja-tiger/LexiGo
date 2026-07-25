@@ -111,8 +111,8 @@ type WeeklyProgressEvidence struct {
 type ScenarioRecommendationReason string
 
 const (
-	ScenarioRecommendationResumeInProgress      ScenarioRecommendationReason = "resume_in_progress"
-	ScenarioRecommendationFirstUncompleted      ScenarioRecommendationReason = "first_uncompleted"
+	ScenarioRecommendationResumeInProgress       ScenarioRecommendationReason = "resume_in_progress"
+	ScenarioRecommendationFirstUncompleted       ScenarioRecommendationReason = "first_uncompleted"
 	ScenarioRecommendationLeastRecentlyCompleted ScenarioRecommendationReason = "least_recently_completed"
 )
 
