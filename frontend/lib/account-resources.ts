@@ -143,7 +143,6 @@ function isProgressModes(value: unknown): boolean {
     && isModeProgress(value.legacy);
 }
 
-
 function isPercentage(value: unknown): boolean {
   return Number.isInteger(value) && isNonNegativeNumber(value) && value <= 100;
 }
@@ -169,8 +168,22 @@ function isTopicEvidence(value: unknown): boolean {
     && isPercentage(value.rate);
 }
 
+function isPartOfSpeechEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isString(value.partOfSpeech)
+    && value.partOfSpeech.trim().length > 0
+    && isNonNegativeNumber(value.attempts)
+    && isNonNegativeNumber(value.successful)
+    && isNonNegativeNumber(value.errors)
+    && isPercentage(value.rate);
+}
+
 function isWeeklyProgressEvidence(value: unknown): boolean {
   if (!isRecord(value)) return false;
+  const weakPartsOfSpeechValid = value.weakPartsOfSpeech === undefined
+    || (Array.isArray(value.weakPartsOfSpeech)
+      && value.weakPartsOfSpeech.length <= 3
+      && value.weakPartsOfSpeech.every(isPartOfSpeechEvidence));
   return isDateOnly(value.weekStart)
     && isDateOnly(value.weekEnd)
     && isNonNegativeNumber(value.recallAttempts)
@@ -191,6 +204,7 @@ function isWeeklyProgressEvidence(value: unknown): boolean {
     && Array.isArray(value.weakTopics)
     && value.weakTopics.length <= 3
     && value.weakTopics.every(isTopicEvidence)
+    && weakPartsOfSpeechValid
     && (value.strongTopic === undefined || isTopicEvidence(value.strongTopic));
 }
 

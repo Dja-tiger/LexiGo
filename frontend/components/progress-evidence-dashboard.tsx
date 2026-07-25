@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 
-import { learningTermCopy, topicLabel } from "../lib/interface-copy";
+import { learningTermCopy, partOfSpeechLabel, topicLabel } from "../lib/interface-copy";
 import {
   dueReviewLessonCount,
   normalizedProgressModes,
@@ -11,11 +11,28 @@ import {
   type ProgressSummary,
 } from "../lib/progress";
 
+export type DueReviewFilter = {
+  topic?: string;
+  source?: string;
+  label?: string;
+};
+
 type ProgressEvidenceDashboardProps = {
   progress: ProgressSummary;
   busy: boolean;
-  onStartDueReview: (topic?: string) => void;
+  onStartDueReview: (filter?: DueReviewFilter) => void;
   onConfigureLesson: () => void;
+};
+
+type WeakArea = {
+  key: string;
+  kind: "topic" | "part-of-speech";
+  label: string;
+  attempts: number;
+  successful: number;
+  errors: number;
+  rate: number;
+  filter: DueReviewFilter;
 };
 
 const RETAINED_COPY = learningTermCopy("retained");
@@ -33,7 +50,7 @@ export function ProgressEvidenceDashboard({
   const modes = normalizedProgressModes(progress);
   const hasRecallEvidence = weekly.recallAttempts > 0;
   const hasComparableWeeks = weekly.recallAttempts >= 3 && weekly.previousRecallAttempts >= 3;
-  const weakTopics = weekly.weakTopics.slice(0, 3);
+  const weakAreas = buildWeakAreas(weekly);
   const dueLessonCount = dueReviewLessonCount(progress.dueNow);
   const dueLabel = dueLessonCount > 0
     ? progress.dueNow > dueLessonCount
@@ -59,7 +76,7 @@ export function ProgressEvidenceDashboard({
           <h2 id="progress-empty-title">Сначала пройдите отложенную проверку</h2>
           <p>
             Открытая карточка и пассивное изучение не доказывают, что материал сохранился.
-            После первой проверки «{RECALL_COPY.label}» здесь появятся недельная динамика и слабые темы.
+            После первой проверки «{RECALL_COPY.label}» здесь появятся недельная динамика и слабые области.
           </p>
           <button type="button" onClick={onConfigureLesson}>Настроить урок на самостоятельное воспроизведение</button>
         </section>
@@ -94,10 +111,10 @@ export function ProgressEvidenceDashboard({
                   description={DUE_EXPLANATION}
                 />
                 <Metric
-                  value={weakTopics.length}
-                  label="слабые темы"
+                  value={weakAreas.length}
+                  label="слабые области"
                   tone="weak"
-                  description="Слабая тема определяется по ошибкам самостоятельного воспроизведения за текущую неделю."
+                  description="Слабая область определяется по ошибкам самостоятельного воспроизведения за текущую неделю. Показывается не более трёх рекомендаций."
                 />
               </dl>
 
@@ -139,38 +156,39 @@ export function ProgressEvidenceDashboard({
           </div>
 
           <div className="lx-progress-evidence__secondary">
-            <article className="lx-progress-evidence__weak" aria-labelledby="weak-topics-title">
-              <h2 id="weak-topics-title">Слабые темы</h2>
-              {weakTopics.length > 0 ? (
+            <article className="lx-progress-evidence__weak" aria-labelledby="weak-areas-title">
+              <h2 id="weak-areas-title">Слабые области</h2>
+              {weakAreas.length > 0 ? (
                 <ul>
-                  {weakTopics.map((topic, index) => {
-                    const displayTopic = topicLabel(topic.topic);
-                    return (
-                      <li key={topic.topic}>
-                        <div>
-                          <strong>{displayTopic}</strong>
-                          <small>{topic.successful} из {topic.attempts} попыток самостоятельного воспроизведения верны</small>
-                        </div>
-                        <span className={`lx-progress-evidence__topic-status ${index === 0 ? "weak" : "milestone"}`}>
-                          {topic.errors} {russianPlural(topic.errors, ["ошибка", "ошибки", "ошибок"])}
-                        </span>
-                        {dueLessonCount > 0 ? (
-                          <button
-                            type="button"
-                            disabled={busy}
-                            aria-label={`Повторить тему ${displayTopic}`}
-                            onClick={() => onStartDueReview(topic.topic)}
-                          >
-                            Повторить
-                          </button>
-                        ) : null}
-                      </li>
-                    );
-                  })}
+                  {weakAreas.map((area, index) => (
+                    <li key={area.key}>
+                      <div>
+                        <strong>
+                          {area.kind === "topic" ? "Тема" : "Часть речи"}: {area.label}
+                        </strong>
+                        <small>{area.successful} из {area.attempts} попыток самостоятельного воспроизведения верны</small>
+                      </div>
+                      <span className={`lx-progress-evidence__topic-status ${index === 0 ? "weak" : "milestone"}`}>
+                        {area.errors} {russianPlural(area.errors, ["ошибка", "ошибки", "ошибок"])}
+                      </span>
+                      {dueLessonCount > 0 ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          aria-label={area.kind === "topic"
+                            ? `Повторить тему ${area.label}`
+                            : `Повторить часть речи ${area.label}`}
+                          onClick={() => onStartDueReview(area.filter)}
+                        >
+                          Повторить
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
                 </ul>
               ) : (
                 <p className="lx-progress-evidence__positive">
-                  В текущей неделе нет тем с ошибками самостоятельного воспроизведения. Продолжайте отложенные проверки, чтобы подтвердить устойчивость результата.
+                  В текущей неделе нет тем или частей речи с ошибками самостоятельного воспроизведения. Продолжайте отложенные проверки, чтобы подтвердить устойчивость результата.
                 </p>
               )}
             </article>
@@ -208,6 +226,46 @@ export function ProgressEvidenceDashboard({
       )}
     </section>
   );
+}
+
+function buildWeakAreas(weekly: ReturnType<typeof normalizedWeeklyEvidence>): WeakArea[] {
+  const topicAreas: WeakArea[] = weekly.weakTopics.map((topic) => {
+    const label = topicLabel(topic.topic);
+    return {
+      key: `topic:${topic.topic}`,
+      kind: "topic",
+      label,
+      attempts: topic.attempts,
+      successful: topic.successful,
+      errors: topic.errors,
+      rate: topic.rate,
+      filter: { topic: topic.topic, label },
+    };
+  });
+  const partOfSpeechAreas: WeakArea[] = weekly.weakPartsOfSpeech.map((part) => {
+    const label = partOfSpeechLabel(part.partOfSpeech);
+    return {
+      key: `part-of-speech:${part.partOfSpeech}`,
+      kind: "part-of-speech",
+      label,
+      attempts: part.attempts,
+      successful: part.successful,
+      errors: part.errors,
+      rate: part.rate,
+      filter: { source: part.partOfSpeech, label },
+    };
+  });
+
+  const selected: WeakArea[] = [];
+  if (topicAreas[0]) selected.push(topicAreas[0]);
+  if (partOfSpeechAreas[0]) selected.push(partOfSpeechAreas[0]);
+
+  const remaining = [...topicAreas.slice(1), ...partOfSpeechAreas.slice(1)]
+    .sort((left, right) => right.errors - left.errors
+      || left.rate - right.rate
+      || right.attempts - left.attempts
+      || left.label.localeCompare(right.label, "ru"));
+  return [...selected, ...remaining].slice(0, 3);
 }
 
 function Metric({

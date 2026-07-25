@@ -27,6 +27,14 @@ export type TopicEvidence = {
   rate: number;
 };
 
+export type PartOfSpeechEvidence = {
+  partOfSpeech: string;
+  attempts: number;
+  successful: number;
+  errors: number;
+  rate: number;
+};
+
 export type WeeklyProgressEvidence = {
   weekStart: string;
   weekEnd: string;
@@ -44,6 +52,7 @@ export type WeeklyProgressEvidence = {
   activeMinutes: number;
   trend: DailyRecallEvidence[];
   weakTopics: TopicEvidence[];
+  weakPartsOfSpeech: PartOfSpeechEvidence[];
   strongTopic?: TopicEvidence;
 };
 
@@ -121,6 +130,7 @@ export function normalizedWeeklyEvidence(progress: ProgressSummary): WeeklyProgr
         ? progress.weekly.trend
         : [...progress.weekly.trend, ...EMPTY_TREND].slice(0, 7),
       weakTopics: progress.weekly.weakTopics ?? [],
+      weakPartsOfSpeech: progress.weekly.weakPartsOfSpeech ?? [],
     };
   }
 
@@ -147,6 +157,7 @@ export function normalizedWeeklyEvidence(progress: ProgressSummary): WeeklyProgr
     activeMinutes: 0,
     trend: EMPTY_TREND.map((entry) => ({ ...entry })),
     weakTopics: [],
+    weakPartsOfSpeech: [],
   };
 }
 
