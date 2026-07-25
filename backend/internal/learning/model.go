@@ -137,7 +137,7 @@ type ScenarioRecommendation struct {
 type ScenarioProgressEvidence struct {
 	CompletedThisWeek int                     `json:"completedThisWeek"`
 	CompletedTotal    int                     `json:"completedTotal"`
-	Recommendation   *ScenarioRecommendation `json:"recommendation,omitempty"`
+	Recommendation    *ScenarioRecommendation `json:"recommendation,omitempty"`
 }
 
 type ProgressSummary struct {
