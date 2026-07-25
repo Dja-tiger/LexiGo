@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
 
 import { SCENARIO_DETAIL, SCENARIO_SESSION } from "./support/scenario-fixture";
@@ -156,11 +157,55 @@ async function installCatalogFixture(page: Page, options: CatalogFixtureOptions 
   });
 }
 
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const documentWidth = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        const className = typeof element.className === "string"
+          ? element.className.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(".")
+          : "";
+        return {
+          selector: `${element.tagName.toLocaleLowerCase("en-US")}${element.id ? `#${element.id}` : ""}${className ? `.${className}` : ""}`,
+          left: Math.round(rect.left * 10) / 10,
+          right: Math.round(rect.right * 10) / 10,
+          width: Math.round(rect.width * 10) / 10,
+        };
+      })
+      .filter((item) => item.left < -1 || item.right > viewport + 1)
+      .sort((left, right) => Math.max(right.right - viewport, -right.left) - Math.max(left.right - viewport, -left.left))
+      .slice(0, 12);
+    return { viewport, document: documentWidth, offenders };
+  });
+
+  expect(
+    dimensions.document,
+    `horizontal overflow: viewport=${dimensions.viewport}px, document=${dimensions.document}px, offenders=${JSON.stringify(dimensions.offenders)}`,
+  ).toBeLessThanOrEqual(dimensions.viewport + 1);
+}
+
 function relevantBrowser(projectName: string): boolean {
   return projectName === "desktop-chromium" || projectName === "ios-webkit";
 }
 
 test.describe("Scenario catalog", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  test("unauthenticated direct entry preserves the exact catalog return path", async ({ page }) => {
+    await page.route("**/api/v1/auth/refresh", (route) => fulfillJSON(route, 401, {
+      error: { code: "unauthorized", message: "guest" },
+    }));
+
+    await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/profile");
+    const redirected = new URL(page.url());
+    expect(redirected.searchParams.get("session")).toBe("required");
+    expect(redirected.searchParams.get("return_to")).toBe("/scenarios");
+  });
+
   test("preserves server order, recommendation ownership and catalog-to-detail history", async ({ page }, testInfo) => {
     test.skip(!relevantBrowser(testInfo.project.name), "Focused contract runs in desktop Chromium and iOS WebKit.");
     await installCatalogFixture(page);
@@ -245,5 +290,56 @@ test.describe("Scenario catalog", () => {
     await expect(page).toHaveURL("/scenarios");
     await expect(page.getByRole("heading", { name: "Рабочие сценарии", exact: true })).toBeVisible();
     await expect(page.locator('[data-route-navigation="mobile"] a')).toHaveCount(4);
+  });
+
+  test("has no critical or serious WCAG violations", async ({ page }, testInfo) => {
+    test.skip(!relevantBrowser(testInfo.project.name), "Focused contract runs in desktop Chromium and iOS WebKit.");
+    await installCatalogFixture(page);
+    await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Рабочие сценарии", exact: true })).toBeVisible();
+
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    const blocking = result.violations.filter((violation) => (
+      violation.impact === "critical" || violation.impact === "serious"
+    ));
+    expect(blocking).toEqual([]);
+  });
+
+  test("minimum width and 200% page zoom do not introduce horizontal overflow", async ({ page }, testInfo) => {
+    test.skip(!relevantBrowser(testInfo.project.name), "Focused contract runs in desktop Chromium and iOS WebKit.");
+    await page.setViewportSize({ width: 320, height: 800 });
+    await installCatalogFixture(page);
+    await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => document.body.style.setProperty("zoom", "2"));
+
+    await expectNoHorizontalOverflow(page);
+    await expect(page.getByRole("heading", { name: "Рабочие сценарии", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: `Открыть сценарий «${SCENARIO_DETAIL.title}»` })).toBeVisible();
+  });
+
+  test("Dark appearance, reduced motion and forced colors preserve the same contract", async ({ page }, testInfo) => {
+    test.skip(!relevantBrowser(testInfo.project.name), "Focused contract runs in desktop Chromium and iOS WebKit.");
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await installCatalogFixture(page);
+    await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+
+    const appearance = await page.locator(".lx-scenario-catalog-route").evaluate((element) => {
+      const root = getComputedStyle(document.documentElement);
+      return {
+        canvas: getComputedStyle(element).backgroundColor,
+        tokenCanvas: root.getPropertyValue("--ak-color-canvas").trim(),
+        runningAnimations: document.getAnimations().filter((animation) => animation.playState === "running").length,
+      };
+    });
+    expect(appearance.canvas).not.toBe("rgba(0, 0, 0, 0)");
+    expect(appearance.tokenCanvas).not.toBe("");
+    expect(appearance.runningAnimations).toBe(0);
+
+    await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
+    await expect.poll(() => page.evaluate(() => matchMedia("(forced-colors: active)").matches)).toBe(true);
+    await expect(page.locator(".lx-scenario-catalog-card").first()).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Разделы обучения" })).toBeVisible();
   });
 });
