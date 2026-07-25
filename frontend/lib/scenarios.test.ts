@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -98,7 +100,7 @@ describe("Scenario API payload contracts", () => {
     })).toBe(false);
   });
 
-  it("builds only the bounded OpenAPI request fields", () => {
+  it("builds only the bounded byte-stable OpenAPI request fields", () => {
     const request = buildSubmitScenarioStepRequest({
       attemptVersion: 3,
       submissionId: SUBMISSION_ID,
@@ -118,12 +120,13 @@ describe("Scenario API payload contracts", () => {
       response: "The impact is confirmed.\nWe will update at 17:00.",
       facts: ["Impact is confirmed", "Queue depth is 120"],
       hypotheses: ["The consumer may be saturated"],
-      review: { responseMs: 1051, timezoneOffsetMinutes: -120 },
+      review: { timezoneOffsetMinutes: -120 },
     });
     expect(request).not.toHaveProperty("wordId");
     expect(request).not.toHaveProperty("rating");
     expect(request).not.toHaveProperty("correct");
     expect(request.review).not.toHaveProperty("answerRevealed");
+    expect(request.review).not.toHaveProperty("responseMs");
   });
 });
 
@@ -217,6 +220,7 @@ describe("Scenario navigation helpers", () => {
     expect(scenarioPath("incident-update")).toBe("/scenarios/incident-update");
     expect(scenarioSlugFromPath("/scenarios/incident-update")).toBe("incident-update");
     expect(scenarioSlugFromPath("/scenarios/Incident_Update")).toBeNull();
+    expect(scenarioSlugFromPath("/scenarios/%E0%A4%A")).toBeNull();
     expect(scenarioSlugFromPath("/scenario/incident-update")).toBeNull();
   });
 
@@ -226,5 +230,26 @@ describe("Scenario navigation helpers", () => {
       "Action",
       "Next update",
     ]);
+  });
+});
+
+describe("Scenario route ownership source contract", () => {
+  it("keeps one dedicated island and focused route chrome boundary", async () => {
+    const [layout, bootstrapped, premium, routeNavigation, footer] = await Promise.all([
+      readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../components/lexigo-bootstrapped-app.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../components/lexigo-premium-app.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../components/route-primary-navigation.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../components/legal-footer.tsx", import.meta.url), "utf8"),
+    ]);
+
+    expect(layout).toContain('import "./scenario-lessons.css";');
+    expect(bootstrapped).toContain('import("./lexigo-scenario-app")');
+    expect(bootstrapped).toContain("<LexigoScenarioApp");
+    expect(bootstrapped.match(/<LexigoScenarioApp/g)).toHaveLength(1);
+    expect(routeNavigation).toContain('pathname.startsWith("/scenarios/")');
+    expect(footer).toContain('pathname.startsWith("/scenarios/")');
+    expect(premium).not.toContain("/api/v1/scenarios");
+    expect(premium).not.toContain("LexigoScenarioApp");
   });
 });
