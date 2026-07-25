@@ -272,6 +272,9 @@ test.describe("Progress retained-learning evidence", () => {
     await dashboard.getByRole("button", { name: "Повторить 3 элемента" }).click();
 
     await expect(page).toHaveURL(/\/lesson\/active$/);
+    const resumeLesson = page.getByRole("button", { name: "Продолжить урок", exact: true });
+    await expect(resumeLesson).toBeVisible();
+    await resumeLesson.click();
     await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", "recall");
     expect(dueTopics).toEqual([null]);
     expect(lessonBodies).toEqual([{
