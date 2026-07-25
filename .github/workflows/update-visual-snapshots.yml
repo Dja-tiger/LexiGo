@@ -1,10 +1,9 @@
-# trigger: execute verified PR 214 fixes
-name: Apply verified PR 214 fixes
+name: Update visual snapshots
 
 on:
   push:
     branches:
-      - agent/issue-195-progress-evidence
+      - agent/issue-162-progressive-lesson-composer
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -12,186 +11,58 @@ permissions:
   contents: write
 
 jobs:
-  apply-fixes:
-    name: Apply verified tests and AGENTS knowledge
+  update-snapshots:
+    name: Regenerate Issue 162 visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-195-progress-evidence
+          ref: agent/issue-162-progressive-lesson-composer
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify source blobs and apply exact replacements
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Regenerate visual snapshots
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+
+      - name: Extract updated snapshots from container
         run: |
-          test "$(git hash-object .agents/AGENTS.md)" = "44aa192d147c5fb12c22a20cfd75bcc7ea519eef"
-          test "$(git hash-object frontend/e2e/adaptive-navigation.spec.ts)" = "3d2899f424101db87bdae4a2ad6a33f199272d7b"
-          test "$(git hash-object frontend/e2e/route-focus-management.spec.ts)" = "3d23a1f6a12d5b5491455ee636a3e6626a8f40a9"
+          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
+          test -n "$container"
+          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
-          python - <<'PY'
-          from pathlib import Path
+      - name: Cleanup container
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
 
-          def replace_once(path: Path, old: str, new: str) -> None:
-              text = path.read_text(encoding="utf-8")
-              if text.count(old) != 1:
-                  raise SystemExit(f"{path}: expected one exact replacement, found {text.count(old)}")
-              path.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-          adaptive = Path("frontend/e2e/adaptive-navigation.spec.ts")
-          replace_once(
-              adaptive,
-              '''  const firstPhrase = page
-                .getByRole("list", { name: "Результаты каталога фраз" })
-                .getByRole("link", { name: "Keep navigation state 1", exact: true });''',
-              '''  const firstPhrase = page
-                .getByRole("list", { name: "Результаты каталога фраз" })
-                .getByRole("link", {
-                  name: "Responsive UI Keep navigation state 1 сохранять состояние навигации 1 Открыть карточку",
-                  exact: true,
-                });''',
-          )
-
-          route_focus = Path("frontend/e2e/route-focus-management.spec.ts")
-          replace_once(
-              route_focus,
-              '''  const progressMotion = await progressBars.evaluateAll((elements) => elements.map((element) => {
-                const style = window.getComputedStyle(element);
-                return {
-                  transitionDuration: style.transitionDuration,
-                  animations: element.getAnimations().length,
-                };
-              }));
-              expect(progressMotion.every((state) => (
-                state.transitionDuration === "0s" && state.animations === 0
-              ))).toBe(true);''',
-              '''  const progressMotion = await progressBars.evaluateAll((elements) => elements.map((element) => {
-                const style = window.getComputedStyle(element);
-                return {
-                  transitionDurationsMilliseconds: style.transitionDuration.split(",").map((duration) => {
-                    const normalized = duration.trim();
-                    const value = Number.parseFloat(normalized);
-                    return normalized.endsWith("ms") ? value : value * 1_000;
-                  }),
-                  animations: element.getAnimations().length,
-                };
-              }));
-              expect(progressMotion.every((state) => (
-                state.transitionDurationsMilliseconds.every((duration) => duration <= 0.01)
-                && state.animations === 0
-              ))).toBe(true);''',
-          )
-
-          agents = Path(".agents/AGENTS.md")
-          text = agents.read_text(encoding="utf-8")
-          data_anchor = '- Runtime owners Progress slice: `frontend/components/lexigo-progress-app.tsx`, `frontend/components/progress-evidence-dashboard.tsx`, `frontend/lib/progress.ts`, `frontend/lib/interface-copy.ts`, backend `learning.Repository.Progress`.\n'
-          data_addition = '''- CI #1716: route-island focus/scroll ownership, progressive disclosure, canonical lesson resume gate и direct-detail mock contract проверены на Chromium/WebKit; visual artifact `8614824397` стал источником шести утверждённых Linux PNG.\n- CI #1721 и #1729: stale selectors и assertions отделены от production defects по фактическим accessibility snapshots и Playwright traces.\n- Approved visual artifact import проверяется по SHA-256, PNG dimensions и точному allow-list из шести paths; temporary workflow восстанавливается до canonical blob перед финальным CI.\n'''
-          if data_addition.strip() not in text:
-              if data_anchor not in text:
-                  raise SystemExit("AGENTS data anchor not found")
-              text = text.replace(data_anchor, data_anchor + data_addition, 1)
-
-          journal = r'''
-
-          ### 2026-07-25 — Route island remount потерял focus, scroll и route announcement
-
-          - **Симптом:** keyboard и adaptive-navigation suites после перехода через `/progress` не восстанавливали фокус на новом `main`, scroll предыдущей вкладки и live-region announcement.
-          - **Первопричина:** `/progress` был выделен в отдельный React route island, но ownership route transition оставался внутри размонтированного legacy product graph.
-          - **Почему ошибка не была обнаружена раньше:** feature E2E проверял содержимое `/progress`, но не полный переход legacy island → Progress island → legacy island, Back/Forward и сохранённый tab destination.
-          - **Профилактика:** общий App Router shell владеет boundary transition между client islands и ждёт semantic `main` через отменяемый scheduler без глобального DOM observation.
-          - **Обязательная проверка:** `route-focus-management.spec.ts` и `adaptive-navigation.spec.ts` проверяют focus, announcement и scroll restoration в Chromium/WebKit.
-          - **Область действия:** App Router islands, primary tabs, browser history, keyboard и screen readers.
-
-          ### 2026-07-25 — Global `MutationObserver` нарушил React DOM ownership
-
-          - **Симптом:** frontend core остановил изменение правилом `react-dom-ownership` после попытки ждать remount через `MutationObserver(document.body)`.
-          - **Первопричина:** synchronization была реализована глобальным наблюдением DOM вместо React-owned lifecycle.
-          - **Почему ошибка не была обнаружена раньше:** исправление проектировалось от browser symptom без сверки с ownership source-contract.
-          - **Профилактика:** для короткого ожидания landmark использовать отменяемый `requestAnimationFrame` loop с точным predicate и cleanup; global DOM не наблюдать и не патчить.
-          - **Обязательная проверка:** frontend core ownership gate, lint/typecheck и route-focus E2E проходят на одном head.
-          - **Область действия:** React route shells, focus restoration, dialogs и portals.
-
-          ### 2026-07-25 — Exact text locator не учёл assistive copy внутри semantic owner
-
-          - **Симптом:** interface-copy suite не находил визуальную подпись «Закреплено», а adaptive-navigation не находил phrase card по сокращённому имени.
-          - **Первопричина:** exact locator был построен по видимой подстроке, тогда как фактический text/accessibility contract включал `sr-only` explanation либо тему, перевод и CTA.
-          - **Почему ошибка не была обнаружена раньше:** selector проектировался по screenshot, а не по accessibility snapshot и owning container.
-          - **Профилактика:** сначала получить фактический accessible name, затем scope через semantic owner и использовать полное точное имя; assistive context не удалять ради теста.
-          - **Обязательная проверка:** `interface-copy.spec.ts` и `adaptive-navigation.spec.ts` проходят во всех назначенных mobile/WebKit projects без `.first()`.
-          - **Область действия:** definition lists, catalog cards, visually-hidden copy и Playwright locators.
-
-          ### 2026-07-25 — Созданный server lesson сначала открывает canonical resume gate
-
-          - **Симптом:** Progress E2E после POST `/api/v1/lessons` ожидал active presentation, но route показывал безопасный экран «Продолжить урок».
-          - **Первопричина:** тест пропустил recovery contract server-owned active lesson.
-          - **Почему ошибка не была обнаружена раньше:** create response был ошибочно связан напрямую с presentation без route bootstrap.
-          - **Профилактика:** моделировать create → active route bootstrap → resume gate → active presentation; recovery UX не обходить ради теста.
-          - **Обязательная проверка:** `progress-evidence.spec.ts` нажимает точный CTA и затем проверяет режим и request bodies.
-          - **Область действия:** lesson creation, hydration, reload/recovery и due queue.
-
-          ### 2026-07-25 — Route-island remount активировал отсутствующий direct-detail API mock
-
-          - **Симптом:** WebKit scenario возвращался на `/phrases/:slug`, но fixture отвечал `not_mocked` для direct-detail endpoint.
-          - **Первопричина:** mock покрывал catalog list, но не fetch после remount detail route.
-          - **Почему ошибка не была обнаружена раньше:** fixture анализировался как один экран, а не как полный navigation journey.
-          - **Профилактика:** строить mock по полной read/mutation sequence; list и direct-entry endpoints добавлять совместно, item выбирать по slug/id запроса.
-          - **Обязательная проверка:** `adaptive-navigation.spec.ts` получает detail payload и сохраняет URL, heading и scroll.
-          - **Область действия:** route islands, deep links, catalog/detail mocks и WebKit.
-
-          ### 2026-07-25 — Reduced-motion assertion не нормализовал zero-equivalent duration
-
-          - **Симптом:** trace CI #1729 показал `transition-duration: 1e-05s` при отсутствии активных animations, а тест требовал буквальное `0s`.
-          - **Первопричина:** Progress CSS использует стандартный reduced-motion fallback `0.01ms`; браузер сериализовал его в секундах.
-          - **Почему ошибка не была обнаружена раньше:** assertion сравнивал строковое представление CSS, а не семантическую длительность.
-          - **Профилактика:** преобразовывать все comma-separated durations в миллисекунды и принимать только значения `<= 0.01ms` вместе с нулём Web Animations.
-          - **Обязательная проверка:** `route-focus-management.spec.ts` проверяет семь chart bars, zero-equivalent duration и отсутствие animations.
-          - **Область действия:** reduced motion, CSS serialization, charts и Chromium/WebKit assertions.
-
-          ### 2026-07-25 — Visual artifact import должен быть криптографически и path-guarded
-
-          - **Симптом:** повторный Linux render workflow не создал commit в execution window, а слепой повтор мог импортировать другой result.
-          - **Первопричина:** первый one-shot пытался заново рендерить вместо переноса уже просмотренных actual PNG.
-          - **Почему ошибка не была обнаружена раньше:** binary delivery path не был включён в pre-flight tooling plan.
-          - **Профилактика:** импортировать конкретный artifact ID с SHA-256, IHDR dimensions и allow-list paths; bot commit меняет только binaries, workflow затем восстанавливается byte-for-byte.
-          - **Обязательная проверка:** compare показывает шесть PNG, PNG signatures валидны, canonical workflow blob восстановлен, visual CI проходит без update mode.
-          - **Область действия:** Linux visual baselines, Actions artifacts, binary commits и final-head provenance.
-
-          ### 2026-07-25 — Branch-local one-shot workflow не должен зависеть от `pull_request` регистрации
-
-          - **Симптом:** временный `pull_request` workflow присутствовал в head, но отдельный run не зарегистрировался после synchronize commits.
-          - **Первопричина:** регистрация и выбор workflow для pull-request event зависят от event/base context и не являются надёжным способом выполнить branch-local maintenance action.
-          - **Почему ошибка не была обнаружена раньше:** trigger strategy не была проверена до помещения append payload в workflow.
-          - **Профилактика:** для строго branch-local one-shot использовать path-scoped `push` trigger либо прямой contents/Git Data API; после выполнения немедленно восстановить canonical workflow.
-          - **Обязательная проверка:** отдельный run создаёт allow-listed commit, canonical workflow blob прочитан обратно, финальный CI выполняется на следующем developer-authored head.
-          - **Область действия:** temporary workflows, binary/text maintenance commits и branch protection.
-          '''
-          journal = "\n".join(line[10:] if line.startswith("          ") else line for line in journal.splitlines())
-          marker = "### 2026-07-25 — Route island remount потерял focus, scroll и route announcement"
-          if marker not in text:
-              text = text.rstrip() + journal + "\n"
-          agents.write_text(text, encoding="utf-8")
-          PY
-
-          mapfile -t changed < <(git diff --name-only)
-          test "${#changed[@]}" -eq 3
-          printf '%s\n' "${changed[@]}" | grep -Fqx '.agents/AGENTS.md'
-          printf '%s\n' "${changed[@]}" | grep -Fqx 'frontend/e2e/adaptive-navigation.spec.ts'
-          printf '%s\n' "${changed[@]}" | grep -Fqx 'frontend/e2e/route-focus-management.spec.ts'
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: pr-214-updated-agents
-          path: .agents/AGENTS.md
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Commit verified fixes
+      - name: Commit Issue 162 baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .agents/AGENTS.md \
-            frontend/e2e/adaptive-navigation.spec.ts \
-            frontend/e2e/route-focus-management.spec.ts
-          test "$(git diff --cached --name-only | wc -l)" -eq 3
-          git commit -m "test(frontend): align accessibility contracts"
-          git push origin HEAD:agent/issue-195-progress-evidence
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
+          if git diff --cached --quiet; then
+            echo "Composer baselines already match."
+          else
+            git commit -m "test(visual): update Lesson Composer baselines"
+            git push origin HEAD:agent/issue-162-progressive-lesson-composer
+          fi

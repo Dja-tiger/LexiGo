@@ -330,7 +330,10 @@ test("medium width uses a labelled rail and restores the previous tab target and
 
   const firstPhrase = page
     .getByRole("list", { name: "Результаты каталога фраз" })
-    .getByRole("link", { name: "Keep navigation state 1", exact: true });
+    .getByRole("link", {
+      name: "Responsive UI Keep navigation state 1 сохранять состояние навигации 1 Открыть карточку",
+      exact: true,
+    });
   await firstPhrase.click();
   await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();

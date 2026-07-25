@@ -367,12 +367,17 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
   const progressMotion = await progressBars.evaluateAll((elements) => elements.map((element) => {
     const style = window.getComputedStyle(element);
     return {
-      transitionDuration: style.transitionDuration,
+      transitionDurationsMilliseconds: style.transitionDuration.split(",").map((duration) => {
+        const normalized = duration.trim();
+        const value = Number.parseFloat(normalized);
+        return normalized.endsWith("ms") ? value : value * 1_000;
+      }),
       animations: element.getAnimations().length,
     };
   }));
   expect(progressMotion.every((state) => (
-    state.transitionDuration === "0s" && state.animations === 0
+    state.transitionDurationsMilliseconds.every((duration) => duration <= 0.01)
+    && state.animations === 0
   ))).toBe(true);
 
   await page.getByRole("button", { name: "Настроить календарь" }).click();
