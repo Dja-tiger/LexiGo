@@ -147,7 +147,7 @@ async function disableFileSharing(context: BrowserContext) {
 
 async function openCalendarDialog(page: Page) {
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Настроить календарь" }).click();
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
