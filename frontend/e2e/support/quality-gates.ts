@@ -52,7 +52,7 @@ export const QUALITY_SCENARIOS = [
   },
   {
     slug: "architecture-review",
-    type: "architecture_review",
+    type: "architecture-review",
     title: "Architecture review",
     summary: "Explain trade-offs, constraints and risks of a proposed design.",
     userRole: "tech lead",
