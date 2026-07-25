@@ -24,7 +24,7 @@ type scenarioProgressResponse struct {
 	Scenarios struct {
 		CompletedThisWeek int `json:"completedThisWeek"`
 		CompletedTotal    int `json:"completedTotal"`
-		Recommendation   *struct {
+		Recommendation    *struct {
 			Slug             string     `json:"slug"`
 			Type             string     `json:"type"`
 			Title            string     `json:"title"`
