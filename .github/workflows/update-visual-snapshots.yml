@@ -1,128 +1,68 @@
 name: Update visual snapshots
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
-    types:
-      - synchronize
+      - agent/issue-162-progressive-lesson-composer
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
 permissions:
-  actions: read
   contents: write
 
 jobs:
   update-snapshots:
-    if: github.event.pull_request.number == 214 && github.head_ref == 'agent/issue-195-progress-evidence'
-    name: Import approved Issue 195 visual baselines
+    name: Regenerate Issue 162 visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      FRONTEND_CI_SLOT: core
+      APP_BUILD_ID: ${{ github.sha }}
+      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-195-progress-evidence
+          ref: agent/issue-162-progressive-lesson-composer
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download reviewed Linux visual artifact
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare isolated frontend workspace
+        run: bash ../scripts/ci/frontend-container.sh prepare
+
+      - name: Install locked dependencies
+        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
+
+      - name: Production build
+        run: bash ../scripts/ci/frontend-container.sh exec npm run build
+
+      - name: Regenerate visual snapshots
+        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
+
+      - name: Extract updated snapshots from container
         run: |
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --location \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            --header "Accept: application/vnd.github+json" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/Dja-tiger/LexiGo/actions/artifacts/8614824397/zip" \
-            --output /tmp/visual-artifact.zip
-          unzip -q /tmp/visual-artifact.zip -d /tmp/visual-artifact
+          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
+          test -n "$container"
+          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
-      - name: Verify and install approved baselines
-        run: |
-          python - <<'PY'
-          from hashlib import sha256
-          from pathlib import Path
-          from shutil import copyfile
-          from struct import unpack
+      - name: Cleanup container
+        if: always()
+        run: bash ../scripts/ci/frontend-container.sh cleanup
 
-          artifact = Path('/tmp/visual-artifact/test-results')
-          target = Path('frontend/e2e/visual-regression.spec.ts-snapshots')
-          approved = {
-              'calendar-dialog-visual-compact-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-calendar-dialog-visual-compact/calendar-dialog-actual.png',
-                  '153aed90adaf7763d08164403759ff2134fef2e143871e6e0a6f71ea9beda504',
-                  (390, 1900),
-              ),
-              'calendar-dialog-visual-medium-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-calendar-dialog-visual-medium/calendar-dialog-actual.png',
-                  '4b6748954affdbae4c87edfe1db1ceffffef99e4a3ed2cf65cc7351e810c2516',
-                  (768, 1689),
-              ),
-              'calendar-dialog-visual-desktop-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-calendar-dialog-visual-desktop/calendar-dialog-actual.png',
-                  '5ed5b0d304061f3690bf31bd3aa277611bfc84a6405c99fe5d96fa08015cebd3',
-                  (1440, 1010),
-              ),
-              'progress-visual-compact-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-progress-visual-compact/progress-actual.png',
-                  '276d152398a48e5b1a7c0eeeff821d08a9a6408d471870732f8d5a1a59da8b40',
-                  (390, 1900),
-              ),
-              'progress-visual-medium-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-progress-visual-medium/progress-actual.png',
-                  '263d528cd982dfa064612bb447e0d4a3827d1a048fe97e5f07666f87a7f5458b',
-                  (768, 1689),
-              ),
-              'progress-visual-desktop-linux.png': (
-                  artifact / 'visual-regression-critical-visual-baselines-progress-visual-desktop/progress-actual.png',
-                  'a85d1727511da63054cceb92eb3c8a037766852ce5ff00dce95c213b52480c5c',
-                  (1440, 1010),
-              ),
-          }
-
-          for name, (source, expected_hash, expected_dimensions) in approved.items():
-              data = source.read_bytes()
-              actual_hash = sha256(data).hexdigest()
-              if actual_hash != expected_hash:
-                  raise SystemExit(f'{source}: expected {expected_hash}, received {actual_hash}')
-              if data[:8] != b'\x89PNG\r\n\x1a\n':
-                  raise SystemExit(f'{source}: invalid PNG signature')
-              dimensions = unpack('>II', data[16:24])
-              if dimensions != expected_dimensions:
-                  raise SystemExit(f'{source}: expected {expected_dimensions}, received {dimensions}')
-              copyfile(source, target / name)
-              print(f'approved {name}: {dimensions[0]}x{dimensions[1]} {actual_hash}')
-          PY
-
-          mapfile -t changed < <(git status --porcelain --untracked-files=all -- frontend/e2e/visual-regression.spec.ts-snapshots | sed -E 's/^.. //')
-          test "${#changed[@]}" -eq 6
-          expected=(
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png
-          )
-          for file in "${expected[@]}"; do
-            printf '%s\n' "${changed[@]}" | grep -Fqx "$file"
-          done
-
-      - name: Commit approved Issue 195 baselines
+      - name: Commit Issue 162 baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
-            frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png \
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png \
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png \
-            frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png
-          test "$(git diff --cached --name-only | wc -l)" -eq 6
-          git commit -m "test(visual): approve Progress evidence baselines"
-          git push origin HEAD:agent/issue-195-progress-evidence
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
+          if git diff --cached --quiet; then
+            echo "Composer baselines already match."
+          else
+            git commit -m "test(visual): update Lesson Composer baselines"
+            git push origin HEAD:agent/issue-162-progressive-lesson-composer
+          fi
