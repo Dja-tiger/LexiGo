@@ -1,0 +1,88 @@
+name: Issue 195 repair runner
+
+on:
+  push:
+    branches:
+      - issue195-repair-runner
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/issue-195-progress-evidence
+          fetch-depth: 0
+
+      - name: Apply confirmed Progress repairs to target branch
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app = Path('frontend/components/lexigo-premium-app.tsx')
+          source = app.read_text(encoding='utf-8')
+          old = '''import {
+            type AnswerMode,
+            type ProgressSummary,
+            type ReviewRating,
+          } from "../lib/progress";'''
+          new = '''import {
+            goalPercent,
+            type AnswerMode,
+            type ProgressSummary,
+            type ReviewRating,
+          } from "../lib/progress";'''
+          if source.count(old) != 1:
+              raise SystemExit(f'unexpected progress import count: {source.count(old)}')
+          app.write_text(source.replace(old, new), encoding='utf-8')
+
+          schema = Path('api/openapi.yaml')
+          source = schema.read_text(encoding='utf-8')
+          start = source.index('ProgressSummary:\n')
+          end = source.index('    Error:\n', start)
+          block = source[start:end]
+          indented = '\n'.join(f'    {line}' if line else line for line in block.splitlines()) + '\n'
+          schema.write_text(source[:start] + indented + source[end:], encoding='utf-8')
+
+          agents = Path('.agents/AGENTS.md')
+          source = agents.read_text(encoding='utf-8')
+          marker = '### 2026-07-25 — Feature extraction removed a helper still owned by Home'
+          incident = '''
+
+### 2026-07-25 — Feature extraction removed a helper still owned by Home
+
+- **Симптом:** `Frontend core quality` упал на typecheck: `goalPercent` не найден в Home progress panel после замены отдельного Progress screen.
+- **Первопричина:** import cleanup был выполнен по новому feature owner, но repository-wide symbol usage не подтвердил, что helper остаётся consumer другого экрана.
+- **Почему не обнаружено раньше:** impact map учитывал `/progress`, но не соседний Home evidence panel в том же legacy container.
+- **Профилактика:** перед удалением import или helper выполнять symbol-level search по всему production graph и разделять route presentation ownership от shared calculation ownership.
+- **Regression gate:** полный `npm run typecheck` должен выполняться до первого PR push после extraction; targeted test не заменяет cross-route compile contract.
+- **Область действия:** shared helpers, route extraction и крупные client containers.
+
+### 2026-07-25 — OpenAPI replacement потерял schema indentation
+
+- **Симптом:** новый `ProgressSummary` оказался на корневом уровне YAML вместо `components.schemas`, хотя textual replacement сохранил содержимое блока.
+- **Первопричина:** текстовый fragment был нормализован без восстановления indentation его semantic owner.
+- **Почему не обнаружено раньше:** проверялась структура полей, но не итоговая YAML hierarchy непосредственно в изменённом файле.
+- **Профилактика:** YAML/JSON replacement обязан проходить parser-level validation и проверку canonical parent path, а не только `git diff --check`.
+- **Regression gate:** OpenAPI validation и source contract подтверждают `components.schemas.ProgressSummary.weekly`.
+- **Область действия:** OpenAPI, workflow-generated config и любые indentation-sensitive formats.
+'''
+          if marker not in source:
+              agents.write_text(source.rstrip() + incident + '\n', encoding='utf-8')
+          PY
+
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/actions-storage-cleanup.yml
+          rm -f .github/workflows/issue-195-fix-core.yml scripts/.issue195-fix-trigger
+          git diff --check
+
+          git config user.name "Dja-tiger"
+          git config user.email "117261349+Dja-tiger@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(progress): preserve shared helper and API schema ownership"
+          git push origin HEAD:agent/issue-195-progress-evidence
