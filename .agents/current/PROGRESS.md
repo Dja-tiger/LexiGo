@@ -1,46 +1,67 @@
 # Current Task Progress
 
-## 2026-07-25 18:29 Europe/Berlin
+## 2026-07-25 — Issue #196 Scenario Lessons UI
 
-### Verified
+### Verified pre-flight
 
-- Mandatory repository harness and every referenced normative document were read from live `main` before product writes.
-- Live base is `d7dc76c9139beff75d331c2b904f743f381f243d`; no open PR existed at branch creation.
-- Issues #196 and #24, merged PRs #216/#218, final Scenario OpenAPI contract and stage Issue #12 were re-read.
-- Figma nodes `76:100`, `76:127` and `76:219` were retrieved with design context and screenshots before implementation.
-- Existing owners were mapped: bootstrapped route graph, navigation parser/history, route chrome/footer, authorized JSON/session refresh, design tokens, focused lesson presentation, axe, visual and bundle gates.
+- Mandatory harness documents and every referenced normative source were read from live `main` before product writes.
+- Repository memory was reconciled before continuing the slice: PR #222 updated the stale stage SHA, passed CI #1804 and squash-merged as `96caedb58a289ce13af9862a9258ba007809a73c`.
+- PR #221 was rebased onto that `main`; live base is `96caedb58a289ce13af9862a9258ba007809a73c` and the branch is not behind it.
+- Issues #196/#24, merged Scenario backend PRs #216/#218, the OpenAPI contract, stage Issue #12 and Figma nodes `76:100`, `76:127`, `76:219` were re-read.
+- Existing owners were reused: authenticated bootstrap/session refresh, navigation/history, `AccessibleDialog`, semantic tokens, axe, visual and bundle gates.
 
-### Finding
+### Implemented product contract
 
-- Backend/content ownership is complete and exposes a safe server-owned attempt/review contract.
-- No Scenario frontend route or runtime exists yet.
-- A dedicated authenticated route island can be added without modifying the legacy `LexigoPremiumApp` product runtime.
-- Existing focused-route chrome suppression covers only `/lesson/` and must include `/scenarios/`.
-- Visual and axe suites enumerate routes explicitly; Scenario must be added with a deterministic mutable API fixture.
+- Canonical authenticated `/scenarios/[slug]` route island without modifying `LexigoPremiumApp`.
+- Typed Scenario API runtime validation for catalog detail, attempts and submission responses.
+- Start, resume, pause, reload, accepted-feedback and completion states.
+- User/attempt/position-owned local drafts with no token or server judgement storage.
+- Stable `submissionId` and byte-stable retry after ambiguous transport failure.
+- Optimistic attempt versioning with 409 resynchronization that preserves unsent evidence.
+- Separate fact and hypothesis inputs; no client-owned `wordId`, rating, correctness, answer reveal or scheduler state.
+- Safe browser Back and explicit close flows with server pause before navigation.
+- Focused route chrome, Light/Dark, reduced motion, forced colors and compact/desktop responsive presentation based on the approved Figma states.
+- Reused `AccessibleDialog` with initial focus, forward/reverse Tab containment, Escape close and trigger-focus restoration.
 
-### Root cause
+### Confirmed defects and root-cause fixes
 
-Issue #196 is an intentionally unimplemented frontend product slice after the durable Scenario backend foundation. The current route graph has no canonical Scenario path, presentation owner or test fixture.
+- React Compiler rejected `Date.now()` in render and synchronous state transitions in effects. Runtime initialization was moved into event/cancellable scheduling instead of disabling lint rules.
+- A readonly fixture widened the Scenario step type. The fixture now uses the explicit `ScenarioStep` contract.
+- The audited application-root allow-list did not include the new route island. The source contract now verifies the single Scenario bootstrap owner and its lifecycle/API/dialog isolation.
+- Small milestone/retained/weak accent labels failed WCAG contrast. Route-local foreground aliases mix the accent with semantic text while preserving the hue.
+- Dialog contrast variables were declared only under `.lx-scenario`, but `AccessibleDialog` portals outside that subtree. Variables are now declared on the portal dialog root as well.
+- Next App Router invalid-slug navigation rendered the canonical 404 boundary with HTTP 200. The E2E contract now verifies semantic 404 UI and absence of the Scenario island rather than asserting transport status.
+- An unscoped retry alert locator matched the global route alert. The test now scopes the assertion to the response-region owner.
+- Mobile tests initially selected a hidden desktop close button. The keyboard contract now selects the actually visible desktop/mobile trigger.
+- At 320 px with 200% CSS zoom, the mobile header label and fixed shared skip link expanded the document. Route-local narrow-width constraints preserve full 44 px controls, keep the label accessible, wrap the focused skip link and remove real horizontal scrolling without a global overflow mask.
 
-### Changed files
+### Linux visual evidence
 
-- `.agents/current/TASK.md` — bounded product contract and acceptance matrix.
-- `.agents/current/PROGRESS.md` — this checkpoint.
+- Compact Light active draft: `390 × 1792`, SHA-256 `85a674882de19c87bc92d4b06888d7dc91471726a9916a943d4592bbd7919aab`, source run `30169218809`, source head `79957603bdd358220d6e045bab00207633999aaf`.
+- Desktop Dark objective feedback after the contrast fix: `1440 × 1054`, SHA-256 `eaad352ced6e94a639014af3ea9a01c5bd20ec335857fe21a5d2cec93af4da40`, source run `30171478706`, source head `c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0`.
+- Both states use content-addressed dimensions and SHA-256 contracts; mismatches attach the Linux actual PNG for review.
 
-### Checks passed
+### Bundle evidence
 
-- Live GitHub/Figma/source pre-flight.
-- Branch created from exact verified base.
-- Task file write read back from explicit branch with expected blob.
+- Cold `/scenarios/incident-update` measurement: `202679` transferred JavaScript bytes and `16` initial requests.
+- Enforced ceiling: `235000` JavaScript bytes and `18` requests.
+- The byte ceiling leaves approximately 15.9% controlled headroom over the measured route.
 
-### Checks failed
+### Checks passed before the final harness head
 
-- None. Runtime implementation and executable checks have not started.
+- CI #1826, run `30171478706`, on `c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0`:
+  - frontend lint, TypeScript, unit tests, production build and dependency audit;
+  - backend unit/race/security and integration;
+  - both UI shards, including desktop Chromium/WebKit, Android Chromium and iOS WebKit;
+  - 320 px/200% zoom reflow;
+  - accessibility audit, content security, service worker, iOS PWA dictionary, lesson completion and performance budget.
+- The only intentional failure in #1826 was the stale Desktop Dark content hash after the proven contrast correction; the reviewed Linux value is now recorded in the visual contract.
+- PR review conversation currently contains no comments or unresolved threads.
 
 ### Current branch head
 
-Resolve from live branch ref after this write; branch is `feat/issue-196-scenario-lessons-ui`.
+Resolve from the live branch ref after this checkpoint; branch is `feat/issue-196-scenario-lessons-ui`, Draft PR #221.
 
 ### Next action
 
-Record skill execution evidence, open a Draft PR for traceability, then implement the typed Scenario contract and canonical route boundary before presentation code.
+Finish `EXECUTION.md` and reusable lessons on the same bounded branch, then require a complete green immutable-head CI. After review-thread and diff audits, move PR #221 to Ready, squash merge, validate the new `main` stage deployment/public smoke/browser matrix, and only then reconcile repository memory.
