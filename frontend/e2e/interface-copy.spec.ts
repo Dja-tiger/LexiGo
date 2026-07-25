@@ -42,6 +42,10 @@ test.describe("interface copy contract", () => {
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
     await expect(page.getByText(retained.label, { exact: true })).toBeVisible();
     await expect(page.getByText(retained.explanation, { exact: true })).toBeVisible();
+
+    const modeBreakdown = page.getByText("Разделение по режимам", { exact: true });
+    await expect(modeBreakdown).toBeVisible();
+    await modeBreakdown.click();
     await expect(page.getByText(recall.label, { exact: true })).toBeVisible();
     await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
