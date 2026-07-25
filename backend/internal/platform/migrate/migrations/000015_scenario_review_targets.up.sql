@@ -1,10 +1,12 @@
 -- Scenario production must create durable learning evidence for a server-owned
--- vocabulary target. The target is explicit instead of being inferred from the
--- array order by API clients, and every target points to the canonical words /
--- user_words learning model used by the scheduler.
+-- vocabulary target. Store the immutable target definition with the Scenario
+-- step. The concrete words.id is resolved lazily in the accepted-submission
+-- transaction so catalog reseeds and integration database resets cannot leave a
+-- persisted cross-seed identifier behind.
 alter table scenario_steps
-    add column review_word_id bigint,
-    add column review_term text;
+    add column review_term text,
+    add column review_translation text,
+    add column review_part_of_speech text;
 
 with targets (
     scenario_slug,
@@ -33,65 +35,11 @@ with targets (
         ('weekly-status-update', 1, 'risk', 'риск', 'noun'),
         ('weekly-status-update', 2, 'status update', 'обновление статуса', 'noun phrase')
 )
-insert into words (
-    lemma,
-    translation,
-    phonetic,
-    part_of_speech,
-    topic,
-    examples,
-    source,
-    note,
-    kind,
-    accepted_answers
-)
-select
-    target.term,
-    target.translation,
-    '',
-    target.part_of_speech,
-    'Technical Scenarios',
-    '[]'::jsonb,
-    'lexigo-scenario-vocabulary-v1',
-    'Целевая лексика для технических Scenario Lessons.',
-    'word',
-    array[target.translation]
-from targets target
-on conflict do nothing;
-
-with targets (
-    scenario_slug,
-    position,
-    term,
-    translation
-) as (
-    values
-        ('incident-update', 0, 'incident', 'инцидент'),
-        ('incident-update', 1, 'mitigation', 'смягчение последствий'),
-        ('incident-update', 2, 'status', 'статус'),
-        ('troubleshoot-latency', 0, 'latency', 'задержка'),
-        ('troubleshoot-latency', 1, 'hypothesis', 'гипотеза'),
-        ('troubleshoot-latency', 2, 'evidence', 'доказательство'),
-        ('architecture-review-cache', 0, 'consistency', 'согласованность'),
-        ('architecture-review-cache', 1, 'trade-off', 'компромисс'),
-        ('architecture-review-cache', 2, 'observability', 'наблюдаемость'),
-        ('data-pipeline-late-arrival', 0, 'event time', 'время события'),
-        ('data-pipeline-late-arrival', 1, 'idempotency', 'идемпотентность'),
-        ('data-pipeline-late-arrival', 2, 'backfill', 'дозагрузка исторических данных'),
-        ('release-go-no-go', 0, 'release', 'релиз'),
-        ('release-go-no-go', 1, 'rollback', 'откат'),
-        ('release-go-no-go', 2, 'go/no-go', 'решение о запуске или остановке'),
-        ('weekly-status-update', 0, 'outcome', 'результат'),
-        ('weekly-status-update', 1, 'risk', 'риск'),
-        ('weekly-status-update', 2, 'status update', 'обновление статуса')
-)
 update scenario_steps step
-set review_word_id = word.id,
-    review_term = target.term
+set review_term = target.term,
+    review_translation = target.translation,
+    review_part_of_speech = target.part_of_speech
 from targets target
-join words word
-  on lower(word.lemma) = lower(target.term)
- and lower(word.translation) = lower(target.translation)
 where step.scenario_slug = target.scenario_slug
   and step.position = target.position;
 
@@ -109,9 +57,12 @@ begin
     if exists (
         select 1
         from scenario_steps
-        where review_word_id is null
-           or review_term is null
+        where review_term is null
            or btrim(review_term) = ''
+           or review_translation is null
+           or btrim(review_translation) = ''
+           or review_part_of_speech is null
+           or btrim(review_part_of_speech) = ''
            or not (review_term = any(vocabulary))
     ) then
         raise exception 'scenario review target backfill is incomplete or inconsistent';
@@ -120,16 +71,23 @@ end
 $$;
 
 alter table scenario_steps
-    alter column review_word_id set not null,
     alter column review_term set not null,
-    add constraint scenario_steps_review_word_fk
-        foreign key (review_word_id) references words(id),
-    add constraint scenario_steps_review_term_chk
-        check (review_term = btrim(review_term) and review_term <> '' and review_term = any(vocabulary));
+    alter column review_translation set not null,
+    alter column review_part_of_speech set not null,
+    add constraint scenario_steps_review_target_chk
+        check (
+            review_term = btrim(review_term)
+            and review_term <> ''
+            and review_translation = btrim(review_translation)
+            and review_translation <> ''
+            and review_part_of_speech = btrim(review_part_of_speech)
+            and review_part_of_speech <> ''
+            and review_term = any(vocabulary)
+        );
 
-create index scenario_steps_review_word_idx on scenario_steps (review_word_id);
-
-comment on column scenario_steps.review_word_id is
-    'Server-owned learning item updated atomically when this Scenario step is accepted.';
 comment on column scenario_steps.review_term is
     'Exact technical term whose normalized whole-term presence is judged in the Scenario response.';
+comment on column scenario_steps.review_translation is
+    'Canonical catalog translation used when the target learning item is resolved lazily.';
+comment on column scenario_steps.review_part_of_speech is
+    'Canonical catalog part of speech used when the target learning item is resolved lazily.';
