@@ -6,7 +6,7 @@
 - Branch: `chore/agent-harness-v1`
 - Base SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`
 - Head SHA: resolve from live branch ref; the file cannot self-encode its own mutable commit SHA
-- PR: pending creation
+- PR: #217 `chore(agent): formalize LexiGo development harness` (Draft)
 
 ## Objective
 
