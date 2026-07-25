@@ -14,6 +14,7 @@ import (
 	"github.com/Dja-tiger/LexiGo/backend/internal/learning"
 	"github.com/Dja-tiger/LexiGo/backend/internal/performance"
 	"github.com/Dja-tiger/LexiGo/backend/internal/ratelimit"
+	"github.com/Dja-tiger/LexiGo/backend/internal/scenarios"
 	"github.com/Dja-tiger/LexiGo/backend/internal/words"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -100,7 +101,9 @@ func NewWithOptions(
 
 	healthHandler := health.NewHandler(pg, rdb)
 	wordsHandler := words.NewHandler(words.NewRepository(pg))
-	learningHandler := learning.NewHandler(learning.NewRepository(pg))
+	learningRepository := learning.NewRepository(pg)
+	learningHandler := learning.NewHandler(learningRepository)
+	scenariosHandler := scenarios.NewHandler(scenarios.NewRepository(pg, learningRepository))
 	performanceHandler := performance.NewHandler(performance.NewRepository(pg), logger)
 	limiter := ratelimit.New(rdb)
 	cspReportHandler := limiter.MiddlewareFailClosed("csp-report", 60, http.HandlerFunc(performanceHandler.CSPReport))
@@ -140,6 +143,13 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/lessons/active", authenticated(http.HandlerFunc(learningHandler.ActiveLesson)))
 	mux.Handle("DELETE /api/v1/lessons/{lessonID}", authenticated(http.HandlerFunc(learningHandler.DiscardLesson)))
 	mux.Handle("POST /api/v1/lessons/{lessonID}/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewLessonWord)))
+	mux.Handle("GET /api/v1/scenarios", authenticated(http.HandlerFunc(scenariosHandler.List)))
+	mux.Handle("GET /api/v1/scenarios/{slug}", authenticated(http.HandlerFunc(scenariosHandler.Detail)))
+	mux.Handle("POST /api/v1/scenarios/{slug}/attempts", authenticated(http.HandlerFunc(scenariosHandler.Start)))
+	mux.Handle("GET /api/v1/scenario-attempts/{attemptID}", authenticated(http.HandlerFunc(scenariosHandler.Attempt)))
+	mux.Handle("POST /api/v1/scenario-attempts/{attemptID}/pause", authenticated(http.HandlerFunc(scenariosHandler.Pause)))
+	mux.Handle("POST /api/v1/scenario-attempts/{attemptID}/resume", authenticated(http.HandlerFunc(scenariosHandler.Resume)))
+	mux.Handle("PUT /api/v1/scenario-attempts/{attemptID}/steps/{position}", authenticated(http.HandlerFunc(scenariosHandler.SubmitStep)))
 	mux.Handle("GET /api/v1/progress", authenticated(http.HandlerFunc(learningHandler.Progress)))
 	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
 
