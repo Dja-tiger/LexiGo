@@ -43,6 +43,8 @@ describe("auth session", () => {
       .toBe("/profile?session=expired");
     expect(expiredSessionURL("https://lexigo.example/lesson/active?source=mixed#card-2", "forbidden"))
       .toBe("/profile?session=forbidden&return_to=%2Flesson%2Factive%3Fsource%3Dmixed");
+    expect(expiredSessionURL("https://lexigo.example/scenarios/incident-update?source=progress#step-2"))
+      .toBe("/profile?session=expired&return_to=%2Fscenarios%2Fincident-update%3Fsource%3Dprogress");
   });
 
   it("removes the legacy persisted session without failing when storage is restricted", () => {
