@@ -2,16 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 17:41 Europe/Berlin
+- Last verified: 2026-07-25 18:04 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Main SHA: `15386321399f5386ff97d7d093c8a3c2777018be`
+- Live `main` must be resolved from GitHub at agent startup; at this verification its latest commit was `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2` from merged PR #219
 - Stage product SHA: `15386321399f5386ff97d7d093c8a3c2777018be`; Issue #12 and run `30163844185` report deploy, public smoke and 12/12 public browser success
 - Latest production merge: #218 `fix(scenarios): own objective review targets on the server`
 - PR #218 validation: final immutable-head CI #1770 (`30163260324`) succeeded on `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`; no unresolved review threads
-- Open PRs: none at verification
+- Repository-memory baseline: PR #219 `docs(agent): reconcile state after Scenario contract merge` squash-merged as `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`; final CI #1773 (`30164541561`) succeeded on `b2d150d8e4e175057b2d39638c83eb032d7de7b4`
+- Open PRs: none immediately after PR #219 merge and before this corrective state branch
 - Active product branch/PR: none verified; merged branch `fix/issue-196-scenario-review-contract` still exists but is not active work
 - Active product Issue: #196 Scenario Lessons UI; Issue #24 remains open for final Scenario product reconciliation
-- Repository-memory reconciliation is delivered by PR #219; live GitHub is authoritative for its final merge SHA and status
 
 ## Completed
 
@@ -47,7 +47,8 @@
 
 - PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
 - PR #217 passed full CI #1756 after the confirmed GitHub Actions infrastructure incident was resolved.
-- Harness merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+- PR #219 reconciled merged Scenario evidence, reset `.agents/current/**` byte-for-byte from templates and passed full final-head CI #1773.
+- Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
 
@@ -55,7 +56,7 @@ Required contracts include backend unit/race/integration/security; frontend lint
 
 ## In progress
 
-No product implementation branch or PR was active at verification. The next product slice is #196; repository-memory reconciliation is delivered by PR #219 before that work begins.
+No product implementation branch or PR was active at verification. A one-file documentation correction removes the self-invalidating current-`main` snapshot; the next product slice remains #196.
 
 ## Remaining roadmap
 
@@ -120,19 +121,20 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
-2. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
-3. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-4. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
-5. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
+1. #219 — `docs(agent): reconcile state after Scenario contract merge` → `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`.
+2. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
+3. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+4. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
+5. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
+6. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
 
 ## Evidence
 
-- Live `main`, open PRs, retained merged branch, Issues #12/#24/#196, PR #218, final CI #1770, review threads and stage run `30163844185` were re-read at the verification timestamp.
-- Stage reports healthy API/frontend containers, HTTP 200 public smoke and 12/12 public Chromium/iOS WebKit browser checks on the merge SHA.
-- Exact Scenario runtime, migration, integration and bounded OpenAPI contracts are present in current `main` through PR #218.
+- Live `main`, PR #219 merge state, final CI #1773, empty current-task templates, open PR state, retained merged branch, Issues #12/#24/#196 and stage run `30163844185` were re-read at the verification timestamp.
+- Stage remains intentionally on the latest product SHA because PR #219 changed documentation only; API/frontend containers are healthy, public endpoints return HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- Exact Scenario runtime, migration, integration and bounded OpenAPI contracts are present in production history through PR #218.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
 
-Update this file before a new task when stale, after every squash merge, after roadmap/dependency changes, after material Issue changes, after stage/production deployment and after any discrepancy with live GitHub. GitHub remains authoritative. Do not encode a branch's own mutable head SHA as immutable state.
+Update this file before a new task when stale, after roadmap/dependency changes, after material Issue changes, after product deployment and after any discrepancy with live GitHub. GitHub remains authoritative. Do not persist the current branch or `main` head as an indefinitely current fact: record it only with an explicit verification timestamp, and always resolve live refs again before writes.
