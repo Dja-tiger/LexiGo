@@ -172,8 +172,12 @@ func TestScenarioProgressRecommendationContract(t *testing.T) {
 		update scenario_attempts
 		set completed_at = now() - interval '10 days',
 		    updated_at = now() - interval '10 days'
-		where id = $1::uuid;
+		where id = $1::uuid
+	`, attempt.ID); err != nil {
+		t.Fatalf("age completed incident Scenario: %v", err)
+	}
 
+	if _, err := pg.Exec(ctx, `
 		insert into scenario_attempts (
 			user_id,
 			scenario_slug,
@@ -185,7 +189,7 @@ func TestScenarioProgressRecommendationContract(t *testing.T) {
 			updated_at,
 			completed_at
 		)
-		select $2::uuid,
+		select $1::uuid,
 		       scenario.slug,
 		       scenario.version,
 		       step_count.value,
@@ -200,8 +204,8 @@ func TestScenarioProgressRecommendationContract(t *testing.T) {
 			from scenario_steps step
 			where step.scenario_slug = scenario.slug
 		) step_count on true
-		where scenario.slug <> 'incident-update';
-	`, attempt.ID, registered.User.ID); err != nil {
+		where scenario.slug <> 'incident-update'
+	`, registered.User.ID); err != nil {
 		t.Fatalf("seed completed Scenario history: %v", err)
 	}
 
