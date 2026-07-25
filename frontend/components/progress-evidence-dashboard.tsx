@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 
 import {
+  dueReviewLessonCount,
   normalizedProgressModes,
   normalizedWeeklyEvidence,
   type DailyRecallEvidence,
@@ -30,8 +31,11 @@ export function ProgressEvidenceDashboard({
   const hasRecallEvidence = weekly.recallAttempts > 0;
   const hasComparableWeeks = weekly.recallAttempts >= 3 && weekly.previousRecallAttempts >= 3;
   const weakTopics = weekly.weakTopics.slice(0, 3);
-  const dueLabel = progress.dueNow > 0
-    ? `Повторить ${progress.dueNow} ${russianPlural(progress.dueNow, ["элемент", "элемента", "элементов"])}`
+  const dueLessonCount = dueReviewLessonCount(progress.dueNow);
+  const dueLabel = dueLessonCount > 0
+    ? progress.dueNow > dueLessonCount
+      ? `Повторить первые ${dueLessonCount}`
+      : `Повторить ${dueLessonCount} ${russianPlural(dueLessonCount, ["элемент", "элемента", "элементов"])}`
     : "Настроить следующий урок";
 
   return (
@@ -98,15 +102,17 @@ export function ProgressEvidenceDashboard({
                 <div>
                   <span>СЛЕДУЮЩЕЕ ДЕЙСТВИЕ</span>
                   <strong>
-                    {progress.dueNow > 0
-                      ? "Короткая Recall-сессия по готовой очереди"
+                    {dueLessonCount > 0
+                      ? progress.dueNow > dueLessonCount
+                        ? `Recall-сессия: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
+                        : "Короткая Recall-сессия по готовой очереди"
                       : "Соберите следующий сфокусированный урок"}
                   </strong>
                 </div>
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => progress.dueNow > 0 ? onStartDueReview() : onConfigureLesson()}
+                  onClick={() => dueLessonCount > 0 ? onStartDueReview() : onConfigureLesson()}
                 >
                   {busy ? "Готовим…" : dueLabel}
                 </button>
@@ -142,7 +148,7 @@ export function ProgressEvidenceDashboard({
                       <span className={`lx-progress-evidence__topic-status ${index === 0 ? "weak" : "milestone"}`}>
                         {topic.errors} {russianPlural(topic.errors, ["ошибка", "ошибки", "ошибок"])}
                       </span>
-                      {progress.dueNow > 0 ? (
+                      {dueLessonCount > 0 ? (
                         <button
                           type="button"
                           disabled={busy}
