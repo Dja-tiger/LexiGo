@@ -1,18 +1,40 @@
 # Current Task Execution
 
-No active task.
+## Task
 
-For each task, record every skill used with:
+- Branch:
+- Base SHA:
+- Head SHA: resolve from live branch ref
+- PR:
 
-- purpose
-- instruction source
-- version or verification date
-- input files or arguments
-- commands or procedures executed
-- artifacts produced
-- result
-- failures
-- root cause
-- fallback
-- limitations
-- reusable lessons
+## Skills used
+
+### Skill name
+
+Purpose:
+
+Instruction source:
+
+Version or verification date:
+
+Inputs:
+
+Files inspected:
+
+Actions performed:
+
+Commands or procedures:
+
+Artifacts produced:
+
+Result:
+
+Failures:
+
+Root cause:
+
+Fallback:
+
+Limitations:
+
+Reusable lesson:
