@@ -40,6 +40,8 @@ The Scenario backend/content foundation and focused UI were intentionally delive
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `.agents/lessons/backend.md`
+- `.agents/lessons/ci.md`
 - `api/openapi-scenarios.json`
 - `backend/internal/learning/model.go`
 - `backend/internal/learning/http.go`
@@ -54,28 +56,51 @@ The Scenario backend/content foundation and focused UI were intentionally delive
 - `frontend/components/lexigo-scenario-app.tsx`
 - `frontend/e2e/scenario-progress-recommendation.spec.ts`
 
+## 2026-07-26 00:48 Europe/Berlin
+
+### Validation evidence
+
+- Draft PR #226 was created against the exact base SHA and remains limited to the declared Scenario progress slice.
+- Product head `df35704aac40a5c398d8e0887f55ba62db4f70a9` passed CI run #1841 after one targeted infrastructure retry.
+- Backend unit/security passed dependency verification, `gofmt`, `go vet`, race tests, coverage and vulnerability scan.
+- Backend integration passed under the race detector with the new initial/open/completed/all-completed recommendation contract.
+- Frontend core passed lint, typecheck, unit tests, production build and production dependency audit.
+- Both UI shards passed, including the new desktop Chromium and iOS WebKit Scenario/Progress lifecycle contract.
+- Content security, accessibility, performance budgets, iOS PWA dictionary, controlled service worker, visual regression, lesson completion and dictionary smoke passed.
+- API and web container builds passed after backend integration became green.
+
+### Failures and root causes
+
+- Early CI heads failed formatting because exact changed Go blobs had not been run through `gofmt` in the connector-only execution environment. All changed Go files were reconstructed and formatter-verified; a durable CI lesson now requires this before first CI when no checkout is available.
+- The first Scenario integration fixture used two parameterized SQL commands in one pgx `Exec`; the extended protocol rejected multiple commands before production behavior was exercised. The fixture was split into separate parameterized calls and a durable backend lesson was added.
+- The first backend integration attempt on run #1841 failed while starting isolated Docker services before tests began. The exact same immutable SHA passed service bootstrap and integration tests on attempt 2 without repository changes, confirming a hosted-runner transient rather than a code or workflow defect.
+
 ### Checks passed
 
 - Every write targeted the explicit feature branch and was read back.
 - Branch comparison remains based on the exact immutable `main` SHA with `behind_by=0`.
-- The large Scenario route rewrite was verified as an actual `+6/-1` semantic diff.
+- The Scenario route change was verified as an actual `+6/-1` semantic diff.
 - Full changed-path review contains only declared task paths.
-- Focused source, integration and browser contracts are present.
+- PR comments are empty.
+- Product code is frozen after the green product head; only active task memory and durable prevention lessons changed afterward.
 
 ### Checks pending
 
-- Executable formatting, backend, frontend and browser validation in GitHub Actions.
-- Full immutable-head CI.
-- Review-thread reconciliation, squash merge and exact post-merge stage/public validation.
+- One full final CI run on the developer-authored head containing the completed repository memory and lessons.
+- Review/review-thread reconciliation and conversion from draft.
+- Squash merge with expected final head SHA.
+- Exact-merge stage deploy, public smoke and public browser matrix.
+- Post-merge Issue #24 checklist reconciliation while keeping catalog/discovery open.
+- Repository-memory reset/reconciliation required by the harness.
 
-### Checks failed
+### Environment limitation
 
-- Local executable validation is unavailable because the sandbox cannot resolve GitHub for a repository checkout. This is an execution-environment restriction, not a repository failure; GitHub Actions remains blocking evidence.
+Local repository checkout remained unavailable because the sandbox could not resolve GitHub. GitHub Actions is the executable source of truth; the limitation did not weaken or skip any required gate.
 
-### Current branch head before this memory update
+### Current head
 
-`7b7ad9413ba6bd55c904a3b10b715d20a6ca7c01`
+Resolve from the live feature branch after this memory update.
 
 ### Next action
 
-Open a draft PR linked to Issue #24, inspect the first executable CI evidence, and fix every root cause before converting the final immutable head to ready for review.
+Finalize `EXECUTION.md`, verify the complete PR diff and review state, then require one unchanged full CI run on the resulting immutable head before marking PR #226 ready.
