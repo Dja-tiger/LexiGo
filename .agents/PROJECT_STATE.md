@@ -2,17 +2,14 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 19:29 Europe/Berlin
+- Last verified: 2026-07-25 22:03 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification its latest commit was `d7dc76c9139beff75d331c2b904f743f381f243d` from merged PR #220
-- Stage image SHA: `d7dc76c9139beff75d331c2b904f743f381f243d`; Issue #12 and run `30165559836` report deploy, public smoke and 12/12 public browser success
-- Latest production merge: #218 `fix(scenarios): own objective review targets on the server`
-- PR #218 validation: final immutable-head CI #1770 (`30163260324`) succeeded on `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`; no unresolved review threads
-- Repository-memory baseline: PR #220 `docs(agent): make project state durable across docs merges` squash-merged as `d7dc76c9139beff75d331c2b904f743f381f243d`; final CI #1775 (`30164974435`) succeeded on `b6781d30c3438b3daf908c3cb1f6d8eae2b3a0fc`
-- Open PRs: #221 `feat(scenarios): implement focused Scenario Lessons UI` is Draft
-- Active product branch/PR: `feat/issue-196-scenario-lessons-ui`, base `d7dc76c9139beff75d331c2b904f743f381f243d`, head `4dd453b77d171d24a17f148b853f2ebd99f28a66`, PR #221
-- Current PR validation: CI #1803 (`30167307694`) completed with backend unit/security and integration success, but frontend core failed at TypeScript typecheck; diagnosis and a new final-head run are required
-- Active product Issue: #196 Scenario Lessons UI; Issue #24 remains open for final Scenario product reconciliation
+- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge was PR #221 at `8404066b0d5705de19f230fb98621d139fab12a0`
+- Product deployment evidence for PR #221: Issue #12 and stage run `30172501400` report image `8404066b0d5705de19f230fb98621d139fab12a0`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
+- PR #221 validation: final immutable-head CI #1833 (`30171929980`) succeeded on `f9aa48b457f717b3faacd6cf549c93313dd14091`; changed-file and review-thread audits were clean
+- PR #221 was squash-merged as `8404066b0d5705de19f230fb98621d139fab12a0`; Issue #196 is closed as completed
+- No product PR was open after PR #221 merged; repository-memory reconciliation is a separate documentation/tooling follow-up
+- Issue #24 remains open only for the broader Scenario product reconciliation, including an explicit Progress/recommendation contract for completed attempts
 
 ## Completed
 
@@ -36,20 +33,24 @@
 - PR #215 completed Issue #19 with weak part-of-speech evidence and direct server-owned recommendations.
 - Full required CI and post-merge stage validation are green for these product slices.
 
-### Scenario backend/content foundation
+### Scenario learning foundation
 
 - PR #216 added six workplace scenario types, ordered steps, explicit outcomes and criteria, durable attempts, optimistic versioning, pause/resume/reload recovery, atomic step acceptance, fact/hypothesis storage, submission idempotency and ordinary Recall review-event persistence.
 - PR #218 corrected the Scenario evidence ownership boundary: every seeded step has an immutable review target definition; public payloads expose only `reviewTarget.term`; accepted submissions resolve/create and enroll the concrete learning item atomically; correctness and rating are derived server-side; scheduler and review-event persistence remain centralized in the learning transaction writer.
 - `api/openapi-scenarios.json` is the bounded OpenAPI 3.1 source of truth for all seven authenticated Scenario routes and is protected by a dependency-free Go source-contract test.
-- PR #218 passed final CI #1770 on immutable head `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`, squash-merged as `15386321399f5386ff97d7d093c8a3c2777018be`, and deployed successfully to stage in run `30163844185`.
-- Issue #24 remains open because Scenario frontend presentation, completion UX, Progress/recommendation reconciliation and final product acceptance are not complete.
+- PR #221 completed Issue #196 with the canonical authenticated `/scenarios/[slug]` route island, start/resume/pause/reload/completion lifecycle, retry-safe versioned drafts, optimistic conflict resynchronization, separate facts/hypotheses, server-owned feedback and safe browser Back/close flows.
+- Scenario presentation reuses `AccessibleDialog`, supports Light/Dark, compact/desktop, forced colors, reduced motion and 320 px/200% reflow, and has blocking keyboard/axe/browser coverage.
+- Cold Scenario route evidence is `202679` JavaScript bytes and `16` initial requests with enforced ceilings `235000`/`18`.
+- Reviewed Linux visual contracts are content-addressed: compact Light `390 × 1792`, SHA-256 `85a674882de19c87bc92d4b06888d7dc91471726a9916a943d4592bbd7919aab`; desktop Dark `1440 × 1054`, SHA-256 `eaad352ced6e94a639014af3ea9a01c5bd20ec335857fe21a5d2cec93af4da40`.
+- PR #221 passed complete final-head CI and stage deployment/public validation on the exact squash SHA.
 
 ### Agent Harness
 
 - PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
 - PR #217 passed full CI #1756 after the confirmed GitHub Actions infrastructure incident was resolved.
-- PR #219 reconciled merged Scenario evidence, reset `.agents/current/**` byte-for-byte from templates and passed full final-head CI #1773.
+- PR #219 reconciled merged Scenario backend evidence, reset `.agents/current/**` byte-for-byte from templates and passed full final-head CI #1773.
 - PR #220 removed the self-invalidating current-`main` snapshot from repository memory and passed full final-head CI #1775.
+- PR #222 reconciled the stage observation before Scenario UI work and passed full CI #1804.
 - Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
@@ -58,16 +59,15 @@ Required contracts include backend unit/race/integration/security; frontend lint
 
 ## In progress
 
-PR #221 implements the active #196 Scenario Lessons UI slice on `feat/issue-196-scenario-lessons-ui`. It remains Draft and is not mergeable by process until the confirmed TypeScript failure is fixed, targeted gates pass, Linux visual baselines and measured bundle evidence are approved, full required CI succeeds on the final developer-authored head, and review-thread audit is clean.
+No product slice is active. `.agents/current/**` is reset by the post-merge repository-memory reconciliation. A new product branch must not be created until live GitHub is re-read and one remaining Issue is selected through a fresh pre-flight.
 
 ## Remaining roadmap
 
-### 1. #196 — Scenario Lessons UI; reconcile #24
+### 1. #24 — Final Scenario product reconciliation
 
-- Implement the exact Figma-backed route island and active/completion states from nodes `76:100`, `76:127`, `76:219`.
-- Use the merged server-owned Scenario contract without client-selected word IDs, client-authored correctness or duplicated scheduler logic.
-- Cover direct entry, start/resume/pause, response retry preservation, fact/hypothesis interaction, completion, Back/Forward, mobile/desktop, Light/Dark, keyboard, axe, reduced motion, 200% zoom, Linux visuals and stage.
-- Reconcile remaining Issue #24 acceptance criteria, including Progress/recommendation integration, only through explicit approved API and product contracts.
+- Define an explicit server-owned contract for how completed Scenario attempts appear in Progress and recommendations.
+- Reconcile the remaining catalog/completion/Progress acceptance surface without client-inferred judgement or duplicated scheduler logic.
+- Close #24 only after the new contract, cross-layer consumers, browser matrix and stage evidence are complete.
 
 ### 2. #197 — Dictionary catalog
 
@@ -111,8 +111,7 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Validation pending
 
-- PR #221: TypeScript correction, keyboard safe-exit dialog contract, Linux compact Light and desktop Dark baselines, measured cold-route bundle evidence, full final-head CI, review audit, squash merge and post-merge stage validation.
-- Progress/recommendation integration for completed Scenario attempts requires an explicit product contract and regression matrix in a later atomic slice.
+- Progress/recommendation integration for completed Scenario attempts requires an explicit product/API contract and regression matrix in a later atomic slice under Issue #24.
 - Phrases and First Use design gaps require approved Figma states before implementation.
 - Final moderated usability evidence remains external work under #133.
 
@@ -123,19 +122,19 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #220 — `docs(agent): make project state durable across docs merges` → `d7dc76c9139beff75d331c2b904f743f381f243d`.
-2. #219 — `docs(agent): reconcile state after Scenario contract merge` → `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`.
-3. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
-4. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
-5. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-6. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
-7. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
+1. #221 — `feat(scenarios): implement focused Scenario Lessons UI` → `8404066b0d5705de19f230fb98621d139fab12a0`.
+2. #222 — repository-memory/stage reconciliation before Scenario UI → `96caedb58a289ce13af9862a9258ba007809a73c`.
+3. #220 — `docs(agent): make project state durable across docs merges` → `d7dc76c9139beff75d331c2b904f743f381f243d`.
+4. #219 — `docs(agent): reconcile state after Scenario contract merge` → `bb9a70f5d49e62d0aa44330eeb9f41f1ebe540f2`.
+5. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
+6. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+7. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
 
 ## Evidence
 
-- Live `main`, merged PR #220, Draft PR #221, current product head, CI #1803, Issues #12/#24/#196 and stage run `30165559836` were re-read at the verification timestamp.
-- Stage currently runs images tagged with documentation-only main SHA `d7dc76c9139beff75d331c2b904f743f381f243d`; the latest product runtime change remains PR #218, while PRs #219/#220 changed repository memory only. API/frontend containers are healthy, public endpoints return HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
-- Exact Scenario runtime, migration, integration and bounded OpenAPI contracts are present in production history through PR #218.
+- Live `main`, merged PR #221, final CI #1833, closed Issue #196, open Issue #24 and stage Issue #12/run `30172501400` were re-read at the verification timestamp.
+- Product deployment evidence for #221 uses immutable image SHA `8404066b0d5705de19f230fb98621d139fab12a0`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- The current stage and `main` must always be resolved live. The immutable product evidence above may be superseded by later documentation-only deployments and must not be interpreted as an indefinitely current ref.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
