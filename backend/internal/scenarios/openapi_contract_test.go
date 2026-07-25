@@ -1,6 +1,7 @@
 package scenarios
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -76,6 +77,11 @@ func TestScenarioOpenAPIContract(t *testing.T) {
 		"review",
 		"submissionId",
 	})
+	assertExactStringValues(t, submit["required"], []string{
+		"attemptVersion",
+		"response",
+		"submissionId",
+	})
 
 	reviewMetadata := objectAt(t, schemas, "ScenarioStepReviewMetadata")
 	if reviewMetadata["additionalProperties"] != false {
@@ -141,12 +147,27 @@ func assertExactPropertyNames(t *testing.T, properties map[string]any, want []st
 	}
 }
 
-func jsonContainsKey(document []byte, key string) bool {
-	needle := []byte(`"` + key + `"`)
-	for index := 0; index+len(needle) <= len(document); index++ {
-		if reflect.DeepEqual(document[index:index+len(needle)], needle) {
-			return true
-		}
+func assertExactStringValues(t *testing.T, value any, want []string) {
+	t.Helper()
+	values, ok := value.([]any)
+	if !ok {
+		t.Fatalf("string values = %#v, want array", value)
 	}
-	return false
+	got := make([]string, 0, len(values))
+	for _, value := range values {
+		item, ok := value.(string)
+		if !ok {
+			t.Fatalf("string value = %#v", value)
+		}
+		got = append(got, item)
+	}
+	sort.Strings(got)
+	sort.Strings(want)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("string values = %v, want %v", got, want)
+	}
+}
+
+func jsonContainsKey(document []byte, key string) bool {
+	return bytes.Contains(document, []byte(`"`+key+`"`))
 }
