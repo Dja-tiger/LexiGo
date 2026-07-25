@@ -74,10 +74,24 @@ const progress: ProgressSummary = {
     legacy: { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 },
   },
   weekly,
+  scenarios: {
+    completedThisWeek: 1,
+    completedTotal: 2,
+    recommendation: {
+      slug: "incident-update",
+      type: "incident",
+      title: "Incident update",
+      estimatedMinutes: 12,
+      reason: "resume_in_progress",
+      action: "resume",
+      completedCount: 1,
+      lastCompletedAt: "2026-07-19T12:00:00Z",
+    },
+  },
 };
 
 describe("weekly progress evidence", () => {
-  it("retains the server-owned seven-day report", () => {
+  it("retains the server-owned seven-day report and Scenario projection", () => {
     expect(normalizedWeeklyEvidence(progress)).toEqual(weekly);
     expect(isProgressSummaryPayload(progress)).toBe(true);
   });
@@ -100,12 +114,53 @@ describe("weekly progress evidence", () => {
     })).toBe(false);
   });
 
-  it("provides a compatibility report for rolling frontend fixtures", () => {
-    const fallback = normalizedWeeklyEvidence({ ...progress, weekly: undefined });
+  it("rejects client-incoherent Scenario recommendations", () => {
+    expect(isProgressSummaryPayload({
+      ...progress,
+      scenarios: { ...progress.scenarios!, completedThisWeek: 3, completedTotal: 2 },
+    })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...progress,
+      scenarios: {
+        ...progress.scenarios!,
+        recommendation: { ...progress.scenarios!.recommendation!, action: "start" },
+      },
+    })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...progress,
+      scenarios: {
+        ...progress.scenarios!,
+        recommendation: {
+          ...progress.scenarios!.recommendation!,
+          reason: "first_uncompleted",
+          action: "start",
+          completedCount: 1,
+          lastCompletedAt: undefined,
+        },
+      },
+    })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...progress,
+      scenarios: {
+        ...progress.scenarios!,
+        recommendation: {
+          ...progress.scenarios!.recommendation!,
+          reason: "least_recently_completed",
+          action: "start",
+          completedCount: 1,
+          lastCompletedAt: undefined,
+        },
+      },
+    })).toBe(false);
+  });
+
+  it("provides compatibility reports for rolling frontend fixtures", () => {
+    const fallback = normalizedWeeklyEvidence({ ...progress, weekly: undefined, scenarios: undefined });
     expect(fallback.recallAttempts).toBe(2);
     expect(fallback.recallRate).toBe(50);
     expect(fallback.choiceRate).toBe(100);
     expect(fallback.trend).toHaveLength(7);
     expect(fallback.weakPartsOfSpeech).toEqual([]);
+    expect(isProgressSummaryPayload({ ...progress, scenarios: undefined })).toBe(true);
   });
 });
