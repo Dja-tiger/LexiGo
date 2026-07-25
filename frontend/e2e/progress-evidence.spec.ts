@@ -154,7 +154,11 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
   });
 }
 
-async function installAPI(page: Page, lessonBodies: unknown[]) {
+async function installAPI(
+  page: Page,
+  lessonBodies: unknown[],
+  dueTopics: Array<string | null> = [],
+) {
   let activeLesson: Record<string, unknown> | null = null;
 
   await page.context().addCookies([{
@@ -180,7 +184,7 @@ async function installAPI(page: Page, lessonBodies: unknown[]) {
     }
     if (path === "/api/v1/words/due") {
       expect(url.searchParams.get("kind")).toBe("all");
-      expect(url.searchParams.get("topic")).toBe("Incident updates");
+      dueTopics.push(url.searchParams.get("topic"));
       return fulfillJSON(route, 200, {
         items: DUE_ITEMS,
         count: DUE_ITEMS.length,
@@ -228,12 +232,13 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 test.describe("Progress retained-learning evidence", () => {
-  test("renders server-owned weekly evidence and starts the exact due Recall queue", async ({ page }, testInfo) => {
+  test("renders server-owned weekly evidence and starts the exact global due Recall queue", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop contract is asserted once; mobile and WebKit have dedicated coverage.");
     await page.setViewportSize({ width: 1440, height: 1024 });
     await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
     const lessonBodies: unknown[] = [];
-    await installAPI(page, lessonBodies);
+    const dueTopics: Array<string | null> = [];
+    await installAPI(page, lessonBodies, dueTopics);
 
     await page.goto("/progress");
 
@@ -252,6 +257,7 @@ test.describe("Progress retained-learning evidence", () => {
 
     await expect(page).toHaveURL(/\/lesson\/active$/);
     await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", "recall");
+    expect(dueTopics).toEqual([null]);
     expect(lessonBodies).toEqual([{
       source: "mixed",
       studyMode: "recall",
@@ -259,6 +265,20 @@ test.describe("Progress retained-learning evidence", () => {
       wordIds: DUE_ITEMS.map((item) => item.id),
     }]);
     await expectNoHorizontalOverflow(page);
+  });
+
+  test("starts a topic-filtered due Recall queue from a weak-topic recommendation", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "The recommendation contract is asserted once in Chromium.");
+    const lessonBodies: unknown[] = [];
+    const dueTopics: Array<string | null> = [];
+    await installAPI(page, lessonBodies, dueTopics);
+
+    await page.goto("/progress");
+    await page.getByRole("button", { name: "Повторить тему Incident updates" }).click();
+
+    await expect(page).toHaveURL(/\/lesson\/active$/);
+    expect(dueTopics).toEqual(["Incident updates"]);
+    expect(lessonBodies).toHaveLength(1);
   });
 
   test("reflows the dark compact dashboard at 200% text size without hiding evidence", async ({ page }, testInfo) => {
