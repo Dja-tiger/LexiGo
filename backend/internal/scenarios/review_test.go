@@ -35,7 +35,7 @@ func TestNormalizedWholeTermPresent(t *testing.T) {
 func TestBuildScenarioReview(t *testing.T) {
 	responseMS := 1450
 	metadata := StepReviewRequest{ResponseMS: &responseMS, TimezoneOffsetMinutes: -180}
-	target := ScenarioReviewTarget{WordID: 42, Term: "mitigation"}
+	target := ScenarioReviewTarget{Term: "mitigation"}
 
 	request, assessment := buildScenarioReview(
 		"The mitigation is active and the error rate is decreasing.",
