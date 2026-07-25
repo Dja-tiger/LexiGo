@@ -155,6 +155,8 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 }
 
 async function installAPI(page: Page, lessonBodies: unknown[]) {
+  let activeLesson: Record<string, unknown> | null = null;
+
   await page.context().addCookies([{
     name: "lexigo_csrf",
     value: "progress-evidence-csrf",
@@ -171,6 +173,7 @@ async function installAPI(page: Page, lessonBodies: unknown[]) {
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
+      if (activeLesson) return fulfillJSON(route, 200, activeLesson);
       return fulfillJSON(route, 404, {
         error: { code: "active_lesson_not_found", message: "active lesson was not found" },
       });
@@ -192,7 +195,7 @@ async function installAPI(page: Page, lessonBodies: unknown[]) {
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const body = request.postDataJSON() as Record<string, unknown>;
       lessonBodies.push(body);
-      return fulfillJSON(route, 201, {
+      activeLesson = {
         id: "00000000-0000-0000-0000-000000001950",
         source: body.source,
         studyMode: body.studyMode,
@@ -203,7 +206,8 @@ async function installAPI(page: Page, lessonBodies: unknown[]) {
         items: DUE_ITEMS.map((item, position) => ({ ...item, position })),
         createdAt: "2026-07-25T00:00:00Z",
         updatedAt: "2026-07-25T00:00:00Z",
-      });
+      };
+      return fulfillJSON(route, 201, activeLesson);
     }
     if (path === "/api/v1/product/journey") return fulfillJSON(route, 202, { accepted: true });
 
@@ -246,6 +250,7 @@ test.describe("Progress retained-learning evidence", () => {
 
     await dashboard.getByRole("button", { name: "Повторить 3 элемента" }).click();
 
+    await expect(page).toHaveURL(/\/lesson\/active$/);
     await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", "recall");
     expect(lessonBodies).toEqual([{
       source: "mixed",

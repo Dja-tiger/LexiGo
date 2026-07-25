@@ -94,6 +94,9 @@ import {
 } from "../lib/navigation-tabs";
 import { phraseCatalogFilters, phraseCatalogTarget } from "../lib/phrase-navigation";
 import {
+  goalPercent,
+  normalizedProgressModes,
+  objectiveSuccessRate,
   type AnswerMode,
   type ProgressSummary,
   type ReviewRating,
@@ -112,7 +115,6 @@ import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
 import { DictionaryCatalog, type DictionaryFilters, type DictionaryPageResult } from "./dictionary-catalog";
 import { ActiveLessonPresentation } from "./active-lesson-presentation";
 import { LessonResultPresentation } from "./lesson-result-presentation";
-import { ProgressEvidenceDashboard } from "./progress-evidence-dashboard";
 import { LessonComposerProgressiveShell } from "./lesson-composer-progressive-shell";
 import { SpeechPlayerButton } from "./speech-player-button";
 
@@ -355,6 +357,7 @@ const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
   { value: 60, label: "60" },
 ];
 
+const GOAL_OPTIONS = [15, 30, 60];
 const MODE_VALUES = MODE_OPTIONS.map((option) => option.value);
 const SOURCE_VALUES: LessonSource[] = [
   ...SOURCE_OPTIONS.map((option) => option.value),
@@ -1113,6 +1116,7 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       ?? DEFAULT_PHRASE_CATALOG.find((phrase) => phrase.id === navigation.detail)
       ?? (remotePhraseDetail?.slug === navigation.detail ? remotePhraseDetail.item : undefined)
     : undefined;
+  const successRate = objectiveSuccessRate(progress);
 
   function navigate(
     target: NavigationTarget,
@@ -1932,6 +1936,27 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     }
   }
 
+  async function updateDailyGoal(dailyGoal: number) {
+    if (!session) {
+      requestAuthentication("progress");
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await authorizedRequest<ProgressSummary>(
+        session,
+        `/api/v1/progress/goal?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
+        { method: "PUT", body: JSON.stringify({ dailyGoal }) },
+      );
+      setSession(result.activeSession);
+      setProgress(result.data);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить дневную цель");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function clearLessonState() {
     setItems([]);
     setCurrentIndex(0);
@@ -2620,70 +2645,42 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     );
   }
 
-
-async function startDueReview(topic?: string) {
-  if (!session) {
-    requestAuthentication("progress");
-    return;
-  }
-  if (busy) return;
-
-  setBusy(true);
-  setError("");
-  try {
-    const requestedLimit = Math.min(60, Math.max(15, progress?.dueNow ?? 15));
-    const result = await loadItems(session, "all", true, {
-      source: "mixed",
-      topic,
-      limit: requestedLimit,
-    });
-    if (result.response.items.length === 0) {
-      setError(topic
-        ? `В теме «${topic}» сейчас нет элементов с наступившим интервалом.`
-        : "Очередь повторения уже пуста.");
-      await refreshProgress(result.activeSession);
-      return;
+  function renderProgress() {
+    if (!session) {
+      return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, материал к повторению, закреплённые знания и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
     }
-
-    const size: LessonSize = result.response.items.length <= 15
-      ? 15
-      : result.response.items.length <= 30
-        ? 30
-        : 60;
-    setBusy(false);
-    await startLesson(result.activeSession, {
-      source: "mixed",
-      size,
-      mode: "recall",
-      items: result.response.items,
-      journeyIntent: "lesson_start",
-    });
-  } catch (requestError) {
-    setError(requestError instanceof Error ? requestError.message : "Не удалось подготовить очередь повторения");
-  } finally {
-    if (!lessonCreateInFlightRef.current) setBusy(false);
+    if (!progress) {
+      const problem = progressStatus.problem;
+      const loading = progressStatus.phase === "loading" || progressStatus.phase === "idle";
+      return <AsyncStatePanel label={loading ? "Загрузка прогресса" : "Прогресс недоступен"} kind={loading ? "loading" : "error"} title={loading ? "Загружаем прогресс…" : problem?.title ?? "Прогресс недоступен"} message={problem?.message ?? "Получаем очередь, дневную цель и статистику обучения."} reference={problem?.correlationId} actionLabel={problem?.retryable ? "Повторить загрузку" : undefined} onAction={problem?.retryable ? () => void loadProgressResource(session) : undefined} focusResult={!loading} />;
+    }
+    const modes = normalizedProgressModes(progress);
+    const progressIsEmpty = progress.reviewsTotal === 0 && progress.masteredWords === 0 && progress.masteredPhrases === 0;
+    const cards = [
+      { label: "Сегодня", value: `${progress.reviewsToday} / ${progress.dailyGoal}`, hint: `${goalPercent(progress)}% цели`, color: "purple" },
+      { label: "Объективная успешность", value: `${successRate}%`, hint: `${progress.objectiveSuccessfulToday ?? progress.successfulToday} из ${progress.objectiveReviewsToday ?? progress.reviewsToday} попыток`, color: "green" },
+      { label: RETAINED_COPY.label, value: String(progress.retainedItemsWeek), hint: `${progress.retainedWordsWeek} слов · ${progress.retainedPhrasesWeek} фраз`, color: "blue" },
+      { label: "Текущая серия", value: `${progress.currentStreak} дн.`, hint: `рекорд ${progress.longestStreak}`, color: "orange" },
+    ];
+    return (
+      <>
+        <section className="lx-page-heading"><div><span>ПРОГРЕСС</span><h1>Смотрите, что действительно сохранилось</h1><p>{RETAINED_COPY.explanation}</p></div><div className="lx-heading-badge"><Icon name="progress"/><span>Следующее повторение: {nextDueLabel(progress.nextDueAt)}</span></div></section>
+        {progressIsEmpty ? <AsyncStatePanel label="Прогресс пока пуст" kind="empty" title="Начните первый учебный блок" message="После первой сохранённой оценки здесь появятся очередь, серия и объективная успешность." actionLabel="Настроить урок" onAction={() => navigate({ view: "learn" })} compact /> : null}
+        <section className="lx-stat-grid">{cards.map((card) => <article key={card.label}><span>{card.label}</span><strong className={card.color}>{card.value}</strong><small>{card.hint}</small></article>)}</section>
+        <section className="lx-summary-panel" aria-label="Попытки по режимам">
+          <div><span>Изучение</span><strong>{modes.study.attemptsToday}</strong><small>ответ показан сразу · без самостоятельного воспроизведения</small></div>
+          <div><span>{RECALL_COPY.label}</span><strong>{modes.recall.successfulToday} / {modes.recall.attemptsToday}</strong><small>{RECALL_COPY.explanation}</small></div>
+          <div><span>Выбор варианта</span><strong>{modes.choice.successfulToday} / {modes.choice.attemptsToday}</strong><small>объективно верные сегодня</small></div>
+          <div><span>Без указанного режима</span><strong>{modes.legacy.attemptsTotal}</strong><small>Исторические события, сохранённые до появления точного режима.</small></div>
+        </section>
+        <section className="lx-progress-detail"><div className="lx-detail-main"><span>Дневная цель</span><h2>{progress.reviewsToday >= progress.dailyGoal ? "Цель выполнена" : "Продолжайте учебный цикл"}</h2><div className="lx-goal-track large" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span style={{ width: `${goalPercent(progress)}%` }}/></div><div className="lx-goal-options" role="radiogroup" aria-label="Дневная цель" aria-orientation="horizontal">{GOAL_OPTIONS.map((goal, index) => {
+        const selected = progress.dailyGoal === goal;
+        const fallbackTabStop = !GOAL_OPTIONS.includes(progress.dailyGoal) && index === 0;
+        return <button key={goal} type="button" role="radio" aria-checked={selected} tabIndex={selected || fallbackTabStop ? 0 : -1} className={selected ? "selected" : ""} disabled={busy} onClick={() => updateDailyGoal(goal)} onKeyDown={(event) => selectRovingControl(event, GOAL_OPTIONS, progress.dailyGoal, updateDailyGoal, "horizontal")}>{goal}</button>;
+      })}</div></div><div className="lx-queue-list"><div><span>Слова к повторению</span><strong>{progress.dueWords}</strong></div><div><span>Фразы к повторению</span><strong>{progress.duePhrases}</strong></div><div><span>Освоено слов</span><strong>{progress.masteredWords}</strong></div><div><span>Освоено фраз</span><strong>{progress.masteredPhrases}</strong></div></div></section>
+      </>
+    );
   }
-}
-
-function renderProgress() {
-  if (!session) {
-    return <section className="lx-empty"><span>ПРОГРЕСС</span><h1>Войдите, чтобы видеть результат обучения</h1><p>Дневная цель, материал к повторению, закреплённые знания и серия синхронизируются между устройствами.</p><button className="lx-button primary" type="button" onClick={() => requestAuthentication("progress")}>Войти и открыть прогресс</button></section>;
-  }
-  if (!progress) {
-    const problem = progressStatus.problem;
-    const loading = progressStatus.phase === "loading" || progressStatus.phase === "idle";
-    return <AsyncStatePanel label={loading ? "Загрузка прогресса" : "Прогресс недоступен"} kind={loading ? "loading" : "error"} title={loading ? "Загружаем прогресс…" : problem?.title ?? "Прогресс недоступен"} message={problem?.message ?? "Получаем недельные доказательства удержания, очередь и активность."} reference={problem?.correlationId} actionLabel={problem?.retryable ? "Повторить загрузку" : undefined} onAction={problem?.retryable ? () => void loadProgressResource(session) : undefined} focusResult={!loading} />;
-  }
-
-  return (
-    <ProgressEvidenceDashboard
-      progress={progress}
-      busy={busy}
-      onStartDueReview={(topic) => void startDueReview(topic)}
-      onConfigureLesson={() => navigate({ view: "learn" }, false, { intent: "in_app_navigation" })}
-    />
-  );
-}
 
   function renderProfile() {
     if (!session) {

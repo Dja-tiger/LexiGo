@@ -1656,171 +1656,89 @@ $ref: "#/components/schemas/LessonSource"
           type: integer
           minimum: 5
           maximum: 200
-ProgressSummary:
-  type: object
-  required:
-    - dueNow
-    - dueWords
-    - duePhrases
-    - totalWords
-    - totalPhrases
-    - newWords
-    - learningWords
-    - reviewWords
-    - masteredWords
-    - masteredPhrases
-    - reviewsToday
-    - successfulToday
-    - objectiveReviewsToday
-    - objectiveSuccessfulToday
-    - reviewsTotal
-    - dailyGoal
-    - currentStreak
-    - longestStreak
-    - retainedItemsWeek
-    - retainedWordsWeek
-    - retainedPhrasesWeek
-    - eventSchemaVersion
-    - modes
-    - weekly
-  properties:
-    dueNow: { type: integer, minimum: 0 }
-    dueWords: { type: integer, minimum: 0 }
-    duePhrases: { type: integer, minimum: 0 }
-    totalWords: { type: integer, minimum: 0 }
-    totalPhrases: { type: integer, minimum: 0 }
-    newWords: { type: integer, minimum: 0 }
-    learningWords: { type: integer, minimum: 0 }
-    reviewWords: { type: integer, minimum: 0 }
-    masteredWords: { type: integer, minimum: 0 }
-    masteredPhrases: { type: integer, minimum: 0 }
-    reviewsToday:
-      type: integer
-      minimum: 0
-      description: All persisted learning activity, including study exposure.
-    successfulToday:
-      type: integer
-      minimum: 0
-      description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.
-    objectiveReviewsToday:
-      type: integer
-      minimum: 0
-      description: Verified schema-v2 recall and choice attempts; study and legacy events are excluded.
-    objectiveSuccessfulToday: { type: integer, minimum: 0 }
-    reviewsTotal: { type: integer, minimum: 0 }
-    dailyGoal: { type: integer, minimum: 1 }
-    currentStreak: { type: integer, minimum: 0 }
-    longestStreak: { type: integer, minimum: 0 }
-    retainedItemsWeek:
-      type: integer
-      minimum: 0
-      description: Distinct items reproduced correctly in Recall this week after a prior successful spaced Recall.
-    retainedWordsWeek: { type: integer, minimum: 0 }
-    retainedPhrasesWeek: { type: integer, minimum: 0 }
-    eventSchemaVersion:
-      type: integer
-      const: 2
-    modes:
-      $ref: "#/components/schemas/ProgressModes"
-    weekly:
-      $ref: "#/components/schemas/WeeklyProgressEvidence"
-    nextDueAt:
-      type: [string, "null"]
-      format: date-time
-ModeProgress:
-  type: object
-  required: [attemptsToday, successfulToday, attemptsTotal, successfulTotal]
-  properties:
-    attemptsToday: { type: integer, minimum: 0 }
-    successfulToday: { type: integer, minimum: 0 }
-    attemptsTotal: { type: integer, minimum: 0 }
-    successfulTotal: { type: integer, minimum: 0 }
-ProgressModes:
-  type: object
-  required: [study, recall, choice, legacy]
-  properties:
-    study:
-      $ref: "#/components/schemas/ModeProgress"
-    recall:
-      $ref: "#/components/schemas/ModeProgress"
-    choice:
-      $ref: "#/components/schemas/ModeProgress"
-    legacy:
-      $ref: "#/components/schemas/ModeProgress"
-DailyRecallEvidence:
-  type: object
-  required: [date, attempts, successful, rate]
-  properties:
-    date: { type: string, format: date }
-    attempts: { type: integer, minimum: 0 }
-    successful: { type: integer, minimum: 0 }
-    rate: { type: integer, minimum: 0, maximum: 100 }
-TopicEvidence:
-  type: object
-  required: [topic, attempts, successful, errors, rate]
-  properties:
-    topic: { type: string }
-    attempts: { type: integer, minimum: 0 }
-    successful: { type: integer, minimum: 0 }
-    errors: { type: integer, minimum: 0 }
-    rate: { type: integer, minimum: 0, maximum: 100 }
-WeeklyProgressEvidence:
-  type: object
-  description: Timezone-aware weekly learning evidence derived from persisted review events and completed lessons.
-  required:
-    - weekStart
-    - weekEnd
-    - recallAttempts
-    - recallSuccessful
-    - recallRate
-    - previousRecallAttempts
-    - previousRecallSuccessful
-    - previousRecallRate
-    - choiceAttempts
-    - choiceSuccessful
-    - choiceRate
-    - reviews
-    - lessons
-    - activeMinutes
-    - trend
-    - weakTopics
-  properties:
-    weekStart: { type: string, format: date }
-    weekEnd: { type: string, format: date }
-    recallAttempts: { type: integer, minimum: 0 }
-    recallSuccessful: { type: integer, minimum: 0 }
-    recallRate: { type: integer, minimum: 0, maximum: 100 }
-    previousRecallAttempts: { type: integer, minimum: 0 }
-    previousRecallSuccessful: { type: integer, minimum: 0 }
-    previousRecallRate: { type: integer, minimum: 0, maximum: 100 }
-    choiceAttempts: { type: integer, minimum: 0 }
-    choiceSuccessful: { type: integer, minimum: 0 }
-    choiceRate: { type: integer, minimum: 0, maximum: 100 }
-    reviews:
-      type: integer
-      minimum: 0
-      description: All persisted review events in the current local week, including passive study.
-    lessons:
-      type: integer
-      minimum: 0
-      description: Completed server lesson sessions in the current local week.
-    activeMinutes:
-      type: integer
-      minimum: 0
-      description: Sum of bounded response times, rounded up to whole minutes.
-    trend:
-      type: array
-      minItems: 7
-      maxItems: 7
-      items:
-        $ref: "#/components/schemas/DailyRecallEvidence"
-    weakTopics:
-      type: array
-      maxItems: 3
-      items:
-        $ref: "#/components/schemas/TopicEvidence"
-    strongTopic:
-      $ref: "#/components/schemas/TopicEvidence"
+    ProgressSummary:
+      type: object
+      required:
+        - dueNow
+        - dueWords
+        - duePhrases
+        - totalWords
+        - totalPhrases
+        - newWords
+        - learningWords
+        - reviewWords
+        - masteredWords
+        - masteredPhrases
+        - reviewsToday
+        - successfulToday
+        - objectiveReviewsToday
+        - objectiveSuccessfulToday
+        - reviewsTotal
+        - dailyGoal
+        - currentStreak
+        - longestStreak
+        - retainedItemsWeek
+        - retainedWordsWeek
+        - retainedPhrasesWeek
+        - eventSchemaVersion
+        - modes
+      properties:
+        dueNow: { type: integer }
+        dueWords: { type: integer }
+        duePhrases: { type: integer }
+        totalWords: { type: integer }
+        totalPhrases: { type: integer }
+        newWords: { type: integer }
+        learningWords: { type: integer }
+        reviewWords: { type: integer }
+        masteredWords: { type: integer }
+        masteredPhrases: { type: integer }
+        reviewsToday:
+          type: integer
+          description: All persisted learning activity, including study exposure.
+        successfulToday:
+          type: integer
+          description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.
+        objectiveReviewsToday:
+          type: integer
+          description: Verified schema-v2 recall and choice attempts; study and legacy events are excluded.
+        objectiveSuccessfulToday:
+          type: integer
+        reviewsTotal: { type: integer }
+        dailyGoal: { type: integer }
+        currentStreak: { type: integer }
+        longestStreak: { type: integer }
+        retainedItemsWeek: { type: integer }
+        retainedWordsWeek: { type: integer }
+        retainedPhrasesWeek: { type: integer }
+        eventSchemaVersion:
+          type: integer
+          const: 2
+        modes:
+          $ref: "#/components/schemas/ProgressModes"
+        nextDueAt:
+          type: [string, "null"]
+          format: date-time
+    ModeProgress:
+      type: object
+      required: [attemptsToday, successfulToday, attemptsTotal, successfulTotal]
+      properties:
+        attemptsToday: { type: integer }
+        successfulToday: { type: integer }
+        attemptsTotal: { type: integer }
+        successfulTotal: { type: integer }
+    ProgressModes:
+      type: object
+      required: [study, recall, choice, legacy]
+      properties:
+        study:
+          $ref: "#/components/schemas/ModeProgress"
+        recall:
+          $ref: "#/components/schemas/ModeProgress"
+        choice:
+          $ref: "#/components/schemas/ModeProgress"
+        legacy:
+          $ref: "#/components/schemas/ModeProgress"
     Error:
       type: object
       required: [error]
