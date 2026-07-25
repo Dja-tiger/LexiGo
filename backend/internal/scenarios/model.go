@@ -48,27 +48,27 @@ type ScenarioStep struct {
 }
 
 type Attempt struct {
-	ID                 string         `json:"id"`
-	Scenario           Scenario       `json:"scenario"`
-	CurrentPosition    int            `json:"currentPosition"`
-	Status             string         `json:"status"`
-	Version            int64          `json:"version"`
-	CompletedPositions []int          `json:"completedPositions"`
-	CurrentStep        *ScenarioStep  `json:"currentStep,omitempty"`
-	StartedAt          time.Time      `json:"startedAt"`
-	UpdatedAt          time.Time      `json:"updatedAt"`
-	CompletedAt        *time.Time     `json:"completedAt,omitempty"`
+	ID                 string          `json:"id"`
+	Scenario           Scenario        `json:"scenario"`
+	CurrentPosition    int             `json:"currentPosition"`
+	Status             string          `json:"status"`
+	Version            int64           `json:"version"`
+	CompletedPositions []int           `json:"completedPositions"`
+	CurrentStep        *ScenarioStep   `json:"currentStep,omitempty"`
+	StartedAt          time.Time       `json:"startedAt"`
+	UpdatedAt          time.Time       `json:"updatedAt"`
+	CompletedAt        *time.Time      `json:"completedAt,omitempty"`
 	LastSubmission     *StepSubmission `json:"lastSubmission,omitempty"`
 }
 
 type StepSubmission struct {
 	Position      int       `json:"position"`
-	SubmissionID string    `json:"submissionId"`
-	Response     string    `json:"response"`
-	Facts        []string  `json:"facts"`
-	Hypotheses   []string  `json:"hypotheses"`
+	SubmissionID  string    `json:"submissionId"`
+	Response      string    `json:"response"`
+	Facts         []string  `json:"facts"`
+	Hypotheses    []string  `json:"hypotheses"`
 	ReviewEventID int64     `json:"reviewEventId"`
-	AcceptedAt   time.Time `json:"acceptedAt"`
+	AcceptedAt    time.Time `json:"acceptedAt"`
 }
 
 type StartAttemptResponse struct {
@@ -81,17 +81,17 @@ type AttemptVersionRequest struct {
 }
 
 type StepReviewRequest struct {
-	WordID                int64  `json:"wordId"`
+	WordID                int64           `json:"wordId"`
 	Rating                learning.Rating `json:"rating"`
-	ResponseMS            *int   `json:"responseMs,omitempty"`
-	SubmittedAnswer       *string `json:"submittedAnswer,omitempty"`
-	Correct               *bool  `json:"correct,omitempty"`
-	AnswerRevealed        *bool  `json:"answerRevealed,omitempty"`
-	TimezoneOffsetMinutes int    `json:"timezoneOffsetMinutes"`
+	ResponseMS            *int            `json:"responseMs,omitempty"`
+	SubmittedAnswer       *string         `json:"submittedAnswer,omitempty"`
+	Correct               *bool           `json:"correct,omitempty"`
+	AnswerRevealed        *bool           `json:"answerRevealed,omitempty"`
+	TimezoneOffsetMinutes int             `json:"timezoneOffsetMinutes"`
 }
 
 type SubmitStepRequest struct {
-	SubmissionID  string            `json:"submissionId"`
+	SubmissionID   string            `json:"submissionId"`
 	AttemptVersion int64             `json:"attemptVersion"`
 	Response       string            `json:"response"`
 	Facts          []string          `json:"facts,omitempty"`
