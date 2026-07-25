@@ -134,7 +134,11 @@ function versionConflict(route: Route, attempt: ScenarioAttempt): Promise<void> 
   });
 }
 
-function reviewResult(position: number, targetPresent: boolean, reviewEventId: number) {
+function reviewResult(
+  position: number,
+  targetPresent: boolean,
+  reviewEventId: number,
+): SubmitScenarioStepResponse["review"] {
   return {
     wordId: 19600 + position,
     status: targetPresent ? "review" : "learning",
@@ -146,8 +150,8 @@ function reviewResult(position: number, targetPresent: boolean, reviewEventId: n
     requestedRating: targetPresent ? "known" : "again",
     effectiveRating: targetPresent ? "known" : "again",
     correct: targetPresent,
-    judgementSource: "server" as const,
-    judgementReason: targetPresent ? "scenario_target_present" as const : "scenario_target_missing" as const,
+    judgementSource: "server",
+    judgementReason: targetPresent ? "scenario_target_present" : "scenario_target_missing",
     ...(targetPresent ? { matchedAnswer: SCENARIO_STEPS[position].reviewTarget.term } : {}),
     reviewEventId,
     suggestionAvailable: !targetPresent,
