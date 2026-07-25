@@ -231,6 +231,22 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
+async function applyTextZoom(page: Page, percent = 200) {
+  const stylesheetPath = `/__e2e__/text-zoom-${percent}.css`;
+  await page.route(`**${stylesheetPath}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/css",
+      body: `html { font-size: ${percent}% !important; }`,
+    });
+  });
+
+  await page.addStyleTag({ url: new URL(stylesheetPath, page.url()).toString() });
+  await expect.poll(async () => page.evaluate(() => (
+    Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize)
+  ))).toBeGreaterThanOrEqual(32);
+}
+
 test.describe("Progress retained-learning evidence", () => {
   test("renders server-owned weekly evidence and starts the exact global due Recall queue", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop contract is asserted once; mobile and WebKit have dedicated coverage.");
@@ -274,7 +290,7 @@ test.describe("Progress retained-learning evidence", () => {
     await installAPI(page, lessonBodies, dueTopics);
 
     await page.goto("/progress");
-    await page.getByRole("button", { name: "Повторить тему Incident updates" }).click();
+    await page.getByRole("button", { name: "Повторить тему Обновления по инцидентам" }).click();
 
     await expect(page).toHaveURL(/\/lesson\/active$/);
     expect(dueTopics).toEqual(["Incident updates"]);
@@ -288,11 +304,11 @@ test.describe("Progress retained-learning evidence", () => {
     await installAPI(page, []);
 
     await page.goto("/progress");
-    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    await applyTextZoom(page);
 
     const dashboard = page.locator(".lx-progress-evidence");
     await expect(dashboard.getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
-    await expect(dashboard.getByText("Что считается сохранённым:", { exact: false })).toBeVisible();
+    await expect(dashboard.getByText("Что считается закреплённым:", { exact: false })).toBeVisible();
     await expect(dashboard.getByRole("heading", { name: "Слабые темы" })).toBeVisible();
     await expect(page.locator('[data-route-navigation="mobile"]')).toBeVisible();
     await expect(page.locator('[data-route-navigation="rail"]')).toBeHidden();
