@@ -1,3 +1,4 @@
+# trigger: apply PR 214 CI 1732 fix
 name: Apply PR 214 progressive disclosure fix
 
 on:
