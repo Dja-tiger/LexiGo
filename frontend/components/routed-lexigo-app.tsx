@@ -26,6 +26,8 @@ import {
 import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
+const ROUTE_ISLAND_BOUNDARIES = new Set(["/progress", "/scenarios"]);
+
 function initializeRouteEntry(): void {
   const target = parseNavigationLocation(window.location);
   const currentState = readNavigationHistoryState(window.history.state);
@@ -77,6 +79,10 @@ function routeBoundaryDestination(target: NavigationTarget): {
       };
 }
 
+function routeBoundaryLabel(pathname: string, target: NavigationTarget): string {
+  return pathname === "/scenarios" ? "Рабочие сценарии" : viewTitle(target.view);
+}
+
 function RouteSkipLink() {
   function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -107,11 +113,13 @@ export function RoutedLexigoApp() {
     const previousPath = previousPathRef.current;
     previousPathRef.current = pathname;
 
-    if (!previousPath || (previousPath !== "/progress" && pathname !== "/progress")) return;
+    // Focused Scenario detail owns its own focus and saved-draft lifecycle.
+    if (pathname.startsWith("/scenarios/")) return;
+    if (!previousPath || (!ROUTE_ISLAND_BOUNDARIES.has(previousPath) && !ROUTE_ISLAND_BOUNDARIES.has(pathname))) return;
 
     const parsedTarget = parseNavigationLocation(window.location);
     const destination = routeBoundaryDestination(parsedTarget);
-    const expectedLabel = viewTitle(parsedTarget.view);
+    const expectedLabel = routeBoundaryLabel(pathname, parsedTarget);
     let discoveryFrame = 0;
     let cancelRestoration: (() => void) | null = null;
     let cancelled = false;
