@@ -27,6 +27,7 @@ func TestScenarioOpenAPIContract(t *testing.T) {
 
 	paths := objectAt(t, document, "paths")
 	wantPaths := []string{
+		"/api/v1/progress",
 		"/api/v1/scenario-attempts/{attemptID}",
 		"/api/v1/scenario-attempts/{attemptID}/pause",
 		"/api/v1/scenario-attempts/{attemptID}/resume",
@@ -58,6 +59,69 @@ func TestScenarioOpenAPIContract(t *testing.T) {
 
 	components := objectAt(t, document, "components")
 	schemas := objectAt(t, components, "schemas")
+
+	progressEnvelope := objectAt(t, schemas, "ScenarioProgressEnvelope")
+	if progressEnvelope["additionalProperties"] != true {
+		t.Fatalf("ScenarioProgressEnvelope.additionalProperties = %v, want true for the bounded projection", progressEnvelope["additionalProperties"])
+	}
+	assertExactStringValues(t, progressEnvelope["required"], []string{"scenarios"})
+	assertExactPropertyNames(t, objectAt(t, progressEnvelope, "properties"), []string{"scenarios"})
+
+	progressEvidence := objectAt(t, schemas, "ScenarioProgressEvidence")
+	if progressEvidence["additionalProperties"] != false {
+		t.Fatalf("ScenarioProgressEvidence.additionalProperties = %v, want false", progressEvidence["additionalProperties"])
+	}
+	assertExactStringValues(t, progressEvidence["required"], []string{"completedThisWeek", "completedTotal"})
+	assertExactPropertyNames(t, objectAt(t, progressEvidence, "properties"), []string{
+		"completedThisWeek",
+		"completedTotal",
+		"recommendation",
+	})
+
+	recommendation := objectAt(t, schemas, "ScenarioProgressRecommendation")
+	if recommendation["additionalProperties"] != false {
+		t.Fatalf("ScenarioProgressRecommendation.additionalProperties = %v, want false", recommendation["additionalProperties"])
+	}
+	assertExactStringValues(t, recommendation["required"], []string{
+		"action",
+		"completedCount",
+		"estimatedMinutes",
+		"reason",
+		"slug",
+		"title",
+		"type",
+	})
+	recommendationProperties := objectAt(t, recommendation, "properties")
+	assertExactPropertyNames(t, recommendationProperties, []string{
+		"action",
+		"completedCount",
+		"estimatedMinutes",
+		"lastCompletedAt",
+		"reason",
+		"slug",
+		"title",
+		"type",
+	})
+	assertExactStringValues(t, objectAt(t, recommendationProperties, "reason")["enum"], []string{
+		"first_uncompleted",
+		"least_recently_completed",
+		"resume_in_progress",
+	})
+	assertExactStringValues(t, objectAt(t, recommendationProperties, "action")["enum"], []string{
+		"resume",
+		"start",
+	})
+
+	progressPath := objectAt(t, paths, "/api/v1/progress")
+	progressOperation := objectAt(t, progressPath, "get")
+	progressResponses := objectAt(t, progressOperation, "responses")
+	progressOK := objectAt(t, progressResponses, "200")
+	progressContent := objectAt(t, progressOK, "content")
+	progressJSON := objectAt(t, progressContent, "application/json")
+	progressSchema := objectAt(t, progressJSON, "schema")
+	if got := progressSchema["$ref"]; got != "#/components/schemas/ScenarioProgressEnvelope" {
+		t.Fatalf("Scenario progress response schema = %v", got)
+	}
 
 	target := objectAt(t, schemas, "ScenarioReviewTarget")
 	if target["additionalProperties"] != false {
