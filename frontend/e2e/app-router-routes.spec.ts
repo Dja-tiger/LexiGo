@@ -90,12 +90,12 @@ test("direct routes render, remain canonical and expose the owning semantic link
     { path: "/learn", view: "learn", heading: "Соберите один сфокусированный урок" },
     { path: "/phrases", view: "library", navigationPath: "/dictionary", heading: "Находите готовые формулировки" },
     { path: "/dictionary", view: "library", heading: "Находите и изучайте материал в контексте" },
-    { path: "/progress", view: "progress", heading: "Смотрите, что действительно сохранилось" },
+    { path: "/progress", view: "progress", heading: "Прогресс" },
   ] as const;
   for (const entry of routes) {
     await page.goto(entry.path);
     await expect(page).toHaveURL((url) => url.pathname === entry.path && url.search === "");
-    await expect(page.getByRole("heading", { level: 1, name: entry.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" })).toBeVisible();
     const link = visibleRouteLink(page, entry.view);
     await expect(link).toHaveAttribute("aria-current", "page");
     await expect(link).toHaveAttribute("href", "navigationPath" in entry ? entry.navigationPath : entry.path);
@@ -113,7 +113,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
     { path: "/", heading: /готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", heading: "Соберите один сфокусированный урок" },
     { path: "/dictionary", heading: "Находите и изучайте материал в контексте" },
-    { path: "/progress", heading: "Смотрите, что действительно сохранилось" },
+    { path: "/progress", heading: "Прогресс" },
   ] as const) {
     const page = await context.newPage();
     const errors = runtimeErrors(page);
@@ -121,7 +121,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
       await page.goto(entry.path, { waitUntil: "domcontentloaded" });
       const heading = entry.path === "/"
         ? page.locator(".lx-home-next-action h1")
-        : page.getByRole("heading", { level: 1, name: entry.heading });
+        : page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" });
       await expect(heading).toBeVisible({ timeout: 15_000 });
 
       await exerciseScrollBursts(page);
@@ -186,7 +186,6 @@ test("word and phrase deep links survive reload and remain shareable", async ({ 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
 });
-
 
 
 test("backend phrase links open in a new tab without a catalog warm-up", async ({ context, page }, testInfo) => {
