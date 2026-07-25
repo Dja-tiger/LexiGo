@@ -59,6 +59,9 @@ export function CalendarReminderRouteEntry() {
   }
 
   function openDialog() {
+    // The preview button becomes hidden when <details> closes. Move focus to
+    // the persistent disclosure before the dialog captures its return target.
+    summaryRef.current?.focus({ preventScroll: true });
     if (detailsRef.current) detailsRef.current.open = false;
     setDialogOpen(true);
   }
