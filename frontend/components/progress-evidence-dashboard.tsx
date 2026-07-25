@@ -206,9 +206,11 @@ function Metric({
 }) {
   return (
     <div className={`lx-progress-evidence__metric ${tone}`}>
-      <dt>{label}</dt>
+      <dt>
+        {label}
+        <span className="lx-progress-evidence__sr-only">. {description}</span>
+      </dt>
       <dd>{value}</dd>
-      <span className="lx-progress-evidence__sr-only">{description}</span>
     </div>
   );
 }
