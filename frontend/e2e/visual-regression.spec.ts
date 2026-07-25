@@ -48,6 +48,33 @@ const SCENARIO_VISUAL_BASELINES = {
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
+const SCENARIO_CATALOG_VISUAL_BASELINES = {
+  compactLight: {
+    name: "scenario-catalog-compact-light.png",
+    width: 390,
+    height: 1,
+    sha256: "pending-linux-review",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-review",
+  },
+  compactDark: {
+    name: "scenario-catalog-compact-dark.png",
+    width: 390,
+    height: 1,
+    sha256: "pending-linux-review",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-review",
+  },
+  desktopLight: {
+    name: "scenario-catalog-desktop-light.png",
+    width: 1440,
+    height: 1,
+    sha256: "pending-linux-review",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-review",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
 async function prepareStableScreenshot(page: Page): Promise<void> {
   const dimensions = await page.evaluate(async () => {
     await document.fonts.ready;
@@ -133,6 +160,12 @@ async function fillScenarioIncidentDraft(page: Page): Promise<void> {
   );
 }
 
+async function openScenarioCatalog(page: Page): Promise<void> {
+  await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Рабочие сценарии" })).toBeVisible();
+  await expect(page.locator("[data-scenario-catalog-order]")).toBeVisible();
+}
+
 test.describe("critical visual baselines", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -171,6 +204,31 @@ test.describe("critical visual baselines", () => {
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
     await expectStableScreenshot(page, "progress.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog compact Light", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openScenarioCatalog(page);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactLight);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog compact Dark", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact dark Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await openScenarioCatalog(page);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactDark);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog desktop Light", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openScenarioCatalog(page);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.desktopLight);
     expect(runtimeErrors).toEqual([]);
   });
 
