@@ -170,6 +170,15 @@ function isFocusedRoute(pathname: string): boolean {
   return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
 }
 
+function LearningSectionSwitch() {
+  return (
+    <nav className="lx-learning-section-switch lx-learning-section-switch--learn" aria-label="Разделы обучения">
+      <RouteLink target={{ view: "learn" }} className="active" ariaCurrent="page">Уроки</RouteLink>
+      <RouteLink target={{ view: "scenario" }}>Сценарии</RouteLink>
+    </nav>
+  );
+}
+
 export function RouteBrand() {
   return (
     <RouteLink target={{ view: "home" }} className="lx-route-brand" ariaLabel="LexiGo — открыть главную">
@@ -193,7 +202,8 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
     <nav className={`lx-route-nav lx-route-nav--${variant}`} aria-label={ariaLabel} data-route-navigation={variant}>
       {PRIMARY_NAVIGATION.map((entry) => {
         const active = activeView === entry.view
-          || (entry.view === "library" && activeView === "phrases");
+          || (entry.view === "library" && activeView === "phrases")
+          || (entry.view === "learn" && activeView === "scenario");
         return (
           <RouteLink
             key={entry.view}
@@ -223,6 +233,7 @@ export function RouteChrome() {
       <RoutePrimaryNavigation variant="header" />
       <RoutePrimaryNavigation variant="rail" />
       <RoutePrimaryNavigation variant="mobile" />
+      {pathname === "/learn" ? <LearningSectionSwitch /> : null}
       <CalendarReminderRouteEntry />
     </>
   );
