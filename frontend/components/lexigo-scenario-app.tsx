@@ -41,6 +41,7 @@ import {
   type ScenarioSubmissionIdentity,
   type SubmitScenarioStepResponse,
 } from "../lib/scenarios";
+import { AccessibleDialog } from "./accessible-dialog";
 import { AsyncStatePanel } from "./async-state";
 
 const EMPTY_DRAFT: ScenarioDraftFields = {
@@ -164,6 +165,7 @@ export function LexigoScenarioApp({
   const [exitIntent, setExitIntent] = useState<ExitIntent | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
+  const continueWorkRef = useRef<HTMLButtonElement>(null);
   const editorStartedAtRef = useRef(0);
   const allowNavigationRef = useRef(false);
 
@@ -734,22 +736,36 @@ export function LexigoScenarioApp({
 
       <div className="lx-scenario-live lx-visually-hidden" role="status" aria-live="polite">{statusMessage}</div>
 
-      {exitIntent ? (
-        <div className="lx-scenario-dialog-backdrop">
-          <div className="lx-scenario-dialog" role="dialog" aria-modal="true" aria-labelledby="scenario-exit-title">
-            <span>СОХРАНЕНИЕ</span>
-            <h2 id="scenario-exit-title">Сохранить черновик и закрыть сценарий?</h2>
-            <p>Текст останется на этом устройстве, а сервер поставит попытку на паузу. Review event создаётся только после принятой отправки.</p>
-            {actionError ? <div className="lx-scenario-action-error" role="alert">{actionError}</div> : null}
-            <div>
-              <button type="button" className="lx-scenario-secondary" disabled={busy} onClick={() => setExitIntent(null)}>Продолжить работу</button>
-              <button type="button" className="lx-scenario-primary" disabled={busy} onClick={() => void pauseAttempt(true)}>
-                {busy ? "Сохраняем…" : exitIntent === "history" ? "Сохранить и выйти" : "Сохранить и закрыть"}
-              </button>
-            </div>
-          </div>
+      <AccessibleDialog
+        open={Boolean(exitIntent)}
+        labelledBy="scenario-exit-title"
+        describedBy="scenario-exit-description"
+        className="lx-scenario-dialog"
+        backdropClassName="lx-scenario-dialog-backdrop"
+        initialFocusRef={continueWorkRef}
+        onClose={() => {
+          if (!busy) setExitIntent(null);
+        }}
+      >
+        <span>СОХРАНЕНИЕ</span>
+        <h2 id="scenario-exit-title">Сохранить черновик и закрыть сценарий?</h2>
+        <p id="scenario-exit-description">Текст останется на этом устройстве, а сервер поставит попытку на паузу. Review event создаётся только после принятой отправки.</p>
+        {actionError ? <div className="lx-scenario-action-error" role="alert">{actionError}</div> : null}
+        <div>
+          <button
+            ref={continueWorkRef}
+            type="button"
+            className="lx-scenario-secondary"
+            disabled={busy}
+            onClick={() => setExitIntent(null)}
+          >
+            Продолжить работу
+          </button>
+          <button type="button" className="lx-scenario-primary" disabled={busy} onClick={() => void pauseAttempt(true)}>
+            {busy ? "Сохраняем…" : exitIntent === "history" ? "Сохранить и выйти" : "Сохранить и закрыть"}
+          </button>
         </div>
-      ) : null}
+      </AccessibleDialog>
     </div>
   );
 }
