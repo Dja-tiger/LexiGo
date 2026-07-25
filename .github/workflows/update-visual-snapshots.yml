@@ -1,9 +1,9 @@
-name: Update visual snapshots
+name: Apply PR 214 progressive disclosure fix
 
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - agent/issue-195-progress-evidence
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -11,58 +11,83 @@ permissions:
   contents: write
 
 jobs:
-  update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+  apply-fix:
+    name: Normalize calendar reminder disclosure
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: core
-      APP_BUILD_ID: ${{ github.sha }}
-      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: agent/issue-195-progress-evidence
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare isolated frontend workspace
-        run: bash ../scripts/ci/frontend-container.sh prepare
-
-      - name: Install locked dependencies
-        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-
-      - name: Production build
-        run: bash ../scripts/ci/frontend-container.sh exec npm run build
-
-      - name: Regenerate visual snapshots
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-      - name: Extract updated snapshots from container
+      - name: Verify source contracts and apply exact fix
         run: |
-          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
-          test -n "$container"
-          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
+          test "$(git hash-object frontend/e2e/route-focus-management.spec.ts)" = "59a6d74e011f63d0ed82ff27d0db6d546a1e9ea5"
+          test "$(git hash-object .agents/AGENTS.md)" = "3cf337c9306e22b0c67b5854b7af6d0ab902571e"
+          test ! -e .agents/AGENTS.progress-pr214-ci1732.md
 
-      - name: Cleanup container
-        if: always()
-        run: bash ../scripts/ci/frontend-container.sh cleanup
+          python - <<'PY'
+          from pathlib import Path
 
-      - name: Commit Issue 162 baselines
+          test_path = Path("frontend/e2e/route-focus-management.spec.ts")
+          text = test_path.read_text(encoding="utf-8")
+          old = '''  await page.getByRole("button", { name: "Настроить календарь" }).click();
+          const calendarBackdrop = page.locator(".lx-calendar-modal-backdrop");'''
+          new = '''  const reminderEntry = page.locator("details.lx-route-reminder-entry");
+          await reminderEntry.locator("summary").click();
+          await expect(reminderEntry).toHaveAttribute("open", "");
+          await reminderEntry.getByRole("button", { name: "Настроить календарь" }).click();
+          const calendarBackdrop = page.locator(".lx-calendar-modal-backdrop");'''
+          if text.count(old) != 1:
+              raise SystemExit(f"route-focus exact replacement count: {text.count(old)}")
+          test_path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          manifest = Path(".agents/AGENTS.md")
+          text = manifest.read_text(encoding="utf-8")
+          old_item = '2. [`AGENTS.progress-pr214.md`](./AGENTS.progress-pr214.md) — обязательные дополнения, подтверждённые при разработке PR #214.\n'
+          new_items = old_item + '3. [`AGENTS.progress-pr214-ci1732.md`](./AGENTS.progress-pr214-ci1732.md) — обязательное уточнение progressive disclosure, подтверждённое CI #1732.\n'
+          if text.count(old_item) != 1:
+              raise SystemExit("AGENTS manifest item anchor not found exactly once")
+          text = text.replace(old_item, new_items, 1)
+          text = text.replace(
+              "Оба документа обязательны и применяются совместно.",
+              "Все три документа обязательны и применяются совместно.",
+              1,
+          )
+          text = text.replace(
+              "Полная консолидированная версия этих двух документов",
+              "Полная консолидированная версия этих документов",
+              1,
+          )
+          manifest.write_text(text, encoding="utf-8")
+
+          Path(".agents/AGENTS.progress-pr214-ci1732.md").write_text('''# Дополнение PR #214 — CI #1732
+
+## 2026-07-25 — Route-level progressive disclosure повторно не был нормализован в desktop test
+
+- **Симптом:** UI shard 1/2 в CI #1732 завершился timeout: reduced-motion test ожидал кнопку «Настроить календарь» после перехода на `/progress`, но control отсутствовал в accessibility tree.
+- **Первопричина:** кнопка принадлежит закрытому `details.lx-route-reminder-entry`; тест искал вложенный control напрямую, не раскрывая owning `summary`.
+- **Почему ошибка не была обнаружена раньше:** ранее правило было применено в compact iOS scenarios, но не было перенесено на desktop reduced-motion journey после замены canonical Progress presentation.
+- **Профилактика:** перед каждым взаимодействием с control внутри `<details>` сначала локализовать owning disclosure, нажать его `summary`, подтвердить атрибут `open`, затем искать control внутри этого owner. Viewport или browser project не освобождает тест от нормализации progressive UI state.
+- **Regression gate:** `frontend/e2e/route-focus-management.spec.ts` раскрывает `details.lx-route-reminder-entry`, подтверждает `open`, открывает dialog и проверяет reduced-motion contract; полный UI shard 1/2 проходит без retry.
+- **Область действия:** route-level calendar reminder, desktop Chromium, compact Chromium/WebKit, reduced motion, dialog focus lifecycle и progressive `<details>`.
+''', encoding="utf-8")
+          PY
+
+          test "$(git diff --name-only | wc -l)" -eq 3
+          git diff --name-only | grep -Fqx frontend/e2e/route-focus-management.spec.ts
+          git diff --name-only | grep -Fqx .agents/AGENTS.md
+          git diff --name-only | grep -Fqx .agents/AGENTS.progress-pr214-ci1732.md
+
+      - name: Commit allow-listed fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+            frontend/e2e/route-focus-management.spec.ts \
+            .agents/AGENTS.md \
+            .agents/AGENTS.progress-pr214-ci1732.md
+          test "$(git diff --cached --name-only | wc -l)" -eq 3
+          git commit -m "test(frontend): normalize reminder disclosure"
+          git push origin HEAD:agent/issue-195-progress-evidence
