@@ -29,18 +29,41 @@
 
 /*
  * At 200% page zoom a 320 px viewport has roughly 160 CSS px of usable
- * layout width. Textareas retain a browser-specific intrinsic inline size
- * unless the grid item and the control are explicitly allowed to shrink.
- * Resetting the min-content floor prevents real horizontal scrolling rather
- * than clipping the overflow.
+ * layout width. Form controls and auto-sized grid blocks retain a browser-
+ * specific min-content floor unless every owner is explicitly shrinkable.
+ * The narrow breakpoint therefore uses a constrained inline size rather
+ * than `width:auto`; this prevents real scrolling without clipping content.
  */
+.lx-scenario-workspace,
 .lx-scenario-workspace > *,
+.lx-scenario-entry,
 .lx-scenario-entry > *,
 .lx-scenario-field,
 .lx-scenario-field textarea,
 .lx-scenario-evidence-grid {
   min-width: 0;
   max-width: 100%;
+}
+
+@media (max-width: 370px) {
+  .lx-scenario-main,
+  .lx-scenario-progress-row {
+    width: calc(100% - 32px);
+    min-width: 0;
+    max-width: calc(100% - 32px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .lx-scenario-workspace,
+  .lx-scenario-entry,
+  .lx-scenario-context-card,
+  .lx-scenario-response-card,
+  .lx-scenario-after {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 .lx-scenario-context-card > span,
