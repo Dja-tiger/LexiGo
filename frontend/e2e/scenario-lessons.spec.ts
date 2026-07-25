@@ -156,6 +156,29 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
     expect(fixture.pauseRequests()).toEqual([{ attemptVersion: 1 }]);
   });
 
+  test("safe-exit dialog traps keyboard focus, closes on Escape and restores its trigger", async ({ page }) => {
+    await installScenarioFixture(page);
+    await startScenario(page);
+
+    const closeTrigger = page.getByRole("button", { name: "Закрыть сценарий", exact: true });
+    await closeTrigger.click();
+
+    const dialog = page.getByRole("dialog", { name: "Сохранить черновик и закрыть сценарий?" });
+    const continueWork = dialog.getByRole("button", { name: "Продолжить работу", exact: true });
+    const saveAndClose = dialog.getByRole("button", { name: "Сохранить и закрыть", exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(continueWork).toBeFocused();
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(saveAndClose).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(continueWork).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(closeTrigger).toBeFocused();
+  });
+
   test("the final server-owned attempt state drives completion", async ({ page }) => {
     const fixture = await installScenarioFixture(page, { initialPosition: 2 });
     await startScenario(page);
