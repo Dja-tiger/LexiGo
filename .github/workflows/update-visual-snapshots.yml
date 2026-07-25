@@ -1,9 +1,11 @@
-name: Update visual snapshots
+name: Update AGENTS knowledge
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - main
+    types:
+      - synchronize
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -11,58 +13,120 @@ permissions:
   contents: write
 
 jobs:
-  update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+  update-agents:
+    if: github.event.pull_request.number == 214 && github.head_ref == 'agent/issue-195-progress-evidence'
+    name: Append verified PR 214 knowledge
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
-      FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: core
-      APP_BUILD_ID: ${{ github.sha }}
-      NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: agent/issue-195-progress-evidence
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare isolated frontend workspace
-        run: bash ../scripts/ci/frontend-container.sh prepare
-
-      - name: Install locked dependencies
-        run: bash ../scripts/ci/frontend-container.sh exec npm ci --no-audit --no-fund
-
-      - name: Production build
-        run: bash ../scripts/ci/frontend-container.sh exec npm run build
-
-      - name: Regenerate visual snapshots
-        run: bash ../scripts/ci/frontend-container.sh exec npm run test:e2e:visual:update
-
-      - name: Extract updated snapshots from container
+      - name: Verify source and append structured knowledge
         run: |
-          container=$(docker ps --filter "label=lexigo-slot=$FRONTEND_CI_SLOT" --format '{{.Names}}' | head -1)
-          test -n "$container"
-          docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
+          test "$(git hash-object .agents/AGENTS.md)" = "44aa192d147c5fb12c22a20cfd75bcc7ea519eef"
+          python - <<'PY'
+          from pathlib import Path
 
-      - name: Cleanup container
-        if: always()
-        run: bash ../scripts/ci/frontend-container.sh cleanup
+          path = Path('.agents/AGENTS.md')
+          text = path.read_text(encoding='utf-8')
+          data_anchor = '- Runtime owners Progress slice: `frontend/components/lexigo-progress-app.tsx`, `frontend/components/progress-evidence-dashboard.tsx`, `frontend/lib/progress.ts`, `frontend/lib/interface-copy.ts`, backend `learning.Repository.Progress`.\n'
+          data_addition = '''- CI #1716: `frontend-playwright-report-ui-1` и `frontend-playwright-report-ui-2` подтвердили route-island focus/scroll ownership, progressive disclosure, canonical resume gate и полный direct-detail mock contract; visual artifact `8614824397` стал источником шести утверждённых Linux PNG.\n- CI #1721: stale direct-detail fixture и reduced-motion assertion были отделены от production defects; regression protection перенесена к фактическим route/API и Progress presentation owners.\n- Approved visual artifact import проверяется по SHA-256, PNG dimensions и точному allow-list из шести paths; temporary workflow обязан быть восстановлен до canonical blob до финального CI.\n'''
+          if data_addition.strip() not in text:
+              if data_anchor not in text:
+                  raise SystemExit('Data anchor not found')
+              text = text.replace(data_anchor, data_anchor + data_addition, 1)
 
-      - name: Commit Issue 162 baselines
+          journal = r'''
+
+### 2026-07-25 — Route island remount потерял focus, scroll и route announcement
+
+- **Симптом:** keyboard и adaptive-navigation suites после перехода через `/progress` не восстанавливали фокус на новом `main`, scroll предыдущей вкладки и live-region announcement.
+- **Первопричина:** `/progress` был выделен в отдельный React route island, но ownership route transition оставался внутри размонтированного legacy product graph.
+- **Почему ошибка не была обнаружена раньше:** feature E2E проверял содержимое `/progress`, но contract matrix не включала переходы legacy island → Progress island → legacy island, Back/Forward и сохранённый tab destination.
+- **Профилактика:** общий App Router shell обязан владеть boundary transition между client islands: дождаться semantic `main` нужного route, передать ему focus без scroll и восстановить сохранённую позицию через отменяемый scheduler.
+- **Обязательная проверка:** `route-focus-management.spec.ts` и `adaptive-navigation.spec.ts` проверяют direct navigation, Back/Forward, focus, announcement и scroll restoration в Chromium/WebKit.
+- **Область действия:** App Router client islands, primary tabs, browser history, keyboard и screen readers.
+
+### 2026-07-25 — Global `MutationObserver` нарушил React DOM ownership
+
+- **Симптом:** `react-dom-ownership` остановил frontend core после попытки ждать remount нового route через `MutationObserver(document.body)`.
+- **Первопричина:** synchronization была реализована глобальным наблюдением DOM-дерева вместо React-owned lifecycle и существующего navigation scheduler.
+- **Почему ошибка не была обнаружена раньше:** исправление focus defect проектировалось от browser symptom без предварительной сверки с архитектурным ownership source-contract.
+- **Профилактика:** не наблюдать и не патчить global DOM для React route lifecycle. Для короткого ожидания нового landmark использовать отменяемый `requestAnimationFrame` loop с точным semantic predicate и cleanup.
+- **Обязательная проверка:** frontend core `react-dom-ownership`, lint/typecheck и route-focus E2E проходят на одном head.
+- **Область действия:** React route shells, dialogs, portals, focus restoration и DOM synchronization.
+
+### 2026-07-25 — Exact text locator не учёл accessible hidden explanation внутри `dt`
+
+- **Симптом:** interface-copy suite не находил визуальную подпись «Закреплено», хотя она присутствовала в metric definition term.
+- **Первопричина:** `getByText(..., { exact: true })` сопоставлял полный text content узла вместе с вложенным `sr-only` explanation.
+- **Почему ошибка не была обнаружена раньше:** selector проектировался по визуальной строке, а не по фактическому DOM/accessibility contract после исправления семантики `dl`.
+- **Профилактика:** для элемента с вложенным assistive text scope locator через owning metric/container и проверять видимый label отдельно от explanation; не удалять screen-reader context ради exact selector.
+- **Обязательная проверка:** `interface-copy.spec.ts` проверяет единственный metric owner, `dt` label и отдельное explanation во всех mobile browser projects.
+- **Область действия:** definition lists, visually-hidden copy, accessible names и Playwright text locators.
+
+### 2026-07-25 — Созданный server lesson сначала открывает canonical resume gate
+
+- **Симптом:** Progress E2E после POST `/api/v1/lessons` ожидал `.lx-active-lesson`, но route показывал безопасный экран «Продолжить урок».
+- **Первопричина:** тест пропустил существующий recovery contract: новый route entry гидратирует server-owned active lesson и требует явного подтверждения продолжения.
+- **Почему ошибка не была обнаружена раньше:** happy-path assertion связывал успешный create response напрямую с presentation, не включая route bootstrap и recovery state.
+- **Профилактика:** multi-route lesson journey обязан моделировать create → active route bootstrap → resume gate → active presentation; production recovery UX нельзя обходить ради теста.
+- **Обязательная проверка:** `progress-evidence.spec.ts` нажимает точный CTA «Продолжить урок» и только затем проверяет Recall mode и request bodies.
+- **Область действия:** lesson creation, active-session hydration, reload/recovery и Progress due queue.
+
+### 2026-07-25 — Route-island remount активировал отсутствующий direct-detail API mock
+
+- **Симптом:** adaptive-navigation WebKit scenario возвращался на `/phrases/:slug`, но fixture отвечал `not_mocked` для `/api/v1/phrases/:slug`.
+- **Первопричина:** после перехода через отдельный `/progress` island phrase detail remount выполнял реальный direct-detail fetch; mock покрывал только catalog list.
+- **Почему ошибка не была обнаружена раньше:** fixture анализировался как один экран, а не как полный navigation journey со всеми remount consumers и deep links.
+- **Профилактика:** mock contract строится по полной mutation/read sequence каждого route перехода; direct-entry endpoint добавляется одновременно с list endpoint, а выбранный item определяется по slug/id запроса.
+- **Обязательная проверка:** `adaptive-navigation.spec.ts` возвращается к exact phrase link без `.first()`, получает detail payload и сохраняет URL/heading/scroll.
+- **Область действия:** route islands, deep links, catalog/detail API mocks и WebKit navigation.
+
+### 2026-07-25 — Reduced-motion assertion был привязан к retired legacy Progress child
+
+- **Симптом:** route-focus suite искал role `progressbar` «Дневная цель» после перехода на canonical `/progress`, где этого legacy control больше нет.
+- **Первопричина:** motion gate проверял устаревшего presentation owner вместо нового accessible chart.
+- **Почему ошибка не была обнаружена раньше:** redesign consumer search обновил readiness selectors, но не классифицировал semantic element как часть reduced-motion contract.
+- **Профилактика:** motion assertions привязывать к текущему canonical owner и проверять все animated descendants, а не исторический control с тем же route purpose.
+- **Обязательная проверка:** `route-focus-management.spec.ts` подтверждает семь Progress bars, `transition-duration: 0s` и отсутствие Web Animations при `prefers-reduced-motion: reduce`.
+- **Область действия:** canonical redesigns, motion CSS, charts и cross-route accessibility suites.
+
+### 2026-07-25 — Visual artifact import должен быть криптографически и path-guarded
+
+- **Симптом:** повторный Linux render workflow не создал baseline commit в своём execution window, а слепой повтор мог импортировать другой rendering result.
+- **Первопричина:** первый one-shot пытался заново рендерить вместо переноса уже просмотренных actual PNG из конкретного CI artifact.
+- **Почему ошибка не была обнаружена раньше:** путь доставки binary baselines не был включён в pre-flight tooling plan до ручного утверждения изображений.
+- **Профилактика:** утверждённые PNG импортировать только из конкретного artifact ID с точными SHA-256, IHDR dimensions и allow-list paths; bot commit должен менять только эти binaries. Temporary workflow восстанавливается byte-for-byte, а финальный head создаётся обычным credential.
+- **Обязательная проверка:** compare commit показывает ровно шесть PNG; каждый branch blob начинается с PNG signature; workflow blob после восстановления совпадает с canonical `fb1d4aefa3e98652769990fd86805950fd88df45`; visual CI повторно проходит без update mode.
+- **Область действия:** Linux visual baselines, GitHub Actions artifacts, binary commits и final-head provenance.
+'''
+          if '### 2026-07-25 — Route island remount потерял focus, scroll и route announcement' not in text:
+              text = text.rstrip() + journal + '\n'
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          test "$(git diff --name-only | wc -l)" -eq 1
+          test "$(git diff --name-only)" = ".agents/AGENTS.md"
+          grep -Fq "Route island remount потерял focus, scroll и route announcement" .agents/AGENTS.md
+          grep -Fq "Visual artifact import должен быть криптографически и path-guarded" .agents/AGENTS.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pr-214-updated-agents
+          path: .agents/AGENTS.md
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit updated AGENTS knowledge
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+          git add .agents/AGENTS.md
+          test "$(git diff --cached --name-only)" = ".agents/AGENTS.md"
+          git commit -m "docs(agents): record Progress delivery lessons"
+          git push origin HEAD:agent/issue-195-progress-evidence
