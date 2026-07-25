@@ -73,7 +73,7 @@ The repository previously lacked an executable contract tying the distributed me
 
 ### Checks failed
 
-No harness check failed. Full required PR CI and stage validation are pending.
+No harness check failed. Full required PR CI is pending; PR #216 stage validation is now complete and recorded below.
 
 ### Current branch head
 
@@ -82,3 +82,41 @@ Resolve from the live branch ref; pre-entry head was `b95eb4683ee269ea0735f258f5
 ### Next action
 
 Run and classify full required CI on the final head, inspect review threads, then proceed to Ready and expected-head squash merge only if all gates are green.
+
+## 2026-07-25 14:21 Europe/Berlin
+
+### Verified
+
+- Issue #12 now reports stage success for `f2785be459a04b87511ab8d9f26d60b3da15669b`
+- stage run `30157188680`: deploy success, public smoke success, public browser success
+- public browser matrix passed 12/12, including Chromium, iOS WebKit and stale-build recovery
+
+### Finding
+
+The deployment source changed after pre-flight; the earlier failure snapshot was no longer current.
+
+### Root cause
+
+PR #216 stage deployment completed after the initial repository-state reconstruction.
+
+### Changed files
+
+- `.agents/PROJECT_STATE.md`
+- `.agents/current/EXECUTION.md`
+- `.agents/current/PROGRESS.md`
+
+### Checks passed
+
+Live deployment reconciliation and exact SHA/run verification.
+
+### Checks failed
+
+None. Full required CI for PR #217 remains pending on the new final head.
+
+### Current branch head
+
+Resolve from the live branch ref; pre-entry head was `938ea95865e9cf129340a994e99440eecd03e25a` and this log update creates a newer head.
+
+### Next action
+
+Run full required CI on the reconciled final head, then inspect final diff and review threads before Ready.
