@@ -97,11 +97,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
   }, [adoptSession]);
 
   useEffect(() => {
-    if (!session) {
-      setProgress(null);
-      setProgressStatus(readyResourceStatus());
-      return;
-    }
+    if (!session) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => void loadProgress(session, controller.signal), 0);
