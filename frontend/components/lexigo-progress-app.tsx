@@ -129,6 +129,10 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
     router.push(navigationURL({ view: "learn", source: "mixed" }), { scroll: false });
   }, [router]);
 
+  const openScenario = useCallback((slug: string) => {
+    router.push(navigationURL({ view: "scenario", detail: slug }), { scroll: false });
+  }, [router]);
+
   const requireAuthentication = useCallback(() => {
     router.push("/profile?session=required&return_to=%2Fprogress", { scroll: false });
   }, [router]);
@@ -249,6 +253,7 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
                 busy={busy}
                 onStartDueReview={(filter) => void startDueReview(filter)}
                 onConfigureLesson={configureLesson}
+                onOpenScenario={openScenario}
               />
             )}
           </div>

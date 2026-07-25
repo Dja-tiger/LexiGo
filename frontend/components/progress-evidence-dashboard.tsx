@@ -9,6 +9,7 @@ import {
   normalizedWeeklyEvidence,
   type DailyRecallEvidence,
   type ProgressSummary,
+  type ScenarioRecommendation,
 } from "../lib/progress";
 
 export type DueReviewFilter = {
@@ -22,6 +23,7 @@ type ProgressEvidenceDashboardProps = {
   busy: boolean;
   onStartDueReview: (filter?: DueReviewFilter) => void;
   onConfigureLesson: () => void;
+  onOpenScenario: (slug: string) => void;
 };
 
 type WeakArea = {
@@ -40,11 +42,31 @@ const RECALL_COPY = learningTermCopy("recall");
 const RETAINED_METRIC_DESCRIPTION = "Количество элементов, подтверждённых успешным самостоятельным воспроизведением после интервала.";
 const DUE_EXPLANATION = "Готово к повторению означает, что наступил следующий интервал проверки памяти.";
 
+function scenarioActionCopy(recommendation: ScenarioRecommendation): { title: string; label: string } {
+  if (recommendation.reason === "resume_in_progress") {
+    return {
+      title: `Продолжите сценарий «${recommendation.title}» с сохранённого шага`,
+      label: "Продолжить сценарий",
+    };
+  }
+  if (recommendation.reason === "least_recently_completed") {
+    return {
+      title: `Вернитесь к сценарию «${recommendation.title}» для нового применения`,
+      label: "Начать заново",
+    };
+  }
+  return {
+    title: `Начните рабочий сценарий «${recommendation.title}»`,
+    label: "Начать сценарий",
+  };
+}
+
 export function ProgressEvidenceDashboard({
   progress,
   busy,
   onStartDueReview,
   onConfigureLesson,
+  onOpenScenario,
 }: ProgressEvidenceDashboardProps) {
   const weekly = normalizedWeeklyEvidence(progress);
   const modes = normalizedProgressModes(progress);
@@ -52,11 +74,24 @@ export function ProgressEvidenceDashboard({
   const hasComparableWeeks = weekly.recallAttempts >= 3 && weekly.previousRecallAttempts >= 3;
   const weakAreas = buildWeakAreas(weekly);
   const dueLessonCount = dueReviewLessonCount(progress.dueNow);
+  const scenarioRecommendation = progress.scenarios?.recommendation;
+  const scenarioCopy = scenarioRecommendation ? scenarioActionCopy(scenarioRecommendation) : null;
   const dueLabel = dueLessonCount > 0
     ? progress.dueNow > dueLessonCount
       ? `Повторить первые ${dueLessonCount}`
       : `Повторить ${dueLessonCount} ${russianPlural(dueLessonCount, ["элемент", "элемента", "элементов"])}`
     : "Настроить следующий урок";
+  const nextActionKind = dueLessonCount > 0
+    ? "due-recall"
+    : scenarioRecommendation
+      ? "scenario"
+      : "configure-lesson";
+  const nextActionTitle = dueLessonCount > 0
+    ? progress.dueNow > dueLessonCount
+      ? `Сессия самостоятельного воспроизведения: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
+      : "Короткая сессия самостоятельного воспроизведения по готовой очереди"
+    : scenarioCopy?.title ?? "Соберите следующий сфокусированный урок";
+  const nextActionLabel = dueLessonCount > 0 ? dueLabel : scenarioCopy?.label ?? dueLabel;
 
   return (
     <section
@@ -118,23 +153,25 @@ export function ProgressEvidenceDashboard({
                 />
               </dl>
 
-              <div className="lx-progress-evidence__next-action">
+              <div className="lx-progress-evidence__next-action" data-progress-next-action={nextActionKind}>
                 <div>
                   <span>СЛЕДУЮЩЕЕ ДЕЙСТВИЕ</span>
-                  <strong>
-                    {dueLessonCount > 0
-                      ? progress.dueNow > dueLessonCount
-                        ? `Сессия самостоятельного воспроизведения: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
-                        : "Короткая сессия самостоятельного воспроизведения по готовой очереди"
-                      : "Соберите следующий сфокусированный урок"}
-                  </strong>
+                  <strong>{nextActionTitle}</strong>
                 </div>
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => dueLessonCount > 0 ? onStartDueReview() : onConfigureLesson()}
+                  onClick={() => {
+                    if (dueLessonCount > 0) {
+                      onStartDueReview();
+                    } else if (scenarioRecommendation) {
+                      onOpenScenario(scenarioRecommendation.slug);
+                    } else {
+                      onConfigureLesson();
+                    }
+                  }}
                 >
-                  {busy ? "Готовим…" : dueLabel}
+                  {busy ? "Готовим…" : nextActionLabel}
                 </button>
               </div>
 
@@ -196,7 +233,9 @@ export function ProgressEvidenceDashboard({
             <article className="lx-progress-evidence__activity" aria-labelledby="activity-title">
               <h2 id="activity-title">Активность отдельно от знания</h2>
               <p className="lx-progress-evidence__activity-total">
-                {weekly.reviews} ответов · {weekly.lessons} {russianPlural(weekly.lessons, ["занятие", "занятия", "занятий"])} · {weekly.activeMinutes} мин.
+                {weekly.reviews} ответов · {weekly.lessons} {russianPlural(weekly.lessons, ["занятие", "занятия", "занятий"])}
+                {progress.scenarios ? ` · ${progress.scenarios.completedThisWeek} ${russianPlural(progress.scenarios.completedThisWeek, ["сценарий", "сценария", "сценариев"])}` : ""}
+                {` · ${weekly.activeMinutes} мин.`}
               </p>
               <p>Эти данные объясняют усилие, но не заменяют отложенную проверку.</p>
               <details>

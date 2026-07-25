@@ -70,7 +70,7 @@ func (h *Handler) Progress(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("timezoneOffsetMinutes"))
 	result, err := h.repository.Progress(r.Context(), userID, offset)
 	if err == nil {
-		err = h.repository.populateWeakPartOfSpeechEvidence(r.Context(), userID, offset, &result)
+		err = h.repository.populateProgressExtensions(r.Context(), userID, offset, &result)
 	}
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
@@ -101,7 +101,7 @@ func (h *Handler) SetDailyGoal(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("timezoneOffsetMinutes"))
 	result, err := h.repository.Progress(r.Context(), userID, offset)
 	if err == nil {
-		err = h.repository.populateWeakPartOfSpeechEvidence(r.Context(), userID, offset, &result)
+		err = h.repository.populateProgressExtensions(r.Context(), userID, offset, &result)
 	}
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")

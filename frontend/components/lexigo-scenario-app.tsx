@@ -465,6 +465,11 @@ export function LexigoScenarioApp({
     router.push(navigationURL({ view: "learn" }));
   }, [router]);
 
+  const openProgress = useCallback(() => {
+    allowNavigationRef.current = true;
+    router.push(navigationURL({ view: "progress" }));
+  }, [router]);
+
   if (scenarioStatus.phase === "loading" || scenarioStatus.phase === "idle") {
     return (
       <main className="lx-scenario lx-scenario-state" aria-busy="true" aria-live="polite">
@@ -590,7 +595,7 @@ export function LexigoScenarioApp({
               <strong>{attempt.completedPositions.length} из {scenario.stepCount} шагов приняты сервером</strong>
               <span>Языковые сигналы записаны как обычные Recall review events; расписание повторения остаётся серверным.</span>
             </div>
-            <button type="button" className="lx-scenario-primary" onClick={leaveCompleted}>Вернуться к обучению</button>
+            <button type="button" className="lx-scenario-primary" onClick={openProgress}>Открыть прогресс</button>
           </section>
         ) : shownStep ? (
           <div className="lx-scenario-workspace">

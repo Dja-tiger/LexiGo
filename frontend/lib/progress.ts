@@ -56,6 +56,30 @@ export type WeeklyProgressEvidence = {
   strongTopic?: TopicEvidence;
 };
 
+export type ScenarioRecommendationReason =
+  | "resume_in_progress"
+  | "first_uncompleted"
+  | "least_recently_completed";
+
+export type ScenarioRecommendationAction = "start" | "resume";
+
+export type ScenarioRecommendation = {
+  slug: string;
+  type: "incident" | "troubleshooting" | "architecture-review" | "data-pipeline" | "release" | "status-update";
+  title: string;
+  estimatedMinutes: number;
+  reason: ScenarioRecommendationReason;
+  action: ScenarioRecommendationAction;
+  completedCount: number;
+  lastCompletedAt?: string;
+};
+
+export type ScenarioProgressEvidence = {
+  completedThisWeek: number;
+  completedTotal: number;
+  recommendation?: ScenarioRecommendation;
+};
+
 export type ProgressSummary = {
   dueNow: number;
   dueWords: number;
@@ -81,6 +105,7 @@ export type ProgressSummary = {
   eventSchemaVersion?: number;
   modes?: ProgressModes;
   weekly?: WeeklyProgressEvidence;
+  scenarios?: ScenarioProgressEvidence;
   nextDueAt?: string;
 };
 

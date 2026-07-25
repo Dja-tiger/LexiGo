@@ -2,12 +2,25 @@
   "openapi": "3.1.0",
   "info": {
     "title": "LexiGo Scenario Lessons API",
-    "version": "0.13.0",
-    "description": "Bounded machine-readable contract for authenticated Scenario Lessons routes. The server owns the review target and objective judgement; clients submit production evidence and optional timing metadata only."
+    "version": "0.14.0",
+    "description": "Bounded machine-readable contract for authenticated Scenario Lessons routes and their Progress projection. The server owns the review target, objective judgement, completion evidence and recommendation ordering; clients submit production evidence and optional timing metadata only."
   },
   "servers": [{ "url": "http://localhost:8080", "description": "local" }],
   "security": [{ "bearerAuth": [] }],
   "paths": {
+    "/api/v1/progress": {
+      "get": {
+        "operationId": "getScenarioProgressProjection",
+        "tags": ["scenarios", "progress"],
+        "summary": "Get learning progress with the server-owned Scenario completion and recommendation projection.",
+        "parameters": [{ "$ref": "#/components/parameters/TimezoneOffsetMinutes" }],
+        "responses": {
+          "200": { "description": "Learning progress containing the authoritative Scenario projection.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioProgressEnvelope" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
     "/api/v1/scenarios": {
       "get": {
         "operationId": "listScenarios",
@@ -132,7 +145,8 @@
     "parameters": {
       "ScenarioSlug": { "name": "slug", "in": "path", "required": true, "schema": { "type": "string", "minLength": 1 } },
       "ScenarioAttemptID": { "name": "attemptID", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
-      "ScenarioPosition": { "name": "position", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 0 } }
+      "ScenarioPosition": { "name": "position", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 0 } },
+      "TimezoneOffsetMinutes": { "name": "timezoneOffsetMinutes", "in": "query", "required": false, "description": "JavaScript Date.getTimezoneOffset used to define the current local day and week.", "schema": { "type": "integer", "minimum": -840, "maximum": 840, "default": 0 } }
     },
     "responses": {
       "BadRequest": { "description": "Malformed path parameter or strict JSON body.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
@@ -143,6 +157,39 @@
       "InternalError": { "description": "Internal server error.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
     },
     "schemas": {
+      "ScenarioProgressEnvelope": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["scenarios"],
+        "properties": {
+          "scenarios": { "$ref": "#/components/schemas/ScenarioProgressEvidence" }
+        }
+      },
+      "ScenarioProgressEvidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["completedThisWeek", "completedTotal"],
+        "properties": {
+          "completedThisWeek": { "type": "integer", "minimum": 0 },
+          "completedTotal": { "type": "integer", "minimum": 0 },
+          "recommendation": { "$ref": "#/components/schemas/ScenarioProgressRecommendation" }
+        }
+      },
+      "ScenarioProgressRecommendation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "type", "title", "estimatedMinutes", "reason", "action", "completedCount"],
+        "properties": {
+          "slug": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "enum": ["incident", "troubleshooting", "architecture-review", "data-pipeline", "release", "status-update"] },
+          "title": { "type": "string", "minLength": 1 },
+          "estimatedMinutes": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string", "enum": ["resume_in_progress", "first_uncompleted", "least_recently_completed"], "description": "Stable server-owned explanation for why this Scenario is the next action." },
+          "action": { "type": "string", "enum": ["start", "resume"], "description": "Presentation intent only; the Scenario start endpoint remains authoritative and idempotently resumes an open attempt." },
+          "completedCount": { "type": "integer", "minimum": 0 },
+          "lastCompletedAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "ScenarioCatalog": {
         "type": "object",
         "additionalProperties": false,
