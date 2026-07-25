@@ -88,6 +88,8 @@ export type ReviewResult = {
   lastReviewedAt: string;
 };
 
+export const MAX_DUE_REVIEW_LESSON_ITEMS = 60;
+
 const EMPTY_MODE: ModeProgress = {
   attemptsToday: 0,
   successfulToday: 0,
@@ -146,6 +148,11 @@ export function normalizedWeeklyEvidence(progress: ProgressSummary): WeeklyProgr
     trend: EMPTY_TREND.map((entry) => ({ ...entry })),
     weakTopics: [],
   };
+}
+
+export function dueReviewLessonCount(dueNow: number): number {
+  if (!Number.isFinite(dueNow) || dueNow <= 0) return 0;
+  return Math.min(MAX_DUE_REVIEW_LESSON_ITEMS, Math.floor(dueNow));
 }
 
 export function objectiveSuccessRate(progress: ProgressSummary | null): number {
