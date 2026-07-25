@@ -16,13 +16,44 @@ function isMobile(page: Page): boolean {
 }
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
-  const dimensions = await page.evaluate(() => ({
-    viewport: document.documentElement.clientWidth,
-    document: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-  }));
+  const dimensions = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const documentWidth = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        const className = typeof element.className === "string"
+          ? element.className.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(".")
+          : "";
+        return {
+          selector: `${element.tagName.toLocaleLowerCase("en-US")}${element.id ? `#${element.id}` : ""}${className ? `.${className}` : ""}`,
+          left: Math.round(rect.left * 10) / 10,
+          right: Math.round(rect.right * 10) / 10,
+          width: Math.round(rect.width * 10) / 10,
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          display: style.display,
+          position: style.position,
+          minWidth: style.minWidth,
+          widthStyle: style.width,
+          whiteSpace: style.whiteSpace,
+          overflowWrap: style.overflowWrap,
+        };
+      })
+      .filter((item) => item.left < -1 || item.right > viewport + 1)
+      .sort((left, right) => (
+        Math.max(right.right - viewport, -right.left)
+        - Math.max(left.right - viewport, -left.left)
+      ))
+      .slice(0, 12);
+
+    return { viewport, document: documentWidth, offenders };
+  });
+
   expect(
     dimensions.document,
-    `horizontal overflow: viewport=${dimensions.viewport}px, document=${dimensions.document}px`,
+    `horizontal overflow: viewport=${dimensions.viewport}px, document=${dimensions.document}px, offenders=${JSON.stringify(dimensions.offenders)}`,
   ).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
