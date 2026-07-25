@@ -2,16 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 17:12 Europe/Berlin
+- Last verified: 2026-07-25 17:41 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Main SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`
-- Stage product SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`; Issue #12 reports deploy, public smoke and 12/12 public browser success in run `30157188680`
-- Latest merged PR: #217 `chore(agent): formalize LexiGo development harness`
-- PR #217 validation: full CI #1756 (`30160458210`) success on final head `d9bfc899abaecb94aa32d0d3b30db9231f13da77`; no unresolved review threads
-- Active branch: `fix/issue-196-scenario-review-contract`
-- Active Issue: #196, prerequisite contract correction for #24 before Scenario UI
-- Active PR: #218 (Draft)
-- PR #218 validation: CI #1760 (`30162517241`) succeeded on the corrected runtime head; final-head CI is pending after bounded OpenAPI and Agent Harness reconciliation
+- Main SHA: `15386321399f5386ff97d7d093c8a3c2777018be`
+- Stage product SHA: `15386321399f5386ff97d7d093c8a3c2777018be`; Issue #12 and run `30163844185` report deploy, public smoke and 12/12 public browser success
+- Latest merged PR: #218 `fix(scenarios): own objective review targets on the server`
+- PR #218 validation: final immutable-head CI #1770 (`30163260324`) succeeded on `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`; no unresolved review threads
+- Open PRs: none at verification
+- Active product branch/PR: none verified; merged branch `fix/issue-196-scenario-review-contract` still exists but is not active work
+- Active product Issue: #196 Scenario Lessons UI; Issue #24 remains open for final Scenario product reconciliation
 
 ## Completed
 
@@ -38,8 +37,10 @@
 ### Scenario backend/content foundation
 
 - PR #216 added six workplace scenario types, ordered steps, explicit outcomes and criteria, durable attempts, optimistic versioning, pause/resume/reload recovery, atomic step acceptance, fact/hypothesis storage, submission idempotency and ordinary Recall review-event persistence.
-- PR #216 passed CI #1744 and stage run `30157188680` on merge SHA `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-- Issue #24 remains open because frontend Scenario presentation and final product reconciliation are not complete.
+- PR #218 corrected the Scenario evidence ownership boundary: every seeded step has an immutable review target definition; public payloads expose only `reviewTarget.term`; accepted submissions resolve/create and enroll the concrete learning item atomically; correctness and rating are derived server-side; scheduler and review-event persistence remain centralized in the learning transaction writer.
+- `api/openapi-scenarios.json` is the bounded OpenAPI 3.1 source of truth for all seven authenticated Scenario routes and is protected by a dependency-free Go source-contract test.
+- PR #218 passed final CI #1770 on immutable head `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`, squash-merged as `15386321399f5386ff97d7d093c8a3c2777018be`, and deployed successfully to stage in run `30163844185`.
+- Issue #24 remains open because Scenario frontend presentation, completion UX, Progress/recommendation reconciliation and final product acceptance are not complete.
 
 ### Agent Harness
 
@@ -53,23 +54,16 @@ Required contracts include backend unit/race/integration/security; frontend lint
 
 ## In progress
 
-### #196 prerequisite — server-owned Scenario review target
-
-- Branch: `fix/issue-196-scenario-review-contract`
-- PR: #218 (Draft)
-- Base: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`
-- Confirmed defect: Scenario submit delegated arbitrary `wordId`, rating and submitted-answer evidence to the client although the step and approved Figma UI had no legitimate owner for those fields.
-- Implemented correction: immutable target definitions on all 18 steps; public `reviewTarget.term`; transactional target word resolution/creation and enrollment; deterministic whole-term server judgement; centralized trusted learning transaction; strict rejection of historical client-authored review fields.
-- Evidence: migration, learning/scenario unit tests, expanded end-to-end integration and bounded `api/openapi-scenarios.json` guarded by a dependency-free Go source-contract test.
-- CI: #1760 succeeded after the only initial failure—two `gofmt` differences—was corrected. A new immutable final-head run is required after the OpenAPI/memory commits.
-- Non-goals: no React/Figma/CSS, no scheduler-policy redesign, no dependencies/workflows/deployment and no visual baseline changes.
+No product implementation branch or PR is active at this verification point. Repository memory is being reconciled after PR #218 before the next product slice begins.
 
 ## Remaining roadmap
 
 ### 1. #196 — Scenario Lessons UI; reconcile #24
 
-- After PR #218 lands, implement the exact Figma-backed route island and active/completion states from nodes `76:100`, `76:127`, `76:219`.
+- Implement the exact Figma-backed route island and active/completion states from nodes `76:100`, `76:127`, `76:219`.
+- Use the merged server-owned Scenario contract without client-selected word IDs, client-authored correctness or duplicated scheduler logic.
 - Cover direct entry, start/resume/pause, response retry preservation, fact/hypothesis interaction, completion, Back/Forward, mobile/desktop, Light/Dark, keyboard, axe, reduced motion, 200% zoom, Linux visuals and stage.
+- Reconcile remaining Issue #24 acceptance criteria, including Progress/recommendation integration, only through explicit approved API and product contracts.
 
 ### 2. #197 — Dictionary catalog
 
@@ -113,29 +107,29 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Validation pending
 
-- PR #218 final-head CI after bounded OpenAPI and repository-memory writes.
-- PR #218 unresolved review-thread check and final metadata reconciliation.
-- Post-merge stage deploy/public smoke/browser evidence for the migration and runtime API correction.
-- Scenario React route, manual device validation, route-by-route Figma parity and moderated usability remain separate evidence classes.
+- Scenario React route, completion presentation, manual device validation, route-by-route Figma parity and final reconciliation of Issues #196/#24.
+- Progress/recommendation integration for completed Scenario attempts requires an explicit product contract and regression matrix in a later atomic slice.
+- Phrases and First Use design gaps require approved Figma states before implementation.
+- Final moderated usability evidence remains external work under #133.
 
 ## Blocked
 
-- Scenario UI remains blocked until PR #218 is merged and its post-merge runtime is verified.
 - Phrases and parts of First Use remain blocked where exact approved Figma states are absent.
 - Final usability closure is blocked on external moderated sessions (#133).
 
 ## Recently merged
 
-1. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
-2. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-3. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
-4. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
+1. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
+2. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+3. #216 — `feat(scenarios): add durable scenario learning contract` → `f2785be459a04b87511ab8d9f26d60b3da15669b`.
+4. #215 — `feat(progress): complete weekly weak-area recommendations` → `20188f7f64db066c599d2fd10daec965ce4a6e27`.
+5. #214 — `feat(progress): add retained-learning evidence` → `ba4070833bb6c33fce4d86ee1a560105ee001d5c`.
 
 ## Evidence
 
-- Live repository, PRs, checks, Issues, branch and deployment status were re-read at the verification timestamp.
-- Exact Scenario model, HTTP, repository, migrations, integration, learning transaction and bounded OpenAPI contract were inspected.
-- Exact Scenario Figma nodes were inspected for the downstream UI contract.
+- Live `main`, open PRs, retained merged branch, Issues #12/#24/#196, PR #218, final CI #1770, review threads and stage run `30163844185` were re-read at the verification timestamp.
+- Stage reports healthy API/frontend containers, HTTP 200 public smoke and 12/12 public Chromium/iOS WebKit browser checks on the merge SHA.
+- Exact Scenario runtime, migration, integration and bounded OpenAPI contracts are present in current `main` through PR #218.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
