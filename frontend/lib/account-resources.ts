@@ -143,6 +143,57 @@ function isProgressModes(value: unknown): boolean {
     && isModeProgress(value.legacy);
 }
 
+
+function isPercentage(value: unknown): boolean {
+  return Number.isInteger(value) && isNonNegativeNumber(value) && value <= 100;
+}
+
+function isDateOnly(value: unknown): boolean {
+  return isString(value) && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00Z`));
+}
+
+function isDailyRecallEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isDateOnly(value.date)
+    && isNonNegativeNumber(value.attempts)
+    && isNonNegativeNumber(value.successful)
+    && isPercentage(value.rate);
+}
+
+function isTopicEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isString(value.topic)
+    && isNonNegativeNumber(value.attempts)
+    && isNonNegativeNumber(value.successful)
+    && isNonNegativeNumber(value.errors)
+    && isPercentage(value.rate);
+}
+
+function isWeeklyProgressEvidence(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return isDateOnly(value.weekStart)
+    && isDateOnly(value.weekEnd)
+    && isNonNegativeNumber(value.recallAttempts)
+    && isNonNegativeNumber(value.recallSuccessful)
+    && isPercentage(value.recallRate)
+    && isNonNegativeNumber(value.previousRecallAttempts)
+    && isNonNegativeNumber(value.previousRecallSuccessful)
+    && isPercentage(value.previousRecallRate)
+    && isNonNegativeNumber(value.choiceAttempts)
+    && isNonNegativeNumber(value.choiceSuccessful)
+    && isPercentage(value.choiceRate)
+    && isNonNegativeNumber(value.reviews)
+    && isNonNegativeNumber(value.lessons)
+    && isNonNegativeNumber(value.activeMinutes)
+    && Array.isArray(value.trend)
+    && value.trend.length === 7
+    && value.trend.every(isDailyRecallEvidence)
+    && Array.isArray(value.weakTopics)
+    && value.weakTopics.length <= 3
+    && value.weakTopics.every(isTopicEvidence)
+    && (value.strongTopic === undefined || isTopicEvidence(value.strongTopic));
+}
+
 export function isProgressSummaryPayload(value: unknown): value is ProgressSummary {
   if (!isRecord(value)) return false;
   if (!REQUIRED_PROGRESS_FIELDS.every((field) => isNonNegativeNumber(value[field]))) return false;
@@ -152,5 +203,6 @@ export function isProgressSummaryPayload(value: unknown): value is ProgressSumma
   if (value.nextDueAt !== undefined && !isTimestamp(value.nextDueAt)) return false;
   if (value.eventSchemaVersion !== undefined && !isNonNegativeNumber(value.eventSchemaVersion)) return false;
   if (value.modes !== undefined && !isProgressModes(value.modes)) return false;
+  if (value.weekly !== undefined && !isWeeklyProgressEvidence(value.weekly)) return false;
   return true;
 }

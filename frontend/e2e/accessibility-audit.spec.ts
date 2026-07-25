@@ -36,12 +36,24 @@ async function expectNoBlockingAxeViolations(page: Page): Promise<void> {
   expect(blocking, formatViolations(blocking)).toEqual([]);
 }
 
+async function openCalendarDialog(page: Page): Promise<void> {
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const disclosure = reminder.locator(":scope > summary");
+  await expect(disclosure).toBeVisible();
+  await disclosure.click();
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  await preview.getByRole("button", { name: "Настроить календарь" }).click();
+  await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+}
+
 const AUTHENTICATED_ROUTES = [
   { name: "home", url: "/", heading: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "dictionary", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
-  { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
+  { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Quality Gates" },
   { name: "word detail", url: "/words/101", heading: "rollback" },
   { name: "phrase detail", url: "/phrases/phrase-root-cause", heading: "We need to identify the root cause." },
@@ -69,9 +81,8 @@ test.describe("blocking accessibility gate", () => {
     test("calendar dialog has no critical or serious WCAG violations", async ({ page }) => {
       const runtimeErrors = captureRuntimeErrors(page);
       await page.goto("/progress", { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
-      await page.getByRole("button", { name: "Настроить календарь" }).click();
-      await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+      await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
+      await openCalendarDialog(page);
       await expectNoBlockingAxeViolations(page);
       expect(runtimeErrors).toEqual([]);
     });

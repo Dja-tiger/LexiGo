@@ -64,6 +64,14 @@ const LexigoDictionaryApp = dynamic(
   },
 );
 
+const LexigoProgressApp = dynamic(
+  () => import("./lexigo-progress-app").then((module) => module.LexigoProgressApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
 function currentReturnTo(): string | null {
   if (!window.location.pathname.startsWith("/lesson/")) return null;
   return `${window.location.pathname}${window.location.search}`;
@@ -81,6 +89,10 @@ function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | nul
 
 function isDictionaryRoute(pathname: string): boolean {
   return pathname === "/dictionary" || pathname.startsWith("/words/");
+}
+
+function isProgressRoute(pathname: string): boolean {
+  return pathname === "/progress";
 }
 
 export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
@@ -241,6 +253,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }
 
   const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
+  const useProgressIsland = isProgressRoute(pathname);
   const routeKey = initialSession?.user.id ?? "guest";
 
   return (
@@ -266,6 +279,12 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
       {useDictionaryIsland ? (
         <LexigoDictionaryApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useProgressIsland ? (
+        <LexigoProgressApp
           key={routeKey}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}

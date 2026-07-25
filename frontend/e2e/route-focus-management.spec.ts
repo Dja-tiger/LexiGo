@@ -36,7 +36,7 @@ const PROGRESS = {
   successfulToday: 0,
   objectiveReviewsToday: 0,
   objectiveSuccessfulToday: 0,
-  reviewsTotal: 0,
+  reviewsTotal: 1,
   dailyGoal: 30,
   currentStreak: 3,
   longestStreak: 5,
@@ -286,13 +286,13 @@ test("back and forward restore the matching scroll position and main focus", asy
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
-await clickPrimaryNavigation(page, "library");
-await expect(page).toHaveURL(/\/dictionary$/);
-await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
-await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
-await expect(page).toHaveURL(/\/phrases$/);
-await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
-await expectMainFocus(page, "Технические фразы");
+  await clickPrimaryNavigation(page, "library");
+  await expect(page).toHaveURL(/\/dictionary$/);
+  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+  await expect(page).toHaveURL(/\/phrases$/);
+  await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
+  await expectMainFocus(page, "Технические фразы");
 
   await page.evaluate(() => window.scrollTo({ top: 1_100, behavior: "auto" }));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
@@ -362,13 +362,28 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
 
   await progressNavigation.click();
   await expectMainFocus(page, "Прогресс");
-  const progressFill = page.getByRole("progressbar", {
-    name: "Выполнение дневной цели",
-  }).locator("span");
-  await expect(progressFill).toHaveCSS("transition-duration", "0s");
-  expect(await progressFill.evaluate((element) => element.getAnimations().length)).toBe(0);
+  const progressBars = page.locator(".lx-progress-evidence__chart .lx-progress-evidence__bar");
+  await expect(progressBars).toHaveCount(7);
+  const progressMotion = await progressBars.evaluateAll((elements) => elements.map((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      transitionDurationsMilliseconds: style.transitionDuration.split(",").map((duration) => {
+        const normalized = duration.trim();
+        const value = Number.parseFloat(normalized);
+        return normalized.endsWith("ms") ? value : value * 1_000;
+      }),
+      animations: element.getAnimations().length,
+    };
+  }));
+  expect(progressMotion.every((state) => (
+    state.transitionDurationsMilliseconds.every((duration) => duration <= 0.01)
+    && state.animations === 0
+  ))).toBe(true);
 
-  await page.getByRole("button", { name: "Настроить календарь" }).click();
+  const reminderEntry = page.locator("details.lx-route-reminder-entry");
+  await reminderEntry.locator("summary").click();
+  await expect(reminderEntry).toHaveAttribute("open", "");
+  await reminderEntry.getByRole("button", { name: "Настроить календарь" }).click();
   const calendarBackdrop = page.locator(".lx-calendar-modal-backdrop");
   const calendarDialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(calendarDialog).toBeVisible();

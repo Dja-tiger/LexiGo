@@ -87,9 +87,15 @@ async function installMocks(page: Page) {
 }
 
 async function openDialog(page: Page) {
-  const trigger = page.getByRole("button", { name: "Настроить календарь" });
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const trigger = reminder.locator(":scope > summary");
   await expect(trigger).toBeVisible();
   await trigger.click();
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  await preview.getByRole("button", { name: "Настроить календарь" }).click();
+
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
   return { trigger, dialog };
@@ -100,7 +106,7 @@ test.describe.configure({ timeout: 60_000 });
 test.beforeEach(async ({ page }) => {
   await installMocks(page);
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
 });
 
 test("calendar dialog isolates the application and contains keyboard and programmatic focus", async ({ page }) => {

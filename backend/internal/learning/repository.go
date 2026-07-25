@@ -140,7 +140,17 @@ func (r *Repository) ReviewWord(
 }
 func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffsetMinutes int) (ProgressSummary, error) {
 	timezoneOffsetMinutes = clampOffset(timezoneOffsetMinutes)
-	result := ProgressSummary{EventSchemaVersion: 2}
+	localNow := time.Now().UTC().Add(-time.Duration(timezoneOffsetMinutes) * time.Minute)
+	weekStartLocal := startOfWeek(dateOnly(localNow))
+	weekStartUTC := weekStartLocal.Add(time.Duration(timezoneOffsetMinutes) * time.Minute)
+	nextWeekUTC := weekStartUTC.AddDate(0, 0, 7)
+	result := ProgressSummary{
+		EventSchemaVersion: 2,
+		Weekly: WeeklyProgressEvidence{
+			Trend:      make([]DailyRecallEvidence, 0, 7),
+			WeakTopics: make([]TopicEvidence, 0, 3),
+		},
+	}
 
 	if err := r.pool.QueryRow(ctx, `
 		select count(*) filter (where word.kind = 'word')::int,
@@ -245,7 +255,7 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		cross join bounds
 		where current_review.user_id = $1::uuid
 		  and current_review.event_schema_version = 2
-		  and current_review.answer_mode in ('recall', 'choice')
+		  and current_review.answer_mode = 'recall'
 		  and current_review.correct is true
 		  and current_review.grade = 5
 		  and current_review.reviewed_at >= bounds.week_start
@@ -255,7 +265,7 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 			where previous_review.user_id = current_review.user_id
 			  and previous_review.word_id = current_review.word_id
 			  and previous_review.event_schema_version = 2
-			  and previous_review.answer_mode in ('recall', 'choice')
+			  and previous_review.answer_mode = 'recall'
 			  and previous_review.correct is true
 			  and previous_review.grade = 5
 			  and previous_review.reviewed_at < bounds.week_start
@@ -266,6 +276,18 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		&result.RetainedPhrasesWeek,
 	); err != nil {
 		return ProgressSummary{}, fmt.Errorf("query retained learning progress: %w", err)
+	}
+
+	if err := r.populateWeeklyEvidence(
+		ctx,
+		userID,
+		timezoneOffsetMinutes,
+		weekStartLocal,
+		weekStartUTC,
+		nextWeekUTC,
+		&result,
+	); err != nil {
+		return ProgressSummary{}, err
 	}
 
 	if err := r.pool.QueryRow(ctx, `
@@ -301,9 +323,197 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		return ProgressSummary{}, fmt.Errorf("iterate review days: %w", err)
 	}
 
-	localNow := time.Now().UTC().Add(-time.Duration(timezoneOffsetMinutes) * time.Minute)
 	result.CurrentStreak, result.LongestStreak = calculateStreaks(days, dateOnly(localNow))
 	return result, nil
+}
+
+func (r *Repository) populateWeeklyEvidence(
+	ctx context.Context,
+	userID string,
+	timezoneOffsetMinutes int,
+	weekStartLocal time.Time,
+	weekStartUTC time.Time,
+	nextWeekUTC time.Time,
+	result *ProgressSummary,
+) error {
+	previousWeekUTC := weekStartUTC.AddDate(0, 0, -7)
+	var activeMilliseconds int64
+	if err := r.pool.QueryRow(ctx, `
+		select count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2 and answer_mode = 'recall'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2 and answer_mode = 'recall' and correct is true
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $4 and reviewed_at < $2
+		             and event_schema_version = 2 and answer_mode = 'recall'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $4 and reviewed_at < $2
+		             and event_schema_version = 2 and answer_mode = 'recall' and correct is true
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2 and answer_mode = 'choice'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2 and answer_mode = 'choice' and correct is true
+		       )::int,
+		       count(*) filter (where reviewed_at >= $2 and reviewed_at < $3)::int,
+		       coalesce(sum(least(coalesce(response_ms, 0), 300000))
+		           filter (where reviewed_at >= $2 and reviewed_at < $3), 0)::bigint
+		from review_events
+		where user_id = $1::uuid
+		  and reviewed_at >= $4
+		  and reviewed_at < $3
+	`, userID, weekStartUTC, nextWeekUTC, previousWeekUTC).Scan(
+		&result.Weekly.RecallAttempts,
+		&result.Weekly.RecallSuccessful,
+		&result.Weekly.PreviousRecallAttempts,
+		&result.Weekly.PreviousRecallSuccessful,
+		&result.Weekly.ChoiceAttempts,
+		&result.Weekly.ChoiceSuccessful,
+		&result.Weekly.Reviews,
+		&activeMilliseconds,
+	); err != nil {
+		return fmt.Errorf("query weekly review evidence: %w", err)
+	}
+	result.Weekly.RecallRate = percentage(result.Weekly.RecallSuccessful, result.Weekly.RecallAttempts)
+	result.Weekly.PreviousRecallRate = percentage(result.Weekly.PreviousRecallSuccessful, result.Weekly.PreviousRecallAttempts)
+	result.Weekly.ChoiceRate = percentage(result.Weekly.ChoiceSuccessful, result.Weekly.ChoiceAttempts)
+	if activeMilliseconds > 0 {
+		result.Weekly.ActiveMinutes = int((activeMilliseconds + 59999) / 60000)
+	}
+
+	if err := r.pool.QueryRow(ctx, `
+		select count(*)::int
+		from lesson_sessions
+		where user_id = $1::uuid
+		  and status = 'completed'
+		  and completed_at >= $2
+		  and completed_at < $3
+	`, userID, weekStartUTC, nextWeekUTC).Scan(&result.Weekly.Lessons); err != nil {
+		return fmt.Errorf("query weekly completed lessons: %w", err)
+	}
+
+	trendRows, err := r.pool.Query(ctx, `
+		with days as (
+			select generate_series(0, 6) as day_index
+		)
+		select $2::timestamptz + day_index * interval '1 day' as day_start,
+		       count(review_event.id) filter (
+		           where review_event.event_schema_version = 2
+		             and review_event.answer_mode = 'recall'
+		       )::int,
+		       count(review_event.id) filter (
+		           where review_event.event_schema_version = 2
+		             and review_event.answer_mode = 'recall'
+		             and review_event.correct is true
+		       )::int
+		from days
+		left join review_events review_event
+		  on review_event.user_id = $1::uuid
+		 and review_event.reviewed_at >= $2::timestamptz + day_index * interval '1 day'
+		 and review_event.reviewed_at < $2::timestamptz + (day_index + 1) * interval '1 day'
+		group by day_index
+		order by day_index
+	`, userID, weekStartUTC)
+	if err != nil {
+		return fmt.Errorf("query weekly recall trend: %w", err)
+	}
+	defer trendRows.Close()
+
+	result.Weekly.Trend = make([]DailyRecallEvidence, 0, 7)
+	for trendRows.Next() {
+		var dayStart time.Time
+		var point DailyRecallEvidence
+		if err := trendRows.Scan(&dayStart, &point.Attempts, &point.Successful); err != nil {
+			return fmt.Errorf("scan weekly recall trend: %w", err)
+		}
+		point.Date = dayStart.Add(-time.Duration(timezoneOffsetMinutes) * time.Minute).Format("2006-01-02")
+		point.Rate = percentage(point.Successful, point.Attempts)
+		result.Weekly.Trend = append(result.Weekly.Trend, point)
+	}
+	if err := trendRows.Err(); err != nil {
+		return fmt.Errorf("iterate weekly recall trend: %w", err)
+	}
+
+	weakRows, err := r.pool.Query(ctx, `
+		select word.topic,
+		       count(*)::int,
+		       count(*) filter (where review_event.correct is true)::int,
+		       count(*) filter (where review_event.correct is not true)::int
+		from review_events review_event
+		join words word on word.id = review_event.word_id
+		where review_event.user_id = $1::uuid
+		  and review_event.reviewed_at >= $2
+		  and review_event.reviewed_at < $3
+		  and review_event.event_schema_version = 2
+		  and review_event.answer_mode = 'recall'
+		group by word.topic
+		having count(*) filter (where review_event.correct is not true) > 0
+		order by count(*) filter (where review_event.correct is not true) desc,
+		         count(*) filter (where review_event.correct is true)::float / count(*) asc,
+		         count(*) desc,
+		         word.topic
+		limit 3
+	`, userID, weekStartUTC, nextWeekUTC)
+	if err != nil {
+		return fmt.Errorf("query weak recall topics: %w", err)
+	}
+	defer weakRows.Close()
+
+	result.Weekly.WeakTopics = make([]TopicEvidence, 0, 3)
+	for weakRows.Next() {
+		var topic TopicEvidence
+		if err := weakRows.Scan(&topic.Topic, &topic.Attempts, &topic.Successful, &topic.Errors); err != nil {
+			return fmt.Errorf("scan weak recall topic: %w", err)
+		}
+		topic.Rate = percentage(topic.Successful, topic.Attempts)
+		result.Weekly.WeakTopics = append(result.Weekly.WeakTopics, topic)
+	}
+	if err := weakRows.Err(); err != nil {
+		return fmt.Errorf("iterate weak recall topics: %w", err)
+	}
+
+	var strong TopicEvidence
+	if err := r.pool.QueryRow(ctx, `
+		select word.topic,
+		       count(*)::int,
+		       count(*) filter (where review_event.correct is true)::int,
+		       count(*) filter (where review_event.correct is not true)::int
+		from review_events review_event
+		join words word on word.id = review_event.word_id
+		where review_event.user_id = $1::uuid
+		  and review_event.reviewed_at >= $2
+		  and review_event.reviewed_at < $3
+		  and review_event.event_schema_version = 2
+		  and review_event.answer_mode = 'recall'
+		group by word.topic
+		having count(*) >= 2
+		order by count(*) filter (where review_event.correct is true)::float / count(*) desc,
+		         count(*) desc,
+		         word.topic
+		limit 1
+	`, userID, weekStartUTC, nextWeekUTC).Scan(
+		&strong.Topic,
+		&strong.Attempts,
+		&strong.Successful,
+		&strong.Errors,
+	); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("query strong recall topic: %w", err)
+	} else if err == nil {
+		strong.Rate = percentage(strong.Successful, strong.Attempts)
+		result.Weekly.StrongTopic = &strong
+	}
+
+	result.Weekly.WeekStart = weekStartLocal.Format("2006-01-02")
+	result.Weekly.WeekEnd = weekStartLocal.AddDate(0, 0, 6).Format("2006-01-02")
+	return nil
 }
 
 func (r *Repository) SetDailyGoal(ctx context.Context, userID string, dailyGoal int) error {
@@ -327,6 +537,18 @@ func clampOffset(offset int) int {
 		return 840
 	}
 	return offset
+}
+
+func startOfWeek(day time.Time) time.Time {
+	daysSinceMonday := (int(day.Weekday()) + 6) % 7
+	return day.AddDate(0, 0, -daysSinceMonday)
+}
+
+func percentage(successful, attempts int) int {
+	if attempts <= 0 {
+		return 0
+	}
+	return (successful*100 + attempts/2) / attempts
 }
 
 func dateOnly(value time.Time) time.Time {

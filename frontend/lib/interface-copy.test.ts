@@ -13,6 +13,9 @@ describe("interface copy", () => {
     expect(topicLabel("Data Engineering")).toBe("Инженерия данных");
     expect(topicLabel("Incident")).toBe("Инциденты");
     expect(topicLabel("Incidents")).toBe("Инциденты");
+    expect(topicLabel("Incident updates")).toBe("Обновления по инцидентам");
+    expect(topicLabel("Architecture trade-offs")).toBe("Архитектурные компромиссы");
+    expect(topicLabel("Backend terminology")).toBe("Backend-терминология");
     expect(topicLabel("Release")).toBe("Релизы");
     expect(topicLabel("Storage")).toBe("Хранение данных");
     expect(topicLabel("  Travel  ")).toBe("Путешествия");

@@ -12,6 +12,41 @@ export type ProgressModes = {
   legacy: ModeProgress;
 };
 
+export type DailyRecallEvidence = {
+  date: string;
+  attempts: number;
+  successful: number;
+  rate: number;
+};
+
+export type TopicEvidence = {
+  topic: string;
+  attempts: number;
+  successful: number;
+  errors: number;
+  rate: number;
+};
+
+export type WeeklyProgressEvidence = {
+  weekStart: string;
+  weekEnd: string;
+  recallAttempts: number;
+  recallSuccessful: number;
+  recallRate: number;
+  previousRecallAttempts: number;
+  previousRecallSuccessful: number;
+  previousRecallRate: number;
+  choiceAttempts: number;
+  choiceSuccessful: number;
+  choiceRate: number;
+  reviews: number;
+  lessons: number;
+  activeMinutes: number;
+  trend: DailyRecallEvidence[];
+  weakTopics: TopicEvidence[];
+  strongTopic?: TopicEvidence;
+};
+
 export type ProgressSummary = {
   dueNow: number;
   dueWords: number;
@@ -36,6 +71,7 @@ export type ProgressSummary = {
   retainedPhrasesWeek: number;
   eventSchemaVersion?: number;
   modes?: ProgressModes;
+  weekly?: WeeklyProgressEvidence;
   nextDueAt?: string;
 };
 
@@ -52,12 +88,21 @@ export type ReviewResult = {
   lastReviewedAt: string;
 };
 
+export const MAX_DUE_REVIEW_LESSON_ITEMS = 60;
+
 const EMPTY_MODE: ModeProgress = {
   attemptsToday: 0,
   successfulToday: 0,
   attemptsTotal: 0,
   successfulTotal: 0,
 };
+
+const EMPTY_TREND: DailyRecallEvidence[] = Array.from({ length: 7 }, () => ({
+  date: "",
+  attempts: 0,
+  successful: 0,
+  rate: 0,
+}));
 
 export function normalizedProgressModes(progress: ProgressSummary | null): ProgressModes {
   return progress?.modes ?? {
@@ -68,11 +113,53 @@ export function normalizedProgressModes(progress: ProgressSummary | null): Progr
   };
 }
 
+export function normalizedWeeklyEvidence(progress: ProgressSummary): WeeklyProgressEvidence {
+  if (progress.weekly) {
+    return {
+      ...progress.weekly,
+      trend: progress.weekly.trend.length === 7
+        ? progress.weekly.trend
+        : [...progress.weekly.trend, ...EMPTY_TREND].slice(0, 7),
+      weakTopics: progress.weekly.weakTopics ?? [],
+    };
+  }
+
+  const modes = normalizedProgressModes(progress);
+  const recallAttempts = modes.recall.attemptsToday;
+  const recallSuccessful = modes.recall.successfulToday;
+  const choiceAttempts = modes.choice.attemptsToday;
+  const choiceSuccessful = modes.choice.successfulToday;
+
+  return {
+    weekStart: "",
+    weekEnd: "",
+    recallAttempts,
+    recallSuccessful,
+    recallRate: percentage(recallSuccessful, recallAttempts),
+    previousRecallAttempts: 0,
+    previousRecallSuccessful: 0,
+    previousRecallRate: 0,
+    choiceAttempts,
+    choiceSuccessful,
+    choiceRate: percentage(choiceSuccessful, choiceAttempts),
+    reviews: progress.reviewsToday,
+    lessons: 0,
+    activeMinutes: 0,
+    trend: EMPTY_TREND.map((entry) => ({ ...entry })),
+    weakTopics: [],
+  };
+}
+
+export function dueReviewLessonCount(dueNow: number): number {
+  if (!Number.isFinite(dueNow) || dueNow <= 0) return 0;
+  return Math.min(MAX_DUE_REVIEW_LESSON_ITEMS, Math.floor(dueNow));
+}
+
 export function objectiveSuccessRate(progress: ProgressSummary | null): number {
   if (!progress) return 0;
   const attempts = progress.objectiveReviewsToday ?? progress.reviewsToday;
   const successful = progress.objectiveSuccessfulToday ?? progress.successfulToday;
-  return attempts > 0 ? Math.round((successful / attempts) * 100) : 0;
+  return percentage(successful, attempts);
 }
 
 export function goalPercent(progress: ProgressSummary | null): number {
@@ -84,4 +171,8 @@ export function ratingLabel(rating: ReviewRating): string {
   if (rating === "known") return "Знал";
   if (rating === "almost") return "Почти";
   return "Не знал";
+}
+
+function percentage(successful: number, attempts: number): number {
+  return attempts > 0 ? Math.round((successful / attempts) * 100) : 0;
 }

@@ -147,8 +147,17 @@ async function disableFileSharing(context: BrowserContext) {
 
 async function openCalendarDialog(page: Page) {
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
-  await page.getByRole("button", { name: "Настроить календарь" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
+
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const disclosure = reminder.locator(":scope > summary");
+  await expect(disclosure).toBeVisible();
+  await disclosure.click();
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  await preview.getByRole("button", { name: "Настроить календарь" }).click();
+
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
   return dialog;

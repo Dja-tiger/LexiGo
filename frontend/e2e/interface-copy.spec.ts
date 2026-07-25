@@ -40,8 +40,14 @@ test.describe("interface copy contract", () => {
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText(retained.label, { exact: true })).toBeVisible();
+    const retainedMetric = page.locator(".lx-progress-evidence__metric").filter({ hasText: retained.label });
+    await expect(retainedMetric).toHaveCount(1);
+    await expect(retainedMetric.locator("dt")).toContainText(retained.label);
     await expect(page.getByText(retained.explanation, { exact: true })).toBeVisible();
+
+    const modeBreakdown = page.getByText("Разделение по режимам", { exact: true });
+    await expect(modeBreakdown).toBeVisible();
+    await modeBreakdown.click();
     await expect(page.getByText(recall.label, { exact: true })).toBeVisible();
     await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());

@@ -60,7 +60,7 @@ const ROUTES: RouteCase[] = [
   {
     route: "/progress",
     waitUntilReady: async (page) => {
-      await expect(page.getByRole("heading", { level: 1, name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
     },
   },
   {

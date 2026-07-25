@@ -173,6 +173,22 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		}
 	}
 
+	if _, err := pg.Exec(ctx, `
+	insert into review_events(
+		user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
+		answer_revealed, event_schema_version
+	) values ($1::uuid, $2, 0, 120000, now(), 'again', 'recall', false, false, 2)
+`, registered.User.ID, words.Items[3].ID); err != nil {
+		t.Fatalf("insert incorrect recall event: %v", err)
+	}
+	if _, err := pg.Exec(ctx, `
+	insert into lesson_sessions(
+		user_id, source, study_mode, lesson_size, status, completed_at
+	) values ($1::uuid, 'mixed', 'recall', '15', 'completed', now())
+`, registered.User.ID); err != nil {
+		t.Fatalf("insert completed lesson: %v", err)
+	}
+
 	var progress struct {
 		ReviewsToday             int `json:"reviewsToday"`
 		SuccessfulToday          int `json:"successfulToday"`
@@ -180,7 +196,37 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		ObjectiveSuccessfulToday int `json:"objectiveSuccessfulToday"`
 		RetainedItemsWeek        int `json:"retainedItemsWeek"`
 		EventSchemaVersion       int `json:"eventSchemaVersion"`
-		Modes                    struct {
+
+		Weekly struct {
+			WeekStart                string `json:"weekStart"`
+			WeekEnd                  string `json:"weekEnd"`
+			RecallAttempts           int    `json:"recallAttempts"`
+			RecallSuccessful         int    `json:"recallSuccessful"`
+			RecallRate               int    `json:"recallRate"`
+			PreviousRecallAttempts   int    `json:"previousRecallAttempts"`
+			PreviousRecallSuccessful int    `json:"previousRecallSuccessful"`
+			PreviousRecallRate       int    `json:"previousRecallRate"`
+			ChoiceAttempts           int    `json:"choiceAttempts"`
+			ChoiceSuccessful         int    `json:"choiceSuccessful"`
+			ChoiceRate               int    `json:"choiceRate"`
+			Reviews                  int    `json:"reviews"`
+			Lessons                  int    `json:"lessons"`
+			ActiveMinutes            int    `json:"activeMinutes"`
+			Trend                    []struct {
+				Date       string `json:"date"`
+				Attempts   int    `json:"attempts"`
+				Successful int    `json:"successful"`
+				Rate       int    `json:"rate"`
+			} `json:"trend"`
+			WeakTopics []struct {
+				Topic      string `json:"topic"`
+				Attempts   int    `json:"attempts"`
+				Successful int    `json:"successful"`
+				Errors     int    `json:"errors"`
+				Rate       int    `json:"rate"`
+			} `json:"weakTopics"`
+		} `json:"weekly"`
+		Modes struct {
 			Study struct {
 				AttemptsToday int `json:"attemptsToday"`
 			} `json:"study"`
@@ -199,14 +245,33 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 		} `json:"modes"`
 	}
 	getAuthenticatedJSON(t, testServer.URL+"/api/v1/progress?timezoneOffsetMinutes=0", registered.Tokens.AccessToken, http.StatusOK, &progress)
-	if progress.ReviewsToday != 5 || progress.ObjectiveReviewsToday != 2 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 3 {
+	if progress.ReviewsToday != 6 || progress.ObjectiveReviewsToday != 3 || progress.ObjectiveSuccessfulToday != 2 || progress.SuccessfulToday != 3 {
 		t.Fatalf("objective progress = %+v", progress)
 	}
-	if progress.Modes.Study.AttemptsToday != 2 || progress.Modes.Recall.AttemptsToday != 1 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 || progress.Modes.Legacy.AttemptsToday != 1 || progress.Modes.Legacy.SuccessfulToday != 1 {
+	if progress.Modes.Study.AttemptsToday != 2 || progress.Modes.Recall.AttemptsToday != 2 || progress.Modes.Recall.SuccessfulToday != 1 || progress.Modes.Choice.AttemptsToday != 1 || progress.Modes.Choice.SuccessfulToday != 1 || progress.Modes.Legacy.AttemptsToday != 1 || progress.Modes.Legacy.SuccessfulToday != 1 {
 		t.Fatalf("mode progress = %+v", progress.Modes)
 	}
-	if progress.RetainedItemsWeek != 2 || progress.EventSchemaVersion != 2 {
+	if progress.RetainedItemsWeek != 1 || progress.EventSchemaVersion != 2 {
 		t.Fatalf("retained/schema progress = %+v", progress)
+	}
+
+	if progress.Weekly.RecallAttempts != 2 || progress.Weekly.RecallSuccessful != 1 || progress.Weekly.RecallRate != 50 {
+		t.Fatalf("weekly recall evidence = %+v", progress.Weekly)
+	}
+	if progress.Weekly.PreviousRecallAttempts != 1 || progress.Weekly.PreviousRecallSuccessful != 1 || progress.Weekly.PreviousRecallRate != 100 {
+		t.Fatalf("previous weekly recall evidence = %+v", progress.Weekly)
+	}
+	if progress.Weekly.ChoiceAttempts != 1 || progress.Weekly.ChoiceSuccessful != 1 || progress.Weekly.ChoiceRate != 100 {
+		t.Fatalf("weekly choice evidence = %+v", progress.Weekly)
+	}
+	if progress.Weekly.Reviews != 6 || progress.Weekly.Lessons != 1 || progress.Weekly.ActiveMinutes != 3 {
+		t.Fatalf("weekly activity = %+v", progress.Weekly)
+	}
+	if len(progress.Weekly.Trend) != 7 || len(progress.Weekly.WeakTopics) == 0 || progress.Weekly.WeakTopics[0].Errors != 1 {
+		t.Fatalf("weekly trend/topics = %+v", progress.Weekly)
+	}
+	if progress.Weekly.WeekStart == "" || progress.Weekly.WeekEnd == "" {
+		t.Fatalf("weekly bounds = %+v", progress.Weekly)
 	}
 
 	var lesson struct {

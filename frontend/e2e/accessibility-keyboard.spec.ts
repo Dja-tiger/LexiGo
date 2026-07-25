@@ -163,6 +163,24 @@ function visiblePrimaryRoute(page: Page, view: "home" | "learn" | "library" | "p
   return page.locator(`.lx-route-nav [data-navigation-view="${view}"]:visible`);
 }
 
+async function openReminderDialogWithKeyboard(page: Page) {
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const trigger = reminder.locator(":scope > summary");
+  await trigger.focus();
+  await expectVisibleFocusRing(trigger);
+  await page.keyboard.press("Enter");
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  const configure = preview.getByRole("button", { name: "Настроить календарь" });
+  await configure.focus();
+  await page.keyboard.press("Enter");
+
+  const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
+  await expect(dialog).toBeVisible();
+  return { trigger, dialog };
+}
+
 test.describe.configure({ timeout: 60_000 });
 
 test.beforeEach(async ({ page }) => {
@@ -249,12 +267,8 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(page.getByRole("heading", { name: "keyboard access" })).toBeVisible();
 
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
-  const calendarTrigger = page.getByRole("button", { name: "Настроить календарь" });
-  await calendarTrigger.focus();
-  await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
-  await expect(dialog).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
+  const { trigger: calendarTrigger, dialog } = await openReminderDialogWithKeyboard(page);
   await expect(page.getByRole("heading", { name: "Напоминание об английском" })).toBeVisible();
 
   const title = dialog.getByRole("heading", { name: "Напоминание об английском" });
@@ -279,12 +293,12 @@ for (const target of [
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "library", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
-  { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
+  { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Keyboard User" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
-    await expect(page.getByRole("heading", { level: 1, name: target.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: target.heading, exact: target.url === "/progress" })).toBeVisible();
     await expectKeyboardAxeBaseline(page);
     await expectNoPositiveTabIndex(page);
   });
@@ -292,14 +306,8 @@ for (const target of [
 
 test("axe keyboard baseline: calendar dialog", async ({ page }) => {
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
-
-  const headerTrigger = page.getByRole("button", { name: "Уведомления" });
-  const cardTrigger = page.getByRole("button", { name: "Настроить календарь" });
-  if (await headerTrigger.isVisible()) await headerTrigger.click();
-  else await cardTrigger.click();
-
-  await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
+  await openReminderDialogWithKeyboard(page);
   await expectKeyboardAxeBaseline(page);
   await expectNoPositiveTabIndex(page);
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  dueReviewLessonCount,
   goalPercent,
   normalizedProgressModes,
   objectiveSuccessRate,
@@ -39,6 +40,12 @@ describe("progress helpers", () => {
 
   it("calculates partial daily progress", () => {
     expect(goalPercent(progress(9, 30))).toBe(30);
+  });
+
+  it("bounds due Recall lessons to the server-supported session size", () => {
+    expect(dueReviewLessonCount(4)).toBe(4);
+    expect(dueReviewLessonCount(100)).toBe(60);
+    expect(dueReviewLessonCount(0)).toBe(0);
   });
 
   it("uses objective attempts instead of passive study in success rate", () => {

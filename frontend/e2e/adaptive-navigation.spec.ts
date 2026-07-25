@@ -149,6 +149,15 @@ async function installAPI(page: Page) {
         error: { code: "active_lesson_not_found", message: "active lesson was not found" },
       });
     }
+    if (path.startsWith("/api/v1/phrases/")) {
+      const slug = decodeURIComponent(path.slice("/api/v1/phrases/".length));
+      const phrase = PHRASES.find((item) => item.slug === slug);
+      return phrase
+        ? fulfillJSON(route, 200, phrase)
+        : fulfillJSON(route, 404, {
+            error: { code: "phrase_not_found", message: "phrase was not found" },
+          });
+    }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due")
       && url.searchParams.get("kind") === "phrase") {
       return fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
@@ -321,8 +330,10 @@ test("medium width uses a labelled rail and restores the previous tab target and
 
   const firstPhrase = page
     .getByRole("list", { name: "Результаты каталога фраз" })
-    .getByRole("link")
-    .first();
+    .getByRole("link", {
+      name: "Responsive UI Keep navigation state 1 сохранять состояние навигации 1 Открыть карточку",
+      exact: true,
+    });
   await firstPhrase.click();
   await expect(page).toHaveURL(/\/phrases\/adaptive-navigation-1$/);
   await expect(page.getByRole("heading", { name: "Keep navigation state 1" })).toBeVisible();
