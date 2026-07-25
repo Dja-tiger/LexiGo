@@ -9,6 +9,7 @@ import {
   captureRuntimeErrors,
   installQualityGateAPI,
 } from "./support/quality-gates";
+import { SCENARIO_DETAIL } from "./support/scenario-fixture";
 
 type RoutePath = keyof typeof bundleBudgets.routes;
 
@@ -75,6 +76,12 @@ const ROUTES: RouteCase[] = [
       await expect(page.getByRole("button", { name: "Продолжить урок" })).toBeVisible();
     },
   },
+  {
+    route: "/scenarios/incident-update",
+    waitUntilReady: async (page) => {
+      await expect(page.getByRole("heading", { level: 1, name: SCENARIO_DETAIL.title })).toBeVisible();
+    },
+  },
 ];
 
 async function installActiveLesson(context: BrowserContext): Promise<void> {
@@ -98,6 +105,16 @@ async function installActiveLesson(context: BrowserContext): Promise<void> {
   });
 }
 
+async function installScenarioDetail(context: BrowserContext): Promise<void> {
+  await context.route(`**/api/v1/scenarios/${SCENARIO_DETAIL.slug}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(SCENARIO_DETAIL),
+    });
+  });
+}
+
 async function createColdRoutePage(browser: Browser): Promise<{
   context: BrowserContext;
   page: Page;
@@ -113,6 +130,7 @@ async function createColdRoutePage(browser: Browser): Promise<{
   });
   await installQualityGateAPI(context);
   await installActiveLesson(context);
+  await installScenarioDetail(context);
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   await cdp.send("Network.enable");
