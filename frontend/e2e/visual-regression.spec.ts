@@ -13,6 +13,10 @@ import {
   completeRecallLesson,
   installLessonResultFixture,
 } from "./support/lesson-result-fixture";
+import {
+  installScenarioFixture,
+  startScenario,
+} from "./support/scenario-fixture";
 
 async function expectStableScreenshot(page: Page, name: string): Promise<void> {
   const dimensions = await page.evaluate(async () => {
@@ -47,6 +51,18 @@ async function openCalendarDialog(page: Page): Promise<void> {
   await expect(preview).toBeVisible();
   await preview.getByRole("button", { name: "Настроить календарь" }).click();
   await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+}
+
+async function fillScenarioIncidentDraft(page: Page): Promise<void> {
+  await page.getByRole("textbox", { name: "Рабочая формулировка на английском" }).fill(
+    "The impact is confirmed for delayed ingestion jobs, and the team will publish another update at 17:00 UTC.",
+  );
+  await page.getByRole("textbox", { name: "Подтверждённые факты — по одному на строку" }).fill(
+    "Ingestion jobs are delayed\nThe customer-facing impact is confirmed",
+  );
+  await page.getByRole("textbox", { name: "Текущие гипотезы — по одной на строку" }).fill(
+    "A saturated consumer may be increasing queue depth",
+  );
 }
 
 test.describe("critical visual baselines", () => {
@@ -142,6 +158,31 @@ test.describe("critical visual baselines", () => {
     await page.getByRole("button", { name: "Знал", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
     await expectStableScreenshot(page, "active-lesson-recall-correct-dark.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario compact Light active draft", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact Scenario baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installScenarioFixture(page);
+    await startScenario(page);
+    await fillScenarioIncidentDraft(page);
+    await expect(page.locator(".lx-scenario")).toHaveAttribute("data-scenario-state", "active");
+    await expectStableScreenshot(page, "scenario-lessons-compact-light.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario desktop Dark objective feedback", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop dark Scenario baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await installScenarioFixture(page);
+    await startScenario(page);
+    await fillScenarioIncidentDraft(page);
+    await page.getByRole("button", { name: "Отправить ответ", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Шаг принят сервером" })).toContainText("Языковая цель использована");
+    await expect(page.locator(".lx-scenario")).toHaveAttribute("data-scenario-state", "feedback");
+    await expectStableScreenshot(page, "scenario-lessons-desktop-dark.png");
     expect(runtimeErrors).toEqual([]);
   });
 
