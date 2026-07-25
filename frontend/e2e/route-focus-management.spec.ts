@@ -380,7 +380,10 @@ test("reduced motion changes route scrolling to instant behavior", async ({ page
     && state.animations === 0
   ))).toBe(true);
 
-  await page.getByRole("button", { name: "Настроить календарь" }).click();
+  const reminderEntry = page.locator("details.lx-route-reminder-entry");
+  await reminderEntry.locator("summary").click();
+  await expect(reminderEntry).toHaveAttribute("open", "");
+  await reminderEntry.getByRole("button", { name: "Настроить календарь" }).click();
   const calendarBackdrop = page.locator(".lx-calendar-modal-backdrop");
   const calendarDialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(calendarDialog).toBeVisible();
