@@ -200,8 +200,12 @@ export function scenarioPath(slug: string): string {
 export function scenarioSlugFromPath(pathname: string): string | null {
   const match = /^\/scenarios\/([^/?#]+)\/?$/.exec(pathname);
   if (!match) return null;
-  const slug = decodeURIComponent(match[1]);
-  return isScenarioSlug(slug) ? slug : null;
+  try {
+    const slug = decodeURIComponent(match[1]);
+    return isScenarioSlug(slug) ? slug : null;
+  } catch {
+    return null;
+  }
 }
 
 export function scenarioTypeLabel(type: ScenarioType): string {
@@ -378,16 +382,14 @@ export function buildSubmitScenarioStepRequest(input: {
   if (!response) throw new Error("Scenario response is empty");
   const facts = normalizeScenarioList(input.fields.facts);
   const hypotheses = normalizeScenarioList(input.fields.hypotheses);
-  const responseMs = input.responseMs === undefined
-    ? undefined
-    : Math.max(0, Math.round(input.responseMs));
   return {
     submissionId: input.submissionId,
     attemptVersion: input.attemptVersion,
     response,
     ...(input.requiresFactHypothesis ? { facts, hypotheses } : {}),
     review: {
-      ...(responseMs === undefined ? {} : { responseMs }),
+      // Timing is optional in the server contract. Omitting it keeps an
+      // ambiguous retry byte-stable under the same idempotency key.
       timezoneOffsetMinutes: Math.round(input.timezoneOffsetMinutes),
     },
   };
