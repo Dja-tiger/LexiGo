@@ -40,3 +40,45 @@ None for harness code yet. Stage validation is pending/failing on an older produ
 ### Next action
 
 Publish the isolated harness content, read every changed path back, run the source contract, inspect diff and create a Draft PR.
+
+## 2026-07-25 14:18 Europe/Berlin
+
+### Verified
+
+- Draft PR #217 exists from `chore/agent-harness-v1` to `main`
+- branch diff contains 19 allowed documentation/tooling paths and no product/runtime/deployment/dependency files
+- all repository file writes were read back by branch ref and `main` remained at `f2785be...`
+
+### Finding
+
+The complete harness is publishable without changing an existing workflow; the source contract can run directly with repository shell capabilities.
+
+### Root cause
+
+The repository previously lacked an executable contract tying the distributed memory files together. One initial connector write was refused before mutation; repository refs and target absence were verified before a neutral equivalent retry.
+
+### Changed files
+
+`AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, `README.md`, `.github/pull_request_template.md`, `scripts/ci/check-agent-harness.sh`.
+
+### Checks passed
+
+- `bash -n scripts/ci/check-agent-harness.sh`
+- `bash scripts/ci/check-agent-harness.sh`
+- Markdown relative links
+- required file/reference/checklist contract
+- obvious-secret scan
+- generated-artifact scan
+- allowed-path branch compare
+
+### Checks failed
+
+No harness check failed. Full required PR CI and stage validation are pending.
+
+### Current branch head
+
+Resolve from the live branch ref; pre-entry head was `b95eb4683ee269ea0735f258f5f529cd5e9eb571` and this log update creates a newer head.
+
+### Next action
+
+Run and classify full required CI on the final head, inspect review threads, then proceed to Ready and expected-head squash merge only if all gates are green.
