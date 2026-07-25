@@ -47,7 +47,7 @@
 - Enforced ceiling: `235000` JavaScript bytes and `18` requests.
 - The byte ceiling leaves approximately 15.9% controlled headroom over the measured route.
 
-### Checks passed before the final harness head
+### Checks passed before the immutable final head
 
 - CI #1826, run `30171478706`, on `c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0`:
   - frontend lint, TypeScript, unit tests, production build and dependency audit;
@@ -56,6 +56,7 @@
   - 320 px/200% zoom reflow;
   - accessibility audit, content security, service worker, iOS PWA dictionary, lesson completion and performance budget.
 - The only intentional failure in #1826 was the stale Desktop Dark content hash after the proven contrast correction; the reviewed Linux value is now recorded in the visual contract.
+- `EXECUTION.md` and reusable frontend/accessibility/CI lessons now contain the confirmed root causes and prevention rules.
 - PR review conversation currently contains no comments or unresolved threads.
 
 ### Current branch head
@@ -64,4 +65,4 @@ Resolve from the live branch ref after this checkpoint; branch is `feat/issue-19
 
 ### Next action
 
-Finish `EXECUTION.md` and reusable lessons on the same bounded branch, then require a complete green immutable-head CI. After review-thread and diff audits, move PR #221 to Ready, squash merge, validate the new `main` stage deployment/public smoke/browser matrix, and only then reconcile repository memory.
+Require a complete green immutable-head CI on the final runtime, measured visual/bundle contracts and harness evidence. Then audit live base/head/diff/review threads, move PR #221 to Ready, squash merge, validate the new `main` stage deployment/public smoke/browser matrix, and only afterward reconcile repository memory.
