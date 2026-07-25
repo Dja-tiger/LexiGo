@@ -4,6 +4,12 @@
  * The route consumes semantic design tokens and preserves the existing four-item
  * application chrome. Scenario detail routes keep their separate focused owner.
  */
+.lx-routed-app[data-route-path="/scenarios"] {
+  --lx-scenario-catalog-border: color-mix(in srgb, var(--ak-color-text-muted) 22%, transparent);
+  --lx-scenario-catalog-milestone: #9a6800;
+  --lx-scenario-catalog-milestone-soft: color-mix(in srgb, #d6a63d 22%, var(--ak-color-surface));
+}
+
 .lx-routed-app[data-route-path="/scenarios"],
 .lx-routed-app[data-route-path="/scenarios"] .lx-app[data-route-client-island="scenario-catalog"],
 .lx-routed-app[data-route-path="/scenarios"] .lx-app-shell,
@@ -17,9 +23,6 @@
   min-height: 100vh;
   --lx-text: var(--ak-color-text-main);
   --lx-muted: var(--ak-color-text-muted);
-  --lx-scenario-catalog-border: color-mix(in srgb, var(--ak-color-text-muted) 22%, transparent);
-  --lx-scenario-catalog-milestone: #9a6800;
-  --lx-scenario-catalog-milestone-soft: color-mix(in srgb, #d6a63d 22%, var(--ak-color-surface));
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -78,7 +81,7 @@
 }
 
 .lx-scenario-catalog-heading h1 {
-  margin: 8px 0 8px;
+  margin: 8px 0;
   color: var(--ak-color-text-main);
   font: 700 clamp(34px, 4vw, 48px)/1.05 Inter, sans-serif;
   letter-spacing: -0.035em;
@@ -92,11 +95,12 @@
 }
 
 .lx-learning-section-switch {
+  --lx-learning-section-border: color-mix(in srgb, var(--ak-color-text-muted) 22%, transparent);
   display: grid;
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   gap: 8px;
   padding: 4px;
-  border: 1px solid var(--lx-scenario-catalog-border);
+  border: 1px solid var(--lx-learning-section-border);
   border-radius: 16px;
   background: var(--ak-color-surface);
 }
@@ -362,7 +366,7 @@ body:has(.lx-routed-app[data-route-path="/scenarios"]) .lx-legal-footer {
   width: 100%;
   box-sizing: border-box;
   color: var(--ak-color-text-muted);
-  border-color: var(--lx-scenario-catalog-border);
+  border-color: color-mix(in srgb, var(--ak-color-text-muted) 22%, transparent);
   background: var(--ak-color-canvas);
   padding-right: max(20px, env(safe-area-inset-right));
   padding-left: max(20px, env(safe-area-inset-left));
@@ -427,10 +431,12 @@ body:has(.lx-routed-app[data-route-path="/scenarios"]) .lx-legal-footer a {
     box-shadow: none;
   }
 
-  .lx-routed-app[data-route-path="/scenarios"] .lx-route-nav--rail a.active::before,
+  .lx-routed-app[data-route-path="/scenarios"] .lx-route-nav--rail a.active::before {
+    background: var(--ak-color-primary);
+  }
+
   .lx-routed-app[data-route-path="/scenarios"] .lx-route-nav--rail a.active svg {
     color: var(--ak-color-primary);
-    background: var(--ak-color-primary);
   }
 
   .lx-scenario-catalog-listing ul,
