@@ -112,12 +112,18 @@ export function RoutedLexigoApp() {
     const parsedTarget = parseNavigationLocation(window.location);
     const destination = routeBoundaryDestination(parsedTarget);
     const expectedLabel = viewTitle(parsedTarget.view);
+    let discoveryFrame = 0;
     let cancelRestoration: (() => void) | null = null;
-    let observer: MutationObserver | null = null;
+    let cancelled = false;
 
     const restoreBoundary = () => {
+      if (cancelled) return;
+
       const main = document.querySelector<HTMLElement>("#lexigo-main-content");
-      if (!main || main.getAttribute("aria-label") !== expectedLabel) return false;
+      if (!main || main.getAttribute("aria-label") !== expectedLabel) {
+        discoveryFrame = window.requestAnimationFrame(restoreBoundary);
+        return;
+      }
 
       main.focus({ preventScroll: true });
       cancelRestoration = scheduleNavigationScrollRestoration(
@@ -142,20 +148,12 @@ export function RoutedLexigoApp() {
           });
         },
       );
-      return true;
     };
 
-    if (!restoreBoundary()) {
-      observer = new MutationObserver(() => {
-        if (!restoreBoundary()) return;
-        observer?.disconnect();
-        observer = null;
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
-
+    discoveryFrame = window.requestAnimationFrame(restoreBoundary);
     return () => {
-      observer?.disconnect();
+      cancelled = true;
+      window.cancelAnimationFrame(discoveryFrame);
       cancelRestoration?.();
     };
   }, [pathname]);
