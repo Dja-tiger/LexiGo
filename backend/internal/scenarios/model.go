@@ -3,6 +3,8 @@ package scenarios
 import (
 	"errors"
 	"time"
+
+	"github.com/Dja-tiger/LexiGo/backend/internal/learning"
 )
 
 var (
@@ -100,10 +102,6 @@ type SubmitStepRequest struct {
 
 type SubmitStepResponse struct {
 	Attempt          Attempt               `json:"attempt"`
-	Review           ReviewResultEnvelope  `json:"review"`
+	Review           learning.ReviewResult `json:"review"`
 	IdempotentReplay bool                  `json:"idempotentReplay"`
 }
-
-// ReviewResultEnvelope is an alias boundary that keeps the Scenario API stable
-// while the canonical result remains owned by the learning package.
-type ReviewResultEnvelope = learningReviewResult
