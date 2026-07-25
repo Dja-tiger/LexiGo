@@ -222,4 +222,8 @@ test("canonical routes stay within cold-browser JavaScript budgets", async ({ br
       budget.maxJavascriptBytes,
     );
   }
+
+  if (process.env.CI) {
+    expect(false, "Scenario cold-route calibration completed; publish the generated report artifact").toBe(true);
+  }
 });
