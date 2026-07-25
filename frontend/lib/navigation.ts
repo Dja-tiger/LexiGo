@@ -1,4 +1,6 @@
-export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "profile" | "lesson";
+import { isScenarioSlug } from "./scenarios";
+
+export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "profile" | "lesson" | "scenario";
 
 export type CatalogStatus = "new" | "learning" | "review" | "mastered";
 export type CatalogSort = "default" | "az" | "za";
@@ -36,7 +38,7 @@ export const NAVIGATION_STORAGE_VERSION = 2 as const;
 export const NAVIGATION_STORAGE_KEY = "lexigo.navigation.v2";
 export const LEGACY_NAVIGATION_STORAGE_KEY = "lexigo.navigation.v1";
 
-const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson"]);
+const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson", "scenario"]);
 const RESTORABLE_VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress"]);
 const SOURCES = new Set<NavigationSource>([
   "mixed",
@@ -54,7 +56,7 @@ const CATALOG_STATUSES = new Set<CatalogStatus>(["new", "learning", "review", "m
 const CATALOG_SORTS = new Set<CatalogSort>(["default", "az", "za"]);
 const MAX_ROUTE_VALUE_LENGTH = 120;
 
-const PRIMARY_PATHS: Record<Exclude<AppView, "lesson">, string> = {
+const PRIMARY_PATHS: Record<Exclude<AppView, "lesson" | "scenario">, string> = {
   home: "/",
   learn: "/learn",
   phrases: "/phrases",
@@ -180,6 +182,12 @@ function pathnameTarget(pathname: string): NavigationTarget {
     return { view: "lesson", ...(detail ? { detail } : {}) };
   }
 
+  const scenarioDetail = normalized.match(/^\/scenarios\/([^/]+)$/);
+  if (scenarioDetail) {
+    const detail = normalizedText(safeDecodePathSegment(scenarioDetail[1]));
+    return detail && isScenarioSlug(detail) ? { view: "scenario", detail } : { view: "home" };
+  }
+
   return { view: "home" };
 }
 
@@ -220,6 +228,11 @@ export function routePath(target: NavigationTarget): string {
   if (normalized.view === "lesson") {
     return `/lesson/${encodedPathSegment(normalized.detail || "active")}`;
   }
+  if (normalized.view === "scenario") {
+    return normalized.detail && isScenarioSlug(normalized.detail)
+      ? `/scenarios/${encodedPathSegment(normalized.detail)}`
+      : "/learn";
+  }
   if (normalized.view === "library" && normalized.detail && /^\d+$/.test(normalized.detail)) {
     return `/words/${normalized.detail}`;
   }
@@ -251,11 +264,13 @@ export function canonicalURLFromLegacySearch(search: string): string | null {
 
 export function isCanonicalRoutePath(pathname: string): boolean {
   const normalized = normalizePathname(pathname);
+  const scenarioMatch = /^\/scenarios\/([^/]+)$/.exec(normalized);
   return normalized === "/"
     || Object.values(PRIMARY_PATHS).includes(normalized)
     || /^\/phrases\/[^/]+$/.test(normalized)
     || /^\/words\/[1-9]\d*$/.test(normalized)
-    || normalized === "/lesson/active";
+    || normalized === "/lesson/active"
+    || Boolean(scenarioMatch && isScenarioSlug(safeDecodePathSegment(scenarioMatch[1])));
 }
 
 export function serializeStoredNavigation(target: NavigationTarget): string {
@@ -331,6 +346,8 @@ export function viewTitle(view: AppView): string {
       return "Профиль";
     case "lesson":
       return "Урок";
+    case "scenario":
+      return "Сценарий";
     default:
       return "Главная";
   }
