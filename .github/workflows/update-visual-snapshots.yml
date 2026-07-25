@@ -1,3 +1,4 @@
+# trigger: append verified PR 214 knowledge
 name: Update AGENTS knowledge
 
 on:
