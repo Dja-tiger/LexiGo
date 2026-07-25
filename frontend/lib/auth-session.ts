@@ -140,10 +140,14 @@ export function clearLegacyAuthStorage(): void {
   }
 }
 
+function isFocusedAuthenticatedPath(pathname: string): boolean {
+  return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+}
+
 export function expiredSessionURL(currentURL: string, reason = "expired"): string {
   const current = new URL(currentURL);
   const params = new URLSearchParams({ session: reason });
-  if (current.pathname.startsWith("/lesson/")) {
+  if (isFocusedAuthenticatedPath(current.pathname)) {
     params.set("return_to", `${current.pathname}${current.search}`);
   }
   return `/profile?${params.toString()}`;
