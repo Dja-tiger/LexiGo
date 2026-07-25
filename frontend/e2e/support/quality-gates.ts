@@ -21,6 +21,51 @@ const EMPTY_MODE = {
   successfulTotal: 0,
 };
 
+export const QUALITY_SCENARIOS = [
+  {
+    slug: "incident-update",
+    type: "incident",
+    title: "Incident update",
+    summary: "Communicate impact, confirmed facts and the next checkpoint.",
+    userRole: "on-call engineer",
+    workplaceGoal: "Provide a precise incident update without overstating the root cause.",
+    completionCriterion: "The update contains impact, evidence, action and the next checkpoint.",
+    constraints: ["Separate confirmed facts from hypotheses", "Name the next checkpoint"],
+    requiresFactHypothesis: true,
+    estimatedMinutes: 12,
+    version: 1,
+    stepCount: 4,
+  },
+  {
+    slug: "troubleshooting-plan",
+    type: "troubleshooting",
+    title: "Troubleshooting plan",
+    summary: "Separate evidence from hypotheses and propose the next checks.",
+    userRole: "backend engineer",
+    workplaceGoal: "Propose a testable diagnostic plan.",
+    completionCriterion: "The plan has evidence, hypotheses and executable next checks.",
+    constraints: ["Keep hypotheses qualified", "Do not skip the evidence"],
+    requiresFactHypothesis: true,
+    estimatedMinutes: 15,
+    version: 1,
+    stepCount: 5,
+  },
+  {
+    slug: "architecture-review",
+    type: "architecture_review",
+    title: "Architecture review",
+    summary: "Explain trade-offs, constraints and risks of a proposed design.",
+    userRole: "tech lead",
+    workplaceGoal: "Defend a design decision with explicit trade-offs.",
+    completionCriterion: "The decision, alternatives and risks are explicit.",
+    constraints: ["Name at least one rejected alternative"],
+    requiresFactHypothesis: false,
+    estimatedMinutes: 14,
+    version: 1,
+    stepCount: 4,
+  },
+] as const;
+
 export const QUALITY_PROGRESS = {
   dueNow: 4,
   dueWords: 3,
@@ -43,43 +88,56 @@ export const QUALITY_PROGRESS = {
   retainedItemsWeek: 16,
   retainedWordsWeek: 12,
   retainedPhrasesWeek: 4,
-
-weekly: {
-  weekStart: "2026-07-20",
-  weekEnd: "2026-07-26",
-  recallAttempts: 25,
-  recallSuccessful: 19,
-  recallRate: 76,
-  previousRecallAttempts: 22,
-  previousRecallSuccessful: 15,
-  previousRecallRate: 68,
-  choiceAttempts: 12,
-  choiceSuccessful: 10,
-  choiceRate: 83,
-  reviews: 120,
-  lessons: 9,
-  activeMinutes: 64,
-  trend: [
-    { date: "2026-07-20", attempts: 4, successful: 3, rate: 75 },
-    { date: "2026-07-21", attempts: 3, successful: 2, rate: 67 },
-    { date: "2026-07-22", attempts: 4, successful: 3, rate: 75 },
-    { date: "2026-07-23", attempts: 5, successful: 4, rate: 80 },
-    { date: "2026-07-24", attempts: 3, successful: 2, rate: 67 },
-    { date: "2026-07-25", attempts: 3, successful: 3, rate: 100 },
-    { date: "2026-07-26", attempts: 3, successful: 2, rate: 67 },
-  ],
-  weakTopics: [
-    { topic: "Incident", attempts: 5, successful: 2, errors: 3, rate: 40 },
-    { topic: "Release", attempts: 4, successful: 2, errors: 2, rate: 50 },
-  ],
-  strongTopic: { topic: "Data Engineering", attempts: 6, successful: 6, errors: 0, rate: 100 },
-},
+  weekly: {
+    weekStart: "2026-07-20",
+    weekEnd: "2026-07-26",
+    recallAttempts: 25,
+    recallSuccessful: 19,
+    recallRate: 76,
+    previousRecallAttempts: 22,
+    previousRecallSuccessful: 15,
+    previousRecallRate: 68,
+    choiceAttempts: 12,
+    choiceSuccessful: 10,
+    choiceRate: 83,
+    reviews: 120,
+    lessons: 9,
+    activeMinutes: 64,
+    trend: [
+      { date: "2026-07-20", attempts: 4, successful: 3, rate: 75 },
+      { date: "2026-07-21", attempts: 3, successful: 2, rate: 67 },
+      { date: "2026-07-22", attempts: 4, successful: 3, rate: 75 },
+      { date: "2026-07-23", attempts: 5, successful: 4, rate: 80 },
+      { date: "2026-07-24", attempts: 3, successful: 2, rate: 67 },
+      { date: "2026-07-25", attempts: 3, successful: 3, rate: 100 },
+      { date: "2026-07-26", attempts: 3, successful: 2, rate: 67 },
+    ],
+    weakTopics: [
+      { topic: "Incident", attempts: 5, successful: 2, errors: 3, rate: 40 },
+      { topic: "Release", attempts: 4, successful: 2, errors: 2, rate: 50 },
+    ],
+    strongTopic: { topic: "Data Engineering", attempts: 6, successful: 6, errors: 0, rate: 100 },
+  },
   eventSchemaVersion: 2,
   modes: {
     study: { ...EMPTY_MODE, attemptsToday: 4, successfulToday: 4, attemptsTotal: 72, successfulTotal: 68 },
     recall: { ...EMPTY_MODE, attemptsToday: 5, successfulToday: 4, attemptsTotal: 58, successfulTotal: 43 },
     choice: { ...EMPTY_MODE, attemptsToday: 3, successfulToday: 2, attemptsTotal: 54, successfulTotal: 45 },
     legacy: EMPTY_MODE,
+  },
+  scenarios: {
+    completedThisWeek: 1,
+    completedTotal: 2,
+    recommendation: {
+      slug: QUALITY_SCENARIOS[0].slug,
+      type: QUALITY_SCENARIOS[0].type,
+      title: QUALITY_SCENARIOS[0].title,
+      estimatedMinutes: QUALITY_SCENARIOS[0].estimatedMinutes,
+      reason: "resume_in_progress",
+      action: "resume",
+      completedCount: 1,
+      lastCompletedAt: "2026-07-19T12:00:00Z",
+    },
   },
 };
 
@@ -175,7 +233,8 @@ export const QUALITY_METADATA = {
     dailyLife: 0,
     travel: 0,
     dataEngineering: 2,
-    backend: 3, academicTechnicalEnglish: 0,
+    backend: 3,
+    academicTechnicalEnglish: 0,
   },
   topics: [
     { topic: "Release", count: 2, words: 1, phrases: 1 },
@@ -251,6 +310,9 @@ export async function installQualityGateAPI(
     }
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, QUALITY_METADATA);
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, QUALITY_PROGRESS);
+    if (path === "/api/v1/scenarios" && request.method() === "GET") {
+      return fulfillJSON(route, 200, { items: QUALITY_SCENARIOS, count: QUALITY_SCENARIOS.length });
+    }
     if (path === "/api/v1/lessons/active") {
       return fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
     }
