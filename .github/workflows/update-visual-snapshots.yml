@@ -3,7 +3,7 @@ name: Update visual snapshots
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - agent/issue-195-progress-evidence
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+    name: Regenerate approved Issue 195 visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: agent/issue-195-progress-evidence
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare isolated frontend workspace
@@ -48,21 +48,69 @@ jobs:
           test -n "$container"
           docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
+      - name: Verify approved visual pixels and changed paths
+        run: |
+          cat > verify-approved-visuals.cjs <<'NODE'
+          const crypto = require("node:crypto");
+          const sharp = require("sharp");
+
+          const expected = {
+            "e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png": [390, 1900, "de2c9325f3d8992647fc5344baa9cccf3a9c9f4ba2fc55d950bce0ad10f52352"],
+            "e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png": [768, 1689, "4721a9f5db9d41780f2d17684e821cac332cc4ff8023d7f6d1f2990b9fa518b1"],
+            "e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png": [1440, 1010, "88ea46cdaf167f60cd624c7050f9e538db65495b2ef6aad37fab30c1edf62e33"],
+            "e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png": [390, 1900, "bb0c4954d441fcefa316a5c41558ca0a2827e7f65d3d2e25762b2983f397f571"],
+            "e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png": [768, 1689, "969ef67f6550db17fd6ca069e139de1ddc4410516cd276c696613643988720d2"],
+            "e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png": [1440, 1010, "e261886079e44eedfb9f321f7ce7c47c12dff00a432bbdcccbd9445e2db13c4b"],
+          };
+
+          async function verify() {
+            for (const [file, [width, height, expectedHash]] of Object.entries(expected)) {
+              const result = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+              const actualHash = crypto.createHash("sha256").update(result.data).digest("hex");
+              if (result.info.width !== width || result.info.height !== height || actualHash !== expectedHash) {
+                throw new Error(`${file}: expected ${width}x${height} ${expectedHash}, received ${result.info.width}x${result.info.height} ${actualHash}`);
+              }
+              console.log(`approved ${file}`);
+            }
+          }
+
+          verify().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+          bash ../scripts/ci/frontend-container.sh exec node verify-approved-visuals.cjs
+          rm verify-approved-visuals.cjs
+
+          expected=(
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png
+          )
+          mapfile -t changed < <(git status --porcelain --untracked-files=all -- e2e/visual-regression.spec.ts-snapshots | sed -E 's/^.. //')
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for file in "${expected[@]}"; do
+            printf '%s\n' "${changed[@]}" | grep -Fqx "$file"
+          done
+
       - name: Cleanup container
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
 
-      - name: Commit Issue 162 baselines
+      - name: Commit approved Issue 195 baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png
+          test "$(git diff --cached --name-only | wc -l)" -eq 6
+          git commit -m "test(visual): approve Progress evidence baselines"
+          git push origin HEAD:agent/issue-195-progress-evidence
