@@ -64,6 +64,27 @@
     min-width: 0;
     max-width: 100%;
   }
+
+  /*
+   * CSS page zoom scales the rendered header geometry after grid layout.
+   * Bound the non-essential route label so the back and close controls keep
+   * their full 44 px targets and the label remains available through its DOM
+   * text even when the visual copy is ellipsized.
+   */
+  .lx-scenario-header > strong {
+    max-inline-size: 30vw;
+  }
+
+  /*
+   * The shared skip link is a fixed sibling of the Scenario island. Under
+   * 200% CSS zoom its intrinsic text width can otherwise extend the document
+   * even while translated above the viewport. Keep this override route-local
+   * and allow the link to wrap when keyboard focus makes it visible.
+   */
+  body:has(.lx-scenario) .lx-route-skip-link {
+    max-inline-size: calc(50vw - 20px);
+    overflow-wrap: anywhere;
+  }
 }
 
 .lx-scenario-context-card > span,
