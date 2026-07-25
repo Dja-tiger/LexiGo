@@ -119,6 +119,12 @@ CI дополнительно запускает `go vet`, race detector, инт
 `DEPLOY_KNOWN_HOSTS` должен содержать заранее проверенную строку host key, а не результат
 непроверенного `ssh-keyscan` внутри pipeline. Production workflow запускается вручную с immutable SHA-тегом образа.
 
+## AI agents and contributors
+
+Перед первой write-операцией обязательно прочитайте [корневой `AGENTS.md`](AGENTS.md), [нормативный индекс](.agents/AGENTS.md), [реестр skills](.agents/SKILLS.md), [актуальное состояние проекта](.agents/PROJECT_STATE.md) и [полный Agent Harness](docs/agent-harness.md).
+
+Живой GitHub является источником актуального статуса. Один PR должен содержать один atomic slice. После merge необходимо проверить `main` и stage, обновить `.agents/PROJECT_STATE.md`, перенести reusable lessons и очистить текущий task context.
+
 ## Следующие этапы
 
 См. [docs/roadmap.md](docs/roadmap.md).
