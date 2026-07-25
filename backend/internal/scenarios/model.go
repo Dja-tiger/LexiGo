@@ -37,8 +37,7 @@ type Scenario struct {
 }
 
 type ScenarioReviewTarget struct {
-	WordID int64  `json:"wordId"`
-	Term   string `json:"term"`
+	Term string `json:"term"`
 }
 
 type ScenarioStep struct {
