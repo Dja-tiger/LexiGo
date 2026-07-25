@@ -87,9 +87,15 @@ async function installMocks(page: Page) {
 }
 
 async function openDialog(page: Page) {
-  const trigger = page.getByRole("button", { name: "Настроить календарь" });
+  const reminder = page.locator(".lx-route-reminder-entry");
+  const trigger = reminder.locator(":scope > summary");
   await expect(trigger).toBeVisible();
   await trigger.click();
+
+  const preview = reminder.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(preview).toBeVisible();
+  await preview.getByRole("button", { name: "Настроить календарь" }).click();
+
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
   return { trigger, dialog };
