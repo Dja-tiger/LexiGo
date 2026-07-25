@@ -17,12 +17,13 @@ import {
   serializeScenarioDraft,
   type Scenario,
   type ScenarioAttempt,
+  type ScenarioStep,
 } from "./scenarios";
 
 const ATTEMPT_ID = "00000000-0000-4000-8000-000000000196";
 const SUBMISSION_ID = "00000000-0000-4000-8000-000000000197";
 
-const STEP = {
+const STEP: ScenarioStep = {
   position: 0,
   kind: "fact-hypothesis",
   title: "Разделите сигналы",
@@ -32,7 +33,7 @@ const STEP = {
   reviewTarget: { term: "impact" },
   requiresFactHypothesis: true,
   minResponseCharacters: 60,
-} as const;
+};
 
 const SCENARIO: Scenario = {
   slug: "incident-update",
