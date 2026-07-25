@@ -1,13 +1,18 @@
-.lx-scenario {
+.lx-scenario,
+.lx-scenario-dialog {
   /*
    * Accent tokens remain useful for fills and progress, but the original
    * Figma accents are below WCAG AA when used as 12–14 px text on Light
    * surfaces. Mixing them with the semantic foreground keeps the same hue,
    * darkens Light-mode labels and lightens Dark-mode labels.
+   *
+   * The dialog is rendered through a portal outside `.lx-scenario`, so its
+   * contrast variables must be declared on the dialog root as well instead
+   * of relying on inheritance from the route island.
    */
   --lx-scenario-milestone-label: color-mix(
     in srgb,
-    var(--lx-scenario-milestone) 60%,
+    #b27d00 60%,
     var(--ak-color-text-main)
   );
   --lx-scenario-retained-label: color-mix(
