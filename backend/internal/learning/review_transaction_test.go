@@ -62,7 +62,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError:  true,
 		},
 		{
-			name: "non-server source",
+			name:    "non-server source",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
@@ -72,7 +72,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "missing reason",
+			name:    "missing reason",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
@@ -82,7 +82,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "missing correctness",
+			name:    "missing correctness",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
@@ -92,7 +92,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "requested rating mismatch",
+			name:    "requested rating mismatch",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
@@ -102,7 +102,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "successful effective rating mismatch",
+			name:    "successful effective rating mismatch",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
@@ -112,7 +112,7 @@ func TestValidateTrustedReviewAssessment(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "successful missing match",
+			name:    "successful missing match",
 			request: knownRequest,
 			assessment: func() ReviewAssessment {
 				value := validSuccess
