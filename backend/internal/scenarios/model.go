@@ -91,12 +91,12 @@ type StepReviewRequest struct {
 }
 
 type SubmitStepRequest struct {
-	SubmissionID   string             `json:"submissionId"`
-	AttemptVersion int64              `json:"attemptVersion"`
-	Response       string             `json:"response"`
-	Facts          []string           `json:"facts,omitempty"`
-	Hypotheses     []string           `json:"hypotheses,omitempty"`
-	Review         *StepReviewRequest `json:"review"`
+	SubmissionID   string            `json:"submissionId"`
+	AttemptVersion int64             `json:"attemptVersion"`
+	Response       string            `json:"response"`
+	Facts          []string          `json:"facts,omitempty"`
+	Hypotheses     []string          `json:"hypotheses,omitempty"`
+	Review         StepReviewRequest `json:"review"`
 }
 
 type SubmitStepResponse struct {
