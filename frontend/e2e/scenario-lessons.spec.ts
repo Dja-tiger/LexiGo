@@ -35,6 +35,19 @@ async function fillFactHypothesisStep(page: Page): Promise<void> {
 test.describe("Issue #196 Scenario Lessons UI", () => {
   test.describe.configure({ timeout: 60_000 });
 
+  test("unauthenticated direct entry preserves the exact Scenario return path", async ({ page }) => {
+    await page.goto(`/scenarios/${SCENARIO_DETAIL.slug}?source=progress`, { waitUntil: "domcontentloaded" });
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/profile");
+    const redirected = new URL(page.url());
+    expect(redirected.searchParams.get("session")).toBe("required");
+    expect(redirected.searchParams.get("return_to")).toBe(`/scenarios/${SCENARIO_DETAIL.slug}?source=progress`);
+  });
+
+  test("invalid Scenario slug resolves through the App Router 404 boundary", async ({ page }) => {
+    const response = await page.goto("/scenarios/Incident_Update", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(404);
+  });
+
   test("direct entry owns the focused route and submits only the bounded server contract", async ({ page }) => {
     const fixture = await installScenarioFixture(page);
     await openScenarioEntry(page);
@@ -74,6 +87,7 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
       hypotheses: ["A saturated consumer may be increasing queue depth"],
       review: { timezoneOffsetMinutes: expect.any(Number) },
     });
+    expect(request.review).not.toHaveProperty("responseMs");
     expect(request.submissionId).toMatch(/^[0-9a-f-]{36}$/i);
     expect(request).not.toHaveProperty("wordId");
     expect(request).not.toHaveProperty("rating");
@@ -81,7 +95,7 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
     expect(request.review).not.toHaveProperty("answerRevealed");
   });
 
-  test("ambiguous transport retry keeps authored evidence and one submission id", async ({ page }) => {
+  test("ambiguous transport retry keeps authored evidence and one byte-stable request", async ({ page }) => {
     const fixture = await installScenarioFixture(page);
     await startScenario(page);
     await fillFactHypothesisStep(page);
@@ -97,11 +111,7 @@ test.describe("Issue #196 Scenario Lessons UI", () => {
     await expect.poll(() => fixture.submissions().length).toBe(2);
 
     const [failed, retried] = fixture.submissions().map((entry) => entry.payload);
-    expect(retried.submissionId).toBe(failed.submissionId);
-    expect(retried.response).toBe(failed.response);
-    expect(retried.facts).toEqual(failed.facts);
-    expect(retried.hypotheses).toEqual(failed.hypotheses);
-    expect(retried.attemptVersion).toBe(failed.attemptVersion);
+    expect(retried).toEqual(failed);
   });
 
   test("pause, reload and resume preserve local draft and server position", async ({ page }) => {
