@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 
+import { learningTermCopy, topicLabel } from "../lib/interface-copy";
 import {
   dueReviewLessonCount,
   normalizedProgressModes,
@@ -17,7 +18,9 @@ type ProgressEvidenceDashboardProps = {
   onConfigureLesson: () => void;
 };
 
-const RETAINED_EXPLANATION = "Элемент засчитывается только после успешного более позднего самостоятельного воспроизведения.";
+const RETAINED_COPY = learningTermCopy("retained");
+const RECALL_COPY = learningTermCopy("recall");
+const RETAINED_METRIC_DESCRIPTION = "Количество элементов, подтверждённых успешным самостоятельным воспроизведением после интервала.";
 const DUE_EXPLANATION = "Готово к повторению означает, что наступил следующий интервал проверки памяти.";
 
 export function ProgressEvidenceDashboard({
@@ -56,9 +59,9 @@ export function ProgressEvidenceDashboard({
           <h2 id="progress-empty-title">Сначала пройдите отложенную проверку</h2>
           <p>
             Открытая карточка и пассивное изучение не доказывают, что материал сохранился.
-            После первого самостоятельного Recall здесь появятся недельная динамика и слабые темы.
+            После первой проверки «{RECALL_COPY.label}» здесь появятся недельная динамика и слабые темы.
           </p>
-          <button type="button" onClick={onConfigureLesson}>Настроить Recall-урок</button>
+          <button type="button" onClick={onConfigureLesson}>Настроить урок на самостоятельное воспроизведение</button>
         </section>
       ) : (
         <>
@@ -73,16 +76,16 @@ export function ProgressEvidenceDashboard({
                   ? `Самостоятельное воспроизведение: ${weekly.previousRecallRate}% → ${weekly.recallRate}%.`
                   : hasRecallEvidence
                     ? `Самостоятельное воспроизведение за текущую неделю: ${weekly.recallRate}%. Для сравнения недель нужно минимум три попытки в каждой.`
-                    : "На этой неделе ещё нет самостоятельных Recall-проверок. Поддержанное узнавание не заменяет воспроизведение."}
-                {weekly.strongTopic ? ` Сильная тема: ${weekly.strongTopic.topic}.` : ""}
+                    : "На этой неделе ещё нет проверок самостоятельного воспроизведения. Поддержанное узнавание не заменяет воспроизведение."}
+                {weekly.strongTopic ? ` Сильная тема: ${topicLabel(weekly.strongTopic.topic)}.` : ""}
               </p>
 
               <dl className="lx-progress-evidence__metrics">
                 <Metric
                   value={progress.retainedItemsWeek}
-                  label="сохранено"
+                  label={RETAINED_COPY.label}
                   tone="retained"
-                  description={RETAINED_EXPLANATION}
+                  description={RETAINED_METRIC_DESCRIPTION}
                 />
                 <Metric
                   value={progress.dueNow}
@@ -94,7 +97,7 @@ export function ProgressEvidenceDashboard({
                   value={weakTopics.length}
                   label="слабые темы"
                   tone="weak"
-                  description="Слабая тема определяется по ошибкам самостоятельного Recall за текущую неделю."
+                  description="Слабая тема определяется по ошибкам самостоятельного воспроизведения за текущую неделю."
                 />
               </dl>
 
@@ -104,8 +107,8 @@ export function ProgressEvidenceDashboard({
                   <strong>
                     {dueLessonCount > 0
                       ? progress.dueNow > dueLessonCount
-                        ? `Recall-сессия: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
-                        : "Короткая Recall-сессия по готовой очереди"
+                        ? `Сессия самостоятельного воспроизведения: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
+                        : "Короткая сессия самостоятельного воспроизведения по готовой очереди"
                       : "Соберите следующий сфокусированный урок"}
                   </strong>
                 </div>
@@ -119,7 +122,8 @@ export function ProgressEvidenceDashboard({
               </div>
 
               <p className="lx-progress-evidence__definition">
-                <strong>Что считается сохранённым:</strong> {RETAINED_EXPLANATION}
+                <strong>Что считается закреплённым:</strong>{" "}
+                <span>{RETAINED_COPY.explanation}</span>
               </p>
             </article>
 
@@ -129,7 +133,7 @@ export function ProgressEvidenceDashboard({
               <strong className="lx-progress-evidence__rate">{weekly.recallRate}%</strong>
               <p>самостоятельное воспроизведение</p>
               <small>
-                {weekly.recallSuccessful} из {weekly.recallAttempts} Recall-попыток выполнены без показа ответа.
+                {weekly.recallSuccessful} из {weekly.recallAttempts} попыток самостоятельного воспроизведения выполнены без показа ответа.
               </small>
             </article>
           </div>
@@ -139,31 +143,34 @@ export function ProgressEvidenceDashboard({
               <h2 id="weak-topics-title">Слабые темы</h2>
               {weakTopics.length > 0 ? (
                 <ul>
-                  {weakTopics.map((topic, index) => (
-                    <li key={topic.topic}>
-                      <div>
-                        <strong>{topic.topic}</strong>
-                        <small>{topic.successful} из {topic.attempts} Recall-попыток верны</small>
-                      </div>
-                      <span className={`lx-progress-evidence__topic-status ${index === 0 ? "weak" : "milestone"}`}>
-                        {topic.errors} {russianPlural(topic.errors, ["ошибка", "ошибки", "ошибок"])}
-                      </span>
-                      {dueLessonCount > 0 ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          aria-label={`Повторить тему ${topic.topic}`}
-                          onClick={() => onStartDueReview(topic.topic)}
-                        >
-                          Повторить
-                        </button>
-                      ) : null}
-                    </li>
-                  ))}
+                  {weakTopics.map((topic, index) => {
+                    const displayTopic = topicLabel(topic.topic);
+                    return (
+                      <li key={topic.topic}>
+                        <div>
+                          <strong>{displayTopic}</strong>
+                          <small>{topic.successful} из {topic.attempts} попыток самостоятельного воспроизведения верны</small>
+                        </div>
+                        <span className={`lx-progress-evidence__topic-status ${index === 0 ? "weak" : "milestone"}`}>
+                          {topic.errors} {russianPlural(topic.errors, ["ошибка", "ошибки", "ошибок"])}
+                        </span>
+                        {dueLessonCount > 0 ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            aria-label={`Повторить тему ${displayTopic}`}
+                            onClick={() => onStartDueReview(topic.topic)}
+                          >
+                            Повторить
+                          </button>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="lx-progress-evidence__positive">
-                  В текущей неделе нет тем с ошибками Recall. Продолжайте отложенные проверки, чтобы подтвердить устойчивость результата.
+                  В текущей неделе нет тем с ошибками самостоятельного воспроизведения. Продолжайте отложенные проверки, чтобы подтвердить устойчивость результата.
                 </p>
               )}
             </article>
@@ -178,8 +185,12 @@ export function ProgressEvidenceDashboard({
                 <summary>Разделение по режимам</summary>
                 <dl>
                   <div>
-                    <dt>Самостоятельный Recall</dt>
-                    <dd>{weekly.recallSuccessful} / {weekly.recallAttempts} · {weekly.recallRate}%</dd>
+                    <dt>{RECALL_COPY.label}</dt>
+                    <dd>
+                      {weekly.recallSuccessful} / {weekly.recallAttempts} · {weekly.recallRate}%
+                      <br />
+                      <small>{RECALL_COPY.explanation}</small>
+                    </dd>
                   </div>
                   <div>
                     <dt>Поддержанное узнавание</dt>
@@ -187,7 +198,7 @@ export function ProgressEvidenceDashboard({
                   </div>
                   <div>
                     <dt>Пассивное изучение</dt>
-                    <dd>{modes.study.attemptsToday} сегодня · не входит в retained</dd>
+                    <dd>{modes.study.attemptsToday} сегодня · не входит в показатель «{RETAINED_COPY.label}»</dd>
                   </div>
                 </dl>
               </details>
