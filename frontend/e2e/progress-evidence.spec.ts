@@ -123,6 +123,9 @@ const PROGRESS = {
       { topic: "Incident updates", attempts: 5, successful: 2, errors: 3, rate: 40 },
       { topic: "Architecture trade-offs", attempts: 4, successful: 2, errors: 2, rate: 50 },
     ],
+    weakPartsOfSpeech: [
+      { partOfSpeech: "noun", attempts: 6, successful: 3, errors: 3, rate: 50 },
+    ],
     strongTopic: { topic: "Backend terminology", attempts: 6, successful: 6, errors: 0, rate: 100 },
   },
 };
@@ -146,6 +149,11 @@ const METADATA = {
   topics: [{ topic: "Incident updates", count: DUE_ITEMS.length, words: 2, phrases: 1 }],
 };
 
+type DueRequest = {
+  topic: string | null;
+  source: string | null;
+};
+
 async function fulfillJSON(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -157,9 +165,10 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 async function installAPI(
   page: Page,
   lessonBodies: unknown[],
-  dueTopics: Array<string | null> = [],
+  dueRequests: DueRequest[] = [],
 ) {
   let activeLesson: Record<string, unknown> | null = null;
+  let selectedDueItems = DUE_ITEMS;
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -184,11 +193,18 @@ async function installAPI(
     }
     if (path === "/api/v1/words/due") {
       expect(url.searchParams.get("kind")).toBe("all");
-      dueTopics.push(url.searchParams.get("topic"));
+      const dueRequest = {
+        topic: url.searchParams.get("topic"),
+        source: url.searchParams.get("source"),
+      };
+      dueRequests.push(dueRequest);
+      selectedDueItems = dueRequest.source === "noun"
+        ? DUE_ITEMS.filter((item) => item.partOfSpeech === "noun")
+        : DUE_ITEMS;
       return fulfillJSON(route, 200, {
-        items: DUE_ITEMS,
-        count: DUE_ITEMS.length,
-        total: DUE_ITEMS.length,
+        items: selectedDueItems,
+        count: selectedDueItems.length,
+        total: selectedDueItems.length,
         page: 1,
         pageSize: 15,
         totalPages: 1,
@@ -207,7 +223,7 @@ async function installAPI(
         currentIndex: 0,
         version: 1,
         status: "active",
-        items: DUE_ITEMS.map((item, position) => ({ ...item, position })),
+        items: selectedDueItems.map((item, position) => ({ ...item, position })),
         createdAt: "2026-07-25T00:00:00Z",
         updatedAt: "2026-07-25T00:00:00Z",
       };
@@ -253,8 +269,8 @@ test.describe("Progress retained-learning evidence", () => {
     await page.setViewportSize({ width: 1440, height: 1024 });
     await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
     const lessonBodies: unknown[] = [];
-    const dueTopics: Array<string | null> = [];
-    await installAPI(page, lessonBodies, dueTopics);
+    const dueRequests: DueRequest[] = [];
+    await installAPI(page, lessonBodies, dueRequests);
 
     await page.goto("/progress");
 
@@ -263,7 +279,7 @@ test.describe("Progress retained-learning evidence", () => {
     await expect(dashboard.getByRole("heading", { name: "21 элемент сохранился в памяти" })).toBeVisible();
     await expect(dashboard.getByText("Самостоятельное воспроизведение: 68% → 76%.")).toBeVisible();
     await expect(dashboard.getByRole("heading", { name: "Активность отдельно от знания" })).toBeVisible();
-    await expect(dashboard.getByRole("listitem")).toHaveCount(9);
+    await expect(dashboard.getByRole("listitem")).toHaveCount(10);
     await expect(dashboard.locator(".lx-progress-evidence__chart li")).toHaveCount(7);
 
     await dashboard.getByText("Разделение по режимам").click();
@@ -276,7 +292,7 @@ test.describe("Progress retained-learning evidence", () => {
     await expect(resumeLesson).toBeVisible();
     await resumeLesson.click();
     await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", "recall");
-    expect(dueTopics).toEqual([null]);
+    expect(dueRequests).toEqual([{ topic: null, source: null }]);
     expect(lessonBodies).toEqual([{
       source: "mixed",
       studyMode: "recall",
@@ -289,15 +305,34 @@ test.describe("Progress retained-learning evidence", () => {
   test("starts a topic-filtered due Recall queue from a weak-topic recommendation", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "The recommendation contract is asserted once in Chromium.");
     const lessonBodies: unknown[] = [];
-    const dueTopics: Array<string | null> = [];
-    await installAPI(page, lessonBodies, dueTopics);
+    const dueRequests: DueRequest[] = [];
+    await installAPI(page, lessonBodies, dueRequests);
 
     await page.goto("/progress");
     await page.getByRole("button", { name: "Повторить тему Обновления по инцидентам" }).click();
 
     await expect(page).toHaveURL(/\/lesson\/active$/);
-    expect(dueTopics).toEqual(["Incident updates"]);
+    expect(dueRequests).toEqual([{ topic: "Incident updates", source: null }]);
     expect(lessonBodies).toHaveLength(1);
+  });
+
+  test("starts a source-filtered due Recall queue from a weak part-of-speech recommendation", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "The part-of-speech recommendation contract is asserted once in Chromium.");
+    const lessonBodies: unknown[] = [];
+    const dueRequests: DueRequest[] = [];
+    await installAPI(page, lessonBodies, dueRequests);
+
+    await page.goto("/progress");
+    await page.getByRole("button", { name: "Повторить часть речи существительное" }).click();
+
+    await expect(page).toHaveURL(/\/lesson\/active$/);
+    expect(dueRequests).toEqual([{ topic: null, source: "noun" }]);
+    expect(lessonBodies).toEqual([{
+      source: "noun",
+      studyMode: "recall",
+      lessonSize: "15",
+      wordIds: DUE_ITEMS.filter((item) => item.partOfSpeech === "noun").map((item) => item.id),
+    }]);
   });
 
   test("reflows the dark compact dashboard at 200% text size without hiding evidence", async ({ page }, testInfo) => {
@@ -312,7 +347,7 @@ test.describe("Progress retained-learning evidence", () => {
     const dashboard = page.locator(".lx-progress-evidence");
     await expect(dashboard.getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
     await expect(dashboard.getByText("Что считается закреплённым:", { exact: false })).toBeVisible();
-    await expect(dashboard.getByRole("heading", { name: "Слабые темы" })).toBeVisible();
+    await expect(dashboard.getByRole("heading", { name: "Слабые области" })).toBeVisible();
     await expect(page.locator('[data-route-navigation="mobile"]')).toBeVisible();
     await expect(page.locator('[data-route-navigation="rail"]')).toBeHidden();
     await expectNoHorizontalOverflow(page);
