@@ -73,7 +73,7 @@ test.describe("critical visual baselines", () => {
   test("progress", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+    await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
     await expectStableScreenshot(page, "progress.png");
     expect(runtimeErrors).toEqual([]);
   });
@@ -81,7 +81,7 @@ test.describe("critical visual baselines", () => {
   test("calendar dialog", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+    await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Настроить календарь" }).click();
     await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
     await expectStableScreenshot(page, "calendar-dialog.png");

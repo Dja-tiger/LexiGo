@@ -64,31 +64,67 @@ type ProgressModes struct {
 	Legacy ModeProgress `json:"legacy"`
 }
 
+type DailyRecallEvidence struct {
+	Date       string `json:"date"`
+	Attempts   int    `json:"attempts"`
+	Successful int    `json:"successful"`
+	Rate       int    `json:"rate"`
+}
+
+type TopicEvidence struct {
+	Topic      string `json:"topic"`
+	Attempts   int    `json:"attempts"`
+	Successful int    `json:"successful"`
+	Errors     int    `json:"errors"`
+	Rate       int    `json:"rate"`
+}
+
+type WeeklyProgressEvidence struct {
+	WeekStart                string                `json:"weekStart"`
+	WeekEnd                  string                `json:"weekEnd"`
+	RecallAttempts           int                   `json:"recallAttempts"`
+	RecallSuccessful         int                   `json:"recallSuccessful"`
+	RecallRate               int                   `json:"recallRate"`
+	PreviousRecallAttempts   int                   `json:"previousRecallAttempts"`
+	PreviousRecallSuccessful int                   `json:"previousRecallSuccessful"`
+	PreviousRecallRate       int                   `json:"previousRecallRate"`
+	ChoiceAttempts           int                   `json:"choiceAttempts"`
+	ChoiceSuccessful         int                   `json:"choiceSuccessful"`
+	ChoiceRate               int                   `json:"choiceRate"`
+	Reviews                  int                   `json:"reviews"`
+	Lessons                  int                   `json:"lessons"`
+	ActiveMinutes            int                   `json:"activeMinutes"`
+	Trend                    []DailyRecallEvidence `json:"trend"`
+	WeakTopics               []TopicEvidence       `json:"weakTopics"`
+	StrongTopic              *TopicEvidence        `json:"strongTopic,omitempty"`
+}
+
 type ProgressSummary struct {
-	DueNow                   int           `json:"dueNow"`
-	DueWords                 int           `json:"dueWords"`
-	DuePhrases               int           `json:"duePhrases"`
-	TotalWords               int           `json:"totalWords"`
-	TotalPhrases             int           `json:"totalPhrases"`
-	NewWords                 int           `json:"newWords"`
-	LearningWords            int           `json:"learningWords"`
-	ReviewWords              int           `json:"reviewWords"`
-	MasteredWords            int           `json:"masteredWords"`
-	MasteredPhrases          int           `json:"masteredPhrases"`
-	ReviewsToday             int           `json:"reviewsToday"`
-	SuccessfulToday          int           `json:"successfulToday"`
-	ObjectiveReviewsToday    int           `json:"objectiveReviewsToday"`
-	ObjectiveSuccessfulToday int           `json:"objectiveSuccessfulToday"`
-	ReviewsTotal             int           `json:"reviewsTotal"`
-	DailyGoal                int           `json:"dailyGoal"`
-	CurrentStreak            int           `json:"currentStreak"`
-	LongestStreak            int           `json:"longestStreak"`
-	RetainedItemsWeek        int           `json:"retainedItemsWeek"`
-	RetainedWordsWeek        int           `json:"retainedWordsWeek"`
-	RetainedPhrasesWeek      int           `json:"retainedPhrasesWeek"`
-	EventSchemaVersion       int           `json:"eventSchemaVersion"`
-	Modes                    ProgressModes `json:"modes"`
-	NextDueAt                *time.Time    `json:"nextDueAt,omitempty"`
+	DueNow                   int                    `json:"dueNow"`
+	DueWords                 int                    `json:"dueWords"`
+	DuePhrases               int                    `json:"duePhrases"`
+	TotalWords               int                    `json:"totalWords"`
+	TotalPhrases             int                    `json:"totalPhrases"`
+	NewWords                 int                    `json:"newWords"`
+	LearningWords            int                    `json:"learningWords"`
+	ReviewWords              int                    `json:"reviewWords"`
+	MasteredWords            int                    `json:"masteredWords"`
+	MasteredPhrases          int                    `json:"masteredPhrases"`
+	ReviewsToday             int                    `json:"reviewsToday"`
+	SuccessfulToday          int                    `json:"successfulToday"`
+	ObjectiveReviewsToday    int                    `json:"objectiveReviewsToday"`
+	ObjectiveSuccessfulToday int                    `json:"objectiveSuccessfulToday"`
+	ReviewsTotal             int                    `json:"reviewsTotal"`
+	DailyGoal                int                    `json:"dailyGoal"`
+	CurrentStreak            int                    `json:"currentStreak"`
+	LongestStreak            int                    `json:"longestStreak"`
+	RetainedItemsWeek        int                    `json:"retainedItemsWeek"`
+	RetainedWordsWeek        int                    `json:"retainedWordsWeek"`
+	RetainedPhrasesWeek      int                    `json:"retainedPhrasesWeek"`
+	EventSchemaVersion       int                    `json:"eventSchemaVersion"`
+	Modes                    ProgressModes          `json:"modes"`
+	Weekly                   WeeklyProgressEvidence `json:"weekly"`
+	NextDueAt                *time.Time             `json:"nextDueAt,omitempty"`
 }
 
 type GoalRequest struct {

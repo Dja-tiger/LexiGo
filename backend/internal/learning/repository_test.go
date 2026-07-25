@@ -27,3 +27,21 @@ func TestCalculateStreaksResetsAfterMissedDay(t *testing.T) {
 		t.Fatalf("current=%d longest=%d, want 0 and 2", current, longest)
 	}
 }
+
+func TestStartOfWeekUsesMondayBoundary(t *testing.T) {
+	sunday := time.Date(2026, time.July, 26, 0, 0, 0, 0, time.UTC)
+	got := startOfWeek(sunday)
+	want := time.Date(2026, time.July, 20, 0, 0, 0, 0, time.UTC)
+	if !got.Equal(want) {
+		t.Fatalf("startOfWeek(%s) = %s, want %s", sunday, got, want)
+	}
+}
+
+func TestPercentageHandlesEmptyAndRoundedEvidence(t *testing.T) {
+	if got := percentage(0, 0); got != 0 {
+		t.Fatalf("percentage(0, 0) = %d, want 0", got)
+	}
+	if got := percentage(2, 3); got != 67 {
+		t.Fatalf("percentage(2, 3) = %d, want 67", got)
+	}
+}

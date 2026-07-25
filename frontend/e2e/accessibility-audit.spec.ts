@@ -41,7 +41,7 @@ const AUTHENTICATED_ROUTES = [
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "dictionary", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
-  { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
+  { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Quality Gates" },
   { name: "word detail", url: "/words/101", heading: "rollback" },
   { name: "phrase detail", url: "/phrases/phrase-root-cause", heading: "We need to identify the root cause." },
@@ -69,7 +69,7 @@ test.describe("blocking accessibility gate", () => {
     test("calendar dialog has no critical or serious WCAG violations", async ({ page }) => {
       const runtimeErrors = captureRuntimeErrors(page);
       await page.goto("/progress", { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+      await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Настроить календарь" }).click();
       await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
       await expectNoBlockingAxeViolations(page);
