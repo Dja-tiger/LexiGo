@@ -30,7 +30,6 @@ export function ProgressEvidenceDashboard({
   const hasRecallEvidence = weekly.recallAttempts > 0;
   const hasComparableWeeks = weekly.recallAttempts >= 3 && weekly.previousRecallAttempts >= 3;
   const weakTopics = weekly.weakTopics.slice(0, 3);
-  const primaryTopic = weakTopics[0]?.topic;
   const dueLabel = progress.dueNow > 0
     ? `Повторить ${progress.dueNow} ${russianPlural(progress.dueNow, ["элемент", "элемента", "элементов"])}`
     : "Настроить следующий урок";
@@ -100,16 +99,14 @@ export function ProgressEvidenceDashboard({
                   <span>СЛЕДУЮЩЕЕ ДЕЙСТВИЕ</span>
                   <strong>
                     {progress.dueNow > 0
-                      ? primaryTopic
-                        ? `Короткая Recall-сессия по теме ${primaryTopic}`
-                        : "Короткая Recall-сессия по готовой очереди"
+                      ? "Короткая Recall-сессия по готовой очереди"
                       : "Соберите следующий сфокусированный урок"}
                   </strong>
                 </div>
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => progress.dueNow > 0 ? onStartDueReview(primaryTopic) : onConfigureLesson()}
+                  onClick={() => progress.dueNow > 0 ? onStartDueReview() : onConfigureLesson()}
                 >
                   {busy ? "Готовим…" : dueLabel}
                 </button>
