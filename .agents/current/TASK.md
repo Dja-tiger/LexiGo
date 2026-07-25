@@ -2,85 +2,89 @@
 
 ## Identity
 
-- Issue: documentation/tooling task; no product Issue
-- Branch: `chore/agent-harness-v1`
-- Base SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- Head SHA: resolve from live branch ref; the file cannot self-encode its own mutable commit SHA
-- PR: #217 `chore(agent): formalize LexiGo development harness` (Draft)
+- Issue: #196 `Реализовать технические Scenario Lessons`; prerequisite contract correction for #24
+- Branch: `fix/issue-196-scenario-review-contract`
+- Base SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`
+- Head SHA: resolve from the live branch ref
+- PR: not created yet
 
 ## Objective
 
-- Implement repository-based agent memory and a reproducible engineering harness.
-- Preserve all existing production-safe rules and error lessons.
-- Make current, completed and remaining work reconstructable from repository files.
-- Do not change production behavior.
+Make Scenario step evidence implementable by the frontend without a client-selected arbitrary learning item or client-authored correctness. Each step must expose its server-owned review target, and step submission must derive the ordinary schema-v2 Recall review from the persisted scenario response and that target.
+
+## Confirmed blocker
+
+The merged Scenario API requires `review.wordId`, rating and submitted answer, while `ScenarioStep` publishes only vocabulary strings. The integration fixture currently selects an unrelated first catalog item. A production client therefore cannot create semantically linked, objective evidence from the approved API without inventing a word mapping or correctness claim.
 
 ## Scope
 
-Root entrypoint, AGENTS index integration, verified project state, skills registry, current-task memory, templates, reusable lessons, harness documentation, README entry, PR checklist and source-contract validation.
+- add one forward-only migration that links every seeded scenario step to an explicit scenario vocabulary learning item;
+- enroll existing and future users through the existing words/user_words model;
+- expose a typed review target in Scenario detail and attempt payloads;
+- make the server derive the review word, submitted answer and effective rating from the response;
+- preserve the canonical learning scheduler and ordinary schema-v2 Recall review event;
+- update Scenario HTTP/OpenAPI contracts and integration/unit coverage;
+- update repository task memory.
 
 ## Non-goals
 
-No backend/frontend product code, API, migration, dependency, deployment, Figma, snapshot, scheduler, Progress, Scenario, Dictionary or Profile change.
+- no Scenario React route or Figma implementation;
+- no Progress, Lesson Composer, Lesson Result or global scheduler redesign;
+- no generative language evaluation or LLM scoring;
+- no broad catalog redesign;
+- no dependency, deployment or visual baseline changes.
 
 ## Allowed paths
 
-- `AGENTS.md`
-- `.agents/**`
-- `docs/agent-harness.md`
-- `README.md`
-- `.github/pull_request_template.md`
-- `scripts/ci/check-agent-harness.sh`
+- `.agents/PROJECT_STATE.md`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `.agents/AGENTS.base.md` or `.agents/lessons/backend.md` only if a new confirmed failure category appears
+- `backend/internal/platform/migrate/migrations/000014_scenario_review_targets.up.sql`
+- `backend/internal/scenarios/model.go`
+- `backend/internal/scenarios/repository.go`
+- `backend/internal/scenarios/http.go`
+- `backend/internal/scenarios/*_test.go`
+- `backend/integration/scenario_lessons_test.go`
+- `backend/openapi.yaml`
 
 ## Prohibited paths
 
-All product/runtime/deployment/dependency paths not listed above.
+Frontend runtime/CSS/tests, existing migration bodies, Progress and lesson scheduler implementation, dependencies, workflows, deployment configuration and unrelated documentation.
 
-## Runtime owners
+## Owners and boundaries
 
-None changed. Existing runtime ownership remains defined by `README.md`, `docs/architecture.md` and product code in `main`.
+- Scenario content/order/attempt ownership: `backend/internal/scenarios` and migrations.
+- Learning schedule/review-event ownership: canonical `learning.Repository.ReviewWordTx`; it must not be duplicated.
+- Correctness derivation: Scenario repository, from the persisted response and the linked target; the client must not choose `wordId` or `correct`.
+- API schema owner: `backend/openapi.yaml`.
 
-## Documentation owners
+## Contract matrix
 
-- Root entrypoint: `AGENTS.md`
-- Normative index/rules: `.agents/AGENTS*.md`
-- Current project state: `.agents/PROJECT_STATE.md`
-- Stable procedures: `.agents/SKILLS.md`
-- Current task records: `.agents/current/**`
-- Full process: `docs/agent-harness.md`
-
-## Invariants
-
-- `main` remains unchanged until an approved squash merge.
-- Existing `.agents/AGENTS.base.md` and specialized rules remain intact.
-- The product branch for Issue #19 is not modified; live verification shows it is absent after PR #215.
-- GitHub remains authoritative over saved state.
-- No secrets, generated artifacts or temporary workflows are added.
+- Catalog/detail/start/resume payloads expose the same linked review target for each current step.
+- Active, paused and completed attempt state remains server-owned with optimistic versioning.
+- Submission idempotency continues to use submission ID plus full request hash.
+- Fact/hypothesis validation remains unchanged.
+- A response containing the complete normalized target term produces server judgement through the canonical Recall evaluator.
+- A response without the target produces an incorrect ordinary Recall event and cannot advance the scheduler as successful.
+- The client may provide response timing and timezone only; it cannot select the review item or assert correctness.
+- Existing users and newly registered users own the linked scenario vocabulary items.
 
 ## Acceptance criteria
 
-- Required harness structure exists and links are valid.
-- Existing AGENTS rules remain discoverable and authoritative.
-- `PROJECT_STATE.md` reflects live GitHub, including closed Issue #19, merged PR #216, open Issue #24 and stage validation gap.
-- `SKILLS.md`, current records, templates and lessons exist.
-- README and PR template reference the harness.
-- `scripts/ci/check-agent-harness.sh` passes.
-- Diff is limited to allowed paths and required CI passes.
-
-## Required checks
-
-- Markdown structure and relative links
-- `scripts/ci/check-agent-harness.sh`
-- allowed-path compare
-- secret-pattern scan
-- generated-artifact scan
-- existing cheap docs/source gates
-- full required PR CI
+- No public Scenario submit contract requires client-supplied `wordId`, rating, submitted answer, correctness or answer-revealed flags.
+- Every seeded step has a non-null deterministic review target.
+- Review events remain schema v2, `answer_mode=recall`, linked atomically to accepted scenario steps.
+- Server judgement is reproducible from persisted response text and target.
+- Pause/resume/order/version/idempotency/completion contracts remain green.
+- OpenAPI matches runtime payloads.
+- Backend unit, race, integration, migration and security gates pass.
 
 ## Risks
 
-Documentation drift, self-referential branch metadata, stale project state and duplication of normative rules.
+Token-boundary false positives, migration ordering, enrollment drift, request-hash compatibility, exposing duplicate catalog items and accidentally bypassing the canonical learning evaluator.
 
 ## Rollback
 
-Revert the documentation/tooling commit. Product runtime and data remain unaffected.
+Revert the code and migration before production deployment. After migration deployment, use a forward corrective migration; never rewrite an applied migration.
