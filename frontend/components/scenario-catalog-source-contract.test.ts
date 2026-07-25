@@ -34,8 +34,9 @@ describe("Scenario catalog route ownership", () => {
     expect(catalog).not.toContain("localStorage");
     expect(catalog).not.toContain("sessionStorage");
 
-    expect(detail).toContain('data-route-client-island="scenario"');
+    expect(detail).toContain('className="lx-scenario"');
     expect(detail).toContain("/api/v1/scenario-attempts/");
+    expect(detail).not.toContain('data-route-client-island="scenario-catalog"');
     expect(premium).not.toContain("/api/v1/scenarios");
 
     expect(navigation).toContain('normalized === "/scenarios"');
