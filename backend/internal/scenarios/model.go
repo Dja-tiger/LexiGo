@@ -36,15 +36,20 @@ type Scenario struct {
 	Steps                  []ScenarioStep `json:"steps,omitempty"`
 }
 
+type ScenarioReviewTarget struct {
+	Term string `json:"term"`
+}
+
 type ScenarioStep struct {
-	Position               int      `json:"position"`
-	Kind                   string   `json:"kind"`
-	Title                  string   `json:"title"`
-	Prompt                 string   `json:"prompt"`
-	ProductionOutcome      string   `json:"productionOutcome"`
-	Vocabulary             []string `json:"vocabulary"`
-	RequiresFactHypothesis bool     `json:"requiresFactHypothesis"`
-	MinResponseCharacters  int      `json:"minResponseCharacters"`
+	Position               int                  `json:"position"`
+	Kind                   string               `json:"kind"`
+	Title                  string               `json:"title"`
+	Prompt                 string               `json:"prompt"`
+	ProductionOutcome      string               `json:"productionOutcome"`
+	Vocabulary             []string             `json:"vocabulary"`
+	ReviewTarget           ScenarioReviewTarget `json:"reviewTarget"`
+	RequiresFactHypothesis bool                 `json:"requiresFactHypothesis"`
+	MinResponseCharacters  int                  `json:"minResponseCharacters"`
 }
 
 type Attempt struct {
@@ -81,13 +86,8 @@ type AttemptVersionRequest struct {
 }
 
 type StepReviewRequest struct {
-	WordID                int64           `json:"wordId"`
-	Rating                learning.Rating `json:"rating"`
-	ResponseMS            *int            `json:"responseMs,omitempty"`
-	SubmittedAnswer       *string         `json:"submittedAnswer,omitempty"`
-	Correct               *bool           `json:"correct,omitempty"`
-	AnswerRevealed        *bool           `json:"answerRevealed,omitempty"`
-	TimezoneOffsetMinutes int             `json:"timezoneOffsetMinutes"`
+	ResponseMS            *int `json:"responseMs,omitempty"`
+	TimezoneOffsetMinutes int  `json:"timezoneOffsetMinutes"`
 }
 
 type SubmitStepRequest struct {

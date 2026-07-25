@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -54,6 +55,101 @@ func (r *Repository) ReviewWordTx(
 	}
 
 	assessment := AssessReview(request, definition)
+	return r.applyReviewTx(ctx, tx, userID, wordID, request, state, assessment)
+}
+
+// ReviewWordTxWithAssessment is the narrow cross-domain entrypoint for a
+// deterministic server judge whose evidence cannot be represented by the
+// translation/cloze AnswerDefinition used by ordinary cards. The caller owns
+// the surrounding transaction and must provide a complete server assessment;
+// scheduler policy and review-event persistence remain centralized here.
+func (r *Repository) ReviewWordTxWithAssessment(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	wordID int64,
+	request ReviewRequest,
+	assessment ReviewAssessment,
+) (ReviewResult, error) {
+	if err := validateTrustedReviewAssessment(request, assessment); err != nil {
+		return ReviewResult{}, err
+	}
+
+	var state ReviewState
+	if err := tx.QueryRow(ctx, `
+		select status,
+		       easiness::float8,
+		       interval_days,
+		       repetitions,
+		       due_at
+		from user_words
+		where user_id = $1::uuid and word_id = $2
+		for update
+	`, userID, wordID).Scan(
+		&state.Status,
+		&state.Easiness,
+		&state.IntervalDays,
+		&state.Repetitions,
+		&state.DueAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ReviewResult{}, ErrWordNotFound
+		}
+		return ReviewResult{}, fmt.Errorf("lock user learning item: %w", err)
+	}
+
+	return r.applyReviewTx(ctx, tx, userID, wordID, request, state, assessment)
+}
+
+func validateTrustedReviewAssessment(request ReviewRequest, assessment ReviewAssessment) error {
+	if !request.AnswerMode.Objective() {
+		return fmt.Errorf("trusted review assessment requires an objective answer mode")
+	}
+	if request.AnswerRevealed != nil && *request.AnswerRevealed {
+		return fmt.Errorf("trusted review assessment cannot reveal the answer before judgement")
+	}
+	if assessment.JudgementSource != JudgementSourceServer {
+		return fmt.Errorf("trusted review assessment requires server judgement source")
+	}
+	if strings.TrimSpace(assessment.JudgementReason) == "" {
+		return fmt.Errorf("trusted review assessment requires a judgement reason")
+	}
+	if assessment.Correct == nil {
+		return fmt.Errorf("trusted review assessment requires objective correctness")
+	}
+	if assessment.RequestedRating != request.Rating {
+		return fmt.Errorf("trusted review assessment requested rating does not match review request")
+	}
+	if assessment.SubmittedAnswer != nil && !SubmittedAnswerWithinLimit(*assessment.SubmittedAnswer) {
+		return fmt.Errorf("trusted review assessment submitted answer exceeds the supported limit")
+	}
+	if *assessment.Correct {
+		if assessment.EffectiveRating != request.Rating {
+			return fmt.Errorf("successful trusted review assessment must preserve the requested rating")
+		}
+		if strings.TrimSpace(assessment.MatchedAnswer) == "" {
+			return fmt.Errorf("successful trusted review assessment requires matched evidence")
+		}
+		return nil
+	}
+	if assessment.EffectiveRating != RatingAgain {
+		return fmt.Errorf("failed trusted review assessment must apply rating again")
+	}
+	if strings.TrimSpace(assessment.MatchedAnswer) != "" {
+		return fmt.Errorf("failed trusted review assessment cannot contain matched evidence")
+	}
+	return nil
+}
+
+func (r *Repository) applyReviewTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	wordID int64,
+	request ReviewRequest,
+	state ReviewState,
+	assessment ReviewAssessment,
+) (ReviewResult, error) {
 	schedule, err := ScheduleAttempt(state, assessment.EffectiveRating, request.AnswerMode)
 	if err != nil {
 		return ReviewResult{}, err

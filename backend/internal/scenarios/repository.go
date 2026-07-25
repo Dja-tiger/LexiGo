@@ -284,11 +284,22 @@ func (r *Repository) SubmitStep(
 
 	var requiresFactHypothesis bool
 	var minResponseCharacters int
+	var reviewTarget scenarioReviewTargetDefinition
 	if err := tx.QueryRow(ctx, `
-		select requires_fact_hypothesis, min_response_characters
+		select requires_fact_hypothesis,
+		       min_response_characters,
+		       review_term,
+		       review_translation,
+		       review_part_of_speech
 		from scenario_steps
 		where scenario_slug = $1 and position = $2
-	`, scenarioSlug, position).Scan(&requiresFactHypothesis, &minResponseCharacters); err != nil {
+	`, scenarioSlug, position).Scan(
+		&requiresFactHypothesis,
+		&minResponseCharacters,
+		&reviewTarget.Term,
+		&reviewTarget.Translation,
+		&reviewTarget.PartOfSpeech,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return SubmitStepResponse{}, ErrStepOutOfOrder
 		}
@@ -304,16 +315,19 @@ func (r *Repository) SubmitStep(
 		return SubmitStepResponse{}, err
 	}
 
-	reviewRequest := learning.ReviewRequest{
-		Rating:                request.Review.Rating,
-		ResponseMS:            request.Review.ResponseMS,
-		AnswerMode:            learning.AnswerModeRecall,
-		SubmittedAnswer:       request.Review.SubmittedAnswer,
-		Correct:               request.Review.Correct,
-		AnswerRevealed:        request.Review.AnswerRevealed,
-		TimezoneOffsetMinutes: request.Review.TimezoneOffsetMinutes,
+	wordID, err := resolveScenarioReviewWord(ctx, tx, userID, reviewTarget)
+	if err != nil {
+		return SubmitStepResponse{}, err
 	}
-	review, err := r.learning.ReviewWordTx(ctx, tx, userID, request.Review.WordID, reviewRequest)
+	reviewRequest, assessment := buildScenarioReview(response, reviewTarget.ScenarioReviewTarget, request.Review)
+	review, err := r.learning.ReviewWordTxWithAssessment(
+		ctx,
+		tx,
+		userID,
+		wordID,
+		reviewRequest,
+		assessment,
+	)
 	if err != nil {
 		return SubmitStepResponse{}, err
 	}
@@ -430,6 +444,7 @@ func loadScenario(ctx context.Context, database queryer, slug string) (Scenario,
 		       prompt,
 		       production_outcome,
 		       vocabulary,
+		       review_term,
 		       requires_fact_hypothesis,
 		       min_response_characters
 		from scenario_steps
@@ -451,6 +466,7 @@ func loadScenario(ctx context.Context, database queryer, slug string) (Scenario,
 			&step.Prompt,
 			&step.ProductionOutcome,
 			&step.Vocabulary,
+			&step.ReviewTarget.Term,
 			&step.RequiresFactHypothesis,
 			&step.MinResponseCharacters,
 		); err != nil {
@@ -564,6 +580,7 @@ func loadAttempt(ctx context.Context, database queryer, userID, attemptID string
 			       prompt,
 			       production_outcome,
 			       vocabulary,
+			       review_term,
 			       requires_fact_hypothesis,
 			       min_response_characters
 			from scenario_steps
@@ -575,6 +592,7 @@ func loadAttempt(ctx context.Context, database queryer, userID, attemptID string
 			&step.Prompt,
 			&step.ProductionOutcome,
 			&step.Vocabulary,
+			&step.ReviewTarget.Term,
 			&step.RequiresFactHypothesis,
 			&step.MinResponseCharacters,
 		); err != nil {

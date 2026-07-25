@@ -11,7 +11,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
-	"github.com/Dja-tiger/LexiGo/backend/internal/learning"
 )
 
 type Handler struct {
@@ -200,33 +199,12 @@ func normalizeAndValidateSubmission(request *SubmitStepRequest) (code, message s
 	if code, message := normalizeEvidencePayload(&request.Hypotheses); code != "" {
 		return code, message
 	}
-	if request.Review.WordID <= 0 {
-		return "invalid_word_id", "review.wordId must be a positive integer"
-	}
-	switch request.Review.Rating {
-	case learning.RatingAgain, learning.RatingAlmost, learning.RatingKnown:
-	default:
-		return "invalid_rating", "review.rating must be again, almost or known"
-	}
 	if request.Review.ResponseMS != nil && (*request.Review.ResponseMS < 0 || *request.Review.ResponseMS > 3_600_000) {
 		return "invalid_response_ms", "review.responseMs must be between 0 and 3600000"
 	}
-	if request.Review.Correct != nil {
-		return "legacy_correct_forbidden", "scenario reviews must provide submittedAnswer instead of legacy correct"
+	if request.Review.TimezoneOffsetMinutes < -840 || request.Review.TimezoneOffsetMinutes > 840 {
+		return "invalid_timezone_offset", "review.timezoneOffsetMinutes must be between -840 and 840"
 	}
-	if request.Review.SubmittedAnswer == nil {
-		return "submitted_answer_required", "scenario reviews require submittedAnswer"
-	}
-	trimmedAnswer := strings.TrimSpace(*request.Review.SubmittedAnswer)
-	if trimmedAnswer == "" || !learning.SubmittedAnswerWithinLimit(trimmedAnswer) {
-		return "invalid_submitted_answer", "review.submittedAnswer must contain at most 500 characters"
-	}
-	request.Review.SubmittedAnswer = &trimmedAnswer
-	if request.Review.AnswerRevealed != nil && *request.Review.AnswerRevealed {
-		return "answer_revealed_forbidden", "scenario production reviews cannot reveal the answer before submission"
-	}
-	answerRevealed := false
-	request.Review.AnswerRevealed = &answerRevealed
 	return "", ""
 }
 
@@ -286,8 +264,6 @@ func writeScenarioError(w http.ResponseWriter, err error) {
 		httpx.WriteError(w, http.StatusNotFound, "scenario_not_found", "scenario was not found")
 	case errors.Is(err, ErrAttemptNotFound):
 		httpx.WriteError(w, http.StatusNotFound, "scenario_attempt_not_found", "scenario attempt was not found")
-	case errors.Is(err, learning.ErrWordNotFound):
-		httpx.WriteError(w, http.StatusNotFound, "word_not_found", "review item is not assigned to the current user")
 	case errors.Is(err, ErrAttemptConflict):
 		httpx.WriteError(w, http.StatusConflict, "scenario_attempt_conflict", "scenario attempt changed; reload it before retrying")
 	case errors.Is(err, ErrAttemptPaused):
@@ -302,10 +278,6 @@ func writeScenarioError(w http.ResponseWriter, err error) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "fact_hypothesis_required", "confirmed facts and current hypotheses must be provided separately")
 	case errors.Is(err, ErrFactHypothesisOverlap):
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "fact_hypothesis_overlap", "the same statement cannot be both a fact and a hypothesis")
-	case errors.Is(err, learning.ErrInvalidRating):
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_rating", "review.rating must be again, almost or known")
-	case errors.Is(err, learning.ErrInvalidAnswerMode):
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "scenario reviews must use recall")
 	default:
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

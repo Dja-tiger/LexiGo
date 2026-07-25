@@ -1,122 +1,51 @@
 # Current Task Progress
 
-## 2026-07-25 13:56 Europe/Berlin
+## 2026-07-25 17:12 Europe/Berlin
 
 ### Verified
 
-- `main` SHA `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- PR #216 merged after CI #1744 success and no review threads
-- no open PRs at harness pre-flight
-- Issue #19 closed by PR #215
-- historical Issue #19 branch absent
-- Issue #24 open; backend/content contract merged, Scenario UI #196 remains
-- stage Issue #12 reports public iOS WebKit failure on older SHA `20188f7...`
-- existing `.agents/AGENTS*.md`, README, architecture and roadmap read from `main`
+- `main` remains `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`; all writes are isolated on `fix/issue-196-scenario-review-contract`.
+- Draft PR #218 is open, mergeable and based on the verified `main`.
+- Exact Scenario Figma nodes `76:100`, `76:127` and `76:219`, Issue #196, Issue #24, runtime routes and the merged Scenario persistence contract were inspected.
+- CI #1760 (`30162517241`) completed successfully on head `35cdfdf7c031541f737dd43f7fd807370ed22bab`: backend formatting, static analysis, unit/race, vulnerability, integration and the full frontend/browser matrix passed.
+- Current branch head after bounded OpenAPI and task-memory reconciliation is `ca7c031c50f7407a1db8b2243b1124449e61ef8d`; CI #1767 is pending on that head.
 
-### Finding
+### Confirmed defect
 
-The repository has strong production-safe rules but no root entrypoint, persistent project-state file, skills registry, current-task records, templates, domain lessons, PR checklist or executable harness contract.
+The previous Scenario submit contract delegated `wordId`, rating and submitted-answer evidence to the client even though a step exposed only vocabulary strings and the approved UI has no owner for those fields. The prior integration fixture selected an unrelated first catalog word, proving persistence but not semantically linked durable evidence.
 
 ### Root cause
 
-Repository memory evolved as specialized AGENTS additions and chat handoffs rather than a single indexed lifecycle.
+The backend/content slice established atomic review-event persistence before defining the Scenario-step-to-learning-item ownership boundary. The API therefore exposed internal review-target selection and evidence claims as client input.
 
-### Changed files
+### Implemented correction
 
-Planned only within the allowed harness paths.
+- Migration `000015` stores an immutable review target definition (`term`, translation, part of speech) on all 18 seeded steps and verifies that each term belongs to its step vocabulary.
+- Public Scenario payloads expose only `reviewTarget.term`; no seed-dependent or client-selectable word ID is published.
+- Accepted submission resolves/creates the concrete catalog item, enrolls it for the user, applies the canonical scheduler, writes the schema-v2 Recall event, links Scenario evidence and advances the attempt in one transaction.
+- Normalized whole-term presence produces `known`/correct/server judgement; absence produces `again`/incorrect/server judgement.
+- A narrow trusted-assessment transaction entrypoint centralizes scheduler/event SQL and rejects passive, client-sourced, inconsistent or unbounded assessments.
+- Strict JSON decoding rejects the historical client-authored `wordId`, rating, submitted answer, correctness and answer-revealed fields.
+- `api/openapi-scenarios.json` now documents all seven authenticated Scenario routes and exact request ownership; `openapi_contract_test.go` parses and guards the document without adding dependencies.
 
-### Checks passed
+### Validation evidence
 
-Pre-flight repository/PR/Issue/branch verification; branch compare is identical to verified `main`.
+- Integration proves catalog/detail target order, start/pause/resume/reload, fact/hypothesis rules, out-of-order rejection, old-payload rejection, objective correct and incorrect events, exact idempotent replay, mutated replay conflict, target enrollment, three-step completion and a new attempt after completion.
+- Backend integration passed before and after the server-owned target redesign.
+- Initial CI #1759 found only two `gofmt` differences in new tests; both were reproduced, corrected and recorded as a formatting failure rather than a behavior defect.
+- CI #1760 subsequently passed all required groups on the corrected runtime head.
+- The bounded OpenAPI source contract and its unit guard were added after #1760, so final-head CI is still required.
 
-### Checks failed
+### Reusable failures recorded
 
-None for harness code yet. Stage validation is pending/failing on an older product SHA and is recorded separately.
-
-### Current branch head
-
-`f2785be459a04b87511ab8d9f26d60b3da15669b` before the first harness content commit.
-
-### Next action
-
-Publish the isolated harness content, read every changed path back, run the source contract, inspect diff and create a Draft PR.
-
-## 2026-07-25 14:18 Europe/Berlin
-
-### Verified
-
-- Draft PR #217 exists from `chore/agent-harness-v1` to `main`
-- branch diff contains 19 allowed documentation/tooling paths and no product/runtime/deployment/dependency files
-- all repository file writes were read back by branch ref and `main` remained at `f2785be...`
-
-### Finding
-
-The complete harness is publishable without changing an existing workflow; the source contract can run directly with repository shell capabilities.
-
-### Root cause
-
-The repository previously lacked an executable contract tying the distributed memory files together. One initial connector write was refused before mutation; repository refs and target absence were verified before a neutral equivalent retry.
-
-### Changed files
-
-`AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, `README.md`, `.github/pull_request_template.md`, `scripts/ci/check-agent-harness.sh`.
-
-### Checks passed
-
-- `bash -n scripts/ci/check-agent-harness.sh`
-- `bash scripts/ci/check-agent-harness.sh`
-- Markdown relative links
-- required file/reference/checklist contract
-- obvious-secret scan
-- generated-artifact scan
-- allowed-path branch compare
-
-### Checks failed
-
-No harness check failed. Full required PR CI is pending; PR #216 stage validation is now complete and recorded below.
+- A transient undefined model alias was introduced and immediately removed before PR validation; `.agents/lessons/backend.md` now requires preserving canonical cross-package types and compiling the owning package after model-shape changes.
+- A persisted FK to seed-dependent `words.id` was rejected during integration reconciliation because catalog truncation/reseed would invalidate the Scenario target. Immutable target definitions plus transactional lazy resolution are now the contract.
+- The monolithic historical `api/openapi.yaml` cannot be safely patched line-wise through the contents-only connector. A bounded, independently parseable Scenario OpenAPI document avoids an unsafe full-file rewrite and is guarded in Go.
 
 ### Current branch head
 
-Resolve from the live branch ref; pre-entry head was `b95eb4683ee269ea0735f258f5f529cd5e9eb571` and this log update creates a newer head.
+`ca7c031c50f7407a1db8b2243b1124449e61ef8d` at this progress update. Resolve again before final validation because this memory write creates a new commit.
 
 ### Next action
 
-Run and classify full required CI on the final head, inspect review threads, then proceed to Ready and expected-head squash merge only if all gates are green.
-
-## 2026-07-25 14:21 Europe/Berlin
-
-### Verified
-
-- Issue #12 now reports stage success for `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- stage run `30157188680`: deploy success, public smoke success, public browser success
-- public browser matrix passed 12/12, including Chromium, iOS WebKit and stale-build recovery
-
-### Finding
-
-The deployment source changed after pre-flight; the earlier failure snapshot was no longer current.
-
-### Root cause
-
-PR #216 stage deployment completed after the initial repository-state reconstruction.
-
-### Changed files
-
-- `.agents/PROJECT_STATE.md`
-- `.agents/current/EXECUTION.md`
-- `.agents/current/PROGRESS.md`
-
-### Checks passed
-
-Live deployment reconciliation and exact SHA/run verification.
-
-### Checks failed
-
-None. Full required CI for PR #217 remains pending on the new final head.
-
-### Current branch head
-
-Resolve from the live branch ref; pre-entry head was `938ea95865e9cf129340a994e99440eecd03e25a` and this log update creates a newer head.
-
-### Next action
-
-Run full required CI on the reconciled final head, then inspect final diff and review threads before Ready.
+Wait for the newest CI, fix any OpenAPI/source-contract failure, reconcile execution/project state and PR body, then run one final immutable-head CI. Keep PR #218 Draft until all checks pass and review threads are empty.

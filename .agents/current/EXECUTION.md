@@ -2,10 +2,11 @@
 
 ## Task
 
-- Branch: `chore/agent-harness-v1`
-- Base SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`
+- Issue: #196 prerequisite contract correction for #24
+- Branch: `fix/issue-196-scenario-review-contract`
+- Base SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`
 - Head SHA: resolve from live branch ref
-- PR: #217 `chore(agent): formalize LexiGo development harness` (Draft)
+- PR: #218 (Draft)
 
 ## Skills used
 
@@ -13,11 +14,11 @@
 
 Purpose:
 
-Reconstruct live state, merge PR #216 safely and create an isolated harness branch.
+Protect `main`, verify repository truth, isolate the atomic correction and drive CI/review state.
 
 Instruction source:
 
-GitHub project skill, `AGENTS.base.md`, existing specialized AGENTS files.
+`AGENTS.md`, `.agents/AGENTS*.md`, `.agents/SKILLS.md`, GitHub repository skill and CI-fix procedure.
 
 Version or verification date:
 
@@ -25,69 +26,45 @@ Version or verification date:
 
 Inputs:
 
-Repository, PR #216, Issues #12/#19/#24, recent commits, branches, checks and allowed paths.
-
-Files inspected:
-
-- `.agents/AGENTS.md`
-- `.agents/AGENTS.base.md`
-- `.agents/AGENTS.progress-pr214.md`
-- `.agents/AGENTS.progress-pr214-ci1732.md`
-- `.agents/AGENTS.issue-19-completion.md`
-- `README.md`
-- `docs/architecture.md`
-- `docs/roadmap.md`
+PR #217, CI #1756, Issues #196/#24, current `main`, PR #218, CI #1759/#1760 and live branch files.
 
 Actions performed:
 
-- verified PR #216 final head, CI and review threads;
-- marked Ready and squash-merged with expected head SHA;
-- verified new `main`;
-- checked open PRs and historical Issue #19 branch;
-- created `chore/agent-harness-v1` from verified `main`;
-- compared branch with base.
-
-Commands or procedures:
-
-Connector-backed exact ref, PR, workflow and file reads; expected-head squash merge; explicit branch creation.
+- verified and squash-merged PR #217 on its immutable green head;
+- created `fix/issue-196-scenario-review-contract` from exact `main`;
+- opened Draft PR #218;
+- read every changed file back from the explicit branch and repeatedly verified `main` unchanged;
+- classified initial CI #1759 as a formatting-only failure after backend integration passed;
+- reproduced and fixed the two `gofmt` differences;
+- verified full CI #1760 success on the corrected runtime head;
+- kept PR #218 Draft while the bounded API contract and final memory were added.
 
 Artifacts produced:
 
-Pre-flight record and verified state reconstruction.
+PR #218, isolated branch, CI evidence and current repository memory.
 
 Result:
 
-PR #216 merged as `f2785be...`; product branch and `main` were not modified by harness pre-flight.
+The runtime correction is green on CI #1760. Final-head CI is pending after OpenAPI/memory reconciliation.
 
 Failures:
 
-The pre-flight deployment snapshot was initially stale and showed the previous image failure.
-
-Root cause:
-
-Stage deployment for PR #216 completed after the first pre-flight read; Issue #12 later moved to `f2785be...` with successful public browser validation.
-
-Fallback:
-
-Re-read the live deployment source before final CI and reconciled `PROJECT_STATE.md`; do not preserve an outdated failure as current state.
-
-Limitations:
-
-Indexed search is discovery only; exact refs/files/PRs are authoritative.
+- GitHub Actions had an earlier platform incident, resolved before this task's canonical runs.
+- Local clone/download fallback could not reach GitHub from the execution container; repository connector and CI remained available.
 
 Reusable lesson:
 
-Repository memory must explicitly distinguish green PR CI from post-merge stage evidence.
+Infrastructure, formatting and behavior failures must be classified separately. A prior green runtime head does not authorize merge after later documentation/source-contract writes; final CI must rerun.
 
-### Documentation architecture
+### Figma inspection
 
 Purpose:
 
-Organize existing rules into an indexed repository-memory system without replacing them.
+Confirm the downstream Scenario UI contract and avoid inventing controls absent from approved design.
 
 Instruction source:
 
-Current task contract and existing AGENTS hierarchy.
+Figma design-to-code skill and Issue #196.
 
 Version or verification date:
 
@@ -95,57 +72,33 @@ Version or verification date:
 
 Inputs:
 
-Existing normative documents and required harness structure.
-
-Files inspected:
-
-All existing `.agents/AGENTS*.md`, README, architecture and roadmap.
+LexiGo Design System nodes `76:100`, `76:127`, `76:219`.
 
 Actions performed:
 
-Defined entrypoint, normative index, state registry, skills registry, current context, templates, lessons and lifecycle documentation.
-
-Commands or procedures:
-
-Preserve specialized files; link instead of copy; assign one owner per information class.
-
-Artifacts produced:
-
-Harness Markdown structure and README/PR-template integration.
+Inspected mobile Light, mobile Dark and desktop active states: role, audience, workplace goal, constraints, response editor, criteria, progress and save/pause affordances.
 
 Result:
 
-A new agent can reconstruct process, state, current work, reusable procedures and remaining roadmap from repository files.
-
-Failures:
-
-None.
-
-Root cause:
-
-Not applicable.
-
-Fallback:
-
-If state is stale, live GitHub overrides and `PROJECT_STATE.md` is corrected in a dedicated branch.
+No arbitrary word picker, self-rating or client correctness control exists. The backend contract had to own review target and judgement before UI implementation.
 
 Limitations:
 
-Repository documents cannot self-encode the exact SHA of the commit containing themselves; live refs remain authoritative.
+React route, browser accessibility matrix and Linux visual baselines are deliberately deferred to the next PR.
 
 Reusable lesson:
 
-Separate normative rules, mutable state, current execution and reusable procedures to prevent handoff drift.
+A required mutation field needs a legitimate UI owner; otherwise ownership belongs in the server contract.
 
-### State reconstruction
+### Backend contract audit and implementation
 
 Purpose:
 
-Replace stale handoff assumptions with current verified project facts.
+Map every Scenario producer/consumer and restore objective durable evidence without duplicating the learning scheduler.
 
 Instruction source:
 
-`docs/agent-harness.md` state-priority model.
+`.agents/AGENTS.base.md`, `.agents/AGENTS.issue-19-completion.md`, backend validation procedure.
 
 Version or verification date:
 
@@ -153,57 +106,46 @@ Version or verification date:
 
 Inputs:
 
-PRs #214-#216, Issues #12/#18/#19/#24/#25/#115/#133/#170/#196-#205, README, architecture and recent commits.
-
-Files inspected:
-
-Exact PR/Issue metadata and repository documents.
+Scenario model/HTTP/repository, migrations `000011`/`000012`, integration fixture, canonical learning review transaction, answer normalization, catalog and registration/enrollment behavior.
 
 Actions performed:
 
-Reconciled completed learning core, closed Issue #19, merged Scenario backend contract, open UI/architecture/research work and stage validation gap.
-
-Commands or procedures:
-
-Cross-check Issues against merge commits and CI records; do not infer completion from chat.
+- traced list/detail/start/pause/resume/submit and replay paths;
+- rejected the initial persisted `review_word_id` design because test/catalog reseeds make seed IDs unstable;
+- added migration `000015` with immutable target term/translation/part-of-speech for all 18 steps;
+- exposed only `reviewTarget.term` publicly;
+- added normalized whole-term target judgement;
+- added transactional word resolution/creation and user enrollment;
+- centralized trusted server assessments through `ReviewWordTxWithAssessment` and shared `applyReviewTx`;
+- removed client-authored word/rating/answer evidence from submit;
+- expanded integration coverage for old-payload rejection, correct/incorrect evidence, assignment, replay and completion.
 
 Artifacts produced:
 
-`.agents/PROJECT_STATE.md`.
+Migration, Scenario domain code, shared learning transaction guard and unit/integration tests.
 
 Result:
 
-The next product slice is Scenario UI #196, not the already completed Issue #19 completion branch.
+Backend integration and full CI #1760 pass. Evidence remains schema v2 Recall and atomically linked to accepted Scenario steps.
 
 Failures:
 
-The first reconstruction lacked latest-stage success evidence.
-
-Root cause:
-
-Issue #12 was updated after pre-flight when stage run `30157188680` completed.
-
-Fallback:
-
-Re-read the live deployment source and reconcile state before final CI; stage is now verified green for `f2785be...`.
-
-Limitations:
-
-Manual usability and visual parity evidence cannot be automated.
+- A transient undefined alias was introduced during a model replacement and removed immediately before CI; a reusable backend lesson was added.
+- The first CI run found two `gofmt` differences in new test literals; behavior/integration were green, formatting was corrected and #1760 passed.
 
 Reusable lesson:
 
-Completed, in-progress, remaining and validation-pending are distinct states.
+Persist immutable domain definitions rather than foreign keys to reseeded catalogs. Resolve concrete learning IDs inside the transaction that consumes the definition.
 
-### Source-contract validation
+### OpenAPI source contract
 
 Purpose:
 
-Make the repository-memory structure executable and regression-resistant.
+Provide a machine-readable Scenario API contract that proves route/auth/request ownership without risking an unsafe wholesale rewrite of the historical monolithic spec through a contents-only connector.
 
 Instruction source:
 
-Current task contract.
+Task contract, runtime routes and strict JSON decoding behavior.
 
 Version or verification date:
 
@@ -211,105 +153,30 @@ Version or verification date:
 
 Inputs:
 
-Required files, links, checklist phrases and secret restrictions.
-
-Files inspected:
-
-Harness tree, README and PR template.
+Seven authenticated Scenario routes, public models, validation bounds and integration responses.
 
 Actions performed:
 
-Implemented a dependency-free shell contract with explicit error messages and non-zero failure behavior.
-
-Commands or procedures:
-
-POSIX shell utilities available on Linux runners.
-
-Artifacts produced:
-
-`scripts/ci/check-agent-harness.sh`.
+- added `api/openapi-scenarios.json` as an OpenAPI 3.1 bounded-context document;
+- documented catalog/detail/start/get/pause/resume/submit routes;
+- documented server-owned `reviewTarget.term`, optional review timing metadata and response evidence;
+- excluded client-owned `wordId`, rating, submitted answer, correctness and judgement fields;
+- added a dependency-free Go test that parses the document, verifies exact paths/security/request properties/required fields and rejects forbidden client evidence.
 
 Result:
 
-Published on branch; `bash -n` and `scripts/ci/check-agent-harness.sh` passed in the reconstructed repository tree. Full PR CI is pending.
+Scenario clients have an independently parseable contract protected by unit CI. The historical aggregate `api/openapi.yaml` remains unchanged in this atomic runtime correction.
 
-Failures:
+Risks and follow-up:
 
-No source-contract failure. One initial connector file-write request was refused before repository mutation.
+The bounded document and historical aggregate may drift if future API governance assumes one monolith. The test protects the bounded contract; aggregate consolidation should be done only with a safe file-level editing environment or generation tooling.
 
-Root cause:
+## Validation status
 
-Connector safety classification was unable to determine the request status; the target file did not exist and refs were unchanged.
-
-Fallback:
-
-Verified no write occurred, preserved the same engineering rule in neutral wording and retried on the explicit branch. The source contract is run manually because changing a workflow is outside the minimal safe scope.
-
-Limitations:
-
-The script validates repository structure and obvious links/secrets, not semantic freshness of GitHub facts.
-
-Reusable lesson:
-
-Mutable documentation needs a cheap structural gate plus a live-state verification protocol.
-
-### PR lifecycle
-
-Purpose:
-
-Publish a Draft PR, classify CI, reach Ready, squash merge and validate post-merge state.
-
-Instruction source:
-
-GitHub operations skill and `docs/agent-harness.md`.
-
-Version or verification date:
-
-2026-07-25.
-
-Inputs:
-
-Final allowed-path diff and validation output.
-
-Files inspected:
-
-Branch compare, PR checks, review threads and deployment status.
-
-Actions performed:
-
-- compared the final branch with `main`;
-- verified 19 changed files are within allowed paths;
-- created Draft PR #217 with scope, non-goals, validation, risk and rollback;
-- linked current task and project state to the Draft PR.
-
-Commands or procedures:
-
-Draft PR, final-head CI, Ready, expected-head squash merge, main/stage validation and memory promotion.
-
-Artifacts produced:
-
-Draft PR #217; merge record pending.
-
-Result:
-
-Draft PR published; full required CI, review-thread check, Ready and merge are pending.
-
-Failures:
-
-None in PR creation.
-
-Root cause:
-
-Not applicable.
-
-Fallback:
-
-Keep PR Draft and stop writes if any stop condition is met.
-
-Limitations:
-
-Post-merge context reset may require a dedicated follow-up documentation PR because direct `main` writes are prohibited.
-
-Reusable lesson:
-
-A task is not complete at code merge; state promotion and context reset are explicit lifecycle steps.
+1. Migration applies in integration and survives the repository's catalog reset/reseed pattern: passed.
+2. Normalized whole-term matching and trusted-assessment validation: passed on CI #1760.
+3. Scenario integration lifecycle/evidence/idempotency/completion: passed on CI #1760.
+4. Bounded OpenAPI parse/source contract: pending newest final-head CI.
+5. Backend formatting/static/unit/race/integration/vulnerability: passed on #1760; rerun pending after later source-contract writes.
+6. Full required frontend/browser matrix: passed on #1760; final-head rerun pending.
+7. Review threads and final PR metadata: pending final-head CI.
