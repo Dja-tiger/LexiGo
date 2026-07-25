@@ -6,7 +6,7 @@
 - Branch: `fix/issue-196-scenario-review-contract`
 - Base SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`
 - Head SHA: resolve from live branch ref
-- PR: not created yet
+- PR: #218 (Draft)
 
 ## Skills used
 
@@ -14,11 +14,11 @@
 
 Purpose:
 
-Validate the post-harness repository, isolate the next atomic slice and protect `main`.
+Protect `main`, verify repository truth, isolate the atomic correction and drive CI/review state.
 
 Instruction source:
 
-`AGENTS.md`, `.agents/AGENTS*.md`, `.agents/SKILLS.md`, GitHub repository skill.
+`AGENTS.md`, `.agents/AGENTS*.md`, `.agents/SKILLS.md`, GitHub repository skill and CI-fix procedure.
 
 Version or verification date:
 
@@ -26,38 +26,41 @@ Version or verification date:
 
 Inputs:
 
-PR #217, CI #1756, Issue #196, Issue #24, current `main`, open PR search and Scenario backend sources.
+PR #217, CI #1756, Issues #196/#24, current `main`, PR #218, CI #1759/#1760 and live branch files.
 
 Actions performed:
 
-- verified CI #1756 success on the final PR #217 head;
-- marked PR #217 Ready and squash-merged with expected head SHA;
-- verified merge commit `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`;
-- verified no open PRs;
+- verified and squash-merged PR #217 on its immutable green head;
 - created `fix/issue-196-scenario-review-contract` from exact `main`;
-- read branch files back and confirmed `main` remained unchanged after writes.
+- opened Draft PR #218;
+- read every changed file back from the explicit branch and repeatedly verified `main` unchanged;
+- classified initial CI #1759 as a formatting-only failure after backend integration passed;
+- reproduced and fixed the two `gofmt` differences;
+- verified full CI #1760 success on the corrected runtime head;
+- kept PR #218 Draft while the bounded API contract and final memory were added.
 
 Artifacts produced:
 
-Isolated branch, pre-flight record and current task memory.
+PR #218, isolated branch, CI evidence and current repository memory.
 
 Result:
 
-The Agent Harness is in `main`; the next work is isolated from product history.
+The runtime correction is green on CI #1760. Final-head CI is pending after OpenAPI/memory reconciliation.
 
 Failures:
 
-GitHub Actions had an earlier confirmed infrastructure incident; the canonical recovery run #1756 passed. No repository failure occurred in this task.
+- GitHub Actions had an earlier platform incident, resolved before this task's canonical runs.
+- Local clone/download fallback could not reach GitHub from the execution container; repository connector and CI remained available.
 
 Reusable lesson:
 
-A recovery run must use the same immutable head, and infrastructure incidents must not be misclassified as product or billing failures without evidence.
+Infrastructure, formatting and behavior failures must be classified separately. A prior green runtime head does not authorize merge after later documentation/source-contract writes; final CI must rerun.
 
 ### Figma inspection
 
 Purpose:
 
-Confirm the downstream Scenario UI contract and avoid inventing controls that do not exist in the approved design.
+Confirm the downstream Scenario UI contract and avoid inventing controls absent from approved design.
 
 Instruction source:
 
@@ -73,29 +76,29 @@ LexiGo Design System nodes `76:100`, `76:127`, `76:219`.
 
 Actions performed:
 
-Inspected mobile Light, mobile Dark and desktop Scenario active states, including role, audience, workplace goal, constraints, response editor, feedback criteria, progress and save/pause affordances.
+Inspected mobile Light, mobile Dark and desktop active states: role, audience, workplace goal, constraints, response editor, criteria, progress and save/pause affordances.
 
 Result:
 
-The approved UI has no arbitrary word picker, self-rating control or client correctness control. The existing submit contract cannot be exposed without a backend correction.
+No arbitrary word picker, self-rating or client correctness control exists. The backend contract had to own review target and judgement before UI implementation.
 
 Limitations:
 
-The UI implementation and Linux visual baselines are deliberately deferred to the next PR.
+React route, browser accessibility matrix and Linux visual baselines are deliberately deferred to the next PR.
 
 Reusable lesson:
 
-A backend contract is not frontend-ready when a required request field has no approved UI owner.
+A required mutation field needs a legitimate UI owner; otherwise ownership belongs in the server contract.
 
-### Backend contract audit
+### Backend contract audit and implementation
 
 Purpose:
 
-Map every Scenario producer and consumer before implementing the UI.
+Map every Scenario producer/consumer and restore objective durable evidence without duplicating the learning scheduler.
 
 Instruction source:
 
-`.agents/AGENTS.base.md`, `.agents/AGENTS.issue-19-completion.md`, backend validation skill.
+`.agents/AGENTS.base.md`, `.agents/AGENTS.issue-19-completion.md`, backend validation procedure.
 
 Version or verification date:
 
@@ -103,40 +106,77 @@ Version or verification date:
 
 Inputs:
 
-- `backend/internal/scenarios/model.go`
-- `backend/internal/scenarios/http.go`
-- `backend/internal/scenarios/repository.go`
-- migrations `000011` and `000012`
-- `backend/integration/scenario_lessons_test.go`
-- canonical learning review and answer judgement code
-- words catalog API.
+Scenario model/HTTP/repository, migrations `000011`/`000012`, integration fixture, canonical learning review transaction, answer normalization, catalog and registration/enrollment behavior.
 
 Actions performed:
 
-- traced list/detail/start/pause/resume/submit transitions;
-- verified optimistic versioning, idempotency and atomic review-event storage;
-- verified `ScenarioStep` has only vocabulary strings;
-- verified submit requires client-supplied `wordId`, rating and submitted answer;
-- verified the integration fixture selects the first unrelated word from `/words`;
-- verified canonical Recall judgement is exact/normalized and must remain server-owned.
+- traced list/detail/start/pause/resume/submit and replay paths;
+- rejected the initial persisted `review_word_id` design because test/catalog reseeds make seed IDs unstable;
+- added migration `000015` with immutable target term/translation/part-of-speech for all 18 steps;
+- exposed only `reviewTarget.term` publicly;
+- added normalized whole-term target judgement;
+- added transactional word resolution/creation and user enrollment;
+- centralized trusted server assessments through `ReviewWordTxWithAssessment` and shared `applyReviewTx`;
+- removed client-authored word/rating/answer evidence from submit;
+- expanded integration coverage for old-payload rejection, correct/incorrect evidence, assignment, replay and completion.
+
+Artifacts produced:
+
+Migration, Scenario domain code, shared learning transaction guard and unit/integration tests.
 
 Result:
 
-Confirmed a cross-layer blocker: review target selection and evidence ownership are missing between Scenario content and the canonical scheduler.
+Backend integration and full CI #1760 pass. Evidence remains schema v2 Recall and atomically linked to accepted Scenario steps.
 
-Fallback:
+Failures:
 
-Implement one forward migration and a server-owned target/derivation contract before the React route.
+- A transient undefined alias was introduced during a model replacement and removed immediately before CI; a reusable backend lesson was added.
+- The first CI run found two `gofmt` differences in new test literals; behavior/integration were green, formatting was corrected and #1760 passed.
 
 Reusable lesson:
 
-For every required mutation field, identify a legitimate UI owner or move ownership to the server before declaring an API ready for a product slice.
+Persist immutable domain definitions rather than foreign keys to reseeded catalogs. Resolve concrete learning IDs inside the transaction that consumes the definition.
 
-## Planned validation
+### OpenAPI source contract
 
-1. Migration applies on clean and upgraded databases.
-2. Scenario unit tests cover normalized whole-token target matching and rejection.
-3. Integration verifies linked target, existing/new user enrollment, objective correct/incorrect review events, pause/resume, idempotency and completion.
-4. OpenAPI source contract matches runtime.
-5. Backend formatting, static analysis, unit/race, integration and vulnerability gates pass.
-6. Full required PR CI passes on the final developer-authored head.
+Purpose:
+
+Provide a machine-readable Scenario API contract that proves route/auth/request ownership without risking an unsafe wholesale rewrite of the historical monolithic spec through a contents-only connector.
+
+Instruction source:
+
+Task contract, runtime routes and strict JSON decoding behavior.
+
+Version or verification date:
+
+2026-07-25.
+
+Inputs:
+
+Seven authenticated Scenario routes, public models, validation bounds and integration responses.
+
+Actions performed:
+
+- added `api/openapi-scenarios.json` as an OpenAPI 3.1 bounded-context document;
+- documented catalog/detail/start/get/pause/resume/submit routes;
+- documented server-owned `reviewTarget.term`, optional review timing metadata and response evidence;
+- excluded client-owned `wordId`, rating, submitted answer, correctness and judgement fields;
+- added a dependency-free Go test that parses the document, verifies exact paths/security/request properties/required fields and rejects forbidden client evidence.
+
+Result:
+
+Scenario clients have an independently parseable contract protected by unit CI. The historical aggregate `api/openapi.yaml` remains unchanged in this atomic runtime correction.
+
+Risks and follow-up:
+
+The bounded document and historical aggregate may drift if future API governance assumes one monolith. The test protects the bounded contract; aggregate consolidation should be done only with a safe file-level editing environment or generation tooling.
+
+## Validation status
+
+1. Migration applies in integration and survives the repository's catalog reset/reseed pattern: passed.
+2. Normalized whole-term matching and trusted-assessment validation: passed on CI #1760.
+3. Scenario integration lifecycle/evidence/idempotency/completion: passed on CI #1760.
+4. Bounded OpenAPI parse/source contract: pending newest final-head CI.
+5. Backend formatting/static/unit/race/integration/vulnerability: passed on #1760; rerun pending after later source-contract writes.
+6. Full required frontend/browser matrix: passed on #1760; final-head rerun pending.
+7. Review threads and final PR metadata: pending final-head CI.
