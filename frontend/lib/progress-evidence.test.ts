@@ -35,6 +35,13 @@ const weekly: WeeklyProgressEvidence = {
     errors: 2,
     rate: 33,
   }],
+  weakPartsOfSpeech: [{
+    partOfSpeech: "noun",
+    attempts: 4,
+    successful: 2,
+    errors: 2,
+    rate: 50,
+  }],
 };
 
 const progress: ProgressSummary = {
@@ -75,7 +82,7 @@ describe("weekly progress evidence", () => {
     expect(isProgressSummaryPayload(progress)).toBe(true);
   });
 
-  it("rejects malformed rates and incomplete trends", () => {
+  it("rejects malformed rates, incomplete trends and invalid weak-area evidence", () => {
     expect(isProgressSummaryPayload({
       ...progress,
       weekly: { ...weekly, recallRate: 101 },
@@ -83,6 +90,13 @@ describe("weekly progress evidence", () => {
     expect(isProgressSummaryPayload({
       ...progress,
       weekly: { ...weekly, trend: weekly.trend.slice(0, 6) },
+    })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...progress,
+      weekly: {
+        ...weekly,
+        weakPartsOfSpeech: [{ ...weekly.weakPartsOfSpeech[0], partOfSpeech: "" }],
+      },
     })).toBe(false);
   });
 
@@ -92,5 +106,6 @@ describe("weekly progress evidence", () => {
     expect(fallback.recallRate).toBe(50);
     expect(fallback.choiceRate).toBe(100);
     expect(fallback.trend).toHaveLength(7);
+    expect(fallback.weakPartsOfSpeech).toEqual([]);
   });
 });
