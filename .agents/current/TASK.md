@@ -6,7 +6,7 @@
 - Branch: `feat/issue-24-scenario-progress-recommendation`
 - Base SHA: `591322c4a55b362402eab0b4936cd4e4f0347c3a`
 - Head SHA: resolve from live branch ref
-- PR: not created yet
+- PR: #226 — `feat(progress): integrate Scenario completion recommendations`
 
 ## Objective
 
@@ -36,10 +36,12 @@ Expose completed and in-progress Scenario activity through the authenticated `/a
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `.agents/lessons/backend.md`
+- `.agents/lessons/ci.md`
 - `api/openapi-scenarios.json`
 - `backend/internal/learning/**`
 - `backend/internal/scenarios/openapi_contract_test.go`
-- `backend/integration/scenario_lessons_test.go`
+- `backend/integration/scenario_progress_test.go`
 - `frontend/lib/progress.ts`
 - `frontend/lib/account-resources.ts`
 - `frontend/lib/progress-evidence.test.ts`
@@ -68,6 +70,7 @@ Expose completed and in-progress Scenario activity through the authenticated `/a
 
 - `api/openapi-scenarios.json`: bounded machine-readable Scenario and Scenario-progress contract
 - `.agents/current/**`: active slice memory; reset after merge
+- `.agents/lessons/**`: durable prevention rules learned from this slice
 - `.agents/PROJECT_STATE.md`: update only in post-merge repository-memory reconciliation when required by the harness
 
 ## Invariants
