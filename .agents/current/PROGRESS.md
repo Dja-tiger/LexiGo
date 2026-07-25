@@ -1,122 +1,50 @@
 # Current Task Progress
 
-## 2026-07-25 13:56 Europe/Berlin
+## 2026-07-25 16:02 Europe/Berlin
 
 ### Verified
 
-- `main` SHA `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- PR #216 merged after CI #1744 success and no review threads
-- no open PRs at harness pre-flight
-- Issue #19 closed by PR #215
-- historical Issue #19 branch absent
-- Issue #24 open; backend/content contract merged, Scenario UI #196 remains
-- stage Issue #12 reports public iOS WebKit failure on older SHA `20188f7...`
-- existing `.agents/AGENTS*.md`, README, architecture and roadmap read from `main`
+- `main` SHA is `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b` after squash merge of PR #217.
+- PR #217 passed full CI #1756 on immutable head `d9bfc899abaecb94aa32d0d3b30db9231f13da77` and was merged with no unresolved review threads.
+- No open PRs were found after the merge.
+- Issue #196 is the next product slice; exact Figma nodes `76:100`, `76:127` and `76:219` and the merged Scenario API were inspected.
+- Branch `fix/issue-196-scenario-review-contract` was created from the verified `main`.
 
 ### Finding
 
-The repository has strong production-safe rules but no root entrypoint, persistent project-state file, skills registry, current-task records, templates, domain lessons, PR checklist or executable harness contract.
+The Scenario frontend cannot safely use the merged submit contract. `ScenarioStep` exposes vocabulary strings but no linked learning item, while submit requires client-supplied `review.wordId`, rating and submitted answer. The integration test proves persistence with an unrelated first catalog word, not with the scenario step vocabulary.
 
 ### Root cause
 
-Repository memory evolved as specialized AGENTS additions and chat handoffs rather than a single indexed lifecycle.
+The backend/content slice established atomic review-event persistence before defining the downstream frontend-to-learning-item mapping. The API therefore delegates review target selection and evidence claims to the client even though the product contract requires ordinary objective durable evidence.
+
+### Decision
+
+Implement a prerequisite server-owned Scenario review-target contract in a separate atomic PR before the Figma UI. The server will own the linked learning item and derive canonical Recall review input from the persisted scenario response.
 
 ### Changed files
 
-Planned only within the allowed harness paths.
-
-### Checks passed
-
-Pre-flight repository/PR/Issue/branch verification; branch compare is identical to verified `main`.
-
-### Checks failed
-
-None for harness code yet. Stage validation is pending/failing on an older product SHA and is recorded separately.
-
-### Current branch head
-
-`f2785be459a04b87511ab8d9f26d60b3da15669b` before the first harness content commit.
-
-### Next action
-
-Publish the isolated harness content, read every changed path back, run the source contract, inspect diff and create a Draft PR.
-
-## 2026-07-25 14:18 Europe/Berlin
-
-### Verified
-
-- Draft PR #217 exists from `chore/agent-harness-v1` to `main`
-- branch diff contains 19 allowed documentation/tooling paths and no product/runtime/deployment/dependency files
-- all repository file writes were read back by branch ref and `main` remained at `f2785be...`
-
-### Finding
-
-The complete harness is publishable without changing an existing workflow; the source contract can run directly with repository shell capabilities.
-
-### Root cause
-
-The repository previously lacked an executable contract tying the distributed memory files together. One initial connector write was refused before mutation; repository refs and target absence were verified before a neutral equivalent retry.
-
-### Changed files
-
-`AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, `README.md`, `.github/pull_request_template.md`, `scripts/ci/check-agent-harness.sh`.
-
-### Checks passed
-
-- `bash -n scripts/ci/check-agent-harness.sh`
-- `bash scripts/ci/check-agent-harness.sh`
-- Markdown relative links
-- required file/reference/checklist contract
-- obvious-secret scan
-- generated-artifact scan
-- allowed-path branch compare
-
-### Checks failed
-
-No harness check failed. Full required PR CI is pending; PR #216 stage validation is now complete and recorded below.
-
-### Current branch head
-
-Resolve from the live branch ref; pre-entry head was `b95eb4683ee269ea0735f258f5f529cd5e9eb571` and this log update creates a newer head.
-
-### Next action
-
-Run and classify full required CI on the final head, inspect review threads, then proceed to Ready and expected-head squash merge only if all gates are green.
-
-## 2026-07-25 14:21 Europe/Berlin
-
-### Verified
-
-- Issue #12 now reports stage success for `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- stage run `30157188680`: deploy success, public smoke success, public browser success
-- public browser matrix passed 12/12, including Chromium, iOS WebKit and stale-build recovery
-
-### Finding
-
-The deployment source changed after pre-flight; the earlier failure snapshot was no longer current.
-
-### Root cause
-
-PR #216 stage deployment completed after the initial repository-state reconstruction.
-
-### Changed files
-
-- `.agents/PROJECT_STATE.md`
-- `.agents/current/EXECUTION.md`
+- `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md` pending
+- `.agents/PROJECT_STATE.md` pending
 
 ### Checks passed
 
-Live deployment reconciliation and exact SHA/run verification.
+- live repository, PR, Issue and branch pre-flight;
+- exact backend model, repository, HTTP and integration contract inspection;
+- exact Scenario Figma inspection for the downstream UI;
+- explicit allowed/prohibited path record;
+- branch write read-back and `main` immutability check.
 
 ### Checks failed
 
-None. Full required CI for PR #217 remains pending on the new final head.
+None yet. No production code has been changed.
 
 ### Current branch head
 
-Resolve from the live branch ref; pre-entry head was `938ea95865e9cf129340a994e99440eecd03e25a` and this log update creates a newer head.
+Resolve from the live branch ref; the first task-memory commit is `02f9bbbd3c6583f97c0e135204816b2020e68dde`.
 
 ### Next action
 
-Run full required CI on the reconciled final head, then inspect final diff and review threads before Ready.
+Update execution/state memory, implement the forward migration and typed server-owned review target, then run targeted backend and integration validation before opening a Draft PR.
