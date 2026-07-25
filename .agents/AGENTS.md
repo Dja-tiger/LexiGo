@@ -371,6 +371,7 @@ PR не считается готовым, если новая категори�
 - **Профилактика:** обязательный prompt раздела 0, contract matrix, repository-wide consumer audit и staged validation до полного CI.
 - **Обязательная проверка:** каждый новый PR содержит заполненный pre-flight record, tests для заявленных invariants и один чистый финальный CI run на developer-authored head.
 - **Область действия:** все production задачи LexiGo.
+
 ### 2026-07-25 — Write-action без явной branch изменил default branch
 
 - **Симптом:** при подготовке рабочей ветки ошибочный `create_file` трижды создавал placeholder `INVALID` в `main`; каждый artifact был сразу удалён, но default-branch history получила лишние commits.
@@ -386,3 +387,59 @@ PR не считается готовым, если новая категори�
 - **Профилактика:** indexed search использовать только как discovery signal. Перед удалением selector доказать отсутствие consumer через source-level test на PR merge ref или прямое чтение всех production sources; живой selector переносить к семантически верному owner вместо удаления.
 - **Обязательная проверка:** ownership test сканирует production `.tsx`, legacy `lx-lesson-top` отсутствует, а `lx-all-items-top` одновременно присутствует в catalog markup и `premium-ui.css`.
 - **Область действия:** dead-code/CSS cleanup, GitHub code search, generated branches и PR merge refs.
+
+### 2026-07-25 — Route island вызвал синхронный `setState` внутри mount-effect
+
+- **Симптом:** frontend lint остановил PR #214 правилом `react-hooks/set-state-in-effect`.
+- **Первопричина:** guest-state уже задавался initializers, но effect повторно синхронно очищал те же значения при отсутствии session.
+- **Профилактика:** initial state и remount key должны владеть синхронной инициализацией; effect без внешней подписки или async boundary не должен дублировать `setState`. Для guest branch effect завершается до любых writes.
+- **Обязательная проверка:** frontend lint, typecheck и unit tests проходят на authenticated и guest route entry.
+- **Область действия:** route client islands, session hydration и React 19 effects.
+
+### 2026-07-25 — Новый route root не был добавлен в ownership contract
+
+- **Симптом:** unit gate сообщил неожиданный `lexigo-progress-app.tsx`, хотя runtime route был корректен.
+- **Первопричина:** production root allow-list и bootstrap-only consumer assertion не обновили одновременно с extraction.
+- **Профилактика:** новый route island добавлять одним slice с production root inventory, dynamic bootstrap import, единственным consumer assertion и запретом самостоятельного session restore.
+- **Обязательная проверка:** `components/production-app-entry.test.ts` подтверждает полный root set и bootstrap-only loading.
+- **Область действия:** route islands, bundle ownership и application entry graph.
+
+### 2026-07-25 — Canonical heading изменился, но release suites сохранили stale readiness selector
+
+- **Симптом:** PWA и performance jobs завершались timeout до фактического сценария, ожидая удалённый заголовок старого Progress UI.
+- **Первопричина:** consumer audit ограничился feature test и не включил visual, axe, route, keyboard, PWA, dialog и bundle suites.
+- **Профилактика:** при изменении canonical accessible name выполнять repository-wide search и обновлять все readiness selectors через точный `h1`, role и route owner; таймаут не увеличивать.
+- **Обязательная проверка:** UI shards, PWA, axe, visual и performance jobs проходят на одном head.
+- **Область действия:** canonical routes и все Playwright release suites.
+
+### 2026-07-25 — Primary due CTA утратил точный queue contract
+
+- **Симптом:** CTA «Повторить N элементов» передавал первую слабую тему и мог запустить только часть global due queue; при backlog больше 60 обещал больше, чем разрешает lesson API.
+- **Первопричина:** рекомендация weak-topic и основное следующее действие использовали один callback без явного разделения scope и server session limit.
+- **Профилактика:** primary CTA запускает global due queue без topic; topic-фильтр принадлежит только отдельной recommendation. Пользовательский count ограничивается общим domain helper и явно сообщает «первые 60 из N».
+- **Обязательная проверка:** E2E отдельно проверяет global `topic=null` и topic recommendation; unit test проверяет cap 60.
+- **Область действия:** Progress CTA, due API и lesson creation.
+
+### 2026-07-25 — Compact progressive disclosure скрывал action и ломал возврат фокуса
+
+- **Симптом:** iOS PWA не находил «Настроить календарь» в закрытом `<details>`, а dialog мог вернуть focus в уже скрытую кнопку preview.
+- **Первопричина:** тест и production dialog lifecycle не нормализовали responsive disclosure state; return target захватывался до закрытия `<details>`.
+- **Профилактика:** перед nested action раскрывать semantic summary и ждать owning region. Перед открытием dialog переводить focus на постоянный summary, затем закрывать preview; после close проверять видимый return target.
+- **Обязательная проверка:** iOS PWA, keyboard, dialog accessibility, axe и visual calendar scenarios.
+- **Область действия:** progressive `<details>`, compact WebKit и modal focus management.
+
+### 2026-07-25 — Figma status color и валидная картинка не гарантируют accessible semantic UI
+
+- **Симптом:** axe обнаружил недостаточный contrast retained labels и invalid definition-list group.
+- **Первопричина:** один status green применялся на разных surfaces без расчёта фактических пар, а скрытое explanation было третьим прямым child внутри `<dl>` group.
+- **Профилактика:** задавать route-specific foreground tokens по surface и Light/Dark; direct children каждого `<dl>` group ограничивать `dt`/`dd`, скрытое пояснение включать внутрь `dt` или `dd`.
+- **Обязательная проверка:** foreground/background ratio не ниже 4.5:1, blocking axe и semantic DOM audit.
+- **Область действия:** charts, metrics, captions, status labels и definition lists.
+
+### 2026-07-25 — Feature route не владел полным appearance canvas
+
+- **Симптом:** Light Progress actual отображал светлый text token на legacy dark body, header сдвигал Figma layout и пропускал radial-gradient через прозрачность; footer оставлял тёмные gutters.
+- **Первопричина:** feature CSS оформлял только dashboard, но не route island, header, rail и footer; snapshot failure сначала выглядел как ожидаемый redesign drift.
+- **Профилактика:** canonical route обязан явно владеть полным canvas/text/header/navigation/footer appearance. Actual PNG просматривается до baseline update; unreadable text, legacy gradient, overlap и geometry shift исправляются, а не принимаются snapshot.
+- **Обязательная проверка:** Linux actual для compact/medium/desktop вручную сверяется с Figma nodes, Light/Dark и visual run повторяется без update mode.
+- **Область действия:** Figma-to-production routes, global legacy body и visual baselines.
