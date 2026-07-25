@@ -27,6 +27,22 @@
   );
 }
 
+/*
+ * At 200% page zoom a 320 px viewport has roughly 160 CSS px of usable
+ * layout width. Textareas retain a browser-specific intrinsic inline size
+ * unless the grid item and the control are explicitly allowed to shrink.
+ * Resetting the min-content floor prevents real horizontal scrolling rather
+ * than clipping the overflow.
+ */
+.lx-scenario-workspace > *,
+.lx-scenario-entry > *,
+.lx-scenario-field,
+.lx-scenario-field textarea,
+.lx-scenario-evidence-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .lx-scenario-context-card > span,
 .lx-scenario-entry > span,
 .lx-scenario-dialog > span {
