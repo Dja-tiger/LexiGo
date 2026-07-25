@@ -1,0 +1,66 @@
+.lx-scenario {
+  /*
+   * Accent tokens remain useful for fills and progress, but the original
+   * Figma accents are below WCAG AA when used as 12–14 px text on Light
+   * surfaces. Mixing them with the semantic foreground keeps the same hue,
+   * darkens Light-mode labels and lightens Dark-mode labels.
+   */
+  --lx-scenario-milestone-label: color-mix(
+    in srgb,
+    var(--lx-scenario-milestone) 60%,
+    var(--ak-color-text-main)
+  );
+  --lx-scenario-retained-label: color-mix(
+    in srgb,
+    var(--ak-color-retained) 60%,
+    var(--ak-color-text-main)
+  );
+  --lx-scenario-weak-label: color-mix(
+    in srgb,
+    var(--ak-color-weak) 60%,
+    var(--ak-color-text-main)
+  );
+}
+
+.lx-scenario-context-card > span,
+.lx-scenario-entry > span,
+.lx-scenario-dialog > span {
+  color: var(--lx-scenario-milestone-label);
+}
+
+.lx-scenario-save-status,
+.lx-scenario-response-card > span,
+.lx-scenario-entry-action > span,
+.lx-scenario-completed > span,
+.lx-scenario-completed-evidence strong,
+.lx-scenario-criteria [data-criterion-state="retained"],
+.lx-scenario-feedback > strong,
+.lx-scenario-paused-note > strong,
+.lx-scenario-feedback > div b,
+.lx-scenario-feedback > div span {
+  color: var(--lx-scenario-retained-label);
+}
+
+.lx-scenario-criteria [data-criterion-state="weak"],
+.lx-scenario-feedback > [data-language-signal="missing"] b,
+.lx-scenario-feedback > [data-language-signal="missing"] span {
+  color: var(--lx-scenario-weak-label);
+}
+
+@media (forced-colors: active) {
+  .lx-scenario-context-card > span,
+  .lx-scenario-entry > span,
+  .lx-scenario-dialog > span,
+  .lx-scenario-save-status,
+  .lx-scenario-response-card > span,
+  .lx-scenario-entry-action > span,
+  .lx-scenario-completed > span,
+  .lx-scenario-completed-evidence strong,
+  .lx-scenario-criteria [data-criterion-state],
+  .lx-scenario-feedback > strong,
+  .lx-scenario-paused-note > strong,
+  .lx-scenario-feedback > div b,
+  .lx-scenario-feedback > div span {
+    color: CanvasText;
+  }
+}
