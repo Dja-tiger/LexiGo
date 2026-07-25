@@ -42,6 +42,7 @@ import "./lesson-result.css";
 import "./progress-evidence.css";
 import "./progress-evidence-accessibility.css";
 import "./progress-evidence-layout.css";
+import "./scenario-lessons.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
