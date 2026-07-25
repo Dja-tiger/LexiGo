@@ -15,7 +15,10 @@ import {
 import { authorizedJSON } from "../lib/authorized-json";
 import type { Session } from "../lib/auth-session";
 import { navigationURL, viewTitle } from "../lib/navigation";
-import type { ProgressSummary } from "../lib/progress";
+import {
+  dueReviewLessonCount,
+  type ProgressSummary,
+} from "../lib/progress";
 import { AsyncResourceNotice, AsyncStatePanel } from "./async-state";
 import { ProgressEvidenceDashboard } from "./progress-evidence-dashboard";
 
@@ -56,7 +59,7 @@ function boundedLessonSize(count: number): 15 | 30 | 60 {
 function dueQuery(progress: ProgressSummary, topic?: string): string {
   const parameters = new URLSearchParams({
     kind: "all",
-    limit: String(Math.min(60, Math.max(15, progress.dueNow || 15))),
+    limit: String(Math.max(15, dueReviewLessonCount(progress.dueNow))),
   });
   if (topic?.trim()) parameters.set("topic", topic.trim());
   return `/api/v1/words/due?${parameters.toString()}`;
@@ -172,20 +175,6 @@ export function LexigoProgressApp({ initialSession, onSessionUpdated }: LexigoPr
     <div className="lx-app" data-route-client-island="progress">
       <header className="lx-header">
         <div className="lx-header-tools">
-          {session && progress ? (
-            <span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>
-              <span aria-hidden="true">🔥</span>
-              <span>{progress.currentStreak} дн.</span>
-            </span>
-          ) : null}
-          <button
-            className="lx-icon-button"
-            type="button"
-            aria-label="Напоминание о занятии"
-            onClick={() => document.querySelector<HTMLElement>(".lx-route-reminder-entry summary")?.click()}
-          >
-            <span aria-hidden="true">◷</span>
-          </button>
           <button
             className="lx-avatar"
             type="button"
