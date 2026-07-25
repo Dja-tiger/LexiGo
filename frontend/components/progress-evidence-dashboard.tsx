@@ -91,7 +91,7 @@ export function ProgressEvidenceDashboard({
       ? `Сессия самостоятельного воспроизведения: первые ${dueLessonCount} из ${progress.dueNow} готовых элементов`
       : "Короткая сессия самостоятельного воспроизведения по готовой очереди"
     : scenarioCopy?.title ?? "Соберите следующий сфокусированный урок";
-  const nextActionLabel = scenarioCopy?.label ?? dueLabel;
+  const nextActionLabel = dueLessonCount > 0 ? dueLabel : scenarioCopy?.label ?? dueLabel;
 
   return (
     <section
