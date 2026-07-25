@@ -82,6 +82,10 @@ function draftIdentity(session: Session, attempt: ScenarioAttempt) {
   };
 }
 
+function attemptDraftOwner(attempt: ScenarioAttempt): string {
+  return attempt.currentStep ? `${attempt.id}:${attempt.currentPosition}` : "";
+}
+
 function safeReadDraft(session: Session, attempt: ScenarioAttempt): ScenarioDraftFields {
   if (typeof window === "undefined") return EMPTY_DRAFT;
   const identity = draftIdentity(session, attempt);
@@ -158,15 +162,33 @@ export function LexigoScenarioApp({
   const [actionError, setActionError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [exitIntent, setExitIntent] = useState<ExitIntent | null>(null);
-  const [guardInstalled, setGuardInstalled] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
-  const editorStartedAtRef = useRef(Date.now());
+  const editorStartedAtRef = useRef(0);
   const allowNavigationRef = useRef(false);
 
   const adoptSession = useCallback((next: Session) => {
     if (session.tokens.accessToken !== next.tokens.accessToken) onSessionUpdated(next);
   }, [onSessionUpdated, session.tokens.accessToken]);
+
+  const adoptAttempt = useCallback((nextAttempt: ScenarioAttempt, preserveOwnedDraft = false) => {
+    const nextOwner = attemptDraftOwner(nextAttempt);
+    setAttempt(nextAttempt);
+
+    if (!nextAttempt.currentStep) {
+      setDraft(EMPTY_DRAFT);
+      setDraftOwner("");
+      setSubmissionIdentity(null);
+      editorStartedAtRef.current = 0;
+      return;
+    }
+
+    if (preserveOwnedDraft && nextOwner === draftOwner) return;
+    setDraft(safeReadDraft(session, nextAttempt));
+    setDraftOwner(nextOwner);
+    setSubmissionIdentity(null);
+    editorStartedAtRef.current = performance.now();
+  }, [draftOwner, session]);
 
   const loadScenario = useCallback(async (signal?: AbortSignal) => {
     if (!slug) {
@@ -202,14 +224,14 @@ export function LexigoScenarioApp({
         isScenarioAttemptPayload,
       );
       adoptSession(result.activeSession);
-      setAttempt(result.data);
+      adoptAttempt(result.data, true);
       setStatusMessage("Состояние сценария синхронизировано с сервером.");
       return result.data;
     } catch (error) {
       setActionError(actionProblem(error, "состояние сценария"));
       return null;
     }
-  }, [adoptSession, session]);
+  }, [adoptAttempt, adoptSession, session]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -221,15 +243,7 @@ export function LexigoScenarioApp({
   }, [loadScenario]);
 
   const currentStep = attempt?.currentStep;
-  const owner = attempt && currentStep ? `${attempt.id}:${attempt.currentPosition}` : "";
-
-  useEffect(() => {
-    if (!attempt || !currentStep || feedback || owner === draftOwner) return;
-    setDraft(safeReadDraft(session, attempt));
-    setDraftOwner(owner);
-    setSubmissionIdentity(null);
-    editorStartedAtRef.current = Date.now();
-  }, [attempt, currentStep, draftOwner, feedback, owner, session]);
+  const owner = attempt && currentStep ? attemptDraftOwner(attempt) : "";
 
   useEffect(() => {
     if (!attempt || !currentStep || feedback || owner !== draftOwner) return;
@@ -237,10 +251,7 @@ export function LexigoScenarioApp({
   }, [attempt, currentStep, draft, draftOwner, feedback, owner, session]);
 
   useEffect(() => {
-    if (!attempt || attempt.status !== "active" || feedback) {
-      setGuardInstalled(false);
-      return;
-    }
+    if (!attempt || attempt.status !== "active" || feedback) return;
     const guardIdentity = attempt.id;
     const currentState = window.history.state as Record<string, unknown> | null;
     if (currentState?.[HISTORY_GUARD_KEY] !== guardIdentity) {
@@ -255,7 +266,6 @@ export function LexigoScenarioApp({
         window.location.href,
       );
     }
-    setGuardInstalled(true);
 
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (allowNavigationRef.current) return;
@@ -294,9 +304,8 @@ export function LexigoScenarioApp({
         isStartScenarioAttemptResponse,
       );
       adoptSession(result.activeSession);
-      setAttempt(result.data.attempt);
+      adoptAttempt(result.data.attempt);
       setFeedback(null);
-      setDraftOwner("");
       setStatusMessage(result.data.resumed ? "Сохранённая попытка восстановлена." : "Сценарий начат.");
       window.setTimeout(() => mainRef.current?.focus(), 0);
     } catch (error) {
@@ -304,7 +313,7 @@ export function LexigoScenarioApp({
     } finally {
       setBusy(false);
     }
-  }, [adoptSession, session, slug]);
+  }, [adoptAttempt, adoptSession, session, slug]);
 
   const resumeAttempt = useCallback(async () => {
     if (!attempt) return;
@@ -321,7 +330,7 @@ export function LexigoScenarioApp({
         isScenarioAttemptPayload,
       );
       adoptSession(result.activeSession);
-      setAttempt(result.data);
+      adoptAttempt(result.data, true);
       setStatusMessage("Сценарий продолжен с сохранённого шага.");
       window.setTimeout(() => mainRef.current?.focus(), 0);
     } catch (error) {
@@ -334,7 +343,7 @@ export function LexigoScenarioApp({
     } finally {
       setBusy(false);
     }
-  }, [adoptSession, attempt, resyncAttempt, session]);
+  }, [adoptAttempt, adoptSession, attempt, resyncAttempt, session]);
 
   const pauseAttempt = useCallback(async (navigateAfterPause: boolean) => {
     if (!attempt) return;
@@ -359,7 +368,7 @@ export function LexigoScenarioApp({
         isScenarioAttemptPayload,
       );
       adoptSession(result.activeSession);
-      setAttempt(result.data);
+      adoptAttempt(result.data, true);
       setStatusMessage("Черновик сохранён, попытка поставлена на паузу.");
       setExitIntent(null);
       if (navigateAfterPause) {
@@ -376,7 +385,7 @@ export function LexigoScenarioApp({
     } finally {
       setBusy(false);
     }
-  }, [adoptSession, attempt, currentStep, draft, resyncAttempt, router, session]);
+  }, [adoptAttempt, adoptSession, attempt, currentStep, draft, resyncAttempt, router, session]);
 
   const validationMessage = useMemo(() => {
     if (!currentStep || feedback || attempt?.status !== "active") return "";
@@ -401,12 +410,15 @@ export function LexigoScenarioApp({
     setActionError("");
     setStatusMessage("Отправляем ответ и получаем объективный языковой сигнал…");
     try {
+      const responseMs = editorStartedAtRef.current > 0
+        ? performance.now() - editorStartedAtRef.current
+        : undefined;
       const payload = buildSubmitScenarioStepRequest({
         attemptVersion: attempt.version,
         submissionId: identity.submissionId,
         fields: draft,
         requiresFactHypothesis: currentStep.requiresFactHypothesis,
-        responseMs: Date.now() - editorStartedAtRef.current,
+        responseMs,
         timezoneOffsetMinutes: new Date().getTimezoneOffset(),
       });
       const result = await authorizedJSON<SubmitScenarioStepResponse>(
@@ -439,14 +451,12 @@ export function LexigoScenarioApp({
   }, [adoptSession, attempt, currentStep, draft, resyncAttempt, session, submissionIdentity, validationMessage]);
 
   const continueAfterFeedback = useCallback(() => {
+    if (attempt) adoptAttempt(attempt);
     setFeedback(null);
-    setDraft(EMPTY_DRAFT);
-    setDraftOwner("");
-    setSubmissionIdentity(null);
     setActionError("");
     setStatusMessage(attempt?.status === "completed" ? "Сценарий завершён." : "Открыт следующий шаг.");
     window.setTimeout(() => mainRef.current?.focus(), 0);
-  }, [attempt?.status]);
+  }, [adoptAttempt, attempt]);
 
   const leaveCompleted = useCallback(() => {
     allowNavigationRef.current = true;
@@ -494,7 +504,7 @@ export function LexigoScenarioApp({
       ? "На паузе"
       : feedback
         ? "Ответ сохранён"
-        : active && guardInstalled
+        : active
           ? "Черновик сохраняется"
           : "Готово к работе";
 
