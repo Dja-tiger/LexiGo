@@ -1,0 +1,33 @@
+.lx-progress-evidence {
+  /*
+   * Figma's retained green is preserved as the visual family, but each
+   * surface receives a contrast-safe semantic value. The pairs below meet
+   * WCAG AA for normal text instead of relying on large-text exceptions.
+   */
+  --lx-progress-retained-on-canvas: #147a59;
+  --lx-progress-retained-on-inverse: #4bc09a;
+  --lx-progress-retained-on-subtle: #147a59;
+}
+
+.lx-progress-evidence__eyebrow,
+.lx-progress-evidence__rate,
+.lx-progress-evidence__empty > span {
+  color: var(--lx-progress-retained-on-canvas);
+}
+
+.lx-progress-evidence__weekly > .lx-progress-evidence__eyebrow {
+  color: var(--lx-progress-retained-on-inverse);
+}
+
+.lx-progress-evidence__metric.retained dd,
+.lx-progress-evidence__next-action span {
+  color: var(--lx-progress-retained-on-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  .lx-progress-evidence {
+    --lx-progress-retained-on-canvas: #4bc09a;
+    --lx-progress-retained-on-inverse: #147a59;
+    --lx-progress-retained-on-subtle: #4bc09a;
+  }
+}
