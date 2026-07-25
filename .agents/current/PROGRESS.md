@@ -1,14 +1,19 @@
 # Current Task Progress
 
-No active task.
+## YYYY-MM-DD HH:MM timezone
 
-Append-only entries belong here while a task is active. Each entry must include:
+### Verified
 
-- UTC/local timestamp
-- action
-- files changed
-- checks passed
-- checks failed
-- root cause
-- current head SHA
-- next action
+### Finding
+
+### Root cause
+
+### Changed files
+
+### Checks passed
+
+### Checks failed
+
+### Current branch head
+
+### Next action
