@@ -2,6 +2,47 @@
 
 Ниже перечислены обязательные правила production-разработки и сквозного тестирования. Перед любым изменением агент должен сначала выполнить pre-flight prompt из раздела 0, а затем применять предметные правила остальных разделов.
 
+## Навык: production-safe delivery для LexiGo
+
+### Короткое описание
+
+Применяйте этот навык перед любой production-задачей LexiGo, особенно при изменении runtime, API, route islands, responsive UI, browser history, storage, CSS, accessibility, PWA, E2E и visual baselines. Его цель — до первой write-операции устранить непроверенные предположения, определить всех owners и consumers, воспроизвести baseline, а затем довести минимальный slice до зелёного полного CI без ослабления product contracts.
+
+### Инструкции и правила
+
+1. Выполните обязательный pre-flight из раздела 0 и зафиксируйте repository, актуальный `main` SHA, рабочую branch, Issue/PR, разрешённые и запрещённые paths.
+2. Прочитайте Issue, комментарии, связанные PR, `.agents/AGENTS.md`, README, архитектурные документы, точные Figma nodes и последние CI artifacts.
+3. Постройте contract matrix и impact map: runtime, presentation, state, API, history, storage, CSS, responsive variants, browsers, mocks, fixtures, source-contracts, E2E, accessibility, visuals и performance.
+4. До production-правки классифицируйте failure как product defect, stale test/mock, browser-specific behavior, flake, runner/infrastructure или внешний transient failure.
+5. Реализуйте минимальный slice одновременно с устойчивой regression protection. Не исправляйте timeout увеличением ожидания, не маскируйте неоднозначность `.first()`, не отключайте axe/security/visual gates и не обновляйте snapshots без просмотра Linux actual.
+6. После каждого write прочитайте изменённый path из целевой branch, проверьте blob SHA, branch head и неизменность `main`.
+7. Выполняйте проверки по нарастающей: source-contract → lint/typecheck → unit/integration → Chromium/WebKit → Android/iOS → keyboard/axe/reduced motion → recovery/history/offline → Linux visual → bundle/performance → полный CI.
+8. После новой категории ошибки добавьте запись в журнал раздела 6 с симптомом, первопричиной, причиной позднего обнаружения, профилактикой, regression gate и областью действия.
+9. Переводите PR в Ready и выполняйте merge только после проверки Linux baselines, полного required CI на финальном developer-authored head, чистого diff и отсутствия unresolved review threads.
+
+### Инструменты и скрипты
+
+- GitHub connector: чтение Issues/PR/refs/checks, `compare_commits`, workflow jobs/logs/artifacts, явные branch writes, Ready/merge и post-merge validation.
+- Figma connector: `get_design_context`, `get_screenshot`, `get_variable_defs` для точных nodes, Light/Dark и mobile/desktop states.
+- Linux frontend gate: `scripts/ci/frontend-container.sh`; snapshots нельзя утверждать по macOS-rendering.
+- Playwright: role/accessibility locators, traces, screenshots, `playwright-report`, mobile projects `android-chromium` и `ios-webkit`.
+- Targeted команды для Progress: `npx playwright test e2e/interface-copy.spec.ts e2e/progress-evidence.spec.ts` с соответствующими `--project`, затем visual suite без `--update-snapshots`.
+- Repository-wide поиск: component names, accessible names, CSS classes/data attributes, API paths/fields, storage keys, history state, mocks, fixtures и snapshots; indexed GitHub search используется только как discovery signal.
+
+### Данные
+
+- Журнал подтверждённых ошибок и решений хранится в разделе 6 этого файла; запись должна ссылаться на конкретный test, artifact или CI gate.
+- Для PR #214 исходным visual source of truth являются Figma nodes `76:6`, `76:53`, `76:154`.
+- CI #1710: `frontend-playwright-report-ui-2` выявил drift централизованного interface-copy и CSP-несовместимую инъекцию text zoom; `frontend-playwright-report-visual` подтвердил шесть stale Linux baselines после изменения route canvas.
+- Утверждённые snapshot paths для Progress slice:
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-compact-linux.png`;
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-medium-linux.png`;
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/progress-visual-desktop-linux.png`;
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png`;
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png`;
+  - `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png`.
+- Runtime owners Progress slice: `frontend/components/lexigo-progress-app.tsx`, `frontend/components/progress-evidence-dashboard.tsx`, `frontend/lib/progress.ts`, `frontend/lib/interface-copy.ts`, backend `learning.Repository.Progress`.
+
 ## 0. Обязательный pre-flight prompt перед началом любой задачи
 
 Скопируйте этот prompt в рабочий контекст агента без сокращений. Кодирование запрещено, пока не подготовлен и не проверен pre-flight record.
@@ -237,6 +278,7 @@ Playwright-тесты в LexiGo запускаются в 3 окружениях
 
 - **Симптом:** какой check, route или сценарий упал.
 - **Первопричина:** подтверждённая техническая причина.
+- **Почему ошибка не была обнаружена раньше:** какой consumer, state, browser, artifact или process gate не был включён в предварительный анализ.
 - **Профилактика:** что необходимо делать или запрещено делать.
 - **Обязательная проверка:** конкретный test, command, assertion, artifact или CI gate.
 - **Область действия:** components, routes, viewport, browser или environments.
@@ -443,3 +485,21 @@ PR не считается готовым, если новая категори�
 - **Профилактика:** canonical route обязан явно владеть полным canvas/text/header/navigation/footer appearance. Actual PNG просматривается до baseline update; unreadable text, legacy gradient, overlap и geometry shift исправляются, а не принимаются snapshot.
 - **Обязательная проверка:** Linux actual для compact/medium/desktop вручную сверяется с Figma nodes, Light/Dark и visual run повторяется без update mode.
 - **Область действия:** Figma-to-production routes, global legacy body и visual baselines.
+
+### 2026-07-25 — Interface-copy contract разошёлся с Progress presentation
+
+- **Симптом:** UI shard 2/2 в CI #1710 не нашёл централизованный термин «Закреплено»; последующие assertions также обнаружили бы необъяснённые `Recall`, `retained` и английское название темы в пользовательском интерфейсе.
+- **Первопричина:** новый Progress component создал локальные подписи и пояснения вместо использования `learningTermCopy` и `topicLabel`; тест ожидал общий product-language contract, но presentation владел параллельным словарём.
+- **Почему ошибка не была обнаружена раньше:** targeted feature E2E проверял данные и CTA, но не включал cross-route interface-copy suite и не раскрывал `<details>` перед проверкой скрытого mode explanation.
+- **Профилактика:** learning terms и topic labels берутся только из централизованного owner; при progressive disclosure тест сначала открывает semantic `summary`, затем проверяет видимый label/explanation и полный body на запрещённые необъяснённые термины.
+- **Обязательная проверка:** `frontend/e2e/interface-copy.spec.ts` проходит в `ios-webkit` и `android-chromium`; repository-wide поиск не находит пользовательские `Recall`/`retained` в Progress presentation.
+- **Область действия:** `/progress`, interface copy, accessible names, mobile Chromium/WebKit и локализация тем.
+
+### 2026-07-25 — E2E text zoom нарушил enforce CSP
+
+- **Симптом:** compact iOS WebKit test в CI #1710 завершился на `page.addStyleTag({ content })`; browser отклонил inline stylesheet по `style-src`/`style-src-elem`.
+- **Первопричина:** test helper симулировал 200% text zoom через inline `<style>` без nonce, хотя production CSP допускает external same-origin stylesheet и nonce-protected styles.
+- **Почему ошибка не была обнаружена раньше:** сценарий был написан как локальная geometry-проверка и не был сопоставлен с фактическим enforce CSP contract до запуска полного iOS WebKit gate.
+- **Профилактика:** browser tests не обходят CSP. Для text zoom регистрировать same-origin CSS route, подключать его через URL и отдельно подтверждать computed root font size; CSP нельзя ослаблять ради теста.
+- **Обязательная проверка:** `frontend/e2e/progress-evidence.spec.ts` проходит в `ios-webkit`, computed `html` font size не ниже 32 px при 200%, а Content security job остаётся зелёным.
+- **Область действия:** Playwright style injection, 200% zoom, iOS WebKit и enforce CSP environments.
