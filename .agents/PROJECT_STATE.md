@@ -2,10 +2,10 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 14:16 Europe/Berlin
+- Last verified: 2026-07-25 14:20 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
 - Main SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`
-- Stage SHA: `20188f7f64db066c599d2fd10daec965ce4a6e27` according to Issue #12; newer `main` deployment not yet evidenced
+- Stage SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`; Issue #12 reports deploy, public smoke and public browser success in run `30157188680`
 - Latest merged PR: #216 `feat(scenarios): add durable scenario learning contract`
 - Open PRs: #217 `chore(agent): formalize LexiGo development harness` (Draft)
 - Active product branch: none verified; `agent/issue-19-weekly-evidence-completion` is absent
@@ -161,9 +161,8 @@ The order below reflects current dependencies, not the stale historical sequence
 
 ## Validation pending
 
-- Stage issue #12 currently records failure for image SHA `20188f7f64db066c599d2fd10daec965ce4a6e27`: deploy and public smoke passed, but public iOS WebKit browser smoke failed while loading the service worker after a stale build marker.
-- No stage evidence for `f2785be459a04b87511ab8d9f26d60b3da15669b` was available at harness pre-flight.
-- PR #216 therefore has green PR CI but post-merge main/stage validation remains pending.
+- PR #216 post-merge stage validation is complete: Issue #12 reports deploy, public smoke and public browser success for `f2785be459a04b87511ab8d9f26d60b3da15669b` in run `30157188680`, including 12/12 Chromium and iOS WebKit checks and stale-build recovery.
+- Harness PR #217 still requires full required PR CI, final-head review, squash merge and post-merge `main` validation. Runtime stage behavior is unchanged by this documentation-only diff, but live deployment status must still be re-read after merge.
 - Manual device validation, route-by-route Figma parity and moderated usability remain separate evidence classes and must be tracked explicitly.
 
 ## Blocked
@@ -186,7 +185,7 @@ The order below reflects current dependencies, not the stale historical sequence
 - PR #214 body and CI record: full CI #1738.
 - PR #215 body and CI record: full CI #1740; closes Issue #19.
 - PR #216 body and workflow record: CI #1744 success; squash merge SHA `f2785be459a04b87511ab8d9f26d60b3da15669b`.
-- Issue #12 is the deployment status source.
+- Issue #12 is the deployment status source; it reports stage success for `f2785be459a04b87511ab8d9f26d60b3da15669b` in run `30157188680`.
 - `README.md`, `docs/architecture.md`, `docs/roadmap.md` and all existing `.agents/AGENTS*.md` were read from the verified `main`.
 - Indexed search is used only for discovery; final claims must be confirmed by exact files, PRs, Issues, commits, checks or artifacts.
 
