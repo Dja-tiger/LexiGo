@@ -42,9 +42,9 @@ const SCENARIO_VISUAL_BASELINES = {
     name: "scenario-lessons-desktop-dark.png",
     width: 1440,
     height: 1054,
-    sha256: "1f84026411b4e14227526aa6c1738fe077201ab31c39acc566037b0b6d55a301",
-    sourceRun: 30169218809,
-    sourceHeadSha: "79957603bdd358220d6e045bab00207633999aaf",
+    sha256: "eaad352ced6e94a639014af3ea9a01c5bd20ec335857fe21a5d2cec93af4da40",
+    sourceRun: 30171478706,
+    sourceHeadSha: "c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
