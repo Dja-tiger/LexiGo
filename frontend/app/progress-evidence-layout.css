@@ -1,0 +1,100 @@
+/*
+ * Canonical Progress route ownership.
+ *
+ * The legacy document still defaults to the retired dark premium canvas.
+ * Progress must therefore establish its semantic surface on the complete
+ * route island instead of depending on body import order.
+ */
+.lx-routed-app[data-route-path="/progress"],
+.lx-routed-app[data-route-path="/progress"] .lx-app[data-route-client-island="progress"],
+.lx-routed-app[data-route-path="/progress"] .lx-app-shell,
+.lx-routed-app[data-route-path="/progress"] .lx-main-content {
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+}
+
+.lx-routed-app[data-route-path="/progress"] .lx-app[data-route-client-island="progress"] {
+  position: relative;
+  min-height: 100vh;
+  --lx-text: var(--ak-color-text-main);
+  --lx-muted: var(--ak-color-text-muted);
+}
+
+.lx-routed-app[data-route-path="/progress"] .lx-progress-evidence__heading > .lx-progress-evidence__eyebrow {
+  display: none;
+}
+
+.lx-routed-app[data-route-path="/progress"] .lx-header {
+  color: var(--ak-color-text-main);
+  border-color: color-mix(in srgb, var(--ak-color-text-muted) 18%, transparent);
+  background: color-mix(in srgb, var(--ak-color-canvas) 94%, transparent);
+}
+
+body:has(.lx-routed-app[data-route-path="/progress"]) .lx-legal-footer {
+  color: var(--ak-color-text-muted);
+  border-color: color-mix(in srgb, var(--ak-color-text-muted) 18%, transparent);
+  background: var(--ak-color-canvas);
+}
+
+body:has(.lx-routed-app[data-route-path="/progress"]) .lx-legal-footer a {
+  color: var(--ak-color-primary);
+}
+
+@media (min-width: 1024px) {
+  .lx-routed-app[data-route-path="/progress"] .lx-app[data-route-client-island="progress"] > .lx-header {
+    position: absolute;
+    z-index: 160;
+    top: 0;
+    right: 40px;
+    left: 40px;
+    min-height: 72px;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-app[data-route-client-island="progress"] > .lx-header .lx-header-tools {
+    pointer-events: auto;
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-app[data-route-client-island="progress"] .lx-view {
+    padding-top: 32px;
+  }
+}
+
+@media (min-width: 720px) and (max-width: 1023px) {
+  .lx-routed-app[data-route-path="/progress"] .lx-route-brand {
+    color: var(--ak-color-text-main);
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail {
+    border-color: color-mix(in srgb, var(--ak-color-text-muted) 18%, transparent);
+    background: var(--ak-color-surface);
+    box-shadow: var(--ak-elevation-1);
+    backdrop-filter: none;
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail a {
+    color: var(--ak-color-text-muted);
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail a:hover {
+    color: var(--ak-color-text-main);
+    background: var(--ak-color-subtle);
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail a.active {
+    color: var(--ak-color-primary);
+    border-color: transparent;
+    background: var(--ak-color-primary-soft);
+    box-shadow: none;
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail a.active::before {
+    background: var(--ak-color-primary);
+  }
+
+  .lx-routed-app[data-route-path="/progress"] .lx-route-nav--rail a.active svg {
+    color: var(--ak-color-primary);
+  }
+}
