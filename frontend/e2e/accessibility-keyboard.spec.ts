@@ -249,7 +249,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await expect(page.getByRole("heading", { name: "keyboard access" })).toBeVisible();
 
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
   const calendarTrigger = page.getByRole("button", { name: "Настроить календарь" });
   await calendarTrigger.focus();
   await page.keyboard.press("Enter");
@@ -279,12 +279,12 @@ for (const target of [
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "library", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
-  { name: "progress", url: "/progress", heading: "Смотрите, что действительно сохранилось" },
+  { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Keyboard User" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
-    await expect(page.getByRole("heading", { level: 1, name: target.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: target.heading, exact: target.url === "/progress" })).toBeVisible();
     await expectKeyboardAxeBaseline(page);
     await expectNoPositiveTabIndex(page);
   });
@@ -292,7 +292,7 @@ for (const target of [
 
 test("axe keyboard baseline: calendar dialog", async ({ page }) => {
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
 
   const headerTrigger = page.getByRole("button", { name: "Уведомления" });
   const cardTrigger = page.getByRole("button", { name: "Настроить календарь" });
