@@ -6,11 +6,12 @@
 - Repository: `Dja-tiger/LexiGo`
 - Main SHA: `15386321399f5386ff97d7d093c8a3c2777018be`
 - Stage product SHA: `15386321399f5386ff97d7d093c8a3c2777018be`; Issue #12 and run `30163844185` report deploy, public smoke and 12/12 public browser success
-- Latest merged PR: #218 `fix(scenarios): own objective review targets on the server`
+- Latest production merge: #218 `fix(scenarios): own objective review targets on the server`
 - PR #218 validation: final immutable-head CI #1770 (`30163260324`) succeeded on `1f5d4ac690d0527e28f057e66e9e7a86e6c6f542`; no unresolved review threads
 - Open PRs: none at verification
 - Active product branch/PR: none verified; merged branch `fix/issue-196-scenario-review-contract` still exists but is not active work
 - Active product Issue: #196 Scenario Lessons UI; Issue #24 remains open for final Scenario product reconciliation
+- Repository-memory reconciliation is delivered by PR #219; live GitHub is authoritative for its final merge SHA and status
 
 ## Completed
 
@@ -54,7 +55,7 @@ Required contracts include backend unit/race/integration/security; frontend lint
 
 ## In progress
 
-No product implementation branch or PR is active at this verification point. Repository memory is being reconciled after PR #218 before the next product slice begins.
+No product implementation branch or PR was active at verification. The next product slice is #196; repository-memory reconciliation is delivered by PR #219 before that work begins.
 
 ## Remaining roadmap
 
@@ -117,7 +118,7 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 - Phrases and parts of First Use remain blocked where exact approved Figma states are absent.
 - Final usability closure is blocked on external moderated sessions (#133).
 
-## Recently merged
+## Recent production/tooling evidence
 
 1. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
 2. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
