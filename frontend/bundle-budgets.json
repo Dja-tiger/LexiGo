@@ -22,6 +22,16 @@
     },
     "/progress": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/profile": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
-    "/lesson/active": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 }
+    "/lesson/active": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
+    "/scenarios/incident-update": {
+      "baselineJavascriptBytes": 202679,
+      "maxJavascriptBytes": 235000,
+      "maxInitialRequests": 18,
+      "baselineEvidence": {
+        "sourceRun": 30169218809,
+        "capturedAt": "2026-07-25",
+        "headSha": "79957603bdd358220d6e045bab00207633999aaf"
+      }
+    }
   }
 }

@@ -10,6 +10,10 @@ import {
   installActiveLessonFixture,
   openActiveLesson,
 } from "./support/active-lesson-fixture";
+import {
+  installScenarioFixture,
+  startScenario,
+} from "./support/scenario-fixture";
 
 const BLOCKING_IMPACTS = new Set(["critical", "serious"]);
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -101,6 +105,23 @@ test.describe("blocking accessibility gate", () => {
       : page.getByRole("button", { name: "Закрыть урок" });
     await closeButton.click();
     await expect(page.getByRole("dialog", { name: "Закрыть урок?" })).toBeVisible();
+    await expectNoBlockingAxeViolations(page);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("active Scenario and save-and-pause dialog have no critical or serious WCAG violations", async ({ page }) => {
+    await installDeterministicRuntime(page);
+    await installScenarioFixture(page);
+    const runtimeErrors = captureRuntimeErrors(page);
+    await startScenario(page);
+    await expect(page.locator(".lx-scenario")).toHaveAttribute("data-scenario-state", "active");
+    await expectNoBlockingAxeViolations(page);
+
+    const closeButton = (page.viewportSize()?.width ?? 1440) < 768
+      ? page.getByRole("button", { name: "Закрыть", exact: true })
+      : page.getByRole("button", { name: "Закрыть сценарий" });
+    await closeButton.click();
+    await expect(page.getByRole("dialog", { name: "Сохранить черновик и закрыть сценарий?" })).toBeVisible();
     await expectNoBlockingAxeViolations(page);
     expect(runtimeErrors).toEqual([]);
   });

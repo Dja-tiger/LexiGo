@@ -72,8 +72,20 @@ const LexigoProgressApp = dynamic(
   },
 );
 
+const LexigoScenarioApp = dynamic(
+  () => import("./lexigo-scenario-app").then((module) => module.LexigoScenarioApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
+function isFocusedAuthenticatedRoute(pathname: string): boolean {
+  return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+}
+
 function currentReturnTo(): string | null {
-  if (!window.location.pathname.startsWith("/lesson/")) return null;
+  if (!isFocusedAuthenticatedRoute(window.location.pathname)) return null;
   return `${window.location.pathname}${window.location.search}`;
 }
 
@@ -93,6 +105,10 @@ function isDictionaryRoute(pathname: string): boolean {
 
 function isProgressRoute(pathname: string): boolean {
   return pathname === "/progress";
+}
+
+function isScenarioRoute(pathname: string): boolean {
+  return pathname.startsWith("/scenarios/");
 }
 
 export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
@@ -150,7 +166,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
       try {
         const restored = await restoreBootstrappedSession();
         if (cancelled) return;
-        if (restored === null && window.location.pathname.startsWith("/lesson/")) {
+        if (restored === null && isFocusedAuthenticatedRoute(window.location.pathname)) {
           moveToSessionScreen("required");
         }
         setInitialSession(restored);
@@ -254,6 +270,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
+  const useScenarioIsland = isScenarioRoute(pathname) && initialSession !== null;
   const routeKey = initialSession?.user.id ?? "guest";
 
   return (
@@ -277,7 +294,14 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      {useDictionaryIsland ? (
+      {useScenarioIsland ? (
+        <LexigoScenarioApp
+          key={`${routeKey}:${pathname}`}
+          pathname={pathname}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useDictionaryIsland ? (
         <LexigoDictionaryApp
           key={routeKey}
           initialSession={initialSession}

@@ -12,6 +12,7 @@ const productionAppFiles = [
   "lexigo-dictionary-app.tsx",
   "lexigo-premium-app.tsx",
   "lexigo-progress-app.tsx",
+  "lexigo-scenario-app.tsx",
   "routed-lexigo-app.tsx",
 ] as const;
 
@@ -59,9 +60,11 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-progress-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-scenario-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoScenarioApp\b/g)).toHaveLength(1);
   });
 
   it("allows only the bootstrap layer to load route application entries", () => {
@@ -78,10 +81,15 @@ describe("production frontend application entry", () => {
       .filter(({ source }) => source.includes("lexigo-progress-app"))
       .map(({ file }) => file)
       .sort();
+    const scenarioGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-scenario-app"))
+      .map(({ file }) => file)
+      .sort();
 
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(progressGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(scenarioGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
   });
 
   it("keeps dictionary code inside its route island", () => {
@@ -101,6 +109,16 @@ describe("production frontend application entry", () => {
     expect(progressApp).toContain("/api/v1/progress?timezoneOffsetMinutes=");
     expect(progressApp).not.toContain("lexigo-premium-app");
     expect(progressApp).not.toContain("restoreSession");
+  });
+
+  it("keeps Scenario lifecycle and evidence presentation inside its route island", () => {
+    const scenarioApp = readSource(componentsDirectory, "lexigo-scenario-app.tsx");
+
+    expect(scenarioApp).toContain('from "../lib/scenarios"');
+    expect(scenarioApp).toContain("/api/v1/scenario-attempts/");
+    expect(scenarioApp).toContain('from "./accessible-dialog"');
+    expect(scenarioApp).not.toContain("lexigo-premium-app");
+    expect(scenarioApp).not.toContain("restoreSession");
   });
 
   it("keeps retired alternative roots outside the production tree", () => {

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import {
@@ -13,8 +15,40 @@ import {
   completeRecallLesson,
   installLessonResultFixture,
 } from "./support/lesson-result-fixture";
+import {
+  installScenarioFixture,
+  startScenario,
+} from "./support/scenario-fixture";
 
-async function expectStableScreenshot(page: Page, name: string): Promise<void> {
+type ContentAddressedVisualBaseline = {
+  name: string;
+  width: number;
+  height: number;
+  sha256: string;
+  sourceRun: number;
+  sourceHeadSha: string;
+};
+
+const SCENARIO_VISUAL_BASELINES = {
+  compactLight: {
+    name: "scenario-lessons-compact-light.png",
+    width: 390,
+    height: 1792,
+    sha256: "85a674882de19c87bc92d4b06888d7dc91471726a9916a943d4592bbd7919aab",
+    sourceRun: 30169218809,
+    sourceHeadSha: "79957603bdd358220d6e045bab00207633999aaf",
+  },
+  desktopDark: {
+    name: "scenario-lessons-desktop-dark.png",
+    width: 1440,
+    height: 1054,
+    sha256: "eaad352ced6e94a639014af3ea9a01c5bd20ec335857fe21a5d2cec93af4da40",
+    sourceRun: 30171478706,
+    sourceHeadSha: "c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
+async function prepareStableScreenshot(page: Page): Promise<void> {
   const dimensions = await page.evaluate(async () => {
     await document.fonts.ready;
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -32,9 +66,47 @@ async function expectStableScreenshot(page: Page, name: string): Promise<void> {
   ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
 
   await page.waitForTimeout(100);
+}
+
+async function expectStableScreenshot(page: Page, name: string): Promise<void> {
+  await prepareStableScreenshot(page);
   await expect(page).toHaveScreenshot(name, {
     fullPage: true,
   });
+}
+
+async function expectContentAddressedScreenshot(
+  page: Page,
+  baseline: ContentAddressedVisualBaseline,
+): Promise<void> {
+  await prepareStableScreenshot(page);
+  const screenshot = await page.screenshot({ fullPage: true });
+  const actual = {
+    width: screenshot.readUInt32BE(16),
+    height: screenshot.readUInt32BE(20),
+    sha256: createHash("sha256").update(screenshot).digest("hex"),
+  };
+  const expected = {
+    width: baseline.width,
+    height: baseline.height,
+    sha256: baseline.sha256,
+  };
+
+  if (
+    actual.width !== expected.width
+    || actual.height !== expected.height
+    || actual.sha256 !== expected.sha256
+  ) {
+    await test.info().attach(baseline.name, {
+      body: screenshot,
+      contentType: "image/png",
+    });
+  }
+
+  expect(
+    actual,
+    `${baseline.name}: Linux baseline from CI ${baseline.sourceRun} at ${baseline.sourceHeadSha}`,
+  ).toEqual(expected);
 }
 
 async function openCalendarDialog(page: Page): Promise<void> {
@@ -47,6 +119,18 @@ async function openCalendarDialog(page: Page): Promise<void> {
   await expect(preview).toBeVisible();
   await preview.getByRole("button", { name: "Настроить календарь" }).click();
   await expect(page.getByRole("dialog", { name: "Напоминание об английском" })).toBeVisible();
+}
+
+async function fillScenarioIncidentDraft(page: Page): Promise<void> {
+  await page.getByRole("textbox", { name: "Рабочая формулировка на английском" }).fill(
+    "The impact is confirmed for delayed ingestion jobs, and the team will publish another update at 17:00 UTC.",
+  );
+  await page.getByRole("textbox", { name: "Подтверждённые факты — по одному на строку" }).fill(
+    "Ingestion jobs are delayed\nThe customer-facing impact is confirmed",
+  );
+  await page.getByRole("textbox", { name: "Текущие гипотезы — по одной на строку" }).fill(
+    "A saturated consumer may be increasing queue depth",
+  );
 }
 
 test.describe("critical visual baselines", () => {
@@ -142,6 +226,31 @@ test.describe("critical visual baselines", () => {
     await page.getByRole("button", { name: "Знал", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
     await expectStableScreenshot(page, "active-lesson-recall-correct-dark.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario compact Light active draft", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact Scenario baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await installScenarioFixture(page);
+    await startScenario(page);
+    await fillScenarioIncidentDraft(page);
+    await expect(page.locator(".lx-scenario")).toHaveAttribute("data-scenario-state", "active");
+    await expectContentAddressedScreenshot(page, SCENARIO_VISUAL_BASELINES.compactLight);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario desktop Dark objective feedback", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop dark Scenario baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await installScenarioFixture(page);
+    await startScenario(page);
+    await fillScenarioIncidentDraft(page);
+    await page.getByRole("button", { name: "Отправить ответ", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Шаг принят сервером" })).toContainText("Языковая цель использована");
+    await expect(page.locator(".lx-scenario")).toHaveAttribute("data-scenario-state", "feedback");
+    await expectContentAddressedScreenshot(page, SCENARIO_VISUAL_BASELINES.desktopDark);
     expect(runtimeErrors).toEqual([]);
   });
 

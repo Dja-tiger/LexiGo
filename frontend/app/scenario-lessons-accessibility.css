@@ -1,0 +1,131 @@
+.lx-scenario,
+.lx-scenario-dialog {
+  /*
+   * Accent tokens remain useful for fills and progress, but the original
+   * Figma accents are below WCAG AA when used as 12–14 px text on Light
+   * surfaces. Mixing them with the semantic foreground keeps the same hue,
+   * darkens Light-mode labels and lightens Dark-mode labels.
+   *
+   * The dialog is rendered through a portal outside `.lx-scenario`, so its
+   * contrast variables must be declared on the dialog root as well instead
+   * of relying on inheritance from the route island.
+   */
+  --lx-scenario-milestone-label: color-mix(
+    in srgb,
+    #b27d00 60%,
+    var(--ak-color-text-main)
+  );
+  --lx-scenario-retained-label: color-mix(
+    in srgb,
+    var(--ak-color-retained) 60%,
+    var(--ak-color-text-main)
+  );
+  --lx-scenario-weak-label: color-mix(
+    in srgb,
+    var(--ak-color-weak) 60%,
+    var(--ak-color-text-main)
+  );
+}
+
+/*
+ * At 200% page zoom a 320 px viewport has roughly 160 CSS px of usable
+ * layout width. Form controls and auto-sized grid blocks retain a browser-
+ * specific min-content floor unless every owner is explicitly shrinkable.
+ * The narrow breakpoint therefore uses a constrained inline size rather
+ * than `width:auto`; this prevents real scrolling without clipping content.
+ */
+.lx-scenario-workspace,
+.lx-scenario-workspace > *,
+.lx-scenario-entry,
+.lx-scenario-entry > *,
+.lx-scenario-field,
+.lx-scenario-field textarea,
+.lx-scenario-evidence-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 370px) {
+  .lx-scenario-main,
+  .lx-scenario-progress-row {
+    width: calc(100% - 32px);
+    min-width: 0;
+    max-width: calc(100% - 32px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .lx-scenario-workspace,
+  .lx-scenario-entry,
+  .lx-scenario-context-card,
+  .lx-scenario-response-card,
+  .lx-scenario-after {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /*
+   * CSS page zoom scales the rendered header geometry after grid layout.
+   * Bound the non-essential route label so the back and close controls keep
+   * their full 44 px targets and the label remains available through its DOM
+   * text even when the visual copy is ellipsized.
+   */
+  .lx-scenario-header > strong {
+    max-inline-size: 30vw;
+  }
+
+  /*
+   * The shared skip link is a fixed sibling of the Scenario island. Under
+   * 200% CSS zoom its intrinsic text width can otherwise extend the document
+   * even while translated above the viewport. Keep this override route-local
+   * and allow the link to wrap when keyboard focus makes it visible.
+   */
+  body:has(.lx-scenario) .lx-route-skip-link {
+    max-inline-size: calc(50vw - 20px);
+    overflow-wrap: anywhere;
+  }
+}
+
+.lx-scenario-context-card > span,
+.lx-scenario-entry > span,
+.lx-scenario-dialog > span {
+  color: var(--lx-scenario-milestone-label);
+}
+
+.lx-scenario-save-status,
+.lx-scenario-response-card > span,
+.lx-scenario-entry-action > span,
+.lx-scenario-completed > span,
+.lx-scenario-completed-evidence strong,
+.lx-scenario-criteria [data-criterion-state="retained"],
+.lx-scenario-feedback > strong,
+.lx-scenario-paused-note > strong,
+.lx-scenario-feedback > div b,
+.lx-scenario-feedback > div span {
+  color: var(--lx-scenario-retained-label);
+}
+
+.lx-scenario-criteria [data-criterion-state="weak"],
+.lx-scenario-feedback > [data-language-signal="missing"] b,
+.lx-scenario-feedback > [data-language-signal="missing"] span {
+  color: var(--lx-scenario-weak-label);
+}
+
+@media (forced-colors: active) {
+  .lx-scenario-context-card > span,
+  .lx-scenario-entry > span,
+  .lx-scenario-dialog > span,
+  .lx-scenario-save-status,
+  .lx-scenario-response-card > span,
+  .lx-scenario-entry-action > span,
+  .lx-scenario-completed > span,
+  .lx-scenario-completed-evidence strong,
+  .lx-scenario-criteria [data-criterion-state],
+  .lx-scenario-feedback > strong,
+  .lx-scenario-paused-note > strong,
+  .lx-scenario-feedback > div b,
+  .lx-scenario-feedback > div span {
+    color: CanvasText;
+  }
+}

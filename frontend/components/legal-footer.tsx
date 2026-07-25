@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+function isFocusedRoute(pathname: string): boolean {
+  return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+}
+
 export function LegalFooter() {
   const pathname = usePathname();
-  if (pathname.startsWith("/lesson/")) return null;
+  if (isFocusedRoute(pathname)) return null;
 
   return (
     <footer className="lx-legal-footer" aria-label="Юридическая информация">
