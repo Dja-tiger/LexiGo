@@ -61,10 +61,10 @@ type startScenarioResponse struct {
 type submitScenarioStepResponse struct {
 	Attempt scenarioAttemptResponse `json:"attempt"`
 	Review  struct {
-		WordID           int64  `json:"wordId"`
-		ReviewEventID    int64  `json:"reviewEventId"`
-		JudgementSource  string `json:"judgementSource"`
-		JudgementReason  string `json:"judgementReason"`
+		WordID          int64  `json:"wordId"`
+		ReviewEventID   int64  `json:"reviewEventId"`
+		JudgementSource string `json:"judgementSource"`
+		JudgementReason string `json:"judgementReason"`
 		EffectiveRating string `json:"effectiveRating"`
 		Correct         *bool  `json:"correct"`
 		MatchedAnswer   string `json:"matchedAnswer"`
