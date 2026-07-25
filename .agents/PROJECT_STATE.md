@@ -2,17 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-25 13:56 Europe/Berlin
+- Last verified: 2026-07-25 14:16 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
 - Main SHA: `f2785be459a04b87511ab8d9f26d60b3da15669b`
 - Stage SHA: `20188f7f64db066c599d2fd10daec965ce4a6e27` according to Issue #12; newer `main` deployment not yet evidenced
 - Latest merged PR: #216 `feat(scenarios): add durable scenario learning contract`
-- Open PRs: none at pre-flight
+- Open PRs: #217 `chore(agent): formalize LexiGo development harness` (Draft)
 - Active product branch: none verified; `agent/issue-19-weekly-evidence-completion` is absent
 - Active product Issue: #24 remains open after its backend/content contract slice; next UI slice is #196
 - Active product PR: none
 - Harness branch: `chore/agent-harness-v1`
-- Harness PR: pending creation
+- Harness PR: #217 (Draft)
 
 ## Completed
 
