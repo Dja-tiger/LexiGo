@@ -100,7 +100,7 @@ test.describe.configure({ timeout: 60_000 });
 test.beforeEach(async ({ page }) => {
   await installMocks(page);
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "Смотрите, что действительно сохранилось" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
 });
 
 test("calendar dialog isolates the application and contains keyboard and programmatic focus", async ({ page }) => {
