@@ -21,12 +21,17 @@ import (
 	"github.com/Dja-tiger/LexiGo/backend/internal/server"
 )
 
+type scenarioReviewTargetResponse struct {
+	Term string `json:"term"`
+}
+
 type scenarioStepResponse struct {
-	Position               int      `json:"position"`
-	Kind                   string   `json:"kind"`
-	Vocabulary             []string `json:"vocabulary"`
-	RequiresFactHypothesis bool     `json:"requiresFactHypothesis"`
-	MinResponseCharacters  int      `json:"minResponseCharacters"`
+	Position               int                          `json:"position"`
+	Kind                   string                       `json:"kind"`
+	Vocabulary             []string                     `json:"vocabulary"`
+	ReviewTarget           scenarioReviewTargetResponse `json:"reviewTarget"`
+	RequiresFactHypothesis bool                         `json:"requiresFactHypothesis"`
+	MinResponseCharacters  int                          `json:"minResponseCharacters"`
 }
 
 type scenarioResponse struct {
@@ -56,9 +61,13 @@ type startScenarioResponse struct {
 type submitScenarioStepResponse struct {
 	Attempt scenarioAttemptResponse `json:"attempt"`
 	Review  struct {
-		ReviewEventID   int64  `json:"reviewEventId"`
-		JudgementSource string `json:"judgementSource"`
+		WordID           int64  `json:"wordId"`
+		ReviewEventID    int64  `json:"reviewEventId"`
+		JudgementSource  string `json:"judgementSource"`
+		JudgementReason  string `json:"judgementReason"`
 		EffectiveRating string `json:"effectiveRating"`
+		Correct         *bool  `json:"correct"`
+		MatchedAnswer   string `json:"matchedAnswer"`
 	} `json:"review"`
 	IdempotentReplay bool `json:"idempotentReplay"`
 }
@@ -154,39 +163,30 @@ func TestScenarioLessonsContract(t *testing.T) {
 	if incident.StepCount != 3 || len(incident.Steps) != 3 {
 		t.Fatalf("incident steps = %+v", incident.Steps)
 	}
+	wantTargets := []string{"incident", "mitigation", "status"}
 	for position, step := range incident.Steps {
 		if step.Position != position || step.Kind == "" || len(step.Vocabulary) == 0 {
 			t.Fatalf("incident step order/content = %+v", incident.Steps)
+		}
+		if step.ReviewTarget.Term != wantTargets[position] || !containsString(step.Vocabulary, step.ReviewTarget.Term) {
+			t.Fatalf("incident review target = %+v, want %q in vocabulary", step.ReviewTarget, wantTargets[position])
 		}
 	}
 	if !incident.Steps[0].RequiresFactHypothesis || !incident.Steps[2].RequiresFactHypothesis {
 		t.Fatalf("incident fact/hypothesis contract = %+v", incident.Steps)
 	}
 
-	var wordPage struct {
-		Items []struct {
-			ID          int64  `json:"id"`
-			Translation string `json:"translation"`
-		} `json:"items"`
-	}
-	getAuthenticatedJSON(t, testServer.URL+"/api/v1/words?kind=word&limit=1", registered.Tokens.AccessToken, http.StatusOK, &wordPage)
-	if len(wordPage.Items) != 1 || wordPage.Items[0].ID <= 0 || wordPage.Items[0].Translation == "" {
-		t.Fatalf("review word = %+v", wordPage.Items)
-	}
-	word := wordPage.Items[0]
-
 	var started startScenarioResponse
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/scenarios/incident-update/attempts", registered.Tokens.AccessToken, nil, http.StatusCreated, &started)
 	if started.Resumed || started.Attempt.ID == "" || started.Attempt.Status != "active" || started.Attempt.Version != 1 || started.Attempt.CurrentPosition != 0 || started.Attempt.CurrentStep == nil || started.Attempt.CurrentStep.Position != 0 {
 		t.Fatalf("started scenario attempt = %+v", started)
 	}
+	if started.Attempt.CurrentStep.ReviewTarget.Term != "incident" {
+		t.Fatalf("started review target = %+v", started.Attempt.CurrentStep.ReviewTarget)
+	}
 
 	baseReview := map[string]any{
-		"wordId":                word.ID,
-		"rating":                "known",
 		"responseMs":            1200,
-		"submittedAnswer":       word.Translation,
-		"answerRevealed":        false,
 		"timezoneOffsetMinutes": 0,
 	}
 	outOfOrder := scenarioStepPayload(
@@ -199,6 +199,23 @@ func TestScenarioLessonsContract(t *testing.T) {
 	)
 	putAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/steps/1", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, outOfOrder, http.StatusConflict, nil)
 
+	legacyReviewPayload := scenarioStepPayload(
+		"00000000-0000-0000-0000-000000000008",
+		started.Attempt.Version,
+		"The incident is confirmed and the API error rate is above baseline, while database saturation remains a hypothesis.",
+		[]string{"The API error rate is above baseline."},
+		[]string{"Database saturation may be the cause."},
+		map[string]any{
+			"wordId":                1,
+			"rating":                "known",
+			"responseMs":            1200,
+			"submittedAnswer":       "incident",
+			"answerRevealed":        false,
+			"timezoneOffsetMinutes": 0,
+		},
+	)
+	putAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/steps/0", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, legacyReviewPayload, http.StatusBadRequest, nil)
+
 	var paused scenarioAttemptResponse
 	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/pause", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, map[string]any{
 		"attemptVersion": started.Attempt.Version,
@@ -209,14 +226,14 @@ func TestScenarioLessonsContract(t *testing.T) {
 
 	var reloaded scenarioAttemptResponse
 	getAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, http.StatusOK, &reloaded)
-	if reloaded.Status != "paused" || reloaded.CurrentStep == nil || reloaded.CurrentStep.Position != 0 {
+	if reloaded.Status != "paused" || reloaded.CurrentStep == nil || reloaded.CurrentStep.Position != 0 || reloaded.CurrentStep.ReviewTarget.Term != "incident" {
 		t.Fatalf("reloaded paused attempt = %+v", reloaded)
 	}
 
 	pausedSubmission := scenarioStepPayload(
 		"00000000-0000-0000-0000-000000000003",
 		paused.Version,
-		"The API error rate is confirmed above baseline, while a database saturation cause is still only a hypothesis.",
+		"The incident is confirmed above baseline, while a database saturation cause is still only a hypothesis.",
 		[]string{"The API error rate is above baseline."},
 		[]string{"Database saturation may be the cause."},
 		baseReview,
@@ -227,14 +244,14 @@ func TestScenarioLessonsContract(t *testing.T) {
 	postAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/resume", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, map[string]any{
 		"attemptVersion": paused.Version,
 	}, http.StatusOK, &resumed)
-	if resumed.Status != "active" || resumed.Version != 3 || resumed.CurrentPosition != 0 {
+	if resumed.Status != "active" || resumed.Version != 3 || resumed.CurrentPosition != 0 || resumed.CurrentStep == nil || resumed.CurrentStep.ReviewTarget.Term != "incident" {
 		t.Fatalf("resumed scenario attempt = %+v", resumed)
 	}
 
 	overlapPayload := scenarioStepPayload(
 		"00000000-0000-0000-0000-000000000004",
 		resumed.Version,
-		"The API error rate is above baseline, and the statement is intentionally duplicated across both evidence groups.",
+		"The incident is confirmed, and the statement is intentionally duplicated across both evidence groups.",
 		[]string{"The API error rate is above baseline."},
 		[]string{"The API error rate is above baseline."},
 		baseReview,
@@ -245,30 +262,33 @@ func TestScenarioLessonsContract(t *testing.T) {
 	firstPayload := scenarioStepPayload(
 		firstSubmissionID,
 		resumed.Version,
-		"The API error rate is confirmed above baseline. Database saturation remains a hypothesis until connection metrics are checked.",
+		"The incident is confirmed: the API error rate is above baseline. Database saturation remains a hypothesis until connection metrics are checked.",
 		[]string{"The API error rate is confirmed above baseline."},
 		[]string{"Database saturation may be the cause."},
 		baseReview,
 	)
 	var first submitScenarioStepResponse
 	putAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/steps/0", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, firstPayload, http.StatusOK, &first)
-	if first.IdempotentReplay || first.Review.ReviewEventID <= 0 || first.Attempt.CurrentPosition != 1 || first.Attempt.Version != 4 || first.Attempt.Status != "active" {
+	if first.IdempotentReplay || first.Review.ReviewEventID <= 0 || first.Review.WordID <= 0 || first.Attempt.CurrentPosition != 1 || first.Attempt.Version != 4 || first.Attempt.Status != "active" {
 		t.Fatalf("first scenario submission = %+v", first)
 	}
-	if first.Review.JudgementSource == "" || first.Review.EffectiveRating == "" {
-		t.Fatalf("scenario review evidence = %+v", first.Review)
+	if first.Review.Correct == nil || !*first.Review.Correct || first.Review.JudgementSource != "server" || first.Review.EffectiveRating != "known" || first.Review.JudgementReason != "scenario_target_present" || first.Review.MatchedAnswer != "incident" {
+		t.Fatalf("first scenario review evidence = %+v", first.Review)
+	}
+	if first.Attempt.CurrentStep == nil || first.Attempt.CurrentStep.ReviewTarget.Term != "mitigation" {
+		t.Fatalf("next Scenario target = %+v", first.Attempt.CurrentStep)
 	}
 
 	var replay submitScenarioStepResponse
 	putAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s/steps/0", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, firstPayload, http.StatusOK, &replay)
-	if !replay.IdempotentReplay || replay.Review.ReviewEventID != first.Review.ReviewEventID || replay.Attempt.Version != first.Attempt.Version {
+	if !replay.IdempotentReplay || replay.Review.ReviewEventID != first.Review.ReviewEventID || replay.Review.WordID != first.Review.WordID || replay.Attempt.Version != first.Attempt.Version {
 		t.Fatalf("idempotent replay = %+v, first = %+v", replay, first)
 	}
 
 	mutatedFirstPayload := scenarioStepPayload(
 		firstSubmissionID,
 		resumed.Version,
-		"This changed response reuses the same submission identifier and therefore must be rejected instead of replayed.",
+		"This changed incident response reuses the same submission identifier and therefore must be rejected instead of replayed.",
 		[]string{"The API error rate is confirmed above baseline."},
 		[]string{"A network issue may be the cause."},
 		baseReview,
@@ -277,26 +297,70 @@ func TestScenarioLessonsContract(t *testing.T) {
 
 	var reviewEventCount int
 	var linkedReviewEventID int64
+	var linkedWordID int64
 	var answerMode string
 	var eventSchemaVersion int
+	var correct bool
+	var effectiveRating string
+	var judgementSource string
+	var judgementReason string
+	var matchedAnswer string
 	if err := pg.QueryRow(ctx, `
 		select count(*)::int,
 		       max(review_event.id),
+		       max(review_event.word_id),
 		       max(review_event.answer_mode),
-		       max(review_event.event_schema_version)
+		       max(review_event.event_schema_version),
+		       bool_and(review_event.correct),
+		       max(review_event.effective_rating),
+		       max(review_event.judgement_source),
+		       max(review_event.judgement_reason),
+		       max(review_event.matched_answer)
 		from review_events review_event
 		join scenario_attempt_steps attempt_step on attempt_step.review_event_id = review_event.id
 		where attempt_step.attempt_id = $1::uuid
-	`, started.Attempt.ID).Scan(&reviewEventCount, &linkedReviewEventID, &answerMode, &eventSchemaVersion); err != nil {
+	`, started.Attempt.ID).Scan(
+		&reviewEventCount,
+		&linkedReviewEventID,
+		&linkedWordID,
+		&answerMode,
+		&eventSchemaVersion,
+		&correct,
+		&effectiveRating,
+		&judgementSource,
+		&judgementReason,
+		&matchedAnswer,
+	); err != nil {
 		t.Fatalf("query linked scenario review event: %v", err)
 	}
-	if reviewEventCount != 1 || linkedReviewEventID != first.Review.ReviewEventID || answerMode != "recall" || eventSchemaVersion != 2 {
-		t.Fatalf("linked scenario review event count=%d id=%d mode=%s schema=%d", reviewEventCount, linkedReviewEventID, answerMode, eventSchemaVersion)
+	if reviewEventCount != 1 || linkedReviewEventID != first.Review.ReviewEventID || linkedWordID != first.Review.WordID || answerMode != "recall" || eventSchemaVersion != 2 || !correct || effectiveRating != "known" || judgementSource != "server" || judgementReason != "scenario_target_present" || matchedAnswer != "incident" {
+		t.Fatalf("linked Scenario review evidence count=%d id=%d word=%d mode=%s schema=%d correct=%v effective=%s source=%s reason=%s matched=%s", reviewEventCount, linkedReviewEventID, linkedWordID, answerMode, eventSchemaVersion, correct, effectiveRating, judgementSource, judgementReason, matchedAnswer)
+	}
+
+	var persistedLemma string
+	var persistedTranslation string
+	var assigned bool
+	if err := pg.QueryRow(ctx, `
+		select word.lemma,
+		       word.translation,
+		       exists (
+		           select 1
+		           from user_words user_word
+		           where user_word.user_id = $1::uuid
+		             and user_word.word_id = word.id
+		       )
+		from words word
+		where word.id = $2
+	`, registered.User.ID, first.Review.WordID).Scan(&persistedLemma, &persistedTranslation, &assigned); err != nil {
+		t.Fatalf("query Scenario review target assignment: %v", err)
+	}
+	if persistedLemma != "incident" || persistedTranslation != "инцидент" || !assigned {
+		t.Fatalf("persisted Scenario target lemma=%q translation=%q assigned=%v", persistedLemma, persistedTranslation, assigned)
 	}
 
 	var resumedAgain startScenarioResponse
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/scenarios/incident-update/attempts", registered.Tokens.AccessToken, nil, http.StatusOK, &resumedAgain)
-	if !resumedAgain.Resumed || resumedAgain.Attempt.ID != started.Attempt.ID || resumedAgain.Attempt.CurrentPosition != 1 {
+	if !resumedAgain.Resumed || resumedAgain.Attempt.ID != started.Attempt.ID || resumedAgain.Attempt.CurrentPosition != 1 || resumedAgain.Attempt.CurrentStep == nil || resumedAgain.Attempt.CurrentStep.ReviewTarget.Term != "mitigation" {
 		t.Fatalf("resumed open scenario from catalog = %+v", resumedAgain)
 	}
 
@@ -313,6 +377,12 @@ func TestScenarioLessonsContract(t *testing.T) {
 	if second.Attempt.CurrentPosition != 2 || second.Attempt.Version != 5 || second.Attempt.Status != "active" {
 		t.Fatalf("second scenario submission = %+v", second)
 	}
+	if second.Review.Correct == nil || *second.Review.Correct || second.Review.EffectiveRating != "again" || second.Review.JudgementSource != "server" || second.Review.JudgementReason != "scenario_target_missing" || second.Review.MatchedAnswer != "" {
+		t.Fatalf("missing-target Scenario evidence = %+v", second.Review)
+	}
+	if second.Attempt.CurrentStep == nil || second.Attempt.CurrentStep.ReviewTarget.Term != "status" {
+		t.Fatalf("third Scenario target = %+v", second.Attempt.CurrentStep)
+	}
 
 	thirdPayload := scenarioStepPayload(
 		"00000000-0000-0000-0000-000000000007",
@@ -327,6 +397,9 @@ func TestScenarioLessonsContract(t *testing.T) {
 	if completed.Attempt.Status != "completed" || completed.Attempt.CurrentPosition != 3 || completed.Attempt.Version != 6 || completed.Attempt.CurrentStep != nil || !reflect.DeepEqual(completed.Attempt.CompletedPositions, []int{0, 1, 2}) {
 		t.Fatalf("completed scenario attempt = %+v", completed)
 	}
+	if completed.Review.Correct == nil || !*completed.Review.Correct || completed.Review.EffectiveRating != "known" || completed.Review.JudgementReason != "scenario_target_present" || completed.Review.MatchedAnswer != "status" {
+		t.Fatalf("completed Scenario review evidence = %+v", completed.Review)
+	}
 
 	var persisted scenarioAttemptResponse
 	getAuthenticatedJSON(t, fmt.Sprintf("%s/api/v1/scenario-attempts/%s", testServer.URL, started.Attempt.ID), registered.Tokens.AccessToken, http.StatusOK, &persisted)
@@ -334,9 +407,27 @@ func TestScenarioLessonsContract(t *testing.T) {
 		t.Fatalf("persisted completed scenario attempt = %+v", persisted)
 	}
 
+	var linkedCount int
+	var assignedTargetCount int
+	if err := pg.QueryRow(ctx, `
+		select count(*)::int,
+		       count(distinct user_word.word_id)::int
+		from scenario_attempt_steps attempt_step
+		join review_events review_event on review_event.id = attempt_step.review_event_id
+		join user_words user_word
+		  on user_word.user_id = $2::uuid
+		 and user_word.word_id = review_event.word_id
+		where attempt_step.attempt_id = $1::uuid
+	`, started.Attempt.ID, registered.User.ID).Scan(&linkedCount, &assignedTargetCount); err != nil {
+		t.Fatalf("query completed Scenario review targets: %v", err)
+	}
+	if linkedCount != 3 || assignedTargetCount != 3 {
+		t.Fatalf("completed Scenario evidence linked=%d assignedTargets=%d, want 3/3", linkedCount, assignedTargetCount)
+	}
+
 	var next startScenarioResponse
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/scenarios/incident-update/attempts", registered.Tokens.AccessToken, nil, http.StatusCreated, &next)
-	if next.Resumed || next.Attempt.ID == started.Attempt.ID || next.Attempt.CurrentPosition != 0 || next.Attempt.Version != 1 {
+	if next.Resumed || next.Attempt.ID == started.Attempt.ID || next.Attempt.CurrentPosition != 0 || next.Attempt.Version != 1 || next.Attempt.CurrentStep == nil || next.Attempt.CurrentStep.ReviewTarget.Term != "incident" {
 		t.Fatalf("new scenario attempt after completion = %+v", next)
 	}
 }
@@ -357,4 +448,13 @@ func scenarioStepPayload(
 		"hypotheses":     hypotheses,
 		"review":         review,
 	}
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
