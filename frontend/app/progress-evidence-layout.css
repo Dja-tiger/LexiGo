@@ -27,7 +27,7 @@
 .lx-routed-app[data-route-path="/progress"] .lx-header {
   color: var(--ak-color-text-main);
   border-color: color-mix(in srgb, var(--ak-color-text-muted) 18%, transparent);
-  background: color-mix(in srgb, var(--ak-color-canvas) 94%, transparent);
+  background: var(--ak-color-canvas);
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
