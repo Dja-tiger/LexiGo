@@ -61,15 +61,15 @@ PR #216 merged as `f2785be...`; product branch and `main` were not modified by h
 
 Failures:
 
-Stage status is not green for the latest evidenced image; newer SHA deployment evidence is absent.
+The pre-flight deployment snapshot was initially stale and showed the previous image failure.
 
 Root cause:
 
-Issue #12 records an iOS WebKit public service-worker load failure on the previous image.
+Stage deployment for PR #216 completed after the first pre-flight read; Issue #12 later moved to `f2785be...` with successful public browser validation.
 
 Fallback:
 
-Track as validation pending; do not misrepresent stage as green and do not mix deploy repair into the harness PR.
+Re-read the live deployment source before final CI and reconciled `PROJECT_STATE.md`; do not preserve an outdated failure as current state.
 
 Limitations:
 
@@ -177,15 +177,15 @@ The next product slice is Scenario UI #196, not the already completed Issue #19 
 
 Failures:
 
-No latest-stage success evidence for current `main`.
+The first reconstruction lacked latest-stage success evidence.
 
 Root cause:
 
-Deployment status remains on the previous SHA and shows a WebKit smoke failure.
+Issue #12 was updated after pre-flight when stage run `30157188680` completed.
 
 Fallback:
 
-Keep validation pending until Issue #12 or workflow evidence changes.
+Re-read the live deployment source and reconcile state before final CI; stage is now verified green for `f2785be...`.
 
 Limitations:
 
