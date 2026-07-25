@@ -142,10 +142,12 @@ function RouteLink({
         event.preventDefault();
 
         const intent = navigationView ? "primary_navigation" : "in_app_navigation";
-        if (document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR)) {
-          // A cold route island does not own the product-wide popstate runtime.
-          // Let the Next App Router swap the route graph without reloading the
-          // document; the loaded product graph then resumes internal history.
+        const requiresRouterGraphHandoff = target.view === "scenario"
+          || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
+        if (requiresRouterGraphHandoff) {
+          // Route islands, including the Scenario catalog, do not share the
+          // PremiumApp popstate renderer. Let Next swap the route graph without
+          // reloading the document; the loaded graph resumes internal history.
           const transition = routeTransition(target, intent);
           if (transition) {
             window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
