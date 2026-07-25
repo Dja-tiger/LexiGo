@@ -6,7 +6,7 @@
 - Branch: `feat/issue-196-scenario-lessons-ui`
 - Base SHA: `d7dc76c9139beff75d331c2b904f743f381f243d`
 - Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- PR: #221 — Draft
 
 ## Objective
 
@@ -21,6 +21,7 @@ Implement the production Scenario Lessons route island from approved Figma nodes
 - Reuse the same submission id for retries of the same normalized response and create a new id when evidence changes.
 - Pause active attempts before an explicit close/save-and-exit action.
 - Keep task-completion feedback separate from the server-owned language signal and never expose self-rating controls.
+- Preserve `return_to` for initial and mid-session authentication loss on focused Scenario routes.
 - Add deterministic unit, route, UI, navigation, accessibility, visual-regression and bundle-budget coverage.
 - Record execution evidence and reusable lessons in the Agent Harness.
 
@@ -46,6 +47,8 @@ Implement the production Scenario Lessons route island from approved Figma nodes
 - `frontend/components/lexigo-scenario-app.tsx`
 - `frontend/components/route-primary-navigation.tsx`
 - `frontend/components/legal-footer.tsx`
+- `frontend/lib/auth-session.ts`
+- `frontend/lib/auth-session.test.ts`
 - `frontend/lib/navigation.ts`
 - `frontend/lib/navigation.test.ts`
 - `frontend/lib/scenarios.ts`
