@@ -203,7 +203,7 @@ test.describe("Word Detail visual baselines", () => {
     });
     const runtimeErrors = captureRuntimeErrors(page);
     await openWordDetail(page);
-    const speech = page.getByRole("button", { name: /Озвучивание недоступно: rollback/ });
+    const speech = page.getByRole("button", { name: /Произношение недоступно: rollback/ });
     await expect(speech).toBeDisabled();
     await expect(page.getByText(/Озвучивание недоступно в этом браузере/)).toBeVisible();
     await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
@@ -218,7 +218,7 @@ test.describe("Word Detail visual baselines", () => {
     await openWordDetail(page);
     await expectNoHorizontalOverflow(page);
     await expect(page.getByRole("button", { name: "Повторить сейчас" }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Произнести: rollback|Озвучивание недоступно: rollback/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Произнести: rollback|Произношение недоступно: rollback/ })).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 });
