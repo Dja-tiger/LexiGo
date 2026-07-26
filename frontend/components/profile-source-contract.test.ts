@@ -47,12 +47,16 @@ describe("Profile route ownership", () => {
       source("./lexigo-bootstrapped-app.tsx"),
       source("./lexigo-profile-app.tsx"),
     ]);
+    const logoutOwner = bootstrap.slice(
+      bootstrap.indexOf("const handleLoggedOut"),
+      bootstrap.indexOf("const handleAccountDeleted"),
+    );
 
-    expect(bootstrap).toContain("function homeHistoryState()");
-    expect(bootstrap).toContain('window.history.replaceState(homeState, "", "/")');
-    expect(bootstrap).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
-    expect(bootstrap.indexOf('window.history.replaceState(homeState, "", "/")'))
-      .toBeLessThan(bootstrap.indexOf("invalidateBootstrappedSession()"));
+    expect(logoutOwner).toContain("function homeHistoryState");
+    expect(logoutOwner).toContain('window.history.replaceState(homeState, "", "/")');
+    expect(logoutOwner).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
+    expect(logoutOwner.indexOf('window.history.replaceState(homeState, "", "/")'))
+      .toBeLessThan(logoutOwner.indexOf("invalidateBootstrappedSession()"));
 
     expect(profile).toContain("onLoggedOut();");
     expect(profile).not.toContain("createNavigationHistoryState");
