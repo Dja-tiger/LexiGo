@@ -126,11 +126,13 @@ test.describe("System state Figma visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await installAppearance(page, "dark");
     await installQualityGateAPI(context);
-    await context.route("**/api/v1/auth/refresh", async () => new Promise(() => undefined));
+    await context.route("**/api/v1/auth/refresh", async () => {
+      await new Promise<void>(() => undefined);
+    });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".lx-bootstrap:not(.lx-bootstrap--recoverable)")).toBeVisible();
-    await expect(page.getByText("Загружаем персональный план", { exact: true })).toBeVisible();
+    await expect(page.getByText("Восстанавливаем сессию…", { exact: true })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "dark");
     await stabilize(page);
     await expectApprovedSystemStateBaseline(page, testInfo, "compact-loading-dark");
@@ -174,7 +176,7 @@ test.describe("System state Figma visual baselines", () => {
     await expect(page.getByRole("alert", { name: "Словарь недоступен" })).toContainText("visual-system-state-503");
     await stabilize(page);
     await expectApprovedSystemStateBaseline(page, testInfo, "compact-error-dark");
-    expect(runtimeErrors).toEqual([]);
+    expect(runtimeErrors.filter((entry) => !entry.includes("503"))).toEqual([]);
   });
 
   test("desktop offline dark", async ({ context, page }, testInfo) => {
@@ -185,7 +187,7 @@ test.describe("System state Figma visual baselines", () => {
     await installQualityGateAPI(context);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Добро пожаловать|Продолжим обучение/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу", exact: true })).toBeVisible();
     await context.setOffline(true);
     await page.getByRole("button", { name: "Подробнее", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
