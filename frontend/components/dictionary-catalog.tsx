@@ -14,13 +14,14 @@ import { CATALOG_PAGE_SIZE, type CatalogPageInfo } from "../lib/catalog-page";
 import { catalogStatusLabel, partOfSpeechLabel, topicLabel } from "../lib/interface-copy";
 import type { LearningItem, WordSection } from "../lib/learning";
 import type { CatalogSort, CatalogStatus, NavigationTarget } from "../lib/navigation";
-import type { ProductJourneyIntent } from "../lib/product-journey";
 import type { NavigationScrollPosition } from "../lib/navigation-history";
+import type { ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
+import type { WordDetailItem } from "../lib/word-detail";
 import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CatalogKindNavigation } from "./catalog-kind-navigation";
 import { CatalogPagination } from "./catalog-pagination";
-import { SpeechPlayerButton } from "./speech-player-button";
+import { WordDetailRoute } from "./word-detail-route";
 
 export type DictionarySource = WordSection;
 
@@ -45,7 +46,9 @@ type DictionaryCatalogProps = {
   metadataStatus: CatalogMetadataStatus;
   progress: ProgressSummary | null;
   loadPage: (filters: DictionaryFilters, signal: AbortSignal) => Promise<DictionaryPageResult>;
-  loadDetail: (wordID: number, signal: AbortSignal) => Promise<LearningItem>;
+  loadDetail: (wordID: number, signal: AbortSignal) => Promise<WordDetailItem>;
+  loadRelatedPhrases: (item: WordDetailItem, signal: AbortSignal) => Promise<LearningItem[]>;
+  onStartPractice: (item: WordDetailItem) => Promise<void>;
   onNavigate: (
     target: NavigationTarget,
     replace?: boolean,
@@ -53,7 +56,6 @@ type DictionaryCatalogProps = {
     intent?: ProductJourneyIntent,
   ) => void;
   onBackToResults: () => void;
-  onConfigureLesson: (context: { source: DictionarySource; topic?: string }) => void;
   onRequireAuthentication: () => void;
 };
 
@@ -164,9 +166,10 @@ export function DictionaryCatalog({
   metadataStatus,
   loadPage,
   loadDetail,
+  loadRelatedPhrases,
+  onStartPractice,
   onNavigate,
   onBackToResults,
-  onConfigureLesson,
   onRequireAuthentication,
 }: DictionaryCatalogProps) {
   const filters = useMemo(() => dictionaryFilters(navigation), [navigation]);
@@ -174,13 +177,9 @@ export function DictionaryCatalog({
   const [items, setItems] = useState<LearningItem[]>([]);
   const [pageInfo, setPageInfo] = useState<CatalogPageInfo>(EMPTY_PAGE);
   const [pageStatus, setPageStatus] = useState<ResourceStatus>(idleResourceStatus);
-  const [remoteDetail, setRemoteDetail] = useState<{ key: string; item: LearningItem } | null>(null);
-  const [detailStatus, setDetailStatus] = useState<{ key: string; status: ResourceStatus }>({
-    key: "",
-    status: idleResourceStatus(),
-  });
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const resultsRef = useRef<HTMLElement | null>(null);
+  const detailOpenedFromCatalogRef = useRef(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setSearchInput(filters.query));
@@ -188,7 +187,7 @@ export function DictionaryCatalog({
   }, [filters.query]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || navigation.detail) return;
     const controller = new AbortController();
 
     async function run() {
@@ -211,49 +210,7 @@ export function DictionaryCatalog({
 
     void run();
     return () => controller.abort();
-  }, [authenticated, filters, loadPage]);
-
-  const localDetail = navigation.detail
-    ? items.find((item) => String(item.wordId) === navigation.detail) ?? null
-    : null;
-  const selectedItem = localDetail
-    ?? (remoteDetail && remoteDetail.key === navigation.detail ? remoteDetail.item : null);
-  const activeDetailStatus = detailStatus.key === navigation.detail
-    ? detailStatus.status
-    : idleResourceStatus();
-
-  useEffect(() => {
-    if (!authenticated || !navigation.detail || localDetail) return;
-    const detailKey = navigation.detail;
-    const controller = new AbortController();
-
-    async function run() {
-      await Promise.resolve();
-      if (controller.signal.aborted) return;
-      const wordID = Number(detailKey);
-      if (!Number.isSafeInteger(wordID) || wordID <= 0) {
-        setDetailStatus({
-          key: detailKey,
-          status: failedResourceStatus(new Error("Некорректная ссылка на слово"), "карточку слова"),
-        });
-        return;
-      }
-
-      setDetailStatus({ key: detailKey, status: loadingResourceStatus() });
-      try {
-        const item = await loadDetail(wordID, controller.signal);
-        if (controller.signal.aborted) return;
-        setRemoteDetail({ key: detailKey, item });
-        setDetailStatus({ key: detailKey, status: readyResourceStatus() });
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        setDetailStatus({ key: detailKey, status: failedResourceStatus(error, "карточку слова") });
-      }
-    }
-
-    void run();
-    return () => controller.abort();
-  }, [authenticated, loadDetail, localDetail, navigation.detail]);
+  }, [authenticated, filters, loadPage, navigation.detail]);
 
   const topics = useMemo(() => metadata?.topics
     .filter((entry) => (entry.words ?? entry.count) > 0)
@@ -294,7 +251,34 @@ export function DictionaryCatalog({
 
   function openDetail(item: LearningItem) {
     if (!item.wordId) return;
+    detailOpenedFromCatalogRef.current = true;
     onNavigate(cleanTarget(filters, String(item.wordId)), false, undefined, "catalog_open_detail");
+  }
+
+  function backFromDetail() {
+    if (detailOpenedFromCatalogRef.current && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    onBackToResults();
+  }
+
+  if (navigation.detail) {
+    return (
+      <WordDetailRoute
+        authenticated={authenticated}
+        detailKey={navigation.detail}
+        loadDetail={loadDetail}
+        loadRelatedPhrases={loadRelatedPhrases}
+        onStartPractice={onStartPractice}
+        onBack={backFromDetail}
+        onOpenPhrase={(phrase) => {
+          if (!phrase.slug) return;
+          onNavigate({ view: "phrases", detail: phrase.slug }, false, undefined, "catalog_open_detail");
+        }}
+        onRequireAuthentication={onRequireAuthentication}
+      />
+    );
   }
 
   if (!authenticated) {
@@ -313,50 +297,6 @@ export function DictionaryCatalog({
           onAction={onRequireAuthentication}
         />
       </>
-    );
-  }
-
-  if (navigation.detail) {
-    const loading = !localDetail && (activeDetailStatus.phase === "loading" || (activeDetailStatus.phase === "idle" && !selectedItem));
-    const problem = activeDetailStatus.problem;
-    return (
-      <section className="lx-dictionary-detail">
-        <button className="lx-button ghost" type="button" onClick={onBackToResults}>← К результатам</button>
-        {loading ? <AsyncSkeletonGrid label="Загружаем карточку слова" count={1} /> : null}
-        {!loading && !selectedItem ? (
-          <AsyncStatePanel
-            label="Карточка слова недоступна"
-            kind="error"
-            title={problem?.title ?? "Не удалось открыть слово"}
-            message={problem?.message ?? "Проверьте ссылку или вернитесь к результатам поиска."}
-            reference={problem?.correlationId}
-            actionLabel="К результатам"
-            onAction={onBackToResults}
-          />
-        ) : null}
-        {selectedItem ? (
-          <article className="lx-dictionary-detail-card">
-            <div className="lx-dictionary-detail-meta">
-              <span>{topicLabel(selectedItem.topic)}</span>
-              <span>{partOfSpeechLabel(selectedItem.partOfSpeech || "word")}</span>
-              <span data-status={selectedItem.status}>{catalogStatusLabel(selectedItem.status)}</span>
-            </div>
-            <div className="lx-dictionary-detail-title">
-              <div><h1 lang="en">{selectedItem.prompt}</h1>{selectedItem.phonetic ? <p>{selectedItem.phonetic}</p> : null}</div>
-              <SpeechPlayerButton text={selectedItem.prompt}>Произнести</SpeechPlayerButton>
-            </div>
-            <strong className="lx-dictionary-translation" lang="ru">{selectedItem.answer}</strong>
-            {selectedItem.aliases?.length ? <div className="lx-dictionary-detail-section"><h2>Другие варианты написания</h2><p>{selectedItem.aliases.join(", ")}</p></div> : null}
-            {selectedItem.examples.length ? <div className="lx-dictionary-detail-section"><h2>Примеры</h2>{selectedItem.examples.map((example) => <p key={example} lang="en">{example}</p>)}</div> : null}
-            {selectedItem.note ? <div className="lx-dictionary-detail-section"><h2>Контекст</h2><p>{selectedItem.note}</p></div> : null}
-            <div className="lx-page-actions">
-              <button className="lx-button primary" type="button" onClick={() => onConfigureLesson({ source: filters.source, topic: selectedItem.topic })}>
-                Настроить урок по этой теме
-              </button>
-            </div>
-          </article>
-        ) : null}
-      </section>
     );
   }
 
