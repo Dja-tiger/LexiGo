@@ -252,19 +252,19 @@
   background: color-mix(in srgb, var(--ak-color-weak) 13%, var(--ak-color-surface));
 }
 
-html[data-lexigo-resolved-appearance="light"] .lx-route-brand,
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav a {
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-brand,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav a {
   color: var(--ak-color-text-muted);
 }
 
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav a:hover,
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav a.active {
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav a:hover,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav a.active {
   color: var(--ak-color-text-main);
 }
 
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav--rail,
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav--mobile,
-html[data-lexigo-resolved-appearance="light"] .lx-route-nav--header a.active {
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav--rail,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav--mobile,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-route-nav--header a.active {
   border-color: #c9d7d2;
   background: color-mix(in srgb, #ffffff 94%, transparent);
   box-shadow: 0 12px 32px rgba(15, 33, 28, 0.12);
