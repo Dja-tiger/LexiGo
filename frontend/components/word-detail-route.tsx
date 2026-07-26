@@ -105,15 +105,16 @@ export function WordDetailRoute({
 
   useEffect(() => {
     if (!activeItem) return;
+    const relatedItem = activeItem;
     const controller = new AbortController();
-    const relatedKey = `${detailKey}:${activeItem.prompt}`;
+    const relatedKey = `${detailKey}:${relatedItem.prompt}`;
 
     async function run() {
       await Promise.resolve();
       if (controller.signal.aborted) return;
       setRelated({ key: relatedKey, items: [], status: loadingResourceStatus() });
       try {
-        const items = await loadRelatedPhrases(activeItem, controller.signal);
+        const items = await loadRelatedPhrases(relatedItem, controller.signal);
         if (controller.signal.aborted) return;
         setRelated({ key: relatedKey, items, status: readyResourceStatus() });
       } catch (error) {
