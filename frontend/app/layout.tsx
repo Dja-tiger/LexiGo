@@ -31,6 +31,7 @@ import "./review-outbox.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
 import "./dictionary-detail-compatibility.css";
+import "./word-detail.css";
 import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
 import "./compact-home.css";
