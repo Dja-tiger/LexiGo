@@ -265,7 +265,7 @@ export function LexigoProfileApp({
           <section className="lx-profile-identity" aria-label="Данные профиля">
             <span className="lx-profile-initials" aria-hidden="true">{initials}</span>
             <div className="lx-profile-identity-copy">
-              <strong>{displayName}</strong>
+              <strong role="heading" aria-level={2}>{displayName}</strong>
               <span>{session.user.email}</span>
               <span>Аккаунт создан {accountDate(session.user.createdAt)}</span>
             </div>
