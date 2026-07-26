@@ -40,6 +40,7 @@ type AccountNotice = {
 
 type LexigoBootstrappedAppProps = {
   pathname: string;
+  onNavigateHome: () => void;
 };
 
 function ProductShellLoading() {
@@ -123,10 +124,6 @@ function profileHistoryState() {
   return createNavigationHistoryState({ view: "profile" }, { x: 0, y: 0 });
 }
 
-function homeHistoryState() {
-  return createNavigationHistoryState({ view: "home" }, { x: 0, y: 0 });
-}
-
 function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | null = currentReturnTo()): void {
   const params = new URLSearchParams({ session: reason });
   if (returnTo) params.set("return_to", returnTo);
@@ -154,12 +151,13 @@ function mergedNavigationHistoryState(target: NavigationTarget): Record<string, 
   };
 }
 
-export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
+export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootstrappedAppProps) {
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
   const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
+  const [sessionRestoreSuppressed, setSessionRestoreSuppressed] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
   const [routeGraph, setRouteGraph] = useState<RouteGraph>(() => (
     isDictionaryRoute(pathname) ? "dictionary" : "product"
@@ -167,11 +165,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   const handleSessionUpdated = useCallback((nextSession: Session) => {
     adoptBootstrappedSession(nextSession);
+    setSessionRestoreSuppressed(false);
     setInitialSession(nextSession);
   }, []);
 
   const retryRestore = useCallback(() => {
     invalidateBootstrappedSession();
+    setSessionRestoreSuppressed(false);
     setInitialSession(undefined);
     setNotice(null);
     setAccountNotice(null);
@@ -192,14 +192,14 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   const handleLoggedOut = useCallback(() => {
-    const homeState = homeHistoryState();
+    setSessionRestoreSuppressed(true);
     setLogoutPending(true);
-    window.history.replaceState(homeState, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }));
-  }, []);
+    onNavigateHome();
+  }, [onNavigateHome]);
 
   const handleAccountDeleted = useCallback(() => {
     invalidateBootstrappedSession();
+    setSessionRestoreSuppressed(true);
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -212,6 +212,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   const handleEmailChanged = useCallback(() => {
     invalidateBootstrappedSession();
+    setSessionRestoreSuppressed(true);
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
@@ -240,6 +241,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, [handleSessionUpdated]);
 
   useEffect(() => {
+    if (sessionRestoreSuppressed) return;
     let cancelled = false;
 
     async function preflightSession() {
@@ -278,7 +280,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     return () => {
       cancelled = true;
     };
-  }, [pathname, restoreAttempt]);
+  }, [pathname, restoreAttempt, sessionRestoreSuppressed]);
 
   useEffect(() => {
     if (!restoreRecoverable) return;
@@ -309,9 +311,8 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   useEffect(() => {
     // The dictionary graph is only a cold-entry optimization. Keep the owning
-    // island mounted until App Router has actually changed the pathname, then
-    // attach the canonical URL-derived target to the current Next history entry
-    // before the product graph hydrates from history.
+    // island mounted until App Router has changed the pathname and the new
+    // history entry carries the canonical destination target.
     let productGraphFrame: number | null = null;
 
     const scheduleProductGraph = () => {
@@ -341,12 +342,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
     window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, scheduleProductGraph);
     window.addEventListener("popstate", preserveLoadedProductGraph);
+    if (routeGraph === "dictionary" && !isDictionaryRoute(pathname)) scheduleProductGraph();
     return () => {
       if (productGraphFrame !== null) window.cancelAnimationFrame(productGraphFrame);
       window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, scheduleProductGraph);
       window.removeEventListener("popstate", preserveLoadedProductGraph);
     };
-  }, []);
+  }, [pathname, routeGraph]);
 
   if (initialSession === undefined) {
     if (restoreRecoverable && notice) {
@@ -373,6 +375,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }
 
   const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
+  const productGraphPending = routeGraph === "dictionary" && !isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
   const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
   const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;
@@ -400,7 +403,9 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      {useScenarioCatalogIsland ? (
+      {productGraphPending ? (
+        <ProductShellLoading />
+      ) : useScenarioCatalogIsland ? (
         <LexigoScenarioCatalogApp
           key={`${routeKey}:scenario-catalog`}
           initialSession={initialSession}
