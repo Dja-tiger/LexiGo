@@ -212,7 +212,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     return () => {
       cancelled = true;
     };
-  }, [restoreAttempt]);
+  }, [pathname, restoreAttempt]);
 
   useEffect(() => {
     if (!restoreRecoverable) return;
