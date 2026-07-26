@@ -7,6 +7,7 @@ import type { ResourceStatus } from "../lib/account-resources";
 import type { RequestProblem } from "../lib/request-failure";
 
 type AsyncStateKind = "loading" | "empty" | "error" | "success";
+type AsyncSkeletonVariant = "catalog" | "home";
 
 type AsyncStatePanelProps = {
   label: string;
@@ -15,11 +16,27 @@ type AsyncStatePanelProps = {
   message: string;
   actionLabel?: string;
   onAction?: () => void;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
   compact?: boolean;
   children?: ReactNode;
   reference?: string;
   focusResult?: boolean;
 };
+
+function stateEyebrow(kind: AsyncStateKind): string {
+  if (kind === "loading") return "ЗАГРУЗКА";
+  if (kind === "empty") return "НИЧЕГО НЕ НАЙДЕНО";
+  if (kind === "error") return "НЕ УДАЛОСЬ ЗАГРУЗИТЬ";
+  return "ГОТОВО";
+}
+
+function stateIcon(kind: AsyncStateKind): string {
+  if (kind === "loading") return "…";
+  if (kind === "empty") return "⌕";
+  if (kind === "error") return "!";
+  return "✓";
+}
 
 export function AsyncStatePanel({
   label,
@@ -28,6 +45,8 @@ export function AsyncStatePanel({
   message,
   actionLabel,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
   compact = false,
   children,
   reference = "",
@@ -39,6 +58,8 @@ export function AsyncStatePanel({
     if (!focusResult) return;
     regionRef.current?.focus({ preventScroll: false });
   }, [focusResult, kind, title, message, reference]);
+
+  const hasActions = Boolean((actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction));
 
   return (
     <section
@@ -52,17 +73,27 @@ export function AsyncStatePanel({
       tabIndex={focusResult ? -1 : undefined}
       data-async-state={kind}
     >
+      <span className="lx-async-state-icon" aria-hidden="true">{stateIcon(kind)}</span>
       <div className="lx-async-state-copy">
-        <span>{kind === "loading" ? "ЗАГРУЗКА" : kind === "empty" ? "ПОКА ПУСТО" : kind === "error" ? "НЕ УДАЛОСЬ ЗАГРУЗИТЬ" : "ГОТОВО"}</span>
+        <span>{stateEyebrow(kind)}</span>
         <strong>{title}</strong>
         <p>{message}</p>
         {reference ? <small>Код запроса: {reference}</small> : null}
         {children}
       </div>
-      {actionLabel && onAction ? (
-        <button className="lx-button primary" type="button" onClick={onAction}>
-          {actionLabel}
-        </button>
+      {hasActions ? (
+        <div className="lx-async-state-actions">
+          {actionLabel && onAction ? (
+            <button className="lx-button primary" type="button" onClick={onAction}>
+              {actionLabel}
+            </button>
+          ) : null}
+          {secondaryActionLabel && onSecondaryAction ? (
+            <button className="lx-button ghost" type="button" onClick={onSecondaryAction}>
+              {secondaryActionLabel}
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );
@@ -88,7 +119,7 @@ export function AsyncResourceNotice({
       actionLabel={problem.retryable ? "Повторить" : undefined}
       onAction={problem.retryable ? onRetry : undefined}
       compact
-      reference={problem.correlationId}
+      reference={problem.correlationId || problem.code}
     />
   );
 }
@@ -96,12 +127,21 @@ export function AsyncResourceNotice({
 export function AsyncSkeletonGrid({
   label,
   count = 6,
+  variant = "catalog",
 }: {
   label: string;
   count?: number;
+  variant?: AsyncSkeletonVariant;
 }) {
   return (
-    <section className="lx-async-skeleton" role="status" aria-live="polite" aria-label={label} aria-busy="true">
+    <section
+      className={`lx-async-skeleton lx-async-skeleton--${variant}`}
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+      aria-busy="true"
+      data-skeleton-variant={variant}
+    >
       <span className="lx-visually-hidden">{label}</span>
       <div>
         {Array.from({ length: count }, (_, index) => (
