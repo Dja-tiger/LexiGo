@@ -259,6 +259,8 @@ test("Word Detail creates an exact single-word lesson", async ({ page }, testInf
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
   await page.getByRole("button", { name: "Добавить в практику" }).first().click();
   await expect(page).toHaveURL(/\/lesson\/active$/);
+  await expect(page.getByRole("status", { name: "Сохранённый активный урок" })).toBeVisible();
+  await page.getByRole("button", { name: "Продолжить урок" }).click();
   await expect(page.locator(".lx-active-lesson")).toBeVisible();
   expect(lessonRequest).toMatchObject({
     source: "mixed",
