@@ -39,12 +39,15 @@ Implement the approved Figma-backed loading, empty, error, offline and synchroni
 - `docs/offline-review-outbox.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/system-states.css`
+- `frontend/app/system-states-lesson.css`
 - `frontend/components/async-state.tsx`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/review-outbox-runtime.tsx`
 - `frontend/components/active-lesson-presentation.tsx`
+- `frontend/components/system-states-contract.test.ts`
 - `frontend/lib/system-state-events.ts`
 - `frontend/package.json`
+- `frontend/playwright.visual.config.ts`
 - `frontend/e2e/async-states.spec.ts`
 - `frontend/e2e/offline-review-outbox.spec.ts`
 - `frontend/e2e/system-states.spec.ts`
