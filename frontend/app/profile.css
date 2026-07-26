@@ -270,6 +270,85 @@ html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/p
   box-shadow: 0 12px 32px rgba(15, 33, 28, 0.12);
 }
 
+/*
+ * The account/security owners intentionally remain separate components. Their
+ * legacy canvas is hard-coded dark, so explicit Light needs a route-scoped
+ * compatibility palette instead of changing those critical forms or APIs.
+ */
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security {
+  border-color: #c9d7d2;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: 0 18px 54px rgba(15, 33, 28, 0.12);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card {
+  border-color: #c9d7d2;
+  background: var(--ak-color-subtle);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list > div {
+  border-color: #c9d7d2;
+  background: var(--ak-color-surface);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security-heading > div > span,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card-heading > strong,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-schema {
+  color: var(--ak-color-primary);
+  background: var(--ak-color-primary-soft);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security-heading p,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card-heading p,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row span,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list span,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-list > p,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list > p,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form label > span,
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form > small:not([role="alert"]) {
+  color: var(--ak-color-text-muted);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form input {
+  border-color: #9eb2ab;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row > span.current {
+  color: #0b5f44;
+  background: #d7f5e9;
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row > span.other {
+  color: var(--ak-color-text-muted);
+  background: #e6efeb;
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.success {
+  border-color: #7fcdb1;
+  color: #0b5f44;
+  background: #d7f5e9;
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.error {
+  border-color: #e6a5af;
+  color: #8f1f33;
+  background: #ffe2e6;
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-danger-card {
+  border-color: #e6a5af;
+  background: #fff5f6;
+}
+
+html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-confirmation {
+  border-color: #e6a5af;
+  background: #ffe9ec;
+}
+
 @media (max-width: 719px) {
   .lx-profile-app {
     padding: 0 max(14px, env(safe-area-inset-right)) max(108px, calc(env(safe-area-inset-bottom) + 92px)) max(14px, env(safe-area-inset-left));
