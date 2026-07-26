@@ -102,10 +102,12 @@ export function navigationIdentity(target: NavigationTarget): string {
   return navigationURL(target);
 }
 
+/**
+ * Route changes and history restoration recover application state; they are not
+ * decorative motion. Keep writes immediate so touch, wheel and keyboard input
+ * can take control without waiting for a browser-managed smooth animation.
+ */
 export function navigationScrollBehavior(source: MatchMediaSource): ScrollBehavior {
-  try {
-    return source.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  } catch {
-    return "auto";
-  }
+  void source;
+  return "auto";
 }
