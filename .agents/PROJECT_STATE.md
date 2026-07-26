@@ -2,14 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-07-26 17:03 Europe/Berlin
+- Last verified: 2026-07-26 23:26 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge is PR #235 at `5551ec5b0ac849e884c1c94dff91ae66a73269d9`
-- PR #235 final immutable head: `a518e3fb84e2ce05de04e4b1d7cb7bc6e6a74754`
-- PR #235 full CI: #1971, run `30204983602`, successful
-- Product deployment evidence for PR #235: Issue #12 and stage run `30207248528` report image `5551ec5b0ac849e884c1c94dff91ae66a73269d9`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
-- Issue #198 is closed as completed
-- No product PR is open after PR #235 merged
+- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge is PR #237 at `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`
+- PR #237 final immutable head: `a9c258d6cd8103d89d860306630ee34262727557`
+- PR #237 full CI: #2029, run `30219400878`, successful
+- Post-merge `main` CI run `30219791968` completed successfully and released exact-SHA container images
+- Product deployment evidence for PR #237: Issue #12 and stage run `30220894109` report image `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
+- Issue #200 is closed as completed
+- No product PR is open after PR #237 merged
 - The current repository-memory reconciliation is a documentation/tooling follow-up only; it does not change runtime code
 
 ## Completed
@@ -88,6 +89,20 @@
 - Reviewed Word Detail Linux visual contracts: compact Light `390 × 1745`, SHA-256 `0d9eade831f96bcdf7b55132ebce75c69cf22bd4be9761d28e0ce98595968f7b`; compact Dark `390 × 1745`, SHA-256 `f985ac2cce5ae144e09dbe296de886de10b3fe31b01e175cd579f85812ca8088`; desktop Light `1440 × 1160`, SHA-256 `64258a07b5010045dcc4929110f5635d072c995bfaf315d9140aee0e6a3abf72`; desktop Dark `1440 × 1160`, SHA-256 `0d5f69b6b4ecb530bd51b421e20f5fcd66f4bc01d60bb20969b592e9a95fde24`.
 - PR #235 passed complete final-head CI #1971/run `30204983602` and exact-squash stage deployment/public validation in run `30207248528`; Issue #198 is complete.
 
+### Profile, preferences and appearance
+
+- PR #237 completed the authenticated `/profile` production route island from Figma nodes `79:6` and `79:129`; unauthenticated login, registration, reset and email-confirmation flows remain in the existing auth compatibility boundary.
+- Identity is restored from the authenticated session. Daily goal remains server-owned, calendar reminders remain browser/calendar-owned, and password, sessions, email change, export and deletion retain their existing confirmed account-component and API ownership.
+- Profile links move focus to the canonical sensitive-operation owners instead of duplicating security or data-deletion forms.
+- The versioned browser preference stores only `auto`, `light` or `dark`; root-layout bootstrap applies effective appearance, `color-scheme` and PWA `theme-color` before first paint. Storage denial degrades safely to Auto.
+- Auto continues to follow `prefers-color-scheme`; explicit Light/Dark override semantic tokens without replacing system-theme ownership or persisting auth/session material.
+- Logout navigation is owned by the persistent App Router shell, session restore is suppressed while logout is pending, and session invalidation completes only after pathname `/` commits.
+- Dictionary-to-product graph handoff remains blocked behind destination history canonicalization, preserving exact `/lesson/active` ownership for single-word lesson creation.
+- Profile remains protected by explicit Light/Dark axe coverage, roving keyboard semantics, forced colors, reduced motion, iOS WebKit lifecycle, 200% reflow, visual regression and route-budget checks.
+- The `/profile` budget remains `238257` baseline JavaScript bytes with ceilings `275000` bytes and `24` initial requests.
+- Reviewed Profile Linux visual contracts: compact Light `390 × 844`, SHA-256 `e89a8d931de7854a56235bff661afe23317505333dc9671d392076c76bd8198c`; compact Dark `390 × 844`, SHA-256 `ecea257dca01358a66be1078938b202f7ad8194baeae80cb43c45d8ebcefa92d`; desktop Light `1440 × 1024`, SHA-256 `3da62f1cd51197f7b10ab5ec6cf51fc3c6f6d9503f2ea8d40fdc5ff1518816b1`; desktop Dark `1440 × 1024`, SHA-256 `f5670eaaa3ca527f081698c7629bd0c96de9117553fe9b16ff97739c191010ae`.
+- PR #237 passed complete final-head CI #2029/run `30219400878` and exact-squash stage deployment/public validation in run `30220894109`; Issue #200 is complete.
+
 ### Agent Harness
 
 - PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
@@ -99,7 +114,7 @@
 - PR #229 reconciled Scenario catalog production evidence and reset current task memory.
 - PR #232 reconciled Progress navigation reliability production evidence and reset current task memory.
 - PR #234 reconciled Dictionary catalog production evidence and reset current task memory.
-- This documentation follow-up records PR #235 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
+- The current documentation follow-up records PR #237 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
 - Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
@@ -116,31 +131,27 @@ No product slice is active. `.agents/current/**` is reset by the post-merge repo
 
 Approve exact catalog/detail nodes before implementation; no production implementation from inferred design.
 
-### 2. #200 — Profile
-
-Canonical Profile/preferences/appearance presentation preserving auth/session/security ownership. Nodes `79:6`, `79:129`.
-
-### 3. #18 and #201 — Adaptive personalization and First Use
+### 2. #18 and #201 — Adaptive personalization and First Use
 
 Diagnostic onboarding, skip path, reason-coded personalized queue and balancing after stable catalog/scenario routes and approved Figma states.
 
-### 4. #202 and #170 — System and offline states
+### 3. #202 and #170 — System and offline states
 
 Unified loading/empty/error/offline presentation and explicit network-loss/recovery UX.
 
-### 5. #25 — Pronunciation, listening and custom terminology
+### 4. #25 — Pronunciation, listening and custom terminology
 
 Architecture/privacy decision first, then typed backend contract, scheduling, permission UX and import/export/deletion semantics.
 
-### 6. #115 — Route-level client islands and budgets
+### 5. #115 — Route-level client islands and budgets
 
 Bundle inventory and gradual extraction of remaining routes without duplicated session/API/PWA ownership.
 
-### 7. #70 — Legacy apps and CSS
+### 6. #70 — Legacy apps and CSS
 
 Proven-dead app/CSS families only, coordinated with route ownership and guarded by browser/visual/bundle evidence.
 
-### 8. #203, #205 and #133 — Figma handoff, final parity and usability
+### 7. #203, #205 and #133 — Figma handoff, final parity and usability
 
 Maintain exact production nodes, perform route-by-route parity after product slices, and complete external moderated usability validation.
 
@@ -156,19 +167,19 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
-2. #234 — `docs(agent): reconcile state after Dictionary catalog` → `72291d9351f3c565d13be7b3f9e9055258f98ac6`.
-3. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
-4. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
-5. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
-6. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
-7. #228 — `feat(scenarios): add server-backed Scenario catalog` → `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`.
+1. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
+2. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
+3. #234 — `docs(agent): reconcile state after Dictionary catalog` → `72291d9351f3c565d13be7b3f9e9055258f98ac6`.
+4. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
+5. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
+6. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
+7. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
 
 ## Evidence
 
-- Live `main`, merged PR #235, final CI #1971, closed Issue #198 and stage Issue #12/run `30207248528` were re-read at the verification timestamp.
-- Product deployment evidence for #235 uses immutable image SHA `5551ec5b0ac849e884c1c94dff91ae66a73269d9`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
-- No open product PR or parallel reconciliation branch was found after PR #235 merged.
+- Live `main`, merged PR #237, final CI #2029/run `30219400878`, closed Issue #200 and stage Issue #12/run `30220894109` were re-read at the verification timestamp.
+- Product deployment evidence for #237 uses immutable image SHA `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- No open product PR or parallel reconciliation branch was found before this isolated documentation branch was created.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
