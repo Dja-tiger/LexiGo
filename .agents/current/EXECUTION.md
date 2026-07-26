@@ -4,7 +4,7 @@
 
 - Branch: `feat/issue-200-profile`
 - Base SHA: `66104ed2f92bfb288bee57962bab6ee06e134719`
-- Head SHA: resolve from live branch ref after every write
+- Head SHA: resolve from live PR #237 after this final memory write
 - PR: Draft PR #237
 
 ## Skills used
@@ -19,15 +19,15 @@ Version or verification date: live `main` `66104ed2f92bfb288bee57962bab6ee06e134
 
 Inputs: Issue #200, live PR/Issue/CI/stage state, current task templates.
 
-Files inspected: all mandatory harness files plus route bootstrap, navigation, Profile, account/security/data, calendar, appearance, accessibility, visual and performance owners.
+Files inspected: all mandatory harness files plus routed shell, route bootstrap, dictionary and product graphs, Profile, account/security/data, calendar, appearance, accessibility, visual and performance owners.
 
-Actions performed: completed live-GitHub pre-flight, confirmed durable-state consistency, selected the next unblocked roadmap slice, created and verified the exact-base branch, maintained the approved allow-list, opened Draft PR #237 before product writes, inspected each CI failure artifact and fixed only the confirmed owner.
+Actions performed: completed live-GitHub pre-flight, confirmed durable-state consistency, selected the next unblocked roadmap slice, created and verified the exact-base branch, maintained the approved allow-list, opened Draft PR #237 before product writes, inspected every failing CI artifact and fixed only the confirmed owner.
 
-Commands or procedures: GitHub repository/PR/Issue/commit/status searches, exact-SHA branch creation, compare-commits identity check, workflow job/artifact inspection, post-write file read-back, expected-head merge discipline reserved for completion.
+Commands or procedures: GitHub repository/PR/Issue/commit/status searches, exact-SHA branch creation, compare-commits identity check, workflow job/artifact inspection, post-write file read-back, Figma design-context retrieval, manual PNG inspection and expected-head merge discipline reserved for completion.
 
-Artifacts produced: active `TASK.md`, `PROGRESS.md`, `EXECUTION.md`, architecture ownership update and CI evidence.
+Artifacts produced: active `TASK.md`, `PROGRESS.md`, `EXECUTION.md`, architecture ownership update, source contracts and full CI evidence.
 
-Result: Issue #200 implementation is complete on the feature branch; near-head CI #2014 is fully green and the single CI #2016 logout sequencing defect has a source-level fix awaiting final immutable-head validation.
+Result: Issue #200 implementation is complete. CI #2027 is fully green on runtime head `3d8e8af24ab571987cc48db0279a6643ee4119e7`; only the final immutable-head run after completed agent memory remains before merge.
 
 Failures:
 
@@ -36,24 +36,26 @@ Failures:
 - initial appearance CSS applied explicit Light tokens while preference was Auto, changing unrelated route baselines;
 - Light account forms and Dark primary actions initially failed contrast thresholds;
 - legacy keyboard and logout tests still encoded the pre-Figma Profile heading and route lifecycle;
-- CI #2016 showed that History API mutation and session invalidation in one React batch could mount the guest graph with stale `/profile` pathname state;
-- the first post-logout ownership source assertion compared against an unrelated earlier bootstrap invalidation call.
+- CI #2016 showed that direct History API mutation and session invalidation in one React batch could mount the guest graph with stale `/profile` pathname state;
+- CI #2020 showed that pathname-gated invalidation could still race with session preflight, and that leaving the dictionary island could mount the product graph before `/lesson/active` history state was canonicalized;
+- several source contracts initially asserted obsolete root-shell signatures or compared ownership across an overly broad source range.
 
-Root cause: each failure was a boundary, sequencing or downstream-contract mismatch introduced while extracting authenticated Profile from the legacy product graph; none required backend or API changes. The final logout defect was specifically a two-owner timing problem between synchronous History API state and asynchronous App Router `usePathname()` propagation.
+Root cause: each failure was a boundary, sequencing or downstream-contract mismatch introduced while extracting authenticated Profile from the legacy product graph. The route failures were caused by treating the browser URL, App Router pathname and mounted route graph as if they changed atomically. None required backend or API changes.
 
-Fallback: CI artifacts, source-owner inspection and route-scoped fixes were used. No visual baseline was promoted until the actual PNG had been manually compared with Figma. Auto-mode regressions were fixed in CSS rather than accepted as new baselines. Logout now uses a pending state: session invalidation is deferred until pathname `/` has committed, with the state update executed from a zero-delay timer to satisfy the repository's no-cascading-effect lint contract.
+Fallback: CI artifacts, source-owner inspection and route-scoped fixes were used. No visual baseline was promoted until the actual PNG had been manually compared with Figma. Auto-mode regressions were fixed in CSS rather than accepted as new baselines. Logout now routes through the persistent App Router shell, suppresses session restore while pending and finalizes invalidation only after pathname `/` commits. Dictionary exit keeps its island boundary active until the destination history entry is canonicalized before mounting the product graph.
 
-Limitations: repository writes and CI inspection use the GitHub connector; local checkout was unavailable. CI artifact ZIPs were inspected in the execution container when logs required exact failure details.
+Limitations: repository writes and CI inspection use the GitHub connector; local checkout was unavailable. CI artifact ZIPs were inspected in the execution container when logs required exact failure details. Post-merge stage/public validation remains pending until expected-head squash merge.
 
 Reusable lessons:
 
 - route-island extraction must update the audited production-root allow-list in the same slice;
 - explicit appearance overrides must not replace existing media-query owners in Auto mode;
 - critical legacy panels need route-scoped compatibility colors when semantic root tokens change;
-- a History API URL change is not proof that App Router pathname state has committed;
-- post-logout session invalidation must be gated by the canonical pathname before mounting the guest graph;
-- session bootstrap must remain the sole post-logout route owner, while the presentation island only reports successful logout;
-- source contracts should verify the split between navigation scheduling and session finalization, not merely textual call order across an entire file;
+- a History API URL change is not proof that App Router pathname state or the mounted graph has committed;
+- persistent routed shell should own canonical App Router transitions, while bootstrap owns authentication state and presentation islands only report completed mutations;
+- session restore must be explicitly suppressed during logout or destructive account transitions;
+- cold-route graph handoff must not mount the destination graph until its canonical history state is attached;
+- source contracts should verify exact owner slices and runtime ordering rather than broad textual occurrence order;
 - visual hash promotion is valid only after manual review of each new actual against the approved Figma node.
 
 ### Figma Design to Code
@@ -92,24 +94,24 @@ Purpose: prove runtime integrity, accessibility, PWA compatibility and regressio
 
 Instruction source: repository Playwright/Vitest contracts and Issue #200 acceptance criteria.
 
-Version or verification date: CI #2014 on head `77a64efcadaadee1882d2f1b13fc033ea71a52f4`; CI #2016 failure artifact on head `3aeb8cac2efe8ad141c4838290093382fad29f67`; verified 2026-07-26.
+Version or verification date: CI #2027 on runtime head `3d8e8af24ab571987cc48db0279a6643ee4119e7`, verified 2026-07-26.
 
-Inputs: Profile route, appearance runtime, account owner links, daily goal API, calendar settings and logout lifecycle.
+Inputs: Profile route, appearance runtime, account owner links, daily goal API, calendar settings, logout lifecycle and dictionary-to-product graph transition.
 
-Files inspected: frontend core logs, UI shard reports, axe reports, visual actuals and performance jobs.
+Files inspected: frontend core logs, UI shard reports, trace/screenshot artifacts, axe reports, visual actuals and performance jobs.
 
-Actions performed: added unit/source contracts, Chromium/WebKit interaction tests, explicit Light/Dark axe checks, forced-colors, reduced-motion, 200% text reflow, iOS logout lifecycle, route-budget measurement and deterministic visual hashes; inspected CI #2016 UI shard artifact and split Home navigation from pathname-gated logout finalization.
+Actions performed: added unit/source contracts, Chromium/WebKit interaction tests, explicit Light/Dark axe checks, forced-colors, reduced-motion, 200% text reflow, iOS logout lifecycle, route-budget measurement and deterministic visual hashes; inspected CI #2016 and #2020 UI artifacts; moved Home navigation to the canonical App Router owner; added session-restore suppression and pathname-gated logout finalization; held dictionary graph ownership until destination history canonicalization.
 
-Artifacts produced: Profile browser specs, accessibility/reflow specs, visual baseline evidence and post-logout single-owner contract.
+Artifacts produced: Profile browser specs, accessibility/reflow specs, visual baseline evidence, root-shell ownership contracts and product-graph handoff contracts.
 
-Result: CI #2014 passed frontend lint, typecheck, 401 unit tests, production build, dependency audit, backend unit/security, backend integration, both UI shards, axe, performance, iOS PWA, dictionary smoke, controlled service worker and visual regression. CI #2016 passed every gate except the one stale-path logout assertion; its confirmed root cause is now fixed.
+Result: CI #2027 passed frontend lint, typecheck, unit tests, production build, dependency audit, backend unit/security, backend integration, both UI shards, lesson completion, axe, performance, iOS PWA, dictionary smoke, content security, controlled service worker and visual regression.
 
-Failures: described above; the final immutable-head run remains required after this execution-memory write.
+Failures: all confirmed failures are documented above and resolved before CI #2027.
 
-Root cause: downstream tests correctly detected stale legacy semantics, cross-route token leakage and finally a real App Router/session sequencing race.
+Root cause: downstream tests correctly detected stale legacy semantics, cross-route token leakage and real App Router/session/history sequencing races.
 
 Fallback: no gates were disabled, loosened or bypassed; each failure received a source-level fix and a new CI run.
 
-Limitations: post-merge stage/public validation remains pending until expected-head squash merge.
+Limitations: one final full CI run is required because this completed execution-memory record changes the immutable PR head.
 
-Reusable lesson: treat full CI as an ownership map. A failing legacy test should be updated only when the approved product semantics changed; otherwise preserve the compatibility behavior in the runtime owner. For route/session transitions, assert both the visible URL and the mounted guest graph.
+Reusable lesson: treat full CI as an ownership map. A failing legacy test should be updated only when approved product semantics changed; otherwise preserve compatibility behavior in the runtime owner. For route/session transitions, assert the URL, App Router pathname, history state and mounted graph together.
