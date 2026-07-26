@@ -5,7 +5,7 @@
 - Branch: `feat/issue-200-profile`
 - Base SHA: `66104ed2f92bfb288bee57962bab6ee06e134719`
 - Head SHA: resolve from live branch ref after every write
-- PR: pending Draft PR
+- PR: Draft PR #237
 
 ## Skills used
 
@@ -19,25 +19,39 @@ Version or verification date: live `main` `66104ed2f92bfb288bee57962bab6ee06e134
 
 Inputs: Issue #200, live PR/Issue/CI/stage state, current task templates.
 
-Files inspected: all mandatory harness files plus route bootstrap, navigation, Profile, account/security/data, calendar and theme owners.
+Files inspected: all mandatory harness files plus route bootstrap, navigation, Profile, account/security/data, calendar, appearance, accessibility, visual and performance owners.
 
-Actions performed: completed live-GitHub pre-flight, confirmed durable state consistency, selected the next unblocked roadmap slice, created and verified the feature branch, established exact path scope and invariants.
+Actions performed: completed live-GitHub pre-flight, confirmed durable-state consistency, selected the next unblocked roadmap slice, created and verified the exact-base branch, maintained the approved allow-list, opened Draft PR #237 before product writes, inspected each CI failure artifact and fixed only the confirmed owner.
 
-Commands or procedures: GitHub repository/PR/Issue/commit/status searches, exact-SHA branch creation, compare-commits identity check, post-write file read-back.
+Commands or procedures: GitHub repository/PR/Issue/commit/status searches, exact-SHA branch creation, compare-commits identity check, workflow job/artifact inspection, post-write file read-back, expected-head merge discipline reserved for completion.
 
-Artifacts produced: active `TASK.md`, `PROGRESS.md`, `EXECUTION.md` records.
+Artifacts produced: active `TASK.md`, `PROGRESS.md`, `EXECUTION.md`, architecture ownership update and CI evidence.
 
-Result: atomic Issue #200 slice is active on an isolated exact-base branch.
+Result: Issue #200 implementation is complete on the feature branch; near-head CI #2014 is fully green.
 
-Failures: none.
+Failures:
 
-Root cause: not applicable.
+- early frontend core run failed because an effect synchronously reset calendar state;
+- production-root ownership test did not yet include the new Profile island;
+- initial appearance CSS applied explicit Light tokens while preference was Auto, changing unrelated route baselines;
+- Light account forms and Dark primary actions initially failed contrast thresholds;
+- legacy keyboard and logout tests still encoded the pre-Figma Profile heading and route lifecycle;
+- the first post-logout ownership source assertion compared against an unrelated earlier bootstrap invalidation call.
 
-Fallback: not applicable.
+Root cause: each failure was a boundary or downstream-contract mismatch introduced while extracting authenticated Profile from the legacy product graph; none required backend or API changes.
 
-Limitations: local repository checkout and direct shell access to GitHub are unavailable; repository reads/writes and CI inspection use the GitHub connector.
+Fallback: CI artifacts, source-owner inspection and route-scoped fixes were used. No visual baseline was promoted until the actual PNG had been manually compared with Figma. Auto-mode regressions were fixed in CSS rather than accepted as new baselines.
 
-Reusable lesson: when no product PR is active, reconcile live GitHub first and select only the first unblocked roadmap issue; a design-gap issue does not justify inventing production UI.
+Limitations: repository writes and CI inspection use the GitHub connector; local checkout was unavailable. CI artifact ZIPs were inspected in the execution container when logs required exact failure details.
+
+Reusable lessons:
+
+- route-island extraction must update the audited production-root allow-list in the same slice;
+- explicit appearance overrides must not replace existing media-query owners in Auto mode;
+- critical legacy panels need route-scoped compatibility colors when semantic root tokens change;
+- post-logout URL transition must occur before invalidating the mounted authenticated graph, and session bootstrap must remain the sole route owner;
+- source-contract ordering assertions must slice the owning function before comparing call order;
+- visual hash promotion is valid only after manual review of each new actual against the approved Figma node.
 
 ### Figma Design to Code
 
@@ -51,20 +65,48 @@ Inputs: Figma file `3xXmBWnf38jbvLjtziwber`, mobile node `79:6`, desktop node `7
 
 Files inspected: generated design context, screenshots and semantic variable definitions for both nodes.
 
-Actions performed: extracted responsive information architecture, sizing, semantic colors, action hierarchy and mobile/desktop differences; rejected Tailwind output as implementation code and mapped the design to existing route chrome and semantic CSS tokens.
+Actions performed: extracted responsive information architecture, sizing, semantic colors, action hierarchy and mobile/desktop differences; rejected generated Tailwind as repository implementation code; mapped the design to existing route chrome and semantic CSS tokens; manually reviewed compact/desktop Light/Dark Linux actuals before SHA-256 promotion.
 
-Commands or procedures: `get_design_context` for both nodes and `get_variable_defs` for the desktop node.
+Commands or procedures: `get_design_context`, `get_variable_defs`, `get_screenshot`, CI visual artifact download and PNG comparison.
 
-Artifacts produced: implementation contract for Profile identity, learning, application and account/data groups.
+Artifacts produced: authenticated Profile information architecture and four immutable visual hash baselines for 390×844 and 1440×1024 Light/Dark states.
 
-Result: exact approved design nodes are known and no asset download is required because the frames contain no unique raster/vector assets.
+Result: the Profile presentation follows approved nodes without hard-coding representative Figma identity or reminder data.
 
-Failures: none.
+Failures: initial actuals exposed global Auto-mode token leakage and insufficient contrast in reused account panels.
 
-Root cause: not applicable.
+Root cause: the design introduced user-selectable appearance while existing tokens and account panels had system-dark and hard-coded-dark ownership.
 
-Fallback: not applicable.
+Fallback: kept Auto under existing `prefers-color-scheme` owners and added explicit, route-scoped Light/Dark compatibility palettes.
 
-Limitations: Figma contains representative text such as a specific role and reminder schedule; runtime values must come from canonical application owners rather than being hard-coded from the mockup.
+Limitations: Figma provides Light frames only; Dark is a semantic-token adaptation validated through accessibility and visual contracts.
 
-Reusable lesson: preserve design hierarchy while keeping sample copy subordinate to real server/browser-owned state.
+Reusable lesson: preserve design hierarchy and spacing, but resolve representative content from canonical server/browser owners and treat Dark as a semantic adaptation rather than inventing a second layout.
+
+### Frontend Validation and Accessibility
+
+Purpose: prove runtime integrity, accessibility, PWA compatibility and regression safety across the production matrix.
+
+Instruction source: repository Playwright/Vitest contracts and Issue #200 acceptance criteria.
+
+Version or verification date: CI #2014 on head `77a64efcadaadee1882d2f1b13fc033ea71a52f4`, 2026-07-26.
+
+Inputs: Profile route, appearance runtime, account owner links, daily goal API, calendar settings and logout lifecycle.
+
+Files inspected: frontend core logs, UI shard reports, axe reports, visual actuals and performance jobs.
+
+Actions performed: added unit/source contracts, Chromium/WebKit interaction tests, explicit Light/Dark axe checks, forced-colors, reduced-motion, 200% text reflow, iOS logout lifecycle, route-budget measurement and deterministic visual hashes.
+
+Artifacts produced: Profile browser specs, accessibility/reflow specs and visual baseline evidence.
+
+Result: CI #2014 passed frontend lint, typecheck, 401 unit tests, production build, dependency audit, backend unit/security, backend integration, both UI shards, axe, performance, iOS PWA, dictionary smoke, controlled service worker and visual regression.
+
+Failures: described above; all were resolved before CI #2014.
+
+Root cause: downstream tests correctly detected stale legacy semantics or cross-route token leakage.
+
+Fallback: no gates were disabled, loosened or bypassed; each failure received a source-level fix and a new CI run.
+
+Limitations: post-merge stage/public validation remains pending until expected-head squash merge.
+
+Reusable lesson: treat full CI as an ownership map. A failing legacy test should be updated only when the approved product semantics changed; otherwise preserve the compatibility behavior in the runtime owner.
