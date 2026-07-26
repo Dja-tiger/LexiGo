@@ -1,9 +1,8 @@
 /*
  * Issue #198 canonical Word Detail presentation.
  *
- * Runtime, API, session and history ownership remain in the existing Dictionary
- * client island. This file owns only the responsive Figma-backed `/words/[id]`
- * surface and derives Light/Dark appearance from Foundation V1 semantic tokens.
+ * Session, API, lesson and history ownership remain in the Dictionary client
+ * island. This file owns only the responsive `/words/[id]` presentation.
  */
 
 .lx-routed-app[data-route-path^="/words/"],
@@ -27,6 +26,7 @@
 
 .lx-word-detail {
   --lx-word-border: color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
+  --lx-word-on-primary: #ffffff;
   --lx-word-retained-soft: color-mix(in srgb, var(--ak-color-retained) 18%, var(--ak-color-surface));
   --lx-word-review-soft: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
   --lx-word-learning-soft: color-mix(in srgb, #d6a63d 20%, var(--ak-color-surface));
@@ -70,7 +70,7 @@
   color: var(--ak-color-primary);
   background: transparent;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 
@@ -95,7 +95,7 @@
   color: var(--ak-color-text-muted);
   background: var(--ak-color-subtle);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 750;
   line-height: 1.2;
   text-align: center;
 }
@@ -178,10 +178,10 @@
 
 .lx-word-detail-phonetic {
   margin-top: 8px !important;
+  overflow-wrap: anywhere;
   color: var(--ak-color-text-muted);
   font-size: 18px;
   line-height: 1.5;
-  overflow-wrap: anywhere;
 }
 
 .lx-word-detail-taxonomy {
@@ -224,7 +224,10 @@
   background: var(--ak-color-primary-soft);
 }
 
-.lx-word-detail-meaning {
+.lx-word-detail-meaning,
+.lx-word-detail-secondary-section,
+.lx-word-detail-related,
+.lx-word-detail-context {
   display: grid;
   gap: 12px;
 }
@@ -272,13 +275,6 @@
   line-height: 1.45;
 }
 
-.lx-word-detail-secondary-section,
-.lx-word-detail-related,
-.lx-word-detail-context {
-  display: grid;
-  gap: 12px;
-}
-
 .lx-word-detail-secondary-section h2,
 .lx-word-detail-related h2,
 .lx-word-detail-context h2 {
@@ -309,6 +305,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lx-word-detail-phrase-list li {
+  max-width: 100%;
 }
 
 .lx-word-detail-phrase-list button {
@@ -365,10 +368,10 @@
 .lx-word-detail-practice,
 .lx-word-detail-knowledge > button {
   min-height: 48px;
+  padding: 11px 20px;
   border: 0;
   border-radius: 12px;
-  padding: 11px 20px;
-  color: var(--ak-color-on-primary);
+  color: var(--lx-word-on-primary);
   background: var(--ak-color-primary);
   font-size: 14px;
   font-weight: 700;
@@ -388,18 +391,18 @@
 .lx-word-detail-action-error {
   display: grid;
   gap: 5px;
+  padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--ak-color-weak) 42%, transparent);
   border-radius: 12px;
-  padding: 12px 14px;
   color: var(--ak-color-text-main);
   background: var(--lx-word-review-soft);
 }
 
 .lx-word-detail-action-error span,
 .lx-word-detail-action-error code {
+  overflow-wrap: anywhere;
   color: var(--ak-color-text-muted);
   font-size: 13px;
-  overflow-wrap: anywhere;
 }
 
 .lx-word-detail-knowledge {
@@ -407,8 +410,8 @@
   top: 24px;
   display: grid;
   gap: 16px;
-  border-radius: 20px;
   padding: 22px;
+  border-radius: 20px;
   background: var(--ak-color-subtle);
 }
 
@@ -517,7 +520,6 @@
   .lx-word-detail-back {
     gap: 12px;
     color: var(--ak-color-text-main);
-    font-size: 15px;
   }
 
   .lx-word-detail-back-mobile {
@@ -534,9 +536,9 @@
 
   .lx-word-detail-card {
     gap: 22px;
+    padding: 14px 0 0;
     border: 0;
     border-radius: 0;
-    padding: 14px 0 0;
     background: transparent;
   }
 
@@ -567,9 +569,9 @@
   }
 
   .lx-word-detail-meaning {
+    padding: 17px;
     border: 1px solid var(--lx-word-border);
     border-radius: 18px;
-    padding: 17px;
     background: var(--ak-color-surface);
   }
 
@@ -578,18 +580,12 @@
   }
 
   .lx-word-detail-example {
-    border-radius: 18px;
     padding: 18px;
+    border-radius: 18px;
   }
 
   .lx-word-detail-example-list p {
     font-size: 17px;
-  }
-
-  .lx-word-detail-secondary-section h2,
-  .lx-word-detail-related h2,
-  .lx-word-detail-context h2 {
-    font-size: 20px;
   }
 
   .lx-word-detail-practice {
@@ -628,6 +624,7 @@
 @media (prefers-color-scheme: dark) {
   .lx-word-detail {
     --lx-word-border: color-mix(in srgb, var(--ak-color-text-muted) 34%, transparent);
+    --lx-word-on-primary: #10211d;
   }
 
   .lx-word-detail-status-chip[data-tone="learning"],
