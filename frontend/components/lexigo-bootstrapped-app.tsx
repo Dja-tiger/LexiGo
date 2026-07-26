@@ -253,10 +253,17 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => {
-    // The dictionary graph is only a cold-entry optimization. The route chrome
-    // signals the App Router handoff before navigation, and popstate covers
-    // browser history entries that cross into the already loaded product graph.
-    const loadProductGraph = () => setRouteGraph("product");
+    // The dictionary graph is only a cold-entry optimization. Defer the graph
+    // swap by one task so an imperative App Router push issued immediately after
+    // this event is queued before the Dictionary island can unmount.
+    let productGraphTimer: number | null = null;
+    const loadProductGraph = () => {
+      if (productGraphTimer !== null) return;
+      productGraphTimer = window.setTimeout(() => {
+        productGraphTimer = null;
+        setRouteGraph("product");
+      }, 0);
+    };
     const preserveLoadedProductGraph = () => {
       if (!isDictionaryRoute(window.location.pathname)) loadProductGraph();
     };
@@ -264,6 +271,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
     window.addEventListener("popstate", preserveLoadedProductGraph);
     return () => {
+      if (productGraphTimer !== null) window.clearTimeout(productGraphTimer);
       window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
       window.removeEventListener("popstate", preserveLoadedProductGraph);
     };
