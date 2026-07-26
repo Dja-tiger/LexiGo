@@ -50,8 +50,7 @@ function isTimestamp(value: unknown): value is string {
   return typeof value === "string" && Number.isFinite(Date.parse(value));
 }
 
-export function isWordDetailPayload(value: unknown): value is WordDetailPayload {
-  if (!isLearningItemPayload(value) || !isRecord(value)) return false;
+function hasSchedulerFields(value: Record<string, unknown>): boolean {
   return typeof value.status === "string"
     && WORD_DETAIL_STATUSES.has(value.status)
     && isFiniteNumber(value.easiness)
@@ -60,6 +59,14 @@ export function isWordDetailPayload(value: unknown): value is WordDetailPayload 
     && isNonNegativeInteger(value.repetitions)
     && isTimestamp(value.dueAt)
     && (value.lastReviewedAt === undefined || isTimestamp(value.lastReviewedAt));
+}
+
+export function isWordDetailPayload(value: unknown): value is WordDetailPayload {
+  return isLearningItemPayload(value) && isRecord(value) && hasSchedulerFields(value);
+}
+
+export function isWordDetailItem(value: LearningItem): value is WordDetailItem {
+  return hasSchedulerFields(value as unknown as Record<string, unknown>);
 }
 
 export function wordDetailStatus(status: string): {
