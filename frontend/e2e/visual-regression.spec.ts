@@ -76,6 +76,41 @@ const SCENARIO_CATALOG_VISUAL_BASELINES = {
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
+const DICTIONARY_VISUAL_BASELINES = {
+  compactLight: {
+    name: "dictionary-compact-light.png",
+    width: 390,
+    height: 1064,
+    sha256: "6a0a6838bba8dc1642332253bde41de9596ea2401f791074b6330fa093d1d6e4",
+    sourceRun: 30196047727,
+    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+  },
+  compactDark: {
+    name: "dictionary-compact-dark.png",
+    width: 390,
+    height: 1064,
+    sha256: "pending-linux-calibration",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-calibration",
+  },
+  mediumLight: {
+    name: "dictionary-medium-light.png",
+    width: 768,
+    height: 1616,
+    sha256: "60cb3ae1cd0a46c063e32a753f335913d1cf240cbfe988976da5f6f1c14ef237",
+    sourceRun: 30196047727,
+    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+  },
+  desktopLight: {
+    name: "dictionary-desktop-light.png",
+    width: 1440,
+    height: 1624,
+    sha256: "0427bfa62ba5bd8f4bffb1aa25e3c5f3ccabbc5469dc3ee75d904402572251a2",
+    sourceRun: 30196047727,
+    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
 const LESSON_COMPOSER_VISUAL_BASELINES = {
   compact: {
     name: "lesson-composer-compact.png",
@@ -223,6 +258,12 @@ async function fillScenarioIncidentDraft(page: Page): Promise<void> {
   );
 }
 
+async function openDictionaryCatalog(page: Page): Promise<void> {
+  await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();
+}
+
 async function openScenarioCatalog(page: Page, context: BrowserContext): Promise<void> {
   await context.unroute("**/api/v1/**");
   await installQualityGateAPI(context);
@@ -263,12 +304,26 @@ test.describe("critical visual baselines", () => {
     expect(runtimeErrors).toEqual([]);
   });
 
-  test("dictionary", async ({ page }) => {
+  test("Dictionary Light", async ({ page }) => {
     const runtimeErrors = captureRuntimeErrors(page);
-    await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Открыть карточку: rollback" })).toBeVisible();
-    await expectStableScreenshot(page, "dictionary.png");
+    await openDictionaryCatalog(page);
+
+    const viewportWidth = page.viewportSize()?.width;
+    const baseline = viewportWidth === 390
+      ? DICTIONARY_VISUAL_BASELINES.compactLight
+      : viewportWidth === 768
+        ? DICTIONARY_VISUAL_BASELINES.mediumLight
+        : DICTIONARY_VISUAL_BASELINES.desktopLight;
+    await expectContentAddressedScreenshot(page, baseline);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Dictionary compact Dark calibration", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact dark Dictionary baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await openDictionaryCatalog(page);
+    await expectContentAddressedScreenshot(page, DICTIONARY_VISUAL_BASELINES.compactDark);
     expect(runtimeErrors).toEqual([]);
   });
 
