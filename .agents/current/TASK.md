@@ -6,7 +6,7 @@
 - Branch: `feat/issue-200-profile`
 - Base SHA: `66104ed2f92bfb288bee57962bab6ee06e134719`
 - Head SHA: resolve from live branch ref after every write
-- PR: pending Draft PR
+- PR: Draft PR #237
 
 ## Objective
 
@@ -41,6 +41,7 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - `frontend/app/profile.css`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/lexigo-profile-app.tsx`
+- `frontend/components/production-app-entry.test.ts`
 - `frontend/components/profile-source-contract.test.ts`
 - `frontend/lib/appearance-preference.ts`
 - `frontend/lib/appearance-preference.test.ts`
