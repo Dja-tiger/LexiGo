@@ -30,7 +30,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown, headers:
 test("shows persistent offline details and a dismissible restored-connection state", async ({ context, page }) => {
   await installQualityGateAPI(context);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Добро пожаловать|Продолжим обучение/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу", exact: true })).toBeVisible();
 
   await context.setOffline(true);
   await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
