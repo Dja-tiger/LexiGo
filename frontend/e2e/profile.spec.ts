@@ -138,7 +138,6 @@ test("authenticated Profile owns learning, reminder, appearance and account navi
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "dark");
   expect(await page.evaluate(() => localStorage.getItem("lexigo.appearance.v1"))).toBe("dark");
-  await expect(page.locator('meta[name="theme-color"]').filter({ has: page.locator('[data-lexigo-resolved-appearance="dark"]') })).toHaveCount(0);
   expect(await page.locator('meta[name="theme-color"]').evaluateAll((metas) => metas.every((meta) => (
     meta.getAttribute("content") === "#10211d"
     && meta.getAttribute("data-lexigo-resolved-appearance") === "dark"
