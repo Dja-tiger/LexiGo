@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import {
   failedResourceStatus,
@@ -17,7 +17,7 @@ import type { CatalogSort, CatalogStatus, NavigationTarget } from "../lib/naviga
 import type { NavigationScrollPosition } from "../lib/navigation-history";
 import type { ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
-import type { WordDetailItem } from "../lib/word-detail";
+import { isWordDetailItem, type WordDetailItem } from "../lib/word-detail";
 import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { CatalogKindNavigation } from "./catalog-kind-navigation";
 import { CatalogPagination } from "./catalog-pagination";
@@ -46,9 +46,9 @@ type DictionaryCatalogProps = {
   metadataStatus: CatalogMetadataStatus;
   progress: ProgressSummary | null;
   loadPage: (filters: DictionaryFilters, signal: AbortSignal) => Promise<DictionaryPageResult>;
-  loadDetail: (wordID: number, signal: AbortSignal) => Promise<WordDetailItem>;
-  loadRelatedPhrases: (item: WordDetailItem, signal: AbortSignal) => Promise<LearningItem[]>;
-  onStartPractice: (item: WordDetailItem) => Promise<void>;
+  loadDetail: (wordID: number, signal: AbortSignal) => Promise<LearningItem>;
+  loadRelatedPhrases?: (item: WordDetailItem, signal: AbortSignal) => Promise<LearningItem[]>;
+  onStartPractice?: (item: WordDetailItem) => Promise<void>;
   onNavigate: (
     target: NavigationTarget,
     replace?: boolean,
@@ -56,6 +56,7 @@ type DictionaryCatalogProps = {
     intent?: ProductJourneyIntent,
   ) => void;
   onBackToResults: () => void;
+  onConfigureLesson?: (context: { source: DictionarySource; topic?: string }) => void;
   onRequireAuthentication: () => void;
 };
 
@@ -99,7 +100,9 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
 ];
 
 function dictionaryFilters(navigation: NavigationTarget): DictionaryFilters {
-  const source = navigation.source && navigation.source !== "phrases" && SOURCE_VALUES.has(navigation.source as DictionarySource)
+  const source = navigation.source
+    && navigation.source !== "phrases"
+    && SOURCE_VALUES.has(navigation.source as DictionarySource)
     ? navigation.source as DictionarySource
     : "mixed";
   return {
@@ -212,6 +215,17 @@ export function DictionaryCatalog({
     return () => controller.abort();
   }, [authenticated, filters, loadPage, navigation.detail]);
 
+  const loadCanonicalDetail = useCallback(async (
+    wordID: number,
+    signal: AbortSignal,
+  ): Promise<WordDetailItem> => {
+    const item = await loadDetail(wordID, signal);
+    if (!isWordDetailItem(item)) {
+      throw new Error("Карточка слова не содержит обязательные данные интервального повторения");
+    }
+    return item;
+  }, [loadDetail]);
+
   const topics = useMemo(() => metadata?.topics
     .filter((entry) => (entry.words ?? entry.count) > 0)
     .map((entry) => entry.topic)
@@ -219,8 +233,7 @@ export function DictionaryCatalog({
     .sort((left, right) => topicLabel(left).localeCompare(topicLabel(right), "ru")) ?? [], [metadata]);
 
   function updateFilters(patch: Partial<DictionaryFilters>) {
-    const next = { ...filters, ...patch };
-    onNavigate(cleanTarget(next), false, undefined, "in_app_navigation");
+    onNavigate(cleanTarget({ ...filters, ...patch }), false, undefined, "in_app_navigation");
   }
 
   function resetFilters() {
@@ -264,11 +277,26 @@ export function DictionaryCatalog({
   }
 
   if (navigation.detail) {
+    if (!loadRelatedPhrases || !onStartPractice) {
+      return (
+        <section className="lx-word-detail" aria-label="Карточка слова">
+          <button className="lx-word-detail-back" type="button" onClick={backFromDetail}>← Словарь</button>
+          <AsyncStatePanel
+            label="Карточка слова недоступна в устаревшем графе"
+            kind="error"
+            title="Откройте канонический маршрут слова"
+            message="Word Detail загружается только через выделенный Dictionary route island."
+            actionLabel="Вернуться в словарь"
+            onAction={backFromDetail}
+          />
+        </section>
+      );
+    }
     return (
       <WordDetailRoute
         authenticated={authenticated}
         detailKey={navigation.detail}
-        loadDetail={loadDetail}
+        loadDetail={loadCanonicalDetail}
         loadRelatedPhrases={loadRelatedPhrases}
         onStartPractice={onStartPractice}
         onBack={backFromDetail}
@@ -286,7 +314,11 @@ export function DictionaryCatalog({
       <>
         <CatalogKindNavigation active="words" onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")} />
         <section className="lx-page-heading">
-          <div><span>СЛОВАРЬ</span><h1>Каталог слов и терминов</h1><p>Ищите слова по английскому написанию, переводу и синонимам. Настройка урока находится в отдельном разделе «Обучение».</p></div>
+          <div>
+            <span>СЛОВАРЬ</span>
+            <h1>Каталог слов и терминов</h1>
+            <p>Ищите слова по английскому написанию, переводу и синонимам. Настройка урока находится в отдельном разделе «Обучение».</p>
+          </div>
         </section>
         <AsyncStatePanel
           label="Словарь доступен после входа"
@@ -346,27 +378,9 @@ export function DictionaryCatalog({
         </form>
 
         <nav className="lx-dictionary-quick-filters" aria-label="Быстрые фильтры словаря">
-          <button
-            type="button"
-            aria-pressed={!filtersActive}
-            className={!filtersActive ? "active" : undefined}
-            onClick={resetFilters}
-          >
-            Все
-          </button>
-          <button
-            type="button"
-            aria-current="page"
-            onClick={() => updateFilters({ status: "", page: 1 })}
-          >
-            Слова
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")}
-          >
-            Фразы
-          </button>
+          <button type="button" aria-pressed={!filtersActive} className={!filtersActive ? "active" : undefined} onClick={resetFilters}>Все</button>
+          <button type="button" aria-current="page" onClick={() => updateFilters({ status: "", page: 1 })}>Слова</button>
+          <button type="button" onClick={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")}>Фразы</button>
           <button
             type="button"
             aria-pressed={reviewQuickFilterActive}
@@ -386,9 +400,7 @@ export function DictionaryCatalog({
         onClick={() => setFiltersExpanded((expanded) => !expanded)}
       >
         <span>Фильтры и сортировка</span>
-        {activeFilters > 0 ? (
-          <span role="status" aria-label={`Активных фильтров: ${activeFilters}`}>{activeFilters}</span>
-        ) : null}
+        {activeFilters > 0 ? <span role="status" aria-label={`Активных фильтров: ${activeFilters}`}>{activeFilters}</span> : null}
       </button>
 
       <div className="lx-dictionary-workspace">
@@ -399,7 +411,6 @@ export function DictionaryCatalog({
           aria-label="Фильтры словаря"
         >
           <h2>Фильтры</h2>
-
           <fieldset>
             <legend>Разделы</legend>
             <div className="lx-dictionary-filter-stack">
@@ -422,11 +433,7 @@ export function DictionaryCatalog({
 
           <label className="lx-dictionary-topic-filter">
             <span>Тема</span>
-            <select
-              aria-label="Тема словаря"
-              value={filters.topic}
-              onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}
-            >
+            <select aria-label="Тема словаря" value={filters.topic} onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}>
               <option value="">Все темы</option>
               {topics.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}
             </select>
@@ -472,19 +479,11 @@ export function DictionaryCatalog({
             </div>
           </fieldset>
 
-          <button
-            className="lx-dictionary-reset"
-            type="button"
-            disabled={!filtersActive}
-            onClick={resetFilters}
-          >
-            Сбросить фильтры
-          </button>
+          <button className="lx-dictionary-reset" type="button" disabled={!filtersActive} onClick={resetFilters}>Сбросить фильтры</button>
         </aside>
 
         <section className="lx-dictionary-results-panel" aria-labelledby="dictionary-results-title">
           <h2 id="dictionary-results-title">Результаты</h2>
-
           {pageStatus.phase === "error" ? (
             <AsyncStatePanel
               label="Словарь недоступен"
@@ -530,9 +529,7 @@ export function DictionaryCatalog({
                     <span className="lx-dictionary-result-copy">
                       <strong lang="en">{item.prompt}</strong>
                       <span lang="ru">{item.answer}</span>
-                      <span className="lx-visually-hidden">
-                        {topicLabel(item.topic)}; {partOfSpeechLabel(item.partOfSpeech || "word")}
-                      </span>
+                      <span className="lx-visually-hidden">{topicLabel(item.topic)}; {partOfSpeechLabel(item.partOfSpeech || "word")}</span>
                     </span>
                     <span className="lx-dictionary-status" data-tone={status.tone}>{status.label}</span>
                   </button>
@@ -541,12 +538,7 @@ export function DictionaryCatalog({
             })}
           </section>
 
-          <CatalogPagination
-            info={pageInfo}
-            busy={pending}
-            onPageChange={changePage}
-            label="Навигация по страницам словаря"
-          />
+          <CatalogPagination info={pageInfo} busy={pending} onPageChange={changePage} label="Навигация по страницам словаря" />
         </section>
       </div>
     </section>
