@@ -28,8 +28,8 @@ describe("Profile route ownership", () => {
     expect(bootstrap.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
 
     expect(profile).toContain('data-route-client-island="profile"');
-    expect(profile).toContain('"/api/v1/progress?timezoneOffsetMinutes=');
-    expect(profile).toContain('"/api/v1/progress/goal?timezoneOffsetMinutes=');
+    expect(profile).toContain("/api/v1/progress?timezoneOffsetMinutes=");
+    expect(profile).toContain("/api/v1/progress/goal?timezoneOffsetMinutes=");
     expect(profile).toContain('"/api/v1/auth/logout"');
     expect(profile).toContain("CalendarReminderIntegration");
     expect(profile).toContain("setAppearancePreference");
