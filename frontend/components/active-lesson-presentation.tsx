@@ -31,6 +31,13 @@ import {
 import { SpeechPlayerButton } from "./speech-player-button";
 
 const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
+const LESSON_REVIEW_QUEUED_EVENT = "lexigo:lesson-review-queued";
+
+type LessonReviewQueuedDetail = {
+  lessonId: string;
+  wordId: number;
+  lessonVersion: number;
+};
 
 export type ActiveLessonReviewFeedback = {
   requestedRating: ReviewRating;
@@ -114,6 +121,14 @@ function FeedbackIcon({ kind }: { kind: ActiveLessonFeedbackKind }) {
   );
 }
 
+function isQueuedReviewDetail(value: unknown): value is LessonReviewQueuedDetail {
+  if (!value || typeof value !== "object") return false;
+  const detail = value as Partial<LessonReviewQueuedDetail>;
+  return typeof detail.lessonId === "string"
+    && Number.isSafeInteger(detail.wordId)
+    && Number.isSafeInteger(detail.lessonVersion);
+}
+
 function focusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(
     'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -148,10 +163,12 @@ export function ActiveLessonPresentation({
   onSubmitSuggestion,
 }: ActiveLessonPresentationProps) {
   const [exitOpen, setExitOpen] = useState(false);
+  const [queuedReview, setQueuedReview] = useState(false);
   const exitDialogRef = useRef<HTMLElement | null>(null);
   const cancelExitRef = useRef<HTMLButtonElement | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const feedbackRef = useRef<HTMLDivElement | null>(null);
+  const queuedFeedbackRef = useRef<HTMLDivElement | null>(null);
   const modeLabel = activeLessonModeLabel(mode);
   const feedbackKind = activeLessonFeedbackKind(mode, revealed, reviewFeedback?.correct);
   const confidenceAvailable = activeLessonConfidenceAvailable(mode, revealed);
@@ -176,17 +193,36 @@ export function ActiveLessonPresentation({
   }, [requestExit]);
 
   useEffect(() => {
+    setQueuedReview(false);
+  }, [item.id]);
+
+  useEffect(() => {
+    const handleQueuedReview = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !isQueuedReviewDetail(event.detail)) return;
+      if (item.wordId === undefined || event.detail.wordId !== item.wordId) return;
+      setQueuedReview(true);
+    };
+    window.addEventListener(LESSON_REVIEW_QUEUED_EVENT, handleQueuedReview);
+    return () => window.removeEventListener(LESSON_REVIEW_QUEUED_EVENT, handleQueuedReview);
+  }, [item.wordId]);
+
+  useEffect(() => {
     if (!exitOpen) return;
     cancelExitRef.current?.focus({ preventScroll: true });
   }, [exitOpen]);
 
   useEffect(() => {
-    if (!revealed || mode === "study") return;
+    if (!revealed || mode === "study" || queuedReview) return;
     feedbackRef.current?.focus({ preventScroll: true });
-  }, [item.id, mode, revealed]);
+  }, [item.id, mode, queuedReview, revealed]);
+
+  useEffect(() => {
+    if (!queuedReview) return;
+    queuedFeedbackRef.current?.focus({ preventScroll: true });
+  }, [queuedReview]);
 
   function handleRecallKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key !== "Enter" || !typedAnswer.trim()) return;
+    if (event.key !== "Enter" || !typedAnswer.trim() || queuedReview) return;
     event.preventDefault();
     onReveal();
   }
@@ -215,6 +251,7 @@ export function ActiveLessonPresentation({
   }
 
   function handleRating(event: MouseEvent<HTMLButtonElement>) {
+    if (queuedReview) return;
     const value = event.currentTarget.dataset.rating;
     if (value !== "again" && value !== "almost" && value !== "known") return;
     onRate(value, event.timeStamp, document.activeElement === event.currentTarget);
@@ -260,11 +297,29 @@ export function ActiveLessonPresentation({
     );
   };
 
+  const renderQueuedReview = () => queuedReview ? (
+    <div
+      ref={queuedFeedbackRef}
+      className="lx-active-lesson__queued-review"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      tabIndex={-1}
+      data-review-queued="true"
+    >
+      <span aria-hidden="true">⌁</span>
+      <div>
+        <strong>Ответ сохранён на устройстве</strong>
+        <p>Введённый ответ и оценка остаются на этой карточке. Следующая карточка откроется после восстановления сети и подтверждения серверной позиции.</p>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <section
       className="lx-active-lesson"
       data-active-lesson-mode={mode}
-      data-active-lesson-state={reviewFeedback ? feedbackKind : revealed ? "revealed" : "prompt"}
+      data-active-lesson-state={queuedReview ? "queued" : reviewFeedback ? feedbackKind : revealed ? "revealed" : "prompt"}
       aria-labelledby="active-lesson-mode-title"
     >
       <header className="lx-active-lesson__topbar">
@@ -278,7 +333,12 @@ export function ActiveLessonPresentation({
           <span aria-hidden="true">←</span>
         </button>
         <strong id="active-lesson-mode-title" className="lx-active-lesson__mode">{modeLabel}</strong>
-        <span className="lx-active-lesson__saved" aria-label="Прогресс сохранён до текущей карточки">Сохранено</span>
+        <span
+          className="lx-active-lesson__saved"
+          aria-label={queuedReview ? "Ответ сохранён только на этом устройстве и ожидает синхронизации" : "Прогресс сохранён до текущей карточки"}
+        >
+          {queuedReview ? "На устройстве" : "Сохранено"}
+        </span>
         <button
           className="lx-active-lesson__mobile-close"
           type="button"
@@ -339,7 +399,7 @@ export function ActiveLessonPresentation({
                 id="premium-answer"
                 lang={answerLanguage}
                 value={typedAnswer}
-                readOnly={revealed}
+                readOnly={revealed || queuedReview}
                 aria-describedby={revealed ? "active-lesson-feedback-note" : undefined}
                 onInput={(event) => onTypedAnswerChange(event.currentTarget.value)}
                 onKeyDown={handleRecallKeyDown}
@@ -351,6 +411,7 @@ export function ActiveLessonPresentation({
                   <button
                     className="lx-active-lesson__text-action"
                     type="button"
+                    disabled={queuedReview}
                     onClick={onReveal}
                   >
                     Не помню — показать ответ
@@ -359,7 +420,7 @@ export function ActiveLessonPresentation({
                     className="lx-active-lesson__primary"
                     type="button"
                     aria-label="Сверить ответ"
-                    disabled={!typedAnswer.trim()}
+                    disabled={!typedAnswer.trim() || queuedReview}
                     onClick={onReveal}
                   >
                     Проверить ответ
@@ -402,7 +463,7 @@ export function ActiveLessonPresentation({
                       className={`lx-active-lesson__option lx-active-lesson__option--${state}`}
                       aria-pressed={normalizeAnswer(answer) === normalizeAnswer(selectedAnswer)}
                       aria-label={stateLabel ? `${answer}: ${stateLabel}` : answer}
-                      disabled={Boolean(currentRating) || reviewing}
+                      disabled={Boolean(currentRating) || reviewing || queuedReview}
                       onClick={() => onChoice(answer)}
                     >
                       <span>{answer}</span>
@@ -416,8 +477,18 @@ export function ActiveLessonPresentation({
           )}
 
           {mode === "study" ? renderFeedback() : null}
+          {renderQueuedReview()}
 
-          {currentRating ? (
+          {queuedReview ? (
+            <button
+              ref={advanceButtonRef}
+              className="lx-active-lesson__primary lx-active-lesson__advance"
+              type="button"
+              disabled
+            >
+              Ожидаем синхронизацию
+            </button>
+          ) : currentRating ? (
             <button
               ref={advanceButtonRef}
               className="lx-active-lesson__primary lx-active-lesson__advance"
@@ -441,7 +512,7 @@ export function ActiveLessonPresentation({
 
         <fieldset
           className="lx-active-lesson__confidence"
-          disabled={!confidenceAvailable || Boolean(currentRating) || reviewing}
+          disabled={!confidenceAvailable || Boolean(currentRating) || reviewing || queuedReview}
           aria-describedby="active-lesson-confidence-note"
           aria-busy={reviewing}
         >
@@ -453,9 +524,11 @@ export function ActiveLessonPresentation({
           </div>
         </fieldset>
         <p id="active-lesson-confidence-note" className="lx-active-lesson__confidence-note">
-          {currentRating
-            ? `Самооценка сохранена: ${ratingLabel(currentRating)}. Ответ оценивается отдельно от уверенности.`
-            : "Ответ оценивается отдельно от уверенности."}
+          {queuedReview
+            ? "Оценка сохранена на устройстве и недоступна для повторной отправки до синхронизации."
+            : currentRating
+              ? `Самооценка сохранена: ${ratingLabel(currentRating)}. Ответ оценивается отдельно от уверенности.`
+              : "Ответ оценивается отдельно от уверенности."}
         </p>
 
         <button
@@ -468,7 +541,13 @@ export function ActiveLessonPresentation({
           ← Предыдущее недоступно
         </button>
         <p className="lx-visually-hidden" role="status" aria-live="polite" aria-atomic="true">
-          {reviewing ? "Сохраняем оценку." : currentRating ? `Оценка сохранена: ${ratingLabel(currentRating)}.` : ""}
+          {queuedReview
+            ? "Ответ сохранён на устройстве и ожидает синхронизации."
+            : reviewing
+              ? "Сохраняем оценку."
+              : currentRating
+                ? `Оценка сохранена: ${ratingLabel(currentRating)}.`
+                : ""}
         </p>
       </div>
 
@@ -486,7 +565,9 @@ export function ActiveLessonPresentation({
             <span className="lx-active-lesson__eyebrow">БЕЗОПАСНЫЙ ВЫХОД</span>
             <h2 id="active-lesson-exit-title">Закрыть урок?</h2>
             <p id="active-lesson-exit-description">
-              Уже отправленные оценки сохранены. Несохранённый ответ текущей карточки будет сброшен, а продолжение начнётся с этой же позиции.
+              {queuedReview
+                ? "Ответ текущей карточки сохранён на этом устройстве и будет отправлен после восстановления соединения. Продолжение останется на этой позиции до подтверждения сервера."
+                : "Уже отправленные оценки сохранены. Несохранённый ответ текущей карточки будет сброшен, а продолжение начнётся с этой же позиции."}
             </p>
             <div>
               <button ref={cancelExitRef} className="lx-active-lesson__secondary" type="button" onClick={cancelExit}>Продолжить урок</button>
