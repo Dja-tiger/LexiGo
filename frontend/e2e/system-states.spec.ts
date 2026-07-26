@@ -38,7 +38,10 @@ test("shows persistent offline details and a dismissible restored-connection sta
 
   const panel = page.locator("#lexigo-connectivity-panel");
   await expect(panel.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
-  await expect(panel.getByText("Полный переход по уроку остаётся серверным.", { exact: true })).toBeVisible();
+  await expect(panel.getByText(
+    "LexiGo сохраняет только оценку открытой карточки. Полный переход по уроку остаётся серверным.",
+    { exact: true },
+  )).toBeVisible();
   await expect(panel.getByText("Следующая карточка откроется только после подтверждения серверной позиции.", { exact: true })).toBeVisible();
   await expect(panel.getByText("Ожидают отправки", { exact: true })).toBeVisible();
   await expect(panel.getByText("Требуют проверки", { exact: true })).toBeVisible();
