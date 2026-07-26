@@ -52,7 +52,8 @@ describe("Profile route ownership", () => {
       bootstrap.indexOf("const handleAccountDeleted"),
     );
 
-    expect(logoutOwner).toContain("function homeHistoryState");
+    expect(bootstrap).toContain("function homeHistoryState()");
+    expect(logoutOwner).toContain("const homeState = homeHistoryState()");
     expect(logoutOwner).toContain('window.history.replaceState(homeState, "", "/")');
     expect(logoutOwner).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
     expect(logoutOwner.indexOf('window.history.replaceState(homeState, "", "/")'))
