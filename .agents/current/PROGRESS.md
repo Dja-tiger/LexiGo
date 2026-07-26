@@ -27,7 +27,7 @@
 - RootLayout applies appearance, `color-scheme` and PWA `theme-color` before first paint;
 - Auto preserves the established `prefers-color-scheme` owners; only explicit Light/Dark override semantic tokens;
 - explicit Light provides a route-scoped compatibility palette for legacy account panels;
-- logout preserves the local appearance preference, invalidates the authenticated session and returns to canonical guest Home;
+- logout preserves the local appearance preference, returns to canonical Home, then invalidates the authenticated session only after App Router has committed pathname `/`;
 - session bootstrap is the sole post-logout route owner;
 - architecture documentation records Profile, appearance and account boundaries.
 
@@ -63,13 +63,13 @@ Unrelated Auto-route visual changes were rejected and fixed at the token-owner l
 - Auto mode globally applied explicit Light tokens: scoped overrides to explicit preferences only;
 - reused account forms failed Light/Dark contrast: added route-scoped accessible color pairs;
 - old keyboard tests expected the legacy identity H1: updated the locator to the approved `Профиль` page heading;
-- logout returned Home after the authenticated island was already unmounted: moved the transition before session invalidation in bootstrap;
 - Profile and bootstrap both attempted post-logout navigation: removed navigation from the presentation island and added a single-owner contract;
-- the first source ordering assertion matched an unrelated earlier invalidation call: sliced the `handleLoggedOut` owner before comparing call order.
+- CI #2016 showed that synchronous Home navigation plus session invalidation could mount the guest Profile graph before `usePathname()` committed `/`: bootstrap now marks logout pending, dispatches the canonical Home transition, and finalizes session invalidation from a pathname-gated deferred effect;
+- the source contract now proves that `handleLoggedOut` owns only Home navigation, while `finalizeLoggedOut` owns session invalidation after pathname commit.
 
 No gate was disabled, weakened or bypassed.
 
-### Near-head CI passed
+### Near-head CI evidence
 
 CI #2014 on developer-authored head `77a64efcadaadee1882d2f1b13fc033ea71a52f4` completed successfully, including:
 
@@ -84,6 +84,8 @@ CI #2014 on developer-authored head `77a64efcadaadee1882d2f1b13fc033ea71a52f4` c
 - controlled service worker;
 - visual regression and Profile visual hashes.
 
+CI #2016 on documentation head `3aeb8cac2efe8ad141c4838290093382fad29f67` passed every gate except UI shard 1. Its artifact localized the single failing assertion to the post-logout guest Home lifecycle described above. The runtime owner and its source contract are now corrected; a new immutable-head run is required.
+
 Review timeline is empty; there are no unresolved review threads.
 
 ### Current branch state
@@ -91,9 +93,9 @@ Review timeline is empty; there are no unresolved review threads.
 - branch: `feat/issue-200-profile`;
 - base: `66104ed2f92bfb288bee57962bab6ee06e134719`;
 - PR: Draft #237;
-- live head must be resolved after this documentation write;
+- final live head must be resolved after the execution-memory write;
 - `main` remains unchanged.
 
 ### Next action
 
-Wait for full immutable-head CI after the final agent-memory writes. If green, verify PR head and review state, mark PR ready, squash merge with `expected_head_sha`, validate the exact merge SHA on stage/public checks, then reconcile `.agents/PROJECT_STATE.md` and clear `.agents/current/**` in a separate documentation branch.
+Run full immutable-head CI after the final execution-memory write. If green, verify PR head and review state, mark PR ready, squash merge with `expected_head_sha`, validate the exact merge SHA on stage/public checks, then reconcile `.agents/PROJECT_STATE.md` and clear `.agents/current/**` in a separate documentation branch.
