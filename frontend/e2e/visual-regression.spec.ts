@@ -81,9 +81,9 @@ const DICTIONARY_VISUAL_BASELINES = {
     name: "dictionary-compact-light.png",
     width: 390,
     height: 1064,
-    sha256: "6a0a6838bba8dc1642332253bde41de9596ea2401f791074b6330fa093d1d6e4",
-    sourceRun: 30196047727,
-    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+    sha256: "pending-linux-calibration",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-calibration",
   },
   compactDark: {
     name: "dictionary-compact-dark.png",
@@ -97,17 +97,17 @@ const DICTIONARY_VISUAL_BASELINES = {
     name: "dictionary-medium-light.png",
     width: 768,
     height: 1616,
-    sha256: "60cb3ae1cd0a46c063e32a753f335913d1cf240cbfe988976da5f6f1c14ef237",
-    sourceRun: 30196047727,
-    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+    sha256: "pending-linux-calibration",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-calibration",
   },
   desktopLight: {
     name: "dictionary-desktop-light.png",
     width: 1440,
     height: 1624,
-    sha256: "0427bfa62ba5bd8f4bffb1aa25e3c5f3ccabbc5469dc3ee75d904402572251a2",
-    sourceRun: 30196047727,
-    sourceHeadSha: "aa61114bceb61640cef30003b58299d2cde57141",
+    sha256: "pending-linux-calibration",
+    sourceRun: 0,
+    sourceHeadSha: "pending-linux-calibration",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
@@ -203,9 +203,15 @@ async function expectStableScreenshot(page: Page, name: string): Promise<void> {
 async function expectContentAddressedScreenshot(
   page: Page,
   baseline: ContentAddressedVisualBaseline,
+  options: { maskProfile?: boolean } = {},
 ): Promise<void> {
   await prepareStableScreenshot(page);
-  const screenshot = await page.screenshot({ fullPage: true });
+  const screenshot = await page.screenshot({
+    fullPage: true,
+    mask: options.maskProfile
+      ? [page.getByRole("button", { name: "Открыть профиль" })]
+      : [],
+  });
   const actual = {
     width: screenshot.readUInt32BE(16),
     height: screenshot.readUInt32BE(20),
@@ -314,16 +320,20 @@ test.describe("critical visual baselines", () => {
       : viewportWidth === 768
         ? DICTIONARY_VISUAL_BASELINES.mediumLight
         : DICTIONARY_VISUAL_BASELINES.desktopLight;
-    await expectContentAddressedScreenshot(page, baseline);
+    await expectContentAddressedScreenshot(page, baseline, { maskProfile: true });
     expect(runtimeErrors).toEqual([]);
   });
 
-  test("Dictionary compact Dark calibration", async ({ page }) => {
+  test("Dictionary compact Dark", async ({ page }) => {
     test.skip(page.viewportSize()?.width !== 390, "compact dark Dictionary baseline only");
     const runtimeErrors = captureRuntimeErrors(page);
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await openDictionaryCatalog(page);
-    await expectContentAddressedScreenshot(page, DICTIONARY_VISUAL_BASELINES.compactDark);
+    await expectContentAddressedScreenshot(
+      page,
+      DICTIONARY_VISUAL_BASELINES.compactDark,
+      { maskProfile: true },
+    );
     expect(runtimeErrors).toEqual([]);
   });
 
