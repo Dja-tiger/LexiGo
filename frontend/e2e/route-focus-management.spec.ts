@@ -288,8 +288,8 @@ test("back and forward restore the matching scroll position and main focus", asy
 
   await clickPrimaryNavigation(page, "library");
   await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
-  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
+  await page.getByRole("navigation", { name: "Быстрые фильтры словаря" }).getByRole("button", { name: "Фразы", exact: true }).click();
   await expect(page).toHaveURL(/\/phrases$/);
   await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
   await expectMainFocus(page, "Технические фразы");
