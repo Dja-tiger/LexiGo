@@ -30,6 +30,7 @@ const EMPTY_SUMMARY: ReviewOutboxSummary = {
 
 const REVIEW_SYNCED_EVENT = "lexigo:lesson-reviews-synced";
 const SESSION_RESTORED_EVENT = "lexigo:session-restored";
+const REVIEW_QUEUED_EVENT = "lexigo:lesson-review-queued";
 const BACKGROUND_RELOAD_DELAY_MS = 1500;
 
 type ErrorPayload = {
@@ -38,6 +39,13 @@ type ErrorPayload = {
 };
 
 type AuthSessionAction = "adopt" | "clear";
+type ConnectivityTone = "offline" | "pending" | "failed" | "synced";
+
+type ConnectivityCopy = {
+  title: string;
+  message: string;
+  tone: ConnectivityTone;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -117,20 +125,26 @@ function currentNetworkFailureCode(): "network_offline" | "network_request_faile
   return navigator.onLine === false ? "network_offline" : "network_request_failed";
 }
 
+function pluralized(count: number, one: string, few: string, many: string): string {
+  const lastTwo = count % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return many;
+  const last = count % 10;
+  if (last === 1) return one;
+  if (last >= 2 && last <= 4) return few;
+  return many;
+}
+
 function bannerCopy(
   online: boolean,
   summary: ReviewOutboxSummary,
   syncing: boolean,
   recoverySynced: boolean,
-): {
-  title: string;
-  message: string;
-  tone: "offline" | "pending" | "failed" | "synced";
-} | null {
+  connectionRestored: boolean,
+): ConnectivityCopy | null {
   if (summary.failed > 0) {
     return {
       title: "Требуется синхронизация урока",
-      message: `${summary.failed} ${summary.failed === 1 ? "ответ конфликтует" : "ответа конфликтуют"} с серверным состоянием. LexiGo не отправляет их повторно автоматически.`,
+      message: `${summary.failed} ${pluralized(summary.failed, "ответ конфликтует", "ответа конфликтуют", "ответов конфликтуют")} с серверным состоянием. Автоматическая повторная отправка остановлена.`,
       tone: "failed",
     };
   }
@@ -138,15 +152,15 @@ function bannerCopy(
     return {
       title: "Нет подключения к сети",
       message: summary.pending > 0
-        ? `${summary.pending} ${summary.pending === 1 ? "ответ сохранён" : "ответа сохранены"} на устройстве и будет отправлен после восстановления сети.`
-        : "Новый сетевой урок не запускается. Ответы активного урока будут сохранены на устройстве.",
+        ? `${summary.pending} ${pluralized(summary.pending, "ответ сохранён", "ответа сохранены", "ответов сохранены")} на устройстве и будет отправлен после восстановления сети.`
+        : "Новый сетевой урок не запускается. Оценку открытой карточки можно безопасно сохранить на устройстве.",
       tone: "offline",
     };
   }
   if (syncing || summary.pending > 0) {
     return {
       title: syncing ? "Синхронизируем ответы…" : "Ответ ожидает синхронизации",
-      message: `${summary.pending} ${summary.pending === 1 ? "ответ сохранён" : "ответа сохранены"} в защищённой очереди этого устройства.`,
+      message: `${summary.pending} ${pluralized(summary.pending, "ответ сохранён", "ответа сохранены", "ответов сохранены")} в локальной очереди этого устройства.`,
       tone: "pending",
     };
   }
@@ -157,7 +171,26 @@ function bannerCopy(
       tone: "synced",
     };
   }
+  if (connectionRestored) {
+    return {
+      title: "Подключение восстановлено",
+      message: "LexiGo снова может загружать материалы и синхронизировать локальную очередь.",
+      tone: "synced",
+    };
+  }
   return null;
+}
+
+function formattedSyncTime(value: string): string {
+  if (!value) return "Синхронизации ещё не было";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Время синхронизации недоступно";
+  return `Последняя синхронизация: ${new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date)}`;
 }
 
 export function ReviewOutboxRuntime({ session: initialSession }: { session: Session | null }) {
@@ -165,6 +198,9 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
   const [summary, setSummary] = useState<ReviewOutboxSummary>(EMPTY_SUMMARY);
   const [syncing, setSyncing] = useState(false);
   const [recoverySynced, setRecoverySynced] = useState(false);
+  const [connectionRestored, setConnectionRestored] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState("");
   const [activeUserID, setActiveUserID] = useState(initialSession?.user.id ?? "");
   const sessionRef = useRef(initialSession);
   const originalFetchRef = useRef<typeof globalThis.fetch | null>(null);
@@ -209,6 +245,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         }
 
         setRecoverySynced(false);
+        setConnectionRestored(false);
         setSyncing(true);
         let activeSession = currentSession;
         for (const record of records) {
@@ -269,6 +306,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
       }
       if (synchronized > 0) {
         setRecoverySynced(true);
+        setConnectionMessage("Локально сохранённый ответ принят сервером. Обновляем позицию урока.");
         scheduleStateReload();
       }
     })().finally(() => {
@@ -277,6 +315,18 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
     syncInFlightRef.current = synchronization;
     return synchronization;
   }, [refreshSummary, scheduleStateReload]);
+
+  const exposeQueuedReview = useCallback((record: ReviewOutboxRecord, message: string) => {
+    setDetailsOpen(true);
+    setConnectionMessage(message);
+    window.dispatchEvent(new CustomEvent(REVIEW_QUEUED_EVENT, {
+      detail: {
+        lessonId: record.lessonId,
+        wordId: record.wordId,
+        lessonVersion: record.lessonVersion,
+      },
+    }));
+  }, []);
 
   useEffect(() => {
     const originalFetch = globalThis.fetch.bind(globalThis);
@@ -292,6 +342,8 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
           sessionRef.current = null;
           setActiveUserID("");
           setRecoverySynced(false);
+          setConnectionRestored(false);
+          setDetailsOpen(false);
           setSummary(EMPTY_SUMMARY);
           return response;
         }
@@ -340,6 +392,7 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
       let record: ReviewOutboxRecord;
       try {
         setRecoverySynced(false);
+        setConnectionRestored(false);
         record = await enqueueLessonReview({
           userId: activeSession.user.id,
           endpoint: request.url,
@@ -357,7 +410,9 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
         return conflictResponse("Для этой карточки уже сохранена другая оценка. Дождитесь синхронизации исходного ответа.");
       }
       if (navigator.onLine === false) {
-        return queuedResponse("Ответ сохранён на устройстве. Переход к следующей карточке станет доступен после восстановления сети.");
+        const message = "Ответ сохранён на устройстве. Переход к следующей карточке станет доступен после восстановления сети.";
+        exposeQueuedReview(record, message);
+        return queuedResponse(message);
       }
 
       try {
@@ -386,6 +441,10 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
             lastErrorCode: failure.code,
             lastErrorMessage: failure.message,
           });
+          await refreshSummary();
+          const message = "Ответ сохранён на устройстве. LexiGo повторит отправку после восстановления сервиса.";
+          exposeQueuedReview(record, message);
+          return queuedResponse(message);
         }
         await refreshSummary();
         return response;
@@ -397,7 +456,9 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
           lastErrorMessage: error instanceof Error ? error.message : "Network request failed",
         });
         await refreshSummary();
-        return queuedResponse("Ответ сохранён на устройстве. LexiGo отправит его автоматически после восстановления соединения.");
+        const message = "Ответ сохранён на устройстве. LexiGo отправит его автоматически после восстановления соединения.";
+        exposeQueuedReview(record, message);
+        return queuedResponse(message);
       }
     };
 
@@ -408,16 +469,20 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
       if (globalThis.fetch === interceptedFetch) globalThis.fetch = originalFetch;
       originalFetchRef.current = null;
     };
-  }, [refreshSummary, syncPendingReviews]);
+  }, [exposeQueuedReview, refreshSummary, syncPendingReviews]);
 
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
+      setConnectionRestored(true);
+      setConnectionMessage("Подключение восстановлено. Проверяем локальную очередь ответов.");
       void syncPendingReviews();
     };
     const handleOffline = () => {
       setOnline(false);
       setRecoverySynced(false);
+      setConnectionRestored(false);
+      setConnectionMessage("Соединение недоступно. Сетевые действия временно приостановлены.");
       void refreshSummary();
     };
     const handleVisibility = () => {
@@ -436,22 +501,116 @@ export function ReviewOutboxRuntime({ session: initialSession }: { session: Sess
     };
   }, [refreshSummary, syncPendingReviews]);
 
-  const copy = bannerCopy(online, summary, syncing, recoverySynced);
+  const verifyConnection = useCallback(() => {
+    const detectedOnline = navigator.onLine !== false;
+    setOnline(detectedOnline);
+    if (!detectedOnline) {
+      setConnectionMessage("Соединение пока не восстановлено. Локально сохранённые ответы остаются на устройстве.");
+      return;
+    }
+    setConnectionRestored(true);
+    setConnectionMessage("Подключение обнаружено. Проверяем очередь ответов.");
+    void syncPendingReviews();
+  }, [syncPendingReviews]);
+
+  const dismissRecoveredStatus = useCallback(() => {
+    setRecoverySynced(false);
+    setConnectionRestored(false);
+    setConnectionMessage("");
+    setDetailsOpen(false);
+  }, []);
+
+  const copy = bannerCopy(online, summary, syncing, recoverySynced, connectionRestored);
   if (!activeUserID || !copy) return null;
 
+  const panelTitle = online ? "Синхронизация обучения" : "Работа без сети";
+  const primaryActionLabel = online ? "Повторить синхронизацию" : "Проверить соединение";
+
   return (
-    <aside className={`lx-review-sync lx-review-sync--${copy.tone}`} role="status" aria-live="polite" aria-atomic="true">
-      <span className="lx-review-sync__indicator" aria-hidden="true" />
-      <div>
-        <strong>{copy.title}</strong>
-        <span>{copy.message}</span>
-      </div>
-      {copy.tone === "failed" ? (
-        <button type="button" onClick={() => window.location.reload()}>Обновить состояние</button>
-      ) : copy.tone === "pending" && online && !syncing ? (
-        <button type="button" onClick={() => void syncPendingReviews()}>Повторить сейчас</button>
+    <div
+      className="lx-system-connectivity"
+      data-connectivity-state={copy.tone}
+      data-online={online ? "true" : "false"}
+      data-pending-reviews={summary.pending}
+    >
+      <aside className={`lx-review-sync lx-review-sync--${copy.tone}`} aria-label="Состояние подключения и синхронизации">
+        <span className="lx-review-sync__indicator" aria-hidden="true" />
+        <div
+          className="lx-review-sync__copy"
+          role={copy.tone === "failed" ? "alert" : "status"}
+          aria-live={copy.tone === "failed" ? "assertive" : "polite"}
+          aria-atomic="true"
+        >
+          <strong>{copy.title}</strong>
+          <span>{copy.message}</span>
+        </div>
+        <div className="lx-review-sync__actions">
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            aria-controls="lexigo-connectivity-panel"
+            onClick={() => setDetailsOpen((open) => !open)}
+          >
+            {detailsOpen ? "Скрыть" : "Подробнее"}
+          </button>
+          {copy.tone === "failed" ? (
+            <button type="button" onClick={() => window.location.reload()}>Обновить состояние</button>
+          ) : copy.tone === "pending" && online && !syncing ? (
+            <button type="button" onClick={() => void syncPendingReviews()}>Повторить сейчас</button>
+          ) : copy.tone === "synced" ? (
+            <button type="button" onClick={dismissRecoveredStatus}>Готово</button>
+          ) : null}
+        </div>
+      </aside>
+
+      {detailsOpen ? (
+        <section
+          id="lexigo-connectivity-panel"
+          className="lx-connectivity-panel"
+          aria-labelledby="lexigo-connectivity-title"
+        >
+          <div className="lx-connectivity-panel__heading">
+            <span className="lx-connectivity-panel__icon" aria-hidden="true">{online ? "↻" : "⌁"}</span>
+            <div>
+              <h2 id="lexigo-connectivity-title">{panelTitle}</h2>
+              <p>{online
+                ? "Состояние основано на локальной очереди этого устройства и ответах сервера."
+                : "LexiGo сохраняет только оценку открытой карточки. Полный переход по уроку остаётся серверным."}</p>
+            </div>
+          </div>
+
+          <div className="lx-connectivity-panel__metrics" aria-label="Сводка локальной очереди">
+            <div><strong>{summary.pending}</strong><span>Ожидают отправки</span></div>
+            <div><strong>{summary.failed}</strong><span>Требуют проверки</span></div>
+            <div><strong>{summary.synced}</strong><span>Синхронизировано за сутки</span></div>
+          </div>
+
+          <ul className="lx-connectivity-panel__contract">
+            <li>Введённый ответ остаётся на текущей карточке.</li>
+            <li>Оценка записывается в IndexedDB до первой сетевой отправки.</li>
+            <li>Следующая карточка откроется только после подтверждения серверной позиции.</li>
+            <li>Новый урок, каталог и обновление прогресса требуют сети.</li>
+          </ul>
+
+          <p>{formattedSyncTime(summary.latestSyncedAt)}</p>
+          <p className="lx-connectivity-panel__status" role="status" aria-live="polite" aria-atomic="true">
+            {connectionMessage}
+          </p>
+
+          <div className="lx-connectivity-panel__actions">
+            <button type="button" onClick={() => setDetailsOpen(false)}>Продолжить в текущем экране</button>
+            <button
+              className="primary"
+              type="button"
+              disabled={syncing}
+              onClick={online ? () => void syncPendingReviews() : verifyConnection}
+            >
+              {syncing ? "Синхронизируем…" : primaryActionLabel}
+            </button>
+          </div>
+        </section>
       ) : null}
-    </aside>
+    </div>
   );
 }
 
