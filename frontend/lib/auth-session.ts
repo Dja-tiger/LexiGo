@@ -41,6 +41,7 @@ const LEGACY_SESSION_KEY = "lexigo.session.v1";
 const REFRESH_LOCK_NAME = "lexigo.auth.refresh";
 const CONFLICT_RETRY_DELAYS_MS = [100, 300] as const;
 const RESTORE_RETRY_DELAYS_MS = [150, 500, 1500] as const;
+export const SESSION_REFRESHED_EVENT = "lexigo:session-refreshed";
 
 let activeRefresh: Promise<Session> | null = null;
 
@@ -162,6 +163,11 @@ function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => globalThis.setTimeout(resolve, Math.max(0, milliseconds)));
 }
 
+function reportRefreshedSession(session: Session): void {
+  if (typeof window === "undefined" || typeof CustomEvent === "undefined") return;
+  window.dispatchEvent(new CustomEvent<Session>(SESSION_REFRESHED_EVENT, { detail: session }));
+}
+
 async function performRefreshAttempt(): Promise<Session> {
   const csrfToken = csrfTokenFromCookie();
   if (!csrfToken) throw new SessionRefreshError(401, "Session marker is missing", "unauthorized");
@@ -227,9 +233,14 @@ async function refreshWithCrossTabLock(options: RefreshOptions): Promise<Session
 
 export function refreshSession(options: RefreshOptions = {}): Promise<Session> {
   if (!activeRefresh) {
-    activeRefresh = refreshWithCrossTabLock(options).finally(() => {
-      activeRefresh = null;
-    });
+    activeRefresh = refreshWithCrossTabLock(options)
+      .then((session) => {
+        reportRefreshedSession(session);
+        return session;
+      })
+      .finally(() => {
+        activeRefresh = null;
+      });
   }
 
   const refresh = activeRefresh;
