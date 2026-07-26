@@ -20,6 +20,7 @@ const BLOCKING_IMPACTS = new Set(["critical", "serious"]);
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
 type AxeResult = Awaited<ReturnType<AxeBuilder["analyze"]>>;
+type ExplicitAppearance = "light" | "dark";
 
 function formatViolations(violations: AxeResult["violations"]): string {
   return violations.map((violation) => {
@@ -39,6 +40,12 @@ async function expectNoBlockingAxeViolations(page: Page): Promise<void> {
     typeof violation.impact === "string" && BLOCKING_IMPACTS.has(violation.impact)
   ));
   expect(blocking, formatViolations(blocking)).toEqual([]);
+}
+
+async function installExplicitAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+  await page.addInitScript((value) => {
+    localStorage.setItem("lexigo.appearance.v1", value);
+  }, appearance);
 }
 
 async function openCalendarDialog(page: Page): Promise<void> {
@@ -79,6 +86,19 @@ test.describe("blocking accessibility gate", () => {
         const runtimeErrors = captureRuntimeErrors(page);
         await page.goto(route.url, { waitUntil: "domcontentloaded" });
         await expect(page.getByRole("heading", { name: route.heading })).toBeVisible({ timeout: 15_000 });
+        await expectNoBlockingAxeViolations(page);
+        expect(runtimeErrors).toEqual([]);
+      });
+    }
+
+    for (const appearance of ["light", "dark"] as const) {
+      test(`Profile explicit ${appearance} has no critical or serious WCAG violations`, async ({ page }) => {
+        const runtimeErrors = captureRuntimeErrors(page);
+        await installExplicitAppearance(page, appearance);
+        await page.goto("/profile", { waitUntil: "domcontentloaded" });
+        await expect(page.getByRole("heading", { level: 1, name: "Профиль", exact: true })).toBeVisible();
+        await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
+        await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
         await expectNoBlockingAxeViolations(page);
         expect(runtimeErrors).toEqual([]);
       });
