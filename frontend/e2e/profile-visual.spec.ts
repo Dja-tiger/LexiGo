@@ -21,15 +21,15 @@ const PROFILE_VISUAL_BASELINES: Record<ProfileVisualBaseline, {
   },
   "compact-dark": {
     figmaNode: "79:6",
-    sha256: "af661cba699b815a23467a9a8e74f9e79feac9777382357fbad52d838ebb930a",
+    sha256: "ecea257dca01358a66be1078938b202f7ad8194baeae80cb43c45d8ebcefa92d",
   },
   "desktop-light": {
     figmaNode: "79:129",
-    sha256: "624128f9581ff81e448c0d85e40027959deb94dd5c82ea3f2a2e5bc3b908b0e7",
+    sha256: "3da62f1cd51197f7b10ab5ec6cf51fc3c6f6d9503f2ea8d40fdc5ff1518816b1",
   },
   "desktop-dark": {
     figmaNode: "79:129",
-    sha256: "b4c55edb1421611c6070f91a45359e0c18c34533fa188b7cf7914c71ffd7dc21",
+    sha256: "f5670eaaa3ca527f081698c7629bd0c96de9117553fe9b16ff97739c191010ae",
   },
 };
 
