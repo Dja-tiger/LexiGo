@@ -56,7 +56,9 @@ describe("production frontend application entry", () => {
     expect(layout.match(/<RoutedLexigoApp\s*\/>/g)).toHaveLength(1);
 
     expect(routedApp).toMatch(/import\s+\{\s*LexigoBootstrappedApp\s*\}\s+from\s+["']\.\/lexigo-bootstrapped-app["']/);
-    expect(routedApp.match(/<LexigoBootstrappedApp\s+pathname=\{pathname\}\s*\/>/g)).toHaveLength(1);
+    expect(routedApp).toContain('import { usePathname, useRouter } from "next/navigation"');
+    expect(routedApp).toContain('router.replace("/", { scroll: false })');
+    expect(routedApp).toMatch(/<LexigoBootstrappedApp\s+pathname=\{pathname\}\s+onNavigateHome=\{navigateHome\}\s*\/>/);
 
     expect(bootstrappedApp).not.toContain('from "next/navigation"');
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
@@ -71,7 +73,18 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp.match(/<LexigoProfileApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioCatalogApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioApp\b/g)).toHaveLength(1);
-    expect(bootstrappedApp).toMatch(/restoreBootstrappedSession\(\)[\s\S]*\}, \[pathname, restoreAttempt\]\);/);
+    expect(bootstrappedApp).toMatch(/restoreBootstrappedSession\(\)[\s\S]*\}, \[pathname, restoreAttempt, sessionRestoreSuppressed\]\);/);
+  });
+
+  it("canonicalizes a dictionary exit before mounting the product graph", () => {
+    const bootstrappedApp = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
+
+    expect(bootstrappedApp).toContain('const productGraphPending = routeGraph === "dictionary" && !isDictionaryRoute(pathname)');
+    expect(bootstrappedApp).toContain('if (routeGraph === "dictionary" && !isDictionaryRoute(pathname)) scheduleProductGraph()');
+    expect(bootstrappedApp).toContain("mergedNavigationHistoryState(canonicalTarget)");
+    expect(bootstrappedApp.indexOf("mergedNavigationHistoryState(canonicalTarget)"))
+      .toBeLessThan(bootstrappedApp.indexOf('setRouteGraph("product")'));
+    expect(bootstrappedApp).toMatch(/\{productGraphPending \? \(\s*<ProductShellLoading \/>/);
   });
 
   it("allows only the bootstrap layer to load route application entries", () => {
