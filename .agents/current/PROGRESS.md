@@ -1,50 +1,65 @@
 # Current Task Progress
 
-## 2026-07-27 00:40 Europe/Berlin
+## 2026-07-27 01:35 Europe/Berlin
 
 ### Verified
 
-- Live `main` is `d906cacf21f5a25dc52a380ab8ce681177831532`; no open PR existed before branch creation.
-- Reconciliation SHA is deployed on stage with successful public smoke and 12/12 public browser checks.
+- Live `main` remains `d906cacf21f5a25dc52a380ab8ce681177831532`; the feature branch is 21 commits ahead and 0 behind with the exact base as merge base.
 - Issue #202 has exact Figma nodes `79:69`, `79:93`, `79:117`, `79:194` and `75:57`; Issue #170 supplies the existing offline runtime contract.
-- `ReviewOutboxRuntime` already owns IndexedDB persistence, retry on online/visibility/session restore, session lifecycle and global sync status.
-- Full offline lesson progression is intentionally unsupported; the server owns the next lesson position.
-- `AsyncStatePanel` and `AsyncSkeletonGrid` are the existing shared loading/empty/error owners.
-- Dictionary already preserves URL-owned filters and local search input across empty/error/retry states.
+- `ReviewOutboxRuntime` remains the sole browser owner for connectivity, IndexedDB persistence, retry and session adoption.
+- Full offline lesson progression remains intentionally unsupported; the server owns the next lesson position.
+- Dictionary retains URL-owned filters and local search input across loading, empty, error and retry states.
 
 ### Finding
 
-- Current shared async states use the older dark glass presentation rather than the approved semantic Figma hierarchy.
-- Bootstrap loading replaces product content with a generic centered LexiGo mark instead of a stable route-aware skeleton.
-- The global outbox status is a compact fixed toast and does not expose truthful queue details or a persistent restored-connection acknowledgement.
-- Offline/retryable lesson reviews are durable, but Active Lesson only receives a synthetic 503 and presents the local-save evidence through the generic action error; confidence controls become available again and allow a duplicate submission attempt.
-- Existing Dictionary empty CTA is real and safe (`Сбросить фильтры`); the Figma `Добавить термин` action cannot be shipped before Issue #25.
+- Shared async states required semantic Figma presentation, stable skeleton geometry, focus settlement and correlation evidence.
+- The existing outbox toast did not expose real queue details or a persistent restored-connection acknowledgement.
+- Offline/retryable lesson reviews were durable, but Active Lesson re-enabled confidence controls after the synthetic queued response and did not show an inline local-save state.
+- Figma `Добавить термин` and representative cached-item counts cannot be shipped because those capabilities are not owned by the current runtime.
 
 ### Root cause
 
-The durable offline runtime and shared async semantics were implemented before the production system-state Figma slice. Presentation and local queued-review feedback were not yet connected to the existing runtime owner.
+The durable offline runtime and shared async semantics predated the approved production system-state slice. Presentation and local queued-review feedback were not yet connected to the existing owner contracts.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `docs/offline-review-outbox.md`
+- `frontend/app/layout.tsx`
+- `frontend/app/system-states.css`
+- `frontend/app/system-states-lesson.css`
+- `frontend/components/async-state.tsx`
+- `frontend/components/review-outbox-runtime.tsx`
+- `frontend/components/active-lesson-presentation.tsx`
+- `frontend/components/system-states-contract.test.ts`
+- `frontend/e2e/offline-review-outbox.spec.ts`
+- `frontend/e2e/system-states.spec.ts`
+- `frontend/e2e/system-states-visual.spec.ts`
+- `frontend/package.json`
+- `frontend/playwright.visual.config.ts`
 
 ### Checks passed
 
-- Mandatory harness documents and exact live GitHub state re-read.
-- Exact Figma design context fetched for all five Issue #202 nodes.
-- Existing runtime, state components, tests, CSS imports and product invariants inspected at immutable base SHA.
-- No conflicting `system` or `offline` branch found.
+- Mandatory harness and exact live GitHub/Figma pre-flight.
+- Exact-base branch isolation; compare contains only bounded Issue #202 paths.
+- Read-back verification after implementation writes.
+- Source contracts encode semantic token use, reduced motion, forced colors, durable-write-before-send, stable idempotency, no token persistence, queued-review ownership and absence of unsupported CTAs.
+- Browser contracts cover physical offline, retryable `5xx`, response loss, same-key replay, connection restoration, Dictionary loading/empty/error/retry, query retention and reduced motion.
+- Five Linux visual scenarios are wired to exact Figma node metadata and attach deterministic screenshots for manual review.
 
 ### Checks failed
 
-- Figma variable-def lookup on page node `79:2` returned a connector selection error; exact node design-context responses already include the required semantic variable bindings.
-- Local clone is unavailable because the isolated container cannot resolve GitHub DNS; exact-ref connector reads/writes remain authoritative.
+- Figma variable-def lookup on page node `79:2` returned a connector selection error; exact node design contexts already include semantic variable bindings.
+- Local clone/build remains unavailable because the isolated container cannot resolve GitHub DNS.
+- Visual hashes intentionally remain `PENDING_MANUAL_REVIEW`; the first visual CI is expected to produce actuals for inspection and promotion.
+- No repository CI has run on the implementation head yet.
 
 ### Current branch head
 
-Resolve from live branch ref after this commit.
+Resolve from the Draft PR after this commit.
 
 ### Next action
 
-Implement the shared semantic state layer, extend the existing outbox runtime, connect queued-review evidence to Active Lesson, then add bounded tests and documentation before opening the Draft PR.
+Open the Draft PR, run the full repository matrix, fix all functional/type/lint/browser failures, inspect attached Linux visual actuals against the five Figma nodes, promote only approved hashes, then rerun immutable-head CI.
