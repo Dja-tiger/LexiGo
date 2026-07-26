@@ -1,4 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
 import {
   captureRuntimeErrors,
@@ -7,6 +9,29 @@ import {
 } from "./support/quality-gates";
 
 type ExplicitAppearance = "light" | "dark";
+type ProfileVisualBaseline = "compact-light" | "compact-dark" | "desktop-light" | "desktop-dark";
+
+const PROFILE_VISUAL_BASELINES: Record<ProfileVisualBaseline, {
+  figmaNode: "79:6" | "79:129";
+  sha256: string;
+}> = {
+  "compact-light": {
+    figmaNode: "79:6",
+    sha256: "e89a8d931de7854a56235bff661afe23317505333dc9671d392076c76bd8198c",
+  },
+  "compact-dark": {
+    figmaNode: "79:6",
+    sha256: "af661cba699b815a23467a9a8e74f9e79feac9777382357fbad52d838ebb930a",
+  },
+  "desktop-light": {
+    figmaNode: "79:129",
+    sha256: "624128f9581ff81e448c0d85e40027959deb94dd5c82ea3f2a2e5bc3b908b0e7",
+  },
+  "desktop-dark": {
+    figmaNode: "79:129",
+    sha256: "b4c55edb1421611c6070f91a45359e0c18c34533fa188b7cf7914c71ffd7dc21",
+  },
+};
 
 async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
   await page.addInitScript((value) => {
@@ -35,10 +60,28 @@ async function openStableProfile(page: Page, appearance: ExplicitAppearance): Pr
   expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
 }
 
-async function expectProfileScreenshot(page: Page, name: string): Promise<void> {
-  await expect(page).toHaveScreenshot(name, {
+async function expectApprovedProfileBaseline(
+  page: Page,
+  testInfo: TestInfo,
+  baselineName: ProfileVisualBaseline,
+): Promise<void> {
+  const baseline = PROFILE_VISUAL_BASELINES[baselineName];
+  const screenshot = await page.screenshot({
+    animations: "disabled",
+    caret: "hide",
     fullPage: false,
+    scale: "css",
   });
+  await testInfo.attach(`profile-${baselineName}.png`, {
+    body: screenshot,
+    contentType: "image/png",
+  });
+
+  const actualSha256 = createHash("sha256").update(screenshot).digest("hex");
+  expect(
+    actualSha256,
+    `Profile ${baselineName} changed from the manually reviewed Figma ${baseline.figmaNode} Linux baseline`,
+  ).toBe(baseline.sha256);
 }
 
 test.describe("Profile Figma visual baselines", () => {
@@ -54,7 +97,7 @@ test.describe("Profile Figma visual baselines", () => {
       test.skip(testInfo.project.name !== "visual-compact", "390×844 Figma Profile baseline only");
       const runtimeErrors = captureRuntimeErrors(page);
       await openStableProfile(page, appearance);
-      await expectProfileScreenshot(page, `profile-compact-${appearance}.png`);
+      await expectApprovedProfileBaseline(page, testInfo, `compact-${appearance}`);
       expect(runtimeErrors).toEqual([]);
     });
 
@@ -63,7 +106,7 @@ test.describe("Profile Figma visual baselines", () => {
       const runtimeErrors = captureRuntimeErrors(page);
       await page.setViewportSize({ width: 1440, height: 1024 });
       await openStableProfile(page, appearance);
-      await expectProfileScreenshot(page, `profile-desktop-${appearance}.png`);
+      await expectApprovedProfileBaseline(page, testInfo, `desktop-${appearance}`);
       expect(runtimeErrors).toEqual([]);
     });
   }
