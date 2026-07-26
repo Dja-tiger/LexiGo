@@ -187,7 +187,7 @@ test.describe("System state Figma visual baselines", () => {
     await installQualityGateAPI(context);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу", exact: true })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
     await context.setOffline(true);
     await page.getByRole("button", { name: "Подробнее", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
