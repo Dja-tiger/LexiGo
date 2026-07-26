@@ -123,3 +123,25 @@ html[data-lexigo-appearance="dark"] select,
 html[data-lexigo-appearance="dark"] textarea {
   color-scheme: inherit;
 }
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-profile-link-button.danger {
+  color: #b52f42;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-profile-initials,
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-avatar {
+  border-color: #5179ce;
+  color: #ffffff;
+  background: #355fb3;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary {
+  border-color: #5179ce;
+  color: #ffffff;
+  background: #355fb3;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary:hover:not(:disabled) {
+  border-color: #6f91dd;
+  background: #416fc5;
+}
