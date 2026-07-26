@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-26 15:36 Europe/Berlin
+## 2026-07-26 15:51 Europe/Berlin
 
 ### Verified
 
@@ -18,7 +18,7 @@
 - Canonical compact/desktop Light/Dark presentation, 320 px and 200% reflow, reduced-motion and forced-colors contracts.
 - Accessible browser pronunciation with unsupported/error fallback that preserves the visible word and practice path.
 - Dictionary URL-state, Back/Forward and scroll/history ownership remain in the existing route island.
-- Exact single-word lesson journey is protected by browser request-body, destination and route-owner assertions.
+- Exact single-word lesson journey is protected by browser request-body, destination, resume-gate and active-presentation assertions.
 - Route-local dark foreground `#9fb7ff` corrects the two confirmed WCAG contrast defects for the «Пример» heading and active desktop Dictionary rail.
 - Cross-island handoff keeps the Dictionary island mounted until App Router has changed the actual pathname. Before mounting the product graph it derives the canonical target from the current URL and merges that LexiGo state into the framework-owned Next history entry.
 
@@ -29,8 +29,9 @@
 - UI shard 1/2 showed that lesson creation succeeded with the exact request body but the Dictionary island initially unmounted before `router.push` committed `/lesson/active`.
 - CI #1955 on checkpoint head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c` passed frontend core and produced corrected Linux visual actuals, but proved `setTimeout(0)` was still an invalid lifecycle proxy.
 - CI #1961 on head `7f7d8e7370a8e37fcf48e83c779c8509e62e6a3a` confirmed frontend core, backend, accessibility, visual and iOS PWA gates. UI shard 1/2 then proved that pathname settlement alone was insufficient: the URL was `/lesson/active`, while `LexigoPremiumApp` hydrated from stale Dictionary-owned `window.history.state` and rendered the legacy compatibility boundary.
-- The final implementation preserves Next history metadata, replaces only the canonical LexiGo target derived from the actual URL and then mounts the product graph.
-- The full failure category and prevention rule are recorded in `.agents/AGENTS.progress-pr214.md`.
+- CI #1968 on head `cb5027171bf1ae6ab3d5ca733e9fb5f5a6163027` confirmed the production correction. The exact same journey reached `/lesson/active` and rendered the canonical server-owned status «Сохранённый активный урок» with CTA «Продолжить урок»; the only failure was an obsolete test assertion that skipped the repository’s documented resume gate and expected `.lx-active-lesson` immediately.
+- The E2E contract now models create → active-route bootstrap → canonical resume gate → user continuation → active presentation without weakening the exact request-body or destination checks.
+- The full production failure category and prevention rule are recorded in `.agents/AGENTS.progress-pr214.md`; the resume-gate test rule already existed there and is now applied consistently.
 
 ### Reviewed Linux visual evidence
 
@@ -54,7 +55,7 @@ All four actuals were manually reviewed against the approved Word Detail hierarc
 
 ### Current state
 
-- Baselines, canonical history handoff and regression contracts are committed.
+- Production implementation, reviewed baselines, canonical history handoff and complete lesson recovery journey are committed.
 - Final developer-authored branch head must be resolved from live GitHub after this documentation update.
 - Required full CI, Ready transition, squash merge, exact-SHA stage validation, Issue #198 closure and separate post-merge repository-memory reconciliation remain pending.
 
