@@ -7,7 +7,6 @@ const activeLessonSource = readFileSync(new URL("./active-lesson-presentation.ts
 const layoutSource = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const stateCSS = readFileSync(new URL("../app/system-states.css", import.meta.url), "utf8");
 const lessonStateCSS = readFileSync(new URL("../app/system-states-lesson.css", import.meta.url), "utf8");
-const offlineContract = readFileSync(new URL("../../docs/offline-review-outbox.md", import.meta.url), "utf8");
 
 const productStateSource = [
   asyncStateSource,
@@ -16,7 +15,6 @@ const productStateSource = [
   layoutSource,
   stateCSS,
   lessonStateCSS,
-  offlineContract,
 ].join("\n");
 
 describe("system state ownership contract", () => {
@@ -83,7 +81,7 @@ describe("system state ownership contract", () => {
   it("does not advertise unsupported custom-term or full-offline capabilities", () => {
     expect(productStateSource).not.toContain("Добавить термин");
     expect(productStateSource).not.toContain("128 элементов доступны");
-    expect(offlineContract).toContain("Полный offline-урок намеренно не реализован");
-    expect(offlineContract).toContain("переход к следующей карточке");
+    expect(outboxRuntimeSource).toContain("Полный переход по уроку остаётся серверным");
+    expect(activeLessonSource).toContain("Следующая карточка откроется после восстановления сети и подтверждения серверной позиции");
   });
 });
