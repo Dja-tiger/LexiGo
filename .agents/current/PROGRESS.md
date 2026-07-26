@@ -1,58 +1,39 @@
 # Current Task Progress
 
-## 2026-07-26 03:30 Europe/Berlin
+## 2026-07-26 03:48 Europe/Berlin
 
 ### Verified
 
-- Live `main` remains `56c8bf7b589601510ff60465c68c7482f5a8f320`; product work is isolated in `feat/issue-24-scenario-catalog` and Draft PR #228.
-- Canonical authenticated `/scenarios` is implemented as a dedicated route island and consumes `GET /api/v1/scenarios` in exact server order.
-- The optional Scenario recommendation remains server-owned through `/api/v1/progress`; catalog readiness is independent from Progress availability.
-- `/scenarios` preserves `return_to=/scenarios`, keeps the four-item global navigation, marks `Обучение` active and routes cards/recommendations to the existing focused `/scenarios/[slug]` lifecycle.
+- Live `main` remains `56c8bf7b589601510ff60465c68c7482f5a8f320`; Issue #24 work remains isolated in `feat/issue-24-scenario-catalog` and Draft PR #228.
+- Canonical authenticated `/scenarios` is implemented as a dedicated route island. It validates `{items, count}`, preserves exact server order, exposes the server-owned recommendation from `/api/v1/progress`, remains usable when Progress fails and routes to the existing focused `/scenarios/[slug]` lifecycle.
+- The Learning subsection switch preserves the four-item global navigation and is protected by compact, medium and desktop no-overlap contracts against brand, primary navigation and reminder chrome.
 - Approved Figma source remains Mobile Light `228:3`, Mobile Dark `228:4`, Desktop Light `228:5` and Learning entry `228:6`.
-- Cold `/scenarios` evidence from CI #1863 (`30181864359`) is `198852` JavaScript bytes and `17` initial requests. Final ceilings remain `230000` bytes and `19` requests with immutable run/head provenance.
-- Reviewed Scenario Catalog Linux actuals remain content-addressed: compact Light `390 × 1876`, SHA-256 `6d6412fabb2e1b9d5b146da4609da35b7544252d9ab04bd4a8ae3c6e45d26508`; compact Dark `390 × 1876`, SHA-256 `fa874501b7c1a9f66b868c350f607bec444ab12255a18a108f990295a525a47a`; desktop Light `1440 × 981`, SHA-256 `350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a`.
-- Compact and medium Learning actuals remain valid: compact `390 × 1212`, SHA-256 `8cbc1f01bb7079ca0a83b785db2e42be205489edd2dec48a7e40e5b915f20fb9`; medium `768 × 6154`, SHA-256 `4acb9301f3837fb235670c6841c281eb732488701566a84db3b406eaac422812`.
-- CI #1865 (`30182704593`) on `a14b581c704c3996cbcd7248cfa4383f10e4d577` passed backend unit/security, backend integration, frontend lint/typecheck/unit/build/audit, lesson completion, accessibility, content security, iOS PWA, both UI shards, controlled service worker, dictionary smoke and performance.
-- CI #1865 visual trace proves `/api/v1/progress` was fulfilled by the broad handler in `quality-gates.ts`; competing exact route handlers were not a reliable ownership model for this fixture.
-- CI #1865 desktop screenshot and compiled CSS prove the switch was centered at `width: 1180px` across the full 1440 px viewport while the fixed Foundation V1 rail occupied the first 220 px. Roughly 90 px of the switch was under the rail and visually masked by its higher z-index.
-- The previous desktop Learning hash `f70cdc58badacd2f13d568f97d05bc38d54121adf3382480cab438baa6f04f9f` is revoked. It represented the masked overlap and must not be promoted to the final contract.
+- Cold `/scenarios` evidence from CI #1863 (`30181864359`) is `198852` JavaScript bytes and `17` initial requests. The final ceilings are `230000` bytes and `19` requests with immutable run/head provenance in `frontend/bundle-budgets.json`.
+- Scenario Catalog visual contracts remain accepted: compact Light `390 × 1876`, SHA-256 `6d6412fabb2e1b9d5b146da4609da35b7544252d9ab04bd4a8ae3c6e45d26508`; compact Dark `390 × 1876`, SHA-256 `fa874501b7c1a9f66b868c350f607bec444ab12255a18a108f990295a525a47a`; desktop Light `1440 × 981`, SHA-256 `350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a`.
+- Learning visual contracts are now accepted for all required viewports: compact `390 × 1212`, SHA-256 `8cbc1f01bb7079ca0a83b785db2e42be205489edd2dec48a7e40e5b915f20fb9`; medium `768 × 6154`, SHA-256 `4acb9301f3837fb235670c6841c281eb732488701566a84db3b406eaac422812`; corrected desktop `1440 × 1656`, SHA-256 `3be9635dd17bf578adb48cfcbae812c46fe3714969574e5b9a6627b82b7d4088`.
+- Corrected desktop evidence comes from CI #1866 (`30183186758`) on head `623a143a5e4f988606a723efdac66fbd3e43953d`. The full-page Linux actual was manually reviewed: the switch begins to the right of the fixed 220 px rail with the intended 40 px gutter, no route-chrome overlap, no clipping and no horizontal overflow. Retry output was byte-identical.
+- CI #1866 passed backend unit/security, backend integration, frontend lint/typecheck/unit/build/audit, accessibility, content security, iOS PWA, both UI shards, controlled service worker, lesson completion, dictionary smoke and performance. Its only failure was the intentionally stale desktop Learning content hash used to publish the corrected actual.
+- The broad quality API fixture now owns the route-specific Progress payload directly. Existing Progress/calendar visual baselines no longer receive Scenario recommendation data, while Scenario Catalog visuals reinstall the full recommendation fixture explicitly.
 
-### Finding
+### Root cause and correction
 
-The catalog runtime is stable, but final visual acceptance exposed a production desktop alignment defect and a deterministic-fixture ownership defect. Neither can be resolved by loosening visual assertions or accepting the current actual.
-
-### Root cause
-
-- The shared switch base rule centers a maximum 1180 px surface in the whole viewport. From 1024 px onward, Foundation V1 replaces the header navigation with a fixed 220 px rail, so whole-viewport centering places part of the switch behind the rail.
-- `QUALITY_PROGRESS.scenarios` was added to the broad API fixture. Layering a second exact route did not replace that owner in the observed Playwright trace, so Progress/calendar visuals still received Scenario activity.
-
-### Correction in the next evidence head
-
-- `frontend/app/learning-section-switch.css` aligns the switch with the same content column used by the 220 px desktop rail: 40 px gutter after the rail, maximum 1180 px width and centered placement inside the remaining content area.
-- `installQualityGateAPI` accepts an explicit `progress` payload. Visual tests install the baseline Progress payload directly in the broad owner; Scenario catalog visuals reinstall the same owner with the full Scenario recommendation.
-- The geometric no-overlap assertion remains fail-closed at more than 1 CSS px. It is not weakened.
-- The existing desktop Learning content hash intentionally remains stale for one evidence run so CI uploads the corrected Linux actual for manual review.
+The desktop Learning switch had been centered across the full viewport while Foundation V1 placed a fixed 220 px navigation rail on the left. The rail's higher z-index masked approximately 90 px of the switch. The production CSS now aligns the switch with the remaining content column rather than weakening the geometric assertion. Separately, route-specific Progress data is passed through the broad fixture owner instead of competing Playwright route registrations.
 
 ### Checks passed
 
-- Frontend lint, typecheck, unit tests, production build and dependency audit.
-- Backend unit/security and integration.
-- Lesson completion, accessibility audit, content security, iOS PWA, dictionary smoke, UI shards, controlled service worker and performance.
-- Manual Figma/Linux review for all Scenario Catalog states and compact/medium Learning states.
-- Cold-route measurement and request inventory.
+- All product, backend, security, accessibility, PWA, browser and performance jobs in evidence CI #1866.
+- Manual Figma/Linux review of all new Scenario Catalog states and the corrected compact/medium/desktop Learning switch states.
+- Exact bundle measurement and content-addressed visual provenance.
 - Branch/ref read-back after every write; `main` remains unchanged.
 
 ### Checks failed
 
-- CI #1862: invalid provisional bundle baseline; discarded.
-- CI #1863: intentional performance/visual evidence publication; resolved by measured contracts.
-- CI #1864: route-fixture ownership and desktop overlap detected.
-- CI #1865: all nonvisual gates green; visual correctly remained red because both prior corrections were incomplete. The trace established the final root causes above.
+- CI #1866 visual comparison failed only because the checked-in desktop Learning hash intentionally referred to the revoked pre-fix actual. The corrected actual has now been manually approved and is being promoted into the final content-addressed contract.
 
 ### Current branch head
 
-Resolve from the live feature branch after the evidence commit.
+Resolve from the live feature branch after the final visual-evidence commit.
 
 ### Next action
 
-Run CI on the corrected evidence head. The expected visual failure is limited to the revoked desktop Learning hash. Download and manually review that Linux actual, record its dimensions/SHA/run/head, then run complete immutable-head CI without update mode. Only after full green status audit PR comments/reviews/threads, mark PR #228 ready, squash-merge with expected head SHA, deploy the exact squash SHA to stage, validate public smoke/browser matrix, close Issue #24 and perform separate repository-memory reconciliation.
+Run complete CI on the final immutable developer-authored head without update mode. If every required job is green, audit PR comments, reviews and review threads, mark PR #228 ready, squash-merge with the expected head SHA, deploy the exact squash SHA to stage, run public smoke and browser validation, close Issue #24 and perform a separate post-merge repository-memory reconciliation.

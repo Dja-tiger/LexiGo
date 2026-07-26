@@ -97,9 +97,9 @@ const LESSON_COMPOSER_VISUAL_BASELINES = {
     name: "lesson-composer-desktop.png",
     width: 1440,
     height: 1656,
-    sha256: "f70cdc58badacd2f13d568f97d05bc38d54121adf3382480cab438baa6f04f9f",
-    sourceRun: 30181864359,
-    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+    sha256: "3be9635dd17bf578adb48cfcbae812c46fe3714969574e5b9a6627b82b7d4088",
+    sourceRun: 30183186758,
+    sourceHeadSha: "623a143a5e4f988606a723efdac66fbd3e43953d",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
