@@ -165,13 +165,16 @@ async function outboxRecords(page: Page): Promise<Array<{ status: string; idempo
   }));
 }
 
-async function expectQueuedLessonState(page: Page) {
+async function expectQueuedLessonState(page: Page, connectivity: "offline" | "online") {
   await expect(page.getByText("Ответ сохранён на устройстве", { exact: true })).toBeVisible();
   await expect(page.getByText("Следующая карточка откроется после восстановления сети и подтверждения серверной позиции.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Ожидаем синхронизацию", exact: true })).toBeDisabled();
-  await expect(page.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
-  await expect(page.getByText("Полный переход по уроку остаётся серверным.")).toBeVisible();
+  await expect(page.getByRole("heading", {
+    name: connectivity === "offline" ? "Работа без сети" : "Синхронизация обучения",
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText("Следующая карточка откроется только после подтверждения серверной позиции.")).toBeVisible();
   await expect(page.locator("[data-pending-reviews='1']")).toBeVisible();
 }
 
@@ -193,7 +196,7 @@ test("queues a rating offline and replays it automatically when connectivity ret
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
     .toContainText("Ответ сохранён на устройстве.");
-  await expectQueuedLessonState(page);
+  await expectQueuedLessonState(page, "offline");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
@@ -225,7 +228,7 @@ test("queues retryable server responses instead of exposing unconfirmed progress
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
     .toContainText("повторит отправку после восстановления сервиса");
-  await expectQueuedLessonState(page);
+  await expectQueuedLessonState(page, "online");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
@@ -257,7 +260,7 @@ test("replays the same idempotency key after a lost response and tab close", asy
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
     .toContainText("Ответ сохранён на устройстве.");
-  await expectQueuedLessonState(page);
+  await expectQueuedLessonState(page, "online");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
