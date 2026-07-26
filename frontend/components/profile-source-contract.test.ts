@@ -51,13 +51,23 @@ describe("Profile route ownership", () => {
       bootstrap.indexOf("const handleLoggedOut"),
       bootstrap.indexOf("const handleAccountDeleted"),
     );
+    const logoutFinalizer = bootstrap.slice(
+      bootstrap.indexOf("const finalizeLoggedOut"),
+      bootstrap.indexOf("const handleLoggedOut"),
+    );
 
     expect(bootstrap).toContain("function homeHistoryState()");
+    expect(logoutOwner).toContain("setLogoutPending(true)");
     expect(logoutOwner).toContain("const homeState = homeHistoryState()");
     expect(logoutOwner).toContain('window.history.replaceState(homeState, "", "/")');
     expect(logoutOwner).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
-    expect(logoutOwner.indexOf('window.history.replaceState(homeState, "", "/")'))
-      .toBeLessThan(logoutOwner.indexOf("invalidateBootstrappedSession()"));
+    expect(logoutOwner).not.toContain("invalidateBootstrappedSession()");
+
+    expect(bootstrap).toContain('if (!logoutPending || pathname !== "/") return;');
+    expect(bootstrap).toContain("window.setTimeout(finalizeLoggedOut, 0)");
+    expect(logoutFinalizer).toContain("invalidateBootstrappedSession()");
+    expect(logoutFinalizer).toContain("setInitialSession(null)");
+    expect(logoutFinalizer).toContain("setLogoutPending(false)");
 
     expect(profile).toContain("onLoggedOut();");
     expect(profile).not.toContain("createNavigationHistoryState");
