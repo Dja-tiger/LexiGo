@@ -50,6 +50,7 @@ async function json(route: Route, status: number, body: unknown) {
 }
 
 async function installProfileAPI(page: Page) {
+  let authenticated = true;
   let dailyGoal = BASE_PROGRESS.dailyGoal;
   let logoutRequests = 0;
   const goalRequests: Array<{ body: unknown; csrf: string }> = [];
@@ -65,7 +66,10 @@ async function installProfileAPI(page: Page) {
     const request = route.request();
     const path = new URL(request.url()).pathname;
 
-    if (path === "/api/v1/auth/refresh") return json(route, 200, SESSION);
+    if (path === "/api/v1/auth/refresh") {
+      if (authenticated) return json(route, 200, SESSION);
+      return json(route, 401, { error: { code: "unauthorized", message: "logged out" } });
+    }
     if (path === "/api/v1/progress" && request.method() === "GET") {
       return json(route, 200, { ...BASE_PROGRESS, dailyGoal });
     }
@@ -91,6 +95,7 @@ async function installProfileAPI(page: Page) {
     if (path === "/api/v1/auth/audit-events") return json(route, 200, { events: [] });
     if (path === "/api/v1/auth/logout" && request.method() === "POST") {
       logoutRequests += 1;
+      authenticated = false;
       await route.fulfill({ status: 204 });
       return;
     }
@@ -174,7 +179,7 @@ test("Profile radio groups support roving keyboard focus", async ({ page }, test
   await expect(goalGroup.getByRole("radio", { name: "15" })).toHaveAttribute("aria-checked", "true");
 });
 
-test("mobile Profile reflows without horizontal overflow and logout preserves guest auth", async ({ page }, testInfo) => {
+test("mobile Profile reflows and logout preserves Home plus guest authentication", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "ios-webkit", "Mobile/PWA contract runs in the iOS WebKit release profile.");
   const api = await installProfileAPI(page);
   const runtimeErrors: string[] = [];
@@ -185,11 +190,20 @@ test("mobile Profile reflows without horizontal overflow and logout preserves gu
   await expect(page.getByRole("heading", { name: "Интерфейс и устройство" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
+  await page.getByRole("radiogroup", { name: "Оформление приложения" })
+    .getByRole("radio", { name: "Тёмная: Всегда тёмная" })
+    .click();
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
+
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+  await expect(page.getByRole("status", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("lexigo.appearance.v1"))).toBe("dark");
+
+  await page.goto("/profile");
   await expect(page.locator('[data-route-client-island="profile"]')).toHaveCount(0);
   await expect(page.getByRole("tab", { name: "Вход" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "Вы вышли из аккаунта" })).toBeVisible();
   expect(api.logoutRequests()).toBe(1);
   expect(runtimeErrors).toEqual([]);
 });
