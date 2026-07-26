@@ -32,6 +32,8 @@ type WordDetailPayload = {
   lastReviewedAt?: string;
 };
 
+const WORD_DETAIL_STATUSES = new Set(["new", "learning", "review", "mastered"]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -50,7 +52,9 @@ function isTimestamp(value: unknown): value is string {
 
 export function isWordDetailPayload(value: unknown): value is WordDetailPayload {
   if (!isLearningItemPayload(value) || !isRecord(value)) return false;
-  return isFiniteNumber(value.easiness)
+  return typeof value.status === "string"
+    && WORD_DETAIL_STATUSES.has(value.status)
+    && isFiniteNumber(value.easiness)
     && value.easiness > 0
     && isNonNegativeInteger(value.intervalDays)
     && isNonNegativeInteger(value.repetitions)
