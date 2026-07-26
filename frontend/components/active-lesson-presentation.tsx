@@ -163,7 +163,7 @@ export function ActiveLessonPresentation({
   onSubmitSuggestion,
 }: ActiveLessonPresentationProps) {
   const [exitOpen, setExitOpen] = useState(false);
-  const [queuedReview, setQueuedReview] = useState(false);
+  const [queuedReviewWordId, setQueuedReviewWordId] = useState<number | null>(null);
   const exitDialogRef = useRef<HTMLElement | null>(null);
   const cancelExitRef = useRef<HTMLButtonElement | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -175,6 +175,7 @@ export function ActiveLessonPresentation({
   const phraseCloze = item.kind === "phrase" && Boolean(item.cloze);
   const answerLanguage = phraseCloze ? "en" : "ru";
   const answerSubmitted = typedAnswer.trim() || selectedAnswer.trim();
+  const queuedReview = item.wordId !== undefined && queuedReviewWordId === item.wordId;
 
   const requestExit = useCallback((trigger?: HTMLElement | null) => {
     returnFocusRef.current = trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -193,14 +194,10 @@ export function ActiveLessonPresentation({
   }, [requestExit]);
 
   useEffect(() => {
-    setQueuedReview(false);
-  }, [item.id]);
-
-  useEffect(() => {
     const handleQueuedReview = (event: Event) => {
       if (!(event instanceof CustomEvent) || !isQueuedReviewDetail(event.detail)) return;
       if (item.wordId === undefined || event.detail.wordId !== item.wordId) return;
-      setQueuedReview(true);
+      setQueuedReviewWordId(event.detail.wordId);
     };
     window.addEventListener(LESSON_REVIEW_QUEUED_EVENT, handleQueuedReview);
     return () => window.removeEventListener(LESSON_REVIEW_QUEUED_EVENT, handleQueuedReview);
