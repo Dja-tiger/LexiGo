@@ -42,6 +42,23 @@ describe("Profile route ownership", () => {
     expect(premium).toContain('authMode === "reset"');
   });
 
+  it("keeps session bootstrap as the only post-logout route owner", async () => {
+    const [bootstrap, profile] = await Promise.all([
+      source("./lexigo-bootstrapped-app.tsx"),
+      source("./lexigo-profile-app.tsx"),
+    ]);
+
+    expect(bootstrap).toContain("function homeHistoryState()");
+    expect(bootstrap).toContain('window.history.replaceState(homeState, "", "/")');
+    expect(bootstrap).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
+    expect(bootstrap.indexOf('window.history.replaceState(homeState, "", "/")'))
+      .toBeLessThan(bootstrap.indexOf("invalidateBootstrappedSession()"));
+
+    expect(profile).toContain("onLoggedOut();");
+    expect(profile).not.toContain("createNavigationHistoryState");
+    expect(profile).not.toContain("new PopStateEvent");
+  });
+
   it("keeps sensitive account operations in their existing confirmed owners", async () => {
     const [profile, security, email, data] = await Promise.all([
       source("./lexigo-profile-app.tsx"),
