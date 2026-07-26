@@ -42,6 +42,7 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - `frontend/components/routed-lexigo-app.tsx`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/lexigo-profile-app.tsx`
+- `frontend/components/application-error-boundary.test.ts`
 - `frontend/components/production-app-entry.test.ts`
 - `frontend/components/profile-source-contract.test.ts`
 - `frontend/lib/appearance-preference.ts`
