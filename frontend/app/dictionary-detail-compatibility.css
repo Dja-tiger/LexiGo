@@ -1,8 +1,9 @@
 /*
  * Issue #197 catalog compatibility owner.
  *
- * Word Detail moved to its canonical Issue #198 stylesheet. This file now keeps
- * only WCAG-safe catalog state colors that remain shared by `/dictionary`.
+ * Word Detail moved to its canonical Issue #198 stylesheet. This file keeps
+ * WCAG-safe colors shared by the Dictionary route island and the persistent
+ * route chrome rendered around `/words/[id]`.
  */
 
 .lx-app[data-route-client-island="dictionary"] {
@@ -53,5 +54,15 @@
     --lx-dictionary-retained-text: #7ee2b8;
     --lx-dictionary-weak-text: #ff9f9f;
     --lx-dictionary-learning: #f6d27b;
+  }
+
+  /*
+   * The Figma primary foreground (#6c93ef) is decorative on these two dark
+   * surfaces but does not meet the 4.5:1 text threshold. This route-local
+   * foreground is 4.99:1 on the example card and 5.65:1 on the active rail.
+   */
+  .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-example h2,
+  .lx-routed-app[data-route-path^="/words/"] .lx-route-nav--rail > .active[aria-current="page"][data-navigation-view="library"] > span > span {
+    color: #9fb7ff;
   }
 }
