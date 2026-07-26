@@ -10,6 +10,7 @@ import {
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
+import { parseNavigation, type NavigationTarget } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import {
@@ -125,6 +126,15 @@ function isDictionaryRoute(pathname: string): boolean {
 
 function isProgressRoute(pathname: string): boolean {
   return pathname === "/progress";
+}
+
+function mergedNavigationHistoryState(target: NavigationTarget): Record<string, unknown> {
+  const current = window.history.state;
+  const next = createNavigationHistoryState(target, { x: 0, y: 0 });
+  return {
+    ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+    ...next,
+  };
 }
 
 export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
@@ -253,18 +263,42 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => {
-    // The dictionary graph is only a cold-entry optimization. The route chrome
-    // signals the App Router handoff before navigation, and popstate covers
-    // browser history entries that cross into the already loaded product graph.
-    const loadProductGraph = () => setRouteGraph("product");
-    const preserveLoadedProductGraph = () => {
-      if (!isDictionaryRoute(window.location.pathname)) loadProductGraph();
+    // The dictionary graph is only a cold-entry optimization. Keep the owning
+    // island mounted until App Router has actually changed the pathname, then
+    // attach the canonical URL-derived target to the current Next history entry
+    // before the product graph hydrates from history.
+    let productGraphFrame: number | null = null;
+
+    const scheduleProductGraph = () => {
+      if (productGraphFrame !== null) return;
+
+      const settleProductGraph = () => {
+        if (isDictionaryRoute(window.location.pathname)) {
+          productGraphFrame = window.requestAnimationFrame(settleProductGraph);
+          return;
+        }
+        productGraphFrame = null;
+        const canonicalTarget = parseNavigation(window.location.search, window.location.pathname);
+        window.history.replaceState(
+          mergedNavigationHistoryState(canonicalTarget),
+          "",
+          window.location.href,
+        );
+        setRouteGraph("product");
+      };
+
+      productGraphFrame = window.requestAnimationFrame(settleProductGraph);
     };
 
-    window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
+    const preserveLoadedProductGraph = () => {
+      if (!isDictionaryRoute(window.location.pathname)) scheduleProductGraph();
+    };
+
+    window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, scheduleProductGraph);
     window.addEventListener("popstate", preserveLoadedProductGraph);
     return () => {
-      window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
+      if (productGraphFrame !== null) window.cancelAnimationFrame(productGraphFrame);
+      window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, scheduleProductGraph);
       window.removeEventListener("popstate", preserveLoadedProductGraph);
     };
   }, []);

@@ -14,6 +14,7 @@ import {
   installScenarioFixture,
   startScenario,
 } from "./support/scenario-fixture";
+import { installCanonicalWordDetailFixture } from "./support/word-detail-fixture";
 
 const BLOCKING_IMPACTS = new Set(["critical", "serious"]);
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -70,6 +71,7 @@ test.describe("blocking accessibility gate", () => {
     test.beforeEach(async ({ context, page }) => {
       await installDeterministicRuntime(page);
       await installQualityGateAPI(context);
+      await installCanonicalWordDetailFixture(page);
     });
 
     for (const route of AUTHENTICATED_ROUTES) {
@@ -81,6 +83,15 @@ test.describe("blocking accessibility gate", () => {
         expect(runtimeErrors).toEqual([]);
       });
     }
+
+    test("word detail Dark has no critical or serious WCAG violations", async ({ page }) => {
+      const runtimeErrors = captureRuntimeErrors(page);
+      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+      await page.goto("/words/101", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
+      await expectNoBlockingAxeViolations(page);
+      expect(runtimeErrors).toEqual([]);
+    });
 
     test("calendar dialog has no critical or serious WCAG violations", async ({ page }) => {
       const runtimeErrors = captureRuntimeErrors(page);

@@ -4,7 +4,24 @@ const SESSION = {
   user: { id: "00000000-0000-0000-0000-000000000056", email: "routes@example.com", displayName: "Route Contract User", createdAt: "2026-01-01T00:00:00Z" },
   tokens: { accessToken: "route-contract-access-token", tokenType: "Bearer", expiresIn: 900 },
 };
-const WORD = { id: 101, kind: "word", lemma: "route", translation: "маршрут", aliases: ["path"], phonetic: "/ruːt/", partOfSpeech: "noun", topic: "Frontend Architecture", examples: ["Open the route in a new tab."], note: "A canonical application location.", status: "new" };
+const WORD = {
+  id: 101,
+  kind: "word" as const,
+  lemma: "route",
+  translation: "маршрут",
+  aliases: ["path"],
+  acceptedAnswers: ["маршрут", "путь"],
+  phonetic: "/ruːt/",
+  partOfSpeech: "noun",
+  topic: "Frontend Architecture",
+  examples: ["Open the route in a new tab."],
+  note: "A canonical application location.",
+  status: "new",
+  easiness: 2.5,
+  intervalDays: 0,
+  repetitions: 0,
+  dueAt: "2026-07-27T08:00:00Z",
+};
 const PHRASE = { id: 201, kind: "phrase", slug: "backend-route-contract", lemma: "Keep the route stable", translation: "сохранять маршрут стабильным", phonetic: "", partOfSpeech: "phrase", topic: "Frontend Architecture", examples: ["Keep the route stable across reloads."], note: "Back and Forward must restore the screen.", status: "review" };
 const PROGRESS = { dueNow: 1, dueWords: 1, duePhrases: 0, totalWords: 1, totalPhrases: 1, newWords: 1, learningWords: 0, reviewWords: 0, masteredWords: 0, masteredPhrases: 0, reviewsToday: 0, successfulToday: 0, reviewsTotal: 0, dailyGoal: 30, currentStreak: 0, longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0, retainedPhrasesWeek: 0 };
 const METADATA = { catalogVersion: "sha256:app-router-e2e", updatedAt: "2026-07-19T00:00:00Z", totals: { items: 2, words: 1, phrases: 1 }, sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 1, academicTechnicalEnglish: 0 }, topics: [{ topic: "Frontend Architecture", count: 2, words: 1, phrases: 1 }] };
@@ -13,7 +30,23 @@ async function json(route: Route, status: number, body: unknown) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
+function activeLesson(studyMode: string) {
+  return {
+    id: "00000000-0000-0000-0000-000000000057",
+    source: "mixed",
+    studyMode,
+    lessonSize: "15",
+    currentIndex: 0,
+    version: 1,
+    status: "active",
+    items: [{ ...WORD, position: 0 }],
+    createdAt: "2026-07-26T08:00:00Z",
+    updatedAt: "2026-07-26T08:00:00Z",
+  };
+}
+
 async function installAuthenticatedAPI(context: BrowserContext) {
+  let currentActiveLesson: ReturnType<typeof activeLesson> | null = null;
   await context.addCookies([{ name: "lexigo_csrf", value: "route-contract-csrf", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
   await context.route("**/api/v1/**", async (route) => {
     const request = route.request();
@@ -22,10 +55,22 @@ async function installAuthenticatedAPI(context: BrowserContext) {
     if (path === "/api/v1/auth/refresh") return json(route, 200, SESSION);
     if (path === "/api/v1/catalog/metadata") return json(route, 200, METADATA);
     if (path === "/api/v1/progress") return json(route, 200, PROGRESS);
-    if (path === "/api/v1/lessons/active") return json(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
+    if (path === "/api/v1/lessons/active") {
+      return currentActiveLesson
+        ? json(route, 200, currentActiveLesson)
+        : json(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
+    }
     if (path === "/api/v1/lessons/preview") {
       const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
       return json(route, 200, { source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30", composition: { total: 1, words: 1, phrases: 0, due: 1, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 } });
+    }
+    if (path === "/api/v1/lessons" && request.method() === "POST") {
+      const input = request.postDataJSON() as { studyMode?: string; wordIds?: number[] };
+      if (JSON.stringify(input.wordIds) !== JSON.stringify([WORD.id])) {
+        return json(route, 400, { error: { code: "invalid_word_ids", message: "expected exact selected word" } });
+      }
+      currentActiveLesson = activeLesson(input.studyMode ?? "study");
+      return json(route, 201, currentActiveLesson);
     }
     if (path === "/api/v1/words/101") return json(route, 200, WORD);
     if (path === "/api/v1/phrases/backend-route-contract") return json(route, 200, PHRASE);
@@ -175,9 +220,22 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
 });
 
 test("word and phrase deep links survive reload and remain shareable", async ({ page }) => {
-  await page.goto("/words/101?source=backend");
-  await expect(page).toHaveURL(/\/words\/101\?source=backend$/);
+  const requestedAPI: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/v1/")) requestedAPI.push(`${request.method()} ${url.pathname}${url.search}`);
+  });
+
+  await page.goto("/words/101?source=backend&topic=Frontend+Architecture&status=new&page=2");
+  await expect(page).toHaveURL(/\/words\/101\?source=backend&topic=Frontend\+Architecture&status=new&page=2$/);
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
+  await expect(page.getByText("первое повторение", { exact: true })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Связанные фразы" }).getByRole("button", { name: "Keep the route stable" })).toBeVisible();
+  expect(requestedAPI.some((entry) => entry.includes("/api/v1/catalog/metadata"))).toBe(false);
+  expect(requestedAPI.some((entry) => entry.includes("/api/v1/progress"))).toBe(false);
+  expect(requestedAPI.some((entry) => /\/api\/v1\/words\?.*kind=word/.test(entry))).toBe(false);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+
   await page.reload();
   await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
   await page.goto("/phrases/backend-route-contract");
@@ -187,6 +245,31 @@ test("word and phrase deep links survive reload and remain shareable", async ({ 
   await expect(page.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
 });
 
+test("Word Detail creates an exact single-word lesson", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Request-body ownership is verified once in desktop Chromium.");
+  let lessonRequest: Record<string, unknown> | null = null;
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname === "/api/v1/lessons" && request.method() === "POST") {
+      lessonRequest = request.postDataJSON() as Record<string, unknown>;
+    }
+  });
+
+  await page.goto("/words/101");
+  await expect(page.getByRole("heading", { name: "route" })).toBeVisible();
+  await page.getByRole("button", { name: "Добавить в практику" }).first().click();
+  await expect(page).toHaveURL(/\/lesson\/active$/);
+  await expect(page.getByRole("status", { name: "Сохранённый активный урок" })).toBeVisible();
+  await page.getByRole("button", { name: "Продолжить урок" }).click();
+  await expect(page.locator(".lx-active-lesson")).toBeVisible();
+  expect(lessonRequest).toMatchObject({
+    source: "mixed",
+    studyMode: "study",
+    lessonSize: "15",
+    topic: "",
+    wordIds: [101],
+  });
+});
 
 test("backend phrase links open in a new tab without a catalog warm-up", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Native middle-click tab creation is deterministic in Chromium.");

@@ -5,8 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import {
   failedResourceStatus,
+  isActiveLessonPayload,
   isItemsResponsePayload,
-  isLearningItemPayload,
   isProgressSummaryPayload,
   loadingResourceStatus,
   readyResourceStatus,
@@ -44,12 +44,16 @@ import {
 } from "../lib/navigation-scroll-restoration";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
+import {
+  isWordDetailPayload,
+  wordDetailStatus,
+  type WordDetailItem,
+} from "../lib/word-detail";
 import { AsyncResourceNotice } from "./async-state";
 import {
   DictionaryCatalog,
   type DictionaryFilters,
   type DictionaryPageResult,
-  type DictionarySource,
 } from "./dictionary-catalog";
 
 type APIItem = {
@@ -68,6 +72,18 @@ type APIItem = {
   cloze?: string;
   clozeAnswer?: string;
   status: string;
+  easiness?: number;
+  intervalDays?: number;
+  repetitions?: number;
+  dueAt?: string;
+  lastReviewedAt?: string;
+};
+
+type WordDetailAPIItem = APIItem & {
+  easiness: number;
+  intervalDays: number;
+  repetitions: number;
+  dueAt: string;
 };
 
 type ItemsResponse = {
@@ -94,16 +110,17 @@ type PendingNavigation = {
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 
 function toLearningItem(item: APIItem): LearningItem {
+  const kind = item.kind ?? "word";
   return {
-    id: `word-${item.id}`,
+    id: `${kind}-${item.id}`,
     wordId: item.id,
-    kind: "word",
+    kind,
     slug: item.slug,
     prompt: item.lemma,
     answer: item.translation,
     phonetic: item.phonetic,
     partOfSpeech: item.partOfSpeech,
-    section: normalizePartOfSpeech(item.partOfSpeech),
+    section: kind === "phrase" ? "phrase" : normalizePartOfSpeech(item.partOfSpeech),
     topic: item.topic,
     aliases: item.aliases,
     acceptedAnswers: item.acceptedAnswers,
@@ -112,6 +129,17 @@ function toLearningItem(item: APIItem): LearningItem {
     status: item.status,
     cloze: item.cloze,
     clozeAnswer: item.clozeAnswer,
+  };
+}
+
+function toWordDetailItem(item: WordDetailAPIItem): WordDetailItem {
+  return {
+    ...toLearningItem(item),
+    easiness: item.easiness,
+    intervalDays: item.intervalDays,
+    repetitions: item.repetitions,
+    dueAt: item.dueAt,
+    lastReviewedAt: item.lastReviewedAt,
   };
 }
 
@@ -167,6 +195,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   ));
   const mainContentRef = useRef<HTMLElement | null>(null);
   const navigationRef = useRef(navigation);
+  const detailActive = Boolean(navigation.detail);
 
   const adoptSession = useCallback((next: Session) => {
     if (initialSession?.tokens.accessToken !== next.tokens.accessToken) onSessionUpdated(next);
@@ -274,13 +303,14 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   }, []);
 
   useEffect(() => {
+    if (detailActive) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => void loadMetadata(controller.signal), 0);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [loadMetadata]);
+  }, [detailActive, loadMetadata]);
 
   const loadProgress = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
     setProgressStatus(loadingResourceStatus());
@@ -303,6 +333,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
   }, [adoptSession]);
 
   useEffect(() => {
+    if (detailActive) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       if (!session) {
@@ -316,7 +347,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [loadProgress, session]);
+  }, [detailActive, loadProgress, session]);
 
   const loadPage = useCallback(async (
     filters: DictionaryFilters,
@@ -347,16 +378,38 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     };
   }, [adoptSession, session]);
 
-  const loadDetail = useCallback(async (wordID: number, signal: AbortSignal): Promise<LearningItem> => {
+  const loadDetail = useCallback(async (wordID: number, signal: AbortSignal): Promise<WordDetailItem> => {
     if (!session) throw new Error("Войдите, чтобы открыть карточку слова");
-    const result = await authorizedJSON<APIItem>(
+    const result = await authorizedJSON<WordDetailAPIItem>(
       session,
       `/api/v1/words/${wordID}`,
       { signal },
-      isLearningItemPayload,
+      isWordDetailPayload,
     );
     adoptSession(result.activeSession);
-    return toLearningItem(result.data);
+    return toWordDetailItem(result.data);
+  }, [adoptSession, session]);
+
+  const loadRelatedPhrases = useCallback(async (
+    item: WordDetailItem,
+    signal: AbortSignal,
+  ): Promise<LearningItem[]> => {
+    if (!session) return [];
+    const parameters = new URLSearchParams({
+      kind: "phrase",
+      page: "1",
+      limit: "3",
+      sort: "default",
+      query: item.prompt,
+    });
+    const result = await authorizedJSON<ItemsResponse>(
+      session,
+      `/api/v1/words?${parameters.toString()}`,
+      { signal },
+      isItemsResponsePayload,
+    );
+    adoptSession(result.activeSession);
+    return result.data.items.map(toLearningItem);
   }, [adoptSession, session]);
 
   const navigate = useCallback((
@@ -396,13 +449,26 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     writePersistedNavigation(window.localStorage, target);
   }, [router]);
 
-  const configureLesson = useCallback((context: { source: DictionarySource; topic?: string }) => {
-    navigate({
-      view: "learn",
-      source: context.source,
-      ...(context.topic ? { topic: context.topic } : {}),
-    }, false, { x: 0, y: 0 }, "catalog_configure_lesson");
-  }, [navigate]);
+  const startSingleWordPractice = useCallback(async (item: WordDetailItem): Promise<void> => {
+    if (!session || !item.wordId) throw new Error("Не удалось определить слово для практики");
+    const result = await authorizedJSON<unknown>(
+      session,
+      "/api/v1/lessons",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          source: "mixed",
+          studyMode: wordDetailStatus(item.status).studyMode,
+          lessonSize: "15",
+          topic: "",
+          wordIds: [item.wordId],
+        }),
+      },
+      isActiveLessonPayload,
+    );
+    adoptSession(result.activeSession);
+    navigate({ view: "lesson", detail: "active" }, false, { x: 0, y: 0 }, "lesson_start");
+  }, [adoptSession, navigate, session]);
 
   const initial = useMemo(() => session?.user.displayName.trim().charAt(0).toUpperCase()
     || session?.user.email.charAt(0).toUpperCase()
@@ -410,36 +476,38 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
 
   return (
     <div className="lx-app" data-route-client-island="dictionary">
-      <header className="lx-header">
-        <div className="lx-header-tools">
-          {session && progress ? <span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}><FlameIcon /><span>{progress.currentStreak} дн.</span></span> : null}
-          <button
-            className="lx-icon-button"
-            type="button"
-            aria-label="Напоминание о занятии"
-            onClick={() => document.querySelector<HTMLElement>(".lx-route-reminder-entry summary")?.click()}
-          >
-            <BellIcon />
-          </button>
-          <button
-            className="lx-avatar"
-            type="button"
-            aria-label="Открыть профиль"
-            onClick={() => navigate({ view: "profile" })}
-          >
-            {initial}
-          </button>
-        </div>
-      </header>
+      {!detailActive ? (
+        <header className="lx-header">
+          <div className="lx-header-tools">
+            {session && progress ? <span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}><FlameIcon /><span>{progress.currentStreak} дн.</span></span> : null}
+            <button
+              className="lx-icon-button"
+              type="button"
+              aria-label="Напоминание о занятии"
+              onClick={() => document.querySelector<HTMLElement>(".lx-route-reminder-entry summary")?.click()}
+            >
+              <BellIcon />
+            </button>
+            <button
+              className="lx-avatar"
+              type="button"
+              aria-label="Открыть профиль"
+              onClick={() => navigate({ view: "profile" })}
+            >
+              {initial}
+            </button>
+          </div>
+        </header>
+      ) : null}
       <div className="lx-app-shell">
         <main
           id="lexigo-main-content"
           ref={mainContentRef}
           className="lx-main-content"
           tabIndex={-1}
-          aria-label={viewTitle("library")}
+          aria-label={detailActive ? "Карточка слова" : viewTitle("library")}
         >
-          {session ? (
+          {session && !detailActive ? (
             <div className="lx-resource-stack">
               <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgress(session)} />
               <AsyncResourceNotice label="Состав каталога" status={metadataResourceStatus} onRetry={() => void loadMetadata()} />
@@ -454,9 +522,10 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
               progress={progress}
               loadPage={loadPage}
               loadDetail={loadDetail}
+              loadRelatedPhrases={loadRelatedPhrases}
+              onStartPractice={startSingleWordPractice}
               onNavigate={navigate}
               onBackToResults={() => navigate(navigationWithoutDetail(navigation), true)}
-              onConfigureLesson={configureLesson}
               onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
             />
           </div>

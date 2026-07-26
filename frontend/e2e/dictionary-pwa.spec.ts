@@ -38,7 +38,7 @@ const WORDS = Array.from({ length: 60 }, (_, index) => {
   const status = index < 36 ? "new" : index < 44 ? "learning" : index < 56 ? "review" : "mastered";
   return {
     id,
-    kind: "word",
+    kind: "word" as const,
     lemma: index === 0 ? "cache" : `backend term ${number}`,
     translation: index === 0 ? "кэш" : `бэкенд-термин ${number}`,
     aliases: index === 0 ? ["temporary storage", "fast storage"] : [`alias ${number}`],
@@ -48,8 +48,44 @@ const WORDS = Array.from({ length: 60 }, (_, index) => {
     examples: index === 0 ? ["Clear the cache before deployment."] : [`Use backend term ${number} in the incident update.`],
     note: index === 0 ? "Temporary fast storage used by the service." : "Technical catalog entry.",
     status,
+    easiness: 2.5,
+    intervalDays: status === "new" ? 0 : index + 1,
+    repetitions: status === "new" ? 0 : Math.max(1, index - 35),
+    dueAt: "2026-07-27T08:00:00Z",
+    ...(status === "new" ? {} : { lastReviewedAt: "2026-07-20T08:00:00Z" }),
   };
 });
+
+const PHRASES = [
+  {
+    id: 901,
+    kind: "phrase" as const,
+    slug: "clear-the-cache",
+    lemma: "clear the cache",
+    translation: "очистить кэш",
+    aliases: ["flush the cache"],
+    phonetic: "",
+    partOfSpeech: "phrase",
+    topic: "Backend Development",
+    examples: ["Clear the cache before deployment."],
+    note: "Operational phrase.",
+    status: "learning",
+  },
+  {
+    id: 902,
+    kind: "phrase" as const,
+    slug: "cache-invalidation",
+    lemma: "cache invalidation",
+    translation: "инвалидация кэша",
+    aliases: ["invalidate cache"],
+    phonetic: "",
+    partOfSpeech: "phrase",
+    topic: "Backend Development",
+    examples: ["Cache invalidation must propagate to every node."],
+    note: "Architecture phrase.",
+    status: "review",
+  },
+];
 
 const METADATA = {
   catalogVersion: "sha256:dictionary-catalog-e2e",
@@ -114,9 +150,11 @@ async function installAPI(context: BrowserContext) {
       catalogRequests.push(url.search);
       const query = url.searchParams.get("query")?.toLowerCase() ?? "";
       const status = url.searchParams.get("status") ?? "";
+      const kind = url.searchParams.get("kind") ?? "word";
       const page = Number(url.searchParams.get("page") ?? "1");
       const limit = Number(url.searchParams.get("limit") ?? "48");
-      let filtered = WORDS.filter((item) => !status || item.status === status);
+      const sourceItems = kind === "phrase" ? PHRASES : WORDS;
+      let filtered = sourceItems.filter((item) => !status || item.status === status);
       if (query) {
         filtered = filtered.filter((item) => [item.lemma, item.translation, item.topic, ...item.aliases]
           .some((value) => value.toLowerCase().includes(query)));
@@ -261,7 +299,6 @@ test("iOS standalone dictionary restores result scroll on history return and fil
   const resultButtons = page.getByRole("button", { name: /Открыть карточку:/ });
   const lastResult = resultButtons.last();
   await lastResult.scrollIntoViewIfNeeded();
-  // Wait for Next.js to debounce and save the scroll position to history state.
   await page.waitForTimeout(500);
   const scrollBefore = await page.evaluate(() => window.scrollY);
   expect(scrollBefore).toBeGreaterThan(0);
