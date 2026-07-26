@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-26 15:14 Europe/Berlin
+## 2026-07-26 15:36 Europe/Berlin
 
 ### Verified
 
@@ -18,17 +18,19 @@
 - Canonical compact/desktop Light/Dark presentation, 320 px and 200% reflow, reduced-motion and forced-colors contracts.
 - Accessible browser pronunciation with unsupported/error fallback that preserves the visible word and practice path.
 - Dictionary URL-state, Back/Forward and scroll/history ownership remain in the existing route island.
-- Exact single-word lesson journey is protected by browser request-body and destination assertions.
+- Exact single-word lesson journey is protected by browser request-body, destination and route-owner assertions.
 - Route-local dark foreground `#9fb7ff` corrects the two confirmed WCAG contrast defects for the «Пример» heading and active desktop Dictionary rail.
-- Cross-island handoff now keeps the Dictionary island mounted until App Router has actually changed `window.location.pathname`; a cancelable `requestAnimationFrame` route predicate replaces the failed synchronous/fixed-delay graph swap.
+- Cross-island handoff keeps the Dictionary island mounted until App Router has changed the actual pathname. Before mounting the product graph it derives the canonical target from the current URL and merges that LexiGo state into the framework-owned Next history entry.
 
 ### CI findings and classification
 
 - CI #1952 on head `feb32051352fdcfa80d1bb864fa1bd66bd81878f` confirmed frontend core and backend gates but exposed two production contrast defects and one production route-handoff race.
 - Axe measured 3.29:1 for the «Пример» heading and 3.73:1 for the active Dictionary rail. Both are fixed route-locally; the replacement foreground is documented at 4.99:1 and 5.65:1 on the actual dark surfaces.
-- UI shard 1/2 showed that lesson creation succeeded with the exact request body but the Dictionary island unmounted before `router.push` committed `/lesson/active`.
-- CI #1955 on checkpoint head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c` passed frontend core and produced corrected Linux visual actuals, but proved `setTimeout(0)` was still an invalid lifecycle proxy. The implementation now waits for the actual pathname transition.
-- The failure category and prevention rule are recorded in `.agents/AGENTS.progress-pr214.md`.
+- UI shard 1/2 showed that lesson creation succeeded with the exact request body but the Dictionary island initially unmounted before `router.push` committed `/lesson/active`.
+- CI #1955 on checkpoint head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c` passed frontend core and produced corrected Linux visual actuals, but proved `setTimeout(0)` was still an invalid lifecycle proxy.
+- CI #1961 on head `7f7d8e7370a8e37fcf48e83c779c8509e62e6a3a` confirmed frontend core, backend, accessibility, visual and iOS PWA gates. UI shard 1/2 then proved that pathname settlement alone was insufficient: the URL was `/lesson/active`, while `LexigoPremiumApp` hydrated from stale Dictionary-owned `window.history.state` and rendered the legacy compatibility boundary.
+- The final implementation preserves Next history metadata, replaces only the canonical LexiGo target derived from the actual URL and then mounts the product graph.
+- The full failure category and prevention rule are recorded in `.agents/AGENTS.progress-pr214.md`.
 
 ### Reviewed Linux visual evidence
 
@@ -39,20 +41,20 @@ Source: CI #1955, visual artifact `8632306006`, head `7f00019d372a3daf2fd7bd14ba
 - desktop Light: `1440 × 1160`, SHA-256 `64258a07b5010045dcc4929110f5635d072c995bfaf315d9140aee0e6a3abf72`;
 - desktop Dark: `1440 × 1160`, SHA-256 `0d5f69b6b4ecb530bd51b421e20f5fcd66f4bc01d60bb20969b592e9a95fde24`.
 
-All four actuals were manually reviewed against the approved Word Detail hierarchy before promotion into the content-addressed visual contract.
+All four actuals were manually reviewed against the approved Word Detail hierarchy before promotion into the content-addressed visual contract. CI #1961 reproduced all four promoted hashes exactly.
 
 ### Changed owners
 
 - Runtime/presentation: `frontend/components/word-detail-route.tsx`, `frontend/components/word-detail-presentation.tsx`.
-- Session/API/history/route handoff: `frontend/components/lexigo-dictionary-app.tsx`, bounded clarification in `frontend/components/lexigo-bootstrapped-app.tsx`.
-- Validation: `frontend/lib/word-detail.ts` and unit tests.
+- Session/API/history/route handoff: `frontend/components/lexigo-dictionary-app.tsx`, bounded canonical-history clarification in `frontend/components/lexigo-bootstrapped-app.tsx`.
+- Validation: `frontend/lib/word-detail.ts` and unit/source tests.
 - Styling: `frontend/app/word-detail.css`, `frontend/app/dictionary-detail-compatibility.css`, global import only through `frontend/app/layout.tsx`.
 - Regression protection: App Router, PWA, accessibility, ownership, performance and visual tests/fixtures.
-- Harness: current task records and the confirmed route-island failure lesson.
+- Harness: current task records and the confirmed route-island/history hydration lesson.
 
 ### Current state
 
-- Baselines and regression contracts are committed.
+- Baselines, canonical history handoff and regression contracts are committed.
 - Final developer-authored branch head must be resolved from live GitHub after this documentation update.
 - Required full CI, Ready transition, squash merge, exact-SHA stage validation, Issue #198 closure and separate post-merge repository-memory reconciliation remain pending.
 
