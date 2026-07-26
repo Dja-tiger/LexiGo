@@ -4,7 +4,6 @@ import { expect, test, type Browser, type BrowserContext, type Page } from "@pla
 
 import bundleBudgets from "../bundle-budgets.json";
 import {
-  QUALITY_SESSION,
   QUALITY_WORDS,
   captureRuntimeErrors,
   installQualityGateAPI,
@@ -93,7 +92,8 @@ const ROUTES: RouteCase[] = [
   {
     route: "/profile",
     waitUntilReady: async (page) => {
-      await expect(page.getByRole("heading", { name: QUALITY_SESSION.user.displayName })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Профиль", exact: true })).toBeVisible();
+      await expect(page.locator('[data-route-client-island="profile"]')).toBeVisible();
     },
   },
   {

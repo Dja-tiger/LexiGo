@@ -1,0 +1,147 @@
+/*
+ * User-selected appearance overrides.
+ *
+ * The inline bootstrap in RootLayout sets both data attributes before first
+ * paint. Auto deliberately leaves the established media-query token owners in
+ * control; only an explicit Light/Dark preference overrides them.
+ */
+
+:root[data-lexigo-appearance="light"] {
+  color-scheme: light;
+
+  --ak-color-canvas: #f4f7f5;
+  --ak-color-surface: #ffffff;
+  --ak-color-subtle: #e6efeb;
+  --ak-color-primary: #2557c7;
+  --ak-color-primary-hover: #1d48aa;
+  --ak-color-primary-soft: #dde8ff;
+  --ak-color-retained: #1f9d73;
+  --ak-color-weak: #c93f4f;
+  --ak-color-text-main: #10211d;
+  --ak-color-text-muted: #354944;
+  --ak-elevation-1: 0 1px 3px rgba(15, 33, 28, 0.08);
+  --ak-elevation-2: 0 8px 24px rgba(15, 33, 28, 0.12);
+  --ak-elevation-3: 0 16px 48px rgba(15, 33, 28, 0.16);
+
+  --bg: #f4f7f5;
+  --panel: #ffffff;
+  --panel-strong: #ffffff;
+  --border: #c9d7d2;
+  --muted: #354944;
+  --text: #10211d;
+  --accent: #2557c7;
+  --accent-2: #1f6b91;
+  --danger: #b52f42;
+  --success: #187a5a;
+  --warning: #765b00;
+
+  --lx-bg: #f4f7f5;
+  --lx-bg-soft: #e6efeb;
+  --lx-panel: #ffffff;
+  --lx-panel-strong: #ffffff;
+  --lx-border: #c9d7d2;
+  --lx-border-bright: #7da0ee;
+  --lx-text: #10211d;
+  --lx-muted: #354944;
+  --lx-subtle: #55716a;
+  --lx-purple: #2557c7;
+  --lx-violet: #2557c7;
+  --lx-blue: #2557c7;
+  --lx-cyan: #1f6b91;
+  --lx-green: #1f9d73;
+  --lx-orange: #9a5600;
+  --lx-pink: #9f3f72;
+  --lx-danger: #b52f42;
+  --lx-shadow: 0 18px 54px rgba(15, 33, 28, 0.13);
+}
+
+:root[data-lexigo-appearance="dark"] {
+  color-scheme: dark;
+
+  --ak-color-canvas: #10211d;
+  --ak-color-surface: #18302b;
+  --ak-color-subtle: #204b40;
+  --ak-color-primary: #8eafff;
+  --ak-color-primary-hover: #a9c1ff;
+  --ak-color-primary-soft: #203b69;
+  --ak-color-retained: #4bc09a;
+  --ak-color-weak: #ff8d98;
+  --ak-color-text-main: #ffffff;
+  --ak-color-text-muted: #e6efeb;
+  --ak-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --ak-elevation-2: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --ak-elevation-3: 0 16px 48px rgba(0, 0, 0, 0.36);
+
+  --bg: #10211d;
+  --panel: #18302b;
+  --panel-strong: #18302b;
+  --border: #41655b;
+  --muted: #e6efeb;
+  --text: #ffffff;
+  --accent: #8eafff;
+  --accent-2: #8fd2ee;
+  --danger: #ff9ca5;
+  --success: #72dbb8;
+  --warning: #ffe08a;
+
+  --lx-bg: #10211d;
+  --lx-bg-soft: #142a25;
+  --lx-panel: #18302b;
+  --lx-panel-strong: #18302b;
+  --lx-border: #41655b;
+  --lx-border-bright: #8eafff;
+  --lx-text: #ffffff;
+  --lx-muted: #e6efeb;
+  --lx-subtle: #bfd0ca;
+  --lx-purple: #9cb8ff;
+  --lx-violet: #9cb8ff;
+  --lx-blue: #8eafff;
+  --lx-cyan: #8fd2ee;
+  --lx-green: #72dbb8;
+  --lx-orange: #ffc078;
+  --lx-pink: #ff9fd3;
+  --lx-danger: #ff9ca5;
+  --lx-shadow: 0 24px 72px rgba(0, 0, 0, 0.34);
+}
+
+html[data-lexigo-appearance="light"],
+html[data-lexigo-appearance="dark"] {
+  background: var(--ak-color-canvas);
+}
+
+html[data-lexigo-appearance="light"] body,
+html[data-lexigo-appearance="dark"] body {
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
+}
+
+html[data-lexigo-appearance="light"] input,
+html[data-lexigo-appearance="light"] select,
+html[data-lexigo-appearance="light"] textarea,
+html[data-lexigo-appearance="dark"] input,
+html[data-lexigo-appearance="dark"] select,
+html[data-lexigo-appearance="dark"] textarea {
+  color-scheme: inherit;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-profile-link-button.danger {
+  color: #b52f42;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-profile-initials,
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-avatar {
+  border-color: #5179ce;
+  color: #ffffff;
+  background: #355fb3;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary {
+  border-color: #5179ce;
+  color: #ffffff;
+  background: #355fb3;
+}
+
+html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary:hover:not(:disabled) {
+  border-color: #6f91dd;
+  background: #416fc5;
+}

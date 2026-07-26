@@ -5,6 +5,7 @@ import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
+import { createAppearanceBootstrapScript } from "@/lib/appearance-preference";
 import { createBuildVersionGuardScript } from "@/lib/build-version-guard";
 import "./globals.css";
 import "./design-tokens.css";
@@ -48,8 +49,11 @@ import "./scenario-catalog.css";
 import "./learning-section-switch.css";
 import "./scenario-lessons.css";
 import "./scenario-lessons-accessibility.css";
+import "./appearance.css";
+import "./profile.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
+const APPEARANCE_BOOTSTRAP = createAppearanceBootstrapScript();
 const BUILD_VERSION_GUARD = createBuildVersionGuardScript(BUILD_ID);
 
 export const metadata: Metadata = {
@@ -70,7 +74,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f4f7f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b211b" },
+    { media: "(prefers-color-scheme: dark)", color: "#10211d" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -81,8 +85,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
-    <html lang="ru" data-lexigo-build={BUILD_ID}>
+    <html lang="ru" data-lexigo-build={BUILD_ID} suppressHydrationWarning>
       <head>
+        <script
+          id="lexigo-appearance-bootstrap"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP }}
+        />
         <script
           id="lexigo-build-version-guard"
           nonce={nonce}

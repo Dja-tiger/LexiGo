@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 
 import {
   canonicalURLFromLegacySearch,
@@ -129,9 +129,13 @@ function RouteSkipLink() {
 
 export function RoutedLexigoApp() {
   const pathname = usePathname();
+  const router = useRouter();
   const previousPathRef = useRef<string | null>(null);
   const announcementCounterRef = useRef(0);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
+  const navigateHome = useCallback(() => {
+    router.replace("/", { scroll: false });
+  }, [router]);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
@@ -239,7 +243,7 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>
       <RouteSkipLink />
       <RouteChrome />
-      <LexigoBootstrappedApp pathname={pathname} />
+      <LexigoBootstrappedApp pathname={pathname} onNavigateHome={navigateHome} />
       {routeAnnouncement.message ? (
         <p
           key={routeAnnouncement.id}

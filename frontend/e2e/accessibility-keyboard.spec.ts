@@ -294,11 +294,15 @@ for (const target of [
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "library", url: "/dictionary", heading: "Словарь" },
   { name: "progress", url: "/progress", heading: "Прогресс" },
-  { name: "profile", url: "/profile", heading: "Keyboard User" },
+  { name: "profile", url: "/profile", heading: "Профиль" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
-    await expect(page.getByRole("heading", { level: 1, name: target.heading, exact: target.url === "/progress" || target.url === "/dictionary" })).toBeVisible();
+    await expect(page.getByRole("heading", {
+      level: 1,
+      name: target.heading,
+      exact: target.url === "/progress" || target.url === "/dictionary" || target.url === "/profile",
+    })).toBeVisible();
     await expectKeyboardAxeBaseline(page);
     await expectNoPositiveTabIndex(page);
   });
