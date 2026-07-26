@@ -42,8 +42,9 @@ describe("Profile route ownership", () => {
     expect(premium).toContain('authMode === "reset"');
   });
 
-  it("keeps session bootstrap as the only post-logout route owner", async () => {
-    const [bootstrap, profile] = await Promise.all([
+  it("splits App Router navigation from pathname-gated logout finalization", async () => {
+    const [routed, bootstrap, profile] = await Promise.all([
+      source("./routed-lexigo-app.tsx"),
       source("./lexigo-bootstrapped-app.tsx"),
       source("./lexigo-profile-app.tsx"),
     ]);
@@ -56,15 +57,19 @@ describe("Profile route ownership", () => {
       bootstrap.indexOf("const handleLoggedOut"),
     );
 
-    expect(bootstrap).toContain("function homeHistoryState()");
+    expect(routed).toContain('import { usePathname, useRouter } from "next/navigation"');
+    expect(routed).toContain('router.replace("/", { scroll: false })');
+    expect(routed).toContain('onNavigateHome={navigateHome}');
+
+    expect(logoutOwner).toContain("setSessionRestoreSuppressed(true)");
     expect(logoutOwner).toContain("setLogoutPending(true)");
-    expect(logoutOwner).toContain("const homeState = homeHistoryState()");
-    expect(logoutOwner).toContain('window.history.replaceState(homeState, "", "/")');
-    expect(logoutOwner).toContain('window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }))');
+    expect(logoutOwner).toContain("onNavigateHome()");
     expect(logoutOwner).not.toContain("invalidateBootstrappedSession()");
+    expect(logoutOwner).not.toContain("window.history");
 
     expect(bootstrap).toContain('if (!logoutPending || pathname !== "/") return;');
     expect(bootstrap).toContain("window.setTimeout(finalizeLoggedOut, 0)");
+    expect(bootstrap).toContain("if (sessionRestoreSuppressed) return;");
     expect(logoutFinalizer).toContain("invalidateBootstrappedSession()");
     expect(logoutFinalizer).toContain("setInitialSession(null)");
     expect(logoutFinalizer).toContain("setLogoutPending(false)");
@@ -72,6 +77,7 @@ describe("Profile route ownership", () => {
     expect(profile).toContain("onLoggedOut();");
     expect(profile).not.toContain("createNavigationHistoryState");
     expect(profile).not.toContain("new PopStateEvent");
+    expect(profile).not.toContain("useRouter");
   });
 
   it("keeps sensitive account operations in their existing confirmed owners", async () => {
