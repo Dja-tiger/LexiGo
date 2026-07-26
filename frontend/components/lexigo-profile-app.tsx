@@ -24,7 +24,6 @@ import {
   subscribeCalendarReminderSettings,
 } from "../lib/calendar-reminder-storage";
 import { viewTitle } from "../lib/navigation";
-import { createNavigationHistoryState } from "../lib/navigation-history";
 import type { ProgressSummary } from "../lib/progress";
 import { AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
@@ -234,9 +233,6 @@ export function LexigoProfileApp({
     try {
       await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
       onLoggedOut();
-      const homeState = createNavigationHistoryState({ view: "home" }, { x: 0, y: 0 });
-      window.history.replaceState(homeState, "", "/");
-      window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }));
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Не удалось завершить выход");
       setBusyAction("");
