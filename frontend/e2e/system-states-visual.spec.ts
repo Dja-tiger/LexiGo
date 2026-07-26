@@ -21,11 +21,26 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, {
   figmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
   sha256: string;
 }> = {
-  "compact-loading-dark": { figmaNode: "79:69", sha256: "PENDING_MANUAL_REVIEW" },
-  "compact-empty-light": { figmaNode: "79:93", sha256: "PENDING_MANUAL_REVIEW" },
-  "compact-error-dark": { figmaNode: "79:117", sha256: "PENDING_MANUAL_REVIEW" },
-  "desktop-offline-dark": { figmaNode: "79:194", sha256: "PENDING_MANUAL_REVIEW" },
-  "compact-recall-offline-dark": { figmaNode: "75:57", sha256: "PENDING_MANUAL_REVIEW" },
+  "compact-loading-dark": {
+    figmaNode: "79:69",
+    sha256: "0445cb0016887f4c54993cbf3706f4b720e01cf9b13c0bfebf37efc77f1bb61d",
+  },
+  "compact-empty-light": {
+    figmaNode: "79:93",
+    sha256: "d21af9c2f2e194eb6c5a447c5913107cc414f216f28a7fba7a78dfc05b211aa2",
+  },
+  "compact-error-dark": {
+    figmaNode: "79:117",
+    sha256: "acd7f5437ba3994b140f0123f4734678dff7a82188abba8d6cbb5532ec0bc5c0",
+  },
+  "desktop-offline-dark": {
+    figmaNode: "79:194",
+    sha256: "8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a",
+  },
+  "compact-recall-offline-dark": {
+    figmaNode: "75:57",
+    sha256: "0d7393ab3793ab5d773d167f65f743d3cd53190c4da4899a2d915e1d3b01d2ae",
+  },
 };
 
 const VISUAL_LESSON_ID = "00000000-0000-0000-0000-000000000575";
