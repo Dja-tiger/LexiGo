@@ -17,7 +17,7 @@ Instruction source: installed GitHub connector skill plus `AGENTS.md`, `.agents/
 
 Version or verification date: 2026-07-26.
 
-Inputs: repository `Dja-tiger/LexiGo`, base/main `56c8bf7b589601510ff60465c68c7482f5a8f320`, Issue #24, PR #228, CI runs `30180574842`, `30181760632` and `30181864359`.
+Inputs: repository `Dja-tiger/LexiGo`, base/main `56c8bf7b589601510ff60465c68c7482f5a8f320`, Issue #24, PR #228, CI runs `30180574842`, `30181760632`, `30181864359` and `30182388921`.
 
 Files inspected: mandatory harness/current-state documents, architecture, Scenario API and consumers, route chrome/navigation owners, visual/performance specs, workflow jobs/logs/artifacts and PR changed-file set.
 
@@ -34,21 +34,22 @@ Failures:
 - CI #1861 visual comparison exposed new/pending Scenario baselines, expected Learning baseline changes and unrelated Progress/calendar drift.
 - The first measurement head used an invalid JavaScript baseline value and CI #1862 correctly failed the bundle-budget unit contract.
 - CI #1863 intentionally failed performance and visual jobs to publish exact measured artifacts.
+- CI #1864 passed performance and all completed production gates but visual exposed two test-harness ownership/geometry edge cases.
 
 Root cause:
 
 - The Learning subsection switch was in normal flow while route brand/navigation/reminder controls were fixed in the same top band.
-- `QUALITY_PROGRESS.scenarios` was added to a shared visual fixture, coupling unrelated Progress/calendar baselines to the Scenario catalog slice.
+- `QUALITY_PROGRESS.scenarios` was added to a shared visual fixture, coupling unrelated Progress/calendar baselines to the Scenario catalog slice; the first page-level override was at the wrong routing ownership layer.
 - A provisional measurement value diverged from the shared baseline without required provenance.
 
 Fallback and corrections:
 
 - Added `frontend/app/learning-section-switch.css` as the responsive placement owner and manually checked 390/768/1440 Linux actuals.
-- Replaced ordinary Lesson Composer snapshot acceptance with content-addressed dimensions/SHA/run/head contracts and an explicit no-overlap assertion.
-- Kept canonical Progress/calendar fixtures without Scenario projection and exposes the full recommendation only to Scenario catalog visuals.
+- Replaced ordinary Lesson Composer snapshot acceptance with content-addressed dimensions/SHA/run/head contracts and an explicit no-overlap assertion that ignores only ≤1 px subpixel boundary contact.
+- Kept canonical Progress/calendar fixtures without Scenario projection through a last-registered exact `BrowserContext` route; Scenario catalog tests remove that exact route and expose the full recommendation through the broad fixture.
 - Repeated measurement using a valid JavaScript baseline and a temporary request ceiling, then recorded the actual result with provenance.
 
-Limitations: final immutable-head CI, review-thread audit, squash merge, exact-SHA stage deploy/public validation, Issue closure and post-merge memory reconciliation remain blocking.
+Limitations: the corrected final immutable-head CI, review-thread audit, squash merge, exact-SHA stage deploy/public validation, Issue closure and post-merge memory reconciliation remain blocking.
 
 Reusable lesson: evidence fixtures must be route-local when optional projections alter presentation; visual review must test geometric non-overlap with fixed chrome rather than DOM visibility alone; measurement-only budget changes must still satisfy all configuration provenance contracts.
 

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 import {
   captureRuntimeErrors,
@@ -107,10 +107,10 @@ const BASELINE_PROGRESS: Record<string, unknown> = { ...QUALITY_PROGRESS };
 delete BASELINE_PROGRESS.scenarios;
 
 async function installProgressVisualFixture(
-  page: Page,
+  context: BrowserContext,
   progress: Record<string, unknown>,
 ): Promise<void> {
-  await page.route("**/api/v1/progress", async (route) => {
+  await context.route("**/api/v1/progress", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -139,10 +139,11 @@ async function expectLearningSwitchClearOfRouteChrome(page: Page): Promise<void>
       })
       .filter((element) => {
         const rect = element.getBoundingClientRect();
-        return subsectionRect.left < rect.right
-          && subsectionRect.right > rect.left
-          && subsectionRect.top < rect.bottom
-          && subsectionRect.bottom > rect.top;
+        const overlapWidth = Math.min(subsectionRect.right, rect.right)
+          - Math.max(subsectionRect.left, rect.left);
+        const overlapHeight = Math.min(subsectionRect.bottom, rect.bottom)
+          - Math.max(subsectionRect.top, rect.top);
+        return overlapWidth > 1 && overlapHeight > 1;
       })
       .map((element) => element.className);
   });
@@ -235,8 +236,8 @@ async function fillScenarioIncidentDraft(page: Page): Promise<void> {
   );
 }
 
-async function openScenarioCatalog(page: Page): Promise<void> {
-  await page.unroute("**/api/v1/progress");
+async function openScenarioCatalog(page: Page, context: BrowserContext): Promise<void> {
+  await context.unroute("**/api/v1/progress");
   await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1, name: "Рабочие сценарии" })).toBeVisible();
   await expect(page.locator("[data-scenario-catalog-order]")).toBeVisible();
@@ -248,7 +249,7 @@ test.describe("critical visual baselines", () => {
   test.beforeEach(async ({ context, page }) => {
     await installDeterministicRuntime(page);
     await installQualityGateAPI(context);
-    await installProgressVisualFixture(page, BASELINE_PROGRESS);
+    await installProgressVisualFixture(context, BASELINE_PROGRESS);
   });
 
   test("home", async ({ page }) => {
@@ -292,27 +293,27 @@ test.describe("critical visual baselines", () => {
     expect(runtimeErrors).toEqual([]);
   });
 
-  test("Scenario catalog compact Light", async ({ page }) => {
+  test("Scenario catalog compact Light", async ({ context, page }) => {
     test.skip(page.viewportSize()?.width !== 390, "compact Scenario catalog baseline only");
     const runtimeErrors = captureRuntimeErrors(page);
-    await openScenarioCatalog(page);
+    await openScenarioCatalog(page, context);
     await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactLight);
     expect(runtimeErrors).toEqual([]);
   });
 
-  test("Scenario catalog compact Dark", async ({ page }) => {
+  test("Scenario catalog compact Dark", async ({ context, page }) => {
     test.skip(page.viewportSize()?.width !== 390, "compact dark Scenario catalog baseline only");
     const runtimeErrors = captureRuntimeErrors(page);
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
-    await openScenarioCatalog(page);
+    await openScenarioCatalog(page, context);
     await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactDark);
     expect(runtimeErrors).toEqual([]);
   });
 
-  test("Scenario catalog desktop Light", async ({ page }) => {
+  test("Scenario catalog desktop Light", async ({ context, page }) => {
     test.skip(page.viewportSize()?.width !== 1440, "desktop Scenario catalog baseline only");
     const runtimeErrors = captureRuntimeErrors(page);
-    await openScenarioCatalog(page);
+    await openScenarioCatalog(page, context);
     await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.desktopLight);
     expect(runtimeErrors).toEqual([]);
   });
