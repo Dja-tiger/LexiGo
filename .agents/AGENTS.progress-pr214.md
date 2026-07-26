@@ -15,7 +15,7 @@
 7. Утверждённые Linux PNG импортируются только из конкретного artifact ID после ручной сверки с Figma. Обязательны SHA-256, IHDR dimensions и точный allow-list paths.
 8. Temporary workflow удаляется из diff до финального CI. Branch-local maintenance нельзя строить на непроверенной регистрации `pull_request` workflow; предпочтительны прямой contents/Git Data API либо уже зарегистрированный path-scoped mechanism.
 9. Финальный required CI запускается только на developer-authored head после восстановления канонических workflows.
-10. При imperative App Router navigation из отдельного client island не размонтируйте island по намерению перехода или фиксированной задержке. Сохраняйте owner до фактической смены pathname через отменяемый scheduler с точным route predicate.
+10. При imperative App Router navigation из отдельного client island не размонтируйте island по намерению перехода или фиксированной задержке. Дождитесь фактической смены pathname, восстановите канонический `NavigationTarget` из URL в текущем Next history entry с сохранением framework metadata и только затем передавайте ownership новому route graph.
 
 ## Инструменты и скрипты
 
@@ -113,11 +113,11 @@
 - **Regression gate:** allow-listed commit, прочитанный обратно canonical workflow blob и финальный CI на developer-authored head.
 - **Область действия:** temporary workflows, binary/text maintenance commits и branch protection.
 
-### 2026-07-26 — Async mutation размонтировала route island до фиксации App Router pathname
+### 2026-07-26 — Async mutation передала stale history state новому route graph
 
-- **Симптом:** POST однословного урока возвращал валидный payload и точный `wordIds: [101]`, но `/words/101` не переходил в `/lesson/active`; вместо этого отображалась compatibility-заглушка legacy product graph.
-- **Первопричина:** событие намерения перехода синхронно переключало `routeGraph` и размонтировало `LexigoDictionaryApp`, который только после завершения async mutation вызывал imperative `router.push`. Попытка заменить синхронное переключение на `setTimeout(0)` осталась гонкой и также срабатывала раньше реальной смены pathname.
-- **Почему ошибка не была обнаружена раньше:** direct entry, обычные Link-переходы и request-body tests проверялись отдельно; полный journey async mutation → imperative App Router push → cross-island remount впервые был выполнен полным UI shard.
-- **Профилактика:** не считать custom event или фиксированную задержку доказательством завершённой навигации. Сохранять исходный island до фактического выхода `window.location.pathname` из его route predicate через отменяемый `requestAnimationFrame` scheduler с cleanup.
+- **Симптом:** POST однословного урока возвращал валидный payload и точный `wordIds: [101]`; после исправления раннего unmount URL уже становился `/lesson/active`, но новый product graph продолжал отображать compatibility boundary Word Detail вместо Active Lesson.
+- **Первопричина:** исходный Dictionary island сначала размонтировался по намерению перехода, затем по фиксированной задержке. После добавления pathname barrier Next App Router создавал новую URL-запись, но в `window.history.state` сохранялся прежний LexiGo target `{view: "library", detail: "101"}`. `LexigoPremiumApp` честно гидратировался из этой stale state и игнорировал уже правильный pathname.
+- **Почему ошибка не была обнаружена раньше:** direct entry, обычные Link-переходы, request-body и URL assertions проверялись отдельно. Только полный journey async mutation → imperative App Router push → cross-island remount → product graph hydration выявил расхождение URL и history-owned application target.
+- **Профилактика:** custom event и фиксированная задержка не являются доказательством завершённой навигации. Сохранять исходный island до фактического выхода pathname из его route predicate; затем вычислять канонический target из текущего URL, объединять его с framework-owned Next history metadata через `replaceState` и только после этого переключать route graph.
 - **Regression gate:** `frontend/components/word-detail-source.test.ts`, `frontend/e2e/app-router-routes.spec.ts` и полный UI shard 1/2.
-- **Область действия:** App Router client islands, async mutations, imperative navigation и route-graph handoff.
+- **Область действия:** App Router client islands, async mutations, imperative navigation, browser history hydration и route-graph handoff.
