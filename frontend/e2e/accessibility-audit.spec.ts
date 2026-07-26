@@ -84,6 +84,15 @@ test.describe("blocking accessibility gate", () => {
       });
     }
 
+    test("word detail Dark has no critical or serious WCAG violations", async ({ page }) => {
+      const runtimeErrors = captureRuntimeErrors(page);
+      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+      await page.goto("/words/101", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
+      await expectNoBlockingAxeViolations(page);
+      expect(runtimeErrors).toEqual([]);
+    });
+
     test("calendar dialog has no critical or serious WCAG violations", async ({ page }) => {
       const runtimeErrors = captureRuntimeErrors(page);
       await page.goto("/progress", { waitUntil: "domcontentloaded" });
