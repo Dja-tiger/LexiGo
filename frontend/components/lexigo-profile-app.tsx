@@ -29,7 +29,7 @@ import { AsyncStatePanel } from "./async-state";
 import { CalendarReminderIntegration } from "./calendar-reminder-integration";
 
 const GOAL_OPTIONS = [15, 30, 60] as const;
-const APPEARANCE_OPTIONS: Array<{
+const APPEARANCE_OPTIONS: ReadonlyArray<{
   value: AppearancePreference;
   label: string;
   description: string;
@@ -38,6 +38,7 @@ const APPEARANCE_OPTIONS: Array<{
   { value: "light", label: "Светлая", description: "Всегда светлая" },
   { value: "dark", label: "Тёмная", description: "Всегда тёмная" },
 ];
+const APPEARANCE_VALUES = APPEARANCE_OPTIONS.map((option) => option.value);
 
 type ProfileSection = "security" | "email" | "data" | "delete";
 
@@ -66,10 +67,11 @@ function userInitials(session: Session): string {
 function moveRovingSelection<T extends string | number>(
   event: KeyboardEvent<HTMLButtonElement>,
   values: readonly T[],
-  current: T,
+  current: string | number,
   select: (value: T) => void,
 ): void {
-  const currentIndex = Math.max(0, values.indexOf(current));
+  const rawIndex = values.findIndex((value) => value === current);
+  const currentIndex = rawIndex >= 0 ? rawIndex : 0;
   let nextIndex = currentIndex;
 
   if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (currentIndex + 1) % values.length;
@@ -79,14 +81,12 @@ function moveRovingSelection<T extends string | number>(
   else return;
 
   event.preventDefault();
+  const group = event.currentTarget.parentElement;
   const nextValue = values[nextIndex];
   if (nextValue === undefined) return;
   select(nextValue);
   window.requestAnimationFrame(() => {
-    event.currentTarget.parentElement
-      ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
-      .item(nextIndex)
-      .focus();
+    group?.querySelectorAll<HTMLButtonElement>('[role="radio"]').item(nextIndex).focus();
   });
 }
 
@@ -165,11 +165,7 @@ export function LexigoProfileApp({
     };
   }, [loadProgress, session]);
 
-  useEffect(() => {
-    setCalendarSettings(readCalendarReminderSettings());
-    return subscribeCalendarReminderSettings(setCalendarSettings);
-  }, []);
-
+  useEffect(() => subscribeCalendarReminderSettings(setCalendarSettings), []);
   useEffect(() => subscribeAppearanceRuntime((preference) => setAppearance(preference)), []);
 
   useEffect(() => {
@@ -190,7 +186,8 @@ export function LexigoProfileApp({
 
   const initials = useMemo(() => userInitials(session), [session]);
   const displayName = session.user.displayName.trim() || "Ваш аккаунт";
-  const appearanceValues = APPEARANCE_OPTIONS.map((option) => option.value);
+  const configuredGoal = progress?.dailyGoal ?? GOAL_OPTIONS[0];
+  const goalHasPreset = GOAL_OPTIONS.some((goal) => goal === configuredGoal);
 
   async function updateDailyGoal(dailyGoal: number) {
     if (busyAction) return;
@@ -250,12 +247,7 @@ export function LexigoProfileApp({
         </div>
       </header>
 
-      <main
-        id="lexigo-main-content"
-        className="lx-main-content"
-        tabIndex={-1}
-        aria-label={viewTitle("profile")}
-      >
+      <main id="lexigo-main-content" className="lx-main-content" tabIndex={-1} aria-label={viewTitle("profile")}>
         <div className="lx-profile-view">
           <section className="lx-profile-heading" aria-labelledby="profile-title">
             <span>Профиль</span>
@@ -273,11 +265,7 @@ export function LexigoProfileApp({
               <span>{session.user.email}</span>
               <span>Аккаунт создан {accountDate(session.user.createdAt)}</span>
             </div>
-            <button
-              className="lx-profile-secondary-button"
-              type="button"
-              onClick={() => focusAccountSection("email")}
-            >
+            <button className="lx-profile-secondary-button" type="button" onClick={() => focusAccountSection("email")}>
               Изменить email
             </button>
           </section>
@@ -295,13 +283,8 @@ export function LexigoProfileApp({
                   <span>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal} ответов сегодня` : "Загружаем цель аккаунта"}</span>
                 </div>
                 {progress ? (
-                  <div
-                    className="lx-profile-goal-options"
-                    role="radiogroup"
-                    aria-label="Дневная цель"
-                    aria-orientation="horizontal"
-                  >
-                    {GOAL_OPTIONS.map((goal) => {
+                  <div className="lx-profile-goal-options" role="radiogroup" aria-label="Дневная цель" aria-orientation="horizontal">
+                    {GOAL_OPTIONS.map((goal, index) => {
                       const selected = progress.dailyGoal === goal;
                       return (
                         <button
@@ -310,10 +293,10 @@ export function LexigoProfileApp({
                           type="button"
                           role="radio"
                           aria-checked={selected}
-                          tabIndex={selected ? 0 : -1}
+                          tabIndex={selected || (!goalHasPreset && index === 0) ? 0 : -1}
                           disabled={Boolean(busyAction)}
                           onClick={() => void updateDailyGoal(goal)}
-                          onKeyDown={(event) => moveRovingSelection(event, GOAL_OPTIONS, progress.dailyGoal as typeof GOAL_OPTIONS[number], (next) => void updateDailyGoal(next))}
+                          onKeyDown={(event) => moveRovingSelection(event, GOAL_OPTIONS, configuredGoal, (next) => void updateDailyGoal(next))}
                         >
                           {goal}
                         </button>
@@ -364,12 +347,7 @@ export function LexigoProfileApp({
                   <strong>Оформление</strong>
                   <span>{appearancePersisted ? "Сохраняется в этом браузере" : "Только текущая вкладка"}</span>
                 </div>
-                <div
-                  className="lx-profile-appearance-options"
-                  role="radiogroup"
-                  aria-label="Оформление приложения"
-                  aria-orientation="horizontal"
-                >
+                <div className="lx-profile-appearance-options" role="radiogroup" aria-label="Оформление приложения" aria-orientation="horizontal">
                   {APPEARANCE_OPTIONS.map((option) => {
                     const selected = appearance === option.value;
                     return (
@@ -382,7 +360,7 @@ export function LexigoProfileApp({
                         aria-checked={selected}
                         tabIndex={selected ? 0 : -1}
                         onClick={() => updateAppearance(option.value)}
-                        onKeyDown={(event) => moveRovingSelection(event, appearanceValues, appearance, updateAppearance)}
+                        onKeyDown={(event) => moveRovingSelection(event, APPEARANCE_VALUES, appearance, updateAppearance)}
                       >
                         {option.label}
                       </button>
@@ -436,7 +414,7 @@ export function LexigoProfileApp({
               <div className="lx-profile-row">
                 <div className="lx-profile-row-copy">
                   <strong>Текущая сессия</strong>
-                  <span>Выход завершит только эту session family на устройстве</span>
+                  <span>Выход завершит только текущую сессию на устройстве</span>
                 </div>
                 <button
                   className="lx-profile-secondary-button"
