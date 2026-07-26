@@ -26,6 +26,7 @@ type ReviewServer = {
   attempts: number;
   committed: boolean;
   loseFirstResponse: boolean;
+  retryFirstResponse: boolean;
   allowReplay: boolean;
   idempotencyKeys: string[];
   storedResponse: string;
@@ -70,7 +71,7 @@ async function installReviewServer(context: BrowserContext, state: ReviewServer)
       catalogVersion: "sha256:offline-e2e",
       updatedAt: "2026-07-19T00:00:00Z",
       totals: { items: 1, words: 1, phrases: 0 },
-      sources: { mixed: 1, noun: 0, verb: 0, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 1, backend: 0 , academicTechnicalEnglish: 0},
+      sources: { mixed: 1, noun: 0, verb: 0, adjective: 1, phrases: 0, dailyLife: 0, travel: 0, dataEngineering: 1, backend: 0, academicTechnicalEnglish: 0 },
       topics: [{ topic: "Data", count: 1 }],
     });
     if (path === "/api/v1/progress") return json(route, 200, progress(state.logicalEvents));
@@ -101,6 +102,11 @@ async function installReviewServer(context: BrowserContext, state: ReviewServer)
       if (state.committed) {
         if (!state.allowReplay) return json(route, 503, { error: { code: "temporarily_unavailable", message: "retry later" } });
         return route.fulfill({ status: 200, contentType: "application/json", body: state.storedResponse });
+      }
+
+      if (state.retryFirstResponse) {
+        state.retryFirstResponse = false;
+        return json(route, 503, { error: { code: "temporarily_unavailable", message: "retry later" } });
       }
 
       state.logicalEvents += 1;
@@ -159,12 +165,26 @@ async function outboxRecords(page: Page): Promise<Array<{ status: string; idempo
   }));
 }
 
+async function expectQueuedLessonState(page: Page, connectivity: "offline" | "online") {
+  await expect(page.getByText("Ответ сохранён на устройстве", { exact: true })).toBeVisible();
+  await expect(page.getByText("Следующая карточка откроется после восстановления сети и подтверждения серверной позиции.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Ожидаем синхронизацию", exact: true })).toBeDisabled();
+  await expect(page.getByRole("heading", {
+    name: connectivity === "offline" ? "Работа без сети" : "Синхронизация обучения",
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText("Следующая карточка откроется только после подтверждения серверной позиции.")).toBeVisible();
+  await expect(page.locator("[data-pending-reviews='1']")).toBeVisible();
+}
+
 test("queues a rating offline and replays it automatically when connectivity returns", async ({ context, page }) => {
   const state: ReviewServer = {
     logicalEvents: 0,
     attempts: 0,
     committed: false,
     loseFirstResponse: false,
+    retryFirstResponse: false,
     allowReplay: true,
     idempotencyKeys: [],
     storedResponse: "",
@@ -176,6 +196,7 @@ test("queues a rating offline and replays it automatically when connectivity ret
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
     .toContainText("Ответ сохранён на устройстве.");
+  await expectQueuedLessonState(page, "offline");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);
@@ -190,12 +211,45 @@ test("queues a rating offline and replays it automatically when connectivity ret
   expect(state.logicalEvents).toBe(1);
 });
 
+test("queues retryable server responses instead of exposing unconfirmed progress", async ({ context, page }) => {
+  const state: ReviewServer = {
+    logicalEvents: 0,
+    attempts: 0,
+    committed: false,
+    loseFirstResponse: false,
+    retryFirstResponse: true,
+    allowReplay: true,
+    idempotencyKeys: [],
+    storedResponse: "",
+  };
+  await installReviewServer(context, state);
+  await openPersistedLesson(page);
+
+  await page.getByRole("button", { name: "Знал", exact: true }).click();
+  await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
+    .toContainText("повторит отправку после восстановления сервиса");
+  await expectQueuedLessonState(page, "online");
+  await expect.poll(() => outboxRecords(page)).toEqual([
+    expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
+  ]);
+  expect(state.attempts).toBe(1);
+  expect(state.logicalEvents).toBe(0);
+
+  await page.getByRole("button", { name: "Повторить сейчас", exact: true }).click();
+  await expect.poll(() => outboxRecords(page), { timeout: 15_000 }).toEqual([
+    expect.objectContaining({ status: "synced", idempotencyKey: expect.any(String) }),
+  ]);
+  expect(state.logicalEvents).toBe(1);
+  expect(new Set(state.idempotencyKeys).size).toBe(1);
+});
+
 test("replays the same idempotency key after a lost response and tab close", async ({ context, page }) => {
   const state: ReviewServer = {
     logicalEvents: 0,
     attempts: 0,
     committed: false,
     loseFirstResponse: true,
+    retryFirstResponse: false,
     allowReplay: false,
     idempotencyKeys: [],
     storedResponse: "",
@@ -206,6 +260,7 @@ test("replays the same idempotency key after a lost response and tab close", asy
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await expect(page.getByRole("alert", { name: "Ошибка текущего действия" }))
     .toContainText("Ответ сохранён на устройстве.");
+  await expectQueuedLessonState(page, "online");
   await expect.poll(() => outboxRecords(page)).toEqual([
     expect.objectContaining({ status: "pending", idempotencyKey: expect.any(String) }),
   ]);

@@ -51,6 +51,8 @@ import "./scenario-lessons.css";
 import "./scenario-lessons-accessibility.css";
 import "./appearance.css";
 import "./profile.css";
+import "./system-states.css";
+import "./system-states-lesson.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const APPEARANCE_BOOTSTRAP = createAppearanceBootstrapScript();

@@ -21,6 +21,8 @@ type LessonRequest = {
   lessonSize?: string;
 };
 
+const ACTIVE_LESSON_HYDRATION = new WeakMap<Page, Promise<void>>();
+
 const SESSION = {
   user: {
     id: "00000000-0000-0000-0000-000000000194",
@@ -98,6 +100,12 @@ export async function installLessonResultFixture(
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
+  let activeLessonHydrationResolved = false;
+  let resolveActiveLessonHydration!: () => void;
+  const activeLessonHydration = new Promise<void>((resolve) => {
+    resolveActiveLessonHydration = resolve;
+  });
+  ACTIVE_LESSON_HYDRATION.set(page, activeLessonHydration);
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -166,7 +174,12 @@ export async function installLessonResultFixture(
       });
     }
     if (path === "/api/v1/lessons/active") {
-      return fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "none" } });
+      await fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "none" } });
+      if (!activeLessonHydrationResolved) {
+        activeLessonHydrationResolved = true;
+        resolveActiveLessonHydration();
+      }
+      return;
     }
     if (path === "/api/v1/lessons/preview") {
       previewCount += 1;
@@ -261,6 +274,8 @@ export async function installLessonResultFixture(
 
 export async function completeRecallLesson(page: Page): Promise<void> {
   await page.goto("/learn", { waitUntil: "domcontentloaded" });
+  const activeLessonHydration = ACTIVE_LESSON_HYDRATION.get(page);
+  if (activeLessonHydration) await activeLessonHydration;
 
   const isCompact = (page.viewportSize()?.width ?? 1000) < 768;
   let start;

@@ -1,0 +1,604 @@
+/* Issue #202: Figma-backed loading, empty, error and offline system states. */
+
+:root {
+  --lx-state-canvas: var(--ak-color-canvas);
+  --lx-state-surface: var(--ak-color-surface);
+  --lx-state-subtle: var(--ak-color-subtle);
+  --lx-state-text: var(--ak-color-text-main);
+  --lx-state-muted: var(--ak-color-text-muted);
+  --lx-state-primary: var(--ak-color-primary);
+  --lx-state-primary-soft: var(--ak-color-primary-soft);
+  --lx-state-retained: var(--ak-color-retained);
+  --lx-state-weak: var(--ak-color-weak);
+  --lx-state-border: color-mix(in srgb, var(--ak-color-text-main) 14%, transparent);
+  --lx-state-shadow: var(--ak-elevation-2);
+}
+
+.lx-async-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ak-space-xl);
+  width: min(720px, calc(100% - 28px));
+  min-height: 220px;
+  margin: var(--ak-space-4xl) auto;
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-2xl);
+  padding: var(--ak-space-4xl);
+  color: var(--lx-state-text);
+  background: var(--lx-state-surface);
+  box-shadow: var(--lx-state-shadow);
+  outline: none;
+}
+
+.lx-async-state.compact {
+  width: 100%;
+  min-height: 0;
+  margin: var(--ak-space-md) 0;
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-xl);
+}
+
+.lx-async-state:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lx-state-primary) 42%, transparent), var(--lx-state-shadow);
+}
+
+.lx-async-state-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--lx-state-primary);
+  background: var(--lx-state-primary-soft);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lx-async-state.error .lx-async-state-icon {
+  color: var(--lx-state-weak);
+  background: color-mix(in srgb, var(--lx-state-weak) 16%, var(--lx-state-surface));
+}
+
+.lx-async-state.success .lx-async-state-icon {
+  color: var(--lx-state-retained);
+  background: color-mix(in srgb, var(--lx-state-retained) 16%, var(--lx-state-surface));
+}
+
+.lx-async-state-copy {
+  display: grid;
+  min-width: 0;
+  gap: var(--ak-space-sm);
+}
+
+.lx-async-state-copy > span {
+  color: var(--lx-state-primary);
+  font: var(--ak-text-caption);
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+
+.lx-async-state-copy > strong {
+  color: var(--lx-state-text);
+  font: var(--ak-text-title-medium);
+  letter-spacing: var(--ak-letter-spacing-title-medium);
+}
+
+.lx-async-state-copy > p {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--lx-state-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-async-state-copy > small {
+  color: var(--lx-state-muted);
+  font: var(--ak-text-caption);
+  overflow-wrap: anywhere;
+}
+
+.lx-async-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ak-space-md);
+}
+
+.lx-async-state-actions .lx-button {
+  min-width: 144px;
+}
+
+.lx-async-skeleton {
+  width: min(1160px, calc(100% - 28px));
+  margin: var(--ak-space-3xl) auto;
+}
+
+.lx-async-skeleton > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-lg);
+}
+
+.lx-async-skeleton i {
+  display: grid;
+  min-height: 152px;
+  align-content: start;
+  gap: var(--ak-space-md);
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-xl);
+  padding: var(--ak-space-xl);
+  background: var(--lx-state-surface);
+  box-shadow: var(--ak-elevation-1);
+  overflow: hidden;
+}
+
+.lx-async-skeleton b,
+.lx-bootstrap:not(.lx-bootstrap--recoverable)::after {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--lx-state-muted) 8%, transparent),
+    color-mix(in srgb, var(--lx-state-muted) 19%, transparent),
+    color-mix(in srgb, var(--lx-state-muted) 8%, transparent)
+  );
+  background-size: 220% 100%;
+  animation: lx-system-state-shimmer 1.4s linear infinite;
+}
+
+.lx-async-skeleton b {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.lx-async-skeleton b:first-child { width: 38%; }
+.lx-async-skeleton b:nth-child(2) { width: 76%; height: 24px; }
+.lx-async-skeleton b:last-child { width: 92%; }
+
+.lx-async-skeleton--home > div {
+  grid-template-columns: 1fr 1fr;
+}
+
+.lx-async-skeleton--home i:first-child {
+  min-height: 236px;
+  grid-column: 1 / -1;
+}
+
+/* Route chrome stays mounted while bootstrap/session restoration reserves Home geometry. */
+.lx-bootstrap:not(.lx-bootstrap--recoverable) {
+  display: grid;
+  width: min(1160px, calc(100% - 28px));
+  min-height: 600px;
+  align-content: start;
+  justify-items: start;
+  gap: var(--ak-space-md);
+  margin: 0 auto;
+  padding: clamp(40px, 7vw, 88px) 0 120px;
+  color: var(--lx-state-text);
+  background: transparent;
+}
+
+.lx-bootstrap:not(.lx-bootstrap--recoverable) .lx-bootstrap-mark {
+  width: 38px;
+  height: 46px;
+  border-radius: var(--ak-radius-md);
+  box-shadow: none;
+  font-size: 18px;
+}
+
+.lx-bootstrap:not(.lx-bootstrap--recoverable) strong {
+  font: var(--ak-text-title-large);
+  letter-spacing: var(--ak-letter-spacing-title-large);
+}
+
+.lx-bootstrap:not(.lx-bootstrap--recoverable) span {
+  color: var(--lx-state-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-bootstrap:not(.lx-bootstrap--recoverable)::before {
+  content: "Загружаем персональный план";
+  order: 4;
+  color: var(--lx-state-primary);
+  font: var(--ak-text-caption);
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+
+.lx-bootstrap:not(.lx-bootstrap--recoverable)::after {
+  content: "";
+  order: 5;
+  width: 100%;
+  min-height: 320px;
+  margin-top: var(--ak-space-sm);
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-2xl);
+  background-color: var(--lx-state-surface);
+  box-shadow: var(--ak-elevation-1);
+}
+
+/* Global connectivity state. Queue ownership remains in ReviewOutboxRuntime. */
+.lx-system-connectivity {
+  position: fixed;
+  z-index: 340;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px));
+  display: grid;
+  width: min(520px, calc(100vw - 40px));
+  gap: var(--ak-space-md);
+}
+
+.lx-review-sync {
+  position: static;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ak-space-md);
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-lg);
+  color: var(--lx-state-text);
+  background: color-mix(in srgb, var(--lx-state-surface) 96%, transparent);
+  box-shadow: var(--ak-elevation-3);
+  backdrop-filter: blur(18px);
+}
+
+.lx-review-sync--offline,
+.lx-review-sync--pending {
+  border-color: color-mix(in srgb, var(--lx-state-primary) 45%, transparent);
+}
+
+.lx-review-sync--failed {
+  border-color: color-mix(in srgb, var(--lx-state-weak) 50%, transparent);
+}
+
+.lx-review-sync--synced {
+  border-color: color-mix(in srgb, var(--lx-state-retained) 50%, transparent);
+}
+
+.lx-review-sync__indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--lx-state-primary);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--lx-state-primary) 14%, transparent);
+}
+
+.lx-review-sync--failed .lx-review-sync__indicator {
+  background: var(--lx-state-weak);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--lx-state-weak) 14%, transparent);
+}
+
+.lx-review-sync--synced .lx-review-sync__indicator {
+  background: var(--lx-state-retained);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--lx-state-retained) 14%, transparent);
+}
+
+.lx-review-sync__copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.lx-review-sync__copy strong {
+  color: var(--lx-state-text);
+  font: var(--ak-text-label);
+  font-weight: 800;
+}
+
+.lx-review-sync__copy span {
+  color: var(--lx-state-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-review-sync__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ak-space-sm);
+}
+
+.lx-review-sync button,
+.lx-connectivity-panel button {
+  min-height: 40px;
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-md);
+  padding: 8px 12px;
+  color: var(--lx-state-text);
+  background: var(--lx-state-subtle);
+  font: var(--ak-text-label);
+  font-weight: 700;
+}
+
+.lx-review-sync button:hover,
+.lx-connectivity-panel button:hover {
+  border-color: var(--lx-state-primary);
+}
+
+.lx-connectivity-panel {
+  display: grid;
+  gap: var(--ak-space-xl);
+  max-height: min(680px, calc(100dvh - 140px));
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-2xl);
+  padding: var(--ak-space-3xl);
+  color: var(--lx-state-text);
+  background: var(--lx-state-surface);
+  box-shadow: var(--ak-elevation-3);
+  overflow: auto;
+}
+
+.lx-connectivity-panel__heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ak-space-lg);
+  align-items: center;
+}
+
+.lx-connectivity-panel__icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--lx-state-primary);
+  background: var(--lx-state-primary-soft);
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.lx-connectivity-panel h2,
+.lx-connectivity-panel p {
+  margin: 0;
+}
+
+.lx-connectivity-panel h2 {
+  font: var(--ak-text-title-small);
+}
+
+.lx-connectivity-panel p,
+.lx-connectivity-panel li {
+  color: var(--lx-state-muted);
+  font: var(--ak-text-body);
+}
+
+.lx-connectivity-panel__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ak-space-md);
+}
+
+.lx-connectivity-panel__metrics div {
+  display: grid;
+  gap: var(--ak-space-xs);
+  border: 1px solid var(--lx-state-border);
+  border-radius: var(--ak-radius-lg);
+  padding: var(--ak-space-lg);
+  background: var(--lx-state-subtle);
+}
+
+.lx-connectivity-panel__metrics strong {
+  font: var(--ak-text-title-medium);
+}
+
+.lx-connectivity-panel__metrics span {
+  color: var(--lx-state-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-connectivity-panel__contract {
+  display: grid;
+  gap: var(--ak-space-sm);
+  margin: 0;
+  padding-left: 20px;
+}
+
+.lx-connectivity-panel__status {
+  min-height: 20px;
+  color: var(--lx-state-muted);
+  font: var(--ak-text-caption);
+}
+
+.lx-connectivity-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ak-space-md);
+}
+
+.lx-connectivity-panel__actions .primary {
+  border-color: var(--lx-state-primary);
+  color: #fff;
+  background: var(--lx-state-primary);
+}
+
+/* Active Lesson owns its answer controls. The global signal stays visible but moves below lesson chrome. */
+body:has(.lx-active-lesson) .lx-system-connectivity {
+  top: max(76px, calc(env(safe-area-inset-top) + 76px));
+  right: max(16px, env(safe-area-inset-right));
+  bottom: auto;
+  width: min(460px, calc(100vw - 32px));
+}
+
+body:has(.lx-active-lesson) .lx-review-sync {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 10px 12px;
+}
+
+body:has(.lx-active-lesson) .lx-review-sync__copy span {
+  display: none;
+}
+
+body:has(.lx-active-lesson) .lx-review-sync__actions {
+  grid-column: auto;
+}
+
+@keyframes lx-system-state-shimmer {
+  to { background-position: -220% 0; }
+}
+
+@media (max-width: 760px) {
+  .lx-async-state {
+    grid-template-columns: 1fr;
+    align-items: start;
+    width: 100%;
+    min-height: 0;
+    margin: var(--ak-space-2xl) 0;
+    padding: var(--ak-space-3xl) var(--ak-space-xl);
+    text-align: center;
+  }
+
+  .lx-async-state-icon {
+    justify-self: center;
+  }
+
+  .lx-async-state-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .lx-async-state-actions .lx-button {
+    width: 100%;
+  }
+
+  .lx-async-skeleton {
+    width: 100%;
+    margin: var(--ak-space-xl) 0;
+  }
+
+  .lx-async-skeleton > div,
+  .lx-async-skeleton--home > div {
+    grid-template-columns: 1fr;
+  }
+
+  .lx-async-skeleton--home i:first-child {
+    grid-column: auto;
+  }
+
+  .lx-async-skeleton i:nth-child(n + 4) {
+    display: none;
+  }
+
+  .lx-bootstrap:not(.lx-bootstrap--recoverable) {
+    width: 100%;
+    min-height: 560px;
+    padding: 40px 18px 128px;
+  }
+
+  .lx-bootstrap:not(.lx-bootstrap--recoverable)::after {
+    min-height: 360px;
+  }
+
+  .lx-system-connectivity {
+    right: 14px;
+    bottom: max(84px, calc(env(safe-area-inset-bottom) + 84px));
+    width: calc(100vw - 28px);
+  }
+
+  .lx-review-sync {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lx-review-sync__actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .lx-review-sync__actions button {
+    flex: 1 1 130px;
+  }
+
+  .lx-connectivity-panel {
+    max-height: calc(100dvh - 180px);
+    padding: var(--ak-space-xl);
+  }
+
+  .lx-connectivity-panel__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .lx-connectivity-panel__actions {
+    flex-direction: column-reverse;
+  }
+
+  .lx-connectivity-panel__actions button {
+    width: 100%;
+  }
+
+  body:has(.lx-active-lesson) .lx-system-connectivity {
+    top: max(70px, calc(env(safe-area-inset-top) + 70px));
+    right: 10px;
+    bottom: auto;
+    width: calc(100vw - 20px);
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync__actions {
+    grid-column: auto;
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync__actions button {
+    min-height: 36px;
+    flex: 0 0 auto;
+    padding: 6px 9px;
+  }
+}
+
+@media (max-width: 360px) {
+  .lx-system-connectivity {
+    right: 8px;
+    width: calc(100vw - 16px);
+  }
+
+  .lx-connectivity-panel {
+    padding: var(--ak-space-lg);
+  }
+
+  body:has(.lx-active-lesson) .lx-system-connectivity {
+    right: 6px;
+    width: calc(100vw - 12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-async-skeleton b,
+  .lx-bootstrap:not(.lx-bootstrap--recoverable)::after {
+    animation: none;
+    background-position: 0 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .lx-async-state,
+  .lx-async-skeleton i,
+  .lx-review-sync,
+  .lx-connectivity-panel,
+  .lx-connectivity-panel__metrics div {
+    border: 1px solid CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .lx-async-state-icon,
+  .lx-connectivity-panel__icon,
+  .lx-review-sync__indicator {
+    color: HighlightText;
+    background: Highlight;
+    box-shadow: none;
+  }
+
+  .lx-review-sync button,
+  .lx-connectivity-panel button {
+    border: 1px solid ButtonText;
+    color: ButtonText;
+    background: ButtonFace;
+  }
+}

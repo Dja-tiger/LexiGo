@@ -14,7 +14,12 @@ const sharedUse = {
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: ["visual-regression.spec.ts", "word-detail-visual.spec.ts", "profile-visual.spec.ts"],
+  testMatch: [
+    "visual-regression.spec.ts",
+    "word-detail-visual.spec.ts",
+    "profile-visual.spec.ts",
+    "system-states-visual.spec.ts",
+  ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
