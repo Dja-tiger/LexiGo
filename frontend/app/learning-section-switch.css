@@ -20,6 +20,25 @@
   }
 }
 
+/*
+ * Foundation V1 promotes the navigation rail to 220px from 1024px onward.
+ * Align the switch with the same content column instead of centring it under
+ * the fixed rail, which would leave the first tab partially covered.
+ */
+@media (min-width: 1024px) {
+  .lx-learning-section-switch--learn {
+    width: min(
+      1180px,
+      calc(100vw - var(--ak-shell-rail-width) - 80px)
+    );
+    margin-right: 40px;
+    margin-left: max(
+      calc(var(--ak-shell-rail-width) + 40px),
+      calc((100vw + var(--ak-shell-rail-width) - 1180px) / 2)
+    );
+  }
+}
+
 @media (max-width: 719px) {
   .lx-learning-section-switch--learn {
     width: calc(100% - 48px);

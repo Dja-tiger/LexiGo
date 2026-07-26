@@ -286,9 +286,10 @@ export async function installDeterministicRuntime(page: Page): Promise<void> {
 
 export async function installQualityGateAPI(
   context: BrowserContext,
-  options: { authenticated?: boolean } = {},
+  options: { authenticated?: boolean; progress?: unknown } = {},
 ): Promise<void> {
   const authenticated = options.authenticated ?? true;
+  const progress = options.progress ?? QUALITY_PROGRESS;
 
   if (authenticated) {
     await context.addCookies([{
@@ -309,7 +310,7 @@ export async function installQualityGateAPI(
       return fulfillJSON(route, 401, { error: { code: "unauthorized", message: "guest" } });
     }
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, QUALITY_METADATA);
-    if (path === "/api/v1/progress") return fulfillJSON(route, 200, QUALITY_PROGRESS);
+    if (path === "/api/v1/progress") return fulfillJSON(route, 200, progress);
     if (path === "/api/v1/scenarios" && request.method() === "GET") {
       return fulfillJSON(route, 200, { items: QUALITY_SCENARIOS, count: QUALITY_SCENARIOS.length });
     }

@@ -106,19 +106,6 @@ const LESSON_COMPOSER_VISUAL_BASELINES = {
 const BASELINE_PROGRESS: Record<string, unknown> = { ...QUALITY_PROGRESS };
 delete BASELINE_PROGRESS.scenarios;
 
-async function installProgressVisualFixture(
-  context: BrowserContext,
-  progress: Record<string, unknown>,
-): Promise<void> {
-  await context.route("**/api/v1/progress", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(progress),
-    });
-  });
-}
-
 async function expectLearningSwitchClearOfRouteChrome(page: Page): Promise<void> {
   const intersections = await page.evaluate(() => {
     const subsection = document.querySelector<HTMLElement>(".lx-learning-section-switch--learn");
@@ -237,7 +224,8 @@ async function fillScenarioIncidentDraft(page: Page): Promise<void> {
 }
 
 async function openScenarioCatalog(page: Page, context: BrowserContext): Promise<void> {
-  await context.unroute("**/api/v1/progress");
+  await context.unroute("**/api/v1/**");
+  await installQualityGateAPI(context);
   await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1, name: "Рабочие сценарии" })).toBeVisible();
   await expect(page.locator("[data-scenario-catalog-order]")).toBeVisible();
@@ -248,8 +236,7 @@ test.describe("critical visual baselines", () => {
 
   test.beforeEach(async ({ context, page }) => {
     await installDeterministicRuntime(page);
-    await installQualityGateAPI(context);
-    await installProgressVisualFixture(context, BASELINE_PROGRESS);
+    await installQualityGateAPI(context, { progress: BASELINE_PROGRESS });
   });
 
   test("home", async ({ page }) => {
