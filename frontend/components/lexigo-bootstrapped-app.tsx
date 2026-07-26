@@ -253,16 +253,23 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => {
-    // The dictionary graph is only a cold-entry optimization. Defer the graph
-    // swap by one task so an imperative App Router push issued immediately after
-    // this event is queued before the Dictionary island can unmount.
-    let productGraphTimer: number | null = null;
+    // The dictionary graph is only a cold-entry optimization. Keep the owning
+    // island mounted until App Router has actually changed the pathname; an
+    // async lesson mutation may otherwise unmount the router that issued push().
+    let productGraphFrame: number | null = null;
     const loadProductGraph = () => {
-      if (productGraphTimer !== null) return;
-      productGraphTimer = window.setTimeout(() => {
-        productGraphTimer = null;
+      if (productGraphFrame !== null) return;
+
+      const settleProductGraph = () => {
+        if (isDictionaryRoute(window.location.pathname)) {
+          productGraphFrame = window.requestAnimationFrame(settleProductGraph);
+          return;
+        }
+        productGraphFrame = null;
         setRouteGraph("product");
-      }, 0);
+      };
+
+      productGraphFrame = window.requestAnimationFrame(settleProductGraph);
     };
     const preserveLoadedProductGraph = () => {
       if (!isDictionaryRoute(window.location.pathname)) loadProductGraph();
@@ -271,7 +278,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
     window.addEventListener("popstate", preserveLoadedProductGraph);
     return () => {
-      if (productGraphTimer !== null) window.clearTimeout(productGraphTimer);
+      if (productGraphFrame !== null) window.cancelAnimationFrame(productGraphFrame);
       window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
       window.removeEventListener("popstate", preserveLoadedProductGraph);
     };
