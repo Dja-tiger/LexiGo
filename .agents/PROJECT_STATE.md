@@ -2,14 +2,14 @@
 
 ## Verification
 
-- Last verified: 2026-07-26 05:32 Europe/Berlin
+- Last verified: 2026-07-26 12:24 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge was PR #231 at `e8be735457f5d622487b27ad5a621ce6bb7b9754`
-- PR #231 final immutable head: `c603124eb6bc79300b6ada629816af937c0465b3`
-- PR #231 full CI: #1885, run `30185771628`, successful
-- Product deployment evidence for PR #231: Issue #12 and stage run `30186260749` report image `e8be735457f5d622487b27ad5a621ce6bb7b9754`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
-- Issue #230 is closed as completed
-- No product PR is open after PR #231 merged
+- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge was PR #233 at `5da5218250c671fcee73dbe154f0e14703b05036`
+- PR #233 final immutable head: `a5822064d86a359d51e3ab0a4b1b51f2635cb726`
+- PR #233 full CI: #1912, run `30197559129`, successful
+- Product deployment evidence for PR #233: Issue #12 and stage run `30198116371` report image `5da5218250c671fcee73dbe154f0e14703b05036`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
+- Issue #197 is closed as completed
+- No product PR is open after PR #233 merged
 - The current repository-memory reconciliation is a documentation/tooling follow-up only; it does not change runtime code
 
 ## Completed
@@ -61,6 +61,19 @@
 - Reviewed Scenario Catalog Linux visual contracts: compact Light `390 × 1876`, SHA-256 `6d6412fabb2e1b9d5b146da4609da35b7544252d9ab04bd4a8ae3c6e45d26508`; compact Dark `390 × 1876`, SHA-256 `fa874501b7c1a9f66b868c350f607bec444ab12255a18a108f990295a525a47a`; desktop Light `1440 × 981`, SHA-256 `350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a`.
 - PR #228 passed complete final-head CI #1867 and exact-squash stage deployment/public validation in run `30184041786`; Issue #24 is complete.
 
+### Dictionary catalog
+
+- PR #233 completed the canonical Figma-backed `/dictionary` browse/search catalog from nodes `78:54` and `78:193` while preserving the dedicated `LexigoDictionaryApp` route island.
+- Authenticated `GET /api/v1/words` remains authoritative for search, source, topic, learning status, sorting, pagination and exact item order; the client does not filter or sort returned items.
+- Search/filter/sort/page state remains canonical in the URL and is restored through reload and browser Back/Forward without losing the existing result-scroll contract.
+- The approved compact and desktop hierarchy now includes the Dictionary heading/count, search, quick filters, desktop filter rail, vertical result rows/cards and one server-metadata-owned pagination surface.
+- Catalog items navigate to canonical `/words/[id]`; Word Detail remains outside the redesign and is protected by a narrow compatibility stylesheet until Issue #198.
+- The duplicate catalog-level Lesson Composer action was removed; Dictionary remains browse/search only.
+- Loading, empty, error/retry, keyboard, axe, 320 px/200% reflow, PWA/history, route ownership and performance contracts are blocking.
+- Dictionary visual evidence uses content-addressed full-page Linux screenshots while masking only the non-product profile glyph boundary that proved platform-antialias-sensitive.
+- Reviewed Dictionary Linux visual contracts: compact Light `390 × 1064`, SHA-256 `fd61da13cbfb4378e17c5337e95632e95a33a944a5bbed1f64741124a8cea32b`; compact Dark `390 × 1064`, SHA-256 `b3f5349c94660fa041ac62d96f0e2f1f7683dfdbccf3792933eeb8a3892a3e27`; medium Light `768 × 1616`, SHA-256 `a0e187ffe7dedf4fefc29b4ae8f4ecf7ca859b66de178395c7b928647c19b80f`; desktop Light `1440 × 1624`, SHA-256 `eb4bf1143a93bedaf6186deca7f88154db1b1c2c46018b0dd4f3a6bfe63899bd`.
+- PR #233 passed complete final-head CI #1912 and exact-squash stage deployment/public validation in run `30198116371`; Issue #197 is complete.
+
 ### Agent Harness
 
 - PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
@@ -70,7 +83,8 @@
 - PR #225 reconciled Scenario UI production evidence and reset `.agents/current/**` from templates.
 - PR #227 reconciled Scenario progress integration and reset current task memory.
 - PR #229 reconciled Scenario catalog production evidence and reset current task memory.
-- This documentation follow-up records PR #231 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
+- PR #232 reconciled Progress navigation reliability production evidence and reset current task memory.
+- This documentation follow-up records PR #233 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
 - Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
@@ -83,43 +97,39 @@ No product slice is active. `.agents/current/**` is reset by the post-merge repo
 
 ## Remaining roadmap
 
-### 1. #197 — Dictionary catalog
-
-Canonical Figma presentation for `/dictionary`, preserving URL filters, API and route-island semantics. Nodes `78:54`, `78:193`.
-
-### 2. #198 — Word Detail
+### 1. #198 — Word Detail
 
 Canonical `/words/[id]` Figma presentation and direct-entry/loading/error/history contract. Nodes `78:99`, `78:274`.
 
-### 3. #199 — Phrases design gap
+### 2. #199 — Phrases design gap
 
 Approve exact catalog/detail nodes before implementation; no production implementation from inferred design.
 
-### 4. #200 — Profile
+### 3. #200 — Profile
 
 Canonical Profile/preferences/appearance presentation preserving auth/session/security ownership. Nodes `79:6`, `79:129`.
 
-### 5. #18 and #201 — Adaptive personalization and First Use
+### 4. #18 and #201 — Adaptive personalization and First Use
 
 Diagnostic onboarding, skip path, reason-coded personalized queue and balancing after stable catalog/scenario routes and approved Figma states.
 
-### 6. #202 and #170 — System and offline states
+### 5. #202 and #170 — System and offline states
 
 Unified loading/empty/error/offline presentation and explicit network-loss/recovery UX.
 
-### 7. #25 — Pronunciation, listening and custom terminology
+### 6. #25 — Pronunciation, listening and custom terminology
 
 Architecture/privacy decision first, then typed backend contract, scheduling, permission UX and import/export/deletion semantics.
 
-### 8. #115 — Route-level client islands and budgets
+### 7. #115 — Route-level client islands and budgets
 
 Bundle inventory and gradual extraction of remaining routes without duplicated session/API/PWA ownership.
 
-### 9. #70 — Legacy apps and CSS
+### 8. #70 — Legacy apps and CSS
 
 Proven-dead app/CSS families only, coordinated with route ownership and guarded by browser/visual/bundle evidence.
 
-### 10. #203, #205 and #133 — Figma handoff, final parity and usability
+### 9. #203, #205 and #133 — Figma handoff, final parity and usability
 
 Maintain exact production nodes, perform route-by-route parity after product slices, and complete external moderated usability validation.
 
@@ -135,19 +145,19 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
-2. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
-3. #228 — `feat(scenarios): add server-backed Scenario catalog` → `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`.
-4. #227 — `docs(agent): reconcile state after Scenario progress integration` → `56c8bf7b589601510ff60465c68c7482f5a8f320`.
-5. #226 — `feat(progress): integrate Scenario completion recommendations` → `e45b6beb63de2e1b18fd4482f21df8083e188df2`.
-6. #225 — `docs(agent): reconcile state after Scenario UI` → `591322c4a55b362402eab0b4936cd4e4f0347c3a`.
-7. #221 — `feat(scenarios): implement focused Scenario Lessons UI` → `8404066b0d5705de19f230fb98621d139fab12a0`.
+1. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
+2. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
+3. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
+4. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
+5. #228 — `feat(scenarios): add server-backed Scenario catalog` → `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`.
+6. #227 — `docs(agent): reconcile state after Scenario progress integration` → `56c8bf7b589601510ff60465c68c7482f5a8f320`.
+7. #226 — `feat(progress): integrate Scenario completion recommendations` → `e45b6beb63de2e1b18fd4482f21df8083e188df2`.
 
 ## Evidence
 
-- Live `main`, merged PR #231, final CI #1885, closed Issue #230 and stage Issue #12/run `30186260749` were re-read at the verification timestamp.
-- Product deployment evidence for #231 uses immutable image SHA `e8be735457f5d622487b27ad5a621ce6bb7b9754`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
-- No open product PR was found after PR #231 merged.
+- Live `main`, merged PR #233, final CI #1912, closed Issue #197 and stage Issue #12/run `30198116371` were re-read at the verification timestamp.
+- Product deployment evidence for #233 uses immutable image SHA `5da5218250c671fcee73dbe154f0e14703b05036`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- No open product PR was found after PR #233 merged.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
