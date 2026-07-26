@@ -10,6 +10,10 @@ import {
   installQualityGateAPI,
 } from "./support/quality-gates";
 import { SCENARIO_DETAIL } from "./support/scenario-fixture";
+import {
+  CANONICAL_WORD_DETAIL,
+  installCanonicalWordDetailFixture,
+} from "./support/word-detail-fixture";
 
 type RoutePath = keyof typeof bundleBudgets.routes;
 
@@ -71,6 +75,13 @@ const ROUTES: RouteCase[] = [
     route: "/dictionary",
     waitUntilReady: async (page) => {
       await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
+    },
+  },
+  {
+    route: "/words/101",
+    waitUntilReady: async (page) => {
+      await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
+      await expect(page.getByRole("list", { name: "Связанные фразы" })).toBeVisible();
     },
   },
   {
@@ -168,6 +179,7 @@ async function createColdRoutePage(browser: Browser): Promise<{
   await installScenarioCatalog(context);
   await installScenarioDetail(context);
   const page = await context.newPage();
+  await installCanonicalWordDetailFixture(page);
   const cdp = await context.newCDPSession(page);
   await cdp.send("Network.enable");
   await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
