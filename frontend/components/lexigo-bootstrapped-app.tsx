@@ -10,6 +10,7 @@ import {
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
+import type { NavigationTarget } from "../lib/navigation";
 import { createNavigationHistoryState } from "../lib/navigation-history";
 import { describeRequestFailure, type RequestProblem } from "../lib/request-failure";
 import {
@@ -125,6 +126,24 @@ function isDictionaryRoute(pathname: string): boolean {
 
 function isProgressRoute(pathname: string): boolean {
   return pathname === "/progress";
+}
+
+function navigationTargetFromGraphEvent(event: Event): NavigationTarget | null {
+  if (!(event instanceof CustomEvent)) return null;
+  const detail = event.detail;
+  if (!detail || typeof detail !== "object" || typeof (detail as { view?: unknown }).view !== "string") {
+    return null;
+  }
+  return detail as NavigationTarget;
+}
+
+function mergedNavigationHistoryState(target: NavigationTarget): Record<string, unknown> {
+  const current = window.history.state;
+  const next = createNavigationHistoryState(target, { x: 0, y: 0 });
+  return {
+    ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+    ...next,
+  };
 }
 
 export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
@@ -254,10 +273,14 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   useEffect(() => {
     // The dictionary graph is only a cold-entry optimization. Keep the owning
-    // island mounted until App Router has actually changed the pathname; an
-    // async lesson mutation may otherwise unmount the router that issued push().
+    // island mounted until App Router has actually changed the pathname, then
+    // attach the canonical target to the new Next history entry before the
+    // product graph hydrates from history.
     let productGraphFrame: number | null = null;
-    const loadProductGraph = () => {
+    let pendingProductTarget: NavigationTarget | null = null;
+
+    const scheduleProductGraph = (target: NavigationTarget | null) => {
+      if (target) pendingProductTarget = target;
       if (productGraphFrame !== null) return;
 
       const settleProductGraph = () => {
@@ -266,13 +289,25 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
           return;
         }
         productGraphFrame = null;
+        if (pendingProductTarget) {
+          window.history.replaceState(
+            mergedNavigationHistoryState(pendingProductTarget),
+            "",
+            window.location.href,
+          );
+          pendingProductTarget = null;
+        }
         setRouteGraph("product");
       };
 
       productGraphFrame = window.requestAnimationFrame(settleProductGraph);
     };
+
+    const loadProductGraph = (event: Event) => {
+      scheduleProductGraph(navigationTargetFromGraphEvent(event));
+    };
     const preserveLoadedProductGraph = () => {
-      if (!isDictionaryRoute(window.location.pathname)) loadProductGraph();
+      if (!isDictionaryRoute(window.location.pathname)) scheduleProductGraph(null);
     };
 
     window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, loadProductGraph);
