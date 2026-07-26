@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   isDefinitiveSessionRefreshError,
+  isSessionPayload,
+  SESSION_REFRESHED_EVENT,
   SessionRefreshError,
   type Session,
 } from "../lib/auth-session";
@@ -174,6 +176,15 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => {
+    const adoptRefreshedSession = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !isSessionPayload(event.detail)) return;
+      handleSessionUpdated(event.detail);
+    };
+    window.addEventListener(SESSION_REFRESHED_EVENT, adoptRefreshedSession);
+    return () => window.removeEventListener(SESSION_REFRESHED_EVENT, adoptRefreshedSession);
+  }, [handleSessionUpdated]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function preflightSession() {
@@ -212,7 +223,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     return () => {
       cancelled = true;
     };
-  }, [restoreAttempt]);
+  }, [pathname, restoreAttempt]);
 
   useEffect(() => {
     if (!restoreRecoverable) return;

@@ -68,6 +68,7 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioCatalogApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp).toMatch(/restoreBootstrappedSession\(\)[\s\S]*\}, \[pathname, restoreAttempt\]\);/);
   });
 
   it("allows only the bootstrap layer to load route application entries", () => {

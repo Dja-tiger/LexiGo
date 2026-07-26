@@ -162,6 +162,22 @@ async function installAPI(context: BrowserContext, state: ServerState) {
   });
 }
 
+async function clickPrimaryNavigation(
+  page: Page,
+  view: "home" | "learn" | "library" | "progress",
+) {
+  const controls = page.locator(`[data-navigation-view="${view}"]`);
+  const count = await controls.count();
+  for (let index = 0; index < count; index += 1) {
+    const control = controls.nth(index);
+    if (await control.isVisible()) {
+      await control.click();
+      return;
+    }
+  }
+  throw new Error(`No visible primary navigation control for ${view}`);
+}
+
 async function queuedReviews(page: Page): Promise<Array<{ userId: string; status: string }>> {
   return page.evaluate(async () => new Promise((resolve, reject) => {
     const request = indexedDB.open("lexigo-review-outbox", 1);
@@ -209,6 +225,40 @@ test("adopts an in-app login before persisting an offline lesson review", async 
     { userId: USER_ID, status: "pending" },
   ]);
   expect(state.reviewAttempts).toBe(0);
+});
+
+test("keeps an in-app login across Progress and lets PWA navigation leave the route island", async ({ context, page }) => {
+  const state: ServerState = {
+    authenticated: false,
+    activeLesson: false,
+    lessonCreateAttempts: 0,
+    reviewAttempts: 0,
+  };
+  await installAPI(context, state);
+
+  await page.goto("/profile");
+  await page.locator("#auth-email").fill(SESSION.user.email);
+  await page.locator("#auth-password").fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Войти", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
+
+  const destinations = [
+    { view: "home" as const, pathname: "/", label: "Главная" },
+    { view: "learn" as const, pathname: "/learn", label: "Обучение" },
+    { view: "library" as const, pathname: "/dictionary", label: "Словарь" },
+  ];
+
+  for (const destination of destinations) {
+    await clickPrimaryNavigation(page, "progress");
+    await expect(page).toHaveURL((url) => url.pathname === "/progress");
+    await expect(page.locator('[data-route-client-island="progress"]')).toBeVisible();
+    await expect(page.getByRole("button", { name: "Войти и открыть прогресс" })).toHaveCount(0);
+    await expect(page.locator("#lexigo-main-content")).toHaveAttribute("aria-label", "Прогресс");
+
+    await clickPrimaryNavigation(page, destination.view);
+    await expect(page).toHaveURL((url) => url.pathname === destination.pathname);
+    await expect(page.locator("#lexigo-main-content")).toHaveAttribute("aria-label", destination.label);
+  }
 });
 
 test("blocks a new network lesson with an explicit offline state", async ({ context, page }) => {

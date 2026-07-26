@@ -9,6 +9,7 @@ import {
   expiredSessionURL,
   isSessionPayload,
   refreshSession,
+  SESSION_REFRESHED_EVENT,
   SessionRefreshError,
 } from "./auth-session";
 
@@ -85,6 +86,33 @@ describe("auth session", () => {
       },
       signal: expect.any(AbortSignal),
     }));
+  });
+
+  it("reports a refreshed access token to the document session owner", async () => {
+    vi.stubGlobal("document", { cookie: "lexigo_csrf=csrf-token" });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(SESSION), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })));
+    const dispatchEvent = vi.fn();
+    vi.stubGlobal("window", { dispatchEvent });
+    class TestCustomEvent<T> {
+      readonly type: string;
+      readonly detail: T;
+
+      constructor(type: string, init: CustomEventInit<T>) {
+        this.type = type;
+        this.detail = init.detail as T;
+      }
+    }
+    vi.stubGlobal("CustomEvent", TestCustomEvent);
+
+    await expect(refreshSession({ redirectOnInvalid: false })).resolves.toEqual(SESSION);
+    expect(dispatchEvent).toHaveBeenCalledTimes(1);
+    expect(dispatchEvent.mock.calls[0]?.[0]).toMatchObject({
+      type: SESSION_REFRESHED_EVENT,
+      detail: SESSION,
+    });
   });
 
   it("coalesces concurrent refreshes in the same browser context", async () => {

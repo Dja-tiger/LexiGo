@@ -121,6 +121,33 @@ describe("navigation scroll restoration", () => {
     expect(settled).toBe(false);
   });
 
+  it("stops writing after cancellation interrupts an unreachable retry", () => {
+    const frames = createFrameHarness();
+    let writes = 0;
+    let settled = false;
+    const cancel = scheduleNavigationScrollRestoration(
+      { x: 0, y: 900 },
+      {
+        readPosition: () => ({ x: 0, y: 0 }),
+        writePosition: () => { writes += 1; },
+        requestFrame: frames.requestFrame,
+        cancelFrame: frames.cancelFrame,
+      },
+      () => { settled = true; },
+    );
+
+    frames.runNext();
+    expect(writes).toBe(1);
+    expect(frames.frames.size).toBe(1);
+
+    const [retryFrameID] = frames.frames.keys();
+    cancel();
+    expect(frames.cancelled).toContain(retryFrameID);
+    expect(frames.frames.size).toBe(0);
+    expect(writes).toBe(1);
+    expect(settled).toBe(false);
+  });
+
   it("stops after the configured frame budget", () => {
     const frames = createFrameHarness();
     let result: NavigationScrollRestorationResult | null = null;
