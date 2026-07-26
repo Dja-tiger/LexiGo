@@ -16,7 +16,7 @@ describe("global application error recovery", () => {
     expect(layout).toContain('import { ApplicationErrorBoundary } from "@/components/application-error-boundary"');
     expect(layout).toMatch(/<ApplicationErrorBoundary>[\s\S]*<ServiceWorkerRegistration \/>[\s\S]*<RoutedLexigoApp \/>[\s\S]*\{children\}[\s\S]*<LegalFooter \/>[\s\S]*<\/ApplicationErrorBoundary>/);
     expect(routedApp).not.toContain("ApplicationErrorBoundary");
-    expect(routedApp).toContain("<LexigoBootstrappedApp pathname={pathname} />");
+    expect(routedApp).toContain('<LexigoBootstrappedApp pathname={pathname} onNavigateHome={navigateHome} />');
   });
 
   it("implements React error lifecycle diagnostics and two recovery actions", () => {
