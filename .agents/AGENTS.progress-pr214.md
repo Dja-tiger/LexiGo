@@ -15,6 +15,7 @@
 7. Утверждённые Linux PNG импортируются только из конкретного artifact ID после ручной сверки с Figma. Обязательны SHA-256, IHDR dimensions и точный allow-list paths.
 8. Temporary workflow удаляется из diff до финального CI. Branch-local maintenance нельзя строить на непроверенной регистрации `pull_request` workflow; предпочтительны прямой contents/Git Data API либо уже зарегистрированный path-scoped mechanism.
 9. Финальный required CI запускается только на developer-authored head после восстановления канонических workflows.
+10. При imperative App Router navigation из отдельного client island не размонтируйте island по намерению перехода или фиксированной задержке. Сохраняйте owner до фактической смены pathname через отменяемый scheduler с точным route predicate.
 
 ## Инструменты и скрипты
 
@@ -111,3 +112,12 @@
 - **Профилактика:** применять прямой contents/Git Data API или заранее зарегистрированный path-scoped workflow; после выполнения восстановить canonical workflow.
 - **Regression gate:** allow-listed commit, прочитанный обратно canonical workflow blob и финальный CI на developer-authored head.
 - **Область действия:** temporary workflows, binary/text maintenance commits и branch protection.
+
+### 2026-07-26 — Async mutation размонтировала route island до фиксации App Router pathname
+
+- **Симптом:** POST однословного урока возвращал валидный payload и точный `wordIds: [101]`, но `/words/101` не переходил в `/lesson/active`; вместо этого отображалась compatibility-заглушка legacy product graph.
+- **Первопричина:** событие намерения перехода синхронно переключало `routeGraph` и размонтировало `LexigoDictionaryApp`, который только после завершения async mutation вызывал imperative `router.push`. Попытка заменить синхронное переключение на `setTimeout(0)` осталась гонкой и также срабатывала раньше реальной смены pathname.
+- **Почему ошибка не была обнаружена раньше:** direct entry, обычные Link-переходы и request-body tests проверялись отдельно; полный journey async mutation → imperative App Router push → cross-island remount впервые был выполнен полным UI shard.
+- **Профилактика:** не считать custom event или фиксированную задержку доказательством завершённой навигации. Сохранять исходный island до фактического выхода `window.location.pathname` из его route predicate через отменяемый `requestAnimationFrame` scheduler с cleanup.
+- **Regression gate:** `frontend/components/word-detail-source.test.ts`, `frontend/e2e/app-router-routes.spec.ts` и полный UI shard 1/2.
+- **Область действия:** App Router client islands, async mutations, imperative navigation и route-graph handoff.
