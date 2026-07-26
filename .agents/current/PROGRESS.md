@@ -1,65 +1,61 @@
 # Current Task Progress
 
-## 2026-07-26 13:28 Europe/Berlin
+## 2026-07-26 15:14 Europe/Berlin
 
 ### Verified
 
-- Live `main` is `72291d9351f3c565d13be7b3f9e9055258f98ac6`; stage run `30198806876` deploys that exact SHA and reports successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks.
-- No product PR was open before this slice. Issue #198 is the next verified roadmap item after completed Dictionary catalog Issue #197.
-- Branch `feat/issue-198-word-detail` was created from the exact live `main`; Draft PR #235 was opened before runtime writes.
-- Approved Figma sources are Mobile Dark `78:99` and Desktop Dark `78:274`; Light must derive from Foundation V1 tokens and receive separate Linux evidence.
-- `/words/[id]` is already a canonical App Router path. The route is selected by `LexigoBootstrappedApp` into the existing Dictionary client island.
-- Authenticated `GET /api/v1/words/{wordID}` returns the user-scoped word plus authoritative `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` and optional `lastReviewedAt` fields.
-- Authenticated bounded phrase search can provide related phrases while preserving server order. The repository has no personal-note mutation contract; catalog `note` is contextual learning copy, not user-authored data.
-- The Lesson API accepts one to sixty exact unique `wordIds`; a one-word detail CTA can therefore create a lesson with exactly the selected word without backend changes.
-- `SpeechPlayerButton` already owns browser speech loading, playing, unsupported and error feedback and leaves the text path available.
+- Live `main` remains `72291d9351f3c565d13be7b3f9e9055258f98ac6`; the feature branch is still based on that exact SHA and PR #235 remains Draft.
+- Issue #198 is the active atomic product slice. Approved Figma sources are Mobile Dark `78:99` and Desktop Dark `78:274`; Light appearance is derived from Foundation V1 tokens and separately reviewed Linux evidence.
+- `/words/[id]` stays inside the existing Dictionary client island and independently loads authenticated `GET /api/v1/words/{wordID}` without catalog metadata, Progress or catalog-page warm-up.
+- Scheduler fields `easiness`, `intervalDays`, `repetitions`, `dueAt` and optional `lastReviewedAt` are strictly validated before presentation.
+- Related phrases use bounded server-owned phrase search (`limit=3`) and preserve exact API order.
+- Practice creation uses the existing Lesson API with exactly `wordIds: [selectedWordId]`.
+- Cold-route performance baseline is `212877` JavaScript bytes and `18` requests, with enforced ceilings `245000`/`20`.
 
-### Finding
+### Implemented
 
-- The previous Word Detail was rendered inline by `DictionaryCatalog`, depended on either the current catalog page or a compatibility fetch and used a topic-wide Lesson Composer action.
-- Direct detail shared catalog metadata/progress/page effects and therefore did not have an independently bounded request graph.
-- The frontend base learning-item validator discarded scheduler fields already returned by the backend.
-- Figma contains a representative retention percentage and personal-note affordance that have no matching production contracts. They must not be reproduced as invented data or persistence.
+- Separate Word Detail controller and presentation component with direct-entry loading/error/retry states.
+- Canonical compact/desktop Light/Dark presentation, 320 px and 200% reflow, reduced-motion and forced-colors contracts.
+- Accessible browser pronunciation with unsupported/error fallback that preserves the visible word and practice path.
+- Dictionary URL-state, Back/Forward and scroll/history ownership remain in the existing route island.
+- Exact single-word lesson journey is protected by browser request-body and destination assertions.
+- Route-local dark foreground `#9fb7ff` corrects the two confirmed WCAG contrast defects for the «Пример» heading and active desktop Dictionary rail.
+- Cross-island handoff now keeps the Dictionary island mounted until App Router has actually changed `window.location.pathname`; a cancelable `requestAnimationFrame` route predicate replaces the failed synchronous/fixed-delay graph swap.
 
-### Root cause
+### CI findings and classification
 
-- Word Detail remained inside the legacy catalog presentation owner while App Router routing and the backend detail endpoint had already become canonical.
-- Issue #197 intentionally protected the old detail surface with a compatibility stylesheet rather than redesigning it, leaving route ownership and presentation ownership coupled until Issue #198.
+- CI #1952 on head `feb32051352fdcfa80d1bb864fa1bd66bd81878f` confirmed frontend core and backend gates but exposed two production contrast defects and one production route-handoff race.
+- Axe measured 3.29:1 for the «Пример» heading and 3.73:1 for the active Dictionary rail. Both are fixed route-locally; the replacement foreground is documented at 4.99:1 and 5.65:1 on the actual dark surfaces.
+- UI shard 1/2 showed that lesson creation succeeded with the exact request body but the Dictionary island unmounted before `router.push` committed `/lesson/active`.
+- CI #1955 on checkpoint head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c` passed frontend core and produced corrected Linux visual actuals, but proved `setTimeout(0)` was still an invalid lifecycle proxy. The implementation now waits for the actual pathname transition.
+- The failure category and prevention rule are recorded in `.agents/AGENTS.progress-pr214.md`.
 
-### Changed files
+### Reviewed Linux visual evidence
 
-- `.agents/current/TASK.md`
-- `.agents/current/PROGRESS.md`
-- `.agents/current/EXECUTION.md`
-- `frontend/lib/word-detail.ts`
-- `frontend/lib/word-detail.test.ts`
-- `frontend/components/word-detail-route.tsx`
-- `frontend/components/word-detail-presentation.tsx`
-- `frontend/components/dictionary-catalog.tsx`
-- `frontend/components/lexigo-dictionary-app.tsx`
-- `frontend/app/word-detail.css`
-- `frontend/app/dictionary-detail-compatibility.css`
-- `frontend/app/layout.tsx`
+Source: CI #1955, visual artifact `8632306006`, head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c`.
 
-### Checks passed
+- compact Light: `390 × 1745`, SHA-256 `0d9eade831f96bcdf7b55132ebce75c69cf22bd4be9761d28e0ce98595968f7b`;
+- compact Dark: `390 × 1745`, SHA-256 `f985ac2cce5ae144e09dbe296de886de10b3fe31b01e175cd579f85812ca8088`;
+- desktop Light: `1440 × 1160`, SHA-256 `64258a07b5010045dcc4929110f5635d072c995bfaf315d9140aee0e6a3abf72`;
+- desktop Dark: `1440 × 1160`, SHA-256 `0d5f69b6b4ecb530bd51b421e20f5fcd66f4bc01d60bb20969b592e9a95fde24`.
 
-- Repository/harness/main/stage/Issue/PR pre-flight.
-- Exact Figma design-context and variable inspection for both approved Word Detail nodes.
-- Backend detail, phrase-search and lesson-create ownership inspection.
-- Explicit branch-scoped write/read-back discipline for the task contract and implementation files.
-- Related phrase buttons retain native button semantics inside a semantic list.
-- Strict detail validator rejects malformed scheduler payloads and unsupported statuses by source inspection; automated unit execution is pending CI.
+All four actuals were manually reviewed against the approved Word Detail hierarchy before promotion into the content-addressed visual contract.
 
-### Checks failed
+### Changed owners
 
-- No product assertion has failed on the current checkpoint yet.
-- A source review found `--ak-color-on-primary` is not a Foundation V1 token. This must be replaced by a route-local Light/Dark token before visual calibration.
+- Runtime/presentation: `frontend/components/word-detail-route.tsx`, `frontend/components/word-detail-presentation.tsx`.
+- Session/API/history/route handoff: `frontend/components/lexigo-dictionary-app.tsx`, bounded clarification in `frontend/components/lexigo-bootstrapped-app.tsx`.
+- Validation: `frontend/lib/word-detail.ts` and unit tests.
+- Styling: `frontend/app/word-detail.css`, `frontend/app/dictionary-detail-compatibility.css`, global import only through `frontend/app/layout.tsx`.
+- Regression protection: App Router, PWA, accessibility, ownership, performance and visual tests/fixtures.
+- Harness: current task records and the confirmed route-island failure lesson.
 
-### Current branch head
+### Current state
 
-- `9b0ea79d577e2835e4f74d6f416dfa30afd4ead9` before this documentation update.
-- CI #1927 / run `30200185474` is pending for that implementation head.
+- Baselines and regression contracts are committed.
+- Final developer-authored branch head must be resolved from live GitHub after this documentation update.
+- Required full CI, Ready transition, squash merge, exact-SHA stage validation, Issue #198 closure and separate post-merge repository-memory reconciliation remain pending.
 
 ### Next action
 
-Inspect the first CI checkpoint and correct only objective lint/type/unit/source-contract failures. Then add focused direct-entry/history/PWA/accessibility/browser ownership tests, replace the missing on-primary token, measure the cold route and collect Linux Light/Dark visual actuals for manual review before baseline promotion.
+Run and analyze the complete required CI on the final head. Do not mark Ready or merge until every required frontend/backend/browser/PWA/accessibility/visual/performance gate is green and the PR diff/review state is clean.
