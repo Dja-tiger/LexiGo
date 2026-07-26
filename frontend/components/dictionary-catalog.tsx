@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import {
-  failedResourceStatus,
-  idleResourceStatus,
-  loadingResourceStatus,
-  readyResourceStatus,
-  type ResourceStatus,
-} from "../lib/account-resources";
-import type { CatalogMetadata, CatalogMetadataStatus } from "../lib/catalog-metadata";
-import { CATALOG_PAGE_SIZE, type CatalogPageInfo } from "../lib/catalog-page";
-import { catalogStatusLabel, partOfSpeechLabel, topicLabel } from "../lib/interface-copy";
-import type { LearningItem, WordSection } from "../lib/learning";
+  catalogStatusLabel,
+  partOfSpeechLabel,
+  topicLabel,
+} from "../lib/interface-copy";
+import type { WordSection } from "../lib/learning";
 import type { CatalogSort, CatalogStatus, NavigationTarget } from "../lib/navigation";
-import type { ProductJourneyIntent } from "../lib/product-journey";
 import type { NavigationScrollPosition } from "../lib/navigation-history";
-import type { ProgressSummary } from "../lib/progress";
-import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
+import type { ProductJourneyIntent } from "../lib/product-journey";
+import type { Progress } from "../lib/progress";
+import type { AsyncResourceStatus } from "../lib/resource-status";
+import type { CatalogMetadata, CatalogPage, CatalogQuery, Word } from "../lib/types";
+import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state-panel";
+import { CatalogPagination } from "./catalog-pagination";
 import { CatalogKindNavigation } from "./catalog-kind-navigation";
-import { CatalogPagination, CatalogSearchForm } from "./catalog-pagination";
-import { SpeechPlayerButton } from "./speech-player-button";
+import { SpeechPlayerButton } from "./speech-player";
 
-export type DictionarySource = WordSection;
-
-export type DictionaryFilters = {
+type DictionarySource = WordSection;
+type DictionaryFilters = {
   source: DictionarySource;
   topic: string;
   status: CatalogStatus | "";
@@ -33,19 +29,16 @@ export type DictionaryFilters = {
   page: number;
 };
 
-export type DictionaryPageResult = {
-  items: LearningItem[];
-  info: CatalogPageInfo;
-};
+type DictionaryStatusTone = "new" | "learning" | "review" | "mastered";
 
 type DictionaryCatalogProps = {
   authenticated: boolean;
   navigation: NavigationTarget;
   metadata: CatalogMetadata | null;
-  metadataStatus: CatalogMetadataStatus;
-  progress: ProgressSummary | null;
-  loadPage: (filters: DictionaryFilters, signal: AbortSignal) => Promise<DictionaryPageResult>;
-  loadDetail: (wordID: number, signal: AbortSignal) => Promise<LearningItem>;
+  metadataStatus: "idle" | "loading" | "ready" | "error";
+  progress: Progress | null;
+  loadPage: (query: CatalogQuery, signal?: AbortSignal) => Promise<CatalogPage>;
+  loadDetail: (id: number, signal?: AbortSignal) => Promise<Word>;
   onNavigate: (
     target: NavigationTarget,
     replace?: boolean,
@@ -57,42 +50,54 @@ type DictionaryCatalogProps = {
   onRequireAuthentication: () => void;
 };
 
-const EMPTY_PAGE: CatalogPageInfo = {
-  total: 0,
-  page: 1,
-  pageSize: CATALOG_PAGE_SIZE,
-  totalPages: 0,
-  hasPrevious: false,
-  hasNext: false,
-};
-
 const SOURCE_OPTIONS: Array<{ value: DictionarySource; label: string }> = [
-  { value: "mixed", label: "Все слова" },
+  { value: "mixed", label: "Все разделы" },
   { value: "noun", label: "Существительные" },
   { value: "verb", label: "Глаголы" },
   { value: "adjective", label: "Прилагательные" },
-  { value: "daily-life", label: "Бытовой английский" },
+  { value: "daily-life", label: "Повседневная жизнь" },
   { value: "travel", label: "Путешествия" },
   { value: "data-engineering", label: "Инженерия данных" },
   { value: "backend", label: "Backend-разработка" },
+  { value: "academic-technical-english", label: "Технический английский" },
 ];
-
-const SOURCE_VALUES = new Set(SOURCE_OPTIONS.map((option) => option.value));
 
 const STATUS_OPTIONS: Array<{ value: CatalogStatus | ""; label: string }> = [
   { value: "", label: "Все статусы" },
-  { value: "new", label: "Новые" },
-  { value: "learning", label: "Изучаются" },
-  { value: "review", label: "На повторении" },
-  { value: "mastered", label: "Освоены" },
+  { value: "new", label: "Новое" },
+  { value: "learning", label: "В работе" },
+  { value: "review", label: "К повторению" },
+  { value: "mastered", label: "Готово" },
 ];
 
-function dictionaryFilters(navigation: NavigationTarget): DictionaryFilters {
-  const source = navigation.source && navigation.source !== "phrases" && SOURCE_VALUES.has(navigation.source as DictionarySource)
-    ? navigation.source as DictionarySource
-    : "mixed";
+const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
+  { value: "default", label: "Порядок обучения" },
+  { value: "az", label: "По алфавиту A–Z" },
+  { value: "za", label: "По алфавиту Z–A" },
+];
+
+const CATALOG_PAGE_SIZE = 48;
+
+function sectionLabel(source: DictionarySource): string {
+  return SOURCE_OPTIONS.find((option) => option.value === source)?.label ?? source;
+}
+
+function statusPresentation(status: string): { label: string; tone: DictionaryStatusTone } {
+  switch (status) {
+    case "mastered":
+      return { label: "Готово", tone: "mastered" };
+    case "review":
+      return { label: "К повторению", tone: "review" };
+    case "learning":
+      return { label: "В работе", tone: "learning" };
+    default:
+      return { label: catalogStatusLabel(status), tone: "new" };
+  }
+}
+
+function filtersFromNavigation(navigation: NavigationTarget): DictionaryFilters {
   return {
-    source,
+    source: navigation.source && navigation.source !== "phrases" ? navigation.source : "mixed",
     topic: navigation.topic ?? "",
     status: navigation.status ?? "",
     query: navigation.query ?? "",
@@ -101,11 +106,7 @@ function dictionaryFilters(navigation: NavigationTarget): DictionaryFilters {
   };
 }
 
-function sectionLabel(source: DictionarySource): string {
-  return SOURCE_OPTIONS.find((option) => option.value === source)?.label ?? "Все слова";
-}
-
-function cleanTarget(filters: DictionaryFilters, detail?: string): NavigationTarget {
+function navigationFromFilters(filters: DictionaryFilters): NavigationTarget {
   return {
     view: "library",
     ...(filters.source !== "mixed" ? { source: filters.source } : {}),
@@ -114,8 +115,29 @@ function cleanTarget(filters: DictionaryFilters, detail?: string): NavigationTar
     ...(filters.query ? { query: filters.query } : {}),
     ...(filters.sort !== "default" ? { sort: filters.sort } : {}),
     ...(filters.page > 1 ? { page: filters.page } : {}),
-    ...(detail ? { detail } : {}),
   };
+}
+
+function navigationWithoutDetail(navigation: NavigationTarget): NavigationTarget {
+  const { detail: _detail, ...catalog } = navigation;
+  return { ...catalog, view: "library" };
+}
+
+function sameFilters(left: DictionaryFilters, right: DictionaryFilters): boolean {
+  return left.source === right.source
+    && left.topic === right.topic
+    && left.status === right.status
+    && left.query === right.query
+    && left.sort === right.sort
+    && left.page === right.page;
+}
+
+function filterCount(filters: DictionaryFilters): number {
+  return Number(filters.source !== "mixed")
+    + Number(Boolean(filters.topic))
+    + Number(Boolean(filters.status))
+    + Number(Boolean(filters.query))
+    + Number(filters.sort !== "default");
 }
 
 export function DictionaryCatalog({
@@ -123,7 +145,6 @@ export function DictionaryCatalog({
   navigation,
   metadata,
   metadataStatus,
-  progress,
   loadPage,
   loadDetail,
   onNavigate,
@@ -131,140 +152,199 @@ export function DictionaryCatalog({
   onConfigureLesson,
   onRequireAuthentication,
 }: DictionaryCatalogProps) {
-  const filters = useMemo(() => dictionaryFilters(navigation), [navigation]);
+  const filters = useMemo(() => filtersFromNavigation(navigation), [navigation]);
   const [searchInput, setSearchInput] = useState(filters.query);
-  const [items, setItems] = useState<LearningItem[]>([]);
-  const [pageInfo, setPageInfo] = useState<CatalogPageInfo>(EMPTY_PAGE);
-  const [pageStatus, setPageStatus] = useState<ResourceStatus>(idleResourceStatus);
-  const [remoteDetail, setRemoteDetail] = useState<{ key: string; item: LearningItem } | null>(null);
-  const [detailStatus, setDetailStatus] = useState<{ key: string; status: ResourceStatus }>({
-    key: "",
-    status: idleResourceStatus(),
+  const [items, setItems] = useState<Word[]>([]);
+  const [pageInfo, setPageInfo] = useState({
+    page: 1,
+    pageSize: CATALOG_PAGE_SIZE,
+    total: 0,
+    totalPages: 0,
+    hasPrevious: false,
+    hasNext: false,
   });
+  const [pageStatus, setPageStatus] = useState<AsyncResourceStatus>({ phase: "idle" });
+  const [selectedItem, setSelectedItem] = useState<Word | null>(null);
+  const [activeDetailStatus, setActiveDetailStatus] = useState<AsyncResourceStatus>({ phase: "idle" });
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const resultsRef = useRef<HTMLElement | null>(null);
+  const lastLoadedFiltersRef = useRef<DictionaryFilters | null>(null);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setSearchInput(filters.query));
-    return () => window.cancelAnimationFrame(frame);
+    setSearchInput(filters.query);
   }, [filters.query]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || navigation.detail) return;
+    if (lastLoadedFiltersRef.current && sameFilters(lastLoadedFiltersRef.current, filters)) return;
+    lastLoadedFiltersRef.current = filters;
     const controller = new AbortController();
+    setPageStatus({ phase: "loading" });
 
-    async function run() {
-      await Promise.resolve();
+    void loadPage({
+      kind: "word",
+      page: filters.page,
+      limit: CATALOG_PAGE_SIZE,
+      sort: filters.sort,
+      ...(filters.source !== "mixed" ? { source: filters.source } : {}),
+      ...(filters.topic ? { topic: filters.topic } : {}),
+      ...(filters.query ? { query: filters.query } : {}),
+      ...(filters.status ? { status: filters.status } : {}),
+    }, controller.signal).then((page) => {
+      setItems(page.items);
+      setPageInfo({
+        page: page.page,
+        pageSize: page.pageSize,
+        total: page.total,
+        totalPages: page.totalPages,
+        hasPrevious: page.hasPrevious,
+        hasNext: page.hasNext,
+      });
+      setPageStatus({ phase: "ready" });
+    }).catch((error) => {
       if (controller.signal.aborted) return;
-      setPageStatus(loadingResourceStatus());
-      try {
-        const result = await loadPage(filters, controller.signal);
-        if (controller.signal.aborted) return;
-        setItems(result.items);
-        setPageInfo(result.info);
-        setPageStatus(readyResourceStatus());
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        setItems([]);
-        setPageInfo(EMPTY_PAGE);
-        setPageStatus(failedResourceStatus(error, "словарь"));
-      }
-    }
+      setPageStatus({
+        phase: "error",
+        problem: {
+          title: "Не удалось загрузить словарь",
+          message: error instanceof Error ? error.message : "Повторите запрос.",
+          retryable: true,
+        },
+      });
+    });
 
-    void run();
     return () => controller.abort();
-  }, [authenticated, filters, loadPage]);
-
-  const localDetail = navigation.detail
-    ? items.find((item) => String(item.wordId) === navigation.detail) ?? null
-    : null;
-  const selectedItem = localDetail
-    ?? (remoteDetail && remoteDetail.key === navigation.detail ? remoteDetail.item : null);
-  const activeDetailStatus = detailStatus.key === navigation.detail
-    ? detailStatus.status
-    : idleResourceStatus();
+  }, [authenticated, filters, loadPage, navigation.detail]);
 
   useEffect(() => {
-    if (!authenticated || !navigation.detail || localDetail) return;
-    const detailKey = navigation.detail;
-    const controller = new AbortController();
-
-    async function run() {
-      await Promise.resolve();
-      if (controller.signal.aborted) return;
-      const wordID = Number(detailKey);
-      if (!Number.isSafeInteger(wordID) || wordID <= 0) {
-        setDetailStatus({
-          key: detailKey,
-          status: failedResourceStatus(new Error("Некорректная ссылка на слово"), "карточку слова"),
-        });
-        return;
-      }
-
-      setDetailStatus({ key: detailKey, status: loadingResourceStatus() });
-      try {
-        const item = await loadDetail(wordID, controller.signal);
-        if (controller.signal.aborted) return;
-        setRemoteDetail({ key: detailKey, item });
-        setDetailStatus({ key: detailKey, status: readyResourceStatus() });
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        setDetailStatus({ key: detailKey, status: failedResourceStatus(error, "карточку слова") });
-      }
+    if (!authenticated || !navigation.detail) {
+      setSelectedItem(null);
+      setActiveDetailStatus({ phase: "idle" });
+      return;
     }
 
-    void run();
+    const wordId = Number(navigation.detail);
+    if (!Number.isSafeInteger(wordId) || wordId <= 0) {
+      setSelectedItem(null);
+      setActiveDetailStatus({
+        phase: "error",
+        problem: {
+          title: "Карточка слова не найдена",
+          message: "Проверьте ссылку и вернитесь к результатам словаря.",
+          retryable: false,
+        },
+      });
+      return;
+    }
+
+    const cached = items.find((item) => item.id === wordId);
+    if (cached) {
+      setSelectedItem(cached);
+      setActiveDetailStatus({ phase: "ready" });
+      return;
+    }
+
+    const controller = new AbortController();
+    setSelectedItem(null);
+    setActiveDetailStatus({ phase: "loading" });
+    void loadDetail(wordId, controller.signal).then((item) => {
+      setSelectedItem(item);
+      setActiveDetailStatus({ phase: "ready" });
+    }).catch((error) => {
+      if (controller.signal.aborted) return;
+      setActiveDetailStatus({
+        phase: "error",
+        problem: {
+          title: "Не удалось открыть слово",
+          message: error instanceof Error ? error.message : "Вернитесь к результатам и попробуйте снова.",
+          retryable: false,
+        },
+      });
+    });
     return () => controller.abort();
-  }, [authenticated, loadDetail, localDetail, navigation.detail]);
+  }, [authenticated, items, loadDetail, navigation.detail]);
 
-  const topics = useMemo(() => metadata?.topics
-    .filter((entry) => (entry.words ?? entry.count) > 0)
-    .map((entry) => entry.topic)
-    .filter((topic, index, values) => values.indexOf(topic) === index)
-    .sort((left, right) => topicLabel(left).localeCompare(topicLabel(right), "ru")) ?? [], [metadata]);
+  const topics = useMemo(() => {
+    const available = metadata?.topics
+      .filter((entry) => entry.words > 0)
+      .map((entry) => entry.topic) ?? [];
+    return [...new Set(available)].sort((left, right) => left.localeCompare(right, "ru"));
+  }, [metadata]);
 
-  function updateFilters(patch: Partial<DictionaryFilters>) {
+  function updateFilters(patch: Partial<DictionaryFilters>, replace = false) {
     const next = { ...filters, ...patch };
-    onNavigate(cleanTarget(next), false, undefined, "in_app_navigation");
+    onNavigate(navigationFromFilters(next), replace);
   }
 
   function resetFilters() {
     setSearchInput("");
-    onNavigate({ view: "library" }, false, undefined, "in_app_navigation");
+    setFiltersExpanded(false);
+    onNavigate({ view: "library" });
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateFilters({ query: searchInput.trim(), page: 1 });
   }
 
   function retryPage() {
+    lastLoadedFiltersRef.current = null;
+    setPageStatus({ phase: "loading" });
     const controller = new AbortController();
-    setPageStatus(loadingResourceStatus());
-    void loadPage(filters, controller.signal).then((result) => {
-      setItems(result.items);
-      setPageInfo(result.info);
-      setPageStatus(readyResourceStatus());
-    }).catch((error) => setPageStatus(failedResourceStatus(error, "словарь")));
+    void loadPage({
+      kind: "word",
+      page: filters.page,
+      limit: CATALOG_PAGE_SIZE,
+      sort: filters.sort,
+      ...(filters.source !== "mixed" ? { source: filters.source } : {}),
+      ...(filters.topic ? { topic: filters.topic } : {}),
+      ...(filters.query ? { query: filters.query } : {}),
+      ...(filters.status ? { status: filters.status } : {}),
+    }, controller.signal).then((page) => {
+      lastLoadedFiltersRef.current = filters;
+      setItems(page.items);
+      setPageInfo({
+        page: page.page,
+        pageSize: page.pageSize,
+        total: page.total,
+        totalPages: page.totalPages,
+        hasPrevious: page.hasPrevious,
+        hasNext: page.hasNext,
+      });
+      setPageStatus({ phase: "ready" });
+    }).catch((error) => {
+      setPageStatus({
+        phase: "error",
+        problem: {
+          title: "Не удалось загрузить словарь",
+          message: error instanceof Error ? error.message : "Повторите запрос.",
+          retryable: true,
+        },
+      });
+    });
+  }
+
+  function openDetail(item: Word) {
+    setSelectedItem(item);
+    setActiveDetailStatus({ phase: "ready" });
+    onNavigate({ ...navigationWithoutDetail(navigation), detail: String(item.id) });
   }
 
   function changePage(page: number) {
     updateFilters({ page });
-    window.requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ block: "start", behavior: "auto" }));
-  }
-
-  function openDetail(item: LearningItem) {
-    if (!item.wordId) return;
-    onNavigate(cleanTarget(filters, String(item.wordId)), false, undefined, "catalog_open_detail");
+    requestAnimationFrame(() => resultsRef.current?.focus({ preventScroll: false }));
   }
 
   if (!authenticated) {
     return (
       <>
         <CatalogKindNavigation active="words" onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")} />
-        <section className="lx-page-heading">
-          <div><span>СЛОВАРЬ</span><h1>Каталог слов и терминов</h1><p>Ищите слова по английскому написанию, переводу и синонимам. Настройка урока находится в отдельном разделе «Обучение».</p></div>
-        </section>
         <AsyncStatePanel
           label="Словарь доступен после входа"
           kind="empty"
-          title="Войдите, чтобы открыть персональный каталог"
-          message="Статусы изучения, материал для запланированного повторения и быстрый запуск урока привязаны к вашему аккаунту."
-          actionLabel="Войти и открыть словарь"
+          title="Войдите, чтобы открыть словарь"
+          message="Поиск, фильтры и персональные статусы слов синхронизируются с аккаунтом."
+          actionLabel="Войти"
           onAction={onRequireAuthentication}
         />
       </>
@@ -272,7 +352,7 @@ export function DictionaryCatalog({
   }
 
   if (navigation.detail) {
-    const loading = !localDetail && (activeDetailStatus.phase === "loading" || (activeDetailStatus.phase === "idle" && !selectedItem));
+    const loading = activeDetailStatus.phase === "loading";
     const problem = activeDetailStatus.problem;
     return (
       <section className="lx-dictionary-detail">
@@ -317,84 +397,259 @@ export function DictionaryCatalog({
 
   const pending = pageStatus.phase === "loading" || pageStatus.phase === "idle";
   const problem = pageStatus.problem;
-  const filtersActive = filters.source !== "mixed" || Boolean(filters.topic || filters.status || filters.query) || filters.sort !== "default";
+  const filtersActive = filterCount(filters) > 0;
+  const activeFilters = filterCount(filters);
+  const catalogTotal = metadataStatus === "ready" && metadata
+    ? metadata.totals.words
+    : pageInfo.total;
+  const catalogCount = catalogTotal > 0
+    ? `${catalogTotal.toLocaleString("ru-RU")} ${catalogTotal === 1 ? "слово" : "слов"}`
+    : "Каталог слов";
+  const allQuickFilterActive = !filtersActive;
+  const reviewQuickFilterActive = filters.status === "review";
 
   return (
-    <>
-      <CatalogKindNavigation active="words" onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")} />
-      <section className="lx-page-heading">
+    <section className="lx-dictionary-catalog" aria-labelledby="dictionary-catalog-title">
+      <header className="lx-dictionary-heading">
         <div>
-          <span>СЛОВАРЬ</span>
-          <h1>Находите и изучайте материал в контексте</h1>
-          <p>Ищите по английскому слову, переводу и дополнительным вариантам написания. Здесь вы просматриваете материал; состав урока настраивается в разделе «Обучение».</p>
+          <h1 id="dictionary-catalog-title">Словарь</h1>
+          <p className="lx-dictionary-count">{catalogCount}</p>
+          <p className="lx-dictionary-description">Ищите, изучайте и управляйте материалом.</p>
         </div>
-        <div className="lx-heading-badge"><span>{progress ? `${progress.masteredWords} слов освоено` : metadataStatus === "ready" && metadata ? `${metadata.totals.words} слов` : "Каталог"}</span></div>
-      </section>
+      </header>
 
-      <section className="lx-dictionary-toolbar" aria-label="Фильтры словаря">
-        <label><span>Раздел</span><select aria-label="Раздел словаря" value={filters.source} onChange={(event) => updateFilters({ source: event.target.value as DictionarySource, page: 1 })}>{SOURCE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label><span>Тема</span><select aria-label="Тема словаря" value={filters.topic} onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}><option value="">Все темы</option>{topics.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}</select></label>
-        <label><span>Статус</span><select aria-label="Статус изучения" value={filters.status} onChange={(event) => updateFilters({ status: event.target.value as CatalogStatus | "", page: 1 })}>{STATUS_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}</select></label>
-        <label><span>Сортировка</span><select aria-label="Сортировка словаря" value={filters.sort} onChange={(event) => updateFilters({ sort: event.target.value as CatalogSort, page: 1 })}><option value="default">Порядок обучения</option><option value="az">A–Z</option><option value="za">Z–A</option></select></label>
-      </section>
-
-      <CatalogSearchForm
-        value={searchInput}
-        onChange={setSearchInput}
-        onSubmit={() => updateFilters({ query: searchInput.trim(), page: 1 })}
-        onClear={() => { setSearchInput(""); updateFilters({ query: "", page: 1 }); }}
-        label="Поиск по словарю"
-      />
-      <div className="lx-dictionary-filter-summary">
-        <p><strong>{sectionLabel(filters.source)}</strong>{filters.topic ? ` · ${topicLabel(filters.topic)}` : ""}{filters.status ? ` · ${catalogStatusLabel(filters.status)}` : ""}</p>
-        {filtersActive ? <button className="lx-button ghost" type="button" onClick={resetFilters}>Сбросить все фильтры</button> : null}
-      </div>
-
-      {pageStatus.phase === "error" ? (
-        <AsyncStatePanel
-          label="Словарь недоступен"
-          kind="error"
-          title={problem?.title ?? "Не удалось загрузить словарь"}
-          message={problem?.message ?? "Повторите запрос."}
-          reference={problem?.correlationId}
-          actionLabel={problem?.retryable ? "Повторить" : undefined}
-          onAction={problem?.retryable ? retryPage : undefined}
-        />
-      ) : null}
-      {pending && items.length === 0 ? <AsyncSkeletonGrid label="Загружаем слова" /> : null}
-      {!pending && pageStatus.phase === "ready" && items.length === 0 ? (
-        <AsyncStatePanel
-          label="Слова не найдены"
-          kind="empty"
-          title="По заданным условиям слов нет"
-          message="Измените поисковый запрос или сбросьте фильтры."
-          actionLabel="Сбросить фильтры"
-          onAction={resetFilters}
-        />
-      ) : null}
-
-      <CatalogPagination info={pageInfo} busy={pending} onPageChange={changePage} label="Навигация над результатами словаря" />
-      <section ref={resultsRef} id="dictionary-results" className="lx-dictionary-results" role="list" aria-label="Результаты словаря" aria-busy={pending}>
-        {items.map((item, index) => (
-          <article key={item.id} role="listitem" aria-posinset={(pageInfo.page - 1) * pageInfo.pageSize + index + 1} aria-setsize={pageInfo.total} className="lx-dictionary-result">
-            <button type="button" onClick={() => openDetail(item)} aria-label={`Открыть карточку: ${item.prompt}`}>
-              <div className="lx-dictionary-result-heading"><span>{topicLabel(item.topic)}</span><span data-status={item.status}>{catalogStatusLabel(item.status)}</span></div>
-              <strong lang="en">{item.prompt}</strong>
-              <small lang="ru">{item.answer}</small>
-              <p>{partOfSpeechLabel(item.partOfSpeech || "word")}{item.phonetic ? ` · ${item.phonetic}` : ""}</p>
-              <em>Открыть карточку →</em>
+      <div className="lx-dictionary-command-bar">
+        <form className="lx-dictionary-search" role="search" aria-label="Поиск по словарю" onSubmit={submitSearch}>
+          <span className="lx-dictionary-search-icon" aria-hidden="true">⌕</span>
+          <label>
+            <span className="lx-visually-hidden">Поиск по словарю</span>
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Найдите слово или фразу"
+              maxLength={120}
+            />
+          </label>
+          <button className="lx-visually-hidden" type="submit">Найти</button>
+          {searchInput ? (
+            <button
+              className="lx-dictionary-search-clear"
+              type="button"
+              aria-label="Очистить поиск"
+              onClick={() => {
+                setSearchInput("");
+                updateFilters({ query: "", page: 1 });
+              }}
+            >
+              ×
             </button>
-          </article>
-        ))}
-      </section>
-      <CatalogPagination info={pageInfo} busy={pending} onPageChange={changePage} label="Навигация под результатами словаря" />
+          ) : null}
+        </form>
 
-      <div className="lx-page-actions">
-        <button className="lx-button primary" type="button" disabled={pending || items.length === 0} onClick={() => onConfigureLesson({ source: filters.source, ...(filters.topic ? { topic: filters.topic } : {}) })}>
-          Настроить урок по текущей выборке
-        </button>
-        <small>Раздел и тема будут перенесены в настройки урока; повторно выбирать их не потребуется.</small>
+        <nav className="lx-dictionary-quick-filters" aria-label="Быстрые фильтры словаря">
+          <button
+            type="button"
+            aria-pressed={allQuickFilterActive}
+            className={allQuickFilterActive ? "active" : undefined}
+            onClick={resetFilters}
+          >
+            Все
+          </button>
+          <button
+            type="button"
+            aria-current="page"
+            onClick={() => updateFilters({ status: "", page: 1 })}
+          >
+            Слова
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")}
+          >
+            Фразы
+          </button>
+          <button
+            type="button"
+            aria-pressed={reviewQuickFilterActive}
+            className={reviewQuickFilterActive ? "active weak" : "weak"}
+            onClick={() => updateFilters({ status: reviewQuickFilterActive ? "" : "review", page: 1 })}
+          >
+            Слабые
+          </button>
+        </nav>
       </div>
-    </>
+
+      <button
+        className="lx-dictionary-filter-toggle"
+        type="button"
+        aria-expanded={filtersExpanded}
+        aria-controls="dictionary-filter-panel"
+        onClick={() => setFiltersExpanded((expanded) => !expanded)}
+      >
+        <span>Фильтры и сортировка</span>
+        {activeFilters > 0 ? <span aria-label={`Активных фильтров: ${activeFilters}`}>{activeFilters}</span> : null}
+      </button>
+
+      <div className="lx-dictionary-workspace">
+        <aside
+          id="dictionary-filter-panel"
+          className="lx-dictionary-filter-panel"
+          data-expanded={filtersExpanded ? "true" : "false"}
+          aria-label="Фильтры словаря"
+        >
+          <h2>Фильтры</h2>
+
+          <fieldset>
+            <legend>Разделы</legend>
+            <div className="lx-dictionary-filter-stack">
+              {SOURCE_OPTIONS.map((option) => {
+                const selected = filters.source === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={selected}
+                    className={selected ? "active" : undefined}
+                    onClick={() => updateFilters({ source: option.value, page: 1 })}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <label className="lx-dictionary-topic-filter">
+            <span>Тема</span>
+            <select
+              aria-label="Тема словаря"
+              value={filters.topic}
+              onChange={(event) => updateFilters({ topic: event.target.value, page: 1 })}
+            >
+              <option value="">Все темы</option>
+              {topics.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}
+            </select>
+          </label>
+
+          <fieldset>
+            <legend>Статус</legend>
+            <div className="lx-dictionary-filter-grid">
+              {STATUS_OPTIONS.map((option) => {
+                const selected = filters.status === option.value;
+                return (
+                  <button
+                    key={option.value || "all"}
+                    type="button"
+                    aria-pressed={selected}
+                    className={selected ? "active" : undefined}
+                    onClick={() => updateFilters({ status: option.value, page: 1 })}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Сортировка</legend>
+            <div className="lx-dictionary-filter-stack">
+              {SORT_OPTIONS.map((option) => {
+                const selected = filters.sort === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={selected}
+                    className={selected ? "active" : undefined}
+                    onClick={() => updateFilters({ sort: option.value, page: 1 })}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <button
+            className="lx-dictionary-reset"
+            type="button"
+            disabled={!filtersActive}
+            onClick={resetFilters}
+          >
+            Сбросить фильтры
+          </button>
+        </aside>
+
+        <section className="lx-dictionary-results-panel" aria-labelledby="dictionary-results-title">
+          <h2 id="dictionary-results-title">Результаты</h2>
+
+          {pageStatus.phase === "error" ? (
+            <AsyncStatePanel
+              label="Словарь недоступен"
+              kind="error"
+              title={problem?.title ?? "Не удалось загрузить словарь"}
+              message={problem?.message ?? "Повторите запрос."}
+              reference={problem?.correlationId}
+              actionLabel={problem?.retryable ? "Повторить" : undefined}
+              onAction={problem?.retryable ? retryPage : undefined}
+            />
+          ) : null}
+          {pending && items.length === 0 ? <AsyncSkeletonGrid label="Загружаем слова" /> : null}
+          {!pending && pageStatus.phase === "ready" && items.length === 0 ? (
+            <AsyncStatePanel
+              label="Слова не найдены"
+              kind="empty"
+              title="По заданным условиям слов нет"
+              message="Измените поисковый запрос или сбросьте фильтры."
+              actionLabel="Сбросить фильтры"
+              onAction={resetFilters}
+            />
+          ) : null}
+
+          <section
+            ref={resultsRef}
+            id="dictionary-results"
+            className="lx-dictionary-results"
+            role="list"
+            aria-label="Результаты словаря"
+            aria-busy={pending}
+            tabIndex={-1}
+          >
+            {items.map((item, index) => {
+              const status = statusPresentation(item.status);
+              return (
+                <article
+                  key={item.id}
+                  role="listitem"
+                  aria-posinset={(pageInfo.page - 1) * pageInfo.pageSize + index + 1}
+                  aria-setsize={pageInfo.total}
+                  className="lx-dictionary-result"
+                >
+                  <button type="button" onClick={() => openDetail(item)} aria-label={`Открыть карточку: ${item.prompt}`}>
+                    <span className="lx-dictionary-result-copy">
+                      <strong lang="en">{item.prompt}</strong>
+                      <span lang="ru">{item.answer}</span>
+                      <span className="lx-visually-hidden">
+                        {topicLabel(item.topic)}; {partOfSpeechLabel(item.partOfSpeech || "word")}
+                      </span>
+                    </span>
+                    <span className="lx-dictionary-status" data-tone={status.tone}>{status.label}</span>
+                  </button>
+                </article>
+              );
+            })}
+          </section>
+
+          <CatalogPagination
+            info={pageInfo}
+            busy={pending}
+            onPageChange={changePage}
+            label="Навигация по страницам словаря"
+          />
+        </section>
+      </div>
+    </section>
   );
 }
