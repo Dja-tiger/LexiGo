@@ -160,6 +160,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
   const [routeGraph, setRouteGraph] = useState<RouteGraph>(() => (
     isDictionaryRoute(pathname) ? "dictionary" : "product"
   ));
@@ -178,19 +179,23 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     setRestoreAttempt((current) => current + 1);
   }, []);
 
-  const handleLoggedOut = useCallback(() => {
-    const homeState = homeHistoryState();
-    window.history.replaceState(homeState, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }));
-
+  const finalizeLoggedOut = useCallback(() => {
     invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
+    setLogoutPending(false);
     setAccountNotice({
       title: "Вы вышли из аккаунта",
       message: "Текущая сессия завершена. Локальная настройка оформления сохранена.",
     });
+  }, []);
+
+  const handleLoggedOut = useCallback(() => {
+    const homeState = homeHistoryState();
+    setLogoutPending(true);
+    window.history.replaceState(homeState, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }));
   }, []);
 
   const handleAccountDeleted = useCallback(() => {
@@ -218,6 +223,12 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   useEffect(() => subscribeAppearanceRuntime(), []);
+
+  useEffect(() => {
+    if (!logoutPending || pathname !== "/") return;
+    const timer = window.setTimeout(finalizeLoggedOut, 0);
+    return () => window.clearTimeout(timer);
+  }, [finalizeLoggedOut, logoutPending, pathname]);
 
   useEffect(() => {
     const adoptRefreshedSession = (event: Event) => {
