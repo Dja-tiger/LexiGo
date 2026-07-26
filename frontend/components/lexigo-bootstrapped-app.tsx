@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 
+import { subscribeAppearanceRuntime } from "../lib/appearance-preference";
 import {
   isDefinitiveSessionRefreshError,
   isSessionPayload,
@@ -75,6 +76,14 @@ const LexigoProgressApp = dynamic(
   },
 );
 
+const LexigoProfileApp = dynamic(
+  () => import("./lexigo-profile-app").then((module) => module.LexigoProfileApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
 const LexigoScenarioCatalogApp = dynamic(
   () => import("./lexigo-scenario-catalog-app").then((module) => module.LexigoScenarioCatalogApp),
   {
@@ -128,6 +137,10 @@ function isProgressRoute(pathname: string): boolean {
   return pathname === "/progress";
 }
 
+function isProfileRoute(pathname: string): boolean {
+  return pathname === "/profile";
+}
+
 function mergedNavigationHistoryState(target: NavigationTarget): Record<string, unknown> {
   const current = window.history.state;
   const next = createNavigationHistoryState(target, { x: 0, y: 0 });
@@ -161,6 +174,18 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     setRestoreAttempt((current) => current + 1);
   }, []);
 
+  const handleLoggedOut = useCallback(() => {
+    invalidateBootstrappedSession();
+    setInitialSession(null);
+    setNotice(null);
+    setRestoreRecoverable(false);
+    setAccountNotice({
+      title: "Вы вышли из аккаунта",
+      message: "Текущая сессия завершена. Локальная настройка оформления сохранена.",
+    });
+    window.history.replaceState(profileHistoryState(), "", "/profile?account=logged-out");
+  }, []);
+
   const handleAccountDeleted = useCallback(() => {
     invalidateBootstrappedSession();
     setInitialSession(null);
@@ -184,6 +209,8 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
     });
     window.history.replaceState(profileHistoryState(), "", "/profile?account=email-changed");
   }, []);
+
+  useEffect(() => subscribeAppearanceRuntime(), []);
 
   useEffect(() => {
     const adoptRefreshedSession = (event: Event) => {
@@ -329,6 +356,7 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
+  const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
   const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;
   const useScenarioIsland = isScenarioDetailRoute(pathname) && initialSession !== null;
   const routeKey = initialSession?.user.id ?? "guest";
@@ -378,6 +406,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
           key={routeKey}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useProfileIsland ? (
+        <LexigoProfileApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+          onLoggedOut={handleLoggedOut}
         />
       ) : (
         <LexigoPremiumApp
