@@ -33,6 +33,8 @@ LexiGo должен одновременно быть рабочим инстр�
 - верхнеуровневая навигация использует нативные ссылки Next.js `Link`, поэтому поддерживает открытие в новой вкладке, копирование адреса и стандартные browser controls;
 - root layout содержит persistent client shell: переключение маршрута не перезапускает refresh-session preflight, outbox runtime и PWA lifecycle;
 - тяжёлый product graph загружается отдельным client chunk только после восстановления сессии;
+- `/profile` после восстановления сессии загружает отдельный authenticated Profile island; guest login, registration, password reset и email-change confirmation остаются в существующей auth compatibility boundary;
+- Profile island владеет только сводкой профиля и пользовательскими preferences; password, session revocation, email change, export и account deletion остаются в независимых подтверждаемых account-компонентах;
 - текущая React state-модель экранов остаётся внутренним compatibility layer и синхронизируется с pathname/history;
 - фильтры, сортировка, страница и detail identifier кодируются в URL; Back/Forward восстанавливают соответствующий экран и scroll position;
 - отдельные per-tab snapshots хранят вложенный маршрут и scroll в `sessionStorage`; повреждённый snapshot удаляется локально без очистки остальных данных;
@@ -46,6 +48,15 @@ LexiGo должен одновременно быть рабочим инстр�
 - App Router предоставляет route-level loading, error и not-found boundaries;
 - Service Worker кэширует HTML shell канонических маршрутов и использует `/` как fallback для динамических detail routes при offline navigation.
 
+## Appearance ownership
+
+- пользовательская настройка хранит только значение `auto`, `light` или `dark` под версионированным browser key и не содержит auth/session данных;
+- inline bootstrap в root layout читает настройку до первого paint, вычисляет effective appearance и синхронно выставляет document attributes, `color-scheme` и PWA `theme-color`;
+- `auto` сохраняет существующие `prefers-color-scheme` media-query owners; explicit Light/Dark переопределяют semantic tokens на document root;
+- изменение системной темы применяется в runtime только при `auto`; explicit preference остаётся стабильной до следующего выбора пользователя;
+- запрет browser storage не блокирует приложение: текущая вкладка применяет выбранную тему, а следующий cold start безопасно возвращается к `auto`;
+- legacy account/security forms остаются отдельными runtime owners и получают route-scoped compatibility palette только при explicit Light на `/profile`, без изменения их API и confirmation semantics.
+
 ## Границы модулей backend
 
 - `auth` — identity, пароли, access/refresh tokens и операции над refresh-token families;
@@ -58,6 +69,8 @@ LexiGo должен одновременно быть рабочим инстр�
 
 ## Управление аккаунтом и данными
 
+- Profile summary не дублирует чувствительные операции: ссылки переводят keyboard focus к существующим security, email и data owners;
+- дневная цель остаётся server-owned preference и изменяется через authenticated CSRF-protected progress contract; calendar reminder остаётся browser/calendar-owned;
 - одно устройство представлено одной refresh-token family; ротация токена не создаёт дубликаты устройств в профиле;
 - смена пароля и завершение остальных сессий требуют bearer-аутентификацию, CSRF и повторный ввод текущего пароля;
 - смена пароля, отзыв чужих session families и запись security audit выполняются внутри одной PostgreSQL-транзакции;
