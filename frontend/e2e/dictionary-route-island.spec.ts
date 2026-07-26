@@ -16,7 +16,7 @@ test("cold dictionary island hands off without restarting the session bootstrap"
   await page.goto("/dictionary");
 
   await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1, name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
   await expect.poll(() => refreshRequests).toBe(1);
 
@@ -32,7 +32,7 @@ test("cold dictionary island hands off without restarting the session bootstrap"
   await routeNavigation.getByRole("link", { name: "Словарь", exact: true }).click();
   await expect(page).toHaveURL(/\/dictionary$/);
   await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1, name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
