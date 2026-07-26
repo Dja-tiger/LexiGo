@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   captureRuntimeErrors,
@@ -56,17 +56,7 @@ const WORD_DETAIL_VISUAL_BASELINES = {
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
-async function prepareStableWordDetail(page: Page): Promise<void> {
-  await page.goto("/words/101?source=backend&topic=Release&status=review&page=2", {
-    waitUntil: "domcontentloaded",
-  });
-  await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
-  await expect(page.getByText("Следующее повторение", { exact: true })).toBeVisible();
-  await expect(page.getByRole("list", { name: "Связанные фразы" })).toBeVisible();
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    window.scrollTo({ top: 0, behavior: "auto" });
-  });
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   const dimensions = await page.evaluate(() => ({
     viewportWidth: document.documentElement.clientWidth,
     contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
@@ -75,6 +65,42 @@ async function prepareStableWordDetail(page: Page): Promise<void> {
     dimensions.contentWidth,
     `Word Detail must not overflow horizontally: viewport=${dimensions.viewportWidth}px content=${dimensions.contentWidth}px`,
   ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+}
+
+async function expectVisibleFocus(locator: Locator): Promise<void> {
+  await locator.focus();
+  await expect(locator).toBeFocused();
+  const focus = await locator.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      focusVisible: element.matches(":focus-visible"),
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+      outlineStyle: style.outlineStyle,
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(focus.focusVisible).toBe(true);
+  expect(focus.outlineWidth).toBeGreaterThanOrEqual(3);
+  expect(focus.outlineStyle).not.toBe("none");
+  expect(focus.boxShadow).not.toBe("none");
+}
+
+async function openWordDetail(page: Page): Promise<void> {
+  await page.goto("/words/101?source=backend&topic=Release&status=review&page=2", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
+  await expect(page.getByText("Следующее повторение", { exact: true })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Связанные фразы" })).toBeVisible();
+}
+
+async function prepareStableWordDetail(page: Page): Promise<void> {
+  await openWordDetail(page);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  });
+  await expectNoHorizontalOverflow(page);
   await page.waitForTimeout(100);
 }
 
@@ -148,6 +174,51 @@ test.describe("Word Detail visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await expectContentAddressedWordDetail(page, WORD_DETAIL_VISUAL_BASELINES.desktopDark);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("compact 200% text reflow keeps reading, navigation and practice usable", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact 200% Word Detail contract only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openWordDetail(page);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
+    await expect(page.getByText(CANONICAL_WORD_DETAIL.translation, { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Повторить сейчас" }).first()).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectVisibleFocus(page.getByRole("button", { name: /Слово|Словарь/ }).first());
+    await expectVisibleFocus(page.getByRole("button", { name: "Повторить сейчас" }).first());
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("unsupported speech leaves the word and practice path available", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact speech fallback contract only");
+    await page.addInitScript(() => {
+      Object.defineProperty(window, "SpeechSynthesisUtterance", {
+        configurable: true,
+        value: undefined,
+      });
+    });
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openWordDetail(page);
+    const speech = page.getByRole("button", { name: /Озвучивание недоступно: rollback/ });
+    await expect(speech).toBeDisabled();
+    await expect(page.getByText(/Озвучивание недоступно в этом браузере/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Повторить сейчас" }).first()).toBeEnabled();
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("forced colors preserve semantic controls without overflow", async ({ page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact forced-colors Word Detail contract only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
+    await openWordDetail(page);
+    await expectNoHorizontalOverflow(page);
+    await expect(page.getByRole("button", { name: "Повторить сейчас" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Произнести: rollback|Озвучивание недоступно: rollback/ })).toBeVisible();
     expect(runtimeErrors).toEqual([]);
   });
 });
