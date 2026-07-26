@@ -414,6 +414,27 @@
   background: var(--lx-state-primary);
 }
 
+/* Active Lesson owns its answer controls. The global signal stays visible but moves below lesson chrome. */
+body:has(.lx-active-lesson) .lx-system-connectivity {
+  top: max(76px, calc(env(safe-area-inset-top) + 76px));
+  right: max(16px, env(safe-area-inset-right));
+  bottom: auto;
+  width: min(460px, calc(100vw - 32px));
+}
+
+body:has(.lx-active-lesson) .lx-review-sync {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 10px 12px;
+}
+
+body:has(.lx-active-lesson) .lx-review-sync__copy span {
+  display: none;
+}
+
+body:has(.lx-active-lesson) .lx-review-sync__actions {
+  grid-column: auto;
+}
+
 @keyframes lx-system-state-shimmer {
   to { background-position: -220% 0; }
 }
@@ -505,6 +526,29 @@
   .lx-connectivity-panel__actions button {
     width: 100%;
   }
+
+  body:has(.lx-active-lesson) .lx-system-connectivity {
+    top: max(70px, calc(env(safe-area-inset-top) + 70px));
+    right: 10px;
+    bottom: auto;
+    width: calc(100vw - 20px);
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync__actions {
+    grid-column: auto;
+  }
+
+  body:has(.lx-active-lesson) .lx-review-sync__actions button {
+    min-height: 36px;
+    flex: 0 0 auto;
+    padding: 6px 9px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -515,6 +559,11 @@
 
   .lx-connectivity-panel {
     padding: var(--ak-space-lg);
+  }
+
+  body:has(.lx-active-lesson) .lx-system-connectivity {
+    right: 6px;
+    width: calc(100vw - 12px);
   }
 }
 
