@@ -13,7 +13,8 @@
   background: var(--ak-color-canvas);
 }
 
-.lx-routed-app[data-route-path^="/words/"] .lx-header {
+.lx-routed-app[data-route-path^="/words/"] .lx-header,
+.lx-routed-app[data-route-path^="/words/"] .lx-route-reminder-entry {
   display: none;
 }
 
@@ -27,8 +28,11 @@
 .lx-word-detail {
   --lx-word-border: color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   --lx-word-on-primary: #ffffff;
-  --lx-word-retained-soft: color-mix(in srgb, var(--ak-color-retained) 18%, var(--ak-color-surface));
-  --lx-word-review-soft: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
+  --lx-word-retained-text: #146c4e;
+  --lx-word-review-text: #a83232;
+  --lx-word-learning-text: #7a4e00;
+  --lx-word-retained-soft: color-mix(in srgb, #146c4e 15%, var(--ak-color-surface));
+  --lx-word-review-soft: color-mix(in srgb, #a83232 13%, var(--ak-color-surface));
   --lx-word-learning-soft: color-mix(in srgb, #d6a63d 20%, var(--ak-color-surface));
   --lx-word-new-soft: color-mix(in srgb, var(--ak-color-primary) 14%, var(--ak-color-surface));
   width: min(100%, 1192px);
@@ -101,17 +105,17 @@
 }
 
 .lx-word-detail-status-chip[data-tone="mastered"] {
-  color: var(--ak-color-retained);
+  color: var(--lx-word-retained-text);
   background: var(--lx-word-retained-soft);
 }
 
 .lx-word-detail-status-chip[data-tone="review"] {
-  color: var(--ak-color-weak);
+  color: var(--lx-word-review-text);
   background: var(--lx-word-review-soft);
 }
 
 .lx-word-detail-status-chip[data-tone="learning"] {
-  color: #7a4e00;
+  color: var(--lx-word-learning-text);
   background: var(--lx-word-learning-soft);
 }
 
@@ -138,8 +142,8 @@
 .lx-word-detail-card {
   display: grid;
   gap: 26px;
-  border-radius: 22px;
   padding: 34px;
+  border-radius: 22px;
 }
 
 .lx-word-detail-hero {
@@ -234,7 +238,7 @@
 
 .lx-word-detail-meaning h2,
 .lx-word-detail-example h2 {
-  color: var(--ak-color-retained);
+  color: var(--lx-word-retained-text);
   font-size: 12px;
   font-weight: 750;
   line-height: 1.3;
@@ -253,8 +257,8 @@
 .lx-word-detail-example {
   display: grid;
   gap: 14px;
-  border-radius: 16px;
   padding: 18px 20px;
+  border-radius: 16px;
   background: var(--ak-color-subtle);
 }
 
@@ -392,7 +396,7 @@
   display: grid;
   gap: 5px;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--ak-color-weak) 42%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lx-word-review-text) 42%, transparent);
   border-radius: 12px;
   color: var(--ak-color-text-main);
   background: var(--lx-word-review-soft);
@@ -430,15 +434,15 @@
 }
 
 .lx-word-detail-knowledge > strong[data-tone="mastered"] {
-  color: var(--ak-color-retained);
+  color: var(--lx-word-retained-text);
 }
 
 .lx-word-detail-knowledge > strong[data-tone="review"] {
-  color: var(--ak-color-weak);
+  color: var(--lx-word-review-text);
 }
 
 .lx-word-detail-knowledge > strong[data-tone="learning"] {
-  color: #7a4e00;
+  color: var(--lx-word-learning-text);
 }
 
 .lx-word-detail-knowledge > p {
@@ -625,11 +629,9 @@
   .lx-word-detail {
     --lx-word-border: color-mix(in srgb, var(--ak-color-text-muted) 34%, transparent);
     --lx-word-on-primary: #10211d;
-  }
-
-  .lx-word-detail-status-chip[data-tone="learning"],
-  .lx-word-detail-knowledge > strong[data-tone="learning"] {
-    color: #f1c45f;
+    --lx-word-retained-text: #7ee2b8;
+    --lx-word-review-text: #ff9f9f;
+    --lx-word-learning-text: #f1c45f;
   }
 }
 
