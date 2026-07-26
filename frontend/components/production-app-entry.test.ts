@@ -13,6 +13,7 @@ const productionAppFiles = [
   "lexigo-premium-app.tsx",
   "lexigo-progress-app.tsx",
   "lexigo-scenario-app.tsx",
+  "lexigo-scenario-catalog-app.tsx",
   "routed-lexigo-app.tsx",
 ] as const;
 
@@ -60,10 +61,12 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-progress-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-scenario-catalog-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-scenario-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoScenarioCatalogApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioApp\b/g)).toHaveLength(1);
   });
 
@@ -81,6 +84,10 @@ describe("production frontend application entry", () => {
       .filter(({ source }) => source.includes("lexigo-progress-app"))
       .map(({ file }) => file)
       .sort();
+    const scenarioCatalogGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-scenario-catalog-app"))
+      .map(({ file }) => file)
+      .sort();
     const scenarioGraphConsumers = sources
       .filter(({ source }) => source.includes("lexigo-scenario-app"))
       .map(({ file }) => file)
@@ -89,6 +96,7 @@ describe("production frontend application entry", () => {
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(progressGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(scenarioCatalogGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(scenarioGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
   });
 
@@ -109,6 +117,19 @@ describe("production frontend application entry", () => {
     expect(progressApp).toContain("/api/v1/progress?timezoneOffsetMinutes=");
     expect(progressApp).not.toContain("lexigo-premium-app");
     expect(progressApp).not.toContain("restoreSession");
+  });
+
+  it("keeps Scenario catalog reads and presentation inside its route island", () => {
+    const catalogApp = readSource(componentsDirectory, "lexigo-scenario-catalog-app.tsx");
+
+    expect(catalogApp).toContain('from "../lib/scenarios"');
+    expect(catalogApp).toContain('data-route-client-island="scenario-catalog"');
+    expect(catalogApp).toContain('"/api/v1/scenarios"');
+    expect(catalogApp).toContain("/api/v1/progress?timezoneOffsetMinutes=");
+    expect(catalogApp).not.toContain("lexigo-premium-app");
+    expect(catalogApp).not.toContain("restoreSession");
+    expect(catalogApp).not.toContain("localStorage");
+    expect(catalogApp).not.toContain("sessionStorage");
   });
 
   it("keeps Scenario lifecycle and evidence presentation inside its route island", () => {

@@ -25,13 +25,14 @@ describe("product navigation", () => {
     expect(parseNavigation("", "/unknown-route")).toEqual({ view: "home" });
   });
 
-  it("parses canonical primary and focused routes", () => {
+  it("parses canonical primary, catalog and focused routes", () => {
     expect(parseNavigation("", "/learn")).toEqual({ view: "learn" });
     expect(parseNavigation("", "/phrases")).toEqual({ view: "phrases" });
     expect(parseNavigation("", "/dictionary")).toEqual({ view: "library" });
     expect(parseNavigation("", "/progress")).toEqual({ view: "progress" });
     expect(parseNavigation("", "/profile")).toEqual({ view: "profile" });
     expect(parseNavigation("", "/lesson/active")).toEqual({ view: "lesson", detail: "active" });
+    expect(parseNavigation("", "/scenarios")).toEqual({ view: "scenario" });
     expect(parseNavigation("", "/scenarios/incident-update")).toEqual({
       view: "scenario",
       detail: "incident-update",
@@ -102,6 +103,7 @@ describe("product navigation", () => {
     expect(navigationURL({ view: "phrases", detail: "phrase-root-cause" })).toBe(
       "/phrases/phrase-root-cause",
     );
+    expect(navigationURL({ view: "scenario" })).toBe("/scenarios");
     expect(navigationURL({ view: "scenario", detail: "incident-update" })).toBe(
       "/scenarios/incident-update",
     );
@@ -123,7 +125,7 @@ describe("product navigation", () => {
 
   it("keeps only supported detail route shapes canonical", () => {
     expect(routePath({ view: "lesson" })).toBe("/lesson/active");
-    expect(routePath({ view: "scenario" })).toBe("/learn");
+    expect(routePath({ view: "scenario" })).toBe("/scenarios");
     expect(routePath({ view: "scenario", detail: "release-go-no-go" })).toBe("/scenarios/release-go-no-go");
     expect(routePath({ view: "library", detail: "101" })).toBe("/words/101");
     expect(routePath({ view: "library", detail: "not-a-word-id" })).toBe("/dictionary");
@@ -131,6 +133,7 @@ describe("product navigation", () => {
     expect(isCanonicalRoutePath("/phrases/root-cause")).toBe(true);
     expect(isCanonicalRoutePath("/words/101")).toBe(true);
     expect(isCanonicalRoutePath("/lesson/active")).toBe(true);
+    expect(isCanonicalRoutePath("/scenarios")).toBe(true);
     expect(isCanonicalRoutePath("/scenarios/incident-update")).toBe(true);
     expect(isCanonicalRoutePath("/scenarios/Incident_Update")).toBe(false);
     expect(isCanonicalRoutePath("/lesson/another-users-session")).toBe(false);
@@ -195,6 +198,7 @@ describe("standalone navigation persistence", () => {
     JSON.stringify({ version: 99, target: { view: "home" } }),
     JSON.stringify({ version: 2, target: { view: "unknown" } }),
     JSON.stringify({ version: 2, target: { view: "lesson", source: "mixed" } }),
+    JSON.stringify({ version: 2, target: { view: "scenario" } }),
     JSON.stringify({ version: 2, target: { view: "scenario", detail: "incident-update" } }),
     JSON.stringify({ version: 2, target: { view: "library", status: "unknown" } }),
   ])("rejects unsupported or corrupted versioned value %s", (raw) => {
@@ -248,11 +252,14 @@ describe("standalone navigation persistence", () => {
     expect(parseStoredNavigation(values.get(NAVIGATION_STORAGE_KEY) ?? null)).toEqual({ view: "library", status: "review", query: "cache" });
     writePersistedNavigation(storage, { view: "lesson" });
     expect(values.get(NAVIGATION_STORAGE_KEY)).toBeUndefined();
+    writePersistedNavigation(storage, { view: "scenario" });
+    expect(values.get(NAVIGATION_STORAGE_KEY)).toBeUndefined();
     writePersistedNavigation(storage, { view: "scenario", detail: "incident-update" });
     expect(values.get(NAVIGATION_STORAGE_KEY)).toBeUndefined();
 
     expect(isRestorableNavigation({ view: "learn", source: "backend" })).toBe(true);
     expect(isRestorableNavigation({ view: "lesson", source: "backend" })).toBe(false);
+    expect(isRestorableNavigation({ view: "scenario" })).toBe(false);
     expect(isRestorableNavigation({ view: "scenario", detail: "incident-update" })).toBe(false);
     expect(isRestorableNavigation({ view: "profile" })).toBe(false);
   });

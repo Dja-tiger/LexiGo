@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 import {
   captureRuntimeErrors,
   installDeterministicRuntime,
   installQualityGateAPI,
+  QUALITY_PROGRESS,
 } from "./support/quality-gates";
 import {
   installActiveLessonFixture,
@@ -47,6 +48,95 @@ const SCENARIO_VISUAL_BASELINES = {
     sourceHeadSha: "c0c0f74e001b5ae248b5d88d1fdb8dac041ea2f0",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
+
+const SCENARIO_CATALOG_VISUAL_BASELINES = {
+  compactLight: {
+    name: "scenario-catalog-compact-light.png",
+    width: 390,
+    height: 1876,
+    sha256: "6d6412fabb2e1b9d5b146da4609da35b7544252d9ab04bd4a8ae3c6e45d26508",
+    sourceRun: 30181864359,
+    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+  },
+  compactDark: {
+    name: "scenario-catalog-compact-dark.png",
+    width: 390,
+    height: 1876,
+    sha256: "fa874501b7c1a9f66b868c350f607bec444ab12255a18a108f990295a525a47a",
+    sourceRun: 30181864359,
+    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+  },
+  desktopLight: {
+    name: "scenario-catalog-desktop-light.png",
+    width: 1440,
+    height: 981,
+    sha256: "350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a",
+    sourceRun: 30181864359,
+    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
+const LESSON_COMPOSER_VISUAL_BASELINES = {
+  compact: {
+    name: "lesson-composer-compact.png",
+    width: 390,
+    height: 1212,
+    sha256: "8cbc1f01bb7079ca0a83b785db2e42be205489edd2dec48a7e40e5b915f20fb9",
+    sourceRun: 30181864359,
+    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+  },
+  medium: {
+    name: "lesson-composer-medium.png",
+    width: 768,
+    height: 6154,
+    sha256: "4acb9301f3837fb235670c6841c281eb732488701566a84db3b406eaac422812",
+    sourceRun: 30181864359,
+    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+  },
+  desktop: {
+    name: "lesson-composer-desktop.png",
+    width: 1440,
+    height: 1656,
+    sha256: "3be9635dd17bf578adb48cfcbae812c46fe3714969574e5b9a6627b82b7d4088",
+    sourceRun: 30183186758,
+    sourceHeadSha: "623a143a5e4f988606a723efdac66fbd3e43953d",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
+const BASELINE_PROGRESS: Record<string, unknown> = { ...QUALITY_PROGRESS };
+delete BASELINE_PROGRESS.scenarios;
+
+async function expectLearningSwitchClearOfRouteChrome(page: Page): Promise<void> {
+  const intersections = await page.evaluate(() => {
+    const subsection = document.querySelector<HTMLElement>(".lx-learning-section-switch--learn");
+    if (!subsection) return ["missing Learning subsection switch"];
+
+    const subsectionRect = subsection.getBoundingClientRect();
+    const selectors = [
+      ".lx-route-brand",
+      ".lx-route-nav--header",
+      ".lx-route-nav--rail",
+      ".lx-route-reminder-entry",
+    ];
+
+    return selectors.flatMap((selector) => Array.from(document.querySelectorAll<HTMLElement>(selector)))
+      .filter((element) => {
+        const style = window.getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden";
+      })
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const overlapWidth = Math.min(subsectionRect.right, rect.right)
+          - Math.max(subsectionRect.left, rect.left);
+        const overlapHeight = Math.min(subsectionRect.bottom, rect.bottom)
+          - Math.max(subsectionRect.top, rect.top);
+        return overlapWidth > 1 && overlapHeight > 1;
+      })
+      .map((element) => element.className);
+  });
+
+  expect(intersections, "Learning subsection switch must not overlap visible route chrome").toEqual([]);
+}
 
 async function prepareStableScreenshot(page: Page): Promise<void> {
   const dimensions = await page.evaluate(async () => {
@@ -133,12 +223,20 @@ async function fillScenarioIncidentDraft(page: Page): Promise<void> {
   );
 }
 
+async function openScenarioCatalog(page: Page, context: BrowserContext): Promise<void> {
+  await context.unroute("**/api/v1/**");
+  await installQualityGateAPI(context);
+  await page.goto("/scenarios", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Рабочие сценарии" })).toBeVisible();
+  await expect(page.locator("[data-scenario-catalog-order]")).toBeVisible();
+}
+
 test.describe("critical visual baselines", () => {
   test.describe.configure({ timeout: 90_000 });
 
   test.beforeEach(async ({ context, page }) => {
     await installDeterministicRuntime(page);
-    await installQualityGateAPI(context);
+    await installQualityGateAPI(context, { progress: BASELINE_PROGRESS });
   });
 
   test("home", async ({ page }) => {
@@ -153,7 +251,15 @@ test.describe("critical visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-    await expectStableScreenshot(page, "lesson-composer.png");
+    await expectLearningSwitchClearOfRouteChrome(page);
+
+    const viewportWidth = page.viewportSize()?.width;
+    const baseline = viewportWidth === 390
+      ? LESSON_COMPOSER_VISUAL_BASELINES.compact
+      : viewportWidth === 768
+        ? LESSON_COMPOSER_VISUAL_BASELINES.medium
+        : LESSON_COMPOSER_VISUAL_BASELINES.desktop;
+    await expectContentAddressedScreenshot(page, baseline);
     expect(runtimeErrors).toEqual([]);
   });
 
@@ -171,6 +277,31 @@ test.describe("critical visual baselines", () => {
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
     await expectStableScreenshot(page, "progress.png");
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog compact Light", async ({ context, page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openScenarioCatalog(page, context);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactLight);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog compact Dark", async ({ context, page }) => {
+    test.skip(page.viewportSize()?.width !== 390, "compact dark Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await openScenarioCatalog(page, context);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.compactDark);
+    expect(runtimeErrors).toEqual([]);
+  });
+
+  test("Scenario catalog desktop Light", async ({ context, page }) => {
+    test.skip(page.viewportSize()?.width !== 1440, "desktop Scenario catalog baseline only");
+    const runtimeErrors = captureRuntimeErrors(page);
+    await openScenarioCatalog(page, context);
+    await expectContentAddressedScreenshot(page, SCENARIO_CATALOG_VISUAL_BASELINES.desktopLight);
     expect(runtimeErrors).toEqual([]);
   });
 

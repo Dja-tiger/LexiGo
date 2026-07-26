@@ -72,6 +72,14 @@ const LexigoProgressApp = dynamic(
   },
 );
 
+const LexigoScenarioCatalogApp = dynamic(
+  () => import("./lexigo-scenario-catalog-app").then((module) => module.LexigoScenarioCatalogApp),
+  {
+    ssr: false,
+    loading: ProductShellLoading,
+  },
+);
+
 const LexigoScenarioApp = dynamic(
   () => import("./lexigo-scenario-app").then((module) => module.LexigoScenarioApp),
   {
@@ -80,8 +88,18 @@ const LexigoScenarioApp = dynamic(
   },
 );
 
+function isScenarioCatalogRoute(pathname: string): boolean {
+  return pathname === "/scenarios";
+}
+
+function isScenarioDetailRoute(pathname: string): boolean {
+  return pathname.startsWith("/scenarios/");
+}
+
 function isFocusedAuthenticatedRoute(pathname: string): boolean {
-  return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+  return pathname.startsWith("/lesson/")
+    || isScenarioCatalogRoute(pathname)
+    || isScenarioDetailRoute(pathname);
 }
 
 function currentReturnTo(): string | null {
@@ -105,10 +123,6 @@ function isDictionaryRoute(pathname: string): boolean {
 
 function isProgressRoute(pathname: string): boolean {
   return pathname === "/progress";
-}
-
-function isScenarioRoute(pathname: string): boolean {
-  return pathname.startsWith("/scenarios/");
 }
 
 export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) {
@@ -270,7 +284,8 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
 
   const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
-  const useScenarioIsland = isScenarioRoute(pathname) && initialSession !== null;
+  const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;
+  const useScenarioIsland = isScenarioDetailRoute(pathname) && initialSession !== null;
   const routeKey = initialSession?.user.id ?? "guest";
 
   return (
@@ -294,7 +309,13 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      {useScenarioIsland ? (
+      {useScenarioCatalogIsland ? (
+        <LexigoScenarioCatalogApp
+          key={`${routeKey}:scenario-catalog`}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useScenarioIsland ? (
         <LexigoScenarioApp
           key={`${routeKey}:${pathname}`}
           pathname={pathname}

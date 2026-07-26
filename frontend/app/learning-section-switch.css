@@ -1,0 +1,55 @@
+/*
+ * Shared placement owner for the Learning subsection switch.
+ *
+ * Route brand, primary navigation and reminder controls are fixed-position
+ * chrome. The switch remains in document flow, but reserves the chrome band
+ * and aligns with the content column at every responsive navigation mode.
+ */
+.lx-learning-section-switch--learn {
+  margin-top: calc(84px + env(safe-area-inset-top));
+}
+
+@media (min-width: 720px) and (max-width: 1099px) {
+  .lx-learning-section-switch--learn {
+    width: min(
+      calc(100% - var(--lx-navigation-rail-width) - 92px),
+      860px
+    );
+    margin-right: 24px;
+    margin-left: calc(var(--lx-navigation-rail-width) + 48px);
+  }
+}
+
+/*
+ * Foundation V1 promotes the navigation rail to 220px from 1024px onward.
+ * Align the switch with the same content column instead of centring it under
+ * the fixed rail, which would leave the first tab partially covered.
+ */
+@media (min-width: 1024px) {
+  .lx-learning-section-switch--learn {
+    width: min(
+      1180px,
+      calc(100vw - var(--ak-shell-rail-width) - 80px)
+    );
+    margin-right: 40px;
+    margin-left: max(
+      calc(var(--ak-shell-rail-width) + 40px),
+      calc((100vw + var(--ak-shell-rail-width) - 1180px) / 2)
+    );
+  }
+}
+
+@media (max-width: 719px) {
+  .lx-learning-section-switch--learn {
+    width: calc(100% - 48px);
+    margin-top: calc(76px + env(safe-area-inset-top));
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .lx-learning-section-switch--learn {
+    width: calc(100% - 32px);
+  }
+}

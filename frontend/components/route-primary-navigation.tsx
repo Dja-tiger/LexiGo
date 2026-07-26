@@ -142,10 +142,12 @@ function RouteLink({
         event.preventDefault();
 
         const intent = navigationView ? "primary_navigation" : "in_app_navigation";
-        if (document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR)) {
-          // A cold route island does not own the product-wide popstate runtime.
-          // Let the Next App Router swap the route graph without reloading the
-          // document; the loaded product graph then resumes internal history.
+        const requiresRouterGraphHandoff = target.view === "scenario"
+          || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
+        if (requiresRouterGraphHandoff) {
+          // Route islands, including the Scenario catalog, do not share the
+          // PremiumApp popstate renderer. Let Next swap the route graph without
+          // reloading the document; the loaded graph resumes internal history.
           const transition = routeTransition(target, intent);
           if (transition) {
             window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
@@ -168,6 +170,15 @@ function currentView(pathname: string): AppView {
 
 function isFocusedRoute(pathname: string): boolean {
   return pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/");
+}
+
+function LearningSectionSwitch() {
+  return (
+    <nav className="lx-learning-section-switch lx-learning-section-switch--learn" aria-label="Разделы обучения">
+      <RouteLink target={{ view: "learn" }} className="active" ariaCurrent="page">Уроки</RouteLink>
+      <RouteLink target={{ view: "scenario" }}>Сценарии</RouteLink>
+    </nav>
+  );
 }
 
 export function RouteBrand() {
@@ -193,7 +204,8 @@ export function RoutePrimaryNavigation({ variant }: { variant: RouteNavigationVa
     <nav className={`lx-route-nav lx-route-nav--${variant}`} aria-label={ariaLabel} data-route-navigation={variant}>
       {PRIMARY_NAVIGATION.map((entry) => {
         const active = activeView === entry.view
-          || (entry.view === "library" && activeView === "phrases");
+          || (entry.view === "library" && activeView === "phrases")
+          || (entry.view === "learn" && activeView === "scenario");
         return (
           <RouteLink
             key={entry.view}
@@ -223,6 +235,7 @@ export function RouteChrome() {
       <RoutePrimaryNavigation variant="header" />
       <RoutePrimaryNavigation variant="rail" />
       <RoutePrimaryNavigation variant="mobile" />
+      {pathname === "/learn" ? <LearningSectionSwitch /> : null}
       <CalendarReminderRouteEntry />
     </>
   );

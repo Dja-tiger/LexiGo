@@ -30,6 +30,21 @@ type RouteCase = {
   waitUntilReady: (page: Page) => Promise<void>;
 };
 
+const SCENARIO_CATALOG_ITEM = {
+  slug: SCENARIO_DETAIL.slug,
+  type: SCENARIO_DETAIL.type,
+  title: SCENARIO_DETAIL.title,
+  summary: SCENARIO_DETAIL.summary,
+  userRole: SCENARIO_DETAIL.userRole,
+  workplaceGoal: SCENARIO_DETAIL.workplaceGoal,
+  completionCriterion: SCENARIO_DETAIL.completionCriterion,
+  constraints: SCENARIO_DETAIL.constraints,
+  requiresFactHypothesis: SCENARIO_DETAIL.requiresFactHypothesis,
+  estimatedMinutes: SCENARIO_DETAIL.estimatedMinutes,
+  version: SCENARIO_DETAIL.version,
+  stepCount: SCENARIO_DETAIL.stepCount,
+};
+
 const ROUTES: RouteCase[] = [
   {
     route: "/",
@@ -77,6 +92,12 @@ const ROUTES: RouteCase[] = [
     },
   },
   {
+    route: "/scenarios",
+    waitUntilReady: async (page) => {
+      await expect(page.getByRole("heading", { level: 1, name: "Рабочие сценарии" })).toBeVisible();
+    },
+  },
+  {
     route: "/scenarios/incident-update",
     waitUntilReady: async (page) => {
       await expect(page.getByRole("heading", { level: 1, name: SCENARIO_DETAIL.title })).toBeVisible();
@@ -101,6 +122,20 @@ async function installActiveLesson(context: BrowserContext): Promise<void> {
         createdAt: "2026-07-20T08:00:00Z",
         updatedAt: "2026-07-20T08:00:00Z",
       }),
+    });
+  });
+}
+
+async function installScenarioCatalog(context: BrowserContext): Promise<void> {
+  await context.route("**/api/v1/scenarios", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [SCENARIO_CATALOG_ITEM], count: 1 }),
     });
   });
 }
@@ -130,6 +165,7 @@ async function createColdRoutePage(browser: Browser): Promise<{
   });
   await installQualityGateAPI(context);
   await installActiveLesson(context);
+  await installScenarioCatalog(context);
   await installScenarioDetail(context);
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);

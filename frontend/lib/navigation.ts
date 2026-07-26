@@ -166,6 +166,7 @@ function pathnameTarget(pathname: string): NavigationTarget {
   if (normalized === "/dictionary") return { view: "library" };
   if (normalized === "/progress") return { view: "progress" };
   if (normalized === "/profile") return { view: "profile" };
+  if (normalized === "/scenarios") return { view: "scenario" };
 
   const phraseDetail = normalized.match(/^\/phrases\/([^/]+)$/);
   if (phraseDetail) {
@@ -231,7 +232,7 @@ export function routePath(target: NavigationTarget): string {
   if (normalized.view === "scenario") {
     return normalized.detail && isScenarioSlug(normalized.detail)
       ? `/scenarios/${encodedPathSegment(normalized.detail)}`
-      : "/learn";
+      : "/scenarios";
   }
   if (normalized.view === "library" && normalized.detail && /^\d+$/.test(normalized.detail)) {
     return `/words/${normalized.detail}`;
@@ -266,6 +267,7 @@ export function isCanonicalRoutePath(pathname: string): boolean {
   const normalized = normalizePathname(pathname);
   const scenarioMatch = /^\/scenarios\/([^/]+)$/.exec(normalized);
   return normalized === "/"
+    || normalized === "/scenarios"
     || Object.values(PRIMARY_PATHS).includes(normalized)
     || /^\/phrases\/[^/]+$/.test(normalized)
     || /^\/words\/[1-9]\d*$/.test(normalized)
