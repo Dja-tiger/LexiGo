@@ -39,6 +39,7 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - `frontend/app/layout.tsx`
 - `frontend/app/appearance.css`
 - `frontend/app/profile.css`
+- `frontend/components/routed-lexigo-app.tsx`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/lexigo-profile-app.tsx`
 - `frontend/components/production-app-entry.test.ts`
@@ -71,8 +72,8 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 ## Runtime owners
 
 - `frontend/app/layout.tsx`: document metadata and pre-hydration appearance bootstrap.
-- `frontend/components/routed-lexigo-app.tsx`: canonical route shell, focus and history ownership; inspected, unchanged unless a verified contract requires otherwise.
-- `frontend/components/lexigo-bootstrapped-app.tsx`: session bootstrap and route-island selection.
+- `frontend/components/routed-lexigo-app.tsx`: canonical App Router transition, route focus and history ownership; verified CI #2020 requires this owner to perform the post-logout Home replacement.
+- `frontend/components/lexigo-bootstrapped-app.tsx`: session bootstrap, pathname-gated logout finalization and route-island graph selection.
 - `frontend/components/lexigo-profile-app.tsx`: authenticated Profile presentation and Profile-local preference orchestration.
 - `frontend/components/account-security-panel.tsx`: password, sessions and audit behavior; reused unchanged.
 - `frontend/components/account-email-panel.tsx`: email-change behavior; reused unchanged.
@@ -93,6 +94,7 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - Auto appearance follows `prefers-color-scheme`; explicit Light/Dark ignores later system changes.
 - Appearance is applied before first paint when storage is available, and storage denial degrades to Auto.
 - Route navigation, Back/Forward, focus restoration, PWA safe areas and 200% reflow remain intact.
+- dictionary cold-entry ownership remains mounted until the destination history state is canonicalized before the product graph mounts.
 
 ## Acceptance criteria
 
@@ -121,7 +123,8 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - route-island selection could accidentally replace guest authentication;
 - Profile overview links could duplicate or bypass critical account owners;
 - new CSS could alter non-Profile routes through global selectors;
-- visual baselines may expose shell differences not visible in isolated Figma frames.
+- visual baselines may expose shell differences not visible in isolated Figma frames;
+- session invalidation or product-graph mounting before App Router/history commit can render the wrong guest or lesson screen.
 
 ## Rollback
 
