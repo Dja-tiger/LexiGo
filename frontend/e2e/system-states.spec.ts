@@ -30,23 +30,24 @@ async function fulfillJSON(route: Route, status: number, body: unknown, headers:
 test("shows persistent offline details and a dismissible restored-connection state", async ({ context, page }) => {
   await installQualityGateAPI(context);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу", exact: true })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
 
   await context.setOffline(true);
   await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Подробнее", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
-  await expect(page.getByText("Полный переход по уроку остаётся серверным.")).toBeVisible();
-  await expect(page.getByText("Следующая карточка откроется только после подтверждения серверной позиции.")).toBeVisible();
-  await expect(page.getByText("Ожидают отправки")).toBeVisible();
-  await expect(page.getByText("Требуют проверки")).toBeVisible();
-  await expect(page.getByText("Синхронизировано за сутки")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Проверить соединение", exact: true })).toBeVisible();
+  const panel = page.locator("#lexigo-connectivity-panel");
+  await expect(panel.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
+  await expect(panel.getByText("Полный переход по уроку остаётся серверным.", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Следующая карточка откроется только после подтверждения серверной позиции.", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Ожидают отправки", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Требуют проверки", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Синхронизировано за сутки", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Проверить соединение", exact: true })).toBeVisible();
 
   await context.setOffline(false);
   await expect(page.getByText("Подключение восстановлено", { exact: true })).toBeVisible();
-  await expect(page.getByText("LexiGo снова может загружать материалы и синхронизировать локальную очередь.")).toBeVisible();
+  await expect(page.getByText("LexiGo снова может загружать материалы и синхронизировать локальную очередь.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Готово", exact: true }).click();
   await expect(page.locator(".lx-system-connectivity")).toHaveCount(0);
 });
@@ -86,7 +87,7 @@ test("keeps the Dictionary query through a correlated error and retries determin
         { "x-correlation-id": "dictionary-system-state-503" },
       );
     }
-    return fulfillJSON(route, 200, catalogPage(QUALITY_WORDS));
+    return fulfillJSON(route, 200, catalogPage([QUALITY_WORDS[2]]));
   });
 
   await page.goto("/dictionary");
