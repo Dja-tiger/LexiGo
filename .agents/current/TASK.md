@@ -6,7 +6,7 @@
 - Branch: `feat/issue-197-dictionary-catalog`
 - Base SHA: `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`
 - Head SHA: resolve from live branch ref
-- PR: create as Draft after the first bounded implementation checkpoint
+- PR: #233 — Draft
 
 ## Objective
 
@@ -21,6 +21,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - Preserve the dedicated `LexigoDictionaryApp` client island and existing session bootstrap ownership.
 - Navigate each result to canonical `/words/[id]` without changing Word Detail presentation or API semantics.
 - Remove the catalog-level `Настроить урок по текущей выборке` action so Dictionary does not duplicate Lesson Composer.
+- Preserve the existing Word Detail dark-card color boundary through a route-scoped compatibility stylesheet when catalog semantic variables are loaded globally.
 - Cover loading, empty, error/retry, pagination, mobile/desktop, Light/Dark, keyboard, axe, long-term reflow, Linux visual and cold-route bundle contracts.
 
 ## Non-goals
@@ -44,6 +45,8 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - `frontend/components/catalog-pagination.tsx`
 - `frontend/components/catalog-kind-navigation.tsx` only if required by the approved catalog type switch
 - `frontend/app/dictionary-catalog.css`
+- `frontend/app/dictionary-detail-compatibility.css` only to preserve the existing `/words/[id]` color/contrast boundary
+- `frontend/app/layout.tsx` only to import the route-scoped compatibility stylesheet
 - `frontend/app/catalog-pagination.css`
 - `frontend/app/information-architecture.css` only for catalog-kind primitives shared with the existing Phrases route
 - `frontend/lib/interface-copy.ts` only for a verified shared semantic label correction
@@ -53,6 +56,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - `frontend/e2e/accessibility-keyboard.spec.ts`
 - `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/route-bundle-budget.spec.ts`
+- `frontend/e2e/performance-budget.spec.ts`
 - `frontend/e2e/information-architecture.spec.ts`
 - `frontend/bundle-budgets.json` only after measured immutable Linux evidence
 - Dictionary Linux visual baseline paths only after manual artifact review
@@ -79,7 +83,8 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - Canonical URL parsing/serialization: `frontend/lib/navigation.ts`.
 - Pagination metadata: backend `/api/v1/words` response and `frontend/lib/catalog-page.ts`.
 - Route shell/global navigation: existing `RoutedLexigoApp` and `RouteChrome`, unchanged.
-- Route-local presentation: `frontend/app/dictionary-catalog.css` and narrowly required catalog primitives.
+- Route-local catalog presentation: `frontend/app/dictionary-catalog.css` and narrowly required catalog primitives.
+- Existing Word Detail compatibility boundary: `frontend/app/dictionary-detail-compatibility.css`, scoped only to `/words/`.
 
 ## Documentation owners
 
@@ -99,7 +104,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - `/dictionary` remains a dedicated client island and does not import the full product graph.
 - Catalog cards/rows navigate to the exact `/words/[id]` route.
 - Catalog UI does not configure or start a lesson.
-- Word Detail behavior remains unchanged in this slice.
+- Word Detail behavior remains unchanged in this slice; compatibility CSS may only restore its prior color/contrast boundary.
 - Mobile and desktop use the same semantic data/interaction contract; presentation may adapt without hidden desktop-only interaction assumptions.
 - Light/Dark, reduced motion, forced colors, 320 px and 200% text zoom retain usable controls and no horizontal overflow.
 
@@ -114,6 +119,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - The catalog has no lesson-configuration CTA or duplicated Lesson Composer controls.
 - Result rows/cards expose term, translation and a route-local status label, and open canonical `/words/[id]`.
 - Loading, empty and retryable error states remain explicit and accessible without implementing global system-state redesign.
+- Existing `/words/[id]` semantics and contrast remain intact until Issue #198.
 - 320–390 px, desktop, 200% zoom, long technical terms, Light/Dark, reduced motion and forced colors have no overflow, clipping or inaccessible focus.
 - Reviewed Linux mobile Light, mobile Dark and desktop Light actuals are content-addressed only after manual comparison with Figma.
 - Cold `/dictionary` JavaScript and request counts are measured and protected by an evidence-backed ceiling.
@@ -125,6 +131,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - Dictionary source ownership, navigation and pagination contracts.
 - Desktop Chromium and iOS WebKit browse/search/filter/pagination/history tests; configured Android/WebKit route regressions.
 - Keyboard interaction, visible focus, axe Light/Dark, reduced motion, forced colors and 320 px/200% reflow.
+- Word Detail accessibility regression proving the compatibility boundary.
 - Linux visual actual review before allow-listed baseline import; final comparison without update mode.
 - Cold `/dictionary` JavaScript/request measurement and budget gate.
 - Full repository CI on the final developer-authored head.
@@ -137,6 +144,7 @@ Implement the production `/dictionary` browse/search catalog from approved Figma
 - A desktop filter rail can become hidden interaction on compact layouts or overlap the fixed route rail.
 - Search submit and filter changes can create duplicate history entries or reset page/scroll incorrectly.
 - Removing the catalog lesson CTA can leave stale tests or hidden IA copy that still asserts duplicated Lesson Composer behavior.
+- Catalog semantic variables can leak into the existing Word Detail dark surface unless the `/words/` boundary is explicit.
 - Long technical terms and status pills can collide at 320 px or 200% zoom.
 - Visual fixture data can accidentally depend on unrelated Progress or Phrases route mocks.
 
