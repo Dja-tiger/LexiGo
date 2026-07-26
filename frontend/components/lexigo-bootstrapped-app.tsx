@@ -123,6 +123,10 @@ function profileHistoryState() {
   return createNavigationHistoryState({ view: "profile" }, { x: 0, y: 0 });
 }
 
+function homeHistoryState() {
+  return createNavigationHistoryState({ view: "home" }, { x: 0, y: 0 });
+}
+
 function moveToSessionScreen(reason: SessionScreenReason, returnTo: string | null = currentReturnTo()): void {
   const params = new URLSearchParams({ session: reason });
   if (returnTo) params.set("return_to", returnTo);
@@ -175,6 +179,10 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
   }, []);
 
   const handleLoggedOut = useCallback(() => {
+    const homeState = homeHistoryState();
+    window.history.replaceState(homeState, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate", { state: homeState }));
+
     invalidateBootstrappedSession();
     setInitialSession(null);
     setNotice(null);
@@ -183,7 +191,6 @@ export function LexigoBootstrappedApp({ pathname }: LexigoBootstrappedAppProps) 
       title: "Вы вышли из аккаунта",
       message: "Текущая сессия завершена. Локальная настройка оформления сохранена.",
     });
-    window.history.replaceState(profileHistoryState(), "", "/profile?account=logged-out");
   }, []);
 
   const handleAccountDeleted = useCallback(() => {
