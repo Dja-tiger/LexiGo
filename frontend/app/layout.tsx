@@ -43,6 +43,7 @@ import "./progress-evidence.css";
 import "./progress-evidence-accessibility.css";
 import "./progress-evidence-layout.css";
 import "./scenario-catalog.css";
+import "./learning-section-switch.css";
 import "./scenario-lessons.css";
 import "./scenario-lessons-accessibility.css";
 

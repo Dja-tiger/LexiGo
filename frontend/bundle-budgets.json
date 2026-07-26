@@ -24,8 +24,8 @@
     "/profile": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/lesson/active": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/scenarios": {
-      "baselineJavascriptBytes": 238257,
-      "maxJavascriptBytes": 276000,
+      "baselineJavascriptBytes": 1,
+      "maxJavascriptBytes": 1,
       "maxInitialRequests": 24
     },
     "/scenarios/incident-update": {

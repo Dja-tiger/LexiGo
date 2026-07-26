@@ -42,6 +42,7 @@ Implement the canonical authenticated `/scenarios` catalog/discovery route from 
 - `frontend/app/layout.tsx`
 - `frontend/app/scenarios/page.tsx`
 - `frontend/app/scenario-catalog.css`
+- `frontend/app/learning-section-switch.css`
 - `frontend/app/scenario-catalog-accessibility.css` only if a distinct route-local accessibility owner is required
 - `frontend/components/lexigo-scenario-catalog-app.tsx`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
@@ -79,7 +80,7 @@ Implement the canonical authenticated `/scenarios` catalog/discovery route from 
 - Scenario detail lifecycle and server-owned evidence: existing `frontend/components/lexigo-scenario-app.tsx`, unchanged unless an objective catalog-to-detail regression proves otherwise.
 - Catalog payload validation: `frontend/lib/scenarios.ts`.
 - Progress recommendation validation: existing `frontend/lib/account-resources.ts` and `frontend/lib/progress.ts`.
-- Global CSS import: `frontend/app/layout.tsx`; route presentation: `frontend/app/scenario-catalog.css`.
+- Global CSS import: `frontend/app/layout.tsx`; route presentation: `frontend/app/scenario-catalog.css`; Learning subsection placement: `frontend/app/learning-section-switch.css`.
 
 ## Documentation owners
 
@@ -109,7 +110,7 @@ Implement the canonical authenticated `/scenarios` catalog/discovery route from 
 - Empty `items` and `count=0` produce an explicit user-facing empty state.
 - A recommendation from `/api/v1/progress` presents the exact server title/slug and uses `Продолжить` for `resume`, `Начать` for `start`.
 - Catalog remains available when progress loading fails or recommendation is absent.
-- `Уроки` opens `/learn`; `Сценарии` is current on `/scenarios`; `/learn` exposes the same subsection switch without changing Lesson Composer behavior.
+- `Уроки` opens `/learn`; `Сценарии` is current on `/scenarios`; `/learn` exposes the same subsection switch without changing Lesson Composer behavior or overlapping route chrome at compact, medium or desktop widths.
 - Every catalog card opens the exact canonical `/scenarios/[slug]` route and browser Back returns to the catalog.
 - Guest entry redirects to `/profile?session=required&return_to=%2Fscenarios`; successful return opens the catalog.
 - Global navigation remains four entries and `Обучение` is active for the catalog.
