@@ -24,6 +24,15 @@ describe("Word Detail production ownership", () => {
     expect(catalog).toContain('import { WordDetailRoute } from "./word-detail-route"');
   });
 
+  it("defers the product graph swap until the App Router handoff is queued", () => {
+    const bootstrap = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
+
+    expect(bootstrap).toContain("let productGraphTimer: number | null = null");
+    expect(bootstrap).toContain("productGraphTimer = window.setTimeout(() => {");
+    expect(bootstrap).toContain('setRouteGraph("product")');
+    expect(bootstrap).toContain("window.clearTimeout(productGraphTimer)");
+  });
+
   it("loads direct detail without starting catalog metadata, progress or page requests", () => {
     const dictionaryApp = readSource(componentsDirectory, "lexigo-dictionary-app.tsx");
     const catalog = readSource(componentsDirectory, "dictionary-catalog.tsx");
@@ -51,6 +60,14 @@ describe("Word Detail production ownership", () => {
     expect(dictionaryApp).toContain('navigate({ view: "lesson", detail: "active" }');
     expect(dictionaryApp).not.toContain("ReviewLessonWord");
     expect(dictionaryApp).not.toContain("lessonVersion");
+  });
+
+  it("keeps the two proven dark contrast corrections route-local", () => {
+    const compatibility = readSource(appDirectory, "dictionary-detail-compatibility.css");
+
+    expect(compatibility).toContain('.lx-routed-app[data-route-path^="/words/"] .lx-word-detail-example h2');
+    expect(compatibility).toContain('.active[aria-current="page"][data-navigation-view="library"]');
+    expect(compatibility).toContain("color: #9fb7ff;");
   });
 
   it("retires the old topic-wide detail CTA and compatibility presentation", () => {
