@@ -59,7 +59,7 @@ const AUTHENTICATED_ROUTES = [
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
   { name: "dictionary", url: "/dictionary", heading: "Словарь" },
   { name: "progress", url: "/progress", heading: "Прогресс" },
-  { name: "profile", url: "/profile", heading: "Quality Gates" },
+  { name: "profile", url: "/profile", heading: "Профиль" },
   { name: "word detail", url: "/words/101", heading: "rollback" },
   { name: "phrase detail", url: "/phrases/phrase-root-cause", heading: "We need to identify the root cause." },
 ] as const;
