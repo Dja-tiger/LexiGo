@@ -24,13 +24,15 @@ describe("Word Detail production ownership", () => {
     expect(catalog).toContain('import { WordDetailRoute } from "./word-detail-route"');
   });
 
-  it("defers the product graph swap until the App Router handoff is queued", () => {
+  it("keeps the Dictionary island mounted until App Router changes the pathname", () => {
     const bootstrap = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
 
-    expect(bootstrap).toContain("let productGraphTimer: number | null = null");
-    expect(bootstrap).toContain("productGraphTimer = window.setTimeout(() => {");
-    expect(bootstrap).toContain('setRouteGraph("product")');
-    expect(bootstrap).toContain("window.clearTimeout(productGraphTimer)");
+    expect(bootstrap).toContain("let productGraphFrame: number | null = null");
+    expect(bootstrap).toContain("const settleProductGraph = () => {");
+    expect(bootstrap).toContain("if (isDictionaryRoute(window.location.pathname)) {");
+    expect(bootstrap).toContain("window.requestAnimationFrame(settleProductGraph)");
+    expect(bootstrap).toContain("window.cancelAnimationFrame(productGraphFrame)");
+    expect(bootstrap).not.toContain("productGraphTimer");
   });
 
   it("loads direct detail without starting catalog metadata, progress or page requests", () => {
