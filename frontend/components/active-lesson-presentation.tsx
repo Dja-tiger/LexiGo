@@ -34,9 +34,7 @@ const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
 const LESSON_REVIEW_QUEUED_EVENT = "lexigo:lesson-review-queued";
 
 type LessonReviewQueuedDetail = {
-  lessonId: string;
   wordId: number;
-  lessonVersion: number;
 };
 
 export type ActiveLessonReviewFeedback = {
@@ -124,9 +122,7 @@ function FeedbackIcon({ kind }: { kind: ActiveLessonFeedbackKind }) {
 function isQueuedReviewDetail(value: unknown): value is LessonReviewQueuedDetail {
   if (!value || typeof value !== "object") return false;
   const detail = value as Partial<LessonReviewQueuedDetail>;
-  return typeof detail.lessonId === "string"
-    && Number.isSafeInteger(detail.wordId)
-    && Number.isSafeInteger(detail.lessonVersion);
+  return Number.isSafeInteger(detail.wordId);
 }
 
 function focusableElements(container: HTMLElement): HTMLElement[] {
