@@ -50,6 +50,7 @@ Implement the authenticated `/profile` production slice against Figma nodes `79:
 - `frontend/e2e/profile-visual.spec.ts`
 - `frontend/e2e/profile-visual.spec.ts-snapshots/**`
 - `frontend/e2e/accessibility-audit.spec.ts`
+- `frontend/e2e/accessibility-keyboard.spec.ts`
 - `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/route-bundle-budget.spec.ts`
 - `frontend/playwright.visual.config.ts`
