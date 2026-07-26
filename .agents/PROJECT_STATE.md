@@ -2,14 +2,14 @@
 
 ## Verification
 
-- Last verified: 2026-07-26 04:23 Europe/Berlin
+- Last verified: 2026-07-26 05:32 Europe/Berlin
 - Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge was PR #228 at `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`
-- PR #228 final immutable head: `1bef49521258ddd9b71e3b1985dca61a2c44f512`
-- PR #228 full CI: #1867, run `30183536706`, successful
-- Product deployment evidence for PR #228: Issue #12 and stage run `30184041786` report image `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
-- Issue #24 is closed as completed
-- No product PR is open and no active feature branch was found after PR #228 merged
+- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge was PR #231 at `e8be735457f5d622487b27ad5a621ce6bb7b9754`
+- PR #231 final immutable head: `c603124eb6bc79300b6ada629816af937c0465b3`
+- PR #231 full CI: #1885, run `30185771628`, successful
+- Product deployment evidence for PR #231: Issue #12 and stage run `30186260749` report image `e8be735457f5d622487b27ad5a621ce6bb7b9754`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
+- Issue #230 is closed as completed
+- No product PR is open after PR #231 merged
 - The current repository-memory reconciliation is a documentation/tooling follow-up only; it does not change runtime code
 
 ## Completed
@@ -35,6 +35,18 @@
 - PR #226 extended `/api/v1/progress` with authoritative Scenario completion activity and one deterministic reason-coded Scenario recommendation while preserving due Recall as the higher-priority next action.
 - Full required CI and post-merge stage validation are green for these product slices.
 
+### Route-boundary session and navigation reliability
+
+- PR #231 fixed the guest-bootstrap → in-app login → `/progress` ownership gap: route-boundary reconciliation now adopts the authenticated document session before the dedicated Progress island renders.
+- Every successful coalesced access-token refresh publishes one validated document-scoped session update; the bootstrap owner adopts it through the existing cache rather than allowing a later island to receive a stale token.
+- Matching bootstrap-cache and CSRF state remain a cache hit, so ordinary App Router transitions do not add a duplicate network refresh.
+- Progress remains escapable through Home, Learning and Dictionary navigation in desktop, mobile and installed-PWA browser projects.
+- Route/history scroll recovery is immediate (`behavior: "auto"`) rather than smooth and is cancelled by explicit wheel, touch, primary-pointer or non-editable scroll-navigation keyboard intent.
+- Bounded retry remains for temporarily unreachable positions caused by asynchronous content growth; after interruption no later frame overwrites the user's position.
+- Focus and live-region settlement remain single-shot after successful restoration or user interruption.
+- Regression coverage includes guest login → authenticated Progress → Home/Learning/Dictionary, successful refresh adoption, immediate scroll behavior, async-height retry, cancellation/no-further-write and deterministic browser wheel interruption.
+- PR #231 passed complete final-head CI #1885 and exact-squash stage/public validation in run `30186260749`; Issue #230 is complete.
+
 ### Scenario learning foundation and product integration
 
 - PR #216 added six workplace scenario types, ordered steps, explicit outcomes and criteria, durable attempts, optimistic versioning, pause/resume/reload recovery, atomic step acceptance, fact/hypothesis storage, submission idempotency and ordinary Recall review-event persistence.
@@ -57,7 +69,8 @@
 - PR #222 reconciled stage observation before Scenario UI work.
 - PR #225 reconciled Scenario UI production evidence and reset `.agents/current/**` from templates.
 - PR #227 reconciled Scenario progress integration and reset current task memory.
-- This documentation follow-up records PR #228 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
+- PR #229 reconciled Scenario catalog production evidence and reset current task memory.
+- This documentation follow-up records PR #231 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
 - Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
 
 ### Quality gates
@@ -122,19 +135,19 @@ Maintain exact production nodes, perform route-by-route parity after product sli
 
 ## Recent production/tooling evidence
 
-1. #228 — `feat(scenarios): add server-backed Scenario catalog` → `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`.
-2. #227 — `docs(agent): reconcile state after Scenario progress integration` → `56c8bf7b589601510ff60465c68c7482f5a8f320`.
-3. #226 — `feat(progress): integrate Scenario completion recommendations` → `e45b6beb63de2e1b18fd4482f21df8083e188df2`.
-4. #225 — `docs(agent): reconcile state after Scenario UI` → `591322c4a55b362402eab0b4936cd4e4f0347c3a`.
-5. #221 — `feat(scenarios): implement focused Scenario Lessons UI` → `8404066b0d5705de19f230fb98621d139fab12a0`.
-6. #218 — `fix(scenarios): own objective review targets on the server` → `15386321399f5386ff97d7d093c8a3c2777018be`.
-7. #217 — `chore(agent): formalize LexiGo development harness` → `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
+1. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
+2. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
+3. #228 — `feat(scenarios): add server-backed Scenario catalog` → `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`.
+4. #227 — `docs(agent): reconcile state after Scenario progress integration` → `56c8bf7b589601510ff60465c68c7482f5a8f320`.
+5. #226 — `feat(progress): integrate Scenario completion recommendations` → `e45b6beb63de2e1b18fd4482f21df8083e188df2`.
+6. #225 — `docs(agent): reconcile state after Scenario UI` → `591322c4a55b362402eab0b4936cd4e4f0347c3a`.
+7. #221 — `feat(scenarios): implement focused Scenario Lessons UI` → `8404066b0d5705de19f230fb98621d139fab12a0`.
 
 ## Evidence
 
-- Live `main`, merged PR #228, final CI #1867, closed Issue #24 and stage Issue #12/run `30184041786` were re-read at the verification timestamp.
-- Product deployment evidence for #228 uses immutable image SHA `733b49feec5230d151ab7f0e6e78ca0a8ea0671e`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
-- No open PR was found and no active feature branch was returned by the live branch search after PR #228 merged.
+- Live `main`, merged PR #231, final CI #1885, closed Issue #230 and stage Issue #12/run `30186260749` were re-read at the verification timestamp.
+- Product deployment evidence for #231 uses immutable image SHA `e8be735457f5d622487b27ad5a621ce6bb7b9754`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
+- No open product PR was found after PR #231 merged.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
