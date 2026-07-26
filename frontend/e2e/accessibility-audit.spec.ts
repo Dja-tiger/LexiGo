@@ -56,7 +56,7 @@ const AUTHENTICATED_ROUTES = [
   { name: "home", url: "/", heading: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
-  { name: "dictionary", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
+  { name: "dictionary", url: "/dictionary", heading: "Словарь" },
   { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Quality Gates" },
   { name: "word detail", url: "/words/101", heading: "rollback" },
