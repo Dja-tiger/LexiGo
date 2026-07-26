@@ -79,19 +79,19 @@ function RelatedPhrases({
         <p className="lx-word-detail-inline-status">Для этого слова пока нет связанных фраз.</p>
       ) : null}
       {phrases.length > 0 ? (
-        <div className="lx-word-detail-phrase-list" role="list" aria-label="Связанные фразы">
+        <ul className="lx-word-detail-phrase-list" aria-label="Связанные фразы">
           {phrases.map((phrase) => (
-            <button
-              key={phrase.id}
-              type="button"
-              role="listitem"
-              lang="en"
-              onClick={() => onOpen(phrase)}
-            >
-              {phrase.prompt}
-            </button>
+            <li key={phrase.id}>
+              <button
+                type="button"
+                lang="en"
+                onClick={() => onOpen(phrase)}
+              >
+                {phrase.prompt}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : null}
     </section>
   );
