@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   createNavigationHistoryState,
@@ -82,15 +82,10 @@ describe("navigation history accessibility state", () => {
   });
 });
 
-describe("navigation motion preference", () => {
-  it("uses instant scrolling when reduced motion is requested", () => {
-    const matchMedia = vi.fn(() => ({ matches: true }));
-    expect(navigationScrollBehavior({ matchMedia })).toBe("auto");
-    expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
-  });
-
-  it("uses smooth scrolling otherwise and fails safe when matchMedia is unavailable", () => {
-    expect(navigationScrollBehavior({ matchMedia: () => ({ matches: false }) })).toBe("smooth");
+describe("navigation motion", () => {
+  it("keeps route and history scroll recovery immediate for every motion preference", () => {
+    expect(navigationScrollBehavior({ matchMedia: () => ({ matches: true }) })).toBe("auto");
+    expect(navigationScrollBehavior({ matchMedia: () => ({ matches: false }) })).toBe("auto");
     expect(navigationScrollBehavior({ matchMedia: () => { throw new Error("blocked"); } })).toBe("auto");
   });
 });
