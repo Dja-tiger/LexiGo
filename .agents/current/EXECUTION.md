@@ -20,52 +20,71 @@ Version or verification date: 2026-07-26.
 
 Inputs: repository `Dja-tiger/LexiGo`, exact base `72291d9351f3c565d13be7b3f9e9055258f98ac6`, Issue #198, stage Issue #12 and Draft PR #235.
 
-Files inspected: mandatory harness documents, current project state, README, architecture, canonical route page, navigation/history owners, session/bootstrap graph, Dictionary island/catalog, backend word model/repository/handler, lesson HTTP contract, speech runtime, catalog CSS and quality-gate suites.
+Files inspected: mandatory harness documents, live `main`, PR/Issue/CI state, README, architecture, route shell, session/bootstrap graph, Dictionary island/catalog, Word Detail API/model, lesson API, speech runtime, route/history owners, CSS owners, Playwright reports, traces and Linux visual artifacts.
 
-Actions performed: verified live `main`, stage and open PR state; created an exact-base feature branch; wrote the task boundary; opened Draft PR #235 before runtime changes; added strict Word Detail payload/scheduler helpers; separated catalog and detail controllers; added Figma-backed presentation; skipped catalog metadata/progress/page requests on detail; added bounded server-owned related phrase search; added exact single-word lesson creation; retired the temporary old-detail CSS boundary; added initial unit coverage.
+Actions performed: kept all writes on the explicit feature branch; implemented strict Word Detail validation, separate route controller/presentation, bounded related-phrase search, exact single-word lesson creation, pronunciation fallback, responsive/accessibility/PWA/performance contracts and content-addressed visual baselines; classified CI failures; fixed route-local dark contrast; replaced an invalid synchronous/fixed-delay graph switch with a pathname-settled cancelable `requestAnimationFrame` handoff; promoted the new failure category into the normative agent lesson.
 
-Commands or procedures: connector exact-file reads/writes with explicit branch and blob SHA, post-write read-back, Figma node inspection, backend/frontend owner tracing and CI run polling.
+Commands or procedures: exact GitHub file reads/writes with blob SHA and explicit branch, post-write read-back, live-main verification, workflow run/job/log/artifact inspection, Playwright report analysis, Linux PNG SHA-256/IHDR verification and manual Figma comparison.
 
-Artifacts produced: branch `feat/issue-198-word-detail`, Draft PR #235, active harness memory, standalone Word Detail route controller/presentation/styles and strict scheduler unit contract.
+Artifacts produced: Draft PR #235; standalone Word Detail controller/presentation/styles; strict scheduler contract; App Router/PWA/accessibility/ownership/performance tests; reviewed Linux compact/desktop Light/Dark visual contract; reusable route-island lifecycle lesson.
 
-Result: the first implementation checkpoint is published. Direct detail no longer requires a catalog page response, scheduler evidence is server-owned, related phrases preserve backend order and the practice CTA sends exactly one selected word ID.
+Result: the implementation checkpoint now has exact API ownership, honest scheduler evidence, direct-entry independence, preserved Dictionary history, exact one-word practice creation and a route handoff that retains its router owner until the pathname changes.
 
-Failures: no CI classification is available yet for the current checkpoint. Source review found one undefined CSS token before visual testing.
+Failures: CI #1952 found two dark contrast defects and an async route-island race. CI #1955 confirmed the contrast correction but proved that `setTimeout(0)` remained a race because the route graph could still swap before pathname settlement.
 
-Root cause: Word Detail presentation remained coupled to the Dictionary catalog owner after routing and backend detail semantics had become canonical. The undefined token came from assuming Figma's action-foreground variable existed in the Foundation V1 CSS token set.
+Root cause: Word Detail initially inherited decorative Figma primary text on dark surfaces below WCAG text contrast. Separately, a custom route-graph event was treated as completed navigation; it unmounted the Dictionary island that owned the pending imperative `router.push` after an async Lesson API mutation.
 
-Fallback: keep session/API/history orchestration in the existing Dictionary island; add route-local presentation and validation instead of creating a second application root or changing backend contracts. Replace the missing action foreground with an explicit route-local Light/Dark token.
+Fallback: preserve global/session/API/history ownership in the existing Dictionary island; apply only route-local foreground overrides; use a cancelable pathname predicate rather than DOM mutation, arbitrary delay, alternate app root or backend change.
 
-Limitations: focused browser/accessibility/PWA/visual/bundle contracts, final CI, manual Linux visual review, baseline promotion, Ready transition, squash merge, exact-SHA stage validation and post-merge repository-memory reconciliation remain pending.
+Limitations: full required CI on the final developer-authored head, Ready transition, squash merge, exact-SHA stage/public validation, Issue closure and post-merge repository-memory reconciliation remain pending.
 
-Reusable lesson: Figma representative values are presentation evidence only. A production detail surface must bind status and scheduling copy to typed backend fields, and every visual variable must be resolved against the actual repository token source before baseline calibration.
+Reusable lesson: a navigation intent event and a fixed delay are not lifecycle evidence. For cross-island imperative App Router navigation, retain the source island until the browser pathname exits its route predicate, then switch graphs with cleanup.
 
-### Figma design inspection
+### CI debugging
 
-Purpose: reproduce the approved Word Detail information hierarchy without inferring unsupported product semantics.
+Purpose: classify failing required checks from concrete logs and artifacts before changing production code or tests.
 
-Instruction source: Issue #198 and installed Figma design-to-code skill.
+Instruction source: `.agents/AGENTS.base.md`, `.agents/AGENTS.progress-pr214.md`, `.agents/SKILLS.md` and installed `gh-fix-ci` procedure.
 
 Version or verification date: 2026-07-26.
 
-Inputs: LexiGo Design System `3xXmBWnf38jbvLjtziwber`, Mobile Dark `78:99`, Desktop Dark `78:274`.
+Inputs: CI #1952/run `30202093705`, CI #1955/run `30203166826`, UI shard and axe reports, visual artifact `8632306006`.
 
-Files inspected: Figma design context and variable definitions for both nodes, plus repository Foundation V1 tokens.
+Actions performed: separated three production defects from expected pending visual calibration; confirmed exact axe nodes/colors/ratios; confirmed lesson POST body and failed destination; traced event → graph state → island unmount → lost router navigation; rejected blind retry and timeout inflation; tested the first fixed-delay hypothesis through full CI and replaced it after objective failure.
 
-Actions performed: recorded compact/desktop hierarchy, spacing, cards, status, speech control, related phrases and action placement; compared representative Figma fields with actual API ownership; identified unsupported retention percentage and personal-note persistence; mapped Light/Dark to existing semantic tokens.
+Artifacts produced: root-cause record, route-local contrast contract, pathname-settled graph handoff, source regression test and durable harness lesson.
 
-Commands or procedures: `get_design_context`, `get_variable_defs`, exact source comparison and ownership classification.
+Result: frontend core passed on checkpoint #1955; the final head contains the corrected lifecycle predicate and promoted visual evidence.
 
-Artifacts produced: verified design/state matrix and bounded presentation contract recorded in `.agents/current/TASK.md`.
+Failures: the final-head CI result is not yet available.
 
-Result: the implementation follows the approved hierarchy while replacing representative percentage/note affordances with honest production scheduler/context data.
+Fallback: if the final UI journey still fails, inspect the exact trace/request/navigation sequence before changing the lifecycle contract; do not weaken the `/lesson/active` assertion.
 
-Failures: no Figma retrieval failure. The design variable `action/on-primary` is not formalized in repository Foundation V1 CSS and requires a route-local equivalent.
+Regression gates: `frontend/components/word-detail-source.test.ts`, `frontend/e2e/app-router-routes.spec.ts`, axe Light/Dark and full UI shard 1/2.
 
-Root cause: Figma variable inventory is broader than the currently formalized global token subset.
+### Figma and Linux visual validation
 
-Fallback: preserve global token ownership and define only the missing foreground value within the Word Detail route boundary for Light/Dark.
+Purpose: implement and approve the exact Word Detail hierarchy without inventing unsupported product state.
 
-Limitations: Linux rendering still requires manual comparison before any content-addressed baseline is accepted.
+Instruction source: Issue #198, Figma nodes `78:99`/`78:274`, `.agents/SKILLS.md` visual procedure and Foundation V1 token source.
 
-Reusable lesson: compare Figma variables against checked-in semantic tokens explicitly; never assume matching names or widen global tokens inside a feature slice.
+Version or verification date: 2026-07-26.
+
+Inputs: LexiGo Design System `3xXmBWnf38jbvLjtziwber`, Mobile Dark `78:99`, Desktop Dark `78:274`, Linux artifact `8632306006` from CI #1955/head `7f00019d372a3daf2fd7bd14bac39c3abc69d27c`.
+
+Actions performed: mapped compact/desktop hierarchy and Light/Dark semantics; excluded unsupported retention percentage and personal-note persistence; opened and manually reviewed all four Linux full-page actuals; verified dimensions and SHA-256; promoted exact content-addressed constants without `--update-snapshots`.
+
+Artifacts produced:
+
+- compact Light `390 × 1745`, `0d9eade831f96bcdf7b55132ebce75c69cf22bd4be9761d28e0ce98595968f7b`;
+- compact Dark `390 × 1745`, `f985ac2cce5ae144e09dbe296de886de10b3fe31b01e175cd579f85812ca8088`;
+- desktop Light `1440 × 1160`, `64258a07b5010045dcc4929110f5635d072c995bfaf315d9140aee0e6a3abf72`;
+- desktop Dark `1440 × 1160`, `0d5f69b6b4ecb530bd51b421e20f5fcd66f4bc01d60bb20969b592e9a95fde24`.
+
+Result: all four reviewed actuals preserve the approved hierarchy, route chrome, readable contrast, action placement and responsive geometry.
+
+Failures: the pre-fix dark foreground failed WCAG contrast on two text nodes; corrected actuals were reviewed before promotion.
+
+Fallback: if final Linux comparison differs, do not update hashes blindly; retrieve the final-head artifact, inspect the visual delta and classify whether the route-only navigation change can legitimately affect pixels.
+
+Limitations: final-head visual comparison remains required before Ready.
