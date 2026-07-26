@@ -7,7 +7,7 @@ const SESSION = {
 const WORD = { id: 101, kind: "word", lemma: "route", translation: "маршрут", aliases: ["path"], phonetic: "/ruːt/", partOfSpeech: "noun", topic: "Frontend Architecture", examples: ["Open the route in a new tab."], note: "A canonical application location.", status: "new" };
 const PHRASE = { id: 201, kind: "phrase", slug: "backend-route-contract", lemma: "Keep the route stable", translation: "сохранять маршрут стабильным", phonetic: "", partOfSpeech: "phrase", topic: "Frontend Architecture", examples: ["Keep the route stable across reloads."], note: "Back and Forward must restore the screen.", status: "review" };
 const PROGRESS = { dueNow: 1, dueWords: 1, duePhrases: 0, totalWords: 1, totalPhrases: 1, newWords: 1, learningWords: 0, reviewWords: 0, masteredWords: 0, masteredPhrases: 0, reviewsToday: 0, successfulToday: 0, reviewsTotal: 0, dailyGoal: 30, currentStreak: 0, longestStreak: 0, retainedItemsWeek: 0, retainedWordsWeek: 0, retainedPhrasesWeek: 0 };
-const METADATA = { catalogVersion: "sha256:app-router-e2e", updatedAt: "2026-07-19T00:00:00Z", totals: { items: 2, words: 1, phrases: 1 }, sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 1 , academicTechnicalEnglish: 0}, topics: [{ topic: "Frontend Architecture", count: 2, words: 1, phrases: 1 }] };
+const METADATA = { catalogVersion: "sha256:app-router-e2e", updatedAt: "2026-07-19T00:00:00Z", totals: { items: 2, words: 1, phrases: 1 }, sources: { mixed: 2, noun: 1, verb: 0, adjective: 0, phrases: 1, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 1, academicTechnicalEnglish: 0 }, topics: [{ topic: "Frontend Architecture", count: 2, words: 1, phrases: 1 }] };
 
 async function json(route: Route, status: number, body: unknown) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -89,13 +89,13 @@ test("direct routes render, remain canonical and expose the owning semantic link
     { path: "/", view: "home", heading: /готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", view: "learn", heading: "Соберите один сфокусированный урок" },
     { path: "/phrases", view: "library", navigationPath: "/dictionary", heading: "Находите готовые формулировки" },
-    { path: "/dictionary", view: "library", heading: "Находите и изучайте материал в контексте" },
+    { path: "/dictionary", view: "library", heading: "Словарь" },
     { path: "/progress", view: "progress", heading: "Прогресс" },
   ] as const;
   for (const entry of routes) {
     await page.goto(entry.path);
     await expect(page).toHaveURL((url) => url.pathname === entry.path && url.search === "");
-    await expect(page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" || entry.path === "/dictionary" })).toBeVisible();
     const link = visibleRouteLink(page, entry.view);
     await expect(link).toHaveAttribute("aria-current", "page");
     await expect(link).toHaveAttribute("href", "navigationPath" in entry ? entry.navigationPath : entry.path);
@@ -112,7 +112,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
   for (const entry of [
     { path: "/", heading: /готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
     { path: "/learn", heading: "Соберите один сфокусированный урок" },
-    { path: "/dictionary", heading: "Находите и изучайте материал в контексте" },
+    { path: "/dictionary", heading: "Словарь" },
     { path: "/progress", heading: "Прогресс" },
   ] as const) {
     const page = await context.newPage();
@@ -121,7 +121,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
       await page.goto(entry.path, { waitUntil: "domcontentloaded" });
       const heading = entry.path === "/"
         ? page.locator(".lx-home-next-action h1")
-        : page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" });
+        : page.getByRole("heading", { level: 1, name: entry.heading, exact: entry.path === "/progress" || entry.path === "/dictionary" });
       await expect(heading).toBeVisible({ timeout: 15_000 });
 
       await exerciseScrollBursts(page);
@@ -140,7 +140,7 @@ test("scrolling primary routes never terminates the browser renderer", async ({ 
 test("legacy query URLs redirect once to canonical paths without losing filters", async ({ page }) => {
   await page.goto("/?view=library&source=backend&topic=Frontend%20Architecture&status=new");
   await expect(page).toHaveURL(/\/dictionary\?source=backend&topic=Frontend\+Architecture&status=new$/);
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
 });
 
 test("semantic route links support a real new tab and browser Back/Forward", async ({ context, page }, testInfo) => {
@@ -159,11 +159,11 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   await expect(page).toHaveURL(/\/learn$/);
   await visibleRouteLink(page, "library").click();
   await expect(page).toHaveURL(/\/dictionary$/);
-  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+  await page.getByRole("navigation", { name: "Быстрые фильтры словаря" }).getByRole("button", { name: "Фразы", exact: true }).click();
   await expect(page).toHaveURL(/\/phrases$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/learn$/);
   await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();

@@ -164,7 +164,7 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
   await expect(dueCard.locator("strong")).toHaveText("7");
 
   await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
-  await page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" }).click();
+  await page.getByRole("navigation", { name: "Быстрые фильтры словаря" }).getByRole("button", { name: "Фразы", exact: true }).click();
   await expect(page).toHaveURL(/\/phrases$/);
   await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
 

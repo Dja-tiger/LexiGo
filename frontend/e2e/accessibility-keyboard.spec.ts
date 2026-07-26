@@ -254,7 +254,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
   await startLesson.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
-  await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "keyboard" })).toBeVisible();
 
   const known = page.getByRole("button", { name: "Знал", exact: true });
   await known.focus();
@@ -292,13 +292,13 @@ for (const target of [
   { name: "home", url: "/", heading: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ },
   { name: "learn", url: "/learn", heading: "Соберите один сфокусированный урок" },
   { name: "phrases", url: "/phrases", heading: "Находите готовые формулировки" },
-  { name: "library", url: "/dictionary", heading: "Находите и изучайте материал в контексте" },
+  { name: "library", url: "/dictionary", heading: "Словарь" },
   { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Keyboard User" },
 ] as const) {
   test(`axe keyboard baseline: ${target.name}`, async ({ page }) => {
     await page.goto(target.url);
-    await expect(page.getByRole("heading", { level: 1, name: target.heading, exact: target.url === "/progress" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: target.heading, exact: target.url === "/progress" || target.url === "/dictionary" })).toBeVisible();
     await expectKeyboardAxeBaseline(page);
     await expectNoPositiveTabIndex(page);
   });

@@ -257,9 +257,9 @@ test("application shell, dictionary catalog and composer collections remain uniq
     await expect(visibleNavigation(page)).toHaveCount(1);
     await visibleNavigation(page).getByRole("link", { name: "Словарь", exact: true }).click();
     await expect(page).toHaveURL(/\/dictionary$/);
-    await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
-    await expect(page.locator(".lx-dictionary-toolbar")).toHaveCount(1);
+    await expect(page.locator(".lx-dictionary-workspace")).toHaveCount(1);
     await expect(visibleNavigation(page)).toHaveCount(1);
     await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
@@ -340,11 +340,11 @@ test("focused lesson and speech stay declarative through repeated state transiti
   expect(runtimeErrors).toEqual([]);
 });
 
-test("dictionary counts come from authenticated resources without fallback DOM rewriting", async ({ page }) => {
+test("dictionary counts come from catalog metadata without Progress or fallback DOM rewriting", async ({ page }) => {
   await page.goto("/dictionary");
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
-  await expect(page.getByText("0 слов освоено", { exact: true })).toBeVisible();
+  await expect(page.locator(".lx-dictionary-count")).toHaveText("3 слова");
   await expect(page.locator("body")).not.toContainText("799");
   await expect(page.locator("body")).not.toContainText("579");
 });

@@ -69,10 +69,11 @@ test("a new user can find a word through the application shell without entering 
   await page.goto("/");
   await clickPrimaryNavigation(page, "library");
   await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
 
-  await page.getByRole("searchbox", { name: "Поиск по словарю" }).fill("rollback");
-  await page.getByRole("button", { name: "Найти" }).click();
+  const search = page.getByRole("searchbox", { name: "Поиск по словарю" });
+  await search.fill("rollback");
+  await search.press("Enter");
   await page.getByRole("button", { name: "Открыть карточку: rollback" }).click();
   await expect(page).toHaveURL(/\/words\/101/);
   await expect(page.getByRole("heading", { name: "rollback" })).toBeVisible();
@@ -86,9 +87,9 @@ test("a new user can find a word through the application shell without entering 
 
 test("phrases are a dictionary catalog kind rather than a competing top-level section", async ({ page }) => {
   await page.goto("/dictionary");
-  const switcher = page.getByRole("navigation", { name: "Тип каталога" });
-  await expect(switcher.getByRole("button", { name: "Слова и термины" })).toHaveAttribute("aria-current", "page");
-  await switcher.getByRole("button", { name: "Рабочие фразы" }).click();
+  const switcher = page.getByRole("navigation", { name: "Быстрые фильтры словаря" });
+  await expect(switcher.getByRole("button", { name: "Слова", exact: true })).toHaveAttribute("aria-current", "page");
+  await switcher.getByRole("button", { name: "Фразы", exact: true }).click();
   await expect(page).toHaveURL(/\/phrases$/);
   await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Тип каталога" }).getByRole("button", { name: "Рабочие фразы" })).toHaveAttribute("aria-current", "page");

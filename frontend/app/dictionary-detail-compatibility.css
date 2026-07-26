@@ -1,0 +1,102 @@
+/*
+ * Issue #197 changes only the Dictionary catalog. This compatibility owner
+ * preserves two boundaries that must not leak through the shared Dictionary
+ * client island: WCAG-safe catalog state colors and the existing Word Detail
+ * dark surface that remains until Issue #198.
+ */
+
+.lx-app[data-route-client-island="dictionary"] {
+  --lx-dictionary-retained-strong: #146c4e;
+  --lx-dictionary-retained-text: #146c4e;
+  --lx-dictionary-weak-strong: #a83232;
+  --lx-dictionary-weak-text: #a83232;
+  --lx-dictionary-learning: #7a4e00;
+}
+
+.lx-dictionary-quick-filters button.active,
+.lx-dictionary-quick-filters button[aria-pressed="true"],
+.lx-dictionary-filter-panel button.active,
+.lx-dictionary-filter-panel button[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--lx-dictionary-retained-strong);
+}
+
+.lx-dictionary-quick-filters button.weak {
+  color: var(--lx-dictionary-weak-text);
+}
+
+.lx-dictionary-quick-filters button.weak[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--lx-dictionary-weak-strong);
+}
+
+.lx-dictionary-status[data-tone="mastered"] {
+  color: var(--lx-dictionary-retained-text);
+}
+
+.lx-dictionary-status[data-tone="review"] {
+  color: var(--lx-dictionary-weak-text);
+}
+
+.lx-dictionary-filter-toggle > span:first-child:last-child {
+  min-width: 0;
+  min-height: 0;
+  display: inline;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  font-size: inherit;
+}
+
+.lx-routed-app[data-route-path^="/words/"],
+.lx-routed-app[data-route-path^="/words/"] .lx-app[data-route-client-island="dictionary"],
+.lx-routed-app[data-route-path^="/words/"] .lx-app-shell,
+.lx-routed-app[data-route-path^="/words/"] .lx-main-content {
+  --lx-text: #f8fafc;
+  --lx-muted: #cbd5e1;
+  --lx-secondary: #5eead4;
+  color: #f8fafc;
+  background: #08111f;
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-card {
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-meta span[data-status] {
+  color: #99f6e4;
+  background: rgba(13, 148, 136, 0.32);
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-title p,
+.lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-section p {
+  color: #cbd5e1;
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-dictionary-translation {
+  color: #5eead4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lx-app[data-route-client-island="dictionary"] {
+    --lx-dictionary-retained-text: #7ee2b8;
+    --lx-dictionary-weak-text: #ff9f9f;
+    --lx-dictionary-learning: #f6d27b;
+  }
+}
+
+@media (forced-colors: active) {
+  .lx-routed-app[data-route-path^="/words/"],
+  .lx-routed-app[data-route-path^="/words/"] .lx-app[data-route-client-island="dictionary"],
+  .lx-routed-app[data-route-path^="/words/"] .lx-app-shell,
+  .lx-routed-app[data-route-path^="/words/"] .lx-main-content,
+  .lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-card,
+  .lx-routed-app[data-route-path^="/words/"] .lx-dictionary-detail-meta span {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+}

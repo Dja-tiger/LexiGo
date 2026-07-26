@@ -191,25 +191,26 @@ function watchRuntimeErrors(page: Page) {
 
 async function expectDictionary(page: Page) {
   await expect(page).toHaveURL(/\/dictionary(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты словаря" })).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(48);
   await expect(page.locator(".lx-app")).toBeVisible();
   await expect(page.getByTestId("application-error-boundary")).toHaveCount(0);
 }
 
-test("dictionary filters, alias search, deep link and composer delegation are URL-driven", async ({ context, page }, testInfo) => {
+test("dictionary filters, alias search and deep links are URL-driven without catalog lesson delegation", async ({ context, page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Dedicated desktop catalog contract");
   const api = await installAPI(context);
   const runtimeErrors = watchRuntimeErrors(page);
 
   await page.goto("/dictionary");
   await expectDictionary(page);
-  await expect(page.getByText("Показано 1–48 из 60", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Показано 1–48 из 60", { exact: true })).toBeVisible();
 
-  await page.getByRole("combobox", { name: "Раздел словаря" }).selectOption("backend");
-  await page.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
-  await page.getByRole("combobox", { name: "Статус изучения" }).selectOption("new");
+  const filters = page.getByRole("complementary", { name: "Фильтры словаря" });
+  await filters.getByRole("button", { name: "Backend-разработка", exact: true }).click();
+  await filters.getByRole("combobox", { name: "Тема словаря" }).selectOption("Backend Development");
+  await filters.getByRole("button", { name: "Новое", exact: true }).click();
   await expect(page).toHaveURL(/source=backend/);
   await expect(page).toHaveURL(/topic=Backend\+Development/);
   await expect(page).toHaveURL(/status=new/);
@@ -235,12 +236,9 @@ test("dictionary filters, alias search, deep link and composer delegation are UR
   await expect(page).toHaveURL(/query=temporary\+storage/);
   await expect(page.getByRole("listitem")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Сбросить все фильтры" }).click();
+  await filters.getByRole("button", { name: "Сбросить фильтры", exact: true }).click();
   await expectDictionary(page);
-  await page.getByRole("button", { name: "Настроить урок по текущей выборке" }).click();
-  await expect(page).toHaveURL(/\/learn(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Смешанная практика/ })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("button", { name: "Настроить урок по текущей выборке" })).toHaveCount(0);
   expect(api.lessonRequests).toHaveLength(0);
   expect(runtimeErrors).toEqual([]);
 });
@@ -252,17 +250,22 @@ test("iOS standalone dictionary restores result scroll on history return and fil
   let runtimeErrors = watchRuntimeErrors(page);
 
   await page.goto("/dictionary?source=backend&status=review");
-  await expect(page.getByRole("heading", { name: "Находите и изучайте материал в контексте" })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Раздел словаря" })).toHaveValue("backend");
-  await expect(page.getByRole("combobox", { name: "Статус изучения" })).toHaveValue("review");
+  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
+  await page.getByRole("button", { name: "Фильтры и сортировка" }).click();
+  const filters = page.getByRole("complementary", { name: "Фильтры словаря" });
+  await expect(filters).toBeVisible();
+  await expect(filters.getByRole("button", { name: "Backend-разработка", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(filters.getByRole("button", { name: "К повторению", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("listitem")).toHaveCount(12);
 
-  await page.getByRole("button", { name: /Открыть карточку:/ }).first().scrollIntoViewIfNeeded();
-  // Wait for Next.js to debounce and save the scroll position to history state
+  const resultButtons = page.getByRole("button", { name: /Открыть карточку:/ });
+  const lastResult = resultButtons.last();
+  await lastResult.scrollIntoViewIfNeeded();
+  // Wait for Next.js to debounce and save the scroll position to history state.
   await page.waitForTimeout(500);
   const scrollBefore = await page.evaluate(() => window.scrollY);
   expect(scrollBefore).toBeGreaterThan(0);
-  await page.getByRole("button", { name: /Открыть карточку:/ }).first().click();
+  await lastResult.click();
   await expect(page).toHaveURL(/\/words\/\d+(?:\?|$)/);
   await page.goBack();
   await expect(page).toHaveURL(/\/dictionary\?/);
@@ -282,6 +285,7 @@ test("iOS standalone dictionary restores result scroll on history return and fil
   await expect(relaunched).toHaveURL(/\/dictionary\?/);
   await expect(relaunched).toHaveURL(/source=backend/);
   await expect(relaunched).toHaveURL(/status=review/);
+  await expect(relaunched.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await expect(relaunched.getByRole("listitem")).toHaveCount(12);
   expect(runtimeErrors).toEqual([]);
 });

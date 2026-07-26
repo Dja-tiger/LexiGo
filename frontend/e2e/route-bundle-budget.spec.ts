@@ -70,7 +70,7 @@ const ROUTES: RouteCase[] = [
   {
     route: "/dictionary",
     waitUntilReady: async (page) => {
-      await expect(page.getByRole("heading", { level: 1, name: "Находите и изучайте материал в контексте" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
     },
   },
   {
