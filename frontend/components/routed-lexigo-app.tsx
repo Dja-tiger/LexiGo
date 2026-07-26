@@ -13,7 +13,6 @@ import {
 } from "../lib/navigation";
 import {
   createNavigationHistoryState,
-  navigationScrollBehavior,
   navigationScrollFromHistory,
   readNavigationHistoryState,
   type NavigationScrollPosition,
@@ -27,6 +26,17 @@ import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
 const ROUTE_ISLAND_BOUNDARIES = new Set(["/progress", "/scenarios"]);
+const SCROLL_INTENT_KEYS = new Set([
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "End",
+  "Home",
+  "PageDown",
+  "PageUp",
+  " ",
+]);
 
 function initializeRouteEntry(): void {
   const target = parseNavigationLocation(window.location);
@@ -83,6 +93,24 @@ function routeBoundaryLabel(pathname: string, target: NavigationTarget): string 
   return pathname === "/scenarios" ? "Рабочие сценарии" : viewTitle(target.view);
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (
+    target.isContentEditable
+    || target.tagName === "INPUT"
+    || target.tagName === "SELECT"
+    || target.tagName === "TEXTAREA"
+  );
+}
+
+function isKeyboardScrollIntent(event: KeyboardEvent): boolean {
+  return !event.defaultPrevented
+    && !event.altKey
+    && !event.ctrlKey
+    && !event.metaKey
+    && !isEditableTarget(event.target)
+    && SCROLL_INTENT_KEYS.has(event.key);
+}
+
 function RouteSkipLink() {
   function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -123,6 +151,38 @@ export function RoutedLexigoApp() {
     let discoveryFrame = 0;
     let cancelRestoration: (() => void) | null = null;
     let cancelled = false;
+    let interrupted = false;
+    let settled = false;
+
+    const announceBoundary = () => {
+      if (settled || cancelled) return;
+      settled = true;
+      announcementCounterRef.current += 1;
+      setRouteAnnouncement({
+        id: announcementCounterRef.current,
+        message: `${expectedLabel}. Экран загружен.`,
+      });
+    };
+
+    const interruptRestoration = () => {
+      interrupted = true;
+      if (!cancelRestoration) return;
+      cancelRestoration();
+      cancelRestoration = null;
+      announceBoundary();
+    };
+    const interruptFromPointer = (event: PointerEvent) => {
+      if (event.isPrimary) interruptRestoration();
+    };
+    const interruptFromKeyboard = (event: KeyboardEvent) => {
+      if (isKeyboardScrollIntent(event)) interruptRestoration();
+    };
+
+    window.addEventListener("wheel", interruptRestoration, { passive: true });
+    window.addEventListener("touchstart", interruptRestoration, { passive: true });
+    window.addEventListener("touchmove", interruptRestoration, { passive: true });
+    window.addEventListener("pointerdown", interruptFromPointer, { passive: true });
+    window.addEventListener("keydown", interruptFromKeyboard);
 
     const restoreBoundary = () => {
       if (cancelled) return;
@@ -134,6 +194,11 @@ export function RoutedLexigoApp() {
       }
 
       main.focus({ preventScroll: true });
+      if (interrupted) {
+        announceBoundary();
+        return;
+      }
+
       cancelRestoration = scheduleNavigationScrollRestoration(
         destination.scroll,
         {
@@ -142,18 +207,15 @@ export function RoutedLexigoApp() {
             window.scrollTo({
               left: position.x,
               top: position.y,
-              behavior: navigationScrollBehavior(window),
+              behavior: "auto",
             });
           },
           requestFrame: (callback) => window.requestAnimationFrame(callback),
           cancelFrame: (frameID) => window.cancelAnimationFrame(frameID),
         },
         () => {
-          announcementCounterRef.current += 1;
-          setRouteAnnouncement({
-            id: announcementCounterRef.current,
-            message: `${expectedLabel}. Экран загружен.`,
-          });
+          cancelRestoration = null;
+          announceBoundary();
         },
       );
     };
@@ -163,6 +225,11 @@ export function RoutedLexigoApp() {
       cancelled = true;
       window.cancelAnimationFrame(discoveryFrame);
       cancelRestoration?.();
+      window.removeEventListener("wheel", interruptRestoration);
+      window.removeEventListener("touchstart", interruptRestoration);
+      window.removeEventListener("touchmove", interruptRestoration);
+      window.removeEventListener("pointerdown", interruptFromPointer);
+      window.removeEventListener("keydown", interruptFromKeyboard);
     };
   }, [pathname]);
 
