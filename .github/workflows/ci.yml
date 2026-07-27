@@ -48,6 +48,7 @@ jobs:
         run: python3 scripts/ci/agent_docs_scope_test.py
       - name: Publish CI scope
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: ci-scope-${{ github.sha }}
           path: ${{ runner.temp }}/lexigo-ci-scope/scope.json
