@@ -6,8 +6,8 @@
 - Parent Issue: #115.
 - Branch: `agent/issue-257-active-lesson-route-island`.
 - Base SHA: `0bc5203da2487e947b860ce67a69cf04121cc3c8`.
-- Head SHA: resolve from live branch ref
-- PR: pending Draft PR.
+- Head SHA: `bafae974213e89ea35774360f013a2e5447d1313` (pre-flight; functional changes are not committed yet).
+- PR: #258 (Draft).
 
 ## Objective
 

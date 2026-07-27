@@ -76,7 +76,9 @@ describe("Learn route client-island ownership", () => {
     expect(bootstrappedApp).toContain('request.pathname.startsWith("/lesson/")');
     expect(bootstrappedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
     expect(routedApp).toContain('const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson"');
-    expect(routedApp).toContain("if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) return");
+    expect(routedApp).toContain("focusedLessonMountedRef.current = true");
+    expect(routedApp).toContain("if (!focusedLessonMountedRef.current) return");
+    expect(routedApp).toContain("focusedLessonMountedRef.current = false");
     expect(routedApp).toContain("const requestedEntry = readNavigationHistoryState(event.state)");
     expect(routedApp).toContain('requestedEntry?.target.view === "lesson"');
     expect(routedApp).toContain("every history");

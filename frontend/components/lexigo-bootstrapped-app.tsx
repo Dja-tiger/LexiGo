@@ -74,6 +74,11 @@ const LexigoLearnApp = dynamic(
   { ssr: false, loading: ProductShellLoading },
 );
 
+const LexigoActiveLessonApp = dynamic(
+  () => import("./lexigo-active-lesson-app").then((module) => module.LexigoActiveLessonApp),
+  { ssr: false, loading: ProductShellLoading },
+);
+
 const LexigoDictionaryApp = dynamic(
   () => import("./lexigo-dictionary-app").then((module) => module.LexigoDictionaryApp),
   { ssr: false, loading: ProductShellLoading },
@@ -154,6 +159,10 @@ function isProfileRoute(pathname: string): boolean {
   return normalizedPathname(pathname) === "/profile";
 }
 
+function isActiveLessonRoute(pathname: string): boolean {
+  return normalizedPathname(pathname) === "/lesson/active";
+}
+
 function routeGraphForPath(pathname: string): RouteGraph {
   if (isHomeRoute(pathname)) return "home";
   if (isLearnRoute(pathname)) return "learn";
@@ -218,6 +227,9 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   const [sessionRestoreSuppressed, setSessionRestoreSuppressed] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
   const [routeGraphRequest, setRouteGraphRequest] = useState<RouteGraphRequest | null>(null);
+  const [activeLessonOwnerRetained, setActiveLessonOwnerRetained] = useState(
+    () => isActiveLessonRoute(pathname),
+  );
 
   const handleSessionUpdated = useCallback((nextSession: Session) => {
     adoptBootstrappedSession(nextSession);
@@ -368,6 +380,9 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   useEffect(() => {
     const handleRouteGraphRequest = (event: Event) => {
       const request = requestedRouteGraph(event);
+      setActiveLessonOwnerRetained(
+        request.routeGraph === "product" && request.pathname.startsWith("/lesson/"),
+      );
       if (isLearnRoute(window.location.pathname)
         && request.routeGraph === "product"
         && request.pathname.startsWith("/lesson/")) {
@@ -453,6 +468,8 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
 
   const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);
   const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname);
+  const useActiveLessonIsland = (isActiveLessonRoute(pathname) || activeLessonOwnerRetained)
+    && initialSession !== null;
   const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
   const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
@@ -502,6 +519,12 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
         />
       ) : useLearnIsland ? (
         <LexigoLearnApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useActiveLessonIsland ? (
+        <LexigoActiveLessonApp
           key={routeKey}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}

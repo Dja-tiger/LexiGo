@@ -5,8 +5,8 @@
 - Issue: #257.
 - Branch: `agent/issue-257-active-lesson-route-island`.
 - Base SHA: `0bc5203da2487e947b860ce67a69cf04121cc3c8`.
-- Head SHA: resolve from live branch ref
-- PR: pending Draft PR.
+- Head SHA: `bafae974213e89ea35774360f013a2e5447d1313` (pre-flight).
+- PR: #258 (Draft).
 
 ## Skills used
 
@@ -69,3 +69,42 @@ Fallback: preserve the current route graph if functional equivalence or bundle i
 Limitations: Phrases remains in `LexigoPremiumApp` and is not modified by this slice.
 
 Reusable lesson: route-island completion requires an independent controller entry and measured graph boundary; a wrapper around the compatibility app is not sufficient.
+
+### Functional implementation and browser reconciliation
+
+Purpose: extract the Active Lesson controller without changing the approved presentation, server authority, offline owner or history guarantees.
+
+Instruction source: Issues #193/#194/#257, repository harness and the merged Issue #254 safe-exit contract.
+
+Version or verification date: local functional tree based on `bafae974213e89ea35774360f013a2e5447d1313`, verified 2026-07-28.
+
+Inputs: existing premium controller behavior, shared Active Lesson/Result presentations, authorized JSON helper, product journey and navigation/history contracts.
+
+Files inspected: bootstrap and routed shell, premium controller, Active Lesson/Result presentations, lesson libraries, route source tests and Playwright fixtures.
+
+Actions performed: created the dedicated authenticated controller; added dynamic bootstrap selection; retained semantic ownership through transient pathname mutation; preserved immutable-event-state safe exit; reconciled focus ordering and confirmed-exit history replacement.
+
+Commands or procedures:
+
+- `npm run lint`
+- `npx tsc --noEmit`
+- `npx vitest run`
+- `npm run build`
+- `npx playwright test e2e/active-lesson-figma.spec.ts --project=desktop-chromium --project=desktop-webkit --project=android-chromium --project=ios-webkit`
+- focused Lesson Result, offline outbox, adaptive navigation, app-router and account hydration Playwright suites
+- `git diff --check`
+- `bash scripts/ci/check-agent-harness.sh`
+
+Artifacts produced: `lexigo-active-lesson-app.tsx`, its source contract, updated route-root ownership allowlist and retained-owner history contract.
+
+Result: local functional gate is green: lint has zero errors, TypeScript/build pass, 440 unit tests pass, Active Lesson matrix is 32 passed/4 intentional skips, and the focused post-fix history loop passes.
+
+Failures: initial Browser Back, desktop WebKit focus and post-exit Back expectations failed.
+
+Root cause: mutable pathname incorrectly doubled as semantic owner; controller/presentation focus effects raced; safe exit pushed rather than replaced its protected history entry.
+
+Fallback: revert the bootstrap selection to the compatibility graph if authoritative CI exposes a contract not covered by the focused suites.
+
+Limitations: exact cold-route bytes and request count have not been measured on controlled Linux yet; no permanent budget change is claimed.
+
+Reusable lesson: a route island needs a retained semantic owner separate from pathname so framework history observation cannot preempt a focused-flow exit contract.
