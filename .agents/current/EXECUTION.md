@@ -4,40 +4,40 @@
 
 - Branch: `perf/issue-250-home-island`
 - Base SHA: `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`
-- Head SHA: resolve from live branch ref after publication
-- PR: Draft PR pending first implementation commit
+- Head SHA: resolve from live branch ref after the current compatibility commits
+- PR: Draft PR #251
 
 ## Skills used
 
 ### GitHub repository operations
 
-Purpose: reconstruct live state and perform Issue #250 writes only on the isolated branch.
+Purpose: reconstruct live state, publish Issue #250 only on its isolated branch and preserve immutable CI evidence.
 
 Instruction source: `AGENTS.md`, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`, GitHub plugin skill.
 
 Version or verification date: 2026-07-27.
 
-Inputs: live `main`, Issue #250, branch ref, open PRs, PR #248/#249 evidence and Issue #12 deployment evidence.
+Inputs: live `main`, Issue #250, branch ref, Draft PR #251, PR #248/#249 evidence, Issue #12 deployment evidence and CI runs #2088/#2090/#2092.
 
-Files inspected: mandatory Agent Harness documents, README, architecture, Home Figma handoff, bootstrap/router/navigation sources, Home/Active Lesson implementation, route bundle tests/config and relevant source/browser contracts.
+Files inspected: mandatory Agent Harness documents, README, architecture, Home Figma handoff, bootstrap/router/navigation sources, Home/Active Lesson implementation, route bundle tests/config, workflow upload conditions and relevant source/browser contracts.
 
-Actions performed: resolved exact refs, compared current ownership boundaries, prepared an atomic Home route-island implementation and planned read-back/compare/CI evidence gates.
+Actions performed: resolved exact refs, compared ownership boundaries, published the Home route island, read every changed path back, opened Draft PR #251, classified each CI failure from artifacts and applied branch-only compatibility fixes.
 
-Commands or procedures: exact-ref connector reads; branch-only contents publication; per-path read-back; `compare_commits(main, branch)`; Draft PR CI and artifact inspection.
+Commands or procedures: exact-ref connector reads; branch-only contents updates; per-path read-back; `compare_commits(main, branch)`; workflow job/step inspection; artifact download and Playwright report analysis; Figma screenshot verification for reviewed visual ownership.
 
-Artifacts produced: Issue #250 branch implementation, source/unit/browser contracts and populated current-task memory.
+Artifacts produced: Issue #250 branch implementation, source/unit/browser contracts, Draft PR #251 and populated current-task memory.
 
-Result: implementation published to the branch; read-back and Draft CI pending.
+Result: core quality and most browser shards are green; PWA, lesson fixture and visual compatibility fixes are published for the next immutable-head run.
 
-Failures: local Git clone/raw download could not resolve `github.com`; branch search API did not enumerate the already valid branch ref; Git tree creation could not accept a commit SHA as `base_tree_sha`.
+Failures: local Git clone/raw download could not resolve `github.com`; branch search API did not enumerate the valid exact ref; Git tree creation required a tree SHA rather than a commit SHA; successful performance jobs do not upload the detailed report under the current workflow condition.
 
-Root cause: outbound DNS is unavailable in the isolated execution container, search indexing is not authoritative for exact refs, and GitHub's tree API requires the actual tree object SHA.
+Root cause: isolated-container DNS restrictions; non-authoritative branch search indexing; GitHub Git Data API contract; workflow report upload is guarded by `if: failure()`.
 
-Fallback: use exact GitHub connector file/ref operations and immutable GitHub Actions runs; verify the branch through direct ref reads rather than indexed search; publish branch files through sequential contents operations and rely on PR squash for the final atomic commit.
+Fallback: use exact GitHub connector operations and immutable Actions runs; verify exact refs through direct file reads; rely on PR squash for the final atomic commit; obtain the final performance report through a controlled measurement-only failure rather than infer a number.
 
-Limitations: complete frontend lint/typecheck/browser/build execution requires repository CI; local checks are limited to syntax and static source analysis.
+Limitations: complete frontend execution is available only in repository CI; successful performance runs do not expose the exact route report without a controlled failure.
 
-Reusable lesson: route graph transitions should be driven by canonical pathname after App Router navigation, while transient cross-graph actions should reuse an existing owner action and remove their URL intent before execution.
+Reusable lesson: route graph transitions must be driven by canonical pathname after App Router navigation, while persistent launch behavior such as standalone PWA restoration belongs above individual route islands.
 
 ### Frontend route-island and performance validation
 
@@ -47,24 +47,24 @@ Instruction source: `.agents/AGENTS.base.md`, `.agents/AGENTS.progress-pr214.md`
 
 Version or verification date: 2026-07-27.
 
-Inputs: original `/` monolithic baseline 238,257 JavaScript bytes, persistent bootstrap architecture, exact Home Figma nodes and existing Active Lesson resume action.
+Inputs: original `/` monolithic baseline 238,257 JavaScript bytes, persistent bootstrap architecture, exact Home Figma nodes, reviewed visual baselines and existing Active Lesson resume action.
 
-Files inspected: `lexigo-bootstrapped-app.tsx`, `lexigo-premium-app.tsx`, `route-primary-navigation.tsx`, `routed-lexigo-app.tsx`, `async-state.tsx`, production-entry tests, Home/browser fixtures and route-bundle measurement code.
+Files inspected: `lexigo-bootstrapped-app.tsx`, `lexigo-home-app.tsx`, `lexigo-premium-app.tsx`, `route-primary-navigation.tsx`, `routed-lexigo-app.tsx`, `async-state.tsx`, production-entry tests, PWA/lesson/visual fixtures and route-bundle measurement code.
 
-Actions performed: separated Home reads/presentation, added canonical route graph handoff, added a one-time lesson resume intent, and prepared deterministic source/E2E evidence with exact request scoping.
+Actions performed: separated Home reads/presentation, added canonical graph handoff, added a one-time lesson resume intent, preserved standalone relaunch restoration, restored the reviewed streak control and made the lesson fixture persist the server-created active session.
 
-Commands or procedures: source-boundary analysis, fixture endpoint decomposition, syntax transpilation, Draft CI measurement, then exact budget update and immutable-head rerun.
+Commands or procedures: source-boundary analysis; CI diagnostics; Playwright trace/error-context review; exact Figma/baseline comparison; immutable-head reruns; controlled performance artifact capture; final budget update and immutable-head validation.
 
-Artifacts produced: `LexigoHomeApp`, `lesson-resume-intent`, Home route-island source test and Playwright journey tests.
+Artifacts produced: `LexigoHomeApp`, `lesson-resume-intent`, Home route-island source test, Home journey tests and compatibility updates to PWA/lesson contracts.
 
-Result: implementation prepared; exact bundle number intentionally remains unmodified until measured.
+Result: CI #2092 proved lint, typecheck, 418 unit tests, build, audit, backend, dependency review, accessibility and performance. Three browser compatibility gaps were classified and fixed without weakening production behavior.
 
-Failures: none classified in production code at this stage.
+Failures: the first performance pass had no uploaded exact report; PWA relaunch could not restore its route after Home extraction; a legacy lesson fixture returned 404 after POST; the Home header omitted the reviewed streak control.
 
-Root cause: not applicable.
+Root cause: ownership remained in the old compatibility graph, the fixture was not stateful across route graphs, and the extracted presentation missed one header element.
 
-Fallback: if the first Draft run exposes a fixture-only failure, narrow the exact request matcher without weakening runtime contracts; if runtime ownership fails, fix the same atomic branch before measurement promotion.
+Fallback: move persistent launch restoration to `RoutedLexigoApp`; make fixtures server-like; restore reviewed presentation rather than promote a new visual hash; force a single measurement-only failure after behavioral CI is green.
 
-Limitations: Figma plugin mutation is not required; approved production nodes are already recorded and implementation preserves them.
+Limitations: Figma mutation is not required; approved production nodes remain unchanged. Final budget values remain intentionally unset until the exact report is captured.
 
-Reusable lesson: never set a route-specific baseline from an estimate. First capture an exact controlled artifact on the new route graph, then lock both baseline and ceiling strictly below the replaced monolith.
+Reusable lesson: cross-graph browser fixtures must preserve server-owned state between POST and subsequent GET. Never set a route-specific baseline from an estimate; capture the exact controlled artifact first.
