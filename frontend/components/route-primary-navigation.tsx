@@ -23,7 +23,7 @@ import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
-type RouteGraphHint = "dictionary" | "home" | "product";
+type RouteGraphHint = "dictionary" | "home" | "learn" | "product";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
@@ -75,13 +75,16 @@ function destinationFor(target: NavigationTarget) {
 }
 
 function routeGraphHint(target: NavigationTarget): RouteGraphHint {
-  return target.view === "home" ? "home" : "product";
+  if (target.view === "home") return "home";
+  if (target.view === "learn") return "learn";
+  return "product";
 }
 
 function activeRouteGraph(): RouteGraphHint {
   const island = document.querySelector<HTMLElement>(ROUTE_CLIENT_ISLAND_SELECTOR)
     ?.dataset.routeClientIsland;
   if (island === "home") return "home";
+  if (island === "learn") return "learn";
   if (island === "dictionary") return "dictionary";
   return "product";
 }
