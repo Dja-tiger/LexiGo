@@ -64,6 +64,35 @@ All routes loaded the same 12 JavaScript chunks. This is the measurable baseline
 
 These limits are ceilings, not targets. Client-island extraction must reduce route transfer and then tighten the corresponding route-specific ceiling from successful production CI evidence.
 
+## Home route island
+
+`/` is rendered by the dedicated dynamic entry `LexigoHomeApp`. `LexigoBootstrappedApp` remains mounted and is still the sole owner of session restoration, refresh coordination, account runtime and route-entry loading. `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners outside Home.
+
+The Home island owns only:
+
+- Home progress and active-lesson reads;
+- next-best-action resolution and presentation;
+- lesson creation through the existing authenticated API;
+- one-time handoff to `/lesson/active?resume=1`.
+
+It does not import `LexigoPremiumApp`, own session restoration, register the PWA lifecycle or create another review outbox. Browser contracts cover direct entry, Home ↔ Learn/Dictionary/Progress, Back/Forward, standalone PWA relaunch and exactly one network `/api/v1/auth/refresh` bootstrap.
+
+CI #2120/run `30273535972` completed the full required matrix successfully on developer-authored head `660983ec8773186a719c2f6a0f1317fa65723245`. Because successful performance jobs intentionally do not upload their detailed report, controlled run #2122/run `30275645894` added one test-only assertion after the complete report had been written. Artifact `8656783937` (`sha256:796d3b3f2b569d2bbc777ec52664464b6a5514d0b529e35af090c93b32230a69`) captured the exact route inventory on head `dd35a8f3266aa9358f60a6f05abe2076cf404768`. The probe did not change the production graph and was then removed byte-for-byte; `frontend/e2e/route-bundle-budget.spec.ts` returned to blob `304e7c62d3163a59edac3e648246e2aa4ce00660` before final CI.
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/` | 238,257 bytes | 207,675 bytes | 30,582 bytes (12.8%) | 18 |
+
+The route-specific budget is locked to:
+
+- `baselineJavascriptBytes`: `207675`;
+- `maxJavascriptBytes`: `235000`;
+- `maxInitialRequests`: `21`;
+- `baselineEvidence.sourceRun`: `30275645894`;
+- `baselineEvidence.headSha`: `dd35a8f3266aa9358f60a6f05abe2076cf404768`.
+
+The JavaScript ceiling leaves 13.2% bounded headroom and remains below the original 238,257-byte monolithic transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` stores the original monolithic constants independently from the now-extracted Home route and blocks any Home, Dictionary or Progress ceiling from reaching that original boundary.
+
 ## First route island: Dictionary
 
 The first production slice of Issue #115 moves `/dictionary` and `/words/:id` into `LexigoDictionaryApp`, a dedicated dynamic client entry. `LexigoBootstrappedApp` remains mounted across route transitions and continues to own session restoration, refresh coordination, review outbox runtime, account controls and session notices.
