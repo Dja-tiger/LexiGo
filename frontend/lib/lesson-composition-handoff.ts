@@ -1,7 +1,6 @@
 import type { LearningItem } from "./learning";
 
 let learnHandoffActive = false;
-let trackedItemCount = 0;
 let trackedKinds = new Set<LearningItem["kind"]>();
 let resolvedNotice = "";
 
@@ -12,7 +11,6 @@ let resolvedNotice = "";
  */
 export function markLearnLessonHandoff(): void {
   learnHandoffActive = true;
-  trackedItemCount = 0;
   trackedKinds = new Set();
   resolvedNotice = "";
 }
@@ -22,17 +20,8 @@ export function markLearnLessonHandoff(): void {
  * component state. Active Lesson renders every card before Result, so the
  * presentation boundary can recover whether the server fell back to one kind.
  */
-export function trackLearnHandoffItem(
-  kind: LearningItem["kind"],
-  currentIndex: number,
-  itemCount: number,
-): void {
+export function trackLearnHandoffItem(kind: LearningItem["kind"]): void {
   if (!learnHandoffActive) return;
-  if (currentIndex === 0 || trackedItemCount !== itemCount) {
-    trackedItemCount = itemCount;
-    trackedKinds = new Set();
-    resolvedNotice = "";
-  }
   trackedKinds.add(kind);
 }
 
