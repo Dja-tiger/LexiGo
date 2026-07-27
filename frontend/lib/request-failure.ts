@@ -30,7 +30,24 @@ export type TimedRequestInit = RequestInit & {
   timeoutMs?: number;
 };
 
+type ClientRequestDetails = {
+  method: string;
+  url: URL;
+  authorization: string;
+};
+
+type ClientResourceCacheEntry = {
+  expiresAt: number;
+  response: Response;
+};
+
 const DEFAULT_TIMEOUT_MS = 12_000;
+const CLIENT_RESOURCE_CACHE_TTL_MS = 15_000;
+const CLIENT_RESOURCE_CACHE_PATHS = new Set([
+  "/api/v1/progress",
+  "/api/v1/lessons/active",
+]);
+const clientResourceCache = new Map<string, ClientResourceCacheEntry>();
 
 export class RequestFailure extends Error {
   readonly status: number;
@@ -74,11 +91,75 @@ function errorDetails(value: unknown): { code: string; message: string; field: s
   };
 }
 
+function clientRequestDetails(
+  input: RequestInfo | URL,
+  requestInit: RequestInit,
+): ClientRequestDetails | null {
+  if (typeof window === "undefined") return null;
+
+  const request = typeof Request !== "undefined" && input instanceof Request ? input : null;
+  let url: URL;
+  try {
+    url = new URL(request?.url ?? String(input), window.location.origin);
+  } catch {
+    return null;
+  }
+
+  const headers = new Headers(request?.headers);
+  new Headers(requestInit.headers).forEach((value, name) => headers.set(name, value));
+  return {
+    method: (requestInit.method ?? request?.method ?? "GET").toUpperCase(),
+    url,
+    authorization: headers.get("authorization") ?? "",
+  };
+}
+
+function clientResourceCacheKey(details: ClientRequestDetails): string | null {
+  if (details.method !== "GET" || !CLIENT_RESOURCE_CACHE_PATHS.has(details.url.pathname)) return null;
+  return `${details.authorization}\n${details.url.href}`;
+}
+
+function cachedClientResource(key: string): Response | null {
+  const cached = clientResourceCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    clientResourceCache.delete(key);
+    return null;
+  }
+  return cached.response.clone();
+}
+
+function shouldCacheClientResource(pathname: string, response: Response): boolean {
+  if (pathname === "/api/v1/progress") return response.ok;
+  return pathname === "/api/v1/lessons/active" && (response.ok || response.status === 404);
+}
+
+function invalidateClientResources(details: ClientRequestDetails | null): void {
+  if (!details || details.method === "GET" || !details.url.pathname.startsWith("/api/v1/")) return;
+  clientResourceCache.clear();
+}
+
+function callerAbortError(signal: AbortSignal): unknown {
+  if (signal.reason !== undefined) return signal.reason;
+  return new DOMException("Aborted", "AbortError");
+}
+
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
   options: TimedRequestInit = {},
 ): Promise<Response> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, signal: externalSignal, ...requestInit } = options;
+  const details = clientRequestDetails(input, requestInit);
+  invalidateClientResources(details);
+  const cacheKey = details ? clientResourceCacheKey(details) : null;
+  if (cacheKey) {
+    const cached = cachedClientResource(cacheKey);
+    if (cached) {
+      if (externalSignal?.aborted) throw callerAbortError(externalSignal);
+      return cached;
+    }
+  }
+
   const controller = new AbortController();
   let timedOut = false;
   const timeout = globalThis.setTimeout(() => {
@@ -91,7 +172,14 @@ export async function fetchWithTimeout(
   else externalSignal?.addEventListener("abort", abortFromCaller, { once: true });
 
   try {
-    return await fetch(input, { ...requestInit, signal: controller.signal });
+    const response = await fetch(input, { ...requestInit, signal: controller.signal });
+    if (cacheKey && details && shouldCacheClientResource(details.url.pathname, response)) {
+      clientResourceCache.set(cacheKey, {
+        expiresAt: Date.now() + CLIENT_RESOURCE_CACHE_TTL_MS,
+        response: response.clone(),
+      });
+    }
+    return response;
   } catch (error) {
     if (timedOut) {
       throw new RequestFailure("timeout", "Request timed out", {
