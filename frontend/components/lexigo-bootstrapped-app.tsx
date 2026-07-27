@@ -32,7 +32,7 @@ const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 
 type SessionScreenReason = "required" | "expired" | "forbidden";
-type RouteGraph = "dictionary" | "home" | "product";
+type RouteGraph = "dictionary" | "home" | "learn" | "product";
 
 type RouteGraphRequest = {
   routeGraph: RouteGraph;
@@ -66,6 +66,11 @@ const LexigoPremiumApp = dynamic(
 
 const LexigoHomeApp = dynamic(
   () => import("./lexigo-home-app").then((module) => module.LexigoHomeApp),
+  { ssr: false, loading: ProductShellLoading },
+);
+
+const LexigoLearnApp = dynamic(
+  () => import("./lexigo-learn-app").then((module) => module.LexigoLearnApp),
   { ssr: false, loading: ProductShellLoading },
 );
 
@@ -132,6 +137,10 @@ function isHomeRoute(pathname: string): boolean {
   return normalizedPathname(pathname) === "/";
 }
 
+function isLearnRoute(pathname: string): boolean {
+  return normalizedPathname(pathname) === "/learn";
+}
+
 function isDictionaryRoute(pathname: string): boolean {
   const normalized = normalizedPathname(pathname);
   return normalized === "/dictionary" || normalized.startsWith("/words/");
@@ -147,12 +156,13 @@ function isProfileRoute(pathname: string): boolean {
 
 function routeGraphForPath(pathname: string): RouteGraph {
   if (isHomeRoute(pathname)) return "home";
+  if (isLearnRoute(pathname)) return "learn";
   if (isDictionaryRoute(pathname)) return "dictionary";
   return "product";
 }
 
 function isRouteGraph(value: unknown): value is RouteGraph {
-  return value === "dictionary" || value === "home" || value === "product";
+  return value === "dictionary" || value === "home" || value === "learn" || value === "product";
 }
 
 function historyRouteGraph(pathname: string, state: unknown): RouteGraph {
@@ -161,6 +171,7 @@ function historyRouteGraph(pathname: string, state: unknown): RouteGraph {
   const candidate = (state as Record<string, unknown>)[ROUTE_GRAPH_HISTORY_KEY];
   if (!isRouteGraph(candidate)) return fallback;
   if (isHomeRoute(pathname)) return "home";
+  if (isLearnRoute(pathname)) return "learn";
   if (isDictionaryRoute(pathname)) {
     return candidate === "product" || candidate === "dictionary" ? candidate : "dictionary";
   }
@@ -423,6 +434,7 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   }
 
   const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);
+  const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname);
   const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
   const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
@@ -466,6 +478,12 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
         />
       ) : useHomeIsland ? (
         <LexigoHomeApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useLearnIsland ? (
+        <LexigoLearnApp
           key={routeKey}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}
