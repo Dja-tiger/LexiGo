@@ -6,7 +6,7 @@
 - Branch: `perf/issue-250-home-island`
 - Base SHA: `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`
 - Head SHA: resolve from live branch ref
-- PR: Draft PR to be opened after the first implementation commit
+- PR: Draft PR #251
 
 ## Objective
 
@@ -39,6 +39,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/components/async-state.tsx`
 - `frontend/components/production-app-entry.test.ts`
 - `frontend/components/home-route-island-source.test.ts`
+- `frontend/components/word-detail-source.test.ts`
 - `frontend/lib/lesson-resume-intent.ts`
 - `frontend/lib/lesson-resume-intent.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
