@@ -86,7 +86,9 @@ export function nextProductJourneyHistory(
 }
 
 export function queueProductJourneyIntent(intent: ProductJourneyIntent): void {
-  if (intent === "lesson_start" && window.location.pathname === "/learn") {
+  if (intent === "lesson_start"
+    && typeof window !== "undefined"
+    && window.location.pathname === "/learn") {
     markLearnLessonHandoff();
   }
   queuedIntent = intent;
