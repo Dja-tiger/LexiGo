@@ -22,6 +22,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Add an explicit one-time `resume=1` intent so a Home-created or resumed active lesson opens immediately without a second user click.
 - Preserve Figma production nodes `194:249` (desktop) and `196:223` (mobile).
 - Add source, unit and browser contracts for ownership, canonical history and single session bootstrap.
+- Preserve the current route-graph owner across all LexiGo History snapshots without copying Next.js internal state.
 - Lock the measured Home baseline at 207,675 JavaScript bytes and 18 initial requests with permanent ceilings of 235,000 bytes and 21 requests.
 
 ## Non-goals
@@ -42,9 +43,12 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/components/async-state.tsx`
 - `frontend/components/production-app-entry.test.ts`
 - `frontend/components/home-route-island-source.test.ts`
+- `frontend/components/profile-source-contract.test.ts`
 - `frontend/components/word-detail-source.test.ts`
 - `frontend/lib/lesson-resume-intent.ts`
 - `frontend/lib/lesson-resume-intent.test.ts`
+- `frontend/lib/navigation-history.ts`
+- `frontend/lib/navigation-history.test.ts`
 - `frontend/lib/request-failure.ts`
 - `frontend/lib/request-failure.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
@@ -73,6 +77,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Root layout: sole Service Worker, Web Vitals and global runtime owner.
 - `RoutedLexigoApp`: canonical route initialization, persisted stable-route ownership and standalone PWA start-route restoration.
 - `LexigoHomeApp`: Home-only progress/active-lesson reads, next-best-action presentation and lesson-create intent.
+- `createNavigationHistoryState`: sole constructor for LexiGo-owned accessibility, scroll and route-graph fields written through History APIs; framework-private state is not propagated.
 - `fetchWithTimeout`: bounded in-memory reuse of immutable Home handoff reads, scoped by token and URL and invalidated by every API mutation.
 - `LexigoPremiumApp`: Learn, Phrases and Active Lesson compatibility graph; backend remains authoritative for lesson lifecycle.
 
@@ -94,6 +99,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Progress and active-lesson handoff reuse is client-memory-only, token/URL scoped, short-lived and cleared before every non-GET API request.
 - Home island does not import `LexigoPremiumApp`, session restoration, outbox or Service Worker owners.
 - Canonical pathname/history settle before another client graph mounts.
+- Every LexiGo History write preserves `lexigoRouteGraph` when present and excludes unknown Next.js internal fields.
 - Home Light/Dark, responsive, reduced-motion, keyboard and Figma geometry contracts do not regress.
 - Home baseline and both ceilings remain strictly below the original 238,257-byte/24-request monolithic boundary.
 
@@ -123,6 +129,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Home may create a new lesson when active-lesson detection failed.
 - Shared shell changes may regress Dictionary/Progress/PWA navigation.
 - A handoff cache may hide fresh data if mutation invalidation or token scoping is weakened.
+- A future History owner may bypass the shared constructor and remove graph ownership again.
 - A future budget change may accidentally compare extracted routes with the current Home baseline instead of the immutable original monolithic boundary.
 
 ## Rollback
