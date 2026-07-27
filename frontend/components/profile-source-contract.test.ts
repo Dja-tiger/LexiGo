@@ -22,7 +22,7 @@ describe("Profile route ownership", () => {
       .toBeLessThan(layout.indexOf('id="lexigo-build-version-guard"'));
 
     expect(bootstrap).toContain('import("./lexigo-profile-app")');
-    expect(bootstrap).toContain('pathname === "/profile"');
+    expect(bootstrap).toContain('return normalizedPathname(pathname) === "/profile";');
     expect(bootstrap).toContain('isProfileRoute(pathname) && initialSession !== null');
     expect(bootstrap.match(/<LexigoProfileApp\b/g)).toHaveLength(1);
     expect(bootstrap.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("Profile route ownership", () => {
     expect(profile).toContain('"/api/v1/auth/logout"');
     expect(profile).toContain("CalendarReminderIntegration");
     expect(profile).toContain("setAppearancePreference");
-    expect(profile).not.toContain("accessToken\"");
+    expect(profile).not.toContain('accessToken"');
 
     expect(premium).toContain("function renderProfile()");
     expect(premium).toContain('authMode === "login"');
