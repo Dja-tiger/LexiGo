@@ -2,70 +2,40 @@
 
 ## Task
 
-- Issue: #202 with related runtime Issue #170
-- Branch: `feat/issue-202-system-states`
-- Base SHA: `d906cacf21f5a25dc52a380ab8ce681177831532`
+- Issue: #241
+- Branch: `fix/issue-241-week-boundary`
+- Base SHA: `370d0dccfaa9c273d11164bbce37dd71975485cd`
 - Head SHA: resolve from live branch ref
 - PR: not opened yet
 
 ## Skills used
 
-### GitHub repository production workflow
+### GitHub CI failure diagnosis
 
-Purpose: restore repository truth, inspect immutable sources, isolate an atomic branch and preserve harness evidence before writes.
+Purpose: classify the reconciliation CI failure before any retry or code change.
 
-Instruction source: repository `AGENTS.md`, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `docs/agent-harness.md` and GitHub connector skill.
-
-Version or verification date: 2026-07-27 Europe/Berlin.
-
-Inputs: live main, Issues #202/#170, open PRs/branches, Issue #12 stage evidence, current agent memory, frontend owners and tests.
-
-Files inspected: mandatory harness set, architecture/README, async-state/runtime/lesson/dictionary sources, offline documentation, route shell, CSS imports, package scripts and E2E contracts.
-
-Actions performed: verified exact main/stage state, selected the first unblocked roadmap slice, defined scope/invariants/rollback, created the exact-base branch and populated current task memory.
-
-Commands or procedures: exact-ref GitHub fetch/search/branch/update operations; read-back verification after writes.
-
-Artifacts produced: branch `feat/issue-202-system-states`; populated `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md`.
-
-Result: pre-flight complete; implementation may proceed without a conflicting branch or duplicated runtime owner.
-
-Failures: local repository clone could not resolve GitHub DNS in the isolated container.
-
-Root cause: container network/DNS isolation, unrelated to repository health.
-
-Fallback: use exact-ref GitHub connector reads/writes and full CI on repository runners.
-
-Limitations: local build and browser execution are unavailable until CI; every source write requires connector read-back and CI evidence.
-
-Reusable lesson: when a durable runtime already exists, Figma system-state work must extend its observable contract rather than add a second connectivity state machine.
-
-### Figma design-to-code inspection
-
-Purpose: obtain exact production state hierarchy and semantic bindings before implementation.
-
-Instruction source: installed `figma-use` and `figma-design-to-code` skills.
+Instruction source: repository `AGENTS.md`, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `docs/agent-harness.md` and GitHub workflow diagnostics.
 
 Version or verification date: 2026-07-27 Europe/Berlin.
 
-Inputs: file key `3xXmBWnf38jbvLjtziwber`; nodes `79:69`, `79:93`, `79:117`, `79:194`, `75:57`.
+Inputs: PR #240, CI #2044/run `30226575552`, Backend integration job `89857659335`, `integration-test-log` artifact and exact `main` sources.
 
-Files inspected: Figma design-context responses for compact Home loading, Dictionary empty, compact error, desktop offline and Recall offline.
+Files inspected: `backend/integration/review_modes_test.go`, `backend/internal/learning/repository.go`, mandatory harness and current agent memory.
 
-Actions performed: mapped visual hierarchy to existing route/runtime owners and separated representative copy from truthful production evidence.
+Actions performed: isolated the only integration failure, compared its fixture timestamp with production previous-week boundaries, searched for duplicate Issues and created Issue #241.
 
-Commands or procedures: one exact `get_design_context` call per approved node.
+Commands or procedures: workflow jobs/log/artifact retrieval, exact-ref source reads, Issue/PR audit and branch isolation.
 
-Artifacts produced: implementation mapping for semantic tokens, state geometry, CTAs, offline banner/details and inline queued-review feedback.
+Artifacts produced: Issue #241, blocker comment on PR #240 and branch `fix/issue-241-week-boundary`.
 
-Result: all required nodes resolved successfully.
+Result: failure is deterministic on Mondays and cannot be resolved by rerunning the same head.
 
-Failures: page-level `get_variable_defs` on node `79:2` returned a connector selection error.
+Failures: `TestLearningReviewModesAndAnalytics` expected one previous-week Recall attempt but received zero.
 
-Root cause: the page node was not accepted as a variable-definition selection target.
+Root cause: `now() - interval '8 days'` falls in the penultimate week when CI runs on Monday.
 
-Fallback: use semantic bindings already embedded in each exact design-context response and verify against `frontend/app/design-tokens.css`.
+Fallback: derive the fixture from the current UTC week boundary and place it one day before that boundary.
 
-Limitations: Figma copy such as `Добавить термин`, fixed cached-item counts and full offline progression cannot be copied where the production runtime does not own those capabilities.
+Limitations: production time is not injectable in this integration path; the fixture must align with the existing `timezoneOffsetMinutes=0` contract without modifying runtime code.
 
-Reusable lesson: Figma states define hierarchy and intent; server/runtime contracts remain authoritative for claims, counts and enabled actions.
+Reusable lesson: calendar buckets must be seeded from their explicit boundaries, never from an assumed fixed-duration offset from `now()`.

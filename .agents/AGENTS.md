@@ -8,13 +8,14 @@
 2. [`AGENTS.progress-pr214.md`](./AGENTS.progress-pr214.md) — route islands, focus/scroll restoration, accessibility snapshots, lesson recovery, reduced motion, Linux visual artifacts и temporary workflow lifecycle.
 3. [`AGENTS.progress-pr214-ci1732.md`](./AGENTS.progress-pr214-ci1732.md) — обязательная нормализация progressive disclosure перед browser interactions.
 4. [`AGENTS.issue-19-completion.md`](./AGENTS.issue-19-completion.md) — сквозной downstream-consumer audit для новых API fields и acceptance criteria.
-5. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
-6. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
-7. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
-8. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
-9. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
-10. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
-11. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
+5. [`AGENTS.issue-241-calendar-boundaries.md`](./AGENTS.issue-241-calendar-boundaries.md) — обязательные границы календарных buckets для time-dependent fixtures и запрет fixed-duration approximation.
+6. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
+7. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
+8. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
+9. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
+10. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
+11. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
+12. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
 
 Все специализированные `.agents/AGENTS.*.md` обязательны и применяются совместно. При конфликте более конкретное подтверждённое правило специализированного документа имеет приоритет в своей предметной области. Существующие записи об ошибках нельзя удалять, сокращать до общих формулировок или заменять новым handoff.
 
