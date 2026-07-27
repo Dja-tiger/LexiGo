@@ -19,6 +19,7 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 - Run only lightweight routing-contract and Agent Harness validation when the classifier reports a pure Agent Docs change.
 - Skip backend, frontend, browser and container jobs only for that exact pure scope.
 - Publish a fail-closed CI scope artifact and make automatic stage deployment consume it before deploying.
+- Update repository-wide runner policy to include the two new configurable lightweight CI jobs.
 - Record the completed PR #240 reconciliation and the active Issue #243 tooling slice in repository memory.
 - Preserve the complete existing product CI commands and browser/container matrix for every non-Agent-Docs or mixed change.
 
@@ -35,6 +36,7 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 - `.github/workflows/deploy-stage.yml`
 - `scripts/ci/agent_docs_scope.py`
 - `scripts/ci/agent_docs_scope_test.py`
+- `scripts/ci/runner_policy_test.py`
 - `.agents/PROJECT_STATE.md`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -56,6 +58,7 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 - `.github/workflows/deploy-stage.yml` owns automatic/manual stage eligibility and must fail closed when the CI scope artifact is missing or invalid.
 - `scripts/ci/agent_docs_scope.py` owns deterministic path classification for pull-request and push base/head ranges.
 - `scripts/ci/agent_docs_scope_test.py` owns regression protection for pure, mixed, unrelated and ambiguous scopes plus workflow wiring.
+- `scripts/ci/runner_policy_test.py` owns the configurable-runner job graph contract.
 
 ## Documentation owners
 
@@ -74,6 +77,7 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 - Pure Agent Docs pushes to `main` must not build/publish runtime images or perform automatic stage deployment.
 - Automatic stage deploy requires a valid scope artifact from the exact successful `CI` workflow run.
 - Manual stage deployment remains available and bypasses the automatic scope-artifact requirement.
+- All eight CI jobs use the configurable hosted-runner expression; hard-coded self-hosted labels and serialized matrices remain prohibited.
 - Existing product job commands, browser matrix and container publication semantics remain unchanged for non-Agent-Docs changes.
 
 ## Acceptance criteria
@@ -83,11 +87,14 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 - Mixed and unrelated changes execute the complete existing CI matrix.
 - Stage automatic deployment is skipped only when the exact CI artifact reports `agent_docs_only=true`.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
+- Repository storage and runner policy checks accept the new job/artifact graph.
 - Final PR diff contains only allowed paths.
 
 ## Required checks
 
 - `python3 scripts/ci/agent_docs_scope_test.py`
+- `python3 scripts/ci/actions_storage_policy_test.py`
+- `python3 scripts/ci/runner_policy_test.py`
 - classifier CLI tests against synthetic Git histories
 - `bash scripts/ci/check-agent-harness.sh`
 - source inspection for unchanged product job commands/matrix
@@ -105,4 +112,4 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 
 ## Rollback
 
-Revert the workflow and classifier commit. The repository returns to the previous full-CI-and-stage-for-all-main-changes behavior without runtime data migration or product rollback.
+Revert the workflow, classifier and runner-policy commit. The repository returns to the previous full-CI-and-stage-for-all-main-changes behavior without runtime data migration or product rollback.
