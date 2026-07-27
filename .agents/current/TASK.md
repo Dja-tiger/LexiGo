@@ -11,18 +11,17 @@
 
 ## Objective
 
-Close the Progress portion of the route-level client-islands roadmap with explicit ownership, single-bootstrap navigation evidence and a route-specific cold-browser JavaScript budget derived from successful immutable-head CI.
+Close the Progress portion of the route-level client-islands roadmap with explicit ownership, single-bootstrap navigation evidence and a route-specific cold-browser JavaScript budget derived from exact CI evidence.
 
 ## Scope
 
 - Preserve the existing `LexigoProgressApp` UI and API behavior.
-- Strengthen source contracts proving that only `LexigoBootstrappedApp` loads the Progress client entry.
-- Prove repeated Home/Learn/Dictionary ↔ Progress navigation reuses the bootstrapped session without an additional network refresh.
-- Emit deterministic per-route bundle measurements in CI logs while preserving the JSON report.
-- Use one branch-local measurement probe only while `/progress` still carries the shared monolithic baseline; remove it before the final developer-authored head.
-- After exact measurement evidence is available, lock `/progress` baseline, request ceiling and JavaScript ceiling to that immutable head.
+- Enforce that only `LexigoBootstrappedApp` loads the Progress client entry.
+- Prove repeated Home/Learn/Dictionary ↔ Progress navigation reuses the bootstrapped session without another network refresh.
+- Emit deterministic per-route bundle measurements while preserving the JSON report.
+- Lock `/progress` to the measured 207,502-byte baseline, 240,000-byte JavaScript ceiling and 21-request ceiling.
 - Document Progress island ownership and before/after budget evidence.
-- Maintain current repository task/progress/execution memory.
+- Maintain repository state and reusable fixture lessons.
 
 ## Non-goals
 
@@ -37,8 +36,7 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 - `frontend/components/progress-route-island-source.test.ts`
 - `frontend/e2e/progress-route-island.spec.ts`
 - `frontend/e2e/performance-global-teardown.ts`
-- `frontend/e2e/route-bundle-budget.spec.ts` only for the removable exact-measurement probe and final stable budget assertions
-- `frontend/e2e/system-states.spec.ts` only for the confirmed initial-load/search-request fixture race found by CI #2068
+- `frontend/e2e/system-states.spec.ts` only for the confirmed request-scoping fixture race found by CI #2068
 - `frontend/lib/bundle-budgets.test.ts`
 - `frontend/bundle-budgets.json`
 - `docs/frontend-bundle-budgets.md`
@@ -46,16 +44,17 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `.agents/SKILLS.md` only if a stable reusable procedure must be promoted
-- `.agents/AGENTS*.md` only if a new confirmed failure category is discovered
+- `.agents/AGENTS.md`
+- `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
 
 ## Prohibited paths
 
 - `backend/**`
-- Progress presentation/runtime components unless a test proves an implementation defect
+- Progress presentation/runtime components
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/lexigo-progress-app.tsx`
 - session/auth/outbox/PWA runtime owners
+- `frontend/e2e/route-bundle-budget.spec.ts` on the final head; the temporary probe was removed byte-for-byte
 - visual baselines and approved Figma UI
 - deployment workflows or scripts
 
@@ -72,35 +71,35 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 - `docs/frontend-bundle-budgets.md`
 - `.agents/PROJECT_STATE.md`
 - `.agents/current/**`
+- `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
 
 ## Invariants
 
 - A direct `/progress` entry restores the session once through the persistent bootstrap layer.
-- Repeated in-app route transitions do not issue another `/api/v1/auth/refresh` network request after the initial bootstrap/login state is adopted.
-- Progress never imports the monolithic `LexigoPremiumApp` and never owns session restoration.
-- The route budget is based on exact immutable-head CI measurement, not an estimate.
-- The `/progress` baseline and ceilings must be below the original 238,257-byte / 275,000-byte monolithic values.
-- The measurement probe must not exist in the final diff or final CI head.
+- Repeated in-app route transitions do not issue another `/api/v1/auth/refresh` network request after the initial bootstrap.
+- Progress never imports the monolithic `LexigoPremiumApp` and never owns session restoration, the outbox or PWA lifecycle.
+- The route budget is based on exact CI report evidence, not an estimate.
+- The `/progress` baseline and both ceilings remain below the original 238,257-byte / 275,000-byte / 24-request monolithic contract.
+- No temporary measurement probe exists in the final diff or final CI head.
 - Existing browser, PWA, accessibility, visual, security and product behavior remain unchanged.
 
 ## Acceptance criteria
 
-- Issue #247 acceptance criteria are implemented.
 - Source contract names the Progress dynamic entry and its exclusive bootstrap consumer.
-- Browser contract records network refresh attempts and proves no repeated bootstrap across route-island transitions.
-- Performance teardown logs deterministic JSON measurement lines for every canonical route.
-- `/progress` receives exact baseline evidence from successful immutable-head measurement execution.
-- Budget configuration tests require Progress to remain below the monolithic graph.
-- Final diff contains only allowed paths and no temporary probe.
+- Browser contract counts refresh requests and proves one bootstrap across repeated route-island transitions.
+- Performance teardown emits deterministic route summaries.
+- `/progress` uses baseline 207,502 bytes, max 240,000 bytes and max 21 initial requests with exact baseline evidence.
+- Budget tests require Progress to remain strictly below the monolithic graph.
+- Request-scoped failure fixture guidance is mandatory and the corrected iOS WebKit scenario passes.
+- Final diff contains only permanent allowed paths.
 
 ## Required checks
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`
-- `npm run build`
-- full Chromium/WebKit/mobile/PWA browser matrix
-- route bundle performance gate and exact measurement artifact/log
+- frontend lint, typecheck, unit and production build
+- backend unit/race/security and integration gates
+- full Chromium/WebKit/Android/iOS/PWA matrix
+- accessibility, Content Security, controlled service worker and Linux visual regression
+- route bundle/performance gate with permanent budget
 - complete repository CI on the final immutable head
 - no unresolved comments, reviews or threads
 - expected-head squash merge
@@ -108,11 +107,10 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 
 ## Risks
 
-- The existing session cache may still cause a hidden refresh on one route boundary or browser engine.
-- Measurement variance may require bounded ceiling headroom without weakening the monolithic reduction invariant.
-- Logging the full asset inventory could create excessive CI output; only one compact route summary line is allowed.
-- A measurement probe accidentally retained on final head would invalidate merge readiness.
+- Measurement variance must remain inside bounded headroom; unexplained regression cannot be solved by raising the ceiling.
+- Route-boundary session cache behavior must remain consistent across all browser engines.
+- Any reintroduction of the measurement probe invalidates merge readiness.
 
 ## Rollback
 
-Revert the test, budget and documentation commit. Runtime behavior is unchanged; the previous shared monolithic `/progress` ceiling is restored.
+Revert the test, budget and documentation commits. Runtime behavior is unchanged; the previous shared `/progress` ceiling is restored.
