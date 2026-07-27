@@ -45,6 +45,8 @@ const PHRASES = [
 ];
 
 async function installBrowserMocks(page: Page) {
+  let activeLesson: Record<string, unknown> | null = null;
+
   await page.addInitScript(() => {
     class MockSpeechSynthesisUtterance {
       text: string;
@@ -140,7 +142,11 @@ async function installBrowserMocks(page: Page) {
       }) });
     }
     if (path === "/api/v1/lessons/active") {
-      await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }) });
+      if (activeLesson) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(activeLesson) });
+      } else {
+        await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_found", message: "active lesson was not found" } }) });
+      }
       return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
@@ -148,27 +154,36 @@ async function installBrowserMocks(page: Page) {
       const selected = input.wordIds
         ? WORDS.filter((item) => input.wordIds?.includes(item.id))
         : [WORDS[0], PHRASES[0]];
+      activeLesson = {
+        id: "00000000-0000-0000-0000-000000000360",
+        source: input.source,
+        studyMode: input.studyMode,
+        lessonSize: input.lessonSize,
+        currentIndex: 0,
+        version: 1,
+        status: "active",
+        items: selected.map((item, position) => ({ ...item, position })),
+        createdAt: "2026-07-17T00:00:00Z",
+        updatedAt: "2026-07-17T00:00:00Z",
+      };
       await route.fulfill({
         status: 201,
         contentType: "application/json",
-        body: JSON.stringify({
-          id: "00000000-0000-0000-0000-000000000360",
-          source: input.source,
-          studyMode: input.studyMode,
-          lessonSize: input.lessonSize,
-          currentIndex: 0,
-          version: 1,
-          status: "active",
-          items: selected.map((item, position) => ({ ...item, position })),
-          createdAt: "2026-07-17T00:00:00Z",
-          updatedAt: "2026-07-17T00:00:00Z",
-        }),
+        body: JSON.stringify(activeLesson),
       });
       return;
     }
 
     if (path.endsWith("/review") && request.method() === "POST") {
       const input = request.postDataJSON() as { rating: "again" | "almost" | "known" };
+      if (activeLesson) {
+        activeLesson = {
+          ...activeLesson,
+          currentIndex: 1,
+          version: 2,
+          updatedAt: "2026-07-17T00:01:00Z",
+        };
+      }
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -222,11 +237,12 @@ async function phrasePrompts(page: Page) {
 }
 
 async function revealLessonComposerControls(page: Page) {
+  if ((page.viewportSize()?.width ?? 1000) >= 768) return;
+
   const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-  if (await configureLesson.isVisible()) {
-    await configureLesson.click();
-    await expect(page.getByRole("button", { name: /Ручная настройка/ })).toBeVisible();
-  }
+  await expect(configureLesson).toBeVisible();
+  await configureLesson.click();
+  await expect(page.getByRole("button", { name: /Ручная настройка/ })).toBeVisible();
 }
 
 test.describe.configure({ timeout: 60_000 });
