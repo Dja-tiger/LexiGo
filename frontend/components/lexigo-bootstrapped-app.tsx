@@ -61,58 +61,37 @@ function ProductShellLoading() {
 
 const LexigoPremiumApp = dynamic(
   () => import("./lexigo-premium-app").then((module) => module.LexigoPremiumApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoHomeApp = dynamic(
   () => import("./lexigo-home-app").then((module) => module.LexigoHomeApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoDictionaryApp = dynamic(
   () => import("./lexigo-dictionary-app").then((module) => module.LexigoDictionaryApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoProgressApp = dynamic(
   () => import("./lexigo-progress-app").then((module) => module.LexigoProgressApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoProfileApp = dynamic(
   () => import("./lexigo-profile-app").then((module) => module.LexigoProfileApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoScenarioCatalogApp = dynamic(
   () => import("./lexigo-scenario-catalog-app").then((module) => module.LexigoScenarioCatalogApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 const LexigoScenarioApp = dynamic(
   () => import("./lexigo-scenario-app").then((module) => module.LexigoScenarioApp),
-  {
-    ssr: false,
-    loading: ProductShellLoading,
-  },
+  { ssr: false, loading: ProductShellLoading },
 );
 
 function isScenarioCatalogRoute(pathname: string): boolean {
@@ -225,7 +204,6 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
   const [sessionRestoreSuppressed, setSessionRestoreSuppressed] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
-  const [routeGraph, setRouteGraph] = useState<RouteGraph>(() => routeGraphForPath(pathname));
   const [routeGraphRequest, setRouteGraphRequest] = useState<RouteGraphRequest | null>(null);
 
   const handleSessionUpdated = useCallback((nextSession: Session) => {
@@ -392,7 +370,7 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   }, []);
 
   const normalizedCurrentPath = normalizedPathname(pathname);
-  const requestedForCurrentPath = routeGraphRequest?.pathname === normalizedCurrentPath
+  const effectiveRouteGraph = routeGraphRequest?.pathname === normalizedCurrentPath
     ? routeGraphRequest.routeGraph
     : historyRouteGraph(normalizedCurrentPath, typeof window === "undefined" ? null : window.history.state);
 
@@ -408,20 +386,17 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
         frame = window.requestAnimationFrame(settleRouteGraph);
         return;
       }
-
       const canonicalTarget = parseNavigation(window.location.search, window.location.pathname);
       window.history.replaceState(
         mergedNavigationHistoryState(canonicalTarget, expectedGraph),
         "",
         window.location.href,
       );
-      if (routeGraph !== expectedGraph) setRouteGraph(expectedGraph);
-      if (routeGraphRequest?.pathname === expectedPath) setRouteGraphRequest(null);
     };
 
     frame = window.requestAnimationFrame(settleRouteGraph);
     return () => window.cancelAnimationFrame(frame);
-  }, [pathname, routeGraph, routeGraphRequest]);
+  }, [pathname, routeGraphRequest]);
 
   if (initialSession === undefined) {
     if (restoreRecoverable && notice) {
@@ -447,10 +422,8 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     );
   }
 
-  const expectedRouteGraph = requestedForCurrentPath;
-  const useHomeIsland = routeGraph === "home" && isHomeRoute(pathname);
-  const useDictionaryIsland = routeGraph === "dictionary" && isDictionaryRoute(pathname);
-  const routeGraphPending = routeGraph !== expectedRouteGraph;
+  const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);
+  const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
   const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
   const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;
@@ -478,9 +451,7 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
-      {routeGraphPending ? (
-        <ProductShellLoading />
-      ) : useScenarioCatalogIsland ? (
+      {useScenarioCatalogIsland ? (
         <LexigoScenarioCatalogApp
           key={`${routeKey}:scenario-catalog`}
           initialSession={initialSession}
@@ -519,10 +490,7 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
           onLoggedOut={handleLoggedOut}
         />
       ) : (
-        <LexigoPremiumApp
-          key={routeKey}
-          initialSession={initialSession}
-        />
+        <LexigoPremiumApp key={routeKey} initialSession={initialSession} />
       )}
       {initialSession ? (
         <>
