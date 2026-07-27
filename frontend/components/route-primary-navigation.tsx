@@ -146,11 +146,13 @@ function commitRouteTransition(
     }));
   }
 
-  // Next.js App Router patches the native History API. Using it here keeps the
-  // custom graph owner on the exact entry while still updating usePathname and
-  // route metadata without a document reload.
+  // Next.js App Router patches the native History API. It updates usePathname
+  // for cross-graph transitions itself. Dispatching a synthetic popstate there
+  // starts a second navigation cycle and can replace the custom graph marker.
   window.history.pushState(nextState, "", transition.nextURL);
-  window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+  if (!graphHandoff) {
+    window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+  }
 }
 
 function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
