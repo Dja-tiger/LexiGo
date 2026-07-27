@@ -2,7 +2,7 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 04:09 Europe/Berlin.
+- Last verified: 2026-07-27 04:13 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
 - Live `main` at verification: `426144d00a857f36be8a543553df5029ac49a454`.
 - Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
@@ -19,6 +19,8 @@
 - Agent Docs CI optimization PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed CI #2060/run `30230474179` and was expected-head squash merged as `426144d00a857f36be8a543553df5029ac49a454`.
 - Issue #243 is closed as completed.
 - PR #244 exact-SHA stage/public validation: run `30231298766`, exact image `426144d00a857f36be8a543553df5029ac49a454`, scope validation/deploy/public smoke/public browser successful, 12/12 checks passed.
+- PR #245 first live pure Agent Docs head `3908793ee98ff27d472890b28e9ea3b6f97b3b4a` passed lightweight CI #2062/run `30231567675`.
+- PR #245 scope artifact classified exactly four `.agents/**` paths as `agent_docs_only=true`; Agent Harness validation passed and all backend/frontend/browser/container jobs were skipped.
 
 ## Completed
 
@@ -105,12 +107,13 @@
 - CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
 - Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
+- PR #245 proved the pull-request fast path in live GitHub Actions: classifier and Agent Harness successful; backend unit/integration, frontend core/browser/aggregate and container build skipped.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset byte-for-byte from canonical templates.
 
 ## In progress
 
-- Documentation-only branch `docs/reconcile-agent-docs-fast-path` verifies the new pure Agent Docs path with only `.agents/**` changes.
-- Required evidence: classifier and Agent Harness jobs successful; backend, frontend, browser and container jobs skipped; after merge the stage image must remain `426144d00a857f36be8a543553df5029ac49a454` and automatic deploy must be skipped.
-- No new product/runtime slice may begin until this reconciliation proof is merged and post-merge behavior is verified.
+- No product or runtime slice is active.
+- The next slice must be selected only after resolving live `main`, open PRs, Issues, CI and stage evidence again.
 
 ## Remaining roadmap
 
@@ -140,7 +143,6 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Validation pending
 
-- The pure Agent Docs reconciliation branch must prove the lightweight PR and push paths plus skipped automatic stage deployment.
 - Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
 
@@ -161,12 +163,13 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Evidence
 
-- Live GitHub `main`, PRs #239/#240/#242/#244, Issues #12/#170/#202/#241/#243, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
+- Live GitHub `main`, PRs #239/#240/#242/#244/#245, Issues #12/#170/#202/#241/#243, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
 - Product deployment evidence uses exact image `370d0dccfaa9c273d11164bbce37dd71975485cd` with successful deploy/public smoke/public browser checks.
 - CI reliability deployment evidence uses exact image `b63b6197fdffd0fc7623a5131c649aadaaa52476`, stage run `30227955912`, successful deploy/public smoke/public browser and 12/12 checks.
 - PR #240 final head `ba71e8fe3a3be6da52594559bbbea0e09b3b13ee` passed CI #2047/run `30228327070`; expected-head squash merge produced `387cc50c199218d71b49b39beb9d92859b6e299c`.
 - PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed complete CI #2060/run `30230474179`; expected-head squash merge produced `426144d00a857f36be8a543553df5029ac49a454`.
 - Stage run `30231298766` checked out exact SHA `426144d00a857f36be8a543553df5029ac49a454`, downloaded and validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
+- PR #245 head `3908793ee98ff27d472890b28e9ea3b6f97b3b4a` passed lightweight CI #2062/run `30231567675`; artifact reason was `agent_docs_only` with exactly `.agents/PROJECT_STATE.md` and the three `.agents/current/**` files, and every heavy product/container job was skipped.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
