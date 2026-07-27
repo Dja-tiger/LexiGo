@@ -17,7 +17,16 @@
         "headSha": "dd35a8f3266aa9358f60a6f05abe2076cf404768"
       }
     },
-    "/learn": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
+    "/learn": {
+      "baselineJavascriptBytes": 210986,
+      "maxJavascriptBytes": 235000,
+      "maxInitialRequests": 22,
+      "baselineEvidence": {
+        "sourceRun": 30312155204,
+        "capturedAt": "2026-07-28",
+        "headSha": "b82c31acfc9bd48ec5b28682a49035226bdef556"
+      }
+    },
     "/phrases": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/dictionary": {
       "baselineJavascriptBytes": 205239,

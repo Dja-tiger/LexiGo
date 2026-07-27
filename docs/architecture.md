@@ -34,10 +34,12 @@ LexiGo должен одновременно быть рабочим инстр�
 - root layout содержит persistent client shell: переключение маршрута не перезапускает refresh-session preflight, outbox runtime и PWA lifecycle;
 - `LexigoBootstrappedApp` остаётся единственным владельцем восстановления сессии и динамической загрузки route entries;
 - `/` после bootstrap загружает отдельный `LexigoHomeApp`: island владеет только Home progress/active-lesson reads, next-best-action presentation и созданием урока через существующий API;
+- `/learn` после bootstrap загружает отдельный `LexigoLearnApp`: island владеет Lesson Composer metadata/progress/active-session reads, preview/create/resume/discard mutations и presentation, но не создаёт второй session, outbox или PWA owner;
+- переход Learn → `/lesson/active` сохраняет source/topic URL state, записывает канонический product-graph history target и передаёт backend-owned active session существующему Active Lesson graph;
 - переход Home → `/lesson/active?resume=1` использует одноразовый intent: совместимый Active Lesson graph удаляет `resume=1` из URL до вызова существующего resume action, поэтому backend-owned session position не дублируется;
-- `/dictionary`, `/progress`, authenticated `/profile`, Scenario catalog/detail и Home используют отдельные client entries; Learn, Phrases и Active Lesson пока остаются в compatibility graph `LexigoPremiumApp`;
+- `/dictionary`, `/progress`, authenticated `/profile`, Scenario catalog/detail, Home и Learn используют отдельные client entries; Phrases и Active Lesson пока остаются в compatibility graph `LexigoPremiumApp`;
 - route islands не импортируют session restoration, review outbox, Service Worker или другой route root; эти owners остаются persistent и представлены в DOM ровно один раз;
-- при переходе между Home/Dictionary/product graphs текущий island остаётся смонтированным до изменения pathname, после чего bootstrap канонизирует history state и только затем подключает целевой graph;
+- при переходе между Home/Learn/Dictionary/product graphs текущий island остаётся смонтированным до изменения pathname, после чего bootstrap канонизирует history state и только затем подключает целевой graph;
 - `/profile` после восстановления сессии загружает отдельный authenticated Profile island; guest login, registration, password reset и email-change confirmation остаются в существующей auth compatibility boundary;
 - Profile island владеет только сводкой профиля и пользовательскими preferences; password, session revocation, email change, export и account deletion остаются в независимых подтверждаемых account-компонентах;
 - текущая React state-модель ещё не извлечённых экранов остаётся внутренним compatibility layer и синхронизируется с pathname/history;

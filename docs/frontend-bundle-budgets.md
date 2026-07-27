@@ -91,7 +91,34 @@ The route-specific budget is locked to:
 - `baselineEvidence.sourceRun`: `30275645894`;
 - `baselineEvidence.headSha`: `dd35a8f3266aa9358f60a6f05abe2076cf404768`.
 
-The JavaScript ceiling leaves 13.2% bounded headroom and remains below the original 238,257-byte monolithic transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` stores the original monolithic constants independently from the now-extracted Home route and blocks any Home, Dictionary or Progress ceiling from reaching that original boundary.
+The JavaScript ceiling leaves 13.2% bounded headroom and remains below the original 238,257-byte monolithic transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` stores the original monolithic constants independently from the now-extracted routes and blocks any Home, Learn, Dictionary or Progress ceiling from reaching that original boundary.
+
+## Learn route island
+
+`/learn` is rendered by the dedicated dynamic entry `LexigoLearnApp`. `LexigoBootstrappedApp` remains the sole owner of session restoration, refresh coordination, account runtime and route-entry selection, while `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners.
+
+The Learn island owns only:
+
+- catalog metadata, progress and active-lesson reads required by Lesson Composer;
+- preview, create, resume and optimistic discard flows;
+- source/topic URL state and Lesson Composer presentation;
+- one-way handoff to the existing `/lesson/active` product graph.
+
+CI #2194/run `30311583592` completed the full required matrix successfully on developer-authored head `1450986be0e1c63ddce47e9ddb33fc4324bcf9b1`. Controlled run `30312155204` then added one test-only assertion after the complete route report had been written. Artifact `8670855986` (`sha256:e24af0cfe3aa3c71d7a31c28077ca20490d98d2f5d62ba4674fc6f4b0b98f32c`) captured the exact route inventory on probe head `b82c31acfc9bd48ec5b28682a49035226bdef556`. The production graph was unchanged by the probe, and `frontend/e2e/route-bundle-budget.spec.ts` was restored to canonical blob `304e7c62d3163a59edac3e648246e2aa4ce00660` before final CI.
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/learn` | 238,257 bytes | 210,986 bytes | 27,271 bytes (11.4%) | 20 |
+
+The route-specific budget is locked to:
+
+- `baselineJavascriptBytes`: `210986`;
+- `maxJavascriptBytes`: `235000`;
+- `maxInitialRequests`: `22`;
+- `baselineEvidence.sourceRun`: `30312155204`;
+- `baselineEvidence.headSha`: `b82c31acfc9bd48ec5b28682a49035226bdef556`.
+
+The JavaScript ceiling leaves 24,014 bytes (11.4%) of bounded headroom and remains below the original 238,257-byte measured monolith. The request ceiling remains below the original 24-request limit. `frontend/lib/bundle-budgets.test.ts` blocks any Learn baseline or ceiling from returning to the monolithic boundary.
 
 ## First route island: Dictionary
 

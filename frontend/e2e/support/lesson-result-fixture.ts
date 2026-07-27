@@ -100,6 +100,7 @@ export async function installLessonResultFixture(
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
+  let activeLesson: Record<string, unknown> | null = null;
   let activeLessonHydrationResolved = false;
   let resolveActiveLessonHydration!: () => void;
   const activeLessonHydration = new Promise<void>((resolve) => {
@@ -174,7 +175,11 @@ export async function installLessonResultFixture(
       });
     }
     if (path === "/api/v1/lessons/active") {
-      await fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "none" } });
+      if (activeLesson) {
+        await fulfillJSON(route, 200, activeLesson);
+      } else {
+        await fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "none" } });
+      }
       if (!activeLessonHydrationResolved) {
         activeLessonHydrationResolved = true;
         resolveActiveLessonHydration();
@@ -211,7 +216,7 @@ export async function installLessonResultFixture(
       const lessonID = nextRequest && !repeat
         ? "00000000-0000-0000-0000-000000000195"
         : "00000000-0000-0000-0000-000000000194";
-      return fulfillJSON(route, 201, {
+      activeLesson = {
         id: lessonID,
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
@@ -222,10 +227,12 @@ export async function installLessonResultFixture(
         items: [item],
         createdAt: "2026-07-24T00:00:00Z",
         updatedAt: "2026-07-24T00:00:00Z",
-      });
+      };
+      return fulfillJSON(route, 201, activeLesson);
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
+      activeLesson = null;
       const payload = request.postDataJSON() as Record<string, unknown>;
       return fulfillJSON(route, 200, {
         wordId: COMPLETED_ITEM.id,

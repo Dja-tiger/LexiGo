@@ -24,7 +24,7 @@ describe("Home route client-island ownership", () => {
     expect(bootstrappedApp.match(/<LexigoHomeApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<ReviewOutboxRuntime\b/g)).toHaveLength(1);
     expect(bootstrappedApp).toContain("restoreBootstrappedSession()");
-    expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "product"');
+    expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "learn" | "product"');
   });
 
   it("keeps Home reads, next-action resolution and Figma presentation inside the island", () => {

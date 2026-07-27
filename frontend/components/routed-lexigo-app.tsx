@@ -27,7 +27,12 @@ import {
 import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
-const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/progress", "/scenarios"]);
+const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/learn", "/progress", "/scenarios"]);
+const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson";
+const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
+const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice";
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
+const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -133,6 +138,10 @@ function isKeyboardScrollIntent(event: KeyboardEvent): boolean {
     && SCROLL_INTENT_KEYS.has(event.key);
 }
 
+function recordState(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
 function RouteSkipLink() {
   function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -154,10 +163,109 @@ export function RoutedLexigoApp() {
   const router = useRouter();
   const previousPathRef = useRef<string | null>(null);
   const announcementCounterRef = useRef(0);
+  const focusedLessonURLRef = useRef("/lesson/active");
+  const focusedLessonHistoryStateRef = useRef<Record<string, unknown>>({});
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
+  const [focusedLessonExitRequested, setFocusedLessonExitRequested] = useState(false);
+  const [lessonResultNotice, setLessonResultNotice] = useState("");
   const navigateHome = useCallback(() => {
     router.replace("/", { scroll: false });
   }, [router]);
+
+  useLayoutEffect(() => {
+    if (!pathname.startsWith("/lesson/")) return;
+    const captureFocusedLesson = () => {
+      focusedLessonURLRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      focusedLessonHistoryStateRef.current = { ...recordState(window.history.state) };
+    };
+    captureFocusedLesson();
+    const frame = window.requestAnimationFrame(captureFocusedLesson);
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
+
+  useLayoutEffect(() => {
+    const preserveFocusedLesson = (event: PopStateEvent) => {
+      if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) return;
+      const requestedEntry = readNavigationHistoryState(event.state);
+
+      // Next.js and the compatibility graph may observe the same target-level
+      // popstate before this shell listener. A framework transition can also
+      // leave an adjacent Active Lesson entry behind, so every history
+      // traversal while the semantic lesson owner is mounted is an exit intent.
+      // Recreate the focused entry from immutable event.state plus the captured
+      // framework state rather than trusting the mutable current pathname.
+      event.stopImmediatePropagation();
+      const protectedState = {
+        ...recordState(event.state),
+        ...focusedLessonHistoryStateRef.current,
+        ...createNavigationHistoryState(
+          { view: "lesson", detail: "active" },
+          { x: window.scrollX, y: window.scrollY },
+        ),
+        [ROUTE_GRAPH_HISTORY_KEY]: "product",
+      };
+      if (requestedEntry?.target.view === "lesson") {
+        window.history.replaceState(protectedState, "", focusedLessonURLRef.current);
+      } else {
+        window.history.pushState(protectedState, "", focusedLessonURLRef.current);
+      }
+      setFocusedLessonExitRequested(true);
+    };
+
+    const clearFocusedLessonExitForNewHandoff = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object") return;
+      const detail = event.detail as { pathname?: unknown; routeGraph?: unknown };
+      if (detail.routeGraph === "product"
+        && typeof detail.pathname === "string"
+        && detail.pathname.startsWith("/lesson/")) {
+        setFocusedLessonExitRequested(false);
+      }
+    };
+
+    const syncLessonResultNotice = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      setLessonResultNotice(typeof event.detail === "string" ? event.detail : "");
+    };
+
+    window.addEventListener("popstate", preserveFocusedLesson, { capture: true });
+    window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+    window.addEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice);
+    return () => {
+      window.removeEventListener("popstate", preserveFocusedLesson, { capture: true });
+      window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+      window.removeEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!focusedLessonExitRequested) return;
+    let frame = 0;
+    let stableLesson: Element | null = null;
+
+    const deliverFocusedLessonExit = () => {
+      const activeLesson = document.querySelector(ACTIVE_LESSON_SELECTOR);
+      if (!window.location.pathname.startsWith("/lesson/") || !activeLesson) {
+        stableLesson = null;
+        frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+        return;
+      }
+      if (stableLesson !== activeLesson) {
+        stableLesson = activeLesson;
+        frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+        return;
+      }
+
+      // Next may retain the attempted destination in usePathname after the
+      // shell restores the protected History entry. Wait for the semantic
+      // Active Lesson owner to remain stable across a paint, then deliver to
+      // the child layout-effect listener without depending on stale route state.
+      window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
+      setFocusedLessonExitRequested(false);
+    };
+
+    frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusedLessonExitRequested]);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
@@ -173,8 +281,8 @@ export function RoutedLexigoApp() {
     const previousPath = previousPathRef.current;
     previousPathRef.current = pathname;
 
-    // Focused Scenario detail owns its own focus and saved-draft lifecycle.
-    if (pathname.startsWith("/scenarios/")) return;
+    // Focused routes own their own focus, announcement and saved-state lifecycle.
+    if (pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/")) return;
     if (!previousPath || (!ROUTE_ISLAND_BOUNDARIES.has(previousPath) && !ROUTE_ISLAND_BOUNDARIES.has(pathname))) return;
 
     const parsedTarget = parseNavigationLocation(window.location);
@@ -271,6 +379,16 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>
       <RouteSkipLink />
       <RouteChrome />
+      {lessonResultNotice ? (
+        <p className="lx-queue-notice" role="status">
+          {lessonResultNotice}
+        </p>
+      ) : null}
+      {focusedLessonExitRequested && pathname.startsWith("/lesson/") ? (
+        <p className="lx-queue-notice lx-focused-lesson-exit-notice" role="status">
+          Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».
+        </p>
+      ) : null}
       <LexigoBootstrappedApp pathname={pathname} onNavigateHome={navigateHome} />
       {routeAnnouncement.message ? (
         <p

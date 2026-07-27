@@ -32,6 +32,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 async function installMocks(page: Page) {
   let lessonVersion = 1;
   let reviewCount = 0;
+  let activeLesson: Record<string, unknown> | null = null;
   await page.context().addCookies([{
     name: "lexigo_csrf",
     value: "keyboard-csrf",
@@ -48,7 +49,9 @@ async function installMocks(page: Page) {
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
-      return fulfillJSON(route, 404, { error: { code: "not_found", message: "not found" } });
+      return activeLesson
+        ? fulfillJSON(route, 200, activeLesson)
+        : fulfillJSON(route, 404, { error: { code: "not_found", message: "not found" } });
     }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due") && url.searchParams.get("kind") === "phrase") {
       return fulfillJSON(route, 200, { items: PHRASES, count: PHRASES.length });
@@ -76,7 +79,7 @@ async function installMocks(page: Page) {
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string };
-      return fulfillJSON(route, 201, {
+      activeLesson = {
         id: "00000000-0000-0000-0000-000000000450",
         source: input.source,
         studyMode: input.studyMode,
@@ -87,11 +90,20 @@ async function installMocks(page: Page) {
         items: [WORDS[0], PHRASES[0]].map((item, position) => ({ ...item, position })),
         createdAt: "2026-07-18T00:00:00Z",
         updatedAt: "2026-07-18T00:00:00Z",
-      });
+      };
+      return fulfillJSON(route, 201, activeLesson);
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
       lessonVersion += 1;
+      if (activeLesson) {
+        activeLesson = {
+          ...activeLesson,
+          currentIndex: reviewCount,
+          version: lessonVersion,
+          updatedAt: "2026-07-18T00:01:00Z",
+        };
+      }
       return fulfillJSON(route, 200, {
         wordId: reviewCount === 1 ? WORDS[0].id : PHRASES[0].id,
         status: "learning",

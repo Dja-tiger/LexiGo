@@ -129,6 +129,8 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 }
 
 async function installAPI(page: Page) {
+  let activeLesson: Record<string, unknown> | null = null;
+
   await page.context().addCookies([{
     name: "lexigo_csrf",
     value: "adaptive-navigation-csrf",
@@ -145,9 +147,11 @@ async function installAPI(page: Page) {
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
-      return fulfillJSON(route, 404, {
-        error: { code: "active_lesson_not_found", message: "active lesson was not found" },
-      });
+      return activeLesson
+        ? fulfillJSON(route, 200, activeLesson)
+        : fulfillJSON(route, 404, {
+            error: { code: "active_lesson_not_found", message: "active lesson was not found" },
+          });
     }
     if (path.startsWith("/api/v1/phrases/")) {
       const slug = decodeURIComponent(path.slice("/api/v1/phrases/".length));
@@ -194,7 +198,7 @@ async function installAPI(page: Page) {
         studyMode?: string;
         lessonSize?: string;
       };
-      return fulfillJSON(route, 201, {
+      activeLesson = {
         id: "00000000-0000-0000-0000-000000000500",
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
@@ -205,7 +209,8 @@ async function installAPI(page: Page) {
         items: WORDS.map((item, position) => ({ ...item, position })),
         createdAt: "2026-07-18T00:00:00Z",
         updatedAt: "2026-07-18T00:00:00Z",
-      });
+      };
+      return fulfillJSON(route, 201, activeLesson);
     }
 
     return fulfillJSON(route, 404, {
@@ -411,9 +416,11 @@ test("an active lesson removes top-level navigation and blocks browser history e
 
   await page.evaluate(() => window.history.back());
   await expect.poll(() => new URL(page.url()).pathname).toBe("/lesson/active");
-  await expect(page.locator(".lx-queue-notice")).toContainText("Сохранить и выйти");
   const exitDialog = page.getByRole("dialog", { name: "Закрыть урок?" });
   await expect(exitDialog).toBeVisible();
+  await expect(
+    exitDialog.getByRole("button", { name: "Сохранить и выйти", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "viewport" })).toBeVisible();
 
   await exitDialog.getByRole("button", { name: "Сохранить и выйти", exact: true }).click();

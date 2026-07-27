@@ -16,7 +16,7 @@ LexiGo — персональный тренажёр английской лек
 
 Единственная production-цепочка приложения:
 
-`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
+`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
 
 Ownership компонентов разделён следующим образом:
 
@@ -24,7 +24,8 @@ Ownership компонентов разделён следующим образ�
 - `frontend/components/routed-lexigo-app.tsx` владеет канонической route shell, skip-link и persistent navigation chrome;
 - `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, account runtime и единственной динамической загрузкой route entries;
 - route-specific islands владеют только данными и presentation своего маршрута, но не восстанавливают сессию и не создают вторые outbox/PWA owners;
-- `frontend/components/lexigo-premium-app.tsx` остаётся compatibility graph для ещё не извлечённых Learn, Phrases и Active Lesson и не должен импортироваться напрямую из других компонентов;
+- `frontend/components/lexigo-learn-app.tsx` владеет Lesson Composer reads/mutations и presentation только на `/learn`, но использует общий session bootstrap и передаёт Active Lesson существующему product graph;
+- `frontend/components/lexigo-premium-app.tsx` остаётся compatibility graph для ещё не извлечённых Phrases и Active Lesson и не должен импортироваться напрямую из других компонентов;
 - feature-компоненты расширяют owning route graph, но не создают альтернативные application roots.
 
 Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`. Feature styles не должны добавлять скрытые root-level imports или зависеть от альтернативной точки входа. Консолидация существующих глобальных CSS выполняется отдельными небольшими PR с visual regression gate, без смешивания с redesign.

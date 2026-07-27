@@ -1,4 +1,11 @@
+"use client";
+
+import { useLayoutEffect, useState } from "react";
+
+import { consumeLearnHandoffFallbackNotice } from "../lib/lesson-composition-handoff";
 import type { LessonResultContinuation, LessonResultSnapshot } from "../lib/lesson-result";
+
+const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice";
 
 type LessonResultPresentationProps = {
   snapshot: LessonResultSnapshot;
@@ -164,6 +171,7 @@ export function LessonResultPresentation({
   onDueReview,
   onStay,
 }: LessonResultPresentationProps) {
+  const [handoffNotice] = useState(() => consumeLearnHandoffFallbackNotice(snapshot.source));
   const copy = resultCopy(snapshot, continuation, sourceLabel);
   const primaryAction = copy.primaryAction === "next"
     ? onNextLesson
@@ -178,6 +186,19 @@ export function LessonResultPresentation({
       ? onStay
       : onProgress;
   const statusLabel = snapshot.syncPending ? "На устройстве" : "Сохранено";
+
+  useLayoutEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT, { detail: handoffNotice }));
+      }
+    });
+    return () => {
+      cancelled = true;
+      window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT, { detail: "" }));
+    };
+  }, [handoffNotice]);
 
   return (
     <section

@@ -11,7 +11,7 @@ export type NavigationScrollPosition = {
   y: number;
 };
 
-export type RouteGraphHistoryOwner = "dictionary" | "home" | "product";
+export type RouteGraphHistoryOwner = "dictionary" | "home" | "learn" | "product";
 
 export type NavigationHistoryState = {
   lexigo: true;
@@ -32,7 +32,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function routeGraphOwner(value: unknown): RouteGraphHistoryOwner | undefined {
   if (!isRecord(value)) return undefined;
   const candidate = value.lexigoRouteGraph;
-  return candidate === "dictionary" || candidate === "home" || candidate === "product"
+  return candidate === "dictionary" || candidate === "home" || candidate === "learn" || candidate === "product"
     ? candidate
     : undefined;
 }

@@ -21,6 +21,7 @@ test("Academic Technical English is selectable and preserved for the next block"
   test.setTimeout(45_000);
   const createSources: string[] = [];
   const previewSources: string[] = [];
+  let activeLesson: Record<string, unknown> | null = null;
   await page.context().addCookies([{ name: "lexigo_csrf", value: "academic-csrf", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
@@ -35,7 +36,11 @@ test("Academic Technical English is selectable and preserved for the next block"
       topics: [{ topic: "academic-technical-english", count: 579, words: 579, phrases: 0 }],
     }) });
     if (path === "/api/v1/words" || path === "/api/v1/words/due") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: ITEMS, count: ITEMS.length }) });
-    if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "none" } }) });
+    if (path === "/api/v1/lessons/active") {
+      return activeLesson
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(activeLesson) })
+        : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "none" } }) });
+    }
     if (path === "/api/v1/lessons/preview") {
       const body = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string };
       previewSources.push(body.source);
@@ -45,9 +50,13 @@ test("Academic Technical English is selectable and preserved for the next block"
       const body = request.postDataJSON() as { source: string };
       createSources.push(body.source);
       const index = Math.min(createSources.length - 1, ITEMS.length - 1);
-      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ id: `00000000-0000-0000-0000-00000000018${index}`, source: body.source, studyMode: "study", lessonSize: "15", currentIndex: 0, version: 1, status: "active", items: [ITEMS[index]], createdAt: "2026-07-23T00:00:00Z", updatedAt: "2026-07-23T00:00:00Z" }) });
+      activeLesson = { id: `00000000-0000-0000-0000-00000000018${index}`, source: body.source, studyMode: "study", lessonSize: "15", currentIndex: 0, version: 1, status: "active", items: [ITEMS[index]], createdAt: "2026-07-23T00:00:00Z", updatedAt: "2026-07-23T00:00:00Z" };
+      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(activeLesson) });
     }
-    if (path.endsWith("/review")) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wordId: 701, status: "learning", easiness: 2.5, intervalDays: 0, repetitions: 0, dueAt: "2026-07-24T00:00:00Z", lastReviewedAt: "2026-07-23T00:00:00Z", requestedRating: "known", effectiveRating: "known", judgementSource: "study", judgementReason: "passive_exposure", reviewEventId: 1, suggestionAvailable: false, lessonId: "00000000-0000-0000-0000-000000000180", lessonCurrentIndex: 1, lessonVersion: 2, lessonCompleted: true, lessonReviewedItems: 1, lessonSkippedItems: 0, lessonTotalItems: 1 }) });
+    if (path.endsWith("/review")) {
+      activeLesson = null;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wordId: 701, status: "learning", easiness: 2.5, intervalDays: 0, repetitions: 0, dueAt: "2026-07-24T00:00:00Z", lastReviewedAt: "2026-07-23T00:00:00Z", requestedRating: "known", effectiveRating: "known", judgementSource: "study", judgementReason: "passive_exposure", reviewEventId: 1, suggestionAvailable: false, lessonId: "00000000-0000-0000-0000-000000000180", lessonCurrentIndex: 1, lessonVersion: 2, lessonCompleted: true, lessonReviewedItems: 1, lessonSkippedItems: 0, lessonTotalItems: 1 }) });
+    }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
 
@@ -75,4 +84,3 @@ test("Academic Technical English is selectable and preserved for the next block"
   expect(createSources).toEqual(["academic-technical-english", "academic-technical-english"]);
   expect(previewSources).toContain("academic-technical-english");
 });
-

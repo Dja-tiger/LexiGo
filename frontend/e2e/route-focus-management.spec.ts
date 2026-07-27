@@ -125,6 +125,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 async function installAPI(page: Page) {
   let reviewCount = 0;
   let lessonVersion = 1;
+  let activeLesson: Record<string, unknown> | null = null;
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -142,9 +143,11 @@ async function installAPI(page: Page) {
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, METADATA);
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, PROGRESS);
     if (path === "/api/v1/lessons/active") {
-      return fulfillJSON(route, 404, {
-        error: { code: "active_lesson_not_found", message: "active lesson was not found" },
-      });
+      return activeLesson
+        ? fulfillJSON(route, 200, activeLesson)
+        : fulfillJSON(route, 404, {
+            error: { code: "active_lesson_not_found", message: "active lesson was not found" },
+          });
     }
     if ((path === "/api/v1/words" || path === "/api/v1/words/due")
       && url.searchParams.get("kind") === "phrase") {
@@ -182,7 +185,7 @@ async function installAPI(page: Page) {
         studyMode?: string;
         lessonSize?: string;
       };
-      return fulfillJSON(route, 201, {
+      activeLesson = {
         id: "00000000-0000-0000-0000-000000000460",
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
@@ -193,11 +196,20 @@ async function installAPI(page: Page) {
         items: WORDS.map((item, position) => ({ ...item, position })),
         createdAt: "2026-07-18T00:00:00Z",
         updatedAt: "2026-07-18T00:00:00Z",
-      });
+      };
+      return fulfillJSON(route, 201, activeLesson);
     }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
       lessonVersion += 1;
+      if (activeLesson) {
+        activeLesson = {
+          ...activeLesson,
+          currentIndex: reviewCount,
+          version: lessonVersion,
+          updatedAt: "2026-07-18T00:01:00Z",
+        };
+      }
       return fulfillJSON(route, 200, {
         wordId: WORDS[Math.min(reviewCount - 1, WORDS.length - 1)].id,
         status: "learning",
