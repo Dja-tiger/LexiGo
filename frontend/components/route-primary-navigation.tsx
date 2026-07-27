@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { AriaAttributes, MouseEvent, ReactNode } from "react";
 
 import {
@@ -23,6 +23,7 @@ import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
+type RouteGraphHint = "dictionary" | "home" | "product";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
@@ -32,6 +33,7 @@ const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
 ]);
 const ROUTE_CLIENT_ISLAND_SELECTOR = "[data-route-client-island]";
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
+const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 
 function RouteIcon({ name }: { name: RouteIconName }) {
   const common = {
@@ -72,6 +74,29 @@ function destinationFor(target: NavigationTarget) {
     : { target, scroll: { x: 0, y: 0 } };
 }
 
+function routeGraphHint(target: NavigationTarget): RouteGraphHint {
+  return target.view === "home" ? "home" : "product";
+}
+
+function activeRouteGraph(): RouteGraphHint {
+  const island = document.querySelector<HTMLElement>(ROUTE_CLIENT_ISLAND_SELECTOR)
+    ?.dataset.routeClientIsland;
+  if (island === "home") return "home";
+  if (island === "dictionary") return "dictionary";
+  return "product";
+}
+
+function graphHistoryState(
+  target: NavigationTarget,
+  scroll: { x: number; y: number },
+  routeGraph: RouteGraphHint,
+): Record<string, unknown> {
+  return {
+    ...createNavigationHistoryState(target, scroll),
+    [ROUTE_GRAPH_HISTORY_KEY]: routeGraph,
+  };
+}
+
 function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourneyIntent) {
   const current = parseNavigationLocation(window.location);
   const currentScroll = { x: window.scrollX, y: window.scrollY };
@@ -89,27 +114,79 @@ function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourn
   return {
     current,
     currentScroll,
+    currentGraph: activeRouteGraph(),
     destination,
     nextURL,
+    nextPathname: new URL(nextURL, window.location.origin).pathname,
+    nextGraph: routeGraphHint(destination.target),
   };
+}
+
+function mergeCurrentHistoryState(nextState: Record<string, unknown>): Record<string, unknown> {
+  const current = window.history.state;
+  return {
+    ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+    ...nextState,
+  };
+}
+
+function stabilizeGraphHistoryEntry(
+  transition: NonNullable<ReturnType<typeof routeTransition>>,
+  nextState: Record<string, unknown>,
+): void {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        if (navigationURL(parseNavigationLocation(window.location)) !== transition.nextURL) return;
+        window.history.replaceState(
+          mergeCurrentHistoryState(nextState),
+          "",
+          window.location.href,
+        );
+      }, 0);
+    });
+  });
+}
+
+function commitRouteTransition(
+  transition: NonNullable<ReturnType<typeof routeTransition>>,
+  graphHandoff: boolean,
+): void {
+  window.history.replaceState(
+    graphHistoryState(transition.current, transition.currentScroll, transition.currentGraph),
+    "",
+    window.location.href,
+  );
+
+  const nextState = graphHistoryState(
+    transition.destination.target,
+    transition.destination.scroll,
+    transition.nextGraph,
+  );
+  if (graphHandoff) {
+    window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
+      detail: {
+        routeGraph: transition.nextGraph,
+        pathname: transition.nextPathname,
+      },
+    }));
+  }
+
+  // Next.js App Router patches the native History API. It updates usePathname
+  // for cross-graph transitions itself. Dispatching a synthetic popstate there
+  // starts a second navigation cycle and can replace the custom graph marker.
+  window.history.pushState(nextState, "", transition.nextURL);
+  if (graphHandoff) {
+    stabilizeGraphHistoryEntry(transition, nextState);
+  } else {
+    window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+  }
 }
 
 function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
   const transition = routeTransition(requestedTarget, intent);
   if (!transition) return;
-
-  window.history.replaceState(
-    createNavigationHistoryState(transition.current, transition.currentScroll),
-    "",
-    window.location.href,
-  );
-
-  const nextState = createNavigationHistoryState(
-    transition.destination.target,
-    transition.destination.scroll,
-  );
-  window.history.pushState(nextState, "", transition.nextURL);
-  window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+  commitRouteTransition(transition, false);
 }
 
 function RouteLink({
@@ -127,8 +204,6 @@ function RouteLink({
   ariaCurrent?: AriaAttributes["aria-current"];
   navigationView?: AppView;
 }) {
-  const router = useRouter();
-
   return (
     <Link
       href={navigationURL(target)}
@@ -142,17 +217,12 @@ function RouteLink({
         event.preventDefault();
 
         const intent = navigationView ? "primary_navigation" : "in_app_navigation";
-        const requiresRouterGraphHandoff = target.view === "scenario"
+        const requiresGraphHandoff = target.view === "scenario"
+          || target.view === "home"
           || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
-        if (requiresRouterGraphHandoff) {
-          // Route islands, including the Scenario catalog, do not share the
-          // PremiumApp popstate renderer. Let Next swap the route graph without
-          // reloading the document; the loaded graph resumes internal history.
+        if (requiresGraphHandoff) {
           const transition = routeTransition(target, intent);
-          if (transition) {
-            window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
-            router.push(transition.nextURL, { scroll: false });
-          }
+          if (transition) commitRouteTransition(transition, true);
           return;
         }
 

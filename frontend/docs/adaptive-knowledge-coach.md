@@ -40,12 +40,15 @@ Research and concept pages `01–08` currently act primarily as section shells i
 The implementation must not introduce a second product graph.
 
 - `RouteChrome` remains the only owner of primary route navigation.
-- `LexigoPremiumApp` retains Home state resolution and lesson orchestration.
+- `LexigoBootstrappedApp` remains the sole session restoration, account runtime and dynamic route-entry owner.
+- `LexigoHomeApp` owns Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
+- `LexigoPremiumApp` retains Learn, Phrases and Active Lesson compatibility orchestration while those routes remain unextracted.
+- `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners and are not imported by Home.
 - The backend remains authoritative for lesson position, completion and review persistence.
 - The active lesson remains higher priority than the due queue, new study and manual configuration.
 - The Dictionary route island remains isolated and must not regress.
 
-The first implementation slice changes presentation and responsive composition only.
+Issue #250 changes the client-entry boundary, not the approved Home visual hierarchy. A transient `/lesson/active?resume=1` URL reuses the existing Active Lesson resume action and removes the query before execution; it does not create another lesson lifecycle owner.
 
 ## Application Shell contract
 
@@ -65,6 +68,8 @@ The next action resolves in this order:
 4. open manual lesson configuration.
 
 The desktop and mobile production frames preserve this order and keep the primary action above mobile bottom navigation.
+
+Direct `/` entry and return navigation must use the dedicated Home island without repeating session restoration. Home-created or resumed lessons must reach the existing Active Lesson UI immediately, without exposing a second confirmation click.
 
 ## Next implementation slice
 

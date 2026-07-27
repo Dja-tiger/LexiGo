@@ -16,19 +16,20 @@ LexiGo — персональный тренажёр английской лек
 
 Единственная production-цепочка приложения:
 
-`frontend/app/layout.tsx` → `RoutedLexigoApp → LexigoBootstrappedApp → LexigoPremiumApp`.
+`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
 
 Ownership компонентов разделён следующим образом:
 
 - `frontend/app/layout.tsx` владеет глобальным runtime-контуром: error boundary, Web Vitals, Service Worker, persistent route shell и legal footer;
 - `frontend/components/routed-lexigo-app.tsx` владеет канонической route shell, skip-link и persistent navigation chrome;
-- `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, account runtime и единственной динамической загрузкой product graph;
-- `frontend/components/lexigo-premium-app.tsx` является единственным product UI graph и не должен импортироваться напрямую из других компонентов;
-- feature-компоненты расширяют product graph, но не создают альтернативные application roots.
+- `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, account runtime и единственной динамической загрузкой route entries;
+- route-specific islands владеют только данными и presentation своего маршрута, но не восстанавливают сессию и не создают вторые outbox/PWA owners;
+- `frontend/components/lexigo-premium-app.tsx` остаётся compatibility graph для ещё не извлечённых Learn, Phrases и Active Lesson и не должен импортироваться напрямую из других компонентов;
+- feature-компоненты расширяют owning route graph, но не создают альтернативные application roots.
 
 Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`. Feature styles не должны добавлять скрытые root-level imports или зависеть от альтернативной точки входа. Консолидация существующих глобальных CSS выполняется отдельными небольшими PR с visual regression gate, без смешивания с redesign.
 
-Контракт защищён unit-тестом `frontend/components/production-app-entry.test.ts`, который запрещает возврат retired app roots и прямые обходные импорты product graph.
+Контракт защищён unit-тестом `frontend/components/production-app-entry.test.ts` и route-specific source contracts, которые запрещают возврат retired app roots, прямые обходные импорты и дублирование persistent runtime owners.
 
 Подробности маршрутизации и runtime boundaries находятся в [docs/architecture.md](docs/architecture.md).
 

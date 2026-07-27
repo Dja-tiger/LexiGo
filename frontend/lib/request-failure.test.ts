@@ -83,6 +83,60 @@ describe("request failure classification", () => {
     await rejection;
   });
 
+  it("reuses route handoff resources and invalidates them after an API mutation", async () => {
+    vi.stubGlobal("window", { location: { origin: "http://lexigo.test" } });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(typeof input === "string" ? input : input.toString(), "http://lexigo.test");
+      const method = (init?.method ?? "GET").toUpperCase();
+      if (method !== "GET") return new Response(null, { status: 204 });
+      if (url.pathname === "/api/v1/lessons/active") {
+        return new Response(JSON.stringify({ error: { code: "active_lesson_not_found" } }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ dueNow: 7 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const headers = { Authorization: "Bearer route-session" };
+
+    // Clear any module-level cache left by an earlier browser-like test environment.
+    await fetchWithTimeout("/api/v1/lessons", { method: "POST", headers });
+    await fetchWithTimeout("/api/v1/progress?timezoneOffsetMinutes=0", { headers });
+    await fetchWithTimeout("/api/v1/progress?timezoneOffsetMinutes=0", { headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await fetchWithTimeout("/api/v1/lessons", { method: "POST", headers });
+    await fetchWithTimeout("/api/v1/progress?timezoneOffsetMinutes=0", { headers });
+
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it("revalidates a successful active lesson response", async () => {
+    vi.stubGlobal("window", { location: { origin: "http://lexigo.test" } });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: "00000000-0000-0000-0000-000000000001",
+      status: "active",
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const headers = { Authorization: "Bearer active-session" };
+
+    await fetchWithTimeout("/api/v1/lessons", { method: "POST", headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("returns distinct user-facing recovery states", () => {
     expect(describeRequestFailure(new RequestFailure("offline", "offline"), "прогресс")).toMatchObject({
       title: "Нет подключения к сети",

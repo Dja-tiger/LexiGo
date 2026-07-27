@@ -17,24 +17,25 @@ describe("Word Detail production ownership", () => {
     const dictionaryApp = readSource(componentsDirectory, "lexigo-dictionary-app.tsx");
     const catalog = readSource(componentsDirectory, "dictionary-catalog.tsx");
 
-    expect(bootstrap).toContain('pathname.startsWith("/words/")');
+    expect(bootstrap).toContain('normalized.startsWith("/words/")');
     expect(bootstrap.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
     expect(dictionaryApp).toContain('data-route-client-island="dictionary"');
     expect(dictionaryApp).not.toContain("restoreSession");
     expect(catalog).toContain('import { WordDetailRoute } from "./word-detail-route"');
   });
 
-  it("hands the canonical URL target to the product graph after pathname settlement", () => {
+  it("hands the canonical URL and explicit graph owner to History after pathname settlement", () => {
     const bootstrap = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
 
-    expect(bootstrap).toContain("let productGraphFrame: number | null = null");
-    expect(bootstrap).toContain("const settleProductGraph = () => {");
-    expect(bootstrap).toContain("if (isDictionaryRoute(window.location.pathname)) {");
-    expect(bootstrap).toContain("window.requestAnimationFrame(settleProductGraph)");
+    expect(bootstrap).toContain('const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph"');
+    expect(bootstrap).toContain("function historyRouteGraph(pathname: string, state: unknown): RouteGraph");
+    expect(bootstrap).toContain("const settleRouteGraph = () => {");
+    expect(bootstrap).toContain("normalizedPathname(window.location.pathname) !== expectedPath");
+    expect(bootstrap).toContain("window.requestAnimationFrame(settleRouteGraph)");
     expect(bootstrap).toContain("parseNavigation(window.location.search, window.location.pathname)");
-    expect(bootstrap).toContain("mergedNavigationHistoryState(canonicalTarget)");
+    expect(bootstrap).toContain("mergedNavigationHistoryState(canonicalTarget, expectedGraph)");
     expect(bootstrap).toContain("window.history.replaceState(");
-    expect(bootstrap).toContain("window.cancelAnimationFrame(productGraphFrame)");
+    expect(bootstrap).toContain("window.cancelAnimationFrame(frame)");
     expect(bootstrap).not.toContain("productGraphTimer");
   });
 
@@ -61,7 +62,7 @@ describe("Word Detail production ownership", () => {
   it("creates a lesson with exactly the selected word and keeps Active Lesson ownership external", () => {
     const dictionaryApp = readSource(componentsDirectory, "lexigo-dictionary-app.tsx");
 
-    expect(dictionaryApp).toContain('wordIds: [item.wordId]');
+    expect(dictionaryApp).toContain("wordIds: [item.wordId]");
     expect(dictionaryApp).toContain('navigate({ view: "lesson", detail: "active" }');
     expect(dictionaryApp).not.toContain("ReviewLessonWord");
     expect(dictionaryApp).not.toContain("lessonVersion");

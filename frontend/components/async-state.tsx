@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
 import type { ResourceStatus } from "../lib/account-resources";
+import { consumeLessonResumeIntent } from "../lib/lesson-resume-intent";
 import type { RequestProblem } from "../lib/request-failure";
 
 type AsyncStateKind = "loading" | "empty" | "error" | "success";
@@ -53,11 +54,20 @@ export function AsyncStatePanel({
   focusResult = kind === "error" || kind === "empty",
 }: AsyncStatePanelProps) {
   const regionRef = useRef<HTMLElement>(null);
+  const resumeIntentConsumedRef = useRef(false);
 
   useEffect(() => {
     if (!focusResult) return;
     regionRef.current?.focus({ preventScroll: false });
   }, [focusResult, kind, title, message, reference]);
+
+  useEffect(() => {
+    if (resumeIntentConsumedRef.current || actionLabel !== "Продолжить урок" || !onAction) return;
+    if (!consumeLessonResumeIntent(window.location, window.history)) return;
+
+    resumeIntentConsumedRef.current = true;
+    queueMicrotask(onAction);
+  }, [actionLabel, onAction]);
 
   const hasActions = Boolean((actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction));
 

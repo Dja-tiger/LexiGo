@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createNavigationHistoryState,
@@ -8,6 +8,10 @@ import {
   navigationTargetFromHistory,
   readNavigationHistoryState,
 } from "./navigation-history";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("navigation history accessibility state", () => {
   it("stores a validated target and finite non-negative scroll position", () => {
@@ -29,6 +33,25 @@ describe("navigation history accessibility state", () => {
       target,
       scroll: { x: 0, y: 740 },
     });
+    expect(readNavigationHistoryState(state)).toEqual(state);
+  });
+
+  it("preserves the current route-graph owner across replace-state snapshots", () => {
+    vi.stubGlobal("window", {
+      location: { pathname: "/dictionary" },
+      history: { state: { lexigoRouteGraph: "product", nextInternalState: "do-not-copy" } },
+    });
+
+    const state = createNavigationHistoryState({ view: "library" }, { x: 0, y: 120 });
+
+    expect(state).toEqual({
+      lexigo: true,
+      version: 1,
+      target: { view: "library" },
+      scroll: { x: 0, y: 120 },
+      lexigoRouteGraph: "product",
+    });
+    expect(state).not.toHaveProperty("nextInternalState");
     expect(readNavigationHistoryState(state)).toEqual(state);
   });
 
