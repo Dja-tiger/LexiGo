@@ -79,16 +79,16 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toMatch(/restoreBootstrappedSession\(\)[\s\S]*\}, \[pathname, restoreAttempt, sessionRestoreSuppressed\]\);/);
   });
 
-  it("canonicalizes Home and Dictionary exits with an explicit History graph owner", () => {
+  it("renders the explicit History graph owner without an intermediate pending graph", () => {
     const bootstrappedApp = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
 
     expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "product"');
     expect(bootstrappedApp).toContain('const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph"');
     expect(bootstrappedApp).toContain("historyRouteGraph(window.location.pathname, event.state)");
+    expect(bootstrappedApp).toContain("const effectiveRouteGraph = routeGraphRequest?.pathname === normalizedCurrentPath");
     expect(bootstrappedApp).toContain("mergedNavigationHistoryState(canonicalTarget, expectedGraph)");
-    expect(bootstrappedApp.indexOf("mergedNavigationHistoryState(canonicalTarget, expectedGraph)"))
-      .toBeLessThan(bootstrappedApp.indexOf("setRouteGraph(expectedGraph)"));
-    expect(bootstrappedApp).toMatch(/\{routeGraphPending \? \(\s*<ProductShellLoading \/>/);
+    expect(bootstrappedApp).not.toContain("routeGraphPending");
+    expect(bootstrappedApp).not.toContain("setRouteGraph(");
   });
 
   it("allows only the bootstrap layer to load route application entries", () => {
