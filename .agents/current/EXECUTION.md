@@ -99,3 +99,33 @@ Fallback: no retry or timeout fallback was retained. Rebuild before Playwright, 
 Limitations: full repository CI is still required on the new immutable developer-authored head before bundle measurement.
 
 Reusable lesson: after intercepted App Router `popstate`, route safety must use immutable history state plus the actual semantic owner; stale `usePathname()` is not a delivery barrier, and duplicate focused entries require replacement rather than another push.
+
+### Controlled Learn bundle measurement
+
+Purpose: capture the exact cold `/learn` JavaScript transfer and initial-request baseline, then lock a route-specific ceiling below the original measured monolith.
+
+Instruction source: Issue #254, `docs/frontend-bundle-budgets.md`, `frontend/e2e/route-bundle-budget.spec.ts`, `.agents/AGENTS.base.md` and `.agents/AGENTS.progress-pr214.md`.
+
+Version or verification date: functional head `1450986be0e1c63ddce47e9ddb33fc4324bcf9b1`; probe head `b82c31acfc9bd48ec5b28682a49035226bdef556`; verified 2026-07-28.
+
+Inputs: full green CI #2194/run `30311583592`; production Pixel 5 Chromium profile; original `/learn` baseline 238257 bytes/19 requests.
+
+Files inspected: route bundle spec, global teardown, performance workflow, existing Home/Progress probe history, bundle budget JSON/tests and prior measurement documentation.
+
+Actions performed: added one post-report test-only sentinel; published controlled run `30312155204`; verified the expected sentinel-only failure; downloaded artifact `8670855986`; checked its SHA-256 and extracted both route reports; removed the sentinel byte-for-byte; selected bounded permanent ceilings.
+
+Commands or procedures: GitHub workflow/job/log/artifact reads; artifact digest verification; JSON agreement check; exact asset inventory audit; local route-budget run for non-authoritative comparison.
+
+Artifacts produced: artifact `8670855986`, exact reports with `/learn` result `210986` bytes/20 requests, permanent `235000` byte/22 request ceilings and durable ownership documentation.
+
+Result: `/learn` transfers 27271 fewer JavaScript bytes (11.4%) than the monolithic baseline; the permanent ceiling leaves 24014 bytes (11.4%) headroom and remains below the old measured transfer.
+
+Failures: the dedicated performance-report upload step ran before extraction and found no host-side file.
+
+Root cause: `.github/workflows/ci.yml` uploads `frontend/ci-artifacts/test-results/performance-budget-report.json` before `frontend-container.sh extract` copies it from the isolated volume.
+
+Fallback: the always-uploaded `frontend-playwright-report-perf` artifact contained both exact JSON reports; its connector metadata digest and downloaded ZIP digest matched, and both reports agreed.
+
+Limitations: the final permanent-budget head still requires a full required CI with the probe absent.
+
+Reusable lesson: when browser artifacts live in an isolated volume, extract before a path-specific upload; if an existing generic diagnostics artifact is used as recovery evidence, verify artifact digest and duplicate report agreement.

@@ -130,3 +130,12 @@
 - **Профилактика:** определять route-safety intent по immutable `event.state` и живому semantic owner; восстанавливать захваченные exact URL/framework state; для duplicate lesson target применять `replaceState`, для lower-route target — `pushState`; доставлять событие после стабильности owner через отменяемый `requestAnimationFrame`.
 - **Regression gate:** `frontend/components/learn-route-island-source.test.ts`, Browser Back case в `active-lesson-figma.spec.ts` во всех четырёх проектах и полный focused-lesson case в `adaptive-navigation.spec.ts`.
 - **Область действия:** App Router popstate interception, focused routes, safe-exit dialogs, framework history metadata и post-exit Back behavior.
+
+### 2026-07-28 — Performance artifact upload выполнился до extract
+
+- **Симптом:** controlled performance job записал полный route report, но path-specific `performance-budget-*` upload не нашёл `frontend/ci-artifacts/test-results/performance-budget-report.json`.
+- **Первопричина:** upload step расположен раньше `frontend-container.sh extract`, который копирует report из isolated Docker volume на host.
+- **Почему ошибка не была обнаружена раньше:** upload использует `continue-on-error`, а последующий generic diagnostics artifact успешно загружается и не делает job infrastructure-failed.
+- **Профилактика:** для path-specific browser artifacts сначала выполнять extract, затем upload; recovery через generic artifact допустим только с проверкой connector/download digest и совпадения дублирующих JSON reports.
+- **Regression gate:** workflow step-order audit, artifact listing, SHA-256 downloaded ZIP и equality critical route results в `performance-budget-report.json`/`route-bundle-budget-report.json`.
+- **Область действия:** containerized browser CI, performance/visual reports, controlled measurements и release evidence.

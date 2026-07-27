@@ -96,3 +96,46 @@ Pre-commit head: `6040a2680d61209d8ca527db0f00dfbd3ca73db2`. Resolve the new imm
 ### Next action
 
 Run the local frontend quality gate, publish the developer-authored fix head, and require a new full CI before beginning controlled `/learn` cold-route measurement.
+
+## 2026-07-28 01:57 Europe/Moscow
+
+### Verified
+
+- functional head `1450986be0e1c63ddce47e9ddb33fc4324bcf9b1` passed full CI #2194/run `30311583592`;
+- controlled probe head `b82c31acfc9bd48ec5b28682a49035226bdef556` changed only `frontend/e2e/route-bundle-budget.spec.ts`;
+- controlled run `30312155204` measured cold `/learn` at `210986` JavaScript bytes and 20 initial requests;
+- artifact `8670855986` has digest `sha256:e24af0cfe3aa3c71d7a31c28077ca20490d98d2f5d62ba4674fc6f4b0b98f32c`;
+- extracted `performance-budget-report.json` and `route-bundle-budget-report.json` agree on the exact `/learn` result and 11 JavaScript assets.
+
+### Measurement outcome
+
+- original monolithic `/learn`: 238257 bytes and 19 requests;
+- extracted Learn island: 210986 bytes and 20 requests;
+- reduction: 27271 bytes (11.4%);
+- permanent ceiling: 235000 bytes and 22 requests;
+- JavaScript headroom: 24014 bytes (11.4%), with the ceiling still below the original measured transfer.
+
+### Changed files
+
+- `frontend/e2e/route-bundle-budget.spec.ts` — controlled probe removed byte-for-byte to canonical blob `304e7c62d3163a59edac3e648246e2aa4ce00660`;
+- `frontend/bundle-budgets.json` and `frontend/lib/bundle-budgets.test.ts` — exact baseline/evidence and stricter Learn ceilings;
+- `docs/frontend-bundle-budgets.md` — reproducible measurement provenance and before/after result;
+- `README.md` and `docs/architecture.md` — durable Learn island ownership and reduced compatibility graph;
+- `.agents/current/**` and `.agents/AGENTS.progress-pr214.md` — execution evidence and reusable artifact-ordering lesson.
+
+### Checks passed
+
+- canonical measurement-probe blob restored exactly to `304e7c62d3163a59edac3e648246e2aa4ce00660`;
+- bundle/source contracts — 12/12 tests;
+- lint — 0 errors and the same 3 pre-existing warnings; typecheck green; full unit suite — 68 files, 435/435 tests;
+- local cold-route harness with permanent budgets — all canonical routes green; `/learn` measured 210345 bytes/20 requests locally;
+- artifact ZIP SHA-256 matched connector metadata and both extracted reports agreed;
+- `git diff --check`.
+
+### Finding
+
+The dedicated performance-report upload step runs before `frontend-container.sh extract`, so it found no host-side report. The later generic `frontend-playwright-report-perf` artifact contained both exact reports and was verified by artifact digest and matching JSON content.
+
+### Next action
+
+Run local budget/source/document checks, publish the permanent budget head with no probe, and require a new full immutable-head CI.
