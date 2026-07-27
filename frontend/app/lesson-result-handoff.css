@@ -1,0 +1,11 @@
+/*
+ * The mixed-composition notice is owned by the persistent route shell so it
+ * remains outside the animated product view. Its translucent fill must still
+ * blend against the same Light canvas that owned the legacy in-app slot.
+ */
+html[data-lexigo-appearance="light"]
+  .lx-routed-app[data-route-path^="/lesson/"]:has(> .lx-queue-notice:not(.lx-focused-lesson-exit-notice)),
+html[data-lexigo-resolved-appearance="light"]
+  .lx-routed-app[data-route-path^="/lesson/"]:has(> .lx-queue-notice:not(.lx-focused-lesson-exit-notice)) {
+  background: var(--ak-color-canvas);
+}
