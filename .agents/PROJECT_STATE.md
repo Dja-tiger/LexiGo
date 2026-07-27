@@ -2,9 +2,9 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 04:13 Europe/Berlin.
+- Last verified: 2026-07-27 04:29 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `426144d00a857f36be8a543553df5029ac49a454`.
+- Live `main` at verification: `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
 - Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 - PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
 - PR #239 full CI: #2042, run `30225559882`, successful.
@@ -19,8 +19,10 @@
 - Agent Docs CI optimization PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed CI #2060/run `30230474179` and was expected-head squash merged as `426144d00a857f36be8a543553df5029ac49a454`.
 - Issue #243 is closed as completed.
 - PR #244 exact-SHA stage/public validation: run `30231298766`, exact image `426144d00a857f36be8a543553df5029ac49a454`, scope validation/deploy/public smoke/public browser successful, 12/12 checks passed.
-- PR #245 first live pure Agent Docs head `3908793ee98ff27d472890b28e9ea3b6f97b3b4a` passed lightweight CI #2062/run `30231567675`.
-- PR #245 scope artifact classified exactly four `.agents/**` paths as `agent_docs_only=true`; Agent Harness validation passed and all backend/frontend/browser/container jobs were skipped.
+- PR #245 final head `a6c6a8a1dd410ddb8fcab219f379aa8555b9d4da` passed lightweight CI #2063/run `30231679715` and was expected-head squash merged as `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+- PR #245 exact scope artifact classified only `.agents/PROJECT_STATE.md` and the three `.agents/current/**` files as `agent_docs_only=true`; Agent Harness validation passed and all backend/frontend/browser/container jobs were skipped.
+- Push-triggered main CI for `2ba1053877f916be2c5f5ce4651d772256ee66dd` completed successfully through the lightweight path.
+- Automatic stage deployment for PR #245 was skipped: Issue #12 remains on exact runtime image `426144d00a857f36be8a543553df5029ac49a454`, run `30231298766`, with successful deploy/public smoke/public browser evidence.
 
 ## Completed
 
@@ -107,7 +109,7 @@
 - CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
 - Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
-- PR #245 proved the pull-request fast path in live GitHub Actions: classifier and Agent Harness successful; backend unit/integration, frontend core/browser/aggregate and container build skipped.
+- PR #245 proved both live pull-request and main-push fast paths: classifier and Agent Harness successful, all heavy jobs skipped, runtime image and stage deployment unchanged.
 - `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset byte-for-byte from canonical templates.
 
 ## In progress
@@ -153,13 +155,13 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-2. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
-3. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-4. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
-5. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
-6. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
-7. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
+1. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+2. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+3. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+4. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+5. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+6. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
+7. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
 
 ## Evidence
 
@@ -169,7 +171,9 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 - PR #240 final head `ba71e8fe3a3be6da52594559bbbea0e09b3b13ee` passed CI #2047/run `30228327070`; expected-head squash merge produced `387cc50c199218d71b49b39beb9d92859b6e299c`.
 - PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed complete CI #2060/run `30230474179`; expected-head squash merge produced `426144d00a857f36be8a543553df5029ac49a454`.
 - Stage run `30231298766` checked out exact SHA `426144d00a857f36be8a543553df5029ac49a454`, downloaded and validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
-- PR #245 head `3908793ee98ff27d472890b28e9ea3b6f97b3b4a` passed lightweight CI #2062/run `30231567675`; artifact reason was `agent_docs_only` with exactly `.agents/PROJECT_STATE.md` and the three `.agents/current/**` files, and every heavy product/container job was skipped.
+- PR #245 final head `a6c6a8a1dd410ddb8fcab219f379aa8555b9d4da` passed lightweight CI #2063/run `30231679715`; expected-head squash merge produced `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+- The PR #245 scope artifact contained exactly four `.agents/**` paths and `agent_docs_only=true`; every heavy product/container job was skipped.
+- Issue #12 received the successful main-CI report for `2ba1053877f916be2c5f5ce4651d772256ee66dd`, while its deployment body remained unchanged on runtime image `426144d00a857f36be8a543553df5029ac49a454`, proving automatic stage deployment was skipped.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
