@@ -69,3 +69,33 @@ Fallback: if a complete safe extraction cannot preserve Active Lesson handoff in
 Limitations: exact transfer values require a controlled CI measurement after implementation.
 
 Reusable lesson: a dynamic wrapper that still imports the compatibility graph is not a route island and cannot establish a smaller bundle boundary.
+
+### Active Lesson Browser Back reconciliation
+
+Purpose: make Browser Back reliably invoke the Active Lesson safe-exit contract without losing the exact URL, Next framework history state or the previous Learn entry.
+
+Instruction source: `.agents/AGENTS.progress-pr214.md`, `.agents/AGENTS.progress-pr214-ci1732.md`, Issue #254, Draft PR #255 and CI #2193 artifacts.
+
+Version or verification date: PR head `6040a2680d61209d8ca527db0f00dfbd3ca73db2`, CI run `30309200166`, verified 2026-07-28.
+
+Inputs: failed desktop Chromium/WebKit, Android Chromium and iOS WebKit traces; local production build with Next.js `16.2.11`; Active Lesson and adaptive-navigation fixtures.
+
+Files inspected: `frontend/components/routed-lexigo-app.tsx`, `active-lesson-presentation.tsx`, `lexigo-premium-app.tsx`, `lexigo-bootstrapped-app.tsx`, `lexigo-learn-app.tsx`, focused source contracts and Playwright specs.
+
+Actions performed: reproduced the exact failure locally; separated stale App Router route state from actual URL/DOM ownership; discovered the organic adjacent Active Lesson history entry; implemented immutable-state push/replace branching and semantic-owner `requestAnimationFrame` delivery.
+
+Commands or procedures: exact CI artifact download and trace inspection; `npm ci`; focused Vitest; production build; one targeted Chromium reproduction; four-project Browser Back matrix; complete adaptive-navigation save-and-exit history assertion.
+
+Artifacts produced: updated route shell, source contract and Agent Harness failure-category evidence.
+
+Result: both the direct Learn target and duplicate Active Lesson target open the safe-exit dialog; confirmed exit leaves Back pointing to `/learn`; no duplicate review submit occurs.
+
+Failures: the first local browser rerun used stale `.next` output; the first semantic-owner fix left a duplicate Active Lesson entry behind after confirmed exit.
+
+Root cause: application source changed without rebuilding the `next start` artifact; then unconditional `pushState` preserved an already-focused target that needed to be collapsed.
+
+Fallback: no retry or timeout fallback was retained. Rebuild before Playwright, then choose `replaceState` only for immutable lesson targets and `pushState` for lower-route targets.
+
+Limitations: full repository CI is still required on the new immutable developer-authored head before bundle measurement.
+
+Reusable lesson: after intercepted App Router `popstate`, route safety must use immutable history state plus the actual semantic owner; stale `usePathname()` is not a delivery barrier, and duplicate focused entries require replacement rather than another push.

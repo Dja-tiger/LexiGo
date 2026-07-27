@@ -76,17 +76,26 @@ describe("Learn route client-island ownership", () => {
     expect(bootstrappedApp).toContain('request.pathname.startsWith("/lesson/")');
     expect(bootstrappedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
     expect(routedApp).toContain('const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson"');
+    expect(routedApp).toContain("if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) return");
     expect(routedApp).toContain("const requestedEntry = readNavigationHistoryState(event.state)");
-    expect(routedApp).toContain('requestedEntry?.target.view !== "learn"');
+    expect(routedApp).toContain('requestedEntry?.target.view === "lesson"');
+    expect(routedApp).toContain("every history");
+    expect(routedApp).toContain("immutable event.state");
     expect(routedApp).toContain("event.stopImmediatePropagation()");
     expect(routedApp).toContain("focusedLessonHistoryStateRef.current");
+    expect(routedApp).toContain("window.history.replaceState(protectedState");
     expect(routedApp).toContain("window.history.pushState(protectedState");
     expect(routedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
-    expect(routedApp).toContain('if (!focusedLessonExitRequested || !pathname.startsWith("/lesson/")) return');
+    expect(routedApp).toContain("if (!focusedLessonExitRequested) return");
+    expect(routedApp).toContain('window.location.pathname.startsWith("/lesson/")');
+    expect(routedApp).toContain("stableLesson !== activeLesson");
+    expect(routedApp).toContain("window.requestAnimationFrame(deliverFocusedLessonExit)");
     expect(routedApp).toContain("window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT))");
-    expect(routedApp).toContain("Child layout effects install the Active Lesson listener");
+    expect(routedApp).toContain("setFocusedLessonExitRequested(false)");
+    expect(routedApp).toContain("without depending on stale route state");
     expect(routedApp).not.toContain("window.history.forward()");
     expect(routedApp).not.toContain("new PopStateEvent");
+    expect(routedApp).not.toContain("window.setTimeout(deliverFocusedLessonExit");
   });
 
   it("places the result composition notice outside the animated product view", () => {

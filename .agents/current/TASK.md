@@ -7,7 +7,7 @@
 - Branch: `agent/issue-254-learn-route-island`.
 - Base SHA: `eeab812c6785ae9a92aee948ecb63729ab850932`.
 - Head SHA: resolve from live branch ref.
-- PR: pending Draft PR.
+- PR: Draft PR #255.
 
 ## Objective
 

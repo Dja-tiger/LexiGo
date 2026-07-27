@@ -121,3 +121,12 @@
 - **Профилактика:** custom event и фиксированная задержка не являются доказательством завершённой навигации. Сохранять исходный island до фактического выхода pathname из его route predicate; затем вычислять канонический target из текущего URL, объединять его с framework-owned Next history metadata через `replaceState` и только после этого переключать route graph.
 - **Regression gate:** `frontend/components/word-detail-source.test.ts`, `frontend/e2e/app-router-routes.spec.ts` и полный UI shard 1/2.
 - **Область действия:** App Router client islands, async mutations, imperative navigation, browser history hydration и route-graph handoff.
+
+### 2026-07-28 — Intercepted popstate оставил stale pathname и duplicate focused entry
+
+- **Симптом:** Browser Back сохранял фактический `/lesson/active`, но safe-exit dialog не открывался во всех четырёх browser projects; после первого semantic-owner исправления подтверждённый выход оставлял Back на stale Active Lesson.
+- **Первопричина:** parent delivery gate зависел от уже устаревшего Next `usePathname()`. Органический Learn handoff также оставлял соседнюю Active Lesson history entry, для которой unconditional `pushState` создавал ещё один дубликат.
+- **Почему ошибка не была обнаружена раньше:** source contract моделировал только lower-route target `learn`; точная последовательность organic `/learn` → `/lesson/active?resume=1` → Back → confirmed exit → Back не проверялась совместно.
+- **Профилактика:** определять route-safety intent по immutable `event.state` и живому semantic owner; восстанавливать захваченные exact URL/framework state; для duplicate lesson target применять `replaceState`, для lower-route target — `pushState`; доставлять событие после стабильности owner через отменяемый `requestAnimationFrame`.
+- **Regression gate:** `frontend/components/learn-route-island-source.test.ts`, Browser Back case в `active-lesson-figma.spec.ts` во всех четырёх проектах и полный focused-lesson case в `adaptive-navigation.spec.ts`.
+- **Область действия:** App Router popstate interception, focused routes, safe-exit dialogs, framework history metadata и post-exit Back behavior.

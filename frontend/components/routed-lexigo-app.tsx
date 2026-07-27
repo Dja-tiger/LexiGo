@@ -185,16 +185,15 @@ export function RoutedLexigoApp() {
 
   useLayoutEffect(() => {
     const preserveFocusedLesson = (event: PopStateEvent) => {
+      if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) return;
       const requestedEntry = readNavigationHistoryState(event.state);
-      if (requestedEntry?.target.view !== "learn"
-        || !document.querySelector(ACTIVE_LESSON_SELECTOR)) {
-        return;
-      }
 
       // Next.js and the compatibility graph may observe the same target-level
-      // popstate before this shell listener. Identify the attempted destination
-      // from immutable event.state rather than the mutable current pathname,
-      // then recreate the focused entry with the captured framework state.
+      // popstate before this shell listener. A framework transition can also
+      // leave an adjacent Active Lesson entry behind, so every history
+      // traversal while the semantic lesson owner is mounted is an exit intent.
+      // Recreate the focused entry from immutable event.state plus the captured
+      // framework state rather than trusting the mutable current pathname.
       event.stopImmediatePropagation();
       const protectedState = {
         ...recordState(event.state),
@@ -205,7 +204,11 @@ export function RoutedLexigoApp() {
         ),
         [ROUTE_GRAPH_HISTORY_KEY]: "product",
       };
-      window.history.pushState(protectedState, "", focusedLessonURLRef.current);
+      if (requestedEntry?.target.view === "lesson") {
+        window.history.replaceState(protectedState, "", focusedLessonURLRef.current);
+      } else {
+        window.history.pushState(protectedState, "", focusedLessonURLRef.current);
+      }
       setFocusedLessonExitRequested(true);
     };
 
@@ -235,11 +238,34 @@ export function RoutedLexigoApp() {
   }, []);
 
   useLayoutEffect(() => {
-    if (!focusedLessonExitRequested || !pathname.startsWith("/lesson/")) return;
-    // Child layout effects install the Active Lesson listener before this
-    // parent effect runs, so delivery survives any Next.js route remount.
-    window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
-  }, [focusedLessonExitRequested, pathname]);
+    if (!focusedLessonExitRequested) return;
+    let frame = 0;
+    let stableLesson: Element | null = null;
+
+    const deliverFocusedLessonExit = () => {
+      const activeLesson = document.querySelector(ACTIVE_LESSON_SELECTOR);
+      if (!window.location.pathname.startsWith("/lesson/") || !activeLesson) {
+        stableLesson = null;
+        frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+        return;
+      }
+      if (stableLesson !== activeLesson) {
+        stableLesson = activeLesson;
+        frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+        return;
+      }
+
+      // Next may retain the attempted destination in usePathname after the
+      // shell restores the protected History entry. Wait for the semantic
+      // Active Lesson owner to remain stable across a paint, then deliver to
+      // the child layout-effect listener without depending on stale route state.
+      window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
+      setFocusedLessonExitRequested(false);
+    };
+
+    frame = window.requestAnimationFrame(deliverFocusedLessonExit);
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusedLessonExitRequested]);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
