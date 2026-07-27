@@ -24,17 +24,17 @@ describe("Word Detail production ownership", () => {
     expect(catalog).toContain('import { WordDetailRoute } from "./word-detail-route"');
   });
 
-  it("hands the canonical URL target to the product graph after pathname settlement", () => {
+  it("hands the canonical URL target to the next route graph after pathname settlement", () => {
     const bootstrap = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
 
-    expect(bootstrap).toContain("let productGraphFrame: number | null = null");
-    expect(bootstrap).toContain("const settleProductGraph = () => {");
-    expect(bootstrap).toContain("if (isDictionaryRoute(window.location.pathname)) {");
-    expect(bootstrap).toContain("window.requestAnimationFrame(settleProductGraph)");
+    expect(bootstrap).toContain("let routeGraphFrame: number | null = null");
+    expect(bootstrap).toContain("const settleRouteGraph = () => {");
+    expect(bootstrap).toContain("routeGraphForPath(window.location.pathname) !== pendingRouteGraph");
+    expect(bootstrap).toContain("window.requestAnimationFrame(settleRouteGraph)");
     expect(bootstrap).toContain("parseNavigation(window.location.search, window.location.pathname)");
     expect(bootstrap).toContain("mergedNavigationHistoryState(canonicalTarget)");
     expect(bootstrap).toContain("window.history.replaceState(");
-    expect(bootstrap).toContain("window.cancelAnimationFrame(productGraphFrame)");
+    expect(bootstrap).toContain("window.cancelAnimationFrame(routeGraphFrame)");
     expect(bootstrap).not.toContain("productGraphTimer");
   });
 
