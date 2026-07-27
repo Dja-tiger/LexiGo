@@ -28,8 +28,9 @@ import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
 const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/learn", "/progress", "/scenarios"]);
-const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson";
+const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -157,41 +158,55 @@ export function RoutedLexigoApp() {
   const previousPathRef = useRef<string | null>(null);
   const announcementCounterRef = useRef(0);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
+  const [focusedLessonExitRequested, setFocusedLessonExitRequested] = useState(false);
   const navigateHome = useCallback(() => {
     router.replace("/", { scroll: false });
   }, [router]);
 
   useLayoutEffect(() => {
-    let redispatchingProtectedHistory = false;
-    const preserveFocusedLessonGraph = (event: PopStateEvent) => {
-      if (redispatchingProtectedHistory
-        || window.location.pathname !== "/learn"
+    let restoringFocusedLesson = false;
+
+    const preserveFocusedLesson = (event: PopStateEvent) => {
+      if (restoringFocusedLesson) {
+        event.stopImmediatePropagation();
+        restoringFocusedLesson = false;
+        setFocusedLessonExitRequested(true);
+        window.requestAnimationFrame(() => {
+          window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
+        });
+        return;
+      }
+
+      if (window.location.pathname !== "/learn"
         || !document.querySelector(ACTIVE_LESSON_SELECTOR)) {
         return;
       }
 
-      const currentState = event.state && typeof event.state === "object"
-        ? event.state as Record<string, unknown>
-        : {};
-      if (currentState[ROUTE_GRAPH_HISTORY_KEY] === "product") return;
-
-      // Back from an unfinished lesson first belongs to the product graph so
-      // its safe-exit owner can block navigation and open the confirmation.
-      // Re-dispatch the same history entry with only LexiGo's graph marker
-      // changed; preserve every Next.js internal field byte-for-byte.
+      // Browser Back has already selected the previous Learn entry when
+      // popstate fires. Restore the existing focused-lesson entry instead of
+      // replacing or synthesising History state; this preserves Next.js fields,
+      // the user's forward stack and the product safe-exit owner byte-for-byte.
       event.stopImmediatePropagation();
-      const protectedState = {
-        ...currentState,
-        [ROUTE_GRAPH_HISTORY_KEY]: "product",
-      };
-      window.history.replaceState(protectedState, "", window.location.href);
-      redispatchingProtectedHistory = true;
-      window.dispatchEvent(new PopStateEvent("popstate", { state: protectedState }));
-      redispatchingProtectedHistory = false;
+      restoringFocusedLesson = true;
+      window.history.forward();
     };
 
-    window.addEventListener("popstate", preserveFocusedLessonGraph, { capture: true });
-    return () => window.removeEventListener("popstate", preserveFocusedLessonGraph, { capture: true });
+    const clearFocusedLessonExitForNewHandoff = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object") return;
+      const detail = event.detail as { pathname?: unknown; routeGraph?: unknown };
+      if (detail.routeGraph === "product"
+        && typeof detail.pathname === "string"
+        && detail.pathname.startsWith("/lesson/")) {
+        setFocusedLessonExitRequested(false);
+      }
+    };
+
+    window.addEventListener("popstate", preserveFocusedLesson, { capture: true });
+    window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+    return () => {
+      window.removeEventListener("popstate", preserveFocusedLesson, { capture: true });
+      window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -306,6 +321,11 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>
       <RouteSkipLink />
       <RouteChrome />
+      {focusedLessonExitRequested && pathname.startsWith("/lesson/") ? (
+        <p className="lx-queue-notice lx-focused-lesson-exit-notice" role="status">
+          Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».
+        </p>
+      ) : null}
       <LexigoBootstrappedApp pathname={pathname} onNavigateHome={navigateHome} />
       {routeAnnouncement.message ? (
         <p
