@@ -118,6 +118,25 @@ describe("request failure classification", () => {
     expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
+  it("revalidates a successful active lesson response", async () => {
+    vi.stubGlobal("window", { location: { origin: "http://lexigo.test" } });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: "00000000-0000-0000-0000-000000000001",
+      status: "active",
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const headers = { Authorization: "Bearer active-session" };
+
+    await fetchWithTimeout("/api/v1/lessons", { method: "POST", headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+    await fetchWithTimeout("/api/v1/lessons/active", { headers });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("returns distinct user-facing recovery states", () => {
     expect(describeRequestFailure(new RequestFailure("offline", "offline"), "прогресс")).toMatchObject({
       title: "Нет подключения к сети",
