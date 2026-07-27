@@ -1,3 +1,4 @@
+import { trackLearnHandoffItem } from "./lesson-composition-handoff";
 import type { AnswerMode } from "./progress";
 
 export type ActiveLessonFeedbackKind = "idle" | "pending" | "correct" | "incorrect" | "study";
@@ -10,6 +11,7 @@ export function activeLessonModeLabel(mode: AnswerMode): string {
 }
 
 export function activeLessonEyebrow(mode: AnswerMode, kind: "word" | "phrase"): string {
+  trackLearnHandoffItem(kind);
   if (mode === "study") return kind === "phrase" ? "НОВАЯ ФРАЗА" : "НОВОЕ СЛОВО";
   if (mode === "choice") return "ВЫБЕРИТЕ ПЕРЕВОД";
   return "ВВЕДИТЕ ОТВЕТ";
