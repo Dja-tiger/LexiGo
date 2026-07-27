@@ -167,7 +167,11 @@ func TestLearningReviewModesAndAnalytics(t *testing.T) {
 			insert into review_events(
 				user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
 				answer_revealed, event_schema_version
-			) values ($1::uuid, $2, 5, 1000, now() - interval '8 days', 'known', $3, $4, true, 2)
+			) values (
+				$1::uuid, $2, 5, 1000,
+				date_trunc('week', now()) - interval '1 day',
+				'known', $3, $4, true, 2
+			)
 		`, registered.User.ID, wordID, attemptMode, objectiveCorrect); err != nil {
 			t.Fatalf("insert previous %s event: %v", attemptMode, err)
 		}
