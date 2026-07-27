@@ -38,6 +38,7 @@ describe("navigation history accessibility state", () => {
 
   it("preserves the current route-graph owner across replace-state snapshots", () => {
     vi.stubGlobal("window", {
+      location: { pathname: "/dictionary" },
       history: { state: { lexigoRouteGraph: "product", nextInternalState: "do-not-copy" } },
     });
 
