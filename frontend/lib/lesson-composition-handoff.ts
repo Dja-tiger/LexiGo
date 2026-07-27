@@ -27,7 +27,11 @@ export function trackLearnHandoffItem(kind: LearningItem["kind"]): void {
 
 export function consumeLearnHandoffFallbackNotice(source: string): string {
   if (resolvedNotice) return resolvedNotice;
-  if (!learnHandoffActive || source !== "mixed") return "";
+  if (!learnHandoffActive) return "";
+  if (source !== "mixed") {
+    learnHandoffActive = false;
+    return "";
+  }
 
   if (trackedKinds.size === 1 && trackedKinds.has("phrase")) {
     resolvedNotice = "Слова для этого режима закончились. Смешанная практика продолжится доступными фразами.";
