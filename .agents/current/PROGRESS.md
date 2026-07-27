@@ -22,25 +22,35 @@ Issue #115 was implemented incrementally. Progress runtime extraction exists, wh
 
 ### Changed files
 
+- `.agents/AGENTS.md`
+- `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
 - `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `frontend/components/progress-route-island-source.test.ts`
 - `frontend/e2e/progress-route-island.spec.ts`
 - `frontend/e2e/performance-global-teardown.ts`
+- `frontend/e2e/system-states.spec.ts`
 
 ### Checks passed
 
+- PR #248 Draft CI #2068/run `30251200141` passed classifier, backend unit/security, backend integration, frontend lint/typecheck/unit/build/dependency audit, Content Security, controlled service worker, visual regression, Dictionary smoke and other completed browser gates.
+- New Progress source contract compiled and passed frontend unit tests.
 - Exact branch readback completed for every changed path.
 - Source inspection confirms no production runtime, API, CSS, visual or workflow file changed.
-- Branch compare contains only declared paths and remains 0 commits behind `main`.
+- Branch compare remains 0 commits behind `main`.
 
 ### Checks failed
 
-- Local clone and local targeted execution are unavailable because the isolated execution environment cannot resolve `github.com`; no product or test failure has been observed.
+- UI shard 2/2 job `89929756765` failed the existing correlated Dictionary error scenario on `ios-webkit`.
+- Artifact `frontend-playwright-report-ui-2` ID `8647220580` and trace showed a stale fixture race: the path-only interceptor returned HTTP 503 for both the initial catalog request and `query=durable`, so the initial error remount reset the controlled input during `fill()`.
+- This is a stale test fixture, not a production defect. The fixture now allows successful baseline loading and fails only the exact `query=durable` request.
+- Local clone and local targeted execution remain unavailable because the isolated execution environment cannot resolve `github.com`.
 
 ### Current branch head
 
-`0ef9d22f45a88268487d49385ec57703d5a3ed1c`
+Resolve from live branch ref after the request-scoped fixture rule and index update.
 
 ### Next action
 
-Open a Draft PR and use the first full CI run to validate source/E2E contracts and capture the exact `/progress` cold-route measurement before changing `bundle-budgets.json`.
+Run corrected full PR CI. After the first completely successful immutable-head performance run, read the exact `/progress` bytes/request count and promote them into the route-specific budget and documentation.
