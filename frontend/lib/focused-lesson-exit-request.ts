@@ -1,7 +1,5 @@
 export const FOCUSED_LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
 
-const PENDING_REQUEST_KEY = "__lexigoPendingFocusedLessonExitRequest";
-
 type FocusedLessonExitWindow = Window & {
   __lexigoPendingFocusedLessonExitRequest?: boolean;
 };
@@ -17,7 +15,7 @@ function requestWindow(): FocusedLessonExitWindow {
  * evaluation order without persisting beyond the current document.
  */
 export function requestFocusedLessonExit(): void {
-  requestWindow()[PENDING_REQUEST_KEY as keyof FocusedLessonExitWindow] = true;
+  requestWindow().__lexigoPendingFocusedLessonExitRequest = true;
   window.dispatchEvent(new Event(FOCUSED_LESSON_EXIT_REQUEST_EVENT));
 }
 
@@ -28,9 +26,9 @@ export function requestFocusedLessonExit(): void {
  */
 export function consumeFocusedLessonExitRequest(): boolean {
   const host = requestWindow();
-  const pending = host[PENDING_REQUEST_KEY as keyof FocusedLessonExitWindow] === true;
+  const pending = host.__lexigoPendingFocusedLessonExitRequest === true;
   if (pending) {
-    delete host[PENDING_REQUEST_KEY as keyof FocusedLessonExitWindow];
+    delete host.__lexigoPendingFocusedLessonExitRequest;
   }
   return pending;
 }
