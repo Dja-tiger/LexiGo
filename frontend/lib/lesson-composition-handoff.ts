@@ -3,6 +3,7 @@ import type { LearningItem } from "./learning";
 let learnHandoffActive = false;
 let trackedKinds = new Set<LearningItem["kind"]>();
 let resolvedNotice = "";
+let resolutionGeneration = 0;
 
 /**
  * Marks the one-way Learn-island handoff into the compatibility Active Lesson
@@ -10,6 +11,7 @@ let resolvedNotice = "";
  * the server-owned active lesson and the persisted result snapshot.
  */
 export function markLearnLessonHandoff(): void {
+  resolutionGeneration += 1;
   learnHandoffActive = true;
   trackedKinds = new Set();
   resolvedNotice = "";
@@ -25,6 +27,17 @@ export function trackLearnHandoffItem(kind: LearningItem["kind"]): void {
   trackedKinds.add(kind);
 }
 
+function retainNoticeForStrictRender(notice: string): string {
+  resolvedNotice = notice;
+  const generation = ++resolutionGeneration;
+  queueMicrotask(() => {
+    if (resolutionGeneration === generation && !learnHandoffActive) {
+      resolvedNotice = "";
+    }
+  });
+  return notice;
+}
+
 export function consumeLearnHandoffFallbackNotice(source: string): string {
   if (resolvedNotice) return resolvedNotice;
   if (!learnHandoffActive) return "";
@@ -33,12 +46,17 @@ export function consumeLearnHandoffFallbackNotice(source: string): string {
     return "";
   }
 
+  learnHandoffActive = false;
   if (trackedKinds.size === 1 && trackedKinds.has("phrase")) {
-    resolvedNotice = "Слова для этого режима закончились. Смешанная практика продолжится доступными фразами.";
-  } else if (trackedKinds.size === 1 && trackedKinds.has("word")) {
-    resolvedNotice = "Фразы для этого режима закончились. Смешанная практика продолжится доступными словами.";
+    return retainNoticeForStrictRender(
+      "Слова для этого режима закончились. Смешанная практика продолжится доступными фразами.",
+    );
+  }
+  if (trackedKinds.size === 1 && trackedKinds.has("word")) {
+    return retainNoticeForStrictRender(
+      "Фразы для этого режима закончились. Смешанная практика продолжится доступными словами.",
+    );
   }
 
-  learnHandoffActive = false;
-  return resolvedNotice;
+  return "";
 }
