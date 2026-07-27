@@ -23,7 +23,7 @@ import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
-type RouteGraphHint = "home" | "product";
+type RouteGraphHint = "dictionary" | "home" | "product";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
@@ -33,6 +33,7 @@ const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
 ]);
 const ROUTE_CLIENT_ISLAND_SELECTOR = "[data-route-client-island]";
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
+const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 
 function RouteIcon({ name }: { name: RouteIconName }) {
   const common = {
@@ -77,6 +78,25 @@ function routeGraphHint(target: NavigationTarget): RouteGraphHint {
   return target.view === "home" ? "home" : "product";
 }
 
+function activeRouteGraph(): RouteGraphHint {
+  const island = document.querySelector<HTMLElement>(ROUTE_CLIENT_ISLAND_SELECTOR)
+    ?.dataset.routeClientIsland;
+  if (island === "home") return "home";
+  if (island === "dictionary") return "dictionary";
+  return "product";
+}
+
+function graphHistoryState(
+  target: NavigationTarget,
+  scroll: { x: number; y: number },
+  routeGraph: RouteGraphHint,
+): Record<string, unknown> {
+  return {
+    ...createNavigationHistoryState(target, scroll),
+    [ROUTE_GRAPH_HISTORY_KEY]: routeGraph,
+  };
+}
+
 function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourneyIntent) {
   const current = parseNavigationLocation(window.location);
   const currentScroll = { x: window.scrollX, y: window.scrollY };
@@ -94,8 +114,11 @@ function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourn
   return {
     current,
     currentScroll,
+    currentGraph: activeRouteGraph(),
     destination,
     nextURL,
+    nextPathname: new URL(nextURL, window.location.origin).pathname,
+    nextGraph: routeGraphHint(destination.target),
   };
 }
 
@@ -104,14 +127,15 @@ function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyInte
   if (!transition) return;
 
   window.history.replaceState(
-    createNavigationHistoryState(transition.current, transition.currentScroll),
+    graphHistoryState(transition.current, transition.currentScroll, transition.currentGraph),
     "",
     window.location.href,
   );
 
-  const nextState = createNavigationHistoryState(
+  const nextState = graphHistoryState(
     transition.destination.target,
     transition.destination.scroll,
+    transition.nextGraph,
   );
   window.history.pushState(nextState, "", transition.nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
@@ -152,12 +176,20 @@ function RouteLink({
           || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
         if (requiresRouterGraphHandoff) {
           // Cold route islands hand control to Home or the warm compatibility
-          // graph through App Router. Dictionary remains a cold-entry island;
-          // warm Dictionary navigation stays inside LexigoPremiumApp.
+          // graph through App Router. The explicit history marker distinguishes a
+          // direct cold Dictionary entry from a warm Dictionary destination.
           const transition = routeTransition(target, intent);
           if (transition) {
+            window.history.replaceState(
+              graphHistoryState(transition.current, transition.currentScroll, transition.currentGraph),
+              "",
+              window.location.href,
+            );
             window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
-              detail: { routeGraph: routeGraphHint(transition.destination.target) },
+              detail: {
+                routeGraph: transition.nextGraph,
+                pathname: transition.nextPathname,
+              },
             }));
             router.push(transition.nextURL, { scroll: false });
           }
