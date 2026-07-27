@@ -7,7 +7,7 @@
 - Branch: `perf/issue-247-progress-island-budget`
 - Base SHA: `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #248
 
 ## Objective
 
