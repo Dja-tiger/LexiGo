@@ -131,7 +131,7 @@ function cachedClientResource(key: string): Response | null {
 
 function shouldCacheClientResource(pathname: string, response: Response): boolean {
   if (pathname === "/api/v1/progress") return response.ok;
-  return pathname === "/api/v1/lessons/active" && (response.ok || response.status === 404);
+  return pathname === "/api/v1/lessons/active" && response.status === 404;
 }
 
 function invalidateClientResources(details: ClientRequestDetails | null): void {
