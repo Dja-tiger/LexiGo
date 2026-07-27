@@ -2,9 +2,13 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 19:01 Europe/Berlin.
+- Last verified: 2026-07-27 19:12 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+- Live `main` at verification: `17c5a8baa544382344936f423d020e5fec89a3d2`.
+- Latest documentation merge: PR #252, merge SHA `17c5a8baa544382344936f423d020e5fec89a3d2`.
+- PR #252 immutable head: `34784f7b4a416258c18d8d66867c87aece40bc15`.
+- PR #252 lightweight CI: #2135, run `30287635161`, successful; classifier and Agent Harness ran, while backend, frontend, browser and container jobs were correctly skipped.
+- PR #252 did not build or deploy runtime images. Stage remains on exact product image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` from run `30279520923`.
 - Latest product merge: PR #251, merge SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
 - PR #251 immutable head: `189f5eee089b1afe5127904770525810da1ae101`.
 - PR #251 authoritative full CI: #2133, run `30277124935`, successful.
@@ -29,7 +33,7 @@
 - Agent Docs CI optimization PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed CI #2060/run `30230474179` and was expected-head squash merged as `426144d00a857f36be8a543553df5029ac49a454`.
 - Issue #243 is closed as completed.
 - PR #244 exact-SHA stage/public validation: run `30231298766`, exact image `426144d00a857f36be8a543553df5029ac49a454`; deploy, public smoke and public browser succeeded, 12/12 checks passed.
-- PRs #245 and #246 proved the lightweight Agent Docs pull-request and main-push paths without rebuilding or redeploying runtime images.
+- PRs #245, #246 and #252 proved the lightweight Agent Docs pull-request and main-push paths without rebuilding or redeploying runtime images.
 
 ## Completed
 
@@ -139,7 +143,7 @@
 - CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
 - Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
-- PRs #245 and #246 proved live pull-request and main-push fast paths: classifier and Agent Harness succeeded, all heavy jobs were skipped, and the runtime image/stage deployment remained unchanged.
+- PRs #245, #246 and #252 proved live pull-request and main-push fast paths: classifier and Agent Harness succeeded, all heavy jobs were skipped, and the runtime image/stage deployment remained unchanged.
 
 ## In progress
 
@@ -184,20 +188,23 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
-2. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
-3. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
-4. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
-5. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-6. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-7. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-8. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+1. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
+2. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+3. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
+4. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+5. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
+6. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+7. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+8. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+9. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 
 ## Evidence
 
-- Live GitHub `main`, PR #251, Issues #12/#115/#250, immutable head, CI and deployment evidence were re-read at the verification timestamp.
+- Live GitHub `main`, PR #252, PR #251, Issues #12/#115/#250, immutable heads, CI and deployment evidence were re-read at the verification timestamp.
+- PR #252 final head `34784f7b4a416258c18d8d66867c87aece40bc15` passed lightweight CI #2135/run `30287635161`; heavy backend/frontend/browser/container jobs were skipped by the Agent Docs classifier.
+- Expected-head squash merge produced `17c5a8baa544382344936f423d020e5fec89a3d2`; runtime image and stage deployment remained unchanged.
 - PR #251 final head `189f5eee089b1afe5127904770525810da1ae101` passed authoritative complete CI #2133/run `30277124935` after the same-head rerun of one transient UI shard 2 iOS WebKit timing failure.
-- Expected-head squash merge produced `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` and closed Issue #250.
+- Expected-head squash merge of PR #251 produced `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` and closed Issue #250.
 - Stage run `30279520923` deployed exact image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`; frontend and API became healthy, public smoke passed, and the public desktop Chromium/iOS WebKit matrix completed successfully.
 - Exact performance artifact `8656783937` from controlled run `30275645894` records `/` at 207,675 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte before final CI.
 - CI #2130/run `30276740022` exposed only an over-strict test comparator that conflated the original measured transfer with the original release ceiling. The corrected test preserved all production code and budget values; final CI #2133 passed.
