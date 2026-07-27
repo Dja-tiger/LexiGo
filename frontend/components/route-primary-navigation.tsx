@@ -23,6 +23,7 @@ import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
+type RouteGraphHint = "dictionary" | "home" | "product";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
@@ -70,6 +71,12 @@ function destinationFor(target: NavigationTarget) {
   return isPrimaryRouteView(target.view)
     ? routeTabDestination(target.view)
     : { target, scroll: { x: 0, y: 0 } };
+}
+
+function routeGraphHint(target: NavigationTarget): RouteGraphHint {
+  if (target.view === "home") return "home";
+  if (target.view === "library") return "dictionary";
+  return "product";
 }
 
 function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourneyIntent) {
@@ -143,14 +150,17 @@ function RouteLink({
 
         const intent = navigationView ? "primary_navigation" : "in_app_navigation";
         const requiresRouterGraphHandoff = target.view === "scenario"
+          || target.view === "home"
           || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
         if (requiresRouterGraphHandoff) {
-          // Route islands, including the Scenario catalog, do not share the
-          // PremiumApp popstate renderer. Let Next swap the route graph without
-          // reloading the document; the loaded graph resumes internal history.
+          // Route islands do not share the PremiumApp popstate renderer. Let Next
+          // swap the route graph without reloading the document; the bootstrap
+          // layer keeps the current island mounted until pathname/history settle.
           const transition = routeTransition(target, intent);
           if (transition) {
-            window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
+            window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
+              detail: { routeGraph: routeGraphHint(transition.destination.target) },
+            }));
             router.push(transition.nextURL, { scroll: false });
           }
           return;
