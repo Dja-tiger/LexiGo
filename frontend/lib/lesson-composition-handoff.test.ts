@@ -7,13 +7,16 @@ import {
 } from "./lesson-composition-handoff";
 
 describe("Learn lesson composition handoff", () => {
-  it("restores the phrase-only mixed fallback after the route island remount", () => {
+  it("restores the phrase-only mixed fallback across Strict Mode initialization only", async () => {
     markLearnLessonHandoff();
     trackLearnHandoffItem("phrase");
 
     const notice = "Слова для этого режима закончились. Смешанная практика продолжится доступными фразами.";
     expect(consumeLearnHandoffFallbackNotice("mixed")).toBe(notice);
     expect(consumeLearnHandoffFallbackNotice("mixed")).toBe(notice);
+
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(consumeLearnHandoffFallbackNotice("mixed")).toBe("");
   });
 
   it("restores the word-only mixed fallback", () => {
