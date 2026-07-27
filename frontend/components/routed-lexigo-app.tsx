@@ -10,6 +10,7 @@ import {
   parseNavigationLocation,
   readPersistedNavigation,
   viewTitle,
+  writePersistedNavigation,
   type NavigationTarget,
 } from "../lib/navigation";
 import {
@@ -161,7 +162,11 @@ export function RoutedLexigoApp() {
   useLayoutEffect(() => {
     initializeRouteEntry();
     const restoredURL = restoreStandaloneStartRoute(pathname);
-    if (restoredURL) router.replace(restoredURL, { scroll: false });
+    if (restoredURL) {
+      router.replace(restoredURL, { scroll: false });
+      return;
+    }
+    writePersistedNavigation(window.localStorage, parseNavigationLocation(window.location));
   }, [pathname, router]);
 
   useLayoutEffect(() => {
