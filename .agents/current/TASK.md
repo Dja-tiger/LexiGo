@@ -33,9 +33,9 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 
 ## Allowed paths
 
-- `frontend/components/production-app-entry.test.ts`
-- `frontend/e2e/review-outbox-auth-lifecycle.spec.ts`
-- `frontend/e2e/route-bundle-budget.spec.ts`
+- `frontend/components/progress-route-island-source.test.ts`
+- `frontend/e2e/progress-route-island.spec.ts`
+- `frontend/e2e/performance-global-teardown.ts`
 - `frontend/lib/bundle-budgets.test.ts`
 - `frontend/bundle-budgets.json`
 - `docs/frontend-bundle-budgets.md`
@@ -84,7 +84,7 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 - Issue #247 acceptance criteria are implemented.
 - Source contract names the Progress dynamic entry and its exclusive bootstrap consumer.
 - Browser contract records network refresh attempts and proves no repeated bootstrap across route-island transitions.
-- Route bundle test logs deterministic JSON measurement lines for every canonical route.
+- Performance teardown logs deterministic JSON measurement lines for every canonical route.
 - `/progress` receives exact baseline evidence from successful immutable-head CI.
 - Budget configuration tests require Progress to remain below the monolithic graph.
 - Final diff contains only allowed paths.
