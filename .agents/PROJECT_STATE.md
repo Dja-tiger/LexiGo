@@ -6,7 +6,7 @@
 - Repository: `Dja-tiger/LexiGo`.
 - Live `main` at verification: `17c5a8baa544382344936f423d020e5fec89a3d2`.
 - Latest documentation merge: PR #252, merge SHA `17c5a8baa544382344936f423d020e5fec89a3d2`.
-- PR #252 immutable head: `34784f7b4a416258c18d8d66867c87aece40bc15`.
+- PR #252 immutable head: `008d53014e690ab0c314b5c706489988ab5ba29f`.
 - PR #252 lightweight CI: #2135, run `30287635161`, successful; classifier and Agent Harness ran, while backend, frontend, browser and container jobs were correctly skipped.
 - PR #252 did not build or deploy runtime images. Stage remains on exact product image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` from run `30279520923`.
 - Latest product merge: PR #251, merge SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
@@ -201,7 +201,7 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 ## Evidence
 
 - Live GitHub `main`, PR #252, PR #251, Issues #12/#115/#250, immutable heads, CI and deployment evidence were re-read at the verification timestamp.
-- PR #252 final head `34784f7b4a416258c18d8d66867c87aece40bc15` passed lightweight CI #2135/run `30287635161`; heavy backend/frontend/browser/container jobs were skipped by the Agent Docs classifier.
+- PR #252 final head `008d53014e690ab0c314b5c706489988ab5ba29f` passed lightweight CI #2135/run `30287635161`; heavy backend/frontend/browser/container jobs were skipped by the Agent Docs classifier.
 - Expected-head squash merge produced `17c5a8baa544382344936f423d020e5fec89a3d2`; runtime image and stage deployment remained unchanged.
 - PR #251 final head `189f5eee089b1afe5127904770525810da1ae101` passed authoritative complete CI #2133/run `30277124935` after the same-head rerun of one transient UI shard 2 iOS WebKit timing failure.
 - Expected-head squash merge of PR #251 produced `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` and closed Issue #250.
