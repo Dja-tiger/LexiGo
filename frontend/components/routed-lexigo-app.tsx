@@ -8,6 +8,7 @@ import {
   isCanonicalRoutePath,
   navigationURL,
   parseNavigationLocation,
+  readPersistedNavigation,
   viewTitle,
   type NavigationTarget,
 } from "../lib/navigation";
@@ -38,6 +39,12 @@ const SCROLL_INTENT_KEYS = new Set([
   " ",
 ]);
 
+function isStandaloneDisplayMode(): boolean {
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+  return navigatorWithStandalone.standalone === true
+    || window.matchMedia?.("(display-mode: standalone)").matches === true;
+}
+
 function initializeRouteEntry(): void {
   const target = parseNavigationLocation(window.location);
   const currentState = readNavigationHistoryState(window.history.state);
@@ -58,6 +65,20 @@ function initializeRouteEntry(): void {
   if (canonicalLegacyURL && targetURL !== currentURL) {
     window.history.replaceState(currentState, "", targetURL);
   }
+}
+
+function restoreStandaloneStartRoute(pathname: string): string | null {
+  if (pathname !== "/" || window.location.search.length > 0 || !isStandaloneDisplayMode()) return null;
+  const restored = readPersistedNavigation(window.localStorage);
+  if (!restored || restored.view === "home") return null;
+
+  const restoredURL = navigationURL(restored);
+  window.history.replaceState(
+    createNavigationHistoryState(restored, { x: 0, y: 0 }),
+    "",
+    restoredURL,
+  );
+  return restoredURL;
 }
 
 function primaryRouteView(target: NavigationTarget): PrimaryRouteView | null {
@@ -139,7 +160,9 @@ export function RoutedLexigoApp() {
 
   useLayoutEffect(() => {
     initializeRouteEntry();
-  }, [pathname]);
+    const restoredURL = restoreStandaloneStartRoute(pathname);
+    if (restoredURL) router.replace(restoredURL, { scroll: false });
+  }, [pathname, router]);
 
   useLayoutEffect(() => {
     const previousPath = previousPathRef.current;
