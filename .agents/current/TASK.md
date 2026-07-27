@@ -10,7 +10,7 @@
 
 ## Objective
 
-Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve one persistent session/outbox/PWA runtime, keep active-lesson priority and immediate start/resume behavior, then measure and lock a route-specific Home bundle budget below the original monolithic graph.
+Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve one persistent session/outbox/PWA runtime, keep active-lesson priority and immediate start/resume behavior, then lock a route-specific Home bundle budget below the original monolithic graph.
 
 ## Scope
 
@@ -22,8 +22,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Add an explicit one-time `resume=1` intent so a Home-created or resumed active lesson opens immediately without a second user click.
 - Preserve Figma production nodes `194:249` (desktop) and `196:223` (mobile).
 - Add source, unit and browser contracts for ownership, canonical history and single session bootstrap.
-- Use the first controlled performance report to determine the exact Home baseline before tightening `frontend/bundle-budgets.json`.
-- Permit one temporary measurement-only assertion in the route-bundle E2E after the full report is written; restore the original blob byte-for-byte before final immutable-head CI.
+- Lock the measured Home baseline at 207,675 JavaScript bytes and 18 initial requests with permanent ceilings of 235,000 bytes and 21 requests.
 
 ## Non-goals
 
@@ -31,9 +30,8 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Change backend lesson composition, scheduler, review persistence or lesson position ownership.
 - Move session restoration, review outbox, Service Worker or appearance bootstrap into a route island.
 - Introduce persistent, cross-session or mutation response caching.
-- Tighten the Home release ceiling before an exact controlled measurement exists.
 - Extract Learn, Phrases or Active Lesson from `LexigoPremiumApp` in this slice.
-- Retain the controlled measurement probe in the final PR diff.
+- Retain a controlled measurement probe in the final PR diff.
 
 ## Allowed paths
 
@@ -51,10 +49,9 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/lib/request-failure.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
 - `frontend/e2e/lesson-flow.spec.ts`
-- `frontend/e2e/route-bundle-budget.spec.ts` only for the temporary controlled measurement assertion; restore original blob `304e7c62d3163a59edac3e648246e2aa4ce00660` before final CI
-- `frontend/bundle-budgets.json` after exact measurement only
-- `frontend/lib/bundle-budgets.test.ts` after exact measurement only
-- `docs/frontend-bundle-budgets.md` after exact measurement only
+- `frontend/bundle-budgets.json`
+- `frontend/lib/bundle-budgets.test.ts`
+- `docs/frontend-bundle-budgets.md`
 - `README.md`
 - `docs/architecture.md`
 - `frontend/docs/adaptive-knowledge-coach.md`
@@ -83,7 +80,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 
 - `README.md` and `docs/architecture.md`: production application-root and route-island boundaries.
 - `frontend/docs/adaptive-knowledge-coach.md`: Figma nodes and Home behavior ownership.
-- `docs/frontend-bundle-budgets.md`: exact measured Home baseline and permanent ceiling after CI evidence.
+- `docs/frontend-bundle-budgets.md`: exact measured Home baseline, evidence and permanent ceiling.
 - `.agents/current/*`: live execution state for Issue #250.
 
 ## Invariants
@@ -98,6 +95,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Home island does not import `LexigoPremiumApp`, session restoration, outbox or Service Worker owners.
 - Canonical pathname/history settle before another client graph mounts.
 - Home Light/Dark, responsive, reduced-motion, keyboard and Figma geometry contracts do not regress.
+- Home baseline and both ceilings remain strictly below the original 238,257-byte/24-request monolithic boundary.
 
 ## Acceptance criteria
 
@@ -106,16 +104,16 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Standalone PWA relaunch retains the existing last-route restoration contract.
 - Home start/resume reaches visible Active Lesson without the intermediate `Продолжить урок` gate.
 - Unit/source/browser checks pass.
-- Controlled CI produces an exact `/` JavaScript/request measurement.
-- Final Home baseline and ceilings are strictly below the original 238,257-byte monolithic graph and pass immutable-head CI.
-- Expected-head squash merge and exact-SHA stage/public validation complete before Issue #250 is closed.
+- Exact controlled evidence records 207,675 JavaScript bytes and 18 initial requests for `/`.
+- Permanent Home ceilings are 235,000 JavaScript bytes and 21 requests, both below the original monolithic boundary.
+- Final immutable-head CI, expected-head squash merge and exact-SHA stage/public validation complete before Issue #250 is closed.
 
 ## Required checks
 
 - Agent Harness and source contracts.
 - Frontend lint, typecheck, unit tests and production build.
 - Browser route, Home, PWA/session, accessibility, visual and performance matrices selected by CI.
-- Controlled route-bundle report for `/`.
+- Final route-bundle gate using the permanent Home budget without a measurement probe.
 - Final immutable-head CI and post-merge exact-SHA stage/public smoke/browser validation.
 
 ## Risks
@@ -125,8 +123,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Home may create a new lesson when active-lesson detection failed.
 - Shared shell changes may regress Dictionary/Progress/PWA navigation.
 - A handoff cache may hide fresh data if mutation invalidation or token scoping is weakened.
-- Premature budget tightening may encode an unverified number.
-- A temporary measurement probe may accidentally remain in the final diff; exact blob restoration and final compare are mandatory.
+- A future budget change may accidentally compare extracted routes with the current Home baseline instead of the immutable original monolithic boundary.
 
 ## Rollback
 
