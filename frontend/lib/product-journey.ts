@@ -1,4 +1,5 @@
 import type { NavigationTarget } from "./navigation";
+import { markLearnLessonHandoff } from "./lesson-composition-handoff";
 import { classifyBrowser, classifyDevice, isCollectionEnabled } from "./performance-rum";
 
 export type ProductJourneyRoute =
@@ -85,6 +86,9 @@ export function nextProductJourneyHistory(
 }
 
 export function queueProductJourneyIntent(intent: ProductJourneyIntent): void {
+  if (intent === "lesson_start" && window.location.pathname === "/learn") {
+    markLearnLessonHandoff();
+  }
   queuedIntent = intent;
 }
 
