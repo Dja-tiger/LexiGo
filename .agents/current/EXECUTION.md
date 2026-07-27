@@ -5,7 +5,7 @@
 - Branch: `chore/issue-243-agent-docs-ci`
 - Base SHA: `387cc50c199218d71b49b39beb9d92859b6e299c`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #244
 
 ## Skills used
 
@@ -21,13 +21,13 @@ Inputs: `main` SHA, PR #240 final head/CI, Issue #12 exact-SHA deployment eviden
 
 Files inspected: mandatory Agent Harness documents, `.github/workflows/ci.yml`, `.github/workflows/deploy-stage.yml`, `scripts/ci/check-agent-harness.sh` discovery path.
 
-Actions performed: completed PR #240 through Ready and expected-head squash merge; created Issue #243 and branch; reconciled repository memory before workflow writes; read every changed implementation path back and verified exact blob SHA.
+Actions performed: completed PR #240 through Ready and expected-head squash merge; created Issue #243, branch and Draft PR #244; reconciled repository memory before workflow writes; read every changed implementation path back and verified exact blob SHA.
 
 Commands or procedures: live GitHub compare, exact-ref file reads, branch-only Contents API writes, review/thread checks, expected-head squash merge.
 
-Artifacts produced: Issue #243, branch `chore/issue-243-agent-docs-ci`, updated current task memory and six-file implementation diff before execution-log update.
+Artifacts produced: Issue #243, branch `chore/issue-243-agent-docs-ci`, Draft PR #244, updated current task memory and eight-file implementation diff.
 
-Result: branch is based on verified `main`, contains only allowed paths and is ready for Draft PR validation.
+Result: branch is based on verified `main`, contains only allowed paths and is under immutable-head PR validation.
 
 Failures: none in repository writes.
 
@@ -77,15 +77,15 @@ Instruction source: `.agents/SKILLS.md`, `docs/agent-harness.md`, `.agents/templ
 
 Version or verification date: 2026-07-27.
 
-Inputs: PR #240 merge SHA `387cc50c199218d71b49b39beb9d92859b6e299c`, Issue #243 and branch evidence.
+Inputs: PR #240 merge SHA `387cc50c199218d71b49b39beb9d92859b6e299c`, Issue #243, branch and PR #244 evidence.
 
 Files inspected: `.agents/PROJECT_STATE.md`, `.agents/current/TASK.md`, `.agents/current/PROGRESS.md`, `.agents/current/EXECUTION.md`.
 
-Actions performed: reconciled stale PR #240 status before implementation; recorded scope, owners, invariants, risks, targeted validation and next action.
+Actions performed: reconciled stale PR #240 status before implementation; recorded scope, owners, invariants, risks, targeted validation and PR lifecycle state.
 
 Commands or procedures: exact-ref reads, branch-scoped updates, read-back verification and branch compare.
 
-Artifacts produced: current factual task memory for Issue #243.
+Artifacts produced: current factual task memory for Issue #243 and PR #244.
 
 Result: repository memory identifies the active slice and no longer claims PR #240 is in progress.
 
