@@ -60,7 +60,7 @@ describe("Learn route client-island ownership", () => {
     const routedApp = readComponent("routed-lexigo-app.tsx");
     const navigationHistory = readLibrary("navigation-history.ts");
 
-    expect(bootstrappedApp).toContain('if (isLearnRoute(pathname)) return "learn"');
+    expect(bootstrappedApp).toContain('return candidate === "product" || candidate === "learn" ? candidate : "learn"');
     expect(bootstrappedApp).toContain('const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname)');
     expect(routeNavigation).toContain('if (target.view === "learn") return "learn"');
     expect(routeNavigation).toContain('if (island === "learn") return "learn"');
@@ -70,8 +70,11 @@ describe("Learn route client-island ownership", () => {
   });
 
   it("preserves the product graph until Active Lesson safe-exit handles Back", () => {
+    const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
     const routedApp = readComponent("routed-lexigo-app.tsx");
 
+    expect(bootstrappedApp).toContain('request.pathname.startsWith("/lesson/")');
+    expect(bootstrappedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
     expect(routedApp).toContain('const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson"');
     expect(routedApp).toContain('window.location.pathname !== "/learn"');
     expect(routedApp).toContain("event.stopImmediatePropagation()");
