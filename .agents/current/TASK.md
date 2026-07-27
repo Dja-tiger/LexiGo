@@ -6,7 +6,7 @@
 - Branch: `chore/issue-243-agent-docs-ci`
 - Base SHA: `387cc50c199218d71b49b39beb9d92859b6e299c`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #244
 
 ## Objective
 
