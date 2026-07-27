@@ -202,9 +202,7 @@ export function RoutedLexigoApp() {
       };
       window.history.pushState(protectedState, "", focusedLessonURLRef.current);
       setFocusedLessonExitRequested(true);
-      window.requestAnimationFrame(() => {
-        window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
-      });
+      window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
     };
 
     const clearFocusedLessonExitForNewHandoff = (event: Event) => {
