@@ -223,8 +223,8 @@ export function RoutedLexigoApp() {
     const previousPath = previousPathRef.current;
     previousPathRef.current = pathname;
 
-    // Focused Scenario detail owns its own focus and saved-draft lifecycle.
-    if (pathname.startsWith("/scenarios/")) return;
+    // Focused routes own their own focus, announcement and saved-state lifecycle.
+    if (pathname.startsWith("/lesson/") || pathname.startsWith("/scenarios/")) return;
     if (!previousPath || (!ROUTE_ISLAND_BOUNDARIES.has(previousPath) && !ROUTE_ISLAND_BOUNDARIES.has(pathname))) return;
 
     const parsedTarget = parseNavigationLocation(window.location);
