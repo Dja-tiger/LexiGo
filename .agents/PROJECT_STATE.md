@@ -2,9 +2,9 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 03:00 Europe/Berlin.
+- Last verified: 2026-07-27 03:10 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+- Live `main` at verification: `387cc50c199218d71b49b39beb9d92859b6e299c`.
 - Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 - PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
 - PR #239 full CI: #2042, run `30225559882`, successful.
@@ -15,14 +15,15 @@
 - PR #242 full CI: #2045, run `30227244754`, successful, including Monday execution of `TestLearningReviewModesAndAnalytics`.
 - Issue #241 is closed as completed.
 - PR #242 exact-SHA stage/public validation: run `30227955912`, deploy/public smoke/public browser successful, 12/12 checks passed.
-- PR #240 is the only active slice and is documentation-only post-merge reconciliation.
+- Documentation reconciliation PR #240 passed final immutable-head CI #2047/run `30228327070` and was expected-head squash merged as `387cc50c199218d71b49b39beb9d92859b6e299c`.
+- Issue #243 is the only active slice: a tooling-only Agent Docs CI fast path.
 
 ## Completed
 
 ### Platform foundations
 
 - Go API, PostgreSQL, Redis, authenticated sessions, account security, migrations, containers and CI/CD foundations are implemented.
-- Backend unit/race/integration/security gates and frontend lint/type/unit/build/browser gates are mandatory.
+- Backend unit/race/integration/security gates and frontend lint/type/unit/build/browser gates are mandatory for product and mixed changes.
 - Canonical App Router paths, browser history, route recovery, persistent PWA shell and service-worker safety contracts are implemented.
 
 ### Learning core
@@ -94,19 +95,17 @@
 ### Agent Harness
 
 - The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
-- Previous reconciliation PRs recorded production evidence after each completed slice and reset `.agents/current/**` from templates.
+- PR #240 recorded PR #239 and PR #242 evidence, reset `.agents/current/**` from canonical templates and merged as `387cc50c199218d71b49b39beb9d92859b6e299c` after CI #2047 succeeded.
 - PR #242 added mandatory calendar-boundary fixture guidance.
-- PR #240 records PR #239 and PR #242 evidence and resets current task memory byte-for-byte from canonical templates.
+- Issue #243 now tracks a conservative CI optimization for pure Agent Harness documentation changes.
 
 ## In progress
 
-- PR #240: documentation-only reconciliation after System States and the calendar-boundary CI blocker.
-- Allowed diff is exactly:
-  - `.agents/PROJECT_STATE.md`;
-  - `.agents/current/TASK.md`;
-  - `.agents/current/PROGRESS.md`;
-  - `.agents/current/EXECUTION.md`.
-- No product/runtime slice may begin until PR #240 passes full immutable-head CI, expected-head squash merge and post-merge validation.
+- Issue #243 on branch `chore/issue-243-agent-docs-ci` from base `387cc50c199218d71b49b39beb9d92859b6e299c`.
+- Objective: route pure changes limited to `AGENTS.md`, `.agents/**` and `docs/agent-harness.md` through a dedicated Agent Docs validation workflow.
+- Product, mixed, workflow, script, dependency and other documentation changes must retain the complete existing CI matrix.
+- A pure Agent Docs push to `main` must not publish runtime images or trigger automatic stage deployment; manual stage deployment remains unchanged.
+- Allowed implementation paths are recorded in `.agents/current/TASK.md`.
 
 ## Remaining roadmap
 
@@ -138,6 +137,7 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 - Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
+- Issue #243 must prove pure/mixed/unrelated path routing and verify actual GitHub check behavior before merge.
 
 ## Blocked
 
@@ -146,20 +146,20 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-2. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
-3. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
-4. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
-5. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
-6. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
-7. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
+1. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+2. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+3. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+4. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
+5. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
+6. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
+7. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
 
 ## Evidence
 
-- Live GitHub `main`, PRs #239/#240/#242, Issues #12/#170/#202/#241, immutable heads and CI runs were re-read at the verification timestamp.
+- Live GitHub `main`, PRs #239/#240/#242, Issues #12/#170/#202/#241/#243, immutable heads and CI runs were re-read at the verification timestamp.
 - Product deployment evidence uses exact image `370d0dccfaa9c273d11164bbce37dd71975485cd` with successful deploy/public smoke/public browser checks.
 - CI reliability deployment evidence uses exact image `b63b6197fdffd0fc7623a5131c649aadaaa52476`, stage run `30227955912`, successful deploy/public smoke/public browser and 12/12 checks.
-- PR #240 is Draft while its branch is rebuilt from the verified `main`.
+- PR #240 final head `ba71e8fe3a3be6da52594559bbbea0e09b3b13ee` passed CI #2047/run `30228327070`; expected-head squash merge produced `387cc50c199218d71b49b39beb9d92859b6e299c`.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
