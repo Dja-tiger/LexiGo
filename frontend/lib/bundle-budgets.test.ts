@@ -15,7 +15,25 @@ type RouteBudget = {
   baselineEvidence?: BaselineEvidence;
 };
 
+const ORIGINAL_MONOLITHIC_BUDGET = {
+  baselineJavascriptBytes: 238_257,
+  maxJavascriptBytes: 275_000,
+  maxInitialRequests: 24,
+} as const;
+
 const routeBudgets = Object.entries(bundleBudgets.routes) as Array<[string, RouteBudget]>;
+
+function expectRouteBelowOriginalMonolith(route: string, budget: RouteBudget): void {
+  expect(budget.baselineJavascriptBytes, `${route}: baseline`).toBeLessThan(
+    ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes,
+  );
+  expect(budget.maxJavascriptBytes, `${route}: JavaScript ceiling`).toBeLessThan(
+    ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes,
+  );
+  expect(budget.maxInitialRequests, `${route}: request ceiling`).toBeLessThan(
+    ORIGINAL_MONOLITHIC_BUDGET.maxInitialRequests,
+  );
+}
 
 describe("route bundle budget configuration", () => {
   it("keeps every ceiling bounded above its measured baseline", () => {
@@ -28,15 +46,15 @@ describe("route bundle budget configuration", () => {
         Math.ceil(budget.baselineJavascriptBytes * 1.16),
       );
       expect(budget.maxInitialRequests, `${route}: request ceiling`).toBeGreaterThan(0);
-      expect(budget.maxInitialRequests, `${route}: request ceiling`).toBeLessThanOrEqual(24);
+      expect(budget.maxInitialRequests, `${route}: request ceiling`).toBeLessThanOrEqual(
+        ORIGINAL_MONOLITHIC_BUDGET.maxInitialRequests,
+      );
     }
   });
 
   it("requires evidence when a route diverges from the shared original baseline", () => {
-    const sharedBaseline = bundleBudgets.routes["/"].baselineJavascriptBytes;
-
     for (const [route, budget] of routeBudgets) {
-      if (budget.baselineJavascriptBytes === sharedBaseline) continue;
+      if (budget.baselineJavascriptBytes === ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes) continue;
 
       expect(budget.baselineEvidence, `${route}: baseline evidence`).toBeDefined();
       expect(budget.baselineEvidence?.sourceRun, `${route}: source run`).toBeGreaterThan(0);
@@ -45,21 +63,15 @@ describe("route bundle budget configuration", () => {
     }
   });
 
-  it("keeps the dictionary island below the monolithic product graph", () => {
-    const monolith = bundleBudgets.routes["/"];
-    const dictionary = bundleBudgets.routes["/dictionary"];
-
-    expect(dictionary.baselineJavascriptBytes).toBeLessThan(monolith.baselineJavascriptBytes);
-    expect(dictionary.maxJavascriptBytes).toBeLessThan(monolith.maxJavascriptBytes);
-    expect(dictionary.maxInitialRequests).toBeLessThan(monolith.maxInitialRequests);
+  it("keeps the Home island below the original monolithic product graph", () => {
+    expectRouteBelowOriginalMonolith("/", bundleBudgets.routes["/"]);
   });
 
-  it("keeps the Progress island below the monolithic product graph", () => {
-    const monolith = bundleBudgets.routes["/"];
-    const progress = bundleBudgets.routes["/progress"];
+  it("keeps the Dictionary island below the original monolithic product graph", () => {
+    expectRouteBelowOriginalMonolith("/dictionary", bundleBudgets.routes["/dictionary"]);
+  });
 
-    expect(progress.baselineJavascriptBytes).toBeLessThan(monolith.baselineJavascriptBytes);
-    expect(progress.maxJavascriptBytes).toBeLessThan(monolith.maxJavascriptBytes);
-    expect(progress.maxInitialRequests).toBeLessThan(monolith.maxInitialRequests);
+  it("keeps the Progress island below the original monolithic product graph", () => {
+    expectRouteBelowOriginalMonolith("/progress", bundleBudgets.routes["/progress"]);
   });
 });
