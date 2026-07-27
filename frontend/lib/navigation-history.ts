@@ -11,11 +11,14 @@ export type NavigationScrollPosition = {
   y: number;
 };
 
+export type RouteGraphHistoryOwner = "dictionary" | "home" | "product";
+
 export type NavigationHistoryState = {
   lexigo: true;
   version: typeof NAVIGATION_HISTORY_VERSION;
   target: NavigationTarget;
   scroll: NavigationScrollPosition;
+  lexigoRouteGraph?: RouteGraphHistoryOwner;
 };
 
 type MatchMediaSource = {
@@ -24,6 +27,19 @@ type MatchMediaSource = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function routeGraphOwner(value: unknown): RouteGraphHistoryOwner | undefined {
+  if (!isRecord(value)) return undefined;
+  const candidate = value.lexigoRouteGraph;
+  return candidate === "dictionary" || candidate === "home" || candidate === "product"
+    ? candidate
+    : undefined;
+}
+
+function currentRouteGraphOwner(): RouteGraphHistoryOwner | undefined {
+  if (typeof window === "undefined") return undefined;
+  return routeGraphOwner(window.history.state);
 }
 
 function safeCoordinate(value: unknown): number {
@@ -49,7 +65,7 @@ function normalizeUnknownTarget(value: unknown): NavigationTarget | null {
   return normalized;
 }
 
-export function createNavigationHistoryState(
+function baseNavigationHistoryState(
   target: NavigationTarget,
   scroll: NavigationScrollPosition,
 ): NavigationHistoryState {
@@ -64,6 +80,17 @@ export function createNavigationHistoryState(
   };
 }
 
+export function createNavigationHistoryState(
+  target: NavigationTarget,
+  scroll: NavigationScrollPosition,
+): NavigationHistoryState {
+  const routeGraph = currentRouteGraphOwner();
+  return {
+    ...baseNavigationHistoryState(target, scroll),
+    ...(routeGraph ? { lexigoRouteGraph: routeGraph } : {}),
+  };
+}
+
 export function readNavigationHistoryState(value: unknown): NavigationHistoryState | null {
   if (!isRecord(value)
     || value.lexigo !== true
@@ -74,11 +101,14 @@ export function readNavigationHistoryState(value: unknown): NavigationHistorySta
 
   const target = normalizeUnknownTarget(value.target);
   if (!target) return null;
-
-  return createNavigationHistoryState(target, {
-    x: value.scroll.x as number,
-    y: value.scroll.y as number,
-  });
+  const routeGraph = routeGraphOwner(value);
+  return {
+    ...baseNavigationHistoryState(target, {
+      x: value.scroll.x as number,
+      y: value.scroll.y as number,
+    }),
+    ...(routeGraph ? { lexigoRouteGraph: routeGraph } : {}),
+  };
 }
 
 export function navigationTargetFromHistory(value: unknown, search: string): NavigationTarget {
