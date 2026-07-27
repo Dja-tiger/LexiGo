@@ -17,10 +17,11 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Add a dedicated dynamic Home entry under `LexigoBootstrappedApp`.
 - Keep Home API reads and next-best-action presentation inside the Home island.
 - Add Home-aware App Router graph handoff for Home ↔ product/dictionary navigation.
+- Preserve standalone PWA relaunch restoration when `/` is no longer owned by the compatibility graph.
 - Add an explicit one-time `resume=1` intent so a Home-created or resumed active lesson opens immediately without a second user click.
 - Preserve Figma production nodes `194:249` (desktop) and `196:223` (mobile).
 - Add source, unit and browser contracts for ownership, canonical history and single session bootstrap.
-- Use the first Draft CI performance artifact to determine the exact Home baseline before tightening `frontend/bundle-budgets.json`.
+- Use the first controlled performance report to determine the exact Home baseline before tightening `frontend/bundle-budgets.json`.
 
 ## Non-goals
 
@@ -43,6 +44,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/lib/lesson-resume-intent.ts`
 - `frontend/lib/lesson-resume-intent.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
+- `frontend/e2e/lesson-flow.spec.ts`
 - `frontend/bundle-budgets.json` after exact measurement only
 - `frontend/lib/bundle-budgets.test.ts` after exact measurement only
 - `docs/frontend-bundle-budgets.md` after exact measurement only
@@ -65,6 +67,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `LexigoBootstrappedApp`: sole session restoration, token adoption and route-entry owner.
 - `ReviewOutboxRuntime`: sole connectivity and review-outbox owner.
 - Root layout: sole Service Worker, Web Vitals and global runtime owner.
+- `RoutedLexigoApp`: canonical route initialization and standalone PWA start-route restoration.
 - `LexigoHomeApp`: Home-only progress/active-lesson reads, next-best-action presentation and lesson-create intent.
 - `LexigoPremiumApp`: Learn, Phrases and Active Lesson compatibility graph; backend remains authoritative for lesson lifecycle.
 
@@ -81,6 +84,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Active lesson remains higher priority than due review, new study and manual configuration.
 - A new Home-created lesson uses the existing authenticated lesson API and opens `/lesson/active` immediately.
 - `resume=1` is transient, consumed once and removed without losing unrelated query/hash/history state.
+- Standalone PWA relaunch from `/` restores the last stable persisted route before route-graph handoff.
 - Home island does not import `LexigoPremiumApp`, session restoration, outbox or Service Worker owners.
 - Canonical pathname/history settle before another client graph mounts.
 - Home Light/Dark, responsive, reduced-motion, keyboard and Figma geometry contracts do not regress.
@@ -89,9 +93,10 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 
 - Direct `/` renders `data-route-client-island="home"` without loading the monolithic Home graph.
 - Home ↔ Learn/Dictionary/Progress and Back/Forward retain canonical URLs and one session bootstrap.
+- Standalone PWA relaunch retains the existing last-route restoration contract.
 - Home start/resume reaches visible Active Lesson without the intermediate `Продолжить урок` gate.
 - Unit/source/browser checks pass.
-- First Draft CI produces an exact `/` JavaScript/request measurement.
+- Controlled CI produces an exact `/` JavaScript/request measurement.
 - Final Home baseline and ceilings are strictly below the original 238,257-byte monolithic graph and pass immutable-head CI.
 - Expected-head squash merge and exact-SHA stage/public validation complete before Issue #250 is closed.
 
