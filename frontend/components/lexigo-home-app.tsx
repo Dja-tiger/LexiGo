@@ -61,7 +61,7 @@ type LexigoHomeAppProps = {
   onSessionUpdated: (session: Session) => void;
 };
 
-type HomeIconName = "play" | "repeat" | "learn" | "chart";
+type HomeIconName = "play" | "repeat" | "learn" | "chart" | "flame";
 
 type HomeNextAction = {
   eyebrow: string;
@@ -98,6 +98,7 @@ function HomeIcon({ name, size = 19 }: { name: HomeIconName; size?: number }) {
   if (name === "play") return <svg {...common}><path d="m8 5 11 7-11 7V5Z" /></svg>;
   if (name === "repeat") return <svg {...common}><path d="M20 7h-9a6 6 0 0 0-6 6v1" /><path d="m17 4 3 3-3 3" /><path d="M4 17h9a6 6 0 0 0 6-6v-1" /><path d="m7 20-3-3 3-3" /></svg>;
   if (name === "chart") return <svg {...common}><path d="M5 20V10M12 20V4M19 20v-7" /><path d="M3 20h18" /></svg>;
+  if (name === "flame") return <svg {...common}><path d="M12 22c4 0 7-2.9 7-7 0-3.2-1.8-5.8-4.5-8.4.1 2.4-.8 3.8-2 4.7.1-3.7-1.7-6.7-4.4-9.3.1 4.4-3.1 6.5-3.1 10.8C5 18 8 22 12 22Z" /></svg>;
   return <svg {...common}><path d="m3 7 9-4 9 4-9 4-9-4Z" /><path d="M7 9.5V15c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5" /><path d="M21 7v6" /></svg>;
 }
 
@@ -306,6 +307,12 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     <div className="lx-app" data-route-client-island="home" data-figma-home-desktop="194:249" data-figma-home-mobile="196:223">
       <header className="lx-header">
         <div className="lx-header-tools">
+          {session && progress ? (
+            <button className="lx-streak" type="button" onClick={() => navigate({ view: "progress" })}>
+              <HomeIcon name="flame" />
+              <span>{progress.currentStreak} дн.</span>
+            </button>
+          ) : null}
           <button
             className="lx-avatar"
             type="button"
