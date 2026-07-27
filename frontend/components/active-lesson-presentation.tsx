@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -183,7 +184,7 @@ export function ActiveLessonPresentation({
     window.requestAnimationFrame(() => returnFocusRef.current?.focus({ preventScroll: true }));
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleExternalExitRequest = () => requestExit();
     window.addEventListener(LESSON_EXIT_REQUEST_EVENT, handleExternalExitRequest);
     return () => window.removeEventListener(LESSON_EXIT_REQUEST_EVENT, handleExternalExitRequest);
