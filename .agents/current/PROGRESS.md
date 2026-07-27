@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-27 03:34 Europe/Berlin
+## 2026-07-27 03:39 Europe/Berlin
 
 ### Verified
 
@@ -14,11 +14,13 @@
 
 - A workflow-level `paths-ignore` fast path is unsafe when branch protection requires checks from the skipped workflow: GitHub can leave expected checks pending because the workflow never registers.
 - Automatic stage deployment currently reacts to every successful push-triggered `CI` run, so job-level heavy-test skips alone would still deploy documentation-only commits.
+- The first PR head exposed an existing repository storage-policy requirement: every `actions/upload-artifact@v7` step must be non-blocking and have bounded retention.
 
 ### Root cause
 
 - CI previously had no exact changed-path classification and no deployable-scope evidence shared with `Deploy Stage`.
 - Product checks, image publication and stage eligibility were coupled to the existence of a successful `CI` run rather than to the semantic change scope.
+- The new exact-scope artifact initially omitted `continue-on-error: true`, so `scripts/ci/actions_storage_policy_test.py` rejected the workflow before normal PR validation.
 
 ### Changed files
 
@@ -33,25 +35,25 @@
 
 ### Checks passed
 
-- Exact Git blob hashes of all four implementation files match locally validated content:
-  - `ci.yml`: `598a115e91a0d5f4c35989a51af755b607cf05fb`;
+- Exact implementation blob hashes after the storage-policy fix:
+  - `ci.yml`: `f788426ad0bbd5987a8930746239582fe41c365e`;
   - `deploy-stage.yml`: `1bd2ae7c432183e4bce110b52b48ab9a7b286615`;
   - classifier: `af3e8edda201cfe9c4fc44dab2a8da3ccd08af40`;
-  - routing tests: `2ef2813830ea01d75f055e7b211eecd628127078`.
-- `python3 scripts/ci/agent_docs_scope_test.py`: 8/8 tests passed against the exact workflow/script blobs.
+  - routing tests: `b4c3950d38a8cec838362bb9c670338ef752b901`.
+- `python3 scripts/ci/agent_docs_scope_test.py`: 8/8 tests passed against the corrected exact workflow/script blobs.
 - Both workflow YAML files parsed successfully with PyYAML 6.0.3.
 - Pure Agent Docs, mixed, unrelated, empty, unavailable-base, full base-to-head and artifact/head-mismatch cases are covered.
-- Draft PR #244 was created from the exact verified base.
+- The routing contract now asserts the repository-mandated non-blocking artifact upload.
 
 ### Checks failed
 
-- None in targeted validation.
-- Full repository CI on the final immutable PR head is pending.
+- Superseded head `3f58579878a17ab69eb28e4d4c12fb048ac66d75`: `Actions storage cleanup` run `30230143787` failed only at `Validate Actions storage policy` because the new scope upload lacked `continue-on-error: true`.
+- The storage-policy defect is fixed on the current branch; superseded CI runs are not valid merge evidence.
 
 ### Current branch head
 
-Resolve from live PR #244 after the final current-memory commits.
+Resolve from live PR #244 after this failure-record update.
 
 ### Next action
 
-Freeze the branch head, inspect the complete PR #244 CI graph, classify any failure and fix only its root cause.
+Freeze the corrected branch head, inspect the complete PR #244 CI graph, and classify any remaining failure without retrying an unchanged deterministic head.
