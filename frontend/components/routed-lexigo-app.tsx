@@ -174,22 +174,27 @@ export function RoutedLexigoApp() {
 
   useLayoutEffect(() => {
     if (!pathname.startsWith("/lesson/")) return;
-    focusedLessonURLRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    focusedLessonHistoryStateRef.current = { ...recordState(window.history.state) };
+    const captureFocusedLesson = () => {
+      focusedLessonURLRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      focusedLessonHistoryStateRef.current = { ...recordState(window.history.state) };
+    };
+    captureFocusedLesson();
+    const frame = window.requestAnimationFrame(captureFocusedLesson);
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   useLayoutEffect(() => {
     const preserveFocusedLesson = (event: PopStateEvent) => {
-      if (window.location.pathname !== "/learn"
+      const requestedEntry = readNavigationHistoryState(event.state);
+      if (requestedEntry?.target.view !== "learn"
         || !document.querySelector(ACTIVE_LESSON_SELECTOR)) {
         return;
       }
 
-      // popstate fires after Browser Back has selected the Learn entry. Stop
-      // Next.js before it remounts the Learn island, then recreate the same
-      // focused route atomically. pushState intentionally discards the stale
-      // forward entry while preserving every captured Next.js field and the
-      // product graph owner; no synthetic popstate or duplicate submit occurs.
+      // Next.js and the compatibility graph may observe the same target-level
+      // popstate before this shell listener. Identify the attempted destination
+      // from immutable event.state rather than the mutable current pathname,
+      // then recreate the focused entry with the captured framework state.
       event.stopImmediatePropagation();
       const protectedState = {
         ...recordState(event.state),
@@ -202,7 +207,6 @@ export function RoutedLexigoApp() {
       };
       window.history.pushState(protectedState, "", focusedLessonURLRef.current);
       setFocusedLessonExitRequested(true);
-      window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
     };
 
     const clearFocusedLessonExitForNewHandoff = (event: Event) => {
@@ -229,6 +233,13 @@ export function RoutedLexigoApp() {
       window.removeEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    if (!focusedLessonExitRequested || !pathname.startsWith("/lesson/")) return;
+    // Child layout effects install the Active Lesson listener before this
+    // parent effect runs, so delivery survives any Next.js route remount.
+    window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
+  }, [focusedLessonExitRequested, pathname]);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
