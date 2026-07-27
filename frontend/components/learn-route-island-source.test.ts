@@ -76,13 +76,15 @@ describe("Learn route client-island ownership", () => {
     expect(bootstrappedApp).toContain('request.pathname.startsWith("/lesson/")');
     expect(bootstrappedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
     expect(routedApp).toContain('const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson"');
-    expect(routedApp).toContain('window.location.pathname !== "/learn"');
+    expect(routedApp).toContain("const requestedEntry = readNavigationHistoryState(event.state)");
+    expect(routedApp).toContain('requestedEntry?.target.view !== "learn"');
     expect(routedApp).toContain("event.stopImmediatePropagation()");
     expect(routedApp).toContain("focusedLessonHistoryStateRef.current");
     expect(routedApp).toContain("window.history.pushState(protectedState");
     expect(routedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
+    expect(routedApp).toContain('if (!focusedLessonExitRequested || !pathname.startsWith("/lesson/")) return');
     expect(routedApp).toContain("window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT))");
-    expect(routedApp).toContain("preserving every captured Next.js field");
+    expect(routedApp).toContain("Child layout effects install the Active Lesson listener");
     expect(routedApp).not.toContain("window.history.forward()");
     expect(routedApp).not.toContain("new PopStateEvent");
   });
