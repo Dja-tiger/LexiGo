@@ -55,8 +55,6 @@ export function AsyncStatePanel({
 }: AsyncStatePanelProps) {
   const regionRef = useRef<HTMLElement>(null);
   const resumeIntentConsumedRef = useRef(false);
-  const primaryActionRef = useRef(onAction);
-  primaryActionRef.current = onAction;
 
   useEffect(() => {
     if (!focusResult) return;
@@ -64,13 +62,12 @@ export function AsyncStatePanel({
   }, [focusResult, kind, title, message, reference]);
 
   useEffect(() => {
-    if (resumeIntentConsumedRef.current || actionLabel !== "Продолжить урок" || !primaryActionRef.current) return;
+    if (resumeIntentConsumedRef.current || actionLabel !== "Продолжить урок" || !onAction) return;
     if (!consumeLessonResumeIntent(window.location, window.history)) return;
 
     resumeIntentConsumedRef.current = true;
-    const frame = window.requestAnimationFrame(() => primaryActionRef.current?.());
-    return () => window.cancelAnimationFrame(frame);
-  }, [actionLabel]);
+    queueMicrotask(onAction);
+  }, [actionLabel, onAction]);
 
   const hasActions = Boolean((actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction));
 
