@@ -27,7 +27,7 @@ import {
 import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
-const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/progress", "/scenarios"]);
+const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/learn", "/progress", "/scenarios"]);
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
