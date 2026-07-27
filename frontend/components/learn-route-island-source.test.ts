@@ -84,6 +84,19 @@ describe("Learn route client-island ownership", () => {
     expect(routedApp).not.toContain("new PopStateEvent");
   });
 
+  it("places the result composition notice outside the animated product view", () => {
+    const resultPresentation = readComponent("lesson-result-presentation.tsx");
+    const routedApp = readComponent("routed-lexigo-app.tsx");
+
+    expect(resultPresentation).toContain('const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice"');
+    expect(resultPresentation).toContain("queueMicrotask(() =>");
+    expect(resultPresentation).toContain("window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT");
+    expect(resultPresentation).not.toContain("lx-queue-notice--lesson-result-handoff");
+    expect(routedApp).toContain('const [lessonResultNotice, setLessonResultNotice] = useState("")');
+    expect(routedApp).toContain("window.addEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice)");
+    expect(routedApp).toContain('<p className="lx-queue-notice" role="status">');
+  });
+
   it("preserves source/topic URL state and server-authoritative Active Lesson handoff", () => {
     const learnApp = readComponent("lexigo-learn-app.tsx");
 
