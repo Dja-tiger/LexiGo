@@ -188,8 +188,14 @@ export function LessonResultPresentation({
   const statusLabel = snapshot.syncPending ? "На устройстве" : "Сохранено";
 
   useLayoutEffect(() => {
-    window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT, { detail: handoffNotice }));
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT, { detail: handoffNotice }));
+      }
+    });
     return () => {
+      cancelled = true;
       window.dispatchEvent(new CustomEvent(LESSON_RESULT_NOTICE_EVENT, { detail: "" }));
     };
   }, [handoffNotice]);
