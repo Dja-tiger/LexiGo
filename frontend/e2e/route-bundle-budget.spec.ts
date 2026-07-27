@@ -261,6 +261,18 @@ test("canonical routes stay within cold-browser JavaScript budgets", async ({ br
     await writeRouteBundleReport(results);
 
     const budget = bundleBudgets.routes[routeCase.route];
+    if (
+      routeCase.route === "/progress"
+      && budget.baselineJavascriptBytes === bundleBudgets.routes["/"].baselineJavascriptBytes
+    ) {
+      throw new Error(`[progress-bundle-measurement] ${JSON.stringify({
+        headSha: process.env.APP_BUILD_ID ?? "unknown",
+        route: result.route,
+        initialRequests: result.initialRequests,
+        javascriptBytes: result.javascriptBytes,
+      })}`);
+    }
+
     expect.soft(result.initialRequests, `${routeCase.route}: initial request count`).toBeGreaterThan(0);
     expect.soft(result.initialRequests, `${routeCase.route}: initial request count`).toBeLessThanOrEqual(
       budget.maxInitialRequests,
