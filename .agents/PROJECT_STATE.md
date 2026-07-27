@@ -2,13 +2,18 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 11:38 Europe/Berlin.
+- Last verified: 2026-07-27 12:03 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
-- Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+- Live `main` at verification: `a617dfce331700d0b3e911726d52a2683f18d526`.
+- Latest product merge: PR #248, merge SHA `a617dfce331700d0b3e911726d52a2683f18d526`.
+- PR #248 immutable head: `7052865d4ef07c707c7d692ecc4a539d863e13dc`.
+- PR #248 full CI: #2084, run `30254670808`, successful.
+- Issue #247 is closed as completed.
+- PR #248 exact-SHA stage/public validation: run `30256018000`, exact image `a617dfce331700d0b3e911726d52a2683f18d526`, scope validation/deploy/public smoke/public browser successful, 12/12 checks passed.
+- Product system-state merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 - PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
 - PR #239 full CI: #2042, run `30225559882`, successful.
-- Product stage/public validation: run `30226263326`, exact image `370d0dccfaa9c273d11164bbce37dd71975485cd`, deploy/public smoke/public browser successful, 12/12 checks passed.
+- Product stage/public validation for PR #239: run `30226263326`, exact image `370d0dccfaa9c273d11164bbce37dd71975485cd`, deploy/public smoke/public browser successful, 12/12 checks passed.
 - Issues #202 and #170 are closed as completed.
 - CI reliability follow-up: PR #242, merge SHA `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
 - PR #242 immutable head: `609367b61ae8f687fc2d1d8ec20a1f26f01048e0`.
@@ -47,6 +52,18 @@
 - Route-boundary session adoption prevents logout during Progress navigation.
 - Progress navigation remains escapable in desktop, mobile and installed PWA contexts.
 - Scroll restoration is immediate and interruptible rather than uninterruptible smooth scrolling.
+
+### Route-level client islands and bundle budgets
+
+- Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
+- PR #248 completed the Progress portion of Issue #115 without changing approved Progress UI or API behavior.
+- `LexigoBootstrappedApp` remains the sole session restoration, refresh coordination and route-entry owner; `ReviewOutboxRuntime` remains the sole connectivity and review-outbox owner.
+- `LexigoProgressApp` owns only Progress API reads/actions and evidence presentation and does not import `LexigoPremiumApp` or duplicate session, outbox or PWA lifecycle ownership.
+- Direct `/progress` entry and repeated Progress ↔ Home/Learn/Dictionary navigation perform exactly one network `/api/v1/auth/refresh` bootstrap request.
+- Cold `/progress` entry measures 207,502 JavaScript bytes and 18 initial requests versus the original 238,257-byte monolithic graph: a 30,755-byte, 12.9% reduction.
+- Permanent `/progress` limits are 240,000 JavaScript bytes and 21 initial requests; source and budget contracts require the baseline and both ceilings to remain below the monolithic graph.
+- Exact measurement report artifact `8648042201` came from controlled run `30253573827`; its test-only probe was removed byte-for-byte before final immutable-head CI.
+- Remaining routes in the monolithic `LexigoPremiumApp` graph are Home, Learn, Phrases and Active Lesson.
 
 ### Scenario learning
 
@@ -99,6 +116,13 @@
 - Calendar buckets must be seeded from explicit production boundaries, not fixed-duration approximations from `now()`.
 - Same-head retries are prohibited when a failure is proven deterministic for the current calendar boundary.
 
+### Request-scoped failure fixtures
+
+- Initial PR #248 CI #2068 exposed a stale Dictionary test fixture on `ios-webkit`; production runtime was not defective.
+- A broad path-only HTTP 503 interceptor failed both initial catalog loading and the intended `query=durable` request, racing the controlled input with an initial error remount.
+- The fixture now allows successful baseline loading and fails only the exact target request; corrected and final browser matrices passed.
+- `.agents/AGENTS.issue-247-request-scoped-fixtures.md` is mandatory reading for failure fixtures sharing an endpoint between baseline and user action.
+
 ### Agent Harness and Agent Docs CI
 
 - The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
@@ -114,12 +138,8 @@
 
 ## In progress
 
-- Issue #247, part of #115, is active in branch `perf/issue-247-progress-island-budget` and Draft PR #248.
-- Objective: close the Progress route-island slice with exclusive ownership, one-session-bootstrap browser evidence and a route-specific bundle budget.
-- Corrected CI #2074/run `30252335806` completed successfully on head `03854f0601972d270bb052725548578cf11929e3`.
-- Exact controlled measurement artifact `8648042201` records `/progress` at 207,502 JavaScript bytes and 18 initial requests, a 30,755-byte (12.9%) reduction from the original graph.
-- Permanent `/progress` ceilings are 240,000 JavaScript bytes and 21 requests; the temporary measurement probe is removed before final CI.
-- Final immutable-head CI, expected-head squash merge and exact-SHA stage/public validation remain pending.
+- No product or runtime slice is active.
+- The next atomic slice must be selected only after resolving live `main`, open PRs, Issues, CI and stage evidence again.
 
 ## Remaining roadmap
 
@@ -135,9 +155,9 @@ Implement diagnostic onboarding, skip path, reason-coded personalized queue and 
 
 Resolve architecture/privacy and typed backend contracts before implementation, including scheduling, permissions, import/export and deletion semantics.
 
-### 4. #115 — Route-level client islands and budgets
+### 4. #115 — Remaining route-level client islands and budgets
 
-Complete the Progress slice in #247, then inventory and gradually extract the remaining Home, Learn, Phrases and Active Lesson routes without duplicating session, API, outbox or PWA ownership.
+Gradually extract Home, Learn, Phrases and Active Lesson without duplicating session, API, review-outbox or PWA ownership. Each route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
 
 ### 5. #70 — Legacy applications and CSS
 
@@ -151,7 +171,6 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 - Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
-- Issue #247 still requires final-head CI and post-merge exact-SHA stage/public evidence.
 
 ## Blocked
 
@@ -160,20 +179,21 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
-2. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-3. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-4. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
-5. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-6. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
-7. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
+1. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+2. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
+3. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+4. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+5. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+6. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+7. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 
 ## Evidence
 
 - Live GitHub `main`, PR #248, Issues #12/#115/#247, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
-- Stage remains on exact runtime image `426144d00a857f36be8a543553df5029ac49a454`, run `30231298766`, with successful deploy/public smoke/public browser and 12/12 checks.
-- Corrected PR #248 CI #2074/run `30252335806` passed all required backend, frontend, browser, accessibility, visual and performance gates on head `03854f0601972d270bb052725548578cf11929e3`.
-- Exact performance artifact `8648042201` from run `30253573827` on probe head `96479e0f07eda62cff5176f519e6294e005a451b` records `/progress` at 207,502 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte afterward.
+- PR #248 final head `7052865d4ef07c707c7d692ecc4a539d863e13dc` passed complete CI #2084/run `30254670808`; expected-head squash merge produced `a617dfce331700d0b3e911726d52a2683f18d526` and closed Issue #247.
+- Main push CI for exact merge SHA `a617dfce331700d0b3e911726d52a2683f18d526` completed successfully and triggered exact-scope stage deployment.
+- Stage run `30256018000` checked out exact SHA `a617dfce331700d0b3e911726d52a2683f18d526`, validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
+- Exact performance artifact `8648042201` from run `30253573827` on probe head `96479e0f07eda62cff5176f519e6294e005a451b` records `/progress` at 207,502 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte before final CI.
 - Initial CI #2068 failure was classified as a stale request-scoping fixture, fixed without runtime changes and promoted to mandatory rule `.agents/AGENTS.issue-247-request-scoped-fixtures.md`.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
