@@ -43,7 +43,6 @@ import "./adaptive-lesson-composer-accessibility.css";
 import "./active-lesson.css";
 import "./focused-lesson-exit.css";
 import "./lesson-result.css";
-import "./lesson-result-handoff.css";
 import "./progress-evidence.css";
 import "./progress-evidence-accessibility.css";
 import "./progress-evidence-layout.css";
