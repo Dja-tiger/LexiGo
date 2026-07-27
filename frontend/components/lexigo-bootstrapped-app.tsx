@@ -171,7 +171,9 @@ function historyRouteGraph(pathname: string, state: unknown): RouteGraph {
   const candidate = (state as Record<string, unknown>)[ROUTE_GRAPH_HISTORY_KEY];
   if (!isRouteGraph(candidate)) return fallback;
   if (isHomeRoute(pathname)) return "home";
-  if (isLearnRoute(pathname)) return "learn";
+  if (isLearnRoute(pathname)) {
+    return candidate === "product" || candidate === "learn" ? candidate : "learn";
+  }
   if (isDictionaryRoute(pathname)) {
     return candidate === "product" || candidate === "dictionary" ? candidate : "dictionary";
   }
@@ -364,7 +366,23 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   }, []);
 
   useEffect(() => {
-    const handleRouteGraphRequest = (event: Event) => setRouteGraphRequest(requestedRouteGraph(event));
+    const handleRouteGraphRequest = (event: Event) => {
+      const request = requestedRouteGraph(event);
+      if (isLearnRoute(window.location.pathname)
+        && request.routeGraph === "product"
+        && request.pathname.startsWith("/lesson/")) {
+        const current = window.history.state;
+        window.history.replaceState(
+          {
+            ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+            [ROUTE_GRAPH_HISTORY_KEY]: "product",
+          },
+          "",
+          window.location.href,
+        );
+      }
+      setRouteGraphRequest(request);
+    };
     const syncRouteGraphFromHistory = (event: PopStateEvent) => {
       setRouteGraphRequest({
         routeGraph: historyRouteGraph(window.location.pathname, event.state),
