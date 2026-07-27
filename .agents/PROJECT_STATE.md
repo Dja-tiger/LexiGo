@@ -2,10 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 12:03 Europe/Berlin.
+- Last verified: 2026-07-27 17:27 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `a617dfce331700d0b3e911726d52a2683f18d526`.
-- Latest product merge: PR #248, merge SHA `a617dfce331700d0b3e911726d52a2683f18d526`.
+- Live `main` at verification: `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+- Latest product merge: PR #251, merge SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+- PR #251 immutable head: `189f5eee089b1afe5127904770525810da1ae101`.
+- PR #251 full CI: #2133, run `30277124935`, successful. One transient iOS WebKit Dictionary timing failure in UI shard 2 passed on the same-head job rerun without a code change.
+- Issue #250 is closed as completed.
+- PR #251 exact-SHA stage/public validation: run `30279520923`, exact image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`, deploy/public smoke/public browser successful. The public browser result was 11 passed and 1 flaky after an iOS WebKit Service Worker access-control error passed on retry.
+- Controlled Home bundle evidence: run `30275645894`, artifact `8656783937`, digest `sha256:796d3b3f2b569d2bbc777ec52664464b6a5514d0b529e35af090c93b32230a69`; exact `/` measurement is 207,675 JavaScript bytes and 18 initial requests.
+- Documentation reconciliation PR #249 passed lightweight CI #2086/run `30256713287` on immutable head `ba2eccaf4f1d5f2b879450756c6e6a7105cb2462` and was expected-head squash merged as `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4` without rebuilding runtime images or redeploying stage.
+- Previous product merge: PR #248, merge SHA `a617dfce331700d0b3e911726d52a2683f18d526`.
 - PR #248 immutable head: `7052865d4ef07c707c7d692ecc4a539d863e13dc`.
 - PR #248 full CI: #2084, run `30254670808`, successful.
 - Issue #247 is closed as completed.
@@ -55,15 +62,24 @@
 
 ### Route-level client islands and bundle budgets
 
-- Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
-- PR #248 completed the Progress portion of Issue #115 without changing approved Progress UI or API behavior.
+- Home, Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
+- PR #251 completed the Home portion of Issue #115 without redesigning the approved Home UI or moving session, review-outbox, PWA or lesson lifecycle ownership.
 - `LexigoBootstrappedApp` remains the sole session restoration, refresh coordination and route-entry owner; `ReviewOutboxRuntime` remains the sole connectivity and review-outbox owner.
+- `LexigoHomeApp` owns only Home progress/active-lesson reads, next-best-action presentation and the existing authenticated lesson-create intent. It does not import `LexigoPremiumApp` or duplicate session, outbox or Service Worker ownership.
+- Active Lesson remains higher priority than due review, new study and manual configuration. A transient `resume=1` intent is consumed once so a Home-created or resumed lesson opens immediately through the existing Active Lesson lifecycle owner.
+- Direct `/` entry and repeated Home ↔ Learn/Dictionary/Progress navigation retain one network `/api/v1/auth/refresh` bootstrap request.
+- Every LexiGo History writer uses the shared `createNavigationHistoryState` constructor. Application-owned `lexigoRouteGraph`, navigation, focus and scroll fields are preserved; unknown Next.js framework-private state is not copied between route graphs.
+- Cold `/` entry measures 207,675 JavaScript bytes and 18 initial requests versus the original 238,257-byte monolithic graph: a 30,582-byte, 12.8% reduction.
+- Permanent `/` limits are 235,000 JavaScript bytes and 21 initial requests. The Home ceiling remains below the original measured transfer.
+- Exact Home measurement report artifact `8656783937` came from controlled run `30275645894`; the post-report test-only assertion was removed byte-for-byte before final immutable-head CI, restoring `frontend/e2e/route-bundle-budget.spec.ts` to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`.
+- Original monolithic measured transfer and original release ceiling are separate immutable comparison constants. Extracted route keys must not become the comparator for later islands.
+- PR #248 completed the Progress portion of Issue #115 without changing approved Progress UI or API behavior.
 - `LexigoProgressApp` owns only Progress API reads/actions and evidence presentation and does not import `LexigoPremiumApp` or duplicate session, outbox or PWA lifecycle ownership.
 - Direct `/progress` entry and repeated Progress ↔ Home/Learn/Dictionary navigation perform exactly one network `/api/v1/auth/refresh` bootstrap request.
 - Cold `/progress` entry measures 207,502 JavaScript bytes and 18 initial requests versus the original 238,257-byte monolithic graph: a 30,755-byte, 12.9% reduction.
-- Permanent `/progress` limits are 240,000 JavaScript bytes and 21 initial requests; source and budget contracts require the baseline and both ceilings to remain below the monolithic graph.
-- Exact measurement report artifact `8648042201` came from controlled run `30253573827`; its test-only probe was removed byte-for-byte before final immutable-head CI.
-- Remaining routes in the monolithic `LexigoPremiumApp` graph are Home, Learn, Phrases and Active Lesson.
+- Permanent `/progress` limits are 240,000 JavaScript bytes and 21 initial requests; source and budget contracts require the baseline and release ceilings to remain below their intended immutable boundaries.
+- Exact Progress measurement report artifact `8648042201` came from controlled run `30253573827`; its test-only probe was removed byte-for-byte before final immutable-head CI.
+- Remaining routes in the monolithic `LexigoPremiumApp` graph are Learn, Phrases and Active Lesson.
 
 ### Scenario learning
 
@@ -123,6 +139,14 @@
 - The fixture now allows successful baseline loading and fails only the exact target request; corrected and final browser matrices passed.
 - `.agents/AGENTS.issue-247-request-scoped-fixtures.md` is mandatory reading for failure fixtures sharing an endpoint between baseline and user action.
 
+### Home route-island reliability lessons
+
+- A route graph owner is shared History state, not a field owned only by the primary navigation component. Mount-time, scroll-snapshot, focus and accessibility writers must preserve it through one shared constructor.
+- Do not spread or clone arbitrary `window.history.state` across independent App Router graphs. Preserve an explicit allow-list of LexiGo-owned fields and let Next.js own its framework-private state.
+- A controlled performance probe is valid only after the full report has been persisted, with an exact artifact and digest, explicit authorization, byte-for-byte restoration and a final immutable-head CI run without the probe.
+- Keep original measured transfer and original release ceiling as distinct constants. A route may require the stronger ceiling-below-transfer rule, while other extracted routes can retain bounded ceilings below the original release limit.
+- Same-head retry is acceptable only after a failure is classified as temporal or infrastructure-related and the immutable code head is unchanged. Deterministic contract failures require a corrective commit rather than retry.
+
 ### Agent Harness and Agent Docs CI
 
 - The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
@@ -134,7 +158,7 @@
 - CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
 - Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
-- PRs #245 and #246 proved live pull-request and main-push fast paths: classifier and Agent Harness successful, all heavy jobs skipped, runtime image and stage deployment unchanged.
+- PRs #245, #246 and #249 proved live pull-request and main-push fast paths: classifier and Agent Harness successful, all heavy jobs skipped, runtime image and stage deployment unchanged.
 
 ## In progress
 
@@ -157,7 +181,7 @@ Resolve architecture/privacy and typed backend contracts before implementation, 
 
 ### 4. #115 — Remaining route-level client islands and budgets
 
-Gradually extract Home, Learn, Phrases and Active Lesson without duplicating session, API, review-outbox or PWA ownership. Each route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
+Gradually extract Learn, Phrases and Active Lesson without duplicating session, API, review-outbox or PWA ownership. Each route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
 
 ### 5. #70 — Legacy applications and CSS
 
@@ -179,22 +203,25 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
-2. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
-3. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-4. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-5. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
-6. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-7. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+1. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+2. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
+3. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+4. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
+5. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+6. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+7. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+8. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+9. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 
 ## Evidence
 
-- Live GitHub `main`, PR #248, Issues #12/#115/#247, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
-- PR #248 final head `7052865d4ef07c707c7d692ecc4a539d863e13dc` passed complete CI #2084/run `30254670808`; expected-head squash merge produced `a617dfce331700d0b3e911726d52a2683f18d526` and closed Issue #247.
-- Main push CI for exact merge SHA `a617dfce331700d0b3e911726d52a2683f18d526` completed successfully and triggered exact-scope stage deployment.
-- Stage run `30256018000` checked out exact SHA `a617dfce331700d0b3e911726d52a2683f18d526`, validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
-- Exact performance artifact `8648042201` from run `30253573827` on probe head `96479e0f07eda62cff5176f519e6294e005a451b` records `/progress` at 207,502 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte before final CI.
-- Initial CI #2068 failure was classified as a stale request-scoping fixture, fixed without runtime changes and promoted to mandatory rule `.agents/AGENTS.issue-247-request-scoped-fixtures.md`.
+- Live GitHub `main`, PR #251, Issues #12/#115/#250, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
+- PR #251 final head `189f5eee089b1afe5127904770525810da1ae101` passed complete CI #2133/run `30277124935`; expected-head squash merge produced `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` and closed Issue #250.
+- Main push CI for exact merge SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` completed successfully and triggered exact-scope stage deployment.
+- Stage run `30279520923` checked out exact SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`, validated the exact CI scope artifact, deployed that image and passed public smoke plus public browser validation. One iOS WebKit Service Worker access-control page error passed on retry; the final public browser outcome is successful.
+- Exact Home performance artifact `8656783937` from controlled run `30275645894` records `/` at 207,675 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte before final CI.
+- CI #2130/run `30276740022` exposed a test-only invariant error that compared the existing Progress release ceiling with the original measured transfer. The corrected contract separates original transfer and original release-ceiling semantics without changing runtime or budget values.
+- CI #2133 initially recorded one iOS WebKit Dictionary timing failure in UI shard 2; the same job passed on the unchanged immutable head, classifying it as transient rather than deterministic.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
