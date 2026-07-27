@@ -23,6 +23,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Preserve Figma production nodes `194:249` (desktop) and `196:223` (mobile).
 - Add source, unit and browser contracts for ownership, canonical history and single session bootstrap.
 - Use the first controlled performance report to determine the exact Home baseline before tightening `frontend/bundle-budgets.json`.
+- Permit one temporary measurement-only assertion in the route-bundle E2E after the full report is written; restore the original blob byte-for-byte before final immutable-head CI.
 
 ## Non-goals
 
@@ -32,6 +33,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Introduce persistent, cross-session or mutation response caching.
 - Tighten the Home release ceiling before an exact controlled measurement exists.
 - Extract Learn, Phrases or Active Lesson from `LexigoPremiumApp` in this slice.
+- Retain the controlled measurement probe in the final PR diff.
 
 ## Allowed paths
 
@@ -49,6 +51,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/lib/request-failure.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
 - `frontend/e2e/lesson-flow.spec.ts`
+- `frontend/e2e/route-bundle-budget.spec.ts` only for the temporary controlled measurement assertion; restore original blob `304e7c62d3163a59edac3e648246e2aa4ce00660` before final CI
 - `frontend/bundle-budgets.json` after exact measurement only
 - `frontend/lib/bundle-budgets.test.ts` after exact measurement only
 - `docs/frontend-bundle-budgets.md` after exact measurement only
@@ -123,6 +126,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Shared shell changes may regress Dictionary/Progress/PWA navigation.
 - A handoff cache may hide fresh data if mutation invalidation or token scoping is weakened.
 - Premature budget tightening may encode an unverified number.
+- A temporary measurement probe may accidentally remain in the final diff; exact blob restoration and final compare are mandatory.
 
 ## Rollback
 
