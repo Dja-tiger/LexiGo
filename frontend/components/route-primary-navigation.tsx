@@ -122,6 +122,32 @@ function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourn
   };
 }
 
+function mergeCurrentHistoryState(nextState: Record<string, unknown>): Record<string, unknown> {
+  const current = window.history.state;
+  return {
+    ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+    ...nextState,
+  };
+}
+
+function stabilizeGraphHistoryEntry(
+  transition: NonNullable<ReturnType<typeof routeTransition>>,
+  nextState: Record<string, unknown>,
+): void {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        if (navigationURL(parseNavigationLocation(window.location)) !== transition.nextURL) return;
+        window.history.replaceState(
+          mergeCurrentHistoryState(nextState),
+          "",
+          window.location.href,
+        );
+      }, 0);
+    });
+  });
+}
+
 function commitRouteTransition(
   transition: NonNullable<ReturnType<typeof routeTransition>>,
   graphHandoff: boolean,
@@ -150,7 +176,9 @@ function commitRouteTransition(
   // for cross-graph transitions itself. Dispatching a synthetic popstate there
   // starts a second navigation cycle and can replace the custom graph marker.
   window.history.pushState(nextState, "", transition.nextURL);
-  if (!graphHandoff) {
+  if (graphHandoff) {
+    stabilizeGraphHistoryEntry(transition, nextState);
+  } else {
     window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
   }
 }
