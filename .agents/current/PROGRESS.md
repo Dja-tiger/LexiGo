@@ -1,12 +1,12 @@
 # Current Task Progress
 
-## 2026-07-27 03:31 Europe/Berlin
+## 2026-07-27 03:34 Europe/Berlin
 
 ### Verified
 
 - `main` remains `387cc50c199218d71b49b39beb9d92859b6e299c`.
-- Branch `chore/issue-243-agent-docs-ci` is based on that exact SHA, 7 commits ahead and 0 behind.
-- Issue #243 is the only active atomic slice.
+- Branch `chore/issue-243-agent-docs-ci` is based on that exact SHA and 0 commits behind.
+- Issue #243 is the only active atomic slice; Draft PR #244 is open.
 - Existing `CI` remains registered for every pull request and `main` push.
 - Existing product commands, browser matrix and container publication contracts are preserved for non-Agent-Docs changes.
 
@@ -24,6 +24,8 @@
 
 - `.agents/PROJECT_STATE.md`
 - `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/deploy-stage.yml`
 - `scripts/ci/agent_docs_scope.py`
@@ -39,17 +41,17 @@
 - `python3 scripts/ci/agent_docs_scope_test.py`: 8/8 tests passed against the exact workflow/script blobs.
 - Both workflow YAML files parsed successfully with PyYAML 6.0.3.
 - Pure Agent Docs, mixed, unrelated, empty, unavailable-base, full base-to-head and artifact/head-mismatch cases are covered.
-- Branch compare contains only allowed paths and is 0 commits behind `main`.
+- Draft PR #244 was created from the exact verified base.
 
 ### Checks failed
 
 - None in targeted validation.
-- Full repository CI has not started yet because the Draft PR is not yet open.
+- Full repository CI on the final immutable PR head is pending.
 
 ### Current branch head
 
-`4c43c6bc51dcf67e7c0c52cb207fd0aca77f0f03`
+Resolve from live PR #244 after the final current-memory commits.
 
 ### Next action
 
-Update `EXECUTION.md`, open a Draft PR for Issue #243, then validate the new classifier under the complete existing CI matrix on the immutable PR head.
+Freeze the branch head, inspect the complete PR #244 CI graph, classify any failure and fix only its root cause.
