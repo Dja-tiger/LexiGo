@@ -7,7 +7,16 @@
     "capturedAt": "2026-07-22"
   },
   "routes": {
-    "/": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
+    "/": {
+      "baselineJavascriptBytes": 207675,
+      "maxJavascriptBytes": 235000,
+      "maxInitialRequests": 21,
+      "baselineEvidence": {
+        "sourceRun": 30275645894,
+        "capturedAt": "2026-07-27",
+        "headSha": "dd35a8f3266aa9358f60a6f05abe2076cf404768"
+      }
+    },
     "/learn": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/phrases": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
     "/dictionary": {
