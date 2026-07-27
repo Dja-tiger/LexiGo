@@ -24,6 +24,7 @@ const WORDS = BLOCKS.flat().map(({ position, ...item }) => {
 test("completed block advances once to a distinct server lesson", async ({ page }) => {
   test.setTimeout(45_000);
   let createCalls = 0;
+  let activeLesson: Record<string, unknown> | null = null;
   await page.context().addCookies([{ name: "lexigo_csrf", value: "e2e-csrf-token", url: "http://127.0.0.1:3000", sameSite: "Lax" }]);
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
@@ -43,7 +44,11 @@ test("completed block advances once to a distinct server lesson", async ({ page 
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: WORDS, count: WORDS.length }) });
     }
-    if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "none" } }) });
+    if (path === "/api/v1/lessons/active") {
+      return activeLesson
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(activeLesson) })
+        : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "none" } }) });
+    }
     if (path === "/api/v1/lessons/preview") {
       const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
@@ -56,19 +61,23 @@ test("completed block advances once to a distinct server lesson", async ({ page 
       const items = BLOCKS[blockIndex];
       createCalls += 1;
       if (blockIndex === 1) await new Promise((resolve) => setTimeout(resolve, 150));
-      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
+      activeLesson = {
         id: `00000000-0000-0000-0000-00000000017${blockIndex + 7}`,
         source: "mixed", studyMode: "study", lessonSize: "15", currentIndex: 0, version: 1,
         status: "active", items, createdAt: "2026-07-23T00:00:00Z", updatedAt: "2026-07-23T00:00:00Z",
+      };
+      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(activeLesson) });
+    }
+    if (path.endsWith("/review") && request.method() === "POST") {
+      activeLesson = null;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        wordId: 101, status: "learning", easiness: 2.5, intervalDays: 0, repetitions: 0,
+        dueAt: "2026-07-24T00:00:00Z", lastReviewedAt: "2026-07-23T00:00:00Z",
+        requestedRating: "known", effectiveRating: "known", judgementSource: "study", judgementReason: "passive_exposure",
+        reviewEventId: 1, suggestionAvailable: false, lessonId: "00000000-0000-0000-0000-000000000177",
+        lessonCurrentIndex: 1, lessonVersion: 2, lessonCompleted: true, lessonReviewedItems: 1, lessonSkippedItems: 0, lessonTotalItems: 1,
       }) });
     }
-    if (path.endsWith("/review") && request.method() === "POST") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-      wordId: 101, status: "learning", easiness: 2.5, intervalDays: 0, repetitions: 0,
-      dueAt: "2026-07-24T00:00:00Z", lastReviewedAt: "2026-07-23T00:00:00Z",
-      requestedRating: "known", effectiveRating: "known", judgementSource: "study", judgementReason: "passive_exposure",
-      reviewEventId: 1, suggestionAvailable: false, lessonId: "00000000-0000-0000-0000-000000000177",
-      lessonCurrentIndex: 1, lessonVersion: 2, lessonCompleted: true, lessonReviewedItems: 1, lessonSkippedItems: 0, lessonTotalItems: 1,
-    }) });
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "not_mocked", message: path } }) });
   });
 
