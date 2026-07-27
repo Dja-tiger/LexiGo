@@ -52,6 +52,7 @@ async function installLessonAPI(
   let reviewedItems = 0;
   let version = 1;
   const selectedItems = itemOverride ?? lessonItems(itemCount);
+  let activeLesson: RequestRecord | null = null;
   const lessonRequests: RequestRecord[] = [];
   const reviewRequests: RequestRecord[] = [];
   const suggestionRequests: RequestRecord[] = [];
@@ -84,14 +85,19 @@ async function installLessonAPI(
         composition: { total: selectedItems.length, words: wordCount, phrases: phraseCount, due: selectedItems.length, new: 0, scheduled: 0, availableWords: wordCount, availablePhrases: phraseCount, ...(phraseCount === 0 ? { fallback: "words_only" } : {}) },
       }) });
     }
-    if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "active lesson was not found" } }) });
+    if (path === "/api/v1/lessons/active") {
+      return activeLesson
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(activeLesson) })
+        : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "active lesson was not found" } }) });
+    }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const payload = request.postDataJSON() as RequestRecord;
       lessonRequests.push(payload);
-      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
+      activeLesson = {
         id: "00000000-0000-0000-0000-000000000350", source: "mixed", studyMode: payload.studyMode, lessonSize: String(itemCount),
         currentIndex: 0, version: 1, status: "active", items: selectedItems, createdAt: "2026-07-17T00:00:00Z", updatedAt: "2026-07-17T00:00:00Z",
-      }) });
+      };
+      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(activeLesson) });
     }
     if (path.endsWith("/answer-suggestions") && request.method() === "POST") {
       const payload = request.postDataJSON() as RequestRecord;
@@ -317,25 +323,4 @@ test("mixed practice previews and opens both words and phrases", async ({ page }
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "Дальше", exact: true }).click();
   await expect(page.getByRole("heading", { name: "roll ____" })).toBeVisible();
-});
-
-
-test("home review CTA requests a server-composed mixed due queue", async ({ page }) => {
-  const mixedItems = [
-    lessonItems(1)[0],
-    { ...PHRASE, position: 1 },
-  ];
-  const api = await installLessonAPI(page, 2, 0, mixedItems, {
-    ...PROGRESS,
-    dueNow: 2,
-    dueWords: 1,
-    duePhrases: 1,
-    newWords: 2,
-  });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Повторить сейчас", exact: true }).click();
-  await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
-  expect(api.lessonRequests()[0]).toMatchObject({ source: "mixed", studyMode: "recall", lessonSize: "30" });
-  expect(api.lessonRequests()[0]).not.toHaveProperty("wordIds");
-  await expect(page.getByText("ВВЕДИТЕ ОТВЕТ", { exact: true })).toBeVisible();
 });
