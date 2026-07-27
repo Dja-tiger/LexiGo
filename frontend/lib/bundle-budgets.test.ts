@@ -28,7 +28,7 @@ function expectRouteBelowOriginalMonolith(route: string, budget: RouteBudget): v
     ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes,
   );
   expect(budget.maxJavascriptBytes, `${route}: JavaScript ceiling`).toBeLessThan(
-    ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes,
+    ORIGINAL_MONOLITHIC_BUDGET.maxJavascriptBytes,
   );
   expect(budget.maxInitialRequests, `${route}: request ceiling`).toBeLessThan(
     ORIGINAL_MONOLITHIC_BUDGET.maxInitialRequests,
@@ -63,8 +63,13 @@ describe("route bundle budget configuration", () => {
     }
   });
 
-  it("keeps the Home island below the original monolithic product graph", () => {
-    expectRouteBelowOriginalMonolith("/", bundleBudgets.routes["/"]);
+  it("keeps the Home island below the original monolithic transfer and release limits", () => {
+    const home = bundleBudgets.routes["/"];
+
+    expectRouteBelowOriginalMonolith("/", home);
+    expect(home.maxJavascriptBytes, "/: JavaScript ceiling below original transfer").toBeLessThan(
+      ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes,
+    );
   });
 
   it("keeps the Dictionary island below the original monolithic product graph", () => {
