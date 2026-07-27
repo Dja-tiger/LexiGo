@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { AriaAttributes, MouseEvent, ReactNode } from "react";
 
 import {
@@ -122,10 +122,10 @@ function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourn
   };
 }
 
-function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
-  const transition = routeTransition(requestedTarget, intent);
-  if (!transition) return;
-
+function commitRouteTransition(
+  transition: NonNullable<ReturnType<typeof routeTransition>>,
+  graphHandoff: boolean,
+): void {
   window.history.replaceState(
     graphHistoryState(transition.current, transition.currentScroll, transition.currentGraph),
     "",
@@ -137,8 +137,26 @@ function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyInte
     transition.destination.scroll,
     transition.nextGraph,
   );
+  if (graphHandoff) {
+    window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
+      detail: {
+        routeGraph: transition.nextGraph,
+        pathname: transition.nextPathname,
+      },
+    }));
+  }
+
+  // Next.js App Router patches the native History API. Using it here keeps the
+  // custom graph owner on the exact entry while still updating usePathname and
+  // route metadata without a document reload.
   window.history.pushState(nextState, "", transition.nextURL);
   window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+}
+
+function pushRoute(requestedTarget: NavigationTarget, intent: ProductJourneyIntent): void {
+  const transition = routeTransition(requestedTarget, intent);
+  if (!transition) return;
+  commitRouteTransition(transition, false);
 }
 
 function RouteLink({
@@ -156,8 +174,6 @@ function RouteLink({
   ariaCurrent?: AriaAttributes["aria-current"];
   navigationView?: AppView;
 }) {
-  const router = useRouter();
-
   return (
     <Link
       href={navigationURL(target)}
@@ -171,28 +187,12 @@ function RouteLink({
         event.preventDefault();
 
         const intent = navigationView ? "primary_navigation" : "in_app_navigation";
-        const requiresRouterGraphHandoff = target.view === "scenario"
+        const requiresGraphHandoff = target.view === "scenario"
           || target.view === "home"
           || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
-        if (requiresRouterGraphHandoff) {
-          // Cold route islands hand control to Home or the warm compatibility
-          // graph through App Router. The explicit history marker distinguishes a
-          // direct cold Dictionary entry from a warm Dictionary destination.
+        if (requiresGraphHandoff) {
           const transition = routeTransition(target, intent);
-          if (transition) {
-            window.history.replaceState(
-              graphHistoryState(transition.current, transition.currentScroll, transition.currentGraph),
-              "",
-              window.location.href,
-            );
-            window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
-              detail: {
-                routeGraph: transition.nextGraph,
-                pathname: transition.nextPathname,
-              },
-            }));
-            router.push(transition.nextURL, { scroll: false });
-          }
+          if (transition) commitRouteTransition(transition, true);
           return;
         }
 
