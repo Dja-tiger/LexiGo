@@ -23,7 +23,7 @@ import { CalendarReminderRouteEntry } from "./calendar-reminder-route-entry";
 
 type RouteNavigationVariant = "header" | "rail" | "mobile";
 type RouteIconName = "home" | "learn" | "library" | "progress";
-type RouteGraphHint = "dictionary" | "home" | "product";
+type RouteGraphHint = "home" | "product";
 
 const PRIMARY_ROUTE_VIEWS = new Set<PrimaryRouteView>([
   "home",
@@ -74,9 +74,7 @@ function destinationFor(target: NavigationTarget) {
 }
 
 function routeGraphHint(target: NavigationTarget): RouteGraphHint {
-  if (target.view === "home") return "home";
-  if (target.view === "library") return "dictionary";
-  return "product";
+  return target.view === "home" ? "home" : "product";
 }
 
 function routeTransition(requestedTarget: NavigationTarget, intent: ProductJourneyIntent) {
@@ -153,9 +151,9 @@ function RouteLink({
           || target.view === "home"
           || Boolean(document.querySelector(ROUTE_CLIENT_ISLAND_SELECTOR));
         if (requiresRouterGraphHandoff) {
-          // Route islands do not share the PremiumApp popstate renderer. Let Next
-          // swap the route graph without reloading the document; the bootstrap
-          // layer keeps the current island mounted until pathname/history settle.
+          // Cold route islands hand control to Home or the warm compatibility
+          // graph through App Router. Dictionary remains a cold-entry island;
+          // warm Dictionary navigation stays inside LexigoPremiumApp.
           const transition = routeTransition(target, intent);
           if (transition) {
             window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
