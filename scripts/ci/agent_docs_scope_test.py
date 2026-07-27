@@ -161,6 +161,7 @@ class WorkflowContractTest(unittest.TestCase):
         self.assertIn("python3 scripts/ci/agent_docs_scope.py classify", scope_job)
         self.assertIn("python3 scripts/ci/agent_docs_scope_test.py", scope_job)
         self.assertIn("name: ci-scope-${{ github.sha }}", scope_job)
+        self.assertIn("continue-on-error: true", scope_job)
         self.assertIn("retention-days: 1", scope_job)
 
     def test_only_heavy_jobs_are_skipped_for_agent_docs(self) -> None:
