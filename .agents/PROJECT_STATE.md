@@ -2,184 +2,164 @@
 
 ## Verification
 
-- Last verified: 2026-07-26 23:26 Europe/Berlin
-- Repository: `Dja-tiger/LexiGo`
-- Live `main` must be resolved from GitHub at agent startup; at this verification the latest production merge is PR #237 at `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`
-- PR #237 final immutable head: `a9c258d6cd8103d89d860306630ee34262727557`
-- PR #237 full CI: #2029, run `30219400878`, successful
-- Post-merge `main` CI run `30219791968` completed successfully and released exact-SHA container images
-- Product deployment evidence for PR #237: Issue #12 and stage run `30220894109` report image `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`, successful deploy, public smoke and 12/12 public Chromium/iOS WebKit checks
-- Issue #200 is closed as completed
-- No product PR is open after PR #237 merged
-- The current repository-memory reconciliation is a documentation/tooling follow-up only; it does not change runtime code
+- Last verified: 2026-07-27 03:00 Europe/Berlin.
+- Repository: `Dja-tiger/LexiGo`.
+- Live `main` at verification: `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+- Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+- PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
+- PR #239 full CI: #2042, run `30225559882`, successful.
+- Product stage/public validation: run `30226263326`, exact image `370d0dccfaa9c273d11164bbce37dd71975485cd`, deploy/public smoke/public browser successful, 12/12 checks passed.
+- Issues #202 and #170 are closed as completed.
+- CI reliability follow-up: PR #242, merge SHA `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+- PR #242 immutable head: `609367b61ae8f687fc2d1d8ec20a1f26f01048e0`.
+- PR #242 full CI: #2045, run `30227244754`, successful, including Monday execution of `TestLearningReviewModesAndAnalytics`.
+- Issue #241 is closed as completed.
+- PR #242 exact-SHA stage/public validation: run `30227955912`, deploy/public smoke/public browser successful, 12/12 checks passed.
+- PR #240 is the only active slice and is documentation-only post-merge reconciliation.
 
 ## Completed
 
 ### Platform foundations
 
-- Go API, PostgreSQL, Redis, auth/session, account security, migrations, Docker and CI/CD foundations are implemented and protected by backend unit/race/integration/security gates.
-- PWA shell, canonical App Router paths, browser history, route recovery and persistent runtime were completed by PR #113.
-- Catalog, word/phrase detail, durable personal learning state and phrase deep links are in production.
+- Go API, PostgreSQL, Redis, authenticated sessions, account security, migrations, containers and CI/CD foundations are implemented.
+- Backend unit/race/integration/security gates and frontend lint/type/unit/build/browser gates are mandatory.
+- Canonical App Router paths, browser history, route recovery, persistent PWA shell and service-worker safety contracts are implemented.
 
 ### Learning core
 
 - Due queue, spaced repetition, objective schema-v2 review events, durable offline review outbox and idempotency are implemented.
-- Study, Recall and Choice are separate runtime and evidence modes.
-- Progressive Lesson Composer was completed by PR #192.
-- Canonical Active Lesson was completed by PR #208.
-- Canonical Lesson Result, distinct-next protection and reload/history recovery were completed by PR #209.
+- Study, Recall and Choice remain separate runtime and evidence modes.
+- Progressive Lesson Composer, canonical Active Lesson and canonical Lesson Result are in production.
+- Distinct-next protection prevents the next lesson from silently repeating the completed block.
 
-### Retained-learning evidence
+### Progress and retained-learning evidence
 
-- PR #214 implemented canonical `/progress`, server-owned weekly evidence, retained knowledge, due backlog, weak topics, trend, recommendations and global/topic due Recall actions.
-- PR #215 completed Issue #19 with weak part-of-speech evidence and direct server-owned recommendations.
-- PR #226 extended `/api/v1/progress` with authoritative Scenario completion activity and one deterministic reason-coded Scenario recommendation while preserving due Recall as the higher-priority next action.
-- Full required CI and post-merge stage validation are green for these product slices.
+- `/progress` is server-owned and reports current due evidence, retained knowledge, weekly trends, weak topics and deterministic recommendations.
+- Weak part-of-speech evidence and direct server-owned recommendations are implemented.
+- Route-boundary session adoption prevents logout during Progress navigation.
+- Progress navigation remains escapable in desktop, mobile and installed PWA contexts.
+- Scroll restoration is immediate and interruptible rather than uninterruptible smooth scrolling.
 
-### Route-boundary session and navigation reliability
+### Scenario learning
 
-- PR #231 fixed the guest-bootstrap → in-app login → `/progress` ownership gap: route-boundary reconciliation now adopts the authenticated document session before the dedicated Progress island renders.
-- Every successful coalesced access-token refresh publishes one validated document-scoped session update; the bootstrap owner adopts it through the existing cache rather than allowing a later island to receive a stale token.
-- Matching bootstrap-cache and CSRF state remain a cache hit, so ordinary App Router transitions do not add a duplicate network refresh.
-- Progress remains escapable through Home, Learning and Dictionary navigation in desktop, mobile and installed-PWA browser projects.
-- Route/history scroll recovery is immediate (`behavior: "auto"`) rather than smooth and is cancelled by explicit wheel, touch, primary-pointer or non-editable scroll-navigation keyboard intent.
-- Bounded retry remains for temporarily unreachable positions caused by asynchronous content growth; after interruption no later frame overwrites the user's position.
-- Focus and live-region settlement remain single-shot after successful restoration or user interruption.
-- Regression coverage includes guest login → authenticated Progress → Home/Learning/Dictionary, successful refresh adoption, immediate scroll behavior, async-height retry, cancellation/no-further-write and deterministic browser wheel interruption.
-- PR #231 passed complete final-head CI #1885 and exact-squash stage/public validation in run `30186260749`; Issue #230 is complete.
+- Durable Scenario contracts, ordered steps, optimistic versioning, pause/resume/reload, fact/hypothesis evidence and idempotent submission are implemented.
+- Scenario review targets resolve to concrete enrolled learning items and use the central learning transaction writer.
+- Canonical `/scenarios/[slug]`, Scenario catalog `/scenarios` and Progress Scenario evidence/recommendations are in production.
+- Scenario catalog preserves backend order and remains usable if Progress recommendations fail.
 
-### Scenario learning foundation and product integration
+### Dictionary catalog and Word Detail
 
-- PR #216 added six workplace scenario types, ordered steps, explicit outcomes and criteria, durable attempts, optimistic versioning, pause/resume/reload recovery, atomic step acceptance, fact/hypothesis storage, submission idempotency and ordinary Recall review-event persistence.
-- PR #218 corrected the Scenario evidence ownership boundary: every seeded step has an immutable review target definition; public payloads expose only `reviewTarget.term`; accepted submissions resolve/create and enroll the concrete learning item atomically; correctness and rating are derived server-side; scheduler and review-event persistence remain centralized in the learning transaction writer.
-- `api/openapi-scenarios.json` is the bounded OpenAPI 3.1 source of truth for all authenticated Scenario routes plus the Scenario projection in `/api/v1/progress`; it is protected by a dependency-free Go source-contract test.
-- PR #221 completed the canonical authenticated `/scenarios/[slug]` route island, start/resume/pause/reload/completion lifecycle, retry-safe versioned drafts, optimistic conflict resynchronization, separate facts/hypotheses, server-owned feedback and safe browser Back/close flows.
-- Scenario presentation reuses `AccessibleDialog`, supports Light/Dark, compact/desktop, forced colors, reduced motion and 320 px/200% reflow, and has blocking keyboard/axe/browser coverage.
-- PR #226 added current-week and total Scenario completion counts, deterministic `resume_in_progress`, `first_uncompleted` and `least_recently_completed` recommendations, strict frontend semantic validation, due-Recall priority, Scenario activity separate from retained knowledge, exact-slug routing from Progress and a completed-Scenario CTA to `/progress`.
-- PR #228 completed the server-backed Scenario catalog/discovery surface at `/scenarios`, preserving exact backend order, keeping recommendation ownership in `/api/v1/progress`, remaining usable when Progress fails and routing into the existing focused Scenario lifecycle.
-- PR #228 added the approved `Уроки / Сценарии` Learning subsection switch while preserving the four-item global navigation and route-chrome geometry across compact, medium and desktop layouts.
-- Cold `/scenarios` evidence is `198852` JavaScript bytes and `17` initial requests with enforced ceilings `230000`/`19`.
-- Reviewed Scenario Catalog Linux visual contracts: compact Light `390 × 1876`, SHA-256 `6d6412fabb2e1b9d5b146da4609da35b7544252d9ab04bd4a8ae3c6e45d26508`; compact Dark `390 × 1876`, SHA-256 `fa874501b7c1a9f66b868c350f607bec444ab12255a18a108f990295a525a47a`; desktop Light `1440 × 981`, SHA-256 `350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a`.
-- PR #228 passed complete final-head CI #1867 and exact-squash stage deployment/public validation in run `30184041786`; Issue #24 is complete.
+- Canonical `/dictionary` is server-owned for search, filters, sorting, pagination and exact result order.
+- URL state and Back/Forward recovery are preserved.
+- Canonical `/words/[id]` loads independently, strictly validates scheduler fields and loads bounded server-owned related phrases.
+- Word Detail pronunciation has supported, loading, playing, error and unsupported states.
+- Single-word practice creates an exact lesson with `wordIds: [selectedWordId]`.
 
-### Dictionary catalog
+### Profile and appearance
 
-- PR #233 completed the canonical Figma-backed `/dictionary` browse/search catalog from nodes `78:54` and `78:193` while preserving the dedicated `LexigoDictionaryApp` route island.
-- Authenticated `GET /api/v1/words` remains authoritative for search, source, topic, learning status, sorting, pagination and exact item order; the client does not filter or sort returned items.
-- Search/filter/sort/page state remains canonical in the URL and is restored through reload and browser Back/Forward without losing the existing result-scroll contract.
-- The approved compact and desktop hierarchy includes the Dictionary heading/count, search, quick filters, desktop filter rail, vertical result rows/cards and one server-metadata-owned pagination surface.
-- Catalog items navigate to canonical `/words/[id]`; Word Detail is now the production presentation completed by PR #235.
-- The duplicate catalog-level Lesson Composer action was removed; Dictionary remains browse/search only.
-- Loading, empty, error/retry, keyboard, axe, 320 px/200% reflow, PWA/history, route ownership and performance contracts are blocking.
-- Dictionary visual evidence uses content-addressed full-page Linux screenshots while masking only the non-product profile glyph boundary that proved platform-antialias-sensitive.
-- Reviewed Dictionary Linux visual contracts: compact Light `390 × 1064`, SHA-256 `fd61da13cbfb4378e17c5337e95632e95a33a944a5bbed1f64741124a8cea32b`; compact Dark `390 × 1064`, SHA-256 `b3f5349c94660fa041ac62d96f0e2f1f7683dfdbccf3792933eeb8a3892a3e27`; medium Light `768 × 1616`, SHA-256 `a0e187ffe7dedf4fefc29b4ae8f4ecf7ca859b66de178395c7b928647c19b80f`; desktop Light `1440 × 1624`, SHA-256 `eb4bf1143a93bedaf6186deca7f88154db1b1c2c46018b0dd4f3a6bfe63899bd`.
-- PR #233 passed complete final-head CI #1912 and exact-squash stage deployment/public validation in run `30198116371`; Issue #197 is complete.
+- Authenticated `/profile` is implemented from approved Figma nodes.
+- Daily goal remains server-owned; calendar reminders remain browser/calendar-owned.
+- Password, sessions, email change, export and deletion retain their existing account/API owners.
+- Appearance persists only `auto`, `light` or `dark`; first-paint theme bootstrap and PWA `theme-color` are implemented.
+- Logout and session invalidation remain owned by the persistent App Router shell.
 
-### Word Detail
+### System and offline states
 
-- PR #235 completed canonical independently loadable `/words/[id]` from Figma nodes `78:99` and `78:274` while preserving the existing Dictionary route island, session bootstrap and URL/history ownership.
-- Cold direct entry and reload load only authenticated `GET /api/v1/words/{wordID}` and do not require Dictionary catalog metadata or a prior catalog visit.
-- Existing scheduler fields `easiness`, `intervalDays`, `repetitions`, `dueAt` and optional `lastReviewedAt` are strictly validated before presentation; no representative Figma percentages are treated as production evidence.
-- Related phrases use bounded server-owned phrase search with `limit=3` and preserve exact API order.
-- Pronunciation reuses the accessible browser speech runtime with loading/playing/error/unsupported feedback and never blocks the textual learning path.
-- The primary practice action creates an exact one-word lesson with `wordIds: [selectedWordId]` and follows the canonical `/lesson/active` resume-gate lifecycle.
-- Cross-island handoff retains the Dictionary island until pathname settlement, reconciles the canonical URL-derived LexiGo target into the framework-owned Next history entry and only then transfers ownership to the product graph.
-- Light/Dark, 320 px, 200% reflow, forced colors, reduced motion, keyboard, axe, PWA/history and browser contracts are blocking.
-- Cold `/words/[id]` evidence is `212877` JavaScript bytes and `18` initial requests with enforced ceilings `245000`/`20`.
-- Reviewed Word Detail Linux visual contracts: compact Light `390 × 1745`, SHA-256 `0d9eade831f96bcdf7b55132ebce75c69cf22bd4be9761d28e0ce98595968f7b`; compact Dark `390 × 1745`, SHA-256 `f985ac2cce5ae144e09dbe296de886de10b3fe31b01e175cd579f85812ca8088`; desktop Light `1440 × 1160`, SHA-256 `64258a07b5010045dcc4929110f5635d072c995bfaf315d9140aee0e6a3abf72`; desktop Dark `1440 × 1160`, SHA-256 `0d5f69b6b4ecb530bd51b421e20f5fcd66f4bc01d60bb20969b592e9a95fde24`.
-- PR #235 passed complete final-head CI #1971/run `30204983602` and exact-squash stage deployment/public validation in run `30207248528`; Issue #198 is complete.
+- PR #239 completed approved loading, empty, correlated error, physical-offline, retryable-failure, queued-review, restored-connection and synchronized states.
+- Figma source nodes: `79:69`, `79:93`, `79:117`, `79:194` and `75:57`.
+- `ReviewOutboxRuntime` remains the sole connectivity and IndexedDB review-outbox owner.
+- Reviews are persisted before the first network request and retain one idempotency key across retry/reload.
+- Auth and CSRF tokens are never persisted in the outbox.
+- Active Lesson preserves the submitted answer after offline/retryable review and blocks duplicate rating or next-card advancement until authoritative replay confirmation.
+- Full offline lesson progression remains intentionally unsupported; new lesson creation remains blocked offline.
+- Dictionary query/filter state survives loading, empty, error and retry states.
+- Connectivity presentation avoids compact navigation and Active Lesson controls.
+- Reduced motion, forced colors, Light/Dark, 320 px, 200% reflow, Chromium/WebKit, Android/iOS PWA, keyboard, axe, CSP, service-worker and performance contracts are blocking.
+- Reviewed visual hashes:
+  - compact loading Dark: `0445cb0016887f4c54993cbf3706f4b720e01cf9b13c0bfebf37efc77f1bb61d`;
+  - compact Dictionary empty Light: `d21af9c2f2e194eb6c5a447c5913107cc414f216f28a7fba7a78dfc05b211aa2`;
+  - compact error Dark: `acd7f5437ba3994b140f0123f4734678dff7a82188abba8d6cbb5532ec0bc5c0`;
+  - desktop offline Dark: `8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a`;
+  - compact Recall offline Dark: `0d7393ab3793ab5d773d167f65f743d3cd53190c4da4899a2d915e1d3b01d2ae`.
 
-### Profile, preferences and appearance
+### Calendar-boundary CI reliability
 
-- PR #237 completed the authenticated `/profile` production route island from Figma nodes `79:6` and `79:129`; unauthenticated login, registration, reset and email-confirmation flows remain in the existing auth compatibility boundary.
-- Identity is restored from the authenticated session. Daily goal remains server-owned, calendar reminders remain browser/calendar-owned, and password, sessions, email change, export and deletion retain their existing confirmed account-component and API ownership.
-- Profile links move focus to the canonical sensitive-operation owners instead of duplicating security or data-deletion forms.
-- The versioned browser preference stores only `auto`, `light` or `dark`; root-layout bootstrap applies effective appearance, `color-scheme` and PWA `theme-color` before first paint. Storage denial degrades safely to Auto.
-- Auto continues to follow `prefers-color-scheme`; explicit Light/Dark override semantic tokens without replacing system-theme ownership or persisting auth/session material.
-- Logout navigation is owned by the persistent App Router shell, session restore is suppressed while logout is pending, and session invalidation completes only after pathname `/` commits.
-- Dictionary-to-product graph handoff remains blocked behind destination history canonicalization, preserving exact `/lesson/active` ownership for single-word lesson creation.
-- Profile remains protected by explicit Light/Dark axe coverage, roving keyboard semantics, forced colors, reduced motion, iOS WebKit lifecycle, 200% reflow, visual regression and route-budget checks.
-- The `/profile` budget remains `238257` baseline JavaScript bytes with ceilings `275000` bytes and `24` initial requests.
-- Reviewed Profile Linux visual contracts: compact Light `390 × 844`, SHA-256 `e89a8d931de7854a56235bff661afe23317505333dc9671d392076c76bd8198c`; compact Dark `390 × 844`, SHA-256 `ecea257dca01358a66be1078938b202f7ad8194baeae80cb43c45d8ebcefa92d`; desktop Light `1440 × 1024`, SHA-256 `3da62f1cd51197f7b10ab5ec6cf51fc3c6f6d9503f2ea8d40fdc5ff1518816b1`; desktop Dark `1440 × 1024`, SHA-256 `f5670eaaa3ca527f081698c7629bd0c96de9117553fe9b16ff97739c191010ae`.
-- PR #237 passed complete final-head CI #2029/run `30219400878` and exact-squash stage deployment/public validation in run `30220894109`; Issue #200 is complete.
+- PR #242 fixed deterministic Monday failure in `TestLearningReviewModesAndAnalytics` without changing production aggregation.
+- The invalid fixture `now() - interval '8 days'` was replaced by `date_trunc('week', now()) - interval '1 day'`.
+- For `timezoneOffsetMinutes=0`, the fixture now always lies inside the immediately previous UTC week.
+- `.agents/AGENTS.issue-241-calendar-boundaries.md` is mandatory reading.
+- Calendar buckets must be seeded from explicit production boundaries, not fixed-duration approximations from `now()`.
+- Same-head retries are prohibited when a failure is proven deterministic for the current calendar boundary.
 
 ### Agent Harness
 
-- PR #217 added the root agent entrypoint, normative index, verified project state, skills registry, current-task memory, templates, lessons, README/PR integration and dependency-free source contract.
-- PR #219 reconciled merged Scenario backend evidence and reset `.agents/current/**` from templates.
-- PR #220 removed the self-invalidating current-`main` snapshot from repository memory.
-- PR #222 reconciled stage observation before Scenario UI work.
-- PR #225 reconciled Scenario UI production evidence and reset `.agents/current/**` from templates.
-- PR #227 reconciled Scenario progress integration and reset current task memory.
-- PR #229 reconciled Scenario catalog production evidence and reset current task memory.
-- PR #232 reconciled Progress navigation reliability production evidence and reset current task memory.
-- PR #234 reconciled Dictionary catalog production evidence and reset current task memory.
-- The current documentation follow-up records PR #237 production evidence and resets `.agents/current/**` byte-for-byte from canonical templates.
-- Harness foundation merge SHA: `3aa4b7e16a852ddd635ec0bcc2b2b56323e60f2b`.
-
-### Quality gates
-
-Required contracts include backend unit/race/integration/security; frontend lint/type/build; Chromium/WebKit; Android/iOS PWA; keyboard/axe/reduced motion/200% zoom; route/history/recovery; CSP/service worker; Linux visual regression; bundle/performance; clean final-head CI and no unresolved review threads.
+- The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
+- Previous reconciliation PRs recorded production evidence after each completed slice and reset `.agents/current/**` from templates.
+- PR #242 added mandatory calendar-boundary fixture guidance.
+- PR #240 records PR #239 and PR #242 evidence and resets current task memory byte-for-byte from canonical templates.
 
 ## In progress
 
-No product slice is active. `.agents/current/**` is reset by the post-merge repository-memory reconciliation. A new product branch must not be created until live GitHub is re-read and one remaining Issue is selected through a fresh pre-flight.
+- PR #240: documentation-only reconciliation after System States and the calendar-boundary CI blocker.
+- Allowed diff is exactly:
+  - `.agents/PROJECT_STATE.md`;
+  - `.agents/current/TASK.md`;
+  - `.agents/current/PROGRESS.md`;
+  - `.agents/current/EXECUTION.md`.
+- No product/runtime slice may begin until PR #240 passes full immutable-head CI, expected-head squash merge and post-merge validation.
 
 ## Remaining roadmap
 
 ### 1. #199 — Phrases design gap
 
-Approve exact catalog/detail nodes before implementation; no production implementation from inferred design.
+Approve exact catalog/detail Figma nodes before production implementation. Do not infer missing production design.
 
 ### 2. #18 and #201 — Adaptive personalization and First Use
 
-Diagnostic onboarding, skip path, reason-coded personalized queue and balancing after stable catalog/scenario routes and approved Figma states.
+Implement diagnostic onboarding, skip path, reason-coded personalized queue and balancing after exact approved design states are available.
 
-### 3. #202 and #170 — System and offline states
+### 3. #25 — Pronunciation, listening and custom terminology
 
-Unified loading/empty/error/offline presentation and explicit network-loss/recovery UX.
+Resolve architecture/privacy and typed backend contracts before implementation, including scheduling, permissions, import/export and deletion semantics.
 
-### 4. #25 — Pronunciation, listening and custom terminology
+### 4. #115 — Route-level client islands and budgets
 
-Architecture/privacy decision first, then typed backend contract, scheduling, permission UX and import/export/deletion semantics.
+Inventory bundles and gradually extract remaining routes without duplicating session, API or PWA ownership.
 
-### 5. #115 — Route-level client islands and budgets
+### 5. #70 — Legacy applications and CSS
 
-Bundle inventory and gradual extraction of remaining routes without duplicated session/API/PWA ownership.
+Remove only proven-dead app/CSS families with browser, visual and bundle evidence.
 
-### 6. #70 — Legacy apps and CSS
+### 6. #203, #205 and #133 — Figma handoff, final parity and usability
 
-Proven-dead app/CSS families only, coordinated with route ownership and guarded by browser/visual/bundle evidence.
-
-### 7. #203, #205 and #133 — Figma handoff, final parity and usability
-
-Maintain exact production nodes, perform route-by-route parity after product slices, and complete external moderated usability validation.
+Maintain exact production nodes, complete route-by-route parity and perform external moderated usability validation.
 
 ## Validation pending
 
-- Phrases and First Use design gaps require approved Figma states before implementation.
+- Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
 
 ## Blocked
 
-- Phrases and parts of First Use remain blocked where exact approved Figma states are absent.
-- Final usability closure is blocked on external moderated sessions (#133).
+- #199 and design-dependent portions of First Use are blocked on approved production Figma nodes.
+- Final usability closure is blocked on external moderated sessions.
 
 ## Recent production/tooling evidence
 
-1. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
-2. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
-3. #234 — `docs(agent): reconcile state after Dictionary catalog` → `72291d9351f3c565d13be7b3f9e9055258f98ac6`.
-4. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
-5. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
-6. #231 — `fix(navigation): preserve Progress session and interrupt scroll restore` → `e8be735457f5d622487b27ad5a621ce6bb7b9754`.
-7. #229 — `docs(agent): reconcile state after Scenario catalog` → `b1f92920af88c9d82b00c50e13b4d0450666989f`.
+1. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+2. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+3. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
+4. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
+5. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
+6. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
+7. #232 — `docs(agent): reconcile state after Progress navigation fix` → `6f9bcd196af1f876500d2b6f700e5e7fdfb685aa`.
 
 ## Evidence
 
-- Live `main`, merged PR #237, final CI #2029/run `30219400878`, closed Issue #200 and stage Issue #12/run `30220894109` were re-read at the verification timestamp.
-- Product deployment evidence for #237 uses immutable image SHA `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`; API/frontend containers were healthy, public endpoints returned HTTP 200 and 12/12 public Chromium/iOS WebKit checks passed.
-- No open product PR or parallel reconciliation branch was found before this isolated documentation branch was created.
+- Live GitHub `main`, PRs #239/#240/#242, Issues #12/#170/#202/#241, immutable heads and CI runs were re-read at the verification timestamp.
+- Product deployment evidence uses exact image `370d0dccfaa9c273d11164bbce37dd71975485cd` with successful deploy/public smoke/public browser checks.
+- CI reliability deployment evidence uses exact image `b63b6197fdffd0fc7623a5131c649aadaaa52476`, stage run `30227955912`, successful deploy/public smoke/public browser and 12/12 checks.
+- PR #240 is Draft while its branch is rebuilt from the verified `main`.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
