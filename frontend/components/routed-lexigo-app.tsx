@@ -30,6 +30,7 @@ import { RouteChrome } from "./route-primary-navigation";
 const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/learn", "/progress", "/scenarios"]);
 const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson";
 const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
+const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice";
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
@@ -159,6 +160,7 @@ export function RoutedLexigoApp() {
   const announcementCounterRef = useRef(0);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
   const [focusedLessonExitRequested, setFocusedLessonExitRequested] = useState(false);
+  const [lessonResultNotice, setLessonResultNotice] = useState("");
   const navigateHome = useCallback(() => {
     router.replace("/", { scroll: false });
   }, [router]);
@@ -201,11 +203,18 @@ export function RoutedLexigoApp() {
       }
     };
 
+    const syncLessonResultNotice = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      setLessonResultNotice(typeof event.detail === "string" ? event.detail : "");
+    };
+
     window.addEventListener("popstate", preserveFocusedLesson, { capture: true });
     window.addEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+    window.addEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice);
     return () => {
       window.removeEventListener("popstate", preserveFocusedLesson, { capture: true });
       window.removeEventListener(PRODUCT_ROUTE_GRAPH_EVENT, clearFocusedLessonExitForNewHandoff);
+      window.removeEventListener(LESSON_RESULT_NOTICE_EVENT, syncLessonResultNotice);
     };
   }, []);
 
@@ -321,6 +330,11 @@ export function RoutedLexigoApp() {
     <div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>
       <RouteSkipLink />
       <RouteChrome />
+      {lessonResultNotice ? (
+        <p className="lx-queue-notice" role="status">
+          {lessonResultNotice}
+        </p>
+      ) : null}
       {focusedLessonExitRequested && pathname.startsWith("/lesson/") ? (
         <p className="lx-queue-notice lx-focused-lesson-exit-notice" role="status">
           Чтобы перейти в другой раздел, нажмите «Сохранить и выйти».
