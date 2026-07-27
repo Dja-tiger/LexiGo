@@ -45,13 +45,17 @@ describe("Home route client-island ownership", () => {
     expect(homeApp).not.toContain("navigator.serviceWorker");
   });
 
-  it("keeps the transient lesson intent explicit and single-use", () => {
+  it("keeps the transient lesson intent and cross-graph destination explicit", () => {
     const asyncState = readComponent("async-state.tsx");
     const routeNavigation = readComponent("route-primary-navigation.tsx");
+    const homeApp = readComponent("lexigo-home-app.tsx");
 
     expect(asyncState).toContain("consumeLessonResumeIntent(window.location, window.history)");
     expect(asyncState).toContain('actionLabel !== "Продолжить урок"');
     expect(routeNavigation).toContain('target.view === "home"');
-    expect(routeNavigation).toContain('detail: { routeGraph: routeGraphHint(transition.destination.target) }');
+    expect(routeNavigation).toContain("pathname: transition.nextPathname");
+    expect(routeNavigation).toContain("routeGraph: transition.nextGraph");
+    expect(homeApp).toContain("function requestProductGraph(targetURL: string): void");
+    expect(homeApp).toContain('routeGraph: "product"');
   });
 });
