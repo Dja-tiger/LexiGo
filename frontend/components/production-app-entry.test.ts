@@ -11,6 +11,7 @@ const productionAppFiles = [
   "lexigo-bootstrapped-app.tsx",
   "lexigo-dictionary-app.tsx",
   "lexigo-home-app.tsx",
+  "lexigo-learn-app.tsx",
   "lexigo-premium-app.tsx",
   "lexigo-profile-app.tsx",
   "lexigo-progress-app.tsx",
@@ -64,6 +65,7 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).not.toContain('from "next/navigation"');
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-home-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-learn-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-progress-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-profile-app")');
@@ -71,6 +73,7 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toContain('import("./lexigo-scenario-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoHomeApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoLearnApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProfileApp\b/g)).toHaveLength(1);
@@ -82,7 +85,7 @@ describe("production frontend application entry", () => {
   it("renders the explicit History graph owner without an intermediate pending graph", () => {
     const bootstrappedApp = readSource(componentsDirectory, "lexigo-bootstrapped-app.tsx");
 
-    expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "product"');
+    expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "learn" | "product"');
     expect(bootstrappedApp).toContain('const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph"');
     expect(bootstrappedApp).toContain("historyRouteGraph(window.location.pathname, event.state)");
     expect(bootstrappedApp).toContain("const effectiveRouteGraph = routeGraphRequest?.pathname === normalizedCurrentPath");
@@ -99,6 +102,10 @@ describe("production frontend application entry", () => {
       .sort();
     const homeGraphConsumers = sources
       .filter(({ source }) => source.includes("lexigo-home-app"))
+      .map(({ file }) => file)
+      .sort();
+    const learnGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-learn-app"))
       .map(({ file }) => file)
       .sort();
     const dictionaryGraphConsumers = sources
@@ -124,6 +131,7 @@ describe("production frontend application entry", () => {
 
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(homeGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(learnGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(progressGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(profileGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
@@ -145,6 +153,23 @@ describe("production frontend application entry", () => {
     expect(homeApp).not.toContain("restoreSession");
     expect(homeApp).not.toContain("ReviewOutboxRuntime");
     expect(homeApp).not.toContain("ServiceWorkerRegistration");
+  });
+
+  it("keeps Learn preview, composition and lesson mutations inside its route island", () => {
+    const learnApp = readSource(componentsDirectory, "lexigo-learn-app.tsx");
+
+    expect(learnApp).toContain('data-route-client-island="learn"');
+    expect(learnApp).toContain('from "./lesson-composer-progressive-shell"');
+    expect(learnApp).toContain('"/api/v1/catalog/metadata"');
+    expect(learnApp).toContain('"/api/v1/lessons/active"');
+    expect(learnApp).toContain('"/api/v1/lessons/preview"');
+    expect(learnApp).toContain('"/api/v1/lessons"');
+    expect(learnApp).toContain('method: "DELETE"');
+    expect(learnApp).toContain("lessonResumeURL()");
+    expect(learnApp).not.toContain("lexigo-premium-app");
+    expect(learnApp).not.toContain("restoreSession");
+    expect(learnApp).not.toContain("ReviewOutboxRuntime");
+    expect(learnApp).not.toContain("ServiceWorkerRegistration");
   });
 
   it("keeps dictionary code inside its route island", () => {
