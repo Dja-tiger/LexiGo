@@ -36,6 +36,7 @@ Close the Progress portion of the route-level client-islands roadmap with explic
 - `frontend/components/progress-route-island-source.test.ts`
 - `frontend/e2e/progress-route-island.spec.ts`
 - `frontend/e2e/performance-global-teardown.ts`
+- `frontend/e2e/system-states.spec.ts` only for the confirmed initial-load/search-request fixture race found by CI #2068
 - `frontend/lib/bundle-budgets.test.ts`
 - `frontend/bundle-budgets.json`
 - `docs/frontend-bundle-budgets.md`
