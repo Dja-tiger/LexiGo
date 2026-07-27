@@ -178,17 +178,11 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
   }, [adoptSession]);
 
   useEffect(() => {
-    setProgress(null);
-    setActiveLesson(null);
-    setActionError("");
-    if (!session) {
-      setProgressStatus(readyResourceStatus());
-      setActiveLessonStatus(readyResourceStatus());
-      return;
-    }
+    if (!session) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
+      setActionError("");
       void Promise.all([
         loadProgress(session, controller.signal),
         loadActiveLesson(session, controller.signal),
