@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-27 03:39 Europe/Berlin
+## 2026-07-27 03:44 Europe/Berlin
 
 ### Verified
 
@@ -10,17 +10,17 @@
 - Existing `CI` remains registered for every pull request and `main` push.
 - Existing product commands, browser matrix and container publication contracts are preserved for non-Agent-Docs changes.
 
-### Finding
+### Findings
 
-- A workflow-level `paths-ignore` fast path is unsafe when branch protection requires checks from the skipped workflow: GitHub can leave expected checks pending because the workflow never registers.
-- Automatic stage deployment currently reacts to every successful push-triggered `CI` run, so job-level heavy-test skips alone would still deploy documentation-only commits.
-- The first PR head exposed an existing repository storage-policy requirement: every `actions/upload-artifact@v7` step must be non-blocking and have bounded retention.
+- Workflow-level `paths-ignore` is unsafe when branch protection expects checks from the skipped workflow.
+- Job-level test skips alone are insufficient because every successful push-triggered `CI` run previously initiated automatic stage deployment.
+- Repository policies require every artifact upload to be non-blocking with bounded retention and require an exact configurable-runner job count.
 
-### Root cause
+### Root causes fixed
 
-- CI previously had no exact changed-path classification and no deployable-scope evidence shared with `Deploy Stage`.
-- Product checks, image publication and stage eligibility were coupled to the existence of a successful `CI` run rather than to the semantic change scope.
-- The new exact-scope artifact initially omitted `continue-on-error: true`, so `scripts/ci/actions_storage_policy_test.py` rejected the workflow before normal PR validation.
+- CI had no exact changed-path classification or deployable-scope evidence.
+- The first scope artifact upload omitted `continue-on-error: true`.
+- The runner policy expected the previous six-job graph and did not include the new `change-scope` and `agent-docs` jobs.
 
 ### Changed files
 
@@ -32,28 +32,29 @@
 - `.github/workflows/deploy-stage.yml`
 - `scripts/ci/agent_docs_scope.py`
 - `scripts/ci/agent_docs_scope_test.py`
+- `scripts/ci/runner_policy_test.py`
 
-### Checks passed
+### Targeted checks passed
 
-- Exact implementation blob hashes after the storage-policy fix:
+- `python3 scripts/ci/agent_docs_scope_test.py`: 8/8.
+- Both workflow YAML files parse successfully.
+- Corrected implementation blobs:
   - `ci.yml`: `f788426ad0bbd5987a8930746239582fe41c365e`;
   - `deploy-stage.yml`: `1bd2ae7c432183e4bce110b52b48ab9a7b286615`;
   - classifier: `af3e8edda201cfe9c4fc44dab2a8da3ccd08af40`;
-  - routing tests: `b4c3950d38a8cec838362bb9c670338ef752b901`.
-- `python3 scripts/ci/agent_docs_scope_test.py`: 8/8 tests passed against the corrected exact workflow/script blobs.
-- Both workflow YAML files parsed successfully with PyYAML 6.0.3.
-- Pure Agent Docs, mixed, unrelated, empty, unavailable-base, full base-to-head and artifact/head-mismatch cases are covered.
-- The routing contract now asserts the repository-mandated non-blocking artifact upload.
+  - routing tests: `b4c3950d38a8cec838362bb9c670338ef752b901`;
+  - runner policy: `eca57bdb12f77e46f3295ad458c060ff5b1d99ac`.
 
-### Checks failed
+### Superseded failures
 
-- Superseded head `3f58579878a17ab69eb28e4d4c12fb048ac66d75`: `Actions storage cleanup` run `30230143787` failed only at `Validate Actions storage policy` because the new scope upload lacked `continue-on-error: true`.
-- The storage-policy defect is fixed on the current branch; superseded CI runs are not valid merge evidence.
+- Head `3f58579878a17ab69eb28e4d4c12fb048ac66d75`, run `30230143787`: storage policy rejected the blocking scope artifact upload.
+- Head `96a0adf39634337057fb877c1d261335d249f26a`, run `30230363908`: storage policy passed, then runner policy rejected the obsolete six-job expectation.
+- Both failures are deterministic and fixed; neither superseded head is valid merge evidence.
 
 ### Current branch head
 
-Resolve from live PR #244 after this failure-record update.
+Resolve from live PR #244 after this repository-memory update.
 
 ### Next action
 
-Freeze the corrected branch head, inspect the complete PR #244 CI graph, and classify any remaining failure without retrying an unchanged deterministic head.
+Freeze the corrected head and require all PR #244 workflows, the full CI matrix, review checks and exact-head merge gate to pass.
