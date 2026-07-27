@@ -78,9 +78,12 @@ describe("Learn route client-island ownership", () => {
     expect(routedApp).toContain('const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson"');
     expect(routedApp).toContain('window.location.pathname !== "/learn"');
     expect(routedApp).toContain("event.stopImmediatePropagation()");
-    expect(routedApp).toContain("window.history.forward()");
+    expect(routedApp).toContain("focusedLessonHistoryStateRef.current");
+    expect(routedApp).toContain("window.history.pushState(protectedState");
+    expect(routedApp).toContain('[ROUTE_GRAPH_HISTORY_KEY]: "product"');
     expect(routedApp).toContain("window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT))");
-    expect(routedApp).toContain("preserves Next.js fields");
+    expect(routedApp).toContain("preserving every captured Next.js field");
+    expect(routedApp).not.toContain("window.history.forward()");
     expect(routedApp).not.toContain("new PopStateEvent");
   });
 
