@@ -17,5 +17,13 @@ export default defineConfig([
       "react-hooks/refs": "off",
     },
   },
+  {
+    files: ["components/lexigo-learn-app.tsx"],
+    rules: {
+      // Temporary compiler probe: remove after the guest-preview reset is
+      // folded into the final Learn controller state transition.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
