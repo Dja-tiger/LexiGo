@@ -55,6 +55,28 @@ describe("navigation history accessibility state", () => {
     expect(readNavigationHistoryState(state)).toEqual(state);
   });
 
+  it("accepts the dedicated Learn graph owner without copying framework state", () => {
+    vi.stubGlobal("window", {
+      location: { pathname: "/learn" },
+      history: { state: { lexigoRouteGraph: "learn", nextInternalState: "do-not-copy" } },
+    });
+
+    const state = createNavigationHistoryState(
+      { view: "learn", source: "data-engineering", topic: "Pipelines" },
+      { x: 0, y: 360 },
+    );
+
+    expect(state).toEqual({
+      lexigo: true,
+      version: 1,
+      target: { view: "learn", source: "data-engineering", topic: "Pipelines" },
+      scroll: { x: 0, y: 360 },
+      lexigoRouteGraph: "learn",
+    });
+    expect(state).not.toHaveProperty("nextInternalState");
+    expect(readNavigationHistoryState(state)).toEqual(state);
+  });
+
   it("sanitizes infinite and negative scroll coordinates", () => {
     expect(createNavigationHistoryState(
       { view: "progress" },
