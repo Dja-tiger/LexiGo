@@ -36,7 +36,7 @@
 - Relative to the original 238,257-byte Home graph, the reduction is 30,582 bytes or 12.8%.
 - Permanent Home limits are now 235,000 JavaScript bytes and 21 initial requests.
 - The temporary assertion was removed byte-for-byte; `frontend/e2e/route-bundle-budget.spec.ts` is restored to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`.
-- `bundle-budgets.test.ts` now stores the immutable original monolithic boundary independently from the extracted Home route and blocks Home, Dictionary and Progress from reaching it.
+- `bundle-budgets.test.ts` now stores the immutable original monolithic transfer and release limits independently from the extracted Home route.
 
 ### Failure classification and fixes
 
@@ -44,7 +44,8 @@
 - Security/lesson flow: the browser fixture returned 404 from `/api/v1/lessons/active` even after a successful lesson POST. The fixture now persists the created lesson and serves it on the next authenticated GET, matching server ownership across route graphs.
 - Visual system state: the extracted Home header omitted the reviewed streak control. The original flame icon and current-streak button were restored inside Home without changing the Figma hierarchy or promoting a new visual hash.
 - Back/Forward: `LexigoPremiumApp` scroll snapshot writes replaced `history.state` and removed `lexigoRouteGraph`. All History owners now use the shared state constructor, preserving only LexiGo-owned accessibility and graph fields.
+- Final CI #2130/run `30276740022`: frontend unit failed because the first generalized helper incorrectly required the existing Progress ceiling `240000` to be below the old measured transfer `238257`. The Progress contract is below the original release ceiling `275000` and within 16% of its own measured baseline. The helper now preserves that established semantic, while Home keeps the stronger explicit requirement `235000 < 238257`. No production code or budget value changed.
 
 ### Next action
 
-Run the full required matrix on the final developer-authored head with the permanent Home budget and no measurement probe. After success, verify the focused diff and review state, mark PR #251 Ready, perform expected-head squash merge and complete exact-SHA stage/public validation.
+Run the full required matrix on the corrected final developer-authored head with the permanent Home budget and no measurement probe. After success, verify the focused diff and review state, mark PR #251 Ready, perform expected-head squash merge and complete exact-SHA stage/public validation.
