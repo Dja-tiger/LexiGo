@@ -53,4 +53,13 @@ describe("route bundle budget configuration", () => {
     expect(dictionary.maxJavascriptBytes).toBeLessThan(monolith.maxJavascriptBytes);
     expect(dictionary.maxInitialRequests).toBeLessThan(monolith.maxInitialRequests);
   });
+
+  it("keeps the Progress island below the monolithic product graph", () => {
+    const monolith = bundleBudgets.routes["/"];
+    const progress = bundleBudgets.routes["/progress"];
+
+    expect(progress.baselineJavascriptBytes).toBeLessThan(monolith.baselineJavascriptBytes);
+    expect(progress.maxJavascriptBytes).toBeLessThan(monolith.maxJavascriptBytes);
+    expect(progress.maxInitialRequests).toBeLessThan(monolith.maxInitialRequests);
+  });
 });

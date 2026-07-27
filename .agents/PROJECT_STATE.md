@@ -2,9 +2,9 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 04:29 Europe/Berlin.
+- Last verified: 2026-07-27 11:38 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+- Live `main` at verification: `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
 - Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 - PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
 - PR #239 full CI: #2042, run `30225559882`, successful.
@@ -22,7 +22,8 @@
 - PR #245 final head `a6c6a8a1dd410ddb8fcab219f379aa8555b9d4da` passed lightweight CI #2063/run `30231679715` and was expected-head squash merged as `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
 - PR #245 exact scope artifact classified only `.agents/PROJECT_STATE.md` and the three `.agents/current/**` files as `agent_docs_only=true`; Agent Harness validation passed and all backend/frontend/browser/container jobs were skipped.
 - Push-triggered main CI for `2ba1053877f916be2c5f5ce4651d772256ee66dd` completed successfully through the lightweight path.
-- Automatic stage deployment for PR #245 was skipped: Issue #12 remains on exact runtime image `426144d00a857f36be8a543553df5029ac49a454`, run `30231298766`, with successful deploy/public smoke/public browser evidence.
+- Automatic stage deployment for PR #245 was skipped: Issue #12 remained on exact runtime image `426144d00a857f36be8a543553df5029ac49a454`, run `30231298766`, with successful deploy/public smoke/public browser evidence.
+- PR #246 recorded the post-merge Agent Docs proof and was expected-head squash merged as `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c` through the same lightweight path without redeploying stage.
 
 ## Completed
 
@@ -109,13 +110,16 @@
 - CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
 - Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
-- PR #245 proved both live pull-request and main-push fast paths: classifier and Agent Harness successful, all heavy jobs skipped, runtime image and stage deployment unchanged.
-- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset byte-for-byte from canonical templates.
+- PRs #245 and #246 proved live pull-request and main-push fast paths: classifier and Agent Harness successful, all heavy jobs skipped, runtime image and stage deployment unchanged.
 
 ## In progress
 
-- No product or runtime slice is active.
-- The next slice must be selected only after resolving live `main`, open PRs, Issues, CI and stage evidence again.
+- Issue #247, part of #115, is active in branch `perf/issue-247-progress-island-budget` and Draft PR #248.
+- Objective: close the Progress route-island slice with exclusive ownership, one-session-bootstrap browser evidence and a route-specific bundle budget.
+- Corrected CI #2074/run `30252335806` completed successfully on head `03854f0601972d270bb052725548578cf11929e3`.
+- Exact controlled measurement artifact `8648042201` records `/progress` at 207,502 JavaScript bytes and 18 initial requests, a 30,755-byte (12.9%) reduction from the original graph.
+- Permanent `/progress` ceilings are 240,000 JavaScript bytes and 21 requests; the temporary measurement probe is removed before final CI.
+- Final immutable-head CI, expected-head squash merge and exact-SHA stage/public validation remain pending.
 
 ## Remaining roadmap
 
@@ -133,7 +137,7 @@ Resolve architecture/privacy and typed backend contracts before implementation, 
 
 ### 4. #115 — Route-level client islands and budgets
 
-Inventory bundles and gradually extract remaining routes without duplicating session, API or PWA ownership.
+Complete the Progress slice in #247, then inventory and gradually extract the remaining Home, Learn, Phrases and Active Lesson routes without duplicating session, API, outbox or PWA ownership.
 
 ### 5. #70 — Legacy applications and CSS
 
@@ -147,6 +151,7 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 - Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
+- Issue #247 still requires final-head CI and post-merge exact-SHA stage/public evidence.
 
 ## Blocked
 
@@ -155,25 +160,21 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-2. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-3. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
-4. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-5. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
-6. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
-7. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
+1. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
+2. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+3. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+4. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+5. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+6. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+7. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
 
 ## Evidence
 
-- Live GitHub `main`, PRs #239/#240/#242/#244/#245, Issues #12/#170/#202/#241/#243, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
-- Product deployment evidence uses exact image `370d0dccfaa9c273d11164bbce37dd71975485cd` with successful deploy/public smoke/public browser checks.
-- CI reliability deployment evidence uses exact image `b63b6197fdffd0fc7623a5131c649aadaaa52476`, stage run `30227955912`, successful deploy/public smoke/public browser and 12/12 checks.
-- PR #240 final head `ba71e8fe3a3be6da52594559bbbea0e09b3b13ee` passed CI #2047/run `30228327070`; expected-head squash merge produced `387cc50c199218d71b49b39beb9d92859b6e299c`.
-- PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed complete CI #2060/run `30230474179`; expected-head squash merge produced `426144d00a857f36be8a543553df5029ac49a454`.
-- Stage run `30231298766` checked out exact SHA `426144d00a857f36be8a543553df5029ac49a454`, downloaded and validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
-- PR #245 final head `a6c6a8a1dd410ddb8fcab219f379aa8555b9d4da` passed lightweight CI #2063/run `30231679715`; expected-head squash merge produced `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-- The PR #245 scope artifact contained exactly four `.agents/**` paths and `agent_docs_only=true`; every heavy product/container job was skipped.
-- Issue #12 received the successful main-CI report for `2ba1053877f916be2c5f5ce4651d772256ee66dd`, while its deployment body remained unchanged on runtime image `426144d00a857f36be8a543553df5029ac49a454`, proving automatic stage deployment was skipped.
+- Live GitHub `main`, PR #248, Issues #12/#115/#247, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
+- Stage remains on exact runtime image `426144d00a857f36be8a543553df5029ac49a454`, run `30231298766`, with successful deploy/public smoke/public browser and 12/12 checks.
+- Corrected PR #248 CI #2074/run `30252335806` passed all required backend, frontend, browser, accessibility, visual and performance gates on head `03854f0601972d270bb052725548578cf11929e3`.
+- Exact performance artifact `8648042201` from run `30253573827` on probe head `96479e0f07eda62cff5176f519e6294e005a451b` records `/progress` at 207,502 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte afterward.
+- Initial CI #2068 failure was classified as a stale request-scoping fixture, fixed without runtime changes and promoted to mandatory rule `.agents/AGENTS.issue-247-request-scoped-fixtures.md`.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol

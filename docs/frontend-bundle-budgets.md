@@ -22,7 +22,7 @@ For each route the test records:
 - transferred JavaScript bytes using `max(transferSize, encodedBodySize)`;
 - runtime errors during direct entry.
 
-The covered routes are `/`, `/learn`, `/phrases`, `/dictionary`, `/progress`, `/profile` and `/lesson/active`.
+The covered routes are `/`, `/learn`, `/phrases`, `/dictionary`, `/words/101`, `/progress`, `/profile`, `/lesson/active`, `/scenarios` and `/scenarios/incident-update`.
 
 ## Blocking CI gate
 
@@ -42,7 +42,7 @@ Playwright global teardown also embeds it into the existing required artifact:
 test-results/performance-budget-report.json
 ```
 
-The report contains the execution profile, configured budgets, route totals and exact JavaScript asset inventory. Existing CI diagnostics upload `test-results` on failure and retain the combined performance artifact for successful release validation.
+The global teardown emits one stable, sorted log line per route containing only route, JavaScript bytes and initial request count. The JSON report remains the owner of the full execution profile, configured budgets and exact JavaScript asset inventory.
 
 ## Baseline and ceilings
 
@@ -62,7 +62,7 @@ All routes loaded the same 12 JavaScript chunks. This is the measurable baseline
 
 `frontend/bundle-budgets.json` owns the canonical route inventory and release ceilings. Routes that still use the global product graph retain the original `275,000` byte ceiling and at most 24 initial requests.
 
-These limits are ceilings, not targets. Client-island extraction must reduce route transfer and then tighten the corresponding route-specific ceiling from a successful production CI artifact.
+These limits are ceilings, not targets. Client-island extraction must reduce route transfer and then tighten the corresponding route-specific ceiling from successful production CI evidence.
 
 ## First route island: Dictionary
 
@@ -91,6 +91,35 @@ The route-specific budget is therefore locked to:
 
 The ceiling leaves bounded measurement and dependency-update headroom while remaining below the original monolithic transfer. `schemaVersion: 2` allows a route whose baseline differs from the shared original measurement to carry explicit `baselineEvidence` with the source run, capture date and head SHA.
 
+## Progress route island
+
+`/progress` is rendered by the dedicated dynamic entry `LexigoProgressApp`. `LexigoBootstrappedApp` remains mounted and is still the sole owner of session restoration, refresh coordination, route-entry loading, account lifecycle and `ReviewOutboxRuntime`.
+
+The Progress island owns only:
+
+- the authenticated Progress read and its loading/error/retry state;
+- due-queue and Scenario actions initiated from Progress;
+- Progress evidence presentation;
+- adoption of an access token returned by the shared authenticated JSON client.
+
+It does not import the monolithic `LexigoPremiumApp`, restore or refresh the session independently, own the review outbox, or register the PWA lifecycle. Source contracts enforce these boundaries. Browser coverage opens `/progress` directly and repeatedly navigates Progress ↔ Home/Learn/Dictionary while requiring exactly one network `/api/v1/auth/refresh` bootstrap request.
+
+CI #2074/run `30252335806` completed successfully on head `03854f0601972d270bb052725548578cf11929e3`, including frontend lint/typecheck/unit/build, all Chromium/WebKit/mobile/PWA groups and the performance gate. A controlled measurement execution on the same production graph, head `96479e0f07eda62cff5176f519e6294e005a451b`, produced exact report artifact `8648042201`; that head differed only by a temporary test-only probe which was removed before the final head.
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/progress` | 238,257 bytes | 207,502 bytes | 30,755 bytes (12.9%) | 18 |
+
+The route-specific budget is locked to:
+
+- `baselineJavascriptBytes`: `207502`;
+- `maxJavascriptBytes`: `240000`;
+- `maxInitialRequests`: `21`;
+- `baselineEvidence.sourceRun`: `30252335806`;
+- `baselineEvidence.headSha`: `03854f0601972d270bb052725548578cf11929e3`.
+
+The JavaScript ceiling gives less than 16% bounded headroom and remains below the original monolithic ceiling. The request ceiling also remains below the original 24-request limit. `frontend/lib/bundle-budgets.test.ts` blocks any change that makes Progress baseline or ceilings equal to or larger than the monolithic product graph.
+
 A budget increase requires:
 
 - the before/after JSON reports;
@@ -116,7 +145,7 @@ npm run test:e2e:performance
 - `route-bundle-budget.spec.ts` owns cold-route JavaScript measurement and reporting.
 - `bundle-budgets.test.ts` owns configuration invariants for ceilings and route-specific evidence.
 - `performance-budget.spec.ts` continues to own LCP, CLS, long-task, CSS and interaction budgets.
-- `performance-global-teardown.ts` owns the combined performance artifact contract.
+- `performance-global-teardown.ts` owns the combined performance report and compact route log contract.
 - `playwright.performance.config.ts` owns the production low-end mobile execution profile.
 - `frontend-container.sh` owns host-level shared/exclusive scheduling for frontend workloads.
 - `frontend-container.test.sh` owns the concurrency contract for that scheduling.

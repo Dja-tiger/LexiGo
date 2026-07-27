@@ -79,10 +79,14 @@ test("keeps the Dictionary query in a truthful empty state and exposes only impl
 
 test("keeps the Dictionary query through a correlated error and retries deterministically", async ({ context, page }) => {
   await installQualityGateAPI(context);
-  let fail = true;
+  let failSearch = true;
   await context.route("**/api/v1/words**", async (route) => {
-    if (new URL(route.request().url()).pathname !== "/api/v1/words") return route.fallback();
-    if (fail) {
+    const requestURL = new URL(route.request().url());
+    if (requestURL.pathname !== "/api/v1/words") return route.fallback();
+    if (requestURL.searchParams.get("query") !== "durable") {
+      return fulfillJSON(route, 200, catalogPage(QUALITY_WORDS));
+    }
+    if (failSearch) {
       return fulfillJSON(
         route,
         503,
@@ -95,6 +99,7 @@ test("keeps the Dictionary query through a correlated error and retries determin
 
   await page.goto("/dictionary");
   const search = page.getByRole("searchbox", { name: "Поиск по словарю" });
+  await expect(page.getByRole("listitem").first()).toBeVisible();
   await search.fill("durable");
   await search.press("Enter");
 
@@ -103,7 +108,7 @@ test("keeps the Dictionary query through a correlated error and retries determin
   await expect(error).toContainText("Код запроса: dictionary-system-state-503");
   await expect(search).toHaveValue("durable");
 
-  fail = false;
+  failSearch = false;
   await error.getByRole("button", { name: "Повторить", exact: true }).click();
   await expect(page.getByRole("listitem").filter({ hasText: "durable" })).toBeVisible();
   await expect(search).toHaveValue("durable");
