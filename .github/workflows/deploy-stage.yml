@@ -18,15 +18,52 @@ concurrency:
 permissions:
   contents: read
   packages: read
+  actions: read
   issues: write
 
 jobs:
-  deploy:
+  scope:
+    name: Resolve CI deployment scope
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main')
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    outputs:
+      agent_docs_only: ${{ steps.scope.outputs.agent_docs_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Download exact CI scope artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ci-scope-${{ github.event.workflow_run.head_sha }}
+          path: ${{ runner.temp }}/lexigo-ci-scope
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - id: scope
+        name: Validate exact CI scope artifact
+        run: |
+          python3 scripts/ci/agent_docs_scope.py validate-artifact \
+            --artifact "$RUNNER_TEMP/lexigo-ci-scope/scope.json" \
+            --expected-head-sha "${{ github.event.workflow_run.head_sha }}" \
+            --github-output "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: [scope]
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+      (needs.scope.result == 'success' &&
+      needs.scope.outputs.agent_docs_only != 'true' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'))
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 40
     environment: stage

@@ -18,7 +18,9 @@ def require(condition: bool, message: str, violations: list[str]) -> None:
 def main() -> None:
     violations: list[str] = []
     ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
-    require(ci.count(HOSTED_RUNNER) == 6, "ci.yml: expected six configurable runner jobs", violations)
+    require(ci.count(HOSTED_RUNNER) == 8, "ci.yml: expected eight configurable runner jobs", violations)
+    require("  change-scope:\n" in ci, "ci.yml: change-scope job is required", violations)
+    require("  agent-docs:\n" in ci, "ci.yml: Agent Docs validation job is required", violations)
     require("self-hosted" not in ci, "ci.yml: hard-coded self-hosted labels are forbidden", violations)
     require("max-parallel: 1" not in ci, "ci.yml: hosted matrices must not be serialized", violations)
     require("ci-resource-cleanup:" not in ci, "ci.yml: shared-host cleanup job must be absent", violations)
@@ -33,7 +35,7 @@ def main() -> None:
 
     if violations:
         raise SystemExit("\n".join(violations))
-    print("Validated GitHub-hosted CI profile with unrestricted matrices")
+    print("Validated GitHub-hosted CI profile with unrestricted matrices and Agent Docs routing")
 
 
 if __name__ == "__main__":

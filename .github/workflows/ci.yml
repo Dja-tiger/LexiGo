@@ -13,11 +13,69 @@ permissions:
   contents: read
 
 jobs:
-  backend-unit:
-    name: Backend unit and security
+  change-scope:
+    name: Classify change scope
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    outputs:
+      agent_docs_only: ${{ steps.scope.outputs.agent_docs_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: scope
+        name: Classify changed paths
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -Eeuo pipefail
+          base_sha="$PUSH_BEFORE_SHA"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base_sha="$PR_BASE_SHA"
+          fi
+          python3 scripts/ci/agent_docs_scope.py classify \
+            --repo "$GITHUB_WORKSPACE" \
+            --base-sha "$base_sha" \
+            --head-sha "$GITHUB_SHA" \
+            --github-output "$GITHUB_OUTPUT" \
+            --artifact "$RUNNER_TEMP/lexigo-ci-scope/scope.json"
+      - name: Validate Agent Docs routing contract
+        run: python3 scripts/ci/agent_docs_scope_test.py
+      - name: Publish CI scope
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: ci-scope-${{ github.sha }}
+          path: ${{ runner.temp }}/lexigo-ci-scope/scope.json
+          if-no-files-found: error
+          retention-days: 1
+
+  agent-docs:
+    name: Agent Harness validation
+    needs: [change-scope]
+    if: >-
+      needs.change-scope.outputs.agent_docs_only == 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate Agent Harness
+        run: bash scripts/ci/check-agent-harness.sh
+
+  backend-unit:
+    name: Backend unit and security
+    needs: [change-scope]
+    if: >-
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
@@ -78,9 +136,11 @@ jobs:
 
   backend-integration:
     name: Backend integration
+    needs: [change-scope]
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
@@ -213,9 +273,11 @@ jobs:
 
   frontend-core:
     name: Frontend core quality
+    needs: [change-scope]
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
@@ -277,10 +339,11 @@ jobs:
 
   frontend-browser:
     name: Frontend E2E (${{ matrix.name }})
-    needs: [frontend-core]
+    needs: [change-scope, frontend-core]
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
@@ -412,9 +475,11 @@ jobs:
 
   frontend:
     name: Frontend quality
-    needs: [frontend-core, frontend-browser]
+    needs: [change-scope, frontend-core, frontend-browser]
     if: >-
       always() &&
+      needs.change-scope.result == 'success' &&
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
       (github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
@@ -431,12 +496,13 @@ jobs:
 
   container-build:
     name: Container build (${{ matrix.component }})
+    needs: [change-scope, backend-unit, backend-integration, frontend]
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
-    needs: [backend-unit, backend-integration, frontend]
     env:
       BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
       CI_LEASE_CONTAINER: lexigo-buildx-lease-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.component }}
