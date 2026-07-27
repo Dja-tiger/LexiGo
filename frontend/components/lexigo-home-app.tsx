@@ -73,6 +73,7 @@ type HomeNextAction = {
   action: () => void;
 };
 
+const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 const DUE_COPY = learningTermCopy("due");
 const RETAINED_COPY = learningTermCopy("retained");
 const WORD_PREVIEW = {
@@ -113,6 +114,15 @@ function sourceLabel(source: LessonSource): string {
   if (source === "backend") return "Backend-разработка";
   if (source === "academic-technical-english") return "Academic Technical English";
   return "Смешанная практика";
+}
+
+function requestProductGraph(targetURL: string): void {
+  window.dispatchEvent(new CustomEvent(PRODUCT_ROUTE_GRAPH_EVENT, {
+    detail: {
+      routeGraph: "product",
+      pathname: new URL(targetURL, window.location.origin).pathname,
+    },
+  }));
 }
 
 export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAppProps) {
@@ -200,13 +210,17 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     || "L", [session]);
 
   const navigate = useCallback((target: NavigationTarget, intent: ProductJourneyIntent = "in_app_navigation") => {
+    const targetURL = navigationURL(target);
     queueProductJourneyIntent(intent);
-    router.push(navigationURL(target), { scroll: false });
+    requestProductGraph(targetURL);
+    router.push(targetURL, { scroll: false });
   }, [router]);
 
   const openLesson = useCallback(() => {
+    const targetURL = lessonResumeURL();
     queueProductJourneyIntent("home_next_action");
-    router.push(lessonResumeURL(), { scroll: false });
+    requestProductGraph(targetURL);
+    router.push(targetURL, { scroll: false });
   }, [router]);
 
   const startLesson = useCallback(async (mode: StudyMode, lessonSize: 15 | 30) => {
@@ -243,7 +257,6 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
   const activeLessonPending = Boolean(session && (
     activeLessonStatus.phase === "idle" || activeLessonStatus.phase === "loading"
   ));
-  const planPending = activeLessonPending || progressPending;
   const dueNow = progress?.dueNow ?? 0;
 
   const nextAction: HomeNextAction = activeLesson
@@ -255,7 +268,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
         icon: "play",
         action: openLesson,
       }
-    : planPending
+    : activeLessonPending
       ? {
           eyebrow: "СИНХРОНИЗИРУЕМ ПЛАН",
           title: "Проверяем учебную очередь",
