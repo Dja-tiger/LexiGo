@@ -32,6 +32,7 @@ const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson";
 const LESSON_EXIT_REQUEST_EVENT = "lexigo:request-lesson-exit";
 const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice";
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
+const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -137,6 +138,10 @@ function isKeyboardScrollIntent(event: KeyboardEvent): boolean {
     && SCROLL_INTENT_KEYS.has(event.key);
 }
 
+function recordState(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
 function RouteSkipLink() {
   function skipToMainContent(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -158,6 +163,8 @@ export function RoutedLexigoApp() {
   const router = useRouter();
   const previousPathRef = useRef<string | null>(null);
   const announcementCounterRef = useRef(0);
+  const focusedLessonURLRef = useRef("/lesson/active");
+  const focusedLessonHistoryStateRef = useRef<Record<string, unknown>>({});
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
   const [focusedLessonExitRequested, setFocusedLessonExitRequested] = useState(false);
   const [lessonResultNotice, setLessonResultNotice] = useState("");
@@ -166,31 +173,38 @@ export function RoutedLexigoApp() {
   }, [router]);
 
   useLayoutEffect(() => {
-    let restoringFocusedLesson = false;
+    if (!pathname.startsWith("/lesson/")) return;
+    focusedLessonURLRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    focusedLessonHistoryStateRef.current = { ...recordState(window.history.state) };
+  }, [pathname]);
 
+  useLayoutEffect(() => {
     const preserveFocusedLesson = (event: PopStateEvent) => {
-      if (restoringFocusedLesson) {
-        event.stopImmediatePropagation();
-        restoringFocusedLesson = false;
-        setFocusedLessonExitRequested(true);
-        window.requestAnimationFrame(() => {
-          window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
-        });
-        return;
-      }
-
       if (window.location.pathname !== "/learn"
         || !document.querySelector(ACTIVE_LESSON_SELECTOR)) {
         return;
       }
 
-      // Browser Back has already selected the previous Learn entry when
-      // popstate fires. Restore the existing focused-lesson entry instead of
-      // replacing or synthesising History state; this preserves Next.js fields,
-      // the user's forward stack and the product safe-exit owner byte-for-byte.
+      // popstate fires after Browser Back has selected the Learn entry. Stop
+      // Next.js before it remounts the Learn island, then recreate the same
+      // focused route atomically. pushState intentionally discards the stale
+      // forward entry while preserving every captured Next.js field and the
+      // product graph owner; no synthetic popstate or duplicate submit occurs.
       event.stopImmediatePropagation();
-      restoringFocusedLesson = true;
-      window.history.forward();
+      const protectedState = {
+        ...recordState(event.state),
+        ...focusedLessonHistoryStateRef.current,
+        ...createNavigationHistoryState(
+          { view: "lesson", detail: "active" },
+          { x: window.scrollX, y: window.scrollY },
+        ),
+        [ROUTE_GRAPH_HISTORY_KEY]: "product",
+      };
+      window.history.pushState(protectedState, "", focusedLessonURLRef.current);
+      setFocusedLessonExitRequested(true);
+      window.requestAnimationFrame(() => {
+        window.dispatchEvent(new Event(LESSON_EXIT_REQUEST_EVENT));
+      });
     };
 
     const clearFocusedLessonExitForNewHandoff = (event: Event) => {
