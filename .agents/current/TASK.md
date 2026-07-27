@@ -18,6 +18,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Keep Home API reads and next-best-action presentation inside the Home island.
 - Add Home-aware App Router graph handoff for Home ↔ product/dictionary navigation.
 - Preserve standalone PWA relaunch restoration when `/` is no longer owned by the compatibility graph.
+- Preserve one logical progress/active-lesson read across short Home route-graph handoffs without caching mutations or moving resource ownership.
 - Add an explicit one-time `resume=1` intent so a Home-created or resumed active lesson opens immediately without a second user click.
 - Preserve Figma production nodes `194:249` (desktop) and `196:223` (mobile).
 - Add source, unit and browser contracts for ownership, canonical history and single session bootstrap.
@@ -28,6 +29,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - Redesign Home, Learn or Active Lesson.
 - Change backend lesson composition, scheduler, review persistence or lesson position ownership.
 - Move session restoration, review outbox, Service Worker or appearance bootstrap into a route island.
+- Introduce persistent, cross-session or mutation response caching.
 - Tighten the Home release ceiling before an exact controlled measurement exists.
 - Extract Learn, Phrases or Active Lesson from `LexigoPremiumApp` in this slice.
 
@@ -43,6 +45,8 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `frontend/components/word-detail-source.test.ts`
 - `frontend/lib/lesson-resume-intent.ts`
 - `frontend/lib/lesson-resume-intent.test.ts`
+- `frontend/lib/request-failure.ts`
+- `frontend/lib/request-failure.test.ts`
 - `frontend/e2e/home-route-island.spec.ts`
 - `frontend/e2e/lesson-flow.spec.ts`
 - `frontend/bundle-budgets.json` after exact measurement only
@@ -67,8 +71,9 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - `LexigoBootstrappedApp`: sole session restoration, token adoption and route-entry owner.
 - `ReviewOutboxRuntime`: sole connectivity and review-outbox owner.
 - Root layout: sole Service Worker, Web Vitals and global runtime owner.
-- `RoutedLexigoApp`: canonical route initialization and standalone PWA start-route restoration.
+- `RoutedLexigoApp`: canonical route initialization, persisted stable-route ownership and standalone PWA start-route restoration.
 - `LexigoHomeApp`: Home-only progress/active-lesson reads, next-best-action presentation and lesson-create intent.
+- `fetchWithTimeout`: bounded in-memory reuse of immutable Home handoff reads, scoped by token and URL and invalidated by every API mutation.
 - `LexigoPremiumApp`: Learn, Phrases and Active Lesson compatibility graph; backend remains authoritative for lesson lifecycle.
 
 ## Documentation owners
@@ -85,6 +90,8 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - A new Home-created lesson uses the existing authenticated lesson API and opens `/lesson/active` immediately.
 - `resume=1` is transient, consumed once and removed without losing unrelated query/hash/history state.
 - Standalone PWA relaunch from `/` restores the last stable persisted route before route-graph handoff.
+- Direct Dictionary entry remains a cold island; warm Dictionary history remains owned by the compatibility graph across Back/Forward.
+- Progress and active-lesson handoff reuse is client-memory-only, token/URL scoped, short-lived and cleared before every non-GET API request.
 - Home island does not import `LexigoPremiumApp`, session restoration, outbox or Service Worker owners.
 - Canonical pathname/history settle before another client graph mounts.
 - Home Light/Dark, responsive, reduced-motion, keyboard and Figma geometry contracts do not regress.
@@ -114,6 +121,7 @@ Extract canonical `/` into a dedicated `LexigoHomeApp` client island, preserve o
 - The transient resume intent may fire more than once or be lost during rerender.
 - Home may create a new lesson when active-lesson detection failed.
 - Shared shell changes may regress Dictionary/Progress/PWA navigation.
+- A handoff cache may hide fresh data if mutation invalidation or token scoping is weakened.
 - Premature budget tightening may encode an unverified number.
 
 ## Rollback
