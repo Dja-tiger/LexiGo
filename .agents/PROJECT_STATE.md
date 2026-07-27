@@ -2,9 +2,9 @@
 
 ## Verification
 
-- Last verified: 2026-07-27 03:10 Europe/Berlin.
+- Last verified: 2026-07-27 04:09 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `387cc50c199218d71b49b39beb9d92859b6e299c`.
+- Live `main` at verification: `426144d00a857f36be8a543553df5029ac49a454`.
 - Latest product merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
 - PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
 - PR #239 full CI: #2042, run `30225559882`, successful.
@@ -16,7 +16,9 @@
 - Issue #241 is closed as completed.
 - PR #242 exact-SHA stage/public validation: run `30227955912`, deploy/public smoke/public browser successful, 12/12 checks passed.
 - Documentation reconciliation PR #240 passed final immutable-head CI #2047/run `30228327070` and was expected-head squash merged as `387cc50c199218d71b49b39beb9d92859b6e299c`.
-- Issue #243 is the only active slice: a tooling-only Agent Docs CI fast path.
+- Agent Docs CI optimization PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed CI #2060/run `30230474179` and was expected-head squash merged as `426144d00a857f36be8a543553df5029ac49a454`.
+- Issue #243 is closed as completed.
+- PR #244 exact-SHA stage/public validation: run `30231298766`, exact image `426144d00a857f36be8a543553df5029ac49a454`, scope validation/deploy/public smoke/public browser successful, 12/12 checks passed.
 
 ## Completed
 
@@ -92,20 +94,23 @@
 - Calendar buckets must be seeded from explicit production boundaries, not fixed-duration approximations from `now()`.
 - Same-head retries are prohibited when a failure is proven deterministic for the current calendar boundary.
 
-### Agent Harness
+### Agent Harness and Agent Docs CI
 
 - The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
 - PR #240 recorded PR #239 and PR #242 evidence, reset `.agents/current/**` from canonical templates and merged as `387cc50c199218d71b49b39beb9d92859b6e299c` after CI #2047 succeeded.
 - PR #242 added mandatory calendar-boundary fixture guidance.
-- Issue #243 now tracks a conservative CI optimization for pure Agent Harness documentation changes.
+- PR #244 introduced fail-closed base-to-head scope classification and retained the required `CI` workflow for every pull request and `main` push.
+- Only pure changes limited to `AGENTS.md`, `.agents/**` and `docs/agent-harness.md` may use the lightweight Agent Harness path.
+- Workflow, script, runtime, dependency, mixed and all other documentation changes retain the complete backend/frontend/browser/container matrix.
+- CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
+- Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
+- Missing, malformed or mismatched scope evidence blocks automatic deployment.
 
 ## In progress
 
-- Issue #243 on branch `chore/issue-243-agent-docs-ci` from base `387cc50c199218d71b49b39beb9d92859b6e299c`.
-- Objective: route pure changes limited to `AGENTS.md`, `.agents/**` and `docs/agent-harness.md` through a dedicated Agent Docs validation workflow.
-- Product, mixed, workflow, script, dependency and other documentation changes must retain the complete existing CI matrix.
-- A pure Agent Docs push to `main` must not publish runtime images or trigger automatic stage deployment; manual stage deployment remains unchanged.
-- Allowed implementation paths are recorded in `.agents/current/TASK.md`.
+- Documentation-only branch `docs/reconcile-agent-docs-fast-path` verifies the new pure Agent Docs path with only `.agents/**` changes.
+- Required evidence: classifier and Agent Harness jobs successful; backend, frontend, browser and container jobs skipped; after merge the stage image must remain `426144d00a857f36be8a543553df5029ac49a454` and automatic deploy must be skipped.
+- No new product/runtime slice may begin until this reconciliation proof is merged and post-merge behavior is verified.
 
 ## Remaining roadmap
 
@@ -135,9 +140,9 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Validation pending
 
+- The pure Agent Docs reconciliation branch must prove the lightweight PR and push paths plus skipped automatic stage deployment.
 - Phrases and parts of First Use require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
-- Issue #243 must prove pure/mixed/unrelated path routing and verify actual GitHub check behavior before merge.
 
 ## Blocked
 
@@ -146,20 +151,22 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
-2. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-3. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
-4. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
-5. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
-6. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
-7. #233 — `feat(dictionary): implement Figma-backed catalog` → `5da5218250c671fcee73dbe154f0e14703b05036`.
+1. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+2. #240 — `docs(agent): reconcile state after system states` → `387cc50c199218d71b49b39beb9d92859b6e299c`.
+3. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+4. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+5. #238 — `docs(agent): reconcile state after Profile` → `d906cacf21f5a25dc52a380ab8ce681177831532`.
+6. #237 — `feat(profile): implement Figma Profile and appearance preferences` → `9f8a5bc33cf87a2f1710edc309d889a5b7130a5f`.
+7. #235 — `feat(dictionary): implement canonical Word Detail` → `5551ec5b0ac849e884c1c94dff91ae66a73269d9`.
 
 ## Evidence
 
-- Live GitHub `main`, PRs #239/#240/#242, Issues #12/#170/#202/#241/#243, immutable heads and CI runs were re-read at the verification timestamp.
+- Live GitHub `main`, PRs #239/#240/#242/#244, Issues #12/#170/#202/#241/#243, immutable heads and CI/deployment evidence were re-read at the verification timestamp.
 - Product deployment evidence uses exact image `370d0dccfaa9c273d11164bbce37dd71975485cd` with successful deploy/public smoke/public browser checks.
 - CI reliability deployment evidence uses exact image `b63b6197fdffd0fc7623a5131c649aadaaa52476`, stage run `30227955912`, successful deploy/public smoke/public browser and 12/12 checks.
 - PR #240 final head `ba71e8fe3a3be6da52594559bbbea0e09b3b13ee` passed CI #2047/run `30228327070`; expected-head squash merge produced `387cc50c199218d71b49b39beb9d92859b6e299c`.
+- PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed complete CI #2060/run `30230474179`; expected-head squash merge produced `426144d00a857f36be8a543553df5029ac49a454`.
+- Stage run `30231298766` checked out exact SHA `426144d00a857f36be8a543553df5029ac49a454`, downloaded and validated the exact CI scope artifact, deployed that image and passed public smoke plus 12/12 public browser tests.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
