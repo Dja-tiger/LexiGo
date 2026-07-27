@@ -28,6 +28,8 @@ import { LexigoBootstrappedApp } from "./lexigo-bootstrapped-app";
 import { RouteChrome } from "./route-primary-navigation";
 
 const ROUTE_ISLAND_BOUNDARIES = new Set(["/", "/learn", "/progress", "/scenarios"]);
+const ROUTE_GRAPH_HISTORY_KEY = "lexigoRouteGraph";
+const ACTIVE_LESSON_SELECTOR = ".lx-active-lesson";
 const SCROLL_INTENT_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -158,6 +160,39 @@ export function RoutedLexigoApp() {
   const navigateHome = useCallback(() => {
     router.replace("/", { scroll: false });
   }, [router]);
+
+  useLayoutEffect(() => {
+    let redispatchingProtectedHistory = false;
+    const preserveFocusedLessonGraph = (event: PopStateEvent) => {
+      if (redispatchingProtectedHistory
+        || window.location.pathname !== "/learn"
+        || !document.querySelector(ACTIVE_LESSON_SELECTOR)) {
+        return;
+      }
+
+      const currentState = event.state && typeof event.state === "object"
+        ? event.state as Record<string, unknown>
+        : {};
+      if (currentState[ROUTE_GRAPH_HISTORY_KEY] === "product") return;
+
+      // Back from an unfinished lesson first belongs to the product graph so
+      // its safe-exit owner can block navigation and open the confirmation.
+      // Re-dispatch the same history entry with only LexiGo's graph marker
+      // changed; preserve every Next.js internal field byte-for-byte.
+      event.stopImmediatePropagation();
+      const protectedState = {
+        ...currentState,
+        [ROUTE_GRAPH_HISTORY_KEY]: "product",
+      };
+      window.history.replaceState(protectedState, "", window.location.href);
+      redispatchingProtectedHistory = true;
+      window.dispatchEvent(new PopStateEvent("popstate", { state: protectedState }));
+      redispatchingProtectedHistory = false;
+    };
+
+    window.addEventListener("popstate", preserveFocusedLessonGraph, { capture: true });
+    return () => window.removeEventListener("popstate", preserveFocusedLessonGraph, { capture: true });
+  }, []);
 
   useLayoutEffect(() => {
     initializeRouteEntry();
