@@ -14,14 +14,17 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 
 ## Scope
 
-- Add exact path filtering to the existing `CI` workflow for pure Agent Harness documentation changes.
-- Add a dedicated Agent Docs workflow that runs the harness source contract and path-routing regression contract.
+- Keep the existing `CI` workflow registered for every pull request and `main` push so branch-protection checks cannot remain permanently pending.
+- Add an exact changed-path classifier to `CI` for pure Agent Harness documentation changes.
+- Run only lightweight routing-contract and Agent Harness validation when the classifier reports a pure Agent Docs change.
+- Skip backend, frontend, browser and container jobs only for that exact pure scope.
+- Publish a fail-closed CI scope artifact and make automatic stage deployment consume it before deploying.
 - Record the completed PR #240 reconciliation and the active Issue #243 tooling slice in repository memory.
-- Preserve the complete existing CI matrix for every non-Agent-Docs or mixed change.
+- Preserve the complete existing product CI commands and browser/container matrix for every non-Agent-Docs or mixed change.
 
 ## Non-goals
 
-- No runtime, API, dependency, product UI, test expectation or deployment-script changes.
+- No runtime, API, dependency, product UI, test expectation or deployment-script behavior changes beyond the automatic deployment eligibility gate.
 - No broad skip for arbitrary documentation.
 - No change to manual stage deployment.
 - No weakening of full CI for mixed changes.
@@ -29,8 +32,9 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 ## Allowed paths
 
 - `.github/workflows/ci.yml`
-- `.github/workflows/agent-docs.yml`
-- `scripts/ci/agent_docs_workflow_test.py`
+- `.github/workflows/deploy-stage.yml`
+- `scripts/ci/agent_docs_scope.py`
+- `scripts/ci/agent_docs_scope_test.py`
 - `.agents/PROJECT_STATE.md`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -48,9 +52,10 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 
 ## Runtime owners
 
-- `.github/workflows/ci.yml` owns the complete product CI trigger and test/build matrix.
-- `.github/workflows/deploy-stage.yml` remains unchanged and only reacts to successful push-triggered `CI` workflow runs on `main`.
-- `.github/workflows/agent-docs.yml` will own pure Agent Harness documentation validation.
+- `.github/workflows/ci.yml` owns the required CI check lifecycle, exact scope classification, product test/build matrix and CI scope artifact.
+- `.github/workflows/deploy-stage.yml` owns automatic/manual stage eligibility and must fail closed when the CI scope artifact is missing or invalid.
+- `scripts/ci/agent_docs_scope.py` owns deterministic path classification for pull-request and push base/head ranges.
+- `scripts/ci/agent_docs_scope_test.py` owns regression protection for pure, mixed, unrelated and ambiguous scopes plus workflow wiring.
 
 ## Documentation owners
 
@@ -61,35 +66,43 @@ Add a conservative CI fast path for pure Agent Harness documentation changes so 
 
 ## Invariants
 
+- The `CI` workflow remains registered for all pull requests and `main` pushes.
 - A mixed change must run full CI.
-- Workflow, script, README, architecture, runtime, dependency and deployment changes must run full CI.
+- Workflow, classifier script, README, architecture, runtime, dependency and deployment changes must run full CI.
 - Only `AGENTS.md`, `.agents/**` and `docs/agent-harness.md` may qualify for the Agent Docs path.
-- Pure Agent Docs pushes to `main` must not produce a successful `CI` workflow run, runtime images or an automatic stage deployment.
-- Manual stage deployment remains available.
-- The dedicated Agent Docs workflow must validate the harness and its own routing contract.
+- Empty, unavailable or ambiguous base/head ranges classify as non-Agent-Docs and therefore run full CI.
+- Pure Agent Docs pushes to `main` must not build/publish runtime images or perform automatic stage deployment.
+- Automatic stage deploy requires a valid scope artifact from the exact successful `CI` workflow run.
+- Manual stage deployment remains available and bypasses the automatic scope-artifact requirement.
+- Existing product job commands, browser matrix and container publication semantics remain unchanged for non-Agent-Docs changes.
 
 ## Acceptance criteria
 
 - Issue #243 acceptance criteria are implemented and source-protected.
-- Full CI path commands and matrix remain byte-for-byte unchanged outside the trigger filter.
-- Agent Docs path validation is deterministic for pure, mixed and unrelated path sets.
+- Pure Agent Docs changes run the classifier/routing contract and `scripts/ci/check-agent-harness.sh`, while heavy jobs are skipped.
+- Mixed and unrelated changes execute the complete existing CI matrix.
+- Stage automatic deployment is skipped only when the exact CI artifact reports `agent_docs_only=true`.
+- Missing, malformed or mismatched scope evidence blocks automatic deployment.
 - Final PR diff contains only allowed paths.
 
 ## Required checks
 
-- `python3 scripts/ci/agent_docs_workflow_test.py`
+- `python3 scripts/ci/agent_docs_scope_test.py`
+- classifier CLI tests against synthetic Git histories
 - `bash scripts/ci/check-agent-harness.sh`
-- YAML parse/source inspection for both workflows
-- Full required CI on the final workflow-changing head
-- Review threads empty before expected-head squash merge
-- Post-merge main validation; automatic stage deployment must be absent for a later pure Agent Docs commit
+- source inspection for unchanged product job commands/matrix
+- full required CI on the final workflow-changing head
+- review threads empty before expected-head squash merge
+- post-merge main validation and normal tooling-change stage validation
+- subsequent pure Agent Docs reconciliation must prove heavy CI jobs and automatic stage deploy are skipped
 
 ## Risks
 
-- Incorrect `paths-ignore` semantics could skip product CI for mixed changes.
-- A mismatched dedicated workflow path list could leave pure Agent Docs changes without validation.
-- Required-check configuration may depend on the existing `CI` workflow name; the PR must verify actual check behavior before merge.
+- Incorrect changed-range selection could classify a mixed push as documentation-only.
+- Job-level skip wiring could break required-check aggregation or dependency semantics.
+- Missing scope artifact handling could either deploy unsafely or block legitimate stage releases.
+- `workflow_run` artifact download permissions or action inputs could differ from assumptions and require evidence from final CI/stage runs.
 
 ## Rollback
 
-Revert the workflow and routing-test commit. The repository returns to the previous full-CI-for-all-changes behavior without runtime data migration or deployment rollback.
+Revert the workflow and classifier commit. The repository returns to the previous full-CI-and-stage-for-all-main-changes behavior without runtime data migration or product rollback.
