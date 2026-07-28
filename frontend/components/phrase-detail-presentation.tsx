@@ -1,6 +1,7 @@
 "use client";
 
 import type { ResourceStatus } from "../lib/account-resources";
+import { learningTermCopy } from "../lib/interface-copy";
 import { phraseStatusLabel, phraseTopicLabel, type PhraseItem } from "../lib/phrases";
 import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { SpeechPlayerButton } from "./speech-player-button";
@@ -44,6 +45,7 @@ function BookIcon() {
 
 function PhraseContent({ phrase }: { phrase: PhraseItem }) {
   const examples = phrase.examples.filter((example) => example.trim()).slice(0, 3);
+  const clozeCopy = learningTermCopy("cloze");
   return (
     <>
       <header className="lx-phrase-detail-hero">
@@ -76,7 +78,8 @@ function PhraseContent({ phrase }: { phrase: PhraseItem }) {
         <section className="lx-phrase-detail-section lx-phrase-cloze" aria-labelledby="phrase-cloze-heading">
           <span className="lx-phrase-detail-section-icon" aria-hidden="true">…</span>
           <div>
-            <h2 id="phrase-cloze-heading">Заполните пропуск</h2>
+            <h2 id="phrase-cloze-heading">{clozeCopy.label}</h2>
+            <p className="lx-phrase-cloze-explanation">{clozeCopy.explanation}</p>
             <p lang="en">{phrase.cloze}</p>
             {phrase.clozeAnswer ? <small>Ответ: <span lang="en">{phrase.clozeAnswer}</span></small> : null}
           </div>
