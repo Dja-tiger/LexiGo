@@ -5,8 +5,9 @@
 - Issue: #70 — remove one proven-dead Phrases compatibility runtime family.
 - Branch: `refactor/issue-70-remove-phrases-compat`.
 - Base SHA: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
-- Head SHA: resolve from live branch ref.
-- PR: not opened yet.
+- Implementation SHA: `169e8978588cfe3cd9adf22fe4b0dbf17bdbc6fd`.
+- Current head SHA: resolve from live branch ref.
+- PR: #281, Draft.
 
 ## Objective
 
@@ -15,10 +16,10 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 ## Scope
 
 - Delete only route-level Phrases catalog/detail state, derived values, API loaders, lifecycle effects, URL/filter synchronization, navigation handlers and presentation branches from `frontend/components/lexigo-premium-app.tsx`.
-- Remove imports, types, helpers and icon branches only when TypeScript/source evidence proves they became unused because of that route-family deletion.
-- Replace the compatibility candidate-presence contract with exact absence assertions while retaining canonical Phrases island ownership and shared lesson-domain assertions.
-- Measure exact line/byte reduction and controlled route bundle output without raising any permanent budget.
-- A temporary branch-local edit workflow may be used only to apply fail-closed exact transformations through the connected GitHub environment; it must be deleted before PR creation and must not appear in the final diff.
+- Remove imports, types, helpers and icon branches only where the deleted route family was the sole consumer.
+- Replace compatibility candidate-presence assertions with exact absence assertions while retaining canonical Phrases island ownership and shared lesson-domain assertions.
+- Measure source reduction and controlled route bundle output without raising any permanent budget.
+- A transient branch-local workflow was used to apply an exact fail-closed transformation through the connected GitHub environment; it has been deleted and is absent from the PR diff.
 
 ## Non-goals
 
@@ -28,14 +29,13 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 - No lesson, review, answer-suggestion, backend, API, schema, migration, deployment or permanent CI workflow changes.
 - No broad deletion of `LexigoPremiumApp` or unrelated compatibility families.
 
-## Allowed paths
+## Final allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
-- `.github/workflows/temporary-issue70-edit.yml` only as a transient branch-local implementation mechanism; absent from final PR diff.
 
 ## Prohibited paths
 
@@ -64,7 +64,7 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 - `LessonSource = WordSection | "phrases"` remains supported.
 - Lesson Composer keeps the “Технические фразы” source option.
 - Mixed lessons retain words/phrases composition and fallback messaging.
-- `toLearningItem` retains phrase slug/cloze fallback behavior.
+- `DEFAULT_PHRASE_CATALOG` and `toLearningItem` retain phrase slug/cloze fallback behavior.
 - Phrase-containing Active Lesson review and `exerciseKind: "cloze"` answer suggestions remain intact.
 - Guest/auth/account-recovery fallback remains reachable.
 - Canonical Phrases direct entry, reload, new tab and Browser Back/Forward continue selecting `LexigoPhrasesApp` before `LexigoPremiumApp`.
@@ -75,7 +75,7 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 - Every marker listed by the compatibility deletion contract is absent from `LexigoPremiumApp`.
 - Canonical Phrases reachability/ownership assertions remain green.
 - Shared phrase lesson-domain assertions remain green.
-- The final diff contains only the five persistent allowed files and no temporary workflow.
+- The final diff contains only the five final allowed files and no transient workflow.
 - Lint, TypeScript, unit/source contracts, production build, full browser/device/accessibility/PWA/visual/performance/container CI all pass.
 - Controlled bundle evidence is available and no permanent budget increases.
 - Review audit is empty or all actionable feedback is resolved.
@@ -95,11 +95,10 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 
 ## Risks
 
-- A candidate symbol may still have a non-route lesson/auth consumer.
-- Broad string deletion can damage adjacent legacy fallback code.
-- Removing a route-only import may accidentally remove a shared lesson fallback dependency.
-- Pure dead-code deletion can still perturb chunking or visual output and must be measured.
+- A candidate symbol may still have a non-route lesson/auth consumer despite source proof.
+- Pure dead-code deletion can perturb chunking or visual output and must be measured.
+- Existing CSS selectors remain intentionally untouched and require a later proof-gated slice.
 
 ## Rollback
 
-Revert the atomic squash merge. Stop immediately before PR publication if exact source assertions, TypeScript, visual hashes, bundle evidence or scope boundaries cannot be proven.
+Revert the atomic squash merge. Stop before merge if exact source assertions, TypeScript, visual hashes, bundle evidence or scope boundaries cannot be proven.
