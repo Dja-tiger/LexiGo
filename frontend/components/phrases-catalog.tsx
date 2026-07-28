@@ -13,6 +13,7 @@ import { CatalogPagination } from "./catalog-pagination";
 
 export type PhrasesCatalogProps = {
   authenticated: boolean;
+  duePhrases: number | null;
   filters: PhraseCatalogFilters;
   searchInput: string;
   items: PhraseItem[];
@@ -74,6 +75,7 @@ function ResultsSurface({
   items,
   info,
   status,
+  onReset,
   onRetry,
   onOpenPhrase,
   onPageChange,
@@ -84,6 +86,7 @@ function ResultsSurface({
   | "items"
   | "info"
   | "status"
+  | "onReset"
   | "onRetry"
   | "onOpenPhrase"
   | "onPageChange"
@@ -112,12 +115,14 @@ function ResultsSurface({
   if (items.length === 0) {
     return (
       <AsyncStatePanel
-        label="Результаты каталога фраз"
+        label="Каталог фраз пуст"
         kind="empty"
-        title="Подходящих фраз не найдено"
+        title="По заданным условиям фразы не найдены"
         message={filters.query || filters.topic !== "all"
-          ? "Измените запрос или тему. Текущие фильтры сохранены в адресе страницы."
+          ? "Сбросьте поиск или выберите другую тему. Текущие фильтры сохранены в адресе страницы."
           : "Каталог пока пуст. Новые формулировки появятся после синхронизации контента."}
+        actionLabel="Сбросить фильтры"
+        onAction={onReset}
       />
     );
   }
@@ -129,6 +134,7 @@ function ResultsSurface({
         {items.map((item, index) => (
           <li
             key={`${item.wordId}:${item.slug}`}
+            role="listitem"
             aria-posinset={offset + index + 1}
             aria-setsize={info.total}
           >
@@ -164,6 +170,7 @@ function ResultsSurface({
 export function PhrasesCatalog(props: PhrasesCatalogProps) {
   const {
     authenticated,
+    duePhrases,
     filters,
     searchInput,
     items,
@@ -191,8 +198,8 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
       <CatalogKindNavigation active="phrases" onSelect={(kind) => kind === "words" && onSwitchToWords()} />
       <header className="lx-phrases-heading">
         <div>
-          <h1 id="phrases-heading">Фразы</h1>
-          <h2 className="lx-phrases-heading-copy">Находите готовые формулировки</h2>
+          <span className="lx-phrases-page-label">ФРАЗЫ</span>
+          <h1 id="phrases-heading">Находите готовые формулировки</h1>
           <p>{info.total > 0
             ? `${info.total.toLocaleString("ru-RU")} фраз для рабочих и повседневных ситуаций`
             : "Рабочие и повседневные формулировки с контекстом и переводом"}</p>
@@ -201,6 +208,11 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
           <button className="lx-phrases-sign-in" type="button" onClick={onRequireAuthentication}>
             Войти для синхронизации
           </button>
+        ) : duePhrases !== null ? (
+          <div className="lx-phrases-due-badge" role="status">
+            <strong>{duePhrases}</strong>
+            <span>{duePhrases} фраз готовы к повторению</span>
+          </div>
         ) : null}
       </header>
 
@@ -232,6 +244,25 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
         ))}
       </nav>
 
+      <div className="lx-catalog-sort" data-lexigo-sort-for="phrases">
+        <div>
+          <strong>Сортировка</strong>
+          <small>Упорядочить фразы по английскому алфавиту</small>
+        </div>
+        <label>
+          <span className="lx-visually-hidden">Выберите порядок сортировки</span>
+          <select
+            aria-label="Сортировка каталога"
+            value={filters.sort}
+            onChange={(event) => onSortChange(event.target.value as PhraseCatalogFilters["sort"])}
+          >
+            <option value="default">Порядок обучения</option>
+            <option value="az">A–Z</option>
+            <option value="za">Z–A</option>
+          </select>
+        </label>
+      </div>
+
       <div className="lx-phrases-workspace">
         <aside className="lx-phrases-filters" aria-label="Фильтры каталога фраз">
           <div className="lx-phrases-filter-heading">
@@ -254,12 +285,6 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
               </label>
             ))}
           </fieldset>
-          <fieldset>
-            <legend>Порядок</legend>
-            <label><input type="radio" name="phrase-sort" value="default" checked={filters.sort === "default"} onChange={() => onSortChange("default")} /> По умолчанию</label>
-            <label><input type="radio" name="phrase-sort" value="az" checked={filters.sort === "az"} onChange={() => onSortChange("az")} /> От A до Z</label>
-            <label><input type="radio" name="phrase-sort" value="za" checked={filters.sort === "za"} onChange={() => onSortChange("za")} /> От Z до A</label>
-          </fieldset>
           <button className="lx-phrases-reset" type="button" disabled={filterCount === 0} onClick={onReset}>Сбросить фильтры</button>
         </aside>
 
@@ -277,6 +302,7 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
             items={items}
             info={info}
             status={status}
+            onReset={onReset}
             onRetry={onRetry}
             onOpenPhrase={onOpenPhrase}
             onPageChange={onPageChange}
