@@ -13,7 +13,7 @@ on:
       - opened
 
 concurrency:
-  group: temporary-issue70-edit-${{ github.head_ref || github.ref }}
+  group: temporary-issue70-edit-refactor-issue-70-remove-phrases-compat
   cancel-in-progress: true
 
 permissions:
@@ -36,24 +36,48 @@ jobs:
           import subprocess
 
           workflow_path = ".github/workflows/temporary-issue70-edit.yml"
+          original_commit = "24f1babb302c039d842d249f9046267a4ef59a32"
           original = subprocess.check_output(
-              ["git", "show", f"HEAD^:{workflow_path}"],
+              ["git", "show", f"{original_commit}:{workflow_path}"],
               text=True,
           )
           start_marker = "          python3 <<'PY'\n"
           end_marker = "\n          PY\n"
           if original.count(start_marker) != 1 or original.count(end_marker) != 1:
-              raise SystemExit("unable to recover exactly one transformer body from parent workflow")
+              raise SystemExit("unable to recover exactly one transformer body from original workflow")
           body = original.split(start_marker, 1)[1].split(end_marker, 1)[0]
           lines = body.splitlines()
           if any(line and not line.startswith("          ") for line in lines):
-              raise SystemExit("unexpected transformer indentation in parent workflow")
+              raise SystemExit("unexpected transformer indentation in original workflow")
           script = "\n".join(line[10:] if line else "" for line in lines) + "\n"
-          wrong = 'navigation.view === "phrases" ? "phrases" : "learn"'
-          correct = 'source === "phrases" ? "phrases" : "learn"'
-          if script.count(wrong) != 1:
-              raise SystemExit(f"expected one incorrect required marker, found {script.count(wrong)}")
-          script = script.replace(wrong, correct, 1)
+
+          wrong_required = 'navigation.view === "phrases" ? "phrases" : "learn"'
+          correct_required = 'source === "phrases" ? "phrases" : "learn"'
+          if script.count(wrong_required) != 1:
+              raise SystemExit(f"expected one incorrect required marker, found {script.count(wrong_required)}")
+          script = script.replace(wrong_required, correct_required, 1)
+
+          old_derived = """source = regex_once(
+              source,
+              r'  const phraseTopics = useMemo\\(\\(\\) => \\{.*?  const sortedAllItems = items;\\n  const successRate = objectiveSuccessRate\\(progress\\);',
+              '  const sortedAllItems = items;\\n  const successRate = objectiveSuccessRate(progress);',
+              \"Phrases derived route values\",
+          )"""
+          new_derived = """source = regex_once(
+              source,
+              r'  const phraseTopics = useMemo\\(\\(\\) => \\{.*?  const activePhrasePageInfo = session \\? phraseCatalogPageInfo : guestPhrasePage\\.info;\\n',
+              \"\",
+              \"Phrases derived catalog values\",
+          )
+          source = regex_once(
+              source,
+              r'  const selectedPhrase = navigation\\.detail\\n.*?    : undefined;\\n',
+              \"\",
+              \"Phrases derived detail value\",
+          )"""
+          if script.count(old_derived) != 1:
+              raise SystemExit(f"expected one obsolete derived-value transform, found {script.count(old_derived)}")
+          script = script.replace(old_derived, new_derived, 1)
           Path("/tmp/issue70-transform.py").write_text(script, encoding="utf-8")
           PYEXTRACT
 
