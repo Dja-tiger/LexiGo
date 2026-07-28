@@ -6,7 +6,7 @@
 - Branch: `refactor/issue-70-consolidate-phrases-css`
 - Base SHA: `986ab18f4faa2f8a0581133e976cb104a3e4434a`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #284
 
 ## Objective
 
@@ -14,17 +14,16 @@ Consolidate the live route-scoped Phrases computed-cascade overrides into the ca
 
 ## Scope
 
-- Move the exact selectors and declarations from `frontend/app/phrases-compat.css` into `frontend/app/phrases.css` without changing values or specificity.
+- Preserve the exact selectors, declarations and specificity formerly owned by `frontend/app/phrases-compat.css` in `frontend/app/phrases.css`.
 - Remove `import "./phrases-compat.css"` from `frontend/app/layout.tsx`.
 - Delete `frontend/app/phrases-compat.css`.
-- Add an executable source contract for canonical ownership, import order, exact declaration preservation and compatibility-file absence.
-- Update the Issue #70 compatibility cleanup document and CSS specificity rule with the new canonical owner.
-- Record current task, progress and execution evidence.
-- Use one temporary exact-branch patch script and one temporary job in the already registered Actions-storage workflow only because the connector exposes whole-file replacement but no safe patch operation for the 911-line canonical stylesheet; restore/delete both before authoritative CI.
+- Enforce canonical ownership, import order, selector uniqueness, exact declaration values and compatibility-file absence with an executable source contract.
+- Update the Issue #70 compatibility cleanup document and CSS specificity rule with the canonical owner.
+- Record exact execution and validation evidence in `.agents/current/*`.
 
 ## Non-goals
 
-- No selector rename, value change, specificity increase or new visual behavior.
+- No selector rename, declaration value change, specificity increase or visual behavior change.
 - No Phrases markup, runtime, URL state, API, History or lesson-domain change.
 - No CSS changes outside the exact Phrases override family.
 - No visual baseline promotion.
@@ -32,8 +31,6 @@ Consolidate the live route-scoped Phrases computed-cascade overrides into the ca
 - No broad CSS consolidation beyond this one file/import family.
 
 ## Allowed paths
-
-Final intended paths:
 
 - `.agents/AGENTS.issue-261-css-specificity.md`
 - `.agents/current/TASK.md`
@@ -45,25 +42,20 @@ Final intended paths:
 - `frontend/components/phrases-css-ownership.test.ts`
 - `frontend/docs/compatibility-cleanup.md`
 
-Temporary-only paths, prohibited from final diff:
-
-- `.github/workflows/actions-storage-cleanup.yml` — one exact-branch patch job; restore byte-for-byte from base
-- `scripts/ci/issue_70_phrases_css_patch.py` — delete immediately after the source commit
-
 ## Prohibited paths
 
-- all other `.github/workflows/**`
-- all other `scripts/ci/**`
+- `.github/workflows/**`
+- `scripts/ci/**`
+- all other CSS files
 - `frontend/e2e/**/*-snapshots/**`
 - `frontend/bundle-budgets.json`
-- all other CSS files
 - frontend runtime components and libraries except the source-only ownership test
 - backend, API, migrations and deployment files
 
 ## Runtime owners
 
 - `frontend/components/lexigo-phrases-app.tsx` remains the sole Phrases route runtime owner.
-- `frontend/app/phrases.css` becomes the sole route-specific Phrases visual and computed-cascade owner.
+- `frontend/app/phrases.css` is the sole route-specific Phrases visual and computed-cascade owner.
 - `frontend/app/catalog-enhancements.css` remains the shared catalog-sort base owner.
 - Root layout remains the explicit global stylesheet import owner.
 
@@ -78,12 +70,12 @@ Temporary-only paths, prohibited from final diff:
 - `catalog-enhancements.css` remains imported before `phrases.css`.
 - Every moved selector keeps byte-equivalent selector text and declaration values.
 - Route scoping remains `.lx-app[data-route-client-island="phrases"]`.
-- The catalog sort retains border, text, surface, elevation and `backdrop-filter: none` overrides.
+- Catalog-sort border, text, surface, elevation and `backdrop-filter: none` overrides remain unchanged.
 - Selected topic chip contrast remains `#10211d`/700 and forced-colors remains `HighlightText`/`Highlight`.
 - Phrases result boundary remains `padding-top: 24px`.
 - Forced-colors catalog sort remains Canvas/CanvasText with no shadow.
 - `phrases-compat.css` is absent and layout imports `phrases.css` exactly once.
-- Eight content-addressed Phrases compact/desktop Light/Dark catalog/detail hashes remain unchanged.
+- Eight content-addressed compact/desktop Light/Dark catalog/detail hashes remain unchanged.
 - No visual baseline or budget file changes.
 - Temporary workflow/script changes are absent from the final compare.
 - Final immutable PR head is developer-authored.
@@ -99,7 +91,7 @@ Temporary-only paths, prohibited from final diff:
 - Lint, TypeScript, unit/source tests and production build pass.
 - Browser, forced-colors, accessibility and all eight authoritative Phrases visual hashes pass unchanged.
 - Full backend, frontend, browser, performance and container CI passes on one immutable developer-authored head.
-- Final compare is behind `0` and contains only declared final paths.
+- Final compare is behind `0` and contains only declared paths.
 - PR is expected-head squash-merged and exact merge SHA passes stage/public smoke/browser validation.
 
 ## Required checks
@@ -120,7 +112,6 @@ Temporary-only paths, prohibited from final diff:
 - Moving declarations earlier than a competing global rule could change computed values; import order and exact selector specificity must be executable contracts.
 - Omitting one forced-colors or contrast declaration could pass source compilation but fail accessibility or visual hashes.
 - A duplicate copied rule could preserve visuals while leaving ambiguous ownership; selector uniqueness must be tested.
-- Temporary patch automation could remain in the diff or leave a bot-authored final head; both are merge blockers.
 - A pure cleanup visual mismatch indicates hidden import-order ownership and must stop the slice without baseline promotion.
 
 ## Rollback
