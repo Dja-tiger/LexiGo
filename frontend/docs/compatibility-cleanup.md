@@ -4,12 +4,15 @@
 
 - Repository: `Dja-tiger/LexiGo`.
 - Issue: #70 — remove unused application implementations and conflicting global styles.
-- Runtime deletion base: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
-- Active delivery PR: #282.
+- Phrases runtime deletion base: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
+- Phrases CSS consolidation base: `986ab18f4faa2f8a0581133e976cb104a3e4434a`.
+- Runtime deletion PR: #282.
+- CSS ownership PR: #284.
 - Canonical route selector: `frontend/components/lexigo-bootstrapped-app.tsx`.
-- Canonical Phrases owner: `frontend/components/lexigo-phrases-app.tsx`.
+- Canonical Phrases runtime owner: `frontend/components/lexigo-phrases-app.tsx`.
+- Canonical Phrases visual owner: `frontend/app/phrases.css`.
 - Compatibility fallback: `frontend/components/lexigo-premium-app.tsx`.
-- This document records one completed route-runtime deletion boundary. It does not claim that the complete compatibility fallback or its CSS is dead.
+- This document records one completed route-runtime deletion boundary and one bounded CSS ownership consolidation. It does not claim that the complete compatibility fallback or unrelated global CSS is dead.
 
 ## Reachability proof
 
@@ -19,7 +22,7 @@
 2. `usePhrasesIsland` depends on the product route graph and pathname, not on session presence.
 3. The render branch for `LexigoPhrasesApp` appears before the final `LexigoPremiumApp` branch.
 4. Guest and authenticated direct entry, reload, new tab and Browser Back/Forward therefore use the dedicated Phrases island.
-5. `LexigoPremiumApp` remains reachable for guest authentication, account recovery and other fallback states; deleting the complete component remains outside this slice.
+5. `LexigoPremiumApp` remains reachable for guest authentication, account recovery and other fallback states; deleting the complete component remains outside these slices.
 
 The executable proof is `frontend/components/phrases-route-island-source.test.ts`.
 
@@ -37,7 +40,9 @@ The executable proof is `frontend/components/phrases-route-island-source.test.ts
 - direct Phrase Detail loading/error/presentation;
 - speech action and the existing `/learn?source=phrases` handoff.
 
-## Completed Phrases compatibility deletion
+`frontend/app/phrases.css` owns the route-specific Phrases visual system and the scoped computed-cascade overrides required over the shared catalog base.
+
+## Completed Phrases compatibility runtime deletion
 
 PR #282 removes the following unreachable route-level family from `LexigoPremiumApp`.
 
@@ -110,60 +115,78 @@ The deletion audit found that some symbols used by the retired route were also l
 - backend lesson preview/create/review contracts that accept or return phrase items;
 - shared `TECHNICAL_PHRASES` / `EXPANDED_PHRASES` content.
 
-The source contract now asserts both sides of the boundary: retired route markers must be absent, while these shared lesson markers must remain.
+The source contract asserts both sides of the boundary: retired route markers must be absent, while these shared lesson markers must remain.
 
-## Current source reduction
+## Runtime source reduction
 
-Against base `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`, the runtime source diff currently reports:
+Against base `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`, PR #282 changed `frontend/components/lexigo-premium-app.tsx` by 11 additions and 334 deletions, net `-323` lines, without stylesheet, visual baseline, backend, API, migration or bundle-budget changes.
 
-- `frontend/components/lexigo-premium-app.tsx`: 11 added lines, 334 deleted lines;
-- net reduction: 323 lines;
-- no stylesheet, visual baseline, backend, API, migration or bundle-budget change.
+## Phrases CSS ownership consolidation
 
-Exact JavaScript-byte impact remains subject to the controlled production-build comparison. Existing route budgets may not be increased.
+PR #284 removes an obsolete ownership boundary, not live declarations.
 
-## CSS boundary
+Before consolidation:
 
-This runtime deletion does not authorize CSS changes.
+- `frontend/app/catalog-enhancements.css` owned the shared catalog-sort base;
+- `frontend/app/phrases.css` owned the canonical Phrases route visual system;
+- `frontend/app/phrases-compat.css`, imported immediately after `phrases.css`, owned seven live route-scoped override groups introduced after a computed-contrast failure.
 
-No stylesheet or visual baseline is changed in PR #282. The removed markup classes must be audited in a separate atomic selector-cleanup slice because selectors may still be consumed by canonical Phrases, Dictionary, Learn, auth or shared shell markup.
+After consolidation:
 
-A later selector can be removed only if:
+- root layout imports `catalog-enhancements.css` before `phrases.css` and no longer imports `phrases-compat.css`;
+- the exact selector text, specificity and declaration values from `phrases-compat.css` live once in `phrases.css` under `Issue #70: canonical Phrases computed-cascade ownership`;
+- `phrases-compat.css` is deleted;
+- catalog-sort border/text/surface/elevation, selected-topic contrast, results spacing and forced-colors values remain unchanged;
+- no selector rename, specificity increase, redesign or baseline promotion is permitted.
 
-- executable TS/TSX and comment-stripped CSS search proves no remaining consumer;
-- specificity and import-order ownership are understood;
-- authoritative Linux visual hashes remain unchanged for pure cleanup;
-- any changed image is reviewed against the exact approved Figma node before baseline promotion.
+The executable ownership proof is `frontend/components/phrases-css-ownership.test.ts`. It validates compatibility-file absence, layout import order, selector uniqueness and exact preserved declarations.
 
-Phrases-specific canonical files such as `phrases.css` and `phrases-compat.css` are not legacy merely because the old compatibility markup was removed.
+## Authoritative visual boundary
 
-## Required validation for PR #282
+Pure CSS consolidation requires unchanged content-addressed images. `frontend/e2e/phrases-visual.spec.ts` protects eight approved compact/desktop Light/Dark catalog/detail images.
 
-- Agent Harness source contract;
-- frontend lint and TypeScript;
-- all unit/source contracts and production build;
+Any changed Phrases visual hash stops PR #284. A baseline may not be promoted merely to complete cleanup; the actual must first be compared with the exact approved Figma node and the computed-cascade difference explained.
+
+## Required validation for PR #284
+
+- Agent Harness and change-scope classification;
+- Phrases CSS ownership source contract;
+- frontend lint, TypeScript, all unit/source contracts, production build and dependency audit;
 - direct `/phrases` and `/phrases/[slug]` guest/auth entry;
 - catalog search/filter/sort/pagination, reload and Back/Forward;
-- Learn handoff and phrase lesson creation;
-- phrase-containing Active Lesson review, cloze answer and suggestion behavior;
-- desktop Chromium/WebKit and Android/iOS projects;
 - keyboard, axe, reduced motion, forced colors and 200% reflow;
-- authoritative Linux visual regression without baseline updates;
-- controlled bundle comparison and existing permanent budgets;
+- all eight authoritative Phrases Linux visual hashes without baseline updates;
+- complete desktop Chromium/WebKit and Android/iOS browser matrix;
+- existing performance budgets without ceiling changes;
 - full backend/frontend/browser/container CI;
 - review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Remaining Issue #70 work
 
-After PR #282 is fully validated and deployed, choose the next minimal compatibility or selector family only from fresh reachability and consumer evidence. Do not combine auth fallback extraction, broad `LexigoPremiumApp` removal or CSS consolidation with this slice.
+After PR #284 is fully validated and deployed, choose the next minimal compatibility or selector family only from fresh reachability, markup-consumer and computed-cascade evidence.
+
+Do not combine:
+
+- auth fallback extraction;
+- broad `LexigoPremiumApp` removal;
+- unrelated global selector cleanup;
+- redesign or baseline promotion.
+
+A later selector can be removed only if:
+
+- executable TS/TSX and comment-stripped CSS search proves no remaining consumer;
+- specificity and import-order ownership are understood;
+- effective declarations are preserved in the canonical owner where required;
+- authoritative Linux visual hashes remain unchanged for pure cleanup;
+- any changed image is reviewed against the exact approved Figma node before baseline promotion.
 
 ## Stop conditions
 
-Do not broaden this deletion if any of the following is true:
+Do not broaden a slice if any of the following is true:
 
 - the fallback is still selected for the target pathname;
 - a candidate marker has a non-route lesson/auth consumer;
 - a CSS selector remains in canonical markup;
 - a visual hash changes without a computed-cascade explanation and Figma review;
-- bundle evidence is unavailable;
-- the branch expands into auth fallback extraction or broad CSS consolidation.
+- bundle or browser evidence is unavailable;
+- the branch expands into auth fallback extraction, unrelated CSS consolidation or redesign.
