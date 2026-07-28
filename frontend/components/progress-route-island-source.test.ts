@@ -26,6 +26,22 @@ describe("Progress route client-island ownership", () => {
     expect(bootstrappedApp).toContain("restoreBootstrappedSession()");
   });
 
+  it("selects Progress before the compatibility fallback for guest and authenticated entry", () => {
+    const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
+    const progressApp = readComponent("lexigo-progress-app.tsx");
+
+    expect(bootstrappedApp).toContain('return normalizedPathname(pathname) === "/progress";');
+    expect(bootstrappedApp).toContain("const useProgressIsland = isProgressRoute(pathname);");
+    expect(bootstrappedApp).not.toContain("useProgressIsland = initialSession");
+
+    const progressRender = bootstrappedApp.lastIndexOf("<LexigoProgressApp");
+    const compatibilityFallback = bootstrappedApp.lastIndexOf("<LexigoPremiumApp");
+
+    expect(progressRender).toBeGreaterThanOrEqual(0);
+    expect(compatibilityFallback).toBeGreaterThan(progressRender);
+    expect(progressApp).toContain("initialSession: Session | null;");
+  });
+
   it("keeps Progress API and evidence behavior inside the island without shared runtime owners", () => {
     const progressApp = readComponent("lexigo-progress-app.tsx");
 
@@ -38,5 +54,36 @@ describe("Progress route client-island ownership", () => {
     expect(progressApp).not.toContain("refreshSession");
     expect(progressApp).not.toContain("ReviewOutboxRuntime");
     expect(progressApp).not.toContain("navigator.serviceWorker");
+  });
+
+  it("keeps the compatibility Progress presentation visible for the next bounded deletion slice", () => {
+    const premiumApp = readComponent("lexigo-premium-app.tsx");
+    const compatibilityMarkers = [
+      "function renderProgress()",
+      'navigation.view === "progress" ? renderProgress()',
+      'showCard={navigation.view === "progress"',
+      'navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс"',
+    ] as const;
+
+    for (const marker of compatibilityMarkers) {
+      expect(premiumApp, `compatibility Progress marker ${marker}`).toContain(marker);
+    }
+  });
+
+  it("preserves shared progress consumers outside the route presentation boundary", () => {
+    const premiumApp = readComponent("lexigo-premium-app.tsx");
+    const sharedMarkers = [
+      "const [progress, setProgress]",
+      "const [progressStatus, setProgressStatus]",
+      "loadProgressResource",
+      "latestProgressRef",
+      "lessonProgressBeforeRef",
+      "progress.dailyGoal",
+      'navigate({ view: "progress"',
+    ] as const;
+
+    for (const marker of sharedMarkers) {
+      expect(premiumApp, `shared progress contract ${marker}`).toContain(marker);
+    }
   });
 });
