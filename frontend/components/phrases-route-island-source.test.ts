@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const bootstrap = readFileSync(new URL("./lexigo-bootstrapped-app.tsx", import.meta.url), "utf8");
 const phrases = readFileSync(new URL("./lexigo-phrases-app.tsx", import.meta.url), "utf8");
+const premium = readFileSync(new URL("./lexigo-premium-app.tsx", import.meta.url), "utf8");
 const catalog = readFileSync(new URL("./phrases-catalog.tsx", import.meta.url), "utf8");
 const detail = readFileSync(new URL("./phrase-detail-presentation.tsx", import.meta.url), "utf8");
 
@@ -14,6 +15,22 @@ describe("Phrases route island source contract", () => {
     expect(bootstrap).toContain("usePhrasesIsland");
     expect(bootstrap).toContain("<LexigoPhrasesApp");
     expect(phrases).toContain('data-route-client-island="phrases"');
+  });
+
+  it("selects the Phrases island before the compatibility fallback for guest and authenticated entry", () => {
+    expect(bootstrap).toContain(
+      'const usePhrasesIsland = effectiveRouteGraph === "product" && isPhrasesRoute(pathname);',
+    );
+    expect(bootstrap).not.toContain("usePhrasesIsland = initialSession");
+
+    const phrasesRender = bootstrap.lastIndexOf("<LexigoPhrasesApp");
+    const compatibilityFallback = bootstrap.lastIndexOf("<LexigoPremiumApp");
+
+    expect(phrasesRender).toBeGreaterThanOrEqual(0);
+    expect(compatibilityFallback).toBeGreaterThan(phrasesRender);
+    expect(phrases).toContain("initialSession: Session | null;");
+    expect(phrases).toContain("const GUEST_PHRASES");
+    expect(phrases).toContain("function guestCatalog");
   });
 
   it("does not import the compatibility graph or persistent runtime owners", () => {
@@ -53,5 +70,46 @@ describe("Phrases route island source contract", () => {
     expect(detail).toContain('aria-label="Карточка фразы"');
     expect(detail).toContain("<SpeechPlayerButton");
     expect(detail).toContain("Настроить урок");
+  });
+
+  it("records the exact compatibility catalog and detail deletion surface", () => {
+    const deletionCandidates = [
+      "const [phraseCatalog, setPhraseCatalog]",
+      "const [phraseCatalogStatus, setPhraseCatalogStatus]",
+      "const [remotePhraseDetail, setRemotePhraseDetail]",
+      "const [phraseDetailStatus, setPhraseDetailStatus]",
+      "const [phraseCatalogPageInfo, setPhraseCatalogPageInfo]",
+      "const [phrasePage, setPhrasePage]",
+      "const [phraseSearchInput, setPhraseSearchInput]",
+      "const [phraseSearch, setPhraseSearch]",
+      "const [phraseTopic, setPhraseTopic]",
+      "const [phraseSortMode, setPhraseSortMode]",
+      "const loadPhraseCatalogResource",
+      "const loadPhraseDetailResource",
+      "function openPhraseDetail",
+      "function backToPhraseCatalog",
+      "function changePhrasePage",
+      "function applyPhraseSearch",
+      "function clearPhraseSearch",
+      "function renderPhrases",
+      '`/api/v1/phrases/${encodeURIComponent(slug)}`',
+    ] as const;
+
+    for (const marker of deletionCandidates) {
+      expect(premium, `compatibility deletion candidate ${marker}`).toContain(marker);
+    }
+  });
+
+  it("preserves live phrase lesson-domain behavior outside the route deletion surface", () => {
+    const sharedLessonContracts = [
+      'type LessonSource = WordSection | "phrases";',
+      '{ value: "phrases", label: "Технические фразы"',
+      "mixedLessonFallbackMessage",
+      'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"',
+    ] as const;
+
+    for (const marker of sharedLessonContracts) {
+      expect(premium, `shared phrase lesson contract ${marker}`).toContain(marker);
+    }
   });
 });
