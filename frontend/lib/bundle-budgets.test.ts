@@ -81,6 +81,16 @@ describe("route bundle budget configuration", () => {
     );
   });
 
+  it("keeps the Phrases island below the original monolithic transfer and release limits", () => {
+    const phrases = bundleBudgets.routes["/phrases"];
+
+    expectRouteBelowOriginalMonolith("/phrases", phrases);
+    expect(
+      phrases.maxJavascriptBytes,
+      "/phrases: JavaScript ceiling below original transfer",
+    ).toBeLessThan(ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes);
+  });
+
   it("keeps the Dictionary island below the original monolithic product graph", () => {
     expectRouteBelowOriginalMonolith("/dictionary", bundleBudgets.routes["/dictionary"]);
   });
