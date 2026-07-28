@@ -107,7 +107,9 @@ export function isPhraseItemsResponsePayload(value: unknown): value is PhraseIte
   return optionalNonNegative && optionalPositive && optionalFlags;
 }
 
-export function phraseFromAPI(item: PhraseAPIItem): PhraseItem {
+export function phraseFromAPI(value: unknown): PhraseItem {
+  if (!isPhraseItemPayload(value)) throw new TypeError("Некорректный payload фразы");
+  const item = value;
   return {
     id: `phrase-${item.id}`,
     wordId: item.id,
