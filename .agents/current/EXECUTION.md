@@ -6,7 +6,7 @@
 - Branch: `agent/issue-261-system-state-css-ownership`.
 - Base SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b`.
 - Head SHA: `0dce967` (local implementation commit; final evidence commit pending).
-- PR: not opened.
+- PR: #262 (Draft).
 
 ## Skills used
 

@@ -12,6 +12,7 @@
 - Issue #261 and branch `agent/issue-261-system-state-css-ownership` were created from exact live main;
 - exact Figma contexts `79:69`, `79:117` and `79:194` were re-read from file `3xXmBWnf38jbvLjtziwber`.
 - pre-flight contract was committed and pushed at `ad15f562024e8eded82495b00427b7ed2b6b4ab5`;
+- Draft PR #262 was opened against the unchanged exact base;
 - legacy async/skeleton and outbox presentation owners are removed; their still-effective declarations now live in `system-states.css`;
 - root layout no longer imports `review-outbox.css`, and a source contract prevents its return;
 - durable architecture documentation records the runtime/presentation/PWA ownership boundary.
@@ -56,4 +57,4 @@ Local implementation commit: `0dce967`.
 
 ### Next action
 
-Commit the local validation evidence, push the immutable head, open Draft PR and require the complete authoritative GitHub matrix without baseline promotion.
+Require the complete authoritative GitHub matrix on the immutable PR head without baseline promotion.
