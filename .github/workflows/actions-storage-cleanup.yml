@@ -212,107 +212,89 @@ jobs:
           ]:
               source = replace_once(source, line, "", label)
 
-          source = sub_once(
-              source,
-              r'function CatalogSortControl\(\{.*?\n\}\n\nfunction isStandaloneDisplayMode',
-              '''function CatalogSortControl({
-  mode,
-  onChange,
-}: {
-  mode: CatalogSortMode;
-  onChange: (mode: CatalogSortMode) => void;
-}) {
-  return (
-    <div className="lx-catalog-sort" data-lexigo-sort-for="all-items">
-      <div><strong>Сортировка</strong><small>Упорядочить слова по английскому алфавиту</small></div>
-      <label>
-        <span className="lx-visually-hidden">Выберите порядок сортировки</span>
-        <select
-          aria-label="Сортировка каталога"
-          value={mode}
-          onChange={(event) => onChange(event.target.value as CatalogSortMode)}
-        >
-          <option value="default">Порядок обучения</option>
-          <option value="az">A–Z</option>
-          <option value="za">Z–A</option>
-        </select>
-      </label>
-    </div>
-  );
-}
-
-function readStoredCatalogSort(): CatalogSortMode {
-  try {
-    const value = window.localStorage.getItem(`${SORT_STORAGE_PREFIX}all-items`);
-    return value === "az" || value === "za" ? value : "default";
-  } catch {
-    return "default";
-  }
-}
-
-function isStandaloneDisplayMode''',
-              "catalog sorting helpers",
-          )
+          catalog_sort_replacement = "\n".join([
+              "function CatalogSortControl({",
+              "  mode,",
+              "  onChange,",
+              "}: {",
+              "  mode: CatalogSortMode;",
+              "  onChange: (mode: CatalogSortMode) => void;",
+              "}) {",
+              "  return (",
+              "    <div className=\"lx-catalog-sort\" data-lexigo-sort-for=\"all-items\">",
+              "      <div><strong>Сортировка</strong><small>Упорядочить слова по английскому алфавиту</small></div>",
+              "      <label>",
+              "        <span className=\"lx-visually-hidden\">Выберите порядок сортировки</span>",
+              "        <select",
+              "          aria-label=\"Сортировка каталога\"",
+              "          value={mode}",
+              "          onChange={(event) => onChange(event.target.value as CatalogSortMode)}",
+              "        >",
+              "          <option value=\"default\">Порядок обучения</option>",
+              "          <option value=\"az\">A–Z</option>",
+              "          <option value=\"za\">Z–A</option>",
+              "        </select>",
+              "      </label>",
+              "    </div>",
+              "  );",
+              "}",
+              "",
+              "function readStoredCatalogSort(): CatalogSortMode {",
+              "  try {",
+              "    const value = window.localStorage.getItem(`${SORT_STORAGE_PREFIX}all-items`);",
+              "    return value === \"az\" || value === \"za\" ? value : \"default\";",
+              "  } catch {",
+              "    return \"default\";",
+              "  }",
+              "}",
+              "",
+              "function isStandaloneDisplayMode",
+          ])
+          source = sub_once(source, r'function CatalogSortControl\(\{.*?\n\}\n\nfunction isStandaloneDisplayMode', catalog_sort_replacement, "catalog sorting helpers")
           source = sub_once(source, r'\nfunction itemKey\(item: LearningItem\): string \{\n  return item\.slug \|\| item\.id;\n\}\n', '\n', "itemKey helper")
           source = sub_once(source, r'  const \[phraseCatalog, setPhraseCatalog\].*?  const \[phraseSearch, setPhraseSearch\] = useState\(""\);\n\n', '', "phrase route state")
           source = sub_once(source, r'  const \[phraseTopic, setPhraseTopic\] = useState\("all"\);\n  const \[phraseSortMode, setPhraseSortMode\] = useState<CatalogSortMode>\("default"\);\n', '', "phrase filter state")
-          source = sub_once(
-              source,
-              r'  useEffect\(\(\) => \{\n    const storageTimer = window\.setTimeout\(\(\) => \{\n      setPhraseSortMode\(readStoredCatalogSort\("phrases"\)\);\n      setAllItemsSortMode\(readStoredCatalogSort\("all-items"\)\);\n    \}, 0\);\n    return \(\) => window\.clearTimeout\(storageTimer\);\n  \}, \[\]\);',
-              '''  useEffect(() => {
-    const storageTimer = window.setTimeout(() => {
-      setAllItemsSortMode(readStoredCatalogSort());
-    }, 0);
-    return () => window.clearTimeout(storageTimer);
-  }, []);''',
-              "stored sort effect",
-          )
+
+          stored_sort_replacement = "\n".join([
+              "  useEffect(() => {",
+              "    const storageTimer = window.setTimeout(() => {",
+              "      setAllItemsSortMode(readStoredCatalogSort());",
+              "    }, 0);",
+              "    return () => window.clearTimeout(storageTimer);",
+              "  }, []);",
+          ])
+          source = sub_once(source, r'  useEffect\(\(\) => \{\n    const storageTimer = window\.setTimeout\(\(\) => \{\n      setPhraseSortMode\(readStoredCatalogSort\("phrases"\)\);\n      setAllItemsSortMode\(readStoredCatalogSort\("all-items"\)\);\n    \}, 0\);\n    return \(\) => window\.clearTimeout\(storageTimer\);\n  \}, \[\]\);', stored_sort_replacement, "stored sort effect")
           source = sub_once(source, r'\n  useEffect\(\(\) => \{\n    if \(navigation\.view !== "phrases"\) return;.*?\n  \}, \[navigation\]\);\n', '\n', "phrase URL synchronization")
           source = sub_once(source, r'  const phraseTopics = useMemo\(\(\) => \{.*?  const successRate = objectiveSuccessRate\(progress\);', '  const sortedAllItems = items;\n  const successRate = objectiveSuccessRate(progress);', "phrase derived values")
           source = sub_once(source, r'  const loadPhraseCatalogResource = useCallback\(async \(.*?\n  const loadActiveLessonResource = useCallback', '  const loadActiveLessonResource = useCallback', "phrase loaders")
-          source = sub_once(
-              source,
-              r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n',
-              '',
-              "hydration phrase resets",
-          )
-          source = sub_once(
-              source,
-              r'  useEffect\(\(\) => \{\n    if \(!session \|\| navigation\.view !== "phrases" \|\| navigation\.detail\) return;.*?\n  \}, \[\n    loadPhraseDetailResource,.*?\n  \]\);\n\n',
-              '',
-              "phrase catalog/detail effects",
-          )
-          source = sub_once(
-              source,
-              r'  function updateCatalogSort\(kind: CatalogKind, mode: CatalogSortMode\) \{.*?\n  \}\n\n  function selectRovingControl',
-              '''  function updateAllItemsSort(mode: CatalogSortMode) {
-    setAllItemsSortMode(mode);
-    try {
-      window.localStorage.setItem(`${SORT_STORAGE_PREFIX}all-items`, mode);
-    } catch {
-      // Sorting remains available for the current session when storage is restricted.
-    }
-  }
+          source = sub_once(source, r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n', '', "hydration phrase resets")
+          source = sub_once(source, r'  useEffect\(\(\) => \{\n    if \(!session \|\| navigation\.view !== "phrases" \|\| navigation\.detail\) return;.*?\n  \}, \[\n    loadPhraseDetailResource,.*?\n  \]\);\n\n', '', "phrase catalog/detail effects")
 
-  function selectRovingControl''',
-              "catalog sort mutation",
-          )
-          source = sub_once(
-              source,
-              r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseSearchInput\(""\);\n      setPhraseSearch\(""\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n',
-              '',
-              "logout phrase resets",
-          )
+          update_sort_replacement = "\n".join([
+              "  function updateAllItemsSort(mode: CatalogSortMode) {",
+              "    setAllItemsSortMode(mode);",
+              "    try {",
+              "      window.localStorage.setItem(`${SORT_STORAGE_PREFIX}all-items`, mode);",
+              "    } catch {",
+              "      // Sorting remains available for the current session when storage is restricted.",
+              "    }",
+              "  }",
+              "",
+              "  function selectRovingControl",
+          ])
+          source = sub_once(source, r'  function updateCatalogSort\(kind: CatalogKind, mode: CatalogSortMode\) \{.*?\n  \}\n\n  function selectRovingControl', update_sort_replacement, "catalog sort mutation")
+          source = sub_once(source, r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseSearchInput\(""\);\n      setPhraseSearch\(""\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n', '', "logout phrase resets")
           source = sub_once(source, r'  function openPhraseDetail\(phrase: LearningItem\) \{.*?\n  async function changeAllItemsPage', '  async function changeAllItemsPage', "phrase handlers")
           source = replace_once(source, '    updateCatalogSort("all-items", mode);', '    updateAllItemsSort(mode);', "all-items sort call")
           source = sub_once(source, r'  function renderPhrases\(\) \{.*?\n  function renderLibrary\(\) \{', '  function renderLibrary() {', "phrase presentation")
           source = replace_once(source, '<CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={changeAllItemsSort} />', '<CatalogSortControl mode={allItemsSortMode} onChange={changeAllItemsSort} />', "all-items sort control")
-          source = sub_once(
-              source,
-              r'  const view = navigation\.view === "home" \? renderHome\(\)\n    : navigation\.view === "learn" \? renderLearn\(\)\n      : navigation\.view === "phrases" \? renderPhrases\(\)\n        : navigation\.view === "library" \? renderLibrary\(\)',
-              '  const view = navigation.view === "home" ? renderHome()\n    : navigation.view === "learn" ? renderLearn()\n      : navigation.view === "library" ? renderLibrary()',
-              "view selection",
-          )
+
+          view_replacement = "\n".join([
+              "  const view = navigation.view === \"home\" ? renderHome()",
+              "    : navigation.view === \"learn\" ? renderLearn()",
+              "      : navigation.view === \"library\" ? renderLibrary()",
+          ])
+          source = sub_once(source, r'  const view = navigation\.view === "home" \? renderHome\(\)\n    : navigation\.view === "learn" \? renderLearn\(\)\n      : navigation\.view === "phrases" \? renderPhrases\(\)\n        : navigation\.view === "library" \? renderLibrary\(\)', view_replacement, "view selection")
           source = sub_once(source, r'          <AsyncResourceNotice label="Каталог фраз"[^\n]+\n', '', "phrase resource notice")
 
           banned = [
