@@ -51,7 +51,7 @@ for entry in "${routes[@]}"; do
 
   case "$expected" in
     phrases)
-      grep -Fq 'class="lx-phrase-grid"' <<<"$html" || {
+      grep -Eq 'class="[^"]*(^|[[:space:]])lx-phrase-grid([[:space:]]|$)[^"]*"' <<<"$html" || {
         echo "Phrase catalog did not render for ${url}" >&2
         exit 1
       }
