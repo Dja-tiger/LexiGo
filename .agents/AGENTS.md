@@ -12,17 +12,18 @@
 6. [`AGENTS.issue-247-request-scoped-fixtures.md`](./AGENTS.issue-247-request-scoped-fixtures.md) — request-scoped failure fixtures, разделение baseline load и целевого падающего запроса.
 7. [`AGENTS.issue-199-phrases.md`](./AGENTS.issue-199-phrases.md) — semantic route-boundary names, shell smoke class-token matching и controlled Phrases visual/performance evidence.
 8. [`AGENTS.issue-115-architecture-docs.md`](./AGENTS.issue-115-architecture-docs.md) — executable synchronization public architecture documentation с фактическим route-owner inventory.
-9. [`AGENTS.issue-261-css-specificity.md`](./AGENTS.issue-261-css-specificity.md) — обязательный computed-cascade audit при удалении или консолидации CSS owners.
-10. [`AGENTS.issue-132-openapi-structure.md`](./AGENTS.issue-132-openapi-structure.md) — обязательная структурная проверка OpenAPI после изменений YAML.
-11. [`AGENTS.issue-132-pg-array-snapshots.md`](./AGENTS.issue-132-pg-array-snapshots.md) — non-null snapshot semantics для пустых PostgreSQL arrays.
-12. [`AGENTS.issue-132-dictionary-input-sync.md`](./AGENTS.issue-132-dictionary-input-sync.md) — controlled-input synchronization без stale initial frame.
-13. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
-14. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
-15. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
-16. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
-17. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
-18. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
-19. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
+9. [`AGENTS.issue-70-compatibility-reachability.md`](./AGENTS.issue-70-compatibility-reachability.md) — обязательный guest/auth reachability и shared-domain audit перед удалением compatibility code/CSS.
+10. [`AGENTS.issue-261-css-specificity.md`](./AGENTS.issue-261-css-specificity.md) — обязательный computed-cascade audit при удалении или консолидации CSS owners.
+11. [`AGENTS.issue-132-openapi-structure.md`](./AGENTS.issue-132-openapi-structure.md) — обязательная структурная проверка OpenAPI после изменений YAML.
+12. [`AGENTS.issue-132-pg-array-snapshots.md`](./AGENTS.issue-132-pg-array-snapshots.md) — non-null snapshot semantics для пустых PostgreSQL arrays.
+13. [`AGENTS.issue-132-dictionary-input-sync.md`](./AGENTS.issue-132-dictionary-input-sync.md) — controlled-input synchronization без stale initial frame.
+14. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
+15. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
+16. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
+17. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
+18. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
+19. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
+20. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
 
 Все специализированные `.agents/AGENTS.*.md` обязательны и применяются совместно. При конфликте более конкретное подтверждённое правило специализированного документа имеет приоритет в своей предметной области. Существующие записи об ошибках нельзя удалять, сокращать до общих формулировок или заменять новым handoff.
 
