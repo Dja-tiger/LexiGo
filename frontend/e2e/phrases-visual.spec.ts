@@ -146,7 +146,7 @@ async function expectContentAddressedScreenshot(
 
 async function openCatalog(page: Page): Promise<void> {
   await page.goto("/phrases", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { level: 1, name: "Фразы", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Находите готовые формулировки" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Результаты каталога фраз" }).getByRole("listitem")).toHaveCount(
     QUALITY_PHRASES.length,
   );
