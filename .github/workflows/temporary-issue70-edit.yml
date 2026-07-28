@@ -11,6 +11,7 @@ on:
       - main
     types:
       - opened
+      - synchronize
 
 concurrency:
   group: temporary-issue70-edit-refactor-issue-70-remove-phrases-compat
@@ -86,6 +87,11 @@ jobs:
           set -Eeuo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if ! grep -Fq 'const [phraseCatalog, setPhraseCatalog]' frontend/components/lexigo-premium-app.tsx; then
+            echo "Phrases compatibility runtime is already absent; no additional commit is required."
+            exit 0
+          fi
 
           set +e
           python3 /tmp/issue70-transform.py > /tmp/issue70-transform.log 2>&1
