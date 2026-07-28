@@ -2,11 +2,13 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 11:11 Europe/Moscow.
+- Last verified: 2026-07-28 11:43 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
-- Latest documentation merge: state reconciliation PR #269, merge SHA `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
-- PR #269 post-merge lightweight CI run `30340319636` passed on exact merge SHA; Deploy Stage run `30340336780` validated Agent Docs scope and skipped runtime deployment.
+- Live `main` at verification: `5472e8f0479a750483709222745cdee92f504258`.
+- Latest documentation/design merge: Phrases production handoff PR #270, merge SHA `5472e8f0479a750483709222745cdee92f504258`.
+- PR #270 immutable developer-authored head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`.
+- PR #270 post-merge full CI run `30342447923` passed on the exact merge SHA.
+- PR #270 exact-SHA stage/public validation run `30343061807` deployed web/API image `5472e8f0479a750483709222745cdee92f504258`; frontend/API returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
 - Latest product merge: recovery PR #267, merge SHA `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
 - PR #267 immutable developer-authored head: `68a2be9987b8d1fcb2ca31ead40b50994055267c`.
 - PR #267 final full CI: run `30337018986`, successful across backend, frontend, complete browser matrix and both container builds.
@@ -213,14 +215,14 @@
 
 ## In progress
 
-- Issue #199 design-handoff slice is active in Draft PR #270 on `agent/issue-199-phrases-design-handoff`.
-- Canonical Figma production page `253:2` now contains the exact Phrases catalog/detail Light/Dark mobile/desktop matrix, resilient-state hooks and Screen Map `82:3` handoff. Repository documentation and lightweight CI remain before the design slice can merge.
+- No product slice is active after the Phrases design-handoff merge and context reset.
+- The next atomic production slice is Issue #199 runtime implementation and route-island extraction from the compatibility graph using the approved exact Figma nodes.
 
 ## Remaining roadmap
 
-### 1. #199 — Phrases design gap
+### 1. #199 — Phrases runtime implementation
 
-Merge the exact catalog/detail Figma handoff, then implement the approved production nodes in a separate frontend slice. Canonical page: `253:2`; screens: `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162`, `257:159`; resilient hooks: `257:212`; Screen Map entry: `261:2`.
+Implement the merged catalog/detail Figma handoff in a dedicated frontend slice. Canonical page: `253:2`; screens: `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162`, `257:159`; resilient hooks: `257:212`; Screen Map entry: `261:2`.
 
 ### 2. #18 and #201 — Adaptive personalization and First Use
 
@@ -244,7 +246,7 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Validation pending
 
-- Phrases repository handoff and runtime implementation remain pending; the exact Figma states are prepared and visually reviewed.
+- Phrases runtime implementation, browser/visual validation and permanent route budget remain pending; the repository/Figma handoff is merged and exact-SHA stage validated.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
 
@@ -255,23 +257,26 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #269 — `docs(agent): reconcile state before Phrases design` → `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
-2. #268 — `docs(agent): finalize Issue 132 delivery` → `c001932fdec11e4c09e33c173656c85be6592906`.
-3. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
-4. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
-5. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
-6. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
-7. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-8. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-9. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
-10. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
-11. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-12. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
-13. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+1. #270 — `docs(figma): hand off Phrases production designs` → `5472e8f0479a750483709222745cdee92f504258`.
+2. #269 — `docs(agent): reconcile state before Phrases design` → `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
+3. #268 — `docs(agent): finalize Issue 132 delivery` → `c001932fdec11e4c09e33c173656c85be6592906`.
+4. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+5. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+6. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+7. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
+8. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+9. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+10. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+11. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+12. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+13. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
 
 ## Evidence
 
 - Live GitHub `main`, open PRs, branches, Issues #12/#115/#199/#203, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- PR #270 final head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`; review comments, reviews and review threads were empty, and expected-head squash merge produced `5472e8f0479a750483709222745cdee92f504258`.
+- Post-merge full CI run `30342447923` passed on the exact PR #270 merge SHA. Stage run `30343061807` created GitHub deployment `5636659535` for that SHA; deploy, public smoke and public browser checks succeeded, frontend/API returned HTTP 200 on attempt one and all 12 desktop Chromium/iOS WebKit checks passed.
+- Deployment-status Issue #12 and GitHub deployment status `16028582201` report the same exact stage SHA and success.
 - PR #269 final head `581c233f0c2c73ae2af9267a3f9738226307fa40` passed lightweight CI run `30340242817`; review comments, reviews and review threads were empty, and expected-head squash merge produced `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
 - Post-merge lightweight CI run `30340319636` passed on the exact PR #269 merge SHA. Deploy Stage run `30340336780` validated Agent Docs scope and skipped deployment, so stage remains on exact product image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
 - Issue #199 canonical Figma production page is `253:2`, source wrapper is `253:3`, catalog/detail screens are `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162` and `257:159`, resilient hooks are `257:212`, and Screen Map `82:3` records the handoff in node `261:2`.
