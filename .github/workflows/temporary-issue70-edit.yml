@@ -1,0 +1,109 @@
+name: Temporary Issue 70 stale-reference cleanup
+
+on:
+  push:
+    branches:
+      - refactor/issue-70-remove-phrases-compat
+    paths:
+      - .github/workflows/temporary-issue70-edit.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+
+concurrency:
+  group: temporary-issue70-stale-reference-cleanup
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refactor/issue-70-remove-phrases-compat
+          fetch-depth: 0
+
+      - name: Remove stale route resource consumer and strengthen source contract
+        run: |
+          set -Eeuo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          source_path = Path("frontend/components/lexigo-premium-app.tsx")
+          test_path = Path("frontend/components/phrases-route-island-source.test.ts")
+          source = source_path.read_text(encoding="utf-8")
+          test = test_path.read_text(encoding="utf-8")
+
+          stale_notice = '          <AsyncResourceNotice label="Каталог фраз" status={phraseCatalogStatus} onRetry={() => void loadPhraseCatalogResource(session, { page: phrasePage, topic: phraseTopic, query: phraseSearch, sort: phraseSortMode })} />\n'
+          retired_identifiers = [
+              "phraseCatalog",
+              "phraseCatalogStatus",
+              "remotePhraseDetail",
+              "phraseDetailStatus",
+              "phraseCatalogPageInfo",
+              "phrasePage",
+              "phraseSearchInput",
+              "phraseSearch",
+              "phraseTopic",
+              "phraseSortMode",
+              "loadPhraseCatalogResource",
+              "loadPhraseDetailResource",
+          ]
+
+          if stale_notice in source:
+              if source.count(stale_notice) != 1:
+                  raise SystemExit(f"expected one stale catalog notice, found {source.count(stale_notice)}")
+              source = source.replace(stale_notice, "", 1)
+          elif any(identifier in source for identifier in retired_identifiers):
+              remaining = [identifier for identifier in retired_identifiers if identifier in source]
+              raise SystemExit(f"stale notice shape changed; retired identifiers remain: {remaining}")
+          else:
+              print("stale route resource consumer is already absent")
+
+          anchor = '      "function itemKey",\n'
+          identifier_assertions = "".join(f'      "{identifier}",\n' for identifier in retired_identifiers)
+          if identifier_assertions not in test:
+              if test.count(anchor) != 1:
+                  raise SystemExit(f"expected one source-contract anchor, found {test.count(anchor)}")
+              test = test.replace(anchor, anchor + identifier_assertions, 1)
+
+          remaining = [identifier for identifier in retired_identifiers if identifier in source]
+          if remaining:
+              raise SystemExit(f"retired Phrases identifiers remain after cleanup: {remaining}")
+
+          required = [
+              'type LessonSource = WordSection | "phrases";',
+              "DEFAULT_PHRASE_CATALOG",
+              "function toLearningItem",
+              'if (!activeSession && resolvedSource === "phrases")',
+              'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"',
+          ]
+          missing = [marker for marker in required if marker not in source]
+          if missing:
+              raise SystemExit(f"shared phrase markers missing after cleanup: {missing}")
+
+          source_path.write_text(source, encoding="utf-8")
+          test_path.write_text(test, encoding="utf-8")
+          PY
+
+          git diff --check
+          git diff --stat
+
+      - name: Commit cleanup
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- frontend/components/lexigo-premium-app.tsx frontend/components/phrases-route-island-source.test.ts; then
+            echo "No cleanup commit required."
+            exit 0
+          fi
+          git add frontend/components/lexigo-premium-app.tsx frontend/components/phrases-route-island-source.test.ts
+          git commit -m "fix(frontend): remove stale Phrases resource reference"
+          git push origin HEAD:refactor/issue-70-remove-phrases-compat
