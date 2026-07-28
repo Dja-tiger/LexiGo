@@ -6,6 +6,11 @@ on:
       - refactor/issue-70-remove-phrases-compat
     paths:
       - .github/workflows/temporary-issue70-bundle-measurement.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
 
 concurrency:
   group: temporary-issue70-bundle-measurement
