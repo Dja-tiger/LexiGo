@@ -12,6 +12,7 @@ import (
 	"github.com/Dja-tiger/LexiGo/backend/internal/health"
 	"github.com/Dja-tiger/LexiGo/backend/internal/httpx"
 	"github.com/Dja-tiger/LexiGo/backend/internal/learning"
+	"github.com/Dja-tiger/LexiGo/backend/internal/moderation"
 	"github.com/Dja-tiger/LexiGo/backend/internal/performance"
 	"github.com/Dja-tiger/LexiGo/backend/internal/ratelimit"
 	"github.com/Dja-tiger/LexiGo/backend/internal/scenarios"
@@ -105,6 +106,14 @@ func NewWithOptions(
 	learningHandler := learning.NewHandler(learningRepository)
 	scenariosHandler := scenarios.NewHandler(scenarios.NewRepository(pg, learningRepository))
 	performanceHandler := performance.NewHandler(performance.NewRepository(pg), logger)
+	moderationRepository := moderation.NewRepository(pg)
+	moderationHandler := moderation.NewHandler(
+		moderationRepository,
+		cfg.ContentModeration.AdminEmails,
+		logger,
+		cfg.ContentModeration.PendingTTL,
+		cfg.ContentModeration.DecidedTTL,
+	)
 	limiter := ratelimit.New(rdb)
 	cspReportHandler := limiter.MiddlewareFailClosed("csp-report", 60, http.HandlerFunc(performanceHandler.CSPReport))
 	authenticated := func(handler http.HandlerFunc) http.Handler {
@@ -152,6 +161,16 @@ func NewWithOptions(
 	mux.Handle("PUT /api/v1/scenario-attempts/{attemptID}/steps/{position}", authenticated(http.HandlerFunc(scenariosHandler.SubmitStep)))
 	mux.Handle("GET /api/v1/progress", authenticated(http.HandlerFunc(learningHandler.Progress)))
 	mux.Handle("PUT /api/v1/progress/goal", authenticated(http.HandlerFunc(learningHandler.SetDailyGoal)))
+	mux.Handle("GET /api/v1/admin/answer-suggestions", authenticated(http.HandlerFunc(moderationHandler.List)))
+	mux.Handle("GET /api/v1/admin/answer-suggestions/metrics", authenticated(http.HandlerFunc(moderationHandler.Metrics)))
+	mux.Handle(
+		"POST /api/v1/admin/answer-suggestions/{suggestionID}/decision",
+		limiter.MiddlewareFailClosed(
+			"moderation-decision",
+			60,
+			authenticated(http.HandlerFunc(moderationHandler.Decide)),
+		),
+	)
 
 	// CSP report delivery may carry an opaque Origin ("null") even when the
 	// document is same-origin. Keep only this credential-free, media-type-

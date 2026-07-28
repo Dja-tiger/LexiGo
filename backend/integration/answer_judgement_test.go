@@ -32,7 +32,7 @@ func TestObjectiveAnswerJudgementAndSuggestion(t *testing.T) {
 	if err := migrate.Up(ctx, pg); err != nil {
 		t.Fatalf("migrate.Up() error = %v", err)
 	}
-	if _, err := pg.Exec(ctx, "truncate table answer_suggestions, lesson_review_idempotency, lesson_session_items, lesson_sessions, user_learning_preferences, review_events, user_words, refresh_tokens, words, users restart identity cascade"); err != nil {
+	if _, err := pg.Exec(ctx, "truncate table answer_suggestion_audit, answer_suggestions, lesson_review_idempotency, lesson_session_items, lesson_sessions, user_learning_preferences, review_events, user_words, refresh_tokens, words, users restart identity cascade"); err != nil {
 		t.Fatalf("truncate test data: %v", err)
 	}
 	if _, err := catalog.Seed(ctx, pg); err != nil {
