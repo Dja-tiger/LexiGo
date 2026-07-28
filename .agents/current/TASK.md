@@ -41,6 +41,7 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `.agents/current/EXECUTION.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/phrases.css`
+- `frontend/app/phrases-compat.css`
 - `frontend/bundle-budgets.json`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/routed-lexigo-app.tsx`
@@ -55,11 +56,15 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `frontend/e2e/app-router-routes.spec.ts`
 - `frontend/e2e/catalog-pagination.spec.ts`
 - `frontend/e2e/information-architecture.spec.ts`
+- `frontend/e2e/interface-copy.spec.ts`
 - `frontend/e2e/route-bundle-budget.spec.ts`
 - `frontend/e2e/speech-player.spec.ts`
 - `frontend/e2e/phrases-production.spec.ts`
 - `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/accessibility.spec.ts`
+- `frontend/e2e/accessibility-audit.spec.ts`
+- `frontend/e2e/adaptive-navigation.spec.ts`
+- `frontend/e2e/route-focus-management.spec.ts`
 - `frontend/e2e/support/quality-gates.ts`
 - `frontend/docs/adaptive-knowledge-coach.md`
 - `docs/frontend-bundle-budgets.md`
