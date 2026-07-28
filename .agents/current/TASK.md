@@ -10,19 +10,19 @@
 
 ## Objective
 
-Remove the proven-unreachable Phrases catalog/detail compatibility family from `LexigoPremiumApp` while preserving the complete canonical Phrases island, guest/auth fallback and all shared phrase lesson-domain behavior.
+Remove the proven-unreachable Phrases catalog/detail compatibility family from `LexigoPremiumApp` while preserving the canonical Phrases island, guest/auth fallback and every shared phrase lesson-domain contract.
 
 ## Scope
 
-- Remove Phrases route-only state, derived values, URL/filter synchronization, API loaders/effects, reset writes and presentation from `frontend/components/lexigo-premium-app.tsx`.
-- Remove route-only imports/helpers that become unused after the deletion.
-- Replace compatibility-candidate presence assertions with fail-closed absence assertions while retaining canonical route ownership and shared lesson-domain assertions.
-- Update the compatibility cleanup delivery document with exact completion evidence and the remaining CSS/compatibility boundary.
-- Use one temporary, branch-only, path-guarded job in an existing PR workflow plus one temporary patch script solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; restore/delete both before final CI and ensure the final branch head is developer-authored.
+- Remove Phrases route-only state, derived values, URL/filter synchronization, API loaders/effects, lifecycle resets, handlers and presentation from `frontend/components/lexigo-premium-app.tsx`.
+- Remove only imports, types and helpers that become unused with that route family.
+- Replace compatibility-candidate presence assertions with a fail-closed absence contract while retaining canonical route ownership and shared lesson-domain assertions.
+- Document the completed deletion boundary, preserved shared consumers, CSS boundary, validation and remaining Issue #70 work.
+- Record exact execution and validation evidence in `.agents/current/*`.
 
 ## Non-goals
 
-- No CSS or visual baseline changes.
+- No CSS selector, stylesheet or visual baseline change.
 - No auth, password recovery, account, Home, Learn, Active Lesson, Lesson Result, Dictionary, Progress or Profile redesign/refactor.
 - No removal of `LessonSource = "phrases"`, mixed lessons, phrase payload conversion, cloze judgement, answer suggestions or backend/API contracts.
 - No removal of the shared guest phrase-browse helper `sortLearningItems` or its `sortCatalogEntries` dependency.
@@ -34,21 +34,19 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `.github/workflows/issue-70-phrases-runtime-patch.yml` — temporary only; prohibited from final diff
-- `.github/workflows/issue-70-phrases-runtime-patch-v2.yml` — temporary only; prohibited from final diff
-- `.github/workflows/actions-storage-cleanup.yml` — temporary exact-branch job only; must match base byte-for-byte in final diff
-- `scripts/ci/issue_70_phrases_patch.py` — temporary exact-anchor patcher only; prohibited from final diff
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
 - `frontend/docs/compatibility-cleanup.md`
 
 ## Prohibited paths
 
+- `.github/workflows/**`
+- `scripts/ci/**`
 - `frontend/app/*.css`
 - `frontend/e2e/**/*-snapshots/**`
 - `frontend/bundle-budgets.json`
-- backend, API, migrations, deployment and permanent workflow changes
-- any route island or shared lesson-domain implementation outside the two declared frontend component/test files
+- backend, API, migrations and deployment files
+- any route-island or shared lesson-domain implementation outside the two declared frontend component/test files
 
 ## Runtime owners
 
@@ -59,7 +57,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 
 ## Documentation owners
 
-- `frontend/docs/compatibility-cleanup.md` owns the exact deletion manifest and remaining cleanup boundary.
+- `frontend/docs/compatibility-cleanup.md` owns the exact deletion manifest, preserved contracts and remaining cleanup boundary.
 - `.agents/current/*` owns current task scope, execution evidence and handoff state.
 
 ## Invariants
@@ -69,41 +67,45 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `sortLearningItems` and `sortCatalogEntries` remain available to the shared guest phrase-browse lesson path.
 - `LessonSource` continues to accept `"phrases"`; the Lesson Composer option remains.
 - Mixed lessons, phrase `slug`/`cloze`/answer conversion, cloze review and answer suggestions remain unchanged.
-- No CSS selector or stylesheet is changed in this slice.
+- No CSS selector or stylesheet changes in this slice.
 - Authoritative Linux visual hashes remain unchanged.
 - Existing route bundle ceilings are not raised.
-- All temporary workflows/jobs/scripts are absent from the final diff and the final head is not bot-authored.
+- Temporary workflows, jobs and scripts are absent from the final diff.
+- The final immutable PR head is developer-authored.
 
 ## Acceptance criteria
 
 - Every route-only marker listed in the deletion manifest is absent from `LexigoPremiumApp`.
 - Canonical Phrases reachability and ownership contracts remain green.
 - Shared phrase lesson-domain markers remain present and executable.
-- TypeScript/lint identify no stale imports, types or unreachable route helpers.
-- The source file has a measured line/byte reduction with no generated or formatting-only churn.
-- Full browser, accessibility, visual, performance, container and backend CI passes on one immutable developer-authored head.
-- PR is squash-merged with expected head and exact merge SHA passes stage/public validation.
+- Lint and TypeScript report no stale imports, types or unreachable route helpers.
+- `lexigo-premium-app.tsx` has a measured net reduction with no generated or formatting-only churn.
+- Final compare is behind `0` and contains exactly the six allowed paths.
+- Full frontend, backend, browser, accessibility, visual, performance, service-worker and container CI passes on one immutable developer-authored head.
+- PR #282 has no unresolved review feedback and is squash-merged with expected head.
+- Exact merge SHA passes stage deploy, public frontend/API smoke and public desktop/iOS browser validation.
 
 ## Required checks
 
-- Agent Harness validation.
+- Change-scope classifier and Agent Harness routing contract.
 - Frontend lint, TypeScript, unit/source contracts, production build and dependency audit.
 - Direct `/phrases` and `/phrases/[slug]` guest/auth entry, reload, new tab and Back/Forward.
 - Phrases search/filter/sort/pagination and Learn handoff.
-- Phrase-containing lesson, cloze review and answer suggestion regression.
+- Phrase-containing lesson, cloze review and answer-suggestion regression.
 - Desktop Chromium/WebKit and Android/iOS browser projects.
 - Keyboard, axe, reduced motion, forced colors, 200% reflow and CSP.
 - Authoritative Linux visual regression without baseline updates.
-- Controlled route bundle comparison and existing permanent budgets.
-- Backend/integration/container full CI, review audit, expected-head merge and exact-SHA stage/public validation.
+- Performance budgets without ceiling changes.
+- Backend unit/security/integration and container builds.
+- Review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Risks
 
-- `DEFAULT_PHRASE_CATALOG` appears in both route-only and shared lesson conversion paths; deleting it would break phrase slug/cloze enrichment.
-- `sortLearningItems` appears in the retired route UI and the live shared guest phrase-browse path; deleting it would break lesson browsing.
-- Removing a route-only state incompletely can leave a stale effect/import or hidden bundle branch.
-- A temporary workflow/job/script can accidentally persist or leave a bot-authored final head; final compare must explicitly reject all such conditions.
-- Raw History transitions may briefly retain the old compatibility component until the App Router selects the canonical island; browser tests must prove no observable regression.
+- `DEFAULT_PHRASE_CATALOG` has both retired route and live lesson-conversion consumers; deleting it would break phrase slug/cloze enrichment.
+- `sortLearningItems` has both retired route and live shared guest phrase-browse consumers; deleting it would break lesson browsing.
+- Incomplete deletion can leave a stale effect/import or hidden bundle branch.
+- Raw History transitions may briefly retain a compatibility component until the App Router selects the canonical island; browser tests must prove no observable regression.
+- A documentation update after a green run changes the immutable head; the full authoritative matrix must therefore run again before merge.
 
 ## Rollback
 
