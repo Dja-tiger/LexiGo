@@ -2,15 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 02:24 Europe/Moscow.
+- Last verified: 2026-07-28 04:55 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-- Latest product merge: PR #255, merge SHA `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-- PR #255 immutable developer-authored head: `4bd470609d20485a8a797c96574002de93bc6a03`.
-- PR #255 final full CI: #2196, run `30312747613`, successful with the controlled measurement probe absent.
-- Post-merge `main` CI: #2197, run `30313334659`, successful on exact merge SHA `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-- Issue #254 is closed as completed.
-- PR #255 exact-SHA stage/public validation: #2035, run `30313824186`, exact image `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`; deploy, public smoke and public browser succeeded, with 12/12 public Chromium/WebKit checks passing.
+- Live `main` at verification: `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- Latest product merge: PR #258, merge SHA `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- PR #258 immutable developer-authored head: `21256ba34ba64448a26770c6eec584ea00a1e60a`.
+- PR #258 final full CI: #2204, run `30317303968`, successful with the controlled measurement probe absent.
+- Post-merge `main` CI: #2205, run `30317863420`, successful on exact merge SHA `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- Issue #257 is closed as completed.
+- PR #258 exact-SHA stage/public validation: #2043, run `30318351607`, exact image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`; deploy and first-attempt frontend/API smoke succeeded, with 12/12 public desktop Chromium/iOS WebKit checks passing.
 - Latest documentation merge: PR #252, merge SHA `17c5a8baa544382344936f423d020e5fec89a3d2`.
 - PR #252 immutable head: `008d53014e690ab0c314b5c706489988ab5ba29f`.
 - PR #252 lightweight CI: #2135, run `30287635161`, successful; classifier and Agent Harness ran, while backend, frontend, browser and container jobs were correctly skipped.
@@ -86,7 +86,12 @@
 - Cold `/learn` entry measures 210,986 JavaScript bytes and 20 initial requests versus the original 238,257-byte monolithic graph: a 27,271-byte, 11.4% reduction.
 - Permanent `/learn` limits are 235,000 JavaScript bytes and 22 initial requests.
 - Exact Learn measurement artifact `8670855986` came from controlled run `30312155204` on probe head `b82c31acfc9bd48ec5b28682a49035226bdef556`; its test-only probe was removed byte-for-byte before final immutable-head CI.
-- Remaining routes in the compatibility graph `LexigoPremiumApp` are Phrases and Active Lesson.
+- `LexigoActiveLessonApp` owns only active-session restore, review/resync/suggestion, completion/result continuation, focused-route announcement and safe exit; it does not import `LexigoPremiumApp` or duplicate session, review-outbox, Service Worker or appearance ownership.
+- Active Lesson semantic ownership survives transient Next pathname changes during Browser Back, preserves immutable framework history state and replaces the protected entry after confirmed exit so a later Back returns to `/learn`.
+- Cold `/lesson/active` entry measures 220,225 JavaScript bytes and 19 initial requests versus the original 238,257-byte monolithic graph: an 18,032-byte, 7.6% reduction.
+- Permanent `/lesson/active` limits are 235,000 JavaScript bytes and 22 initial requests.
+- Exact Active Lesson measurement artifact `8672549672` came from controlled run `30316931098` on probe head `ce468c054dc57f3dc154a7b8b016f0999b04d90c`; artifact digest is `sha256:a66f6155801715d4d689adb84f82b136e57e5360ef76c193ad77e2db9ea3829a`, and the test-only probe was removed byte-for-byte before final immutable-head CI.
+- The only remaining route in the compatibility graph `LexigoPremiumApp` is Phrases.
 
 ### Scenario learning
 
@@ -177,7 +182,7 @@ Resolve architecture/privacy and typed backend contracts before implementation, 
 
 ### 4. #115 — Remaining route-level client islands and budgets
 
-Gradually extract Phrases and Active Lesson without duplicating session, API, review-outbox or PWA ownership. Each route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
+Extract Phrases after its exact production Figma nodes are approved, without duplicating session, API, review-outbox or PWA ownership. The route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
 
 ### 5. #70 — Legacy applications and CSS
 
@@ -199,20 +204,24 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-2. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
-3. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
-4. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
-5. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
-6. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
-7. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
-8. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
-9. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
-10. #239 — `feat(ui): implement production system states` → `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+1. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+2. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+3. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
+4. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+5. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
+6. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+7. #246 — `docs(agent): record Agent Docs post-merge proof` → `a0b6ce2bfa359ec232ad3c8df79f0bdfa624db1c`.
+8. #245 — `docs(agent): reconcile state after Agent Docs CI` → `2ba1053877f916be2c5f5ce4651d772256ee66dd`.
+9. #244 — `ci: add safe Agent Docs fast path` → `426144d00a857f36be8a543553df5029ac49a454`.
+10. #242 — `fix(ci): make previous-week fixture boundary-safe` → `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
 
 ## Evidence
 
-- Live GitHub `main`, PR #255, Issues #12/#115/#254, immutable heads, CI and deployment evidence were re-read at the verification timestamp.
+- Live GitHub `main`, PR #258, Issues #12/#115/#257, immutable heads, CI and deployment evidence were re-read at the verification timestamp.
+- PR #258 final head `21256ba34ba64448a26770c6eec584ea00a1e60a` passed full CI #2204/run `30317303968`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- Post-merge push CI #2205/run `30317863420` passed on the exact merge SHA, including frontend core, backend unit/security/integration, full browser matrix, performance budgets and both container builds.
+- Stage run `30318351607` deployed exact web/API image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`; frontend/API smoke returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
+- Exact performance artifact `8672549672` from controlled run `30316931098` records `/lesson/active` at 220,225 bytes and 19 requests; the probe changed only the route-budget test, was restored to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`, and was absent from final CI.
 - PR #255 final head `4bd470609d20485a8a797c96574002de93bc6a03` passed full CI #2196/run `30312747613`; review-thread audits were empty and expected-head squash merge produced `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
 - Post-merge push CI #2197/run `30313334659` passed on the exact merge SHA, including frontend core, backend unit/security/integration, full browser matrix, performance budgets and both container builds.
 - Stage run `30313824186` deployed exact web/API image `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`; public frontend/API smoke passed and the public desktop Chromium/iOS WebKit suite passed 12/12.
