@@ -39,7 +39,9 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `.agents/AGENTS.md`
 - `.agents/AGENTS.progress-pr214.md`
+- `.agents/AGENTS.issue-199-phrases.md`
 - `.agents/AGENTS.issue-261-css-specificity.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/phrases.css`
