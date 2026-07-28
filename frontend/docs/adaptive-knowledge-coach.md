@@ -33,6 +33,23 @@ Prepared design slice for Issue #162:
 - mobile manual-settings composer: node `203:5`;
 - desktop full composer: node `204:2`.
 
+Approved production design slice for Issue #199:
+
+- page `21 — Production Slice — Phrases`: node `253:2`;
+- production source-of-truth wrapper: node `253:3`;
+- mobile catalog, Light/default: node `255:10`;
+- mobile catalog, Dark/search + Travel filter: node `257:2`;
+- mobile Phrase Detail, Dark/daily: node `255:55`;
+- mobile Phrase Detail, Light/travel: node `257:47`;
+- desktop catalog, Light/default: node `255:81`;
+- desktop catalog, Dark/empty search: node `257:74`;
+- desktop Phrase Detail, Dark/technical: node `255:162`;
+- desktop Phrase Detail, Light/daily: node `257:159`;
+- loading, empty and error hooks: node `257:212`;
+- Product Screen Map handoff entry: node `261:2` inside canonical map `82:3`.
+
+The catalog contract keeps query and topic state visible and URL-backed while the results surface moves between default, loading, empty and error states. Phrase Detail preserves a direct-entry hierarchy of meaning, cloze prompt, working example, usage note and one lesson-configuration action. Technical, daily and travel content variants change phrase content, not application ownership or navigation semantics.
+
 Research and concept pages `01–08` currently act primarily as section shells in the live file. The approved direction and engineering contract are represented by the populated foundations, patterns, product-screen matrices, screen map and prototype. Do not infer missing production behavior from empty concept pages.
 
 ## Production ownership
@@ -42,7 +59,7 @@ The implementation must not introduce a second product graph.
 - `RouteChrome` remains the only owner of primary route navigation.
 - `LexigoBootstrappedApp` remains the sole session restoration, account runtime and dynamic route-entry owner.
 - `LexigoHomeApp` owns Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
-- `LexigoPremiumApp` retains Learn, Phrases and Active Lesson compatibility orchestration while those routes remain unextracted.
+- `LexigoPremiumApp` retains only Phrases compatibility orchestration until the approved Issue #199 catalog/detail slice is extracted.
 - `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners and are not imported by Home.
 - The backend remains authoritative for lesson position, completion and review persistence.
 - The active lesson remains higher priority than the due queue, new study and manual configuration.
@@ -73,9 +90,9 @@ Direct `/` entry and return navigation must use the dedicated Home island withou
 
 ## Next implementation slice
 
-Issue #162 is the next product-screen slice. On mobile, Learn defaults to a recommended lesson with one primary action. Manual mode/source/size controls are disclosed through an explicit `Настроить урок` action. Desktop keeps the full composer visible.
+Issue #199 is the next product-screen slice. Implement the approved Phrases catalog/detail nodes without creating another session, API, review-outbox, appearance or PWA owner.
 
-The design reuses the existing lesson API parameters and session lifecycle. Progressive disclosure is a presentation contract, not a new scheduling or composition algorithm.
+The catalog must preserve URL-backed search, topic, sort and pagination state across reload and browser Back/Forward. Direct `/phrases/[slug]` entry keeps independent loading/error handling and must not depend on a previously loaded catalog page. The design changes presentation and route-entry ownership only; the existing typed phrase API and authenticated session lifecycle remain authoritative.
 
 ## Figma source-of-truth maintenance
 
