@@ -5,8 +5,8 @@
 - Issue: #199 — Phrases runtime implementation and route-island extraction.
 - Branch: `agent/issue-199-phrases-runtime`.
 - Base SHA: `3475d1443bbccedb63bca54e67c5762aec2374e3`.
-- Head SHA: resolve from live branch ref.
-- PR: not opened yet.
+- Head SHA: resolve from live PR ref before every immutable-head gate.
+- PR: Draft #273.
 
 ## Objective
 
@@ -48,6 +48,7 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `frontend/components/phrases-catalog.tsx`
 - `frontend/components/phrase-detail-presentation.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
+- `frontend/components/production-app-entry.test.ts`
 - `frontend/lib/phrases.ts`
 - `frontend/lib/phrases.test.ts`
 - `frontend/lib/bundle-budgets.test.ts`
