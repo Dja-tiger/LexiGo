@@ -72,12 +72,12 @@ describe("phrase presentation helpers", () => {
     expect(phraseSlug({ ...phraseFromAPI(PHRASE), slug: undefined, id: "phrase-legacy-slug" })).toBe("legacy-slug");
   });
 
-  it("normalizes known topics and scheduler states without hiding unknown values", () => {
-    expect(phraseTopicLabel("Daily Life")).toBe("Повседневное");
+  it("reuses canonical localized catalog copy without hiding unknown values", () => {
+    expect(phraseTopicLabel("Daily Life")).toBe("Повседневная жизнь");
     expect(phraseTopicLabel("Incidents")).toBe("Инциденты");
     expect(phraseTopicLabel("Custom Topic")).toBe("Custom Topic");
-    expect(phraseStatusLabel("mastered")).toBe("Закреплено");
+    expect(phraseStatusLabel("mastered")).toBe("Освоено");
     expect(phraseStatusLabel("learning")).toBe("Изучается");
-    expect(phraseStatusLabel("unknown")).toBe("Новое");
+    expect(phraseStatusLabel("unknown")).toBe("unknown");
   });
 });
