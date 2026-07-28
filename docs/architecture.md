@@ -27,23 +27,41 @@ LexiGo должен одновременно быть рабочим инстр�
 | Прогресс | `/progress` |
 | Профиль и авторизация | `/profile` |
 | Активный урок текущего пользователя | `/lesson/active` |
+| Каталог сценариев | `/scenarios` |
+| Прохождение сценария | `/scenarios/[slug]` |
+
+Канонические client owners:
+
+| Маршрут | Client entry | Основная ответственность |
+| --- | --- | --- |
+| `/` | `LexigoHomeApp` | progress/active-session reads, next-best action и создание урока |
+| `/learn` | `LexigoLearnApp` | metadata, preview/create/resume/discard и Lesson Composer presentation |
+| `/lesson/active` | `LexigoActiveLessonApp` | restore, review/resync/suggestion, result continuation и safe exit |
+| `/dictionary`, `/words/[id]` | `LexigoDictionaryApp` | Dictionary catalog и независимый Word Detail |
+| `/phrases`, `/phrases/[slug]` | `LexigoPhrasesApp` | server-order catalog, URL state, direct Phrase Detail и Learn handoff |
+| `/progress` | `LexigoProgressApp` | progress evidence, due actions и recommendations |
+| authenticated `/profile` | `LexigoProfileApp` | profile summary, goal и appearance preferences |
+| `/scenarios` | `LexigoScenarioCatalogApp` | ordered scenario catalog и recommendation evidence |
+| `/scenarios/[slug]` | `LexigoScenarioApp` | scenario attempt lifecycle и evidence presentation |
 
 Принципы маршрутизации:
 
 - верхнеуровневая навигация использует нативные ссылки Next.js `Link`, поэтому поддерживает открытие в новой вкладке, копирование адреса и стандартные browser controls;
 - root layout содержит persistent client shell: переключение маршрута не перезапускает refresh-session preflight, outbox runtime и PWA lifecycle;
-- `LexigoBootstrappedApp` остаётся единственным владельцем восстановления сессии и динамической загрузки route entries;
+- `LexigoBootstrappedApp` остаётся единственным владельцем восстановления сессии, refresh coordination, account runtime и динамической загрузки route entries;
+- все канонические product routes из таблицы выше используют отдельные client entries; route islands не импортируют session restoration, review outbox, Service Worker или другой route root;
 - `/` после bootstrap загружает отдельный `LexigoHomeApp`: island владеет только Home progress/active-lesson reads, next-best-action presentation и созданием урока через существующий API;
 - `/learn` после bootstrap загружает отдельный `LexigoLearnApp`: island владеет Lesson Composer metadata/progress/active-session reads, preview/create/resume/discard mutations и presentation, но не создаёт второй session, outbox или PWA owner;
 - переход Learn → `/lesson/active` сохраняет source/topic URL state, записывает канонический product-graph history target и передаёт backend-owned active session отдельному `LexigoActiveLessonApp`;
 - переход Home → `/lesson/active?resume=1` использует одноразовый intent: Active Lesson island удаляет `resume=1` из URL до вызова существующего resume action, поэтому backend-owned session position не дублируется;
 - Active Lesson island владеет active-session restore, review/resync/suggestion, completion/result continuation, focused-route announcement и safe exit, но оставляет session bootstrap, review outbox, Service Worker и immutable-event-state Browser Back guard persistent owners;
-- `/dictionary`, `/progress`, authenticated `/profile`, Scenario catalog/detail, Home, Learn и Active Lesson используют отдельные client entries; только Phrases пока остаётся в compatibility graph `LexigoPremiumApp`;
-- route islands не импортируют session restoration, review outbox, Service Worker или другой route root; эти owners остаются persistent и представлены в DOM ровно один раз;
-- при переходе между Home/Learn/Dictionary/product graphs текущий island остаётся смонтированным до изменения pathname, после чего bootstrap канонизирует history state и только затем подключает целевой graph;
-- `/profile` после восстановления сессии загружает отдельный authenticated Profile island; guest login, registration, password reset и email-change confirmation остаются в существующей auth compatibility boundary;
+- `LexigoPhrasesApp` загружает authenticated catalog через `/api/v1/words?kind=phrase&source=phrases` без client reordering, хранит `topic`, `query`, `sort` и `page` в URL и загружает `/api/v1/phrases/{slug}` независимо от catalog warm-up;
+- Phrases direct entry, reload, new tab и Back/Forward не зависят от ранее открытой catalog page; lesson configuration передаётся существующему `/learn?source=phrases` flow;
+- при переходе между route graphs текущий island остаётся смонтированным до фактического изменения pathname, после чего bootstrap канонизирует history state и только затем подключает целевой graph;
+- `/profile` после восстановления сессии загружает отдельный authenticated `LexigoProfileApp`; guest login, registration, password reset и email-change confirmation остаются в compatibility boundary;
 - Profile island владеет только сводкой профиля и пользовательскими preferences; password, session revocation, email change, export и account deletion остаются в независимых подтверждаемых account-компонентах;
-- текущая React state-модель ещё не извлечённых экранов остаётся внутренним compatibility layer и синхронизируется с pathname/history;
+- `LexigoPremiumApp` остаётся узким compatibility fallback для guest/auth и оставшихся legacy states, не представленных отдельным canonical route owner. Он загружается только через `LexigoBootstrappedApp` и не владеет Phrases или Active Lesson;
+- наличие compatibility fallback не является доказательством живого route ownership. Удаление доказанно мёртвых приложений и конфликтующих CSS выполняется отдельными атомарными slice в Issue #70 с source, bundle, browser и Linux visual evidence;
 - фильтры, сортировка, страница и detail identifier кодируются в URL; Back/Forward восстанавливают соответствующий экран и scroll position;
 - отдельные per-tab snapshots хранят вложенный маршрут и scroll в `sessionStorage`; повреждённый snapshot удаляется локально без очистки остальных данных;
 - устаревшие ссылки вида `/?view=...` принимаются только как migration input и заменяются каноническим URL;
@@ -55,6 +73,10 @@ LexiGo должен одновременно быть рабочим инстр�
 - одноразовые reset/email-change credentials передаются во fragment `/profile#...`, поэтому не попадают в HTTP access logs, query analytics и `Referer`;
 - App Router предоставляет route-level loading, error и not-found boundaries;
 - Service Worker кэширует HTML shell канонических маршрутов и использует `/` как fallback для динамических detail routes при offline navigation.
+
+Route-specific initial JavaScript и request ceilings хранятся в `frontend/bundle-budgets.json`, защищаются `frontend/lib/bundle-budgets.test.ts` и browser performance gate. Методика и измеренные baselines описаны в [`frontend-bundle-budgets.md`](./frontend-bundle-budgets.md). Изменение ownership route entry не считается завершённым без direct-entry/history evidence и permanent route budget.
+
+Публичная архитектурная документация является downstream consumer executable ownership. `frontend/components/architecture-documentation-contract.test.ts` сверяет README и этот документ с dynamic imports `LexigoBootstrappedApp` и блокирует возврат подтверждённых stale ownership claims.
 
 ## Appearance ownership
 
