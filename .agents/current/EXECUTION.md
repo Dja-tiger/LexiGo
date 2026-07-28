@@ -67,3 +67,11 @@ Validation:
 Visual limitation: a local Apple Silicon Docker run failed unchanged Profile/Scenario hashes and produced differing retry hashes. It was classified as a non-authoritative architecture/font-render environment, the exact container was stopped, the temporary source copy was removed and no baseline was updated. The x86 Linux GitHub visual job remains required.
 
 Result: source and functional behavior are green locally at implementation commit `0dce967`; immutable-head authoritative CI is pending.
+
+## Authoritative visual correction
+
+Run `30319926639` executed 44 applicable Linux visual cases: 43 passed and only `desktop-offline-dark` failed. The received SHA was `4603e4d35e823b5feb0ea9f687912a38d0c54fb48a874a79640567fe4d9e5791`; the approved SHA remains `8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a`.
+
+Root cause: the retired `.lx-review-sync span:not(.lx-review-sync__indicator)` selector had higher specificity than `.lx-review-sync__copy span`. Its effective `color: #cbd5e1`, `font-size: 13px` and `line-height: 1.45` therefore remained part of the approved baseline before consolidation.
+
+Correction: preserve those values in the canonical copy selector and assert them in the source contract. Baselines remain unchanged.

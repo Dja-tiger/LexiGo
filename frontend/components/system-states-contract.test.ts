@@ -44,6 +44,9 @@ describe("system state ownership contract", () => {
     ]) {
       expect(stateCSS).toContain(selector);
     }
+    expect(stateCSS).toMatch(
+      /\.lx-review-sync__copy span\s*\{[\s\S]*?color:\s*#cbd5e1;[\s\S]*?font-size:\s*13px;[\s\S]*?line-height:\s*1\.45;/,
+    );
   });
 
   it("uses shared semantic tokens and preserves accessible motion and contrast fallbacks", () => {

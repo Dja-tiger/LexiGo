@@ -51,10 +51,16 @@ Issue #202 added a late canonical presentation layer without retiring the earlie
 
 The local Apple Silicon Playwright Docker run produced mismatches for untouched Profile/Scenario baselines and non-deterministic retry hashes. This is not accepted as product or baseline evidence. No visual baseline was changed; the immutable-head x86 Linux GitHub job remains authoritative.
 
+### Authoritative CI finding
+
+Run `30319926639` passed core, backend and 43/44 executed visual cases, but `desktop-offline-dark` changed from approved SHA `8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a` to `4603e4d35e823b5feb0ea9f687912a38d0c54fb48a874a79640567fe4d9e5791`.
+
+The removed `.lx-review-sync span:not(.lx-review-sync__indicator)` selector had higher specificity than the canonical copy selector, so its effective `#cbd5e1`, `13px` and `1.45` typography was lost. These effective values are now restored in the canonical owner and protected by the source contract; no baseline is promoted.
+
 ### Current branch head
 
 Local implementation commit: `0dce967`.
 
 ### Next action
 
-Require the complete authoritative GitHub matrix on the immutable PR head without baseline promotion.
+Validate the specificity correction locally, push a new immutable head and require a fresh complete authoritative GitHub matrix without baseline promotion.

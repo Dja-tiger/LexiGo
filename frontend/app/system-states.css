@@ -323,8 +323,9 @@
 }
 
 .lx-review-sync__copy span {
-  color: var(--lx-state-muted);
-  font: var(--ak-text-caption);
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .lx-review-sync__actions {
