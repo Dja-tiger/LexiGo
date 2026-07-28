@@ -7,18 +7,79 @@
 - Live `main` at verification: `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
 - Latest documentation merge: PR #271, merge SHA `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
 - PR #271 immutable developer-authored head `4f40d0fff78a52d0f94ca5b6d2f678314bc45539` passed lightweight CI run `30343850404`.
-- PR #271 is Agent Docs-only: it reset `.agents/current/**`, did not change runtime, did not build a new product image and did not supersede the verified stage image.
-- Latest design/runtime handoff merge: PR #270, merge SHA `5472e8f0479a750483709222745cdee92f504258`.
+- PR #271 changed only Agent Docs, reset `.agents/current/**`, did not build a runtime image and did not supersede the exact stage image from PR #270.
+- Latest documentation/design merge with runtime validation: Phrases production handoff PR #270, merge SHA `5472e8f0479a750483709222745cdee92f504258`.
 - PR #270 immutable developer-authored head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`.
 - PR #270 post-merge full CI run `30342447923` passed on the exact merge SHA.
-- PR #270 exact-SHA stage/public validation run `30343061807` created deployment `5636659535` and deployed web/API image `5472e8f0479a750483709222745cdee92f504258`; frontend/API returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
-- Deployment-status Issue #12 still reports the same exact healthy stage image `5472e8f0479a750483709222745cdee92f504258`.
+- PR #270 exact-SHA stage/public validation run `30343061807` deployed web/API image `5472e8f0479a750483709222745cdee92f504258`; frontend/API returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
 - Latest product merge: recovery PR #267, merge SHA `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
-- PR #267 immutable developer-authored head `68a2be9987b8d1fcb2ca31ead40b50994055267c` passed full CI run `30337018986`.
-- PR #267 post-merge full CI run `30337705777` passed on the exact merge SHA.
-- PR #267 exact-SHA stage/public validation run `30338245219` passed first-attempt frontend/API smoke and 12/12 public browser checks.
-- Issue #199 is open. Its design handoff is complete; runtime implementation and Phrases route-island extraction remain pending.
-- No pull request was open at verification. `.agents/current/**` is reset to templates.
+- PR #267 immutable developer-authored head: `68a2be9987b8d1fcb2ca31ead40b50994055267c`.
+- PR #267 final full CI: run `30337018986`, successful across backend, frontend, complete browser matrix and both container builds.
+- Post-merge `main` CI: run `30337705777`, successful on exact merge SHA `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- PR #267 exact-SHA stage/public validation: run `30338245219`, exact web/API image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`; frontend/API smoke returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
+- PR #268 post-merge lightweight CI run `30338890682` passed on exact documentation merge SHA `c001932fdec11e4c09e33c173656c85be6592906`; Deploy Stage run `30338912556` validated Agent Docs scope and skipped deployment, so stage remains on exact product image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- Issue #132 is closed and fully validated.
+- Initial Issue #132 product merge: PR #265, merge SHA `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- PR #265 immutable developer-authored head: `be47c73e4251f3c1984da100d5f0aeab593e7e61`.
+- PR #265 final full CI: run `30334918051`, successful across backend, frontend, complete browser matrix and both container builds.
+- Post-merge `main` CI run `30335497860` failed only in `Frontend E2E (UI tests (shard 2/2))`: iOS WebKit cleared the Dictionary search value between a successful `fill()` and immediate Enter submit.
+- Deploy Stage run `30335952017` was skipped because post-merge CI failed; at that checkpoint stage still served exact product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Documentation reconciliation PR #266 passed lightweight CI `30336497762`, was expected-head squash merged as `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`, and passed post-merge lightweight CI `30336556239`.
+- Previous product merge: PR #262, merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- PR #262 immutable developer-authored head: `bfdb1ede306b6a1e8d29e2a71067a508d6903a45`.
+- PR #262 final full CI: run `30320390335`, successful including unchanged authoritative Linux visual hashes.
+- Post-merge `main` CI: run `30320890448`, successful on exact merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Issue #261 is closed as completed; parent Issue #70 remains open for Phrases/dead compatibility evidence.
+- PR #262 exact-SHA stage/public validation: run `30321331383`, exact image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`; deploy and first-attempt frontend/API HTTP 200 smoke succeeded, with 12/12 public desktop Chromium/iOS WebKit checks passing.
+- Previous product merge: PR #258, merge SHA `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- PR #258 immutable developer-authored head: `21256ba34ba64448a26770c6eec584ea00a1e60a`.
+- PR #258 final full CI: #2204, run `30317303968`, successful with the controlled measurement probe absent.
+- PR #258 post-merge `main` CI: #2205, run `30317863420`, successful on exact merge SHA `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- Issue #257 is closed as completed.
+- PR #258 exact-SHA stage/public validation: #2043, run `30318351607`, exact image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`; deploy and first-attempt frontend/API smoke succeeded, with 12/12 public desktop Chromium/iOS WebKit checks passing.
+- Earlier documentation merge: PR #266, merge SHA `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+- PR #266 immutable head: `52d82b67616816500fcb7323c5b3e53f9772c770`.
+- PR #266 lightweight CI: run `30336497762`, successful.
+- PR #266 post-merge lightweight CI: run `30336556239`, successful on exact merge SHA `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+- Previous documentation merge: PR #263, merge SHA `d85c57f1e23b891526970b06c49479fa15873cb4`.
+- PR #263 immutable head: `5dab7b979c6002f8d9fdf7f350f3799b62ecade0`.
+- PR #263 lightweight CI: run `30321738395`, successful.
+- PR #263 post-merge lightweight CI: run `30321794215`, successful on exact merge SHA `d85c57f1e23b891526970b06c49479fa15873cb4`.
+- Deploy Stage scope run `30321812942` validated the Agent Docs classification and skipped the deploy job; stage remains on exact product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Previous documentation merge: PR #260, merge SHA `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+- PR #260 immutable head: `f3e8c6ca287997a5578b70db931c2d553995f460`.
+- PR #260 lightweight CI: run `30319000583`, successful.
+- PR #260 post-merge lightweight CI: run `30319056079`, successful on exact merge SHA `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+- Previous documentation merge: PR #259, merge SHA `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+- PR #259 immutable head: `8be2a15ae7a34dff6d93d2705d5b080b16cee658`.
+- PR #259 lightweight CI: #2206, run `30318745468`, successful; classifier and Agent Harness ran, while backend, frontend, browser and container jobs were correctly skipped.
+- PR #259 post-merge lightweight CI: #2207, run `30318796156`, successful on exact merge SHA `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+- PR #259 did not build or deploy runtime images. Stage remains on exact product image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2` from run `30318351607`.
+- Previous product merge: PR #251, merge SHA `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+- PR #251 immutable head: `189f5eee089b1afe5127904770525810da1ae101`.
+- PR #251 authoritative full CI: #2133, run `30277124935`, successful.
+- Issue #250 is closed as completed.
+- PR #251 exact-SHA stage/public validation: run `30279520923`, exact image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`; deploy, public smoke and public browser succeeded. All 12 logical public checks completed; one iOS WebKit stale-build recovery check passed on retry after a transient Service Worker load error.
+- Previous product merge: PR #248, merge SHA `a617dfce331700d0b3e911726d52a2683f18d526`.
+- PR #248 immutable head: `7052865d4ef07c707c7d692ecc4a539d863e13dc`.
+- PR #248 full CI: #2084, run `30254670808`, successful.
+- Issue #247 is closed as completed.
+- PR #248 exact-SHA stage/public validation: run `30256018000`, exact image `a617dfce331700d0b3e911726d52a2683f18d526`; deploy, public smoke and public browser succeeded, 12/12 checks passed.
+- Product system-state merge: PR #239, merge SHA `370d0dccfaa9c273d11164bbce37dd71975485cd`.
+- PR #239 immutable head: `1a450fef6e6cc11621cb9c7de2552fb426cef522`.
+- PR #239 full CI: #2042, run `30225559882`, successful.
+- Product stage/public validation for PR #239: run `30226263326`, exact image `370d0dccfaa9c273d11164bbce37dd71975485cd`; deploy, public smoke and public browser succeeded, 12/12 checks passed.
+- Issues #202 and #170 are closed as completed.
+- CI reliability follow-up: PR #242, merge SHA `b63b6197fdffd0fc7623a5131c649aadaaa52476`.
+- PR #242 immutable head: `609367b61ae8f687fc2d1d8ec20a1f26f01048e0`.
+- PR #242 full CI: #2045, run `30227244754`, successful, including Monday execution of `TestLearningReviewModesAndAnalytics`.
+- Issue #241 is closed as completed.
+- PR #242 exact-SHA stage/public validation: run `30227955912`; deploy, public smoke and public browser succeeded, 12/12 checks passed.
+- Documentation reconciliation PR #240 passed final immutable-head CI #2047/run `30228327070` and was expected-head squash merged as `387cc50c199218d71b49b39beb9d92859b6e299c`.
+- Agent Docs CI optimization PR #244 final head `cc59aff4729f168063315100179a1693922ca47c` passed CI #2060/run `30230474179` and was expected-head squash merged as `426144d00a857f36be8a543553df5029ac49a454`.
+- Issue #243 is closed as completed.
+- PR #244 exact-SHA stage/public validation: run `30231298766`, exact image `426144d00a857f36be8a543553df5029ac49a454`; deploy, public smoke and public browser succeeded, 12/12 checks passed.
+- PRs #245, #246, #252, #259 and #260 proved the lightweight Agent Docs pull-request and main-push paths without rebuilding or redeploying runtime images.
 
 ## Completed
 
@@ -30,10 +91,10 @@
 
 ### Shared system-state presentation
 
-- `frontend/app/system-states.css` is the sole shared loading, empty, error, success, skeleton and connectivity presentation owner.
-- `frontend/app/mobile-pwa-fixes.css` is limited to the PWA/session shell.
+- `frontend/app/system-states.css` is the sole shared loading/empty/error/success/skeleton/connectivity presentation owner.
+- `mobile-pwa-fixes.css` is limited to the PWA/session shell; the retired `review-outbox.css` owner and root import are absent.
 - `ReviewOutboxRuntime` remains the sole connectivity and durable review-queue runtime owner.
-- Source contracts protect ownership and effective review-sync typography; authoritative Linux system-state hashes remain unchanged.
+- Source contracts protect the ownership boundary and effective review-sync typography; all approved Linux system-state hashes remain unchanged.
 
 ### Learning core
 
@@ -45,29 +106,46 @@
 ### Answer-suggestion moderation
 
 - A real server-rejected review can create a bounded pending answer suggestion without changing curated answers or the already-applied scheduler result.
-- Administrative access is fail-closed through a server-side allowlist; no long-lived role is stored in the JWT.
-- The moderation queue supports bounded pagination, atomic accept/reject with optimistic versioning, immutable audit snapshots, normalized-unique accepted answers, metrics and bounded retention.
-- OpenAPI structure, PostgreSQL empty-array semantics, unit/integration contracts, full CI and exact-SHA stage deployment are validated for Issue #132.
+- Administrative access is resolved fail-closed from the current account email against a server-side allowlist; no long-lived role is stored in the JWT.
+- The moderation queue supports bounded pagination, atomic accept/reject with optimistic versioning, immutable audit snapshots, normalized-unique accepted answers, operational metrics and replica-safe retention cleanup.
+- Raw pending answers are retained for at most 90 days; terminal suggestion and audit data are retained for at most 365 days.
+- OpenAPI, PostgreSQL empty-array semantics, unit/integration contracts, full browser-independent CI and exact-SHA stage deployment are validated for Issue #132.
 
 ### Progress and retained-learning evidence
 
-- `/progress` is server-owned and reports due evidence, retained knowledge, weekly trends, weak topics and deterministic recommendations.
+- `/progress` is server-owned and reports current due evidence, retained knowledge, weekly trends, weak topics and deterministic recommendations.
 - Weak part-of-speech evidence and direct server-owned recommendations are implemented.
 - Route-boundary session adoption prevents logout during Progress navigation.
 - Progress navigation remains escapable in desktop, mobile and installed PWA contexts.
-- Scroll restoration is immediate and interruptible.
+- Scroll restoration is immediate and interruptible rather than uninterruptible smooth scrolling.
 
 ### Route-level client islands and bundle budgets
 
-- Home, Learn, Active Lesson, Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
+- Home, Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
 - `LexigoBootstrappedApp` remains the sole session restoration, refresh coordination, account runtime and dynamic route-entry owner.
 - `ReviewOutboxRuntime` remains the sole connectivity and review-outbox owner.
+- `LexigoHomeApp` owns only Home progress/active-lesson reads, next-best-action presentation and lesson creation through the existing API. It does not import `LexigoPremiumApp` or duplicate session, outbox, Service Worker or appearance ownership.
+- Home preserves the ordering active lesson > due review > new study > manual configuration and hands off through the one-time canonical `/lesson/active?resume=1` intent without a second confirmation click.
+- Direct `/` entry and repeated Home ↔ Learn/Dictionary/Progress navigation perform exactly one network `/api/v1/auth/refresh` bootstrap request.
 - All LexiGo History writers use `createNavigationHistoryState`, preserve the current `lexigoRouteGraph` owner and do not copy unknown Next.js internal state between route graphs.
-- Home: 207,675 JavaScript bytes, 18 initial requests; permanent limits 235,000 bytes and 21 requests.
-- Progress: 207,502 JavaScript bytes, 18 initial requests; permanent limits 240,000 bytes and 21 requests.
-- Learn: 210,986 JavaScript bytes, 20 initial requests; permanent limits 235,000 bytes and 22 requests.
-- Active Lesson: 220,225 JavaScript bytes, 19 initial requests; permanent limits 235,000 bytes and 22 requests.
-- Active Lesson Browser Back preserves exact framework history state, invokes safe exit in all four browser projects and leaves the confirmed-exit Back target at `/learn`.
+- Cold `/` entry measures 207,675 JavaScript bytes and 18 initial requests versus the original 238,257-byte monolithic graph: a 30,582-byte, 12.8% reduction.
+- Permanent `/` limits are 235,000 JavaScript bytes and 21 initial requests.
+- Exact Home measurement artifact `8656783937` came from controlled run `30275645894` on probe head `dd35a8f3266aa9358f60a6f05abe2076cf404768`; the post-report test-only probe was removed byte-for-byte before final CI.
+- `bundle-budgets.test.ts` preserves the original measured transfer and original release ceiling as distinct immutable boundaries. Home keeps the stronger ceiling-below-original-transfer requirement; existing extracted routes remain bounded below the original release ceiling and within route-specific headroom.
+- `LexigoProgressApp` owns only Progress API reads/actions and evidence presentation and does not import `LexigoPremiumApp` or duplicate session, outbox or PWA lifecycle ownership.
+- Cold `/progress` entry measures 207,502 JavaScript bytes and 18 initial requests versus the original 238,257-byte monolithic graph: a 30,755-byte, 12.9% reduction.
+- Permanent `/progress` limits are 240,000 JavaScript bytes and 21 initial requests.
+- Exact Progress measurement report artifact `8648042201` came from controlled run `30253573827`; its test-only probe was removed byte-for-byte before final immutable-head CI.
+- `LexigoLearnApp` owns only Lesson Composer metadata/progress/active-session reads, preview/create/resume/discard mutations and presentation; it does not import `LexigoPremiumApp` or duplicate session, outbox or PWA lifecycle ownership.
+- Active Lesson Browser Back preserves exact Next.js history state, invokes the safe-exit dialog in desktop Chromium/WebKit and Android/iOS projects, and leaves the confirmed-exit Back target at `/learn`.
+- Cold `/learn` entry measures 210,986 JavaScript bytes and 20 initial requests versus the original 238,257-byte monolithic graph: a 27,271-byte, 11.4% reduction.
+- Permanent `/learn` limits are 235,000 JavaScript bytes and 22 initial requests.
+- Exact Learn measurement artifact `8670855986` came from controlled run `30312155204` on probe head `b82c31acfc9bd48ec5b28682a49035226bdef556`; its test-only probe was removed byte-for-byte before final immutable-head CI.
+- `LexigoActiveLessonApp` owns only active-session restore, review/resync/suggestion, completion/result continuation, focused-route announcement and safe exit; it does not import `LexigoPremiumApp` or duplicate session, review-outbox, Service Worker or appearance ownership.
+- Active Lesson semantic ownership survives transient Next pathname changes during Browser Back, preserves immutable framework history state and replaces the protected entry after confirmed exit so a later Back returns to `/learn`.
+- Cold `/lesson/active` entry measures 220,225 JavaScript bytes and 19 initial requests versus the original 238,257-byte monolithic graph: an 18,032-byte, 7.6% reduction.
+- Permanent `/lesson/active` limits are 235,000 JavaScript bytes and 22 initial requests.
+- Exact Active Lesson measurement artifact `8672549672` came from controlled run `30316931098` on probe head `ce468c054dc57f3dc154a7b8b016f0999b04d90c`; artifact digest is `sha256:a66f6155801715d4d689adb84f82b136e57e5360ef76c193ad77e2db9ea3829a`, and the test-only probe was removed byte-for-byte before final immutable-head CI.
 - The only remaining route in the compatibility graph `LexigoPremiumApp` is Phrases.
 
 ### Scenario learning
@@ -84,7 +162,6 @@
 - Canonical `/words/[id]` loads independently, strictly validates scheduler fields and loads bounded server-owned related phrases.
 - Word Detail pronunciation has supported, loading, playing, error and unsupported states.
 - Single-word practice creates an exact lesson with `wordIds: [selectedWordId]`.
-- Immediate Dictionary search submit is protected from stale mount-frame synchronization in Chromium and WebKit.
 
 ### Profile and appearance
 
@@ -96,44 +173,59 @@
 
 ### System and offline states
 
-- Approved loading, empty, correlated error, physical-offline, retryable-failure, queued-review, restored-connection and synchronized states are implemented.
+- PR #239 completed approved loading, empty, correlated error, physical-offline, retryable-failure, queued-review, restored-connection and synchronized states.
+- Figma source nodes: `79:69`, `79:93`, `79:117`, `79:194` and `75:57`.
 - Reviews are persisted before the first network request and retain one idempotency key across retry/reload.
 - Auth and CSRF tokens are never persisted in the outbox.
 - Active Lesson preserves the submitted answer after offline/retryable review and blocks duplicate rating or next-card advancement until authoritative replay confirmation.
 - Full offline lesson progression remains intentionally unsupported; new lesson creation remains blocked offline.
 - Dictionary query/filter state survives loading, empty, error and retry states.
+- Connectivity presentation avoids compact navigation and Active Lesson controls.
 - Reduced motion, forced colors, Light/Dark, 320 px, 200% reflow, Chromium/WebKit, Android/iOS PWA, keyboard, axe, CSP, service-worker and performance contracts are blocking.
+- Reviewed visual hashes:
+  - compact loading Dark: `0445cb0016887f4c54993cbf3706f4b720e01cf9b13c0bfebf37efc77f1bb61d`;
+  - compact Dictionary empty Light: `d21af9c2f2e194eb6c5a447c5913107cc414f216f28a7fba7a78dfc05b211aa2`;
+  - compact error Dark: `acd7f5437ba3994b140f0123f4734678dff7a82188abba8d6cbb5532ec0bc5c0`;
+  - desktop offline Dark: `8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a`;
+  - compact Recall offline Dark: `0d7393ab3793ab5d773d167f65f743d3cd53190c4da4899a2d915e1d3b01d2ae`.
+
+### Calendar-boundary CI reliability
+
+- PR #242 fixed deterministic Monday failure in `TestLearningReviewModesAndAnalytics` without changing production aggregation.
+- The invalid fixture `now() - interval '8 days'` was replaced by `date_trunc('week', now()) - interval '1 day'`.
+- For `timezoneOffsetMinutes=0`, the fixture now always lies inside the immediately previous UTC week.
+- `.agents/AGENTS.issue-241-calendar-boundaries.md` is mandatory reading.
+- Calendar buckets must be seeded from explicit production boundaries, not fixed-duration approximations from `now()`.
+- Same-head retries are prohibited when a failure is proven deterministic for the current calendar boundary.
+
+### Request-scoped failure fixtures
+
+- Initial PR #248 CI #2068 exposed a stale Dictionary test fixture on `ios-webkit`; production runtime was not defective.
+- A broad path-only HTTP 503 interceptor failed both initial catalog loading and the intended `query=durable` request, racing the controlled input with an initial error remount.
+- The fixture now allows successful baseline loading and fails only the exact target request; corrected and final browser matrices passed.
+- `.agents/AGENTS.issue-247-request-scoped-fixtures.md` is mandatory reading for failure fixtures sharing an endpoint between baseline and user action.
 
 ### Agent Harness and Agent Docs CI
 
-- The repository contains normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
+- The repository contains root/normative agent instructions, verified project state, skills registry, current-task memory, templates, reusable lessons and a dependency-free source contract.
+- PR #244 introduced fail-closed base-to-head scope classification and retained the required `CI` workflow for every pull request and `main` push.
 - Only pure changes limited to `AGENTS.md`, `.agents/**` and `docs/agent-harness.md` may use the lightweight Agent Harness path.
 - Workflow, script, runtime, dependency, mixed and all other documentation changes retain the complete backend/frontend/browser/container matrix.
-- Pure Agent Docs pushes do not build or publish runtime images and do not perform automatic stage deployment.
+- CI publishes exact-head scope evidence; automatic stage deployment revalidates that evidence before deployment.
+- Pure Agent Docs pushes do not build/publish runtime images and do not perform automatic stage deployment; manual stage dispatch remains available.
 - Missing, malformed or mismatched scope evidence blocks automatic deployment.
+- PRs #245, #246, #252, #259 and #260 proved live pull-request and main-push fast paths: classifier and Agent Harness succeeded, all heavy jobs were skipped, and the runtime image/stage deployment remained unchanged.
 
 ## In progress
 
-- No product slice is active after PR #271 reconciliation and context reset.
-- The next atomic production slice is Issue #199 runtime implementation and Phrases route-island extraction from `LexigoPremiumApp` using the approved exact Figma nodes.
+- No product slice is active after the Phrases design-handoff merge and context reset.
+- The next atomic production slice is Issue #199 runtime implementation and route-island extraction from the compatibility graph using the approved exact Figma nodes.
 
 ## Remaining roadmap
 
 ### 1. #199 — Phrases runtime implementation
 
 Implement the merged catalog/detail Figma handoff in a dedicated frontend slice. Canonical page: `253:2`; screens: `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162`, `257:159`; resilient hooks: `257:212`; Screen Map entry: `261:2`.
-
-Required runtime outcomes:
-
-- canonical `/phrases` catalog without Lesson Composer duplication;
-- canonical direct-entry `/phrases/[slug]` detail route;
-- server-owned ordering and existing typed phrase APIs;
-- URL-backed search/filter state and Back/Forward restoration;
-- loading, empty, correlated error, retry and offline integration through existing system-state owners;
-- compact/medium/desktop, Light/Dark, reduced motion, forced colors and 200% reflow;
-- Chromium, WebKit, Android, iOS, keyboard, axe and Linux visual validation;
-- separate Phrases client entry with no duplicate session/outbox/PWA ownership;
-- exact cold-route measurement and a permanent route-specific JavaScript/request ceiling.
 
 ### 2. #18 and #201 — Adaptive personalization and First Use
 
@@ -145,11 +237,11 @@ Resolve architecture/privacy and typed backend contracts before implementation, 
 
 ### 4. #115 — Remaining route-level client islands and budgets
 
-Close the remaining Phrases compatibility graph after Issue #199, with direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
+Extract Phrases after its exact production Figma nodes are approved, without duplicating session, API, review-outbox or PWA ownership. The route requires direct-entry/navigation proof, exact transfer evidence and a strictly tighter route-specific release ceiling.
 
 ### 5. #70 — Legacy applications and CSS
 
-Remove only proven-dead app/CSS families with browser, visual and bundle evidence after Phrases extraction.
+System-state CSS ownership consolidation is complete under #261/#262. Remove only remaining proven-dead app/CSS families with browser, visual and bundle evidence; Phrases/dead compatibility proof remains dependent on #199/#115.
 
 ### 6. #203, #205 and #133 — Figma handoff, final parity and usability
 
@@ -157,7 +249,7 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Validation pending
 
-- Phrases runtime implementation, browser/visual validation and permanent route budget remain pending.
+- Phrases runtime implementation, browser/visual validation and permanent route budget remain pending; the repository/Figma handoff is merged and exact-SHA stage validated.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under #133.
 
@@ -173,23 +265,62 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 3. #269 — `docs(agent): reconcile state before Phrases design` → `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
 4. #268 — `docs(agent): finalize Issue 132 delivery` → `c001932fdec11e4c09e33c173656c85be6592906`.
 5. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
-6. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
-7. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-8. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
-9. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-10. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+6. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+7. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+8. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
+9. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+10. #260 — `docs(agent): reconcile live project state` → `32d36a6cc0906e8fe3f2ec787c87aecb0a4b23754`.
+11. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+12. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+13. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+14. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
 
 ## Evidence
 
-- Live GitHub `main`, open PRs, Issue #199, Issue #12, recent commits and PR #271 were re-read at the verification timestamp.
-- PR #271 final head `4f40d0fff78a52d0f94ca5b6d2f678314bc45539` passed lightweight CI run `30343850404`; expected-head squash merge produced `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
-- PR #271 changed only `.agents/PROJECT_STATE.md` and reset `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` from templates.
-- PR #270 final head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`; expected-head squash merge produced `5472e8f0479a750483709222745cdee92f504258`.
-- Post-merge full CI run `30342447923` passed on the exact PR #270 merge SHA.
-- Stage run `30343061807` created deployment `5636659535` for exact SHA `5472e8f0479a750483709222745cdee92f504258`; deploy, public smoke and public browser checks succeeded, frontend/API returned HTTP 200 on attempt one and all 12 desktop Chromium/iOS WebKit checks passed.
-- Issue #199 records exact canonical Figma file `3xXmBWnf38jbvLjtziwber`, page `253:2`, catalog/detail nodes `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162`, `257:159`, resilient hooks `257:212` and Screen Map handoff `261:2`.
-- Indexed repository search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
+- Live GitHub `main`, open PRs, branches, Issues #12/#115/#199/#203, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- PR #271 final head `4f40d0fff78a52d0f94ca5b6d2f678314bc45539` passed lightweight CI run `30343850404`; review comments, reviews and review threads were empty, and expected-head squash merge produced `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+- PR #271 changed only Agent Docs and reset `.agents/current/**`; heavy runtime jobs and automatic stage deployment were not applicable, so stage remains on exact image `5472e8f0479a750483709222745cdee92f504258` from run `30343061807`.
+- PR #270 final head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`; review comments, reviews and review threads were empty, and expected-head squash merge produced `5472e8f0479a750483709222745cdee92f504258`.
+- Post-merge full CI run `30342447923` passed on the exact PR #270 merge SHA. Stage run `30343061807` created GitHub deployment `5636659535` for that SHA; deploy, public smoke and public browser checks succeeded, frontend/API returned HTTP 200 on attempt one and all 12 desktop Chromium/iOS WebKit checks passed.
+- Deployment-status Issue #12 and GitHub deployment status `16028582201` report the same exact stage SHA and success.
+- PR #269 final head `581c233f0c2c73ae2af9267a3f9738226307fa40` passed lightweight CI run `30340242817`; review comments, reviews and review threads were empty, and expected-head squash merge produced `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
+- Post-merge lightweight CI run `30340319636` passed on the exact PR #269 merge SHA. Deploy Stage run `30340336780` validated Agent Docs scope and skipped deployment, so stage remains on exact product image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- Issue #199 canonical Figma production page is `253:2`, source wrapper is `253:3`, catalog/detail screens are `255:10`, `257:2`, `255:55`, `257:47`, `255:81`, `257:74`, `255:162` and `257:159`, resilient hooks are `257:212`, and Screen Map `82:3` records the handoff in node `261:2`.
+- PR #268 expected-head squash merge produced `c001932fdec11e4c09e33c173656c85be6592906`; post-merge lightweight CI run `30338890682` passed, and Deploy Stage run `30338912556` validated Agent Docs scope while correctly skipping deployment.
+- PR #267 final head `68a2be9987b8d1fcb2ca31ead40b50994055267c` passed full CI run `30337018986`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- Post-merge push CI run `30337705777` passed on the exact recovery merge SHA, including frontend core, backend unit/security/integration, the complete browser/visual/performance matrix, the formerly failing UI shard 2 and both container builds.
+- Stage run `30338245219` deployed exact web/API image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`; frontend and API returned HTTP 200 on the first attempt and all 12 public desktop Chromium/iOS WebKit checks passed.
+- GitHub deployment `5635767162` and deployment-status Issue #12 both report the same exact stage SHA and successful deploy/public-smoke/public-browser outcomes.
+- PR #266 final head `52d82b67616816500fcb7323c5b3e53f9772c770` passed lightweight CI `30336497762`; its review audit was empty, expected-head squash merge produced `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`, and post-merge lightweight CI `30336556239` passed.
+- PR #265 final head `be47c73e4251f3c1984da100d5f0aeab593e7e61` passed full CI run `30334918051`; the thread-aware review audit was empty, and expected-head squash merge produced `6059cbd2ffd8669b92fdf73add75a706773a299a` and closed Issue #132.
+- Post-merge CI run `30335497860` failed on exact merge SHA only in UI shard 2. Playwright trace proves the Dictionary input contained `nonexistent term` after `fill()`, then became empty during immediate Enter submit before the mocked response.
+- The runtime source schedules `requestAnimationFrame(() => setSearchInput(filters.query))` on initial mount, so a frame carrying the initial empty query can overwrite newer controlled input. This is classified as a browser-specific production synchronization defect, not an API failure or timeout.
+- Deploy Stage run `30335952017` was skipped after the failed main CI; at that historical checkpoint the most recent actual stage deployment was `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- PR #263 final head `5dab7b979c6002f8d9fdf7f350f3799b62ecade0` passed lightweight CI run `30321738395`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `d85c57f1e23b891526970b06c49479fa15873cb4`.
+- Post-merge push CI run `30321794215` passed the classifier and Agent Harness on the exact documentation merge SHA. Deploy Stage run `30321812942` validated that exact Agent Docs scope and skipped deployment, so the stage runtime remained on product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- PR #262 final head `bfdb1ede306b6a1e8d29e2a71067a508d6903a45` passed full CI run `30320390335`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Initial run `30319926639` caught one computed-cascade specificity omission in `desktop-offline-dark`; the effective review-sync copy values were restored in the canonical owner, protected by a source contract and validated without changing any baseline.
+- Post-merge push CI run `30320890448` passed on exact merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`, including frontend core, backend unit/security/integration, complete browser/visual/performance matrix and both container builds.
+- Stage run `30321331383` deployed exact web/API image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`; frontend/API smoke returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
+- PR #258 final head `21256ba34ba64448a26770c6eec584ea00a1e60a` passed full CI #2204/run `30317303968`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- Post-merge push CI #2205/run `30317863420` passed on the exact merge SHA, including frontend core, backend unit/security/integration, full browser matrix, performance budgets and both container builds.
+- Stage run `30318351607` deployed exact web/API image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`; frontend/API smoke returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
+- Exact performance artifact `8672549672` from controlled run `30316931098` records `/lesson/active` at 220,225 bytes and 19 requests; the probe changed only the route-budget test, was restored to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`, and was absent from final CI.
+- PR #259 final head `8be2a15ae7a34dff6d93d2705d5b080b16cee658` passed lightweight CI #2206/run `30318745468`; review-thread and PR-comment audits were empty, and expected-head squash merge produced `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+- Post-merge push CI #2207/run `30318796156` passed the classifier and Agent Harness on the exact documentation merge SHA; all runtime, browser and container jobs were correctly skipped, and deployment status Issue #12 remained on product image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+- PR #255 final head `4bd470609d20485a8a797c96574002de93bc6a03` passed full CI #2196/run `30312747613`; review-thread audits were empty and expected-head squash merge produced `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+- Post-merge push CI #2197/run `30313334659` passed on the exact merge SHA, including frontend core, backend unit/security/integration, full browser matrix, performance budgets and both container builds.
+- Stage run `30313824186` deployed exact web/API image `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`; public frontend/API smoke passed and the public desktop Chromium/iOS WebKit suite passed 12/12.
+- Exact performance artifact `8670855986` from controlled run `30312155204` records `/learn` at 210,986 bytes and 20 requests; the probe was removed byte-for-byte before the permanent-budget head and final CI.
+- PR #252 final head `008d53014e690ab0c314b5c706489988ab5ba29f` passed lightweight CI #2135/run `30287635161`; heavy backend/frontend/browser/container jobs were skipped by the Agent Docs classifier.
+- Expected-head squash merge produced `17c5a8baa544382344936f423d020e5fec89a3d2`; runtime image and stage deployment remained unchanged.
+- PR #251 final head `189f5eee089b1afe5127904770525810da1ae101` passed authoritative complete CI #2133/run `30277124935` after the same-head rerun of one transient UI shard 2 iOS WebKit timing failure.
+- Expected-head squash merge of PR #251 produced `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754` and closed Issue #250.
+- Stage run `30279520923` deployed exact image `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`; frontend and API became healthy, public smoke passed, and the public desktop Chromium/iOS WebKit matrix completed successfully.
+- Exact performance artifact `8656783937` from controlled run `30275645894` records `/` at 207,675 bytes and 18 requests; the probe changed only the test and was removed byte-for-byte before final CI.
+- CI #2130/run `30276740022` exposed only an over-strict test comparator that conflated the original measured transfer with the original release ceiling. The corrected test preserved all production code and budget values; final CI #2133 passed.
+- Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, checks or deployment records.
 
 ## Update protocol
 
-Update this file before a new task when stale, after roadmap/dependency changes, after material Issue changes, after product deployment and after any discrepancy with live GitHub. GitHub remains authoritative. Record a `main` head only with an explicit verification timestamp and always resolve live refs again before writes.
+Update this file before a new task when stale, after roadmap/dependency changes, after material Issue changes, after product deployment and after any discrepancy with live GitHub. GitHub remains authoritative. Do not persist the current branch or `main` head as an indefinitely current fact: record it only with an explicit verification timestamp, and always resolve live refs again before writes.
