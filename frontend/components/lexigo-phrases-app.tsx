@@ -361,7 +361,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
     setDetail(null);
     try {
       if (!session) {
-        const item = GUEST_PHRASES.find((candidate) => candidate.slug === slug);
+        const item = GUEST_PHRASES.find((candidate) => candidate.slug === slug || candidate.id === slug);
         if (!item) throw new Error("Войдите, чтобы открыть эту карточку фразы");
         if (signal?.aborted) return;
         setDetail(item);
