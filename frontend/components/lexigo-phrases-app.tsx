@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import {
   failedResourceStatus,
+  isProgressSummaryPayload,
   loadingResourceStatus,
   readyResourceStatus,
   type ResourceStatus,
@@ -52,6 +53,7 @@ import {
   type PhraseItem,
   type PhraseItemsResponse,
 } from "../lib/phrases";
+import type { ProgressSummary } from "../lib/progress";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import { TECHNICAL_PHRASES } from "../lib/technical-phrases";
 import { PhraseDetailPresentation } from "./phrase-detail-presentation";
@@ -160,6 +162,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
   const [pageInfo, setPageInfo] = useState<CatalogPageInfo>(EMPTY_PAGE_INFO);
   const [catalogStatus, setCatalogStatus] = useState<ResourceStatus>(loadingResourceStatus);
   const [metadata, setMetadata] = useState<CatalogMetadata | null>(null);
+  const [duePhrases, setDuePhrases] = useState<number | null>(null);
   const [detail, setDetail] = useState<PhraseItem | null>(null);
   const [detailStatus, setDetailStatus] = useState<ResourceStatus>(loadingResourceStatus);
   const mainContentRef = useRef<HTMLElement | null>(null);
@@ -297,15 +300,38 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
     }
   }, []);
 
+  const loadProgress = useCallback(async (signal?: AbortSignal) => {
+    if (!session) {
+      setDuePhrases(null);
+      return;
+    }
+    try {
+      const result = await authorizedJSON<ProgressSummary>(
+        session,
+        `/api/v1/progress?timezoneOffsetMinutes=${new Date().getTimezoneOffset()}`,
+        { signal },
+        isProgressSummaryPayload,
+      );
+      if (signal?.aborted) return;
+      adoptSession(result.activeSession);
+      setDuePhrases(result.data.duePhrases);
+    } catch {
+      if (!signal?.aborted) setDuePhrases(null);
+    }
+  }, [adoptSession, session]);
+
   useEffect(() => {
     if (detailSlug) return;
     const controller = new AbortController();
-    const timer = window.setTimeout(() => void loadMetadata(controller.signal), 0);
+    const timer = window.setTimeout(() => {
+      void loadMetadata(controller.signal);
+      void loadProgress(controller.signal);
+    }, 0);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [detailSlug, loadMetadata]);
+  }, [detailSlug, loadMetadata, loadProgress]);
 
   const loadCatalog = useCallback(async (activeFilters: PhraseCatalogFilters, signal?: AbortSignal) => {
     setCatalogStatus(loadingResourceStatus());
@@ -434,6 +460,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
             ) : (
               <PhrasesCatalog
                 authenticated={Boolean(session)}
+                duePhrases={duePhrases}
                 filters={filters}
                 searchInput={searchInput}
                 items={catalogItems}
