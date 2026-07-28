@@ -43,3 +43,11 @@ Resolve from live branch ref after this commit.
 ### Next action
 
 Record execution provenance, then apply an exact fail-closed transformation to the two runtime/source-contract files. Remove the transient edit workflow before PR creation and inspect the final branch-to-base diff.
+## 2026-07-28 temporary transformer diagnostic
+
+The fail-closed runtime transformation was rejected before a source commit. Diagnostic:
+
+```text
+Phrases derived route values: expected exactly one regex match, found 0
+
+```
