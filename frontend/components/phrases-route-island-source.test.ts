@@ -99,6 +99,18 @@ describe("Phrases route island source contract", () => {
       "lx-phrase-grid",
       "phrase-catalog-results",
       "function itemKey",
+      "phraseCatalog",
+      "phraseCatalogStatus",
+      "remotePhraseDetail",
+      "phraseDetailStatus",
+      "phraseCatalogPageInfo",
+      "phrasePage",
+      "phraseSearchInput",
+      "phraseSearch",
+      "phraseTopic",
+      "phraseSortMode",
+      "loadPhraseCatalogResource",
+      "loadPhraseDetailResource",
     ] as const;
 
     for (const marker of deletionCandidates) {
