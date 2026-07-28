@@ -1,10 +1,12 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const asyncStateSource = readFileSync(new URL("./async-state.tsx", import.meta.url), "utf8");
 const outboxRuntimeSource = readFileSync(new URL("./review-outbox-runtime.tsx", import.meta.url), "utf8");
 const activeLessonSource = readFileSync(new URL("./active-lesson-presentation.tsx", import.meta.url), "utf8");
 const layoutSource = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const mobilePWAStyles = readFileSync(new URL("../app/mobile-pwa-fixes.css", import.meta.url), "utf8");
+const retiredOutboxStyles = new URL("../app/review-outbox.css", import.meta.url);
 const stateCSS = readFileSync(new URL("../app/system-states.css", import.meta.url), "utf8");
 const lessonStateCSS = readFileSync(new URL("../app/system-states-lesson.css", import.meta.url), "utf8");
 
@@ -25,6 +27,23 @@ describe("system state ownership contract", () => {
       .toBeLessThan(layoutSource.indexOf('import "./system-states.css";'));
     expect(layoutSource.indexOf('import "./system-states.css";'))
       .toBeLessThan(layoutSource.indexOf('import "./system-states-lesson.css";'));
+  });
+
+  it("keeps async, skeleton and connectivity presentation in one canonical owner", () => {
+    expect(layoutSource).not.toContain('import "./review-outbox.css";');
+    expect(existsSync(retiredOutboxStyles)).toBe(false);
+    expect(mobilePWAStyles).not.toContain(".lx-async-state");
+    expect(mobilePWAStyles).not.toContain(".lx-async-skeleton");
+
+    for (const selector of [
+      ".lx-async-state",
+      ".lx-async-skeleton",
+      ".lx-review-sync",
+      ".lx-review-sync--offline .lx-review-sync__indicator",
+      ".lx-review-sync--pending .lx-review-sync__indicator",
+    ]) {
+      expect(stateCSS).toContain(selector);
+    }
   });
 
   it("uses shared semantic tokens and preserves accessible motion and contrast fallbacks", () => {

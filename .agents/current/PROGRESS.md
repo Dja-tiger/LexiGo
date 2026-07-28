@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-28 05:08 Europe/Moscow
+## 2026-07-28 04:16 Europe/Moscow
 
 ### Verified
 
@@ -11,6 +11,10 @@
 - Issue #70 remains open specifically for feature-style import-order independence and final dead-client evidence;
 - Issue #261 and branch `agent/issue-261-system-state-css-ownership` were created from exact live main;
 - exact Figma contexts `79:69`, `79:117` and `79:194` were re-read from file `3xXmBWnf38jbvLjtziwber`.
+- pre-flight contract was committed and pushed at `ad15f562024e8eded82495b00427b7ed2b6b4ab5`;
+- legacy async/skeleton and outbox presentation owners are removed; their still-effective declarations now live in `system-states.css`;
+- root layout no longer imports `review-outbox.css`, and a source contract prevents its return;
+- durable architecture documentation records the runtime/presentation/PWA ownership boundary.
 
 ### Finding
 
@@ -22,9 +26,13 @@ Issue #202 added a late canonical presentation layer without retiring the earlie
 
 ### Changed files
 
-- `.agents/current/TASK.md` — atomic contract and invariants.
-- `.agents/current/PROGRESS.md` — live state and confirmed ownership finding.
-- `.agents/current/EXECUTION.md` — reproducible pre-flight evidence.
+- `frontend/app/layout.tsx` — removed the retired outbox stylesheet import.
+- `frontend/app/mobile-pwa-fixes.css` — removed the duplicate async/skeleton block.
+- `frontend/app/review-outbox.css` — deleted the retired connectivity presentation owner.
+- `frontend/app/system-states.css` — retained the effective state tones, stack geometry, offline indicator, pending pulse and reduced-motion behavior.
+- focused CSS source contracts — enforce sole canonical ownership.
+- `docs/architecture.md` — records the durable ownership boundary.
+- `.agents/current/**` — task, validation and execution evidence.
 
 ### Checks passed
 
@@ -32,16 +40,20 @@ Issue #202 added a late canonical presentation layer without retiring the earlie
 - live main/PR/Issues/branches/CI/stage reconciliation completed;
 - repository-wide selector/import/runtime-owner audit completed;
 - exact Figma loading, error and offline nodes inspected;
-- existing visual SHA contract and system-state runtime consumers inspected.
+- existing visual SHA contract and system-state runtime consumers inspected;
+- focused Vitest: 2 files, 10 tests;
+- frontend lint (0 errors; 3 pre-existing warnings), TypeScript, 69 files / 442 unit tests and production build;
+- functional system-state Playwright matrix: 20 tests across desktop Chromium/WebKit and Android/iOS;
+- outbox/offline Playwright matrix: 24 tests across the same four projects.
 
-### Checks failed
+### Environment limitation
 
-- none.
+The local Apple Silicon Playwright Docker run produced mismatches for untouched Profile/Scenario baselines and non-deterministic retry hashes. This is not accepted as product or baseline evidence. No visual baseline was changed; the immutable-head x86 Linux GitHub job remains authoritative.
 
 ### Current branch head
 
-Pre-flight head: `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+Pushed pre-flight head: `ad15f562024e8eded82495b00427b7ed2b6b4ab5`.
 
 ### Next action
 
-Commit/push the pre-flight record, then consolidate the still-effective declarations into the canonical owner and add duplicate-ownership regression protection.
+Run final repository/harness audits, commit and push the implementation, open Draft PR and require the complete authoritative GitHub matrix without baseline promotion.

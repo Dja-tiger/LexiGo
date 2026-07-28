@@ -65,6 +65,13 @@ LexiGo должен одновременно быть рабочим инстр�
 - запрет browser storage не блокирует приложение: текущая вкладка применяет выбранную тему, а следующий cold start безопасно возвращается к `auto`;
 - legacy account/security forms остаются отдельными runtime owners и получают route-scoped compatibility palette только при explicit Light на `/profile`, без изменения их API и confirmation semantics.
 
+## System-state ownership
+
+- `frontend/app/system-states.css` является единственным presentation owner общих loading, empty, error, success, skeleton и connectivity-состояний;
+- `ReviewOutboxRuntime` остаётся persistent runtime owner очереди review и её online/offline/pending state, но не подключает отдельный глобальный stylesheet;
+- `frontend/app/mobile-pwa-fixes.css` ограничен PWA/session shell и не определяет shared async-state presentation;
+- изменение shared state visuals требует source-contract проверок и authoritative visual regression gate; перенос ownership сам по себе не является redesign и не обновляет baselines.
+
 ## Границы модулей backend
 
 - `auth` — identity, пароли, access/refresh tokens и операции над refresh-token families;

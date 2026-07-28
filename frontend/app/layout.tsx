@@ -28,7 +28,6 @@ import "./account-email.css";
 import "./account-data.css";
 import "./speech-player.css";
 import "./service-worker-update.css";
-import "./review-outbox.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
 import "./dictionary-detail-compatibility.css";

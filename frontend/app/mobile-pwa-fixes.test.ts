@@ -30,11 +30,11 @@ describe("mobile PWA style ownership", () => {
     expect(mobileStyleSource).not.toContain(".lx-lesson-result");
   });
 
-  it("retains only shared PWA shell and asynchronous-state responsibilities", () => {
+  it("retains only shared PWA and session-shell responsibilities", () => {
     expect(mobileStyleSource).toContain(".lx-bootstrap");
     expect(mobileStyleSource).toContain(".lx-session-notice");
-    expect(mobileStyleSource).toContain(".lx-async-state");
     expect(mobileStyleSource).toContain("@media (display-mode: standalone)");
-    expect(mobileStyleSource).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(mobileStyleSource).not.toContain(".lx-async-state");
+    expect(mobileStyleSource).not.toContain(".lx-async-skeleton");
   });
 });

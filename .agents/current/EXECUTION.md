@@ -5,7 +5,7 @@
 - Issue: #261.
 - Branch: `agent/issue-261-system-state-css-ownership`.
 - Base SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-- Head SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b` (pre-flight).
+- Head SHA: `ad15f562024e8eded82495b00427b7ed2b6b4ab5` (pushed pre-flight; implementation pending commit).
 - PR: not opened.
 
 ## Skills used
@@ -28,7 +28,7 @@ Commands or procedures: connector/public GitHub reads, local exact-ref checks, r
 
 Artifacts produced: Issue #261 and the current pre-flight contract.
 
-Result: smallest safe ownership slice is defined; production CSS is not yet changed.
+Result: smallest safe ownership slice was defined and its pre-flight record was pushed.
 
 Failures: none.
 
@@ -39,3 +39,31 @@ Fallback: retain both legacy files if byte-identical visual and motion behavior 
 Limitations: parent Issue #70 cannot close while Phrases/dead compatibility client evidence remains blocked by #199/#115.
 
 Reusable lesson: a later stylesheet is not a sole owner when earlier higher-specificity or unique declarations remain effective; ownership must be proven at selector and rendered-pixel levels.
+
+## Implementation and local validation
+
+Purpose: retire the two duplicate presentation owners without changing runtime behavior or approved pixels.
+
+Inputs: the effective cascade declarations, shared state markup, outbox runtime modifiers, reduced-motion contract and existing immutable Linux visual hashes.
+
+Actions performed:
+
+- removed the async/skeleton block from `mobile-pwa-fixes.css`;
+- removed the `review-outbox.css` layout import and deleted that stylesheet;
+- migrated only the still-effective state-tone, resource-stack, offline-indicator, pending-pulse and reduced-motion declarations to `system-states.css`;
+- added a source contract that rejects the retired import/file/selectors;
+- documented the system-state ownership boundary in `docs/architecture.md`.
+
+Validation:
+
+- focused Vitest: 2 files, 10 tests passed;
+- frontend lint: 0 errors and 3 unrelated pre-existing warnings;
+- TypeScript passed;
+- frontend unit: 69 files, 442 tests passed;
+- production build passed;
+- system-state functional Playwright: 20 tests passed across desktop Chromium/WebKit and Android/iOS;
+- offline/auth-lifecycle outbox Playwright: 24 tests passed across the same projects.
+
+Visual limitation: a local Apple Silicon Docker run failed unchanged Profile/Scenario hashes and produced differing retry hashes. It was classified as a non-authoritative architecture/font-render environment, the exact container was stopped, the temporary source copy was removed and no baseline was updated. The x86 Linux GitHub visual job remains required.
+
+Result: source and functional behavior are green locally; immutable-head authoritative CI is pending.

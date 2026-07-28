@@ -6,7 +6,7 @@
 - Parent Issue: #70.
 - Branch: `agent/issue-261-system-state-css-ownership`.
 - Base SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-- Head SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b` (pre-flight).
+- Head SHA: `ad15f562024e8eded82495b00427b7ed2b6b4ab5` (pushed pre-flight; implementation pending commit).
 - PR: not opened.
 
 ## Objective
