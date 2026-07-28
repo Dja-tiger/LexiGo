@@ -5,7 +5,7 @@
 - Issue: #70 — remove one proven-dead Phrases compatibility runtime family.
 - Branch: `refactor/issue-70-remove-phrases-compat`.
 - Base SHA: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
-- Implementation SHA: `169e8978588cfe3cd9adf22fe4b0dbf17bdbc6fd`.
+- Implementation SHA: `2b607c37faabed4030b8c88f298d62ab8c0b5124`.
 - Current head SHA: resolve from live branch ref.
 - PR: #281, Draft.
 
@@ -15,11 +15,11 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 
 ## Scope
 
-- Delete only route-level Phrases catalog/detail state, derived values, API loaders, lifecycle effects, URL/filter synchronization, navigation handlers and presentation branches from `frontend/components/lexigo-premium-app.tsx`.
+- Delete only route-level Phrases catalog/detail state, derived values, API loaders, lifecycle effects, URL/filter synchronization, navigation handlers, resource notices and presentation branches from `frontend/components/lexigo-premium-app.tsx`.
 - Remove imports, types, helpers and icon branches only where the deleted route family was the sole consumer.
-- Replace compatibility candidate-presence assertions with exact absence assertions while retaining canonical Phrases island ownership and shared lesson-domain assertions.
+- Replace compatibility candidate-presence assertions with exact identifier-level absence assertions while retaining canonical Phrases island ownership and shared lesson-domain assertions.
 - Measure source reduction and controlled route bundle output without raising any permanent budget.
-- A transient branch-local workflow was used to apply an exact fail-closed transformation through the connected GitHub environment; it has been deleted and is absent from the PR diff.
+- Transient branch-local workflows were used only to apply exact fail-closed transformations through the connected GitHub environment; all have been deleted and are absent from the PR diff.
 
 ## Non-goals
 
@@ -72,7 +72,7 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 
 ## Acceptance criteria
 
-- Every marker listed by the compatibility deletion contract is absent from `LexigoPremiumApp`.
+- Every declaration and residual use of the retired Phrases compatibility identifiers is absent from `LexigoPremiumApp`.
 - Canonical Phrases reachability/ownership assertions remain green.
 - Shared phrase lesson-domain assertions remain green.
 - The final diff contains only the five final allowed files and no transient workflow.
