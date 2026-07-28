@@ -6,7 +6,7 @@
 - Branch: `refactor/issue-70-remove-phrases-compatibility`
 - Base SHA: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`
 - Head SHA: resolve from live branch ref
-- PR: #280
+- PR: #282
 
 ## Objective
 
@@ -18,7 +18,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - Remove route-only imports/helpers that become unused after the deletion.
 - Replace compatibility-candidate presence assertions with fail-closed absence assertions while retaining canonical route ownership and shared lesson-domain assertions.
 - Update the compatibility cleanup delivery document with exact completion evidence and the remaining CSS/compatibility boundary.
-- Use one temporary, branch-only, path-guarded workflow solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; remove all temporary workflow versions before final CI and ensure the final branch head is developer-authored.
+- Use one temporary, branch-only, path-guarded job in an existing PR workflow solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; restore the workflow byte-for-byte from base before final CI and ensure the final branch head is developer-authored.
 
 ## Non-goals
 
@@ -35,6 +35,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `.agents/current/EXECUTION.md`
 - `.github/workflows/issue-70-phrases-runtime-patch.yml` — temporary only; prohibited from final diff
 - `.github/workflows/issue-70-phrases-runtime-patch-v2.yml` — temporary only; prohibited from final diff
+- `.github/workflows/actions-storage-cleanup.yml` — temporary exact-branch job only; must match base byte-for-byte in final diff
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
 - `frontend/docs/compatibility-cleanup.md`
@@ -44,7 +45,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `frontend/app/*.css`
 - `frontend/e2e/**/*-snapshots/**`
 - `frontend/bundle-budgets.json`
-- backend, API, migrations, deployment and permanent workflow files
+- backend, API, migrations, deployment and permanent workflow changes
 - any route island or shared lesson-domain implementation outside the two declared frontend component/test files
 
 ## Runtime owners
@@ -68,7 +69,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - No CSS selector or stylesheet is changed in this slice.
 - Authoritative Linux visual hashes remain unchanged.
 - Existing route bundle ceilings are not raised.
-- Temporary automation is absent from the final diff and the final head is not bot-authored.
+- All temporary workflows/jobs are absent from the final diff and the final head is not bot-authored.
 
 ## Acceptance criteria
 
@@ -97,7 +98,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 
 - `DEFAULT_PHRASE_CATALOG` appears in both route-only and shared lesson conversion paths; deleting it would break phrase slug/cloze enrichment.
 - Removing a route-only state incompletely can leave a stale effect/import or hidden bundle branch.
-- A temporary workflow can accidentally persist or leave a bot-authored final head; final compare must explicitly reject both conditions.
+- A temporary workflow/job can accidentally persist or leave a bot-authored final head; final compare must explicitly reject both conditions.
 - Raw History transitions may briefly retain the old compatibility component until the App Router selects the canonical island; browser tests must prove no observable regression.
 
 ## Rollback
