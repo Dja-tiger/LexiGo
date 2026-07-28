@@ -72,8 +72,8 @@ describe("Phrases route island source contract", () => {
     expect(detail).toContain("Настроить урок");
   });
 
-  it("records the exact compatibility catalog and detail deletion surface", () => {
-    const deletionCandidates = [
+  it("does not retain the retired compatibility catalog and detail family", () => {
+    const retiredMarkers = [
       "const [phraseCatalog, setPhraseCatalog]",
       "const [phraseCatalogStatus, setPhraseCatalogStatus]",
       "const [remotePhraseDetail, setRemotePhraseDetail]",
@@ -84,6 +84,11 @@ describe("Phrases route island source contract", () => {
       "const [phraseSearch, setPhraseSearch]",
       "const [phraseTopic, setPhraseTopic]",
       "const [phraseSortMode, setPhraseSortMode]",
+      "const phraseTopics",
+      "const guestPhrasePage",
+      "const sortedVisiblePhrases",
+      "const activePhrasePageInfo",
+      "const selectedPhrase",
       "const loadPhraseCatalogResource",
       "const loadPhraseDetailResource",
       "function openPhraseDetail",
@@ -92,20 +97,31 @@ describe("Phrases route island source contract", () => {
       "function applyPhraseSearch",
       "function clearPhraseSearch",
       "function renderPhrases",
-      '`/api/v1/phrases/${encodeURIComponent(slug)}`',
+      "phraseCatalogFilters",
+      "phraseCatalogTarget",
+      "CatalogKindNavigation",
+      "SpeechPlayerButton",
+      '<AsyncResourceNotice label="Каталог фраз"',
+      'navigation.view === "phrases" ? renderPhrases()',
     ] as const;
 
-    for (const marker of deletionCandidates) {
-      expect(premium, `compatibility deletion candidate ${marker}`).toContain(marker);
+    for (const marker of retiredMarkers) {
+      expect(premium, `retired compatibility marker ${marker}`).not.toContain(marker);
     }
   });
 
   it("preserves live phrase lesson-domain behavior outside the route deletion surface", () => {
     const sharedLessonContracts = [
+      'import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";',
+      "function sortLearningItems",
+      'paginateCatalogEntries(sortLearningItems(available, query.sort ?? "default"), requestedPage)',
       'type LessonSource = WordSection | "phrases";',
       '{ value: "phrases", label: "Технические фразы"',
+      "const DEFAULT_PHRASE_CATALOG",
+      "? DEFAULT_PHRASE_CATALOG.find",
       "mixedLessonFallbackMessage",
       'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"',
+      'source === "phrases" ? "phrases" : "learn"',
     ] as const;
 
     for (const marker of sharedLessonContracts) {
