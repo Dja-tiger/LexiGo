@@ -13,6 +13,7 @@ const productionAppFiles = [
   "lexigo-dictionary-app.tsx",
   "lexigo-home-app.tsx",
   "lexigo-learn-app.tsx",
+  "lexigo-phrases-app.tsx",
   "lexigo-premium-app.tsx",
   "lexigo-profile-app.tsx",
   "lexigo-progress-app.tsx",
@@ -69,6 +70,7 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toContain('import("./lexigo-learn-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-active-lesson-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-phrases-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-progress-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-profile-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-scenario-catalog-app")');
@@ -78,6 +80,7 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp.match(/<LexigoLearnApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoActiveLessonApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoPhrasesApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProgressApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoProfileApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoScenarioCatalogApp\b/g)).toHaveLength(1);
@@ -119,6 +122,10 @@ describe("production frontend application entry", () => {
       .filter(({ source }) => source.includes("lexigo-dictionary-app"))
       .map(({ file }) => file)
       .sort();
+    const phrasesGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-phrases-app"))
+      .map(({ file }) => file)
+      .sort();
     const progressGraphConsumers = sources
       .filter(({ source }) => source.includes("lexigo-progress-app"))
       .map(({ file }) => file)
@@ -141,6 +148,7 @@ describe("production frontend application entry", () => {
     expect(learnGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(activeLessonGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(phrasesGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(progressGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(profileGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(scenarioCatalogGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
@@ -203,6 +211,21 @@ describe("production frontend application entry", () => {
     expect(dictionaryApp).toContain('data-route-client-island="dictionary"');
     expect(dictionaryApp).not.toContain("lexigo-premium-app");
     expect(dictionaryApp).not.toContain("restoreSession");
+  });
+
+  it("keeps Phrases catalog and detail inside its route island", () => {
+    const phrasesApp = readSource(componentsDirectory, "lexigo-phrases-app.tsx");
+
+    expect(phrasesApp).toContain('from "./phrases-catalog"');
+    expect(phrasesApp).toContain('from "./phrase-detail-presentation"');
+    expect(phrasesApp).toContain('data-route-client-island="phrases"');
+    expect(phrasesApp).toContain('kind: "phrase"');
+    expect(phrasesApp).toContain('source: "phrases"');
+    expect(phrasesApp).toContain("/api/v1/phrases/");
+    expect(phrasesApp).not.toContain("lexigo-premium-app");
+    expect(phrasesApp).not.toContain("restoreSession");
+    expect(phrasesApp).not.toContain("ReviewOutboxRuntime");
+    expect(phrasesApp).not.toContain("ServiceWorkerRegistration");
   });
 
   it("keeps Progress API and evidence presentation inside its route island", () => {
