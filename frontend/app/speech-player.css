@@ -56,58 +56,6 @@
   background: rgba(18, 28, 48, 0.98);
 }
 
-.lx-detail-speech-row,
-.lx-test-prompt-row {
-  display: flex;
-  min-width: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.lx-detail-speech-row h1,
-.lx-test-prompt-row h1 {
-  min-width: 0;
-}
-
-.lx-test-prompt-row {
-  width: min(1050px, 100%);
-  align-items: center;
-  margin: 18px auto 0;
-  text-align: left;
-}
-
-.lx-test-prompt-row > div:first-child {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.lx-test-prompt-row h1 {
-  margin: 0;
-  font-size: clamp(38px, 5vw, 67px);
-  line-height: 1.12;
-  letter-spacing: -0.05em;
-}
-
-.lx-test-prompt-row p {
-  margin: 12px 0 0;
-  color: #78869c;
-  font-size: 19px;
-}
-
-.lx-detail-speech-row .lx-speech-player > button,
-.lx-test-prompt-row .lx-speech-player > button {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid var(--lx-border);
-  border-radius: 14px;
-  color: #bdc8d9;
-  background: rgba(255, 255, 255, 0.025);
-}
-
 @keyframes lx-speech-pulse {
   from { transform: scale(0.9); opacity: 0.55; }
   to { transform: scale(1.06); opacity: 1; }
@@ -132,10 +80,5 @@
 
   .lx-lesson-focus-mode .lx-speech-feedback {
     bottom: calc(18px + env(safe-area-inset-bottom));
-  }
-
-  .lx-detail-speech-row,
-  .lx-test-prompt-row {
-    gap: 10px;
   }
 }
