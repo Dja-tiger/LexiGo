@@ -43,6 +43,31 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--lx-state-primary) 42%, transparent), var(--lx-state-shadow);
 }
 
+/* Preserve the established state tones while keeping their ownership in this canonical layer. */
+.lx-async-state.error {
+  border-color: rgba(255, 122, 122, 0.34);
+  background: rgba(63, 24, 33, 0.94);
+}
+
+.lx-async-state.empty {
+  border-color: rgba(142, 132, 255, 0.28);
+  background: rgba(35, 31, 68, 0.9);
+}
+
+.lx-async-state.loading {
+  border-color: rgba(101, 191, 255, 0.26);
+  background: rgba(18, 47, 68, 0.9);
+}
+
+.lx-async-state.success {
+  border-color: rgba(90, 214, 157, 0.26);
+  background: rgba(19, 58, 45, 0.9);
+}
+
+.lx-resource-stack .lx-async-state {
+  margin: 0;
+}
+
 .lx-async-state-icon {
   display: grid;
   width: 56px;
@@ -266,6 +291,15 @@
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--lx-state-primary) 14%, transparent);
 }
 
+.lx-review-sync--offline .lx-review-sync__indicator {
+  background: #fbbf24;
+  box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.14);
+}
+
+.lx-review-sync--pending .lx-review-sync__indicator {
+  animation: lx-review-sync-pulse 1.4s ease-in-out infinite;
+}
+
 .lx-review-sync--failed .lx-review-sync__indicator {
   background: var(--lx-state-weak);
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--lx-state-weak) 14%, transparent);
@@ -289,8 +323,9 @@
 }
 
 .lx-review-sync__copy span {
-  color: var(--lx-state-muted);
-  font: var(--ak-text-caption);
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .lx-review-sync__actions {
@@ -439,6 +474,18 @@ body:has(.lx-active-lesson) .lx-review-sync__actions {
   to { background-position: -220% 0; }
 }
 
+@keyframes lx-review-sync-pulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 @media (max-width: 760px) {
   .lx-async-state {
     grid-template-columns: 1fr;
@@ -572,6 +619,10 @@ body:has(.lx-active-lesson) .lx-review-sync__actions {
   .lx-bootstrap:not(.lx-bootstrap--recoverable)::after {
     animation: none;
     background-position: 0 0;
+  }
+
+  .lx-review-sync--pending .lx-review-sync__indicator {
+    animation: none;
   }
 }
 
