@@ -444,7 +444,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
           ref={mainContentRef}
           className="lx-main-content"
           tabIndex={-1}
-          aria-label={detailSlug ? "Карточка фразы" : "Каталог фраз"}
+          aria-label={detailSlug ? "Карточка фразы" : "Технические фразы"}
         >
           <div className="lx-view">
             {detailSlug ? (
