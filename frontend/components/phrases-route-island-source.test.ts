@@ -72,7 +72,7 @@ describe("Phrases route island source contract", () => {
     expect(detail).toContain("Настроить урок");
   });
 
-  it("records the exact compatibility catalog and detail deletion surface", () => {
+  it("removes the exact compatibility catalog and detail deletion surface", () => {
     const deletionCandidates = [
       "const [phraseCatalog, setPhraseCatalog]",
       "const [phraseCatalogStatus, setPhraseCatalogStatus]",
@@ -93,10 +93,16 @@ describe("Phrases route island source contract", () => {
       "function clearPhraseSearch",
       "function renderPhrases",
       '`/api/v1/phrases/${encodeURIComponent(slug)}`',
+      'from "../lib/phrase-navigation"',
+      "CatalogKindNavigation",
+      "SpeechPlayerButton",
+      "lx-phrase-grid",
+      "phrase-catalog-results",
+      "function itemKey",
     ] as const;
 
     for (const marker of deletionCandidates) {
-      expect(premium, `compatibility deletion candidate ${marker}`).toContain(marker);
+      expect(premium, `retired compatibility marker ${marker}`).not.toContain(marker);
     }
   });
 
@@ -106,6 +112,9 @@ describe("Phrases route island source contract", () => {
       '{ value: "phrases", label: "Технические фразы"',
       "mixedLessonFallbackMessage",
       'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"',
+      "DEFAULT_PHRASE_CATALOG",
+      "function toLearningItem",
+      'if (!activeSession && resolvedSource === "phrases")',
     ] as const;
 
     for (const marker of sharedLessonContracts) {
