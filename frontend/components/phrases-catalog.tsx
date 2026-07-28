@@ -129,7 +129,6 @@ function ResultsSurface({
         {items.map((item, index) => (
           <li
             key={`${item.wordId}:${item.slug}`}
-            role="listitem"
             aria-posinset={offset + index + 1}
             aria-setsize={info.total}
           >
@@ -193,9 +192,10 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
       <header className="lx-phrases-heading">
         <div>
           <h1 id="phrases-heading">Фразы</h1>
+          <h2 className="lx-phrases-heading-copy">Находите готовые формулировки</h2>
           <p>{info.total > 0
-            ? `${info.total.toLocaleString("ru-RU")} готовых формулировок для рабочих и повседневных ситуаций`
-            : "Готовые формулировки для рабочих и повседневных ситуаций"}</p>
+            ? `${info.total.toLocaleString("ru-RU")} фраз для рабочих и повседневных ситуаций`
+            : "Рабочие и повседневные формулировки с контекстом и переводом"}</p>
         </div>
         {!authenticated ? (
           <button className="lx-phrases-sign-in" type="button" onClick={onRequireAuthentication}>
@@ -238,13 +238,22 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
             <h2>Фильтры</h2>
             {filterCount > 0 ? <span>{filterCount}</span> : null}
           </div>
-          <label>
-            <span>Тема</span>
-            <select value={filters.topic} onChange={(event) => onTopicChange(event.target.value)}>
-              <option value="all">Все темы</option>
-              {topicOptions.map((topic) => <option key={topic} value={topic}>{phraseTopicLabel(topic)}</option>)}
-            </select>
-          </label>
+          <fieldset>
+            <legend>Тема</legend>
+            <label><input type="radio" name="phrase-topic" value="all" checked={filters.topic === "all"} onChange={() => onTopicChange("all")} /> Все темы</label>
+            {topicOptions.slice(0, 10).map((topic) => (
+              <label key={topic}>
+                <input
+                  type="radio"
+                  name="phrase-topic"
+                  value={topic}
+                  checked={filters.topic === topic}
+                  onChange={() => onTopicChange(topic)}
+                />
+                {phraseTopicLabel(topic)}
+              </label>
+            ))}
+          </fieldset>
           <fieldset>
             <legend>Порядок</legend>
             <label><input type="radio" name="phrase-sort" value="default" checked={filters.sort === "default"} onChange={() => onSortChange("default")} /> По умолчанию</label>
