@@ -52,8 +52,8 @@ The local Apple Silicon Playwright Docker run produced mismatches for untouched 
 
 ### Current branch head
 
-Pushed pre-flight head: `ad15f562024e8eded82495b00427b7ed2b6b4ab5`.
+Local implementation commit: `0dce967`.
 
 ### Next action
 
-Run final repository/harness audits, commit and push the implementation, open Draft PR and require the complete authoritative GitHub matrix without baseline promotion.
+Commit the local validation evidence, push the immutable head, open Draft PR and require the complete authoritative GitHub matrix without baseline promotion.

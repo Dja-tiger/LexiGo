@@ -5,7 +5,7 @@
 - Issue: #261.
 - Branch: `agent/issue-261-system-state-css-ownership`.
 - Base SHA: `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-- Head SHA: `ad15f562024e8eded82495b00427b7ed2b6b4ab5` (pushed pre-flight; implementation pending commit).
+- Head SHA: `0dce967` (local implementation commit; final evidence commit pending).
 - PR: not opened.
 
 ## Skills used
@@ -66,4 +66,4 @@ Validation:
 
 Visual limitation: a local Apple Silicon Docker run failed unchanged Profile/Scenario hashes and produced differing retry hashes. It was classified as a non-authoritative architecture/font-render environment, the exact container was stopped, the temporary source copy was removed and no baseline was updated. The x86 Linux GitHub visual job remains required.
 
-Result: source and functional behavior are green locally; immutable-head authoritative CI is pending.
+Result: source and functional behavior are green locally at implementation commit `0dce967`; immutable-head authoritative CI is pending.
