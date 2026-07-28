@@ -108,3 +108,33 @@ Fallback: revert the bootstrap selection to the compatibility graph if authorita
 Limitations: exact cold-route bytes and request count have not been measured on controlled Linux yet; no permanent budget change is claimed.
 
 Reusable lesson: a route island needs a retained semantic owner separate from pathname so framework history observation cannot preempt a focused-flow exit contract.
+
+### CI focus-owner correction
+
+Purpose: resolve the only failure in functional CI #2201 without changing presentation or route-announcement semantics.
+
+Instruction source: GitHub CI Fix skill, `route-focus-management.spec.ts` and diagnostic artifact `8672199687`.
+
+Version or verification date: head `4d2e08a29a55dc45e91c9838e10161c718ccb96b`, run `30315741944`, verified 2026-07-28.
+
+Inputs: failed job `90141008316`, both retry error contexts and the existing focused-route ownership split.
+
+Files inspected: GitHub job log, downloaded artifact digest, error contexts, routed shell focus suppression and legacy controller focus/announcement behavior.
+
+Actions performed: moved main-landmark entry focus and stable lesson route announcement into `LexigoActiveLessonApp`.
+
+Commands or procedures: connector job/log/artifact inspection; exact artifact download; focused source/type/build checks; exact Playwright grep on desktop Chromium.
+
+Artifacts produced: local focused regression evidence; no new baseline or generated repository artifact.
+
+Result: the exact failed test passes locally on production build.
+
+Failures: after the first main-focus correction, local replay advanced to a timeout because the route-local announcement was also absent.
+
+Root cause: both contracts had been owned by the monolithic focused route while the persistent routed shell intentionally bypassed lesson paths.
+
+Fallback: revert the focused correction and route selection if the new full CI shows an incompatible focus consumer.
+
+Limitations: authoritative confirmation requires the complete new-head CI matrix.
+
+Reusable lesson: inspect the entire failing flow after the first blocked assertion is fixed; a single CI failure may hide multiple sequential responsibilities formerly owned by the extracted controller.

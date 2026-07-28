@@ -104,3 +104,31 @@ Route selection initially treated the mutable `usePathname()` value as both the 
 ### Next action
 
 Commit and push the functional head, run authoritative full CI, then perform controlled Linux cold-route measurement before setting the permanent `/lesson/active` budget.
+
+## 2026-07-28 03:09 Europe/Moscow
+
+### Authoritative CI finding
+
+- CI #2201 / run `30315741944` on functional head `4d2e08a29a55dc45e91c9838e10161c718ccb96b` passed every backend, frontend core, CSP, visual, lesson-completion, Service Worker, iOS PWA, accessibility, performance, dictionary smoke and UI shard 2 gate.
+- UI shard 1 failed only `route-focus-management.spec.ts` at the Active Lesson route-entry focus assertion.
+- diagnostic artifact `8672199687`, digest `sha256:568f01abbd3e875dea0b962a4914f7c7dbd44ae7e1810f15cb3f0de0839318ce`, reproduced the failure on both attempts.
+
+### Root cause
+
+The compatibility controller had owned two focused-route contracts that were not visible in the initial Active Lesson-specific suite:
+
+1. moving focus to the lesson main landmark after the Learn → Active route transition;
+2. owning a stable `Урок. Экран загружен.` live region that does not change when a review is saved.
+
+`RoutedLexigoApp` intentionally skips those behaviors for `/lesson/**`, so the extracted island had to adopt them.
+
+### Resolution and verification
+
+- added a layout-owned main-landmark focus after Active Lesson starts;
+- added the stable route-local lesson announcement without review-driven updates;
+- source/type/build checks passed;
+- the exact failed Playwright test passed locally on production build: 1 passed.
+
+### Next action
+
+Commit and push the focused CI fix, require a new complete functional CI run, and only after green create the controlled measurement probe.

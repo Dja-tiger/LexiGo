@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import {
   failedResourceStatus,
@@ -229,6 +229,7 @@ export function LexigoActiveLessonApp({
   const lessonProgressBeforeRef = useRef<number | null>(null);
   const latestProgressRef = useRef<ProgressSummary | null>(null);
   const lessonAdvanceRef = useRef<HTMLButtonElement | null>(null);
+  const mainContentRef = useRef<HTMLElement | null>(null);
 
   const adoptSession = useCallback((nextSession: Session) => {
     if (session.tokens.accessToken !== nextSession.tokens.accessToken) {
@@ -338,6 +339,14 @@ export function LexigoActiveLessonApp({
     window.addEventListener("beforeunload", preventAccidentalUnload);
     return () => window.removeEventListener("beforeunload", preventAccidentalUnload);
   }, [lessonComplete, lessonStarted]);
+
+  useLayoutEffect(() => {
+    if (!lessonStarted) return;
+    const frame = window.requestAnimationFrame(() => {
+      mainContentRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lessonStarted]);
 
   const resetCardState = useCallback((mode: AnswerMode, rated = false) => {
     setRevealed(rated || mode === "study");
@@ -990,6 +999,7 @@ export function LexigoActiveLessonApp({
         {!focusMode ? <RoutePrimaryNavigation variant="rail" /> : null}
         <main
           id="lexigo-main-content"
+          ref={mainContentRef}
           className="lx-main-content"
           tabIndex={-1}
           aria-label={viewTitle("lesson")}
@@ -1022,6 +1032,17 @@ export function LexigoActiveLessonApp({
         </main>
       </div>
       {!focusMode ? <RoutePrimaryNavigation variant="mobile" /> : null}
+      {focusMode ? (
+        <p
+          className="lx-route-announcement"
+          data-announcement-id="1"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          Урок. Экран загружен.
+        </p>
+      ) : null}
     </div>
   );
 }

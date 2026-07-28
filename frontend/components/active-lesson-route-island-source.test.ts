@@ -38,6 +38,8 @@ describe("Active Lesson route island source contract", () => {
     expect(activeLesson).toContain("<ActiveLessonPresentation");
     expect(activeLesson).toContain("<LessonResultPresentation");
     expect(activeLesson).toContain('data-route-client-island="active-lesson"');
+    expect(activeLesson).toContain("mainContentRef.current?.focus({ preventScroll: true })");
+    expect(activeLesson).toContain("Урок. Экран загружен.");
     expect(activeLesson).not.toContain("lexigo:lesson-review-queued");
     expect(activeLesson).not.toContain("indexedDB");
   });
