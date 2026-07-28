@@ -2,20 +2,18 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 19:13 Europe/Moscow.
+- Last verified: 2026-07-28 20:51 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `156f7a9144d7652766e68e54ff9f0e246edfcc2b`.
-- Latest completed slice: Issue #115 — route-level client islands, bundle budgets and architecture documentation.
-- Architecture completion PR: #275.
-- PR #275 immutable developer-authored head: `3604ddecf68ce4d7be86f0f16cc3ad2e243e7505`.
-- PR #275 authoritative full CI: #2286 / run `30375142888`, successful across the root-level architecture contract, backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, Lesson completion, iOS PWA, accessibility, Content Security, Controlled Service Worker, Dictionary smoke, Linux visual regression, performance budgets and container builds.
-- PR #275 review comments, submitted reviews and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `156f7a9144d7652766e68e54ff9f0e246edfcc2b`.
-- Post-merge full CI succeeded on the exact merge SHA; automatic stage deployment consumed and validated that exact CI scope artifact before deployment.
-- Exact-SHA stage/public validation: run `30376789983`, deployed web/API image `156f7a9144d7652766e68e54ff9f0e246edfcc2b`, frontend/API HTTP 200 on the first attempt and public desktop Chromium/iOS WebKit matrix 12/12.
+- Live `main` at verification: `928b026e0bf694f07043986bec12f70374405dde`.
+- Latest completed slice: Issue #70 tooling proof — Phrases compatibility reachability and deletion boundary.
+- Completion PR: #277.
+- PR #277 immutable developer-authored head: `7bd1b01ac7309c1198b9e7ea6e96dcdea6ea054d`.
+- PR #277 authoritative full CI: #2290 / run `30379189814`, successful across Agent Harness and architecture contracts, backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, Lesson completion, iOS PWA, accessibility, Content Security, Controlled Service Worker, Dictionary smoke, Linux visual regression, performance budgets and container builds.
+- PR #277 review comments, submitted reviews and unresolved review threads were empty before merge.
+- Expected-head squash merge produced `928b026e0bf694f07043986bec12f70374405dde`.
+- Exact-SHA stage/public validation: run `30380720977`, deployed web/API image `928b026e0bf694f07043986bec12f70374405dde`, frontend/API HTTP 200 on the first attempt and public desktop Chromium/iOS WebKit matrix 12/12.
 - Deployment-status Issue #12 reports the same exact stage SHA with deploy, public smoke and public browser all successful.
-- Issue #115 is closed as completed; completion comment ID `5106704918` records final evidence.
-- Issue #199 remains closed as completed after PR #273 and exact-SHA stage run `30371866995`.
+- Issue #70 remains open: the proof slice authorizes only one bounded follow-up runtime deletion family and does not close the broader compatibility/CSS cleanup epic.
 - No pull request was open when this reconciliation branch was created.
 
 ## Completed
@@ -64,9 +62,20 @@
 - Cold `/phrases` entry: `226149` JavaScript bytes and `19` initial requests versus the original `238257`-byte monolithic graph; reduction `12108` bytes (`5.1%`); permanent limits `235000` bytes and `22` requests.
 - Phrases performance evidence came from controlled run `30366489438`, artifact `8691127915`, digest `sha256:ac33ca9695a7b3bc8db26b4f8bca89c54fa05b0eb0a8145c7b93cf629bc9c589`; the test-only probe was removed byte-for-byte before final CI.
 - Eight compact/desktop Light/Dark Phrases catalog/detail Linux images were manually reviewed and protected by exact dimensions and SHA-256 hashes; source artifact `8691167183`, digest `sha256:5b9a1c18f27d014de47885a1ae7743f93583730b17734e5dc04eb6d293b16790`.
-- README and `docs/architecture.md` now document the executable route-to-entry inventory, persistent runtime owners, Phrases direct-entry/URL-state contract and the narrow compatibility fallback.
+- README and `docs/architecture.md` document the executable route-to-entry inventory, persistent runtime owners, Phrases direct-entry/URL-state contract and the narrow compatibility fallback.
 - `scripts/ci/agent_docs_scope_test.py` validates public architecture against `LexigoBootstrappedApp` from the complete repository checkout before CI scope routing.
-- `LexigoPremiumApp` is no longer documented as the canonical owner of Phrases or Active Lesson; remaining compatibility code is separate Issue #70 debt.
+- `LexigoPremiumApp` is not the canonical owner of Phrases or Active Lesson; remaining compatibility code is separate Issue #70 debt.
+
+### Compatibility cleanup evidence
+
+- The production application-entry inventory and public architecture ownership are executable contracts.
+- Document-level `body`, `button` and `input` ownership has been centralized without visual redesign.
+- Shared system-state CSS ownership has been consolidated with computed-cascade and Linux visual protection.
+- PR #277 proves that canonical `/phrases` and `/phrases/[slug]` select `LexigoPhrasesApp` for guest and authenticated entry before the final `LexigoPremiumApp` fallback.
+- `LexigoPhrasesApp` owns guest catalog data, authenticated bounded catalog reads, independent direct detail, URL/History state and Learn handoff.
+- `frontend/docs/compatibility-cleanup.md` records the exact Phrases catalog/detail deletion candidate family and the live shared phrase lesson-domain contracts that must remain.
+- The complete `LexigoPremiumApp` is still reachable for guest authentication, account recovery and other fallback states and must not be broadly deleted.
+- No CSS selector removal is authorized by the Phrases reachability proof; CSS changes require a separate selector, specificity, computed-cascade and authoritative Linux visual audit.
 
 ### Scenario learning
 
@@ -96,7 +105,7 @@
 
 ### Shared system and offline states
 
-- `frontend/app/system-states.css` is the sole shared loading/empty/error/success/skeleton/connectivity presentation owner.
+- `frontend/app/system-states.css` is the sole shared loading, empty, error, success, skeleton and connectivity presentation owner.
 - `ReviewOutboxRuntime` remains the sole connectivity and durable review-queue runtime owner.
 - Reviews are persisted before the first network request and retain one idempotency key across retry/reload.
 - Auth and CSRF tokens are never persisted in the outbox.
@@ -105,27 +114,35 @@
 
 ## In progress
 
-- No product or tooling slice is active after Issue #115 completion, merge and exact-SHA stage validation.
-- The next candidate epic is Issue #70, but work must begin with a fresh pre-flight and a repository-wide proof of the smallest dead compatibility application/CSS owner. Issue #70 must not be treated as one broad deletion PR.
+- No product or tooling slice is active after PR #277 merge and exact-SHA stage validation.
+- The next Issue #70 slice must start only after this repository-memory reconciliation is merged.
 
 ## Remaining roadmap
 
-### 1. #70 — Remove proven-dead compatibility applications and conflicting CSS
+### 1. #70 — Remove one proven-dead Phrases compatibility runtime family
 
-- Route-island extraction and architecture documentation now provide the required ownership baseline.
-- Inventory actual imports, dynamic fallbacks, route predicates, CSS selectors, browser consumers and authoritative Linux visual hashes before deletion.
+- Use the exact manifest in `frontend/docs/compatibility-cleanup.md`.
+- Delete only the unreachable Phrases catalog/detail state, effects/API loaders, presentation/navigation branches and imports from `LexigoPremiumApp`.
+- Preserve guest authentication, account recovery, unknown-route fallback and all shared phrase lesson-domain behavior: `LessonSource = "phrases"`, mixed lessons, cloze judgement and answer suggestions.
+- Replace candidate-presence assertions with absence assertions.
+- Do not modify CSS in the runtime deletion PR; stop if a selector appears shared or its computed ownership is not proven.
+- Require lint, typecheck, unit/source contracts, production build, full Chromium/WebKit/Android/iOS regression, authoritative Linux visual hashes and a controlled bundle comparison.
+
+### 2. #70 — Continue compatibility and CSS cleanup by independently proven families
+
+- Inventory actual imports, dynamic fallbacks, route predicates, CSS selectors, browser consumers and authoritative Linux visual hashes before each deletion.
 - Select one minimal proven-dead family per atomic PR.
-- Preserve guest/auth and any remaining compatibility state until source and browser evidence proves replacement ownership.
+- Preserve guest/auth and remaining compatibility state until source and browser evidence proves replacement ownership.
 
-### 2. #18 and #201 — Adaptive personalization and First Use
+### 3. #18 and #201 — Adaptive personalization and First Use
 
 - Implement diagnostic onboarding, skip path, reason-coded personalized queue and balancing after exact approved design states are available.
 
-### 3. #25 — Pronunciation, listening and custom terminology
+### 4. #25 — Pronunciation, listening and custom terminology
 
 - Resolve architecture/privacy and typed backend contracts before implementation, including scheduling, permissions, import/export and deletion semantics.
 
-### 4. #203, #205 and #133 — Figma handoff, final parity and usability
+### 5. #203, #205 and #133 — Figma handoff, final parity and usability
 
 - Maintain exact production nodes, complete route-by-route parity and perform external moderated usability validation.
 
@@ -133,7 +150,7 @@
 
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
-- Issue #70 cleanup evidence must be established per compatibility family; no broad dead-code claim is currently accepted.
+- Each remaining Issue #70 family requires its own reachability, consumer, bundle, browser and visual evidence; no broad dead-code claim is accepted.
 
 ## Blocked
 
@@ -142,28 +159,25 @@
 
 ## Recent production/tooling evidence
 
-1. #275 — `docs(frontend): align completed route-island architecture` → `156f7a9144d7652766e68e54ff9f0e246edfcc2b`.
-2. #274 — `docs(agent): reconcile Phrases runtime completion` → `279eb4dcfe461ce6c9b056146644689e488e44cc`.
-3. #273 — `feat(phrases): add production catalog and route island` → `b53aeca3329bef61dd23c7b08964d98065ee1d7b`.
-4. #272 — `docs(agent): reconcile live main before Phrases runtime` → `3475d1443bbccedb63bca54e67c5762aec2374e3`.
-5. #271 — `docs(agent): reconcile Phrases design handoff` → `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
-6. #270 — `docs(figma): hand off Phrases production designs` → `5472e8f0479a750483709222745cdee92f504258`.
-7. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
-8. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-9. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+1. #277 — `test(frontend): prove Phrases compatibility deletion boundary` → `928b026e0bf694f07043986bec12f70374405dde`.
+2. #276 — `docs(agent): reconcile route-island epic completion` → `3d4a8dd49255da11f25fd38f92b2a8637d443517`.
+3. #275 — `docs(frontend): align completed route-island architecture` → `156f7a9144d7652766e68e54ff9f0e246edfcc2b`.
+4. #274 — `docs(agent): reconcile Phrases runtime completion` → `279eb4dcfe461ce6c9b056146644689e488e44cc`.
+5. #273 — `feat(phrases): add production catalog and route island` → `b53aeca3329bef61dd23c7b08964d98065ee1d7b`.
+6. #272 — `docs(agent): reconcile live main before Phrases runtime` → `3475d1443bbccedb63bca54e67c5762aec2374e3`.
+7. #271 — `docs(agent): reconcile Phrases design handoff` → `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+8. #270 — `docs(figma): hand off Phrases production designs` → `5472e8f0479a750483709222745cdee92f504258`.
+9. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
 10. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
 
 ## Evidence
 
-- PR #275 final head `3604ddecf68ce4d7be86f0f16cc3ad2e243e7505` passed full CI #2286/run `30375142888`; review comments, reviews and review threads were empty.
-- Initial PR CI #2279/run `30374395504` failed only because the first root-document contract was placed inside the isolated frontend workspace. Artifact `8694316141` proved 455 existing tests green and two new `ENOENT: /README.md` failures.
-- The unreachable frontend test was removed; the semantic contract was moved to the existing root-level classifier boundary without workflow or container-mount changes. The confirmed failure category is recorded in `.agents/AGENTS.issue-115-architecture-docs.md`.
-- Expected-head squash merge produced `156f7a9144d7652766e68e54ff9f0e246edfcc2b`; updated architecture files were read back from that exact `main` SHA.
-- Post-merge full CI succeeded on the exact merge SHA and supplied the CI scope artifact consumed by automatic deployment.
-- Deploy Stage run `30376789983` checked out the exact merge SHA, downloaded and validated its CI scope artifact, deployed exact web/API images, returned public frontend/API HTTP 200 on attempt one and passed all 12 public browser checks.
-- Deployment-status Issue #12 reports `156f7a9144d7652766e68e54ff9f0e246edfcc2b` with deploy, public smoke and public browser all successful.
-- Issue #115 completion comment `5106704918` records final CI, merge, stage and architecture evidence; Issue #115 is closed as completed.
-- Issue #199 completion comment `5106052236` records the Phrases runtime, visual and performance evidence; Issue #199 remains closed.
+- PR #277 final head `7bd1b01ac7309c1198b9e7ea6e96dcdea6ea054d` passed authoritative full CI #2290/run `30379189814`; review comments, submitted reviews and unresolved review threads were empty.
+- Final compare was behind `0`, contained exactly the seven declared paths and made no runtime, CSS, workflow, backend or bundle-budget changes.
+- Expected-head squash merge produced `928b026e0bf694f07043986bec12f70374405dde`; the proof rule, source contract and deletion manifest were read back from that exact `main` SHA.
+- Deploy Stage run `30380720977` deployed exact web/API image `928b026e0bf694f07043986bec12f70374405dde`, returned frontend/API HTTP 200 on attempt one and passed all 12 public browser checks.
+- Deployment-status Issue #12 reports `928b026e0bf694f07043986bec12f70374405dde` with deploy, public smoke and public browser all successful.
+- Issue #70 remains open because PR #277 establishes only the Phrases deletion boundary; the actual runtime family and later CSS/compatibility families remain separate slices.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
