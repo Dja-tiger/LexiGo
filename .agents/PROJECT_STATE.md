@@ -2,10 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 05:02 Europe/Moscow.
+- Last verified: 2026-07-28 09:51 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `d85c57f1e23b891526970b06c49479fa15873cb4`.
-- Latest product merge: PR #262, merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Live `main` at verification: `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- Latest product merge: PR #265, merge SHA `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- PR #265 immutable developer-authored head: `be47c73e4251f3c1984da100d5f0aeab593e7e61`.
+- PR #265 final full CI: run `30334918051`, successful across backend, frontend, complete browser matrix and both container builds.
+- Issue #132 is closed as completed at the product-contract level.
+- Post-merge `main` CI run `30335497860` failed only in `Frontend E2E (UI tests (shard 2/2))`: iOS WebKit cleared the Dictionary search value between a successful `fill()` and immediate Enter submit.
+- Deploy Stage run `30335952017` was skipped because post-merge CI failed. Stage remains on exact product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- A focused post-merge recovery is required before Issue #132 delivery can be considered fully validated.
+- Previous product merge: PR #262, merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
 - PR #262 immutable developer-authored head: `bfdb1ede306b6a1e8d29e2a71067a508d6903a45`.
 - PR #262 final full CI: run `30320390335`, successful including unchanged authoritative Linux visual hashes.
 - Post-merge `main` CI: run `30320890448`, successful on exact merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
@@ -186,8 +193,9 @@
 
 ## In progress
 
-- No product or runtime slice is active.
-- The next atomic slice must be selected only after resolving live `main`, open PRs, Issues, CI and stage evidence again.
+- Post-merge recovery for PR #265 is active.
+- The confirmed failure is limited to Dictionary controlled-input synchronization in iOS WebKit: the initial filter-to-input synchronization frame can overwrite newer user input.
+- The recovery must add a durable source/browser regression gate, pass full immutable-head CI, merge, pass post-merge `main` CI and deploy the exact resulting SHA to stage before final Issue #132 reconciliation.
 
 ## Remaining roadmap
 
@@ -227,20 +235,25 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
-2. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-3. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-4. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
-5. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
-6. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-7. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
-8. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
-9. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
-10. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+1. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a` (post-merge recovery pending).
+2. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
+3. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+4. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+5. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+6. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+7. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+8. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
+9. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
+10. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
+11. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
 
 ## Evidence
 
-- Live GitHub `main`, open PRs, branches, Issues #12/#70/#115/#199/#201/#261, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- Live GitHub `main`, open PRs, branches, Issues #12/#132, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- PR #265 final head `be47c73e4251f3c1984da100d5f0aeab593e7e61` passed full CI run `30334918051`; the thread-aware review audit was empty, and expected-head squash merge produced `6059cbd2ffd8669b92fdf73add75a706773a299a` and closed Issue #132.
+- Post-merge CI run `30335497860` failed on exact merge SHA only in UI shard 2. Playwright trace proves the Dictionary input contained `nonexistent term` after `fill()`, then became empty during immediate Enter submit before the mocked response.
+- The runtime source schedules `requestAnimationFrame(() => setSearchInput(filters.query))` on initial mount, so a frame carrying the initial empty query can overwrite newer controlled input. This is classified as a browser-specific production synchronization defect, not an API failure or timeout.
+- Deploy Stage run `30335952017` was skipped after the failed main CI. The most recent actual stage deployment remains `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
 - PR #263 final head `5dab7b979c6002f8d9fdf7f350f3799b62ecade0` passed lightweight CI run `30321738395`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `d85c57f1e23b891526970b06c49479fa15873cb4`.
 - Post-merge push CI run `30321794215` passed the classifier and Agent Harness on the exact documentation merge SHA. Deploy Stage run `30321812942` validated that exact Agent Docs scope and skipped deployment, so the stage runtime remained on product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
 - PR #262 final head `bfdb1ede306b6a1e8d29e2a71067a508d6903a45` passed full CI run `30320390335`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
