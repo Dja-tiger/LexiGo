@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-28 21:24 Europe/Berlin
+## 2026-07-28 21:43 Europe/Berlin
 
 ### Verified
 
@@ -26,7 +26,7 @@ The route island extraction intentionally deferred compatibility deletion until 
 - Replaced candidate-presence assertions with identifier-level absence assertions for all retired route state/resources.
 - Expanded shared-contract assertions for `DEFAULT_PHRASE_CATALOG`, `toLearningItem` and unauthenticated phrase browsing.
 - Preserved phrase lesson source, mixed lesson fallback, conversion/cloze fallback, Active Lesson review and answer-suggestion behavior.
-- Removed every transient edit workflow before review; none is present in the final diff.
+- Removed every transient edit and measurement workflow before final review; none is present in the final diff.
 
 ### Source metrics
 
@@ -35,6 +35,22 @@ The route island extraction intentionally deferred compatibility deletion until 
 - Source-contract diff: 23 additions, 2 deletions.
 - Final branch-to-base tree: exactly five allowed files; no CSS, backend, API, deployment, baseline or workflow file.
 
+### Authoritative CI evidence
+
+- CI #2323/run `30387297239` completed successfully on immutable head `5152776d04e4902a17966931687deeec2987b479` before the final evidence-only Agent Docs update.
+- Frontend lint, TypeScript, unit/source contracts, production build and dependency audit passed.
+- Backend formatting, static analysis, race-enabled unit tests, coverage, vulnerability scan and integration tests passed.
+- Both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, content security, accessibility audit, performance budgets and authoritative Linux visual regression passed.
+- Frontend aggregate quality and both API/web container builds passed.
+- No visual baseline or permanent budget file changed.
+
+### Controlled bundle evidence
+
+- Dedicated measurement run `30388331928` completed successfully on current PR merge-ref `01776b209334007eb1f54f2e0d5e178bd40535b7` using Pixel 5 Chromium, disabled cache, 4x CPU throttle and simulated 3G.
+- `/phrases`: 226,093 JavaScript bytes and 19 initial requests against permanent ceilings 235,000 bytes and 22 requests.
+- Compared with the committed `/phrases` baseline of 226,149 bytes, current transfer is 56 bytes lower.
+- All ten canonical routes remained within their existing permanent ceilings; no budget increase is required.
+
 ### Checks passed
 
 - Exact-base branch and single-PR pre-flight.
@@ -42,20 +58,23 @@ The route island extraction intentionally deferred compatibility deletion until 
 - Full read-back of relevant final source/test regions.
 - Exact absence of declarations and residual uses for 12 retired Phrases identifiers.
 - Exact presence markers for canonical route ownership and shared phrase lesson-domain contracts.
-- Manual diff-review found and removed the stale resource-stack consumer before final CI.
-- Final diff allow-list and temporary-workflow absence.
+- Manual diff-review found and removed the stale resource-stack consumer before authoritative CI.
+- Final diff allow-list and transient-workflow absence.
+- Full runtime CI and controlled bundle measurement.
 
 ### Checks pending
 
-- Authoritative frontend lint, TypeScript, unit/source contracts and production build.
-- Browser/device/accessibility/PWA/visual/performance/container matrix.
-- Controlled bundle comparison and permanent budget verification.
-- Review audit, immutable-head CI, squash merge and exact-SHA stage/public validation.
+- Final immutable-head CI after this evidence-only Agent Docs update.
+- Ready-for-review transition and final review-thread audit.
+- Expected-head squash merge.
+- Exact-SHA stage deployment, public smoke and public browser validation.
+- Separate post-merge Agent Docs reconciliation and current-context reset.
 
 ### Checks failed
 
-- No product check has failed on the complete implementation head.
+- No product check failed on the complete implementation.
 - Earlier transient transformer attempts rejected incorrect textual boundaries before creating runtime commits.
+- The unrelated `Actions storage cleanup` workflow can fail independently and is not a required product gate; authoritative CI and measurement jobs succeeded.
 
 ### Current implementation SHA
 
@@ -63,8 +82,8 @@ The route island extraction intentionally deferred compatibility deletion until 
 
 ### Current branch head
 
-Resolve from live branch ref after Agent Harness updates.
+Resolve from live branch ref after the final execution-record update.
 
 ### Next action
 
-Run and inspect authoritative CI on the final five-file diff. Address only failures attributable to this slice, then collect bundle/visual evidence and complete the review/merge/deployment gates.
+Publish the final execution record, verify the five-file diff, and require one last full CI on the resulting immutable head. Do not modify the branch after that CI succeeds.
