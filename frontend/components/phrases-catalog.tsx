@@ -195,7 +195,9 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
 
   useLayoutEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById("lexigo-main-content")?.focus({ preventScroll: true });
+      const main = document.getElementById("lexigo-main-content");
+      main?.setAttribute("aria-label", "Технические фразы");
+      main?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
