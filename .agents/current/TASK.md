@@ -20,6 +20,7 @@ Bring the public frontend architecture documentation into exact agreement with t
 - Update `docs/architecture.md` with the completed route-island inventory, Phrases ownership and compatibility-debt boundary under Issue #70.
 - Extend the existing root-level CI routing contract so it reads README, architecture and bootstrap from the full repository checkout.
 - Reject the confirmed stale ownership claims without changing frontend-container mounts or workflows.
+- Remove the branch-local frontend-isolated test after its execution-boundary assumption is proven invalid.
 - Add a reusable Agent Harness lesson for keeping architecture documentation synchronized with executable ownership inventories and for selecting the correct CI execution boundary.
 - Record task progress and execution evidence in `.agents/current/**`.
 
@@ -40,10 +41,11 @@ Bring the public frontend architecture documentation into exact agreement with t
 - `README.md`
 - `docs/architecture.md`
 - `scripts/ci/agent_docs_scope_test.py`
+- `frontend/components/architecture-documentation-contract.test.ts` — cleanup deletion only; this path must be absent from the final diff.
 
 ## Prohibited paths
 
-- `frontend/**`
+- All other `frontend/**` paths.
 - `backend/**`
 - `api/**`
 - `migrations/**`
@@ -77,6 +79,7 @@ Bring the public frontend architecture documentation into exact agreement with t
 - The compatibility fallback remains documented without claiming ownership of extracted routes.
 - Issue #70 remains the only owner of legacy-app deletion and CSS cleanup.
 - Root-level documentation validation must run before the CI scope branches into lightweight or full jobs.
+- The failed frontend-isolated contract file must not remain in the final branch diff.
 - No runtime bundle, visual or behavior change is introduced by this slice.
 
 ## Acceptance criteria
@@ -97,7 +100,7 @@ Bring the public frontend architecture documentation into exact agreement with t
 - Root-level `python3 scripts/ci/agent_docs_scope_test.py` through the classifier job.
 - Frontend lint, TypeScript, unit/source-contract tests and production build.
 - Full backend/frontend/browser/container CI because README and `docs/architecture.md` are outside the Agent Docs lightweight allow-list.
-- Changed-path audit against this allow-list.
+- Changed-path audit against this allow-list and absence of the cleanup-only frontend test path.
 - Review comment, review submission and unresolved-thread audit.
 - Post-merge `main` CI and stage-scope validation.
 
