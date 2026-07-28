@@ -1,5 +1,7 @@
 "use client";
 
+import { useLayoutEffect } from "react";
+
 import type { ResourceStatus } from "../lib/account-resources";
 import { learningTermCopy } from "../lib/interface-copy";
 import { phraseStatusLabel, phraseTopicLabel, type PhraseItem } from "../lib/phrases";
@@ -115,6 +117,13 @@ export function PhraseDetailPresentation({
   onConfigureLesson,
   onRequireAuthentication,
 }: PhraseDetailPresentationProps) {
+  useLayoutEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("lexigo-main-content")?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <section className="lx-phrase-detail" aria-label="Карточка фразы">
       <button className="lx-phrase-detail-back" type="button" onClick={onBack}>
