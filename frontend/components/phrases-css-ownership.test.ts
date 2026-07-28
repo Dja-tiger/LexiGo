@@ -9,6 +9,55 @@ const compatibilityCssUrl = new URL("../app/phrases-compat.css", import.meta.url
 const layout = readFileSync(layoutUrl, "utf8");
 const phrasesCss = readFileSync(phrasesCssUrl, "utf8");
 
+const canonicalCascadeBlock = `/* Issue #70: canonical Phrases computed-cascade ownership. */
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {
+  border-color: var(--lx-phrases-border);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
+  backdrop-filter: none;
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort strong {
+  color: var(--ak-color-text-main);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort small {
+  color: var(--ak-color-text-muted);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {
+  border-color: var(--lx-phrases-border);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {
+  color: #10211d;
+  font-weight: 700;
+}
+
+/* Keep the first result below the restored catalog viewport boundary. */
+.lx-app[data-route-client-island="phrases"] .lx-phrases-results {
+  padding-top: 24px;
+}
+
+@media (forced-colors: active) {
+  .lx-app[data-route-client-island="phrases"] .lx-catalog-sort,
+  .lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {
+    border: 1px solid CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {
+    color: HighlightText;
+    background: Highlight;
+  }
+}`;
+
 function occurrences(source: string, marker: string): number {
   return source.split(marker).length - 1;
 }
@@ -25,44 +74,26 @@ describe("Phrases CSS ownership", () => {
     expect(existsSync(compatibilityCssUrl)).toBe(false);
   });
 
-  it("owns the route-scoped computed cascade in phrases.css", () => {
-    const canonicalMarker = "/* Issue #70: canonical Phrases computed-cascade ownership. */";
-    const catalogSelector = '.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {';
-    const selectedTopicSelector =
-      '.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {';
-    const resultsSelector = '.lx-app[data-route-client-island="phrases"] .lx-phrases-results {';
-
-    expect(occurrences(phrasesCss, canonicalMarker)).toBe(1);
-    expect(occurrences(phrasesCss, catalogSelector)).toBe(1);
-    expect(occurrences(phrasesCss, selectedTopicSelector)).toBe(2);
-    expect(occurrences(phrasesCss, resultsSelector)).toBe(1);
+  it("owns the complete route-scoped computed cascade exactly once", () => {
+    expect(occurrences(phrasesCss, canonicalCascadeBlock)).toBe(1);
+    expect(phrasesCss.trimEnd().endsWith(canonicalCascadeBlock)).toBe(true);
     expect(phrasesCss).not.toContain(
       "/* Issue #199 compatibility overrides verified against the full browser/axe matrix. */",
     );
   });
 
-  it("preserves the exact catalog, contrast, spacing and forced-colors values", () => {
-    const requiredDeclarations = [
-      "border-color: var(--lx-phrases-border);",
-      "color: var(--ak-color-text-main);",
-      "background: var(--ak-color-surface);",
-      "box-shadow: var(--ak-elevation-1);",
-      "backdrop-filter: none;",
-      "color: var(--ak-color-text-muted);",
-      "color: #10211d;",
-      "font-weight: 700;",
-      "padding-top: 24px;",
-      "@media (forced-colors: active)",
-      "border: 1px solid CanvasText;",
-      "color: CanvasText;",
-      "background: Canvas;",
-      "box-shadow: none;",
-      "color: HighlightText;",
-      "background: Highlight;",
-    ] as const;
+  it("keeps every moved selector unique in the canonical owner", () => {
+    const selectorCounts = new Map<string, number>([
+      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort strong {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort small {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {', 2],
+      ['.lx-app[data-route-client-island="phrases"] .lx-phrases-results {', 1],
+    ]);
 
-    for (const declaration of requiredDeclarations) {
-      expect(phrasesCss, `canonical declaration ${declaration}`).toContain(declaration);
+    for (const [selector, expected] of selectorCounts) {
+      expect(occurrences(phrasesCss, selector), `canonical selector ${selector}`).toBe(expected);
     }
   });
 });
