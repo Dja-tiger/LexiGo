@@ -1,6 +1,9 @@
 name: Issue 70 Phrases compatibility patch
 
 on:
+  push:
+    branches:
+      - refactor/issue-70-remove-phrases-compatibility
   pull_request:
     branches: [main]
     types: [opened, reopened, synchronize]
@@ -16,7 +19,7 @@ jobs:
   patch:
     if: >-
       github.actor != 'github-actions[bot]' &&
-      github.event.pull_request.head.ref == 'refactor/issue-70-remove-phrases-compatibility'
+      (github.event_name == 'push' || github.event.pull_request.head.ref == 'refactor/issue-70-remove-phrases-compatibility')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
