@@ -183,8 +183,11 @@ export function DictionaryCatalog({
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const resultsRef = useRef<HTMLElement | null>(null);
   const detailOpenedFromCatalogRef = useRef(false);
+  const lastSyncedFilterQueryRef = useRef(filters.query);
 
   useEffect(() => {
+    if (lastSyncedFilterQueryRef.current === filters.query) return;
+    lastSyncedFilterQueryRef.current = filters.query;
     const frame = window.requestAnimationFrame(() => setSearchInput(filters.query));
     return () => window.cancelAnimationFrame(frame);
   }, [filters.query]);

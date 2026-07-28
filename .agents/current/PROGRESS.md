@@ -45,3 +45,54 @@ An asynchronous synchronization intended for later route filter changes also run
 ### Next action
 
 Merge this state-only reconciliation, then implement the smallest runtime/source-contract recovery from the new exact `main`.
+
+## 2026-07-28 10:03 Europe/Moscow
+
+### Verified
+
+- reconciliation PR #266 passed lightweight CI `30336497762` on immutable head `52d82b67616816500fcb7323c5b3e53f9772c770`;
+- PR #266 had no comments, reviews or review threads and was expected-head squash merged as `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`;
+- post-merge lightweight CI `30336556239` passed on the exact reconciliation SHA;
+- runtime recovery branch was created from that exact `main`;
+- no parallel PR or newer `main` existed at branch creation.
+
+### Implemented
+
+- initial `filters.query` is now owned only by the `useState` initializer;
+- later external query changes retain deferred synchronization through a last-synced-value guard;
+- a focused source contract prevents an unconditional mount-time synchronization frame;
+- the confirmed failure category is indexed as mandatory Agent Harness guidance.
+
+### Changed files
+
+- `frontend/components/dictionary-catalog.tsx`;
+- `frontend/components/dictionary-search-source.test.ts`;
+- `frontend/e2e/system-states.spec.ts`;
+- `.agents/AGENTS.md`;
+- `.agents/AGENTS.issue-132-dictionary-input-sync.md`;
+- `.agents/current/**`.
+
+### Checks passed
+
+- focused source contract;
+- frontend lint with three pre-existing warnings and no errors;
+- TypeScript;
+- all 443 frontend unit tests;
+- production build;
+- production dependency audit: zero vulnerabilities after the authorized network retry;
+- focused truthful-empty-state journey 5/5 in `ios-webkit`;
+- focused journey 4/4 across desktop Chromium/WebKit, Android Chromium and iOS WebKit;
+- complete `system-states.spec.ts` matrix, 20/20 across all four projects;
+- Agent Harness and `git diff --check`.
+
+### Checks failed
+
+- none in the current source state.
+
+### Current branch head
+
+`fb3f482a4e2c065e151dab6e8009ae775d7b9ea4` before the developer-authored recovery commit.
+
+### Next action
+
+Run the source/unit contract, frontend core gates and repeated focused iOS WebKit journey before publishing the recovery PR.

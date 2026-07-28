@@ -13,13 +13,14 @@
 7. [`AGENTS.issue-261-css-specificity.md`](./AGENTS.issue-261-css-specificity.md) — обязательный computed-cascade audit при удалении или консолидации CSS owners.
 8. [`AGENTS.issue-132-openapi-structure.md`](./AGENTS.issue-132-openapi-structure.md) — обязательная структурная проверка OpenAPI после изменений YAML.
 9. [`AGENTS.issue-132-pg-array-snapshots.md`](./AGENTS.issue-132-pg-array-snapshots.md) — non-null snapshot semantics для пустых PostgreSQL arrays.
-10. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
-11. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
-12. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
-13. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
-14. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
-15. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
-16. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
+10. [`AGENTS.issue-132-dictionary-input-sync.md`](./AGENTS.issue-132-dictionary-input-sync.md) — controlled-input synchronization без stale initial frame.
+11. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
+12. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
+13. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
+14. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
+15. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
+16. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
+17. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
 
 Все специализированные `.agents/AGENTS.*.md` обязательны и применяются совместно. При конфликте более конкретное подтверждённое правило специализированного документа имеет приоритет в своей предметной области. Существующие записи об ошибках нельзя удалять, сокращать до общих формулировок или заменять новым handoff.
 

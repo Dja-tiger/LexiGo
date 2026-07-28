@@ -2,8 +2,8 @@
 
 ## Task
 
-- Branch: `agent/issue-132-postmerge-state`.
-- Base SHA: `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- Branch: `agent/issue-132-dictionary-submit-recovery`.
+- Base SHA: `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
 - Head SHA: resolve from live branch ref.
 - PR: pending.
 
@@ -38,3 +38,33 @@ Fallback: preserve the current stage image until the recovery passes full main C
 Limitations: this reconciliation intentionally changes no runtime code and cannot make the failed main CI green.
 
 Reusable lesson: initial state-to-input synchronization must not be deferred across the first user interaction; later external route changes need a synchronization path that excludes the initial mount.
+
+### Frontend controlled-input recovery
+
+Purpose: preserve a user-entered Dictionary query through immediate keyboard submit while retaining external route restoration.
+
+Instruction source: repository frontend validation procedure and `.agents/AGENTS.issue-132-dictionary-input-sync.md`.
+
+Version or verification date: 2026-07-28.
+
+Inputs: post-merge Playwright trace, `DictionaryCatalog` controlled state, canonical `navigation.query` and existing system-state E2E.
+
+Files inspected: Dictionary catalog runtime, system-state fixture, route/navigation owners and existing source-contract patterns.
+
+Actions performed: separated synchronous initial state from later external filter synchronization; added a last-synced-value guard and focused source contract; documented the new failure category.
+
+Commands or procedures: source inspection, targeted Vitest, frontend core gates and focused cross-browser Playwright validation.
+
+Artifacts produced: runtime fix, source regression test and mandatory Agent Harness lesson.
+
+Result: source, frontend core, repeated iOS WebKit and complete four-project system-state validation pass; full CI remains pending.
+
+Failures: none after the source change.
+
+Root cause: an unconditional mount effect deferred a stale initial query across the first user interaction.
+
+Fallback: revert the focused runtime/test/lesson commit and retain the previous stage image.
+
+Limitations: no API, CSS, visual or bundle behavior is changed.
+
+Reusable lesson: initialize synchronously once, then gate deferred synchronization on a real external-value transition.
