@@ -161,3 +161,45 @@ jobs:
           fi
 
           python3 scripts/ci/actions_storage_cleanup.py "${args[@]}"
+
+  patch_issue_70_phrases_css:
+    name: Consolidate Issue 70 Phrases CSS ownership
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.actor != 'github-actions[bot]' &&
+      github.event.pull_request.head.ref == 'refactor/issue-70-consolidate-phrases-css'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/issue-70-consolidate-phrases-css
+          fetch-depth: 0
+
+      - name: Apply exact CSS consolidation
+        run: python3 scripts/ci/issue_70_phrases_css_patch.py
+
+      - name: Validate exact patch scope
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            frontend/app/layout.tsx
+            frontend/app/phrases-compat.css
+            frontend/app/phrases.css
+          )
+          printf 'Changed paths:\n%s\n' "${changed[*]}"
+          [[ "${changed[*]}" == "${expected[*]}" ]]
+
+      - name: Commit exact CSS consolidation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/app/layout.tsx frontend/app/phrases.css frontend/app/phrases-compat.css
+          git commit -m "refactor(frontend): consolidate Phrases CSS ownership"
+          git push origin HEAD:refactor/issue-70-consolidate-phrases-css
