@@ -18,13 +18,14 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - Remove route-only imports/helpers that become unused after the deletion.
 - Replace compatibility-candidate presence assertions with fail-closed absence assertions while retaining canonical route ownership and shared lesson-domain assertions.
 - Update the compatibility cleanup delivery document with exact completion evidence and the remaining CSS/compatibility boundary.
-- Use one temporary, branch-only, path-guarded job in an existing PR workflow solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; restore the workflow byte-for-byte from base before final CI and ensure the final branch head is developer-authored.
+- Use one temporary, branch-only, path-guarded job in an existing PR workflow plus one temporary patch script solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; restore/delete both before final CI and ensure the final branch head is developer-authored.
 
 ## Non-goals
 
 - No CSS or visual baseline changes.
 - No auth, password recovery, account, Home, Learn, Active Lesson, Lesson Result, Dictionary, Progress or Profile redesign/refactor.
 - No removal of `LessonSource = "phrases"`, mixed lessons, phrase payload conversion, cloze judgement, answer suggestions or backend/API contracts.
+- No removal of the shared guest phrase-browse helper `sortLearningItems` or its `sortCatalogEntries` dependency.
 - No bundle-budget increase.
 - No broad removal of `LexigoPremiumApp`.
 
@@ -36,6 +37,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `.github/workflows/issue-70-phrases-runtime-patch.yml` — temporary only; prohibited from final diff
 - `.github/workflows/issue-70-phrases-runtime-patch-v2.yml` — temporary only; prohibited from final diff
 - `.github/workflows/actions-storage-cleanup.yml` — temporary exact-branch job only; must match base byte-for-byte in final diff
+- `scripts/ci/issue_70_phrases_patch.py` — temporary exact-anchor patcher only; prohibited from final diff
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
 - `frontend/docs/compatibility-cleanup.md`
@@ -64,12 +66,13 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 
 - Guest and authenticated direct Phrases entry resolve to `LexigoPhrasesApp` before `LexigoPremiumApp`.
 - `DEFAULT_PHRASE_CATALOG` remains available to enrich live phrase lesson payloads in `toLearningItem`.
+- `sortLearningItems` and `sortCatalogEntries` remain available to the shared guest phrase-browse lesson path.
 - `LessonSource` continues to accept `"phrases"`; the Lesson Composer option remains.
 - Mixed lessons, phrase `slug`/`cloze`/answer conversion, cloze review and answer suggestions remain unchanged.
 - No CSS selector or stylesheet is changed in this slice.
 - Authoritative Linux visual hashes remain unchanged.
 - Existing route bundle ceilings are not raised.
-- All temporary workflows/jobs are absent from the final diff and the final head is not bot-authored.
+- All temporary workflows/jobs/scripts are absent from the final diff and the final head is not bot-authored.
 
 ## Acceptance criteria
 
@@ -97,8 +100,9 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 ## Risks
 
 - `DEFAULT_PHRASE_CATALOG` appears in both route-only and shared lesson conversion paths; deleting it would break phrase slug/cloze enrichment.
+- `sortLearningItems` appears in the retired route UI and the live shared guest phrase-browse path; deleting it would break lesson browsing.
 - Removing a route-only state incompletely can leave a stale effect/import or hidden bundle branch.
-- A temporary workflow/job can accidentally persist or leave a bot-authored final head; final compare must explicitly reject both conditions.
+- A temporary workflow/job/script can accidentally persist or leave a bot-authored final head; final compare must explicitly reject all such conditions.
 - Raw History transitions may briefly retain the old compatibility component until the App Router selects the canonical island; browser tests must prove no observable regression.
 
 ## Rollback
