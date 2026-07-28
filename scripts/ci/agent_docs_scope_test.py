@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the LexiGo Agent Docs CI routing contract."""
+"""Regression tests for LexiGo CI routing and architecture documentation contracts."""
 
 from __future__ import annotations
 
@@ -16,6 +16,27 @@ ROOT = Path(__file__).resolve().parents[2]
 SCOPE_SCRIPT = ROOT / "scripts" / "ci" / "agent_docs_scope.py"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 DEPLOY_WORKFLOW = ROOT / ".github" / "workflows" / "deploy-stage.yml"
+README = ROOT / "README.md"
+ARCHITECTURE = ROOT / "docs" / "architecture.md"
+BOOTSTRAP = ROOT / "frontend" / "components" / "lexigo-bootstrapped-app.tsx"
+
+CANONICAL_ROUTE_ENTRIES = (
+    ("LexigoHomeApp", "./lexigo-home-app"),
+    ("LexigoLearnApp", "./lexigo-learn-app"),
+    ("LexigoActiveLessonApp", "./lexigo-active-lesson-app"),
+    ("LexigoDictionaryApp", "./lexigo-dictionary-app"),
+    ("LexigoPhrasesApp", "./lexigo-phrases-app"),
+    ("LexigoProgressApp", "./lexigo-progress-app"),
+    ("LexigoProfileApp", "./lexigo-profile-app"),
+    ("LexigoScenarioCatalogApp", "./lexigo-scenario-catalog-app"),
+    ("LexigoScenarioApp", "./lexigo-scenario-app"),
+)
+
+STALE_ARCHITECTURE_CLAIMS = (
+    "compatibility graph для ещё не извлечённых Phrases и Active Lesson",
+    "только Phrases пока остаётся в compatibility graph",
+    "текущая React state-модель ещё не извлечённых экранов",
+)
 
 
 def _load_scope_module():
@@ -144,6 +165,34 @@ class PathClassificationTest(unittest.TestCase):
             artifact.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "head_sha"):
                 scope.validate_artifact(artifact, "c" * 40)
+
+
+class ArchitectureDocumentationContractTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        cls.readme = README.read_text(encoding="utf-8")
+        cls.architecture = ARCHITECTURE.read_text(encoding="utf-8")
+
+    def test_public_docs_match_the_canonical_bootstrap_inventory(self) -> None:
+        for component, module in CANONICAL_ROUTE_ENTRIES:
+            with self.subTest(component=component):
+                self.assertIn(f'import("{module}")', self.bootstrap)
+                self.assertIn(f"`{component}`", self.readme)
+                self.assertIn(f"`{component}`", self.architecture)
+
+    def test_compatibility_fallback_does_not_reclaim_extracted_routes(self) -> None:
+        public_architecture = f"{self.readme}\n{self.architecture}"
+
+        self.assertIn('import("./lexigo-premium-app")', self.bootstrap)
+        self.assertIn("`LexigoPremiumApp`", self.readme)
+        self.assertIn("`LexigoPremiumApp`", self.architecture)
+        self.assertIn("Issue #70", self.readme)
+        self.assertIn("Issue #70", self.architecture)
+
+        for stale_claim in STALE_ARCHITECTURE_CLAIMS:
+            with self.subTest(stale_claim=stale_claim):
+                self.assertNotIn(stale_claim, public_architecture)
 
 
 class WorkflowContractTest(unittest.TestCase):
