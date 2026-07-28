@@ -13,6 +13,7 @@ import (
 
 	"github.com/Dja-tiger/LexiGo/backend/internal/catalog"
 	"github.com/Dja-tiger/LexiGo/backend/internal/config"
+	"github.com/Dja-tiger/LexiGo/backend/internal/moderation"
 	"github.com/Dja-tiger/LexiGo/backend/internal/performance"
 	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
 	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
@@ -95,6 +96,27 @@ func run() error {
 			slog.Duration("interval", cfg.RUMRetention.CleanupInterval),
 			slog.Int("batch_size", cfg.RUMRetention.BatchSize),
 			slog.Int("max_batches", cfg.RUMRetention.MaxBatches),
+		)
+	}
+	if cfg.ContentModeration.RetentionEnabled {
+		retentionWorker := moderation.NewRetentionWorker(
+			moderation.NewRepository(pg),
+			logger,
+			moderation.RetentionPolicy{
+				PendingTTL:      cfg.ContentModeration.PendingTTL,
+				DecidedTTL:      cfg.ContentModeration.DecidedTTL,
+				CleanupInterval: cfg.ContentModeration.CleanupInterval,
+				BatchSize:       cfg.ContentModeration.BatchSize,
+				MaxBatches:      cfg.ContentModeration.MaxBatches,
+			},
+		)
+		go retentionWorker.Run(ctx)
+		logger.Info("answer suggestion retention worker started",
+			slog.Duration("pending_ttl", cfg.ContentModeration.PendingTTL),
+			slog.Duration("decided_ttl", cfg.ContentModeration.DecidedTTL),
+			slog.Duration("interval", cfg.ContentModeration.CleanupInterval),
+			slog.Int("batch_size", cfg.ContentModeration.BatchSize),
+			slog.Int("max_batches", cfg.ContentModeration.MaxBatches),
 		)
 	}
 

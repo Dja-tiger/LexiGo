@@ -33,6 +33,16 @@ type RUMRetention struct {
 	MaxBatches      int
 }
 
+type ContentModeration struct {
+	AdminEmails      []string
+	RetentionEnabled bool
+	PendingTTL       time.Duration
+	DecidedTTL       time.Duration
+	CleanupInterval  time.Duration
+	BatchSize        int
+	MaxBatches       int
+}
+
 type Config struct {
 	AppEnv                string
 	HTTPAddr              string
@@ -48,6 +58,7 @@ type Config struct {
 	PasswordResetDelivery string
 	SMTP                  SMTP
 	RUMRetention          RUMRetention
+	ContentModeration     ContentModeration
 }
 
 func Load() (Config, error) {
@@ -99,6 +110,35 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("RUM_RETENTION_MAX_BATCHES must be an integer: %w", err)
 	}
 
+	moderationRetentionEnabled, err := strconv.ParseBool(env("MODERATION_RETENTION_ENABLED", "true"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_RETENTION_ENABLED must be a boolean: %w", err)
+	}
+	moderationPendingTTL, err := time.ParseDuration(env("MODERATION_PENDING_TTL", "2160h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_PENDING_TTL: %w", err)
+	}
+	moderationDecidedTTL, err := time.ParseDuration(env("MODERATION_DECIDED_TTL", "8760h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_DECIDED_TTL: %w", err)
+	}
+	moderationCleanupInterval, err := time.ParseDuration(env("MODERATION_CLEANUP_INTERVAL", "6h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_CLEANUP_INTERVAL: %w", err)
+	}
+	moderationBatchSize, err := strconv.Atoi(env("MODERATION_CLEANUP_BATCH_SIZE", "1000"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_CLEANUP_BATCH_SIZE must be an integer: %w", err)
+	}
+	moderationMaxBatches, err := strconv.Atoi(env("MODERATION_CLEANUP_MAX_BATCHES", "20"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MODERATION_CLEANUP_MAX_BATCHES must be an integer: %w", err)
+	}
+	adminEmails, err := parseAdminEmails(os.Getenv("CONTENT_ADMIN_EMAILS"))
+	if err != nil {
+		return Config{}, err
+	}
+
 	secureDefault := "true"
 	passwordResetDeliveryDefault := "smtp"
 	if appEnv == "local" || appEnv == "test" {
@@ -147,6 +187,15 @@ func Load() (Config, error) {
 			BatchSize:       rumBatchSize,
 			MaxBatches:      rumMaxBatches,
 		},
+		ContentModeration: ContentModeration{
+			AdminEmails:      adminEmails,
+			RetentionEnabled: moderationRetentionEnabled,
+			PendingTTL:       moderationPendingTTL,
+			DecidedTTL:       moderationDecidedTTL,
+			CleanupInterval:  moderationCleanupInterval,
+			BatchSize:        moderationBatchSize,
+			MaxBatches:       moderationMaxBatches,
+		},
 	}
 
 	if cfg.PostgresDSN == "" {
@@ -175,7 +224,31 @@ func Load() (Config, error) {
 	if err := validateRUMRetention(cfg.RUMRetention); err != nil {
 		return Config{}, err
 	}
+	if err := validateContentModeration(cfg.ContentModeration); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+func parseAdminEmails(value string) ([]string, error) {
+	seen := make(map[string]struct{})
+	result := make([]string, 0)
+	for _, raw := range strings.Split(value, ",") {
+		email := strings.ToLower(strings.TrimSpace(raw))
+		if email == "" {
+			continue
+		}
+		parsed, err := mail.ParseAddress(email)
+		if err != nil || parsed.Address != email {
+			return nil, fmt.Errorf("CONTENT_ADMIN_EMAILS must contain comma-separated normalized email addresses")
+		}
+		if _, exists := seen[email]; exists {
+			continue
+		}
+		seen[email] = struct{}{}
+		result = append(result, email)
+	}
+	return result, nil
 }
 
 func validateBrowserOrigin(value string) error {
@@ -224,6 +297,25 @@ func validateRUMRetention(value RUMRetention) error {
 	}
 	if value.MaxBatches < 1 || value.MaxBatches > 100 {
 		return fmt.Errorf("RUM_RETENTION_MAX_BATCHES must be between 1 and 100")
+	}
+	return nil
+}
+
+func validateContentModeration(value ContentModeration) error {
+	if value.PendingTTL < 24*time.Hour {
+		return fmt.Errorf("MODERATION_PENDING_TTL must be at least 24h")
+	}
+	if value.DecidedTTL < value.PendingTTL {
+		return fmt.Errorf("MODERATION_DECIDED_TTL must be greater than or equal to MODERATION_PENDING_TTL")
+	}
+	if value.CleanupInterval < time.Minute {
+		return fmt.Errorf("MODERATION_CLEANUP_INTERVAL must be at least 1m")
+	}
+	if value.BatchSize < 100 || value.BatchSize > 10_000 {
+		return fmt.Errorf("MODERATION_CLEANUP_BATCH_SIZE must be between 100 and 10000")
+	}
+	if value.MaxBatches < 1 || value.MaxBatches > 100 {
+		return fmt.Errorf("MODERATION_CLEANUP_MAX_BATCHES must be between 1 and 100")
 	}
 	return nil
 }

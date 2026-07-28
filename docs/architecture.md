@@ -81,6 +81,16 @@ LexiGo должен одновременно быть рабочим инстр�
 - `lesson` — формирование дневной сессии;
 - `ai` — будущая интеграция с моделью;
 - `platform` — PostgreSQL, Redis, migrations с PostgreSQL advisory lock.
+- `moderation` — fail-closed content-admin allowlist, bounded answer-suggestion queue, atomic terminal decisions, immutable audit, operational metrics и bounded raw-answer retention; не владеет review history или scheduler.
+
+## Moderation ownership
+
+- `learning` создаёт pending suggestion только из реального server-rejected review текущего пользователя и никогда автоматически не меняет curated answers;
+- `moderation` повторно разрешает текущий account email через server-side allowlist, поэтому JWT не содержит долгоживущую роль;
+- accept/reject блокирует suggestion и word в одной PostgreSQL transaction, использует optimistic version и добавляет только normalized-unique accepted answer;
+- review event и уже применённый scheduler state неизменяемы;
+- pending raw answers хранятся не более 90 дней, terminal decision/audit — не более 365 дней; replica-safe worker использует отдельный advisory lock и bounded batches;
+- полный operational/privacy contract описан в [`answer-suggestion-moderation.md`](./answer-suggestion-moderation.md).
 
 ## Управление аккаунтом и данными
 

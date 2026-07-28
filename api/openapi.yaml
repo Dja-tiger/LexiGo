@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.12.0
+  version: 0.13.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -729,6 +729,113 @@ paths:
           description: The referenced review was not a server-rejected objective attempt.
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/admin/answer-suggestions:
+    get:
+      operationId: listAnswerSuggestionsForModeration
+      tags: [moderation]
+      summary: Read one bounded page of answer suggestions with decision context.
+      description: Requires a bearer-authenticated account whose current normalized email is present in the server-side content-admin allowlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [pending, accepted, rejected], default: pending } }
+        - { name: exerciseKind, in: query, schema: { type: string, enum: [translation, cloze] } }
+        - { name: itemQuery, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: createdBefore, in: query, schema: { type: string, format: date-time } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        "200":
+          description: Keyset-paginated moderation context. Raw learner answers are never cacheable.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Authenticated account is not present in the content-admin allowlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/admin/answer-suggestions/metrics:
+    get:
+      operationId: getAnswerSuggestionModerationMetrics
+      tags: [moderation]
+      summary: Read bounded queue age, outcome and retention metrics.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current content-moderation operational metrics.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationMetrics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Authenticated account is not present in the content-admin allowlist.
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/admin/answer-suggestions/{suggestionID}/decision:
+    post:
+      operationId: decideAnswerSuggestion
+      tags: [moderation]
+      summary: Atomically accept or reject one pending suggestion.
+      description: A terminal decision never changes the referenced review event or historical scheduler state. Accept appends only a normalized-unique curated answer.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: suggestionID
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerationDecisionRequest"
+      responses:
+        "200":
+          description: Decision, optimistic version and accepted-answer mutation result.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationDecisionResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Authenticated account is not present in the content-admin allowlist.
+        "404":
+          description: Suggestion does not exist.
+        "409":
+          description: Suggestion is already terminal or expectedVersion is stale.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/lessons/preview:
@@ -1497,6 +1604,103 @@ components:
         submittedAnswer: { type: string }
         status: { type: string, enum: [pending, accepted, rejected] }
         createdAt: { type: string, format: date-time }
+    ModerationListResponse:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ModerationSuggestionContext"
+        nextCursor:
+          type: string
+    ModerationSuggestionContext:
+      type: object
+      additionalProperties: false
+      required: [id, version, status, exerciseKind, submittedAnswer, normalizedAnswer, createdAt, updatedAt, item, review]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        version: { type: integer, format: int64, minimum: 1 }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        exerciseKind: { type: string, enum: [translation, cloze] }
+        submittedAnswer: { type: string, minLength: 1, maxLength: 500 }
+        normalizedAnswer: { type: string, minLength: 1, maxLength: 500 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        decidedAt: { type: string, format: date-time }
+        decisionReason:
+          $ref: "#/components/schemas/ModerationDecisionReason"
+        decisionComment: { type: string, maxLength: 1000 }
+        item:
+          $ref: "#/components/schemas/ModerationItemContext"
+        review:
+          $ref: "#/components/schemas/ModerationReviewContext"
+    ModerationItemContext:
+      type: object
+      additionalProperties: false
+      required: [id, kind, lemma, translation, acceptedAnswers]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        kind: { type: string, enum: [word, phrase] }
+        lemma: { type: string }
+        translation: { type: string }
+        clozeAnswer: { type: string }
+        acceptedAnswers:
+          type: array
+          items: { type: string }
+    ModerationReviewContext:
+      type: object
+      additionalProperties: false
+      required: [id, answerMode, rating, effectiveRating, correct, judgementReason, reviewedAt]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        answerMode: { type: string, enum: [recall, choice] }
+        rating: { type: string, enum: [again, almost, known] }
+        effectiveRating: { type: string, enum: [again, almost, known] }
+        correct: { type: boolean, const: false }
+        judgementReason: { type: string, enum: [rejected_no_answer, rejected_no_match] }
+        reviewedAt: { type: string, format: date-time }
+    ModerationDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [decision, expectedVersion, reason]
+      properties:
+        decision: { type: string, enum: [accepted, rejected] }
+        expectedVersion: { type: integer, format: int64, minimum: 1 }
+        reason:
+          $ref: "#/components/schemas/ModerationDecisionReason"
+        comment: { type: string, maxLength: 1000 }
+    ModerationDecisionReason:
+      type: string
+      enum: [valid_variant, incorrect, duplicate, unsafe, irrelevant, insufficient_context]
+    ModerationDecisionResult:
+      type: object
+      additionalProperties: false
+      required: [id, status, version, decisionReason, decidedAt, answerAdded]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        status: { type: string, enum: [accepted, rejected] }
+        version: { type: integer, format: int64, minimum: 2 }
+        decisionReason:
+          $ref: "#/components/schemas/ModerationDecisionReason"
+        decisionComment: { type: string, maxLength: 1000 }
+        decidedAt: { type: string, format: date-time }
+        answerAdded: { type: boolean }
+    ModerationMetrics:
+      type: object
+      additionalProperties: false
+      required: [pendingCount, oldestPendingAgeSeconds, acceptedCount, rejectedCount, acceptanceRatePercent, expiredPendingCount, expiredDecidedCount]
+      properties:
+        pendingCount: { type: integer, format: int64, minimum: 0 }
+        oldestPendingAt: { type: string, format: date-time }
+        oldestPendingAgeSeconds: { type: integer, format: int64, minimum: 0 }
+        acceptedCount: { type: integer, format: int64, minimum: 0 }
+        rejectedCount: { type: integer, format: int64, minimum: 0 }
+        acceptanceRatePercent: { type: number, minimum: 0, maximum: 100 }
+        expiredPendingCount: { type: integer, format: int64, minimum: 0 }
+        expiredDecidedCount: { type: integer, format: int64, minimum: 0 }
     LessonSource:
       type: string
       description: Stable lesson-composer source identifier. Academic Technical English maps to the curated hakui-technical-english-2020 catalog source.
@@ -1506,7 +1710,7 @@ components:
       required: [source, studyMode, lessonSize]
       properties:
         source:
-$ref: "#/components/schemas/LessonSource"
+          $ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]
@@ -1531,7 +1735,7 @@ $ref: "#/components/schemas/LessonSource"
       required: [source, studyMode, lessonSize]
       properties:
         source:
-$ref: "#/components/schemas/LessonSource"
+          $ref: "#/components/schemas/LessonSource"
         studyMode:
           type: string
           enum: [study, recall, choice]

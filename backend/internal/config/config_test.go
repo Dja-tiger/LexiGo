@@ -42,6 +42,13 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	t.Setenv("RUM_RETENTION_CLEANUP_INTERVAL", "")
 	t.Setenv("RUM_RETENTION_BATCH_SIZE", "")
 	t.Setenv("RUM_RETENTION_MAX_BATCHES", "")
+	t.Setenv("CONTENT_ADMIN_EMAILS", "")
+	t.Setenv("MODERATION_RETENTION_ENABLED", "")
+	t.Setenv("MODERATION_PENDING_TTL", "")
+	t.Setenv("MODERATION_DECIDED_TTL", "")
+	t.Setenv("MODERATION_CLEANUP_INTERVAL", "")
+	t.Setenv("MODERATION_CLEANUP_BATCH_SIZE", "")
+	t.Setenv("MODERATION_CLEANUP_MAX_BATCHES", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -64,6 +71,12 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	}
 	if cfg.RUMRetention.CleanupInterval != time.Hour || cfg.RUMRetention.BatchSize != 5000 || cfg.RUMRetention.MaxBatches != 20 {
 		t.Fatalf("unexpected RUM cleanup bounds: %+v", cfg.RUMRetention)
+	}
+	if len(cfg.ContentModeration.AdminEmails) != 0 ||
+		cfg.ContentModeration.PendingTTL != 90*24*time.Hour ||
+		cfg.ContentModeration.DecidedTTL != 365*24*time.Hour ||
+		cfg.ContentModeration.CleanupInterval != 6*time.Hour {
+		t.Fatalf("unexpected moderation defaults: %+v", cfg.ContentModeration)
 	}
 }
 
@@ -170,6 +183,49 @@ func TestLoadRejectsUnsafeRUMRetentionBounds(t *testing.T) {
 			_, err := Load()
 			if err == nil || !strings.Contains(err.Error(), test.errorText) {
 				t.Fatalf("expected %s validation error, got %v", test.errorText, err)
+			}
+		})
+	}
+}
+
+func TestLoadNormalizesAndDeduplicatesContentAdminEmails(t *testing.T) {
+	setRequiredEnvironment(t)
+	t.Setenv("CONTENT_ADMIN_EMAILS", " Admin@Example.com,admin@example.com, editor@example.com ")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if len(cfg.ContentModeration.AdminEmails) != 2 ||
+		cfg.ContentModeration.AdminEmails[0] != "admin@example.com" ||
+		cfg.ContentModeration.AdminEmails[1] != "editor@example.com" {
+		t.Fatalf("admin emails = %#v", cfg.ContentModeration.AdminEmails)
+	}
+}
+
+func TestLoadRejectsInvalidContentAdminAndRetentionConfiguration(t *testing.T) {
+	tests := []struct {
+		key       string
+		value     string
+		errorText string
+	}{
+		{key: "CONTENT_ADMIN_EMAILS", value: "not-an-email", errorText: "CONTENT_ADMIN_EMAILS"},
+		{key: "MODERATION_PENDING_TTL", value: "23h", errorText: "MODERATION_PENDING_TTL"},
+		{key: "MODERATION_DECIDED_TTL", value: "24h", errorText: "MODERATION_DECIDED_TTL"},
+		{key: "MODERATION_CLEANUP_INTERVAL", value: "30s", errorText: "MODERATION_CLEANUP_INTERVAL"},
+		{key: "MODERATION_CLEANUP_BATCH_SIZE", value: "99", errorText: "MODERATION_CLEANUP_BATCH_SIZE"},
+		{key: "MODERATION_CLEANUP_MAX_BATCHES", value: "101", errorText: "MODERATION_CLEANUP_MAX_BATCHES"},
+	}
+	for _, test := range tests {
+		t.Run(test.key, func(t *testing.T) {
+			setRequiredEnvironment(t)
+			t.Setenv(test.key, test.value)
+			if test.key == "MODERATION_DECIDED_TTL" {
+				t.Setenv("MODERATION_PENDING_TTL", "48h")
+			}
+			_, err := Load()
+			if err == nil || !strings.Contains(err.Error(), test.errorText) {
+				t.Fatalf("expected %s error, got %v", test.errorText, err)
 			}
 		})
 	}
