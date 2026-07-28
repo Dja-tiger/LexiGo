@@ -16,21 +16,24 @@ LexiGo — персональный тренажёр английской лек
 
 Единственная production-цепочка приложения:
 
-`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoActiveLessonApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
+`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoActiveLessonApp`, `LexigoDictionaryApp`, `LexigoPhrasesApp`, `LexigoProgressApp`, `LexigoProfileApp`, `LexigoScenarioCatalogApp`, `LexigoScenarioApp`) либо узкий compatibility fallback `LexigoPremiumApp`.
 
 Ownership компонентов разделён следующим образом:
 
 - `frontend/app/layout.tsx` владеет глобальным runtime-контуром: error boundary, Web Vitals, Service Worker, persistent route shell и legal footer;
 - `frontend/components/routed-lexigo-app.tsx` владеет канонической route shell, skip-link и persistent navigation chrome;
-- `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, account runtime и единственной динамической загрузкой route entries;
-- route-specific islands владеют только данными и presentation своего маршрута, но не восстанавливают сессию и не создают вторые outbox/PWA owners;
-- `frontend/components/lexigo-learn-app.tsx` владеет Lesson Composer reads/mutations и presentation только на `/learn`, но использует общий session bootstrap и передаёт Active Lesson существующему product graph;
-- `frontend/components/lexigo-premium-app.tsx` остаётся compatibility graph для ещё не извлечённых Phrases и Active Lesson и не должен импортироваться напрямую из других компонентов;
+- `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, refresh coordination, account runtime и единственной динамической загрузкой route entries;
+- route-specific islands владеют только API reads/mutations, state и presentation своего маршрута, но не восстанавливают сессию и не создают вторые outbox, Service Worker, appearance или PWA owners;
+- `LexigoHomeApp` владеет `/`, `LexigoLearnApp` — `/learn`, а созданная или восстановленная backend-owned lesson session передаётся отдельному `LexigoActiveLessonApp` на `/lesson/active`;
+- `LexigoDictionaryApp` владеет `/dictionary` и `/words/[id]`, а `LexigoPhrasesApp` — `/phrases` и `/phrases/[slug]`, включая direct entry, URL-backed catalog state и handoff в существующий Learn flow;
+- `LexigoProgressApp` владеет `/progress`, а authenticated `LexigoProfileApp` — сводкой и preferences на `/profile`;
+- `LexigoScenarioCatalogApp` и `LexigoScenarioApp` владеют соответственно `/scenarios` и `/scenarios/[slug]`;
+- `LexigoPremiumApp` остаётся только узким compatibility fallback для guest/auth и оставшихся legacy states, которые ещё не имеют отдельного canonical route owner. Он не является владельцем извлечённых Phrases или Active Lesson; удаление доказанно мёртвого compatibility-кода выполняется отдельно в Issue #70;
 - feature-компоненты расширяют owning route graph, но не создают альтернативные application roots.
 
 Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`. Feature styles не должны добавлять скрытые root-level imports или зависеть от альтернативной точки входа. Консолидация существующих глобальных CSS выполняется отдельными небольшими PR с visual regression gate, без смешивания с redesign.
 
-Контракт защищён unit-тестом `frontend/components/production-app-entry.test.ts` и route-specific source contracts, которые запрещают возврат retired app roots, прямые обходные импорты и дублирование persistent runtime owners.
+Контракт защищён unit-тестами `frontend/components/production-app-entry.test.ts` и `frontend/components/architecture-documentation-contract.test.ts`, а также route-specific source contracts. Они запрещают возврат retired app roots, прямые обходные импорты, дублирование persistent runtime owners и рассинхронизацию публичной архитектурной документации с фактическим bootstrap inventory.
 
 Подробности маршрутизации и runtime boundaries находятся в [docs/architecture.md](docs/architecture.md).
 
