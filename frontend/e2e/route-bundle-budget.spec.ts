@@ -270,4 +270,9 @@ test("canonical routes stay within cold-browser JavaScript budgets", async ({ br
       budget.maxJavascriptBytes,
     );
   }
+
+  expect(
+    false,
+    "controlled Phrases bundle measurement probe; remove before final CI",
+  ).toBe(true);
 });
