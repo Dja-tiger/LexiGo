@@ -39,6 +39,8 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `.agents/AGENTS.progress-pr214.md`
+- `.agents/AGENTS.issue-261-css-specificity.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/phrases.css`
 - `frontend/app/phrases-compat.css`
@@ -60,12 +62,14 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `frontend/e2e/route-bundle-budget.spec.ts`
 - `frontend/e2e/speech-player.spec.ts`
 - `frontend/e2e/phrases-production.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
 - `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/accessibility.spec.ts`
 - `frontend/e2e/accessibility-audit.spec.ts`
 - `frontend/e2e/adaptive-navigation.spec.ts`
 - `frontend/e2e/route-focus-management.spec.ts`
 - `frontend/e2e/support/quality-gates.ts`
+- `frontend/playwright.visual.config.ts`
 - `frontend/scripts/dictionary-navigation-smoke.sh`
 - `frontend/docs/adaptive-knowledge-coach.md`
 - `docs/frontend-bundle-budgets.md`
