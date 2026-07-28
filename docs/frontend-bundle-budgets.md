@@ -120,6 +120,26 @@ The route-specific budget is locked to:
 
 The JavaScript ceiling leaves 24,014 bytes (11.4%) of bounded headroom and remains below the original 238,257-byte measured monolith. The request ceiling remains below the original 24-request limit. `frontend/lib/bundle-budgets.test.ts` blocks any Learn baseline or ceiling from returning to the monolithic boundary.
 
+## Active Lesson route island
+
+`/lesson/active` is rendered by the dedicated dynamic entry `LexigoActiveLessonApp`. The island owns active-session restore/resume, study/recall/choice review, optimistic-version resynchronization, answer suggestion, Lesson Result continuation, focused-route focus/announcement and confirmed safe exit. `LexigoBootstrappedApp`, `ReviewOutboxRuntime`, `RoutedLexigoApp` and the Service Worker remain the sole persistent session, offline, immutable-history and PWA owners.
+
+CI #2202/run `30316446027` completed the full required functional matrix successfully on developer-authored head `ffedfbc47b1694afe8288dcb2c68d9034a0f718d`. Controlled CI #2203/run `30316931098` then added one test-only assertion after the complete route report had been written. Artifact `8672549672` (`sha256:a66f6155801715d4d689adb84f82b136e57e5360ef76c193ad77e2db9ea3829a`) captured the exact route inventory on probe head `ce468c054dc57f3dc154a7b8b016f0999b04d90c`. The embedded and standalone route-result arrays were byte-equivalent after canonical JSON sorting. The probe was removed byte-for-byte, restoring `frontend/e2e/route-bundle-budget.spec.ts` to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`.
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/lesson/active` | 238,257 bytes | 220,225 bytes | 18,032 bytes (7.6%) | 19 |
+
+The route-specific budget is locked to:
+
+- `baselineJavascriptBytes`: `220225`;
+- `maxJavascriptBytes`: `235000`;
+- `maxInitialRequests`: `22`;
+- `baselineEvidence.sourceRun`: `30316931098`;
+- `baselineEvidence.headSha`: `ce468c054dc57f3dc154a7b8b016f0999b04d90c`.
+
+The JavaScript ceiling leaves 14,775 bytes (6.7%) of bounded headroom and remains below the original 238,257-byte measured monolith. The request ceiling remains below the original 24-request limit. `frontend/lib/bundle-budgets.test.ts` prevents the Active Lesson baseline or ceiling from returning to the original product graph boundary.
+
 ## First route island: Dictionary
 
 The first production slice of Issue #115 moves `/dictionary` and `/words/:id` into `LexigoDictionaryApp`, a dedicated dynamic client entry. `LexigoBootstrappedApp` remains mounted across route transitions and continues to own session restoration, refresh coordination, review outbox runtime, account controls and session notices.

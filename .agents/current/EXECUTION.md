@@ -138,3 +138,33 @@ Fallback: revert the focused correction and route selection if the new full CI s
 Limitations: authoritative confirmation requires the complete new-head CI matrix.
 
 Reusable lesson: inspect the entire failing flow after the first blocked assertion is fixed; a single CI failure may hide multiple sequential responsibilities formerly owned by the extracted controller.
+
+### Controlled Active Lesson bundle measurement
+
+Purpose: obtain exact Linux cold-route transfer evidence and replace the monolithic placeholder budget.
+
+Instruction source: Issue #257, `docs/frontend-bundle-budgets.md`, `.agents/lessons/ci.md` and the existing route-budget harness.
+
+Version or verification date: functional head `ffedfbc47b1694afe8288dcb2c68d9034a0f718d`, controlled head `ce468c054dc57f3dc154a7b8b016f0999b04d90c`, verified 2026-07-28.
+
+Inputs: successful CI #2202/run `30316446027`; canonical test blob `304e7c62d3163a59edac3e648246e2aa4ce00660`; controlled CI #2203/run `30316931098`.
+
+Files inspected: route-budget test/report, performance global report, bundle configuration/invariants and durable bundle documentation.
+
+Actions performed: added one post-report failing assertion; downloaded artifact `8672549672`; verified ZIP digest; compared standalone and embedded route arrays; removed the assertion byte-for-byte; set permanent baseline and ceilings.
+
+Commands or procedures: connector workflow/job/artifact reads; SHA-256 verification; canonical `jq -S` comparison; `git hash-object` before and after probe.
+
+Artifacts produced: controlled performance artifact `8672549672`, digest `sha256:a66f6155801715d4d689adb84f82b136e57e5360ef76c193ad77e2db9ea3829a`.
+
+Result: `/lesson/active` measured at `220225` JavaScript bytes and `19` requests; permanent limits are `235000` and `22`.
+
+Failures: controlled performance failure was intentional and occurred only after the complete report was written.
+
+Root cause: not applicable; this was a measurement sentinel.
+
+Fallback: preserve the original monolithic budget if artifact integrity or route-array equality cannot be proven.
+
+Limitations: permanent probe-free head still requires full immutable-head CI.
+
+Reusable lesson: record the canonical test blob before the probe and verify it after removal; compare both report copies before accepting exact route evidence.

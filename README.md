@@ -16,7 +16,7 @@ LexiGo — персональный тренажёр английской лек
 
 Единственная production-цепочка приложения:
 
-`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
+`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoActiveLessonApp`, `LexigoDictionaryApp`, `LexigoProgressApp`, `LexigoProfileApp`, Scenario islands или совместимый `LexigoPremiumApp`).
 
 Ownership компонентов разделён следующим образом:
 

@@ -132,3 +132,33 @@ The compatibility controller had owned two focused-route contracts that were not
 ### Next action
 
 Commit and push the focused CI fix, require a new complete functional CI run, and only after green create the controlled measurement probe.
+
+## 2026-07-28 03:24 Europe/Moscow
+
+### Functional gate
+
+- CI #2202 / run `30316446027` passed every required job on immutable functional head `ffedfbc47b1694afe8288dcb2c68d9034a0f718d`, including the formerly failing UI shard 1 focus contract and both container builds.
+
+### Controlled measurement
+
+- canonical route-budget test blob before probe: `304e7c62d3163a59edac3e648246e2aa4ce00660`;
+- controlled probe head: `ce468c054dc57f3dc154a7b8b016f0999b04d90c`;
+- CI #2203 / run `30316931098` failed the performance job at the intentional post-report sentinel;
+- artifact: `8672549672`;
+- artifact digest: `sha256:a66f6155801715d4d689adb84f82b136e57e5360ef76c193ad77e2db9ea3829a`;
+- standalone and embedded route-result arrays match after canonical JSON sorting;
+- exact `/lesson/active`: `220225` JavaScript bytes and `19` initial requests;
+- original monolith: `238257` bytes, so the reduction is `18032` bytes (`7.6%`);
+- the probe is removed byte-for-byte and the route-budget test is restored to blob `304e7c62d3163a59edac3e648246e2aa4ce00660`.
+
+### Permanent budget
+
+- baseline: `220225`;
+- JavaScript ceiling: `235000` (`14775` bytes / `6.7%` headroom and below the original transfer);
+- initial-request ceiling: `22` (below the original `24`);
+- evidence run/head/date recorded in schema v2 budget metadata;
+- bundle invariant now blocks Active Lesson baseline or ceiling from returning to the monolithic boundary.
+
+### Next action
+
+Validate the permanent budget/docs tree, commit and push the probe-free head, then require the final full immutable-head CI before Ready/review/merge.
