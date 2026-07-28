@@ -27,7 +27,16 @@
         "headSha": "b82c31acfc9bd48ec5b28682a49035226bdef556"
       }
     },
-    "/phrases": { "baselineJavascriptBytes": 238257, "maxJavascriptBytes": 275000, "maxInitialRequests": 24 },
+    "/phrases": {
+      "baselineJavascriptBytes": 226149,
+      "maxJavascriptBytes": 235000,
+      "maxInitialRequests": 22,
+      "baselineEvidence": {
+        "sourceRun": 30366489438,
+        "capturedAt": "2026-07-28",
+        "headSha": "dc22918ffe99bc8e52116d885ab0baf961762d00"
+      }
+    },
     "/dictionary": {
       "baselineJavascriptBytes": 205239,
       "maxJavascriptBytes": 235000,
