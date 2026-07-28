@@ -3,8 +3,8 @@
 ## Identity
 
 - Issue: #132 post-merge validation recovery.
-- Branch: `agent/issue-132-postmerge-state` for mandatory state reconciliation, then a dedicated runtime recovery branch from the reconciled `main`.
-- Base SHA: `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- Branch: `agent/issue-132-dictionary-submit-recovery`.
+- Base SHA: `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
 - Head SHA: resolve from live branch ref.
 - PR: pending.
 
@@ -14,7 +14,6 @@ Restore truthful Dictionary query retention for an immediate keyboard submit in 
 
 ## Scope
 
-- first reconcile repository memory with the merged/failing live state in a pure Agent Docs PR;
 - remove the stale initial filter-to-input synchronization frame from the Dictionary controlled-input lifecycle;
 - add source-level protection for the synchronization owner and retain the existing cross-browser empty/error journeys;
 - promote the confirmed failure category to a focused mandatory Agent Harness lesson;
@@ -29,7 +28,6 @@ Restore truthful Dictionary query retention for an immediate keyboard submit in 
 
 ## Allowed paths
 
-- reconciliation: `.agents/PROJECT_STATE.md`, `.agents/current/**`;
 - runtime recovery: `frontend/components/dictionary-catalog.tsx` and focused source/browser tests;
 - focused `.agents/AGENTS*.md`, `.agents/AGENTS.md` and `.agents/current/**`.
 

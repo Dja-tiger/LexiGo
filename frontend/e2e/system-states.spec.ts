@@ -75,6 +75,10 @@ test("keeps the Dictionary query in a truthful empty state and exposes only impl
 
   await page.getByRole("button", { name: "Сбросить фильтры", exact: true }).last().click();
   await expect(search).toHaveValue("");
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dictionary\?query=nonexistent\+term$/);
+  await expect(search).toHaveValue("nonexistent term");
 });
 
 test("keeps the Dictionary query through a correlated error and retries deterministically", async ({ context, page }) => {
