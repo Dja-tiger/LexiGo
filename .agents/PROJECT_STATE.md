@@ -2,17 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 22:53 Europe/Moscow.
+- Last verified: 2026-07-28 23:38 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `df033168f56f6143285e68aff0fc67d4570fc2a4`.
-- Latest completed slice: Issue #70 — consolidate the live Phrases computed-cascade compatibility rules into the canonical route stylesheet.
-- Completion PR: #284.
-- PR #284 immutable developer-authored head: `03820b4b5b92cdc8bb37df84efc98c7b9070ab07`.
-- Authoritative full CI: #2357 / run `30392104701`, successful across Agent Harness, backend, frontend, browser, accessibility, forced-colors, visual, performance and container gates.
-- Expected-head squash merge produced `df033168f56f6143285e68aff0fc67d4570fc2a4`.
-- Exact-SHA stage/public validation: run `30393760854`, deployed web/API image `df033168f56f6143285e68aff0fc67d4570fc2a4`; frontend/API smoke succeeded and public desktop Chromium/iOS WebKit passed 12/12.
-- Deployment-status Issue #12 reports the same exact stage SHA with deploy, public smoke and public browser all successful.
-- No pull request was open when this reconciliation branch was created.
+- Live `main` at verification: `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+- Latest completed slice: Issue #70 — prove the Progress compatibility deletion boundary without runtime changes.
+- Completion PR: #288.
+- PR #288 immutable developer-authored head: `c7e9975681e2f72b482614808d0102c0f5240dcc`.
+- Authoritative full CI: #2362 / run `30395627872`, successful across backend, frontend core, accessibility, CSP, iOS PWA, UI, visual and performance gates.
+- Expected-head squash merge produced `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+- PR #288 was proof-only: no runtime, CSS, API, backend, migration, workflow, deployment or bundle-budget change; no stage deployment was required.
+- Reviews, comments and unresolved review threads were empty before merge.
+- PR #287 remains open but conflicts with current `main` because its stale branch also owns `.agents/current/**`; it must not be merged as-is.
 
 ## Completed
 
@@ -37,6 +37,9 @@
 - Route-boundary session adoption prevents logout during Progress navigation.
 - Progress navigation remains escapable in desktop, mobile and installed PWA contexts.
 - Scroll restoration is immediate and interruptible.
+- PR #288 proves exact `/progress` route detection, unconditional guest/auth island selection and render ordering before the final compatibility fallback.
+- The executable proof inventories route-only Progress presentation markers separately from shared progress state/data used by Home, Profile and lesson-result flows.
+- PR #288 does not authorize runtime deletion; a later implementation slice must preserve all shared progress consumers.
 
 ### Route-level client islands and bundle budgets
 
@@ -58,11 +61,7 @@
 - PR #277 proved canonical Phrases guest/auth route reachability before the compatibility fallback.
 - PR #282 removed the proven-unreachable Phrases catalog/detail runtime family from `LexigoPremiumApp` while preserving shared lesson-domain consumers.
 - PR #284 removed the separate `phrases-compat.css` boundary and moved its exact seven live route-scoped rule groups into `frontend/app/phrases.css`.
-- `frontend/app/phrases.css` is now the sole Phrases route-specific visual and computed-cascade owner.
-- Root layout imports `catalog-enhancements.css` before `phrases.css`; `phrases-compat.css` and its import are absent.
-- The executable ownership contract enforces file absence, import order, selector uniqueness and exact declarations.
-- Catalog contrast/surface/elevation, selected-topic contrast, result spacing and forced-colors values remain unchanged.
-- Eight compact/desktop Light/Dark Phrases catalog/detail visual hashes remained unchanged; no baseline or bundle-budget promotion occurred.
+- PR #288 established the next two-sided Progress boundary: route-only presentation remains a deletion candidate, while shared progress data/state consumers remain protected.
 - Issue #70 remains open for later independently proven compatibility families.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 
@@ -92,13 +91,15 @@
 
 ## In progress
 
-- No product or tooling slice is active after PR #284 merge and exact-SHA stage validation.
-- The next Issue #70 slice may start only after this repository-memory reconciliation is merged.
+- No product or tooling slice is active after PR #288 merge.
+- This Agent Docs reconciliation must merge before another Issue #70 slice starts.
+- PR #287 is not an active slice and cannot be merged from its stale/conflicting branch.
 
 ## Remaining roadmap
 
 ### 1. #70 — Select the next independently proven compatibility family
 
+- After this reconciliation, close or replace stale PR #287 rather than force-merging conflicting `.agents/current/**` history.
 - Re-read live routing, imports, fallback predicates, markup consumers and `frontend/docs/compatibility-cleanup.md` before choosing scope.
 - Select one minimal family per atomic PR; do not combine authentication fallback extraction, broad `LexigoPremiumApp` removal and unrelated CSS cleanup.
 - Preserve guest authentication, account recovery, unknown-route fallback and all shared lesson-domain behavior until exact evidence proves replacement ownership.
@@ -121,6 +122,7 @@
 ## Validation pending
 
 - Each remaining Issue #70 family requires its own reachability, consumer, bundle, browser and visual evidence; no broad dead-code claim is accepted.
+- Progress runtime deletion remains pending a separate atomic implementation slice after PR #288 proof.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
 
@@ -131,23 +133,19 @@
 
 ## Recent production/tooling evidence
 
-1. #284 — `refactor(frontend): consolidate Phrases CSS ownership` → `df033168f56f6143285e68aff0fc67d4570fc2a4`.
-2. #282 — `refactor(frontend): remove Phrases compatibility route family` → `9250d9ca583614b976e0c3154246ef56b69a5994`.
-3. #278 — `docs(agent): reconcile Phrases compatibility proof completion` → `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
-4. #277 — `test(frontend): prove Phrases compatibility deletion boundary` → `928b026e0bf694f07043986bec12f70374405dde`.
-5. #276 — `docs(agent): reconcile route-island epic completion` → `3d4a8dd49255da11f25fd38f92b2a8637d443517`.
-6. #275 — `docs(frontend): align completed route-island architecture` → `156f7a9144d7652766e68e54ff9f0e246edfcc2b`.
-7. #273 — `feat(phrases): add production catalog and route island` → `b53aeca3329bef61dd23c7b08964d98065ee1d7b`.
-8. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+1. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+2. #284 — `refactor(frontend): consolidate Phrases CSS ownership` → `df033168f56f6143285e68aff0fc67d4570fc2a4`.
+3. #282 — `refactor(frontend): remove Phrases compatibility route family` → `9250d9ca583614b976e0c3154246ef56b69a5994`.
+4. #278 — `docs(agent): reconcile Phrases compatibility proof completion` → `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
+5. #277 — `test(frontend): prove Phrases compatibility deletion boundary` → `928b026e0bf694f07043986bec12f70374405dde`.
 
 ## Evidence
 
-- PR #284 final head `03820b4b5b92cdc8bb37df84efc98c7b9070ab07` passed authoritative full CI #2357/run `30392104701`.
-- Final compare was behind `0`, contained exactly nine declared paths and contained no workflow, temporary script, unrelated stylesheet, snapshot, runtime, backend, API, migration, deployment or bundle-budget change.
+- PR #288 final head `c7e9975681e2f72b482614808d0102c0f5240dcc` passed authoritative full CI #2362/run `30395627872`.
+- Final PR state was mergeable and contained exactly four declared proof-only paths.
 - Reviews, comments and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `df033168f56f6143285e68aff0fc67d4570fc2a4`.
-- Deploy Stage run `30393760854` deployed exact web/API image `df033168f56f6143285e68aff0fc67d4570fc2a4`, returned successful frontend/API smoke and passed all 12 public browser checks.
-- Deployment-status Issue #12 reports the same exact SHA with deploy, public smoke and public browser successful.
+- Expected-head squash merge produced `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+- No stage deployment was required because the slice changed only executable source tests and Agent Harness current-task records.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
