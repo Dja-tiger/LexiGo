@@ -2,102 +2,85 @@
 
 ## Identity
 
-- Issue: #132 — administrative moderation of answer suggestions.
-- Branch: `agent/issue-132-answer-suggestion-moderation`.
-- Base SHA: `65c233601b684b8b9ac2873290dd2718a83b39a9`.
+- Issue: #132 post-merge validation recovery.
+- Branch: `agent/issue-132-postmerge-state` for mandatory state reconciliation, then a dedicated runtime recovery branch from the reconciled `main`.
+- Base SHA: `6059cbd2ffd8669b92fdf73add75a706773a299a`.
 - Head SHA: resolve from live branch ref.
 - PR: pending.
 
 ## Objective
 
-Deliver a fail-closed backend moderation workflow for `answer_suggestions`: authorized queue inspection, contextual decisions, normalized accepted-answer deduplication, immutable audit, observability and bounded raw-answer retention.
+Restore truthful Dictionary query retention for an immediate keyboard submit in iOS WebKit, then complete full post-merge CI and exact-SHA stage validation for Issue #132.
 
 ## Scope
 
-- additive moderation schema and audit/version fields;
-- content-admin allowlist resolved against the current authenticated account email;
-- keyset-paginated queue with bounded filters and full learning-item/review context;
-- atomic accept/reject decision with optimistic locking;
-- normalized no-duplicate update of `words.accepted_answers`;
-- queue metrics, structured operational logs and bounded retention cleanup;
-- OpenAPI, integration, authorization, concurrency and retention contracts;
-- operational/privacy documentation and environment examples.
+- first reconcile repository memory with the merged/failing live state in a pure Agent Docs PR;
+- remove the stale initial filter-to-input synchronization frame from the Dictionary controlled-input lifecycle;
+- add source-level protection for the synchronization owner and retain the existing cross-browser empty/error journeys;
+- promote the confirmed failure category to a focused mandatory Agent Harness lesson;
+- complete full CI, expected-head squash merge, post-merge CI and stage/public validation.
 
 ## Non-goals
 
-- no LLM or automatic acceptance;
-- no retroactive review result or scheduler mutation;
-- no public moderator frontend, Figma or visual baseline;
-- no unrelated auth role system or account redesign.
+- no moderation backend changes;
+- no Dictionary redesign, API change, CSS or visual baseline update;
+- no timeout increase, retry-only workaround or browser-project exclusion;
+- no unrelated roadmap work.
 
 ## Allowed paths
 
-- `backend/internal/moderation/**`;
-- focused `backend/internal/config/**`, `backend/internal/server/**`, `backend/cmd/api/**`;
-- `backend/internal/platform/migrate/migrations/000017_answer_suggestion_moderation.up.sql`;
-- focused backend integration tests;
-- `api/openapi.yaml`;
-- `.env.example`, stage/prod env examples and compose wiring only for moderation configuration;
-- focused moderation/architecture/privacy documentation;
-- `.agents/AGENTS.md` and the focused OpenAPI structural lesson for a confirmed failure category;
-- `.agents/current/**`.
+- reconciliation: `.agents/PROJECT_STATE.md`, `.agents/current/**`;
+- runtime recovery: `frontend/components/dictionary-catalog.tsx` and focused source/browser tests;
+- focused `.agents/AGENTS*.md`, `.agents/AGENTS.md` and `.agents/current/**`.
 
 ## Prohibited paths
 
-- frontend runtime and visual baselines;
-- existing learning judgement/scheduler semantics except reuse of deterministic normalization;
-- unrelated migrations, workflows, dependencies or deployment scripts;
-- secrets or real admin identities.
+- backend, migrations, OpenAPI and moderation behavior;
+- workflows, dependencies, deployment scripts and visual snapshots;
+- Phrases or other route runtime.
 
 ## Runtime owners
 
-- existing `learning` package: suggestion submission, deterministic answer normalization and scheduler.
-- new `moderation` package: admin authorization, queue/context, decisions, audit, metrics and retention.
-- `httpx.Authenticate`: credential epoch validation and authenticated user context.
-- PostgreSQL transaction: row locks and atomic suggestion/word/audit mutation.
+- `DictionaryCatalog`: controlled search draft and filter navigation;
+- `navigation.query`: canonical committed URL/filter state;
+- Dictionary route island: page loading and cross-browser presentation.
 
 ## Documentation owners
 
-- Issue #132 and Draft PR: acceptance and validation evidence.
-- `api/openapi.yaml`: external HTTP contract.
-- moderation operational document: RBAC, decision reasons, retention and incident procedure.
-- `.agents/current/**`: active pre-flight and reproducible execution.
+- `.agents/PROJECT_STATE.md`: verified merge, CI and stage facts;
+- focused Agent Harness lesson: prevention and regression gate;
+- `.agents/current/**`: recovery pre-flight and evidence.
 
 ## Invariants
 
-- non-admin users cannot infer queue contents or mutate suggestions;
-- empty/malformed allowlist denies all moderation access;
-- a decision never changes the referenced review event or historical scheduler state;
-- accepted answers contain no normalized duplicates;
-- one expected version produces at most one terminal decision;
-- raw submitted answers and audit data follow documented bounded retention;
-- final CI runs on a developer-authored immutable head.
+- a user-entered query cannot be overwritten by delayed synchronization from an older route state;
+- URL/Back/Forward changes still restore the canonical committed query;
+- empty/error/retry states retain the submitted query;
+- reset and clear actions still clear both draft and committed filters;
+- no visual, API or bundle contract changes.
 
 ## Acceptance criteria
 
-- all Issue #132 criteria are backed by unit/integration/OpenAPI evidence;
-- list requests are bounded and keyset-paginated;
-- accept/reject decisions are transactional, audited and conflict-safe;
-- queue metrics expose pending count, oldest age and terminal rates to admins only;
-- retention cleanup is bounded, replica-safe and documented;
-- full required CI, review audit, expected-head squash merge and exact-SHA stage validation pass.
+- the existing Dictionary empty-state journey passes repeatedly in iOS WebKit without retry;
+- Chromium/WebKit desktop and compact projects retain the submitted query;
+- source protection rejects reintroduction of delayed initial synchronization;
+- full CI passes on the final developer-authored head;
+- recovery merge, post-merge main CI and exact-SHA stage/public validation pass.
 
 ## Required checks
 
-- formatting, `go vet`, unit and race tests;
-- migration and PostgreSQL/Redis integration;
-- authorization, pagination, decision, normalized dedupe and concurrent conflict tests;
-- retention worker bounds/advisory-lock behavior;
-- OpenAPI source contract;
-- complete GitHub CI, container builds and stage/public validation.
+- focused source/unit contract;
+- frontend lint, TypeScript, unit and production build;
+- repeated focused iOS WebKit journey plus desktop Chromium/WebKit and Android Chromium;
+- full required CI, review-thread audit, expected-head squash merge;
+- post-merge main CI and Deploy Stage public validation.
 
 ## Risks
 
-- allowlist drift could deny legitimate admins or expose data if matching is weak;
-- concurrent decisions could append duplicates without word-level locking;
-- retention could delete active work or unbounded rows;
-- list filters could leak learner raw answers or permit unbounded scans.
+- removing synchronization entirely would break Back/Forward query restoration;
+- changing submit to read only DOM state could create a second state owner;
+- a test-only wait could hide the real runtime race.
 
 ## Rollback
 
-Remove the new routes/worker/package and stop writing the additive moderation fields. Existing pending suggestions, review events and scheduler state remain readable and unchanged.
+Restore the prior input synchronization implementation; no API, schema or persisted data is changed.
