@@ -39,8 +39,8 @@
 
 ### Current branch head
 
-- Resolve after the documentation commit.
+- Resolve from live `agent/issue-199-phrases-design-handoff`; PR #270 is Draft.
 
 ### Next action
 
-- Validate docs diff, commit, publish Draft PR and complete lightweight CI/review/squash-merge lifecycle.
+- Validate the final metadata commit, pass PR #270 lightweight CI, mark Ready, audit reviews/threads and expected-head squash merge.

@@ -5,7 +5,7 @@
 - Branch: `agent/issue-199-phrases-design-handoff`
 - Base SHA: `72a1a621225ee08dbf6643d6c982396c77b85bd4`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #270 (Draft)
 
 ## Skills used
 
@@ -25,7 +25,7 @@ Actions performed: live-state audit, isolated branch workflow, immutable-head CI
 
 Commands or procedures: GitHub/`gh` ref, Issue, PR, check and review-thread reads; expected-head squash policy.
 
-Artifacts produced: Issue #199 design handoff branch and PR.
+Artifacts produced: Issue #199 design handoff branch and Draft PR #270.
 
 Result: in progress.
 

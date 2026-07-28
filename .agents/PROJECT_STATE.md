@@ -213,7 +213,7 @@
 
 ## In progress
 
-- Issue #199 design-handoff slice is active on `agent/issue-199-phrases-design-handoff`.
+- Issue #199 design-handoff slice is active in Draft PR #270 on `agent/issue-199-phrases-design-handoff`.
 - Canonical Figma production page `253:2` now contains the exact Phrases catalog/detail Light/Dark mobile/desktop matrix, resilient-state hooks and Screen Map `82:3` handoff. Repository documentation and lightweight CI remain before the design slice can merge.
 
 ## Remaining roadmap

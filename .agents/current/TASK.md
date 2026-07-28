@@ -6,7 +6,7 @@
 - Branch: `agent/issue-199-phrases-design-handoff`
 - Base SHA: `72a1a621225ee08dbf6643d6c982396c77b85bd4`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #270 (Draft)
 
 ## Objective
 
