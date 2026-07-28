@@ -67,7 +67,7 @@ const ROUTES: RouteCase[] = [
   {
     route: "/phrases",
     waitUntilReady: async (page) => {
-      await expect(page.getByRole("heading", { level: 1, name: "Фразы", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Находите готовые формулировки" })).toBeVisible();
     },
   },
   {
