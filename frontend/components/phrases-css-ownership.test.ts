@@ -87,7 +87,7 @@ describe("Phrases CSS ownership", () => {
       ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {', 1],
       ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort strong {', 1],
       ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort small {', 1],
-      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {', 2],
       ['.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {', 2],
       ['.lx-app[data-route-client-island="phrases"] .lx-phrases-results {', 1],
     ]);
