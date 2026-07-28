@@ -88,4 +88,14 @@ describe("route bundle budget configuration", () => {
   it("keeps the Progress island below the original monolithic product graph", () => {
     expectRouteBelowOriginalMonolith("/progress", bundleBudgets.routes["/progress"]);
   });
+
+  it("keeps the Active Lesson island below the original monolithic transfer and release limits", () => {
+    const activeLesson = bundleBudgets.routes["/lesson/active"];
+
+    expectRouteBelowOriginalMonolith("/lesson/active", activeLesson);
+    expect(
+      activeLesson.maxJavascriptBytes,
+      "/lesson/active: JavaScript ceiling below original transfer",
+    ).toBeLessThan(ORIGINAL_MONOLITHIC_BUDGET.baselineJavascriptBytes);
+  });
 });

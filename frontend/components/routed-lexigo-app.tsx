@@ -165,6 +165,7 @@ export function RoutedLexigoApp() {
   const announcementCounterRef = useRef(0);
   const focusedLessonURLRef = useRef("/lesson/active");
   const focusedLessonHistoryStateRef = useRef<Record<string, unknown>>({});
+  const focusedLessonMountedRef = useRef(false);
   const [routeAnnouncement, setRouteAnnouncement] = useState({ id: 0, message: "" });
   const [focusedLessonExitRequested, setFocusedLessonExitRequested] = useState(false);
   const [lessonResultNotice, setLessonResultNotice] = useState("");
@@ -173,7 +174,15 @@ export function RoutedLexigoApp() {
   }, [router]);
 
   useLayoutEffect(() => {
-    if (!pathname.startsWith("/lesson/")) return;
+    if (!pathname.startsWith("/lesson/")) {
+      const frame = window.requestAnimationFrame(() => {
+        if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) {
+          focusedLessonMountedRef.current = false;
+        }
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+    focusedLessonMountedRef.current = true;
     const captureFocusedLesson = () => {
       focusedLessonURLRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       focusedLessonHistoryStateRef.current = { ...recordState(window.history.state) };
@@ -185,7 +194,7 @@ export function RoutedLexigoApp() {
 
   useLayoutEffect(() => {
     const preserveFocusedLesson = (event: PopStateEvent) => {
-      if (!document.querySelector(ACTIVE_LESSON_SELECTOR)) return;
+      if (!focusedLessonMountedRef.current) return;
       const requestedEntry = readNavigationHistoryState(event.state);
 
       // Next.js and the compatibility graph may observe the same target-level
