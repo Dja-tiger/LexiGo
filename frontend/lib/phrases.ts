@@ -1,4 +1,5 @@
 import type { CatalogPageInfo } from "./catalog-page";
+import { catalogStatusLabel, topicLabel } from "./interface-copy";
 import type { LearningItem } from "./learning";
 
 export type PhraseAPIItem = {
@@ -138,23 +139,9 @@ export function phraseSlug(item: LearningItem): string {
 }
 
 export function phraseTopicLabel(topic: string): string {
-  const normalized = topic.trim().toLowerCase();
-  if (normalized === "daily life" || normalized === "daily-life") return "Повседневное";
-  if (normalized === "travel") return "Путешествия";
-  if (normalized === "data engineering") return "Data Engineering";
-  if (normalized === "backend" || normalized === "backend development") return "Backend";
-  if (normalized === "academic-technical-english") return "Academic English";
-  if (normalized === "incidents") return "Инциденты";
-  if (normalized === "architecture") return "Архитектура";
-  if (normalized === "performance") return "Производительность";
-  if (normalized === "reliability") return "Надёжность";
-  return topic.trim() || "Другая тема";
+  return topicLabel(topic);
 }
 
 export function phraseStatusLabel(status: string): string {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "mastered") return "Закреплено";
-  if (normalized === "review") return "К повторению";
-  if (normalized === "learning") return "Изучается";
-  return "Новое";
+  return catalogStatusLabel(status || "new");
 }
