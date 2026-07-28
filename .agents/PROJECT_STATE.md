@@ -2,10 +2,13 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 11:43 Europe/Moscow.
+- Last verified: 2026-07-28 14:08 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `5472e8f0479a750483709222745cdee92f504258`.
-- Latest documentation/design merge: Phrases production handoff PR #270, merge SHA `5472e8f0479a750483709222745cdee92f504258`.
+- Live `main` at verification: `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+- Latest documentation merge: PR #271, merge SHA `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+- PR #271 immutable developer-authored head `4f40d0fff78a52d0f94ca5b6d2f678314bc45539` passed lightweight CI run `30343850404`.
+- PR #271 changed only Agent Docs, reset `.agents/current/**`, did not build a runtime image and did not supersede the exact stage image from PR #270.
+- Latest documentation/design merge with runtime validation: Phrases production handoff PR #270, merge SHA `5472e8f0479a750483709222745cdee92f504258`.
 - PR #270 immutable developer-authored head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`.
 - PR #270 post-merge full CI run `30342447923` passed on the exact merge SHA.
 - PR #270 exact-SHA stage/public validation run `30343061807` deployed web/API image `5472e8f0479a750483709222745cdee92f504258`; frontend/API returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
@@ -257,23 +260,26 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #270 — `docs(figma): hand off Phrases production designs` → `5472e8f0479a750483709222745cdee92f504258`.
-2. #269 — `docs(agent): reconcile state before Phrases design` → `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
-3. #268 — `docs(agent): finalize Issue 132 delivery` → `c001932fdec11e4c09e33c173656c85be6592906`.
-4. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
-5. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
-6. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
-7. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
-8. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-9. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-10. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
-11. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
-12. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-13. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
+1. #271 — `docs(agent): reconcile Phrases design handoff` → `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+2. #270 — `docs(figma): hand off Phrases production designs` → `5472e8f0479a750483709222745cdee92f504258`.
+3. #269 — `docs(agent): reconcile state before Phrases design` → `72a1a621225ee08dbf6643d6c982396c77b85bd4`.
+4. #268 — `docs(agent): finalize Issue 132 delivery` → `c001932fdec11e4c09e33c173656c85be6592906`.
+5. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+6. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+7. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+8. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
+9. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+10. #260 — `docs(agent): reconcile live project state` → `32d36a6cc0906e8fe3f2ec787c87aecb0a4b23754`.
+11. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+12. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+13. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+14. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
 
 ## Evidence
 
 - Live GitHub `main`, open PRs, branches, Issues #12/#115/#199/#203, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- PR #271 final head `4f40d0fff78a52d0f94ca5b6d2f678314bc45539` passed lightweight CI run `30343850404`; review comments, reviews and review threads were empty, and expected-head squash merge produced `ff63aba1b0cd02f909121e80da6ea51537ef1960`.
+- PR #271 changed only Agent Docs and reset `.agents/current/**`; heavy runtime jobs and automatic stage deployment were not applicable, so stage remains on exact image `5472e8f0479a750483709222745cdee92f504258` from run `30343061807`.
 - PR #270 final head `15d31f1dd7c0ad21b7cf6c42552a6ad8c616457c` passed full CI run `30341744614`; review comments, reviews and review threads were empty, and expected-head squash merge produced `5472e8f0479a750483709222745cdee92f504258`.
 - Post-merge full CI run `30342447923` passed on the exact PR #270 merge SHA. Stage run `30343061807` created GitHub deployment `5636659535` for that SHA; deploy, public smoke and public browser checks succeeded, frontend/API returned HTTP 200 on attempt one and all 12 desktop Chromium/iOS WebKit checks passed.
 - Deployment-status Issue #12 and GitHub deployment status `16028582201` report the same exact stage SHA and success.
