@@ -2,16 +2,21 @@
 
 ## Verification
 
-- Last verified: 2026-07-28 09:51 Europe/Moscow.
+- Last verified: 2026-07-28 10:28 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `6059cbd2ffd8669b92fdf73add75a706773a299a`.
-- Latest product merge: PR #265, merge SHA `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+- Live `main` at verification: `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- Latest product merge: recovery PR #267, merge SHA `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- PR #267 immutable developer-authored head: `68a2be9987b8d1fcb2ca31ead40b50994055267c`.
+- PR #267 final full CI: run `30337018986`, successful across backend, frontend, complete browser matrix and both container builds.
+- Post-merge `main` CI: run `30337705777`, successful on exact merge SHA `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- PR #267 exact-SHA stage/public validation: run `30338245219`, exact web/API image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`; frontend/API smoke returned HTTP 200 on the first attempt and the public desktop Chromium/iOS WebKit matrix passed 12/12.
+- Issue #132 is closed and fully validated.
+- Initial Issue #132 product merge: PR #265, merge SHA `6059cbd2ffd8669b92fdf73add75a706773a299a`.
 - PR #265 immutable developer-authored head: `be47c73e4251f3c1984da100d5f0aeab593e7e61`.
 - PR #265 final full CI: run `30334918051`, successful across backend, frontend, complete browser matrix and both container builds.
-- Issue #132 is closed as completed at the product-contract level.
 - Post-merge `main` CI run `30335497860` failed only in `Frontend E2E (UI tests (shard 2/2))`: iOS WebKit cleared the Dictionary search value between a successful `fill()` and immediate Enter submit.
-- Deploy Stage run `30335952017` was skipped because post-merge CI failed. Stage remains on exact product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-- A focused post-merge recovery is required before Issue #132 delivery can be considered fully validated.
+- Deploy Stage run `30335952017` was skipped because post-merge CI failed; at that checkpoint stage still served exact product image `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+- Documentation reconciliation PR #266 passed lightweight CI `30336497762`, was expected-head squash merged as `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`, and passed post-merge lightweight CI `30336556239`.
 - Previous product merge: PR #262, merge SHA `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
 - PR #262 immutable developer-authored head: `bfdb1ede306b6a1e8d29e2a71067a508d6903a45`.
 - PR #262 final full CI: run `30320390335`, successful including unchanged authoritative Linux visual hashes.
@@ -24,7 +29,11 @@
 - PR #258 post-merge `main` CI: #2205, run `30317863420`, successful on exact merge SHA `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
 - Issue #257 is closed as completed.
 - PR #258 exact-SHA stage/public validation: #2043, run `30318351607`, exact image `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`; deploy and first-attempt frontend/API smoke succeeded, with 12/12 public desktop Chromium/iOS WebKit checks passing.
-- Latest documentation merge: PR #263, merge SHA `d85c57f1e23b891526970b06c49479fa15873cb4`.
+- Latest documentation merge: PR #266, merge SHA `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+- PR #266 immutable head: `52d82b67616816500fcb7323c5b3e53f9772c770`.
+- PR #266 lightweight CI: run `30336497762`, successful.
+- PR #266 post-merge lightweight CI: run `30336556239`, successful on exact merge SHA `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+- Previous documentation merge: PR #263, merge SHA `d85c57f1e23b891526970b06c49479fa15873cb4`.
 - PR #263 immutable head: `5dab7b979c6002f8d9fdf7f350f3799b62ecade0`.
 - PR #263 lightweight CI: run `30321738395`, successful.
 - PR #263 post-merge lightweight CI: run `30321794215`, successful on exact merge SHA `d85c57f1e23b891526970b06c49479fa15873cb4`.
@@ -85,6 +94,14 @@
 - Study, Recall and Choice remain separate runtime and evidence modes.
 - Progressive Lesson Composer, canonical Active Lesson and canonical Lesson Result are in production.
 - Distinct-next protection prevents the next lesson from silently repeating the completed block.
+
+### Answer-suggestion moderation
+
+- A real server-rejected review can create a bounded pending answer suggestion without changing curated answers or the already-applied scheduler result.
+- Administrative access is resolved fail-closed from the current account email against a server-side allowlist; no long-lived role is stored in the JWT.
+- The moderation queue supports bounded pagination, atomic accept/reject with optimistic versioning, immutable audit snapshots, normalized-unique accepted answers, operational metrics and replica-safe retention cleanup.
+- Raw pending answers are retained for at most 90 days; terminal suggestion and audit data are retained for at most 365 days.
+- OpenAPI, PostgreSQL empty-array semantics, unit/integration contracts, full browser-independent CI and exact-SHA stage deployment are validated for Issue #132.
 
 ### Progress and retained-learning evidence
 
@@ -193,9 +210,8 @@
 
 ## In progress
 
-- Post-merge recovery for PR #265 is active.
-- The confirmed failure is limited to Dictionary controlled-input synchronization in iOS WebKit: the initial filter-to-input synchronization frame can overwrite newer user input.
-- The recovery must add a durable source/browser regression gate, pass full immutable-head CI, merge, pass post-merge `main` CI and deploy the exact resulting SHA to stage before final Issue #132 reconciliation.
+- No active production slice.
+- Select the next atomic task only after re-reading live GitHub, current roadmap dependencies and exact design sources.
 
 ## Remaining roadmap
 
@@ -235,21 +251,26 @@ Maintain exact production nodes, complete route-by-route parity and perform exte
 
 ## Recent production/tooling evidence
 
-1. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a` (post-merge recovery pending).
-2. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
-3. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
-4. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
-5. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
-6. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
-7. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
-8. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
-9. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
-10. #249 — `docs(agent): reconcile Progress island completion` → `2d8347d61ffeee173f5eab02b9c2bea29f1fe7b4`.
-11. #248 — `perf(progress): lock route-island ownership and bundle budget` → `a617dfce331700d0b3e911726d52a2683f18d526`.
+1. #267 — `fix(dictionary): preserve immediate search submit` → `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+2. #266 — `docs(agent): record Issue #132 post-merge recovery` → `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`.
+3. #265 — `feat(moderation): add answer suggestion workflow` → `6059cbd2ffd8669b92fdf73add75a706773a299a`.
+4. #263 — `docs(agent): reconcile system-state ownership completion` → `d85c57f1e23b891526970b06c49479fa15873cb4`.
+5. #262 — `refactor(frontend): consolidate system-state CSS ownership` → `f84e60a06124821e4d90086eea8fd8a2a03aaed9`.
+6. #260 — `docs(agent): reconcile live project state` → `32d36a6cc4eaefc553e893fcd1942519441d647b`.
+7. #259 — `docs(agent): reconcile Active Lesson island completion` → `8f21019b1061aea7ab649b13b002d68ccc7178c2`.
+8. #258 — `perf(lesson): extract Active Lesson route island` → `d142fb4a6ce4f7e8c9894a19b0ccf6e5bcde05a2`.
+9. #255 — `perf(learn): extract Learn route island and lock bundle budget` → `9c7a2a46a974a2fd3b16f2de95d8e6f7694584b8`.
+10. #252 — `docs(agent): reconcile Home island completion` → `17c5a8baa544382344936f423d020e5fec89a3d2`.
+11. #251 — `perf(home): extract Home route island and lock bundle budget` → `dc59c8cc0906e8fe3f2ec787c87aecb0a4b23754`.
 
 ## Evidence
 
 - Live GitHub `main`, open PRs, branches, Issues #12/#132, CI and deployment evidence were re-read at the verification timestamp; no pull request was open.
+- PR #267 final head `68a2be9987b8d1fcb2ca31ead40b50994055267c` passed full CI run `30337018986`; review-thread, review and PR-comment audits were empty, and expected-head squash merge produced `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`.
+- Post-merge push CI run `30337705777` passed on the exact recovery merge SHA, including frontend core, backend unit/security/integration, the complete browser/visual/performance matrix, the formerly failing UI shard 2 and both container builds.
+- Stage run `30338245219` deployed exact web/API image `b16f1e4a54b7c9a997744f5fd6bdf230010b76fa`; frontend and API returned HTTP 200 on the first attempt and all 12 public desktop Chromium/iOS WebKit checks passed.
+- GitHub deployment `5635767162` and deployment-status Issue #12 both report the same exact stage SHA and successful deploy/public-smoke/public-browser outcomes.
+- PR #266 final head `52d82b67616816500fcb7323c5b3e53f9772c770` passed lightweight CI `30336497762`; its review audit was empty, expected-head squash merge produced `fb3f482a4e2c065e151dab6e8009ae775d7b9ea4`, and post-merge lightweight CI `30336556239` passed.
 - PR #265 final head `be47c73e4251f3c1984da100d5f0aeab593e7e61` passed full CI run `30334918051`; the thread-aware review audit was empty, and expected-head squash merge produced `6059cbd2ffd8669b92fdf73add75a706773a299a` and closed Issue #132.
 - Post-merge CI run `30335497860` failed on exact merge SHA only in UI shard 2. Playwright trace proves the Dictionary input contained `nonexistent term` after `fill()`, then became empty during immediate Enter submit before the mocked response.
 - The runtime source schedules `requestAnimationFrame(() => setSearchInput(filters.query))` on initial mount, so a frame carrying the initial empty query can overwrite newer controlled input. This is classified as a browser-specific production synchronization defect, not an API failure or timeout.
