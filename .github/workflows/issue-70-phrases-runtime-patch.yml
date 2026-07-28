@@ -1,0 +1,281 @@
+name: Issue 70 Phrases compatibility patch
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-70-phrases-runtime-patch
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      github.event.pull_request.head.ref == 'refactor/issue-70-remove-phrases-compatibility'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/issue-70-remove-phrases-compatibility
+          fetch-depth: 0
+
+      - name: Apply exact Phrases compatibility deletion
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          source_path = Path("frontend/components/lexigo-premium-app.tsx")
+          test_path = Path("frontend/components/phrases-route-island-source.test.ts")
+          source = source_path.read_text(encoding="utf-8")
+          test = test_path.read_text(encoding="utf-8")
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one anchor, found {count}")
+              return text.replace(old, new, 1)
+
+          def sub_once(text: str, pattern: str, replacement: str, label: str) -> str:
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.DOTALL)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one match, found {count}")
+              return updated
+
+          # Route-only imports and types.
+          source = replace_once(source, 'import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";', 'import type { CatalogSortMode } from "../lib/catalog-sort";', "catalog-sort import")
+          for line, label in [
+              ('import { phraseCatalogFilters, phraseCatalogTarget } from "../lib/phrase-navigation";\n', "phrase navigation import"),
+              ('import { CatalogKindNavigation } from "./catalog-kind-navigation";\n', "catalog kind navigation import"),
+              ('import { SpeechPlayerButton } from "./speech-player-button";\n', "speech player import"),
+              ('type CatalogKind = "phrases" | "all-items";\n', "catalog kind type"),
+              ('  | "volume"\n', "volume icon type"),
+              ('  if (name === "volume") return <svg {...common}><path d="M5 10v4h4l5 4V6L9 10H5Z"/><path d="M17 9c1.4 1.5 1.4 4.5 0 6M19.5 6.5c3.1 3 3.1 8 0 11"/></svg>;\n', "volume icon branch"),
+          ]:
+              source = replace_once(source, line, "", label)
+
+          # All-items sorting stays; the Phrases branch and local guest sorting disappear.
+          source = sub_once(
+              source,
+              r'function CatalogSortControl\(\{.*?\n\}\n\nfunction isStandaloneDisplayMode',
+              '''function CatalogSortControl({
+  mode,
+  onChange,
+}: {
+  mode: CatalogSortMode;
+  onChange: (mode: CatalogSortMode) => void;
+}) {
+  return (
+    <div className="lx-catalog-sort" data-lexigo-sort-for="all-items">
+      <div><strong>Сортировка</strong><small>Упорядочить слова по английскому алфавиту</small></div>
+      <label>
+        <span className="lx-visually-hidden">Выберите порядок сортировки</span>
+        <select
+          aria-label="Сортировка каталога"
+          value={mode}
+          onChange={(event) => onChange(event.target.value as CatalogSortMode)}
+        >
+          <option value="default">Порядок обучения</option>
+          <option value="az">A–Z</option>
+          <option value="za">Z–A</option>
+        </select>
+      </label>
+    </div>
+  );
+}
+
+function readStoredCatalogSort(): CatalogSortMode {
+  try {
+    const value = window.localStorage.getItem(`${SORT_STORAGE_PREFIX}all-items`);
+    return value === "az" || value === "za" ? value : "default";
+  } catch {
+    return "default";
+  }
+}
+
+function isStandaloneDisplayMode''',
+              "catalog sorting helpers",
+          )
+          source = sub_once(source, r'\nfunction itemKey\(item: LearningItem\): string \{\n  return item\.slug \|\| item\.id;\n\}\n', '\n', "itemKey helper")
+
+          # Route-only state and URL/filter synchronization.
+          source = sub_once(source, r'  const \[phraseCatalog, setPhraseCatalog\].*?  const \[phraseSearch, setPhraseSearch\] = useState\(""\);\n\n', '', "phrase route state")
+          source = sub_once(source, r'  const \[phraseTopic, setPhraseTopic\] = useState\("all"\);\n  const \[phraseSortMode, setPhraseSortMode\] = useState<CatalogSortMode>\("default"\);\n', '', "phrase filter state")
+          source = sub_once(
+              source,
+              r'  useEffect\(\(\) => \{\n    const storageTimer = window\.setTimeout\(\(\) => \{\n      setPhraseSortMode\(readStoredCatalogSort\("phrases"\)\);\n      setAllItemsSortMode\(readStoredCatalogSort\("all-items"\)\);\n    \}, 0\);\n    return \(\) => window\.clearTimeout\(storageTimer\);\n  \}, \[\]\);',
+              '''  useEffect(() => {
+    const storageTimer = window.setTimeout(() => {
+      setAllItemsSortMode(readStoredCatalogSort());
+    }, 0);
+    return () => window.clearTimeout(storageTimer);
+  }, []);''',
+              "stored sort effect",
+          )
+          source = sub_once(source, r'\n  useEffect\(\(\) => \{\n    if \(navigation\.view !== "phrases"\) return;.*?\n  \}, \[navigation\]\);\n', '\n', "phrase URL synchronization")
+          source = sub_once(source, r'  const phraseTopics = useMemo\(\(\) => \{.*?  const successRate = objectiveSuccessRate\(progress\);', '  const sortedAllItems = items;\n  const successRate = objectiveSuccessRate(progress);', "phrase derived values")
+
+          # Route-only loaders, effects and lifecycle resets.
+          source = sub_once(source, r'  const loadPhraseCatalogResource = useCallback\(async \(.*?\n  const loadActiveLessonResource = useCallback', '  const loadActiveLessonResource = useCallback', "phrase loaders")
+          source = sub_once(
+              source,
+              r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n',
+              '',
+              "hydration phrase resets",
+          )
+          source = sub_once(
+              source,
+              r'  useEffect\(\(\) => \{\n    if \(!session \|\| navigation\.view !== "phrases" \|\| navigation\.detail\) return;.*?\n  \}, \[\n    loadPhraseDetailResource,.*?\n  \]\);\n\n',
+              '',
+              "phrase catalog/detail effects",
+          )
+          source = sub_once(
+              source,
+              r'  function updateCatalogSort\(kind: CatalogKind, mode: CatalogSortMode\) \{.*?\n  \}\n\n  function selectRovingControl',
+              '''  function updateAllItemsSort(mode: CatalogSortMode) {
+    setAllItemsSortMode(mode);
+    try {
+      window.localStorage.setItem(`${SORT_STORAGE_PREFIX}all-items`, mode);
+    } catch {
+      // Sorting remains available for the current session when storage is restricted.
+    }
+  }
+
+  function selectRovingControl''',
+              "catalog sort mutation",
+          )
+          source = sub_once(
+              source,
+              r'      setPhraseCatalog\(\[\]\);\n      setRemotePhraseDetail\(null\);\n      setPhraseDetailStatus\(\{ slug: "", status: idleResourceStatus\(\) \}\);\n      setPhraseCatalogPageInfo\(paginateCatalogEntries\(DEFAULT_PHRASE_CATALOG, 1\)\.info\);\n      setPhrasePage\(1\);\n      setPhraseSearchInput\(""\);\n      setPhraseSearch\(""\);\n      setPhraseCatalogStatus\(idleResourceStatus\(\)\);\n',
+              '',
+              "logout phrase resets",
+          )
+
+          # Route handlers and presentation.
+          source = sub_once(source, r'  function openPhraseDetail\(phrase: LearningItem\) \{.*?\n  async function changeAllItemsPage', '  async function changeAllItemsPage', "phrase handlers")
+          source = replace_once(source, '    updateCatalogSort("all-items", mode);', '    updateAllItemsSort(mode);', "all-items sort call")
+          source = sub_once(source, r'  function renderPhrases\(\) \{.*?\n  function renderLibrary\(\) \{', '  function renderLibrary() {', "phrase presentation")
+          source = replace_once(source, '<CatalogSortControl kind="all-items" mode={allItemsSortMode} onChange={changeAllItemsSort} />', '<CatalogSortControl mode={allItemsSortMode} onChange={changeAllItemsSort} />', "all-items sort control")
+          source = sub_once(
+              source,
+              r'  const view = navigation\.view === "home" \? renderHome\(\)\n    : navigation\.view === "learn" \? renderLearn\(\)\n      : navigation\.view === "phrases" \? renderPhrases\(\)\n        : navigation\.view === "library" \? renderLibrary\(\)',
+              '  const view = navigation.view === "home" ? renderHome()\n    : navigation.view === "learn" ? renderLearn()\n      : navigation.view === "library" ? renderLibrary()',
+              "view selection",
+          )
+          source = sub_once(source, r'          <AsyncResourceNotice label="Каталог фраз"[^\n]+\n', '', "phrase resource notice")
+
+          # Source contract turns the old manifest into an absence contract.
+          test = sub_once(
+              test,
+              r'  it\("records the exact compatibility catalog and detail deletion surface", \(\) => \{.*?\n  \}\);\n\n  it\("preserves live phrase lesson-domain behavior outside the route deletion surface"',
+              '''  it("does not retain the retired compatibility catalog and detail family", () => {
+    const retiredMarkers = [
+      "const [phraseCatalog, setPhraseCatalog]",
+      "const [phraseCatalogStatus, setPhraseCatalogStatus]",
+      "const [remotePhraseDetail, setRemotePhraseDetail]",
+      "const [phraseDetailStatus, setPhraseDetailStatus]",
+      "const [phraseCatalogPageInfo, setPhraseCatalogPageInfo]",
+      "const [phrasePage, setPhrasePage]",
+      "const [phraseSearchInput, setPhraseSearchInput]",
+      "const [phraseSearch, setPhraseSearch]",
+      "const [phraseTopic, setPhraseTopic]",
+      "const [phraseSortMode, setPhraseSortMode]",
+      "const phraseTopics",
+      "const guestPhrasePage",
+      "const sortedVisiblePhrases",
+      "const activePhrasePageInfo",
+      "const selectedPhrase",
+      "const loadPhraseCatalogResource",
+      "const loadPhraseDetailResource",
+      "function openPhraseDetail",
+      "function backToPhraseCatalog",
+      "function changePhrasePage",
+      "function applyPhraseSearch",
+      "function clearPhraseSearch",
+      "function renderPhrases",
+      '`/api/v1/phrases/${encodeURIComponent(slug)}`',
+      "CatalogKindNavigation",
+      "SpeechPlayerButton",
+      "phraseCatalogFilters",
+      "phraseCatalogTarget",
+      "sortLearningItems",
+      '<AsyncResourceNotice label="Каталог фраз"',
+      'navigation.view === "phrases" ? renderPhrases()',
+    ] as const;
+
+    for (const marker of retiredMarkers) {
+      expect(premium, `retired compatibility marker ${marker}`).not.toContain(marker);
+    }
+  });
+
+  it("preserves live phrase lesson-domain behavior outside the route deletion surface"''',
+              "absence source contract",
+          )
+          test = replace_once(
+              test,
+              '      \'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"\',\n',
+              '      \'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"\',\n      "const DEFAULT_PHRASE_CATALOG",\n      "? DEFAULT_PHRASE_CATALOG.find",\n',
+              "shared fallback assertions",
+          )
+
+          banned = [
+              "const [phraseCatalog, setPhraseCatalog]",
+              "const [phraseCatalogStatus, setPhraseCatalogStatus]",
+              "const [remotePhraseDetail, setRemotePhraseDetail]",
+              "const [phraseDetailStatus, setPhraseDetailStatus]",
+              "const [phraseCatalogPageInfo, setPhraseCatalogPageInfo]",
+              "const [phrasePage, setPhrasePage]",
+              "const [phraseSearchInput, setPhraseSearchInput]",
+              "const [phraseSearch, setPhraseSearch]",
+              "const [phraseTopic, setPhraseTopic]",
+              "const [phraseSortMode, setPhraseSortMode]",
+              "loadPhraseCatalogResource",
+              "loadPhraseDetailResource",
+              "function renderPhrases",
+              "phraseCatalogFilters",
+              "phraseCatalogTarget",
+              "CatalogKindNavigation",
+              "SpeechPlayerButton",
+              "sortLearningItems",
+          ]
+          required = [
+              'type LessonSource = WordSection | "phrases";',
+              '{ value: "phrases", label: "Технические фразы"',
+              "const DEFAULT_PHRASE_CATALOG",
+              "? DEFAULT_PHRASE_CATALOG.find",
+              "mixedLessonFallbackMessage",
+              'exerciseKind: currentItem.kind === "phrase" ? "cloze" : "translation"',
+              'source === "phrases" ? "phrases" : "learn"',
+          ]
+          if remaining := [marker for marker in banned if marker in source]:
+              raise SystemExit(f"retired markers remain: {remaining}")
+          if missing := [marker for marker in required if marker not in source]:
+              raise SystemExit(f"shared phrase contracts missing: {missing}")
+
+          source_path.write_text(source, encoding="utf-8")
+          test_path.write_text(test, encoding="utf-8")
+          PY
+
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          printf 'Changed paths:\n%s\n' "${changed[*]}"
+          [[ "${#changed[@]}" -eq 2 ]]
+          [[ "${changed[0]}" == "frontend/components/lexigo-premium-app.tsx" ]]
+          [[ "${changed[1]}" == "frontend/components/phrases-route-island-source.test.ts" ]]
+
+      - name: Commit exact patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx frontend/components/phrases-route-island-source.test.ts
+          git commit -m "refactor(frontend): remove Phrases compatibility route family"
+          git push origin HEAD:refactor/issue-70-remove-phrases-compatibility
