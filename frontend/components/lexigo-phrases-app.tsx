@@ -47,6 +47,7 @@ import {
   isPhraseItemsResponsePayload,
   phraseFromAPI,
   phraseSlug,
+  type PhraseAPIItem,
   type PhraseCatalogResult,
   type PhraseItem,
   type PhraseItemsResponse,
@@ -126,7 +127,7 @@ function guestCatalog(filters: PhraseCatalogFilters): PhraseCatalogResult {
 function phraseTopics(metadata: CatalogMetadata | null, items: PhraseItem[], selected: string): string[] {
   const topics = new Set<string>();
   metadata?.topics.forEach((entry) => {
-    if (entry.phrases > 0 && entry.topic.trim()) topics.add(entry.topic.trim());
+    if ((entry.phrases ?? 0) > 0 && entry.topic.trim()) topics.add(entry.topic.trim());
   });
   items.forEach((item) => {
     if (item.topic.trim()) topics.add(item.topic.trim());
@@ -367,7 +368,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
         setDetailStatus(readyResourceStatus());
         return;
       }
-      const result = await authorizedJSON<unknown>(
+      const result = await authorizedJSON<PhraseAPIItem>(
         session,
         `/api/v1/phrases/${encodeURIComponent(slug)}`,
         { signal },
