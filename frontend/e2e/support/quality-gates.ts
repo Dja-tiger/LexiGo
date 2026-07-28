@@ -336,6 +336,12 @@ export async function installQualityGateAPI(
       });
     }
     if (path === "/api/v1/words/101") return fulfillJSON(route, 200, QUALITY_WORDS[0]);
+    if (path.startsWith("/api/v1/phrases/") && request.method() === "GET") {
+      const slug = decodeURIComponent(path.slice("/api/v1/phrases/".length));
+      const phrase = QUALITY_PHRASES.find((item) => item.slug === slug);
+      if (phrase) return fulfillJSON(route, 200, phrase);
+      return fulfillJSON(route, 404, { error: { code: "phrase_not_found", message: slug } });
+    }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
       const items = url.searchParams.get("kind") === "phrase" ? QUALITY_PHRASES : QUALITY_WORDS;
       return fulfillJSON(route, 200, paginated(items));
