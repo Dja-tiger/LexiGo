@@ -7,7 +7,7 @@
 - Base SHA: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`.
 - Implementation SHA: `2b607c37faabed4030b8c88f298d62ab8c0b5124`.
 - Current head SHA: resolve from live branch ref.
-- PR: #281, Draft.
+- PR: #281, Draft pending final immutable-head CI.
 
 ## Objective
 
@@ -19,7 +19,7 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 - Remove imports, types, helpers and icon branches only where the deleted route family was the sole consumer.
 - Replace compatibility candidate-presence assertions with exact identifier-level absence assertions while retaining canonical Phrases island ownership and shared lesson-domain assertions.
 - Measure source reduction and controlled route bundle output without raising any permanent budget.
-- Transient branch-local workflows were used only to apply exact fail-closed transformations through the connected GitHub environment; all have been deleted and are absent from the PR diff.
+- Transient branch-local workflows were used only to apply exact fail-closed transformations and one controlled bundle measurement through the connected GitHub environment; all have been deleted and are absent from the PR diff.
 
 ## Non-goals
 
@@ -92,6 +92,13 @@ Remove the unreachable Phrases catalog/detail compatibility family from `LexigoP
 - Authoritative Linux visual regression without baseline promotion.
 - Controlled bundle comparison and existing permanent budgets.
 - Full backend/frontend/browser/container CI.
+
+## Validation evidence
+
+- Full authoritative CI #2323/run `30387297239` succeeded on implementation-and-harness head `5152776d04e4902a17966931687deeec2987b479`.
+- Controlled bundle run `30388331928` succeeded on PR merge-ref `01776b209334007eb1f54f2e0d5e178bd40535b7`.
+- `/phrases`: 226,093 JavaScript bytes and 19 initial requests against permanent ceilings 235,000/22; 56 bytes below the 226,149-byte baseline.
+- All ten measured canonical routes remained within their existing permanent ceilings.
 
 ## Risks
 
