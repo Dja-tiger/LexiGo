@@ -30,6 +30,8 @@ import "./speech-player.css";
 import "./service-worker-update.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
+import "./phrases.css";
+import "./phrases-compat.css";
 import "./dictionary-detail-compatibility.css";
 import "./word-detail.css";
 import "./information-architecture.css";

@@ -84,6 +84,11 @@ const LexigoDictionaryApp = dynamic(
   { ssr: false, loading: ProductShellLoading },
 );
 
+const LexigoPhrasesApp = dynamic(
+  () => import("./lexigo-phrases-app").then((module) => module.LexigoPhrasesApp),
+  { ssr: false, loading: ProductShellLoading },
+);
+
 const LexigoProgressApp = dynamic(
   () => import("./lexigo-progress-app").then((module) => module.LexigoProgressApp),
   { ssr: false, loading: ProductShellLoading },
@@ -149,6 +154,11 @@ function isLearnRoute(pathname: string): boolean {
 function isDictionaryRoute(pathname: string): boolean {
   const normalized = normalizedPathname(pathname);
   return normalized === "/dictionary" || normalized.startsWith("/words/");
+}
+
+function isPhrasesRoute(pathname: string): boolean {
+  const normalized = normalizedPathname(pathname);
+  return normalized === "/phrases" || normalized.startsWith("/phrases/");
 }
 
 function isProgressRoute(pathname: string): boolean {
@@ -471,6 +481,7 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
   const useActiveLessonIsland = (isActiveLessonRoute(pathname) || activeLessonOwnerRetained)
     && initialSession !== null;
   const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);
+  const usePhrasesIsland = effectiveRouteGraph === "product" && isPhrasesRoute(pathname);
   const useProgressIsland = isProgressRoute(pathname);
   const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;
   const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;
@@ -531,6 +542,12 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
         />
       ) : useDictionaryIsland ? (
         <LexigoDictionaryApp
+          key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : usePhrasesIsland ? (
+        <LexigoPhrasesApp
           key={routeKey}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}

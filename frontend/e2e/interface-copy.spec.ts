@@ -58,18 +58,19 @@ test.describe("interface copy contract", () => {
 
     await page.goto("/phrases", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Находите готовые формулировки" })).toBeVisible();
-    const incidentTopic = page.getByRole("radio", { name: "Инциденты" });
+    const incidentTopic = page.getByRole("button", { name: "Инциденты", exact: true });
     await expect(incidentTopic).toHaveCount(1);
     await expect(incidentTopic).toBeVisible();
-    await expect(page.getByRole("radio", { name: "Релизы" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Релизы", exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
 
     await page.getByRole("link", { name: /We need to identify the root cause\./ }).click();
     await expect(page).toHaveURL(/\/phrases\/identify-root-cause$/);
     await expect(page.getByRole("heading", { name: "We need to identify the root cause." })).toBeVisible();
-    await expect(page.getByText("Инциденты", { exact: true })).toBeVisible();
-    await expect(page.getByText(cloze.label, { exact: true })).toBeVisible();
-    await expect(page.getByText(cloze.explanation, { exact: true })).toBeVisible();
+    const detail = page.locator(".lx-phrase-detail-main");
+    await expect(detail.getByText("Инциденты", { exact: true })).toBeVisible();
+    await expect(detail.getByText(cloze.label, { exact: true })).toBeVisible();
+    await expect(detail.getByText(cloze.explanation, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
   });
 });

@@ -91,7 +91,7 @@ The route-specific budget is locked to:
 - `baselineEvidence.sourceRun`: `30275645894`;
 - `baselineEvidence.headSha`: `dd35a8f3266aa9358f60a6f05abe2076cf404768`.
 
-The JavaScript ceiling leaves 13.2% bounded headroom and remains below the original 238,257-byte monolithic transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` stores the original monolithic constants independently from the now-extracted routes and blocks any Home, Learn, Dictionary or Progress ceiling from reaching that original boundary.
+The JavaScript ceiling leaves 13.2% bounded headroom and remains below the original 238,257-byte monolithic transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` stores the original monolithic constants independently from the now-extracted routes and blocks any Home, Learn, Dictionary, Phrases or Progress ceiling from reaching that original boundary.
 
 ## Learn route island
 
@@ -119,6 +119,34 @@ The route-specific budget is locked to:
 - `baselineEvidence.headSha`: `b82c31acfc9bd48ec5b28682a49035226bdef556`.
 
 The JavaScript ceiling leaves 24,014 bytes (11.4%) of bounded headroom and remains below the original 238,257-byte measured monolith. The request ceiling remains below the original 24-request limit. `frontend/lib/bundle-budgets.test.ts` blocks any Learn baseline or ceiling from returning to the monolithic boundary.
+
+## Phrases route island
+
+`/phrases` and `/phrases/[slug]` are rendered by the dedicated dynamic entry `LexigoPhrasesApp`. `LexigoBootstrappedApp` remains the sole owner of session restoration, refresh coordination, account runtime and route-entry selection. `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners.
+
+The Phrases island owns only:
+
+- authenticated phrase catalog and independent phrase-detail reads;
+- URL-backed topic, query, sort and page state;
+- native History and scroll restoration inside the Phrases route graph;
+- presentation of loading, empty, correlated error/retry and guest-preview states;
+- one-way handoff to `/learn?source=phrases`.
+
+Functional CI #2258/run `30364447226` completed the full required matrix on head `a7835d85390fc143d50c023d647cf1785ed566bf`. Controlled run `30366489438` then added a test-only assertion after the complete report had been written. Artifact `8691127915` (`sha256:ac33ca9695a7b3bc8db26b4f8bca89c54fa05b0eb0a8145c7b93cf629bc9c589`) captured the exact route inventory on probe head `dc22918ffe99bc8e52116d885ab0baf961762d00`. The production graph was unchanged by the probe, and `frontend/e2e/route-bundle-budget.spec.ts` was restored byte-for-byte to canonical blob `304e7c62d3163a59edac3e648246e2aa4ce00660` before final CI.
+
+| Route | Before | After | Reduction | Initial requests |
+| --- | ---: | ---: | ---: | ---: |
+| `/phrases` | 238,257 bytes | 226,149 bytes | 12,108 bytes (5.1%) | 19 |
+
+The route-specific budget is locked to:
+
+- `baselineJavascriptBytes`: `226149`;
+- `maxJavascriptBytes`: `235000`;
+- `maxInitialRequests`: `22`;
+- `baselineEvidence.sourceRun`: `30366489438`;
+- `baselineEvidence.headSha`: `dc22918ffe99bc8e52116d885ab0baf961762d00`.
+
+The JavaScript ceiling leaves 8,851 bytes (3.9%) of bounded headroom while remaining 3,257 bytes below the original 238,257-byte transfer. The request ceiling remains below the original 24-request release limit. `frontend/lib/bundle-budgets.test.ts` prevents the Phrases baseline or ceiling from returning to the original product graph boundary.
 
 ## Active Lesson route island
 

@@ -45,11 +45,20 @@ async function installAPI(context: BrowserContext, requestedLimits: number[]) {
     if (path === "/api/v1/catalog/metadata") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       catalogVersion: "sha256:catalog-performance", updatedAt: "2026-07-19T00:00:00Z",
       totals: { items: 1000, words: 0, phrases: 1000 },
-      sources: { mixed: 1000, noun: 0, verb: 0, adjective: 0, phrases: 1000, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0 , academicTechnicalEnglish: 0},
+      sources: { mixed: 1000, noun: 0, verb: 0, adjective: 0, phrases: 1000, dailyLife: 0, travel: 0, dataEngineering: 0, backend: 0, academicTechnicalEnglish: 0 },
       topics: [{ topic: "Performance", count: 500, words: 0, phrases: 500 }, { topic: "Reliability", count: 500, words: 0, phrases: 500 }],
     }) });
     if (path === "/api/v1/progress") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PROGRESS) });
     if (path === "/api/v1/lessons/active") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { code: "active_lesson_not_found", message: "not found" } }) });
+    if (path.startsWith("/api/v1/phrases/") && request.method() === "GET") {
+      const slug = decodeURIComponent(path.slice("/api/v1/phrases/".length));
+      const phrase = PHRASES.find((item) => item.slug === slug);
+      return route.fulfill({
+        status: phrase ? 200 : 404,
+        contentType: "application/json",
+        body: JSON.stringify(phrase ?? { error: { code: "phrase_not_found", message: "not found" } }),
+      });
+    }
     if (path === "/api/v1/words") {
       const limit = Number(url.searchParams.get("limit") ?? "30");
       requestedLimits.push(limit);
@@ -118,7 +127,6 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
     .getByRole("link")
     .nth(40);
   await target.scrollIntoViewIfNeeded();
-  // Wait for Next.js to debounce and save the scroll position
   await page.waitForTimeout(500);
   const scrollBeforeDetail = await page.evaluate(() => window.scrollY);
   await target.click();
@@ -128,7 +136,7 @@ test("low-end Android keeps catalog requests and DOM bounded while preserving pa
   await expect(page.getByText("Страница 2 из 21").first()).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, scrollBeforeDetail - 200));
 
-  await page.getByRole("button", { name: "Настроить урок по текущей теме" }).click();
+  await page.getByRole("button", { name: "Урок по теме" }).click();
   await expect(page).toHaveURL(/\/learn\?source=phrases/);
   const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
   await expect(configureLesson).toBeVisible();
