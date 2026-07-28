@@ -38,12 +38,13 @@ Bring the public frontend architecture documentation into exact agreement with t
 - `.agents/current/EXECUTION.md`
 - `README.md`
 - `docs/architecture.md`
-- `frontend/components/production-app-entry.test.ts`
+- `frontend/components/architecture-documentation-contract.test.ts`
 
 ## Prohibited paths
 
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/lexigo-premium-app.tsx`
+- `frontend/components/production-app-entry.test.ts`
 - `frontend/app/**`
 - `frontend/lib/**`
 - `frontend/e2e/**`
@@ -68,7 +69,8 @@ Bring the public frontend architecture documentation into exact agreement with t
 
 - `README.md`: concise public production-entry and ownership summary.
 - `docs/architecture.md`: normative route and runtime-boundary description.
-- `frontend/components/production-app-entry.test.ts`: executable inventory of production roots and documentation synchronization contract.
+- `frontend/components/architecture-documentation-contract.test.ts`: executable synchronization contract between public documentation and the bootstrap route inventory.
+- `frontend/components/production-app-entry.test.ts`: existing executable inventory of production roots; read-only source of truth in this slice.
 - `.agents/AGENTS.issue-115-architecture-docs.md`: reusable prevention rule for architecture-documentation drift.
 
 ## Invariants
