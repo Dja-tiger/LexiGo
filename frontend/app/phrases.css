@@ -907,3 +907,52 @@
     box-shadow: none;
   }
 }
+
+/* Issue #70: canonical Phrases computed-cascade ownership. */
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {
+  border-color: var(--lx-phrases-border);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
+  backdrop-filter: none;
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort strong {
+  color: var(--ak-color-text-main);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort small {
+  color: var(--ak-color-text-muted);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {
+  border-color: var(--lx-phrases-border);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {
+  color: #10211d;
+  font-weight: 700;
+}
+
+/* Keep the first result below the restored catalog viewport boundary. */
+.lx-app[data-route-client-island="phrases"] .lx-phrases-results {
+  padding-top: 24px;
+}
+
+@media (forced-colors: active) {
+  .lx-app[data-route-client-island="phrases"] .lx-catalog-sort,
+  .lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {
+    border: 1px solid CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {
+    color: HighlightText;
+    background: Highlight;
+  }
+}
