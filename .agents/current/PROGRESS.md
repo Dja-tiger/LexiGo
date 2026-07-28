@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-28 21:18 Europe/Berlin
+## 2026-07-28 21:24 Europe/Berlin
 
 ### Verified
 
@@ -8,40 +8,41 @@
 - Draft PR #281 is the only active production slice.
 - `frontend/docs/compatibility-cleanup.md` authorizes exactly one Phrases catalog/detail compatibility runtime deletion family and explicitly prohibits CSS deletion.
 - Canonical `/phrases` and `/phrases/[slug]` remain owned by `LexigoPhrasesApp` before the compatibility fallback for guest and authenticated entry.
-- Shared phrase lesson-domain behavior remains in `LexigoPremiumApp` and was protected by explicit source assertions.
+- Shared phrase lesson-domain behavior remains in `LexigoPremiumApp` and is protected by explicit source assertions.
 
 ### Finding
 
-`LexigoPremiumApp` retained an unreachable route-level Phrases catalog/detail implementation after the canonical route island became authoritative. The dead family included state, filter synchronization, API loaders, lifecycle effects, navigation helpers and duplicated presentation markup.
+`LexigoPremiumApp` retained an unreachable route-level Phrases catalog/detail implementation after the canonical route island became authoritative. The dead family included state, filter synchronization, API loaders, lifecycle effects, navigation helpers, duplicated presentation markup and one shared resource-stack notice that still referenced the removed loader/state.
 
 ### Root cause
 
-The route island extraction intentionally deferred compatibility deletion until executable reachability and deletion-boundary proof existed. PR #277 supplied that proof; this slice consumes it without expanding into CSS or auth/account fallback ownership.
+The route island extraction intentionally deferred compatibility deletion until executable reachability and deletion-boundary proof existed. PR #277 supplied that proof; this slice consumes it without expanding into CSS or auth/account fallback ownership. The first deletion contract asserted declaration markers but did not initially forbid residual identifier consumers, which self-review caught before authoritative CI.
 
 ### Implemented
 
-- Removed route-only Phrases imports, state, URL synchronization, derived catalog/detail values, catalog/detail API resources, lifecycle effects, reset writes, navigation handlers and `renderPhrases` branch.
+- Removed route-only Phrases imports, state, URL synchronization, derived catalog/detail values, catalog/detail API resources, lifecycle effects, reset writes, navigation handlers, resource notice and `renderPhrases` branch.
 - Removed route-only `itemKey`, `CatalogKindNavigation`, `SpeechPlayerButton` and volume icon ownership.
 - Narrowed compatibility catalog sorting to the remaining `all-items` owner.
-- Replaced source-contract candidate-presence assertions with exact absence assertions.
+- Replaced candidate-presence assertions with identifier-level absence assertions for all retired route state/resources.
 - Expanded shared-contract assertions for `DEFAULT_PHRASE_CATALOG`, `toLearningItem` and unauthenticated phrase browsing.
 - Preserved phrase lesson source, mixed lesson fallback, conversion/cloze fallback, Active Lesson review and answer-suggestion behavior.
-- Removed the transient edit workflow before review; it is absent from the final diff.
+- Removed every transient edit workflow before review; none is present in the final diff.
 
 ### Source metrics
 
-- `frontend/components/lexigo-premium-app.tsx`: 3,108 → 2,788 lines, net reduction 320 lines.
-- Runtime diff: 7 additions, 327 deletions.
-- Source-contract diff: 11 additions, 2 deletions.
+- `frontend/components/lexigo-premium-app.tsx`: 3,108 → 2,787 lines, net reduction 321 lines.
+- Runtime diff: 7 additions, 328 deletions.
+- Source-contract diff: 23 additions, 2 deletions.
 - Final branch-to-base tree: exactly five allowed files; no CSS, backend, API, deployment, baseline or workflow file.
 
 ### Checks passed
 
 - Exact-base branch and single-PR pre-flight.
-- Fail-closed source transformation; two rejected boundary attempts produced no runtime commit.
-- Read-back of final source and test blobs.
-- Exact absence markers for legacy Phrases route family.
+- Fail-closed source transformation; rejected boundaries produced no runtime commit.
+- Full read-back of relevant final source/test regions.
+- Exact absence of declarations and residual uses for 12 retired Phrases identifiers.
 - Exact presence markers for canonical route ownership and shared phrase lesson-domain contracts.
+- Manual diff-review found and removed the stale resource-stack consumer before final CI.
 - Final diff allow-list and temporary-workflow absence.
 
 ### Checks pending
@@ -53,12 +54,12 @@ The route island extraction intentionally deferred compatibility deletion until 
 
 ### Checks failed
 
-- No product check has failed yet.
-- The temporary transformer initially rejected two incorrect boundary markers before any source write; both were corrected using exact source read-back.
+- No product check has failed on the complete implementation head.
+- Earlier transient transformer attempts rejected incorrect textual boundaries before creating runtime commits.
 
 ### Current implementation SHA
 
-`169e8978588cfe3cd9adf22fe4b0dbf17bdbc6fd`
+`2b607c37faabed4030b8c88f298d62ab8c0b5124`
 
 ### Current branch head
 
