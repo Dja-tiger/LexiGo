@@ -68,7 +68,7 @@ const AUTHENTICATED_ROUTES = [
   { name: "progress", url: "/progress", heading: "Прогресс" },
   { name: "profile", url: "/profile", heading: "Профиль" },
   { name: "word detail", url: "/words/101", heading: "rollback" },
-  { name: "phrase detail", url: "/phrases/phrase-root-cause", heading: "We need to identify the root cause." },
+  { name: "phrase detail", url: "/phrases/identify-root-cause", heading: "We need to identify the root cause." },
 ] as const;
 
 test.describe("blocking accessibility gate", () => {
