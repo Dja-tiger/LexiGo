@@ -56,6 +56,7 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `frontend/e2e/catalog-pagination.spec.ts`
 - `frontend/e2e/information-architecture.spec.ts`
 - `frontend/e2e/route-bundle-budget.spec.ts`
+- `frontend/e2e/speech-player.spec.ts`
 - `frontend/e2e/phrases-production.spec.ts`
 - `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/accessibility.spec.ts`
