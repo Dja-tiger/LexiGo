@@ -66,6 +66,7 @@ Implement the approved Phrases catalog/detail production slice from Figma and re
 - `frontend/e2e/adaptive-navigation.spec.ts`
 - `frontend/e2e/route-focus-management.spec.ts`
 - `frontend/e2e/support/quality-gates.ts`
+- `frontend/scripts/dictionary-navigation-smoke.sh`
 - `frontend/docs/adaptive-knowledge-coach.md`
 - `docs/frontend-bundle-budgets.md`
 
