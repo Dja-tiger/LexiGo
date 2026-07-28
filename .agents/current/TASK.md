@@ -6,7 +6,7 @@
 - Branch: `refactor/issue-70-remove-phrases-compatibility`
 - Base SHA: `162b93b7dbfa53bcfe25e6ce055b0eb0797043d7`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #280
 
 ## Objective
 
@@ -18,7 +18,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - Remove route-only imports/helpers that become unused after the deletion.
 - Replace compatibility-candidate presence assertions with fail-closed absence assertions while retaining canonical route ownership and shared lesson-domain assertions.
 - Update the compatibility cleanup delivery document with exact completion evidence and the remaining CSS/compatibility boundary.
-- Use one temporary, branch-only, path-guarded workflow solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; remove it before final CI and ensure the final branch head is developer-authored.
+- Use one temporary, branch-only, path-guarded workflow solely because the connector exposes full-file replacement but no patch operation for the 3,106-line source file; remove all temporary workflow versions before final CI and ensure the final branch head is developer-authored.
 
 ## Non-goals
 
@@ -34,6 +34,7 @@ Remove the proven-unreachable Phrases catalog/detail compatibility family from `
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 - `.github/workflows/issue-70-phrases-runtime-patch.yml` — temporary only; prohibited from final diff
+- `.github/workflows/issue-70-phrases-runtime-patch-v2.yml` — temporary only; prohibited from final diff
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/phrases-route-island-source.test.ts`
 - `frontend/docs/compatibility-cleanup.md`
