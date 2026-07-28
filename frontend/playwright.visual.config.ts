@@ -19,6 +19,7 @@ export default defineConfig({
     "word-detail-visual.spec.ts",
     "profile-visual.spec.ts",
     "system-states-visual.spec.ts",
+    "phrases-visual.spec.ts",
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
