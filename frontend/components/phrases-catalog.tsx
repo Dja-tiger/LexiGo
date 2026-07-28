@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, MouseEvent } from "react";
+import { useLayoutEffect, type FormEvent, type MouseEvent } from "react";
 
 import type { ResourceStatus } from "../lib/account-resources";
 import type { CatalogPageInfo } from "../lib/catalog-page";
@@ -140,7 +140,7 @@ function ResultsSurface({
           >
             <a
               href={navigationURL(phraseCatalogTarget(filters, item.slug))}
-              aria-label={`Открыть фразу: ${item.prompt}`}
+              aria-label={`${phraseTopicLabel(item.topic)} ${item.prompt} ${item.answer} Открыть карточку`}
               onClick={(event) => onOpenPhrase(item, event)}
             >
               <span className="lx-phrases-result-copy">
@@ -192,6 +192,13 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
   } = props;
   const filterCount = activeFilterCount(filters);
   const topicOptions = visibleTopics(topics, filters.topic);
+
+  useLayoutEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("lexigo-main-content")?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <section className="lx-phrases-catalog" aria-labelledby="phrases-heading">
