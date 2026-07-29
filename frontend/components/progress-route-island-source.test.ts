@@ -56,17 +56,21 @@ describe("Progress route client-island ownership", () => {
     expect(progressApp).not.toContain("navigator.serviceWorker");
   });
 
-  it("keeps the compatibility Progress presentation visible for the next bounded deletion slice", () => {
+  it("removes the unreachable compatibility Progress presentation", () => {
     const premiumApp = readComponent("lexigo-premium-app.tsx");
-    const compatibilityMarkers = [
+    const retiredMarkers = [
       "function renderProgress()",
       'navigation.view === "progress" ? renderProgress()',
       'showCard={navigation.view === "progress"',
       'navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс"',
+      "normalizedProgressModes",
+      "objectiveSuccessRate",
+      "GOAL_OPTIONS",
+      "nextDueLabel(",
     ] as const;
 
-    for (const marker of compatibilityMarkers) {
-      expect(premiumApp, `compatibility Progress marker ${marker}`).toContain(marker);
+    for (const marker of retiredMarkers) {
+      expect(premiumApp, `retired compatibility Progress marker ${marker}`).not.toContain(marker);
     }
   });
 
