@@ -47,15 +47,16 @@ describe("Dictionary route island source contract", () => {
     expect(premium).toContain("<DictionaryCatalog");
   });
 
-  it("keeps URL, History, scroll restoration and Learn handoff in the canonical owner", () => {
+  it("keeps URL, History, scroll restoration and product-route handoff in the canonical owner", () => {
     const canonicalContracts = [
       "parseNavigationLocation(window.location)",
       "createNavigationHistoryState",
       'window.addEventListener("popstate", syncNavigation)',
       "createScrollSnapshotScheduler",
       "scheduleNavigationScrollRestoration",
-      'view: "learn"',
+      'if (target.view !== "library")',
       "PRODUCT_ROUTE_GRAPH_EVENT",
+      "router.push(url, { scroll: false })",
     ] as const;
 
     for (const marker of canonicalContracts) {
