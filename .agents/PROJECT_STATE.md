@@ -2,18 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 00:25 Europe/Berlin.
+- Last verified: 2026-07-29 08:32 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-- Latest completed slice: Issue #70 — prove the Active Lesson queued-review CSS compatibility boundary without runtime changes.
-- Completion PR: #290.
-- PR #290 immutable developer-authored head: `5a57e9e43f1a691f555e3bca74e1526b7abe699f`.
-- Authoritative full CI: #2366 / run `30399822158`, successful.
-- Expected-head squash merge produced `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-- PR #290 was proof-only: no production CSS, runtime, API, backend, migration, workflow, deployment, visual baseline or bundle-budget change.
+- Live `main` at verification: `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+- Latest completed slice: Issue #70 — scope queued Active Lesson CSS ownership without visual changes.
+- Completion PR: #292.
+- PR #292 immutable developer-authored head: `ca452297a0a89922a89de8b6ebfae29487432372`.
+- Authoritative PR CI: #2372 / run `30424265056`, successful.
+- Expected-head squash merge produced `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+- Main CI run `30424720586` initially failed only in UI shard 2/2; the failed-job rerun passed and the complete main matrix finished successfully.
+- Exact-SHA stage run `30428344783` deployed web/API images tagged `90afa3263aa8f04f4988d71ae64ebd5bea156881`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
 - Reviews, comments and unresolved review threads were empty before merge.
-- No stage deployment was required for this proof-only slice.
-- Stale conflicting PR #287 was closed without merge and replaced by PR #290 from the current reconciled base.
 
 ## Completed
 
@@ -57,8 +56,9 @@
 - PR #282 removed the proven-unreachable Phrases catalog/detail runtime family from `LexigoPremiumApp` while preserving shared lesson-domain consumers.
 - PR #284 consolidated live Phrases computed-cascade rules into `frontend/app/phrases.css`.
 - PR #288 established the two-sided Progress compatibility boundary.
-- PR #290 proves `active-lesson.css` imports before `system-states-lesson.css`, queued-review markup is owned by `active-lesson-presentation.tsx`, and the compatibility stylesheet is bounded to queued Active Lesson and forced-colors presentation.
-- `system-states-lesson.css` is live and remains unchanged; PR #290 does not authorize consolidation or deletion.
+- PR #290 proved that the queued Active Lesson CSS family was live, bounded and imported after the canonical Active Lesson sheet.
+- PR #292 renamed `system-states-lesson.css` to `active-lesson-queued-state.css` with zero CSS additions or deletions, preserved import order, updated both ownership contracts and retired the misleading generic path.
+- `frontend/app/active-lesson-queued-state.css` is now the explicit queued-state presentation owner; `frontend/app/active-lesson.css` remains the canonical base presentation owner.
 - Issue #70 remains open for later independently proven compatibility families.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 
@@ -83,7 +83,7 @@
 
 ## In progress
 
-- No product or tooling slice is active after PR #290 merge.
+- No product or tooling slice is active after PR #292 merge and exact-SHA stage validation.
 - This Agent Docs reconciliation must merge before another Issue #70 slice starts.
 
 ## Remaining roadmap
@@ -113,7 +113,7 @@
 
 - Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
 - Progress runtime deletion remains pending a separate implementation slice.
-- Active Lesson CSS consolidation remains pending a separate implementation slice with computed-cascade and visual evidence.
+- Physical consolidation of `active-lesson-queued-state.css` into the large canonical sheet remains optional and requires exact patch semantics plus unchanged visual hashes.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
 
@@ -124,18 +124,19 @@
 
 ## Recent production/tooling evidence
 
-1. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-2. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
-3. #284 — `refactor(frontend): consolidate Phrases CSS ownership` → `df033168f56f6143285e68aff0fc67d4570fc2a4`.
-4. #282 — `refactor(frontend): remove Phrases compatibility route family` → `9250d9ca583614b976e0c3154246ef56b69a5994`.
+1. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+2. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
+3. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+4. #284 — `refactor(frontend): consolidate Phrases CSS ownership` → `df033168f56f6143285e68aff0fc67d4570fc2a4`.
 
 ## Evidence
 
-- PR #290 final head `5a57e9e43f1a691f555e3bca74e1526b7abe699f` passed authoritative full CI #2366/run `30399822158`.
-- Final compare was behind `0` and contained exactly four declared proof-only paths.
+- PR #292 final head `ca452297a0a89922a89de8b6ebfae29487432372` passed authoritative full PR CI #2372/run `30424265056`.
+- Final compare was behind `0`; GitHub detected the stylesheet operation as a pure rename with `0` additions and `0` deletions.
 - Reviews, comments and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-- No stage deployment was required because the slice changed only an executable source test and Agent Harness current-task records.
+- Expected-head squash merge produced `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+- Main CI run `30424720586` passed after retrying the isolated UI shard 2/2 failure; frontend aggregate and both container builds succeeded.
+- Stage run `30428344783` deployed exact merge SHA and passed deploy, public smoke and public browser validation.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
