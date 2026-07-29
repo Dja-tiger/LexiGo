@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const bootstrap = readFileSync(new URL("./lexigo-bootstrapped-app.tsx", import.meta.url), "utf8");
 const catalog = readFileSync(new URL("./lexigo-scenario-catalog-app.tsx", import.meta.url), "utf8");
 const detail = readFileSync(new URL("./lexigo-scenario-app.tsx", import.meta.url), "utf8");
+const compatibility = readFileSync(new URL("./lexigo-premium-app.tsx", import.meta.url), "utf8");
 
 function sourceIndex(source: string, marker: string): number {
   const index = source.lastIndexOf(marker);
@@ -56,6 +57,28 @@ describe("Scenario route island source contract", () => {
     }
     for (const marker of detailContracts) {
       expect(detail, `canonical Scenario detail contract ${marker}`).toContain(marker);
+    }
+  });
+
+  it("keeps Scenario route runtime absent from the compatibility app", () => {
+    const retiredCompatibilityMarkers = [
+      '"/api/v1/scenarios"',
+      '"/api/v1/scenario-attempts"',
+      "renderScenarios",
+      "renderScenario",
+      "scenarioCatalog",
+      "scenarioAttempt",
+      "scenarioDraftStorageKey",
+      "isScenarioCatalogPayload",
+      "isScenarioDetailPayload",
+      "isStartScenarioAttemptResponse",
+      "isSubmitScenarioStepResponse",
+      'navigation.view === "scenarios"',
+      'navigation.view === "scenario"',
+    ] as const;
+
+    for (const marker of retiredCompatibilityMarkers) {
+      expect(compatibility, `retired Scenario compatibility marker ${marker}`).not.toContain(marker);
     }
   });
 
