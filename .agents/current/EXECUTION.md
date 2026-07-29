@@ -1,18 +1,34 @@
 # Current Task Execution
 
-No active task.
+## Task
 
-## Previous execution
+- Issue: #70
+- Branch: `test/issue-70-scenario-absence-contract`
+- Base SHA: `eedd9dc4d978cd8f5b89d2d969a85cd181342e8f`
+- PR: pending
 
-- Issue #70 Scenario compatibility boundary completed through PR #303.
-- Full CI #2395/run `30471439763` passed on immutable head `ba5663bfbe68aed5750d76fa698e700a3116a98c`.
-- Expected-head squash merge produced `c8495eacdd8b1289e82a532668834414fb63e55c`.
-- Exact-SHA stage run `30479156802` completed deploy, public smoke and public browser successfully.
-- Runtime remained unchanged; only executable ownership evidence and compatibility documentation were added.
+## Skills used
 
-## Next execution requirements
+### GitHub repository operations
 
-- Re-run repository pre-flight.
-- Record the selected atomic slice before writes.
-- Use exact operation/function/schema checks for every repository tool call.
-- Preserve guest/auth and shared-domain owners unless replacement evidence is executable.
+Purpose: verify live state, inspect exact source ownership, create an isolated branch and add a bounded executable absence contract.
+
+Instruction source: `AGENTS.md`, `.agents/AGENTS.md`, mandatory referenced guidance, `.agents/PROJECT_STATE.md`, `.agents/current/*`, `docs/agent-harness.md`.
+
+Version or verification date: 2026-07-30.
+
+Inputs: Issue #70, current main/open PR/stage state, complete `LexigoPremiumApp`, existing Scenario route source contract.
+
+Actions performed: exact source audit, branch creation, current-task recording, source-contract extension and read/write verification.
+
+Result: implementation complete; PR lifecycle and authoritative CI pending.
+
+Failures: indexed search produced no relevant results; local clone failed on container DNS.
+
+Root cause: search index coverage and isolated container network resolution, not repository state.
+
+Fallback: exact GitHub file reads and response-resource search supplied authoritative evidence.
+
+Limitations: this slice proves and protects absence; it does not reduce runtime because no Scenario compatibility runtime exists to delete.
+
+Reusable lesson: before planning compatibility deletion, assert whether the legacy family exists at all; when already absent, add a two-sided regression contract instead of manufacturing a no-op deletion.
