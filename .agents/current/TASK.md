@@ -6,7 +6,7 @@
 - Branch: `refactor/issue-70-active-lesson-css-ownership`
 - Base SHA: `a605aadcc4cc7fb4355962d73e854960714b9800`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #292
 
 ## Objective
 
@@ -17,7 +17,7 @@ Replace the misleading generic `system-states-lesson.css` ownership boundary wit
 - Add `frontend/app/active-lesson-queued-state.css` with byte-equivalent CSS declarations.
 - Replace the root layout import while preserving its position after `active-lesson.css`.
 - Delete `frontend/app/system-states-lesson.css`.
-- Convert the existing proof into a fail-closed ownership and retired-path contract.
+- Convert the existing proof and shared system-state contract into fail-closed ownership and retired-path contracts.
 
 ## Non-goals
 
@@ -35,6 +35,7 @@ Replace the misleading generic `system-states-lesson.css` ownership boundary wit
 - `frontend/app/active-lesson-queued-state.css`
 - `frontend/app/system-states-lesson.css`
 - `frontend/components/active-lesson-css-boundary.test.ts`
+- `frontend/components/system-states-contract.test.ts`
 
 ## Prohibited paths
 
@@ -66,7 +67,7 @@ Replace the misleading generic `system-states-lesson.css` ownership boundary wit
 
 - Layout imports the route-scoped file exactly once after `active-lesson.css`.
 - The generic stylesheet path is absent.
-- Source contract proves exact consumer and bounded ownership.
+- Both ownership contracts read the route-scoped owner and reject the retired generic path.
 - Final compare contains only declared paths.
 - Required full CI and visual/browser evidence pass on immutable head.
 
@@ -80,7 +81,7 @@ Replace the misleading generic `system-states-lesson.css` ownership boundary wit
 
 ## Risks
 
-- A rename can accidentally alter cascade order if the root import moves; the source contract asserts the ordering.
+- A rename can accidentally alter cascade order if the root import moves; the source contracts assert the ordering.
 - Pure CSS ownership cleanup must not promote visual baselines.
 
 ## Rollback
