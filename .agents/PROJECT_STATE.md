@@ -2,18 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 14:28 Europe/Berlin.
+- Last verified: 2026-07-29 15:05 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `303c8357901302add151b41ed1e657caff6c6893`.
-- Latest completed slice: Issue #70 — remove the unreachable Progress compatibility presentation while preserving shared progress-domain runtime.
-- Completion PR: #295.
-- PR #295 immutable developer-authored head: `1b62544f96e73c410ee42dc7977f7098ff0d30ab`.
-- Authoritative PR CI: #2377 / run `30442118036`, successful.
-- Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
-- Post-merge main CI run `30443002420` completed successfully.
-- Exact-SHA stage run `30443653247` deployed web/API images tagged `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
-- Agent Docs reconciliation PR #296 passed lightweight CI #2379 / run `30444747875` and squash-merged as `303c8357901302add151b41ed1e657caff6c6893`.
-- Reviews, comments and unresolved review threads were empty before both merges.
+- Live `main` at verification: `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
+- Latest completed slice: Issue #70 — prove the two-sided Dictionary compatibility boundary without deleting runtime.
+- Completion PR: #298.
+- PR #298 immutable developer-authored head: `ed1c560b298b2c383145396d25ffbbd26c673cd4`.
+- Authoritative PR CI: #2384 / run `30450752644`, successful.
+- Expected-head squash merge produced `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
+- Exact-SHA stage run `30451962982` deployed web/API images tagged `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
+- Reviews, comments and unresolved review threads were empty before merge.
 
 ## Completed
 
@@ -60,8 +58,10 @@
 - PR #290 proved that the queued Active Lesson CSS family was live, bounded and imported after the canonical Active Lesson sheet.
 - PR #292 renamed `system-states-lesson.css` to `active-lesson-queued-state.css` with zero CSS additions or deletions, preserved import order, updated both ownership contracts and retired the misleading generic path.
 - PR #295 removed only the proven-unreachable Progress route presentation and its presentation-only helpers; absence and preservation source contracts cover the boundary.
+- PR #298 established the two-sided Dictionary boundary: canonical direct entry, reload and new-tab reconstruction use `LexigoDictionaryApp`, while product-owned Dictionary History entries may still retain the product graph and reach `LexigoPremiumApp.renderLibrary()`.
 - `frontend/app/active-lesson-queued-state.css` is the explicit queued-state presentation owner; `frontend/app/active-lesson.css` remains the canonical base presentation owner.
 - Issue #70 remains open for later independently proven compatibility families.
+- Dictionary compatibility runtime is not deletion-ready; route extraction alone does not prove product-owned History entries unreachable.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 
 ### Scenario learning
@@ -95,6 +95,7 @@
 - Re-read live routing, imports, fallback predicates, markup consumers and `frontend/docs/compatibility-cleanup.md` before choosing scope.
 - Select one minimal family per atomic PR.
 - Preserve guest authentication, account recovery, unknown-route fallback and all shared lesson-domain behavior until exact evidence proves replacement ownership.
+- Do not delete Dictionary compatibility runtime while product-owned History entries can still route through the product graph.
 - Runtime cleanup requires absence/preservation source contracts, lint, typecheck, unit/build, browser matrix, performance budgets and containers.
 - CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and authoritative Linux visual hashes.
 - Existing bundle ceilings remain unchanged unless a separately approved performance decision changes them.
@@ -114,6 +115,7 @@
 ## Validation pending
 
 - Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
+- Dictionary product-history compatibility remains intentionally live and requires a separately proven migration or replacement before deletion.
 - Physical consolidation of `active-lesson-queued-state.css` into the large canonical sheet remains optional and requires exact patch semantics plus unchanged visual hashes.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
@@ -125,19 +127,18 @@
 
 ## Recent production/tooling evidence
 
-1. #296 — `docs(agent): reconcile Progress runtime deletion` → `303c8357901302add151b41ed1e657caff6c6893`.
-2. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
-3. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-4. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
+1. #298 — `test(frontend): prove Dictionary compatibility boundary` → `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
+2. #297 — `docs(agent): reconcile PR 296 main state` → `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`.
+3. #296 — `docs(agent): reconcile Progress runtime deletion` → `303c8357901302add151b41ed1e657caff6c6893`.
+4. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
 
 ## Evidence
 
-- PR #295 final head `1b62544f96e73c410ee42dc7977f7098ff0d30ab` passed authoritative full PR CI #2377/run `30442118036`.
+- PR #298 final head `ed1c560b298b2c383145396d25ffbbd26c673cd4` passed authoritative full PR CI #2384/run `30450752644`.
 - Reviews, comments and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
-- Main CI run `30443002420` completed successfully.
-- Stage run `30443653247` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
-- Agent Docs PR #296 final head `ffd9be126e0001d8874664873150018a295761dd` passed classifier and Agent Harness validation in run `30444747875`; heavy product jobs were skipped as intended.
+- Expected-head squash merge produced `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
+- Stage run `30451962982` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
+- The source contract proves canonical Dictionary island ownership and deliberately preserves evidence for the still-live product-history fallback.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
