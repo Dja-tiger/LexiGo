@@ -7,8 +7,9 @@ const activeLessonSource = readFileSync(new URL("./active-lesson-presentation.ts
 const layoutSource = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const mobilePWAStyles = readFileSync(new URL("../app/mobile-pwa-fixes.css", import.meta.url), "utf8");
 const retiredOutboxStyles = new URL("../app/review-outbox.css", import.meta.url);
+const retiredGenericLessonStyles = new URL("../app/system-states-lesson.css", import.meta.url);
 const stateCSS = readFileSync(new URL("../app/system-states.css", import.meta.url), "utf8");
-const lessonStateCSS = readFileSync(new URL("../app/system-states-lesson.css", import.meta.url), "utf8");
+const lessonStateCSS = readFileSync(new URL("../app/active-lesson-queued-state.css", import.meta.url), "utf8");
 
 const productStateSource = [
   asyncStateSource,
@@ -22,11 +23,13 @@ const productStateSource = [
 describe("system state ownership contract", () => {
   it("loads the bounded state layers after route presentation styles", () => {
     expect(layoutSource).toContain('import "./system-states.css";');
-    expect(layoutSource).toContain('import "./system-states-lesson.css";');
+    expect(layoutSource).toContain('import "./active-lesson-queued-state.css";');
+    expect(layoutSource).not.toContain('import "./system-states-lesson.css";');
+    expect(existsSync(retiredGenericLessonStyles)).toBe(false);
     expect(layoutSource.indexOf('import "./profile.css";'))
       .toBeLessThan(layoutSource.indexOf('import "./system-states.css";'));
     expect(layoutSource.indexOf('import "./system-states.css";'))
-      .toBeLessThan(layoutSource.indexOf('import "./system-states-lesson.css";'));
+      .toBeLessThan(layoutSource.indexOf('import "./active-lesson-queued-state.css";'));
   });
 
   it("keeps async, skeleton and connectivity presentation in one canonical owner", () => {
