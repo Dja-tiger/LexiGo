@@ -2,39 +2,39 @@
 
 ## Task
 
-- Branch: `test/issue-70-dictionary-reachability`
-- Base SHA: `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`
-- Head SHA: resolve from live branch ref
-- PR: Draft pending
+- Branch:
+- Base SHA:
+- Head SHA:
+- PR:
 
 ## Skills used
 
-### GitHub repository operations
+### Skill name
 
-Purpose: isolate, verify and publish one Issue #70 evidence slice.
+Purpose:
 
-Instruction source: `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`.
+Instruction source:
 
-Version or verification date: repository rules read from base SHA `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`.
+Version or verification date:
 
-Inputs: live main, open PRs/branches, Issue #70, deployment status and exact runtime source.
+Inputs:
 
-Files inspected: `lexigo-bootstrapped-app.tsx`, `lexigo-dictionary-app.tsx`, `lexigo-premium-app.tsx`, existing Phrases/Progress source contracts and compatibility cleanup documentation.
+Files inspected:
 
-Actions performed: created an isolated branch and added a source-level two-sided Dictionary reachability contract.
+Actions performed:
 
-Commands or procedures: connector-first exact-ref reads, explicit branch write, branch read-back and blob verification.
+Commands or procedures:
 
-Artifacts produced: `frontend/components/dictionary-route-island-source.test.ts` and current task records.
+Artifacts produced:
 
-Result: the slice records canonical guest/auth direct-entry ownership and the still-live product-history compatibility boundary without changing runtime.
+Result:
 
-Failures: none yet.
+Failures:
 
-Root cause: not applicable.
+Root cause:
 
-Fallback: if exact source markers prove unstable or incorrect, narrow assertions to semantic ownership markers without changing runtime.
+Fallback:
 
-Limitations: authoritative frontend/browser/container CI is pending.
+Limitations:
 
-Reusable lesson: route-island extraction can coexist with deliberately retained route-graph history ownership; deletion requires proof for both canonical reconstruction and product-owned entries.
+Reusable lesson:
