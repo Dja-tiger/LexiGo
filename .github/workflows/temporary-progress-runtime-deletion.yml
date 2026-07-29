@@ -1,0 +1,87 @@
+name: Temporary Progress runtime deletion
+
+on:
+  push:
+    branches:
+      - feat/issue-70-progress-runtime-deletion
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/issue-70-progress-runtime-deletion
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply exact bounded deletion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          app_path = Path('frontend/components/lexigo-premium-app.tsx')
+          source = app_path.read_text()
+
+          source = source.replace('  normalizedProgressModes,\n  objectiveSuccessRate,\n', '')
+          source = source.replace('const GOAL_OPTIONS = [15, 30, 60];\n', '')
+          source = source.replace('\nfunction nextDueLabel(nextDueAt?: string): string {\n  if (!nextDueAt) return "Очередь пуста";\n  const value = new Date(nextDueAt);\n  if (Number.isNaN(value.getTime())) return "Будет рассчитано";\n  return new Intl.DateTimeFormat("ru", {\n    day: "numeric",\n    month: "short",\n    hour: "2-digit",\n    minute: "2-digit",\n  }).format(value);\n}\n', '')
+          source = source.replace('  const successRate = objectiveSuccessRate(progress);\n', '')
+
+          start = source.index('  function renderProgress() {\n')
+          end = source.index('  function renderProfile() {\n', start)
+          source = source[:start] + source[end:]
+
+          source = source.replace('      : navigation.view === "library" ? renderLibrary()\n          : navigation.view === "progress" ? renderProgress()\n            : navigation.view === "profile" ? renderProfile()\n              : renderLesson();', '      : navigation.view === "library" ? renderLibrary()\n        : navigation.view === "profile" ? renderProfile()\n          : renderLesson();')
+          source = source.replace('          {navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} /> : null}', '          <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} />')
+          source = source.replace('            showCard={navigation.view === "progress" && Boolean(session && progress)}', '            showCard={false}')
+
+          forbidden = [
+              'function renderProgress()',
+              'navigation.view === "progress" ? renderProgress()',
+              'showCard={navigation.view === "progress"',
+              'navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс"',
+              'normalizedProgressModes',
+              'objectiveSuccessRate',
+              'GOAL_OPTIONS',
+              'nextDueLabel(',
+          ]
+          for marker in forbidden:
+              if marker in source:
+                  raise SystemExit(f'forbidden marker remains: {marker}')
+          app_path.write_text(source)
+
+          test_path = Path('frontend/components/progress-route-island-source.test.ts')
+          test = test_path.read_text()
+          old = '''  it("keeps the compatibility Progress presentation visible for the next bounded deletion slice", () => {\n    const premiumApp = readComponent("lexigo-premium-app.tsx");\n    const compatibilityMarkers = [\n      "function renderProgress()",\n      'navigation.view === "progress" ? renderProgress()',\n      'showCard={navigation.view === "progress"',\n      'navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс"',\n    ] as const;\n\n    for (const marker of compatibilityMarkers) {\n      expect(premiumApp, `compatibility Progress marker ${marker}`).toContain(marker);\n    }\n  });\n'''
+          new = '''  it("removes the unreachable compatibility Progress presentation", () => {\n    const premiumApp = readComponent("lexigo-premium-app.tsx");\n    const retiredMarkers = [\n      "function renderProgress()",\n      'navigation.view === "progress" ? renderProgress()',\n      'showCard={navigation.view === "progress"',\n      'navigation.view !== "progress" ? <AsyncResourceNotice label="Прогресс"',\n      "normalizedProgressModes",\n      "objectiveSuccessRate",\n      "GOAL_OPTIONS",\n      "nextDueLabel(",\n    ] as const;\n\n    for (const marker of retiredMarkers) {\n      expect(premiumApp, `retired compatibility Progress marker ${marker}`).not.toContain(marker);\n    }\n  });\n'''
+          if old not in test:
+              raise SystemExit('expected Progress presence contract not found')
+          test_path.write_text(test.replace(old, new))
+
+          docs_path = Path('frontend/docs/compatibility-cleanup.md')
+          docs = docs_path.read_text()
+          appendix = '''\n## Completed Progress compatibility presentation deletion\n\nThe dedicated `LexigoProgressApp` is selected for `/progress` before the compatibility fallback for both guest and authenticated entry. The bounded deletion removes only the unreachable route-level Progress presentation from `LexigoPremiumApp`:\n\n- `renderProgress`;\n- the `navigation.view === "progress"` render branch;\n- the Progress-only suppression of the shared resource notice;\n- the Progress-only calendar-card condition;\n- presentation-only helpers `normalizedProgressModes`, `objectiveSuccessRate`, `GOAL_OPTIONS` and `nextDueLabel`.\n\nShared progress-domain consumers remain intentionally live: `progress` and `progressStatus`, hydration and refresh, Home summary and next action, header streak, Profile daily goal, Dictionary context, lesson completion snapshots, navigation to the canonical Progress route, and the shared calendar dialog trigger. The executable two-sided boundary is `frontend/components/progress-route-island-source.test.ts`.\n'''
+          if '## Completed Progress compatibility presentation deletion' not in docs:
+              docs_path.write_text(docs.rstrip() + '\n' + appendix)
+
+          workflow = Path('.github/workflows/temporary-progress-runtime-deletion.yml')
+          workflow.unlink()
+          PY
+      - name: Verify focused diff
+        run: |
+          git diff --check
+          test ! -e .github/workflows/temporary-progress-runtime-deletion.yml
+          git diff --name-only
+      - name: Commit applied patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add frontend/components/lexigo-premium-app.tsx frontend/components/progress-route-island-source.test.ts frontend/docs/compatibility-cleanup.md .github/workflows/temporary-progress-runtime-deletion.yml
+          git commit -m "refactor(frontend): remove Progress compatibility presentation"
+          git push origin HEAD:feat/issue-70-progress-runtime-deletion
