@@ -2,9 +2,9 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 13:39 Europe/Berlin.
+- Last verified: 2026-07-29 14:28 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+- Live `main` at verification: `303c8357901302add151b41ed1e657caff6c6893`.
 - Latest completed slice: Issue #70 — remove the unreachable Progress compatibility presentation while preserving shared progress-domain runtime.
 - Completion PR: #295.
 - PR #295 immutable developer-authored head: `1b62544f96e73c410ee42dc7977f7098ff0d30ab`.
@@ -12,7 +12,8 @@
 - Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
 - Post-merge main CI run `30443002420` completed successfully.
 - Exact-SHA stage run `30443653247` deployed web/API images tagged `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
-- Reviews, comments and unresolved review threads were empty before merge.
+- Agent Docs reconciliation PR #296 passed lightweight CI #2379 / run `30444747875` and squash-merged as `303c8357901302add151b41ed1e657caff6c6893`.
+- Reviews, comments and unresolved review threads were empty before both merges.
 
 ## Completed
 
@@ -84,8 +85,8 @@
 
 ## In progress
 
-- No product or tooling slice is active after PR #295 merge and exact-SHA stage validation.
-- This Agent Docs reconciliation must merge before another Issue #70 slice starts.
+- No product or tooling slice is active.
+- The next Issue #70 slice may start only after fresh routing, consumer and CSS ownership evidence selects one bounded compatibility family.
 
 ## Remaining roadmap
 
@@ -124,10 +125,10 @@
 
 ## Recent production/tooling evidence
 
-1. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
-2. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-3. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-4. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
+1. #296 — `docs(agent): reconcile Progress runtime deletion` → `303c8357901302add151b41ed1e657caff6c6893`.
+2. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+3. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+4. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
 
 ## Evidence
 
@@ -136,6 +137,7 @@
 - Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
 - Main CI run `30443002420` completed successfully.
 - Stage run `30443653247` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
+- Agent Docs PR #296 final head `ffd9be126e0001d8874664873150018a295761dd` passed classifier and Agent Harness validation in run `30444747875`; heavy product jobs were skipped as intended.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
