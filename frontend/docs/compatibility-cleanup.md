@@ -12,7 +12,7 @@
 - Canonical Phrases runtime owner: `frontend/components/lexigo-phrases-app.tsx`.
 - Canonical Phrases visual owner: `frontend/app/phrases.css`.
 - Compatibility fallback: `frontend/components/lexigo-premium-app.tsx`.
-- This document records one completed route-runtime deletion boundary and one bounded CSS ownership consolidation. It does not claim that the complete compatibility fallback or unrelated global CSS is dead.
+- This document records completed bounded route-runtime/CSS work and executable reachability boundaries. It does not claim that the complete compatibility fallback or unrelated global CSS is dead.
 
 ## Reachability proof
 
@@ -163,7 +163,7 @@ Any changed Phrases visual hash stops PR #284. A baseline may not be promoted me
 
 ## Remaining Issue #70 work
 
-After PR #284 is fully validated and deployed, choose the next minimal compatibility or selector family only from fresh reachability, markup-consumer and computed-cascade evidence.
+After each bounded slice is fully validated and deployed, choose the next minimal compatibility or selector family only from fresh reachability, markup-consumer and computed-cascade evidence.
 
 Do not combine:
 
@@ -202,3 +202,22 @@ The dedicated `LexigoProgressApp` is selected for `/progress` before the compati
 - presentation-only helpers `normalizedProgressModes`, `objectiveSuccessRate`, `GOAL_OPTIONS` and `nextDueLabel`.
 
 Shared progress-domain consumers remain intentionally live: `progress` and `progressStatus`, hydration and refresh, Home summary and next action, header streak, Profile daily goal, Dictionary context, lesson completion snapshots, navigation to the canonical Progress route, and the shared calendar dialog trigger. The executable two-sided boundary is `frontend/components/progress-route-island-source.test.ts`.
+
+## Scenario catalog/detail reachability boundary
+
+The dedicated Scenario entries are selected before the compatibility fallback for authenticated sessions:
+
+1. `isScenarioCatalogRoute` accepts exactly `/scenarios`.
+2. `isScenarioDetailRoute` accepts `/scenarios/[slug]`.
+3. `useScenarioCatalogIsland` and `useScenarioIsland` require a restored authenticated session.
+4. Both `LexigoScenarioCatalogApp` and `LexigoScenarioApp` render before the final `LexigoPremiumApp` fallback.
+5. Guest direct entry is a live authentication boundary, not dead Scenario presentation: bootstrap rewrites the route to `/profile?session=required&return_to=...` before presenting guest auth/recovery.
+
+Canonical ownership is split deliberately:
+
+- `LexigoScenarioCatalogApp` owns authenticated catalog reads, payload validation and progress-backed recommendation evidence;
+- `LexigoScenarioApp` owns direct detail loading, attempt lifecycle, optimistic submissions, draft/sessionStorage recovery and safe exit;
+- `LexigoBootstrappedApp` remains the sole session restoration and guest redirect owner;
+- `LexigoPremiumApp` remains live for guest authentication, account recovery and unknown-route fallback.
+
+This slice proves reachability only. It does not delete runtime, alter auth behavior or claim the complete compatibility fallback is dead. The executable two-sided proof is `frontend/components/scenario-route-island-source.test.ts`.
