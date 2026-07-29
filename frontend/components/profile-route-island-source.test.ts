@@ -34,7 +34,7 @@ describe("Profile route island source contract", () => {
   it("keeps account settings and logout behavior in the canonical authenticated owner", () => {
     const canonicalContracts = [
       'data-route-client-island="profile"',
-      '"/api/v1/progress/goal?timezoneOffsetMinutes=',
+      "/api/v1/progress/goal?timezoneOffsetMinutes=",
       'requestJSON<void>("/api/v1/auth/logout"',
       "setAppearancePreference",
       "CalendarReminderIntegration",
