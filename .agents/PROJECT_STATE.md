@@ -2,15 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 15:05 Europe/Berlin.
+- Last verified: 2026-07-29 17:48 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
-- Latest completed slice: Issue #70 — prove the two-sided Dictionary compatibility boundary without deleting runtime.
-- Completion PR: #298.
-- PR #298 immutable developer-authored head: `ed1c560b298b2c383145396d25ffbbd26c673cd4`.
-- Authoritative PR CI: #2384 / run `30450752644`, successful.
-- Expected-head squash merge produced `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
-- Exact-SHA stage run `30451962982` deployed web/API images tagged `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
+- Live `main` at verification: `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
+- Latest completed slice: Issue #70 — prove the authenticated/guest Profile compatibility boundary without deleting runtime.
+- Completion PR: #300.
+- PR #300 immutable developer-authored head: `7b2571e1be6306c5598fecad231632549b4beb81`.
+- Authoritative PR CI: #2389 / run `30456469695`, successful.
+- Expected-head squash merge produced `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
+- Exact-SHA stage run `30462326308` deployed web/API images tagged `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
 - Reviews, comments and unresolved review threads were empty before merge.
 
 ## Completed
@@ -59,9 +59,11 @@
 - PR #292 renamed `system-states-lesson.css` to `active-lesson-queued-state.css` with zero CSS additions or deletions, preserved import order, updated both ownership contracts and retired the misleading generic path.
 - PR #295 removed only the proven-unreachable Progress route presentation and its presentation-only helpers; absence and preservation source contracts cover the boundary.
 - PR #298 established the two-sided Dictionary boundary: canonical direct entry, reload and new-tab reconstruction use `LexigoDictionaryApp`, while product-owned Dictionary History entries may still retain the product graph and reach `LexigoPremiumApp.renderLibrary()`.
+- PR #300 established the Profile boundary: authenticated `/profile` uses `LexigoProfileApp`, while guest authentication and account-recovery behavior remains live in `LexigoPremiumApp`.
 - `frontend/app/active-lesson-queued-state.css` is the explicit queued-state presentation owner; `frontend/app/active-lesson.css` remains the canonical base presentation owner.
 - Issue #70 remains open for later independently proven compatibility families.
 - Dictionary compatibility runtime is not deletion-ready; route extraction alone does not prove product-owned History entries unreachable.
+- Profile guest compatibility runtime is not deletion-ready because authentication and account recovery still route through the compatibility owner.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 
 ### Scenario learning
@@ -96,6 +98,7 @@
 - Select one minimal family per atomic PR.
 - Preserve guest authentication, account recovery, unknown-route fallback and all shared lesson-domain behavior until exact evidence proves replacement ownership.
 - Do not delete Dictionary compatibility runtime while product-owned History entries can still route through the product graph.
+- Do not delete Profile guest compatibility runtime while authentication and recovery remain owned by the compatibility app.
 - Runtime cleanup requires absence/preservation source contracts, lint, typecheck, unit/build, browser matrix, performance budgets and containers.
 - CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and authoritative Linux visual hashes.
 - Existing bundle ceilings remain unchanged unless a separately approved performance decision changes them.
@@ -116,6 +119,7 @@
 
 - Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
 - Dictionary product-history compatibility remains intentionally live and requires a separately proven migration or replacement before deletion.
+- Profile guest compatibility remains intentionally live until authentication and account-recovery ownership is migrated or replaced with exact evidence.
 - Physical consolidation of `active-lesson-queued-state.css` into the large canonical sheet remains optional and requires exact patch semantics plus unchanged visual hashes.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
@@ -127,18 +131,18 @@
 
 ## Recent production/tooling evidence
 
-1. #298 — `test(frontend): prove Dictionary compatibility boundary` → `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
-2. #297 — `docs(agent): reconcile PR 296 main state` → `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`.
-3. #296 — `docs(agent): reconcile Progress runtime deletion` → `303c8357901302add151b41ed1e657caff6c6893`.
-4. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+1. #300 — `test(frontend): prove Profile compatibility boundary` → `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
+2. #299 — `docs(agent): reconcile PR 298 main state` → `4568c1c2446f24180726a7a5729758c05e6baa1a`.
+3. #298 — `test(frontend): prove Dictionary compatibility boundary` → `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
+4. #297 — `docs(agent): reconcile PR 296 main state` → `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`.
 
 ## Evidence
 
-- PR #298 final head `ed1c560b298b2c383145396d25ffbbd26c673cd4` passed authoritative full PR CI #2384/run `30450752644`.
+- PR #300 final head `7b2571e1be6306c5598fecad231632549b4beb81` passed authoritative full PR CI #2389/run `30456469695`.
 - Reviews, comments and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
-- Stage run `30451962982` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
-- The source contract proves canonical Dictionary island ownership and deliberately preserves evidence for the still-live product-history fallback.
+- Expected-head squash merge produced `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
+- Stage run `30462326308` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
+- The source contract proves canonical authenticated Profile ownership and deliberately preserves evidence for the still-live guest authentication and account-recovery fallback.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
