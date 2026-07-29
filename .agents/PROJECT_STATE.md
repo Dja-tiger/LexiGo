@@ -2,16 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 08:32 Europe/Berlin.
+- Last verified: 2026-07-29 13:39 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-- Latest completed slice: Issue #70 — scope queued Active Lesson CSS ownership without visual changes.
-- Completion PR: #292.
-- PR #292 immutable developer-authored head: `ca452297a0a89922a89de8b6ebfae29487432372`.
-- Authoritative PR CI: #2372 / run `30424265056`, successful.
-- Expected-head squash merge produced `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-- Main CI run `30424720586` initially failed only in UI shard 2/2; the failed-job rerun passed and the complete main matrix finished successfully.
-- Exact-SHA stage run `30428344783` deployed web/API images tagged `90afa3263aa8f04f4988d71ae64ebd5bea156881`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
+- Live `main` at verification: `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+- Latest completed slice: Issue #70 — remove the unreachable Progress compatibility presentation while preserving shared progress-domain runtime.
+- Completion PR: #295.
+- PR #295 immutable developer-authored head: `1b62544f96e73c410ee42dc7977f7098ff0d30ab`.
+- Authoritative PR CI: #2377 / run `30442118036`, successful.
+- Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+- Post-merge main CI run `30443002420` completed successfully.
+- Exact-SHA stage run `30443653247` deployed web/API images tagged `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
 - Reviews, comments and unresolved review threads were empty before merge.
 
 ## Completed
@@ -35,8 +35,8 @@
 
 - `/progress` is server-owned and reports due evidence, retained knowledge, weekly trends, weak topics and deterministic recommendations.
 - PR #288 proves exact `/progress` route detection, unconditional guest/auth island selection and render ordering before the compatibility fallback.
-- The Progress proof separates route-only presentation markers from shared progress state/data used by Home, Profile and lesson-result flows.
-- Progress runtime deletion remains pending a separate atomic implementation slice.
+- PR #295 removed the unreachable route-level Progress presentation from `LexigoPremiumApp`.
+- Shared progress state, loaders and navigation consumers used by Home, Profile, Dictionary, header and lesson-result flows remain intact.
 
 ### Route-level client islands and bundle budgets
 
@@ -45,7 +45,7 @@
 - `LexigoBootstrappedApp` remains the sole session restoration, refresh coordination, account runtime and dynamic route-entry owner.
 - `ReviewOutboxRuntime` remains the sole connectivity and durable review-queue owner.
 - Cold `/`: `207675` JavaScript bytes, `18` initial requests; limits `235000` bytes and `21` requests.
-- Cold `/progress`: `207502` JavaScript bytes, `18` initial requests; limits `240000` bytes and `21` requests.
+- Cold `/progress`: existing limit remains `240000` bytes and `21` requests.
 - Cold `/learn`: `210986` JavaScript bytes, `20` initial requests; limits `235000` bytes and `22` requests.
 - Cold `/lesson/active`: `220225` JavaScript bytes, `19` initial requests; limits `235000` bytes and `22` requests.
 - Cold `/phrases`: `226149` JavaScript bytes, `19` initial requests; limits `235000` bytes and `22` requests.
@@ -58,7 +58,8 @@
 - PR #288 established the two-sided Progress compatibility boundary.
 - PR #290 proved that the queued Active Lesson CSS family was live, bounded and imported after the canonical Active Lesson sheet.
 - PR #292 renamed `system-states-lesson.css` to `active-lesson-queued-state.css` with zero CSS additions or deletions, preserved import order, updated both ownership contracts and retired the misleading generic path.
-- `frontend/app/active-lesson-queued-state.css` is now the explicit queued-state presentation owner; `frontend/app/active-lesson.css` remains the canonical base presentation owner.
+- PR #295 removed only the proven-unreachable Progress route presentation and its presentation-only helpers; absence and preservation source contracts cover the boundary.
+- `frontend/app/active-lesson-queued-state.css` is the explicit queued-state presentation owner; `frontend/app/active-lesson.css` remains the canonical base presentation owner.
 - Issue #70 remains open for later independently proven compatibility families.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 
@@ -83,7 +84,7 @@
 
 ## In progress
 
-- No product or tooling slice is active after PR #292 merge and exact-SHA stage validation.
+- No product or tooling slice is active after PR #295 merge and exact-SHA stage validation.
 - This Agent Docs reconciliation must merge before another Issue #70 slice starts.
 
 ## Remaining roadmap
@@ -112,7 +113,6 @@
 ## Validation pending
 
 - Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
-- Progress runtime deletion remains pending a separate implementation slice.
 - Physical consolidation of `active-lesson-queued-state.css` into the large canonical sheet remains optional and requires exact patch semantics plus unchanged visual hashes.
 - Parts of First Use still require approved exact Figma states.
 - Final moderated usability evidence remains external work under Issue #133.
@@ -124,19 +124,18 @@
 
 ## Recent production/tooling evidence
 
-1. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-2. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
-3. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
-4. #284 — `refactor(frontend): consolidate Phrases CSS ownership` → `df033168f56f6143285e68aff0fc67d4570fc2a4`.
+1. #295 — `refactor(frontend): remove Progress compatibility presentation` → `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+2. #292 — `refactor(frontend): scope Active Lesson queued-state CSS ownership` → `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
+3. #290 — `test(frontend): prove Active Lesson CSS compatibility boundary` → `23f575fa7adf338dcd5ec76f0942875a7ea046c4`.
+4. #288 — `test(frontend): prove Progress compatibility deletion boundary` → `daef3e456f2b775389d913d6b3df689b21b2b9b1`.
 
 ## Evidence
 
-- PR #292 final head `ca452297a0a89922a89de8b6ebfae29487432372` passed authoritative full PR CI #2372/run `30424265056`.
-- Final compare was behind `0`; GitHub detected the stylesheet operation as a pure rename with `0` additions and `0` deletions.
+- PR #295 final head `1b62544f96e73c410ee42dc7977f7098ff0d30ab` passed authoritative full PR CI #2377/run `30442118036`.
 - Reviews, comments and unresolved review threads were empty before merge.
-- Expected-head squash merge produced `90afa3263aa8f04f4988d71ae64ebd5bea156881`.
-- Main CI run `30424720586` passed after retrying the isolated UI shard 2/2 failure; frontend aggregate and both container builds succeeded.
-- Stage run `30428344783` deployed exact merge SHA and passed deploy, public smoke and public browser validation.
+- Expected-head squash merge produced `0b36be36b3c2c0ea1d859b025922d74ee2c5fcbb`.
+- Main CI run `30443002420` completed successfully.
+- Stage run `30443653247` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
