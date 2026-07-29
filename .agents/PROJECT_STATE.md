@@ -2,16 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-29 17:48 Europe/Berlin.
+- Last verified: 2026-07-29 18:05 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main` at verification: `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
-- Latest completed slice: Issue #70 — prove the authenticated/guest Profile compatibility boundary without deleting runtime.
+- Live `main` at verification: `9d82b67efc2b408f0696f856e2f3aad33c9aa244`.
+- Latest completed product slice: Issue #70 — prove the authenticated/guest Profile compatibility boundary without deleting runtime.
 - Completion PR: #300.
 - PR #300 immutable developer-authored head: `7b2571e1be6306c5598fecad231632549b4beb81`.
 - Authoritative PR CI: #2389 / run `30456469695`, successful.
 - Expected-head squash merge produced `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
 - Exact-SHA stage run `30462326308` deployed web/API images tagged `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`; deploy, public smoke and public browser all succeeded, with 12/12 public checks passing.
-- Reviews, comments and unresolved review threads were empty before merge.
+- Agent Docs reconciliation PR #301 passed lightweight CI #2391 / run `30467853472` and squash-merged as `9d82b67efc2b408f0696f856e2f3aad33c9aa244`; product, browser, container and deployment jobs were correctly skipped.
+- Reviews, comments and unresolved review threads were empty before both merges.
 
 ## Completed
 
@@ -87,7 +88,8 @@
 
 ## In progress
 
-- No product or tooling slice is active.
+- No product or tooling slice is active after PR #301.
+- A documentation-only reconciliation is being prepared because repository memory must explicitly record the PR #301 merge before the next Issue #70 product slice.
 - The next Issue #70 slice may start only after fresh routing, consumer and CSS ownership evidence selects one bounded compatibility family.
 
 ## Remaining roadmap
@@ -131,10 +133,10 @@
 
 ## Recent production/tooling evidence
 
-1. #300 — `test(frontend): prove Profile compatibility boundary` → `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
-2. #299 — `docs(agent): reconcile PR 298 main state` → `4568c1c2446f24180726a7a5729758c05e6baa1a`.
-3. #298 — `test(frontend): prove Dictionary compatibility boundary` → `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
-4. #297 — `docs(agent): reconcile PR 296 main state` → `10ed9cd39b03204794b53c6bb8158ab1253ffdb9`.
+1. #301 — `docs(agent): reconcile PR 300 main state` → `9d82b67efc2b408f0696f856e2f3aad33c9aa244`.
+2. #300 — `test(frontend): prove Profile compatibility boundary` → `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
+3. #299 — `docs(agent): reconcile PR 298 main state` → `4568c1c2446f24180726a7a5729758c05e6baa1a`.
+4. #298 — `test(frontend): prove Dictionary compatibility boundary` → `8e1ba2b1785f78c0e3bfdc945a8f802e5ef4f5ee`.
 
 ## Evidence
 
@@ -143,6 +145,8 @@
 - Expected-head squash merge produced `3f6efd70d8f8d76fcbd59a35aa292c078352c2ec`.
 - Stage run `30462326308` deployed exact merge SHA and passed deploy, public smoke and public browser validation, including 12/12 public runtime checks.
 - The source contract proves canonical authenticated Profile ownership and deliberately preserves evidence for the still-live guest authentication and account-recovery fallback.
+- PR #301 head `c41d78128a210b1bb99e30ffa73672dbd4ae44bb` passed lightweight Agent Docs CI #2391/run `30467853472`; heavy product jobs were skipped by the fail-closed classifier.
+- Expected-head squash merge of PR #301 produced `9d82b67efc2b408f0696f856e2f3aad33c9aa244`.
 - Indexed search is discovery only; final claims are based on exact files, refs, Issues, PRs, workflow jobs, artifacts or deployment records.
 
 ## Update protocol
