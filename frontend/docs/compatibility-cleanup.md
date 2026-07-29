@@ -190,3 +190,15 @@ Do not broaden a slice if any of the following is true:
 - a visual hash changes without a computed-cascade explanation and Figma review;
 - bundle or browser evidence is unavailable;
 - the branch expands into auth fallback extraction, unrelated CSS consolidation or redesign.
+
+## Completed Progress compatibility presentation deletion
+
+The dedicated `LexigoProgressApp` is selected for `/progress` before the compatibility fallback for both guest and authenticated entry. The bounded deletion removes only the unreachable route-level Progress presentation from `LexigoPremiumApp`:
+
+- `renderProgress`;
+- the `navigation.view === "progress"` render branch;
+- the Progress-only suppression of the shared resource notice;
+- the Progress-only calendar-card condition;
+- presentation-only helpers `normalizedProgressModes`, `objectiveSuccessRate`, `GOAL_OPTIONS` and `nextDueLabel`.
+
+Shared progress-domain consumers remain intentionally live: `progress` and `progressStatus`, hydration and refresh, Home summary and next action, header streak, Profile daily goal, Dictionary context, lesson completion snapshots, navigation to the canonical Progress route, and the shared calendar dialog trigger. The executable two-sided boundary is `frontend/components/progress-route-island-source.test.ts`.
