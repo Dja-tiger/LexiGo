@@ -1,40 +1,18 @@
 # Current Task Execution
 
-## Task
+No active task.
 
-- Branch: `test/issue-70-scenario-reachability`
-- Base SHA: `8576c6645d31a4d4d4ef7b1aed5c2453f28d5d84`
-- Head SHA: pending final developer-authored head
-- PR: pending
+## Previous execution
 
-## Skills used
+- Issue #70 Scenario compatibility boundary completed through PR #303.
+- Full CI #2395/run `30471439763` passed on immutable head `ba5663bfbe68aed5750d76fa698e700a3116a98c`.
+- Expected-head squash merge produced `c8495eacdd8b1289e82a532668834414fb63e55c`.
+- Exact-SHA stage run `30479156802` completed deploy, public smoke and public browser successfully.
+- Runtime remained unchanged; only executable ownership evidence and compatibility documentation were added.
 
-### GitHub repository operations
+## Next execution requirements
 
-Purpose: inspect live repository state, create an isolated branch, write exact allowed paths and validate read-back.
-
-Instruction source: `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`.
-
-Version or verification date: 2026-07-29.
-
-Inputs: Issue #70, live main/open PR/stage state, bootstrap and Scenario source owners.
-
-Files inspected: `lexigo-bootstrapped-app.tsx`, both Scenario islands, Profile boundary precedent, compatibility cleanup manifest.
-
-Actions performed: selected a bounded evidence-only slice, created exact-base branch, added a source contract and updated repository task memory/manifest.
-
-Commands or procedures: GitHub connector exact file reads/writes, branch creation, read-back and focused compare.
-
-Artifacts produced: Scenario route source contract and compatibility ownership manifest.
-
-Result: implementation complete; CI and PR lifecycle pending.
-
-Failures: none in this slice.
-
-Root cause: not applicable.
-
-Fallback: revert test/documentation-only commits; runtime remains unchanged.
-
-Limitations: indexed search was discovery only; claims use exact source reads.
-
-Reusable lesson: authenticated route-island ownership must be proven together with the guest redirect boundary before compatibility deletion is considered.
+- Re-run repository pre-flight.
+- Record the selected atomic slice before writes.
+- Use exact operation/function/schema checks for every repository tool call.
+- Preserve guest/auth and shared-domain owners unless replacement evidence is executable.
