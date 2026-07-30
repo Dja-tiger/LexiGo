@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          # Every replacement below is asserted before the branch write.
           python3 - <<'PY'
           from pathlib import Path
 
