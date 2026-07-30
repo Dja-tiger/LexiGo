@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-07-30 21:35 Europe/Berlin
+## 2026-07-30 21:40 Europe/Berlin
 
 ### Verified
 
@@ -8,7 +8,7 @@
 - Draft PR #313 targets `main` from `refactor/issue-70-remove-home-compatibility`.
 - PR #311 proves `/` is forced onto the Home graph and renders `LexigoHomeApp` before `LexigoPremiumApp`.
 - Exact product SHA `8ce61297d4c0ade5cb687a42ca11047b836c85c3` remains successfully deployed on stage with public smoke and 12/12 browser checks.
-- CI #2419 / run `30568316390` completed successfully on head `7ec5c30f37e80067ae577555c17aa9175415a4d1`.
+- CI #2419 / run `30568316390` completed successfully on runtime/test head `7ec5c30f37e80067ae577555c17aa9175415a4d1`.
 
 ### Finding
 
@@ -41,8 +41,8 @@ Home moved to its dedicated route island before the legacy compatibility present
 
 ### Current branch head
 
-Resolve after this documentation write.
+`713b4ec7ac9953b6836bfc93f57772ff4a7c7e1f`
 
 ### Next action
 
-Run full authoritative CI on the final documentation head. If green, perform review audit, mark PR #313 Ready, expected-head squash merge, then exact-SHA stage/public validation before reconciliation.
+Run full authoritative CI on this final documentation head. If green, perform review audit, mark PR #313 Ready, expected-head squash merge, then exact-SHA stage/public validation before reconciliation.
