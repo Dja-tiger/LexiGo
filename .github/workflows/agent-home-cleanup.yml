@@ -1,0 +1,86 @@
+name: Temporary Home cleanup finalizer
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+    paths:
+      - .github/workflows/agent-home-cleanup.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-home-cleanup-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Finalize Home cleanup documentation
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refactor/issue-70-remove-home-compatibility
+          fetch-depth: 0
+
+      - name: Apply idempotent final changes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime = Path("frontend/components/lexigo-premium-app.tsx")
+          source = runtime.read_text(encoding="utf-8")
+          old = '''  const view = navigation.view === "learn" ? renderLearn()
+          : navigation.view === "library" ? renderLibrary()
+            : navigation.view === "profile" ? renderProfile()
+              : renderLesson();'''
+          new = '''  const view = navigation.view === "learn" ? renderLearn()
+            : navigation.view === "library" ? renderLibrary()
+              : navigation.view === "profile" ? renderProfile()
+                : renderLesson();'''
+          if source.count(old) != 1:
+              raise SystemExit("expected the unformatted dispatch exactly once")
+          runtime.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+          docs = Path("frontend/docs/compatibility-cleanup.md")
+          text = docs.read_text(encoding="utf-8")
+          heading = "## Completed Home compatibility presentation deletion"
+          if heading in text:
+              raise SystemExit("Home completion section already exists")
+          section = '''
+
+## Completed Home compatibility presentation deletion
+
+PR #311 established the two-sided root-route boundary: `isHomeRoute` forces `/` onto the Home graph and `LexigoHomeApp` renders before the final `LexigoPremiumApp` fallback. The bounded follow-up removes only the now-unreachable Home presentation family from `LexigoPremiumApp`:
+
+- `renderHome`;
+- the `navigation.view === "home"` dispatch branch;
+- Home-only `WORD_PREVIEW`;
+- Home-only `russianPlural`, `goalPercent` and `RETAINED_COPY` dependencies.
+
+Shared compatibility owners remain intentionally live: guest authentication, password recovery, unknown-route fallback, persistent navigation, progress and active-lesson resource loading, Lesson Composer, Dictionary compatibility, Profile, Active Lesson, Lesson Result, `startLesson`, `resumeLesson`, and transitions whose destination is Home. No CSS, visual baseline, API, backend, workflow, deployment or bundle-ceiling contract changes are part of this deletion.
+
+The executable absence/preservation proof is `frontend/components/home-route-island-source.test.ts`.
+'''
+          docs.write_text(text.rstrip() + section + "\n", encoding="utf-8")
+          PY
+
+          rm -- .github/workflows/agent-home-cleanup.yml
+          git diff --check
+          test ! -e .github/workflows/agent-home-cleanup.yml
+          grep -Fq '## Completed Home compatibility presentation deletion' frontend/docs/compatibility-cleanup.md
+          ! grep -Fq 'function renderHome()' frontend/components/lexigo-premium-app.tsx
+
+      - name: Commit finalizer and self-removal
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-premium-app.tsx frontend/docs/compatibility-cleanup.md .github/workflows/agent-home-cleanup.yml
+          git commit -m "docs(frontend): record Home compatibility deletion"
+          git push origin HEAD:refactor/issue-70-remove-home-compatibility
