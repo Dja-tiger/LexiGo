@@ -69,20 +69,17 @@ jobs:
           end = source.index(next_function, start)
           source = source[:start] + source[end:]
 
-          old_dispatch = '''  const view = navigation.view === "home" ? renderHome()
-            : navigation.view === "learn" ? renderLearn()
-              : navigation.view === "library" ? renderLibrary()
-                : navigation.view === "profile" ? renderProfile()
-                  : renderLesson();
-          '''
+          dispatch_start = '  const view = navigation.view === "home" ? renderHome()\n'
+          return_boundary = "\n\n  return (\n"
+          if source.count(dispatch_start) != 1:
+              raise SystemExit("compatibility dispatch start marker is missing or non-unique")
+          dispatch_index = source.index(dispatch_start)
+          dispatch_end = source.index(return_boundary, dispatch_index)
           new_dispatch = '''  const view = navigation.view === "learn" ? renderLearn()
             : navigation.view === "library" ? renderLibrary()
               : navigation.view === "profile" ? renderProfile()
-                : renderLesson();
-          '''
-          if source.count(old_dispatch) != 1:
-              raise SystemExit("compatibility dispatch marker is missing or non-unique")
-          source = source.replace(old_dispatch, new_dispatch, 1)
+                : renderLesson();'''
+          source = source[:dispatch_index] + new_dispatch + source[dispatch_end:]
 
           absent = [
               "function renderHome()",
