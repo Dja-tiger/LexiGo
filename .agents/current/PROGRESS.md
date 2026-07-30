@@ -41,8 +41,8 @@ Home moved to its dedicated route island before the legacy compatibility present
 
 ### Current branch head
 
-`713b4ec7ac9953b6836bfc93f57772ff4a7c7e1f`
+Resolve from the live branch ref.
 
 ### Next action
 
-Run full authoritative CI on this final documentation head. If green, perform review audit, mark PR #313 Ready, expected-head squash merge, then exact-SHA stage/public validation before reconciliation.
+Run full authoritative CI on the final documentation head. If green, perform review audit, mark PR #313 Ready, expected-head squash merge, then exact-SHA stage/public validation before reconciliation.
