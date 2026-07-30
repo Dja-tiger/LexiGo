@@ -27,7 +27,7 @@ Commands or procedures: GitHub contents/blob reads, code search, exact branch co
 
 Artifacts produced: Draft PR #313, bounded runtime deletion, executable source contract, compatibility-plan update and current task records.
 
-Result: CI #2419 / run `30568316390` succeeded on runtime/test head `7ec5c30f37e80067ae577555c17aa9175415a4d1`; final documentation writes now require a new immutable-head CI.
+Result: CI #2419 / run `30568316390` succeeded on runtime/test head `7ec5c30f37e80067ae577555c17aa9175415a4d1`; the final six-file branch diff is now ready for immutable-head CI.
 
 Failures: local `git clone` could not resolve `github.com`; initial temporary workflow assertions failed before commit because exact text/branch state differed.
 
