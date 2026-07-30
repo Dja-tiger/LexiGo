@@ -2,17 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-07-30 12:14 Europe/Berlin.
+- Last verified: 2026-07-30 15:58 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
-- Latest completed product slice: Issue #70 — lock the already-absent Scenario compatibility runtime against regression.
-- Completion PR: #308.
-- PR #308 immutable developer-authored head: `7df6aa9058256fc5af3ba4dac61978fcfffabb38`.
-- Authoritative PR CI: #2402 / run `30493061049`, successful.
-- Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-- Exact-SHA stage run `30494296741` deployed web/API images tagged `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`; deploy, public smoke and all 12 public browser checks succeeded.
-- Agent Docs reconciliation PR #309 passed lightweight CI #2404 / run `30528157545` and squash-merged as `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
-- Reviews, comments and unresolved review threads were empty before both merges.
+- Live `main`: `8ce61297d4c0ade5cb687a42ca11047b836c85c3`.
+- Latest completed product slice: Issue #70 — prove the two-sided Home compatibility boundary before any runtime deletion.
+- Completion PR: #311.
+- PR #311 immutable developer-authored head: `f45115b551a19a8313e2950058650b5d40071924`.
+- Authoritative PR CI: #2409 / run `30535283540`, successful after the isolated UI shard rerun.
+- Expected-head squash merge produced `8ce61297d4c0ade5cb687a42ca11047b836c85c3`.
+- Exact-SHA stage run `30546514323` deployed web/API images tagged `8ce61297d4c0ade5cb687a42ca11047b836c85c3`; deploy, public smoke and all 12 public browser checks succeeded.
+- Reviews, comments and unresolved review threads were empty before merge.
 
 ## Completed
 
@@ -35,14 +34,16 @@
 - PR #288 established the Progress boundary; PR #295 removed only its proven-unreachable compatibility presentation.
 - PR #298 established the Dictionary boundary; product-owned History entries still preserve live compatibility reachability.
 - PR #300 established the Profile boundary; guest authentication and account recovery remain live in `LexigoPremiumApp`.
-- PR #303 established the two-sided Scenario route boundary: authenticated `/scenarios` and `/scenarios/[slug]` select dedicated islands before `LexigoPremiumApp`, while guest entry remains redirected to `/profile?session=required&return_to=...`.
-- PR #308 added an executable absence contract proving and protecting that Scenario API, state, lifecycle and render ownership remain absent from `LexigoPremiumApp`.
+- PR #303 established the two-sided Scenario route boundary; PR #308 protects the already-absent Scenario compatibility runtime against regression.
+- PR #311 proves that `/` is forced onto the Home graph and renders `LexigoHomeApp` before the `LexigoPremiumApp` fallback, while explicitly preserving shared authentication, recovery, unknown-route and lesson-domain owners.
+- The legacy `renderHome` presentation family is now a bounded future deletion candidate; no runtime or CSS was deleted by PR #311.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 - Issue #70 remains open for later independently proven compatibility or selector families.
 
 ## In progress
 
-- No product or tooling slice is active after reconciliation PR #309.
+- No product or tooling slice is active after PR #311 post-merge validation.
+- Agent Docs reconciliation is being completed in a separate docs-only PR.
 - Open Dependabot PRs #304, #305 and #306 are unrelated parallel dependency updates and are not part of the active Issue #70 workflow.
 
 ## Remaining roadmap
@@ -52,6 +53,7 @@
 - Re-read live routing, imports, fallback predicates, markup consumers and `frontend/docs/compatibility-cleanup.md` before choosing scope.
 - Select one minimal family per atomic PR.
 - Preserve guest authentication, account recovery, unknown-route fallback and all shared lesson-domain behavior until exact evidence proves replacement ownership.
+- The Home compatibility presentation may be considered for a later deletion slice only after exact shared-domain and consumer evidence is revalidated.
 - Runtime cleanup requires absence/preservation source contracts, full CI, browser matrix, performance budgets and containers.
 - CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
 - Existing bundle ceilings remain unchanged unless a separately approved performance decision changes them.
@@ -73,24 +75,25 @@
 - Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
 - Dictionary product-history compatibility remains intentionally live.
 - Profile and Scenario guest authentication boundaries remain intentionally live.
+- Home shared lesson/auth/fallback owners remain intentionally live.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #309 — `docs(agent): reconcile PR 308 Scenario absence` → `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
-2. #308 — `test(frontend): lock Scenario compatibility absence` → `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-3. #307 — `docs(agent): reconcile PR 303 Scenario boundary` → `eedd9dc4d978cd8f5b89d2d969a85cd181342e8f`.
-4. #303 — `test(frontend): prove Scenario compatibility boundary` → `c8495eacdd8b1289e82a532668834414fb63e55c`.
+1. #311 — `test(frontend): prove Home compatibility boundary` → `8ce61297d4c0ade5cb687a42ca11047b836c85c3`.
+2. #310 — Agent Docs reconciliation before the Home slice → `94836b3214dddccd58e249a342f0e56505bf2d7d`.
+3. #309 — `docs(agent): reconcile PR 308 Scenario absence` → `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
+4. #308 — `test(frontend): lock Scenario compatibility absence` → `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
 
 ## Evidence
 
-- PR #308 head `7df6aa9058256fc5af3ba4dac61978fcfffabb38` passed authoritative full CI #2402/run `30493061049`.
-- Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-- Stage run `30494296741` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
-- PR #309 head `3b6c194b7f9c3acacf8777f8008ec9db5e9a0648` passed lightweight CI #2404/run `30528157545`; product, browser and container jobs were correctly skipped.
-- PR #309 squash merge produced current `main` SHA `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
-- The source contract preserves canonical Scenario islands and guest redirect ownership while prohibiting Scenario runtime from returning to `LexigoPremiumApp`.
-- Indexed search is discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
+- PR #311 head `f45115b551a19a8313e2950058650b5d40071924` passed authoritative full CI #2409/run `30535283540`.
+- The first CI run exposed an incorrect source-marker assertion; it was corrected without runtime changes.
+- A pre-existing Active Lesson WebKit test failed once on `/learn`; the isolated failed job rerun passed on the same immutable head, and the complete workflow concluded successfully.
+- Expected-head squash merge produced current product `main` SHA `8ce61297d4c0ade5cb687a42ca11047b836c85c3`.
+- Stage run `30546514323` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- The Home source contract protects canonical route-graph and render-order ownership while preserving the bounded compatibility manifest.
+- Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## Update protocol
 
