@@ -1,34 +1,18 @@
 # Current Task Execution
 
-## Task
+No active task.
 
-- Issue: #70
-- Branch: `test/issue-70-scenario-absence-contract`
-- Base SHA: `eedd9dc4d978cd8f5b89d2d969a85cd181342e8f`
-- PR: pending
+## Previous execution
 
-## Skills used
+- Issue #70 Scenario absence-contract slice completed through PR #308.
+- Full CI #2402/run `30493061049` passed on immutable head `7df6aa9058256fc5af3ba4dac61978fcfffabb38`.
+- Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
+- Exact-SHA stage run `30494296741` completed deploy, public smoke and all 12 public browser checks successfully.
+- Runtime remained unchanged; the executable contract prevents Scenario API, state, lifecycle and render ownership from returning to `LexigoPremiumApp`.
 
-### GitHub repository operations
+## Next execution requirements
 
-Purpose: verify live state, inspect exact source ownership, create an isolated branch and add a bounded executable absence contract.
-
-Instruction source: `AGENTS.md`, `.agents/AGENTS.md`, mandatory referenced guidance, `.agents/PROJECT_STATE.md`, `.agents/current/*`, `docs/agent-harness.md`.
-
-Version or verification date: 2026-07-30.
-
-Inputs: Issue #70, current main/open PR/stage state, complete `LexigoPremiumApp`, existing Scenario route source contract.
-
-Actions performed: exact source audit, branch creation, current-task recording, source-contract extension and read/write verification.
-
-Result: implementation complete; PR lifecycle and authoritative CI pending.
-
-Failures: indexed search produced no relevant results; local clone failed on container DNS.
-
-Root cause: search index coverage and isolated container network resolution, not repository state.
-
-Fallback: exact GitHub file reads and response-resource search supplied authoritative evidence.
-
-Limitations: this slice proves and protects absence; it does not reduce runtime because no Scenario compatibility runtime exists to delete.
-
-Reusable lesson: before planning compatibility deletion, assert whether the legacy family exists at all; when already absent, add a two-sided regression contract instead of manufacturing a no-op deletion.
+- Re-run repository pre-flight.
+- Record the selected atomic slice before writes.
+- Use exact operation/function/schema checks for every repository tool call.
+- Preserve guest/auth and shared-domain owners unless replacement evidence is executable.
