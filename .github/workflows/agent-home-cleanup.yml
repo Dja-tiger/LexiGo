@@ -6,6 +6,12 @@ on:
       - refactor/issue-70-remove-home-compatibility
     paths:
       - .github/workflows/agent-home-cleanup.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/agent-home-cleanup.yml
 
 permissions:
   contents: write
@@ -17,6 +23,7 @@ concurrency:
 jobs:
   patch:
     name: Apply asserted Home cleanup patch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
@@ -113,7 +120,6 @@ jobs:
           rm -- .github/workflows/agent-home-cleanup.yml
 
           git diff --check
-          git diff --exit-code -- .agents/current/TASK.md >/dev/null || true
           test ! -e .github/workflows/agent-home-cleanup.yml
           ! grep -Fq 'function renderHome()' frontend/components/lexigo-premium-app.tsx
           ! grep -Fq 'navigation.view === "home" ? renderHome()' frontend/components/lexigo-premium-app.tsx
