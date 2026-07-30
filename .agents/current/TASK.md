@@ -18,12 +18,13 @@ Remove only the unreachable legacy Home presentation from `LexigoPremiumApp` now
 - Remove only imports/constants that become provably orphaned by that deletion.
 - Convert the Home source contract from candidate-presence evidence to absence/preservation evidence.
 - Update the compatibility cleanup plan and current execution memory.
+- Because the local execution sandbox has no outbound GitHub connectivity, permit one branch-scoped self-removing workflow to apply exact asserted textual replacements; the workflow must be absent from the final diff.
 
 ## Non-goals
 
 - No deletion or extraction of `LexigoPremiumApp` itself.
 - No changes to guest authentication, account recovery, unknown-route fallback, Learn, Library, Profile, Active Lesson or Lesson Result behavior.
-- No CSS cleanup, redesign, visual baseline promotion, API/backend/workflow changes or bundle-ceiling changes.
+- No persistent workflow, deployment configuration, CSS cleanup, redesign, visual baseline promotion, API/backend change or bundle-ceiling change.
 - No work on unrelated dependency PRs.
 
 ## Allowed paths
@@ -34,10 +35,12 @@ Remove only the unreachable legacy Home presentation from `LexigoPremiumApp` now
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `.github/workflows/agent-home-cleanup.yml` only as a temporary self-removing implementation transport; it is prohibited from the final branch diff.
 
 ## Prohibited paths
 
-- Backend, migrations, workflows and deployment configuration.
+- Backend, migrations and deployment configuration.
+- Any persistent workflow change.
 - Global or route CSS.
 - Visual snapshots and performance ceilings.
 - Canonical Home island implementation.
@@ -59,11 +62,13 @@ Remove only the unreachable legacy Home presentation from `LexigoPremiumApp` now
 - Shared progress loading, active-lesson state, lesson creation/resume, auth and fallback owners remain available in `LexigoPremiumApp`.
 - No CSS selector or declaration changes.
 - Existing route, browser, accessibility, visual and performance contracts remain unchanged.
+- The temporary workflow may write only the exact target branch, must assert every source marker before replacement, and must delete itself in the same generated commit.
 
 ## Acceptance criteria
 
 - Legacy `renderHome`, its dispatch branch and Home-only presentation markers are absent from `LexigoPremiumApp`.
 - Shared Learn/Library/Profile/Lesson/auth/progress owners are explicitly protected by source contracts.
+- `.github/workflows/agent-home-cleanup.yml` is absent from the final branch diff.
 - Full required CI passes on the final developer-authored head.
 - Review audit is clean, merge uses expected head, and exact-SHA stage/public validation succeeds.
 
@@ -71,13 +76,15 @@ Remove only the unreachable legacy Home presentation from `LexigoPremiumApp` now
 
 - Home source contract, lint, TypeScript, unit tests and production build.
 - Full browser, accessibility, visual/performance and container CI.
+- Final diff audit proving no temporary workflow remains.
 - Review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Risks
 
 - Removing a symbol that is shared with lesson or auth behavior rather than Home-only presentation.
 - Accidentally changing fallback dispatch semantics for non-Home views.
+- Temporary workflow permissions or push semantics failing before the self-removal commit.
 
 ## Rollback
 
-Revert the bounded runtime/test/documentation commit; the canonical Home island remains unchanged.
+Revert the bounded runtime/test/documentation commit; the canonical Home island remains unchanged. If the temporary workflow does not self-remove, delete it immediately before any further product write.
