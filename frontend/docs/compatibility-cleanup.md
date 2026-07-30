@@ -221,3 +221,16 @@ Canonical ownership is split deliberately:
 - `LexigoPremiumApp` remains live for guest authentication, account recovery and unknown-route fallback.
 
 This slice proves reachability only. It does not delete runtime, alter auth behavior or claim the complete compatibility fallback is dead. The executable two-sided proof is `frontend/components/scenario-route-island-source.test.ts`.
+
+## Completed Home compatibility presentation deletion
+
+PR #311 established the two-sided root-route boundary: `isHomeRoute` forces `/` onto the Home graph and `LexigoHomeApp` renders before the final `LexigoPremiumApp` fallback. PR #313 removes only the now-unreachable Home presentation family from `LexigoPremiumApp`:
+
+- `renderHome`;
+- the `navigation.view === "home"` dispatch branch;
+- Home-only `WORD_PREVIEW`;
+- Home-only `russianPlural`, `goalPercent` and `RETAINED_COPY` dependencies.
+
+Shared compatibility owners remain intentionally live: guest authentication, password recovery, unknown-route fallback, persistent navigation, progress and active-lesson resource loading, Lesson Composer, Dictionary compatibility, Profile, Active Lesson, Lesson Result, `startLesson`, `resumeLesson`, and transitions whose destination is Home. No CSS, visual baseline, API, backend, workflow, deployment or bundle-ceiling contract changes are part of this deletion.
+
+The executable absence/preservation proof is `frontend/components/home-route-island-source.test.ts`.

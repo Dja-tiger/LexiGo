@@ -39,7 +39,6 @@ import {
   lessonCompositionDescription,
   lessonCompositionFallbackMessage,
   lessonPriorityDescription,
-  russianPlural,
   type LessonComposition,
 } from "../lib/lesson-composition";
 import { decideLessonAdvance, resolveActiveLessonIndex } from "../lib/lesson-flow";
@@ -93,7 +92,6 @@ import {
   type PrimaryNavigationView,
 } from "../lib/navigation-tabs";
 import {
-  goalPercent,
   type AnswerMode,
   type ProgressSummary,
   type ReviewRating,
@@ -263,7 +261,6 @@ const DEFAULT_PHRASE_CATALOG = Array.from(
 );
 const RECALL_COPY = learningTermCopy("recall");
 const DUE_COPY = learningTermCopy("due");
-const RETAINED_COPY = learningTermCopy("retained");
 const CLOZE_COPY = learningTermCopy("cloze");
 const CHUNK_COPY = learningTermCopy("chunk");
 
@@ -357,12 +354,6 @@ const SOURCE_VALUES: LessonSource[] = [
 ];
 const SIZE_VALUES = SIZE_OPTIONS.map((option) => option.value);
 const AUTH_TAB_VALUES: Array<Extract<AuthMode, "login" | "register">> = ["login", "register"];
-const WORD_PREVIEW = {
-  prompt: "incident",
-  phonetic: "/ˈɪnsɪdənt/",
-  answer: "инцидент, происшествие",
-  example: "We need to identify the cause of the incident.",
-};
 
 function Icon({ name, size = 19 }: { name: IconName; size?: number }) {
   const common = {
@@ -2017,91 +2008,6 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     );
   }
 
-  function renderHome() {
-    const progressPending = Boolean(session && (progressStatus.phase === "idle" || progressStatus.phase === "loading"));
-    const dueNow = progress?.dueNow ?? 0;
-    const nextAction = activeLesson
-      ? {
-          eyebrow: "НЕЗАВЕРШЁННЫЙ УРОК",
-          title: "Продолжите с сохранённой позиции",
-          description: `${sourceLabel(activeLesson.source)} · карточка ${activeLesson.currentIndex + 1} из ${activeLesson.items.length}.`,
-          label: "Продолжить урок",
-          action: () => void resumeLesson(),
-        }
-      : session && progress && dueNow > 0
-        ? {
-            eyebrow: "СЕЙЧАС ЛУЧШЕ ПОВТОРИТЬ",
-            title: `${dueNow} ${russianPlural(dueNow, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,
-            description: DUE_COPY.explanation,
-            label: "Повторить сейчас",
-            action: () => void startLesson(session, { source: "mixed", size: 30, mode: "recall", journeyIntent: "home_next_action" }),
-          }
-        : session && progress
-          ? {
-              eyebrow: "СЛЕДУЮЩИЙ ШАГ",
-              title: "Добавьте новые слова в учебный цикл",
-              description: "Откройте короткий блок знакомства: ответы будут видны сразу, а самостоятельное воспроизведение начнётся на следующих повторениях.",
-              label: "Начать изучение",
-              action: () => void startLesson(session, { source: "mixed", size: 15, mode: "study", journeyIntent: "home_next_action" }),
-            }
-          : {
-              eyebrow: progressPending && session ? "СИНХРОНИЗИРУЕМ ПЛАН" : "ПЕРВЫЙ ШАГ",
-              title: session ? "Настройте урок под текущую задачу" : "Соберите первый учебный блок",
-              description: session ? "Пока очередь загружается, можно выбрать режим, раздел и размер урока." : "Выберите формат обучения и посмотрите состав до регистрации и запуска.",
-              label: "Настроить урок",
-              action: () => navigate({ view: "learn" }, false, { intent: "home_next_action" }),
-            };
-
-    return (
-      <>
-        <section className="lx-home-next-action" aria-label="Следующее рекомендуемое действие">
-          <article className="lx-hero-card">
-            <div className="lx-home-next-action-copy">
-              <span>{nextAction.eyebrow}</span>
-              <h1>{nextAction.title}</h1>
-              <p>{nextAction.description}</p>
-              <button className="lx-button primary large" type="button" data-journey-intent="home_next_action" onClick={nextAction.action}>
-                <Icon name={activeLesson ? "play" : dueNow > 0 ? "repeat" : "learn"} />
-                {nextAction.label}
-              </button>
-            </div>
-            <div className="lx-hero-art" aria-hidden="true">
-              <div className="lx-word-preview">
-                <span>{WORD_PREVIEW.phonetic}</span>
-                <strong>{WORD_PREVIEW.prompt}</strong>
-                <p>{WORD_PREVIEW.answer}</p>
-                <small>{WORD_PREVIEW.example}</small>
-              </div>
-            </div>
-          </article>
-          <aside className="lx-progress-panel" aria-label="Краткий прогресс" aria-busy={progressPending || undefined}>
-            <div className="lx-panel-heading"><div><span>Учебный статус</span><strong>{progress ? `${progress.reviewsToday} из ${progress.dailyGoal}` : progressPending ? "Загружаем…" : session ? "Недоступно" : "После входа"}</strong></div><Icon name="chart" /></div>
-            {progress ? (
-              <>
-                <div className="lx-progress-ring" role="progressbar" aria-label="Выполнение дневной цели" aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizeProgressValue(goalPercent(progress))} aria-valuetext={`${progress.reviewsToday} из ${progress.dailyGoal} ответов`}><span>{goalPercent(progress)}%</span></div>
-                <div className="lx-progress-list"><div><span>{DUE_COPY.label}</span><strong>{progress.dueNow}</strong></div><div><span>{RETAINED_COPY.label} за неделю</span><strong>{progress.retainedItemsWeek}</strong></div><div><span>Серия</span><strong>{progress.currentStreak} дн.</strong></div></div>
-              </>
-            ) : progressPending ? (
-              <>
-                <div className="lx-progress-ring" aria-hidden="true"><span>—</span></div>
-                <div className="lx-progress-list" role="status" aria-live="polite" aria-label="Загрузка краткого прогресса"><div><span>{DUE_COPY.label}</span><strong>—</strong></div><div><span>{RETAINED_COPY.label} за неделю</span><strong>—</strong></div><div><span>Серия</span><strong>—</strong></div></div>
-              </>
-            ) : (
-              <AsyncStatePanel label={!session ? "Персональный прогресс доступен после входа" : "Краткий прогресс недоступен"} kind={!session ? "empty" : "error"} title={!session ? "Войдите, чтобы видеть учебную очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"} message={!session ? "Материал к повторению, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем материал к повторению и дневную цель."} reference={progressStatus.problem?.correlationId} actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined} onAction={!session ? () => requestAuthentication("home") : progressStatus.problem?.retryable ? () => void loadProgressResource(session) : undefined} compact focusResult={false} />
-            )}
-            <button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Открыть прогресс</button>
-          </aside>
-        </section>
-
-        <section className="lx-home-paths" aria-label="Назначение основных разделов">
-          <article><span>Обучение</span><h2>Настройте урок</h2><p>Режим, раздел, размер и предварительный состав настраиваются на одном экране.</p><button className="lx-button ghost" type="button" data-journey-intent="home_configure_lesson" onClick={() => navigate({ view: "learn" }, false, { intent: "home_configure_lesson" })}>Настроить урок</button></article>
-          <article><span>Словарь</span><h2>Найдите материал</h2><p>Ищите слова, термины и рабочие фразы, открывайте карточки и сохраняйте контекст.</p><button className="lx-button ghost" type="button" data-journey-intent="home_find_material" onClick={() => navigate({ view: "library" }, false, { intent: "home_find_material" })}>Найти материал</button></article>
-          <article><span>Прогресс</span><h2>Проверьте результат</h2><p>Материал к повторению, закреплённые знания, объективная успешность и дневная цель собраны отдельно.</p><button className="lx-button ghost" type="button" onClick={() => navigate({ view: "progress" }, false, { intent: "in_app_navigation" })}>Посмотреть результат</button></article>
-        </section>
-      </>
-    );
-  }
-
   function selectLessonSource(nextSource: LessonSource) {
     setSource(nextSource);
     setLessonTopic("");
@@ -2656,11 +2562,10 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
     );
   }
 
-  const view = navigation.view === "home" ? renderHome()
-    : navigation.view === "learn" ? renderLearn()
-      : navigation.view === "library" ? renderLibrary()
-        : navigation.view === "profile" ? renderProfile()
-          : renderLesson();
+  const view = navigation.view === "learn" ? renderLearn()
+  : navigation.view === "library" ? renderLibrary()
+    : navigation.view === "profile" ? renderProfile()
+      : renderLesson();
 
   return (
     <div className={`lx-app${lessonFocusMode ? " lx-lesson-focus-mode" : ""}`}>
