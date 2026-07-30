@@ -2,16 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-30 11:45 Europe/Berlin.
+- Last verified: 2026-07-30 12:14 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
+- Live `main`: `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
 - Latest completed product slice: Issue #70 — lock the already-absent Scenario compatibility runtime against regression.
 - Completion PR: #308.
 - PR #308 immutable developer-authored head: `7df6aa9058256fc5af3ba4dac61978fcfffabb38`.
 - Authoritative PR CI: #2402 / run `30493061049`, successful.
 - Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
 - Exact-SHA stage run `30494296741` deployed web/API images tagged `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`; deploy, public smoke and all 12 public browser checks succeeded.
-- Reviews, comments and unresolved review threads were empty before merge.
+- Agent Docs reconciliation PR #309 passed lightweight CI #2404 / run `30528157545` and squash-merged as `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
+- Reviews, comments and unresolved review threads were empty before both merges.
 
 ## Completed
 
@@ -41,8 +42,8 @@
 
 ## In progress
 
-- No product or tooling slice is active after PR #308.
-- This Agent Docs reconciliation records the exact merge/deployment evidence and resets current task memory.
+- No product or tooling slice is active after reconciliation PR #309.
+- Open Dependabot PRs #304, #305 and #306 are unrelated parallel dependency updates and are not part of the active Issue #70 workflow.
 
 ## Remaining roadmap
 
@@ -76,16 +77,18 @@
 
 ## Recent production/tooling evidence
 
-1. #308 — `test(frontend): lock Scenario compatibility absence` → `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-2. #307 — `docs(agent): reconcile PR 303 Scenario boundary` → `eedd9dc4d978cd8f5b89d2d969a85cd181342e8f`.
-3. #303 — `test(frontend): prove Scenario compatibility boundary` → `c8495eacdd8b1289e82a532668834414fb63e55c`.
-4. #302 — `docs(agent): reconcile PR 301 and tool-selection safety` → `8576c6645d31a4d4d4ef7b1aed5c2453f28d5d84`.
+1. #309 — `docs(agent): reconcile PR 308 Scenario absence` → `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
+2. #308 — `test(frontend): lock Scenario compatibility absence` → `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
+3. #307 — `docs(agent): reconcile PR 303 Scenario boundary` → `eedd9dc4d978cd8f5b89d2d969a85cd181342e8f`.
+4. #303 — `test(frontend): prove Scenario compatibility boundary` → `c8495eacdd8b1289e82a532668834414fb63e55c`.
 
 ## Evidence
 
 - PR #308 head `7df6aa9058256fc5af3ba4dac61978fcfffabb38` passed authoritative full CI #2402/run `30493061049`.
 - Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-- Stage run `30494296741` deployed the exact merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- Stage run `30494296741` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- PR #309 head `3b6c194b7f9c3acacf8777f8008ec9db5e9a0648` passed lightweight CI #2404/run `30528157545`; product, browser and container jobs were correctly skipped.
+- PR #309 squash merge produced current `main` SHA `a735c304b7f288b1014082c79e4dde74cdfeb10a`.
 - The source contract preserves canonical Scenario islands and guest redirect ownership while prohibiting Scenario runtime from returning to `LexigoPremiumApp`.
 - Indexed search is discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
