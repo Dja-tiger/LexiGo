@@ -73,7 +73,7 @@ describe("Learn route client-island ownership", () => {
     const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
     const premiumApp = readComponent("lexigo-premium-app.tsx");
 
-    const learnBranch = bootstrappedApp.indexOf("{useLearnIsland ? (");
+    const learnBranch = bootstrappedApp.indexOf(") : useLearnIsland ? (");
     const learnRender = bootstrappedApp.indexOf("<LexigoLearnApp", learnBranch);
     const fallbackRender = bootstrappedApp.indexOf("<LexigoPremiumApp", learnRender);
 
