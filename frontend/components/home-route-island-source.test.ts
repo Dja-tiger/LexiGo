@@ -83,14 +83,17 @@ describe("Home route client-island ownership", () => {
     expect(homeApp).toContain('routeGraph: "product"');
   });
 
-  it("records the bounded legacy Home presentation candidate without deleting shared owners", () => {
+  it("keeps legacy Home presentation absent while preserving shared fallback owners", () => {
     const compatibilityApp = readComponent("lexigo-premium-app.tsx");
-    const candidateMarkers = [
+    const retiredMarkers = [
       "function renderHome()",
       'navigation.view === "home" ? renderHome()',
       'className="lx-home-next-action"',
       'className="lx-home-paths"',
-      'aria-label="Краткий прогресс"',
+      "WORD_PREVIEW",
+      "goalPercent",
+      "russianPlural",
+      "RETAINED_COPY",
     ] as const;
     const preservedSharedMarkers = [
       "function renderResumeStrip()",
@@ -99,13 +102,16 @@ describe("Home route client-island ownership", () => {
       "function renderProfile()",
       "function renderLesson()",
       "loadProgressResource",
+      "loadActiveLessonResource",
       "resumeLesson",
       "startLesson",
       "requestAuthentication",
+      'const [navigation, setNavigation] = useState<NavigationTarget>({ view: "home" })',
+      'navigate({ view: "home" })',
     ] as const;
 
-    for (const marker of candidateMarkers) {
-      expect(compatibilityApp, `legacy Home candidate ${marker}`).toContain(marker);
+    for (const marker of retiredMarkers) {
+      expect(compatibilityApp, `retired Home marker ${marker}`).not.toContain(marker);
     }
     for (const marker of preservedSharedMarkers) {
       expect(compatibilityApp, `shared compatibility owner ${marker}`).toContain(marker);
