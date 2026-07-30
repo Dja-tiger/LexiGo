@@ -6,7 +6,7 @@
 - Branch: `refactor/issue-70-remove-home-compatibility`
 - Base SHA: `dbb7d04c083cc266ab3f9247564a7b293e32d272`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #313
 
 ## Objective
 
