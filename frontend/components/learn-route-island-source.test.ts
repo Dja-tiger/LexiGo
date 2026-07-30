@@ -15,6 +15,12 @@ function readLibrary(file: string): string {
   return readFileSync(path.join(libDirectory, file), "utf8");
 }
 
+function sourceIndex(source: string, marker: string): number {
+  const index = source.indexOf(marker);
+  expect(index, `missing source marker ${marker}`).toBeGreaterThanOrEqual(0);
+  return index;
+}
+
 describe("Learn route client-island ownership", () => {
   it("loads the dedicated Learn entry only from the persistent bootstrap layer", () => {
     const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
@@ -31,6 +37,21 @@ describe("Learn route client-island ownership", () => {
     expect(bootstrappedApp.match(/<ReviewOutboxRuntime\b/g)).toHaveLength(1);
     expect(bootstrappedApp).toContain("restoreBootstrappedSession()");
     expect(bootstrappedApp).toContain('type RouteGraph = "dictionary" | "home" | "learn" | "product"');
+  });
+
+  it("forces /learn onto the Learn graph before the compatibility fallback", () => {
+    const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
+
+    expect(bootstrappedApp).toContain("function isLearnRoute(pathname: string): boolean");
+    expect(bootstrappedApp).toContain('if (isLearnRoute(pathname)) return "learn"');
+    expect(bootstrappedApp).toContain('const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname)');
+
+    const learnBranch = sourceIndex(bootstrappedApp, ": useLearnIsland ? (");
+    const learnEntry = sourceIndex(bootstrappedApp, "<LexigoLearnApp");
+    const compatibilityFallback = sourceIndex(bootstrappedApp, "<LexigoPremiumApp");
+
+    expect(learnBranch).toBeLessThan(learnEntry);
+    expect(learnEntry).toBeLessThan(compatibilityFallback);
   });
 
   it("keeps Lesson Composer reads, mutations and presentation inside the island", () => {
@@ -124,5 +145,37 @@ describe("Learn route client-island ownership", () => {
     expect(learnApp).toContain('return_to: returnTo');
     expect(learnApp).not.toContain("sessionStorage.setItem");
     expect(learnApp).not.toContain("localStorage.setItem");
+  });
+
+  it("keeps the legacy Learn presentation explicit while preserving shared fallback owners", () => {
+    const compatibilityApp = readComponent("lexigo-premium-app.tsx");
+    const candidateMarkers = [
+      "function renderLearn()",
+      'navigation.view === "learn" ? renderLearn()',
+      "LessonComposerProgressiveShell",
+      "SOURCE_OPTIONS",
+      "MODE_OPTIONS",
+      "SIZE_OPTIONS",
+    ] as const;
+    const preservedSharedMarkers = [
+      "function renderResumeStrip()",
+      "function renderLibrary()",
+      "function renderProfile()",
+      "function renderLesson()",
+      "loadProgressResource",
+      "loadActiveLessonResource",
+      "resumeLesson",
+      "startLesson",
+      "requestAuthentication",
+      'const [navigation, setNavigation] = useState<NavigationTarget>({ view: "home" })',
+      'navigate({ view: "home" })',
+    ] as const;
+
+    for (const marker of candidateMarkers) {
+      expect(compatibilityApp, `legacy Learn candidate ${marker}`).toContain(marker);
+    }
+    for (const marker of preservedSharedMarkers) {
+      expect(compatibilityApp, `shared compatibility owner ${marker}`).toContain(marker);
+    }
   });
 });
