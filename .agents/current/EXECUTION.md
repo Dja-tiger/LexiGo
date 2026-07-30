@@ -1,18 +1,34 @@
 # Current Task Execution
 
-No active task.
+## Task
 
-## Previous execution
+- Issue: #70
+- Branch: `test/issue-70-home-compatibility-boundary`
+- Base SHA: `94836b3214dddccd58e249a342f0e56505bf2d7d`
+- PR: pending
 
-- Issue #70 Scenario absence-contract slice completed through PR #308.
-- Full CI #2402/run `30493061049` passed on immutable head `7df6aa9058256fc5af3ba4dac61978fcfffabb38`.
-- Expected-head squash merge produced `f2bc1dfb46408bdd85bbc9ad4a1145f7269908f6`.
-- Exact-SHA stage run `30494296741` completed deploy, public smoke and all 12 public browser checks successfully.
-- Runtime remained unchanged; the executable contract prevents Scenario API, state, lifecycle and render ownership from returning to `LexigoPremiumApp`.
+## Skills used
 
-## Next execution requirements
+### GitHub repository operations
 
-- Re-run repository pre-flight.
-- Record the selected atomic slice before writes.
-- Use exact operation/function/schema checks for every repository tool call.
-- Preserve guest/auth and shared-domain owners unless replacement evidence is executable.
+Purpose: reconcile live repository memory, inspect exact Home route ownership and extend an existing executable source contract without runtime changes.
+
+Instruction source: `AGENTS.md`, `.agents/AGENTS.md`, mandatory referenced guidance, `.agents/PROJECT_STATE.md`, `.agents/current/*`, `docs/agent-harness.md`, Issue #70 and `frontend/docs/compatibility-cleanup.md`.
+
+Version or verification date: 2026-07-30.
+
+Inputs: live `main`, open PRs, Issue #70, stage Issue #12, `lexigo-bootstrapped-app.tsx`, `lexigo-home-app.tsx`, `lexigo-premium-app.tsx`, existing Home source contract.
+
+Actions performed: separate PROJECT_STATE reconciliation through PR #310; exact route-graph/render-order audit; Home canonical/candidate/preservation contract extension; branch read-back verification.
+
+Result: Home boundary proof implemented; PR lifecycle and authoritative CI pending.
+
+Failure: indexed search did not return the existing Home source-contract file, causing an attempted `create_file` to be rejected with HTTP 422.
+
+Root cause: search-index recall was treated as path discovery rather than confirming existence with `fetch_file`.
+
+Fallback: stopped writes, verified `main` and branch blobs, reloaded the exact operation contract and used `update_file` with blob SHA `24574aa412c22a6e99fca1a3688df7b348b3dd29`.
+
+Limitations: this slice records reachability and the future deletion manifest only; it does not delete compatibility Home presentation or claim shared progress/lesson/auth owners are dead.
+
+Reusable lesson: before `create_file`, perform an exact path read even when indexed search returns no result; search is discovery-only and cannot prove path absence.
