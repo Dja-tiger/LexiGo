@@ -40,7 +40,7 @@ describe("Home route client-island ownership", () => {
     expect(bootstrappedApp).toContain('if (isHomeRoute(pathname)) return "home"');
     expect(bootstrappedApp).toContain('const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname)');
 
-    const homeBranch = sourceIndex(bootstrappedApp, "{useHomeIsland ? (");
+    const homeBranch = sourceIndex(bootstrappedApp, ": useHomeIsland ? (");
     const homeEntry = sourceIndex(bootstrappedApp, "<LexigoHomeApp");
     const compatibilityFallback = sourceIndex(bootstrappedApp, "<LexigoPremiumApp");
 
