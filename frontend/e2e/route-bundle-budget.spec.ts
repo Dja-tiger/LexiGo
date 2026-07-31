@@ -30,10 +30,11 @@ type RouteBundleResult = {
 
 type RouteCase<Route extends string = string> = {
   route: Route;
+  preparePage?: (page: Page) => Promise<void>;
   waitUntilReady: (page: Page) => Promise<void>;
 };
 
-const COMPATIBILITY_PROBE_ROUTE = "/lesson/bundle-probe";
+const COMPATIBILITY_PROBE_ROUTE = "/learn";
 
 const SCENARIO_CATALOG_ITEM = {
   slug: SCENARIO_DETAIL.slug,
@@ -120,6 +121,19 @@ const ROUTES: Array<RouteCase<RoutePath>> = [
 
 const COMPATIBILITY_PROBE: RouteCase = {
   route: COMPATIBILITY_PROBE_ROUTE,
+  preparePage: async (page) => {
+    await page.addInitScript(() => {
+      const current = window.history.state;
+      window.history.replaceState(
+        {
+          ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+          lexigoRouteGraph: "product",
+        },
+        "",
+        window.location.href,
+      );
+    });
+  },
   waitUntilReady: async (page) => {
     await expect(page.locator(".lx-app")).toBeVisible();
   },
@@ -207,6 +221,7 @@ async function measureRoute(browser: Browser, routeCase: RouteCase): Promise<Rou
   const { context, page } = await createColdRoutePage(browser);
   const errors = captureRuntimeErrors(page);
   try {
+    await routeCase.preparePage?.(page);
     await page.goto(routeCase.route, { waitUntil: "domcontentloaded" });
     await routeCase.waitUntilReady(page);
     await page.waitForTimeout(1_500);
