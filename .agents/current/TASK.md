@@ -19,6 +19,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - Convert the Learn source contract from candidate-presence to absence/preservation evidence.
 - Update the existing Home absence contract so it no longer protects the independently retired Learn presentation while continuing to preserve shared fallback owners.
 - Align the existing progressive Lesson Composer source contract with canonical Learn presentation ownership while preserving the production lesson API owner.
+- Align existing navigation E2E assertions with canonical `/learn` empty-active-lesson and saved-active-lesson states after the legacy heading is retired.
 
 ## Non-goals
 
@@ -32,6 +33,8 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - `frontend/components/learn-route-island-source.test.ts`
 - `frontend/components/home-route-island-source.test.ts`
 - `frontend/app/adaptive-lesson-composer.test.ts`
+- `frontend/e2e/adaptive-navigation.spec.ts`
+- `frontend/e2e/app-router-routes.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -58,6 +61,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - Active Lesson handoff remains on the product graph.
 - Existing Home retirement evidence remains valid without treating retired Learn presentation as shared runtime.
 - Progressive composer tests distinguish canonical presentation ownership from retained lesson API ownership.
+- Navigation E2E distinguishes an absent active lesson from a saved active lesson instead of depending on the retired legacy heading.
 - No visual or API behavior changes.
 
 ## Acceptance criteria
@@ -65,6 +69,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - `renderLearn` is absent from `LexigoPremiumApp`.
 - Its exact dispatch branch is absent.
 - Learn, Home and progressive composer source contracts protect canonical route precedence, retirement evidence and shared-owner preservation without contradictory assertions.
+- Existing navigation E2E validates canonical Learn state ownership without legacy presentation copy.
 - Final diff contains no temporary workflow.
 - Full required CI passes on the final developer-authored head.
 
