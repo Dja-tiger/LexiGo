@@ -22,16 +22,19 @@ type JavaScriptAsset = {
 };
 
 type RouteBundleResult = {
-  route: RoutePath;
+  route: string;
   initialRequests: number;
   javascriptBytes: number;
   javascriptAssets: JavaScriptAsset[];
 };
 
-type RouteCase = {
-  route: RoutePath;
+type RouteCase<Route extends string = string> = {
+  route: Route;
+  preparePage?: (page: Page) => Promise<void>;
   waitUntilReady: (page: Page) => Promise<void>;
 };
+
+const COMPATIBILITY_PROBE_ROUTE = "/learn";
 
 const SCENARIO_CATALOG_ITEM = {
   slug: SCENARIO_DETAIL.slug,
@@ -48,7 +51,7 @@ const SCENARIO_CATALOG_ITEM = {
   stepCount: SCENARIO_DETAIL.stepCount,
 };
 
-const ROUTES: RouteCase[] = [
+const ROUTES: Array<RouteCase<RoutePath>> = [
   {
     route: "/",
     waitUntilReady: async (page) => {
@@ -115,6 +118,26 @@ const ROUTES: RouteCase[] = [
     },
   },
 ];
+
+const COMPATIBILITY_PROBE: RouteCase = {
+  route: COMPATIBILITY_PROBE_ROUTE,
+  preparePage: async (page) => {
+    await page.addInitScript(() => {
+      const current = window.history.state;
+      window.history.replaceState(
+        {
+          ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),
+          lexigoRouteGraph: "product",
+        },
+        "",
+        window.location.href,
+      );
+    });
+  },
+  waitUntilReady: async (page) => {
+    await expect(page.locator(".lx-app")).toBeVisible();
+  },
+};
 
 async function installActiveLesson(context: BrowserContext): Promise<void> {
   await context.route("**/api/v1/lessons/active", async (route) => {
@@ -198,6 +221,7 @@ async function measureRoute(browser: Browser, routeCase: RouteCase): Promise<Rou
   const { context, page } = await createColdRoutePage(browser);
   const errors = captureRuntimeErrors(page);
   try {
+    await routeCase.preparePage?.(page);
     await page.goto(routeCase.route, { waitUntil: "domcontentloaded" });
     await routeCase.waitUntilReady(page);
     await page.waitForTimeout(1_500);
@@ -236,7 +260,11 @@ async function measureRoute(browser: Browser, routeCase: RouteCase): Promise<Rou
   }
 }
 
-async function writeRouteBundleReport(results: RouteBundleResult[]): Promise<void> {
+async function writeRouteBundleReport(
+  results: RouteBundleResult[],
+  compatibilityProbe: RouteBundleResult | null = null,
+  fallbackExclusiveAssets: JavaScriptAsset[] = [],
+): Promise<void> {
   await mkdir("test-results", { recursive: true });
   await writeFile(
     "test-results/route-bundle-budget-report.json",
@@ -245,13 +273,15 @@ async function writeRouteBundleReport(results: RouteBundleResult[]): Promise<voi
       measurement: bundleBudgets.measurement,
       budgets: bundleBudgets.routes,
       results,
+      compatibilityProbe,
+      fallbackExclusiveAssets,
     }, null, 2)}\n`,
     "utf8",
   );
 }
 
-test("canonical routes stay within cold-browser JavaScript budgets", async ({ browser }) => {
-  test.setTimeout(420_000);
+test("canonical routes stay within budgets and exclude fallback-only JavaScript", async ({ browser }) => {
+  test.setTimeout(480_000);
   const results: RouteBundleResult[] = [];
   await writeRouteBundleReport(results);
 
@@ -270,4 +300,29 @@ test("canonical routes stay within cold-browser JavaScript budgets", async ({ br
       budget.maxJavascriptBytes,
     );
   }
+
+  const compatibilityProbe = await measureRoute(browser, COMPATIBILITY_PROBE);
+  const canonicalAssetPaths = new Set(
+    results.flatMap((result) => result.javascriptAssets.map((asset) => asset.path)),
+  );
+  const fallbackExclusiveAssets = compatibilityProbe.javascriptAssets.filter(
+    (asset) => !canonicalAssetPaths.has(asset.path),
+  );
+
+  expect(
+    fallbackExclusiveAssets,
+    "the live compatibility fallback must retain at least one independently loaded JavaScript asset",
+  ).not.toEqual([]);
+
+  for (const result of results) {
+    const routeAssetPaths = new Set(result.javascriptAssets.map((asset) => asset.path));
+    for (const fallbackAsset of fallbackExclusiveAssets) {
+      expect(
+        routeAssetPaths.has(fallbackAsset.path),
+        `${result.route}: must not load fallback-only asset ${fallbackAsset.path}`,
+      ).toBe(false);
+    }
+  }
+
+  await writeRouteBundleReport(results, compatibilityProbe, fallbackExclusiveAssets);
 });
