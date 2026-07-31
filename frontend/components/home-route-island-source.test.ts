@@ -83,7 +83,7 @@ describe("Home route client-island ownership", () => {
     expect(homeApp).toContain('routeGraph: "product"');
   });
 
-  it("keeps legacy Home presentation absent while preserving shared fallback owners", () => {
+  it("keeps retired route presentations absent while preserving shared fallback owners", () => {
     const compatibilityApp = readComponent("lexigo-premium-app.tsx");
     const retiredMarkers = [
       "function renderHome()",
@@ -94,10 +94,11 @@ describe("Home route client-island ownership", () => {
       "goalPercent",
       "russianPlural",
       "RETAINED_COPY",
+      "function renderLearn()",
+      'navigation.view === "learn" ? renderLearn()',
     ] as const;
     const preservedSharedMarkers = [
       "function renderResumeStrip()",
-      "function renderLearn()",
       "function renderLibrary()",
       "function renderProfile()",
       "function renderLesson()",
@@ -111,7 +112,7 @@ describe("Home route client-island ownership", () => {
     ] as const;
 
     for (const marker of retiredMarkers) {
-      expect(compatibilityApp, `retired Home marker ${marker}`).not.toContain(marker);
+      expect(compatibilityApp, `retired route marker ${marker}`).not.toContain(marker);
     }
     for (const marker of preservedSharedMarkers) {
       expect(compatibilityApp, `shared compatibility owner ${marker}`).toContain(marker);

@@ -429,7 +429,7 @@ test("an active lesson removes top-level navigation and blocks browser history e
 
   await page.goBack();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Сохранённый активный урок" })).toBeVisible();
   await expect(page).not.toHaveURL(/\/lesson\//);
 });
 
