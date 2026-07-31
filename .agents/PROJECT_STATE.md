@@ -2,16 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-31 15:16 Europe/Moscow.
+- Last verified: 2026-07-31 16:27 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
+- Live `main`: `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
 - Latest completed product slice: Issue #70 — remove the proven-unreachable legacy Learn presentation.
 - Completion PR: #318.
 - PR #318 immutable head: `a717f1abb8c4749e6d684e687043ab0414bc01e7`.
 - Authoritative PR CI: #2444 / run `30620664121`, successful.
-- Expected-head squash merge produced `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
+- Expected-head squash merge produced product SHA `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
 - Exact-SHA stage run `30626027711` deployed web/API images tagged `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`; deploy, public smoke and all 12 public browser checks succeeded.
-- Reviews, comments and unresolved review threads were empty before merge.
+- Documentation reconciliation PR #322 passed lightweight CI #2446 / run `30630502166` and squash-merged as current `main` SHA `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
+- Reviews, comments and unresolved review threads were empty before both merges.
 
 ## Completed
 
@@ -43,7 +44,7 @@
 
 ## In progress
 
-- No product slice is active while PR #318 reconciliation is being completed in this docs-only branch.
+- No product slice is active.
 - Open Dependabot PRs #304, #305 and #306 are unrelated parallel dependency updates.
 
 ## Remaining roadmap
@@ -82,18 +83,19 @@
 
 ## Recent production/tooling evidence
 
-1. #318 — `refactor(frontend): remove legacy Learn presentation` → `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
-2. #316 — `test(frontend): prove Learn compatibility boundary` → `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
-3. #314 — `docs(agent): reconcile PR 313 Home deletion` → `d7a2c037040b1a1d8d978fa038b2528abd92661e`.
-4. #313 — `refactor(frontend): remove legacy Home presentation` → `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
+1. #322 — `docs(agent): reconcile legacy Learn deletion` → `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
+2. #318 — `refactor(frontend): remove legacy Learn presentation` → `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
+3. #316 — `test(frontend): prove Learn compatibility boundary` → `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
+4. #314 — `docs(agent): reconcile PR 313 Home deletion` → `d7a2c037040b1a1d8d978fa038b2528abd92661e`.
 
 ## Evidence
 
 - PR #318 head `a717f1abb8c4749e6d684e687043ab0414bc01e7` passed authoritative full CI #2444/run `30620664121`.
 - Earlier CI failures were stale browser expectations after the legacy heading was retired; runtime behavior remained canonical and the assertions were corrected to distinguish absent and saved active-lesson states.
-- Reviews, comments and unresolved review threads were empty before Ready and merge.
-- Expected-head squash merge produced current product `main` SHA `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
-- Stage run `30626027711` deployed the exact merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- Expected-head squash merge produced product SHA `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
+- Stage run `30626027711` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- PR #322 head `a32252d89c474b6d2ce0480aa5c1c8f2bc56b1ed` passed lightweight CI #2446/run `30630502166`; heavy backend/frontend/browser/container jobs were correctly skipped.
+- PR #322 squash merge produced current `main` SHA `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
 - Accidental empty Issues #319, #320 and #321 were immediately closed as `not_planned`; they track no project work.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
