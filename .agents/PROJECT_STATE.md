@@ -4,15 +4,17 @@
 
 - Last verified: 2026-07-31 21:35 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+- Repository base verified before this documentation slice: `f09b278e5ef743bec10d1bb69d75a460513bb581`.
+- Latest deployed product SHA: `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
 - Latest completed product slice: Issue #70 — executable inventory of the final live `LexigoPremiumApp` compatibility fallback.
 - Completion PR: #324.
 - PR #324 immutable head: `97a182b79ed01f528fbd8b2abf982bf98ec6e07c`.
 - Authoritative PR CI: #2452 / run `30646932870`, successful.
 - Expected-head squash merge produced product SHA `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
 - Exact-SHA stage run `30652629164` deployed web/API images tagged `cbb9bc9c50e76a93c887736319047fd5d98bc35a`; deploy, public smoke and all 12 public browser checks succeeded.
-- Documentation reconciliation PR #325 passed lightweight CI #2454 / run `30654585328` and squash-merged as current `main` SHA `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
-- Reviews, comments and unresolved review threads were empty before both merges.
+- Documentation reconciliation PR #325 passed lightweight CI #2454 / run `30654585328` and squash-merged as `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+- Documentation reconciliation PR #326 passed lightweight CI #2456 / run `30656416599` and squash-merged as repository base `f09b278e5ef743bec10d1bb69d75a460513bb581`.
+- Reviews, comments and unresolved review threads were empty before all recorded merges.
 
 ## Completed
 
@@ -84,10 +86,10 @@
 
 ## Recent production/tooling evidence
 
-1. #325 — `docs(agent): reconcile PR 324 fallback inventory` → `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
-2. #324 — `test(frontend): inventory final compatibility fallback` → `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
-3. #323 — `docs(agent): reconcile main after PR 322` → `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
-4. #322 — `docs(agent): reconcile legacy Learn deletion` → `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
+1. #326 — `docs(agent): reconcile main after PR 325` → `f09b278e5ef743bec10d1bb69d75a460513bb581`.
+2. #325 — `docs(agent): reconcile PR 324 fallback inventory` → `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+3. #324 — `test(frontend): inventory final compatibility fallback` → `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
+4. #323 — `docs(agent): reconcile main after PR 322` → `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
 
 ## Evidence
 
@@ -97,10 +99,14 @@
 - Expected-head squash merge produced product SHA `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
 - Stage run `30652629164` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
 - PR #325 head `6832eb214148272e745c70891b875fe17c76b2e6` passed lightweight CI #2454/run `30654585328`; heavy backend/frontend/browser/container jobs were correctly skipped.
-- PR #325 squash merge produced current `main` SHA `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
-- Two rejected connector calls attempted `create_file` against nonexistent branches while branch creation was intended. Both returned 404; verification confirmed `main` unchanged and paths `__invalid__` and `noop` absent. The exact `create_branch` schema was then reloaded before continuing.
+- PR #326 head `e97735651c4b6a82a3d315e4d464f226c5b88123` passed lightweight CI #2456/run `30656416599`; heavy backend/frontend/browser/container jobs were correctly skipped.
+- Two rejected connector calls attempted `create_file` against nonexistent branches while branch creation was intended. Both returned 404; verification confirmed repository base unchanged and paths `__invalid__` and `noop` absent. The exact `create_branch` schema was then reloaded before continuing.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
+
+## State semantics
+
+This file records the exact repository base verified before the current task or documentation slice, the latest deployed product SHA, and the latest completed delivery evidence. It intentionally does not claim that a SHA embedded in a documentation commit will remain the live tip after that documentation PR merges. A docs-only merge does not make this state stale solely by advancing `main`; staleness is determined by unrecorded product, roadmap, Issue, deployment or dependency changes.
 
 ## Update protocol
 
-Update this file before a new task when stale, after roadmap/dependency changes, after material Issue changes, after product deployment and after any discrepancy with live GitHub. GitHub remains authoritative. Resolve live refs before writes.
+Update this file before a new task when product, roadmap, Issue, deployment or dependency facts are stale; after material product deployment; and after any discrepancy in those recorded facts. Always verify the current live GitHub tip separately before writes. Do not create recursive reconciliation PRs solely because a docs-only reconciliation merge advanced `main`.
