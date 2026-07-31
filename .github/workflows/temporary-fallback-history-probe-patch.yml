@@ -1,0 +1,59 @@
+name: Temporary fallback history probe patch
+
+on:
+  push:
+    branches:
+      - test/issue-70-fallback-bundle-isolation
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: test/issue-70-fallback-bundle-isolation
+      - name: Use the production history boundary for the fallback probe
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('frontend/e2e/route-bundle-budget.spec.ts')
+          source = path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  'type RouteCase<Route extends string = string> = {\n  route: Route;\n  waitUntilReady: (page: Page) => Promise<void>;\n};',
+                  'type RouteCase<Route extends string = string> = {\n  route: Route;\n  preparePage?: (page: Page) => Promise<void>;\n  waitUntilReady: (page: Page) => Promise<void>;\n};',
+              ),
+              (
+                  'const COMPATIBILITY_PROBE_ROUTE = "/lesson/bundle-probe";',
+                  'const COMPATIBILITY_PROBE_ROUTE = "/learn";',
+              ),
+              (
+                  'const COMPATIBILITY_PROBE: RouteCase = {\n  route: COMPATIBILITY_PROBE_ROUTE,\n  waitUntilReady: async (page) => {',
+                  'const COMPATIBILITY_PROBE: RouteCase = {\n  route: COMPATIBILITY_PROBE_ROUTE,\n  preparePage: async (page) => {\n    await page.addInitScript(() => {\n      const current = window.history.state;\n      window.history.replaceState(\n        {\n          ...(current && typeof current === "object" ? current as Record<string, unknown> : {}),\n          lexigoRouteGraph: "product",\n        },\n        "",\n        window.location.href,\n      );\n    });\n  },\n  waitUntilReady: async (page) => {',
+              ),
+              (
+                  '  try {\n    await page.goto(routeCase.route, { waitUntil: "domcontentloaded" });',
+                  '  try {\n    await routeCase.preparePage?.(page);\n    await page.goto(routeCase.route, { waitUntil: "domcontentloaded" });',
+              ),
+          ]
+          for old, new in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected one marker, found {count}: {old[:80]!r}')
+              source = source.replace(old, new)
+          path.write_text(source, encoding='utf-8')
+          PY
+          git diff --check
+          git diff --exit-code -- frontend/e2e/route-bundle-budget.spec.ts && exit 1 || true
+      - name: Commit bounded patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add frontend/e2e/route-bundle-budget.spec.ts
+          git commit -m "test(frontend): probe fallback through learn history"
+          git push origin HEAD:test/issue-70-fallback-bundle-isolation
