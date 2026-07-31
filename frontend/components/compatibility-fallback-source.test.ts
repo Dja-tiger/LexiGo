@@ -52,6 +52,7 @@ describe("final compatibility fallback inventory", () => {
   });
 
   it("preserves the shared auth, recovery, lesson and unknown-route boundary", () => {
+    const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
     const premium = readComponent("lexigo-premium-app.tsx");
 
     expect(premium).toContain("requestAuthentication(");
@@ -60,7 +61,8 @@ describe("final compatibility fallback inventory", () => {
     expect(premium).toContain("function renderLesson()");
     expect(premium).toContain("async function startLesson(");
     expect(premium).toContain("async function resumeLesson(");
-    expect(premium).toContain("LexiGo не смог открыть страницу");
+    expect(bootstrap).toContain('return "product";');
+    expect(bootstrap).toContain("<LexigoPremiumApp key={routeKey} initialSession={initialSession} />");
   });
 
   it("does not classify canonical Learn CSS as orphaned after presentation retirement", () => {
