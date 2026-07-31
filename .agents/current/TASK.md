@@ -18,6 +18,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - Delete the exact `navigation.view === "learn" ? renderLearn()` dispatch branch.
 - Convert the Learn source contract from candidate-presence to absence/preservation evidence.
 - Update the existing Home absence contract so it no longer protects the independently retired Learn presentation while continuing to preserve shared fallback owners.
+- Align the existing progressive Lesson Composer source contract with canonical Learn presentation ownership while preserving the production lesson API owner.
 
 ## Non-goals
 
@@ -30,6 +31,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - `frontend/components/lexigo-premium-app.tsx`
 - `frontend/components/learn-route-island-source.test.ts`
 - `frontend/components/home-route-island-source.test.ts`
+- `frontend/app/adaptive-lesson-composer.test.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -43,7 +45,7 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 
 - `LexigoBootstrappedApp`: canonical Learn graph selection and render precedence.
 - `LexigoLearnApp`: canonical Lesson Composer owner.
-- `LexigoPremiumApp`: shared authentication, recovery, Library/Profile/Lesson and lesson-domain compatibility behavior.
+- `LexigoPremiumApp`: shared authentication, recovery, Library/Profile/Lesson and lesson-domain API compatibility behavior.
 
 ## Documentation owners
 
@@ -55,13 +57,14 @@ Remove only the proven-unreachable legacy Learn presentation from `LexigoPremium
 - `startLesson` and all shared auth/lesson owners remain available.
 - Active Lesson handoff remains on the product graph.
 - Existing Home retirement evidence remains valid without treating retired Learn presentation as shared runtime.
+- Progressive composer tests distinguish canonical presentation ownership from retained lesson API ownership.
 - No visual or API behavior changes.
 
 ## Acceptance criteria
 
 - `renderLearn` is absent from `LexigoPremiumApp`.
 - Its exact dispatch branch is absent.
-- Learn and Home source contracts protect canonical route precedence, retirement evidence and shared-owner preservation without contradictory assertions.
+- Learn, Home and progressive composer source contracts protect canonical route precedence, retirement evidence and shared-owner preservation without contradictory assertions.
 - Final diff contains no temporary workflow.
 - Full required CI passes on the final developer-authored head.
 
