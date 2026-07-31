@@ -2,16 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-07-31 21:10 Europe/Moscow.
+- Last verified: 2026-07-31 21:35 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
+- Live `main`: `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
 - Latest completed product slice: Issue #70 — executable inventory of the final live `LexigoPremiumApp` compatibility fallback.
 - Completion PR: #324.
 - PR #324 immutable head: `97a182b79ed01f528fbd8b2abf982bf98ec6e07c`.
 - Authoritative PR CI: #2452 / run `30646932870`, successful.
 - Expected-head squash merge produced product SHA `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
 - Exact-SHA stage run `30652629164` deployed web/API images tagged `cbb9bc9c50e76a93c887736319047fd5d98bc35a`; deploy, public smoke and all 12 public browser checks succeeded.
-- Reviews, comments and unresolved review threads were empty before merge.
+- Documentation reconciliation PR #325 passed lightweight CI #2454 / run `30654585328` and squash-merged as current `main` SHA `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+- Reviews, comments and unresolved review threads were empty before both merges.
 
 ## Completed
 
@@ -83,10 +84,10 @@
 
 ## Recent production/tooling evidence
 
-1. #324 — `test(frontend): inventory final compatibility fallback` → `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
-2. #323 — `docs(agent): reconcile main after PR 322` → `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
-3. #322 — `docs(agent): reconcile legacy Learn deletion` → `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
-4. #318 — `refactor(frontend): remove legacy Learn presentation` → `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`.
+1. #325 — `docs(agent): reconcile PR 324 fallback inventory` → `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+2. #324 — `test(frontend): inventory final compatibility fallback` → `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
+3. #323 — `docs(agent): reconcile main after PR 322` → `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
+4. #322 — `docs(agent): reconcile legacy Learn deletion` → `558ccda1cf5e062ff6dc050b0ea0a0814f901bf2`.
 
 ## Evidence
 
@@ -95,6 +96,9 @@
 - Review comments, review submissions and unresolved threads were empty.
 - Expected-head squash merge produced product SHA `cbb9bc9c50e76a93c887736319047fd5d98bc35a`.
 - Stage run `30652629164` deployed the exact product merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
+- PR #325 head `6832eb214148272e745c70891b875fe17c76b2e6` passed lightweight CI #2454/run `30654585328`; heavy backend/frontend/browser/container jobs were correctly skipped.
+- PR #325 squash merge produced current `main` SHA `674e0d58272a1ca343c6b845c7954b5a66d2d187`.
+- Two rejected connector calls attempted `create_file` against nonexistent branches while branch creation was intended. Both returned 404; verification confirmed `main` unchanged and paths `__invalid__` and `noop` absent. The exact `create_branch` schema was then reloaded before continuing.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## Update protocol
