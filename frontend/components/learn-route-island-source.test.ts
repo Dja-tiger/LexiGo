@@ -69,7 +69,7 @@ describe("Learn route client-island ownership", () => {
     expect(navigationHistory).toContain('candidate === "learn"');
   });
 
-  it("renders the canonical Learn island before the compatibility fallback while preserving the bounded legacy candidate", () => {
+  it("renders the canonical Learn island before the compatibility fallback while excluding the retired legacy presentation", () => {
     const bootstrappedApp = readComponent("lexigo-bootstrapped-app.tsx");
     const premiumApp = readComponent("lexigo-premium-app.tsx");
 
@@ -80,8 +80,8 @@ describe("Learn route client-island ownership", () => {
     expect(learnBranch).toBeGreaterThan(-1);
     expect(learnRender).toBeGreaterThan(learnBranch);
     expect(fallbackRender).toBeGreaterThan(learnRender);
-    expect(premiumApp).toContain("function renderLearn()");
-    expect(premiumApp).toContain('navigation.view === "learn" ? renderLearn()');
+    expect(premiumApp).not.toContain("function renderLearn()");
+    expect(premiumApp).not.toContain('navigation.view === "learn" ? renderLearn()');
     expect(premiumApp).toContain("async function startLesson(");
     expect(premiumApp).toContain("requestAuthentication(");
     expect(premiumApp).toContain("function renderLibrary()");
