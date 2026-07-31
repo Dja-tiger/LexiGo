@@ -33,7 +33,7 @@ type RouteCase<Route extends string = string> = {
   waitUntilReady: (page: Page) => Promise<void>;
 };
 
-const COMPATIBILITY_PROBE_ROUTE = "/__compatibility-bundle-probe";
+const COMPATIBILITY_PROBE_ROUTE = "/lesson/bundle-probe";
 
 const SCENARIO_CATALOG_ITEM = {
   slug: SCENARIO_DETAIL.slug,
