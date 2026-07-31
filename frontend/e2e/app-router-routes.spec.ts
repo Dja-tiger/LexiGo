@@ -211,7 +211,7 @@ test("semantic route links support a real new tab and browser Back/Forward", asy
   await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/learn$/);
-  await expect(page.getByRole("status", { name: "Сохранённый активный урок" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Активный урок отсутствует" })).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/\/dictionary$/);
   await page.goForward();
