@@ -2,15 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-07-30 22:39 Europe/Berlin.
+- Last verified: 2026-07-31 03:04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
-- Latest completed product slice: Issue #70 — remove the proven-unreachable legacy Home presentation from `LexigoPremiumApp`.
-- Completion PR: #313.
-- PR #313 immutable developer-authored head: `b7e8c872078a60aceeacaad6fd5978ed3d6164cb`.
-- Authoritative PR CI: #2426 / run `30575851960`, successful.
-- Expected-head squash merge produced `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
-- Exact-SHA stage run `30577252268` deployed web/API images tagged `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`; deploy, public smoke and public browser validation succeeded.
+- Live `main`: `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
+- Latest completed product slice: Issue #70 — prove the two-sided Learn compatibility boundary before runtime deletion.
+- Completion PR: #316.
+- PR #316 immutable head: `654cb64823bc90cf27a9458694c19995de761767`.
+- Authoritative PR CI: #2431 / run `30586633106`, successful.
+- Expected-head squash merge produced `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
+- Exact-SHA stage run `30591994231` deployed web/API images tagged `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`; deploy, public smoke and all 12 public browser checks succeeded.
 - Reviews, comments and unresolved review threads were empty before merge.
 
 ## Completed
@@ -26,7 +26,7 @@
 - Home, Learn, Active Lesson, Phrases, Dictionary, Word Detail, Progress, Profile, Scenario catalog and Scenario detail use dedicated dynamic client entries.
 - `LexigoBootstrappedApp` remains the sole session restoration, refresh coordination, account runtime and dynamic route-entry owner.
 - `ReviewOutboxRuntime` remains the sole durable review-queue owner.
-- Canonical Scenario catalog/detail lifecycle, pause/resume, draft persistence and submission contracts are implemented.
+- `LexigoLearnApp` is the canonical `/learn` Lesson Composer owner and renders before the final `LexigoPremiumApp` compatibility fallback.
 
 ### Compatibility cleanup evidence
 
@@ -35,65 +35,66 @@
 - PR #298 established the Dictionary boundary; product-owned History entries still preserve live compatibility reachability.
 - PR #300 established the Profile boundary; guest authentication and account recovery remain live in `LexigoPremiumApp`.
 - PR #303 established the two-sided Scenario route boundary; PR #308 protects the already-absent Scenario compatibility runtime against regression.
-- PR #311 proved that `/` is forced onto the Home graph and renders `LexigoHomeApp` before the `LexigoPremiumApp` fallback.
-- PR #313 removed the now-unreachable `renderHome` presentation, its Home dispatch branch and Home-only `WORD_PREVIEW`, `russianPlural`, `goalPercent` and `RETAINED_COPY` dependencies.
-- The Home absence/preservation source contract keeps shared authentication, recovery, unknown-route, progress-loading, active-lesson and lesson-domain owners explicit.
+- PR #311 proved the Home boundary; PR #313 removed the unreachable legacy Home presentation.
+- PR #316 proved that `/learn` renders `LexigoLearnApp` before `LexigoPremiumApp`, bounded legacy `renderLearn` and its dispatch as the next deletion candidate, and explicitly preserved shared lesson creation, authentication, Library, Profile and Lesson owners.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
-- Issue #70 remains open for later independently proven compatibility or selector families.
+- Issue #70 remains open for the Learn runtime deletion and later independently proven compatibility/CSS families.
 
 ## In progress
 
-- No product or tooling slice is active after PR #313 post-merge validation.
-- Agent Docs reconciliation is being completed in a separate docs-only PR.
-- Open Dependabot PRs #304, #305 and #306 are unrelated parallel dependency updates and are not part of the active Issue #70 workflow.
+- No product slice is active while PR #316 reconciliation is being completed in this docs-only branch.
+- Open Dependabot PRs #304, #305 and #306 are unrelated parallel dependency updates.
 
 ## Remaining roadmap
 
-### 1. #70 — Select the next independently proven compatibility family
+### 1. #70 — Remove only the proven-unreachable legacy Learn presentation
 
-- Re-read live routing, imports, fallback predicates, markup consumers and `frontend/docs/compatibility-cleanup.md` before choosing scope.
+- Delete `renderLearn` and its exact dispatch branch from `LexigoPremiumApp`.
+- Remove only dependencies proven Learn-exclusive by exact consumer search.
+- Preserve `startLesson`, authentication, Library, Profile, Lesson, unknown-route fallback and Active Lesson behavior.
+- Convert the Learn source contract from candidate-presence assertions to absence/preservation assertions.
+- Require full authoritative CI, browser matrix, performance budgets, containers, expected-head squash merge and exact-SHA stage validation.
+
+### 2. #70 — Audit remaining compatibility and CSS ownership families
+
 - Select one minimal family per atomic PR.
-- Preserve guest authentication, account recovery, unknown-route fallback and all shared lesson-domain behavior until exact evidence proves replacement ownership.
-- Runtime cleanup requires absence/preservation source contracts, full CI, browser matrix, performance budgets and containers.
 - CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
-- Existing bundle ceilings remain unchanged unless a separately approved performance decision changes them.
+- Finish with bundle/dead-code evidence and README ownership verification before closing Issue #70.
 
-### 2. #18 and #201 — Adaptive personalization and First Use
+### 3. #18 and #201 — Adaptive personalization and First Use
 
 - Implement diagnostic onboarding, skip path, reason-coded personalized queue and balancing after approved design states are available.
 
-### 3. #25 — Pronunciation, listening and custom terminology
+### 4. #25 — Pronunciation, listening and custom terminology
 
 - Resolve architecture/privacy and typed backend contracts before implementation.
 
-### 4. #203, #205 and #133 — Figma handoff, final parity and usability
+### 5. #203, #205 and #133 — Figma handoff, final parity and usability
 
 - Maintain exact production nodes, complete route-by-route parity and perform external moderated usability validation.
 
 ## Validation pending
 
-- Each remaining Issue #70 family requires its own reachability, consumer, browser and visual evidence.
+- The next Issue #70 runtime slice must prove `renderLearn` absence while preserving shared owners.
 - Dictionary product-history compatibility remains intentionally live.
 - Profile and Scenario guest authentication boundaries remain intentionally live.
-- Home shared lesson/auth/fallback owners remain intentionally live after presentation deletion.
+- Final bundle/dead-code and CSS ownership acceptance criteria remain open.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #313 — `refactor(frontend): remove legacy Home presentation` → `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
-2. #312 — `docs(agent): reconcile PR 311 Home boundary` → `dbb7d04c083cc266ab3f9247564a7b293e32d272`.
-3. #311 — `test(frontend): prove Home compatibility boundary` → `8ce61297d4c0ade5cb687a42ca11047b836c85c3`.
-4. #310 — Agent Docs reconciliation before the Home slice → `94836b3214dddccd58e249a342f0e56505bf2d7d`.
+1. #316 — `test(frontend): prove Learn compatibility boundary` → `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
+2. #314 — `docs(agent): reconcile PR 313 Home deletion` → `d7a2c037040b1a1d8d978fa038b2528abd92661e`.
+3. #313 — `refactor(frontend): remove legacy Home presentation` → `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
+4. #312 — `docs(agent): reconcile PR 311 Home boundary` → `dbb7d04c083cc266ab3f9247564a7b293e32d272`.
 
 ## Evidence
 
-- PR #313 head `b7e8c872078a60aceeacaad6fd5978ed3d6164cb` passed authoritative full CI #2426/run `30575851960`.
-- A prior full CI #2419/run `30568316390` also passed on the runtime/test head before final documentation updates.
-- The final branch diff contained exactly six allowed files and no temporary workflow.
+- PR #316 head `654cb64823bc90cf27a9458694c19995de761767` passed authoritative full CI #2431/run `30586633106`.
+- Initial CI #2430 failed only because the new source test used an incorrect textual ternary marker; the marker was corrected without runtime changes.
 - Reviews, comments and unresolved review threads were empty before Ready and merge.
-- Expected-head squash merge produced current product `main` SHA `0ce29fd9bf99de77a62c2397b9046d602bce0c7d`.
-- Stage run `30577252268` deployed the exact product merge SHA and completed deploy, public smoke and public browser validation successfully; one iOS WebKit stale-build check required its configured retry and then passed.
-- The Home source contract prohibits the legacy presentation from returning while preserving shared compatibility owners.
+- Expected-head squash merge produced current product `main` SHA `2b8171600bc8422c911025a8bb73ae4c78ccc0a6`.
+- Stage run `30591994231` deployed the exact merge SHA and completed deploy, public smoke and 12/12 public browser checks successfully.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## Update protocol
