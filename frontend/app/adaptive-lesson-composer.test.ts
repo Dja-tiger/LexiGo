@@ -33,10 +33,13 @@ describe("progressive Lesson Composer", () => {
     expect(shellSource).not.toContain("onKeyDown");
   });
 
-  it("keeps lesson API ownership in the production app", () => {
-    expect(premiumAppSource).toContain('useState<StudyMode>("recall")');
-    expect(premiumAppSource).toContain("<LessonComposerProgressiveShell");
-    expect(premiumAppSource).toContain('onStart={() => void startLesson(session, { topic: lessonTopic, journeyIntent: "lesson_start" })}');
+  it("keeps lesson API ownership in the production app while retiring the legacy presentation", () => {
+    expect(premiumAppSource).toContain("async function startLesson(");
+    expect(premiumAppSource).toContain("authorizedRequest<LessonSessionResponse>(");
+    expect(premiumAppSource).toContain('"/api/v1/lessons"');
+    expect(premiumAppSource).toContain('method: "POST"');
+    expect(premiumAppSource).not.toContain("<LessonComposerProgressiveShell");
+    expect(premiumAppSource).not.toContain('onStart={() => void startLesson');
     expect(shellSource).not.toContain("fetch(");
     expect(shellSource).not.toContain("/api/");
   });
