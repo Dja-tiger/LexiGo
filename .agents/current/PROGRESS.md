@@ -1,16 +1,34 @@
 # Current Task Progress
 
-No product task is active.
+## 2026-07-31 16:27 Europe/Moscow
 
-## Last completed slice
+### Verified
 
-- Issue: #70
-- PR: #318
-- Immutable head: `a717f1abb8c4749e6d684e687043ab0414bc01e7`
-- Authoritative CI: #2444 / run `30620664121` — success
-- Squash merge: `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`
-- Stage run: `30626027711` — deploy, public smoke and public browser success
-- Public browser validation: 12/12 passed
-- Review audit: no comments, reviews or unresolved threads
+- Live main before the slice: `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
+- Issue #70 remains open.
+- PR #323 corrected stale PROJECT_STATE and passed lightweight CI #2448 before merge.
+- Legacy Learn presentation was removed by PR #318 and exact-SHA stage validation passed.
+- Fresh selector search showed canonical `LexigoLearnApp` still consumes `lx-composer-context`, `lx-setup-card`, `lx-setup-block`, `lx-mode-selector`, `lx-source-selector`, `lx-setup-footer`, `lx-lesson-preview` and `lx-setup-submit`.
 
-The next task must be selected from live GitHub state and recorded in `TASK.md` before product writes.
+### Finding
+
+There is no safe orphaned Learn CSS deletion family. The next bounded evidence slice is an executable inventory of the final compatibility fallback and the route islands that precede it.
+
+### Changed files
+
+- `frontend/components/compatibility-fallback-source.test.ts`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+
+### Process deviation
+
+The source-test file was created before `.agents/current/TASK.md` was populated. No runtime, CSS, workflow or default-branch file changed. The task record now explicitly freezes the allow-list; all current files must be read back before further writes.
+
+### Current branch head
+
+Resolve after the current task-memory commits.
+
+### Next action
+
+Populate EXECUTION, read back all four files, compare the branch with main, then open a Draft PR and run authoritative CI. Any failing assertion must be classified against actual source before changing the contract.
