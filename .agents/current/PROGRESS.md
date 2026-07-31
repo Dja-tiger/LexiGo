@@ -1,16 +1,42 @@
 # Current Task Progress
 
-No product task is active.
+## 2026-07-31 19:18 Europe/Moscow
 
-## Last completed slice
+### Verified
 
-- Issue: #70
-- PR: #318
-- Immutable head: `a717f1abb8c4749e6d684e687043ab0414bc01e7`
-- Authoritative CI: #2444 / run `30620664121` — success
-- Squash merge: `1e04674aada19b5c024aa3688b45c75ab1e1d7cb`
-- Stage run: `30626027711` — deploy, public smoke and public browser success
-- Public browser validation: 12/12 passed
-- Review audit: no comments, reviews or unresolved threads
+- Live main before the slice: `ec3d3f05f97a61b4600abc2d5947726d599e8618`.
+- Issue #70 remains open.
+- PR #323 corrected stale PROJECT_STATE and passed lightweight CI #2448 before merge.
+- Legacy Learn presentation was removed by PR #318 and exact-SHA stage validation passed.
+- Fresh selector search showed canonical `LexigoLearnApp` still consumes `lx-composer-context`, `lx-setup-card`, `lx-setup-block`, `lx-mode-selector`, `lx-source-selector`, `lx-setup-footer`, `lx-lesson-preview` and `lx-setup-submit`.
+- Draft PR #324 contains only the fallback source contract and `.agents/current/**`.
 
-The next task must be selected from live GitHub state and recorded in `TASK.md` before product writes.
+### Finding
+
+There is no safe orphaned Learn CSS deletion family. The bounded evidence slice inventories the final compatibility fallback and the dedicated route islands that precede it.
+
+### Changed files
+
+- `frontend/components/compatibility-fallback-source.test.ts`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+
+### CI evidence
+
+- Authoritative CI #2450 / run `30636055474` passed change classification, backend unit/security, backend integration, frontend lint and TypeScript.
+- The unit gate failed only in the new source contract because it asserted the nonexistent copy `LexiGo не смог открыть страницу` inside `LexigoPremiumApp`.
+- Exact source inspection proved the unknown/product route boundary structurally: `routeGraphForPath` returns `product`, and the final bootstrap else-branch renders `<LexigoPremiumApp key={routeKey} initialSession={initialSession} />`.
+- The assertion was replaced with that actual structural evidence. Runtime and CSS remain unchanged.
+
+### Process deviation
+
+The source-test file was created before `.agents/current/TASK.md` was populated. No runtime, CSS, workflow or default-branch file changed. The allow-list is frozen and the deviation is recorded.
+
+### Current branch head
+
+Resolve from the live branch after the progress commit.
+
+### Next action
+
+Read back the corrected contract and branch diff, then evaluate the new authoritative CI on the exact developer-authored head. If fully green, perform review audit, Ready transition, expected-head squash merge and exact-SHA stage/public validation.
