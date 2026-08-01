@@ -2,17 +2,17 @@
 
 ## Verification
 
-- Last verified: 2026-08-01 09:56 Europe/Moscow.
+- Last verified: 2026-08-02 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
-- Latest deployed product SHA: `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
-- Latest completed product slice: Issue #70 — source-order independence of the canonical Phrases route cascade from the shared catalog base.
-- Completion PR: #330.
-- PR #330 immutable head: `fd91588c57e77a9e9a44ad3e79f6dc99ae832c4e`.
-- Authoritative PR CI: #2470 / run `30687931754`, successful.
-- Expected-head squash merge produced product SHA `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
-- Post-merge main CI run `30688251296` succeeded on the exact product merge SHA.
-- Exact-SHA stage run `30688539355` deployed web/API images tagged `073e59989cd7a938bf28c1ebee1f77b8f49352c3`; deploy, public smoke and final public browser gates succeeded.
+- Repository base verified before this documentation slice: `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
+- Latest deployed product SHA: `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
+- Latest completed product slice: Issue #70 — consolidation of Dictionary catalog, canonical Word Detail and persistent route-navigation CSS ownership.
+- Completion PR: #334.
+- PR #334 immutable head: `533a072987311f1ca9cff043429b5bd7f8c42b40`.
+- Authoritative PR CI: #2484 / run `30722732370`, successful.
+- Expected-head squash merge produced product SHA `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
+- Post-merge main CI run `30723066187` succeeded on the exact product merge SHA.
+- Exact-SHA stage run `30723367270` deployed web/API images tagged `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`; deploy, public smoke and all 12 public browser checks succeeded.
 - No pull requests were open at verification time.
 - Reviews, comments and unresolved review threads were empty before the recorded product merge.
 
@@ -44,8 +44,14 @@
 - PR #324 also proved canonical `LexigoLearnApp` still consumes the Learn composer CSS family, so those selectors are not safe orphan-deletion candidates.
 - PR #328 added production-network evidence that the live compatibility fallback retains independently loaded JavaScript assets and that every measured canonical route island excludes those fallback-exclusive assets.
 - PR #330 removed the remaining Phrases route-after-base source-order assumption: root layout now imports `phrases.css` before `catalog-enhancements.css`, while executable ownership tests prove the route selectors remain more specific than the shared base.
-- The overlapping Phrases route selectors retain specificity `(0, 3, 0)` over shared `(0, 1, 0)` and `(0, 3, 1)` over shared `(0, 1, 1)`.
-- The exact canonical Phrases cascade block, selector counts, all CSS file bytes, visual snapshots and route budgets remained unchanged.
+- PR #332 synchronized the normative CSS-specificity rule with the production Phrases order-independence contract; PR #333 reset the completed current context.
+- PR #334 deleted `dictionary-detail-compatibility.css` and its root-layout import after moving every live declaration group to the exact canonical owner.
+- `dictionary-catalog.css` now owns Dictionary route variables, active filter/status colors and the compact filter-toggle correction while preserving the prior effective later-file position after forced-colors.
+- `word-detail.css` now owns the `/words/[id]` example-heading dark contrast correction.
+- `route-navigation.css` now owns the `/words/[id]` active Library rail-label dark contrast correction.
+- `word-detail-source.test.ts` proves physical compatibility-file/import absence, exact canonical declaration blocks, single occurrence and no cross-owner placement.
+- No selector text, declaration value, specificity, component markup, runtime behavior, visual snapshot or route-budget ceiling changed in PR #334.
+- The older `.lx-dictionary-detail-*` family remains intentionally outside PR #334 and requires a separate exact-consumer proof before any deletion.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown/product-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
 - Issue #70 remains open for independently proven compatibility/CSS families and final dead-code, bundle and ownership acceptance.
 
@@ -63,6 +69,7 @@
 - Prove canonical ownership and compatibility reachability before deletion.
 - Preserve shared authentication, lesson-domain and unknown-route owners.
 - CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
+- Treat the old `.lx-dictionary-detail-*` family as unproven until executable markup and comment-stripped CSS search establish exact consumer absence.
 
 ### 2. #70 — Final dead-code and bundle acceptance
 
@@ -86,31 +93,32 @@
 
 - The next Issue #70 slice must be selected from fresh live evidence; no new compatibility or CSS family is pre-authorized by this reconciliation.
 - Dictionary product-history compatibility remains intentionally live.
+- The old `.lx-dictionary-detail-*` family remains unproven and was not removed by PR #334.
 - Profile and Scenario guest authentication boundaries remain intentionally live.
 - Final bundle/dead-code, CSS ownership and README acceptance criteria remain open.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #330 — `refactor(frontend): prove Phrases cascade order independence` → `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
-2. #329 — `docs(agent): reconcile PR 328 bundle isolation` → `8241296b4b452984534777dfa07a7a4f9b7d5b25`.
-3. #328 — `test(frontend): prove compatibility fallback bundle isolation` → `65efdab1211b4b7bebfec04d6186fed80cde0949`.
-4. #327 — `docs(agent): make project-state SHA semantics non-recursive` → `31c1f9cd9432bc5fd75a81c76e7f65d96e430e8b`.
-5. #326 — `docs(agent): reconcile main after PR 325` → `f09b278e5ef743bec10d1bb69d75a460513bb581`.
+1. #334 — `refactor(frontend): consolidate Dictionary detail CSS ownership` → `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
+2. #333 — `docs(agent): reset context after PR 332` → `5b4cab79d6030b01b1306fa1ca28666c95fb35fd`.
+3. #332 — `docs(agent): align Phrases cascade ownership rule` → `3683c58603f0243cd99a9889f01bb372c4ddcf3c`.
+4. #331 — `docs(agent): reconcile PR 330 Phrases cascade` → `4b4da827856c2551321332afeed4f9c9473bdcb3`.
+5. #330 — `refactor(frontend): prove Phrases cascade order independence` → `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
 
 ## Evidence
 
-- PR #330 head `fd91588c57e77a9e9a44ad3e79f6dc99ae832c4e` passed authoritative full CI #2470/run `30687931754`.
-- CI covered backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, visual regression, accessibility, CSP, service worker, performance budgets, lesson completion, iOS PWA and both container builds.
-- `frontend/app/layout.tsx` imports the canonical Phrases route owner before the later shared catalog base as an adversarial production proof.
-- `frontend/components/phrases-css-ownership.test.ts` computes selector specificity, requires the inverted import order, preserves the exact canonical cascade block and protects selector uniqueness.
-- No CSS declaration, selector, stylesheet byte, visual snapshot, runtime, API, backend, dependency, workflow or route-budget ceiling changed.
-- The authoritative Visual Regression, Accessibility audit and Performance budgets jobs succeeded without baseline or ceiling updates.
+- PR #334 head `533a072987311f1ca9cff043429b5bd7f8c42b40` passed authoritative full CI #2484/run `30722732370`.
+- CI covered backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, visual regression, accessibility, CSP, service worker, performance budgets, lesson completion, iOS PWA, Dictionary smoke and both container builds.
+- `frontend/app/dictionary-detail-compatibility.css` and its root-layout import are absent.
+- The exact Dictionary computed-cascade block is canonical in `dictionary-catalog.css`; the exact Word Detail and route-chrome contrast blocks are canonical in `word-detail.css` and `route-navigation.css` respectively.
+- `frontend/components/word-detail-source.test.ts` enforces file/import absence, exact declaration text, unique occurrence and owner separation.
+- No selector, declaration value, specificity, runtime, API, backend, dependency, workflow, visual baseline or route-budget ceiling changed.
+- Authoritative Visual Regression, Accessibility audit and Performance budgets jobs succeeded without baseline or ceiling updates.
 - Review comments, review submissions and unresolved threads were empty.
-- Expected-head squash merge produced product SHA `073e59989cd7a938bf28c1ebee1f77b8f49352c3`.
-- Post-merge main CI run `30688251296` repeated the complete product matrix successfully on the exact merge SHA.
-- Stage run `30688539355` deployed the exact product merge SHA; web/API containers were healthy and deploy, public smoke and final public browser gates succeeded.
-- The stage browser matrix exercised `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery in desktop Chromium and iOS WebKit. An iOS WebKit service-worker access-control event was retried by the existing test policy; the final deployment job conclusion remained successful.
+- Expected-head squash merge produced product SHA `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
+- Post-merge main CI run `30723066187` repeated the complete product matrix successfully on the exact merge SHA.
+- Stage run `30723367270` deployed the exact product merge SHA; web/API containers were healthy and deploy, public smoke and 12/12 public browser checks succeeded without retries.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
