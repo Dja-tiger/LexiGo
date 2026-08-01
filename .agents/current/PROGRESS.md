@@ -9,12 +9,17 @@
 - Issue #70 remains open.
 - Product stage remains healthy on exact SHA `073e59989cd7a938bf28c1ebee1f77b8f49352c3`, run `30688539355`.
 - The previous normative and reset PRs completed lightweight validation; current context was clean.
-- `dictionary-detail-compatibility.css` contains live declarations but no longer owns a compatibility presentation.
+- `dictionary-detail-compatibility.css` contained live declarations but no longer owned a compatibility presentation.
 - Exact canonical destinations were identified in `dictionary-catalog.css`, `word-detail.css` and `route-navigation.css`.
 
-### Selected slice
+### Applied
 
-Delete only the obsolete stylesheet boundary while moving the exact effective declaration groups to their canonical owners and preserving all computed presentation.
+- Moved the exact Dictionary catalog variables, active-filter/status colors and compact filter-toggle correction to the end of `dictionary-catalog.css`, preserving their prior effective source position after forced-colors.
+- Moved the exact `/words/[id]` example-heading dark contrast correction to `word-detail.css`.
+- Moved the exact `/words/[id]` active Library rail-label dark contrast correction to `route-navigation.css`.
+- Removed the root-layout compatibility import and deleted `dictionary-detail-compatibility.css`.
+- Strengthened `word-detail-source.test.ts` to require physical file/import absence, exact canonical declaration blocks and single occurrence.
+- Recorded the ownership consolidation in the compatibility delivery plan.
 
 ### Validation plan
 
