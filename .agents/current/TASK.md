@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `docs/fix-phrases-cascade-rule`
 - Base SHA: `4b4da827856c2551321332afeed4f9c9473bdcb3`
-- PR: pending
+- PR: #332
 
 ## Objective
 
