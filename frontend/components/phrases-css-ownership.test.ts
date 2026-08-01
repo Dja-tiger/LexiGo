@@ -3,10 +3,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const layoutUrl = new URL("../app/layout.tsx", import.meta.url);
+const sharedCatalogCssUrl = new URL("../app/catalog-enhancements.css", import.meta.url);
 const phrasesCssUrl = new URL("../app/phrases.css", import.meta.url);
 const compatibilityCssUrl = new URL("../app/phrases-compat.css", import.meta.url);
 
 const layout = readFileSync(layoutUrl, "utf8");
+const sharedCatalogCss = readFileSync(sharedCatalogCssUrl, "utf8");
 const phrasesCss = readFileSync(phrasesCssUrl, "utf8");
 
 const canonicalCascadeBlock = `/* Issue #70: canonical Phrases computed-cascade ownership. */
@@ -63,15 +65,45 @@ function occurrences(source: string, marker: string): number {
 }
 
 describe("Phrases CSS ownership", () => {
-  it("keeps one canonical stylesheet after the shared catalog base", () => {
-    expect(layout).toContain('import "./catalog-enhancements.css";');
-    expect(layout).toContain('import "./phrases.css";');
+  it("loads the route owner before the shared catalog base as an order-independence proof", () => {
+    const routeImport = 'import "./phrases.css";';
+    const sharedImport = 'import "./catalog-enhancements.css";';
+
+    expect(layout).toContain(routeImport);
+    expect(layout).toContain(sharedImport);
     expect(layout).not.toContain('import "./phrases-compat.css";');
-    expect(occurrences(layout, 'import "./phrases.css";')).toBe(1);
-    expect(layout.indexOf('import "./catalog-enhancements.css";')).toBeLessThan(
-      layout.indexOf('import "./phrases.css";'),
-    );
+    expect(occurrences(layout, routeImport)).toBe(1);
+    expect(occurrences(layout, sharedImport)).toBe(1);
+    expect(layout.indexOf(routeImport)).toBeLessThan(layout.indexOf(sharedImport));
     expect(existsSync(compatibilityCssUrl)).toBe(false);
+  });
+
+  it("keeps every overlapping route override stricter than the unscoped shared base", () => {
+    const selectorPairs = [
+      {
+        shared: ".lx-catalog-sort {",
+        route: '.lx-app[data-route-client-island="phrases"] .lx-catalog-sort {',
+      },
+      {
+        shared: ".lx-catalog-sort strong {",
+        route: '.lx-app[data-route-client-island="phrases"] .lx-catalog-sort strong {',
+      },
+      {
+        shared: ".lx-catalog-sort small {",
+        route: '.lx-app[data-route-client-island="phrases"] .lx-catalog-sort small {',
+      },
+      {
+        shared: ".lx-catalog-sort select {",
+        route: '.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {',
+      },
+    ] as const;
+
+    for (const { shared, route } of selectorPairs) {
+      expect(sharedCatalogCss, `shared selector ${shared}`).toContain(shared);
+      expect(phrasesCss, `route selector ${route}`).toContain(route);
+      expect(route).toContain('.lx-app[data-route-client-island="phrases"] ');
+      expect(route.length).toBeGreaterThan(shared.length);
+    }
   });
 
   it("owns the complete route-scoped computed cascade exactly once", () => {
