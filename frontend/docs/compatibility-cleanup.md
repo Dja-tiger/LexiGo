@@ -133,21 +133,32 @@ Before consolidation:
 
 After consolidation:
 
-- root layout imports `catalog-enhancements.css` before `phrases.css` and no longer imports `phrases-compat.css`;
-- the exact selector text, specificity and declaration values from `phrases-compat.css` live once in `phrases.css` under `Issue #70: canonical Phrases computed-cascade ownership`;
 - `phrases-compat.css` is deleted;
+- the exact selector text, specificity and declaration values from `phrases-compat.css` live once in `phrases.css` under `Issue #70: canonical Phrases computed-cascade ownership`;
 - catalog-sort border/text/surface/elevation, selected-topic contrast, results spacing and forced-colors values remain unchanged;
 - no selector rename, specificity increase, redesign or baseline promotion is permitted.
 
-The executable ownership proof is `frontend/components/phrases-css-ownership.test.ts`. It validates compatibility-file absence, layout import order, selector uniqueness and exact preserved declarations.
+The executable ownership proof is `frontend/components/phrases-css-ownership.test.ts`. It validates compatibility-file absence, selector uniqueness and exact preserved declarations.
+
+## Phrases source-order independence
+
+The canonical Phrases overrides are more specific than their shared catalog counterparts:
+
+- shared `.lx-catalog-sort` has specificity `(0, 1, 0)`, while `.lx-app[data-route-client-island="phrases"] .lx-catalog-sort` has `(0, 3, 0)`;
+- shared `.lx-catalog-sort select` has `(0, 1, 1)`, while the Phrases owner has `(0, 3, 1)`;
+- the same route prefix protects the overlapping `strong` and `small` declarations.
+
+Root layout intentionally imports `phrases.css` before `catalog-enhancements.css`. The later shared base still provides layout primitives, while the more specific route declarations retain Phrases colors, surfaces, elevation and forced-colors behavior. This adversarial order removes the former route-after-base assumption without changing CSS bytes.
+
+`phrases-css-ownership.test.ts` computes and compares selector specificity, requires the adversarial import order, preserves the exact canonical cascade block and keeps every moved selector unique.
 
 ## Authoritative visual boundary
 
-Pure CSS consolidation requires unchanged content-addressed images. `frontend/e2e/phrases-visual.spec.ts` protects eight approved compact/desktop Light/Dark catalog/detail images.
+Pure CSS consolidation or cascade-order work requires unchanged content-addressed images. `frontend/e2e/phrases-visual.spec.ts` protects eight approved compact/desktop Light/Dark catalog/detail images.
 
-Any changed Phrases visual hash stops PR #284. A baseline may not be promoted merely to complete cleanup; the actual must first be compared with the exact approved Figma node and the computed-cascade difference explained.
+Any changed Phrases visual hash stops the slice. A baseline may not be promoted merely to complete cleanup; the actual must first be compared with the exact approved Figma node and the computed-cascade difference explained.
 
-## Required validation for PR #284
+## Required validation for Phrases CSS ownership slices
 
 - Agent Harness and change-scope classification;
 - Phrases CSS ownership source contract;
