@@ -245,3 +245,15 @@ PR #311 established the two-sided root-route boundary: `isHomeRoute` forces `/` 
 Shared compatibility owners remain intentionally live: guest authentication, password recovery, unknown-route fallback, persistent navigation, progress and active-lesson resource loading, Lesson Composer, Dictionary compatibility, Profile, Active Lesson, Lesson Result, `startLesson`, `resumeLesson`, and transitions whose destination is Home. No CSS, visual baseline, API, backend, workflow, deployment or bundle-ceiling contract changes are part of this deletion.
 
 The executable absence/preservation proof is `frontend/components/home-route-island-source.test.ts`.
+
+## Dictionary and Word Detail CSS ownership consolidation
+
+This Issue #70 slice retires `frontend/app/dictionary-detail-compatibility.css` as an obsolete ownership boundary. Its declarations remain byte-identical but move to their actual canonical owners:
+
+- `frontend/app/dictionary-catalog.css` owns Dictionary route variables, active filter/status colors and the compact filter-toggle correction;
+- `frontend/app/word-detail.css` owns the proven dark Word Detail example-heading contrast correction;
+- `frontend/app/route-navigation.css` owns the proven `/words/[id]` active Library rail-label contrast correction.
+
+Root layout no longer imports the compatibility file. The exact effective source position is preserved: the Dictionary computed-cascade block remains after the catalog forced-colors section, matching the prior later-file precedence. No selector, declaration value, specificity, component markup, visual baseline or route-budget ceiling changes are part of this consolidation.
+
+`frontend/components/word-detail-source.test.ts` protects physical file/import absence, exact canonical blocks and single occurrence of each moved block. Authoritative Dictionary and Word Detail Linux visual hashes must remain unchanged.
