@@ -16,11 +16,12 @@
 - Updated `.agents/AGENTS.issue-261-css-specificity.md` to match PR #330.
 - Preserved the confirmed failure history.
 - Added exact specificity and regression-gate wording.
+- Opened Draft PR #332.
 
 ### Validation plan
 
 - Read-back all changed paths.
 - Compare branch against `main` and enforce the four-path allow-list.
-- Draft PR with lightweight Agent Docs CI.
+- Confirm lightweight Agent Docs CI on the final head.
 - Confirm heavy product jobs are skipped.
 - Review audit, expected-head squash merge and post-merge lightweight CI.
