@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `refactor/issue-70-dictionary-detail-css-ownership`
 - Base SHA: `5b4cab79d6030b01b1306fa1ca28666c95fb35fd`
-- PR: pending
+- PR: #334
 
 ## Objective
 
@@ -17,7 +17,7 @@ Remove the obsolete `dictionary-detail-compatibility.css` ownership boundary whi
 - Its Dictionary catalog variables, active-filter colors, status colors and compact filter-toggle correction belong to `dictionary-catalog.css`.
 - Its `/words/[id]` example-heading dark contrast correction belongs to `word-detail.css`.
 - Its `/words/[id]` active Library rail-label dark contrast correction belongs to `route-navigation.css`.
-- `layout.tsx` still imports the compatibility file and `word-detail-source.test.ts` still treats it as the contrast owner.
+- `layout.tsx` still imported the compatibility file and `word-detail-source.test.ts` still treated it as the contrast owner before this slice.
 
 ## Scope
 
@@ -58,7 +58,7 @@ Remove the obsolete `dictionary-detail-compatibility.css` ownership boundary whi
 - Each declaration group exists exactly once in its canonical owner.
 - Source contracts reject compatibility-file restoration, declaration drift and misplaced ownership.
 - Full frontend core, browser, accessibility, visual and performance gates pass without baseline or ceiling updates.
-- Full authoritative CI passes on an immutable head, followed by review audit, expected-head squash merge and exact-SHA stage/public validation.
+- Full authoritative CI passes on the immutable PR #334 head, followed by review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Rollback
 
