@@ -671,3 +671,10 @@
     background: Highlight;
   }
 }
+
+/* Issue #70: canonical Word Detail dark contrast ownership. */
+@media (prefers-color-scheme: dark) {
+  .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-example h2 {
+    color: #9fb7ff;
+  }
+}
