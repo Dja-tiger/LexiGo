@@ -15,20 +15,27 @@
 - Classified `dictionary-detail-compatibility.css` as an obsolete ownership boundary with three still-live declaration groups.
 - Selected exact canonical destinations by markup and route ownership rather than filename proximity.
 
-## Implementation plan
+## Implementation
 
-1. Move Dictionary catalog variables and route control/status corrections to `dictionary-catalog.css` without changing selector text or effective values.
-2. Move the `/words/[id]` example-heading dark correction to the existing Word Detail dark media block.
-3. Move the `/words/[id]` active Library rail-label dark correction to `route-navigation.css`.
-4. Remove the root-layout import and delete the compatibility file.
-5. Strengthen `word-detail-source.test.ts` for file absence, exact ownership blocks and uniqueness.
-6. Update the delivery plan and run full authoritative product CI.
+1. Appended the exact Dictionary catalog declaration group to `dictionary-catalog.css` after its forced-colors section, preserving the previous later-file precedence.
+2. Appended the exact dark Word Detail example-heading contrast rule to `word-detail.css`.
+3. Appended the exact dark `/words/[id]` Library rail-label contrast rule to `route-navigation.css`.
+4. Removed the root-layout import and deleted `dictionary-detail-compatibility.css`.
+5. Updated `word-detail-source.test.ts` to enforce compatibility-file absence, canonical owner placement, exact declaration text and single occurrence.
+6. Updated the compatibility delivery plan without claiming the unrelated legacy `.lx-dictionary-detail-*` family is dead.
 
-## Restrictions
+## Restrictions preserved
 
 - No old `.lx-dictionary-detail-*` cleanup in this slice.
-- No runtime, API, backend, dependency, workflow, snapshot or budget modification.
+- No runtime, markup, API, backend, dependency, workflow, snapshot or budget modification.
+- No selector or declaration-value change.
 - Any changed authoritative visual hash stops the slice.
+
+## Validation remaining
+
+- Allowed-path and branch-base audit.
+- Full authoritative CI on the final immutable head.
+- Review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Rollback
 
