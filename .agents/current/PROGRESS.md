@@ -20,10 +20,11 @@
 - Removed the root-layout compatibility import and deleted `dictionary-detail-compatibility.css`.
 - Strengthened `word-detail-source.test.ts` to require physical file/import absence, exact canonical declaration blocks and single occurrence.
 - Recorded the ownership consolidation in the compatibility delivery plan.
+- Opened Draft PR #334.
 
 ### Validation plan
 
-- Read back each write and compare the branch against `main` using the allow-list.
+- Confirm final allowed-path compare on the immutable PR head.
 - Source contract for deleted file/import, unique selectors and exact declaration values.
 - Frontend lint, TypeScript, unit/source contracts, production build and dependency audit.
 - Dictionary and Word Detail direct entry, catalog/detail flows, navigation, accessibility, forced-colors and reflow coverage.
