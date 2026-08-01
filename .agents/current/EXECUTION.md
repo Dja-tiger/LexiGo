@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `refactor/issue-70-dictionary-detail-css-ownership`
 - Base SHA: `5b4cab79d6030b01b1306fa1ca28666c95fb35fd`
-- PR: pending
+- PR: #334
 
 ## Applied procedures
 
@@ -23,6 +23,7 @@
 4. Removed the root-layout import and deleted `dictionary-detail-compatibility.css`.
 5. Updated `word-detail-source.test.ts` to enforce compatibility-file absence, canonical owner placement, exact declaration text and single occurrence.
 6. Updated the compatibility delivery plan without claiming the unrelated legacy `.lx-dictionary-detail-*` family is dead.
+7. Verified the branch remained based exactly on `5b4cab79d6030b01b1306fa1ca28666c95fb35fd`, changed only ten allow-listed paths and opened Draft PR #334.
 
 ## Restrictions preserved
 
@@ -33,8 +34,7 @@
 
 ## Validation remaining
 
-- Allowed-path and branch-base audit.
-- Full authoritative CI on the final immutable head.
+- Full authoritative CI on the final immutable PR #334 head.
 - Review audit, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Rollback
