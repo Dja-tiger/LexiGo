@@ -25,20 +25,22 @@ Selector presence and import order do not prove CSS ownership.
 7. Never promote a changed baseline until the actual is reviewed against the exact Figma node.
 8. For a new route surface, verify computed foreground, background, border and opacity in both Light and Dark; a declared token is not evidence that it won the cascade.
 9. Run axe against the final computed surface and keep a route-scoped selector contract when a global component owner must be overridden.
-10. When removing a compatibility stylesheet but preserving its declarations, prove that the canonical stylesheet remains after the shared base import and retain exact selector text, specificity and values.
+10. When removing a compatibility stylesheet but preserving its declarations, prove that the canonical stylesheet owns the effective values independently of accidental source order, and retain exact selector text, specificity and values.
 
 ## Canonical ownership
 
 - `frontend/app/catalog-enhancements.css` owns the shared catalog-sort base.
 - `frontend/app/phrases.css` owns the route-scoped Phrases catalog-sort, topic-chip, results-spacing and forced-colors overrides.
-- Root layout must import `catalog-enhancements.css` before `phrases.css`.
-- `frontend/app/phrases-compat.css` is retired; reintroducing a separate post-import compatibility owner requires a new computed-cascade incident and explicit evidence.
+- Root layout intentionally imports `phrases.css` before `catalog-enhancements.css` as an adversarial order-independence proof established by PR #330.
+- Every overlapping canonical Phrases override must remain more specific than the unscoped shared base: `(0, 3, 0)` outranks `(0, 1, 0)` and `(0, 3, 1)` outranks `(0, 1, 1)`.
+- Reordering the two stylesheets is not an ownership mechanism. Any future selector change must preserve the specificity contract, computed foreground/background pairs, accessibility results and unchanged authoritative Linux visual hashes.
+- `frontend/app/phrases-compat.css` is retired; reintroducing a separate compatibility owner requires a new computed-cascade incident and explicit evidence.
 
 ## Regression gate
 
 - `frontend/components/system-states-contract.test.ts` protects the canonical review-sync copy values and retired-owner absence.
 - `frontend/e2e/system-states-visual.spec.ts` preserves the approved `desktop-offline-dark` SHA for Figma node `79:194`.
-- `frontend/components/phrases-css-ownership.test.ts` protects Phrases file absence, import order, selector uniqueness and exact computed-cascade declarations.
+- `frontend/components/phrases-css-ownership.test.ts` protects Phrases compatibility-file absence, the adversarial route-before-shared import order, selector specificity, selector uniqueness and exact computed-cascade declarations.
 - `frontend/e2e/accessibility-audit.spec.ts` verifies final Phrases catalog contrast in Light/Dark.
 - `frontend/e2e/phrases-visual.spec.ts` protects eight content-addressed compact/desktop Light/Dark catalog/detail images.
 - Full immutable-head Linux visual CI must pass without baseline updates.
