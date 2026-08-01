@@ -303,3 +303,10 @@
     bottom: 10px;
   }
 }
+
+/* Issue #70: canonical Word Detail route-chrome contrast ownership. */
+@media (prefers-color-scheme: dark) {
+  .lx-routed-app[data-route-path^="/words/"] .lx-route-nav--rail > .active[aria-current="page"][data-navigation-view="library"] > span > span {
+    color: #9fb7ff;
+  }
+}
