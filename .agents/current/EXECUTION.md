@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `docs/fix-phrases-cascade-rule`
 - Base SHA: `4b4da827856c2551321332afeed4f9c9473bdcb3`
-- PR: pending
+- PR: #332
 
 ## Applied procedures
 
@@ -13,7 +13,7 @@
 - Verified live `main`, open PRs, Issue #70 and exact-SHA stage status.
 - Read `frontend/app/layout.tsx` and `frontend/components/phrases-css-ownership.test.ts` from current `main`.
 - Classified the discrepancy as stale normative documentation rather than a runtime defect.
-- Created an isolated branch from exact `main` and updated only the specialized rule plus current task records.
+- Created an isolated branch from exact `main`, updated only the specialized rule plus current task records, and opened Draft PR #332.
 
 ## Contract correction
 
@@ -29,4 +29,4 @@
 
 ## Rollback
 
-Revert the documentation branch. No product rollback is required.
+Revert PR #332. No product rollback is required.
