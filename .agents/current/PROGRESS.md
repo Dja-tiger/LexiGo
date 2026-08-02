@@ -2,22 +2,38 @@
 
 ## Status
 
-- No atomic production slice is active.
-- PR #346 is squash-merged as product SHA `c0b8aede5563fd8619072746db77ba69a8c6329e`.
-- Exact-SHA main CI run `30759899805` completed successfully.
-- Exact-SHA stage run `30760260623` completed successfully with deploy, public smoke and all 12 public browser checks green.
-- This Agent Docs-only reconciliation records that delivery evidence and resets the completed task context.
+- Issue #70 CSS deletion slice is active on branch `style/issue-70-remove-resource-notice-selectors`.
+- Base SHA: `e5978d3af77e6c5e14e22ee189d72c32d7b79461`.
+- PR: pending.
 
-## Completed slice
+## Completed
 
-- Added `resource-notice-orphan-source.test.ts`.
-- Proved zero executable production TS/TSX consumers of the `lx-resource-notice` prefix using the actual checkout.
-- Bounded exactly eight legacy selector-token occurrences in `mobile-pwa-fixes.css`.
-- Protected canonical `.lx-async-state`, live `.lx-resource-stack`, live `.lx-session-notice`, grouped-rule boundaries and state import order.
-- Changed no production CSS, runtime, visual baseline, route budget, workflow or dependency.
-- PR #346 final developer-authored head `f3dc37181cb95042307358d7cd71de8d62157434` passed full CI #2532 / run `30759470924`.
-- Comments, reviews and unresolved review threads were empty before expected-head merge.
+- Verified fresh live `main`, Issue #70, open PRs, exact main CI and stage product SHA after PR #347 reconciliation.
+- Re-read repository entrypoint, instruction index, current project state and reset task records.
+- Re-read the exact `mobile-pwa-fixes.css` selector family and PR #346 source manifest from current `main`.
+- Confirmed the exact deletion candidate remains eight `.lx-resource-notice*` selector tokens with zero executable production consumers.
+- Confirmed `.lx-resource-stack`, `.lx-session-notice` and canonical `.lx-async-state` remain live protected owners.
+- Defined an atomic five-path deletion contract before production CSS changes.
+- Deleted the standalone `.lx-resource-notice` block and child layout/typography rules.
+- Reduced the three grouped button/connectivity/malformed rules to live `.lx-session-notice` selectors only.
+- Preserved every declaration value and session-notice responsive position.
+- Converted `resource-notice-orphan-source.test.ts` to require physical absence of `lx-resource-notice` from production CSS.
+- Preserved the checkout-level zero-consumer scan, exact live session rule bodies, canonical async-state path, resource-stack consumer and import-order assertions.
+- Read CSS and source contract back from the working branch after writes.
+- Confirmed `main` remained unchanged after each write.
 
-## Next selection boundary
+## Pending
 
-The next Issue #70 slice must be selected only after this reconciliation is merged and live GitHub state is checked again. The proven candidate is a separate deletion-only cleanup of `.lx-resource-notice*` that preserves all `.lx-session-notice` declarations and keeps `.lx-resource-stack` plus canonical `system-states.css` ownership unchanged.
+- Update execution evidence and compare the branch to exact base.
+- Open a Draft PR and attach its number to current task records.
+- Run full authoritative CI on the final immutable developer-authored head.
+- Verify Linux visual snapshots and route-performance budgets remain unchanged.
+- Audit comments, reviews and unresolved review threads.
+- Mark Ready only after complete green CI.
+- Expected-head squash merge.
+- Validate exact merge SHA through main CI and exact-SHA stage/public deployment.
+- Reconcile durable state and reset current context in a separate Agent Docs PR.
+
+## Scope guard
+
+No production TS/TSX, `system-states.css`, layout import, snapshot, route-budget, backend/API, workflow, dependency, README or architecture file is permitted in this slice.
