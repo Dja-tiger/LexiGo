@@ -36,12 +36,27 @@
 - Task-record commit: `00acdc27f84fdcec255fa9c6aaa0db68040af135`.
 - Proof-contract commit: `264146b94859dfea7177000d2453b5c98c240d2b`.
 - Proof-contract blob: `bcd8b898c11924b570d243aba071691fc7267ac6`.
-- `main` remained unchanged at `ab906738ab19287aac40016b5d28c2f341e3ae45` after both writes.
+- Draft PR: #341.
+- Pre-final head: `6b5c62f2c7bb167cb9c6c346cfc38b01f1b6fb3c`.
+- PR diff remained restricted to the four allowed paths.
+- `main` remained unchanged at `ab906738ab19287aac40016b5d28c2f341e3ae45` through pre-final validation.
+
+## Pre-final validation evidence
+
+- Authoritative CI #2509 / run `30737704993` passed completely.
+- The exact source manifest passed without weakening route predicates, guest markers or helper occurrence counts.
+- Frontend lint, typecheck, unit tests, production build and dependency audit passed.
+- Backend unit/security/integration passed.
+- Both UI shards, lesson completion, Dictionary smoke, iOS PWA, controlled service worker and CSP passed.
+- Linux visual regression passed without snapshot changes.
+- Accessibility audit and performance budgets passed without contract or ceiling changes.
+- Web and API container builds passed.
+- No runtime, UI, request, session, History, storage, accessibility, visual or bundle behavior changed.
 
 ## Remaining
 
-- Record execution details and verify the final four-path diff.
-- Open a Draft PR.
-- Require full authoritative CI, including source/unit contract, all browser projects, guest/auth Profile journeys, accessibility, visual regression, performance budgets and containers.
-- If the exact source counts fail, classify the mismatch and correct the manifest rather than weakening the proof.
-- After pre-final evidence is recorded, require a final immutable-head CI, clean review audit, expected-head squash merge and exact-SHA main/stage/public validation.
+- The evidence-record commits change the PR head; run one final immutable-head authoritative CI.
+- Reconfirm the final four-path diff and unchanged `main`.
+- Repeat PR comments, reviews and unresolved-thread audit.
+- Mark Ready and perform expected-head squash merge only if the final head remains completely green.
+- Require exact merge-SHA main CI and exact-SHA stage deploy, public smoke and public browser validation before reconciliation or runtime deletion.
