@@ -35,14 +35,26 @@
 - Source-contract commit: `0dcc041c80c917b256b19cf595baf5f26b387a94`.
 - CSS deletion commit: `316aa70f256daf5c8871c7e69f236157a53c28c6`.
 - CSS blob after deletion: `9f51dcea63d39365f5d5af08680328c60807108e`.
-- Current compare against base contains only three paths so far.
+- Draft PR: #339.
+- PR diff is restricted to the five allowed paths.
 - CSS diff is deletion-only: 79 removed lines and zero additions.
-- `main` remained unchanged at `377d3d11ff5faf0c8fc95ac78f738add7bfac306` after the implementation writes.
+- `main` remained unchanged at `377d3d11ff5faf0c8fc95ac78f738add7bfac306` through the pre-final validation.
+
+## Pre-final validation evidence
+
+- Developer-authored head `20e564d0561c11af067ef9cc78220ff82f1a1d51` passed authoritative CI #2502 / run `30735956254` completely.
+- Frontend core passed: lint, typecheck, unit/source-contract, production build and dependency audit.
+- Backend unit/security/integration passed.
+- Both UI shards, Dictionary smoke, iOS PWA, controlled service worker, CSP and lesson completion passed.
+- Linux visual regression passed without any snapshot update.
+- Accessibility audit and performance budgets passed without contract or ceiling changes.
+- Web and API container builds passed.
+- The deleted selector family therefore remains proven absent from both executable source and rendered visual behavior.
 
 ## Remaining
 
-- Record execution details.
-- Verify final five-path diff and open a Draft PR.
-- Require full authoritative CI, especially source contract, Linux visual regression, accessibility, Dictionary smoke, all browser projects, performance budgets and both container builds.
-- Do not update snapshots or ceilings if a gate changes; classify and fix the root cause.
-- After final immutable-head CI, repeat review audit, mark Ready, expected-head squash merge and require exact-SHA main/stage/public validation.
+- The evidence-record commits change the PR head; run one final immutable-head authoritative CI.
+- Reconfirm the final five-path diff and unchanged `main`.
+- Repeat PR comments, reviews and unresolved-thread audit.
+- Mark Ready and perform expected-head squash merge only if the final head remains completely green.
+- Require exact merge-SHA main CI and exact-SHA stage deploy, public smoke and public browser validation before reconciliation.
