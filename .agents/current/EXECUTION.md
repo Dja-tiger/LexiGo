@@ -5,6 +5,7 @@
 - Repository: `Dja-tiger/LexiGo`.
 - Verified base: `65b73f0c9551880b8e84d371e473e9001e70cab9`.
 - Active branch: `test/issue-70-resource-notice-orphan-proof`.
+- Draft PR: #346.
 - Issue: #70.
 - Open PRs #304–#306 are unrelated Dependabot updates.
 - Stage remains successful on product SHA `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`, run `30752387593`.
@@ -33,22 +34,27 @@
 - It protects live `.lx-resource-stack`, `.lx-session-notice`, state-layer imports and import ordering.
 - No production CSS or runtime file was modified.
 
-## Branch evidence
+## Branch and PR evidence
 
 - Task contract commit: `955f71295c1c6362ca233150653f94ed6b6379cd`.
 - Source-contract implementation commit: `a8f0caf2dab4b260ad621c264a270dd9f4c75530`.
-- Progress evidence commit: `3378c8ddb20afb49664960ff3ab7ba3cc8a2ada9`.
+- Initial progress evidence commit: `3378c8ddb20afb49664960ff3ab7ba3cc8a2ada9`.
+- Initial execution evidence commit: `e1ce0f7650d89c843562e093645acbd4e5c15958`.
+- PR attachment task commit: `57dc42941d62418254ac7ec129b373e76b50595a`.
+- PR attachment progress commit: `e0d07e06360a5571bcef4f997d932d0d8f8f80da`.
+- Draft PR #346 was opened from the exact branch into `main`.
 - Every changed path was read back from the working branch.
-- `main` remained at `65b73f0c9551880b8e84d371e473e9001e70cab9` after each write.
+- `main` remained at `65b73f0c9551880b8e84d371e473e9001e70cab9` after every write.
+- Branch compare contains only the four declared paths; no CSS/runtime/workflow/dependency path is present.
 
 ## Validation plan
 
-1. Compare the branch against exact `main` and require only the four allowed paths.
-2. Open a Draft PR and run full CI.
+1. Resolve this update as the final developer-authored head unless CI identifies a real defect.
+2. Run complete full CI on the exact immutable head.
 3. Treat the new source test as the authoritative checkout-level consumer proof.
 4. Require unchanged Linux visual regression and route-performance budgets even though no CSS changes are present.
 5. Audit comments, reviews and unresolved threads.
-6. Mark Ready only after final immutable-head CI is fully green.
+6. Mark Ready only after final-head CI is fully green.
 7. Expected-head squash merge.
 8. Require exact merge SHA main CI and stage/public validation.
 9. Reconcile project state and reset current context separately.
