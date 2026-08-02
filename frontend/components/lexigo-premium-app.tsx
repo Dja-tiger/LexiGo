@@ -578,12 +578,6 @@ function sourceLabel(source: LessonSource): string {
     ?? source;
 }
 
-function formatAccountDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("ru", { day: "numeric", month: "long", year: "numeric" }).format(date);
-}
-
 function navigationIcon(view: AppView): IconName {
   if (view === "learn") return "learn";
   if (view === "phrases") return "phrases";
@@ -1467,12 +1461,12 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
     try {
       if (!activeSession && resolvedSource === "phrases") {
         let available = query.topic
-? DEFAULT_PHRASE_CATALOG.filter((item) => item.topic === query.topic)
-: DEFAULT_PHRASE_CATALOG;
+          ? DEFAULT_PHRASE_CATALOG.filter((item) => item.topic === query.topic)
+          : DEFAULT_PHRASE_CATALOG;
         const normalizedQuery = query.query?.trim().toLocaleLowerCase("en") ?? "";
         if (normalizedQuery) {
-available = available.filter((item) => [item.prompt, item.answer, item.topic]
-  .some((value) => value.toLocaleLowerCase("en").includes(normalizedQuery)));
+          available = available.filter((item) => [item.prompt, item.answer, item.topic]
+            .some((value) => value.toLocaleLowerCase("en").includes(normalizedQuery)));
         }
         const page = paginateCatalogEntries(sortLearningItems(available, query.sort ?? "default"), requestedPage);
         setItems(page.items);
@@ -1591,6 +1585,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
       setBusy(false);
     }
   }
+
   function clearAuthFieldError(field: AuthField) {
     setAuthFieldErrors((current) => {
       if (!current[field]) return current;
@@ -1689,53 +1684,6 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
       setAuthFieldErrors(presentation.fieldErrors);
       setAuthFormError(presentation.formError);
       focusFirstAuthError(presentation.fieldErrors);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function logout() {
-    if (!session) return;
-    setBusy(true);
-    setError("");
-    try {
-      await requestJSON<void>("/api/v1/auth/logout", { method: "POST" });
-      try {
-        clearLessonResultSnapshot(window.sessionStorage, session.user.id);
-      } catch {
-        // Logout still clears in-memory state when storage is restricted.
-      }
-      setSession(null);
-      setProgress(null);
-      setProgressStatus(idleResourceStatus());
-      setActiveLesson(null);
-      setActiveLessonStatus(idleResourceStatus());
-      setHydratedUserID("");
-      clearLessonState();
-      navigate({ view: "home" });
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось завершить выход");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function updateDailyGoal(dailyGoal: number) {
-    if (!session) {
-      requestAuthentication("progress");
-      return;
-    }
-    setBusy(true);
-    try {
-      const result = await authorizedRequest<ProgressSummary>(
-        session,
-        `/api/v1/progress/goal?timezoneOffsetMinutes=${timezoneOffsetMinutes()}`,
-        { method: "PUT", body: JSON.stringify({ dailyGoal }) },
-      );
-      setSession(result.activeSession);
-      setProgress(result.data);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить дневную цель");
     } finally {
       setBusy(false);
     }
@@ -1951,6 +1899,7 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
       setSuggestionError(requestError instanceof Error ? requestError.message : "Не удалось отправить вариант на проверку");
     }
   }
+
   function renderHeader() {
     const initial = session?.user.displayName?.trim().charAt(0).toUpperCase()
       || session?.user.email.charAt(0).toUpperCase()
@@ -2147,13 +2096,13 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
           {authFormError ? <p className="lx-auth-form-error" role="alert">{authFormError}</p> : null}
 
           <form
-      id={!resetMode && !forgotMode ? "auth-mode-panel" : undefined}
-      role={!resetMode && !forgotMode ? "tabpanel" : undefined}
-      aria-labelledby={!resetMode && !forgotMode ? `auth-mode-tab-${registrationMode ? "register" : "login"}` : undefined}
-      onSubmit={submitAuth}
-      noValidate
-      aria-label={resetMode ? "Новый пароль" : forgotMode ? "Восстановление пароля" : registrationMode ? "Регистрация" : "Вход"}
-    >
+            id={!resetMode && !forgotMode ? "auth-mode-panel" : undefined}
+            role={!resetMode && !forgotMode ? "tabpanel" : undefined}
+            aria-labelledby={!resetMode && !forgotMode ? `auth-mode-tab-${registrationMode ? "register" : "login"}` : undefined}
+            onSubmit={submitAuth}
+            noValidate
+            aria-label={resetMode ? "Новый пароль" : forgotMode ? "Восстановление пароля" : registrationMode ? "Регистрация" : "Вход"}
+          >
             {registrationMode ? (
               <label htmlFor="auth-displayName">
                 <span>Имя</span>
@@ -2295,8 +2244,8 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
         </section>
       );
     }
-    const profileProgressPending = progressStatus.phase === "idle" || progressStatus.phase === "loading";
-    return <><section className="lx-page-heading"><div><span>ПРОФИЛЬ</span><h1>{session.user.displayName || "Ваш аккаунт"}</h1><p>Настройки обучения и синхронизация между устройствами.</p></div><div className="lx-heading-badge"><Icon name="user"/><span>{session.user.email}</span></div></section>{profileProgressPending ? <AsyncStatePanel label="Загрузка настроек профиля" kind="loading" title="Синхронизируем настройки" message="Получаем дневную цель и состояние учебной очереди." compact focusResult={false} /> : progressStatus.phase === "error" && progressStatus.problem ? <AsyncStatePanel label="Настройки профиля недоступны" kind="error" title={progressStatus.problem.title} message={progressStatus.problem.message} reference={progressStatus.problem.correlationId} actionLabel={progressStatus.problem.retryable ? "Повторить" : undefined} onAction={progressStatus.problem.retryable ? () => void loadProgressResource(session) : undefined} compact /> : null}<section className="lx-profile-grid"><article><span>Email</span><strong>{session.user.email}</strong><small>используется для входа</small></article><article><span>Аккаунт создан</span><strong>{formatAccountDate(session.user.createdAt)}</strong><small>история хранится на сервере</small></article><article><span>Дневная цель</span><strong>{progress ? progress.dailyGoal : "—"}</strong><small>{progress ? "ответов в день" : "данные не загружены"}</small></article><article><span>Активный урок</span><strong>{activeLessonStatus.phase === "loading" || activeLessonStatus.phase === "idle" ? "…" : activeLesson ? "Есть" : "Нет"}</strong><small>{activeLesson ? sourceLabel(activeLesson.source) : activeLessonStatus.phase === "error" ? "состояние недоступно" : "можно начать новый"}</small></article></section><section className="lx-page-actions"><button className="lx-button ghost" type="button" onClick={logout}>Выйти</button><button className="lx-button primary" type="button" onClick={() => navigate({ view: "progress" })}>Открыть прогресс</button></section></>;
+
+    return null;
   }
 
   function renderAllItems() {
@@ -2445,28 +2394,28 @@ available = available.filter((item) => [item.prompt, item.answer, item.topic]
           />
         ) : null}
         <main
-        id="lexigo-main-content"
-        ref={mainContentRef}
-        className="lx-main-content"
-        tabIndex={-1}
-        aria-label={viewTitle(navigation.view)}
-      >
-        {error ? <AsyncStatePanel label="Ошибка текущего действия" kind="error" title="Действие не выполнено" message={error} compact /> : null}
-        {session ? <div className="lx-resource-stack">
-          <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} />
-          <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
-          <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
-        </div> : null}
-        {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}
-        <div className="lx-view">
-          {view}
-          <CalendarReminderIntegration
-            open={calendarOpen}
-            showCard={false}
-            onOpen={() => setCalendarOpen(true)}
-            onClose={() => setCalendarOpen(false)}
-          />
-        </div>
+          id="lexigo-main-content"
+          ref={mainContentRef}
+          className="lx-main-content"
+          tabIndex={-1}
+          aria-label={viewTitle(navigation.view)}
+        >
+          {error ? <AsyncStatePanel label="Ошибка текущего действия" kind="error" title="Действие не выполнено" message={error} compact /> : null}
+          {session ? <div className="lx-resource-stack">
+            <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgressResource(session)} />
+            <AsyncResourceNotice label="Состав каталога" status={catalogMetadataResourceStatus} onRetry={() => void loadCatalogMetadataResource()} />
+            <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLessonResource(session)} />
+          </div> : null}
+          {lessonQueueNotice ? <p className="lx-queue-notice" role="status">{lessonQueueNotice}</p> : null}
+          <div className="lx-view">
+            {view}
+            <CalendarReminderIntegration
+              open={calendarOpen}
+              showCard={false}
+              onOpen={() => setCalendarOpen(true)}
+              onClose={() => setCalendarOpen(false)}
+            />
+          </div>
         </main>
       </div>
       {!lessonFocusMode ? (
