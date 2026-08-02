@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `test/issue-70-themed-card-orphan-proof`
 - Base SHA: `9001982fa6cf917741a455c84d78fe06b23a2045`
-- PR: pending
+- PR: #350 (Draft)
 
 ## Objective
 
