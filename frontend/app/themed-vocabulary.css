@@ -1,5 +1,3 @@
-.lx-themed-home,
-.lx-themed-library,
 .lx-themed-selector {
   cursor: pointer;
 }
@@ -44,11 +42,6 @@
   transition: transform 160ms ease;
 }
 
-.lx-themed-home:hover .lx-themed-arrow,
-.lx-themed-library:hover .lx-themed-arrow {
-  transform: translateX(3px);
-}
-
 .lx-themed-selector.selected {
   border-color: rgba(139, 92, 246, 0.72) !important;
   background: linear-gradient(145deg, rgba(78, 56, 168, 0.26), rgba(15, 27, 51, 0.88)) !important;
@@ -58,27 +51,6 @@
 .lx-themed-selector.selected .lx-themed-symbol {
   border-color: rgba(168, 139, 255, 0.72);
   box-shadow: 0 10px 30px rgba(98, 74, 218, 0.24);
-}
-
-.lx-themed-home,
-.lx-themed-library {
-  position: relative;
-  overflow: hidden;
-}
-
-.lx-themed-home::before,
-.lx-themed-library::before {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 12% 0%, rgba(119, 91, 255, 0.14), transparent 42%);
-  content: "";
-  pointer-events: none;
-}
-
-.lx-themed-home > *,
-.lx-themed-library > * {
-  position: relative;
-  z-index: 1;
 }
 
 @media (max-width: 760px) {
