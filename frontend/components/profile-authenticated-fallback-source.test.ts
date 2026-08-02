@@ -75,7 +75,8 @@ describe("authenticated Profile compatibility fallback reachability", () => {
       expect(premium, `guest authentication contract ${marker}`).toContain(marker);
     }
 
-    expect(renderProfile.trimEnd()).toMatch(/return null;\n  }$/);
+    expect(occurrences(renderProfile, "return null;")).toBe(1);
+    expect(renderProfile.trimEnd()).toMatch(/return null;\s*}$/);
   });
 
   it("keeps the proven authenticated duplicate and helper family physically absent", () => {
