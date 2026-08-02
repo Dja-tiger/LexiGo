@@ -1,26 +1,80 @@
 # Current Task Progress
 
-## Status
+## 2026-08-03 02:22 Europe/Moscow
 
-- No atomic production slice is active.
-- PR #352 is squash-merged as product SHA `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
-- Exact-SHA main CI run `30769104005` completed successfully.
-- Exact-SHA stage run `30769451780` completed successfully with deploy, public smoke and all 12 public browser validations green.
-- This Agent Docs-only reconciliation records that delivery evidence and resets the completed task context.
+### Verified live state
 
-## Completed slice
+- Live `main` is `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
+- No pull request was open before this slice.
+- Issue #70 remains open.
+- Stage remains successful on product SHA `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`, run `30769451780`.
+- Repository memory and public architecture agree with live GitHub state.
+- Remaining `LexigoPremiumApp` presentation dispatch is intentionally limited to live Library, guest Profile/auth recovery and Lesson owners.
 
-- Removed `.lx-themed-home` and `.lx-themed-library` from all former CSS owners.
-- Deleted dead cursor members, parent-scoped arrow hover, overflow, pseudo-element and child-layer rules.
-- Removed only the retired selector members from shared focus and reduced-motion groups.
-- Preserved live `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed selectors and every unrelated accessibility declaration.
-- Production CSS changed by 34 deletions and zero additions.
-- Converted `themed-card-orphan-source.test.ts` to fail closed on executable or CSS reintroduction.
-- Preserved CSS import order, production TypeScript/TSX runtime, visual snapshots and route-budget ceilings.
-- PR #352 final developer-authored head `58dccbc363dac85d3581841a41f2f88423d27a4e` completed full CI #2553 / run `30768519332` after a targeted same-head retry of one isolated ambiguous Lesson text locator.
-- Linux visual regression, accessibility, UI shards and route-performance budgets passed unchanged.
-- Comments, reviews and unresolved review threads were empty before expected-head merge.
+### Selected atomic slice
 
-## Next selection boundary
+Proof-only reachability audit for the legacy Home hero-decoration CSS family in `frontend/app/premium-ui.css`.
 
-Select the next Issue #70 compatibility or CSS ownership family from fresh live source, route, bundle and deployment evidence. Preserve guest Profile recovery, Library, Lesson, unknown-route, session/account runtime and all proven live CSS owners. Do not infer adjacent code or selectors are dead from this completed cleanup.
+Candidate classes:
+
+- `lx-hero-copy` — 5 selector-token occurrences;
+- `lx-glow` — 1 occurrence;
+- `lx-floating-card` — 4 occurrences;
+- `lx-book-base` — 6 occurrences;
+- `lx-orbit` — 3 occurrences.
+
+Total bounded inventory: 19 occurrences.
+
+### Finding
+
+- Indexed repository discovery found each candidate only in `premium-ui.css`.
+- `LexigoPremiumApp` contains no candidate class and no `renderHome()` presentation.
+- Canonical `LexigoHomeApp` still executes `lx-hero-card`, `lx-hero-art`, `lx-word-preview`, `lx-home-next-action-copy` and `lx-progress-panel`; those classes are explicitly excluded from the candidate family.
+- `lx-resume-strip` remains live in compatibility Lesson presentation.
+- `lx-auth-card` remains live in guest authentication/recovery presentation.
+- Global stylesheet order remains `premium-ui.css` → `compact-home.css` → `adaptive-knowledge-coach-home.css`.
+
+### Branch and scope
+
+- Branch: `test/issue-70-prove-home-hero-css-orphaned`.
+- Exact base: `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
+- Allowed paths: one new source contract and `.agents/current/**` only.
+- Production CSS, runtime, snapshots, performance ceilings, workflows and dependencies are prohibited.
+
+### Implementation
+
+- Added `frontend/components/home-hero-orphan-source.test.ts`.
+- The contract recursively scans executable TypeScript/TSX from the actual `app`, `components` and `lib` checkout.
+- Test/spec files are excluded and comments are stripped before consumer analysis.
+- Each candidate must have zero executable consumers.
+- Each candidate must be confined to `app/premium-ui.css` with its exact count.
+- Exact candidate declaration blocks remain protected until a separate deletion slice.
+- Canonical Home, compact Home and live compatibility Lesson/auth owners are protected independently.
+- Layout import order is asserted without changing production source.
+
+### Diff evidence
+
+- Current branch is two commits ahead of exact base and not behind.
+- Changed paths before execution evidence:
+  - `.agents/current/TASK.md`
+  - `frontend/components/home-hero-orphan-source.test.ts`
+- No production CSS or runtime file changed.
+- Every written path was read back from the target branch.
+- `main` remained unchanged after writes.
+
+### Checks passed
+
+- Exact branch/base comparison contains only declared paths.
+- Source readback confirms the intended actual-checkout contract.
+- Candidate count arithmetic is exactly 19.
+- Live owner boundaries are represented by positive executable-consumer assertions.
+
+### Checks pending
+
+- Complete authoritative CI on the final developer-authored head.
+- Unchanged Linux visual hashes and route-performance budgets.
+- Review-surface audit, expected-head squash merge and exact-SHA main/stage validation.
+
+### Next action
+
+Write the execution record, compare the final branch with exact base, open a Draft PR and treat that resulting branch head as the immutable developer-authored candidate unless CI identifies a real contract defect.
