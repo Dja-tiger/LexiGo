@@ -20,22 +20,31 @@
 ## Corrective implementation
 
 - Created branch `fix/issue-70-webkit-active-lesson-history-setup` from exact failed main SHA `b4dace966bffcb482231d48b9b7926fee4e2b26f`.
-- Updated `.agents/current/TASK.md` before the product-test write and read it back from the branch.
+- Updated `.agents/current/TASK.md` before the test write and read it back from the branch.
 - Updated `frontend/e2e/active-lesson-figma.spec.ts` only within the failing test:
   - seed adjacent entries through native `History.prototype.replaceState` and `History.prototype.pushState`;
   - assert `/lesson/active` before Back;
   - assert the semantic Active Lesson remains mounted;
   - retain real `page.goBack()`, protected URL, safe-exit dialog and no-review-submit assertions.
 - Read the changed test blob back from the branch.
+- Opened Draft PR #337 with exactly four allowed paths.
 - No runtime, CSS, API, backend, workflow, dependency, snapshot, timeout, retry or performance-budget changes were made.
+
+## Validation evidence
+
+- Pre-final head `a15c9d8b848a8d22bd650edf7cafea3e4cfc1ff2` passed authoritative CI #2495 / run `30726428789` completely.
+- The previously failing desktop WebKit UI shard 1 passed.
+- All remaining browser groups, frontend core, backend unit/security/integration, accessibility, visual regression, performance budgets and both container builds passed.
+- No visual baseline or budget ceiling changed.
 
 ## Tool and safety checks
 
 - GitHub connector was used for refs, files, workflow jobs, artifacts, PR operations and issue state.
 - Every write explicitly targeted the corrective branch.
+- Every sequential changed path was read back before the next write.
 - No direct `main` write, force ref update, temporary workflow or no-op commit was used.
 - Local `gh` authentication was unavailable; authoritative failure evidence came from GitHub workflow artifacts and traces.
 
-## Next gate
+## Final gate
 
-Open a Draft corrective PR, verify the exact four-path diff, then monitor full authoritative CI. Do not mark Ready or merge until desktop WebKit and the complete matrix pass on the final developer-authored head.
+The validation-record updates change the PR head. Run one final immutable-head authoritative CI, repeat the clean review audit, then mark PR #337 Ready and expected-head squash merge only if the complete matrix remains green. After merge, require exact-SHA main CI and stage/public validation before reconciliation.
