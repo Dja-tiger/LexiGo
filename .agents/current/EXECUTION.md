@@ -23,20 +23,31 @@
 - Created `frontend/components/profile-authenticated-fallback-source.test.ts` and read it back.
 - The test combines bootstrap route/session predicate, render order, fallback dispatch, guest branch markers, exact duplicate/helper counts and canonical replacement-owner markers.
 - Updated `.agents/current/PROGRESS.md` and read it back.
+- Opened Draft PR #341 and verified exactly four allowed changed paths.
 - No production runtime, existing tests, CSS, API, backend, snapshots, budgets, workflows, dependencies or public documentation changed.
 
 ## Tool and safety evidence
 
 - Every write explicitly targeted the non-default branch.
-- `main` remained unchanged after each write.
+- `main` remained unchanged through pre-final validation.
 - Exact branch blobs were read back before the next sequential write.
 - The local execution container could not resolve GitHub DNS, so exact connector refs/files rather than a local clone were used as authoritative source evidence.
-- This limitation does not weaken the contract because CI will execute the committed source test in the repository's isolated frontend environment.
+- This limitation did not weaken the contract: authoritative CI executed the committed source test in the repository's isolated frontend environment.
 
-## Validation plan
+## Pre-final validation
 
-- Verify the final diff contains only the new source contract and three current-context files.
-- Open a Draft PR and run full authoritative CI.
-- Treat any exact occurrence mismatch as a manifest defect, not a reason to loosen the test.
-- Require complete frontend/backend/browser/accessibility/visual/performance/container gates despite no runtime change.
-- Record pre-final evidence, run a final immutable-head CI, complete review audit, expected-head squash merge and exact-SHA main/stage/public validation.
+- Head `6b5c62f2c7bb167cb9c6c346cfc38b01f1b6fb3c` passed authoritative CI #2509 / run `30737704993` completely.
+- Frontend core passed the exact source manifest, lint, typecheck, unit tests, production build and dependency audit.
+- Backend unit/security/integration passed.
+- Both UI shards, lesson completion and all specialized browser groups passed.
+- Linux visual regression passed without snapshot updates.
+- Accessibility audit and performance budgets passed without contract or ceiling changes.
+- Web and API container builds passed.
+- Production runtime remained byte-for-byte unchanged by the PR.
+
+## Final gate
+
+- Pre-final evidence was recorded in `.agents/current/TASK.md`, `PROGRESS.md` and this execution log.
+- These record commits change the PR head, so one final immutable-head authoritative CI is required.
+- After final green CI, repeat the comments/reviews/thread audit, verify the four-path diff and unchanged base, mark Ready and perform an expected-head squash merge.
+- Require exact merge-SHA main CI and exact-SHA stage/public validation before reconciliation or the separate runtime-deletion slice.
