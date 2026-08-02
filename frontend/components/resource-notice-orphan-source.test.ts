@@ -16,16 +16,21 @@ const bootstrapSource = readFileSync(path.join(componentsDirectory, "lexigo-boot
 
 const LEGACY_RESOURCE_NOTICE_PREFIX = "lx-resource-notice";
 
-const LEGACY_SELECTOR_MARKERS = [
-  ".lx-resource-notice {",
-  ".lx-resource-notice > div {",
-  ".lx-resource-notice strong {",
-  ".lx-resource-notice span {",
-  ".lx-resource-notice button,",
-  ".lx-resource-notice.offline,",
-  ".lx-resource-notice.timeout,",
-  ".lx-resource-notice.malformed,",
-] as const;
+const SESSION_NOTICE_BUTTON_RULE = `.lx-session-notice button {
+  min-height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 11px;
+  padding: 8px 13px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 800;
+}`;
+
+const SESSION_NOTICE_CONNECTIVITY_RULE = `.lx-session-notice.offline,
+.lx-session-notice.timeout { border-color: rgba(101, 191, 255, 0.3); color: #c7e8ff; background: rgba(13, 55, 84, 0.94); }`;
+
+const SESSION_NOTICE_MALFORMED_RULE = `.lx-session-notice.malformed { border-color: rgba(205, 158, 255, 0.32); color: #ead7ff; background: rgba(57, 31, 83, 0.94); }`;
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -63,25 +68,21 @@ describe("legacy resource notice CSS reachability", () => {
     expect(executableConsumers(LEGACY_RESOURCE_NOTICE_PREFIX)).toEqual([]);
   });
 
-  it("bounds the exact legacy selector inventory without absorbing live adjacent owners", () => {
+  it("keeps the retired selector family physically absent from production CSS", () => {
     const stylesheet = stripComments(mobilePWAStyles);
 
-    expect(occurrences(stylesheet, `.${LEGACY_RESOURCE_NOTICE_PREFIX}`)).toBe(8);
-    for (const marker of LEGACY_SELECTOR_MARKERS) {
-      expect(occurrences(stylesheet, marker), marker).toBe(1);
-    }
+    expect(occurrences(stylesheet, LEGACY_RESOURCE_NOTICE_PREFIX)).toBe(0);
+    expect(stylesheet).not.toContain(".lx-resource-notice");
+  });
+
+  it("preserves the exact live session-notice declarations after grouped-selector reduction", () => {
+    const stylesheet = stripComments(mobilePWAStyles);
 
     expect(stylesheet).toContain(".lx-resource-stack {");
     expect(stylesheet).toContain(".lx-session-notice {");
-    expect(stylesheet).toContain(
-      ".lx-resource-notice button,\n.lx-session-notice button {",
-    );
-    expect(stylesheet).toContain(
-      ".lx-resource-notice.offline,\n.lx-resource-notice.timeout,\n.lx-session-notice.offline,\n.lx-session-notice.timeout {",
-    );
-    expect(stylesheet).toContain(
-      ".lx-resource-notice.malformed,\n.lx-session-notice.malformed {",
-    );
+    expect(occurrences(stylesheet, SESSION_NOTICE_BUTTON_RULE)).toBe(1);
+    expect(occurrences(stylesheet, SESSION_NOTICE_CONNECTIVITY_RULE)).toBe(1);
+    expect(occurrences(stylesheet, SESSION_NOTICE_MALFORMED_RULE)).toBe(1);
   });
 
   it("keeps resource errors on the canonical async-state presentation path", () => {
@@ -99,7 +100,7 @@ describe("legacy resource notice CSS reachability", () => {
       .toBeLessThan(layoutSource.indexOf('import "./system-states.css";'));
   });
 
-  it("protects live route-stack and session-shell consumers from a future deletion slice", () => {
+  it("protects live route-stack and session-shell consumers", () => {
     expect(executableConsumers("lx-resource-stack").length).toBeGreaterThan(0);
     expect(bootstrapSource).toContain("lx-session-notice");
     expect(mobilePWAStyles).toContain("@media (display-mode: standalone)");
