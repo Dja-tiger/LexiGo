@@ -452,26 +452,6 @@
   color: var(--ak-color-text-muted);
 }
 
-.lx-dictionary-detail {
-  display: grid;
-  gap: 18px;
-}
-
-.lx-dictionary-detail > .lx-button {
-  justify-self: start;
-}
-
-.lx-dictionary-detail-card {
-  display: grid;
-  gap: 22px;
-  padding: 28px;
-  border: 1px solid rgba(141, 153, 185, 0.18);
-  border-radius: 28px;
-  background: rgba(16, 25, 45, 0.82);
-  box-shadow: 0 24px 54px rgba(2, 6, 23, 0.2);
-}
-
-.lx-dictionary-detail-meta,
 .lx-dictionary-result-heading {
   display: flex;
   align-items: center;
@@ -479,7 +459,6 @@
   gap: 8px;
 }
 
-.lx-dictionary-detail-meta span,
 .lx-dictionary-result-heading span {
   display: inline-flex;
   align-items: center;
@@ -493,59 +472,14 @@
   line-height: 1.2;
 }
 
-.lx-dictionary-detail-meta span[data-status],
 .lx-dictionary-result-heading span[data-status] {
   background: rgba(45, 212, 191, 0.1);
   color: var(--lx-secondary);
 }
 
-.lx-dictionary-detail-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.lx-dictionary-detail-title h1,
-.lx-dictionary-detail-title p,
-.lx-dictionary-detail-section h2,
-.lx-dictionary-detail-section p {
-  margin: 0;
-}
-
-.lx-dictionary-detail-title h1 {
-  overflow-wrap: anywhere;
-  font-size: clamp(2rem, 7vw, 4.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.06em;
-}
-
-.lx-dictionary-detail-title p {
-  margin-top: 8px;
-  color: var(--lx-muted);
-  font-size: 18px;
-}
-
 .lx-dictionary-translation {
   color: var(--lx-secondary);
   font-size: clamp(1.25rem, 3vw, 2rem);
-  overflow-wrap: anywhere;
-}
-
-.lx-dictionary-detail-section {
-  display: grid;
-  gap: 10px;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
-  padding-top: 18px;
-}
-
-.lx-dictionary-detail-section h2 {
-  font-size: 1rem;
-}
-
-.lx-dictionary-detail-section p {
-  color: var(--lx-muted);
-  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
@@ -661,14 +595,6 @@
     margin-top: 8px;
   }
 
-  .lx-dictionary-detail-card {
-    padding: 22px;
-  }
-
-  .lx-dictionary-detail-title {
-    align-items: stretch;
-    flex-direction: column;
-  }
 }
 
 @media (max-width: 390px) {
@@ -718,11 +644,6 @@
   .lx-dictionary-filter-panel .lx-dictionary-reset,
   .lx-dictionary-filter-toggle {
     border-color: color-mix(in srgb, var(--ak-color-text-muted) 34%, transparent);
-  }
-
-  .lx-dictionary-detail-card {
-    border-color: rgba(148, 163, 184, 0.22);
-    background: rgba(16, 33, 29, 0.92);
   }
 }
 
