@@ -69,6 +69,17 @@ This is dead CSS deletion with no mounted consumer. Therefore direct entry, gues
 - Expected-head squash merge succeeds.
 - Exact merge SHA passes post-merge main CI and stage/public validation.
 
+## Current evidence
+
+- Draft PR: #339.
+- Pre-final developer-authored head: `20e564d0561c11af067ef9cc78220ff82f1a1d51`.
+- Authoritative CI #2502 / run `30735956254` passed completely.
+- Source contract, lint, typecheck, unit tests, production build and dependency audit passed.
+- Both UI shards, Dictionary smoke, iOS PWA, controlled service worker, CSP, lesson completion, accessibility and performance budgets passed.
+- Linux visual regression passed without snapshot changes, confirming that the deleted selector family had no mounted visual consumer.
+- Backend unit/security/integration and both web/API container builds passed.
+- This evidence-record update changes the PR head; one final immutable-head authoritative CI remains required before Ready and merge.
+
 ## Rollback
 
 Revert the single cleanup PR, restoring the orphaned selector arms and the previous presence-oriented source contract.
