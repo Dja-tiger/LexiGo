@@ -2,9 +2,10 @@
 
 ## Status
 
-- Issue #70 proof-only slice is active on branch `test/issue-70-themed-card-orphan-proof`.
+- Issue #70 proof-only slice is active in Draft PR #350.
+- Branch: `test/issue-70-themed-card-orphan-proof`.
 - Base SHA: `9001982fa6cf917741a455c84d78fe06b23a2045`.
-- PR: pending.
+- Head `56d594b1300f6821f9f25bdb932788243678a50c` preceded the PR attachment evidence updates.
 
 ## Completed
 
@@ -22,14 +23,14 @@
 - The contract bounds each candidate to five occurrences in `themed-vocabulary.css`, two in `accessibility-focus.css` and one in `accessibility-navigation.css`.
 - Exact grouped selector blocks are protected so a future deletion must preserve live selector members.
 - Live themed selector, symbol, arrow and collection owners remain mandatory through executable-consumer and CSS-declaration assertions.
-- Read the task contract and source test back from the working branch.
-- Confirmed `main` remained unchanged after each write.
+- Read every changed path back from the working branch and confirmed `main` remained unchanged.
+- Compared the branch to exact base; only the four declared paths changed.
+- Opened Draft PR #350 with proof-only scope and explicit future-deletion boundaries.
 
 ## Pending
 
-- Update execution evidence and compare the branch to exact base.
-- Open a Draft PR and attach its number to current records.
-- Run full authoritative CI on the final immutable developer-authored head.
+- Finalize execution evidence and resolve the immutable developer-authored head.
+- Run full authoritative CI on that exact head.
 - Diagnose any failed count/consumer assertion without weakening the proof.
 - Verify Linux visual snapshots and route-performance budgets remain unchanged.
 - Audit comments, reviews and unresolved review threads.
