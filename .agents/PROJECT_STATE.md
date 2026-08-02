@@ -4,18 +4,18 @@
 
 - Last verified: 2026-08-03 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
-- Latest deployed product SHA: `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
-- Latest completed Issue #70 slice: checkout-level executable proof that legacy `.lx-themed-home` and `.lx-themed-library` selectors have no production TypeScript/TSX consumers while live themed selector, symbol, arrow, collection-theme and accessibility owners remain protected.
-- Completion PR: #350.
-- PR #350 immutable developer-authored head: `3632cee98734940d7d20cc56d7cd91d33e9a0bdb`.
-- Authoritative final PR CI: #2546 / run `30762347453`, successful.
-- Expected-head squash merge produced product SHA `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
-- Post-merge main CI run `30762864259` succeeded on the exact product merge SHA.
-- Exact-SHA stage run `30763184057` deployed web/API images tagged `de1e56fc558e7a7d3fdca155902718034b9f22d2`; deploy, public smoke and public browser validation succeeded.
+- Repository base verified before this documentation slice: `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
+- Latest deployed product SHA: `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
+- Latest completed Issue #70 slice: deletion of the proven-orphaned `.lx-themed-home` and `.lx-themed-library` CSS selector family while preserving every live themed and accessibility owner.
+- Completion PR: #352.
+- PR #352 immutable developer-authored head: `58dccbc363dac85d3581841a41f2f88423d27a4e`.
+- Authoritative PR CI: #2553 / run `30768519332`, successful after a targeted same-head retry of the isolated Lesson completion job.
+- Expected-head squash merge produced product SHA `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
+- Post-merge main CI run `30769104005` succeeded on the exact product merge SHA without retry.
+- Exact-SHA stage run `30769451780` deployed web/API images tagged `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`; deploy, public smoke and all 12 public browser checks succeeded.
 - No Issue #70 product PR is active at verification time.
 - No pull request is open at verification time.
-- PR #350 comments, reviews and unresolved review threads were empty before merge.
+- PR #352 comments, reviews and unresolved review threads were empty before merge.
 
 ## Completed
 
@@ -59,43 +59,34 @@
 - PR #346 bounded exactly eight legacy selector-token occurrences and protected canonical `AsyncResourceNotice` → `AsyncStatePanel` → `.lx-async-state`, live `.lx-resource-stack`, live `.lx-session-notice` and CSS import order.
 - PR #348 removed the complete `.lx-resource-notice*` selector family from `mobile-pwa-fixes.css`.
 - The production CSS patch was deletion-only: 19 removed lines and zero additions.
-- The three grouped rules were reduced to `.lx-session-notice button`, `.lx-session-notice.offline` / `.timeout` and `.lx-session-notice.malformed` with declaration bodies unchanged.
-- `resource-notice-orphan-source.test.ts` now requires physical CSS absence and exact single occurrence of the retained live session-notice rule bodies.
-- `mobile-pwa-fixes.css` contains zero `lx-resource-notice` tokens.
-- `.lx-resource-stack`, canonical `.lx-async-state`, `system-states.css`, layout import order and production TypeScript/TSX runtime were unchanged.
+- The grouped rules were reduced to their live `.lx-session-notice*` members with declaration bodies unchanged.
+- `resource-notice-orphan-source.test.ts` now requires physical CSS absence and protects retained live owners.
 - Both authoritative Linux visual regression runs and all route-performance budgets passed without baseline or ceiling changes.
 
-### Themed-card CSS proof
+### Themed-card CSS cleanup
 
 - PR #350 added `frontend/components/themed-card-orphan-source.test.ts` as actual-checkout evidence for the legacy card selector candidates.
 - The contract recursively scans executable TypeScript/TSX under `frontend/app`, `frontend/components` and `frontend/lib`, excludes test/spec files and strips source comments.
-- It proves zero executable production consumers of `lx-themed-home` and `lx-themed-library`.
-- Each candidate is bounded to five occurrences in `themed-vocabulary.css`, two in `accessibility-focus.css` and one in `accessibility-navigation.css`.
-- Exact grouped cursor, hover-arrow, overflow, pseudo-element, child-layer, focus and reduced-motion selector blocks remain protected.
-- Executable consumers and CSS declarations for live `lx-themed-selector`, `lx-themed-symbol`, `lx-themed-arrow` and collection-prefixed classes remain mandatory.
-- PR #350 changed no production CSS, runtime, snapshots, route-budget ceilings, backend/API, workflow, dependency, README or architecture file.
-- Authoritative Linux visual regression and all route-performance budgets passed unchanged on the final PR head and exact merge SHA.
+- PR #350 proved zero executable production consumers of `lx-themed-home` and `lx-themed-library` and bounded their exact former CSS inventory.
+- PR #352 removed the two retired selector names from `themed-vocabulary.css`, `accessibility-focus.css` and `accessibility-navigation.css`.
+- The production CSS patch was deletion-only: 34 removed lines and zero additions.
+- Removed material was limited to dead cursor members, the dead parent-scoped arrow hover rule, dead overflow/pseudo-element/child-layer blocks and the two retired members of shared focus and reduced-motion groups.
+- `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed selectors and every unrelated accessibility selector/declaration remain unchanged.
+- `themed-card-orphan-source.test.ts` now fails closed if either retired name reappears in executable TypeScript/TSX or any former CSS owner.
+- The contract continues to require executable consumers and exact declarations for the live themed owners.
+- CSS import order, production TypeScript/TSX runtime, snapshots and route-budget ceilings were unchanged.
+- Authoritative PR and exact-merge Linux visual regression and route-performance budgets passed without baseline or ceiling changes.
 
 ## In progress
 
 - No atomic production slice is active.
 - No Issue #70 product pull request is open.
-- This documentation-only reconciliation records PR #350 delivery evidence and resets the completed task context.
+- This documentation-only reconciliation records PR #352 delivery evidence and resets the completed task context.
 - The next atomic product task may start only after this reconciliation is merged and live GitHub state is checked again.
 
 ## Remaining roadmap
 
-### 1. #70 — Delete only the proven orphaned themed-card selectors
-
-- Start from fresh live `main`, Issue #70, open PR, CI and stage evidence.
-- Use `themed-card-orphan-source.test.ts` as the exact deletion manifest.
-- Remove only `.lx-themed-home` and `.lx-themed-library` selector members from `themed-vocabulary.css`, `accessibility-focus.css` and `accessibility-navigation.css`.
-- Preserve live `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed classes and every remaining accessibility selector in grouped rules.
-- Audit selector specificity, import order and computed cascade before deletion; selector presence alone is not ownership evidence.
-- Convert candidate-presence assertions to exact physical-absence assertions without weakening executable-consumer or live-owner evidence.
-- Require a deletion-dominant CSS diff, unchanged authoritative Linux visual hashes, unchanged route-performance budgets, full immutable-head CI and exact-SHA stage/public validation.
-
-### 2. #70 — Audit the next compatibility or CSS ownership family
+### 1. #70 — Audit the next compatibility or CSS ownership family
 
 - Select one minimal family per atomic PR from fresh source, route, bundle and production evidence.
 - Prove canonical ownership and compatibility reachability before deletion.
@@ -103,18 +94,18 @@
 - Do not infer neighboring helpers, selectors or state are dead from completed adjacent cleanup.
 - CSS cleanup requires actual-checkout consumer search, specificity/import-order analysis, exact cascade ownership and unchanged authoritative Linux visual hashes.
 
-### 3. #70 — Final dead-code and bundle acceptance
+### 2. #70 — Final dead-code and bundle acceptance
 
 - Complete exact consumer search for remaining compatibility owners.
 - Reconcile PR #328 fallback-exclusive asset evidence with current source ownership and route budgets.
 - Verify final dead-code inventory, fallback reachability, global CSS ownership, README acceptance criteria and bundle impact before closing Issue #70.
 
-### 4. Dependency maintenance
+### 3. Dependency maintenance
 
 - Keep dependency upgrades separate from Issue #70 compatibility cleanup.
 - Evaluate each dependency update against security, browser, visual and deployment gates in its own atomic slice.
 
-### 5. Product roadmap
+### 4. Product roadmap
 
 - #18 and #201: adaptive personalization and First Use after approved design states.
 - #25: pronunciation, listening and custom terminology after architecture/privacy contracts.
@@ -122,11 +113,10 @@
 
 ## Validation pending
 
-- `.lx-themed-home` and `.lx-themed-library` remain physically present until a separate deletion PR.
-- `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed selectors and their accessibility rules remain protected live declarations.
 - Guest Profile authentication and recovery remain intentionally live.
 - Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
+- `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed selectors and their accessibility rules remain protected live declarations.
 - `.lx-resource-stack`, `.lx-session-notice`, `.lx-async-state`, `.lx-dictionary-result-heading*` and `.lx-dictionary-translation` remain protected live declarations.
 - Scenario guest authentication boundaries remain intentionally live.
 - Final Issue #70 bundle/dead-code, compatibility reachability, CSS ownership and README acceptance criteria remain open.
@@ -134,22 +124,24 @@
 
 ## Recent production/tooling evidence
 
-1. #350 — `test(frontend): prove legacy themed cards orphaned` → `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
-2. #349 — `docs(agent): reconcile PR 348 resource notice deletion` → `9001982fa6cf917741a455c84d78fe06b23a2045`.
-3. #348 — `style(frontend): remove orphaned resource notice selectors` → `07aa9d55c265a392ec20db9057fb7e0f880a8884`.
-4. #347 — `docs(agent): reconcile PR 346 resource notice proof` → `e5978d3af77e6c5e14e22ee189d72c32d7b79461`.
-5. #346 — `test(frontend): prove legacy resource notice CSS orphaned` → `c0b8aede5563fd8619072746db77ba69a8c6329e`.
+1. #352 — `style(frontend): remove orphaned themed card selectors` → `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
+2. #351 — `docs(agent): reconcile PR 350 themed card proof` → `6e5f66953f1e0dbda7e48b5f98d9bd97e6731ebd`.
+3. #350 — `test(frontend): prove legacy themed cards orphaned` → `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
+4. #349 — `docs(agent): reconcile PR 348 resource notice deletion` → `9001982fa6cf917741a455c84d78fe06b23a2045`.
+5. #348 — `style(frontend): remove orphaned resource notice selectors` → `07aa9d55c265a392ec20db9057fb7e0f880a8884`.
 
 ## Evidence
 
-- PR #350 final developer-authored head `3632cee98734940d7d20cc56d7cd91d33e9a0bdb` passed authoritative full CI #2546 / run `30762347453` before expected-head squash merge.
-- Final PR CI passed the new checkout-level source contract, frontend lint, typecheck, complete unit suite, production build and dependency audit.
+- PR #352 final developer-authored head `58dccbc363dac85d3581841a41f2f88423d27a4e` passed authoritative full CI #2553 / run `30768519332` before expected-head squash merge.
+- The first Lesson-completion job attempt failed because one strict text locator matched both explanatory copy and the identically worded button; all CSS-sensitive visual, accessibility, performance and UI gates were already green.
+- A targeted retry of only that isolated job passed on the same immutable head; no code, snapshot or budget change was made.
+- Final PR CI passed the physical-absence source contract, frontend lint, typecheck, complete unit suite, production build and dependency audit.
 - Backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- PR #350 discussion contained no comments, reviews or unresolved review threads.
-- Its final diff was restricted to `frontend/components/themed-card-orphan-source.test.ts` and `.agents/current/**`; production CSS and runtime were unchanged.
-- Expected-head squash merge produced product SHA `de1e56fc558e7a7d3fdca155902718034b9f22d2`.
-- Post-merge main CI run `30762864259` repeated the complete product matrix successfully on that exact merge SHA.
-- Stage run `30763184057` validated the exact CI scope artifact, deployed web/API images tagged `de1e56fc558e7a7d3fdca155902718034b9f22d2`, returned successful public smoke and completed public browser validation.
+- PR #352 discussion contained no comments, reviews or unresolved review threads.
+- Its final diff was restricted to three CSS owners, `themed-card-orphan-source.test.ts` and `.agents/current/**`.
+- Expected-head squash merge produced product SHA `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`.
+- Post-merge main CI run `30769104005` repeated the complete product matrix successfully on that exact merge SHA, including Lesson completion without retry.
+- Stage run `30769451780` validated the exact CI scope artifact from run `30769104005`, deployed web/API images tagged `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`, returned successful public smoke and completed all 12 public browser validations.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
