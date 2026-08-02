@@ -11,19 +11,34 @@ const dictionaryStylesheet = path.join(appDirectory, "dictionary-catalog.css");
 
 const LEGACY_DICTIONARY_DETAIL_PREFIX = "lx-dictionary-detail";
 
-const EXPECTED_LEGACY_SELECTORS = [
-  ".lx-dictionary-detail",
-  ".lx-dictionary-detail > .lx-button",
-  ".lx-dictionary-detail-card",
-  ".lx-dictionary-detail-meta",
-  ".lx-dictionary-detail-meta span",
-  ".lx-dictionary-detail-meta span[data-status]",
-  ".lx-dictionary-detail-title",
-  ".lx-dictionary-detail-title h1",
-  ".lx-dictionary-detail-title p",
-  ".lx-dictionary-detail-section h2",
-  ".lx-dictionary-detail-section p",
-  ".lx-dictionary-detail-section",
+const LIVE_DECLARATION_BLOCKS = [
+  `.lx-dictionary-result-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}`,
+  `.lx-dictionary-result-heading span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #d8b4fe;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}`,
+  `.lx-dictionary-result-heading span[data-status] {
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--lx-secondary);
+}`,
+  `.lx-dictionary-translation {
+  color: var(--lx-secondary);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  overflow-wrap: anywhere;
+}`,
 ] as const;
 
 function sourceFiles(directory: string): string[] {
@@ -45,13 +60,12 @@ function stripComments(source: string): string {
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
-function selectorOccurrences(stylesheet: string, selector: string): number {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return [...stylesheet.matchAll(new RegExp(`${escaped}(?=\\s*[,\\{])`, "g"))].length;
+function occurrences(source: string, value: string): number {
+  return source.split(value).length - 1;
 }
 
 describe("legacy Dictionary detail CSS reachability", () => {
-  it("has no executable TypeScript or TSX consumer for the legacy class family", () => {
+  it("has no executable TypeScript or TSX consumer for the retired class family", () => {
     const candidates = [appDirectory, componentsDirectory, libDirectory]
       .flatMap(sourceFiles)
       .map((file) => ({
@@ -63,16 +77,13 @@ describe("legacy Dictionary detail CSS reachability", () => {
     expect(candidates).toEqual([]);
   });
 
-  it("keeps the candidate family bounded to the known stylesheet selectors", () => {
+  it("has no retired selector while preserving the live adjacent declaration owners", () => {
     const stylesheet = stripComments(readFileSync(dictionaryStylesheet, "utf8"));
-    const selectorTokens = [
-      ...stylesheet.matchAll(/\.lx-dictionary-detail(?:-[a-z0-9-]+)?(?:\s+[^,{]+)?(?=\s*[,\{])/g),
-    ].map(([selector]) => selector.trim());
 
-    expect([...new Set(selectorTokens)].sort()).toEqual([...EXPECTED_LEGACY_SELECTORS].sort());
+    expect(stylesheet).not.toContain(`.${LEGACY_DICTIONARY_DETAIL_PREFIX}`);
 
-    for (const selector of EXPECTED_LEGACY_SELECTORS) {
-      expect(selectorOccurrences(stylesheet, selector)).toBeGreaterThanOrEqual(1);
+    for (const declarationBlock of LIVE_DECLARATION_BLOCKS) {
+      expect(occurrences(stylesheet, declarationBlock)).toBe(1);
     }
   });
 });
