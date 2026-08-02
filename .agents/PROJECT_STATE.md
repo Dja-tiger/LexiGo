@@ -4,22 +4,18 @@
 
 - Last verified: 2026-08-02 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `109ffd8dd39587a83e791ba195449a49bd084cbf`.
-- Latest deployed product SHA: `109ffd8dd39587a83e791ba195449a49bd084cbf`.
-- Latest completed Issue #70 sequence: executable orphan proof for the legacy `.lx-dictionary-detail*` CSS family, followed by correction of the WebKit Active Lesson Browser Back test setup discovered during post-merge validation.
-- Proof PR: #336.
-- PR #336 immutable head: `d22d71041c2722770eacea85eaa45d77738db746`.
-- PR #336 authoritative final CI: #2493 / run `30725579604`, successful.
-- PR #336 expected-head squash merge: `b4dace966bffcb482231d48b9b7926fee4e2b26f`.
-- PR #336 post-merge main CI run `30725885894` failed only the desktop WebKit Active Lesson Browser Back test because the test setup used Next.js-patched History methods; stage was correctly blocked.
-- Corrective PR: #337.
-- PR #337 immutable head: `632e87ac6c00b2934012b09a98001f62a2f22c4d`.
-- PR #337 authoritative final CI: #2498 / run `30726742268`, successful.
-- PR #337 expected-head squash merge produced product SHA `109ffd8dd39587a83e791ba195449a49bd084cbf`.
-- Post-merge main CI run `30726998934` succeeded on the exact corrective merge SHA.
-- Exact-SHA stage run `30727269090` deployed web/API images tagged `109ffd8dd39587a83e791ba195449a49bd084cbf`; deploy, public smoke and all 12 public browser checks succeeded.
-- No pull requests were open at verification time.
-- Reviews, comments and unresolved review threads were empty before the corrective merge.
+- Repository base verified before this documentation slice: `29bf4bba7909fb370e9887d24d00e463da065e33`.
+- Latest deployed product SHA: `29bf4bba7909fb370e9887d24d00e463da065e33`.
+- Latest completed Issue #70 slice: deletion of the proven-unreachable legacy `.lx-dictionary-detail*` CSS selector family while preserving every live adjacent Dictionary declaration.
+- Completion PR: #339.
+- PR #339 immutable head: `dea9227bc37ad458c78ef33a4853a4074a35f380`.
+- Authoritative final PR CI: #2505 / run `30736298511`, successful.
+- Expected-head squash merge produced product SHA `29bf4bba7909fb370e9887d24d00e463da065e33`.
+- Post-merge main CI run `30736614782` succeeded on the exact product merge SHA.
+- Exact-SHA stage run `30736912145` deployed web/API images tagged `29bf4bba7909fb370e9887d24d00e463da065e33`; deploy, public smoke and all 12 public browser checks succeeded.
+- No Issue #70 product PR is active at verification time.
+- Unrelated Dependabot PRs #304, #305 and #306 remain open and were not mixed into this slice.
+- Reviews, comments and unresolved review threads were empty before the recorded product merge.
 
 ## Completed
 
@@ -51,92 +47,88 @@
 - PR #330 removed the remaining Phrases route-after-base source-order assumption: root layout now imports `phrases.css` before `catalog-enhancements.css`, while executable ownership tests prove the route selectors remain more specific than the shared base.
 - PR #332 synchronized the normative CSS-specificity rule with the production Phrases order-independence contract; PR #333 reset the completed current context.
 - PR #334 deleted `dictionary-detail-compatibility.css` and its root-layout import after moving every live declaration group to the exact canonical owner.
-- `dictionary-catalog.css` now owns Dictionary route variables, active filter/status colors and the compact filter-toggle correction while preserving the prior effective later-file position after forced-colors.
-- `word-detail.css` now owns the `/words/[id]` example-heading dark contrast correction.
-- `route-navigation.css` now owns the `/words/[id]` active Library rail-label dark contrast correction.
+- `dictionary-catalog.css` owns Dictionary route variables, active filter/status colors and the compact filter-toggle correction while preserving the prior effective later-file position after forced-colors.
+- `word-detail.css` owns the `/words/[id]` example-heading dark contrast correction.
+- `route-navigation.css` owns the `/words/[id]` active Library rail-label dark contrast correction.
 - `word-detail-source.test.ts` proves physical compatibility-file/import absence, exact canonical declaration blocks, single occurrence and no cross-owner placement.
 - No selector text, declaration value, specificity, component markup, runtime behavior, visual snapshot or route-budget ceiling changed in PR #334.
-- PR #336 added `dictionary-detail-orphan-source.test.ts`, which recursively inspects executable `app`, `components` and `lib` TypeScript/TSX, excludes tests/specs, strips comments and requires zero production consumers of the `lx-dictionary-detail` prefix.
-- PR #336 also bounds the exact remaining `.lx-dictionary-detail*` selector inventory in `dictionary-catalog.css`; the candidate CSS itself was intentionally not deleted.
-- The proof shows the legacy `.lx-dictionary-detail*` selector arms are orphaned, but grouped live `.lx-dictionary-result-heading*` declarations and `.lx-dictionary-translation` remain separate consumers and must be preserved in the deletion slice.
-- PR #337 corrected only the test fixture that prepares adjacent History entries for the Active Lesson Browser Back contract: native `History.prototype` methods now seed entries without triggering Next.js App Router synchronization.
-- PR #337 retained a real `page.goBack()` traversal, explicit `/lesson/active` precondition, protected URL restoration, safe-exit dialog and no-review-submit assertions; production runtime was unchanged.
+- PR #336 added `dictionary-detail-orphan-source.test.ts`, which recursively inspects executable `app`, `components` and `lib` TypeScript/TSX, excludes tests/specs, strips comments and proved zero production consumers of the `lx-dictionary-detail` prefix.
+- PR #336 bounded the exact remaining legacy selector inventory while intentionally leaving deletion to a separate atomic slice.
+- PR #337 corrected only the WebKit test fixture that prepares adjacent History entries for the Active Lesson Browser Back contract; production runtime remained unchanged.
+- PR #339 removed all 12 proven orphaned `.lx-dictionary-detail*` selector tokens from `dictionary-catalog.css`, including their compact and dark-mode overrides.
+- The PR #339 CSS patch was deletion-only: 79 removed CSS lines and zero CSS additions.
+- Three grouped rules were reduced to their live `.lx-dictionary-result-heading*` selector owners without changing declaration values.
+- `.lx-dictionary-translation` remained independent and unchanged.
+- `dictionary-detail-orphan-source.test.ts` now enforces both zero executable production consumers and zero remaining legacy selector tokens, while protecting the three live result-heading blocks and translation block by exact single-occurrence assertions.
+- PR #339 changed no runtime TSX, API, backend, CSS import order, visual baseline, route-budget ceiling, workflow, dependency, README or architecture contract.
+- Both authoritative Linux visual regression runs passed without snapshot changes, validating the no-mounted-consumer claim.
 - `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown/product-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
-- Issue #70 remains open for the bounded orphan-selector deletion, independently proven compatibility/CSS families and final dead-code, bundle and ownership acceptance.
+- Issue #70 remains open for independently proven compatibility/CSS families and final dead-code, bundle and ownership acceptance.
 
 ## In progress
 
-- No product slice is active.
-- No pull request was open at verification time.
+- No atomic production slice is active.
+- No Issue #70 product pull request is open.
 - The next atomic task must be selected only after this reconciliation is merged and fresh live evidence is reviewed.
 
 ## Remaining roadmap
 
-### 1. #70 — Remove the proven orphaned Dictionary detail selector arms
-
-- Use PR #336 as executable consumer evidence.
-- Remove only the bounded `.lx-dictionary-detail*` selector arms from `dictionary-catalog.css`.
-- Preserve grouped live `.lx-dictionary-result-heading*` selectors and their declarations exactly.
-- Treat `.lx-dictionary-translation` independently; it is not covered by the `lx-dictionary-detail` prefix proof.
-- Replace candidate-presence assertions with absence assertions in the same source contract.
-- Require unchanged authoritative Linux visual hashes, accessibility results and performance ceilings.
-
-### 2. #70 — Audit the next compatibility or CSS ownership family
+### 1. #70 — Audit the next compatibility or CSS ownership family
 
 - Select one minimal family per atomic PR.
 - Prove canonical ownership and compatibility reachability before deletion.
 - Preserve shared authentication, lesson-domain and unknown-route owners.
-- CSS cleanup requires selector search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
+- CSS cleanup requires exact consumer search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
+- Do not infer that neighboring Dictionary selectors are dead merely because `.lx-dictionary-detail*` is now absent.
 
-### 3. #70 — Final dead-code and bundle acceptance
+### 2. #70 — Final dead-code and bundle acceptance
 
 - Complete exact consumer search for remaining compatibility owners.
 - Use the PR #328 fallback-exclusive asset evidence together with source ownership, route budgets and README contracts when assessing final bundle acceptance.
 - Verify final bundle/dead-code, global CSS ownership and README acceptance criteria before closing Issue #70.
 
-### 4. #18 and #201 — Adaptive personalization and First Use
+### 3. #18 and #201 — Adaptive personalization and First Use
 
 - Implement diagnostic onboarding, skip path, reason-coded personalized queue and balancing after approved design states are available.
 
-### 5. #25 — Pronunciation, listening and custom terminology
+### 4. #25 — Pronunciation, listening and custom terminology
 
 - Resolve architecture/privacy and typed backend contracts before implementation.
 
-### 6. #203, #205 and #133 — Figma handoff, final parity and usability
+### 5. #203, #205 and #133 — Figma handoff, final parity and usability
 
 - Maintain exact production nodes, complete route-by-route parity and perform external moderated usability validation.
 
 ## Validation pending
 
-- The `.lx-dictionary-detail*` family is now proven orphaned in executable TypeScript/TSX but has not yet been removed from `dictionary-catalog.css`.
-- The deletion PR must preserve live grouped `.lx-dictionary-result-heading*` declarations and treat `.lx-dictionary-translation` separately.
+- The next Issue #70 family has not been selected or authorized; fresh source, runtime, cascade and bundle evidence is required.
 - Dictionary product-history compatibility remains intentionally live.
+- `.lx-dictionary-result-heading*` and `.lx-dictionary-translation` remain protected live declarations.
 - Profile and Scenario guest authentication boundaries remain intentionally live.
 - Final bundle/dead-code, CSS ownership and README acceptance criteria remain open.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #337 — `test(frontend): stabilize WebKit Active Lesson history setup` → `109ffd8dd39587a83e791ba195449a49bd084cbf`.
-2. #336 — `test(frontend): prove legacy Dictionary detail CSS orphaned` → `b4dace966bffcb482231d48b9b7926fee4e2b26f`.
-3. #335 — `docs(agent): reconcile PR 334 Dictionary CSS ownership` → `99668994916e1587a0855c801c10915c6419f59e`.
-4. #334 — `refactor(frontend): consolidate Dictionary detail CSS ownership` → `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
-5. #333 — `docs(agent): reset context after PR 332` → `5b4cab79d6030b01b1306fa1ca28666c95fb35fd`.
+1. #339 — `style(frontend): remove orphaned Dictionary detail selectors` → `29bf4bba7909fb370e9887d24d00e463da065e33`.
+2. #338 — `docs(agent): reconcile PR 336 and PR 337 validation` → `377d3d11ff5faf0c8fc95ac78f738add7bfac306`.
+3. #337 — `test(frontend): stabilize WebKit Active Lesson history setup` → `109ffd8dd39587a83e791ba195449a49bd084cbf`.
+4. #336 — `test(frontend): prove legacy Dictionary detail CSS orphaned` → `b4dace966bffcb482231d48b9b7926fee4e2b26f`.
+5. #334 — `refactor(frontend): consolidate Dictionary detail CSS ownership` → `c184742b651d0f0f8fbdd2c02e7e0c987c86b95b`.
 
 ## Evidence
 
-- PR #336 final head `d22d71041c2722770eacea85eaa45d77738db746` passed authoritative full CI #2493/run `30725579604` before expected-head squash merge.
-- `dictionary-detail-orphan-source.test.ts` proves zero comment-stripped production TS/TSX consumers and an exact bounded selector inventory without changing CSS or runtime.
-- PR #336 merge `b4dace966bffcb482231d48b9b7926fee4e2b26f` exposed a post-merge WebKit-only test-setup race in main CI run `30725885894`; stage was blocked as designed.
-- The failed trace showed `/learn` before `page.goBack()`, proving the Next.js-patched synthetic History setup invalidated the test precondition rather than exercising product safe-exit behavior.
-- PR #337 final head `632e87ac6c00b2934012b09a98001f62a2f22c4d` passed authoritative full CI #2498/run `30726742268`, including the previously failing desktop WebKit UI shard 1 and both container builds.
-- PR #337 changed no runtime, CSS, API, backend, workflow, dependency, timeout, retry, snapshot or performance ceiling.
-- Review comments, review submissions and unresolved threads were empty before PR #337 merge.
-- Expected-head squash merge produced product SHA `109ffd8dd39587a83e791ba195449a49bd084cbf`.
-- Post-merge main CI run `30726998934` repeated the complete product matrix successfully on the exact merge SHA.
-- Stage run `30727269090` deployed the exact merge SHA; web/API containers were healthy, public frontend/API smoke passed and all 12 desktop Chromium/iOS WebKit public browser checks passed.
-- Earlier PR #334 ownership evidence remains valid: `dictionary-detail-compatibility.css` and its import are absent, canonical Dictionary/Word Detail/route-navigation declarations remain in their exact owners, and no approved visual or budget ceiling changed.
-- Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs, artifacts, traces and deployment records.
+- PR #339 final head `dea9227bc37ad458c78ef33a4853a4074a35f380` passed authoritative full CI #2505/run `30736298511` before expected-head squash merge.
+- The final CI repeated frontend source-contract, lint, typecheck, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Dictionary smoke, iOS PWA, controlled service worker, CSP, lesson completion, accessibility, performance budgets and both container builds successfully.
+- Linux visual regression passed on both the pre-final and final PR heads without snapshot updates.
+- The CSS deletion removed 79 lines and added no CSS; exact live result-heading and translation declaration blocks remained unchanged and uniquely protected.
+- Review comments, review submissions and unresolved threads were empty before PR #339 merge.
+- Expected-head squash merge produced product SHA `29bf4bba7909fb370e9887d24d00e463da065e33`.
+- Post-merge main CI run `30736614782` repeated the complete product matrix successfully on the exact merge SHA.
+- Stage run `30736912145` deployed the exact merge SHA; web/API containers were healthy, public frontend/API smoke passed and all 12 desktop Chromium/iOS WebKit public browser checks passed.
+- No visual baseline, performance ceiling, runtime/API contract, dependency or workflow was changed to obtain green validation.
+- Earlier PR #334 ownership evidence and PR #336 consumer proof remain executable and are strengthened by the PR #339 absence contract.
+- Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
 
