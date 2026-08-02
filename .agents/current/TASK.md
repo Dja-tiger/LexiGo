@@ -86,6 +86,20 @@ Because this is proof-only, all user-visible behavior must be identical for gues
 - Expected-head squash merge succeeds.
 - Exact merge SHA passes post-merge main CI and stage/public validation.
 
+## Current evidence
+
+- Draft PR: #341.
+- Pre-final developer-authored head: `6b5c62f2c7bb167cb9c6c346cfc38b01f1b6fb3c`.
+- Authoritative CI #2509 / run `30737704993` passed completely.
+- The exact source contract passed without relaxed markers or occurrence counts.
+- Frontend lint, typecheck, unit tests, production build and dependency audit passed.
+- Backend unit/security/integration passed.
+- Both UI shards, lesson completion, Dictionary smoke, iOS PWA, controlled service worker and CSP passed.
+- Linux visual regression, accessibility audit and performance budgets passed without snapshot, contract or ceiling changes.
+- Web and API container builds passed.
+- No production runtime changed in this proof-only PR.
+- This evidence-record update changes the PR head; one final immutable-head authoritative CI remains required before Ready and merge.
+
 ## Non-goals
 
 - No runtime deletion in this PR.
