@@ -2,40 +2,22 @@
 
 ## Status
 
-- Issue #70 proof-only slice is active in Draft PR #346.
-- Branch: `test/issue-70-resource-notice-orphan-proof`.
-- Base SHA: `65b73f0c9551880b8e84d371e473e9001e70cab9`.
-- Current head: resolve after the final evidence commit; head `57dc42941d62418254ac7ec129b373e76b50595a` preceded this update.
+- No atomic production slice is active.
+- PR #346 is squash-merged as product SHA `c0b8aede5563fd8619072746db77ba69a8c6329e`.
+- Exact-SHA main CI run `30759899805` completed successfully.
+- Exact-SHA stage run `30760260623` completed successfully with deploy, public smoke and all 12 public browser checks green.
+- This Agent Docs-only reconciliation records that delivery evidence and resets the completed task context.
 
-## Completed
+## Completed slice
 
-- Verified live `main`, open PRs, Issue #70, main CI and exact deployed stage product SHA before writes.
-- Confirmed open PRs #304–#306 are unrelated Dependabot updates and remain outside this slice.
-- Read the mandatory repository harness, specialized Issue #70 reachability rules, CSS specificity rules, skills, project state, public architecture and current task records.
-- Confirmed `renderLibrary()` remains intentionally reachable for product-owned Dictionary History entries and is not a safe deletion candidate.
-- Audited global CSS imports and found a repository-memory/source discrepancy: `mobile-pwa-fixes.css` still contains `.lx-resource-notice*` despite the documented canonical async-state ownership.
-- Confirmed current `AsyncResourceNotice` renders through `AsyncStatePanel` and `.lx-async-state`, not `.lx-resource-notice*`.
-- Confirmed `.lx-resource-stack` remains live across route islands and `.lx-session-notice` remains live in `LexigoBootstrappedApp`.
-- Created a source-level Vitest contract that recursively scans executable `app`, `components` and `lib` TypeScript/TSX, excluding tests/specs and comments.
-- The contract requires zero production consumers of `lx-resource-notice`.
-- The contract bounds exactly eight legacy selector-token occurrences in `mobile-pwa-fixes.css`.
-- The contract protects the grouped-rule boundaries shared with `.lx-session-notice`, the canonical `.lx-async-state.compact` owner, the live resource stack and state import order.
-- Read every changed path back from the working branch and confirmed `main` remained unchanged.
-- Compared the branch to exact base; the diff contains only the four declared paths.
-- Opened Draft PR #346 with the proof-only scope and explicit future-deletion boundary.
+- Added `resource-notice-orphan-source.test.ts`.
+- Proved zero executable production TS/TSX consumers of the `lx-resource-notice` prefix using the actual checkout.
+- Bounded exactly eight legacy selector-token occurrences in `mobile-pwa-fixes.css`.
+- Protected canonical `.lx-async-state`, live `.lx-resource-stack`, live `.lx-session-notice`, grouped-rule boundaries and state import order.
+- Changed no production CSS, runtime, visual baseline, route budget, workflow or dependency.
+- PR #346 final developer-authored head `f3dc37181cb95042307358d7cd71de8d62157434` passed full CI #2532 / run `30759470924`.
+- Comments, reviews and unresolved review threads were empty before expected-head merge.
 
-## Pending
+## Next selection boundary
 
-- Resolve the final immutable developer-authored head after current evidence records are complete.
-- Run and complete authoritative full CI on that exact head.
-- Diagnose any failed source assertion or collateral contract without weakening the proof.
-- Verify Linux visual regression and route-performance budgets remain unchanged.
-- Re-check changed paths, comments, reviews and unresolved threads.
-- Mark Ready only after full green CI.
-- Expected-head squash merge.
-- Validate exact merge SHA through main CI and exact-SHA stage/public deployment.
-- Reconcile durable project state and reset current context in a separate Agent Docs PR.
-
-## Scope guard
-
-No production CSS, TS/TSX runtime, layout import, visual baseline, route budget, backend/API, workflow, dependency, README or architecture file is permitted in this proof-only slice.
+The next Issue #70 slice must be selected only after this reconciliation is merged and live GitHub state is checked again. The proven candidate is a separate deletion-only cleanup of `.lx-resource-notice*` that preserves all `.lx-session-notice` declarations and keeps `.lx-resource-stack` plus canonical `system-states.css` ownership unchanged.
