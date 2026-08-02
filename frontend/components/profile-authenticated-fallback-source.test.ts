@@ -43,11 +43,6 @@ describe("authenticated Profile compatibility fallback reachability", () => {
       "function renderProfile()",
       "function renderAllItems()",
     );
-    const authenticatedStart = sourceIndex(
-      renderProfile,
-      "    const profileProgressPending =",
-    );
-    const guestProfile = renderProfile.slice(0, authenticatedStart);
 
     const guestPresentationMarkers = [
       "if (!session) {",
@@ -60,7 +55,7 @@ describe("authenticated Profile compatibility fallback reachability", () => {
     ] as const;
 
     for (const marker of guestPresentationMarkers) {
-      expect(guestProfile, `guest Profile marker ${marker}`).toContain(marker);
+      expect(renderProfile, `guest Profile marker ${marker}`).toContain(marker);
     }
 
     const guestRuntimeMarkers = [
@@ -79,21 +74,19 @@ describe("authenticated Profile compatibility fallback reachability", () => {
     for (const marker of guestRuntimeMarkers) {
       expect(premium, `guest authentication contract ${marker}`).toContain(marker);
     }
+
+    expect(renderProfile.trimEnd()).toMatch(/return null;\n  }$/);
   });
 
-  it("bounds the unreachable authenticated Profile presentation and helper-only consumers", () => {
+  it("keeps the proven authenticated duplicate and helper family physically absent", () => {
     const renderProfile = sourceSlice(
       premium,
       "function renderProfile()",
       "function renderAllItems()",
     );
-    const authenticatedStart = sourceIndex(
-      renderProfile,
-      "    const profileProgressPending =",
-    );
-    const authenticatedProfile = renderProfile.slice(authenticatedStart);
 
-    const duplicatePresentationMarkers = [
+    const removedPresentationMarkers = [
+      "const profileProgressPending =",
       'className="lx-profile-grid"',
       "formatAccountDate(session.user.createdAt)",
       "onClick={logout}",
@@ -101,18 +94,18 @@ describe("authenticated Profile compatibility fallback reachability", () => {
       "Настройки обучения и синхронизация между устройствами.",
     ] as const;
 
-    for (const marker of duplicatePresentationMarkers) {
-      expect(authenticatedProfile, `authenticated duplicate marker ${marker}`).toContain(marker);
+    for (const marker of removedPresentationMarkers) {
+      expect(renderProfile, `removed authenticated duplicate marker ${marker}`).not.toContain(marker);
     }
 
-    expect(occurrences(premium, "function formatAccountDate(")).toBe(1);
-    expect(occurrences(premium, "formatAccountDate(")).toBe(2);
-    expect(occurrences(premium, "async function logout()")).toBe(1);
-    expect(occurrences(premium, "onClick={logout}")).toBe(1);
-    expect(occurrences(premium, "async function updateDailyGoal(")).toBe(1);
-    expect(occurrences(premium, "updateDailyGoal(")).toBe(1);
-    expect(occurrences(premium, '"/api/v1/auth/logout"')).toBe(1);
-    expect(occurrences(premium, "/api/v1/progress/goal?timezoneOffsetMinutes=")).toBe(1);
+    expect(occurrences(premium, "function formatAccountDate(")).toBe(0);
+    expect(occurrences(premium, "formatAccountDate(")).toBe(0);
+    expect(occurrences(premium, "async function logout()")).toBe(0);
+    expect(occurrences(premium, "onClick={logout}")).toBe(0);
+    expect(occurrences(premium, "async function updateDailyGoal(")).toBe(0);
+    expect(occurrences(premium, "updateDailyGoal(")).toBe(0);
+    expect(occurrences(premium, '"/api/v1/auth/logout"')).toBe(0);
+    expect(occurrences(premium, "/api/v1/progress/goal?timezoneOffsetMinutes=")).toBe(0);
   });
 
   it("keeps authenticated Profile mutations in the canonical owner", () => {
@@ -131,6 +124,7 @@ describe("authenticated Profile compatibility fallback reachability", () => {
   });
 
   it("retains the guest Profile dispatch and unrelated live compatibility owners", () => {
+    expect(occurrences(premium, "function renderProfile()")).toBe(1);
     expect(premium).toContain('navigation.view === "profile" ? renderProfile()');
     expect(premium).toContain('navigation.view === "library" ? renderLibrary()');
     expect(premium).toContain("renderLesson()");
