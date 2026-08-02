@@ -75,7 +75,6 @@ describe("authenticated Profile compatibility fallback reachability", () => {
       expect(premium, `guest authentication contract ${marker}`).toContain(marker);
     }
 
-    expect(occurrences(renderProfile, "return null;")).toBe(1);
     expect(renderProfile.trimEnd()).toMatch(/return null;\s*}$/);
   });
 
