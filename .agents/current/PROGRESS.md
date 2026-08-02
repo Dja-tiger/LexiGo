@@ -1,16 +1,41 @@
 # Current Task Progress
 
-No active atomic production slice.
+## Status
 
-## Latest completed delivery
+- Issue #70 atomic deletion slice is active in Draft PR #344.
+- Base SHA: `9bf254cf423b0d0bf69db836882b253797d24466`.
+- Product deletion commit before final evidence update: `55dac63d68a1c3a9bc401aa4fd87c039d2966c5a`.
+- Final head SHA must be resolved from live PR after the evidence commit.
+- Preliminary full CI #2518 / run `30751189324` started on `55dac63d68a1c3a9bc401aa4fd87c039d2966c5a`; it is superseded by the final evidence head and is not merge authority.
 
-- PR #341 final developer-authored head `0bcab13d69121c375a718d7663c26c622c43a69b` passed authoritative full CI #2512 / run `30738044292`.
-- The proof contract established canonical authenticated Profile selection before the compatibility fallback and bounded the later deletion candidate without changing production runtime.
-- Expected-head squash merge produced `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-- Exact-SHA post-merge main CI run `30738363662` passed the complete product matrix.
-- Exact-SHA stage run `30738638783` completed deploy, public smoke and 12/12 desktop Chromium/iOS WebKit public browser checks successfully.
-- Guest Profile authentication, registration and recovery contracts remain live and protected.
+## Completed
 
-## Next boundary
+- Verified live main, open PRs, Issue #70, Issue #12 and exact deployed product SHA before writes.
+- Completed mandatory repository harness and specialized rule reading.
+- Reconciled PR #341 in docs-only PR #342 and squash-merged it as `9bf254cf423b0d0bf69db836882b253797d24466` after lightweight CI #2514.
+- Re-read the reset current context from exact new main before starting this product slice.
+- Audited `LexigoPremiumApp`, `LexigoBootstrappedApp`, canonical `LexigoProfileApp` and the PR #341 source manifest.
+- Confirmed the exact deletion candidate has no reachable authenticated `/profile` path and no helper consumers outside the duplicate.
+- Removed `formatAccountDate`, compatibility-local `logout`, compatibility-local unused `updateDailyGoal` and the post-guest authenticated Profile JSX.
+- Preserved the complete guest login, registration, forgot-password, reset-password and reset-token presentation and runtime.
+- Added fail-closed `return null` for the impossible authenticated compatibility state.
+- Converted the source manifest from candidate-presence assertions to exact physical-absence assertions.
+- Preserved canonical Profile mutation markers for logout, daily goal, appearance and calendar ownership.
+- Read the production source back from exact commit `55dac63d68a1c3a9bc401aa4fd87c039d2966c5a`.
+- Confirmed the PR changed-file list is limited to allowed product/test/current-task paths before this evidence update.
+- Confirmed production TSX is deletion-dominant: 88 deletions versus 37 additions; additions are the fail-closed return and local indentation normalization only.
 
-After this reconciliation merges and live GitHub state is re-verified, the next Issue #70 slice may delete only the proven-unreachable authenticated Profile return and its exact helper family from `LexigoPremiumApp`. The separate product PR must convert candidate-presence assertions into exact absence assertions and preserve all guest auth/recovery, canonical Profile, Library, Lesson, unknown-route and shared account-runtime behavior.
+## Pending
+
+- Resolve the final immutable head after the evidence commit.
+- Run and complete authoritative full CI on that exact head.
+- Verify unchanged Linux visual snapshots and all route-performance budgets.
+- Inspect comments, reviews and unresolved threads.
+- Mark PR #344 Ready only after all required checks pass.
+- Perform expected-head squash merge.
+- Validate exact merge SHA through post-merge main CI and exact-SHA stage/public deployment.
+- Reconcile durable state and reset current context in a separate docs-only PR.
+
+## Scope guard
+
+No CSS, snapshot, route-budget, bootstrap route, canonical Profile, API, backend, migration, workflow, dependency, README or architecture file is permitted in this slice.

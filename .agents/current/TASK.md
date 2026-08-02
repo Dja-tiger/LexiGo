@@ -5,8 +5,9 @@
 - Issue: #70
 - Branch: `refactor/issue-70-remove-authenticated-profile-fallback`
 - Base SHA: `9bf254cf423b0d0bf69db836882b253797d24466`
-- Head SHA: resolve from live branch ref
-- PR: not opened yet
+- Product deletion commit before final evidence update: `55dac63d68a1c3a9bc401aa4fd87c039d2966c5a`
+- Final head SHA: resolve from live PR after this evidence commit
+- PR: #344
 
 ## Objective
 
