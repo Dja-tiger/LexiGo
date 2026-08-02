@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `style/issue-70-remove-resource-notice-selectors`
 - Base SHA: `e5978d3af77e6c5e14e22ee189d72c32d7b79461`
-- PR: pending
+- PR: #348 (Draft)
 
 ## Objective
 
@@ -50,12 +50,12 @@ Every path not listed above, especially:
 - `.lx-session-notice`: live bootstrap/session presentation owner in `mobile-pwa-fixes.css`.
 - `.lx-resource-stack`: live route-island layout owner.
 - `AsyncResourceNotice` → `AsyncStatePanel` → `.lx-async-state`: canonical resource-error presentation.
-- `.lx-resource-notice*`: proven orphan family to delete in this slice.
+- `.lx-resource-notice*`: proven orphan family deleted in this slice.
 
 ## Invariants
 
 - The deletion must be CSS deletion-dominant.
-- All `.lx-resource-notice` occurrences must become physically absent from production CSS.
+- All `.lx-resource-notice` occurrences must remain physically absent from production CSS.
 - `.lx-session-notice button`, `.lx-session-notice.offline`, `.lx-session-notice.timeout` and `.lx-session-notice.malformed` must retain the same declaration bodies.
 - `.lx-resource-stack` and canonical async-state behavior remain unchanged.
 - No reachable DOM, session, PWA, accessibility, visual or navigation behavior changes.
@@ -64,9 +64,9 @@ Every path not listed above, especially:
 ## Acceptance criteria
 
 - `mobile-pwa-fixes.css` contains zero `.lx-resource-notice` tokens.
-- The source contract still proves zero executable production consumers and now requires physical CSS absence.
+- The source contract still proves zero executable production consumers and requires physical CSS absence.
 - All live `.lx-session-notice` selector bodies and values remain present exactly once.
-- Final diff is restricted to the five allowed paths and production CSS contains deletions with only minimal selector-line additions required to preserve live grouped owners.
+- Final diff is restricted to the five allowed paths; production CSS is deletion-only with 19 removed lines and zero additions.
 - Full immutable-head CI passes, including unchanged Linux visual snapshots and performance budgets.
 - Comments, reviews and unresolved review threads are empty before Ready.
 - Expected-head squash merge succeeds.
