@@ -5,7 +5,7 @@
 - Issue: #70
 - Branch: `test/issue-70-resource-notice-orphan-proof`
 - Base SHA: `65b73f0c9551880b8e84d371e473e9001e70cab9`
-- PR: pending
+- PR: #346 (Draft)
 
 ## Objective
 
