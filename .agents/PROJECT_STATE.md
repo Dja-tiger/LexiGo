@@ -4,18 +4,18 @@
 
 - Last verified: 2026-08-02 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-- Latest deployed product SHA: `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-- Latest completed Issue #70 slice: executable proof that the authenticated Profile presentation inside `LexigoPremiumApp.renderProfile()` is unreachable because the canonical authenticated `LexigoProfileApp` is selected before the compatibility fallback, while guest authentication and recovery remain live.
-- Completion PR: #341.
-- PR #341 immutable head: `0bcab13d69121c375a718d7663c26c622c43a69b`.
-- Authoritative final PR CI: #2512 / run `30738044292`, successful.
-- Expected-head squash merge produced product SHA `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-- Post-merge main CI run `30738363662` succeeded on the exact product merge SHA.
-- Exact-SHA stage run `30738638783` deployed web/API images tagged `c516a47910dfad46e174f90c9adf27919f7b4d4d`; deploy, public smoke and all 12 public browser checks succeeded.
+- Repository base verified before this documentation slice: `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`.
+- Latest deployed product SHA: `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`.
+- Latest completed Issue #70 slice: removal of the proven-unreachable authenticated Profile compatibility presentation and its helper-only runtime from `LexigoPremiumApp`, while preserving guest authentication/recovery and canonical Profile/Progress ownership.
+- Completion PR: #344.
+- PR #344 immutable head: `39a46919ba376cae03882f3c703a59ac61ef1e22`.
+- Authoritative final PR CI: #2525 / run `30751670158`, successful.
+- Expected-head squash merge produced product SHA `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`.
+- Post-merge main CI run `30752056658` succeeded on the exact product merge SHA.
+- Exact-SHA stage run `30752387593` deployed web/API images tagged `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`; deploy, public smoke and all 12 public browser checks succeeded.
 - No Issue #70 product PR is active at verification time.
-- No pull request is open at verification time.
-- PR #341 discussion was empty; its final proof-only diff changed no production runtime.
+- Open PRs #304, #305 and #306 are pre-existing Dependabot dependency updates and are outside this completed production slice.
+- PR #344 comments, reviews and unresolved review threads were empty before merge.
 
 ## Completed
 
@@ -23,7 +23,7 @@
 
 - Go API, PostgreSQL, Redis, authenticated sessions, account security, migrations, containers and CI/CD foundations are implemented.
 - Backend unit/race/integration/security gates and frontend lint/type/unit/build/browser gates are mandatory for product and mixed changes.
-- Pure Agent Docs changes use the fail-closed lightweight classifier.
+- Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy stage.
 
 ### Learning and route ownership
 
@@ -32,7 +32,8 @@
 - `ReviewOutboxRuntime` remains the sole durable review-queue owner.
 - `LexigoLearnApp` is the canonical `/learn` Lesson Composer owner and renders before the final `LexigoPremiumApp` compatibility fallback.
 - Authenticated `/profile` is selected by the canonical `LexigoProfileApp` before the final compatibility fallback.
-- Guest `/profile` authentication, registration, forgot-password and reset-password flows remain intentionally compatibility-owned.
+- Guest `/profile` login, registration, forgot-password, reset-password, reset-token and validation flows remain intentionally compatibility-owned by `LexigoPremiumApp.renderProfile()`.
+- Authenticated and guest `/progress` remain owned by canonical `LexigoProgressApp` before the compatibility fallback.
 
 ### Compatibility cleanup evidence
 
@@ -43,66 +44,50 @@
 - PR #303 established the two-sided Scenario route boundary; PR #308 protects the already-absent Scenario compatibility runtime against regression.
 - PR #311 proved the Home boundary; PR #313 removed the unreachable legacy Home presentation.
 - PR #316 proved the two-sided Learn compatibility boundary; PR #318 removed only `renderLearn` and its exact dispatch branch.
-- PR #324 added executable inventory proving that dedicated route islands precede the final fallback, retired route presentations remain absent, and the remaining compatibility dispatch is limited to Library, Profile and Lesson.
-- PR #324 also proved canonical `LexigoLearnApp` still consumes the Learn composer CSS family, so those selectors are not safe orphan-deletion candidates.
-- PR #328 added production-network evidence that the live compatibility fallback retains independently loaded JavaScript assets and that every measured canonical route island excludes those fallback-exclusive assets.
-- PR #330 removed the remaining Phrases route-after-base source-order assumption: root layout now imports `phrases.css` before `catalog-enhancements.css`, while executable ownership tests prove the route selectors remain more specific than the shared base.
-- PR #332 synchronized the normative CSS-specificity rule with the production Phrases order-independence contract; PR #333 reset the completed current context.
-- PR #334 deleted `dictionary-detail-compatibility.css` and its root-layout import after moving every live declaration group to the exact canonical owner.
-- `dictionary-catalog.css` owns Dictionary route variables, active filter/status colors and the compact filter-toggle correction while preserving the prior effective later-file position after forced-colors.
-- `word-detail.css` owns the `/words/[id]` example-heading dark contrast correction.
-- `route-navigation.css` owns the `/words/[id]` active Library rail-label dark contrast correction.
-- `word-detail-source.test.ts` proves physical compatibility-file/import absence, exact canonical declaration blocks, single occurrence and no cross-owner placement.
-- No selector text, declaration value, specificity, component markup, runtime behavior, visual snapshot or route-budget ceiling changed in PR #334.
-- PR #336 added `dictionary-detail-orphan-source.test.ts`, which recursively inspects executable `app`, `components` and `lib` TypeScript/TSX, excludes tests/specs, strips comments and proved zero production consumers of the `lx-dictionary-detail` prefix.
-- PR #336 bounded the exact remaining legacy selector inventory while intentionally leaving deletion to a separate atomic slice.
+- PR #324 added executable inventory proving that dedicated route islands precede the final fallback, retired route presentations remain absent, and remaining compatibility dispatch is limited to live Library, guest Profile and Lesson behavior.
+- PR #328 added production-network evidence that the live compatibility fallback retains independently loaded JavaScript assets and that measured canonical route islands exclude those fallback-exclusive assets.
+- PR #330 removed the Phrases route-after-base source-order assumption; PR #332 synchronized the normative CSS-specificity rule with the production order-independence contract.
+- PR #334 deleted `dictionary-detail-compatibility.css` and moved every live declaration group to the exact canonical owner without changing selector behavior.
+- PR #336 proved zero production consumers of the remaining `.lx-dictionary-detail*` selector family.
 - PR #337 corrected only the WebKit test fixture that prepares adjacent History entries for the Active Lesson Browser Back contract; production runtime remained unchanged.
-- PR #339 removed all 12 proven orphaned `.lx-dictionary-detail*` selector tokens from `dictionary-catalog.css`, including their compact and dark-mode overrides.
-- The PR #339 CSS patch was deletion-only: 79 removed CSS lines and zero CSS additions.
-- Three grouped rules were reduced to their live `.lx-dictionary-result-heading*` selector owners without changing declaration values.
-- `.lx-dictionary-translation` remained independent and unchanged.
-- `dictionary-detail-orphan-source.test.ts` now enforces both zero executable production consumers and zero remaining legacy selector tokens, while protecting the three live result-heading blocks and translation block by exact single-occurrence assertions.
-- PR #339 changed no runtime TSX, API, backend, CSS import order, visual baseline, route-budget ceiling, workflow, dependency, README or architecture contract.
-- Both authoritative Linux visual regression runs passed without snapshot changes, validating the no-mounted-consumer claim.
-- PR #341 added `profile-authenticated-fallback-source.test.ts` and proved the authenticated `/profile` route/session predicate selects `LexigoProfileApp` before `LexigoPremiumApp`.
-- The proof isolates the guest branch from the post-guest authenticated duplicate inside `renderProfile()` and protects guest login, registration, forgot-password and reset-password markers.
-- The exact later deletion candidate is bounded to the authenticated return after the guest `if (!session)` branch, `formatAccountDate`, the compatibility-local `logout` and the compatibility-local unused `updateDailyGoal`.
-- Canonical `LexigoProfileApp` independently owns authenticated logout, daily-goal, appearance and calendar contracts.
-- PR #341 changed only one source-level test and the three current task records; production runtime remained byte-for-byte unchanged.
-- `LexigoPremiumApp` remains reachable for guest authentication, account recovery, unknown/product-route fallback and shared lesson-domain behavior; broad deletion is prohibited without exact replacement evidence.
-- Issue #70 remains open for the separate authenticated Profile duplicate deletion, independently proven compatibility/CSS families and final dead-code, bundle and ownership acceptance.
+- PR #339 removed all 12 proven orphaned `.lx-dictionary-detail*` selector tokens; its CSS patch was deletion-only and authoritative Linux visual regression remained unchanged.
+- PR #341 added `profile-authenticated-fallback-source.test.ts` and proved authenticated `/profile` selects `LexigoProfileApp` before `LexigoPremiumApp`, while guest Profile authentication/recovery remains live.
+- PR #341 bounded the exact authenticated Profile deletion candidate to the post-guest return, `formatAccountDate`, compatibility-local `logout` and compatibility-local unused `updateDailyGoal`.
+- PR #344 deleted that exact bounded candidate and no neighboring runtime family.
+- `LexigoPremiumApp.renderProfile()` still preserves the complete guest branch and ends with fail-closed `return null` for the impossible authenticated compatibility state.
+- `profile-authenticated-fallback-source.test.ts` now requires physical absence of the deleted authenticated family, continued presence of guest auth/recovery markers and continued canonical Profile mutation ownership.
+- The directly affected `progress-route-island-source.test.ts` now treats only `progress.dailyGoal` and Profile navigation as retired Profile-owned consumers while preserving shared Progress state/loading, `latestProgressRef` and `lessonProgressBeforeRef` requirements.
+- No Progress runtime, bootstrap route, canonical Profile, CSS, visual baseline, route-budget ceiling, API, backend, migration, workflow, dependency, README or architecture file changed in PR #344.
+- `LexigoPremiumApp` remains reachable for guest Profile authentication/recovery, Library, Lesson and unknown/product-route fallback; broad deletion remains prohibited without exact replacement and reachability evidence.
 
 ## In progress
 
 - No atomic production slice is active.
 - No Issue #70 product pull request is open.
-- This documentation-only reconciliation records PR #341 delivery evidence and resets the completed task context.
+- This documentation-only reconciliation records PR #344 delivery evidence and resets the completed task context.
 - The next atomic product task may start only after this reconciliation is merged and live GitHub state is checked again.
 
 ## Remaining roadmap
 
-### 1. #70 — Remove the proven-unreachable authenticated Profile duplicate
+### 1. #70 — Audit the next compatibility or CSS ownership family
 
-- Use PR #341 as the executable manifest and keep the deletion in one separate atomic product PR.
-- Remove only the authenticated return after the guest `if (!session)` branch in `renderProfile()`, `formatAccountDate`, compatibility-local `logout` and compatibility-local unused `updateDailyGoal`.
-- Preserve `renderProfile()` itself and every guest login, registration, forgot-password, reset-password, reset-token and validation contract.
-- Preserve canonical `LexigoProfileApp`, session bootstrap, Library, Lesson, unknown-route and shared account-runtime behavior.
-- Replace candidate-presence assertions with exact absence assertions rather than weakening or deleting the reachability contract.
-- Require full immutable-head CI, unchanged authoritative Linux visual hashes, bundle comparison and exact-SHA stage/public validation.
-
-### 2. #70 — Audit the next compatibility or CSS ownership family
-
-- Select one minimal family per atomic PR.
+- Select one minimal family per atomic PR from fresh source, route, bundle and production evidence.
 - Prove canonical ownership and compatibility reachability before deletion.
-- Preserve shared authentication, lesson-domain and unknown-route owners.
+- Preserve guest authentication/recovery, Library, Lesson, unknown-route and shared account/session owners.
 - CSS cleanup requires exact consumer search, specificity/import-order analysis, computed-cascade ownership and unchanged authoritative Linux visual hashes.
-- Do not infer that neighboring selectors are dead from a completed adjacent cleanup.
+- Do not infer that neighboring helpers, selectors or state are dead from the completed Profile cleanup.
 
-### 3. #70 — Final dead-code and bundle acceptance
+### 2. #70 — Final dead-code and bundle acceptance
 
 - Complete exact consumer search for remaining compatibility owners.
 - Use the PR #328 fallback-exclusive asset evidence together with source ownership, route budgets and README contracts when assessing final bundle acceptance.
-- Verify final bundle/dead-code, global CSS ownership and README acceptance criteria before closing Issue #70.
+- Verify final dead-code inventory, fallback reachability, global CSS ownership, route budgets and README acceptance criteria before closing Issue #70.
+
+### 3. Dependency maintenance
+
+- PRs #304, #305 and #306 remain separate Dependabot updates.
+- Do not mix dependency upgrades with Issue #70 compatibility cleanup.
+- Evaluate each dependency PR against repository security, browser, visual and deployment gates in its own atomic slice.
 
 ### 4. #18 and #201 — Adaptive personalization and First Use
 
@@ -118,33 +103,33 @@
 
 ## Validation pending
 
-- The authenticated Profile duplicate remains in production source until a separate deletion PR converts PR #341 presence evidence into absence evidence.
-- Guest Profile authentication and recovery remain intentionally live and must not be included in that deletion.
+- Guest Profile authentication and recovery remain intentionally live and must not be included in inferred deletion.
+- Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
 - `.lx-dictionary-result-heading*` and `.lx-dictionary-translation` remain protected live declarations.
 - Scenario guest authentication boundaries remain intentionally live.
-- Final bundle/dead-code, CSS ownership and README acceptance criteria remain open.
+- Final Issue #70 bundle/dead-code, compatibility reachability, CSS ownership and README acceptance criteria remain open.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #341 — `test(frontend): prove authenticated Profile fallback duplicate unreachable` → `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-2. #340 — `docs(agent): reconcile PR 339 Dictionary selector cleanup` → `ab906738ab19287aac40016b5d28c2f341e3ae45`.
-3. #339 — `style(frontend): remove orphaned Dictionary detail selectors` → `29bf4bba7909fb370e9887d24d00e463da065e33`.
-4. #338 — `docs(agent): reconcile PR 336 and PR 337 validation` → `377d3d11ff5faf0c8fc95ac78f738add7bfac306`.
-5. #337 — `test(frontend): stabilize WebKit Active Lesson history setup` → `109ffd8dd39587a83e791ba195449a49bd084cbf`.
+1. #344 — `refactor(frontend): remove authenticated Profile fallback duplicate` → `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`.
+2. #342 — `docs(agent): reconcile PR 341 Profile reachability proof` → `9bf254cf423b0d0bf69db836882b253797d24466`.
+3. #341 — `test(frontend): prove authenticated Profile fallback duplicate unreachable` → `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
+4. #340 — `docs(agent): reconcile PR 339 Dictionary selector cleanup` → `ab906738ab19287aac40016b5d28c2f341e3ae45`.
+5. #339 — `style(frontend): remove orphaned Dictionary detail selectors` → `29bf4bba7909fb370e9887d24d00e463da065e33`.
 
 ## Evidence
 
-- PR #341 final developer-authored head `0bcab13d69121c375a718d7663c26c622c43a69b` passed authoritative full CI #2512/run `30738044292` before expected-head squash merge.
-- The final PR CI passed the exact Profile reachability source manifest, frontend lint, typecheck, unit tests, production build and dependency audit.
+- PR #344 final developer-authored head `39a46919ba376cae03882f3c703a59ac61ef1e22` passed authoritative full CI #2525 / run `30751670158` before expected-head squash merge.
+- Final PR CI passed Profile absence and Progress ownership source contracts, frontend lint, typecheck, unit tests, production build and dependency audit.
 - Backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- PR #341 discussion contained no comments, and the proof-only diff remained restricted to the dedicated source test plus `.agents/current/**`.
-- Expected-head squash merge produced product SHA `c516a47910dfad46e174f90c9adf27919f7b4d4d`.
-- Post-merge main CI run `30738363662` repeated the complete product matrix successfully on the exact merge SHA.
-- Stage run `30738638783` validated the exact CI scope artifact for `c516a47910dfad46e174f90c9adf27919f7b4d4d`, deployed that SHA and completed public smoke plus all 12 desktop Chromium/iOS WebKit public browser checks successfully.
-- No production TSX, CSS, API, backend, migration, visual baseline, route-budget ceiling, workflow, dependency, README or architecture file changed in PR #341.
-- The proof combines the bootstrap route/session predicate, render order, fallback dispatch, guest/auth branch boundaries, exact occurrence counts and canonical replacement-owner markers.
+- PR #344 discussion contained no comments, reviews or unresolved review threads; its final diff remained restricted to one production TSX file, two directly related source contracts and `.agents/current/**`.
+- Production TSX change was deletion-dominant: 88 deletions and 37 additions, where additions were the fail-closed terminator and local indentation normalization.
+- Expected-head squash merge produced product SHA `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`.
+- Post-merge main CI run `30752056658` repeated the complete product matrix successfully on that exact merge SHA.
+- Stage run `30752387593` validated the exact CI scope artifact, deployed web/API images tagged `b5eea8177255f2bc595340ef9e2abc5bc46a16a3`, returned HTTP 200 for frontend and API readiness and completed all 12 desktop Chromium/iOS WebKit public browser checks successfully.
+- No snapshot, route-budget ceiling or production owner outside the bounded authenticated Profile family changed.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
