@@ -6,7 +6,7 @@
 - Issue #70 is open.
 - Branch base: `99668994916e1587a0855c801c10915c6419f59e`.
 - PR #336 is Draft.
-- Product `main` and latest deployed product SHA were already reconciled after PR #334/#335.
+- Final pre-evidence head before this record update: `0fdb5c71bc25ec90bccdd9c8a514edf6db44e8f3`.
 
 ## Implemented
 
@@ -19,16 +19,16 @@
 
 ## Validation evidence
 
-- Initial head `1689b65a8a9071efac802e57626d5828194d24b0` started authoritative CI #2488 / run `30725119666`.
-- On that head, classifier, backend unit/security, frontend lint/type/unit/build/audit, CSP, service worker, iOS PWA Dictionary, Dictionary smoke and performance budgets passed.
-- Backend integration tests also passed before cleanup completion.
-- The initial run was superseded because `.agents/current/**` was stale and had to be corrected in the same branch.
+- Initial source-test head `1689b65a8a9071efac802e57626d5828194d24b0` started CI #2488 / run `30725119666`; it was superseded after stale `.agents/current/**` state was found.
+- Documentation-synchronized head `0fdb5c71bc25ec90bccdd9c8a514edf6db44e8f3` passed authoritative CI #2491 / run `30725281710` completely.
+- Successful gates included classifier, backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, lesson completion, CSP, service worker, iOS PWA Dictionary, Dictionary smoke, accessibility, authoritative Linux visual regression, performance budgets and both web/API container builds.
+- No visual baseline or performance ceiling was changed.
+- PR comments, reviews and unresolved review threads were empty during the pre-final audit.
+- Final diff contained only the four allowed paths.
 
 ## Remaining
 
-- Complete `.agents/current/**` correction and verify each changed blob from the branch.
-- Confirm the final diff is restricted to the four allowed paths.
-- Run full authoritative CI on the final developer-authored head.
-- Audit PR comments, reviews and unresolved threads.
-- Mark Ready only after all required jobs pass.
+- This evidence-record update changes the PR head; one final immutable-head authoritative CI is required.
+- Re-audit PR metadata, comments, reviews and unresolved threads after final CI.
+- Mark Ready only after the final head is fully green.
 - Expected-head squash merge, post-merge validation, exact-SHA stage/public validation and separate reconciliation remain pending.
