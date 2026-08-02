@@ -5,6 +5,7 @@
 - Repository: `Dja-tiger/LexiGo`.
 - Verified base: `9001982fa6cf917741a455c84d78fe06b23a2045`.
 - Active branch: `test/issue-70-themed-card-orphan-proof`.
+- Draft PR: #350.
 - Issue: #70.
 - Open PRs #304–#306 are unrelated Dependabot updates.
 - Stage remains successful on product SHA `07aa9d55c265a392ec20db9057fb7e0f880a8884`, run `30761598976`.
@@ -32,27 +33,31 @@
 - It protects selected-state, symbol, arrow and three collection-specific declaration owners.
 - No production CSS or runtime file was modified.
 
-## Branch evidence
+## Branch and PR evidence
 
 - Task contract commit: `ce968caab02313831243c632b8246f9c7617ca97`.
 - Source-contract implementation commit: `42ae98350fb6f6fab2dd40cd4b3815ccb7bd3c35`.
-- Progress evidence commit: `7365c00001061af386f84b36d02c2d0fe0751e9f`.
+- Initial progress evidence commit: `7365c00001061af386f84b36d02c2d0fe0751e9f`.
+- Initial execution evidence commit: `56d594b1300f6821f9f25bdb932788243678a50c`.
+- PR attachment task commit: `b62652ea22bb0f3a45a7d08c28013723e12ae7d1`.
+- PR attachment progress commit: `8aedcc59fac8ab2873c922acb1dffb0e74eae32e`.
+- Draft PR #350 was opened from the exact branch into `main`.
+- Branch compare contains only the four declared paths.
 - Every changed path was read back from the working branch.
 - `main` remained at `9001982fa6cf917741a455c84d78fe06b23a2045` after every write.
 
 ## Validation plan
 
-1. Compare the branch against exact `main` and require only the four allowed paths.
-2. Open a Draft PR and attach its number to current records.
-3. Run complete full CI on the final immutable developer-authored head.
-4. Treat the source test as authoritative actual-checkout consumer evidence.
-5. Require unchanged Linux visual regression and route-performance budgets.
-6. Audit comments, reviews and unresolved review threads.
-7. Mark Ready only after final-head CI is fully green.
-8. Expected-head squash merge.
-9. Require exact merge SHA main CI and stage/public validation.
-10. Reconcile project state and reset current context separately.
+1. Treat this update as the final developer-authored head unless CI identifies a real defect.
+2. Run complete full CI on the exact immutable head.
+3. Treat the source test as authoritative actual-checkout consumer evidence.
+4. Require unchanged Linux visual regression and route-performance budgets.
+5. Audit comments, reviews and unresolved review threads.
+6. Mark Ready only after final-head CI is fully green.
+7. Expected-head squash merge.
+8. Require exact merge SHA main CI and stage/public validation.
+9. Reconcile project state and reset current context separately.
 
 ## Rollback
 
-Revert the proof PR. Production CSS and runtime remain unchanged.
+Revert PR #350. Production CSS and runtime remain unchanged.
