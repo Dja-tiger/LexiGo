@@ -6,7 +6,7 @@
 - Incident: post-merge validation failure after PR #336
 - Branch: `fix/issue-70-webkit-active-lesson-history-setup`
 - Base SHA: `b4dace966bffcb482231d48b9b7926fee4e2b26f`
-- Corrective PR: pending
+- Corrective PR: #337
 
 ## Objective
 
@@ -19,7 +19,7 @@ Repair the WebKit Active Lesson Browser Back regression gate that failed post-me
 - Post-merge main CI run `30725885894` failed only `Frontend UI shard 1 (Chromium/WebKit/Android)`; dependent container builds were cancelled and stage was correctly blocked.
 - The failing WebKit test was `active-lesson-figma.spec.ts` — `browser Back opens safe exit instead of navigating or duplicating a submit`.
 - Both the original attempt and retry expected `/lesson/active` but observed `/learn`.
-- Playwright trace proves the page was already at `/learn` immediately after the test setup and before `page.goBack()`, so the product popstate contract was not being exercised from its required precondition.
+- Playwright trace proved the page was already at `/learn` immediately after the test setup and before `page.goBack()`, so the product popstate contract was not being exercised from its required precondition.
 
 ## Scope
 
@@ -41,6 +41,12 @@ Repair the WebKit Active Lesson Browser Back regression gate that failed post-me
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
+## Prohibited paths
+
+- Runtime implementation files.
+- CSS files and visual snapshots.
+- Backend, migrations, workflows and dependencies.
+
 ## Invariants
 
 - The Browser Back action remains a real `page.goBack()` traversal.
@@ -50,14 +56,21 @@ Repair the WebKit Active Lesson Browser Back regression gate that failed post-me
 
 ## Acceptance criteria
 
-- The targeted WebKit Active Lesson spec passes repeatedly on the corrected setup.
 - Full authoritative CI passes on the final developer-authored head.
+- Desktop WebKit UI shard 1 passes without retry-dependent acceptance.
 - Final diff contains only the four allowed paths.
 - Reviews, comments and unresolved threads are empty before Ready.
 - Expected-head squash merge succeeds.
 - Post-merge main CI passes on the exact corrective merge SHA.
 - Exact-SHA stage deploy, public smoke and public browser checks pass before reconciliation.
 
+## Current evidence
+
+- Pre-final corrective head `a15c9d8b848a8d22bd650edf7cafea3e4cfc1ff2` passed authoritative CI #2495 / run `30726428789` completely.
+- Both UI shards, including the previously failing desktop WebKit Browser Back case, passed.
+- Backend, frontend core, accessibility, visual, performance, service worker, iOS PWA and both container builds passed.
+- This evidence-record update changes the branch head; one final immutable-head CI remains required.
+
 ## Rollback
 
-Revert the corrective PR. No production runtime behavior changes in this slice.
+Revert PR #337. No production runtime behavior changes in this slice.
