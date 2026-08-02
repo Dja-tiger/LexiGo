@@ -6,7 +6,7 @@
 - Branch: `style/issue-70-remove-themed-card-selectors`
 - Base SHA: `6e5f66953f1e0dbda7e48b5f98d9bd97e6731ebd`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #352 (Draft)
 
 ## Objective
 
