@@ -164,13 +164,21 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     const fixture = await openMode(page, "recall");
     await page.evaluate(() => {
       const activeState = window.history.state;
-      window.history.replaceState(
-        { lexigo: true, version: 1, target: { view: "learn" }, scroll: { x: 0, y: 0 } },
-        "",
-        "/learn",
-      );
-      window.history.pushState(activeState, "", "/lesson/active");
+      const learnState = {
+        lexigo: true,
+        version: 1,
+        target: { view: "learn" },
+        scroll: { x: 0, y: 0 },
+      };
+
+      // Next.js patches the instance methods to synchronize App Router state.
+      // Use the native prototype methods only to seed the adjacent entries;
+      // the actual Browser Back below remains a real browser traversal.
+      History.prototype.replaceState.call(window.history, learnState, "", "/learn");
+      History.prototype.pushState.call(window.history, activeState, "", "/lesson/active");
     });
+    await expect(page).toHaveURL(/\/lesson\/active$/);
+    await expect(page.locator(".lx-active-lesson")).toBeVisible();
 
     await page.goBack();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/lesson/active");

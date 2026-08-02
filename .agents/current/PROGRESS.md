@@ -3,32 +3,40 @@
 ## Verified baseline
 
 - Repository: `Dja-tiger/LexiGo`.
-- Issue #70 is open.
-- Branch base: `99668994916e1587a0855c801c10915c6419f59e`.
-- PR #336 is Draft.
-- Final pre-evidence head before this record update: `0fdb5c71bc25ec90bccdd9c8a514edf6db44e8f3`.
+- Issue #70 remains open.
+- Corrective branch base: `b4dace966bffcb482231d48b9b7926fee4e2b26f`.
+- Corrective PR: #337.
+- PR #336 was squash-merged from fully green head `d22d71041c2722770eacea85eaa45d77738db746`.
+- Post-merge main CI run `30725885894` failed only WebKit UI shard 1; stage was correctly blocked.
+
+## Root cause
+
+- Failing test: `active-lesson-figma.spec.ts` — Browser Back safe-exit contract.
+- Both the original attempt and retry expected `/lesson/active` but observed `/learn`.
+- The Playwright trace showed `/learn` immediately after the synthetic setup and before `page.goBack()`.
+- The setup used Next.js-patched `window.history.replaceState` and `window.history.pushState`; WebKit synchronized App Router state during setup, invalidating the required current-entry precondition.
+- Product runtime, popstate capture, protected History restoration and safe-exit delivery were not modified by PR #336 and were not the source of this failure.
 
 ## Implemented
 
-- Added `frontend/components/dictionary-detail-orphan-source.test.ts`.
-- The contract recursively inspects executable `app`, `components` and `lib` TypeScript/TSX files.
-- Test/spec files are excluded and comments are stripped before consumer matching.
-- The test requires zero executable consumers of the `lx-dictionary-detail` prefix.
-- The test inventories the exact legacy selector family still present in `dictionary-catalog.css`.
-- No CSS, runtime, API, backend, workflow, dependency, visual baseline or performance ceiling changed.
+- Created branch `fix/issue-70-webkit-active-lesson-history-setup` from the exact failed main SHA.
+- Changed only the test setup to call native `History.prototype.replaceState` and `History.prototype.pushState` with `window.history` as receiver.
+- Added an explicit `/lesson/active` URL precondition and mounted Active Lesson assertion before the real `page.goBack()` traversal.
+- Kept the protected-route URL, safe-exit dialog and empty review-request assertions unchanged.
+- No timeout, retry, skip, runtime, CSS, API, workflow, snapshot or budget change was made.
 
 ## Validation evidence
 
-- Initial source-test head `1689b65a8a9071efac802e57626d5828194d24b0` started CI #2488 / run `30725119666`; it was superseded after stale `.agents/current/**` state was found.
-- Documentation-synchronized head `0fdb5c71bc25ec90bccdd9c8a514edf6db44e8f3` passed authoritative CI #2491 / run `30725281710` completely.
-- Successful gates included classifier, backend unit/security/integration, frontend lint/type/unit/build/audit, both UI shards, lesson completion, CSP, service worker, iOS PWA Dictionary, Dictionary smoke, accessibility, authoritative Linux visual regression, performance budgets and both web/API container builds.
-- No visual baseline or performance ceiling was changed.
-- PR comments, reviews and unresolved review threads were empty during the pre-final audit.
-- Final diff contained only the four allowed paths.
+- Pre-final corrective head: `a15c9d8b848a8d22bd650edf7cafea3e4cfc1ff2`.
+- Authoritative CI #2495 / run `30726428789` passed completely.
+- The previously failing `Frontend E2E (UI tests (shard 1/2))` desktop WebKit gate passed.
+- UI shard 2, lesson completion, accessibility, Linux visual regression, performance budgets, CSP, service worker, iOS PWA Dictionary, Dictionary smoke, backend unit/security/integration, frontend core and both web/API container builds passed.
+- No visual baseline, performance ceiling or runtime source changed.
+- The diff remained restricted to the four allowed paths.
 
 ## Remaining
 
 - This evidence-record update changes the PR head; one final immutable-head authoritative CI is required.
-- Re-audit PR metadata, comments, reviews and unresolved threads after final CI.
-- Mark Ready only after the final head is fully green.
-- Expected-head squash merge, post-merge validation, exact-SHA stage/public validation and separate reconciliation remain pending.
+- Repeat the PR comment/review/thread audit after final CI.
+- Mark Ready and expected-head squash merge only if the final head remains fully green.
+- Require exact corrective merge main CI and stage/public validation before reconciliation or resuming Dictionary CSS cleanup.
