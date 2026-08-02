@@ -56,7 +56,7 @@ describe("Progress route client-island ownership", () => {
     expect(progressApp).not.toContain("navigator.serviceWorker");
   });
 
-  it("removes the unreachable compatibility Progress presentation", () => {
+  it("removes unreachable compatibility Progress presentation and Profile-only consumers", () => {
     const premiumApp = readComponent("lexigo-premium-app.tsx");
     const retiredMarkers = [
       "function renderProgress()",
@@ -67,6 +67,8 @@ describe("Progress route client-island ownership", () => {
       "objectiveSuccessRate",
       "GOAL_OPTIONS",
       "nextDueLabel(",
+      "progress.dailyGoal",
+      'navigate({ view: "progress"',
     ] as const;
 
     for (const marker of retiredMarkers) {
@@ -74,7 +76,7 @@ describe("Progress route client-island ownership", () => {
     }
   });
 
-  it("preserves shared progress consumers outside the route presentation boundary", () => {
+  it("preserves remaining shared progress consumers outside the route presentation boundary", () => {
     const premiumApp = readComponent("lexigo-premium-app.tsx");
     const sharedMarkers = [
       "const [progress, setProgress]",
@@ -82,8 +84,6 @@ describe("Progress route client-island ownership", () => {
       "loadProgressResource",
       "latestProgressRef",
       "lessonProgressBeforeRef",
-      "progress.dailyGoal",
-      'navigate({ view: "progress"',
     ] as const;
 
     for (const marker of sharedMarkers) {
