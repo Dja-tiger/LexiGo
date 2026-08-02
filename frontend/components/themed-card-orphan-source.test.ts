@@ -15,7 +15,7 @@ const accessibilityNavigationStyles = readFileSync(
   "utf8",
 );
 
-const LEGACY_THEMED_CARD_CLASSES = ["lx-themed-home", "lx-themed-library"] as const;
+const RETIRED_THEMED_CARD_CLASSES = ["lx-themed-home", "lx-themed-library"] as const;
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -48,38 +48,44 @@ function executableConsumers(value: string): string[] {
     .sort();
 }
 
-describe("legacy themed card CSS reachability", () => {
-  it("has no executable TypeScript or TSX consumer for either legacy card class", () => {
-    for (const className of LEGACY_THEMED_CARD_CLASSES) {
+describe("retired themed card CSS absence", () => {
+  it("has no executable TypeScript or TSX consumer for either retired card class", () => {
+    for (const className of RETIRED_THEMED_CARD_CLASSES) {
       expect(executableConsumers(className), className).toEqual([]);
     }
   });
 
-  it("bounds the exact candidate inventory across all CSS owners", () => {
+  it("requires both retired class names to be physically absent from every former CSS owner", () => {
+    const cssOwners = [
+      ["themed-vocabulary", themedVocabularyStyles],
+      ["accessibility-focus", accessibilityFocusStyles],
+      ["accessibility-navigation", accessibilityNavigationStyles],
+    ] as const;
+
+    for (const className of RETIRED_THEMED_CARD_CLASSES) {
+      for (const [owner, styles] of cssOwners) {
+        expect(styles, `${className} ${owner}`).not.toContain(className);
+      }
+    }
+  });
+
+  it("protects the exact remaining themed and accessibility owners", () => {
     const themedStyles = stripComments(themedVocabularyStyles);
     const focusStyles = stripComments(accessibilityFocusStyles);
     const navigationStyles = stripComments(accessibilityNavigationStyles);
 
-    for (const className of LEGACY_THEMED_CARD_CLASSES) {
-      expect(occurrences(themedStyles, `.${className}`), `${className} themed-vocabulary`).toBe(5);
-      expect(occurrences(focusStyles, `.${className}`), `${className} accessibility-focus`).toBe(2);
-      expect(occurrences(navigationStyles, `.${className}`), `${className} accessibility-navigation`).toBe(1);
-    }
+    expect(occurrences(themedStyles, ".lx-themed-selector")).toBe(4);
+    expect(occurrences(focusStyles, ".lx-themed-selector")).toBe(2);
 
-    expect(themedStyles).toContain(
-      ".lx-themed-home,\n.lx-themed-library,\n.lx-themed-selector {",
+    expect(themedStyles).toContain(".lx-themed-selector {\n  cursor: pointer;\n}");
+    expect(focusStyles).toContain(
+      ".lx-progress-stats > button,\n  .lx-themed-selector,\n  .lx-calendar-provider-grid > button,",
     );
-    expect(themedStyles).toContain(
-      ".lx-themed-home:hover .lx-themed-arrow,\n.lx-themed-library:hover .lx-themed-arrow {",
+    expect(focusStyles).toContain(
+      ".lx-progress-stats > button,\n  .lx-themed-selector,\n  .lx-calendar-provider-grid > button\n):focus-visible {\n  background-image:",
     );
-    expect(themedStyles).toContain(".lx-themed-home,\n.lx-themed-library {");
-    expect(themedStyles).toContain(".lx-themed-home::before,\n.lx-themed-library::before {");
-    expect(themedStyles).toContain(".lx-themed-home > *,\n.lx-themed-library > * {");
-
-    expect(focusStyles).toContain(".lx-themed-home,");
-    expect(focusStyles).toContain(".lx-themed-library,");
     expect(navigationStyles).toContain(
-      ".lx-themed-home:hover .lx-themed-arrow,\n  .lx-themed-library:hover .lx-themed-arrow,",
+      ".lx-route-nav--header a:hover,\n  .lx-dictionary-result > button:hover,",
     );
   });
 
