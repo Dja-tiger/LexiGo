@@ -1,80 +1,36 @@
 # Current Task Progress
 
-## 2026-08-03 02:22 Europe/Moscow
+## Status
 
-### Verified live state
+- PR #355 is squash-merged as product SHA `f279bc577704f3f68bf587f4c88b474a62929c02`.
+- PR #355 final developer-authored head `0ed20b621e7b3805498174c0267371cdca0b39df` passed full CI #2558 / run `30772507155` without retry.
+- Exact-SHA main CI run `30772832623` completed the full product matrix successfully.
+- Exact-SHA stage run `30773148243` completed deploy, public smoke and all 12 public browser validations successfully.
+- No production CSS or runtime changed in PR #355.
+- This Agent Docs reconciliation records the delivered proof and the concurrent PR boundary.
 
-- Live `main` is `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
-- No pull request was open before this slice.
-- Issue #70 remains open.
-- Stage remains successful on product SHA `b490e9cde0d6a994d6b4ebd3753f4a13e2d56420`, run `30769451780`.
-- Repository memory and public architecture agree with live GitHub state.
-- Remaining `LexigoPremiumApp` presentation dispatch is intentionally limited to live Library, guest Profile/auth recovery and Lesson owners.
+## Completed proof
 
-### Selected atomic slice
+- Added `home-hero-orphan-source.test.ts` as actual-checkout executable evidence.
+- Proved zero executable consumers for `lx-hero-copy`, `lx-glow`, `lx-floating-card`, `lx-book-base` and `lx-orbit`.
+- Bounded the exact inventory to 19 selector-token occurrences in `premium-ui.css`.
+- Protected live canonical Home `lx-hero-card`, `lx-hero-art`, `lx-word-preview`, `lx-home-next-action-copy` and `lx-progress-panel` owners.
+- Protected live compatibility `lx-resume-strip` and guest authentication/recovery `lx-auth-card` owners.
+- Preserved global stylesheet import order, visual baselines and performance ceilings.
 
-Proof-only reachability audit for the legacy Home hero-decoration CSS family in `frontend/app/premium-ui.css`.
+## Concurrent Draft PR #354
 
-Candidate classes:
+- PR #354 was created during execution of PR #355 from base `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
+- It is proof-only and intends to complete the compatibility fallback source inventory.
+- It is currently Draft and non-mergeable because its `.agents/current/**` files diverged from the product delivery that reached `main`.
+- It must not be merged or treated as authoritative on its current head.
 
-- `lx-hero-copy` — 5 selector-token occurrences;
-- `lx-glow` — 1 occurrence;
-- `lx-floating-card` — 4 occurrences;
-- `lx-book-base` — 6 occurrences;
-- `lx-orbit` — 3 occurrences.
+## Next action
 
-Total bounded inventory: 19 occurrences.
+After this docs-only reconciliation merges:
 
-### Finding
-
-- Indexed repository discovery found each candidate only in `premium-ui.css`.
-- `LexigoPremiumApp` contains no candidate class and no `renderHome()` presentation.
-- Canonical `LexigoHomeApp` still executes `lx-hero-card`, `lx-hero-art`, `lx-word-preview`, `lx-home-next-action-copy` and `lx-progress-panel`; those classes are explicitly excluded from the candidate family.
-- `lx-resume-strip` remains live in compatibility Lesson presentation.
-- `lx-auth-card` remains live in guest authentication/recovery presentation.
-- Global stylesheet order remains `premium-ui.css` → `compact-home.css` → `adaptive-knowledge-coach-home.css`.
-
-### Branch and scope
-
-- Branch: `test/issue-70-prove-home-hero-css-orphaned`.
-- Exact base: `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
-- Allowed paths: one new source contract and `.agents/current/**` only.
-- Production CSS, runtime, snapshots, performance ceilings, workflows and dependencies are prohibited.
-
-### Implementation
-
-- Added `frontend/components/home-hero-orphan-source.test.ts`.
-- The contract recursively scans executable TypeScript/TSX from the actual `app`, `components` and `lib` checkout.
-- Test/spec files are excluded and comments are stripped before consumer analysis.
-- Each candidate must have zero executable consumers.
-- Each candidate must be confined to `app/premium-ui.css` with its exact count.
-- Exact candidate declaration blocks remain protected until a separate deletion slice.
-- Canonical Home, compact Home and live compatibility Lesson/auth owners are protected independently.
-- Layout import order is asserted without changing production source.
-
-### Diff evidence
-
-- Current branch is two commits ahead of exact base and not behind.
-- Changed paths before execution evidence:
-  - `.agents/current/TASK.md`
-  - `frontend/components/home-hero-orphan-source.test.ts`
-- No production CSS or runtime file changed.
-- Every written path was read back from the target branch.
-- `main` remained unchanged after writes.
-
-### Checks passed
-
-- Exact branch/base comparison contains only declared paths.
-- Source readback confirms the intended actual-checkout contract.
-- Candidate count arithmetic is exactly 19.
-- Live owner boundaries are represented by positive executable-consumer assertions.
-
-### Checks pending
-
-- Complete authoritative CI on the final developer-authored head.
-- Unchanged Linux visual hashes and route-performance budgets.
-- Review-surface audit, expected-head squash merge and exact-SHA main/stage validation.
-
-### Next action
-
-Write the execution record, compare the final branch with exact base, open a Draft PR and treat that resulting branch head as the immutable developer-authored candidate unless CI identifies a real contract defect.
+1. Re-read the exact new `main`, PR #354 and its source-contract patch.
+2. Reconstruct PR #354 on the new base while retaining only its bounded `compatibility-fallback-source.test.ts` change and refreshed `.agents/current/**`.
+3. Require a new immutable developer-authored head and complete full CI.
+4. Audit review surface, expected-head squash merge and exact-SHA main/stage validation.
+5. Reconcile repository memory separately before the later Home hero CSS deletion slice.
