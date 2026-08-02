@@ -51,9 +51,7 @@
   .lx-phrase-grid > button,
   .lx-library-grid > button,
   .lx-progress-stats > button,
-  .lx-themed-home,
   .lx-themed-selector,
-  .lx-themed-library,
   .lx-calendar-provider-grid > button,
   .lx-calendar-weekdays button
 ):focus-visible {
@@ -67,9 +65,7 @@
   .lx-phrase-grid > button,
   .lx-library-grid > button,
   .lx-progress-stats > button,
-  .lx-themed-home,
   .lx-themed-selector,
-  .lx-themed-library,
   .lx-calendar-provider-grid > button
 ):focus-visible {
   background-image: linear-gradient(145deg, rgba(124, 92, 246, 0.18), rgba(40, 156, 220, 0.14));
