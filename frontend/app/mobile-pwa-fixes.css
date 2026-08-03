@@ -79,18 +79,9 @@ button.speaking {
     padding-top: 0;
   }
 
-  .lx-routed-app .lx-header {
-    background: rgba(5, 9, 20, 0.96);
-  }
-
   .lx-brand,
   .lx-header-tools {
     align-self: end;
-  }
-
-  .lx-routed-app .lx-logo-mark {
-    width: 30px;
-    height: 38px;
   }
 
   .lx-routed-app .lx-avatar {
