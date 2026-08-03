@@ -26,6 +26,10 @@ const cascadeOrders: ReadonlyArray<Readonly<{
     name: "adaptive-first adversarial order",
     order: ["globals", "tokens", "adaptive", "premium", "mobile"],
   },
+  {
+    name: "mobile-first adversarial order",
+    order: ["globals", "tokens", "mobile", "premium", "adaptive"],
+  },
 ];
 
 function shellMarkup(order: readonly StylesheetName[]): string {
