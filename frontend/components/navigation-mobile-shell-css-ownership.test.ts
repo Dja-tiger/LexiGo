@@ -140,9 +140,11 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(mobileRoutedChromeItems).toEqual([]);
   });
 
-  it("removes all premium/adaptive and mobile/adaptive exact-selector conflicts", () => {
+  it("removes premium/adaptive conflicts and keeps one explicitly proven resource fallback", () => {
     expect(premiumAdaptiveItems).toEqual([]);
-    expect(mobileAdaptiveItems).toEqual([]);
+    expect(mobileAdaptiveItems).toHaveLength(1);
+    expect(mobileAdaptiveItems[0]?.classification).toBe("requires-proof");
+    expect(mobileAdaptiveItems[0]?.id).toContain(".lx-resource-stack | width | normal");
   });
 
   it("keeps production import order and the approved media boundaries explicit", () => {
@@ -231,7 +233,7 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
       /\.lx-routed-app \.lx-brand,\s*\.lx-routed-app \.lx-header-tools\s*\{\s*align-self:\s*center;/,
     );
     expect(adaptive).toMatch(
-      /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-routed-app \.lx-resource-stack\s*\{\s*width:\s*100%;\s*\}[\s\S]*?\.lx-async-state\s*\{\s*width:\s*100%;\s*\}/,
+      /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-resource-stack,\s*\.lx-async-state\s*\{\s*width:\s*100%;\s*\}[\s\S]*?\.lx-routed-app \.lx-resource-stack\s*\{\s*width:\s*100%;\s*\}/,
     );
     expect(adaptive).toMatch(
       /@media \(max-width: 719px\)[\s\S]*?\.lx-routed-app \.lx-mobile-nav\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(48px, 1fr\)\);/,
