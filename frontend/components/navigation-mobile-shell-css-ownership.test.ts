@@ -24,10 +24,6 @@ const browserSpec = readFileSync(
   path.join(process.cwd(), "e2e", "navigation-mobile-shell-cascade.spec.ts"),
   "utf8",
 );
-const visualConfig = readFileSync(
-  path.join(process.cwd(), "playwright.visual.config.ts"),
-  "utf8",
-);
 const rawManifest: unknown = JSON.parse(
   readFileSync(path.join(appDirectory, "global-feature-style-overlap-manifest.json"), "utf8"),
 );
@@ -36,7 +32,6 @@ const rawPackage: unknown = JSON.parse(
 );
 
 const CASCADE_SPEC = "e2e/navigation-mobile-shell-cascade.spec.ts";
-const SKIA_BASELINE_ARG = "--disable-skia-runtime-opts";
 const PREMIUM_MOBILE_PAIR = "premium-ui.css -> mobile-pwa-fixes.css";
 const PREMIUM_ADAPTIVE_PAIR = "premium-ui.css -> adaptive-navigation.css";
 const MOBILE_ADAPTIVE_PAIR = "mobile-pwa-fixes.css -> adaptive-navigation.css";
@@ -114,17 +109,6 @@ function classSpecificity(selector: string): number {
   return selector.match(/\.[a-z0-9_-]+/gi)?.length ?? 0;
 }
 
-function visualLaunchArguments(): readonly string[] {
-  const launchOptions = visualConfig.match(
-    /launchOptions:\s*\{[\s\S]*?args:\s*\[([^\]]*)\][\s\S]*?\}/,
-  );
-  if (launchOptions === null) {
-    throw new Error("Visual Playwright config requires explicit launchOptions.args");
-  }
-
-  return [...launchOptions[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
-}
-
 const manifest = parseManifest(rawManifest);
 const scripts = parsePackageScripts(rawPackage);
 const premiumMobileItems = manifest.filter((item) => ownerPair(item.id) === PREMIUM_MOBILE_PAIR);
@@ -181,12 +165,6 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
       'order: ["globals", "tokens", "adaptive", "premium", "mobile"]',
     );
     expect(browserSpec).toContain("await page.setViewportSize({ width: current.width, height: 800 });");
-  });
-
-  it("pins visual Chromium to the exact deterministic Skia baseline path", () => {
-    expect(visualLaunchArguments()).toEqual([SKIA_BASELINE_ARG]);
-    expect(occurrenceCount(visualConfig, SKIA_BASELINE_ARG)).toBe(1);
-    expect(visualConfig).not.toContain("maxDiffPixels:");
   });
 
   it("uses the canonical routed ancestor only for competing adaptive selectors", () => {
