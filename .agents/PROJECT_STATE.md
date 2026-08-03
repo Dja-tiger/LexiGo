@@ -4,16 +4,16 @@
 
 - Last verified: 2026-08-03 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Latest deployed product SHA: `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Latest completed Issue #70 slice: fail-closed repository-wide exact-selector global feature CSS overlap inventory and reviewed classification.
-- Completion PR: #362.
-- PR #362 immutable developer-authored head: `442f7c1cfb3c8bf67346eb026207de565e611f9e`.
-- Authoritative PR CI: #2591 / run `30809820372`, complete success without retry.
-- Expected-head squash merge produced product SHA `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Post-merge main CI run `30810594048` repeated the complete product matrix successfully on the exact merge SHA.
-- Exact-SHA stage run `30811188594` deployed web/API images tagged `8c342e219f4d274a89189534deae20c3499e5c9e`; deploy, public smoke and all 12 public browser checks succeeded without retry.
-- PR #362 comments, reviews and unresolved review threads were empty before merge.
+- Repository base verified before this documentation slice: `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+- Latest deployed product SHA: `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+- Latest completed Issue #70 slice: fail-closed navigation/mobile-shell computed-cascade evidence.
+- Completion PR: #364.
+- PR #364 immutable developer-authored head: `0e2144a8b262ea74ae758c57cbc8052dcb407ce9`.
+- Authoritative PR CI: #2602 / run `30814091000`, complete success without retry.
+- Expected-head squash merge produced product SHA `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+- Exact-SHA main CI run `30814893312` completed successfully on the merge SHA.
+- Exact-SHA stage run `30815582586` deployed web/API images tagged `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`; deploy, public smoke and all 12 public browser checks succeeded without retry.
+- PR #364 comments, reviews and unresolved review threads were empty before merge.
 - The only open pull requests when this documentation branch was created were parallel Dependabot maintenance PRs #304, #305 and #306; they were not modified or mixed into Issue #70.
 
 ## Completed foundations
@@ -52,7 +52,7 @@
 - PRs #350/#352 proved and removed `.lx-themed-home` and `.lx-themed-library` while preserving `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed and accessibility owners.
 - PRs #355/#358 proved and removed the five orphaned Home hero-decoration families: `lx-hero-copy`, `lx-glow`, `lx-floating-card`, `lx-book-base` and `lx-orbit`.
 - The Home hero production CSS diff was deletion-only: 94 lines removed, covering the complete 19-token bounded inventory.
-- The source contract fails closed on executable or CSS reintroduction and protects `.lx-hero-card`, `.lx-hero-card::before`, `.lx-hero-art`, `.lx-hero-actions`, `lx-word-preview`, `lx-home-next-action-copy`, `lx-progress-panel`, `lx-resume-strip` and `lx-auth-card`.
+- The source contract protects live Home, Lesson and guest-auth owners and fails closed on executable or CSS reintroduction.
 - These cleanup PRs passed unchanged authoritative Linux visual hashes and route-performance budgets.
 
 ### Compact Home source-order independence — PR #360
@@ -65,44 +65,34 @@
 
 ### Global exact-selector overlap inventory — PR #362
 
-- `frontend/app/global-feature-style-overlap-source.test.ts` derives the CSS inventory from the actual imports in `frontend/app/layout.tsx`.
-- Its dependency-free parser handles comments, quoted values, selector groups, declarations and nested `@media`, `@supports`, `@container` and `@layer` blocks.
-- Keyframes, same-file layering and selectors outside `.lx-*` feature ownership are excluded.
-- A candidate requires different files, identical normalized selector/property, equal `!important` priority, different normalized values and overlapping recognized media conditions.
-- Deterministic conflict IDs contain selector, property, priority, source files, condition stacks and exact values.
+- `frontend/app/global-feature-style-overlap-source.test.ts` derives the CSS inventory from actual imports in `frontend/app/layout.tsx`.
+- The dependency-free parser handles comments, quoted values, selector groups, declarations and nested `@media`, `@supports`, `@container` and `@layer` blocks.
+- Candidate conflicts require different files, identical normalized selector/property, equal `!important` priority, different normalized values and overlapping recognized media conditions.
 - `frontend/app/global-feature-style-overlap-manifest.json` contains the complete reviewed ordered manifest and is parsed from `unknown` with explicit runtime validation.
-- Ordered actual IDs must exactly equal ordered manifest IDs; additions, removals or mutations fail the source contract.
-- `frontend/app/global-feature-style-overlap-manifest.test.ts` independently requires 107 unique items, exact classification totals, the exact 12 stylesheet pairs and exact pair counts; unknown pairs, mixed classifications, malformed entries and empty evidence fail closed.
+- `frontend/app/global-feature-style-overlap-manifest.test.ts` independently requires 107 unique items, exact classification totals, the exact 12 stylesheet pairs and exact pair counts.
+- Initial classification was 50 `intentional`, 57 `requires-proof` and 0 `protected`.
+- Intentional accessibility-layer groups are Scenario Lessons base → accessibility 40, Lesson Composer base → accessibility 5, Progress Evidence base → accessibility 4 and Knowledge Coach route-rail target size 1.
 
-Reviewed inventory:
+### Navigation/mobile-shell computed-cascade evidence — PR #364
 
-- Total exact-selector/property conflicts: 107.
-- `intentional`: 50.
-- `requires-proof`: 57.
-- `protected`: 0 in this exact-selector inventory.
-
-Intentional accessibility-layer groups:
-
-- Scenario Lessons base → accessibility: 40.
-- Lesson Composer base → accessibility: 5.
-- Progress Evidence base → accessibility: 4.
-- Knowledge Coach route-rail target size: 1.
-
-Remaining `requires-proof` groups:
-
-- `premium-ui.css` → `adaptive-navigation.css`: 21.
-- `premium-ui.css` → `mobile-pwa-fixes.css`: 10.
-- `scenario-catalog.css` → `learning-section-switch.css`: 8.
-- `mobile-pwa-fixes.css` → `adaptive-navigation.css`: 6.
-- `premium-ui.css` → `adaptive-layout.css`: 6.
-- `premium-ui.css` → `phrases.css` for unscoped `.lx-phrase-grid`: 4.
-- `account-security.css` → `adaptive-knowledge-coach-home.css`: 1.
-- `adaptive-navigation.css` → `system-states.css`: 1.
-
-- The existing Phrases CSS ownership contract protects route-scoped catalog-sort selectors, not the unscoped `.lx-phrase-grid`; those four items remain `requires-proof`.
-- PR #362 changed no production CSS, component/runtime, route, API/backend/database, snapshot, budget, workflow, dependency, README or architecture path.
-- Immutable-head PR CI and exact-SHA main CI both passed the complete browser/accessibility/visual/performance matrix without snapshot or budget changes.
-- Stage deployed the exact merge SHA and all 12 public desktop Chromium/iOS WebKit checks passed.
+- The proof slice covered exactly 37 unresolved manifest items across:
+  - `premium-ui.css` → `adaptive-navigation.css`: 21;
+  - `premium-ui.css` → `mobile-pwa-fixes.css`: 10;
+  - `mobile-pwa-fixes.css` → `adaptive-navigation.css`: 6.
+- Production root import order remains premium → mobile PWA → adaptive navigation.
+- Mobile PWA fixes apply through 760px.
+- Adaptive compact navigation applies through 719px.
+- Adaptive tablet navigation applies from 720px through 1099px.
+- The exact 720–760 px overlap currently computes a hybrid owner:
+  - adaptive navigation owns header geometry, alignment and rail mode because it is later in the cascade;
+  - mobile PWA fixes own header background, logo/avatar dimensions and view top padding because no later adaptive declaration replaces those properties.
+- At 761px mobile PWA rules stop applying; premium visual values remain under adaptive tablet geometry.
+- `frontend/components/navigation-mobile-shell-css-ownership.test.ts` fail-closes the exact 37-item manifest boundary, pair counts, import order, media boundaries, declaration inventory, test-script routing and production-equivalent viewport metadata.
+- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts` loads the actual production CSS owners and asserts computed values at 390, 719, 720, 760, 761 and 1024 px.
+- Browser evidence requires exactly one visible primary navigation and no horizontal overflow at every measured width.
+- The initial candidate failed only because the isolated Android Chromium fixture omitted the production viewport meta tag and therefore retained an approximately 980px layout viewport. The fixture was corrected without changing production CSS or weakening expected computed values.
+- PR #364 changed no production CSS, component/runtime, route, API/backend/database, snapshot, budget, workflow, dependency, README or architecture path.
+- Immutable-head PR CI, exact-SHA main CI and exact-SHA stage/public validation all passed without snapshot, budget, timeout or dependency changes.
 
 ## Current Issue #70 acceptance evidence
 
@@ -112,35 +102,36 @@ Remaining `requires-proof` groups:
 - `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
 - README documents the actual production chain, route/runtime ownership and global CSS boundary.
 - Phrases catalog-sort and compact Home have explicit adversarial source-order contracts.
-- The exact-selector overlap inventory now provides a fail-closed bounded map of the remaining feature-style ownership surface.
+- The exact-selector overlap inventory provides a fail-closed bounded map of the remaining feature-style ownership surface.
+- Navigation/mobile-shell behavior is now measured at every critical compact/tablet boundary, but current hybrid ownership has not yet been corrected or intentionally consolidated.
 
 ## In progress
 
 - No atomic production slice is active.
-- This documentation-only reconciliation records PR #362 delivery and resets the completed task context.
-- Issue #70 remains open because 57 exact-selector conflicts still require bounded computed-cascade proof or correction, and semantically overlapping non-identical selectors remain a later acceptance boundary.
+- This documentation-only reconciliation records PR #364 delivery and resets the completed task context.
+- Issue #70 remains open because the navigation/mobile-shell cluster still requires one bounded production ownership correction, other exact-selector clusters remain, and semantically overlapping non-identical selectors remain a later acceptance boundary.
 
 ## Remaining roadmap
 
-### 1. Navigation/mobile-shell ownership
+### 1. Navigation/mobile-shell production correction
 
 - Re-read live `main`, Issue #70, open PRs, CI and stage after this reconciliation merges.
-- Start one bounded proof-first slice for the navigation/mobile-shell cluster only.
-- Measure computed values and ownership at compact widths, 719px, 720px, 760px and representative tablet widths.
-- Cover the exact overlap among `premium-ui.css`, `mobile-pwa-fixes.css` and `adaptive-navigation.css`.
-- Establish canonical ownership independently of source order before deleting, moving or changing any declaration.
-- Preserve all authoritative Linux visual hashes, accessibility results and route-performance budgets.
-- Do not combine Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections in this slice.
+- Select exactly one bounded correction for the navigation/mobile-shell cluster only.
+- Use PR #364 browser evidence to choose the canonical owner independently of accidental source order.
+- Candidate mechanisms may include media-boundary separation, route-scoped specificity, declaration migration or owner consolidation; select one only after current source and computed values are audited.
+- Preserve the approved computed presentation unless an explicit design change is separately approved.
+- Require unchanged authoritative Linux visual hashes, accessibility results and route-performance budgets for a pure ownership correction.
+- Do not combine Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections.
 
 ### 2. Remaining exact-selector clusters
 
 Handle each as a separate proof-first atomic slice after navigation/mobile-shell delivery:
 
-- Scenario Catalog / Learning section switch.
-- Phrases grid.
-- Adaptive tablet layout.
-- Account Security width.
-- Async State width.
+- Scenario Catalog / Learning section switch: 8 conflicts.
+- Adaptive tablet layout: 6 conflicts.
+- Phrases grid: 4 conflicts.
+- Account Security width: 1 conflict.
+- Async State width: 1 conflict.
 
 ### 3. Final Issue #70 acceptance reconciliation
 
@@ -157,31 +148,31 @@ Handle each as a separate proof-first atomic slice after navigation/mobile-shell
 
 ## Validation pending
 
-- Fifty-seven exact-selector conflicts remain `requires-proof` and are intentionally not corrected by PR #362.
+- The 37 navigation/mobile-shell exact-selector conflicts are now proven at source and computed-browser level but are not yet corrected or reclassified as intentionally owned.
+- Twenty additional exact-selector conflicts remain outside the navigation/mobile-shell cluster.
 - Semantically overlapping but textually different selectors are not claimed safe by the exact-selector inventory.
 - Guest Profile authentication/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
-- `.lx-hero-card`, `.lx-hero-art`, `.lx-hero-actions`, `lx-word-preview`, `lx-home-next-action-copy`, `lx-progress-panel`, `lx-resume-strip` and `lx-auth-card` remain protected live owners.
 - Final moderated usability evidence remains external work under Issue #133.
 
 ## Recent production/tooling evidence
 
-1. #362 — `test(frontend): inventory global CSS source-order conflicts` → `8c342e219f4d274a89189534deae20c3499e5c9e`.
-2. #361 — `docs(agent): reconcile PR 360 Home CSS order independence` → `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
-3. #360 — `style(frontend): make compact Home CSS order-independent` → `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
-4. #359 — `docs(agent): reconcile PR 358 Home hero deletion` → `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
-5. #358 — `style(frontend): remove orphaned Home hero decorations` → `7ef023da70819a5afabfeccbff4d6c34768449f2`.
+1. #364 — `test(frontend): prove navigation mobile cascade owners` → `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+2. #363 — `docs(agent): reconcile PR 362 CSS overlap inventory` → `626b6f637f517253aea87faf12223e4e43bfc1e0`.
+3. #362 — `test(frontend): inventory global CSS source-order conflicts` → `8c342e219f4d274a89189534deae20c3499e5c9e`.
+4. #361 — `docs(agent): reconcile PR 360 Home CSS order independence` → `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
+5. #360 — `style(frontend): make compact Home CSS order-independent` → `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
 
 ## Evidence
 
-- PR #362 final developer-authored head `442f7c1cfb3c8bf67346eb026207de565e611f9e` passed authoritative full CI #2591 / run `30809820372` without retry.
-- Final PR CI passed the exact 107-ID source contract, the 50/57/0 classification contract, frontend lint, typecheck, full unit suite, production build and dependency audit.
+- PR #364 final developer-authored head `0e2144a8b262ea74ae758c57cbc8052dcb407ce9` passed authoritative full CI #2602 / run `30814091000` without retry.
+- Final PR CI passed the exact 37-item source contract, frontend lint, typecheck, full unit suite, production build and dependency audit.
 - Backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- PR #362 discussion contained no comments, reviews or unresolved review threads.
-- Expected-head squash merge produced product SHA `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Post-merge main CI run `30810594048` repeated the complete product matrix successfully on that exact merge SHA and published web/API images.
-- Stage run `30811188594` deployed web/API images tagged `8c342e219f4d274a89189534deae20c3499e5c9e`, returned successful public smoke and completed all 12 public browser checks without retry.
-- Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
+- PR #364 discussion contained no comments, reviews or unresolved review threads.
+- Expected-head squash merge produced product SHA `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+- Exact-SHA main CI run `30814893312` completed successfully on that merge SHA.
+- Stage run `30815582586` deployed web/API images tagged `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`, returned successful public smoke and completed all 12 public desktop Chromium/iOS WebKit checks without retry.
+- Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow evidence and deployment records.
 
 ## State semantics
 
