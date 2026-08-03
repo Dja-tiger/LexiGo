@@ -6,55 +6,59 @@
  * the actionable content stays first in the DOM, decorative artwork is
  * removed on compact screens, and the existing progress panel becomes a
  * bounded status summary directly below the primary CTA.
+ *
+ * Issue #70: every selector is scoped below the canonical routed shell so
+ * compact declarations outrank the shared information-architecture base
+ * independently of global stylesheet import order.
  */
 @media (max-width: 760px) {
-  .lx-home-next-action {
+  .lx-routed-app .lx-home-next-action {
     gap: 12px;
   }
 
-  .lx-home-next-action .lx-hero-card {
+  .lx-routed-app .lx-home-next-action .lx-hero-card {
     min-height: 0;
     grid-template-columns: 1fr;
     border-radius: 22px;
     padding: 0;
   }
 
-  .lx-home-next-action-copy {
+  .lx-routed-app .lx-home-next-action-copy {
     min-height: 286px;
     justify-content: flex-start;
     gap: 12px;
     padding: 22px 20px 20px;
   }
 
-  .lx-home-next-action-copy > span {
+  .lx-routed-app .lx-home-next-action-copy > span {
     font-size: 0.7rem;
     line-height: 1.25;
     letter-spacing: 0.1em;
   }
 
-  .lx-home-next-action-copy h1 {
+  .lx-routed-app .lx-home-next-action-copy h1 {
     font-size: clamp(1.75rem, 8vw, 2.15rem);
     line-height: 1.08;
     letter-spacing: -0.04em;
   }
 
-  .lx-home-next-action-copy p {
+  .lx-routed-app .lx-home-next-action-copy p {
     max-width: none;
     font-size: 0.9rem;
     line-height: 1.45;
   }
 
-  .lx-home-next-action-copy .lx-button.primary {
+  .lx-routed-app .lx-home-next-action-copy .lx-button.primary {
     width: 100%;
     min-height: 52px;
     margin-top: auto;
   }
 
-  .lx-home-next-action .lx-hero-art {
+  .lx-routed-app .lx-home-next-action .lx-hero-art {
     display: none;
   }
 
-  .lx-home-next-action .lx-progress-panel {
+  .lx-routed-app .lx-home-next-action .lx-progress-panel {
     display: grid;
     min-height: 214px;
     grid-template-columns: auto minmax(0, 1fr);
@@ -64,37 +68,37 @@
     padding: 16px 18px;
   }
 
-  .lx-home-next-action .lx-panel-heading {
+  .lx-routed-app .lx-home-next-action .lx-panel-heading {
     grid-column: 1 / -1;
     gap: 12px;
   }
 
-  .lx-home-next-action .lx-panel-heading > div > span {
+  .lx-routed-app .lx-home-next-action .lx-panel-heading > div > span {
     font-size: 0.9rem;
   }
 
-  .lx-home-next-action .lx-panel-heading > div > strong {
+  .lx-routed-app .lx-home-next-action .lx-panel-heading > div > strong {
     font-size: 1rem;
   }
 
-  .lx-home-next-action .lx-panel-heading svg {
+  .lx-routed-app .lx-home-next-action .lx-panel-heading svg {
     width: 20px;
     height: 20px;
   }
 
-  .lx-home-next-action .lx-progress-ring {
+  .lx-routed-app .lx-home-next-action .lx-progress-ring {
     position: relative;
     width: 56px;
     height: 56px;
     margin: 0;
   }
 
-  .lx-home-next-action .lx-progress-ring::before {
+  .lx-routed-app .lx-home-next-action .lx-progress-ring::before {
     width: 42px;
     height: 42px;
   }
 
-  .lx-home-next-action .lx-progress-ring > span {
+  .lx-routed-app .lx-home-next-action .lx-progress-ring > span {
     position: relative;
     z-index: 1;
     color: var(--lx-text);
@@ -102,13 +106,13 @@
     font-weight: 800;
   }
 
-  .lx-home-next-action .lx-progress-list {
+  .lx-routed-app .lx-home-next-action .lx-progress-list {
     display: grid;
     min-width: 0;
     gap: 6px;
   }
 
-  .lx-home-next-action .lx-progress-list > div {
+  .lx-routed-app .lx-home-next-action .lx-progress-list > div {
     display: flex;
     min-height: 28px;
     align-items: center;
@@ -117,40 +121,40 @@
     border-bottom: 1px solid rgba(145, 168, 211, 0.12);
   }
 
-  .lx-home-next-action .lx-progress-list > div > span {
+  .lx-routed-app .lx-home-next-action .lx-progress-list > div > span {
     color: var(--lx-muted);
     font-size: 0.78rem;
   }
 
-  .lx-home-next-action .lx-progress-list > div > strong {
+  .lx-routed-app .lx-home-next-action .lx-progress-list > div > strong {
     color: var(--lx-text);
     font-size: 1rem;
   }
 
   /* Retained and streak remain available on the dedicated Progress route. */
-  .lx-home-next-action .lx-progress-list > div:nth-child(n + 2) {
+  .lx-routed-app .lx-home-next-action .lx-progress-list > div:nth-child(n + 2) {
     display: none;
   }
 
-  .lx-home-next-action .lx-progress-panel > .lx-button {
+  .lx-routed-app .lx-home-next-action .lx-progress-panel > .lx-button {
     grid-column: 1 / -1;
     width: 100%;
     min-height: 44px;
   }
 
-  .lx-home-next-action .lx-progress-panel > .lx-async-state,
-  .lx-home-next-action .lx-progress-panel > [data-async-state] {
+  .lx-routed-app .lx-home-next-action .lx-progress-panel > .lx-async-state,
+  .lx-routed-app .lx-home-next-action .lx-progress-panel > [data-async-state] {
     grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 390px) {
-  .lx-home-next-action-copy {
+  .lx-routed-app .lx-home-next-action-copy {
     min-height: 276px;
     padding-inline: 18px;
   }
 
-  .lx-home-next-action .lx-progress-panel {
+  .lx-routed-app .lx-home-next-action .lx-progress-panel {
     padding-inline: 16px;
   }
 }
