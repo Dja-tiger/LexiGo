@@ -16,6 +16,10 @@ const layout = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const premium = readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8");
 const mobile = readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8");
 const adaptive = readFileSync(path.join(appDirectory, "adaptive-navigation.css"), "utf8");
+const browserSpec = readFileSync(
+  path.join(process.cwd(), "e2e", "navigation-mobile-shell-cascade.spec.ts"),
+  "utf8",
+);
 const rawManifest: unknown = JSON.parse(
   readFileSync(path.join(appDirectory, "global-feature-style-overlap-manifest.json"), "utf8"),
 );
@@ -130,7 +134,7 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(adaptive).toContain("@media (min-width: 720px) and (max-width: 1099px)");
   });
 
-  it("routes the browser ownership proof through both authoritative UI scripts", () => {
+  it("routes a mobile-viewport-aware browser proof through both authoritative UI scripts", () => {
     const uiCommand = scripts["test:e2e:ui"];
     const responsiveCommand = scripts["test:e2e:responsive"];
 
@@ -138,6 +142,10 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(responsiveCommand).toBeDefined();
     expect(occurrenceCount(uiCommand, CASCADE_SPEC)).toBe(1);
     expect(occurrenceCount(responsiveCommand, CASCADE_SPEC)).toBe(1);
+    expect(browserSpec).toContain(
+      '<meta name="viewport" content="width=device-width, initial-scale=1" />',
+    );
+    expect(browserSpec).toContain("await page.setViewportSize({ width: current.width, height: 800 });");
   });
 
   it("protects the mobile-PWA declarations that remain effective through 760px", () => {
