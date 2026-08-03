@@ -5,8 +5,10 @@
 - Issue: #70.
 - Branch: `style/issue-70-home-css-order-independence`.
 - Verified base and merge base: `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
-- Latest branch commit before this execution update: `90a868b286cf98a180a0fa370a1232d4c8e19168`.
-- Pull request: not opened yet.
+- Draft PR: #360 — `style(frontend): make compact Home CSS order-independent`.
+- Published PR head before current-context reconciliation: `af3489f10de7d7cc527a1017737a0d2622966e34`.
+- Latest branch commit before this execution update: `615527db73101c86324f4d7512e7bea3d483060c`.
+- Final authoritative head: resolve from live PR after this write.
 
 ## Acceptance audit evidence
 
@@ -25,6 +27,7 @@
 - Moved the compact Home import before `information-architecture.css` in `frontend/app/layout.tsx`.
 - Kept `premium-ui.css` before both Home owners and `adaptive-knowledge-coach-home.css` after the compact/shared pair.
 - Added `frontend/components/home-css-order-independence.test.ts` with a selector-specificity calculator based on the established Phrases ownership contract.
+- Published Draft PR #360 with exact gap evidence, scope, non-goals, mandatory gates and rollback.
 
 ## Source contract
 
@@ -51,18 +54,18 @@ The new test requires:
 - `compact-home.css` blob: `5a89b7d506646410c3543c86a214900fdb64334c`.
 - `layout.tsx` blob: `40088737ddcd4b7b5aceccc7d794ca47356ff7d9`.
 - source-contract blob: `03ea4e99543f6e1dd08720e66033414f1aa54b9b`.
-- current-task blob: `f8e969ef1ea07e85e7653f3a19ed3c61920177db`.
-- current-progress blob: `b3869aac411cb225ef0f3406264d4e4268a44a1f`.
-- Compare against the exact base was zero commits behind and limited to the intended task/product/test paths before this execution update.
-- `main` remained `17c801ae3d9a18a1623d723c39a4b81fae3147ef` throughout implementation.
+- current-task blob after PR linking: `a62f4055238c9e352e687f920c9c587214f9c5b1`.
+- current-progress blob after PR publication: `1c3030991243a6b20ad38260f2d347a2b43a0731`.
+- Final compare before PR publication reported exactly six allowed paths and zero commits behind.
+- `main` remained `17c801ae3d9a18a1623d723c39a4b81fae3147ef` throughout implementation and PR-context reconciliation.
 
 ## Validation plan
 
-1. Publish a Draft PR after the final allowed-path compare.
-2. Treat the resulting head as immutable unless CI exposes a classified root cause.
-3. Require fail-closed full product CI: frontend source/unit/build, complete browser matrix, accessibility, Linux visual hashes, performance budgets, backend and containers.
-4. Reject baseline updates, budget inflation, timeout inflation or skipped browsers as fixes.
-5. Audit comments, reviews and unresolved threads.
+1. Treat the head created by this execution update as the final developer-authored candidate.
+2. Require fail-closed full product CI on that exact head.
+3. Inspect source/unit/build, complete browser matrix, accessibility, Linux visual hashes, route-performance budgets, backend and container jobs.
+4. Classify and fix any failure at the root cause; no blind retry, timeout inflation, skipped browser, snapshot update or budget increase.
+5. Verify PR comments, reviews and unresolved threads.
 6. Mark Ready only after full green CI on the final head.
 7. Squash merge with the expected head SHA.
 8. Validate exact merge SHA in main CI and stage/public deployment.
@@ -70,4 +73,4 @@ The new test requires:
 
 ## Rollback
 
-Revert the product PR. No database, API, migration, snapshot or budget rollback is required.
+Revert PR #360. No database, API, migration, snapshot or budget rollback is required.
