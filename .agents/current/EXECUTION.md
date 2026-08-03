@@ -1,76 +1,41 @@
 # Current Task Execution
 
-## Active delivery
+No atomic production slice is active.
 
-- Issue: #70.
-- Branch: `style/issue-70-home-css-order-independence`.
-- Verified base and merge base: `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
-- Draft PR: #360 — `style(frontend): make compact Home CSS order-independent`.
-- Published PR head before current-context reconciliation: `af3489f10de7d7cc527a1017737a0d2622966e34`.
-- Latest branch commit before this execution update: `615527db73101c86324f4d7512e7bea3d483060c`.
-- Final authoritative head: resolve from live PR after this write.
+## Completed delivery
 
-## Acceptance audit evidence
+- PR: #360 — `style(frontend): make compact Home CSS order-independent`.
+- Base: `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
+- Final immutable developer-authored head: `ea54b29b31030556858558145c611e8e7354fda4`.
+- Authoritative PR CI: #2576 / run `30805447497`, complete success without retry.
+- Review surface before Ready: no comments, reviews or unresolved review threads.
+- Expected-head squash merge: `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+- Exact-SHA main CI: run `30806079581`, complete product matrix success.
+- Exact-SHA stage: run `30806743687`; deploy, public smoke and all 12 public browser checks completed successfully without retry.
 
-- `frontend/components/production-app-entry.test.ts` owns the exact production application-root inventory, retired-root absence, canonical root chain and bootstrap-only route-entry imports.
-- `frontend/app/global-style-ownership.test.ts` requires `globals.css` to be the sole owner of document `body` and shared `button, input` font inheritance.
-- `frontend/e2e/route-bundle-budget.spec.ts` measures all canonical cold routes, derives JavaScript assets exclusive to the live compatibility fallback and requires every canonical route to exclude those assets.
-- `frontend/bundle-budgets.json` provides blocking route JavaScript/request ceilings and immutable baseline evidence.
-- README documents the exact layout → routed shell → bootstrap → route island / compatibility fallback chain and global CSS ownership boundary.
-- The remaining compact Home gap was proven from source and specificity: shared `.lx-home-next-action .lx-hero-card` and compact `.lx-home-next-action .lx-hero-card` both had specificity `(0, 2, 0)`. Between 720 px and 760 px, compact `min-height: 0` therefore depended on its later import to override shared `min-height: 360px`.
+## Durable result
 
-## Applied implementation
+- The former order dependency was exact: shared and compact `.lx-home-next-action .lx-hero-card` selectors both had specificity `(0, 2, 0)` while assigning competing `min-height` values in the 720–760 px range.
+- Every compact Home selector entry is now scoped under `.lx-routed-app`; exactly 26 entries are protected by source contract.
+- All declaration values and responsive boundaries remain unchanged.
+- Layout intentionally loads `compact-home.css` before `information-architecture.css`.
+- `home-css-order-independence.test.ts` proves routed-shell ancestry, import inventory, scoping, media boundaries, no `!important`, and compact/shared/adaptive specificity precedence.
+- Shared hero specificity is `(0, 2, 0)`, compact is `(0, 3, 0)`, adaptive is `(0, 4, 0)`.
+- Compact therefore wins independently of source order and adaptive retains the narrower-breakpoint override.
+- No component/runtime markup, API/backend/database, session, route, Figma, snapshot, budget ceiling, workflow, dependency, README or architecture path changed.
+- Linux visual hashes, accessibility and route-performance budgets passed unchanged in both PR and exact-SHA main CI.
 
-- Added `.lx-routed-app` to every selector entry in `frontend/app/compact-home.css`.
-- Preserved every declaration value and the `max-width: 760px` / `max-width: 390px` media boundaries.
-- Added an ownership comment explaining the Issue #70 source-order contract.
-- Moved the compact Home import before `information-architecture.css` in `frontend/app/layout.tsx`.
-- Kept `premium-ui.css` before both Home owners and `adaptive-knowledge-coach-home.css` after the compact/shared pair.
-- Added `frontend/components/home-css-order-independence.test.ts` with a selector-specificity calculator based on the established Phrases ownership contract.
-- Published Draft PR #360 with exact gap evidence, scope, non-goals, mandatory gates and rollback.
+## Exact validation
 
-## Source contract
+- PR CI passed frontend lint, typecheck, unit suite, production build and dependency audit.
+- Backend unit/security/integration, UI shards, Lesson completion, Dictionary smoke, iOS PWA, service worker, CSP, visual regression, accessibility, performance budgets and both container builds passed.
+- Main CI repeated the same matrix on the squash merge and published exact-SHA web/API images.
+- Stage deployed those images, returned HTTP 200 for public frontend/API smoke and passed all 12 desktop Chromium/iOS WebKit runtime checks.
 
-The new test requires:
+## Next execution boundary
 
-- canonical markup below `.lx-routed-app` and Home route-island ownership;
-- one import each for premium, compact, shared and adaptive Home styles;
-- adversarial order `premium-ui.css` → `compact-home.css` → `information-architecture.css` → `adaptive-knowledge-coach-home.css`;
-- exactly 26 route-scoped compact selector entries;
-- unchanged compact media boundaries and no `!important` escape hatch;
-- compact specificity greater than every overlapping shared selector;
-- adaptive specificity greater than compact specificity at narrower breakpoints;
-- continued presence of shared premium hero/progress declarations.
-
-## Specificity evidence
-
-- Shared hero selector: `.lx-home-next-action .lx-hero-card` → `(0, 2, 0)`.
-- Compact hero selector: `.lx-routed-app .lx-home-next-action .lx-hero-card` → `(0, 3, 0)`.
-- Adaptive hero selector: `.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card` → `(0, 4, 0)`.
-- The intended cascade therefore no longer relies on source order: compact outranks shared, and adaptive outranks compact.
-
-## Read-back evidence
-
-- `compact-home.css` blob: `5a89b7d506646410c3543c86a214900fdb64334c`.
-- `layout.tsx` blob: `40088737ddcd4b7b5aceccc7d794ca47356ff7d9`.
-- source-contract blob: `03ea4e99543f6e1dd08720e66033414f1aa54b9b`.
-- current-task blob after PR linking: `a62f4055238c9e352e687f920c9c587214f9c5b1`.
-- current-progress blob after PR publication: `1c3030991243a6b20ad38260f2d347a2b43a0731`.
-- Final compare before PR publication reported exactly six allowed paths and zero commits behind.
-- `main` remained `17c801ae3d9a18a1623d723c39a4b81fae3147ef` throughout implementation and PR-context reconciliation.
-
-## Validation plan
-
-1. Treat the head created by this execution update as the final developer-authored candidate.
-2. Require fail-closed full product CI on that exact head.
-3. Inspect source/unit/build, complete browser matrix, accessibility, Linux visual hashes, route-performance budgets, backend and container jobs.
-4. Classify and fix any failure at the root cause; no blind retry, timeout inflation, skipped browser, snapshot update or budget increase.
-5. Verify PR comments, reviews and unresolved threads.
-6. Mark Ready only after full green CI on the final head.
-7. Squash merge with the expected head SHA.
-8. Validate exact merge SHA in main CI and stage/public deployment.
-9. Reconcile Agent Docs separately and continue the remaining Issue #70 feature-style audit.
+After this documentation-only reconciliation merges, re-read live GitHub state and continue the remaining Issue #70 global feature-style audit. Build an exact overlap inventory using selector, specificity, media-condition and declaration-value evidence. Any product correction must be preceded by a fail-closed proof and delivered as a separate atomic slice. Do not close Issue #70 until app-entry, compatibility reachability, fallback-exclusive bundle evidence, global ownership, feature order independence, visual regression and README criteria are all explicitly current.
 
 ## Rollback
 
-Revert PR #360. No database, API, migration, snapshot or budget rollback is required.
+Revert this documentation-only reconciliation PR. Product code and deployed images remain unchanged.
