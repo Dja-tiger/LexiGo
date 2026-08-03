@@ -5,7 +5,7 @@
 - Branch: `style/issue-70-learning-switch-placement`.
 - Base SHA: `cc3636872f47c44948d9be5f3aec4784fb2c5a79`.
 - Head SHA: resolve from live branch ref.
-- PR: pending Draft PR.
+- PR: #372 (Draft).
 
 ## Skills used
 
@@ -13,7 +13,7 @@
 
 Purpose:
 
-Read exact repository state, preserve compatibility fallback ownership and add adversarial source-order evidence for one bounded CSS slice.
+Preserve compatibility fallback ownership while proving deterministic `/learn` placement under adversarial stylesheet order.
 
 Instruction source:
 
@@ -21,62 +21,61 @@ GitHub skill, repository Agent Harness, Issue #70 CSS instructions and `docs/age
 
 Version or verification date:
 
-Verified 2026-08-04 Europe/Moscow against exact base `cc3636872f47c44948d9be5f3aec4784fb2c5a79`.
+Verified 2026-08-04 Europe/Moscow against the exact base SHA.
 
 Inputs:
 
-- Issue #70 acceptance criteria;
-- reconciled PR #370/#371 delivery evidence;
-- eight reviewed Scenario Catalog/Learn switch manifest items;
-- root stylesheet order;
+- eight reviewed Scenario Catalog/Learn switch conflict IDs;
 - Scenario Catalog and Learn placement styles;
 - Route Primary Navigation and Scenario Catalog renderers;
-- existing navigation/mobile-shell source and browser contracts.
+- existing shell/resource cascade proof;
+- frontend-core diagnostics from CI #2657 / run `30860028186`.
 
 Files inspected:
 
-Mandatory Agent Harness files, project state/current templates, layout import order, both switch stylesheets, renderers, manifest and existing Chromium fixture.
+Mandatory harness files, project state, import order, both switch stylesheets, renderer files, manifest/source contracts and the Chromium fixture.
 
 Actions performed:
 
-- created the product branch from exact reconciled main;
-- confirmed Scenario Catalog is the shared visual/fallback owner and Learn is the route-specific placement owner;
-- scoped all five Learn placement blocks below `.lx-routed-app[data-route-path="/learn"]`;
-- preserved every declaration value and media boundary;
-- left Scenario Catalog CSS and manifest JSON unchanged;
-- added a focused source contract for the eight reviewed items and renderer/import/specificity boundaries;
-- extended the existing browser fixture with live switch markup, both stylesheets, two adversarial orders and eight responsive widths.
+- scoped the initial Learn placement rules to canonical `/learn` ancestry;
+- ran full diagnostic CI and inspected its exact unit/source failures;
+- identified that route-only replacement removed the eight reviewed manifest IDs;
+- restored every unscoped compatibility fallback and paired it with an identical stronger routed owner;
+- corrected Scenario renderer evidence to its actual base switch class;
+- generalized the navigation source contract to the expanded scenario/learning cascade orders without weakening prior shell/resource assertions;
+- kept Scenario Catalog CSS, manifest JSON, values and breakpoints unchanged.
 
 Commands or procedures:
 
-Exact-ref connector reads, branch-only contents writes, source inventory inspection and computed-cascade fixture extension.
+Exact-ref connector reads, branch-only writes, workflow artifact extraction and fail-closed Vitest diagnostics.
 
 Artifacts produced:
 
-- canonical Learn route placement selector;
-- eight-item source ownership contract;
-- production + adversarial switch computed-cascade proof integrated into both authoritative UI commands.
+- five fallback-plus-routed Learn placement selector groups;
+- eight-item focused ownership contract;
+- expanded three-order/eight-width Chromium switch proof;
+- updated shell ownership source contract.
 
 Result:
 
-The intended Learn switch geometry is now more specific than Scenario Catalog fallbacks at every responsive range. Authoritative CI remains required to validate exact computed pixels and the full product matrix.
+The final mechanism preserves the reviewed 71-item inventory while making production Learn placement independent of import order. Authoritative CI remains required.
 
 Failures:
 
-None yet. Browser expectations have not executed on authoritative Linux Chromium.
+The superseded CI head failed three source assertions: eight parser IDs disappeared, the Scenario renderer modifier was assumed incorrectly, and an older shell test matched exact pre-expansion order literals.
 
 Root cause:
 
-Route-specific placement was encoded with a route-agnostic one-class selector, leaving equal-specificity fallback declarations dependent on import order.
+Valid compatibility fallbacks were removed instead of being paired with stronger route-specific owners; companion tests contained stale implementation assumptions.
 
 Fallback:
 
-If computed evidence differs, correct only fixture expectations or route selector ancestry. Do not change approved values, breakpoints, snapshots, tolerances, timeouts or budgets.
+If browser evidence differs, correct only computed expectations or route ancestry. Do not change approved values, media boundaries, snapshots, tolerances, timeouts or budgets.
 
 Limitations:
 
-This slice does not alter Scenario Catalog layout, adaptive layout, Phrases, Account Security, async state or semantic non-identical-selector auditing.
+Adaptive layout, Phrases, Account Security, async state and final semantic overlap auditing remain separate Issue #70 slices.
 
 Reusable lesson:
 
-When a shared component has valid fallback styling, preserve it and give the canonical route a stronger ancestry-based placement owner instead of deleting cross-route compatibility declarations.
+Preserve reviewed fallback selectors and add stronger route ownership; source contracts should assert semantic order membership and actual renderer classes rather than incidental array formatting or invented modifiers.
