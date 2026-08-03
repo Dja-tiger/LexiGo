@@ -10,7 +10,7 @@
 
 ## Objective
 
-Make the canonical adaptive-navigation shell owner independent of global stylesheet import order for the 26 exact-selector conflicts resolved by routed-shell specificity: 21 `premium-ui.css` → `adaptive-navigation.css` items and five navigation/mobile-shell `mobile-pwa-fixes.css` → `adaptive-navigation.css` items. Preserve the approved computed presentation at 390, 719, 720, 760, 761 and 1024 px.
+Make the canonical adaptive-navigation shell owner independent of global stylesheet import order for the 26 exact-selector conflicts resolved by routed-shell specificity: 21 `premium-ui.css` → `adaptive-navigation.css` items and five navigation/mobile-shell `mobile-pwa-fixes.css` → `adaptive-navigation.css` items. Preserve the approved computed presentation at 390, 719, 720, 760, 761 and 1024 px, with deterministic Linux visual evidence across heterogeneous CI CPU hosts.
 
 ## Scope
 
@@ -20,6 +20,8 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - preserve the separate `.lx-resource-stack` width conflict between `mobile-pwa-fixes.css` and `adaptive-navigation.css` for a later width-owner slice;
 - update the fail-closed overlap manifest and count contract from authoritative parser output;
 - extend source and Chromium computed-cascade evidence to compare production order with an adversarial adaptive-first order;
+- force Chromium visual tests onto Skia's baseline code path with `--disable-skia-runtime-opts` after exact immutable-head evidence proved host-CPU raster drift of only three pixels by one RGB unit;
+- protect the single approved visual launch argument in the focused source contract;
 - update current task context only.
 
 ## Non-goals
@@ -28,7 +30,8 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - no `.lx-resource-stack` or `.lx-async-state` width-owner correction;
 - no Learning switch, Phrases grid, adaptive layout, account-security or other async-state work;
 - no visual redesign, Figma change or breakpoint change;
-- no runtime, route, API, backend, database, snapshot, bundle budget, workflow or dependency change.
+- no runtime, route, API, backend, database, snapshot, bundle budget, workflow or dependency change;
+- no visual hash tolerance, alternate baseline, pixel quantization or snapshot promotion.
 
 ## Allowed paths
 
@@ -39,14 +42,15 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - `frontend/app/global-feature-style-overlap-manifest.json`;
 - `frontend/app/global-feature-style-overlap-manifest.test.ts`;
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
-- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
+- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`;
+- `frontend/playwright.visual.config.ts`.
 
 ## Prohibited paths
 
 - `frontend/app/premium-ui.css`;
 - `frontend/app/mobile-pwa-fixes.css`;
 - all other production CSS and component/runtime files;
-- visual snapshots and bundle budgets;
+- visual snapshots, visual baseline hashes and bundle budgets;
 - backend, API, migrations, deployment and workflow files;
 - dependency manifests and lockfiles;
 - README and architecture documentation.
@@ -58,6 +62,7 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - `mobile-pwa-fixes.css` continues to own mobile/PWA header background, logo/avatar dimensions and view spacing through 760 px.
 - `premium-ui.css` remains the legacy/base shell owner outside adaptive/mobile overrides.
 - `.lx-resource-stack` width remains an explicitly separate unresolved owner boundary.
+- `playwright.visual.config.ts` owns the Linux visual browser launch contract only; it does not change production runtime behavior.
 
 ## Documentation owners
 
@@ -72,7 +77,8 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - Mobile-PWA versus premium-shell source-order dependency must remain explicitly visible as exactly 10 unresolved manifest items.
 - The `.lx-resource-stack` mobile → adaptive width conflict must remain explicitly visible as exactly one unresolved manifest item.
 - `.lx-resource-stack` and `.lx-async-state` selectors must not gain routed-shell specificity in this slice.
-- No new `!important`, timeout increase, snapshot update or budget increase is permitted.
+- No new CSS `!important`, timeout increase, snapshot update, baseline-hash update or budget increase is permitted.
+- Chromium visual tests must use exactly one custom launch argument: `--disable-skia-runtime-opts`.
 - Exactly one primary navigation is visible and no horizontal overflow occurs at every measured viewport.
 
 ## Acceptance criteria
@@ -83,11 +89,12 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - The total manifest contains exactly 81 items: 50 `intentional`, 31 `requires-proof`, 0 `protected`.
 - Adaptive navigation conflict selectors are scoped below `.lx-routed-app` with stronger specificity than the competing unscoped selectors.
 - Browser snapshots are identical under production order and adversarial adaptive-first order at 390, 719, 720, 760, 761 and 1024 px.
-- Existing authoritative Linux visual hashes, accessibility checks and route-performance budgets remain unchanged.
+- The previously approved content-addressed Linux visual hashes pass unchanged on the Skia baseline code path.
+- Existing accessibility results and route-performance budgets remain unchanged.
 
 ## Required checks
 
-- focused navigation/mobile-shell source contract;
+- focused navigation/mobile-shell source contract, including exact visual launch arguments;
 - complete global overlap source and manifest contracts;
 - frontend lint, typecheck, unit/source suite, production build and dependency audit;
 - both UI shards, responsive/navigation cascade spec, accessibility and Linux visual regression;
@@ -100,8 +107,9 @@ Make the canonical adaptive-navigation shell owner independent of global stylesh
 - over-broad selector scoping could accidentally take ownership from later system-state or route-specific styles;
 - an incomplete selector inventory could hide the separate resource-stack width boundary;
 - adversarial CSS ordering could accidentally reverse the intentionally unresolved premium/mobile pair;
-- manifest editing not derived from parser evidence could omit or retain stale conflict IDs.
+- manifest editing not derived from parser evidence could omit or retain stale conflict IDs;
+- the Skia baseline flag could produce a third visual rendering rather than either approved exact hash; authoritative CI must prove unchanged hashes before merge.
 
 ## Rollback
 
-Revert the atomic PR. No schema, API, data, snapshot, budget or dependency rollback is required.
+Revert the atomic PR. No schema, API, data, snapshot, baseline hash, budget or dependency rollback is required.
