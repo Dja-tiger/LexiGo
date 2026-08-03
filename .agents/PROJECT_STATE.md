@@ -4,17 +4,18 @@
 
 - Last verified: 2026-08-04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-- Latest deployed product SHA: `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-- Latest completed Issue #70 slice: mobile-PWA shell source-order independence.
-- Completion PR: #368.
-- PR #368 immutable developer-authored head: `fae8734a6f63b428f3db095b54ceec39534d3a6c`.
-- Authoritative PR CI: #2641 / run `30853203248`, complete success.
-- Expected-head squash merge produced product SHA `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-- Exact-SHA main CI run `30853894366` completed successfully on the merge SHA.
-- Exact-SHA stage run `30854579569` deployed web/API images tagged `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`; deploy, public smoke and all 12 public browser checks succeeded.
-- PR #368 had no comments, reviews or unresolved review threads before merge.
-- No intersecting Issue #70 product PR remains open. Existing Dependabot PRs #304–#306 are separate maintenance work.
+- Product base verified before this documentation slice: `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+- Latest deployed product SHA: `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+- Latest completed Issue #70 slice: routed resource-stack tablet width ownership.
+- Completion PR: #370.
+- PR #370 immutable developer-authored head: `84b9dbee45f477f1e8b4f970009f3ffd63441700`.
+- Authoritative PR CI: #2653 / run `30857900749`, complete success.
+- Expected-head squash merge produced product SHA `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+- Exact-SHA main CI run `30858532612` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-SHA stage run `30859063535` deployed web/API images tagged `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`; deploy and public smoke succeeded.
+- Public browser validation completed successfully. Eleven checks passed directly; the stale-build-marker iOS WebKit check passed on retry after a transient service-worker access-control page error. The workflow conclusion remained successful.
+- PR #370 had no comments, reviews or unresolved review threads before merge.
+- No intersecting Issue #70 product PR remains open. Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
 
@@ -36,7 +37,7 @@
 ### Issue #70 compatibility and orphan cleanup
 
 - Dedicated route ownership, compatibility reachability and fallback-exclusive bundle evidence are fail-closed.
-- Proven orphan families removed in earlier slices include `lx-resource-notice*`, `.lx-themed-home`, `.lx-themed-library` and the five retired Home hero-decoration families.
+- Proven orphan families removed in earlier slices include `lx-resource-notice*`, `.lx-themed-home`, `.lx-themed-library` and the retired Home hero-decoration families.
 - Current source contracts protect intentionally live shared, account, lesson, guest-auth and compatibility owners.
 - Canonical routes exclude fallback-exclusive JavaScript assets under cold-route browser evidence.
 
@@ -45,6 +46,7 @@
 - `frontend/app/global-feature-style-overlap-source.test.ts` derives exact-selector conflicts from the actual root import graph.
 - The parser handles selector groups, declarations and nested media/support/container/layer blocks without external dependencies.
 - `frontend/app/global-feature-style-overlap-manifest.json` is the reviewed fail-closed inventory; its companion test protects exact totals, owner pairs and classifications.
+- The manifest remains at 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
 - Accessibility-layer overrides remain intentional and separately contract-protected.
 - Compact Home, Phrases sorting and navigation/mobile shell have adversarial source-order browser/source contracts.
 
@@ -54,25 +56,31 @@
 
 - Established browser-computed ownership at 390, 719, 720, 760, 761 and 1024 px.
 - Required exactly one visible primary navigation and no horizontal overflow.
-- Bounded premium, mobile-PWA and adaptive-navigation conflicts before correction.
 
 ### PR #366 — adaptive navigation source-order independence
 
 - Removed all 21 `premium-ui.css` → `adaptive-navigation.css` shell conflicts and five navigation-shell `mobile-pwa-fixes.css` → `adaptive-navigation.css` conflicts.
 - Scoped only adaptive routed shell selectors below `.lx-routed-app` without changing values or breakpoints.
-- Preserved `.lx-resource-stack`, `.lx-async-state` and premium/mobile visual ownership as separate slices.
 - Reduced the manifest from 107 to 81 items.
 
 ### PR #368 — mobile-PWA shell source-order independence
 
 - Removed all ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-selector shell conflicts.
-- Deleted mobile header-background and logo declarations already unreachable beneath the stronger routed application-shell chrome owner.
+- Deleted mobile header-background and logo declarations already unreachable beneath the stronger routed application-shell owner.
 - Preserved live compact fallback/dictionary geometry, avatar dimensions and responsive view spacing.
-- Preserved `adaptive-navigation.css` as tablet geometry owner and `adaptive-knowledge-coach-home.css` as routed shell chrome owner.
 - Extended Chromium proof to production, routed-shell-first and mobile-first stylesheet orders at all six boundary widths.
-- No declaration value, approved breakpoint, visual snapshot/hash, tolerance, timeout or route budget changed.
-- The parser-derived manifest now contains exactly 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
-- There are zero remaining `premium-ui.css` → `mobile-pwa-fixes.css`, `premium-ui.css` → `adaptive-navigation.css` or `mobile-pwa-fixes.css` → routed-shell-chrome exact-selector conflicts.
+- Reduced the parser-derived manifest from 81 to 71 items.
+
+### PR #370 — routed resource-stack tablet width ownership
+
+- Audited Home, Learn, Progress, Dictionary, Active Lesson and compatibility fallback resource-stack renderers; all production renderers remain below `.lx-routed-app`.
+- Preserved the compatibility fallback `.lx-resource-stack, .lx-async-state { width: 100%; }` inside the existing 720–1099px media range.
+- Added `.lx-routed-app .lx-resource-stack { width: 100%; }` as the stronger canonical production tablet owner.
+- Kept `.lx-async-state`, mobile-PWA defaults, declaration values, breakpoints and import order unchanged.
+- Extended the existing three-order/six-width Chromium proof to compare `.lx-resource-stack` and `.lx-main-content` bounding widths.
+- Below 720px the resource stack retains the 28px total inset; from 720px through 1099px it equals main-content width under every tested stylesheet order.
+- The one exact mobile-PWA/adaptive resource-stack conflict remains in the reviewed manifest as `requires-proof`; deterministic production behavior is supplied by stronger routed ownership plus source/browser evidence.
+- No visual snapshot/hash, performance budget, tolerance, timeout or backend/runtime contract changed.
 
 ## Current Issue #70 acceptance evidence
 
@@ -80,46 +88,43 @@
 - `frontend/app/global-style-ownership.test.ts` protects the sole document `body` and shared `button, input` font-inheritance owners.
 - `frontend/e2e/route-bundle-budget.spec.ts` verifies canonical routes exclude compatibility-fallback-exclusive assets.
 - `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
+- Navigation/mobile-shell source contracts protect canonical routed owners, compatibility fallbacks and six live resource-stack renderer boundaries.
+- The Chromium cascade matrix exercises production, routed-shell-first and mobile-first orders at six responsive boundaries.
 - README and architecture documentation describe the actual route/runtime/global-style ownership graph.
 - Authoritative Linux visual, accessibility, PWA, CSP, functional browser and performance gates are unchanged and green on the latest deployed product SHA.
 
 ## In progress
 
 - No product slice is active during this documentation reconciliation.
-- The completed PR #368 task context is being reset.
-- Issue #70 remains open because 21 exact-selector conflicts still require proof or correction, semantic non-identical-selector overlaps remain unaudited and the final acceptance reconciliation is incomplete.
+- The completed PR #370 task context is being reset.
+- Issue #70 remains open because 20 additional exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
 
 ## Remaining roadmap
 
-### 1. Resource-stack width owner — 1 conflict
+### 1. Scenario Catalog / Learning section switch — 8 conflicts
 
-- Resolve only `.lx-resource-stack | width` between `mobile-pwa-fixes.css` and `adaptive-navigation.css`.
-- Audit all live route/session renderers.
-- Preserve compact/global width behavior and make tablet `width: 100%` independent of root import order through canonical routed ancestry.
-- Do not combine `.lx-async-state` or unrelated adaptive-layout declarations.
+- Establish deterministic placement ownership for `.lx-learning-section-switch--learn` at desktop, tablet, compact and narrow widths.
+- Preserve the shared visual switch treatment and the separate Scenario Catalog route placement.
+- Audit all eight width/margin conflict IDs and prove production behavior under adversarial source order.
+- Do not combine Scenario cards, navigation chrome or unrelated Learn layout.
 
-### 2. Scenario Catalog / Learning section switch — 8 conflicts
-
-- Establish one canonical placement owner for the Learn/Scenarios switch at desktop, tablet, compact and narrow widths.
-- Preserve approved pixels and route accessibility; do not mix Scenario cards or navigation chrome.
-
-### 3. Adaptive tablet layout — 6 conflicts
+### 2. Adaptive tablet layout — 6 conflicts
 
 - Resolve the bounded `premium-ui.css` → `adaptive-layout.css` cluster with computed-cascade and visual evidence.
 
-### 4. Phrases grid — 4 conflicts
+### 3. Phrases grid — 4 conflicts
 
 - Preserve the extracted Phrases route as canonical grid owner independently of premium fallback order.
 
-### 5. Account Security width — 1 conflict
+### 4. Account Security width — 1 conflict
 
 - Reconcile account-security global width with routed desktop shell placement without changing confirmation/security semantics.
 
-### 6. Async State width — 1 conflict
+### 5. Async State width — 1 conflict
 
 - Reconcile adaptive navigation and `system-states.css` width ownership as an isolated shared-state slice.
 
-### 7. Final Issue #70 acceptance reconciliation
+### 6. Final Issue #70 acceptance reconciliation
 
 - Audit semantically overlapping selectors that are not textually identical.
 - Reconcile exact-selector evidence with app-entry, compatibility reachability, fallback-exclusive bundle, global ownership, visual regression and public architecture documentation.
@@ -127,7 +132,8 @@
 
 ## Validation pending
 
-- Remaining exact-selector inventory: 21 `requires-proof` items across six bounded clusters.
+- Remaining exact-selector inventory requiring additional proof/correction: 20 items across five bounded clusters.
+- The already proven resource-stack fallback remains in the 71-item manifest as a reviewed `requires-proof` item with current source/browser evidence.
 - Semantic non-identical selector overlap is not claimed safe by the exact-selector parser.
 - Guest Profile auth/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
@@ -135,19 +141,19 @@
 
 ## Recent production evidence
 
-1. #368 — `style(frontend): make mobile PWA shell order-independent` → `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-2. #367 — `docs(agent): reconcile PR 366 delivery` → `1030ef2decd970251846650371c18ed8ff9f0ba1`.
-3. #366 — `style(frontend): make adaptive navigation order-independent` → `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
-4. #365 — `docs(agent): reconcile PR 364 cascade evidence` → `e72e88c697ae74dc3dbdb65ed20ce640baee243d`.
-5. #364 — `test(frontend): prove navigation mobile cascade owners` → `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+1. #370 — `style(frontend): prove routed resource stack width ownership` → `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+2. #369 — `docs(agent): reconcile PR 368 delivery` → `7c3684a63e415c647f0b1c7a96ac86387f79cafd`.
+3. #368 — `style(frontend): make mobile PWA shell order-independent` → `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
+4. #367 — `docs(agent): reconcile PR 366 delivery` → `1030ef2decd970251846650371c18ed8ff9f0ba1`.
+5. #366 — `style(frontend): make adaptive navigation order-independent` → `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
 
 ## Evidence
 
-- PR #368 immutable head `fae8734a6f63b428f3db095b54ceec39534d3a6c` passed authoritative full CI #2641 / run `30853203248`.
-- Frontend core, backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- Expected-head squash merge produced `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-- Exact-SHA main CI run `30853894366` completed successfully with the same full product matrix.
-- Stage run `30854579569` deployed exact web/API images; deploy, public smoke and 12 public desktop Chromium/iOS WebKit checks succeeded.
+- PR #370 immutable head `84b9dbee45f477f1e8b4f970009f3ffd63441700` passed authoritative full CI #2653 / run `30857900749`.
+- Frontend parser/source contracts, lint, TypeScript, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded.
+- Expected-head squash merge produced `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+- Exact-SHA main CI run `30858532612` completed successfully with the same full product matrix and image publication.
+- Stage run `30859063535` deployed the exact SHA; deploy and public smoke succeeded. Public browser validation concluded successfully after one transient iOS WebKit service-worker error passed on retry.
 - Indexed search remains discovery only; final claims use exact refs, files, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
