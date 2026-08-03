@@ -5,7 +5,7 @@
 - Branch: `style/issue-70-adaptive-navigation-order-independence`.
 - Base SHA: `e72e88c697ae74dc3dbdb65ed20ce640baee243d`.
 - Head SHA: resolve from live branch ref.
-- PR: pending Draft creation.
+- PR: #366 (Draft).
 
 ## Skills used
 
@@ -13,7 +13,7 @@
 
 Purpose:
 
-Perform branch-safe repository inspection, writes, CI review and expected-head delivery through the connected GitHub application.
+Perform branch-safe repository inspection, bounded production changes, parser-driven manifest reconciliation, CI review and expected-head delivery through the connected GitHub application.
 
 Instruction source:
 
@@ -36,7 +36,8 @@ Inputs:
 - Issue #70;
 - PR #364 source/browser evidence and delivery records;
 - production CSS owners and overlap manifest;
-- canonical routed-shell DOM.
+- canonical routed-shell DOM;
+- CI #2606/run `30827173353` frontend diagnostics and parser output.
 
 Files inspected:
 
@@ -52,50 +53,66 @@ Files inspected:
 - `frontend/app/adaptive-navigation.css`;
 - `frontend/app/global-feature-style-overlap-manifest.json`;
 - `frontend/app/global-feature-style-overlap-source.test.ts`;
+- `frontend/app/global-feature-style-overlap-manifest.test.ts`;
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
 - `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
 
 Actions performed:
 
 - verified exact live main and post-reconciliation state;
-- confirmed only Dependabot PRs #304–#306 remain open;
-- selected one adaptive-navigation correction without mixing the premium/mobile owner pair;
-- created the explicit task branch from exact main;
-- recorded bounded task and progress contracts before production writes.
+- confirmed only Dependabot PRs #304–#306 remain parallel;
+- selected one adaptive-navigation shell correction without mixing premium/mobile or width-owner work;
+- created the task branch from exact main and opened Draft PR #366;
+- scoped only competing adaptive shell selectors below `.lx-routed-app`;
+- added production-order and adaptive-first computed-cascade matrices at six critical widths;
+- ran full authoritative CI #2606 and retrieved frontend-core diagnostics;
+- parsed the exact 81-item inventory and pair/classification totals from `vitest.log`;
+- generated the exact replacement manifest locally;
+- created Git blob `957b5ae5c79f8236c4270076876552699f61f323`, verified it matched the locally computed Git blob SHA, attached it through a base-tree commit and fast-forwarded only the task branch;
+- corrected source/count contracts so `.lx-resource-stack | width` remains an explicit separate conflict.
 
 Commands or procedures:
 
 - connector reads by exact branch/SHA;
 - branch creation from immutable main SHA;
-- sequential explicit-branch writes;
+- sequential explicit-branch contents writes;
+- Git Data `create_blob` → `create_tree` → `create_commit` → non-forced `update_ref` for the generated manifest;
 - read-after-write blob verification;
-- live main verification after every write.
+- live main verification after every write;
+- authoritative CI job/log/artifact inspection;
+- local dependency-free parsing of CI diagnostics only, with repository writes still performed through GitHub connector.
 
 Artifacts produced:
 
-- active task and progress records for the adaptive-navigation source-order-independence slice.
+- routed-shell adaptive selector correction;
+- adversarial-order Chromium proof;
+- exact 81-item overlap manifest;
+- fail-closed 81/50/31 count contract;
+- explicit 10-item premium/mobile and one-item resource-stack retained boundaries;
+- active task, progress and execution records.
 
 Result:
 
-Pre-flight complete. Production CSS has not yet changed.
+The implementation and parser-derived contracts are synchronized. A new full CI run on the corrected branch head is pending.
 
 Failures:
 
-None in this production slice.
+CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership.
 
 Root cause:
 
-The canonical adaptive selectors use the same specificity as legacy premium/mobile selectors, so their intended compact/tablet ownership currently relies on root import order.
+Five mobile → adaptive conflicts were shell selectors corrected by routed specificity. The sixth is `.lx-resource-stack | width`, a distinct layout-width owner explicitly excluded from this atomic slice. The parser correctly retained it.
 
 Fallback:
 
-If routed-shell specificity changes any approved computed value, revert the branch changes and select a narrower declaration-migration mechanism in a new atomic slice.
+If the corrected full CI shows any computed presentation drift, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
 
 Limitations:
 
-- local clone and local test execution remain unavailable because the execution container cannot resolve GitHub hosts;
-- repository evidence and validation therefore use exact GitHub refs and authoritative CI.
+- local clone and direct local repository test execution remain unavailable because the execution container cannot resolve GitHub hosts;
+- repository evidence and final validation therefore use exact GitHub refs and authoritative CI;
+- CI diagnostic artifacts are used only to derive exact parser output, never as a substitute for final immutable-head CI.
 
 Reusable lesson:
 
-When an exact-selector conflict already has browser-proven intended values, first prefer an existing stable route ancestor to encode canonical specificity. Do not combine that correction with a separate competing owner pair that has not yet been selected.
+Source-order ownership must be split by semantic owner, not only stylesheet pair. A parser-retained selector outside the selected shell boundary is evidence to narrow the contract, not a reason to broaden production scope.
