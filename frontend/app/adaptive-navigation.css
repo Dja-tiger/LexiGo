@@ -98,20 +98,20 @@
     padding-bottom: max(36px, env(safe-area-inset-bottom));
   }
 
-  .lx-header {
+  .lx-routed-app .lx-header {
     min-height: calc(76px + env(safe-area-inset-top));
     margin: 0;
     padding: env(safe-area-inset-top) 0 0;
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
-  .lx-brand,
-  .lx-header-tools {
+  .lx-routed-app .lx-brand,
+  .lx-routed-app .lx-header-tools {
     align-self: center;
   }
 
-  .lx-nav,
-  .lx-mobile-nav {
+  .lx-routed-app .lx-nav,
+  .lx-routed-app .lx-mobile-nav {
     display: none !important;
   }
 
@@ -214,12 +214,12 @@
     display: block;
   }
 
-  .lx-nav,
-  .lx-navigation-rail {
+  .lx-routed-app .lx-nav,
+  .lx-routed-app .lx-navigation-rail {
     display: none !important;
   }
 
-  .lx-mobile-nav {
+  .lx-routed-app .lx-mobile-nav {
     position: fixed;
     z-index: 120;
     right: max(10px, env(safe-area-inset-right));
@@ -237,7 +237,7 @@
     backdrop-filter: blur(22px);
   }
 
-  .lx-mobile-nav button {
+  .lx-routed-app .lx-mobile-nav button {
     display: grid;
     min-width: 48px;
     min-height: 52px;
@@ -253,7 +253,7 @@
     line-height: 1.15;
   }
 
-  .lx-mobile-nav button span {
+  .lx-routed-app .lx-mobile-nav button span {
     display: block;
     max-width: 100%;
     overflow: hidden;
@@ -261,12 +261,12 @@
     white-space: nowrap;
   }
 
-  .lx-mobile-nav button.active {
+  .lx-routed-app .lx-mobile-nav button.active {
     color: #c1adff;
     background: rgba(104, 75, 220, 0.19);
   }
 
-  .lx-mobile-nav svg {
+  .lx-routed-app .lx-mobile-nav svg {
     width: 20px;
     height: 20px;
   }
@@ -292,12 +292,12 @@
 }
 
 @media (max-width: 390px) {
-  .lx-mobile-nav {
+  .lx-routed-app .lx-mobile-nav {
     gap: 2px;
     padding: 6px 4px;
   }
 
-  .lx-mobile-nav button {
+  .lx-routed-app .lx-mobile-nav button {
     font-size: 11px;
   }
 
