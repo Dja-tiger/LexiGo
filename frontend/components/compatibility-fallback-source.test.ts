@@ -11,22 +11,43 @@ function readComponent(file: string): string {
 }
 
 describe("final compatibility fallback inventory", () => {
-  it("keeps all dedicated route islands before the final premium fallback", () => {
+  it("keeps every dedicated route island before the final premium fallback", () => {
     const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
     const fallbackIndex = bootstrap.indexOf("<LexigoPremiumApp");
 
     expect(fallbackIndex).toBeGreaterThan(-1);
     for (const owner of [
-      "<LexigoHomeApp",
-      "<LexigoLearnApp",
-      "<LexigoProgressApp",
-      "<LexigoPhrasesApp",
       "<LexigoScenarioCatalogApp",
       "<LexigoScenarioApp",
+      "<LexigoHomeApp",
+      "<LexigoLearnApp",
+      "<LexigoActiveLessonApp",
+      "<LexigoDictionaryApp",
+      "<LexigoPhrasesApp",
+      "<LexigoProgressApp",
+      "<LexigoProfileApp",
     ]) {
       const ownerIndex = bootstrap.indexOf(owner);
       expect(ownerIndex, owner).toBeGreaterThan(-1);
       expect(ownerIndex, owner).toBeLessThan(fallbackIndex);
+    }
+  });
+
+  it("keeps the complete island predicate inventory fail closed", () => {
+    const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
+
+    for (const predicate of [
+      'const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);',
+      'const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname);',
+      "const useActiveLessonIsland = (isActiveLessonRoute(pathname) || activeLessonOwnerRetained)",
+      'const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);',
+      'const usePhrasesIsland = effectiveRouteGraph === "product" && isPhrasesRoute(pathname);',
+      "const useProgressIsland = isProgressRoute(pathname);",
+      "const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;",
+      "const useScenarioCatalogIsland = isScenarioCatalogRoute(pathname) && initialSession !== null;",
+      "const useScenarioIsland = isScenarioDetailRoute(pathname) && initialSession !== null;",
+    ]) {
+      expect(bootstrap, predicate).toContain(predicate);
     }
   });
 
@@ -51,7 +72,7 @@ describe("final compatibility fallback inventory", () => {
     }
   });
 
-  it("preserves the shared auth, recovery, lesson and unknown-route boundary", () => {
+  it("preserves guest Profile, Library, Lesson and unknown-route fallback", () => {
     const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
     const premium = readComponent("lexigo-premium-app.tsx");
 
@@ -61,8 +82,25 @@ describe("final compatibility fallback inventory", () => {
     expect(premium).toContain("function renderLesson()");
     expect(premium).toContain("async function startLesson(");
     expect(premium).toContain("async function resumeLesson(");
+    expect(bootstrap).toContain("const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;");
     expect(bootstrap).toContain('return "product";');
     expect(bootstrap).toContain("<LexigoPremiumApp key={routeKey} initialSession={initialSession} />");
+  });
+
+  it("keeps shared account and session runtime outside route-island selection", () => {
+    const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
+    const fallbackIndex = bootstrap.indexOf("<LexigoPremiumApp");
+
+    for (const owner of [
+      "<ReviewOutboxRuntime session={initialSession} />",
+      "<EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />",
+      "<AccountSecurityPanel",
+      "<AccountEmailPanel",
+      "<AccountDataPanel",
+    ]) {
+      expect(bootstrap, owner).toContain(owner);
+    }
+    expect(bootstrap.indexOf("<AccountSecurityPanel")).toBeGreaterThan(fallbackIndex);
   });
 
   it("does not classify canonical Learn CSS as orphaned after presentation retirement", () => {
