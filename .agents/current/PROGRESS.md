@@ -25,23 +25,22 @@ The exact post-change manifest boundary is:
 - one separate mobile → adaptive `.lx-resource-stack` width conflict;
 - zero premium → adaptive conflicts.
 
-Final immutable-head CI #2614/run `30829924223` exposed a separate Linux visual determinism defect on unchanged production code:
+Immutable-head CI #2614/run `30829924223` exposed a Linux exact-hash visual flake on unchanged production code:
 
-- first visual build failed only `compact Dictionary empty light`;
-- same-SHA failed-job rerun passed that case and failed only `Profile compact light`;
-- both builds checked out the same synthetic merge `00c371d4538ebe561be53453826134d446074555` with the same `APP_BUILD_ID`;
-- loaded CSS URLs, order, lengths and byte hashes were identical;
-- each failing PNG differed from its approved exact hash at exactly three pixels, with maximum per-channel drift of one RGB unit;
-- the two runs used different heterogeneous Azure hosts;
-- no CSS, component, snapshot, baseline hash or route budget changed between the previously green product head and the failing immutable head; only `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` had changed.
+- the first visual build failed only `compact Dictionary empty light`;
+- the same-SHA failed-job rerun passed that case and failed only `Profile compact light`;
+- both attempts used the same source, synthetic merge `00c371d4538ebe561be53453826134d446074555`, `APP_BUILD_ID`, CSS URLs, order, lengths and byte hashes;
+- each failed PNG differed from its approved hash at exactly three pixels, with maximum one-unit RGB-channel drift;
+- the failures moved between unrelated screenshots on different Azure hosts;
+- between the previously green product head and the failing immutable head only `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` had changed.
 
-The visual project now launches Chromium with the single explicit argument `--disable-skia-runtime-opts`, forcing Skia's baseline raster path instead of host-CPU runtime optimizations. The approved exact hashes remain unchanged, and the focused source contract fails closed on any additional launch argument or pixel-tolerance replacement.
+A bounded `--disable-skia-runtime-opts` experiment was evaluated in CI #2619/run `30832095762`. It produced a stable third raster output and changed five existing exact hashes, so the pre-recorded fallback was applied. The visual configuration and focused source contract were restored byte-for-byte, no baseline/hash/tolerance was modified, and visual-harness work remains outside this CSS ownership PR.
 
 ### Root cause
 
 Adaptive navigation shell selectors had equal specificity to legacy premium and mobile-PWA selectors, so intended compact/tablet ownership depended on root stylesheet import order. Resource-stack width is a different ownership concern and remains explicitly unresolved.
 
-The final visual failures were not stable UI regressions. Their three-pixel, one-channel-unit drift moved between unrelated screenshots on the same immutable source and identical assets, which isolates host-CPU-dependent Skia raster optimization as the remaining non-deterministic input.
+The moving three-pixel visual failures are classified as host-dependent Chromium/Skia raster variation rather than a stable presentation regression. The attempted renderer-level mitigation was rejected because it did not preserve the repository's approved exact hashes.
 
 ### Changed files
 
@@ -52,8 +51,7 @@ The final visual failures were not stable UI regressions. Their three-pixel, one
 - `frontend/app/global-feature-style-overlap-manifest.json`;
 - `frontend/app/global-feature-style-overlap-manifest.test.ts`;
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
-- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`;
-- `frontend/playwright.visual.config.ts`.
+- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
 
 ### Checks passed
 
@@ -62,29 +60,31 @@ The final visual failures were not stable UI regressions. Their three-pixel, one
 - branch created from exact main;
 - adaptive selector values and media boundaries preserved;
 - adversarial adaptive-first Chromium matrix added for 390, 719, 720, 760, 761 and 1024 px;
-- authoritative CI #2606/run `30827173353` emitted the exact parser-derived inventory used to correct the stale contracts;
+- authoritative CI #2606/run `30827173353` emitted the exact parser-derived inventory used to correct stale contracts;
 - generated manifest Git blob SHA `957b5ae5c79f8236c4270076876552699f61f323` matched the locally computed Git blob SHA before fast-forward attachment;
-- corrected full CI #2612/run `30829015122` passed on head `77b90f554501db881ba735da380ec82359beda84` without retry;
+- corrected full CI #2612/run `30829015122` passed completely on product head `77b90f554501db881ba735da380ec82359beda84` without retry;
 - frontend lint, TypeScript, complete unit/source suite, production build and dependency audit passed;
 - backend unit/security and race-enabled integration passed;
 - accessibility, iOS PWA, Lesson completion, performance budgets, both UI shards, Linux visual regression, CSP, controlled service worker and Dictionary smoke passed;
 - aggregate Frontend quality and both API/Web container builds passed;
-- CI #2614/run `30829924223` passed every non-visual gate on immutable head `4f973116616f28a81c764e8de5c8d4dd5135e151` in both the original run and same-SHA failed-job rerun;
-- exact visual artifact analysis confirmed both failures were three-pixel, one-RGB-unit raster drift with identical source/assets rather than presentation changes;
-- the deterministic Skia launch flag is protected by a focused source contract;
-- no snapshot, baseline hash, route budget, timeout, dependency or production declaration-value change was required;
-- all successful writes were read back by exact branch ref;
+- CI #2614/run `30829924223` passed every non-visual gate on immutable head `4f973116616f28a81c764e8de5c8d4dd5135e151` in the original run and same-SHA rerun;
+- exact visual artifact analysis confirmed moving three-pixel, one-RGB-unit drift with identical source/assets;
+- CI #2619 proved that forcing the alternate Skia path would change five approved hashes and therefore must not be included in this PR;
+- `frontend/playwright.visual.config.ts`, focused source test and TASK contract were restored to their pre-experiment blobs;
+- no snapshot, baseline hash, tolerance, route budget, timeout, dependency or production declaration-value change remains;
+- every successful write was read back by exact branch ref;
 - main remained unchanged after every write.
 
 ### Checks failed
 
 - CI #2606 frontend core failed only on intentionally stale manifest/count contracts and the initial incorrect assumption that all six mobile → adaptive conflicts belonged to the shell. The parser proved that `.lx-resource-stack | width` is a separate retained conflict.
-- CI #2614 visual job failed twice on the same source but on two different exact-hash screenshots. Artifact analysis identified host-CPU Skia raster drift; deterministic launch configuration is now committed and requires new immutable-head CI.
+- CI #2614 visual failed on two different three-pixel exact-hash cases across same-SHA attempts.
+- CI #2619 visual failed on five stable alternate-raster hashes under the experimental Skia flag. That experiment has been fully reverted.
 
 ### Current branch head
 
-Resolve from live PR #366 head after this final evidence write.
+Resolve from live PR #366 head after this evidence write.
 
 ### Next action
 
-Run one final immutable-head full CI with deterministic Skia rasterization. No further branch writes are planned. If green, verify the final nine-path diff, empty comments/reviews/unresolved-thread surface and unchanged main; then mark Ready and perform expected-head squash merge followed by exact-SHA main CI and stage/public validation.
+Run final immutable-head full CI on the restored eight-file CSS ownership diff. No further branch writes are planned. If the visual gate repeats the already classified moving three-pixel host variation, rerun only failed jobs on the same immutable SHA without modifying code or baselines. After full green, verify the final diff and review surface, then perform expected-head squash merge, exact-SHA main CI and stage/public validation.
