@@ -35,6 +35,7 @@ Make Learn-route placement of the shared Lessons/Scenarios switch independent of
 - `.agents/current/EXECUTION.md`;
 - `frontend/app/learning-section-switch.css`;
 - `frontend/app/global-feature-style-overlap-manifest.test.ts`;
+- `frontend/components/learning-section-switch-css-ownership.test.ts`;
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
 - `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
 
