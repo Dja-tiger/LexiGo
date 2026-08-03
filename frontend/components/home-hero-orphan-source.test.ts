@@ -11,16 +11,20 @@ const libDirectory = path.join(frontendDirectory, "lib");
 const layoutSource = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const premiumStyles = readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8");
 const compactHomeStyles = readFileSync(path.join(appDirectory, "compact-home.css"), "utf8");
+const adaptiveHomeStyles = readFileSync(
+  path.join(appDirectory, "adaptive-knowledge-coach-home.css"),
+  "utf8",
+);
 const homeAppSource = readFileSync(path.join(componentsDirectory, "lexigo-home-app.tsx"), "utf8");
 const premiumAppSource = readFileSync(path.join(componentsDirectory, "lexigo-premium-app.tsx"), "utf8");
 
-const RETIRED_HOME_HERO_CLASSES = new Map<string, number>([
-  ["lx-hero-copy", 5],
-  ["lx-glow", 1],
-  ["lx-floating-card", 4],
-  ["lx-book-base", 6],
-  ["lx-orbit", 3],
-]);
+const RETIRED_HOME_HERO_CLASSES = [
+  "lx-hero-copy",
+  "lx-glow",
+  "lx-floating-card",
+  "lx-book-base",
+  "lx-orbit",
+] as const;
 
 function filesMatching(directory: string, pattern: RegExp): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -44,10 +48,6 @@ function stripComments(source: string): string {
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
-function occurrences(source: string, value: string): number {
-  return source.split(value).length - 1;
-}
-
 function executableConsumers(value: string): string[] {
   return [appDirectory, componentsDirectory, libDirectory]
     .flatMap(executableSourceFiles)
@@ -64,46 +64,34 @@ function cssOwners(value: string): string[] {
 }
 
 describe("legacy Home hero-decoration CSS reachability", () => {
-  it("has no executable TypeScript or TSX consumer for the bounded candidate family", () => {
-    for (const className of RETIRED_HOME_HERO_CLASSES.keys()) {
+  it("has no executable TypeScript or TSX consumer for the retired family", () => {
+    for (const className of RETIRED_HOME_HERO_CLASSES) {
       expect(executableConsumers(className), className).toEqual([]);
     }
   });
 
-  it("confines every candidate to the exact premium stylesheet inventory", () => {
-    const styles = stripComments(premiumStyles);
-
-    for (const [className, expectedCount] of RETIRED_HOME_HERO_CLASSES) {
-      expect(cssOwners(className), className).toEqual(["app/premium-ui.css"]);
-      expect(occurrences(styles, className), className).toBe(expectedCount);
+  it("requires physical CSS absence for every retired class", () => {
+    for (const className of RETIRED_HOME_HERO_CLASSES) {
+      expect(cssOwners(className), className).toEqual([]);
+      expect(stripComments(premiumStyles), className).not.toContain(className);
     }
-
-    expect(
-      Array.from(RETIRED_HOME_HERO_CLASSES.entries()).reduce(
-        (total, [, expectedCount]) => total + expectedCount,
-        0,
-      ),
-    ).toBe(19);
   });
 
-  it("protects the exact legacy decoration blocks until a separate deletion slice", () => {
+  it("preserves the canonical Home hero shell declarations", () => {
     expect(premiumStyles).toContain(
-      ".lx-hero-copy {\n  position: relative;\n  z-index: 2;\n  align-self: center;\n}",
+      ".lx-hero-card {\n  position: relative;\n  display: grid;\n  min-height: 350px;\n  grid-template-columns: minmax(0, 1.1fr) minmax(250px, 0.9fr);",
     );
     expect(premiumStyles).toContain(
-      ".lx-glow {\n  position: absolute;\n  right: 7%;\n  bottom: 1%;",
+      ".lx-hero-card::before {\n  position: absolute;\n  inset: 0;",
     );
     expect(premiumStyles).toContain(
-      ".lx-floating-card span { font-size: 54px; font-weight: 850; letter-spacing: -0.08em; }",
+      ".lx-hero-art {\n  position: relative;\n  z-index: 1;\n  min-height: 280px;\n}",
     );
     expect(premiumStyles).toContain(
-      ".lx-book-base span:nth-child(1) { top: 0; }\n.lx-book-base span:nth-child(2) { top: 21px; width: 86%; margin: 0 auto; }\n.lx-book-base span:nth-child(3) { top: 42px; width: 72%; margin: 0 auto; }",
+      ".lx-hero-actions,\n.lx-page-actions {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 12px;\n  margin-top: 25px;\n}",
     );
     expect(premiumStyles).toContain(
-      ".lx-orbit.orbit-one { top: 55px; right: -8px; width: 320px; height: 160px; transform: rotate(-14deg); }\n.lx-orbit.orbit-two { top: 87px; right: 22px; width: 240px; height: 118px; transform: rotate(18deg); }",
-    );
-    expect(premiumStyles).toContain(
-      ".lx-hero-copy h1 { font-size: 40px; }\n  .lx-hero-art { min-height: 220px; }\n  .lx-floating-card { top: 13px; left: 42%; width: 120px; height: 145px; }\n  .lx-book-base { left: 20%; }",
+      ".lx-hero-card { min-height: 520px; grid-template-columns: 1fr; padding: 26px 22px; }\n  .lx-hero-art { min-height: 220px; }",
     );
   });
 
@@ -120,6 +108,7 @@ describe("legacy Home hero-decoration CSS reachability", () => {
     expect(homeAppSource).toContain('<div className="lx-word-preview">');
     expect(compactHomeStyles).toContain(".lx-home-next-action .lx-hero-card {");
     expect(compactHomeStyles).toContain(".lx-home-next-action .lx-hero-art {");
+    expect(adaptiveHomeStyles).toContain(".lx-adaptive-home-shell .lx-hero-card {");
   });
 
   it("preserves live compatibility Lesson and guest authentication owners", () => {
@@ -130,6 +119,8 @@ describe("legacy Home hero-decoration CSS reachability", () => {
     expect(premiumAppSource).toContain('<section className="lx-resume-strip">');
     expect(premiumAppSource).toContain('<section className="lx-auth-card">');
     expect(premiumAppSource).not.toContain("function renderHome()");
+    expect(premiumStyles).toContain(".lx-resume-strip {");
+    expect(premiumStyles).toContain(".lx-auth-card { display: grid;");
   });
 
   it("keeps the global stylesheet ownership order unchanged", () => {
