@@ -1,43 +1,77 @@
 # Current Task Execution
 
-No atomic production slice is active.
+## Active delivery
 
-## Completed delivery
+- Issue: #70.
+- Branch: `test/issue-70-navigation-mobile-cascade-evidence`.
+- Verified base and merge base: `626b6f637f517253aea87faf12223e4e43bfc1e0`.
+- PR: not opened yet.
+- Latest branch commit before this execution update: `449d7e2cac1d18b3abd3caeb3126dbf21ad1cf51`.
+- Final authoritative head: resolve from the live branch after this write and PR-context reconciliation.
 
-- PR: #362 — `test(frontend): inventory global CSS source-order conflicts`.
-- Base: `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
-- Final immutable developer-authored head: `442f7c1cfb3c8bf67346eb026207de565e611f9e`.
-- Authoritative PR CI: #2591 / run `30809820372`, complete success without retry.
-- Review surface before Ready: no comments, reviews or unresolved review threads.
-- Expected-head squash merge: `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Exact-SHA main CI: run `30810594048`, complete product matrix success.
-- Exact-SHA stage: run `30811188594`; deploy, public smoke and all 12 public browser checks completed successfully without retry.
+## Applied procedures
 
-## Durable result
+- Re-read live `main`, Issue #70, current Agent Docs, open PR inventory, CI and stage before writes.
+- Confirmed only Dependabot PRs #304–#306 remain open and kept them outside the active slice.
+- Re-applied computed-cascade rules: selector presence and import order are evidence of current behavior, not canonical ownership.
+- Limited the slice to proof/test/current-context paths; no production CSS or runtime edit is allowed.
 
-- `global-feature-style-overlap-source.test.ts` derives CSS imports from the actual root layout and parses cross-file exact-selector/property conflicts without new dependencies.
-- The parser handles comments, strings, selector groups, declarations and nested media/supports/container/layer contexts while excluding keyframes and same-file layering.
-- A candidate requires identical normalized `.lx-*` selector/property, different values, equal important priority, overlapping recognized media conditions and different files.
-- Ordered actual conflict IDs must exactly equal the ordered runtime-validated JSON manifest.
-- `global-feature-style-overlap-manifest.test.ts` requires exactly 107 unique items, classification totals 50/57/0, the exact 12 stylesheet pairs and exact pair counts.
-- Intentional accessibility-layer overrides: Scenario Lessons 40, Lesson Composer 5, Progress Evidence 4 and Knowledge Coach route-rail target 1.
-- Remaining `requires-proof` groups: premium/adaptive navigation 21, premium/mobile PWA 10, Scenario Catalog/Learning switch 8, mobile PWA/adaptive navigation 6, premium/adaptive layout 6, premium/Phrases grid 4, account-security/adaptive Home 1 and adaptive-navigation/system-states 1.
-- No production CSS, runtime, route, API, snapshot, budget, workflow, dependency, README or architecture path changed.
-- Linux visual hashes, accessibility and route-performance budgets passed unchanged in both PR and exact-SHA main CI.
+## Source evidence
 
-## Exact validation
+`frontend/components/navigation-mobile-shell-css-ownership.test.ts`:
 
-- PR CI passed frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
-- Backend unit/security/integration, UI shards, Lesson completion, Dictionary smoke, iOS PWA, service worker, CSP, visual regression, accessibility, performance budgets and both container builds passed.
-- Main CI repeated the same matrix on the squash merge and published exact-SHA web/API images.
-- Stage deployed those images, returned HTTP 200 for public frontend/API smoke and passed all 12 desktop Chromium/iOS WebKit runtime checks.
+- parses the durable global overlap manifest from `unknown`;
+- extracts canonical stylesheet pairs from deterministic IDs;
+- requires exactly 37 `requires-proof` items;
+- requires exact pair counts 21/10/6;
+- verifies production import order premium → mobile PWA → adaptive navigation;
+- verifies premium/mobile 760px, adaptive compact 719px and adaptive tablet 720–1099px boundaries;
+- protects mobile PWA header/background/logo/avatar declarations;
+- protects adaptive tablet header/alignment/resource-width declarations;
+- protects premium header/background/logo/avatar values that return above 760px.
 
-## Next execution boundary
+## Browser evidence
 
-After this documentation-only reconciliation merges, re-read live GitHub state and take only the navigation/mobile-shell cluster. Start with computed-cascade evidence at compact, 719px, 720px, 760px and tablet widths. Establish canonical ownership independently of import order before changing production CSS.
+`frontend/e2e/navigation-mobile-shell-cascade.spec.ts`:
 
-Do not combine Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections.
+- reads actual production CSS from the repository checkout;
+- loads global box sizing and tokens, followed by premium, mobile PWA and adaptive navigation in production order;
+- uses minimal production-class shell markup without application API/runtime dependencies;
+- runs once in Chromium and records computed values at 390, 719, 720, 760, 761 and 1024px;
+- asserts exactly one visible primary navigation and no horizontal overflow at every width;
+- asserts the 719/720 switch from mobile navigation to rail;
+- asserts the 720–760 hybrid owner;
+- asserts the 760/761 return from mobile PWA visual values to premium base values.
+
+## CI routing
+
+- `frontend/package.json` was changed only to add the new spec to `test:e2e:ui` and `test:e2e:responsive`.
+- No dependency, version, override or lockfile changed.
+- The new spec therefore runs in the authoritative UI matrix rather than existing only as an uninvoked file.
+
+## Repository safety
+
+- Branch writes were read from the connector after creation/update.
+- A direct container clone attempt failed because DNS resolution for GitHub was unavailable; it made no repository write and was not used as evidence.
+- Main and deployed stage were unchanged during implementation.
+- No Figma, snapshot, route budget, workflow, README or architecture path changed.
+
+## Validation plan
+
+1. Read back all six changed paths and compare against exact base.
+2. Publish Draft PR with the exact computed-cascade gap and non-goals.
+3. Freeze a final developer-authored head after PR-context reconciliation.
+4. Require complete classifier-selected CI on that exact head.
+5. Classify any source/unit/browser failure at root cause; no blind retry, timeout increase, snapshot update or budget increase.
+6. Verify comments, reviews and unresolved threads before Ready.
+7. Perform expected-head squash merge.
+8. Validate exact merge SHA in main CI and stage/public deployment.
+9. Reconcile Agent Docs separately before selecting a production correction.
+
+## Next production boundary
+
+Use the final computed evidence to choose one navigation/mobile-shell ownership correction only. Candidate mechanisms remain unselected until browser evidence passes: separate media boundaries, scoped specificity, declaration migration or owner consolidation.
 
 ## Rollback
 
-Revert this documentation-only reconciliation PR. Product code and deployed images remain unchanged.
+Revert the proof PR. Product CSS, runtime, deployed images, database, APIs, snapshots and budgets remain unchanged.
