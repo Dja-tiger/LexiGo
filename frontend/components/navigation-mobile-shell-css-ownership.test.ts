@@ -32,13 +32,11 @@ const rawPackage: unknown = JSON.parse(
 );
 
 const CASCADE_SPEC = "e2e/navigation-mobile-shell-cascade.spec.ts";
-const UNRESOLVED_PAIR_COUNTS = new Map<string, number>([
-  ["premium-ui.css -> mobile-pwa-fixes.css", 10],
-]);
-const RESOLVED_ADAPTIVE_PAIRS = new Set([
-  "premium-ui.css -> adaptive-navigation.css",
-  "mobile-pwa-fixes.css -> adaptive-navigation.css",
-]);
+const PREMIUM_MOBILE_PAIR = "premium-ui.css -> mobile-pwa-fixes.css";
+const PREMIUM_ADAPTIVE_PAIR = "premium-ui.css -> adaptive-navigation.css";
+const MOBILE_ADAPTIVE_PAIR = "mobile-pwa-fixes.css -> adaptive-navigation.css";
+const RESOURCE_STACK_CONFLICT_ID =
+  '.lx-resource-stack | width | normal -> mobile-pwa-fixes.css [global] = "min(1160px, calc(100% - 28px))" -> adaptive-navigation.css [@media (min-width: 720px) and (max-width: 1099px)] = "100%"';
 
 function parseManifest(value: unknown): readonly ManifestItem[] {
   if (!Array.isArray(value)) {
@@ -113,29 +111,25 @@ function classSpecificity(selector: string): number {
 
 const manifest = parseManifest(rawManifest);
 const scripts = parsePackageScripts(rawPackage);
-const unresolvedNavigationItems = manifest.filter((item) =>
-  UNRESOLVED_PAIR_COUNTS.has(ownerPair(item.id)),
-);
+const premiumMobileItems = manifest.filter((item) => ownerPair(item.id) === PREMIUM_MOBILE_PAIR);
+const premiumAdaptiveItems = manifest.filter((item) => ownerPair(item.id) === PREMIUM_ADAPTIVE_PAIR);
+const mobileAdaptiveItems = manifest.filter((item) => ownerPair(item.id) === MOBILE_ADAPTIVE_PAIR);
 
 describe("navigation and mobile-shell computed-cascade ownership", () => {
-  it("keeps only the exact 10-item premium/mobile unresolved boundary", () => {
-    expect(unresolvedNavigationItems).toHaveLength(10);
-    expect(
-      unresolvedNavigationItems.every((item) => item.classification === "requires-proof"),
-    ).toBe(true);
-
-    const pairCounts = new Map<string, number>();
-    for (const item of unresolvedNavigationItems) {
-      const pair = ownerPair(item.id);
-      pairCounts.set(pair, (pairCounts.get(pair) ?? 0) + 1);
-    }
-
-    expect(Object.fromEntries(pairCounts)).toEqual(Object.fromEntries(UNRESOLVED_PAIR_COUNTS));
+  it("keeps the exact 10-item premium/mobile unresolved boundary", () => {
+    expect(premiumMobileItems).toHaveLength(10);
+    expect(premiumMobileItems.every((item) => item.classification === "requires-proof")).toBe(true);
   });
 
-  it("removes the 27 equal-specificity adaptive owner pairs from the manifest", () => {
-    const staleItems = manifest.filter((item) => RESOLVED_ADAPTIVE_PAIRS.has(ownerPair(item.id)));
-    expect(staleItems).toEqual([]);
+  it("removes all premium/adaptive conflicts and preserves only resource-stack width separately", () => {
+    expect(premiumAdaptiveItems).toEqual([]);
+    expect(mobileAdaptiveItems).toEqual([
+      {
+        id: RESOURCE_STACK_CONFLICT_ID,
+        classification: "requires-proof",
+        evidence: "Separate computed-cascade proof required for this owner pair.",
+      },
+    ]);
   });
 
   it("keeps production import order and the approved media boundaries explicit", () => {
