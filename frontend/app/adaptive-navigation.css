@@ -197,7 +197,10 @@
     min-width: 0;
   }
 
-  .lx-resource-stack,
+  .lx-routed-app .lx-resource-stack {
+    width: 100%;
+  }
+
   .lx-async-state {
     width: 100%;
   }
