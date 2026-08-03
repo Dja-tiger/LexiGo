@@ -27,11 +27,12 @@ Inputs:
 
 - Issue #70 acceptance criteria;
 - PR #366/#367 delivery evidence;
-- current overlap parser and 81-item pre-slice manifest;
+- overlap parser and 81-item pre-slice manifest;
 - production root stylesheet order;
 - premium, mobile-PWA, adaptive-navigation and routed-shell chrome styles;
 - source and Chromium computed-cascade contracts;
-- frontend-core diagnostics from CI #2633 / run `30850565546`.
+- frontend-core diagnostics from CI #2633 / run `30850565546`;
+- Playwright reports and traces from CI #2636 / run `30851215899` UI shards 1 and 2.
 
 Files inspected:
 
@@ -45,7 +46,7 @@ Files inspected:
 - global overlap source/manifest contracts;
 - routed application root;
 - navigation/mobile-shell source and browser specs;
-- CI unit log and emitted actual conflict inventory.
+- CI unit log, emitted actual conflict inventory and both Playwright diagnostic archives.
 
 Actions performed:
 
@@ -55,22 +56,24 @@ Actions performed:
 - rejected an initial generic route-scoping mechanism after the parser proved it created three new routed-chrome conflicts;
 - identified `adaptive-knowledge-coach-home.css` as the canonical routed application-shell chrome owner;
 - removed mobile header background and logo declarations already unreachable beneath that routed owner;
-- retained compact routed header geometry through 719px;
-- retained routed avatar dimensions and view spacing through 760px;
-- restricted standalone safe-area geometry to compact widths;
+- retained bounded compact fallback/dictionary header declarations, routed avatar dimensions and responsive view spacing;
 - expanded the browser fixture to load routed-shell chrome and compare production, routed-shell-first and mobile-first orders at six width boundaries;
 - updated fail-closed source expectations and exact pair totals;
-- used the CI parser output to generate the exact 71-item manifest rather than hand-filtering IDs;
-- verified the committed Git blob `d379ee2f149fee52464272d70be4a88cfe84ba0e` against the generated artifact.
+- generated the exact 71-item manifest from CI parser output and verified Git blob `d379ee2f149fee52464272d70be4a88cfe84ba0e`;
+- downloaded and unpacked both CI #2636 Playwright reports;
+- proved both UI shards failed only at 390px and 719px with identical desktop/Android results and retries;
+- traced the computed 54px header, zero top padding and zero view padding to the existing stronger non-dictionary routed-shell selectors;
+- corrected only the new proof expectations from shadowed mobile fallback values to unchanged production computed values.
 
 Commands or procedures:
 
 - connector reads/fetches for exact refs, files and workflow evidence;
 - contents-API branch writes with immediate read-back;
 - Draft CI as the authoritative parser and browser execution environment;
-- workflow artifact download and local deterministic extraction of the JSON block between `BEGIN ACTUAL CONFLICT IDS` and `END ACTUAL CONFLICT IDS`;
+- workflow artifact download and deterministic extraction of parser/Playwright diagnostics;
 - pair-based classification verification before committing the manifest;
-- Git blob hashing to prove the connector write exactly matches the generated file.
+- Git blob hashing to prove the connector manifest write exactly matched the generated file;
+- exact comparison of desktop Chromium and Android Chromium failure contexts before modifying the proof.
 
 Artifacts produced:
 
@@ -78,24 +81,26 @@ Artifacts produced:
 - routed-shell source ownership contract;
 - three-order × six-width Chromium cascade matrix;
 - parser-derived 71-item exact-selector manifest;
-- exact classification boundary: 50 intentional, 21 requires-proof, 0 protected.
+- exact classification boundary: 50 intentional, 21 requires-proof, 0 protected;
+- preserved Playwright evidence for the incorrect compact expectation at 390px/719px.
 
 Result:
 
-The source correction and manifest are synchronized. Diagnostic CI proves the parser sees exactly the intended 71 conflicts and no replacement mobile/routed-chrome pair. A new complete CI run is required because browser, visual and downstream gates were blocked by the intentionally stale manifest in the diagnostic run.
+The source correction and manifest are synchronized. CI #2636 passed frontend core, backend, visual, accessibility, security, PWA, Dictionary, Lesson and performance gates. Its two UI shard failures were deterministic errors in the newly authored compact expected snapshot, not production changes. The proof now asserts the pre-existing routed-shell values while still requiring equality across all three stylesheet orders.
 
 Failures:
 
 - Initial route-scoping created three new exact-selector conflicts with routed application-shell chrome.
 - CI #2633 failed five unit assertions solely because the branch intentionally still contained the old 81-item manifest at that head.
+- CI #2636 failed both UI shards because the new `/learn` fixture expected lower-specificity mobile fallback values at compact widths; aggregate frontend quality failed and container builds were skipped.
 
 Root cause:
 
-The CSS file name suggested a Home-specific owner, but its selectors target `.lx-routed-app` globally. Mobile background/logo declarations were therefore dead duplicates on all production routed routes, while avatar/view declarations remained live. The first implementation grouped those categories incorrectly.
+CSS ownership was initially inferred too coarsely. The routed-shell file targets `.lx-routed-app` globally, and at compact widths its non-dictionary `.lx-app:not(...)` selectors are more specific than the mobile fallback selectors. The production result has always been 54px header min-height, `env(safe-area-inset-top)` top padding and zero view padding on `/learn`; the test incorrectly expected 58px, `+12px` and 18px.
 
 Fallback:
 
-If the final browser proof detects computed drift, adjust only ownership selectors or declaration placement inside the allowed paths. Do not change approved values, snapshots, hashes, media boundaries, tolerances, timeouts or budgets.
+If the corrected full CI still detects computed drift, use exact Playwright traces to revise only fixture ancestry or owner assertions. Do not change production values, snapshots, hashes, media boundaries, tolerances, timeouts or budgets.
 
 Limitations:
 
@@ -103,4 +108,4 @@ This slice does not prove `.lx-resource-stack`, semantic non-identical-selector 
 
 Reusable lesson:
 
-CSS ownership must be derived from selector reachability and production ancestry, not stylesheet names. Before increasing specificity, identify declarations already unreachable beneath a stronger global route owner and delete those duplicates instead of creating a second equally specific owner.
+CSS ownership must be derived from full production ancestry and selector specificity, not stylesheet names or isolated declarations. A proof fixture must assert the effective stronger owner while separately protecting fallback declarations that remain live only on excluded route states.
