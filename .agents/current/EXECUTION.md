@@ -37,7 +37,8 @@ Inputs:
 - PR #364 source/browser evidence and delivery records;
 - production CSS owners and overlap manifest;
 - canonical routed-shell DOM;
-- CI #2606/run `30827173353` frontend diagnostics and parser output.
+- CI #2606/run `30827173353` frontend diagnostics and parser output;
+- corrected full CI #2612/run `30829015122` on product head `77b90f554501db881ba735da380ec82359beda84`.
 
 Files inspected:
 
@@ -69,7 +70,11 @@ Actions performed:
 - parsed the exact 81-item inventory and pair/classification totals from `vitest.log`;
 - generated the exact replacement manifest locally;
 - created Git blob `957b5ae5c79f8236c4270076876552699f61f323`, verified it matched the locally computed Git blob SHA, attached it through a base-tree commit and fast-forwarded only the task branch;
-- corrected source/count contracts so `.lx-resource-stack | width` remains an explicit separate conflict.
+- corrected source/count contracts so `.lx-resource-stack | width` remains an explicit separate conflict;
+- ran corrected full CI #2612 on head `77b90f554501db881ba735da380ec82359beda84` without retry;
+- verified frontend core, backend unit/security, backend integration, all browser groups, aggregate frontend quality and both container builds passed;
+- verified unchanged Linux visual regression, accessibility results and route-performance budgets;
+- recorded the successful CI evidence in current task memory before the final immutable-head run.
 
 Commands or procedures:
 
@@ -93,11 +98,11 @@ Artifacts produced:
 
 Result:
 
-The implementation and parser-derived contracts are synchronized. A new full CI run on the corrected branch head is pending.
+The implementation and parser-derived contracts are synchronized. Corrected full CI #2612/run `30829015122` passed completely on product head `77b90f554501db881ba735da380ec82359beda84`. This evidence update changes the branch head, so one final full immutable-head CI is required before Ready and merge.
 
 Failures:
 
-CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership.
+CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership. No failure remains after the parser-driven correction.
 
 Root cause:
 
@@ -105,7 +110,7 @@ Five mobile → adaptive conflicts were shell selectors corrected by routed spec
 
 Fallback:
 
-If the corrected full CI shows any computed presentation drift, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
+If the final immutable-head CI shows any computed presentation drift, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
 
 Limitations:
 
