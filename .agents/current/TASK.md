@@ -5,23 +5,25 @@
 - Issue: #70
 - Branch: `test/issue-70-global-css-overlap-inventory`
 - Base SHA: `708403160cb35c1e155c5e3eabd2e5078e4826c4`
-- PR: #362 — Draft discovery
+- PR: #362 — Draft
 - Initial discovery head: `e75fc8e0e36e2672aa6e725beaf1afa1a7612af6`
-- Final head: resolve after the complete manifest is reviewed
+- Classified-manifest commit: `6f0dd8cce26c818f190c24564ab1c146702f01a8`
+- Latest branch commit before this task update: `fd60d8724283b1ba99c0f07aa3e54131ef28bd07`
+- Final developer-authored head: resolve from the live PR after this update
 
 ## Objective
 
-Create a fail-closed, repository-checkout-level inventory of remaining global feature-style conflicts where two different stylesheets imported by `frontend/app/layout.tsx` define the same normalized feature selector and property with different values, equal priority and overlapping media conditions.
+Create a fail-closed, repository-checkout-level inventory of remaining global feature-style conflicts where different stylesheets imported by `frontend/app/layout.tsx` define the same normalized feature selector/property with different values, equal priority and overlapping media conditions.
 
-This is a proof-only slice. It must identify the exact remaining source-order-sensitive surface before any additional production CSS correction.
+This is a proof-only slice. It identifies and classifies the exact remaining source-order-sensitive surface before any additional production CSS correction.
 
 ## Scope
 
 - Add `frontend/app/global-feature-style-overlap-source.test.ts`.
-- Add `frontend/app/global-feature-style-overlap-manifest.json` as the small reviewed classification boundary consumed by the parser test.
-- Parse the actual CSS import list from `frontend/app/layout.tsx` rather than maintaining a duplicate file inventory.
-- Parse imported CSS without new dependencies, including nested media/supports/layer blocks, selector groups and declarations.
-- Exclude keyframes and non-feature document/token selectors already covered by dedicated ownership contracts.
+- Add `frontend/app/global-feature-style-overlap-manifest.json` as the complete reviewed classification boundary consumed by the parser test.
+- Derive the CSS import list from the actual root layout.
+- Parse imported CSS without new dependencies, including nested media/supports/container/layer blocks, selector groups and declarations.
+- Exclude keyframes, same-file layering and non-feature selectors outside `.lx-*` ownership.
 - Detect only high-confidence cross-file conflicts:
   - identical normalized feature selector;
   - identical property;
@@ -29,16 +31,42 @@ This is a proof-only slice. It must identify the exact remaining source-order-se
   - equal `!important` priority;
   - overlapping recognized media constraints;
   - different imported CSS files.
-- Emit a deterministic conflict identifier containing selector, property, files, conditions and values.
-- Convert the discovered output into an explicit classified manifest before the final immutable head.
-- Record exact execution evidence in `.agents/current/**`.
+- Emit deterministic IDs containing selector, property, priority, files, conditions and values.
+- Keep a complete explicit manifest with one reviewed classification and non-empty evidence per conflict.
+- Record exact discovery and validation evidence in `.agents/current/**`.
+
+## Reviewed inventory
+
+- Total conflicts: 107.
+- `intentional`: 50 accessibility-layer overrides.
+- `requires-proof`: 57 unresolved source-order ownership candidates.
+- `protected`: 0 in this exact-selector inventory.
+
+Intentional groups:
+
+- Scenario Lessons accessibility: 40.
+- Lesson Composer accessibility: 5.
+- Progress Evidence accessibility: 4.
+- Knowledge Coach accessible route-rail target: 1.
+
+Requires-proof groups:
+
+- premium → adaptive navigation: 21.
+- premium → mobile PWA fixes: 10.
+- Scenario Catalog → Learning switch: 8.
+- mobile PWA fixes → adaptive navigation: 6.
+- premium → adaptive layout: 6.
+- premium → Phrases grid: 4.
+- account security → adaptive Home: 1.
+- adaptive navigation → system states: 1.
 
 ## Non-goals
 
 - No production CSS, component/runtime TypeScript/TSX, markup, route, API/backend/database, session or Figma change.
 - No import reorder, selector edit, declaration edit or stylesheet deletion.
 - No snapshot, route-budget, workflow, dependency, README or architecture change.
-- No claim that semantically overlapping but textually different selectors are safe; that is a later audit boundary.
+- No claim that semantically overlapping but textually different selectors are safe; that remains a later audit boundary.
+- No production correction for any of the 57 `requires-proof` items in this PR.
 - Do not close Issue #70 in this proof slice.
 
 ## Allowed paths
@@ -61,21 +89,31 @@ Every path not listed above, especially all production CSS and TypeScript/TSX, s
 - Opposite recognized media states do not produce false overlap claims.
 - Feature selectors are limited to selectors containing LexiGo class ownership (`.lx-`).
 - The JSON manifest is runtime-validated and cannot bypass classification typing through an unchecked cast.
+- Ordered actual conflict IDs must equal ordered manifest IDs exactly.
+- Invalid classifications and empty evidence are rejected.
 - Existing Phrases and Home order-independence contracts remain unchanged.
-- A discovered conflict is not automatically classified as a defect; each item requires explicit ownership review.
+- A discovered conflict is not automatically treated as a defect; each item has explicit classification evidence.
+- Production CSS remains byte-identical in this PR.
 
 ## Acceptance criteria
 
 - Final diff contains only the five allowed paths.
 - The source test reads every root-imported CSS file from the actual checkout.
-- Every emitted manifest item is deterministic, cross-file and reproducible from selector/property/value/media evidence.
-- The final JSON contains an explicit complete manifest and the test fails closed on addition, removal, mutation, invalid classification or empty evidence.
-- Each manifest item is classified as already protected, intentional layering with an owner contract, or requiring a separate production proof slice.
-- Frontend lint, typecheck, unit suite and production build pass on the final immutable head; all additional CI selected by the fail-closed classifier must also pass.
+- Every manifest item is deterministic, cross-file and reproducible from selector/property/value/media evidence.
+- The manifest contains exactly 107 explicit unique items.
+- Classification totals remain 50 `intentional`, 57 `requires-proof`, 0 `protected` unless a separately reviewed source change updates the inventory.
+- The test fails closed on conflict addition, removal or ID mutation, malformed manifest structure, invalid classification or empty evidence.
+- Frontend lint, typecheck, full unit suite, production build and dependency audit pass on the final immutable head.
+- Every additional backend/browser/accessibility/visual/performance/container gate selected by the fail-closed classifier passes.
+- No snapshot, budget, timeout, browser matrix, workflow or dependency update is used to make CI green.
 - Review surface is empty before Ready.
 - Expected-head squash merge and exact-SHA main validation complete before Agent Docs reconciliation.
-- No stage deployment is expected unless the classifier treats the test-only change as product scope; if stage runs, exact-SHA validation remains mandatory.
+- If stage runs because the test-only diff is product-classified, exact-SHA deploy/public validation is mandatory.
+
+## Next boundary
+
+After this proof PR and its reconciliation, select exactly one bounded production proof cluster. Preferred first cluster: navigation/mobile-shell ownership, including the exact 719/720/760 px boundary. Do not combine it with Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections.
 
 ## Rollback
 
-Revert the proof PR. Product code, deployed images, schemas, data, snapshots and budgets remain unchanged.
+Revert PR #362. Product code, deployed images, schemas, data, snapshots and budgets remain unchanged.
