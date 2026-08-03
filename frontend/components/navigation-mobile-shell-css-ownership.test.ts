@@ -16,6 +16,10 @@ const layout = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const premium = readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8");
 const mobile = readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8");
 const adaptive = readFileSync(path.join(appDirectory, "adaptive-navigation.css"), "utf8");
+const routedApp = readFileSync(
+  path.join(process.cwd(), "components", "routed-lexigo-app.tsx"),
+  "utf8",
+);
 const browserSpec = readFileSync(
   path.join(process.cwd(), "e2e", "navigation-mobile-shell-cascade.spec.ts"),
   "utf8",
@@ -28,10 +32,12 @@ const rawPackage: unknown = JSON.parse(
 );
 
 const CASCADE_SPEC = "e2e/navigation-mobile-shell-cascade.spec.ts";
-const EXPECTED_PAIR_COUNTS = new Map<string, number>([
-  ["premium-ui.css -> adaptive-navigation.css", 21],
+const UNRESOLVED_PAIR_COUNTS = new Map<string, number>([
   ["premium-ui.css -> mobile-pwa-fixes.css", 10],
-  ["mobile-pwa-fixes.css -> adaptive-navigation.css", 6],
+]);
+const RESOLVED_ADAPTIVE_PAIRS = new Set([
+  "premium-ui.css -> adaptive-navigation.css",
+  "mobile-pwa-fixes.css -> adaptive-navigation.css",
 ]);
 
 function parseManifest(value: unknown): readonly ManifestItem[] {
@@ -101,25 +107,38 @@ function occurrenceCount(source: string, token: string): number {
   return source.split(token).length - 1;
 }
 
+function classSpecificity(selector: string): number {
+  return selector.match(/\.[a-z0-9_-]+/gi)?.length ?? 0;
+}
+
 const manifest = parseManifest(rawManifest);
 const scripts = parsePackageScripts(rawPackage);
-const navigationItems = manifest.filter((item) => EXPECTED_PAIR_COUNTS.has(ownerPair(item.id)));
+const unresolvedNavigationItems = manifest.filter((item) =>
+  UNRESOLVED_PAIR_COUNTS.has(ownerPair(item.id)),
+);
 
 describe("navigation and mobile-shell computed-cascade ownership", () => {
-  it("keeps the exact 37-item unresolved manifest boundary", () => {
-    expect(navigationItems).toHaveLength(37);
-    expect(navigationItems.every((item) => item.classification === "requires-proof")).toBe(true);
+  it("keeps only the exact 10-item premium/mobile unresolved boundary", () => {
+    expect(unresolvedNavigationItems).toHaveLength(10);
+    expect(
+      unresolvedNavigationItems.every((item) => item.classification === "requires-proof"),
+    ).toBe(true);
 
     const pairCounts = new Map<string, number>();
-    for (const item of navigationItems) {
+    for (const item of unresolvedNavigationItems) {
       const pair = ownerPair(item.id);
       pairCounts.set(pair, (pairCounts.get(pair) ?? 0) + 1);
     }
 
-    expect(Object.fromEntries(pairCounts)).toEqual(Object.fromEntries(EXPECTED_PAIR_COUNTS));
+    expect(Object.fromEntries(pairCounts)).toEqual(Object.fromEntries(UNRESOLVED_PAIR_COUNTS));
   });
 
-  it("records the current source-order dependency and overlapping boundaries", () => {
+  it("removes the 27 equal-specificity adaptive owner pairs from the manifest", () => {
+    const staleItems = manifest.filter((item) => RESOLVED_ADAPTIVE_PAIRS.has(ownerPair(item.id)));
+    expect(staleItems).toEqual([]);
+  });
+
+  it("keeps production import order and the approved media boundaries explicit", () => {
     const premiumIndex = importIndex("premium-ui.css");
     const mobileIndex = importIndex("mobile-pwa-fixes.css");
     const adaptiveIndex = importIndex("adaptive-navigation.css");
@@ -134,7 +153,7 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(adaptive).toContain("@media (min-width: 720px) and (max-width: 1099px)");
   });
 
-  it("routes a mobile-viewport-aware browser proof through both authoritative UI scripts", () => {
+  it("routes production and adaptive-first browser proofs through both UI scripts", () => {
     const uiCommand = scripts["test:e2e:ui"];
     const responsiveCommand = scripts["test:e2e:responsive"];
 
@@ -145,10 +164,44 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(browserSpec).toContain(
       '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     );
+    expect(browserSpec).toContain(
+      'order: ["globals", "tokens", "premium", "mobile", "adaptive"]',
+    );
+    expect(browserSpec).toContain(
+      'order: ["globals", "tokens", "adaptive", "premium", "mobile"]',
+    );
     expect(browserSpec).toContain("await page.setViewportSize({ width: current.width, height: 800 });");
   });
 
-  it("protects the mobile-PWA declarations that remain effective through 760px", () => {
+  it("uses the canonical routed ancestor only for competing adaptive selectors", () => {
+    expect(routedApp).toContain('<div className="lx-routed-app"');
+    expect(classSpecificity(".lx-routed-app .lx-header")).toBeGreaterThan(
+      classSpecificity(".lx-header"),
+    );
+    expect(classSpecificity(".lx-routed-app .lx-mobile-nav button.active")).toBeGreaterThan(
+      classSpecificity(".lx-mobile-nav button.active"),
+    );
+
+    expect(adaptive).toMatch(
+      /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-routed-app \.lx-header\s*\{[\s\S]*?min-height:\s*calc\(76px \+ env\(safe-area-inset-top\)\);[\s\S]*?margin:\s*0;[\s\S]*?padding:\s*env\(safe-area-inset-top\) 0 0;[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;/,
+    );
+    expect(adaptive).toMatch(
+      /\.lx-routed-app \.lx-brand,\s*\.lx-routed-app \.lx-header-tools\s*\{\s*align-self:\s*center;/,
+    );
+    expect(adaptive).toMatch(
+      /@media \(max-width: 719px\)[\s\S]*?\.lx-routed-app \.lx-mobile-nav\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(48px, 1fr\)\);/,
+    );
+    expect(adaptive).toMatch(
+      /\.lx-routed-app \.lx-mobile-nav button\.active\s*\{[\s\S]*?color:\s*#c1adff;[\s\S]*?background:\s*rgba\(104, 75, 220, 0\.19\);/,
+    );
+
+    expect(occurrenceCount(adaptive, ".lx-routed-app")).toBe(14);
+    expect(occurrenceCount(adaptive, "!important")).toBe(3);
+    expect(adaptive).not.toContain(".lx-routed-app .lx-resource-stack");
+    expect(adaptive).not.toContain(".lx-routed-app .lx-async-state");
+  });
+
+  it("preserves the mobile-PWA values that remain effective through 760px", () => {
     expect(mobile).toMatch(
       /@media \(max-width: 760px\)[\s\S]*?\.lx-header\s*\{[\s\S]*?min-height:\s*58px;[\s\S]*?margin:\s*0 -14px;[\s\S]*?background:\s*rgba\(5, 9, 20, 0\.96\);/,
     );
@@ -159,19 +212,7 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(mobile).toMatch(/\.lx-avatar\s*\{\s*width:\s*42px;\s*height:\s*42px;/);
   });
 
-  it("protects the later tablet geometry that wins inside the 720–760px overlap", () => {
-    expect(adaptive).toMatch(
-      /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-header\s*\{[\s\S]*?min-height:\s*calc\(76px \+ env\(safe-area-inset-top\)\);[\s\S]*?margin:\s*0;[\s\S]*?padding:\s*env\(safe-area-inset-top\) 0 0;[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;/,
-    );
-    expect(adaptive).toMatch(
-      /\.lx-brand,\s*\.lx-header-tools\s*\{\s*align-self:\s*center;/,
-    );
-    expect(adaptive).toMatch(
-      /\.lx-resource-stack,\s*\.lx-async-state\s*\{\s*width:\s*100%;/,
-    );
-  });
-
-  it("protects the premium values that become effective again above 760px", () => {
+  it("preserves the premium values that become effective again above 760px", () => {
     expect(premium).toMatch(
       /\.lx-header\s*\{[\s\S]*?min-height:\s*82px;[\s\S]*?background:\s*rgba\(5, 9, 20, 0\.82\);/,
     );
