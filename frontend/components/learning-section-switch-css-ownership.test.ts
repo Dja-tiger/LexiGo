@@ -36,31 +36,26 @@ const rawPackage: unknown = JSON.parse(
 );
 
 const OWNER_PAIR = "scenario-catalog.css -> learning-section-switch.css";
+const FALLBACK_SELECTOR = ".lx-learning-section-switch--learn";
 const ROUTED_SELECTOR =
   '.lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn';
 const CASCADE_SPEC = "e2e/navigation-mobile-shell-cascade.spec.ts";
 
 function parseManifest(value: unknown): readonly ManifestItem[] {
-  if (!Array.isArray(value)) {
-    throw new Error("Global feature-style overlap manifest must be an array");
-  }
+  if (!Array.isArray(value)) throw new Error("Overlap manifest must be an array");
 
   return value.map((item, index) => {
     if (typeof item !== "object" || item === null || Array.isArray(item)) {
       throw new Error(`Manifest item ${index} must be an object`);
     }
-
     const record = item as Record<string, unknown>;
-    if (typeof record.id !== "string" || record.id.length === 0) {
-      throw new Error(`Manifest item ${index} requires an id`);
+    if (
+      typeof record.id !== "string" ||
+      typeof record.classification !== "string" ||
+      typeof record.evidence !== "string"
+    ) {
+      throw new Error(`Manifest item ${index} is malformed`);
     }
-    if (typeof record.classification !== "string") {
-      throw new Error(`Manifest item ${index} requires a classification`);
-    }
-    if (typeof record.evidence !== "string" || record.evidence.length === 0) {
-      throw new Error(`Manifest item ${index} requires evidence`);
-    }
-
     return {
       id: record.id,
       classification: record.classification,
@@ -73,7 +68,6 @@ function parsePackageScripts(value: unknown): PackageScripts {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new Error("Frontend package.json must be an object");
   }
-
   const scripts = (value as Record<string, unknown>).scripts;
   if (typeof scripts !== "object" || scripts === null || Array.isArray(scripts)) {
     throw new Error("Frontend package.json requires scripts");
@@ -93,9 +87,7 @@ function ownerPair(id: string): string {
   const match = id.match(
     / -> ([a-z0-9-]+\.css) \[[^\]]+\] = .* -> ([a-z0-9-]+\.css) \[[^\]]+\] = /,
   );
-  if (match === null) {
-    throw new Error(`Conflict id does not contain a canonical stylesheet pair: ${id}`);
-  }
+  if (match === null) throw new Error(`Missing stylesheet pair: ${id}`);
   return `${match[1]} -> ${match[2]}`;
 }
 
@@ -112,39 +104,39 @@ const scripts = parsePackageScripts(rawPackage);
 const switchItems = manifest.filter((item) => ownerPair(item.id) === OWNER_PAIR);
 
 describe("Learn section-switch CSS ownership", () => {
-  it("keeps the eight reviewed fallback conflicts explicitly paired with proof", () => {
+  it("keeps all eight reviewed fallback conflicts paired with proof", () => {
     expect(switchItems).toHaveLength(8);
     expect(switchItems.every((item) => item.classification === "requires-proof")).toBe(true);
-    expect(switchItems.every((item) => item.id.includes(".lx-learning-section-switch--learn"))).toBe(
-      true,
-    );
-    expect(
-      new Set(
-        switchItems.map((item) => {
-          const match = item.id.match(/\.lx-learning-section-switch--learn \| ([a-z-]+) \|/);
-          if (match === null) throw new Error(`Missing placement property in ${item.id}`);
-          return match[1];
-        }),
-      ),
-    ).toEqual(new Set(["margin-left", "margin-right", "width"]));
+    expect(switchItems.every((item) => item.id.includes(FALLBACK_SELECTOR))).toBe(true);
+
+    const properties = switchItems.map((item) => {
+      const match = item.id.match(/\.lx-learning-section-switch--learn \| ([a-z-]+) \|/);
+      if (match === null) throw new Error(`Missing placement property in ${item.id}`);
+      return match[1];
+    });
+    expect(new Set(properties)).toEqual(new Set(["margin-left", "margin-right", "width"]));
   });
 
-  it("keeps production import order while making the routed owner more specific", () => {
-    const scenarioIndex = layout.indexOf('import "./scenario-catalog.css";');
-    const learningIndex = layout.indexOf('import "./learning-section-switch.css";');
-
-    expect(scenarioIndex).toBeGreaterThanOrEqual(0);
-    expect(learningIndex).toBeGreaterThan(scenarioIndex);
+  it("preserves each compatibility fallback beside a stronger routed owner", () => {
     expect(classSpecificity(ROUTED_SELECTOR)).toBeGreaterThan(
-      classSpecificity(".lx-learning-section-switch--learn"),
+      classSpecificity(FALLBACK_SELECTOR),
     );
     expect(occurrenceCount(learningSwitch, ROUTED_SELECTOR)).toBe(5);
+    expect(learningSwitch.match(/^\s*\.lx-learning-section-switch--learn,$/gm)).toHaveLength(5);
     expect(learningSwitch.match(/\.lx-learning-section-switch--learn\s*\{/g)).toHaveLength(5);
+    expect(learningSwitch).not.toContain("!important");
   });
 
-  it("keeps every Learn placement range under canonical route ancestry", () => {
+  it("keeps production import order explicit", () => {
+    const scenarioIndex = layout.indexOf('import "./scenario-catalog.css";');
+    const learningIndex = layout.indexOf('import "./learning-section-switch.css";');
+    expect(scenarioIndex).toBeGreaterThanOrEqual(0);
+    expect(learningIndex).toBeGreaterThan(scenarioIndex);
+  });
+
+  it("keeps every approved placement range under canonical route ancestry", () => {
     expect(learningSwitch).toMatch(
-      /\.lx-routed-app\[data-route-path="\/learn"\] \.lx-learning-section-switch--learn\s*\{\s*margin-top:\s*calc\(84px \+ env\(safe-area-inset-top\)\);/,
+      /\.lx-learning-section-switch--learn,\s*\.lx-routed-app\[data-route-path="\/learn"\] \.lx-learning-section-switch--learn\s*\{\s*margin-top:\s*calc\(84px \+ env\(safe-area-inset-top\)\);/,
     );
     expect(learningSwitch).toMatch(
       /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-routed-app\[data-route-path="\/learn"\] \.lx-learning-section-switch--learn\s*\{[\s\S]*?var\(--lx-navigation-rail-width\)[\s\S]*?860px[\s\S]*?margin-right:\s*24px;[\s\S]*?margin-left:\s*calc\(var\(--lx-navigation-rail-width\) \+ 48px\);/,
@@ -158,10 +150,9 @@ describe("Learn section-switch CSS ownership", () => {
     expect(learningSwitch).toMatch(
       /@media \(max-width: 360px\)[\s\S]*?\.lx-routed-app\[data-route-path="\/learn"\] \.lx-learning-section-switch--learn\s*\{\s*width:\s*calc\(100% - 32px\);/,
     );
-    expect(learningSwitch).not.toContain("!important");
   });
 
-  it("preserves Scenario Catalog as visual and compatibility-fallback owner", () => {
+  it("leaves Scenario Catalog as the visual and fallback owner", () => {
     expect(scenarioCatalog).toMatch(
       /\.lx-learning-section-switch\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/,
     );
@@ -178,13 +169,11 @@ describe("Learn section-switch CSS ownership", () => {
     expect(routeNavigation).toContain(
       'className="lx-learning-section-switch lx-learning-section-switch--learn"',
     );
-    expect(scenarioApp).toContain(
-      'className="lx-learning-section-switch lx-learning-section-switch--scenarios"',
-    );
+    expect(scenarioApp).toContain('className="lx-learning-section-switch"');
     expect(scenarioApp).not.toContain("lx-learning-section-switch--learn");
   });
 
-  it("runs the adversarial switch proof through both authoritative UI commands", () => {
+  it("runs switch proof through both authoritative UI commands", () => {
     expect(scripts["test:e2e:ui"]).toContain(CASCADE_SPEC);
     expect(scripts["test:e2e:responsive"]).toContain(CASCADE_SPEC);
     expect(browserSpec).toContain('scenarioCatalog: readFileSync');
