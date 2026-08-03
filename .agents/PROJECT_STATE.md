@@ -4,17 +4,16 @@
 
 - Last verified: 2026-08-04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
-- Latest deployed product SHA: `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
-- Latest completed Issue #70 slice: routed resource-stack tablet width ownership.
-- Completion PR: #370.
-- PR #370 immutable developer-authored head: `84b9dbee45f477f1e8b4f970009f3ffd63441700`.
-- Authoritative PR CI: #2653 / run `30857900749`, complete success.
-- Expected-head squash merge produced product SHA `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
-- Exact-SHA main CI run `30858532612` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-SHA stage run `30859063535` deployed web/API images tagged `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`; deploy and public smoke succeeded.
-- Public browser validation completed successfully. Eleven checks passed directly; the stale-build-marker iOS WebKit check passed on retry after a transient service-worker access-control page error. The workflow conclusion remained successful.
-- PR #370 had no comments, reviews or unresolved review threads before merge.
+- Product base verified before this documentation slice: `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+- Latest deployed product SHA: `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+- Latest completed Issue #70 slice: Learn-route Lessons/Scenarios switch placement ownership.
+- Completion PR: #372.
+- PR #372 immutable developer-authored head: `d8146a29c86c14d7c007f7cae0bc56149cfecdaa`.
+- Authoritative PR CI: #2663 / run `30861225052`, complete success after an evidence-based retry of one unrelated iOS WebKit Lesson hydration flake on the same immutable head.
+- Expected-head squash merge produced product SHA `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+- Exact-SHA main CI run `30862151034` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-SHA stage run `30862634205` deployed web/API images tagged `e8288ef1c91e948594168aa869bdd5a275d6b3b8`; deployment, public smoke and all 12 public browser checks succeeded directly.
+- PR #372 had no comments, reviews or unresolved review threads before merge.
 - No intersecting Issue #70 product PR remains open. Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
@@ -48,7 +47,7 @@
 - `frontend/app/global-feature-style-overlap-manifest.json` is the reviewed fail-closed inventory; its companion test protects exact totals, owner pairs and classifications.
 - The manifest remains at 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
 - Accessibility-layer overrides remain intentional and separately contract-protected.
-- Compact Home, Phrases sorting and navigation/mobile shell have adversarial source-order browser/source contracts.
+- Compact Home, Phrases sorting, navigation/mobile shell, routed resource-stack and Learn switch placement have adversarial source-order browser/source contracts.
 
 ## Completed navigation and mobile-shell ownership
 
@@ -82,6 +81,18 @@
 - The one exact mobile-PWA/adaptive resource-stack conflict remains in the reviewed manifest as `requires-proof`; deterministic production behavior is supplied by stronger routed ownership plus source/browser evidence.
 - No visual snapshot/hash, performance budget, tolerance, timeout or backend/runtime contract changed.
 
+### PR #372 — Learn switch placement ownership
+
+- Preserved all eight reviewed Scenario Catalog compatibility fallback conflicts for `.lx-learning-section-switch--learn`.
+- Added matching, stronger `.lx-routed-app[data-route-path="/learn"]` owners for global, tablet, desktop, compact and narrow placement without changing declaration values or breakpoints.
+- Preserved Scenario Catalog as the shared switch appearance and compatibility-fallback owner.
+- Added source contracts for renderer reachability, fallback preservation, routed specificity and unchanged placement values.
+- Extended the Chromium computed-cascade matrix to production and two adversarial stylesheet orders at 360, 390, 719, 720, 1024 and 1440 px.
+- Corrected the 1440 px test oracle to the actual desktop-header geometry (`headerNav: flex`, rail hidden, header children `align-self: auto`) without changing production CSS.
+- Production and adversarial orders now produce identical switch/shell snapshots, exactly one primary navigation and no horizontal overflow.
+- The eight switch conflicts remain in the reviewed manifest as `requires-proof`; deterministic behavior is supplied by stronger route ownership and companion source/browser evidence.
+- Visual hashes, budgets, tolerances, timeouts, route runtime and Scenario Catalog presentation remain unchanged.
+
 ## Current Issue #70 acceptance evidence
 
 - `frontend/components/production-app-entry.test.ts` fail-closes the production application-root inventory, retired-root absence and layout → routed shell → bootstrap chain.
@@ -89,42 +100,37 @@
 - `frontend/e2e/route-bundle-budget.spec.ts` verifies canonical routes exclude compatibility-fallback-exclusive assets.
 - `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
 - Navigation/mobile-shell source contracts protect canonical routed owners, compatibility fallbacks and six live resource-stack renderer boundaries.
-- The Chromium cascade matrix exercises production, routed-shell-first and mobile-first orders at six responsive boundaries.
+- The Chromium cascade matrix exercises production and adversarial orders across responsive boundaries, including routed Learn switch placement.
 - README and architecture documentation describe the actual route/runtime/global-style ownership graph.
 - Authoritative Linux visual, accessibility, PWA, CSP, functional browser and performance gates are unchanged and green on the latest deployed product SHA.
 
 ## In progress
 
 - No product slice is active during this documentation reconciliation.
-- The completed PR #370 task context is being reset.
-- Issue #70 remains open because 20 additional exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
+- The completed PR #372 task context is being reset.
+- Issue #70 remains open because 12 additional exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
 
 ## Remaining roadmap
 
-### 1. Scenario Catalog / Learning section switch — 8 conflicts
+### 1. Adaptive tablet layout — 6 conflicts
 
-- Establish deterministic placement ownership for `.lx-learning-section-switch--learn` at desktop, tablet, compact and narrow widths.
-- Preserve the shared visual switch treatment and the separate Scenario Catalog route placement.
-- Audit all eight width/margin conflict IDs and prove production behavior under adversarial source order.
-- Do not combine Scenario cards, navigation chrome or unrelated Learn layout.
+- Audit the bounded `premium-ui.css` → `adaptive-layout.css` cluster for `.lx-setup-footer`, `.lx-setup-submit`, `.lx-source-selector` and `.lx-source-selector > button`.
+- Preserve the dedicated `adaptive-lesson-composer.css` route owner and prove the live Learn composer remains independent of fallback stylesheet order across 719/720/760/761/767/768/1099/1100 boundaries.
+- Do not change approved geometry, breakpoints, snapshots or runtime behavior unless computed evidence proves a production defect.
 
-### 2. Adaptive tablet layout — 6 conflicts
+### 2. Phrases grid — 4 conflicts
 
-- Resolve the bounded `premium-ui.css` → `adaptive-layout.css` cluster with computed-cascade and visual evidence.
+- Preserve the extracted Phrases route as canonical `.lx-phrase-grid` owner independently of premium fallback order.
 
-### 3. Phrases grid — 4 conflicts
+### 3. Account Security width — 1 conflict
 
-- Preserve the extracted Phrases route as canonical grid owner independently of premium fallback order.
+- Reconcile account-security global width with routed desktop shell placement using explicit runtime ownership rather than import-order dependence.
 
-### 4. Account Security width — 1 conflict
-
-- Reconcile account-security global width with routed desktop shell placement without changing confirmation/security semantics.
-
-### 5. Async State width — 1 conflict
+### 4. Async State width — 1 conflict
 
 - Reconcile adaptive navigation and `system-states.css` width ownership as an isolated shared-state slice.
 
-### 6. Final Issue #70 acceptance reconciliation
+### 5. Final Issue #70 acceptance reconciliation
 
 - Audit semantically overlapping selectors that are not textually identical.
 - Reconcile exact-selector evidence with app-entry, compatibility reachability, fallback-exclusive bundle, global ownership, visual regression and public architecture documentation.
@@ -132,8 +138,8 @@
 
 ## Validation pending
 
-- Remaining exact-selector inventory requiring additional proof/correction: 20 items across five bounded clusters.
-- The already proven resource-stack fallback remains in the 71-item manifest as a reviewed `requires-proof` item with current source/browser evidence.
+- Remaining exact-selector inventory requiring additional proof/correction: 12 items across four bounded clusters.
+- The already proven resource-stack fallback and eight Learn switch fallbacks remain in the 71-item manifest as reviewed `requires-proof` items with current source/browser evidence.
 - Semantic non-identical selector overlap is not claimed safe by the exact-selector parser.
 - Guest Profile auth/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
@@ -141,19 +147,20 @@
 
 ## Recent production evidence
 
-1. #370 — `style(frontend): prove routed resource stack width ownership` → `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
-2. #369 — `docs(agent): reconcile PR 368 delivery` → `7c3684a63e415c647f0b1c7a96ac86387f79cafd`.
-3. #368 — `style(frontend): make mobile PWA shell order-independent` → `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
-4. #367 — `docs(agent): reconcile PR 366 delivery` → `1030ef2decd970251846650371c18ed8ff9f0ba1`.
-5. #366 — `style(frontend): make adaptive navigation order-independent` → `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+1. #372 — `style(frontend): make Learn switch placement order-independent` → `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+2. #371 — `docs(agent): reconcile PR 370 delivery` → `cc3636872f47c44948d9be5f3aec4784fb2c5a79`.
+3. #370 — `style(frontend): prove routed resource stack width ownership` → `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+4. #369 — `docs(agent): reconcile PR 368 delivery` → `7c3684a63e415c647f0b1c7a96ac86387f79cafd`.
+5. #368 — `style(frontend): make mobile PWA shell order-independent` → `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`.
 
 ## Evidence
 
-- PR #370 immutable head `84b9dbee45f477f1e8b4f970009f3ffd63441700` passed authoritative full CI #2653 / run `30857900749`.
+- PR #372 immutable head `d8146a29c86c14d7c007f7cae0bc56149cfecdaa` passed authoritative full CI #2663 / run `30861225052`.
 - Frontend parser/source contracts, lint, TypeScript, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded.
-- Expected-head squash merge produced `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
-- Exact-SHA main CI run `30858532612` completed successfully with the same full product matrix and image publication.
-- Stage run `30859063535` deployed the exact SHA; deploy and public smoke succeeded. Public browser validation concluded successfully after one transient iOS WebKit service-worker error passed on retry.
+- One unrelated Lesson iOS WebKit pre-hydration input race failed on the first attempt; the preceding PR head had passed the same job, the only new diff was a separate cascade-test oracle, trace evidence showed the input reset during hydration, and the isolated same-head retry passed 112 tests with 4 skips.
+- Expected-head squash merge produced `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+- Exact-SHA main CI run `30862151034` completed successfully with the full product matrix and image publication.
+- Stage run `30862634205` deployed the exact SHA; deployment, public smoke and all 12 public browser checks succeeded directly.
 - Indexed search remains discovery only; final claims use exact refs, files, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
