@@ -5,7 +5,7 @@
  * chrome. The switch remains in document flow, but reserves the chrome band
  * and aligns with the content column at every responsive navigation mode.
  */
-.lx-learning-section-switch--learn {
+.lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
   margin-top: calc(84px + env(safe-area-inset-top));
 }
 
@@ -47,7 +47,7 @@ html[data-lexigo-resolved-appearance="dark"]
 }
 
 @media (min-width: 720px) and (max-width: 1099px) {
-  .lx-learning-section-switch--learn {
+  .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
     width: min(
       calc(100% - var(--lx-navigation-rail-width) - 92px),
       860px
@@ -63,7 +63,7 @@ html[data-lexigo-resolved-appearance="dark"]
  * the fixed rail, which would leave the first tab partially covered.
  */
 @media (min-width: 1024px) {
-  .lx-learning-section-switch--learn {
+  .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
     width: min(
       1180px,
       calc(100vw - var(--ak-shell-rail-width) - 80px)
@@ -77,7 +77,7 @@ html[data-lexigo-resolved-appearance="dark"]
 }
 
 @media (max-width: 719px) {
-  .lx-learning-section-switch--learn {
+  .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
     width: calc(100% - 48px);
     margin-top: calc(76px + env(safe-area-inset-top));
     margin-right: auto;
@@ -86,7 +86,7 @@ html[data-lexigo-resolved-appearance="dark"]
 }
 
 @media (max-width: 360px) {
-  .lx-learning-section-switch--learn {
+  .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
     width: calc(100% - 32px);
   }
 }
