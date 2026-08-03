@@ -4,46 +4,68 @@ import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 const appDirectory = path.join(process.cwd(), "app");
-const productionCascade = [
-  readFileSync(path.join(appDirectory, "globals.css"), "utf8"),
-  readFileSync(path.join(appDirectory, "design-tokens.css"), "utf8"),
-  readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8"),
-  readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8"),
-  readFileSync(path.join(appDirectory, "adaptive-navigation.css"), "utf8"),
-].map((stylesheet) => `<style>${stylesheet}</style>`).join("\n");
+const stylesheets = {
+  globals: readFileSync(path.join(appDirectory, "globals.css"), "utf8"),
+  tokens: readFileSync(path.join(appDirectory, "design-tokens.css"), "utf8"),
+  premium: readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8"),
+  mobile: readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8"),
+  adaptive: readFileSync(path.join(appDirectory, "adaptive-navigation.css"), "utf8"),
+} as const;
 
-const shellMarkup = `
-  <!doctype html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      ${productionCascade}
-    </head>
-    <body>
-      <main class="lx-routed-app">
-        <section class="lx-app">
-          <header class="lx-header">
-            <button class="lx-brand" type="button">
-              <span class="lx-logo-mark"><span>L</span></span>
-              <strong>LexiGo</strong>
-            </button>
-            <nav class="lx-nav" aria-label="Header navigation"><button type="button">Home</button></nav>
-            <div class="lx-header-tools"><button class="lx-avatar" type="button">A</button></div>
-          </header>
-          <div class="lx-app-shell">
-            <nav class="lx-navigation-rail" aria-label="Rail navigation"><button type="button">Home</button></nav>
-            <section class="lx-main-content">
-              <div class="lx-resource-stack"><div class="lx-async-state">State</div></div>
-              <div class="lx-view">Content</div>
-            </section>
-          </div>
-          <nav class="lx-mobile-nav" aria-label="Mobile navigation"><button type="button">Home</button></nav>
-        </section>
-      </main>
-    </body>
-  </html>
-`;
+type StylesheetName = keyof typeof stylesheets;
+
+const cascadeOrders: ReadonlyArray<Readonly<{
+  name: string;
+  order: readonly StylesheetName[];
+}>> = [
+  {
+    name: "production order",
+    order: ["globals", "tokens", "premium", "mobile", "adaptive"],
+  },
+  {
+    name: "adaptive-first adversarial order",
+    order: ["globals", "tokens", "adaptive", "premium", "mobile"],
+  },
+];
+
+function shellMarkup(order: readonly StylesheetName[]): string {
+  const cascade = order
+    .map((name) => `<style data-owner="${name}">${stylesheets[name]}</style>`)
+    .join("\n");
+
+  return `
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        ${cascade}
+      </head>
+      <body>
+        <main class="lx-routed-app">
+          <section class="lx-app">
+            <header class="lx-header">
+              <button class="lx-brand" type="button">
+                <span class="lx-logo-mark"><span>L</span></span>
+                <strong>LexiGo</strong>
+              </button>
+              <nav class="lx-nav" aria-label="Header navigation"><button type="button">Home</button></nav>
+              <div class="lx-header-tools"><button class="lx-avatar" type="button">A</button></div>
+            </header>
+            <div class="lx-app-shell">
+              <nav class="lx-navigation-rail" aria-label="Rail navigation"><button type="button">Home</button></nav>
+              <section class="lx-main-content">
+                <div class="lx-resource-stack"><div class="lx-async-state">State</div></div>
+                <div class="lx-view">Content</div>
+              </section>
+            </div>
+            <nav class="lx-mobile-nav" aria-label="Mobile navigation"><button type="button">Home</button></nav>
+          </section>
+        </main>
+      </body>
+    </html>
+  `;
+}
 
 type ShellSnapshot = Readonly<{
   header: Readonly<{
@@ -99,129 +121,131 @@ async function readShellSnapshot(page: Page): Promise<ShellSnapshot> {
   });
 }
 
+const cases: ReadonlyArray<Readonly<{
+  width: number;
+  expected: Omit<ShellSnapshot, "horizontalOverflow">;
+}>> = [
+  {
+    width: 390,
+    expected: {
+      header: {
+        minHeight: "58px",
+        marginLeft: "-14px",
+        paddingTop: "12px",
+        backgroundColor: "rgba(5, 9, 20, 0.96)",
+      },
+      brandAlignSelf: "end",
+      toolsAlignSelf: "end",
+      logo: { width: "30px", height: "38px" },
+      avatar: { width: "42px", height: "42px" },
+      viewPaddingTop: "18px",
+      visibility: { header: "none", rail: "none", mobile: "grid" },
+    },
+  },
+  {
+    width: 719,
+    expected: {
+      header: {
+        minHeight: "58px",
+        marginLeft: "-14px",
+        paddingTop: "12px",
+        backgroundColor: "rgba(5, 9, 20, 0.96)",
+      },
+      brandAlignSelf: "end",
+      toolsAlignSelf: "end",
+      logo: { width: "30px", height: "38px" },
+      avatar: { width: "42px", height: "42px" },
+      viewPaddingTop: "18px",
+      visibility: { header: "none", rail: "none", mobile: "grid" },
+    },
+  },
+  {
+    width: 720,
+    expected: {
+      header: {
+        minHeight: "76px",
+        marginLeft: "0px",
+        paddingTop: "0px",
+        backgroundColor: "rgba(5, 9, 20, 0.96)",
+      },
+      brandAlignSelf: "center",
+      toolsAlignSelf: "center",
+      logo: { width: "30px", height: "38px" },
+      avatar: { width: "42px", height: "42px" },
+      viewPaddingTop: "18px",
+      visibility: { header: "none", rail: "flex", mobile: "none" },
+    },
+  },
+  {
+    width: 760,
+    expected: {
+      header: {
+        minHeight: "76px",
+        marginLeft: "0px",
+        paddingTop: "0px",
+        backgroundColor: "rgba(5, 9, 20, 0.96)",
+      },
+      brandAlignSelf: "center",
+      toolsAlignSelf: "center",
+      logo: { width: "30px", height: "38px" },
+      avatar: { width: "42px", height: "42px" },
+      viewPaddingTop: "18px",
+      visibility: { header: "none", rail: "flex", mobile: "none" },
+    },
+  },
+  {
+    width: 761,
+    expected: {
+      header: {
+        minHeight: "76px",
+        marginLeft: "0px",
+        paddingTop: "0px",
+        backgroundColor: "rgba(5, 9, 20, 0.82)",
+      },
+      brandAlignSelf: "center",
+      toolsAlignSelf: "center",
+      logo: { width: "36px", height: "46px" },
+      avatar: { width: "44px", height: "44px" },
+      viewPaddingTop: "24px",
+      visibility: { header: "none", rail: "flex", mobile: "none" },
+    },
+  },
+  {
+    width: 1024,
+    expected: {
+      header: {
+        minHeight: "76px",
+        marginLeft: "0px",
+        paddingTop: "0px",
+        backgroundColor: "rgba(5, 9, 20, 0.82)",
+      },
+      brandAlignSelf: "center",
+      toolsAlignSelf: "center",
+      logo: { width: "36px", height: "46px" },
+      avatar: { width: "44px", height: "44px" },
+      viewPaddingTop: "24px",
+      visibility: { header: "none", rail: "flex", mobile: "none" },
+    },
+  },
+];
+
 test.describe("navigation/mobile-shell computed cascade", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "Computed ownership is asserted once per Chromium project.");
 
-  const cases: ReadonlyArray<Readonly<{
-    width: number;
-    expected: Omit<ShellSnapshot, "horizontalOverflow">;
-  }>> = [
-    {
-      width: 390,
-      expected: {
-        header: {
-          minHeight: "58px",
-          marginLeft: "-14px",
-          paddingTop: "12px",
-          backgroundColor: "rgba(5, 9, 20, 0.96)",
-        },
-        brandAlignSelf: "end",
-        toolsAlignSelf: "end",
-        logo: { width: "30px", height: "38px" },
-        avatar: { width: "42px", height: "42px" },
-        viewPaddingTop: "18px",
-        visibility: { header: "none", rail: "none", mobile: "grid" },
-      },
-    },
-    {
-      width: 719,
-      expected: {
-        header: {
-          minHeight: "58px",
-          marginLeft: "-14px",
-          paddingTop: "12px",
-          backgroundColor: "rgba(5, 9, 20, 0.96)",
-        },
-        brandAlignSelf: "end",
-        toolsAlignSelf: "end",
-        logo: { width: "30px", height: "38px" },
-        avatar: { width: "42px", height: "42px" },
-        viewPaddingTop: "18px",
-        visibility: { header: "none", rail: "none", mobile: "grid" },
-      },
-    },
-    {
-      width: 720,
-      expected: {
-        header: {
-          minHeight: "76px",
-          marginLeft: "0px",
-          paddingTop: "0px",
-          backgroundColor: "rgba(5, 9, 20, 0.96)",
-        },
-        brandAlignSelf: "center",
-        toolsAlignSelf: "center",
-        logo: { width: "30px", height: "38px" },
-        avatar: { width: "42px", height: "42px" },
-        viewPaddingTop: "18px",
-        visibility: { header: "none", rail: "flex", mobile: "none" },
-      },
-    },
-    {
-      width: 760,
-      expected: {
-        header: {
-          minHeight: "76px",
-          marginLeft: "0px",
-          paddingTop: "0px",
-          backgroundColor: "rgba(5, 9, 20, 0.96)",
-        },
-        brandAlignSelf: "center",
-        toolsAlignSelf: "center",
-        logo: { width: "30px", height: "38px" },
-        avatar: { width: "42px", height: "42px" },
-        viewPaddingTop: "18px",
-        visibility: { header: "none", rail: "flex", mobile: "none" },
-      },
-    },
-    {
-      width: 761,
-      expected: {
-        header: {
-          minHeight: "76px",
-          marginLeft: "0px",
-          paddingTop: "0px",
-          backgroundColor: "rgba(5, 9, 20, 0.82)",
-        },
-        brandAlignSelf: "center",
-        toolsAlignSelf: "center",
-        logo: { width: "36px", height: "46px" },
-        avatar: { width: "44px", height: "44px" },
-        viewPaddingTop: "24px",
-        visibility: { header: "none", rail: "flex", mobile: "none" },
-      },
-    },
-    {
-      width: 1024,
-      expected: {
-        header: {
-          minHeight: "76px",
-          marginLeft: "0px",
-          paddingTop: "0px",
-          backgroundColor: "rgba(5, 9, 20, 0.82)",
-        },
-        brandAlignSelf: "center",
-        toolsAlignSelf: "center",
-        logo: { width: "36px", height: "46px" },
-        avatar: { width: "44px", height: "44px" },
-        viewPaddingTop: "24px",
-        visibility: { header: "none", rail: "flex", mobile: "none" },
-      },
-    },
-  ];
+  for (const cascade of cascadeOrders) {
+    for (const current of cases) {
+      test(`${cascade.name} preserves effective owners at ${current.width}px`, async ({ page }) => {
+        await page.setViewportSize({ width: current.width, height: 800 });
+        await page.setContent(shellMarkup(cascade.order));
 
-  for (const current of cases) {
-    test(`records the effective owners at ${current.width}px`, async ({ page }) => {
-      await page.setViewportSize({ width: current.width, height: 800 });
-      await page.setContent(shellMarkup);
+        const snapshot = await readShellSnapshot(page);
+        expect(snapshot.horizontalOverflow).toBe(false);
+        expect(snapshot).toEqual({ ...current.expected, horizontalOverflow: false });
 
-      const snapshot = await readShellSnapshot(page);
-      expect(snapshot.horizontalOverflow).toBe(false);
-      expect(snapshot).toEqual({ ...current.expected, horizontalOverflow: false });
-
-      const visibleNavigationCount = Object.values(snapshot.visibility)
-        .filter((display) => display !== "none").length;
-      expect(visibleNavigationCount).toBe(1);
-    });
+        const visibleNavigationCount = Object.values(snapshot.visibility)
+          .filter((display) => display !== "none").length;
+        expect(visibleNavigationCount).toBe(1);
+      });
+    }
   }
 });
