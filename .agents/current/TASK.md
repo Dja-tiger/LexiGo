@@ -8,8 +8,8 @@
 - PR: #362 — Draft
 - Initial discovery head: `e75fc8e0e36e2672aa6e725beaf1afa1a7612af6`
 - Classified-manifest commit: `6f0dd8cce26c818f190c24564ab1c146702f01a8`
-- Latest branch commit before this task update: `fd60d8724283b1ba99c0f07aa3e54131ef28bd07`
-- Final developer-authored head: resolve from the live PR after this update
+- Latest branch commit before this task update: `c1f43f2e3fae414246cfb61cafaa07aef0ff1bc5`
+- Final developer-authored head: resolve from the live PR after current-context and manifest-contract commits complete
 
 ## Objective
 
@@ -21,6 +21,7 @@ This is a proof-only slice. It identifies and classifies the exact remaining sou
 
 - Add `frontend/app/global-feature-style-overlap-source.test.ts`.
 - Add `frontend/app/global-feature-style-overlap-manifest.json` as the complete reviewed classification boundary consumed by the parser test.
+- Add `frontend/app/global-feature-style-overlap-manifest.test.ts` to fail-close manifest size, unique IDs, classifications and exact stylesheet-pair group counts.
 - Derive the CSS import list from the actual root layout.
 - Parse imported CSS without new dependencies, including nested media/supports/container/layer blocks, selector groups and declarations.
 - Exclude keyframes, same-file layering and non-feature selectors outside `.lx-*` ownership.
@@ -73,6 +74,7 @@ Requires-proof groups:
 
 - `frontend/app/global-feature-style-overlap-source.test.ts`
 - `frontend/app/global-feature-style-overlap-manifest.json`
+- `frontend/app/global-feature-style-overlap-manifest.test.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -90,6 +92,7 @@ Every path not listed above, especially all production CSS and TypeScript/TSX, s
 - Feature selectors are limited to selectors containing LexiGo class ownership (`.lx-`).
 - The JSON manifest is runtime-validated and cannot bypass classification typing through an unchecked cast.
 - Ordered actual conflict IDs must equal ordered manifest IDs exactly.
+- The separate manifest contract owns exact total, classification totals and pair-group counts.
 - Invalid classifications and empty evidence are rejected.
 - Existing Phrases and Home order-independence contracts remain unchanged.
 - A discovered conflict is not automatically treated as a defect; each item has explicit classification evidence.
@@ -97,12 +100,13 @@ Every path not listed above, especially all production CSS and TypeScript/TSX, s
 
 ## Acceptance criteria
 
-- Final diff contains only the five allowed paths.
+- Final diff contains only the six allowed paths.
 - The source test reads every root-imported CSS file from the actual checkout.
 - Every manifest item is deterministic, cross-file and reproducible from selector/property/value/media evidence.
 - The manifest contains exactly 107 explicit unique items.
-- Classification totals remain 50 `intentional`, 57 `requires-proof`, 0 `protected` unless a separately reviewed source change updates the inventory.
-- The test fails closed on conflict addition, removal or ID mutation, malformed manifest structure, invalid classification or empty evidence.
+- Classification totals are exactly 50 `intentional`, 57 `requires-proof`, 0 `protected`.
+- Exact stylesheet-pair group counts match the reviewed 12-pair inventory.
+- The tests fail closed on conflict addition, removal or ID mutation, malformed manifest structure, unknown pair, incorrect classification, count drift or empty evidence.
 - Frontend lint, typecheck, full unit suite, production build and dependency audit pass on the final immutable head.
 - Every additional backend/browser/accessibility/visual/performance/container gate selected by the fail-closed classifier passes.
 - No snapshot, budget, timeout, browser matrix, workflow or dependency update is used to make CI green.
