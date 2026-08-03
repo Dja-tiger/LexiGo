@@ -9,6 +9,8 @@ type ManifestItem = Readonly<{
   evidence: string;
 }>;
 
+type PackageScripts = Readonly<Record<string, string>>;
+
 const appDirectory = path.join(process.cwd(), "app");
 const layout = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const premium = readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8");
@@ -17,7 +19,11 @@ const adaptive = readFileSync(path.join(appDirectory, "adaptive-navigation.css")
 const rawManifest: unknown = JSON.parse(
   readFileSync(path.join(appDirectory, "global-feature-style-overlap-manifest.json"), "utf8"),
 );
+const rawPackage: unknown = JSON.parse(
+  readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+);
 
+const CASCADE_SPEC = "e2e/navigation-mobile-shell-cascade.spec.ts";
 const EXPECTED_PAIR_COUNTS = new Map<string, number>([
   ["premium-ui.css -> adaptive-navigation.css", 21],
   ["premium-ui.css -> mobile-pwa-fixes.css", 10],
@@ -53,6 +59,26 @@ function parseManifest(value: unknown): readonly ManifestItem[] {
   });
 }
 
+function parsePackageScripts(value: unknown): PackageScripts {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("Frontend package.json must be an object");
+  }
+
+  const scripts = (value as Record<string, unknown>).scripts;
+  if (typeof scripts !== "object" || scripts === null || Array.isArray(scripts)) {
+    throw new Error("Frontend package.json requires a scripts object");
+  }
+
+  const parsed: Record<string, string> = {};
+  for (const [name, command] of Object.entries(scripts)) {
+    if (typeof command !== "string") {
+      throw new Error(`Frontend package script ${name} must be a string`);
+    }
+    parsed[name] = command;
+  }
+  return parsed;
+}
+
 function ownerPair(id: string): string {
   const match = id.match(
     / -> ([a-z0-9-]+\.css) \[[^\]]+\] = .* -> ([a-z0-9-]+\.css) \[[^\]]+\] = /,
@@ -67,7 +93,12 @@ function importIndex(file: string): number {
   return layout.indexOf(`import "./${file}";`);
 }
 
+function occurrenceCount(source: string, token: string): number {
+  return source.split(token).length - 1;
+}
+
 const manifest = parseManifest(rawManifest);
+const scripts = parsePackageScripts(rawPackage);
 const navigationItems = manifest.filter((item) => EXPECTED_PAIR_COUNTS.has(ownerPair(item.id)));
 
 describe("navigation and mobile-shell computed-cascade ownership", () => {
@@ -97,6 +128,16 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(mobile).toContain("@media (max-width: 760px)");
     expect(adaptive).toContain("@media (max-width: 719px)");
     expect(adaptive).toContain("@media (min-width: 720px) and (max-width: 1099px)");
+  });
+
+  it("routes the browser ownership proof through both authoritative UI scripts", () => {
+    const uiCommand = scripts["test:e2e:ui"];
+    const responsiveCommand = scripts["test:e2e:responsive"];
+
+    expect(uiCommand).toBeDefined();
+    expect(responsiveCommand).toBeDefined();
+    expect(occurrenceCount(uiCommand, CASCADE_SPEC)).toBe(1);
+    expect(occurrenceCount(responsiveCommand, CASCADE_SPEC)).toBe(1);
   });
 
   it("protects the mobile-PWA declarations that remain effective through 760px", () => {
