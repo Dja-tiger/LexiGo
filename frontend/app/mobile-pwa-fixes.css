@@ -79,14 +79,7 @@ button.speaking {
     padding-top: 0;
   }
 
-  .lx-header {
-    top: 0;
-    min-height: 58px;
-    margin: 0 -14px;
-    padding:
-      calc(env(safe-area-inset-top) + 12px)
-      18px
-      11px;
+  .lx-routed-app .lx-header {
     background: rgba(5, 9, 20, 0.96);
   }
 
@@ -95,17 +88,17 @@ button.speaking {
     align-self: end;
   }
 
-  .lx-logo-mark {
+  .lx-routed-app .lx-logo-mark {
     width: 30px;
     height: 38px;
   }
 
-  .lx-avatar {
+  .lx-routed-app .lx-avatar {
     width: 42px;
     height: 42px;
   }
 
-  .lx-view {
+  .lx-routed-app .lx-view {
     padding-top: 18px;
   }
 
@@ -114,8 +107,20 @@ button.speaking {
   }
 }
 
-@media (display-mode: standalone) and (max-width: 760px) {
-  .lx-header {
+@media (max-width: 719px) {
+  .lx-routed-app .lx-header {
+    top: 0;
+    min-height: 58px;
+    margin: 0 -14px;
+    padding:
+      calc(env(safe-area-inset-top) + 12px)
+      18px
+      11px;
+  }
+}
+
+@media (display-mode: standalone) and (max-width: 719px) {
+  .lx-routed-app .lx-header {
     padding-top: calc(env(safe-area-inset-top) + 16px);
   }
 }
