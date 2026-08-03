@@ -13,7 +13,7 @@
 
 Purpose:
 
-Perform branch-safe repository inspection, bounded production changes, parser-driven manifest reconciliation, CI review and expected-head delivery through the connected GitHub application.
+Perform branch-safe repository inspection, bounded production changes, parser-driven manifest reconciliation, exact visual artifact diagnosis, CI review and expected-head delivery through the connected GitHub application.
 
 Instruction source:
 
@@ -24,7 +24,9 @@ Instruction source:
 - `.agents/AGENTS.issue-261-css-specificity.md`;
 - `.agents/AGENTS.tool-selection.md`;
 - `docs/agent-harness.md`;
-- GitHub plugin skill.
+- GitHub plugin skill;
+- Chromium command-line switch definition for `--disable-skia-runtime-opts`;
+- Playwright configuration contract for `use.launchOptions.args`.
 
 Version or verification date:
 
@@ -38,7 +40,9 @@ Inputs:
 - production CSS owners and overlap manifest;
 - canonical routed-shell DOM;
 - CI #2606/run `30827173353` frontend diagnostics and parser output;
-- corrected full CI #2612/run `30829015122` on product head `77b90f554501db881ba735da380ec82359beda84`.
+- corrected full CI #2612/run `30829015122` on product head `77b90f554501db881ba735da380ec82359beda84`;
+- immutable-head CI #2614/run `30829924223` original and same-SHA failed-job rerun;
+- both visual Playwright report artifacts, screenshots, traces, CSS responses and runner metadata.
 
 Files inspected:
 
@@ -56,7 +60,10 @@ Files inspected:
 - `frontend/app/global-feature-style-overlap-source.test.ts`;
 - `frontend/app/global-feature-style-overlap-manifest.test.ts`;
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
-- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
+- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`;
+- `frontend/e2e/system-states-visual.spec.ts`;
+- `frontend/e2e/profile-visual.spec.ts`;
+- `frontend/playwright.visual.config.ts`.
 
 Actions performed:
 
@@ -74,7 +81,18 @@ Actions performed:
 - ran corrected full CI #2612 on head `77b90f554501db881ba735da380ec82359beda84` without retry;
 - verified frontend core, backend unit/security, backend integration, all browser groups, aggregate frontend quality and both container builds passed;
 - verified unchanged Linux visual regression, accessibility results and route-performance budgets;
-- recorded the successful CI evidence in current task memory before the final immutable-head run.
+- recorded successful product-CI evidence and ran final immutable-head CI #2614 on `4f973116616f28a81c764e8de5c8d4dd5135e151`;
+- observed one exact-hash visual failure, then reran only failed jobs on the same immutable source without changing code or baseline;
+- observed the original visual case pass and a different exact-hash case fail on the second Azure host;
+- downloaded and extracted both visual artifacts;
+- compared approved and failed PNGs at pixel level;
+- verified each failure changed exactly three pixels, with maximum one-unit RGB-channel drift;
+- verified the production CSS response sequence, lengths and byte hashes were identical across both runs;
+- verified both attempts used synthetic merge and `APP_BUILD_ID` `00c371d4538ebe561be53453826134d446074555`;
+- compared green head `77b90f554501db881ba735da380ec82359beda84` to failing head `4f973116616f28a81c764e8de5c8d4dd5135e151` and confirmed only current Agent Docs changed;
+- added Chromium visual launch argument `--disable-skia-runtime-opts` to force Skia's baseline code path;
+- added a fail-closed source contract requiring that argument to be the only custom visual launch argument and forbidding pixel-tolerance substitution;
+- preserved all approved exact visual hashes and snapshots unchanged.
 
 Commands or procedures:
 
@@ -85,7 +103,10 @@ Commands or procedures:
 - read-after-write blob verification;
 - live main verification after every write;
 - authoritative CI job/log/artifact inspection;
-- local dependency-free parsing of CI diagnostics only, with repository writes still performed through GitHub connector.
+- same-SHA rerun of failed workflow jobs;
+- local dependency-free parsing of CI diagnostics;
+- local ZIP/report/trace extraction and exact PNG pixel comparison;
+- repository writes exclusively through the GitHub connector.
 
 Artifacts produced:
 
@@ -94,30 +115,38 @@ Artifacts produced:
 - exact 81-item overlap manifest;
 - fail-closed 81/50/31 count contract;
 - explicit 10-item premium/mobile and one-item resource-stack retained boundaries;
+- deterministic Chromium/Skia visual launch contract;
+- exact pixel-drift and identical-asset diagnosis;
 - active task, progress and execution records.
 
 Result:
 
-The implementation and parser-derived contracts are synchronized. Corrected full CI #2612/run `30829015122` passed completely on product head `77b90f554501db881ba735da380ec82359beda84`. This evidence update changes the branch head, so one final full immutable-head CI is required before Ready and merge.
+The implementation, parser-derived contracts and visual determinism correction are synchronized. Corrected full CI #2612/run `30829015122` passed completely on product head `77b90f554501db881ba735da380ec82359beda84`. Immutable-head CI #2614 showed host-dependent three-pixel Skia raster drift while every non-visual gate passed. The visual project now forces Skia's baseline raster path without changing any approved hash. One new full immutable-head CI is required before Ready and merge.
 
 Failures:
 
-CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership. No failure remains after the parser-driven correction.
+- CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership.
+- CI #2614 visual job failed on `compact Dictionary empty light`; the same-SHA rerun passed that case and failed `Profile compact light` instead. Each artifact differed from its approved hash at exactly three pixels by at most one RGB unit.
 
 Root cause:
 
 Five mobile → adaptive conflicts were shell selectors corrected by routed specificity. The sixth is `.lx-resource-stack | width`, a distinct layout-width owner explicitly excluded from this atomic slice. The parser correctly retained it.
 
+The visual failures were caused by Chromium/Skia runtime CPU optimization selecting slightly different raster code paths on heterogeneous Azure hosts. Identical source, build identity and CSS assets produced moving three-pixel, one-channel-unit differences rather than a stable presentation change.
+
 Fallback:
 
-If the final immutable-head CI shows any computed presentation drift, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
+- If final CI shows a stable computed presentation or approved-hash change, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
+- If `--disable-skia-runtime-opts` produces a stable third image instead of the approved hashes, remove the flag and stop this slice for a separate visual-harness design decision. Do not promote hashes, add tolerance or quantize screenshots in this PR.
 
 Limitations:
 
 - local clone and direct local repository test execution remain unavailable because the execution container cannot resolve GitHub hosts;
 - repository evidence and final validation therefore use exact GitHub refs and authoritative CI;
-- CI diagnostic artifacts are used only to derive exact parser output, never as a substitute for final immutable-head CI.
+- CI diagnostic artifacts are used to derive exact parser and pixel evidence, never as a substitute for final immutable-head CI.
 
 Reusable lesson:
 
 Source-order ownership must be split by semantic owner, not only stylesheet pair. A parser-retained selector outside the selected shell boundary is evidence to narrow the contract, not a reason to broaden production scope.
+
+Exact content-addressed screenshot checks must also control the raster implementation. When identical source and assets fail on different three-pixel locations across hosts, preserve the approved hashes and remove CPU-runtime optimization as the variable instead of weakening the visual assertion.
