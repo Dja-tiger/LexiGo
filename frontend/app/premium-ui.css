@@ -248,12 +248,6 @@
   mask-image: linear-gradient(to right, transparent, black 50%, black);
 }
 
-.lx-hero-copy {
-  position: relative;
-  z-index: 2;
-  align-self: center;
-}
-
 .lx-kicker,
 .lx-page-heading > div > span,
 .lx-detail-content > span,
@@ -265,27 +259,6 @@
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.14em;
-}
-
-.lx-hero-copy h1 {
-  margin: 0;
-  font-size: clamp(39px, 4vw, 62px);
-  line-height: 1.08;
-  letter-spacing: -0.05em;
-}
-
-.lx-hero-copy h1 em {
-  color: #8167ff;
-  font-style: normal;
-  text-shadow: 0 0 24px rgba(129, 103, 255, 0.6);
-}
-
-.lx-hero-copy p {
-  max-width: 590px;
-  margin: 20px 0 0;
-  color: #9ba8bf;
-  font-size: 16px;
-  line-height: 1.65;
 }
 
 .lx-hero-actions,
@@ -330,70 +303,6 @@
   z-index: 1;
   min-height: 280px;
 }
-
-.lx-glow {
-  position: absolute;
-  right: 7%;
-  bottom: 1%;
-  width: 280px;
-  height: 110px;
-  border-radius: 50%;
-  background: rgba(73, 74, 255, 0.22);
-  filter: blur(26px);
-}
-
-.lx-floating-card {
-  position: absolute;
-  z-index: 5;
-  top: 28px;
-  left: 45%;
-  display: grid;
-  width: 145px;
-  height: 178px;
-  place-items: center;
-  transform: perspective(500px) rotateY(-18deg) rotateZ(6deg);
-  border: 1px solid rgba(132, 132, 255, 0.4);
-  border-radius: 25px;
-  color: #77a7ff;
-  background: linear-gradient(145deg, rgba(42, 53, 110, 0.9), rgba(15, 27, 58, 0.96));
-  box-shadow: -22px 30px 55px rgba(0, 0, 0, 0.4), inset 0 0 35px rgba(91, 75, 255, 0.16);
-}
-
-.lx-floating-card span { font-size: 54px; font-weight: 850; letter-spacing: -0.08em; }
-.lx-floating-card i { position: absolute; top: 27px; right: 23px; color: #ffb456; font-size: 20px; font-style: normal; }
-
-.lx-book-base {
-  position: absolute;
-  z-index: 4;
-  right: 3%;
-  bottom: 14px;
-  left: 15%;
-  height: 58px;
-  transform: perspective(500px) rotateX(64deg);
-}
-
-.lx-book-base span {
-  position: absolute;
-  right: 0;
-  left: 0;
-  height: 22px;
-  border: 1px solid rgba(97, 103, 245, 0.38);
-  border-radius: 12px;
-  background: linear-gradient(90deg, #152654, #4d45c4, #172d62);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
-}
-.lx-book-base span:nth-child(1) { top: 0; }
-.lx-book-base span:nth-child(2) { top: 21px; width: 86%; margin: 0 auto; }
-.lx-book-base span:nth-child(3) { top: 42px; width: 72%; margin: 0 auto; }
-
-.lx-orbit {
-  position: absolute;
-  z-index: 2;
-  border: 1px solid rgba(115, 96, 255, 0.28);
-  border-radius: 50%;
-}
-.lx-orbit.orbit-one { top: 55px; right: -8px; width: 320px; height: 160px; transform: rotate(-14deg); }
-.lx-orbit.orbit-two { top: 87px; right: 22px; width: 240px; height: 118px; transform: rotate(18deg); }
 
 .lx-progress-panel {
   border-radius: 28px;
@@ -816,10 +725,7 @@
   .lx-streak { display: none; }
   .lx-dashboard-top { gap: 13px; }
   .lx-hero-card { min-height: 520px; grid-template-columns: 1fr; padding: 26px 22px; }
-  .lx-hero-copy h1 { font-size: 40px; }
   .lx-hero-art { min-height: 220px; }
-  .lx-floating-card { top: 13px; left: 42%; width: 120px; height: 145px; }
-  .lx-book-base { left: 20%; }
   .lx-progress-panel { padding: 20px; }
   .lx-progress-stats { grid-template-columns: repeat(2, 1fr); }
   .lx-goal-row { grid-template-columns: 1fr auto; }
