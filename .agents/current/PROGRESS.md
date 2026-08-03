@@ -1,22 +1,23 @@
 # Current Task Progress
 
-## 2026-08-04 00:35 Europe/Moscow
+## 2026-08-04 00:58 Europe/Moscow
 
 ### Verified
 
-- Base `7c3684a63e415c647f0b1c7a96ac86387f79cafd` is the exact current `main` after PR #369 reconciliation and exact-SHA lightweight main CI run `30855006068`.
-- Latest deployed product remains `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`, stage run `30854579569`, with deploy, public smoke and 12/12 public browser checks successful.
-- Issue #70 remains open with exactly 21 `requires-proof` manifest items before this slice.
-- The only `mobile-pwa-fixes.css` → `adaptive-navigation.css` exact-selector item is `.lx-resource-stack | width`.
-- Live resource-stack renderers exist in Home, Learn, Progress, Dictionary, Active Lesson and the compatibility fallback, all below canonical `.lx-routed-app` production ancestry.
+- Base `7c3684a63e415c647f0b1c7a96ac86387f79cafd` is the exact reconciled `main`.
+- Latest deployed product is `7c4f6b2fa9237080451f0a7ebaa48201e124b53f`, stage run `30854579569`, with deploy, public smoke and 12/12 browser checks successful.
+- Draft PR #370 is the only active Issue #70 product slice.
+- All six live resource-stack renderers are mounted below canonical `.lx-routed-app` ancestry.
+- Diagnostic CI #2645 / run `30855471416` passed lint, TypeScript and 84 files / 533 tests except five assertions caused solely by the intentionally stale 70-item expectation.
+- The parser proved the source correction that removed the fallback conflict would produce 70 IDs with no replacement pair.
 
 ### Finding
 
-The approved tablet result already requires `.lx-resource-stack` to fill `.lx-main-content`, but the unscoped adaptive selector had equal specificity with the global mobile-PWA max-width owner. Reversing stylesheet order could therefore restore the 28px inset inside the 720–1099px tablet range.
+Deleting the exact fallback conflict is not required by Issue #70 and would narrow compatibility ownership. The safer mechanism is to retain the reviewed unscoped fallback while adding a stronger canonical routed owner that makes production output independent of import order.
 
 ### Root cause
 
-`adaptive-navigation.css` grouped `.lx-resource-stack` with `.lx-async-state` under one equal-specificity tablet rule. The two selectors are separate ownership boundaries: resource-stack is a routed application-shell layout owner, while async-state is a shared system-state owner reserved for a later atomic slice.
+The original tablet fallback group serves both compatibility resource stacks and shared async state. Production routed stacks lacked a separate stronger owner, so equal-specificity fallback declarations could depend on root import order.
 
 ### Changed files
 
@@ -28,22 +29,22 @@ The approved tablet result already requires `.lx-resource-stack` to fill `.lx-ma
 - `frontend/components/navigation-mobile-shell-css-ownership.test.ts`;
 - `frontend/e2e/navigation-mobile-shell-cascade.spec.ts`.
 
-`frontend/app/global-feature-style-overlap-manifest.json` is intentionally still stale until the authoritative parser emits the exact 70-item inventory.
+The manifest JSON is unchanged.
 
 ### Checks passed
 
-- The tablet group was split without changing either declaration value.
-- `.lx-routed-app .lx-resource-stack { width: 100%; }` is bounded to the existing 720–1099px media block.
-- `.lx-async-state { width: 100%; }` remains unscoped and unchanged.
-- Mobile-PWA still owns `min(1160px, calc(100% - 28px))` globally and remains unchanged.
-- Source contracts now require zero mobile/adaptive exact-selector conflicts and protect all six live renderer files.
-- Browser proof now measures whether resource stack and main-content widths match: false below 720px, true from 720px through 1099px.
-- Production, routed-shell-first and mobile-first orders remain part of both authoritative UI scripts.
+- The existing `.lx-resource-stack, .lx-async-state { width: 100%; }` compatibility fallback is preserved.
+- `.lx-routed-app .lx-resource-stack { width: 100%; }` is bounded to 720–1099px.
+- `.lx-async-state` value and specificity remain unchanged.
+- Browser proof compares resource stack and main-content widths at six boundaries under three stylesheet orders.
+- Compact behavior remains inset below 720px; routed tablet behavior fills main content.
+- Manifest contracts again expect the unchanged 71-item inventory and exactly one bounded mobile/adaptive resource-stack item.
+- The temporary malformed manifest commit was force-removed from the branch before this mechanism was committed.
 
 ### Checks failed
 
-- No authoritative CI has run on this branch yet.
-- The manifest and its new 70-item expectations intentionally disagree until diagnostic CI provides parser-derived output.
+- No authoritative CI has run on the final fallback-plus-routed-owner mechanism yet.
+- Earlier diagnostic runs are not delivery evidence because their source heads differ from the final branch.
 
 ### Current branch head
 
@@ -51,4 +52,4 @@ Resolve from the live branch after this Agent Harness update.
 
 ### Next action
 
-Open a Draft PR and run full CI as a fail-closed diagnostic. Require frontend core to fail only on the stale manifest, extract the exact 70-item parser inventory, commit that generated manifest, then rerun the complete immutable-head product pipeline.
+Run full CI on the final immutable source. Inspect frontend parser/source tests first, then require the full browser, visual, accessibility, performance, backend and container matrix before Ready/merge.
