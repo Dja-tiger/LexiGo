@@ -118,6 +118,7 @@ async function readComposerSnapshot(page: Page): Promise<ComposerSnapshot> {
     const sourceColumns = buttons.filter(
       (button) => Math.abs(button.getBoundingClientRect().top - firstTop) < 0.5,
     ).length;
+    const footerStyle = style(".lx-setup-footer");
 
     return {
       sourceColumns,
@@ -125,8 +126,9 @@ async function readComposerSnapshot(page: Page): Promise<ComposerSnapshot> {
       sourceButtonGridTemplateColumns: style(
         ".lx-source-selector > button",
       ).gridTemplateColumns,
-      footerDisplay: style(".lx-setup-footer").display,
-      footerGridTemplateColumns: style(".lx-setup-footer").gridTemplateColumns,
+      footerDisplay: footerStyle.display,
+      footerGridTemplateColumns:
+        footerStyle.display === "contents" ? "not-applicable" : footerStyle.gridTemplateColumns,
       submitDisplay: style(".lx-setup-submit").display,
       horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
     };
