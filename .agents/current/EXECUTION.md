@@ -1,43 +1,87 @@
 # Current Task Execution
 
-No atomic production slice is active.
+## Active delivery
 
-## Completed delivery
+- Issue: #70.
+- Branch: `test/issue-70-navigation-mobile-cascade-evidence`.
+- Verified base and merge base: `626b6f637f517253aea87faf12223e4e43bfc1e0`.
+- Draft PR: #364 — `test(frontend): prove navigation mobile cascade owners`.
+- Initial immutable candidate: `afce1afd42afc5e206edd9f52d94ae358b11f1eb`.
+- Browser-fixture correction commits: `45de7c33618ef9d7d49135c308c2f6335cee8c59` and `c83c31e3783a0ef42700063cd892a7415b1fd222`.
+- Latest branch commit before this execution update: `cb6e559464e7e5e62f8719dc5586d557ad2cf30a`.
+- Final authoritative head: resolve from live PR after this write.
 
-- PR: #362 — `test(frontend): inventory global CSS source-order conflicts`.
-- Base: `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
-- Final immutable developer-authored head: `442f7c1cfb3c8bf67346eb026207de565e611f9e`.
-- Authoritative PR CI: #2591 / run `30809820372`, complete success without retry.
-- Review surface before Ready: no comments, reviews or unresolved review threads.
-- Expected-head squash merge: `8c342e219f4d274a89189534deae20c3499e5c9e`.
-- Exact-SHA main CI: run `30810594048`, complete product matrix success.
-- Exact-SHA stage: run `30811188594`; deploy, public smoke and all 12 public browser checks completed successfully without retry.
+## Applied procedures
 
-## Durable result
+- Re-read live `main`, Issue #70, current Agent Docs, open PR inventory, CI and stage before writes.
+- Kept Dependabot PRs #304–#306 outside the active slice.
+- Re-applied computed-cascade rules: browser-computed behavior is authoritative; fixture defects must not be misclassified as production CSS defects.
+- Limited the slice and its correction to proof/test/current-context paths.
 
-- `global-feature-style-overlap-source.test.ts` derives CSS imports from the actual root layout and parses cross-file exact-selector/property conflicts without new dependencies.
-- The parser handles comments, strings, selector groups, declarations and nested media/supports/container/layer contexts while excluding keyframes and same-file layering.
-- A candidate requires identical normalized `.lx-*` selector/property, different values, equal important priority, overlapping recognized media conditions and different files.
-- Ordered actual conflict IDs must exactly equal the ordered runtime-validated JSON manifest.
-- `global-feature-style-overlap-manifest.test.ts` requires exactly 107 unique items, classification totals 50/57/0, the exact 12 stylesheet pairs and exact pair counts.
-- Intentional accessibility-layer overrides: Scenario Lessons 40, Lesson Composer 5, Progress Evidence 4 and Knowledge Coach route-rail target 1.
-- Remaining `requires-proof` groups: premium/adaptive navigation 21, premium/mobile PWA 10, Scenario Catalog/Learning switch 8, mobile PWA/adaptive navigation 6, premium/adaptive layout 6, premium/Phrases grid 4, account-security/adaptive Home 1 and adaptive-navigation/system-states 1.
-- No production CSS, runtime, route, API, snapshot, budget, workflow, dependency, README or architecture path changed.
-- Linux visual hashes, accessibility and route-performance budgets passed unchanged in both PR and exact-SHA main CI.
+## Source evidence
 
-## Exact validation
+`frontend/components/navigation-mobile-shell-css-ownership.test.ts`:
 
-- PR CI passed frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
-- Backend unit/security/integration, UI shards, Lesson completion, Dictionary smoke, iOS PWA, service worker, CSP, visual regression, accessibility, performance budgets and both container builds passed.
-- Main CI repeated the same matrix on the squash merge and published exact-SHA web/API images.
-- Stage deployed those images, returned HTTP 200 for public frontend/API smoke and passed all 12 desktop Chromium/iOS WebKit runtime checks.
+- parses the durable global overlap manifest from `unknown`;
+- requires exactly 37 `requires-proof` items and exact pair counts 21/10/6;
+- verifies production import order premium → mobile PWA → adaptive navigation;
+- verifies premium/mobile 760px, adaptive compact 719px and adaptive tablet 720–1099px boundaries;
+- protects mobile PWA, adaptive tablet and premium declaration inventories;
+- requires the browser spec exactly once in both authoritative UI scripts;
+- requires a `width=device-width, initial-scale=1` viewport meta tag and the explicit Playwright viewport call.
 
-## Next execution boundary
+## Browser evidence
 
-After this documentation-only reconciliation merges, re-read live GitHub state and take only the navigation/mobile-shell cluster. Start with computed-cascade evidence at compact, 719px, 720px, 760px and tablet widths. Establish canonical ownership independently of import order before changing production CSS.
+`frontend/e2e/navigation-mobile-shell-cascade.spec.ts`:
 
-Do not combine Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections.
+- reads actual production CSS from the repository checkout;
+- loads global box sizing/tokens, premium, mobile PWA and adaptive navigation in production order;
+- uses production-class shell markup without application API/runtime dependencies;
+- uses a complete HTML document with production-equivalent viewport metadata;
+- records computed values at 390, 719, 720, 760, 761 and 1024px;
+- asserts exactly one visible primary navigation and no horizontal overflow;
+- asserts the 719/720 mobile-to-rail switch, 720–760 hybrid owner and 760/761 visual-owner transition.
+
+## Initial authoritative CI #2596 / run `30812873755`
+
+- Exact head: `afce1afd42afc5e206edd9f52d94ae358b11f1eb`.
+- Frontend core, backend unit/security/integration, Dictionary smoke, service worker, iOS PWA, CSP, accessibility, visual regression, performance budgets, Lesson completion and UI shard 1 passed.
+- UI shard 2 job `91683942785` failed only the new cascade spec; aggregate frontend and containers were downstream skipped/failed.
+- Downloaded artifact `frontend-playwright-report-ui-2` exposed the exact project and computed snapshots.
+- The cases ran under `android-chromium`.
+- Without `<meta name="viewport" content="width=device-width, initial-scale=1">`, the mobile-emulation layout viewport stayed approximately 980px even after `page.setViewportSize({ width: 390..760 })`.
+- Consequently tablet media queries and premium visual values were correctly selected by the invalid fixture at all four narrow widths.
+- The failure was deterministic on retry and was not infrastructure flakiness.
+
+## Root-cause correction
+
+- Added the viewport meta tag and complete document structure to the isolated fixture.
+- Preserved all original expected computed values; no expectation was weakened to copy invalid-fixture output.
+- Added source-contract enforcement so the viewport meta cannot be silently removed.
+- Changed no production CSS, selector, declaration, import order, runtime, dependency, lockfile, snapshot, budget, workflow, README or architecture path.
+- Did not rerun the old head; branch updates trigger a new authoritative run on the corrected head.
+
+## Repository safety
+
+- Branch compare remained limited to the six allowed paths.
+- Main and deployed stage remained unchanged during failure classification and correction.
+- No direct main write, blind retry, timeout increase, browser skip, snapshot update or budget increase was used.
+
+## Validation plan
+
+1. Treat the live PR head created by this execution update as the corrected final developer-authored candidate.
+2. Require complete classifier-selected CI on that exact head.
+3. Require frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
+4. Require complete browser/accessibility/visual/performance/backend/container jobs.
+5. Audit comments, reviews and unresolved threads before Ready.
+6. Perform expected-head squash merge.
+7. Validate exact merge SHA in main CI and stage/public deployment.
+8. Reconcile Agent Docs separately before selecting a production correction.
+
+## Next production boundary
+
+Use the corrected browser evidence to choose one navigation/mobile-shell ownership correction only. Candidate mechanisms remain unselected until the full corrected CI passes.
 
 ## Rollback
 
-Revert this documentation-only reconciliation PR. Product code and deployed images remain unchanged.
+Revert PR #364. Product CSS, runtime, deployed images, database, APIs, snapshots and budgets remain unchanged.
