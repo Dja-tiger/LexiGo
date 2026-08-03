@@ -1,39 +1,100 @@
 # Current Task Execution
 
-No mergeable atomic production slice is active on the current `main`.
+## Task
 
-## Completed delivery
+- Issue: #70
+- Branch: `test/issue-70-complete-fallback-inventory`
+- Reconstructed base SHA: `3a6bf7686a2563c2828b9293b9ac381397274710`
+- Previous obsolete base SHA: `df3cd097cbd159a4d441aea4ce783043dabe36ec`
+- Previous proof head: `9916d95b7d6584a05da91393adfaa7743d37d0f4`
+- PR: #354 (Draft)
 
-- PR: #355 — `test(frontend): prove legacy Home hero CSS orphaned`.
-- Final developer-authored head: `0ed20b621e7b3805498174c0267371cdca0b39df`.
-- Authoritative PR CI: #2558 / run `30772507155`, complete success without retry.
-- Review surface before Ready: no comments, reviews or unresolved review threads.
-- Expected-head squash merge: `f279bc577704f3f68bf587f4c88b474a62929c02`.
-- Exact-SHA main CI: run `30772832623`, complete product matrix success.
-- Exact-SHA stage: run `30773148243`; deploy, public smoke and all 12 public browser validations succeeded.
+## Repository harness and concurrency recovery
 
-## Durable result
+Purpose:
 
-- `home-hero-orphan-source.test.ts` scans executable TypeScript/TSX from the actual frontend checkout.
-- Tests/specs are excluded and source comments are stripped.
-- `lx-hero-copy`, `lx-glow`, `lx-floating-card`, `lx-book-base` and `lx-orbit` have zero executable consumers.
-- Their exact bounded inventory is 19 selector-token occurrences, all in `premium-ui.css`.
-- Live canonical Home `lx-hero-card`, `lx-hero-art`, `lx-word-preview`, `lx-home-next-action-copy` and `lx-progress-panel` owners remain protected.
-- Live compatibility Lesson `lx-resume-strip` and guest authentication/recovery `lx-auth-card` owners remain protected.
-- Production CSS, runtime, snapshots, performance ceilings, dependencies and workflows were unchanged.
-- Linux visual regression, accessibility and route-performance budgets passed on both final PR head and exact merge SHA.
+Continue the existing proof-only PR without merging stale task state or losing the exact source-contract intent after concurrent PR #355 advanced `main`.
 
-## Concurrent PR boundary
+Instruction sources:
 
-- Draft PR #354 was opened from older base `df3cd097cbd159a4d441aea4ce783043dabe36ec` while PR #355 was in progress.
-- Its intended scope is proof-only: `compatibility-fallback-source.test.ts` and `.agents/current/**`.
-- It is non-mergeable against the delivered `main` because task records diverged.
-- This reconciliation records the conflict explicitly instead of overwriting or merging stale branch state.
+- repository Agent Harness documents;
+- `.agents/PROJECT_STATE.md` reconciled by PR #356;
+- Issue #70 compatibility reachability rules;
+- live PR #354 metadata and exact branch content;
+- exact main/stage evidence for PR #355.
 
-## Next execution boundary
+Actions performed:
 
-After this docs-only reconciliation merges, reconstruct PR #354 onto the exact new `main`, preserve only its bounded source-contract intent, refresh `.agents/current/**`, and run the complete immutable-head delivery sequence. Do not start the Home hero CSS deletion until PR #354 is resolved and repository memory is reconciled again.
+- Detected PR #354 after PR #355 delivery instead of incorrectly claiming no open PR.
+- Kept PR #354 Draft and blocked merge while its base and current-task records were stale.
+- Completed separate Agent Docs reconciliation PR #356.
+- Verified new live `main` `3a6bf7686a2563c2828b9293b9ac381397274710`.
+- Read the exact source-contract file from the old PR #354 head.
+- Verified old head CI #2557 / run `30772233239` was green but marked it non-authoritative for the new base.
+- Force-reset only the existing PR head branch to exact new `main`.
+- Reapplied the single product test file and refreshed `.agents/current/**`.
+
+Result:
+
+PR #354 is reconstructed on the reconciled base without carrying stale task records. No production runtime or CSS was changed.
+
+Failure avoided:
+
+Merging the old head would have discarded or conflicted with PR #355 task evidence and would not have validated the combined repository state.
+
+Fallback:
+
+Force-reset the Draft branch again to exact `main` if the final four-path comparison is not clean. Do not modify production source to resolve documentation conflicts.
+
+Reusable lesson:
+
+When two proof-only branches are created concurrently, deliver and reconcile the first completed product slice, then reconstruct the remaining Draft from exact main rather than merging stale `.agents/current/**` history.
+
+## Compatibility fallback inventory proof
+
+Purpose:
+
+Make the final fallback source contract cover every dedicated island and every intentionally live compatibility/shared owner before any deletion.
+
+Files inspected:
+
+- `frontend/components/compatibility-fallback-source.test.ts` on old PR head and new main;
+- `frontend/components/lexigo-bootstrapped-app.tsx`;
+- `frontend/components/lexigo-premium-app.tsx`;
+- current repository memory and PR #354 metadata.
+
+Actions performed:
+
+- Expanded dedicated owner render-order assertions from six to nine components.
+- Added exact predicates for Home, Learn, Active Lesson, Dictionary, Phrases, Progress, Profile, Scenario Catalog and Scenario Detail.
+- Preserved remaining premium dispatch for Library, Profile and Lesson.
+- Protected guest Profile through the authenticated-only canonical Profile predicate.
+- Protected unknown/product-route fallback.
+- Protected Review Outbox, email confirmation and account panels as shared bootstrap owners.
+- Retained canonical Learn CSS consumer assertions.
+
+Boundaries preserved:
+
+- Guest authentication and recovery remain compatibility-owned.
+- Library remains live for Dictionary History.
+- Lesson and unknown/product-route fallback remain live.
+- Shared account/session runtime remains outside route-island ownership.
+- PR #355 Home hero proof remains unchanged.
+
+## Validation plan
+
+1. Read back all four changed paths from the reconstructed branch.
+2. Compare the branch to exact base `3a6bf768…` and require only the declared paths.
+3. Treat the resulting branch head as the final developer-authored candidate.
+4. Require a new complete authoritative CI run on that immutable head.
+5. Require frontend core, backend unit/security/integration, complete browser matrix, accessibility, CSP, PWA, visual regression, performance budgets and both container builds to pass.
+6. Do not update visual snapshots or performance ceilings.
+7. Audit comments, reviews and unresolved review threads.
+8. Mark Ready only after complete green CI.
+9. Perform expected-head squash merge.
+10. Require exact merge SHA main CI and stage/public validation.
+11. Reconcile repository memory in a separate Agent Docs PR.
 
 ## Rollback
 
-Revert this documentation-only PR. Product code and the deployed images remain unchanged.
+Revert PR #354. No production runtime, schema, data, API or deployment rollback is required.
