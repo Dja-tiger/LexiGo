@@ -8,13 +8,14 @@
 - Draft PR: #362 — `test(frontend): inventory global CSS source-order conflicts`.
 - Initial discovery head: `e75fc8e0e36e2672aa6e725beaf1afa1a7612af6`.
 - Classified-manifest commit: `6f0dd8cce26c818f190c24564ab1c146702f01a8`.
-- Latest branch commit before this execution update: `5831181ea8c49a84a3e714e823275520e8eeeedb`.
-- Final authoritative head: resolve from live PR after current-context commits complete.
+- Manifest classification-contract commit: `2b39997f36f56cd4c85a14143741a570d468ebb0`.
+- Latest branch commit before this execution update: `f566a652db4d874bda7952c4a70206ef4091a850`.
+- Final authoritative head: resolve from live PR after this update.
 
 ## Applied procedures
 
 - Re-read live `main`, PR #362, open PR inventory, Issue #70, stage status and current repository memory before continuing.
-- Confirmed that PRs #304–#306 are parallel Dependabot maintenance and must not be mixed into the active Issue #70 slice.
+- Confirmed that PRs #304–#306 are parallel Dependabot maintenance and were not mixed into the active Issue #70 slice.
 - Re-applied the Issue #70 compatibility reachability and computed-cascade rules.
 - Kept this PR proof-only: no production CSS, component, runtime, route, API, snapshot, budget, workflow or dependency changes.
 
@@ -27,7 +28,14 @@
 - Candidates require different files, identical normalized `.lx-*` selector/property, equal important priority, different values and overlapping media conditions.
 - IDs contain selector, property, priority, file names, condition stacks and exact values.
 - `global-feature-style-overlap-manifest.json` is parsed from `unknown` with explicit runtime validation; unchecked casting is prohibited.
-- The final manifest is exact and ordered: additions, removals or ID mutations make the unit contract fail.
+- Ordered actual conflict IDs must exactly equal ordered manifest IDs.
+- `global-feature-style-overlap-manifest.test.ts` independently fail-closes:
+  - 107 unique items;
+  - classification totals 50/57/0;
+  - the exact 12 stylesheet pairs;
+  - exact pair counts;
+  - one reviewed classification per pair;
+  - unknown pairs and mixed classifications.
 
 ## Discovery runs
 
@@ -64,20 +72,20 @@
   - account security → adaptive Home: 1;
   - adaptive navigation → system states: 1.
 - No item is marked `protected` merely because a similarly named contract exists.
-- In particular, the existing Phrases CSS ownership contract protects route-scoped catalog-sort selectors, not the unscoped `.lx-phrase-grid` conflicts, so all four grid items remain `requires-proof`.
+- The existing Phrases CSS ownership contract protects route-scoped catalog-sort selectors, not the unscoped `.lx-phrase-grid` conflicts, so all four grid items remain `requires-proof`.
 
 ## Read-back evidence
 
 - Parser/source-contract blob: `ac08cb103b47b644a909fbe03f9c7da4ad6aa5d5`.
 - Classified manifest blob: `a2b5fcda3459cbea0192c25b445a2ce25bc6f2ff`.
-- Progress blob after classification record: `fe38ff50d790a8071bd2a7e6c600005c361cffa2`.
-- Manifest contains 107 explicit item objects with non-empty evidence.
+- Manifest classification-contract commit: `2b39997f36f56cd4c85a14143741a570d468ebb0`.
+- Progress blob after manifest-contract record: `b15a2cae71197089ff6f4a47456ccded74207dfa`.
 - Production source remains unchanged.
 
 ## Validation plan
 
-1. Complete current-context reconciliation and freeze the resulting live PR head.
-2. Require full classifier-selected CI on that exact immutable head.
+1. Treat the live PR head created by this execution update as the final developer-authored candidate.
+2. Require full classifier-selected CI on that exact head.
 3. Require frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
 4. Require every backend, browser, accessibility, visual, performance and container job selected by the fail-closed classifier.
 5. Do not modify snapshots, route budgets, timeouts, browser coverage or dependencies to make the PR green.
