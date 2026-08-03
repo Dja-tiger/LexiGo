@@ -116,9 +116,8 @@ const premiumAdaptiveItems = manifest.filter((item) => ownerPair(item.id) === PR
 const mobileAdaptiveItems = manifest.filter((item) => ownerPair(item.id) === MOBILE_ADAPTIVE_PAIR);
 
 describe("navigation and mobile-shell computed-cascade ownership", () => {
-  it("keeps the exact 10-item premium/mobile unresolved boundary", () => {
-    expect(premiumMobileItems).toHaveLength(10);
-    expect(premiumMobileItems.every((item) => item.classification === "requires-proof")).toBe(true);
+  it("removes every premium/mobile-PWA exact-selector conflict", () => {
+    expect(premiumMobileItems).toEqual([]);
   });
 
   it("removes all premium/adaptive conflicts and preserves only resource-stack width separately", () => {
@@ -143,11 +142,14 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
 
     expect(premium).toContain("@media (max-width: 760px)");
     expect(mobile).toContain("@media (max-width: 760px)");
+    expect(mobile).toContain("@media (max-width: 719px)");
+    expect(mobile).toContain("@media (display-mode: standalone) and (max-width: 719px)");
     expect(adaptive).toContain("@media (max-width: 719px)");
     expect(adaptive).toContain("@media (min-width: 720px) and (max-width: 1099px)");
+    expect(mobile).not.toContain("@media (display-mode: standalone) and (max-width: 760px)");
   });
 
-  it("routes production and adaptive-first browser proofs through both UI scripts", () => {
+  it("routes production, adaptive-first and mobile-first browser proofs through both UI scripts", () => {
     const uiCommand = scripts["test:e2e:ui"];
     const responsiveCommand = scripts["test:e2e:responsive"];
 
@@ -164,13 +166,25 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(browserSpec).toContain(
       'order: ["globals", "tokens", "adaptive", "premium", "mobile"]',
     );
+    expect(browserSpec).toContain(
+      'order: ["globals", "tokens", "mobile", "premium", "adaptive"]',
+    );
     expect(browserSpec).toContain("await page.setViewportSize({ width: current.width, height: 800 });");
   });
 
-  it("uses the canonical routed ancestor only for competing adaptive selectors", () => {
+  it("uses the canonical routed ancestor for competing mobile and adaptive selectors", () => {
     expect(routedApp).toContain('<div className="lx-routed-app"');
     expect(classSpecificity(".lx-routed-app .lx-header")).toBeGreaterThan(
       classSpecificity(".lx-header"),
+    );
+    expect(classSpecificity(".lx-routed-app .lx-logo-mark")).toBeGreaterThan(
+      classSpecificity(".lx-logo-mark"),
+    );
+    expect(classSpecificity(".lx-routed-app .lx-avatar")).toBeGreaterThan(
+      classSpecificity(".lx-avatar"),
+    );
+    expect(classSpecificity(".lx-routed-app .lx-view")).toBeGreaterThan(
+      classSpecificity(".lx-view"),
     );
     expect(classSpecificity(".lx-routed-app .lx-mobile-nav button.active")).toBeGreaterThan(
       classSpecificity(".lx-mobile-nav button.active"),
@@ -195,15 +209,29 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(adaptive).not.toContain(".lx-routed-app .lx-async-state");
   });
 
-  it("preserves the mobile-PWA values that remain effective through 760px", () => {
+  it("separates compact geometry from mobile visual ownership without changing values", () => {
     expect(mobile).toMatch(
-      /@media \(max-width: 760px\)[\s\S]*?\.lx-header\s*\{[\s\S]*?min-height:\s*58px;[\s\S]*?margin:\s*0 -14px;[\s\S]*?background:\s*rgba\(5, 9, 20, 0\.96\);/,
+      /@media \(max-width: 760px\)[\s\S]*?\.lx-routed-app \.lx-header\s*\{\s*background:\s*rgba\(5, 9, 20, 0\.96\);\s*\}/,
     );
     expect(mobile).toMatch(
-      /\.lx-brand,\s*\.lx-header-tools\s*\{\s*align-self:\s*end;/,
+      /@media \(max-width: 719px\)[\s\S]*?\.lx-routed-app \.lx-header\s*\{[\s\S]*?top:\s*0;[\s\S]*?min-height:\s*58px;[\s\S]*?margin:\s*0 -14px;[\s\S]*?calc\(env\(safe-area-inset-top\) \+ 12px\)[\s\S]*?18px[\s\S]*?11px;/,
     );
-    expect(mobile).toMatch(/\.lx-logo-mark\s*\{\s*width:\s*30px;\s*height:\s*38px;/);
-    expect(mobile).toMatch(/\.lx-avatar\s*\{\s*width:\s*42px;\s*height:\s*42px;/);
+    expect(mobile).toMatch(
+      /@media \(display-mode: standalone\) and \(max-width: 719px\)[\s\S]*?\.lx-routed-app \.lx-header\s*\{\s*padding-top:\s*calc\(env\(safe-area-inset-top\) \+ 16px\);/,
+    );
+    expect(mobile).toMatch(
+      /\.lx-routed-app \.lx-logo-mark\s*\{\s*width:\s*30px;\s*height:\s*38px;/,
+    );
+    expect(mobile).toMatch(
+      /\.lx-routed-app \.lx-avatar\s*\{\s*width:\s*42px;\s*height:\s*42px;/,
+    );
+    expect(mobile).toMatch(/\.lx-routed-app \.lx-view\s*\{\s*padding-top:\s*18px;/);
+    expect(mobile).toMatch(/\.lx-brand,\s*\.lx-header-tools\s*\{\s*align-self:\s*end;/);
+
+    expect(occurrenceCount(mobile, ".lx-routed-app")).toBe(6);
+    expect(occurrenceCount(mobile, "!important")).toBe(3);
+    expect(mobile).not.toContain(".lx-routed-app .lx-resource-stack");
+    expect(mobile).not.toContain(".lx-routed-app .lx-async-state");
   });
 
   it("preserves the premium values that become effective again above 760px", () => {
@@ -212,5 +240,6 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     );
     expect(premium).toMatch(/\.lx-logo-mark\s*\{[\s\S]*?width:\s*36px;[\s\S]*?height:\s*46px;/);
     expect(premium).toMatch(/\.lx-avatar\s*\{\s*width:\s*44px;\s*height:\s*44px;/);
+    expect(premium).toMatch(/\.lx-view\s*\{[\s\S]*?padding-top:\s*24px;/);
   });
 });
