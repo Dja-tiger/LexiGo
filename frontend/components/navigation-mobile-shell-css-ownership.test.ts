@@ -12,6 +12,7 @@ type ManifestItem = Readonly<{
 type PackageScripts = Readonly<Record<string, string>>;
 
 const appDirectory = path.join(process.cwd(), "app");
+const componentDirectory = path.join(process.cwd(), "components");
 const layout = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const premium = readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8");
 const mobile = readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8");
@@ -21,9 +22,17 @@ const routedShellChrome = readFileSync(
   "utf8",
 );
 const routedApp = readFileSync(
-  path.join(process.cwd(), "components", "routed-lexigo-app.tsx"),
+  path.join(componentDirectory, "routed-lexigo-app.tsx"),
   "utf8",
 );
+const resourceStackRenderers = new Map<string, string>([
+  ["home", readFileSync(path.join(componentDirectory, "lexigo-home-app.tsx"), "utf8")],
+  ["learn", readFileSync(path.join(componentDirectory, "lexigo-learn-app.tsx"), "utf8")],
+  ["progress", readFileSync(path.join(componentDirectory, "lexigo-progress-app.tsx"), "utf8")],
+  ["dictionary", readFileSync(path.join(componentDirectory, "lexigo-dictionary-app.tsx"), "utf8")],
+  ["active lesson", readFileSync(path.join(componentDirectory, "lexigo-active-lesson-app.tsx"), "utf8")],
+  ["compatibility fallback", readFileSync(path.join(componentDirectory, "lexigo-premium-app.tsx"), "utf8")],
+]);
 const browserSpec = readFileSync(
   path.join(process.cwd(), "e2e", "navigation-mobile-shell-cascade.spec.ts"),
   "utf8",
@@ -41,8 +50,6 @@ const PREMIUM_ADAPTIVE_PAIR = "premium-ui.css -> adaptive-navigation.css";
 const MOBILE_ADAPTIVE_PAIR = "mobile-pwa-fixes.css -> adaptive-navigation.css";
 const MOBILE_ROUTED_CHROME_PAIR =
   "mobile-pwa-fixes.css -> adaptive-knowledge-coach-home.css";
-const RESOURCE_STACK_CONFLICT_ID =
-  '.lx-resource-stack | width | normal -> mobile-pwa-fixes.css [global] = "min(1160px, calc(100% - 28px))" -> adaptive-navigation.css [@media (min-width: 720px) and (max-width: 1099px)] = "100%"';
 
 function parseManifest(value: unknown): readonly ManifestItem[] {
   if (!Array.isArray(value)) {
@@ -133,15 +140,11 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(mobileRoutedChromeItems).toEqual([]);
   });
 
-  it("removes all premium/adaptive conflicts and preserves only resource-stack width separately", () => {
+  it("removes premium/adaptive conflicts and keeps one explicitly proven resource fallback", () => {
     expect(premiumAdaptiveItems).toEqual([]);
-    expect(mobileAdaptiveItems).toEqual([
-      {
-        id: RESOURCE_STACK_CONFLICT_ID,
-        classification: "requires-proof",
-        evidence: "Separate computed-cascade proof required for this owner pair.",
-      },
-    ]);
+    expect(mobileAdaptiveItems).toHaveLength(1);
+    expect(mobileAdaptiveItems[0]?.classification).toBe("requires-proof");
+    expect(mobileAdaptiveItems[0]?.id).toContain(".lx-resource-stack | width | normal");
   });
 
   it("keeps production import order and the approved media boundaries explicit", () => {
@@ -184,14 +187,29 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     expect(browserSpec).toContain(
       'order: ["globals", "tokens", "mobile", "premium", "routedChrome", "adaptive"]',
     );
+    expect(browserSpec).toContain("resourceStackMatchesMainContent");
     expect(browserSpec).toContain("for (const cascade of cascadeOrders)");
     expect(browserSpec).toContain("expect(snapshot).toEqual(referenceSnapshot)");
   });
 
-  it("uses canonical routed owners for live mobile geometry and spacing", () => {
+  it("keeps every live resource stack below the canonical routed ancestor", () => {
     expect(routedApp).toContain(
       '<div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>',
     );
+    expect([...resourceStackRenderers.keys()]).toEqual([
+      "home",
+      "learn",
+      "progress",
+      "dictionary",
+      "active lesson",
+      "compatibility fallback",
+    ]);
+    for (const [owner, source] of resourceStackRenderers) {
+      expect(source, `${owner} resource-stack renderer`).toContain("lx-resource-stack");
+    }
+  });
+
+  it("uses canonical routed owners for live mobile geometry, resource width and spacing", () => {
     expect(classSpecificity(".lx-routed-app .lx-header")).toBeGreaterThan(
       classSpecificity(".lx-header"),
     );
@@ -200,6 +218,9 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     );
     expect(classSpecificity(".lx-routed-app .lx-view")).toBeGreaterThan(
       classSpecificity(".lx-view"),
+    );
+    expect(classSpecificity(".lx-routed-app .lx-resource-stack")).toBeGreaterThan(
+      classSpecificity(".lx-resource-stack"),
     );
     expect(classSpecificity(".lx-routed-app .lx-mobile-nav button.active")).toBeGreaterThan(
       classSpecificity(".lx-mobile-nav button.active"),
@@ -212,15 +233,18 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
       /\.lx-routed-app \.lx-brand,\s*\.lx-routed-app \.lx-header-tools\s*\{\s*align-self:\s*center;/,
     );
     expect(adaptive).toMatch(
+      /@media \(min-width: 720px\) and \(max-width: 1099px\)[\s\S]*?\.lx-resource-stack,\s*\.lx-async-state\s*\{\s*width:\s*100%;\s*\}[\s\S]*?\.lx-routed-app \.lx-resource-stack\s*\{\s*width:\s*100%;\s*\}/,
+    );
+    expect(adaptive).toMatch(
       /@media \(max-width: 719px\)[\s\S]*?\.lx-routed-app \.lx-mobile-nav\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(48px, 1fr\)\);/,
     );
     expect(adaptive).toMatch(
       /\.lx-routed-app \.lx-mobile-nav button\.active\s*\{[\s\S]*?color:\s*#c1adff;[\s\S]*?background:\s*rgba\(104, 75, 220, 0\.19\);/,
     );
 
-    expect(occurrenceCount(adaptive, ".lx-routed-app")).toBe(14);
+    expect(occurrenceCount(adaptive, ".lx-routed-app")).toBe(15);
     expect(occurrenceCount(adaptive, "!important")).toBe(3);
-    expect(adaptive).not.toContain(".lx-routed-app .lx-resource-stack");
+    expect(adaptive).toContain(".lx-routed-app .lx-resource-stack");
     expect(adaptive).not.toContain(".lx-routed-app .lx-async-state");
   });
 
@@ -236,6 +260,9 @@ describe("navigation and mobile-shell computed-cascade ownership", () => {
     );
     expect(mobile).toMatch(/\.lx-routed-app \.lx-view\s*\{\s*padding-top:\s*18px;/);
     expect(mobile).toMatch(/\.lx-brand,\s*\.lx-header-tools\s*\{\s*align-self:\s*end;/);
+    expect(mobile).toMatch(
+      /\.lx-resource-stack\s*\{[\s\S]*?width:\s*min\(1160px, calc\(100% - 28px\)\);/,
+    );
 
     expect(mobile).not.toContain(".lx-routed-app .lx-logo-mark");
     expect(mobile).not.toMatch(/\.lx-routed-app \.lx-header\s*\{\s*background:/);

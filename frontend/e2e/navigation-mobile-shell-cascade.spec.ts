@@ -27,6 +27,7 @@ type ShellSnapshot = Readonly<{
   avatarWidth: string;
   avatarHeight: string;
   viewPaddingTop: string;
+  resourceStackMatchesMainContent: boolean;
   headerNav: string;
   railNav: string;
   mobileNav: string;
@@ -67,6 +68,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "42px",
       avatarHeight: "42px",
       viewPaddingTop: "0px",
+      resourceStackMatchesMainContent: false,
       headerNav: "none",
       railNav: "none",
       mobileNav: "grid",
@@ -85,6 +87,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "42px",
       avatarHeight: "42px",
       viewPaddingTop: "0px",
+      resourceStackMatchesMainContent: false,
       headerNav: "none",
       railNav: "none",
       mobileNav: "grid",
@@ -103,6 +106,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "42px",
       avatarHeight: "42px",
       viewPaddingTop: "18px",
+      resourceStackMatchesMainContent: true,
       headerNav: "none",
       railNav: "flex",
       mobileNav: "none",
@@ -121,6 +125,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "42px",
       avatarHeight: "42px",
       viewPaddingTop: "18px",
+      resourceStackMatchesMainContent: true,
       headerNav: "none",
       railNav: "flex",
       mobileNav: "none",
@@ -139,6 +144,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "44px",
       avatarHeight: "44px",
       viewPaddingTop: "24px",
+      resourceStackMatchesMainContent: true,
       headerNav: "none",
       railNav: "flex",
       mobileNav: "none",
@@ -157,6 +163,7 @@ const cases: ReadonlyArray<Readonly<{ width: number; expected: ExpectedInvariant
       avatarWidth: "44px",
       avatarHeight: "44px",
       viewPaddingTop: "24px",
+      resourceStackMatchesMainContent: true,
       headerNav: "none",
       railNav: "flex",
       mobileNav: "none",
@@ -202,15 +209,18 @@ function shellMarkup(order: readonly StylesheetName[]): string {
 
 async function readShellSnapshot(page: Page): Promise<ShellSnapshot> {
   return page.evaluate(() => {
-    const style = (selector: string): CSSStyleDeclaration => {
-      const element = document.querySelector(selector);
-      if (!(element instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
-      return window.getComputedStyle(element);
+    const element = (selector: string): HTMLElement => {
+      const match = document.querySelector(selector);
+      if (!(match instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+      return match;
     };
+    const style = (selector: string): CSSStyleDeclaration => window.getComputedStyle(element(selector));
 
     const header = style(".lx-header");
     const logo = style(".lx-logo-mark");
     const avatar = style(".lx-avatar");
+    const resourceStackWidth = element(".lx-resource-stack").getBoundingClientRect().width;
+    const mainContentWidth = element(".lx-main-content").getBoundingClientRect().width;
 
     return {
       minHeight: header.minHeight,
@@ -224,6 +234,7 @@ async function readShellSnapshot(page: Page): Promise<ShellSnapshot> {
       avatarWidth: avatar.width,
       avatarHeight: avatar.height,
       viewPaddingTop: style(".lx-view").paddingTop,
+      resourceStackMatchesMainContent: Math.abs(resourceStackWidth - mainContentWidth) < 0.5,
       headerNav: style(".lx-nav").display,
       railNav: style(".lx-navigation-rail").display,
       mobileNav: style(".lx-mobile-nav").display,
