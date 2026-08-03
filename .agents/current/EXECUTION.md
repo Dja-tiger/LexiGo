@@ -13,7 +13,7 @@
 
 Purpose:
 
-Perform branch-safe repository inspection, bounded production changes, parser-driven manifest reconciliation, exact visual artifact diagnosis, CI review and expected-head delivery through the connected GitHub application.
+Perform branch-safe repository inspection, bounded CSS ownership changes, parser-driven manifest reconciliation, exact visual artifact diagnosis, CI review and expected-head delivery through the connected GitHub application.
 
 Instruction source:
 
@@ -24,9 +24,7 @@ Instruction source:
 - `.agents/AGENTS.issue-261-css-specificity.md`;
 - `.agents/AGENTS.tool-selection.md`;
 - `docs/agent-harness.md`;
-- GitHub plugin skill;
-- Chromium command-line switch definition for `--disable-skia-runtime-opts`;
-- Playwright configuration contract for `use.launchOptions.args`.
+- GitHub plugin skill.
 
 Version or verification date:
 
@@ -39,10 +37,11 @@ Inputs:
 - PR #364 source/browser evidence and delivery records;
 - production CSS owners and overlap manifest;
 - canonical routed-shell DOM;
-- CI #2606/run `30827173353` frontend diagnostics and parser output;
+- CI #2606/run `30827173353` parser diagnostics;
 - corrected full CI #2612/run `30829015122` on product head `77b90f554501db881ba735da380ec82359beda84`;
 - immutable-head CI #2614/run `30829924223` original and same-SHA failed-job rerun;
-- both visual Playwright report artifacts, screenshots, traces, CSS responses and runner metadata.
+- CI #2619/run `30832095762` for the bounded renderer experiment;
+- visual Playwright reports, screenshots, traces, CSS responses and runner metadata.
 
 Files inspected:
 
@@ -73,26 +72,22 @@ Actions performed:
 - created the task branch from exact main and opened Draft PR #366;
 - scoped only competing adaptive shell selectors below `.lx-routed-app`;
 - added production-order and adaptive-first computed-cascade matrices at six critical widths;
-- ran full authoritative CI #2606 and retrieved frontend-core diagnostics;
-- parsed the exact 81-item inventory and pair/classification totals from `vitest.log`;
-- generated the exact replacement manifest locally;
-- created Git blob `957b5ae5c79f8236c4270076876552699f61f323`, verified it matched the locally computed Git blob SHA, attached it through a base-tree commit and fast-forwarded only the task branch;
-- corrected source/count contracts so `.lx-resource-stack | width` remains an explicit separate conflict;
-- ran corrected full CI #2612 on head `77b90f554501db881ba735da380ec82359beda84` without retry;
-- verified frontend core, backend unit/security, backend integration, all browser groups, aggregate frontend quality and both container builds passed;
-- verified unchanged Linux visual regression, accessibility results and route-performance budgets;
-- recorded successful product-CI evidence and ran final immutable-head CI #2614 on `4f973116616f28a81c764e8de5c8d4dd5135e151`;
-- observed one exact-hash visual failure, then reran only failed jobs on the same immutable source without changing code or baseline;
-- observed the original visual case pass and a different exact-hash case fail on the second Azure host;
+- ran authoritative CI #2606 and retrieved the exact parser output;
+- generated the exact 81-item manifest and attached Git blob `957b5ae5c79f8236c4270076876552699f61f323` through a non-forced branch fast-forward;
+- corrected source/count contracts so `.lx-resource-stack | width` remains a separate unresolved conflict;
+- ran corrected full CI #2612 successfully on product head `77b90f554501db881ba735da380ec82359beda84`;
+- verified frontend core, backend unit/security/integration, all browser groups, aggregate frontend quality and both container builds passed;
+- ran immutable-head CI #2614 and classified its moving exact-hash failures by inspecting two same-SHA attempts;
 - downloaded and extracted both visual artifacts;
-- compared approved and failed PNGs at pixel level;
-- verified each failure changed exactly three pixels, with maximum one-unit RGB-channel drift;
-- verified the production CSS response sequence, lengths and byte hashes were identical across both runs;
-- verified both attempts used synthetic merge and `APP_BUILD_ID` `00c371d4538ebe561be53453826134d446074555`;
-- compared green head `77b90f554501db881ba735da380ec82359beda84` to failing head `4f973116616f28a81c764e8de5c8d4dd5135e151` and confirmed only current Agent Docs changed;
-- added Chromium visual launch argument `--disable-skia-runtime-opts` to force Skia's baseline code path;
-- added a fail-closed source contract requiring that argument to be the only custom visual launch argument and forbidding pixel-tolerance substitution;
-- preserved all approved exact visual hashes and snapshots unchanged.
+- compared approved and failed PNGs pixel-by-pixel;
+- verified each failure changed exactly three pixels with maximum one-unit RGB-channel drift;
+- verified source, synthetic merge, `APP_BUILD_ID`, CSS response sequence, lengths and byte hashes were identical;
+- compared the green product head to the failing immutable head and confirmed only current Agent Docs had changed;
+- evaluated `--disable-skia-runtime-opts` as a bounded experiment in CI #2619;
+- observed that the experiment produced five stable alternate-raster exact-hash failures;
+- applied the pre-recorded fallback: restored `frontend/playwright.visual.config.ts`, the focused source test and TASK contract byte-for-byte;
+- preserved every visual snapshot, expected hash, tolerance and production CSS value unchanged;
+- returned PR #366 to the original eight-file CSS ownership boundary.
 
 Commands or procedures:
 
@@ -103,9 +98,8 @@ Commands or procedures:
 - read-after-write blob verification;
 - live main verification after every write;
 - authoritative CI job/log/artifact inspection;
-- same-SHA rerun of failed workflow jobs;
-- local dependency-free parsing of CI diagnostics;
-- local ZIP/report/trace extraction and exact PNG pixel comparison;
+- same-SHA rerun of failed workflow jobs after classification;
+- local dependency-free parser and exact PNG pixel comparison;
 - repository writes exclusively through the GitHub connector.
 
 Artifacts produced:
@@ -115,38 +109,39 @@ Artifacts produced:
 - exact 81-item overlap manifest;
 - fail-closed 81/50/31 count contract;
 - explicit 10-item premium/mobile and one-item resource-stack retained boundaries;
-- deterministic Chromium/Skia visual launch contract;
 - exact pixel-drift and identical-asset diagnosis;
 - active task, progress and execution records.
 
 Result:
 
-The implementation, parser-derived contracts and visual determinism correction are synchronized. Corrected full CI #2612/run `30829015122` passed completely on product head `77b90f554501db881ba735da380ec82359beda84`. Immutable-head CI #2614 showed host-dependent three-pixel Skia raster drift while every non-visual gate passed. The visual project now forces Skia's baseline raster path without changing any approved hash. One new full immutable-head CI is required before Ready and merge.
+The CSS implementation and parser-derived contracts are synchronized. Full CI #2612 passed completely on the product head. Later immutable-head visual failures were classified as moving host-dependent three-pixel raster variation. The renderer experiment did not preserve approved hashes and has been fully removed. PR #366 again contains only the eight-file CSS ownership slice and requires one final immutable-head full CI before Ready and merge.
 
 Failures:
 
-- CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and on the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership.
-- CI #2614 visual job failed on `compact Dictionary empty light`; the same-SHA rerun passed that case and failed `Profile compact light` instead. Each artifact differed from its approved hash at exactly three pixels by at most one RGB unit.
+- CI #2606 frontend core failed on the intentionally stale 107-item manifest/count contract and the initial assumption that all six mobile → adaptive conflicts belonged to navigation shell ownership.
+- CI #2614 visual failed on `compact Dictionary empty light`; the same-SHA rerun passed that case and failed `Profile compact light` instead. Each artifact differed at exactly three pixels by at most one RGB unit.
+- CI #2619 visual failed on five stable alternate-raster hashes under the experimental Skia flag. The experiment was rejected and reverted.
 
 Root cause:
 
-Five mobile → adaptive conflicts were shell selectors corrected by routed specificity. The sixth is `.lx-resource-stack | width`, a distinct layout-width owner explicitly excluded from this atomic slice. The parser correctly retained it.
+Five mobile → adaptive conflicts were shell selectors corrected by routed specificity. The sixth is `.lx-resource-stack | width`, a distinct layout-width owner excluded from this atomic slice.
 
-The visual failures were caused by Chromium/Skia runtime CPU optimization selecting slightly different raster code paths on heterogeneous Azure hosts. Identical source, build identity and CSS assets produced moving three-pixel, one-channel-unit differences rather than a stable presentation change.
+The moving visual failures were caused by host-dependent Chromium/Skia raster variation rather than a stable UI or CSS regression. Forcing a different raster path was not compatible with the repository's current approved hashes and therefore cannot be included in this PR.
 
 Fallback:
 
-- If final CI shows a stable computed presentation or approved-hash change, revert the atomic PR and select a narrower declaration-migration mechanism. Do not absorb resource-stack or premium/mobile ownership into this slice.
-- If `--disable-skia-runtime-opts` produces a stable third image instead of the approved hashes, remove the flag and stop this slice for a separate visual-harness design decision. Do not promote hashes, add tolerance or quantize screenshots in this PR.
+- Keep the visual harness, snapshots, hashes and tolerance unchanged in this slice.
+- If final CI repeats the already classified moving three-pixel variation, rerun only failed jobs on the same immutable SHA without source changes.
+- If a stable presentation or broad exact-hash change appears on the restored harness, stop delivery and investigate; do not update baselines or broaden this PR.
 
 Limitations:
 
 - local clone and direct local repository test execution remain unavailable because the execution container cannot resolve GitHub hosts;
 - repository evidence and final validation therefore use exact GitHub refs and authoritative CI;
-- CI diagnostic artifacts are used to derive exact parser and pixel evidence, never as a substitute for final immutable-head CI.
+- CI artifacts are used for parser and pixel evidence, never as a substitute for final immutable-head CI.
 
 Reusable lesson:
 
 Source-order ownership must be split by semantic owner, not only stylesheet pair. A parser-retained selector outside the selected shell boundary is evidence to narrow the contract, not a reason to broaden production scope.
 
-Exact content-addressed screenshot checks must also control the raster implementation. When identical source and assets fail on different three-pixel locations across hosts, preserve the approved hashes and remove CPU-runtime optimization as the variable instead of weakening the visual assertion.
+A renderer-level visual determinism change is a separate tooling slice when it changes existing approved hashes. It must not be mixed into a CSS ownership PR or used to justify baseline promotion.
