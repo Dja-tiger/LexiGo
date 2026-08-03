@@ -1,41 +1,104 @@
 # Current Task Execution
 
-No atomic production slice is active.
+## Active delivery
 
-## Completed delivery
+- Issue: #70.
+- Branch: `test/issue-70-global-css-overlap-inventory`.
+- Verified base and merge base: `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
+- Draft PR: #362 — `test(frontend): inventory global CSS source-order conflicts`.
+- Initial discovery head: `e75fc8e0e36e2672aa6e725beaf1afa1a7612af6`.
+- Classified-manifest commit: `6f0dd8cce26c818f190c24564ab1c146702f01a8`.
+- Manifest classification-contract commit: `2b39997f36f56cd4c85a14143741a570d468ebb0`.
+- Latest branch commit before this execution update: `f566a652db4d874bda7952c4a70206ef4091a850`.
+- Final authoritative head: resolve from live PR after this update.
 
-- PR: #360 — `style(frontend): make compact Home CSS order-independent`.
-- Base: `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
-- Final immutable developer-authored head: `ea54b29b31030556858558145c611e8e7354fda4`.
-- Authoritative PR CI: #2576 / run `30805447497`, complete success without retry.
-- Review surface before Ready: no comments, reviews or unresolved review threads.
-- Expected-head squash merge: `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
-- Exact-SHA main CI: run `30806079581`, complete product matrix success.
-- Exact-SHA stage: run `30806743687`; deploy, public smoke and all 12 public browser checks completed successfully without retry.
+## Applied procedures
 
-## Durable result
+- Re-read live `main`, PR #362, open PR inventory, Issue #70, stage status and current repository memory before continuing.
+- Confirmed that PRs #304–#306 are parallel Dependabot maintenance and were not mixed into the active Issue #70 slice.
+- Re-applied the Issue #70 compatibility reachability and computed-cascade rules.
+- Kept this PR proof-only: no production CSS, component, runtime, route, API, snapshot, budget, workflow or dependency changes.
 
-- The former order dependency was exact: shared and compact `.lx-home-next-action .lx-hero-card` selectors both had specificity `(0, 2, 0)` while assigning competing `min-height` values in the 720–760 px range.
-- Every compact Home selector entry is now scoped under `.lx-routed-app`; exactly 26 entries are protected by source contract.
-- All declaration values and responsive boundaries remain unchanged.
-- Layout intentionally loads `compact-home.css` before `information-architecture.css`.
-- `home-css-order-independence.test.ts` proves routed-shell ancestry, import inventory, scoping, media boundaries, no `!important`, and compact/shared/adaptive specificity precedence.
-- Shared hero specificity is `(0, 2, 0)`, compact is `(0, 3, 0)`, adaptive is `(0, 4, 0)`.
-- Compact therefore wins independently of source order and adaptive retains the narrower-breakpoint override.
-- No component/runtime markup, API/backend/database, session, route, Figma, snapshot, budget ceiling, workflow, dependency, README or architecture path changed.
-- Linux visual hashes, accessibility and route-performance budgets passed unchanged in both PR and exact-SHA main CI.
+## Implemented proof
 
-## Exact validation
+- `global-feature-style-overlap-source.test.ts` parses every CSS import from the actual root layout.
+- It strips comments while preserving strings, scans nested CSS blocks, skips keyframes and unsupported non-selector at-rules, splits selector groups/declarations at top level and normalizes whitespace deterministically.
+- It recognizes nested `@media`, `@supports`, `@container` and `@layer` contexts.
+- Media overlap uses min/max width/height and mutually exclusive recognized states for color scheme, forced colors, reduced motion, contrast, orientation, hover and pointer capabilities.
+- Candidates require different files, identical normalized `.lx-*` selector/property, equal important priority, different values and overlapping media conditions.
+- IDs contain selector, property, priority, file names, condition stacks and exact values.
+- `global-feature-style-overlap-manifest.json` is parsed from `unknown` with explicit runtime validation; unchecked casting is prohibited.
+- Ordered actual conflict IDs must exactly equal ordered manifest IDs.
+- `global-feature-style-overlap-manifest.test.ts` independently fail-closes:
+  - 107 unique items;
+  - classification totals 50/57/0;
+  - the exact 12 stylesheet pairs;
+  - exact pair counts;
+  - one reviewed classification per pair;
+  - unknown pairs and mixed classifications.
 
-- PR CI passed frontend lint, typecheck, unit suite, production build and dependency audit.
-- Backend unit/security/integration, UI shards, Lesson completion, Dictionary smoke, iOS PWA, service worker, CSP, visual regression, accessibility, performance budgets and both container builds passed.
-- Main CI repeated the same matrix on the squash merge and published exact-SHA web/API images.
-- Stage deployed those images, returned HTTP 200 for public frontend/API smoke and passed all 12 desktop Chromium/iOS WebKit runtime checks.
+## Discovery runs
 
-## Next execution boundary
+### CI #2580 / run `30807821770`
 
-After this documentation-only reconciliation merges, re-read live GitHub state and continue the remaining Issue #70 global feature-style audit. Build an exact overlap inventory using selector, specificity, media-condition and declaration-value evidence. Any product correction must be preceded by a fail-closed proof and delivered as a separate atomic slice. Do not close Issue #70 until app-entry, compatibility reachability, fallback-exclusive bundle evidence, global ownership, feature order independence, visual regression and README criteria are all explicitly current.
+- Lint passed.
+- Typecheck failed before unit discovery because the initial empty `satisfies` array narrowed to `never[]`.
+- Exact diagnostics were `TS2339` accesses to `id` and `evidence` on `never`.
+- Root cause was fixed by moving reviewed data to runtime-validated JSON.
+- No blind retry and no product change were used.
+
+### CI #2583 / run `30808109632`
+
+- Lint and typecheck passed.
+- Unit discovery reached the intentional fail-closed assertion.
+- 84 other test files and 525 other tests passed.
+- The only failed test printed the complete deterministic inventory between `BEGIN ACTUAL CONFLICT IDS` and `END ACTUAL CONFLICT IDS`.
+- Exact inventory size: 107 conflicts across 12 stylesheet pairs.
+
+## Classification result
+
+- 50 items are `intentional` accessibility-layer overrides:
+  - Scenario Lessons: 40;
+  - Lesson Composer: 5;
+  - Progress Evidence: 4;
+  - Knowledge Coach route-rail target size: 1.
+- 57 items are `requires-proof`:
+  - premium → adaptive navigation: 21;
+  - premium → mobile PWA fixes: 10;
+  - Scenario Catalog → Learning switch: 8;
+  - mobile PWA fixes → adaptive navigation: 6;
+  - premium → adaptive layout: 6;
+  - premium → Phrases grid: 4;
+  - account security → adaptive Home: 1;
+  - adaptive navigation → system states: 1.
+- No item is marked `protected` merely because a similarly named contract exists.
+- The existing Phrases CSS ownership contract protects route-scoped catalog-sort selectors, not the unscoped `.lx-phrase-grid` conflicts, so all four grid items remain `requires-proof`.
+
+## Read-back evidence
+
+- Parser/source-contract blob: `ac08cb103b47b644a909fbe03f9c7da4ad6aa5d5`.
+- Classified manifest blob: `a2b5fcda3459cbea0192c25b445a2ce25bc6f2ff`.
+- Manifest classification-contract commit: `2b39997f36f56cd4c85a14143741a570d468ebb0`.
+- Progress blob after manifest-contract record: `b15a2cae71197089ff6f4a47456ccded74207dfa`.
+- Production source remains unchanged.
+
+## Validation plan
+
+1. Treat the live PR head created by this execution update as the final developer-authored candidate.
+2. Require full classifier-selected CI on that exact head.
+3. Require frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
+4. Require every backend, browser, accessibility, visual, performance and container job selected by the fail-closed classifier.
+5. Do not modify snapshots, route budgets, timeouts, browser coverage or dependencies to make the PR green.
+6. Audit comments, reviews and unresolved review threads.
+7. Mark Ready only after full green CI on the final head.
+8. Squash merge with expected-head protection.
+9. Validate exact merge SHA in main CI; if stage runs for this test-only product-classified change, validate exact-SHA deploy/public checks before reconciliation.
+10. Reconcile Agent Docs separately and select only one bounded production proof cluster next.
+
+## Next production boundary
+
+The preferred next slice is navigation/mobile-shell ownership. It must start with computed values at compact, 719px, 720px, 760px and tablet widths, then establish a canonical owner independently of import order. It must not include Learning switch, Phrases grid, adaptive layout, account security or async-state changes.
 
 ## Rollback
 
-Revert this documentation-only reconciliation PR. Product code and deployed images remain unchanged.
+Revert PR #362. Product code, deployed images, database, APIs, snapshots and budgets remain unchanged.
