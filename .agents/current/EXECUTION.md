@@ -5,8 +5,10 @@
 - Issue: #70.
 - Branch: `style/issue-70-remove-home-hero-decorations`.
 - Verified base and merge base: `16b6c6967e8295767be9877a8e1b4b9d28311290`.
-- Latest verified branch commit after progress reconciliation: `dee58de493bca4be022597b723eb11db7144533d`.
-- Pull request: not opened yet.
+- Draft PR: #358 — `style(frontend): remove orphaned Home hero decorations`.
+- Published PR head before current-context reconciliation: `2b2a2f283d1eba71c63242e0da364deb16b380f2`.
+- Latest branch commit before this execution update: `96ae3cc5b5c6db1ba625707a77c247b719db8115`.
+- Final authoritative head: resolve from live PR after this write.
 
 ## Applied procedures
 
@@ -50,15 +52,16 @@
 
 - Branch `premium-ui.css` blob: `21fb6fd4d3337ec03048e35ff7e84d5a3448ddf8`.
 - Branch source-contract blob: `8c61d0b4a1ec82719b5791ec3924f79f8eff7935`.
-- Branch current-task blob before this update: `285bf795e4c9541d023653ed49c3da2b81d362ed`.
-- Branch progress blob after reconciliation: `187dd8303019626098722b2dc1812d7b89094a90`.
+- Branch task blob after PR linking: `0728dfa6a102993a1176cc4c5984738baa1fde98`.
+- Branch progress blob after PR publication: `3c47eb823d08aa0580e7a4d110b518245fe36f2b`.
 - Full CSS blob was inspected and contains none of the five retired class names, including responsive declarations.
 - Live `.lx-hero-card`, `.lx-hero-art`, `.lx-hero-actions`, `lx-resume-strip` and `lx-auth-card` declarations remain present.
+- Draft PR #358 reports exact base `16b6c6967e8295767be9877a8e1b4b9d28311290` and only five changed paths.
 
 ## Validation plan
 
-1. Publish a Draft PR from the verified branch.
-2. Require the fail-closed classifier and complete product CI on the final developer-authored head.
+1. Treat the head created by this execution update as the final developer-authored candidate.
+2. Require the fail-closed classifier and complete product CI on that exact head.
 3. Inspect source-contract, frontend core/build, browser matrix, accessibility, CSP/service-worker, Linux visual, performance and container jobs.
 4. Classify and fix any failure at the root cause; no blind retry, timeout inflation, skipped browser or baseline update.
 5. Verify PR comments, reviews and unresolved threads.
@@ -69,4 +72,4 @@
 
 ## Rollback
 
-Revert the product PR. No database, API, migration, snapshot or budget rollback is required.
+Revert PR #358. No database, API, migration, snapshot or budget rollback is required.
