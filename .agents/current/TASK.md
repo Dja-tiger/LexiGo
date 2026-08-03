@@ -6,28 +6,29 @@
 - Branch: `style/issue-70-adaptive-navigation-order-independence`.
 - Base SHA: `e72e88c697ae74dc3dbdb65ed20ce640baee243d`.
 - Head SHA: resolve from live branch ref.
-- PR: create as Draft after the bounded source/test contract is committed.
+- PR: #366 (Draft).
 
 ## Objective
 
-Make the canonical adaptive-navigation owner independent of global stylesheet import order for the 27 exact-selector conflicts where `adaptive-navigation.css` competes with `premium-ui.css` or `mobile-pwa-fixes.css`, while preserving the approved computed presentation at 390, 719, 720, 760, 761 and 1024 px.
+Make the canonical adaptive-navigation shell owner independent of global stylesheet import order for the 26 exact-selector conflicts resolved by routed-shell specificity: 21 `premium-ui.css` → `adaptive-navigation.css` items and five navigation/mobile-shell `mobile-pwa-fixes.css` → `adaptive-navigation.css` items. Preserve the approved computed presentation at 390, 719, 720, 760, 761 and 1024 px.
 
 ## Scope
 
-- add the existing `.lx-routed-app` production ancestor only to adaptive navigation selectors that participate in the navigation/mobile-shell conflict cluster;
+- add the existing `.lx-routed-app` production ancestor only to adaptive navigation selectors that participate in the header/navigation shell conflict cluster;
 - preserve declaration values and media boundaries;
 - preserve the 10 separate `premium-ui.css` → `mobile-pwa-fixes.css` conflicts for a later atomic slice;
-- update the fail-closed overlap manifest and count contract after the actual parser-derived conflict set is known;
+- preserve the separate `.lx-resource-stack` width conflict between `mobile-pwa-fixes.css` and `adaptive-navigation.css` for a later width-owner slice;
+- update the fail-closed overlap manifest and count contract from authoritative parser output;
 - extend source and Chromium computed-cascade evidence to compare production order with an adversarial adaptive-first order;
 - update current task context only.
 
 ## Non-goals
 
 - no mobile-PWA versus premium-shell correction;
-- no Learning switch, Phrases grid, adaptive layout, account-security or async-state work;
+- no `.lx-resource-stack` or `.lx-async-state` width-owner correction;
+- no Learning switch, Phrases grid, adaptive layout, account-security or other async-state work;
 - no visual redesign, Figma change or breakpoint change;
-- no runtime, route, API, backend, database, snapshot, bundle budget, workflow or dependency change;
-- no broad scoping of `.lx-resource-stack` or `.lx-async-state`, whose width ownership remains a separate conflict cluster.
+- no runtime, route, API, backend, database, snapshot, bundle budget, workflow or dependency change.
 
 ## Allowed paths
 
@@ -56,6 +57,7 @@ Make the canonical adaptive-navigation owner independent of global stylesheet im
 - `adaptive-navigation.css` owns tablet rail geometry, compact bottom navigation and adaptive header alignment/geometry.
 - `mobile-pwa-fixes.css` continues to own mobile/PWA header background, logo/avatar dimensions and view spacing through 760 px.
 - `premium-ui.css` remains the legacy/base shell owner outside adaptive/mobile overrides.
+- `.lx-resource-stack` width remains an explicitly separate unresolved owner boundary.
 
 ## Documentation owners
 
@@ -66,17 +68,19 @@ Make the canonical adaptive-navigation owner independent of global stylesheet im
 ## Invariants
 
 - Production computed values remain unchanged at every existing browser-proof viewport.
-- Adaptive navigation must win its own properties even when loaded before premium and mobile stylesheets.
+- Adaptive navigation must win its shell properties even when loaded before premium and mobile stylesheets.
 - Mobile-PWA versus premium-shell source-order dependency must remain explicitly visible as exactly 10 unresolved manifest items.
+- The `.lx-resource-stack` mobile → adaptive width conflict must remain explicitly visible as exactly one unresolved manifest item.
 - `.lx-resource-stack` and `.lx-async-state` selectors must not gain routed-shell specificity in this slice.
-- No `!important`, timeout increase, snapshot update or budget increase is permitted.
+- No new `!important`, timeout increase, snapshot update or budget increase is permitted.
 - Exactly one primary navigation is visible and no horizontal overflow occurs at every measured viewport.
 
 ## Acceptance criteria
 
-- The 21 premium → adaptive and 6 mobile → adaptive exact-selector conflicts are absent from the parser-derived manifest.
+- All 21 premium → adaptive exact-selector conflicts are absent from the parser-derived manifest.
+- Five navigation/mobile-shell mobile → adaptive conflicts are absent; only the exact `.lx-resource-stack | width` item remains for that pair.
 - The remaining navigation/mobile-shell manifest boundary contains exactly 10 premium → mobile items, all classified `requires-proof`.
-- The total manifest becomes 80 items with classifications 50 `intentional`, 30 `requires-proof`, 0 `protected` unless the actual parser output proves a different bounded result.
+- The total manifest contains exactly 81 items: 50 `intentional`, 31 `requires-proof`, 0 `protected`.
 - Adaptive navigation conflict selectors are scoped below `.lx-routed-app` with stronger specificity than the competing unscoped selectors.
 - Browser snapshots are identical under production order and adversarial adaptive-first order at 390, 719, 720, 760, 761 and 1024 px.
 - Existing authoritative Linux visual hashes, accessibility checks and route-performance budgets remain unchanged.
@@ -94,9 +98,9 @@ Make the canonical adaptive-navigation owner independent of global stylesheet im
 ## Risks
 
 - over-broad selector scoping could accidentally take ownership from later system-state or route-specific styles;
-- an incomplete selector inventory could leave one adaptive conflict source-order dependent;
+- an incomplete selector inventory could hide the separate resource-stack width boundary;
 - adversarial CSS ordering could accidentally reverse the intentionally unresolved premium/mobile pair;
-- manifest editing before parser evidence could omit or retain stale conflict IDs.
+- manifest editing not derived from parser evidence could omit or retain stale conflict IDs.
 
 ## Rollback
 
