@@ -10,11 +10,6 @@ const sharedUse = {
   trace: "retain-on-failure" as const,
   screenshot: "only-on-failure" as const,
   video: "retain-on-failure" as const,
-  launchOptions: {
-    // Force Skia's baseline raster path so exact PNG hashes do not depend on
-    // runtime-detected CPU optimizations of the heterogeneous CI host.
-    args: ["--disable-skia-runtime-opts"],
-  },
 };
 
 export default defineConfig({
