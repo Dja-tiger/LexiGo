@@ -1,36 +1,56 @@
 # Current Task Progress
 
-## Status
+## 2026-08-03 — reconstructed PR #354
 
-- PR #355 is squash-merged as product SHA `f279bc577704f3f68bf587f4c88b474a62929c02`.
-- PR #355 final developer-authored head `0ed20b621e7b3805498174c0267371cdca0b39df` passed full CI #2558 / run `30772507155` without retry.
-- Exact-SHA main CI run `30772832623` completed the full product matrix successfully.
-- Exact-SHA stage run `30773148243` completed deploy, public smoke and all 12 public browser validations successfully.
-- No production CSS or runtime changed in PR #355.
-- This Agent Docs reconciliation records the delivered proof and the concurrent PR boundary.
+### Verified live state
 
-## Completed proof
+- Live `main` is `3a6bf7686a2563c2828b9293b9ac381397274710`.
+- PR #355 is delivered and reconciled; deployed product SHA remains `f279bc577704f3f68bf587f4c88b474a62929c02`.
+- Exact-SHA stage run `30773148243` is green.
+- PR #354 remained Draft from obsolete base `df3cd097cbd159a4d441aea4ce783043dabe36ec` and was non-mergeable because task records diverged.
+- Its old head `9916d95b7d6584a05da91393adfaa7743d37d0f4` passed CI #2557 / run `30772233239`, but that result is not authoritative after the base changed.
 
-- Added `home-hero-orphan-source.test.ts` as actual-checkout executable evidence.
-- Proved zero executable consumers for `lx-hero-copy`, `lx-glow`, `lx-floating-card`, `lx-book-base` and `lx-orbit`.
-- Bounded the exact inventory to 19 selector-token occurrences in `premium-ui.css`.
-- Protected live canonical Home `lx-hero-card`, `lx-hero-art`, `lx-word-preview`, `lx-home-next-action-copy` and `lx-progress-panel` owners.
-- Protected live compatibility `lx-resume-strip` and guest authentication/recovery `lx-auth-card` owners.
-- Preserved global stylesheet import order, visual baselines and performance ceilings.
+### Reconstruction
 
-## Concurrent Draft PR #354
+- Force-reset only the PR #354 head branch to exact reconciled `main` `3a6bf7686a2563c2828b9293b9ac381397274710`.
+- Reapplied the bounded `compatibility-fallback-source.test.ts` change.
+- Rewrote `.agents/current/**` for the new base and preserved PR #355 delivery evidence through repository memory.
+- No production runtime, CSS, snapshot, budget, workflow, dependency, backend/API, README or architecture file changed.
 
-- PR #354 was created during execution of PR #355 from base `df3cd097cbd159a4d441aea4ce783043dabe36ec`.
-- It is proof-only and intends to complete the compatibility fallback source inventory.
-- It is currently Draft and non-mergeable because its `.agents/current/**` files diverged from the product delivery that reached `main`.
-- It must not be merged or treated as authoritative on its current head.
+### Source-contract changes
 
-## Next action
+- Render-order assertions now cover all nine dedicated route-island components:
+  - Scenario Catalog;
+  - Scenario Detail;
+  - Home;
+  - Learn;
+  - Active Lesson;
+  - Dictionary/Word Detail;
+  - Phrases;
+  - Progress;
+  - authenticated Profile.
+- Added fail-closed assertions for all nine island predicates.
+- Preserved exact premium presentation dispatch for Library, Profile and Lesson.
+- Added explicit guest Profile protection through `initialSession !== null` on the canonical Profile island.
+- Protected shared Review Outbox, email confirmation and account panels outside route-island selection.
+- Retained canonical Learn CSS consumer evidence.
 
-After this docs-only reconciliation merges:
+### Scope evidence
 
-1. Re-read the exact new `main`, PR #354 and its source-contract patch.
-2. Reconstruct PR #354 on the new base while retaining only its bounded `compatibility-fallback-source.test.ts` change and refreshed `.agents/current/**`.
-3. Require a new immutable developer-authored head and complete full CI.
-4. Audit review surface, expected-head squash merge and exact-SHA main/stage validation.
-5. Reconcile repository memory separately before the later Home hero CSS deletion slice.
+Allowed paths only:
+
+- `frontend/components/compatibility-fallback-source.test.ts`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+
+### Validation state
+
+- The source-contract content was read from the prior green proof head before reconstruction.
+- The new branch is based on exact reconciled `main`.
+- Pre-rebase CI is historical evidence only.
+- A new final immutable head and complete authoritative CI are required.
+
+### Next action
+
+Write the execution record, compare the reconstructed branch against exact base, verify the four-path allow-list, treat the resulting head as the final developer-authored candidate and monitor only the latest full CI run.
