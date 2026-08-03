@@ -167,24 +167,24 @@ const cases: ReadonlyArray<Readonly<{
   {
     width: 390,
     expected: {
-      header: { minHeight: "58px", marginLeft: "-14px", paddingTop: "12px" },
+      header: { minHeight: "54px", marginLeft: "-14px", paddingTop: "0px" },
       brandAlignSelf: "end",
       toolsAlignSelf: "end",
       logo: { width: "34px", height: "34px" },
       avatar: { width: "42px", height: "42px" },
-      viewPaddingTop: "18px",
+      viewPaddingTop: "0px",
       visibility: { header: "none", rail: "none", mobile: "grid" },
     },
   },
   {
     width: 719,
     expected: {
-      header: { minHeight: "58px", marginLeft: "-14px", paddingTop: "12px" },
+      header: { minHeight: "54px", marginLeft: "-14px", paddingTop: "0px" },
       brandAlignSelf: "end",
       toolsAlignSelf: "end",
       logo: { width: "34px", height: "34px" },
       avatar: { width: "42px", height: "42px" },
-      viewPaddingTop: "18px",
+      viewPaddingTop: "0px",
       visibility: { header: "none", rail: "none", mobile: "grid" },
     },
   },
