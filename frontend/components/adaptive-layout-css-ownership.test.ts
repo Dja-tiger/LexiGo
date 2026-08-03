@@ -84,9 +84,9 @@ function ownerPair(id: string): string {
 }
 
 function selectorProperty(id: string): string {
-  const match = id.match(/\| ([^|]+) \| ([a-z-]+) \|/);
+  const match = id.match(/^(.+?) \| ([a-z-]+) \| (?:normal|important) -> /);
   if (match === null) throw new Error(`Missing selector/property: ${id}`);
-  return `${match[1].trim()} | ${match[2]}`;
+  return `${match[1]} | ${match[2]}`;
 }
 
 function specificity(selector: string): number {
@@ -109,7 +109,7 @@ describe("adaptive Lesson Composer CSS ownership", () => {
       ".lx-source-selector | grid-template-columns",
       ".lx-source-selector | grid-template-columns",
       ".lx-source-selector | grid-template-columns",
-      ".lx-source-selector > button | grid-template-columns",
+      ".lx-source-selector>button | grid-template-columns",
     ]);
   });
 
@@ -181,9 +181,9 @@ describe("adaptive Lesson Composer CSS ownership", () => {
     );
   });
 
-  it("keeps the live Learn renderer under canonical ancestry", () => {
+  it("keeps the live Learn renderer under canonical runtime ancestry", () => {
     expect(learnApp).toContain('className="lx-main-content"');
-    expect(learnApp).toContain('aria-label="Обучение"');
+    expect(learnApp).toContain('aria-label={viewTitle("learn")}');
     expect(learnApp).toContain("lx-source-selector");
     expect(learnApp).toContain("lx-setup-footer");
     expect(learnApp).toContain("lx-setup-submit");
