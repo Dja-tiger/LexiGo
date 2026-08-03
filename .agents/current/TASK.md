@@ -5,8 +5,9 @@
 - Issue: #70
 - Branch: `test/issue-70-navigation-mobile-cascade-evidence`
 - Base SHA: `626b6f637f517253aea87faf12223e4e43bfc1e0`
-- PR: not opened yet
-- Head SHA: resolve from the live branch after each write
+- PR: #364 — Draft
+- Published proof head before PR-context reconciliation: `68354842757262e4cc025230dfafc956ca5c8eae`
+- Final developer-authored head: resolve from the live PR after current-context commits complete
 
 ## Objective
 
@@ -85,4 +86,4 @@ After this proof PR and reconciliation, use the evidence to select exactly one p
 
 ## Rollback
 
-Revert the proof PR. Product CSS, runtime, deployed images, schemas, data, snapshots and budgets remain unchanged.
+Revert PR #364. Product CSS, runtime, deployed images, schemas, data, snapshots and budgets remain unchanged.
