@@ -36,16 +36,46 @@ type Conflict = Readonly<{
 }>;
 
 const layoutUrl = new URL("./layout.tsx", import.meta.url);
+const manifestUrl = new URL("./global-feature-style-overlap-manifest.json", import.meta.url);
 const layout = readFileSync(layoutUrl, "utf8");
 const cssImportPattern = /import\s+["']\.\/([^"']+\.css)["'];/g;
 const importedCssFiles = Array.from(layout.matchAll(cssImportPattern), (match) => match[1]);
 
-/*
- * Discovery starts fail-closed. The first authoritative run publishes the exact
- * deterministic IDs. Each item must then be reviewed and classified before the
- * final immutable head; production CSS is outside this proof-only slice.
- */
-const CLASSIFIED_CONFLICTS = [] satisfies readonly ClassifiedConflict[];
+function isConflictClassification(value: unknown): value is ConflictClassification {
+  return value === "protected" || value === "intentional" || value === "requires-proof";
+}
+
+function parseClassifiedConflicts(value: unknown): readonly ClassifiedConflict[] {
+  if (!Array.isArray(value)) {
+    throw new Error("Global feature-style conflict manifest must be a JSON array");
+  }
+
+  return value.map((item, index) => {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new Error(`Conflict manifest item ${index} must be an object`);
+    }
+
+    const record = item as Record<string, unknown>;
+    if (typeof record.id !== "string" || record.id.trim().length === 0) {
+      throw new Error(`Conflict manifest item ${index} requires a non-empty id`);
+    }
+    if (!isConflictClassification(record.classification)) {
+      throw new Error(`Conflict manifest item ${index} has an invalid classification`);
+    }
+    if (typeof record.evidence !== "string" || record.evidence.trim().length === 0) {
+      throw new Error(`Conflict manifest item ${index} requires non-empty evidence`);
+    }
+
+    return {
+      id: record.id,
+      classification: record.classification,
+      evidence: record.evidence,
+    };
+  });
+}
+
+const rawManifest: unknown = JSON.parse(readFileSync(manifestUrl, "utf8"));
+const CLASSIFIED_CONFLICTS = parseClassifiedConflicts(rawManifest);
 
 function stripComments(source: string): string {
   let result = "";
@@ -506,9 +536,6 @@ describe("global feature-style exact-selector overlap inventory", () => {
     const actualIds = conflicts.map((conflict) => conflict.id);
 
     expect(new Set(classifiedIds).size).toBe(classifiedIds.length);
-    for (const conflict of CLASSIFIED_CONFLICTS) {
-      expect(conflict.evidence.trim().length, conflict.id).toBeGreaterThan(0);
-    }
 
     if (JSON.stringify(actualIds) !== JSON.stringify(classifiedIds)) {
       throw new Error(
