@@ -10,16 +10,16 @@
 
 ## Objective
 
-Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-selector shell conflicts by removing mobile declarations that are already unreachable beneath the stronger routed-shell chrome owner and by explicitly scoping the remaining effective mobile properties, while preserving the approved production presentation independently of root stylesheet order.
+Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-selector shell conflicts by removing mobile declarations already unreachable beneath the stronger routed-shell chrome owner and by explicitly scoping the remaining mobile properties, while preserving the approved production presentation independently of root stylesheet order.
 
 ## Scope
 
-- Remove mobile header background and logo width/height declarations that are already superseded on every production route by `adaptive-knowledge-coach-home.css` routed-shell selectors.
-- Keep compact header geometry, including 58px min-height and safe-area spacing, under `.lx-routed-app .lx-header` through 719px.
-- Keep avatar 42×42 and view padding-top 18px under routed-shell selectors through 760px.
+- Remove mobile header background and logo width/height declarations superseded on every production route by `adaptive-knowledge-coach-home.css` routed-shell selectors.
+- Preserve the compact mobile fallback/dictionary header declarations through 719px under `.lx-routed-app .lx-header`.
+- Preserve avatar 42×42 and view padding-top 18px under routed-shell selectors through 760px; stronger route-specific compact selectors may remain the effective owner where already established.
 - Preserve `adaptive-navigation.css` as tablet geometry owner from 720px through 1099px.
-- Preserve `adaptive-knowledge-coach-home.css` as routed application-shell chrome owner for header background and 34×34 logo.
-- Extend the adversarial browser proof to load the actual routed-shell chrome stylesheet and compare production, shell-first and mobile-first orders.
+- Preserve `adaptive-knowledge-coach-home.css` as routed application-shell chrome owner for header background, 34×34 logo and non-dictionary compact shell geometry.
+- Load the actual routed-shell chrome stylesheet in the adversarial browser proof and compare production, routed-shell-first and mobile-first orders.
 - Regenerate the exact overlap manifest from parser output after the corrected ownership mechanism is applied.
 
 ## Non-goals
@@ -54,7 +54,8 @@ Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-se
 ## Runtime owners
 
 - `adaptive-knowledge-coach-home.css` owns routed application-shell chrome, including header background and 34×34 logo, across canonical routes.
-- `mobile-pwa-fixes.css` owns compact safe-area/header geometry through 719px, avatar dimensions and view spacing through 760px, plus session/PWA responsibilities.
+- At compact widths on non-dictionary routed routes, its `.lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"])` selectors own effective header min-height/padding-top and view padding-top.
+- `mobile-pwa-fixes.css` owns compact horizontal header placement and preserves fallback/dictionary compact geometry, avatar dimensions and responsive view spacing where no stronger route-specific owner applies.
 - `adaptive-navigation.css` owns tablet header geometry from 720px through 1099px.
 - `premium-ui.css` remains the compatibility/base shell owner outside stronger routed and responsive selectors.
 - `.lx-routed-app` remains the canonical production application ancestor.
@@ -69,9 +70,10 @@ Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-se
 
 - Root production import order remains premium → mobile PWA → adaptive → routed application-shell chrome.
 - Routed shell header background remains `color-mix(in srgb, var(--ak-bg) 90%, transparent)` and routed logo remains 34×34 at every applicable width.
-- Compact header geometry remains 58px, `-14px` horizontal margin and 12px safe-area top padding through 719px.
-- Avatar remains 42×42 and view padding remains 18px through 760px.
-- At 720–760px adaptive geometry remains 76px, zero margin and zero top padding.
+- On compact non-dictionary routed routes, effective header geometry remains 54px min-height, `-14px` horizontal margin and `env(safe-area-inset-top)` top padding; effective view padding-top remains 0.
+- Mobile fallback/dictionary declarations remain 58px min-height, safe-area spacing and 18px view padding where stronger route-specific selectors do not apply.
+- Avatar remains 42×42 through 760px.
+- At 720–760px adaptive geometry remains 76px, zero margin and zero top padding, while view padding remains 18px.
 - Above 760px premium avatar/view base values remain effective outside stronger routed feature owners.
 - Exactly one primary navigation is visible and no horizontal overflow is introduced at 390, 719, 720, 760, 761 and 1024 px.
 - `.lx-resource-stack | width` remains the sole mobile-PWA → adaptive exact-selector conflict.
@@ -82,9 +84,10 @@ Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-se
 - The parser reports zero `premium-ui.css` → `mobile-pwa-fixes.css` exact-selector conflicts.
 - The correction creates no new exact-selector conflicts with `adaptive-knowledge-coach-home.css` or another stylesheet.
 - The manifest contains exactly 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
-- Production, shell-first and mobile-first browser orders produce identical routed-shell computed snapshots at all six boundary widths.
-- Source contracts require routed-shell background/logo ownership, compact-only mobile geometry and the unchanged resource-stack boundary.
-- Full immutable-head required CI passes without retry-driven source changes or baseline updates.
+- Production, routed-shell-first and mobile-first browser orders produce identical routed-shell computed snapshots at all six boundary widths.
+- The compact `/learn` fixture asserts the pre-existing stronger routed-shell values rather than the shadowed mobile fallback values.
+- Source contracts require routed-shell background/logo ownership, bounded mobile declarations and the unchanged resource-stack boundary.
+- Full immutable-head required CI passes without baseline updates or unexplained retries.
 - PR has no unresolved comments, reviews or threads and is squash-merged with expected head SHA.
 - Exact-SHA main CI and exact-SHA stage/public validation succeed after product merge.
 
@@ -100,10 +103,11 @@ Eliminate the ten remaining `premium-ui.css` → `mobile-pwa-fixes.css` exact-se
 ## Risks
 
 - Treating the routed application-shell stylesheet as Home-only would create three new equal-selector conflicts and make chrome depend on source order.
-- Removing avatar dimensions or view spacing would change live mobile presentation because the routed-shell chrome owner does not replace those properties.
+- Treating mobile fallback declarations as the effective `/learn` compact owner would encode incorrect computed expectations despite unchanged production rendering.
+- Removing avatar dimensions or responsive view spacing would change live presentation in ranges/routes where no stronger route-specific owner replaces them.
 - Leaving dead background/logo declarations in mobile preserves misleading ownership even if production specificity currently masks them.
 - A stale manually edited manifest could hide or invent conflicts; it must match parser output exactly.
 
 ## Rollback
 
-Revert the focused product commit to restore the prior ten-item unresolved boundary. Do not update snapshots, hashes, tolerances, breakpoints or expected computed values as rollback substitutes.
+Revert the focused product commit to restore the prior ten-item unresolved boundary. Do not update snapshots, hashes, tolerances, breakpoints or production computed values as rollback substitutes.
