@@ -5,8 +5,9 @@
 - Issue: #70
 - Branch: `style/issue-70-remove-home-hero-decorations`
 - Base SHA: `16b6c6967e8295767be9877a8e1b4b9d28311290`
-- Head SHA: resolve from live branch ref after each write
-- PR: not opened yet
+- PR: #358 — Draft
+- Published head before PR-context reconciliation: `2b2a2f283d1eba71c63242e0da364deb16b380f2`
+- Final head: resolve from live PR after the current-context commits complete
 
 ## Objective
 
