@@ -5,16 +5,17 @@
 - Issue: #70
 - Branch: `style/issue-70-home-css-order-independence`
 - Base SHA: `17c801ae3d9a18a1623d723c39a4b81fae3147ef`
-- PR: not opened yet
-- Head SHA: resolve from the live branch after each write
+- PR: #360 — Draft
+- Published head before PR-context reconciliation: `af3489f10de7d7cc527a1017737a0d2622966e34`
+- Final head: resolve from live PR after the current-context commits complete
 
 ## Objective
 
 Remove the proven compact Home dependence on global CSS import order without changing computed presentation.
 
-`information-architecture.css` and `compact-home.css` currently contain overlapping Home selectors. In the 720–760 px range the compact rule for `.lx-home-next-action .lx-hero-card` has the same specificity as the earlier information-architecture rule, so the intended compact value wins only because `compact-home.css` is imported later.
+`information-architecture.css` and `compact-home.css` previously contained overlapping Home selectors. In the 720–760 px range the compact rule for `.lx-home-next-action .lx-hero-card` had the same specificity as the shared information-architecture rule, so the intended compact value won only because `compact-home.css` was imported later.
 
-The canonical compact Home owner must instead win by route-scoped specificity. Root layout will then load the compact owner before the shared information-architecture base as an adversarial source-order proof.
+The canonical compact Home owner now wins by route-scoped specificity. Root layout loads the compact owner before the shared information-architecture base as an adversarial source-order proof.
 
 ## Scope
 
@@ -26,7 +27,7 @@ The canonical compact Home owner must instead win by route-scoped specificity. R
 
 ## Non-goals
 
-- No runtime TypeScript/TSX, component markup, API/backend/database, session, route or Figma change.
+- No production component/runtime TypeScript/TSX, markup, API/backend/database, session, route or Figma change.
 - No selector deletion and no declaration-value change.
 - No visual snapshot or route-budget ceiling update.
 - No broad CSS consolidation, CSS Modules migration, cascade-layer introduction or unrelated selector cleanup.
@@ -69,4 +70,4 @@ Every path not listed above, especially production components, snapshots, `front
 
 ## Rollback
 
-Revert the product PR. No schema, data, API, migration, snapshot or budget rollback is required.
+Revert PR #360. No schema, data, API, migration, snapshot or budget rollback is required.
