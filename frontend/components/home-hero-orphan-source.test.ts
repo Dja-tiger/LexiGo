@@ -108,7 +108,9 @@ describe("legacy Home hero-decoration CSS reachability", () => {
     expect(homeAppSource).toContain('<div className="lx-word-preview">');
     expect(compactHomeStyles).toContain(".lx-home-next-action .lx-hero-card {");
     expect(compactHomeStyles).toContain(".lx-home-next-action .lx-hero-art {");
-    expect(adaptiveHomeStyles).toContain(".lx-adaptive-home-shell .lx-hero-card {");
+    expect(adaptiveHomeStyles).toContain(
+      '.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-hero-card {',
+    );
   });
 
   it("preserves live compatibility Lesson and guest authentication owners", () => {
