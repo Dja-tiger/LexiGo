@@ -4,16 +4,16 @@
 
 - Last verified: 2026-08-03 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `7ef023da70819a5afabfeccbff4d6c34768449f2`.
-- Latest deployed product SHA: `7ef023da70819a5afabfeccbff4d6c34768449f2`.
-- Latest completed Issue #70 slice: physical removal of the five proven-orphaned legacy Home hero-decoration CSS families while preserving every live Home, Lesson and guest-auth owner.
-- Completion PR: #358.
-- PR #358 immutable developer-authored head: `60d242549878a6b9d7b0fe76b94b921ecda6a474`.
-- Authoritative PR CI: #2569 / run `30802213289`, complete success without retry.
-- Expected-head squash merge produced product SHA `7ef023da70819a5afabfeccbff4d6c34768449f2`.
-- Post-merge main CI run `30802913327` repeated the complete product matrix successfully on the exact merge SHA.
-- Exact-SHA stage run `30803555608` deployed web/API images tagged `7ef023da70819a5afabfeccbff4d6c34768449f2`; deploy, public smoke and all 12 public browser checks succeeded without retry.
-- PR #358 comments, reviews and unresolved review threads were empty before merge.
+- Repository base verified before this documentation slice: `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+- Latest deployed product SHA: `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+- Latest completed Issue #70 slice: compact Home CSS source-order independence with route-scoped specificity and an adversarial global import order.
+- Completion PR: #360.
+- PR #360 immutable developer-authored head: `ea54b29b31030556858558145c611e8e7354fda4`.
+- Authoritative PR CI: #2576 / run `30805447497`, complete success without retry.
+- Expected-head squash merge produced product SHA `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+- Post-merge main CI run `30806079581` repeated the complete product matrix successfully on the exact merge SHA.
+- Exact-SHA stage run `30806743687` deployed web/API images tagged `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`; deploy, public smoke and all 12 public browser checks succeeded without retry.
+- PR #360 comments, reviews and unresolved review threads were empty before merge.
 - No pull request was open when this documentation branch was created.
 
 ## Completed foundations
@@ -50,46 +50,55 @@
 
 - PRs #346/#348 proved and removed the orphaned `lx-resource-notice*` family while preserving live session and async-state owners.
 - PRs #350/#352 proved and removed `.lx-themed-home` and `.lx-themed-library` while preserving `.lx-themed-selector`, `.lx-themed-symbol`, `.lx-themed-arrow`, collection-prefixed and accessibility owners.
-- These deletion PRs were production-CSS deletion-only and passed unchanged Linux visual regression and route-performance budgets.
+- PRs #355/#358 proved and removed the five orphaned Home hero-decoration families: `lx-hero-copy`, `lx-glow`, `lx-floating-card`, `lx-book-base` and `lx-orbit`.
+- The Home hero production CSS diff was deletion-only: 94 lines removed, covering the complete 19-token bounded inventory.
+- The source contract fails closed on executable or CSS reintroduction and protects `.lx-hero-card`, `.lx-hero-card::before`, `.lx-hero-art`, `.lx-hero-actions`, `lx-word-preview`, `lx-home-next-action-copy`, `lx-progress-panel`, `lx-resume-strip` and `lx-auth-card`.
+- These cleanup PRs passed unchanged authoritative Linux visual hashes and route-performance budgets.
 
-### Home hero-decoration proof and deletion — PRs #355/#358
+### Compact Home source-order independence — PR #360
 
-- PR #355 introduced `frontend/components/home-hero-orphan-source.test.ts` as actual-checkout evidence.
-- The contract recursively scans executable TypeScript/TSX under `frontend/app`, `frontend/components` and `frontend/lib`, excludes tests/specs and strips source comments.
-- It proved zero executable consumers for the bounded legacy families:
-  - `lx-hero-copy` — 5 selector-token occurrences;
-  - `lx-glow` — 1 occurrence;
-  - `lx-floating-card` — 4 occurrences;
-  - `lx-book-base` — 6 occurrences;
-  - `lx-orbit` — 3 occurrences.
-- Total bounded inventory was 19 selector-token occurrences.
-- PR #358 removed only those five families from `frontend/app/premium-ui.css`.
-- The production CSS diff was deletion-only: 94 lines removed and no declaration added or changed.
-- The source contract now fails closed on executable or CSS reintroduction and requires physical absence from `premium-ui.css`.
-- `.lx-hero-card`, `.lx-hero-card::before`, `.lx-hero-art` and `.lx-hero-actions` remain positively protected.
-- `lx-word-preview`, `lx-home-next-action-copy`, `lx-progress-panel`, compatibility `lx-resume-strip` and guest-auth `lx-auth-card` remain protected live owners.
-- Compact/adaptive Home ownership and stylesheet order `premium-ui.css` → `compact-home.css` → `adaptive-knowledge-coach-home.css` remain unchanged.
-- No runtime TypeScript/TSX, API/backend/database, route, session, Figma, snapshot, budget ceiling, workflow, dependency, README or architecture path changed.
-- Linux visual regression, accessibility and all route-performance budgets passed unchanged on both the final PR head and exact merge SHA.
+- Final acceptance auditing confirmed that shared and compact Home selectors had equal specificity before PR #360.
+- In the 720–760 px range, shared `.lx-home-next-action .lx-hero-card` declared `min-height: 360px` and compact `.lx-home-next-action .lx-hero-card` declared `min-height: 0`; both had specificity `(0, 2, 0)`.
+- The intended compact value therefore depended on `compact-home.css` being imported after `information-architecture.css`.
+- PR #360 scoped every selector entry in `frontend/app/compact-home.css` below `.lx-routed-app`.
+- Exactly 26 compact selector entries are route-scoped.
+- No declaration value or responsive boundary changed; the existing `760px` and `390px` media boundaries remain.
+- `frontend/app/layout.tsx` now intentionally imports `compact-home.css` before `information-architecture.css` as an adversarial source-order proof.
+- The relevant global order is now `premium-ui.css` → `compact-home.css` → `information-architecture.css` → `adaptive-knowledge-coach-home.css`.
+- `frontend/components/home-css-order-independence.test.ts` verifies canonical routed-shell ancestry, exact stylesheet imports, selector scoping, media boundaries, absence of `!important`, and computed specificity precedence.
+- Shared hero specificity remains `(0, 2, 0)`; compact is `(0, 3, 0)`; adaptive is `(0, 4, 0)`.
+- Compact therefore outranks shared independently of source order, while adaptive retains precedence at narrower breakpoints.
+- No production component/runtime markup, API/backend/database, session, route, Figma, snapshot, budget ceiling, workflow, dependency, README or architecture path changed.
+- Both immutable-head CI and exact-SHA main CI passed unchanged Linux visual regression, accessibility and all route-performance budgets.
+- Stage deployed the exact merge SHA and all 12 public desktop/iOS browser checks passed.
+
+## Current Issue #70 acceptance evidence
+
+- `frontend/components/production-app-entry.test.ts` fail-closes the exact production application-root inventory, retired-root absence, canonical layout → routed shell → bootstrap chain and bootstrap-only route-entry imports.
+- `frontend/app/global-style-ownership.test.ts` requires `globals.css` to be the sole owner of document `body` and shared `button, input` font inheritance.
+- `frontend/e2e/route-bundle-budget.spec.ts` measures all canonical cold routes, derives JavaScript assets exclusive to the live compatibility fallback and requires every canonical route to exclude them.
+- `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
+- README documents the actual production chain, route/runtime ownership and global CSS boundary.
+- Phrases and compact Home now have explicit adversarial source-order contracts.
 
 ## In progress
 
 - No atomic production slice is active.
-- This documentation-only reconciliation records PR #358 delivery and resets the completed current-task context.
-- Issue #70 remains open until its final acceptance criteria are re-audited against the current checkout and deployed product.
+- This documentation-only reconciliation records PR #360 delivery and resets the completed task context.
+- Issue #70 remains open until the remaining global feature-style source-order audit and final acceptance reconciliation are complete.
 
 ## Remaining roadmap
 
-### 1. Final Issue #70 acceptance audit
+### 1. Continue the final Issue #70 acceptance audit
 
 - Re-read live `main`, Issue #70, open PRs, CI and stage after this reconciliation merges.
-- Verify the single production app-entry and approved import ownership remain enforced.
-- Complete an exact repository-wide consumer inventory for all remaining compatibility runtime and global CSS owners.
-- Reconcile fallback-exclusive asset evidence with current route ownership, bundle analyzer output and route-performance budgets.
-- Audit remaining root/body/button/input declarations and feature styles for ambiguous ownership or import-order dependence.
-- Verify README frontend structure and ownership documentation against the actual checkout.
-- Produce explicit evidence for every remaining unchecked Issue #70 acceptance criterion before closing the Issue.
-- Any newly proven production deletion must be a separate bounded proof-first slice; do not combine final acceptance evidence with speculative cleanup.
+- Complete an exact repository-wide inventory of remaining global feature stylesheet overlaps and equal-specificity declaration conflicts.
+- Distinguish intentional base/feature layering from accidental source-order dependence using selector, specificity, media-condition and computed-value evidence.
+- Add proof contracts before any production CSS modification.
+- Preserve current route budgets and visual baselines; do not use snapshot or budget changes to hide cascade regressions.
+- Reconcile the final global CSS evidence with app-entry, compatibility reachability, fallback-exclusive asset and README ownership evidence.
+- Close Issue #70 only when every acceptance criterion has current fail-closed evidence.
+- Any newly proven production change must be a separate bounded slice; do not combine multiple feature owners in one speculative cleanup PR.
 
 ### 2. Separate maintenance and product roadmap
 
@@ -100,7 +109,7 @@
 
 ## Validation pending
 
-- Final Issue #70 bundle/dead-code, compatibility reachability, global CSS ownership and README acceptance evidence remain open.
+- The remaining global feature-style source-order inventory is not yet complete.
 - Guest Profile authentication/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
 - `.lx-hero-card`, `.lx-hero-art`, `.lx-hero-actions`, `lx-word-preview`, `lx-home-next-action-copy`, `lx-progress-panel`, `lx-resume-strip` and `lx-auth-card` remain protected live owners.
@@ -108,21 +117,21 @@
 
 ## Recent production/tooling evidence
 
-1. #358 — `style(frontend): remove orphaned Home hero decorations` → `7ef023da70819a5afabfeccbff4d6c34768449f2`.
-2. #357 — `docs(agent): reconcile PR 354 fallback inventory` → `16b6c6967e8295767be9877a8e1b4b9d28311290`.
-3. #354 — `test(frontend): complete compatibility fallback inventory` → `535cedd42c9bc56a65e093034764cee247cf87c0`.
-4. #356 — `docs(agent): reconcile PR 355 Home hero CSS proof` → `3a6bf7686a2563c2828b9293b9ac381397274710`.
-5. #355 — `test(frontend): prove legacy Home hero CSS orphaned` → `f279bc577704f3f68bf587f4c88b474a62929c02`.
+1. #360 — `style(frontend): make compact Home CSS order-independent` → `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+2. #359 — `docs(agent): reconcile PR 358 Home hero deletion` → `17c801ae3d9a18a1623d723c39a4b81fae3147ef`.
+3. #358 — `style(frontend): remove orphaned Home hero decorations` → `7ef023da70819a5afabfeccbff4d6c34768449f2`.
+4. #357 — `docs(agent): reconcile PR 354 fallback inventory` → `16b6c6967e8295767be9877a8e1b4b9d28311290`.
+5. #354 — `test(frontend): complete compatibility fallback inventory` → `535cedd42c9bc56a65e093034764cee247cf87c0`.
 
 ## Evidence
 
-- PR #358 final developer-authored head `60d242549878a6b9d7b0fe76b94b921ecda6a474` passed authoritative full CI #2569 / run `30802213289` without retry.
-- Final PR CI passed the physical-absence source contract, frontend lint, typecheck, full unit suite, production build and dependency audit.
+- PR #360 final developer-authored head `ea54b29b31030556858558145c611e8e7354fda4` passed authoritative full CI #2576 / run `30805447497` without retry.
+- Final PR CI passed the new specificity source contract, frontend lint, typecheck, full unit suite, production build and dependency audit.
 - Backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- PR #358 discussion contained no comments, reviews or unresolved review threads.
-- Expected-head squash merge produced product SHA `7ef023da70819a5afabfeccbff4d6c34768449f2`.
-- Post-merge main CI run `30802913327` repeated the complete product matrix successfully on that exact merge SHA.
-- Stage run `30803555608` validated the exact CI scope, deployed web/API images tagged `7ef023da70819a5afabfeccbff4d6c34768449f2`, returned successful public smoke and completed all 12 public browser checks without retry.
+- PR #360 discussion contained no comments, reviews or unresolved review threads.
+- Expected-head squash merge produced product SHA `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+- Post-merge main CI run `30806079581` repeated the complete product matrix successfully on that exact merge SHA and published web/API images.
+- Stage run `30806743687` deployed web/API images tagged `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`, returned successful public smoke and completed all 12 public browser checks without retry.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
