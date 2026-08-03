@@ -13,27 +13,36 @@ const productionCascade = [
 ].map((stylesheet) => `<style>${stylesheet}</style>`).join("\n");
 
 const shellMarkup = `
-  ${productionCascade}
-  <main class="lx-routed-app">
-    <section class="lx-app">
-      <header class="lx-header">
-        <button class="lx-brand" type="button">
-          <span class="lx-logo-mark"><span>L</span></span>
-          <strong>LexiGo</strong>
-        </button>
-        <nav class="lx-nav" aria-label="Header navigation"><button type="button">Home</button></nav>
-        <div class="lx-header-tools"><button class="lx-avatar" type="button">A</button></div>
-      </header>
-      <div class="lx-app-shell">
-        <nav class="lx-navigation-rail" aria-label="Rail navigation"><button type="button">Home</button></nav>
-        <section class="lx-main-content">
-          <div class="lx-resource-stack"><div class="lx-async-state">State</div></div>
-          <div class="lx-view">Content</div>
+  <!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      ${productionCascade}
+    </head>
+    <body>
+      <main class="lx-routed-app">
+        <section class="lx-app">
+          <header class="lx-header">
+            <button class="lx-brand" type="button">
+              <span class="lx-logo-mark"><span>L</span></span>
+              <strong>LexiGo</strong>
+            </button>
+            <nav class="lx-nav" aria-label="Header navigation"><button type="button">Home</button></nav>
+            <div class="lx-header-tools"><button class="lx-avatar" type="button">A</button></div>
+          </header>
+          <div class="lx-app-shell">
+            <nav class="lx-navigation-rail" aria-label="Rail navigation"><button type="button">Home</button></nav>
+            <section class="lx-main-content">
+              <div class="lx-resource-stack"><div class="lx-async-state">State</div></div>
+              <div class="lx-view">Content</div>
+            </section>
+          </div>
+          <nav class="lx-mobile-nav" aria-label="Mobile navigation"><button type="button">Home</button></nav>
         </section>
-      </div>
-      <nav class="lx-mobile-nav" aria-label="Mobile navigation"><button type="button">Home</button></nav>
-    </section>
-  </main>
+      </main>
+    </body>
+  </html>
 `;
 
 type ShellSnapshot = Readonly<{
@@ -91,7 +100,7 @@ async function readShellSnapshot(page: Page): Promise<ShellSnapshot> {
 }
 
 test.describe("navigation/mobile-shell computed cascade", () => {
-  test.skip(({ browserName }) => browserName !== "chromium", "Computed ownership is asserted once in Chromium.");
+  test.skip(({ browserName }) => browserName !== "chromium", "Computed ownership is asserted once per Chromium project.");
 
   const cases: ReadonlyArray<Readonly<{
     width: number;
