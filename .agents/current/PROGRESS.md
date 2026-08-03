@@ -47,20 +47,26 @@ Adaptive navigation shell selectors had equal specificity to legacy premium and 
 - branch created from exact main;
 - adaptive selector values and media boundaries preserved;
 - adversarial adaptive-first Chromium matrix added for 390, 719, 720, 760, 761 and 1024 px;
-- authoritative CI #2606/run `30827173353` confirmed backend and accessibility gates passed and emitted the exact parser-derived inventory;
+- authoritative CI #2606/run `30827173353` emitted the exact parser-derived inventory used to correct the stale contracts;
 - generated manifest Git blob SHA `957b5ae5c79f8236c4270076876552699f61f323` matched the locally computed Git blob SHA before fast-forward attachment;
+- corrected full CI #2612/run `30829015122` passed on head `77b90f554501db881ba735da380ec82359beda84` without retry;
+- frontend lint, TypeScript, complete unit/source suite, production build and dependency audit passed;
+- backend unit/security and race-enabled integration passed;
+- accessibility, iOS PWA, Lesson completion, performance budgets, both UI shards, Linux visual regression, CSP, controlled service worker and Dictionary smoke passed;
+- aggregate Frontend quality and both API/Web container builds passed;
+- no snapshot, route budget, timeout, dependency or production declaration-value change was required;
 - all successful writes were read back by exact branch ref;
 - main remained unchanged after every write.
 
 ### Checks failed
 
 - CI #2606 frontend core failed only on intentionally stale manifest/count contracts and the initial incorrect assumption that all six mobile → adaptive conflicts belonged to the shell. The parser proved that `.lx-resource-stack | width` is a separate retained conflict.
-- The stale contracts have now been corrected from authoritative output; a new full CI run is pending.
+- No failure remains on corrected product head `77b90f554501db881ba735da380ec82359beda84`.
 
 ### Current branch head
 
-Resolve from live PR #366 head after the current documentation write.
+Resolve from live PR #366 head after this evidence write.
 
 ### Next action
 
-Update execution evidence and PR description, then inspect the next full CI run. Fix only exact failures within the declared eight-file boundary; after immutable-head green, verify review surface and deliver through expected-head squash merge, exact-SHA main CI and stage/public validation.
+Run one final immutable-head full CI after this evidence-only update. If green, verify the final eight-path diff, empty comments/reviews/unresolved-thread surface and unchanged main; then mark Ready and perform expected-head squash merge followed by exact-SHA main CI and stage/public validation.
