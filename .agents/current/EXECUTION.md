@@ -5,9 +5,10 @@
 - Issue: #70.
 - Branch: `test/issue-70-navigation-mobile-cascade-evidence`.
 - Verified base and merge base: `626b6f637f517253aea87faf12223e4e43bfc1e0`.
-- PR: not opened yet.
-- Latest branch commit before this execution update: `449d7e2cac1d18b3abd3caeb3126dbf21ad1cf51`.
-- Final authoritative head: resolve from the live branch after this write and PR-context reconciliation.
+- Draft PR: #364 — `test(frontend): prove navigation mobile cascade owners`.
+- Published proof head before PR-context reconciliation: `68354842757262e4cc025230dfafc956ca5c8eae`.
+- Latest branch commit before this execution update: `39182e661fd92fbcdc74c4572b1fb4a8a1ee104a`.
+- Final authoritative head: resolve from live PR after this write.
 
 ## Applied procedures
 
@@ -28,7 +29,8 @@
 - verifies premium/mobile 760px, adaptive compact 719px and adaptive tablet 720–1099px boundaries;
 - protects mobile PWA header/background/logo/avatar declarations;
 - protects adaptive tablet header/alignment/resource-width declarations;
-- protects premium header/background/logo/avatar values that return above 760px.
+- protects premium header/background/logo/avatar values that return above 760px;
+- parses `frontend/package.json` and requires the browser spec exactly once in both authoritative UI scripts.
 
 ## Browser evidence
 
@@ -47,10 +49,11 @@
 
 - `frontend/package.json` was changed only to add the new spec to `test:e2e:ui` and `test:e2e:responsive`.
 - No dependency, version, override or lockfile changed.
-- The new spec therefore runs in the authoritative UI matrix rather than existing only as an uninvoked file.
+- The source contract verifies exact-once routing so the spec cannot silently leave authoritative CI.
 
 ## Repository safety
 
+- Compare against exact base reported six changed paths and zero commits behind before PR publication.
 - Branch writes were read from the connector after creation/update.
 - A direct container clone attempt failed because DNS resolution for GitHub was unavailable; it made no repository write and was not used as evidence.
 - Main and deployed stage were unchanged during implementation.
@@ -58,10 +61,10 @@
 
 ## Validation plan
 
-1. Read back all six changed paths and compare against exact base.
-2. Publish Draft PR with the exact computed-cascade gap and non-goals.
-3. Freeze a final developer-authored head after PR-context reconciliation.
-4. Require complete classifier-selected CI on that exact head.
+1. Treat the live PR head created by this execution update as the final developer-authored candidate.
+2. Require complete classifier-selected CI on that exact head.
+3. Require frontend lint, typecheck, all unit/source contracts, production build and dependency audit.
+4. Require complete browser/accessibility/visual/performance/backend/container jobs selected by the fail-closed classifier.
 5. Classify any source/unit/browser failure at root cause; no blind retry, timeout increase, snapshot update or budget increase.
 6. Verify comments, reviews and unresolved threads before Ready.
 7. Perform expected-head squash merge.
@@ -74,4 +77,4 @@ Use the final computed evidence to choose one navigation/mobile-shell ownership 
 
 ## Rollback
 
-Revert the proof PR. Product CSS, runtime, deployed images, database, APIs, snapshots and budgets remain unchanged.
+Revert PR #364. Product CSS, runtime, deployed images, database, APIs, snapshots and budgets remain unchanged.
