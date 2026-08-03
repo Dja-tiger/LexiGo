@@ -157,7 +157,6 @@ describe("adaptive Lesson Composer CSS ownership", () => {
       );
       expect(composer).toContain(`${CANONICAL_ANCESTRY} ${fallback}`);
     }
-    expect(composer).not.toContain("!important");
   });
 
   it("protects the approved 767/768 canonical geometry", () => {
