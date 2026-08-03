@@ -5,6 +5,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 const appDirectory = path.join(process.cwd(), "app");
 const productionCascade = [
+  readFileSync(path.join(appDirectory, "globals.css"), "utf8"),
+  readFileSync(path.join(appDirectory, "design-tokens.css"), "utf8"),
   readFileSync(path.join(appDirectory, "premium-ui.css"), "utf8"),
   readFileSync(path.join(appDirectory, "mobile-pwa-fixes.css"), "utf8"),
   readFileSync(path.join(appDirectory, "adaptive-navigation.css"), "utf8"),
