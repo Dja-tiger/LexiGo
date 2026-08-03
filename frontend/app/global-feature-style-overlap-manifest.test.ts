@@ -33,11 +33,7 @@ const EXPECTED_GROUPS = new Map<string, ExpectedGroup>([
   ],
   [
     "mobile-pwa-fixes.css -> adaptive-navigation.css",
-    { classification: "requires-proof", count: 6 },
-  ],
-  [
-    "premium-ui.css -> adaptive-navigation.css",
-    { classification: "requires-proof", count: 21 },
+    { classification: "requires-proof", count: 1 },
   ],
   [
     "scenario-catalog.css -> learning-section-switch.css",
@@ -113,8 +109,8 @@ const manifest = parseManifest(rawManifest);
 
 describe("global feature-style overlap classification manifest", () => {
   it("keeps the complete reviewed inventory unique and explicitly evidenced", () => {
-    expect(manifest).toHaveLength(107);
-    expect(new Set(manifest.map((item) => item.id)).size).toBe(107);
+    expect(manifest).toHaveLength(81);
+    expect(new Set(manifest.map((item) => item.id)).size).toBe(81);
     expect(manifest.every((item) => item.evidence.trim().length > 40)).toBe(true);
   });
 
@@ -132,7 +128,7 @@ describe("global feature-style overlap classification manifest", () => {
     expect(Object.fromEntries(counts)).toEqual({
       protected: 0,
       intentional: 50,
-      "requires-proof": 57,
+      "requires-proof": 31,
     });
   });
 
