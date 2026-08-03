@@ -4,17 +4,17 @@
 
 - Last verified: 2026-08-03 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository base verified before this documentation slice: `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
-- Latest deployed product SHA: `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
-- Latest completed Issue #70 slice: fail-closed navigation/mobile-shell computed-cascade evidence.
-- Completion PR: #364.
-- PR #364 immutable developer-authored head: `0e2144a8b262ea74ae758c57cbc8052dcb407ce9`.
-- Authoritative PR CI: #2602 / run `30814091000`, complete success without retry.
-- Expected-head squash merge produced product SHA `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
-- Exact-SHA main CI run `30814893312` completed successfully on the merge SHA.
-- Exact-SHA stage run `30815582586` deployed web/API images tagged `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`; deploy, public smoke and all 12 public browser checks succeeded without retry.
-- PR #364 comments, reviews and unresolved review threads were empty before merge.
-- The only open pull requests when this documentation branch was created were parallel Dependabot maintenance PRs #304, #305 and #306; they were not modified or mixed into Issue #70.
+- Repository base verified before this documentation slice: `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+- Latest deployed product SHA: `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+- Latest completed Issue #70 slice: adaptive-navigation shell source-order independence.
+- Completion PR: #366.
+- PR #366 immutable developer-authored head: `cc3b472808be0a0e4d5e19370e0d51e3b6be100c`.
+- Authoritative PR CI: #2624 / run `30833124440`, complete success.
+- Expected-head squash merge produced product SHA `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+- Exact-SHA main CI run `30834200322` completed successfully on the merge SHA.
+- Exact-SHA stage run `30834930215` deployed web/API images tagged `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`; deploy, public smoke and all 12 public browser checks succeeded.
+- PR #366 comments, reviews and unresolved review threads were empty before merge.
+- No open pull requests were present when this documentation branch was created.
 
 ## Completed foundations
 
@@ -69,8 +69,8 @@
 - The dependency-free parser handles comments, quoted values, selector groups, declarations and nested `@media`, `@supports`, `@container` and `@layer` blocks.
 - Candidate conflicts require different files, identical normalized selector/property, equal `!important` priority, different normalized values and overlapping recognized media conditions.
 - `frontend/app/global-feature-style-overlap-manifest.json` contains the complete reviewed ordered manifest and is parsed from `unknown` with explicit runtime validation.
-- `frontend/app/global-feature-style-overlap-manifest.test.ts` independently requires 107 unique items, exact classification totals, the exact 12 stylesheet pairs and exact pair counts.
-- Initial classification was 50 `intentional`, 57 `requires-proof` and 0 `protected`.
+- `frontend/app/global-feature-style-overlap-manifest.test.ts` independently protects exact totals, stylesheet pairs and pair counts.
+- The initial manifest contained 107 items: 50 `intentional`, 57 `requires-proof` and 0 `protected`.
 - Intentional accessibility-layer groups are Scenario Lessons base → accessibility 40, Lesson Composer base → accessibility 5, Progress Evidence base → accessibility 4 and Knowledge Coach route-rail target size 1.
 
 ### Navigation/mobile-shell computed-cascade evidence — PR #364
@@ -83,16 +83,27 @@
 - Mobile PWA fixes apply through 760px.
 - Adaptive compact navigation applies through 719px.
 - Adaptive tablet navigation applies from 720px through 1099px.
-- The exact 720–760 px overlap currently computes a hybrid owner:
-  - adaptive navigation owns header geometry, alignment and rail mode because it is later in the cascade;
-  - mobile PWA fixes own header background, logo/avatar dimensions and view top padding because no later adaptive declaration replaces those properties.
-- At 761px mobile PWA rules stop applying; premium visual values remain under adaptive tablet geometry.
-- `frontend/components/navigation-mobile-shell-css-ownership.test.ts` fail-closes the exact 37-item manifest boundary, pair counts, import order, media boundaries, declaration inventory, test-script routing and production-equivalent viewport metadata.
-- `frontend/e2e/navigation-mobile-shell-cascade.spec.ts` loads the actual production CSS owners and asserts computed values at 390, 719, 720, 760, 761 and 1024 px.
+- The exact 720–760 px overlap computed a hybrid owner under production order:
+  - adaptive navigation owned header geometry, alignment and rail mode;
+  - mobile PWA fixes owned header background, logo/avatar dimensions and view top padding where no later adaptive declaration replaced those properties.
+- `frontend/components/navigation-mobile-shell-css-ownership.test.ts` and `frontend/e2e/navigation-mobile-shell-cascade.spec.ts` established the source and browser-computed boundary at 390, 719, 720, 760, 761 and 1024 px.
 - Browser evidence requires exactly one visible primary navigation and no horizontal overflow at every measured width.
-- The initial candidate failed only because the isolated Android Chromium fixture omitted the production viewport meta tag and therefore retained an approximately 980px layout viewport. The fixture was corrected without changing production CSS or weakening expected computed values.
-- PR #364 changed no production CSS, component/runtime, route, API/backend/database, snapshot, budget, workflow, dependency, README or architecture path.
-- Immutable-head PR CI, exact-SHA main CI and exact-SHA stage/public validation all passed without snapshot, budget, timeout or dependency changes.
+
+### Adaptive navigation source-order independence — PR #366
+
+- PR #366 resolved exactly 26 parser conflicts without changing declaration values or media boundaries:
+  - all 21 `premium-ui.css` → `adaptive-navigation.css` shell conflicts;
+  - five navigation-shell `mobile-pwa-fixes.css` → `adaptive-navigation.css` conflicts.
+- Only competing adaptive header/navigation selectors were scoped below the existing `.lx-routed-app` ancestor.
+- `.lx-resource-stack`, `.lx-async-state`, premium/mobile visual ownership and every non-shell selector remained outside the slice.
+- The post-change manifest contains exactly 81 items: 50 `intentional`, 31 `requires-proof` and 0 `protected`.
+- There are zero remaining `premium-ui.css` → `adaptive-navigation.css` exact-selector conflicts.
+- The remaining navigation/mobile boundary is exactly:
+  - 10 `premium-ui.css` → `mobile-pwa-fixes.css` items;
+  - one `mobile-pwa-fixes.css` → `adaptive-navigation.css` item: `.lx-resource-stack | width`.
+- Browser evidence compares production order with adversarial adaptive-first order at 390, 719, 720, 760, 761 and 1024 px and requires identical computed snapshots, one visible primary navigation and no horizontal overflow.
+- The immutable-head visual gate passed without snapshot, hash, tolerance, timeout, budget or production-value changes.
+- A bounded alternate-Skia experiment was rejected and fully reverted because it changed five approved exact hashes; it is not part of the merged product diff.
 
 ## Current Issue #70 acceptance evidence
 
@@ -103,29 +114,34 @@
 - README documents the actual production chain, route/runtime ownership and global CSS boundary.
 - Phrases catalog-sort and compact Home have explicit adversarial source-order contracts.
 - The exact-selector overlap inventory provides a fail-closed bounded map of the remaining feature-style ownership surface.
-- Navigation/mobile-shell behavior is now measured at every critical compact/tablet boundary, but current hybrid ownership has not yet been corrected or intentionally consolidated.
+- Adaptive navigation shell ownership is independent of whether its stylesheet loads before or after premium/mobile styles.
 
 ## In progress
 
 - No atomic production slice is active.
-- This documentation-only reconciliation records PR #364 delivery and resets the completed task context.
-- Issue #70 remains open because the navigation/mobile-shell cluster still requires one bounded production ownership correction, other exact-selector clusters remain, and semantically overlapping non-identical selectors remain a later acceptance boundary.
+- This documentation-only reconciliation records PR #366 delivery and resets the completed task context.
+- Issue #70 remains open because 31 exact-selector conflicts still require proof or correction, semantically overlapping non-identical selectors remain unaudited, and the final acceptance reconciliation is not complete.
 
 ## Remaining roadmap
 
-### 1. Navigation/mobile-shell production correction
+### 1. Premium/mobile-shell ownership correction
 
 - Re-read live `main`, Issue #70, open PRs, CI and stage after this reconciliation merges.
-- Select exactly one bounded correction for the navigation/mobile-shell cluster only.
-- Use PR #364 browser evidence to choose the canonical owner independently of accidental source order.
-- Candidate mechanisms may include media-boundary separation, route-scoped specificity, declaration migration or owner consolidation; select one only after current source and computed values are audited.
-- Preserve the approved computed presentation unless an explicit design change is separately approved.
+- Select exactly one bounded correction for the 10 remaining `premium-ui.css` → `mobile-pwa-fixes.css` conflicts.
+- Preserve the approved computed presentation and current 760px mobile-PWA boundary unless an explicit design change is separately approved.
+- Use a canonical owner mechanism independent of accidental root import order: route-scoped specificity, declaration migration, media-boundary separation or owner consolidation after source/computed audit.
 - Require unchanged authoritative Linux visual hashes, accessibility results and route-performance budgets for a pure ownership correction.
-- Do not combine Learning switch, Phrases grid, adaptive layout, account-security or async-state corrections.
+- Do not combine `.lx-resource-stack`, Learning switch, Phrases grid, adaptive tablet layout, account-security or async-state corrections.
 
-### 2. Remaining exact-selector clusters
+### 2. Resource-stack width owner
 
-Handle each as a separate proof-first atomic slice after navigation/mobile-shell delivery:
+- Handle the single `.lx-resource-stack | width` conflict between `mobile-pwa-fixes.css` and `adaptive-navigation.css` as a separate atomic slice.
+- Audit every route/session state that renders the resource stack before choosing the canonical width owner.
+- Do not broaden this width slice to `.lx-async-state` or unrelated adaptive layout selectors.
+
+### 3. Remaining exact-selector clusters
+
+Handle each as a separate proof-first atomic slice after the navigation/mobile boundaries:
 
 - Scenario Catalog / Learning section switch: 8 conflicts.
 - Adaptive tablet layout: 6 conflicts.
@@ -133,13 +149,13 @@ Handle each as a separate proof-first atomic slice after navigation/mobile-shell
 - Account Security width: 1 conflict.
 - Async State width: 1 conflict.
 
-### 3. Final Issue #70 acceptance reconciliation
+### 4. Final Issue #70 acceptance reconciliation
 
 - Audit semantically overlapping selectors that are not textually identical.
 - Reconcile global feature-style evidence with app-entry, compatibility reachability, fallback-exclusive bundle, global ownership, visual regression and README evidence.
 - Close Issue #70 only when every acceptance criterion has current fail-closed evidence.
 
-### 4. Separate maintenance and product roadmap
+### 5. Separate maintenance and product roadmap
 
 - Keep Dependabot and dependency upgrades separate from compatibility/CSS cleanup.
 - Continue #18/#201 personalization and First Use only after approved design states.
@@ -148,8 +164,9 @@ Handle each as a separate proof-first atomic slice after navigation/mobile-shell
 
 ## Validation pending
 
-- The 37 navigation/mobile-shell exact-selector conflicts are now proven at source and computed-browser level but are not yet corrected or reclassified as intentionally owned.
-- Twenty additional exact-selector conflicts remain outside the navigation/mobile-shell cluster.
+- Ten premium/mobile-shell exact-selector conflicts still depend on the current owner/cascade relationship and require one bounded correction.
+- The `.lx-resource-stack | width` exact-selector conflict remains explicitly unresolved as a separate layout-owner boundary.
+- Twenty additional exact-selector conflicts remain outside the navigation/mobile cluster.
 - Semantically overlapping but textually different selectors are not claimed safe by the exact-selector inventory.
 - Guest Profile authentication/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
@@ -157,21 +174,21 @@ Handle each as a separate proof-first atomic slice after navigation/mobile-shell
 
 ## Recent production/tooling evidence
 
-1. #364 — `test(frontend): prove navigation mobile cascade owners` → `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
-2. #363 — `docs(agent): reconcile PR 362 CSS overlap inventory` → `626b6f637f517253aea87faf12223e4e43bfc1e0`.
-3. #362 — `test(frontend): inventory global CSS source-order conflicts` → `8c342e219f4d274a89189534deae20c3499e5c9e`.
-4. #361 — `docs(agent): reconcile PR 360 Home CSS order independence` → `708403160cb35c1e155c5e3eabd2e5078e4826c4`.
-5. #360 — `style(frontend): make compact Home CSS order-independent` → `37f3e0d36fa6a34a63c3ef5c51459ec0af98cbcd`.
+1. #366 — `style(frontend): make adaptive navigation order-independent` → `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+2. #365 — `docs(agent): reconcile PR 364 cascade evidence` → `e72e88c697ae74dc3dbdb65ed20ce640baee243d`.
+3. #364 — `test(frontend): prove navigation mobile cascade owners` → `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
+4. #363 — `docs(agent): reconcile PR 362 CSS overlap inventory` → `626b6f637f517253aea87faf12223e4e43bfc1e0`.
+5. #362 — `test(frontend): inventory global CSS source-order conflicts` → `8c342e219f4d274a89189534deae20c3499e5c9e`.
 
 ## Evidence
 
-- PR #364 final developer-authored head `0e2144a8b262ea74ae758c57cbc8052dcb407ce9` passed authoritative full CI #2602 / run `30814091000` without retry.
-- Final PR CI passed the exact 37-item source contract, frontend lint, typecheck, full unit suite, production build and dependency audit.
+- PR #366 final developer-authored head `cc3b472808be0a0e4d5e19370e0d51e3b6be100c` passed authoritative full CI #2624 / run `30833124440`.
+- Final PR CI passed the exact 81-item overlap manifest, focused navigation source/cascade contracts, frontend lint, typecheck, full unit suite, production build and dependency audit.
 - Backend unit/security/integration, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance budgets and both container builds succeeded.
-- PR #364 discussion contained no comments, reviews or unresolved review threads.
-- Expected-head squash merge produced product SHA `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`.
-- Exact-SHA main CI run `30814893312` completed successfully on that merge SHA.
-- Stage run `30815582586` deployed web/API images tagged `7b1b18eb6ba42513ca4a10b86961b9318650fbe9`, returned successful public smoke and completed all 12 public desktop Chromium/iOS WebKit checks without retry.
+- PR #366 discussion contained no comments, reviews or unresolved review threads.
+- Expected-head squash merge produced product SHA `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`.
+- Exact-SHA main CI run `30834200322` completed successfully on that merge SHA.
+- Stage run `30834930215` deployed web/API images tagged `924a50af5ff5e6d9748d0a48fa43b104c09c8e05`; deploy, public smoke and all 12 public desktop Chromium/iOS WebKit checks succeeded.
 - Indexed search remains discovery only; final claims use exact files, refs, Issues, PRs, workflow evidence and deployment records.
 
 ## State semantics
