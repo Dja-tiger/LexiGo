@@ -34,10 +34,18 @@ async function disclosureTarget(button: Locator): Promise<EffectiveTarget> {
     const rightInset = Number.parseFloat(hitSlop.right) || 0;
     const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
     const leftInset = Number.parseFloat(hitSlop.left) || 0;
-    const targetTop = rect.top + borderTop + topInset;
-    const targetRight = rect.right - borderRight - rightInset;
-    const targetBottom = rect.bottom - borderBottom - bottomInset;
-    const targetLeft = rect.left + borderLeft + leftInset;
+
+    // An absolutely positioned pseudo-element is laid out from the button's
+    // padding box, while the native button border box remains clickable too.
+    // Measure the union of both surfaces rather than dropping the border area.
+    const pseudoTop = rect.top + borderTop + topInset;
+    const pseudoRight = rect.right - borderRight - rightInset;
+    const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+    const pseudoLeft = rect.left + borderLeft + leftInset;
+    const targetTop = Math.min(rect.top, pseudoTop);
+    const targetRight = Math.max(rect.right, pseudoRight);
+    const targetBottom = Math.max(rect.bottom, pseudoBottom);
+    const targetLeft = Math.min(rect.left, pseudoLeft);
     const centerX = (targetLeft + targetRight) / 2;
     const centerY = (targetTop + targetBottom) / 2;
     const inset = 1;
