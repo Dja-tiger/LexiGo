@@ -6,7 +6,7 @@
 - Branch: `agent/issue-74-header-touch-targets`
 - Base SHA: `c56485511c752aacd3e2f43cd0d102f229a9c25f`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #387
 
 ## Objective
 
@@ -16,8 +16,8 @@ Make shared production header controls meet minimum effective touch-target size 
 
 - Add one narrow routed stylesheet with a shared semantic target: 44 CSS px by default and 48 CSS px for coarse-pointer environments.
 - Import it without reordering existing global style owners.
-- Apply transparent effective hit slop to live shared header `streak`, reminder icon and avatar buttons.
-- Preserve visible dimensions, spacing and existing focus styling while extending the focus/touch rectangle.
+- Apply visually inert effective hit slop to live shared header `streak`, reminder icon and avatar buttons.
+- Preserve visible dimensions, spacing and the existing global keyboard-focus owner.
 - Add fail-closed source ownership evidence and real Chromium/iOS/Android hit-testing coverage.
 - Register the focused browser suite in authoritative UI and accessibility CI.
 
@@ -27,7 +27,7 @@ Make shared production header controls meet minimum effective touch-target size 
 - No mobile navigation label change; current compact navigation already has 48×52 targets and 11–12 px labels.
 - No text-only card/action remediation outside shared headers.
 - No manual real-device acceptance claim; that remains required before Issue #74 closure.
-- No Figma redesign, DOM change, runtime behavior, visual baseline, budget or dependency change.
+- No new focus visual, Figma redesign, DOM change, runtime behavior, visual baseline, budget or dependency change.
 
 ## Allowed paths
 
@@ -52,6 +52,7 @@ Make shared production header controls meet minimum effective touch-target size 
 ## Runtime owners
 
 - `frontend/app/header-touch-targets.css` — routed shared header effective hit slop.
+- `frontend/app/accessibility-focus.css` — unchanged global keyboard-focus visual owner.
 - `frontend/components/lexigo-home-app.tsx` — interactive streak and avatar.
 - `frontend/components/lexigo-dictionary-app.tsx` — reminder icon and avatar.
 - routed header shells preserve existing layout and safe-area ownership.
@@ -63,12 +64,13 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Invariants
 
-- Visible icon/avatar geometry and header layout footprint remain unchanged.
+- Visible icon/avatar geometry, raster output and header layout footprint remain unchanged.
 - Existing navigation controls remain at least 48 px in compact/rail layouts.
 - Effective target is at least 44×44 with a fine pointer and 48×48 with a coarse pointer.
 - Expanded targets do not overlap adjacent header controls.
 - Pointer events at the expanded perimeter resolve to the intended control.
-- Keyboard focus remains visible over the expanded perimeter and no semantic role/name changes.
+- Existing keyboard focus remains visible and no semantic role/name changes.
+- The hit-slop pseudo-element has no transform, shadow, background or other painted output.
 - No horizontal overflow at minimum compact widths.
 - Existing global stylesheet imports remain in their current relative order.
 
@@ -78,7 +80,8 @@ Make shared production header controls meet minimum effective touch-target size 
 - Dictionary reminder icon and avatar meet the effective target contract.
 - Coarse-pointer projects enforce 48 px; desktop fine-pointer enforces 44 px.
 - Adjacent expanded header targets retain non-overlapping spacing.
-- Source contract maps CSS owner, coarse override, runtime class owners and authoritative browser registration.
+- Source contract maps CSS owner, existing focus owner, coarse override, runtime class owners and authoritative browser registration.
+- Existing visual hashes remain unchanged.
 - Full immutable-head CI, expected-head merge, exact-SHA main CI and exact-image stage/public validation succeed.
 
 ## Required checks
@@ -91,9 +94,9 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Risks
 
-- A pseudo-element may visually or interactively overlap an adjacent control if spacing is insufficient.
+- A pseudo-element may interactively overlap an adjacent control if spacing is insufficient.
 - Coarse-pointer media emulation may differ across browser projects.
-- Global focus rules must remain visible alongside the expanded perimeter.
+- Even transparent transformed layers can alter deterministic raster output; transforms and painted focus effects are prohibited in this owner.
 
 ## Rollback
 
