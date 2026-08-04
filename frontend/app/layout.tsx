@@ -19,6 +19,7 @@ import "./calendar-reminders.css";
 import "./error-boundary.css";
 import "./accessibility-focus.css";
 import "./accessibility-navigation.css";
+import "./header-touch-targets.css";
 import "./adaptive-navigation.css";
 import "./adaptive-layout.css";
 import "./route-navigation.css";
