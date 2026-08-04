@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 01:52 Europe/Moscow
+## 2026-08-05 01:57 Europe/Moscow
 
 ### Verified
 
@@ -34,8 +34,37 @@ The adaptive Lesson Composer presentation predates the Issue #74 input-modality 
 
 - Initial browser proof referenced an outer helper from a Playwright page callback. Because outer functions are not serialized into browser context, the measurement helper was moved inside each `evaluate`/`evaluateAll` callback before CI.
 - Initial source contract expected a literal `aria-label="Размер урока"`. The live runtime correctly names that group through `<legend id="lesson-size-label">` plus `aria-labelledby="lesson-size-label"`; the contract was aligned with the actual accessibility owner.
-- Source inspection also confirmed four `role="radio"` templates: three inline option maps plus the reusable collection-card radio component.
+- Source inspection confirmed four `role="radio"` templates: three inline option maps plus the reusable collection-card radio component.
 - No production CSS or runtime component changed during these corrections.
+
+### CI diagnosis
+
+Authoritative CI #2775 / run `30958010741` ran on developer head `02be8af2e74cd0e18932dace0c74a47dd7cc0835`.
+
+Passed before the frontend-core failure:
+
+- change classifier and full product-pipeline selection;
+- frontend lint;
+- frontend TypeScript;
+- completed backend checks continued independently, but this run is superseded and is not merge evidence.
+
+Failed:
+
+- Frontend core quality job `92155520449`, unit/source contract step.
+
+Exact evidence:
+
+- `lesson-composer-option-touch-target-source.test.ts` produced two failures;
+- global `runtime.match(/role="radiogroup"/g)` found four groups because the large source file contains one unrelated radiogroup outside this slice;
+- the naive forbidden substring `width:` matched the allowed media query `max-width: 767px` rather than a visual `width` declaration;
+- 96 other unit files and 595 tests passed in the same run.
+
+Correction:
+
+- removed the ambiguous global radiogroup count while retaining exact assertions for the three targeted group owners;
+- replaced forbidden declaration substrings with line-anchored CSS declaration regexes, so `width:` is prohibited but `max-width:` is allowed;
+- correction commit: `4826f8225f87634ab6d22aefc59f87430e4d1ae8`;
+- production CSS, runtime components and browser proof remain unchanged.
 
 ### Changed files
 
@@ -55,17 +84,18 @@ The adaptive Lesson Composer presentation predates the Issue #74 input-modality 
 - Runtime visibility, accessibility-tree semantics, computed source ownership and exact Figma-node inspection.
 - Atomic allowed-path and rollback pre-flight.
 - Full read-back of every product/test/package write.
-- Branch compare: eight allowed paths, `behind_by=0`, no runtime component, adaptive presentation or snapshot change.
+- Branch compare: eight allowed paths, no runtime component, adaptive presentation or snapshot change.
 - Exact search confirmed no existing conflicting `::before` owner on the targeted option buttons.
+- CI #2775 lint and typecheck passed; failure was isolated to the new source contract.
 
 ### Checks failed
 
-- None executed yet; no CI claim is made.
+- CI #2775 source contract on superseded head `02be8af2…`, for the two exact test-only causes described above.
 
 ### Current branch head
 
-Resolve from the live branch after the remaining execution-record write. The PR head before this progress update was `aeb4b64cde0b4243a0e724e9e2d05091c9e49dd5`.
+Resolve from the live branch after the remaining execution-record write. No final CI claim is made yet.
 
 ### Next action
 
-Complete the execution record, verify the resulting final diff and require fresh full authoritative CI on the final developer-authored head before any Ready or merge transition.
+Complete the execution record, verify the final eight-path diff and require a fresh full authoritative CI run on the resulting immutable developer head before any Ready or merge transition.
