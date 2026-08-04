@@ -26,8 +26,9 @@ describe("Issue #75 Phrases search acceptance source contract", () => {
     expect(catalog).toContain('type="radio"');
     expect(catalog).toContain('checked={filters.topic === topic}');
     expect(catalog).toContain('aria-label="Фильтры каталога фраз"');
-    expect(acceptanceJourney).toContain("await releaseRadio.check()");
+    expect(acceptanceJourney).toContain("await releaseChip.click()");
     expect(acceptanceJourney).toContain('toHaveAttribute("aria-pressed", "true")');
+    expect(acceptanceJourney).toContain("await expect(releaseRadio).toBeChecked()");
   });
 
   it("keeps query and topic combined in URL-backed History state", () => {
