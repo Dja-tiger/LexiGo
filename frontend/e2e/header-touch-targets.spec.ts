@@ -100,28 +100,24 @@ test.describe("Issue #74 shared header touch targets", () => {
 
     const compact = testInfo.project.name !== "desktop-chromium";
     await page.setViewportSize(compact ? { width: 390, height: 844 } : { width: 1440, height: 900 });
-    const expectedMinimum = await page.evaluate(() => window.matchMedia("(pointer: coarse)").matches ? 48 : 44);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-route-client-island="home"]')).toBeVisible();
+    const expectedMinimum = await page.evaluate(() => window.matchMedia("(pointer: coarse)").matches ? 48 : 44);
     const homeStreak = page.locator(".lx-header-tools button.lx-streak");
     const homeAvatar = page.locator(".lx-header-tools button.lx-avatar");
-    const homeTargets = await Promise.all([
-      expectTarget(homeStreak, expectedMinimum),
-      expectTarget(homeAvatar, expectedMinimum),
-    ]);
-    expectSeparated(homeTargets[0], homeTargets[1]);
+    const homeStreakTarget = await expectTarget(homeStreak, expectedMinimum);
+    const homeAvatarTarget = await expectTarget(homeAvatar, expectedMinimum);
+    expectSeparated(homeStreakTarget, homeAvatarTarget);
     await expectNoHorizontalOverflow(page);
 
     await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-route-client-island="dictionary"]')).toBeVisible();
     const reminder = page.getByRole("button", { name: "Напоминание о занятии" });
     const dictionaryAvatar = page.getByRole("button", { name: "Открыть профиль" });
-    const dictionaryTargets = await Promise.all([
-      expectTarget(reminder, expectedMinimum),
-      expectTarget(dictionaryAvatar, expectedMinimum),
-    ]);
-    expectSeparated(dictionaryTargets[0], dictionaryTargets[1]);
+    const reminderTarget = await expectTarget(reminder, expectedMinimum);
+    const dictionaryAvatarTarget = await expectTarget(dictionaryAvatar, expectedMinimum);
+    expectSeparated(reminderTarget, dictionaryAvatarTarget);
     await expectNoHorizontalOverflow(page);
   });
 });
