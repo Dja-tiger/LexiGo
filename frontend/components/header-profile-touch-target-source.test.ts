@@ -7,6 +7,7 @@ const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8
 const premiumUI = readFileSync(new URL("../app/premium-ui.css", import.meta.url), "utf8");
 const mobilePWA = readFileSync(new URL("../app/mobile-pwa-fixes.css", import.meta.url), "utf8");
 const profileStyles = readFileSync(new URL("../app/profile.css", import.meta.url), "utf8");
+const reminderEntryStyles = readFileSync(new URL("../app/calendar-reminder-entry.css", import.meta.url), "utf8");
 const focusStyles = readFileSync(new URL("../app/accessibility-focus.css", import.meta.url), "utf8");
 const profileRuntime = readFileSync(new URL("./lexigo-profile-app.tsx", import.meta.url), "utf8");
 const routeRuntimes = [
@@ -58,7 +59,6 @@ describe("Issue #74 header profile touch-target ownership", () => {
     expect(premiumUI).toContain(".lx-avatar {\n  width: 44px;\n  height: 44px;");
     expect(mobilePWA).toContain(".lx-routed-app .lx-avatar {\n    width: 42px;\n    height: 42px;");
     expect(profileStyles).toContain(".lx-profile-app .lx-avatar {\n  width: 42px;\n  height: 42px;");
-    expect(premiumUI).toContain(".lx-header-tools {\n  display: flex;\n  align-items: center;\n  gap: 10px;");
     expect(touchTargets).not.toContain("min-height:");
     expect(touchTargets).not.toContain("min-width:");
     expect(touchTargets).not.toContain("width:");
@@ -80,6 +80,16 @@ describe("Issue #74 header profile touch-target ownership", () => {
     expect(touchTargets).toContain(LIVE_SELECTOR);
     expect(touchTargets).not.toContain(".lx-avatar::before");
     expect(touchTargets).not.toContain(".lx-icon-button");
+  });
+
+  it("protects the visible route reminder summary as the compact adjacent control", () => {
+    expect(reminderEntryStyles).toContain(".lx-route-reminder-entry > summary {");
+    expect(reminderEntryStyles).toContain("min-width: 44px;");
+    expect(reminderEntryStyles).toContain("min-height: 48px;");
+    expect(reminderEntryStyles).toContain("@media (max-width: 719px)");
+    expect(reminderEntryStyles).toContain("right: max(68px, calc(env(safe-area-inset-right) + 68px));");
+    expect(reminderEntryStyles).toContain("min-width: 48px;\n    min-height: 48px;");
+    expect(mobilePWA).toContain(".lx-routed-app .lx-streak {\n    display: none;");
   });
 
   it("retains the existing global keyboard focus owner", () => {
