@@ -47,7 +47,7 @@ Actions performed:
 - recorded allowed/prohibited paths, invariants, acceptance criteria and rollback;
 - created Draft PR #393;
 - read back every changed path;
-- confirmed branch compare contains only the eight allowed paths and is not behind base.
+- confirmed branch compares contain only the eight allowed paths and remain based on the exact main SHA.
 
 Commands or procedures:
 
@@ -179,7 +179,7 @@ Actions performed:
 
 Commands or procedures:
 
-GitHub contents writes, exact file read-back, source search and branch compare. Full lint/typecheck/unit/build/browser validation is pending authoritative CI.
+GitHub contents writes, exact file read-back, source search, branch compare and authoritative CI inspection.
 
 Artifacts produced:
 
@@ -190,25 +190,71 @@ Artifacts produced:
 
 Result:
 
-Production and validation ownership implemented; no final validation claim yet.
+Production and validation ownership implemented; final full-CI validation remains pending on the post-diagnosis immutable head.
 
-Failures:
+#### Pre-CI correction 1 — Playwright callback serialization
 
-Two defects were found during mandatory read-back before CI:
+Failure found during mandatory read-back:
 
-1. The first E2E version referenced a top-level `targetRectForElement` helper from inside Playwright `evaluate` and `evaluateAll` callbacks.
-2. The first source contract expected a literal `aria-label="Размер урока"` and counted only three `role="radio"` templates.
+The first E2E version referenced a top-level geometry helper from inside Playwright `evaluate` and `evaluateAll` callbacks.
 
 Root cause:
 
-1. Playwright serializes page callbacks but not arbitrary outer helper functions.
-2. The live size group is correctly named by `<legend id="lesson-size-label">` plus `aria-labelledby`, and the reusable `CollectionCard` contributes the fourth radio template.
+Playwright serializes page callbacks but not arbitrary outer helper functions.
 
-Fallback or correction:
+Correction:
 
-- moved the geometry helper inside each browser callback so it is fully serializable;
-- aligned the source contract to the exact legend/`aria-labelledby` ownership and four radio templates;
-- kept production CSS and runtime components unchanged.
+Moved the geometry measurement function inside each browser callback. No production CSS or runtime change.
+
+Reusable lesson:
+
+Playwright page callbacks must be self-contained.
+
+#### Pre-CI correction 2 — accessibility naming and radio templates
+
+Failure found during mandatory read-back:
+
+The first source contract expected `aria-label="Размер урока"` and only three `role="radio"` templates.
+
+Root cause:
+
+The live size group is correctly named by `<legend id="lesson-size-label">` plus `aria-labelledby`, and reusable `CollectionCard` contributes the fourth radio template.
+
+Correction:
+
+Aligned the contract with the exact naming relation and four source templates. No runtime change.
+
+Reusable lesson:
+
+Source contracts must model actual `aria-label` versus `aria-labelledby` ownership and reusable component templates.
+
+#### CI diagnosis — exact source assertions
+
+Run:
+
+CI #2775 / run `30958010741`, developer head `02be8af2e74cd0e18932dace0c74a47dd7cc0835`.
+
+Failed job:
+
+Frontend core quality `92155520449`, unit/source-contract step. Lint and TypeScript passed. The same run reported 96 passing unit files and 595 passing tests outside the two new assertions.
+
+Evidence:
+
+Exact job logs showed:
+
+1. `runtime.match(/role="radiogroup"/g)` returned four because `lexigo-learn-app.tsx` contains another unrelated radiogroup outside this slice.
+2. `not.toContain("width:")` matched the allowed media condition `max-width: 767px`, not a CSS `width` declaration.
+
+Root cause:
+
+The source contract used global file-level counts and raw substring checks where exact owner strings and declaration-level checks were required.
+
+Correction:
+
+- removed the ambiguous global radiogroup count while retaining exact assertions for each of the three target owner strings;
+- replaced raw forbidden declaration substrings with line-anchored regular expressions for actual CSS declarations, allowing `max-width` while still rejecting `width`;
+- committed as `4826f8225f87634ab6d22aefc59f87430e4d1ae8`;
+- production CSS, runtime source and Playwright proof were unchanged.
 
 Limitations:
 
@@ -216,7 +262,7 @@ Physical-device acceptance, enlarged-text behavior and 200% zoom remain outside 
 
 Reusable lesson:
 
-Playwright page callbacks must be self-contained. Accessibility source contracts must model the actual naming relation (`aria-label` versus `aria-labelledby`) and reusable component templates rather than infer structure from the rendered count.
+A source contract for a large owner file must assert exact target fragments instead of total counts unless the whole-file count is itself the invariant. CSS declaration prohibitions must distinguish declarations from media-feature names such as `max-width`.
 
 ## Required next evidence
 
