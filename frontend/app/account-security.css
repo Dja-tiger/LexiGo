@@ -192,6 +192,18 @@
   margin-top: 18px;
 }
 
+@media (min-width: 1024px) {
+  .lx-routed-app .lx-account-security {
+    box-sizing: border-box;
+    width: min(1140px, calc(100vw - var(--ak-shell-rail-width) - 80px));
+    margin-right: 40px;
+    margin-left: max(
+      calc(var(--ak-shell-rail-width) + 40px),
+      calc((100vw + var(--ak-shell-rail-width) - 1140px) / 2)
+    );
+  }
+}
+
 @media (max-width: 880px) {
   .lx-account-security-grid {
     grid-template-columns: 1fr;
