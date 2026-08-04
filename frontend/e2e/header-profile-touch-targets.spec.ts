@@ -91,16 +91,16 @@ test.describe("Issue #74 header profile touch target", () => {
     await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
 
     const action = page.getByRole("button", { name: "Открыть профиль", exact: true });
-    const neighbor = page.locator(".lx-header-tools .lx-streak");
+    const reminder = page.locator(".lx-route-reminder-entry > summary");
     await expect(action).toBeVisible();
-    await expect(neighbor).toBeVisible();
+    await expect(reminder).toBeVisible();
 
     const expectedMinimum = await page.evaluate(() => (
       window.matchMedia("(pointer: coarse)").matches ? 48 : 44
     ));
     const expectedPainted = compact ? 42 : 44;
     const target = await profileTarget(action);
-    const neighborBox = await neighbor.boundingBox();
+    const reminderBox = await reminder.boundingBox();
 
     expect(target.visualHeight).toBeCloseTo(expectedPainted, 3);
     expect(target.visualWidth).toBeCloseTo(expectedPainted, 3);
@@ -112,10 +112,13 @@ test.describe("Issue #74 header profile touch target", () => {
     expect(target.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
     expect(target.pseudoBoxShadow).toBe("none");
 
-    expect(neighborBox).not.toBeNull();
-    if (neighborBox) {
-      const neighborRight = neighborBox.x + neighborBox.width;
-      expect(target.targetLeft - neighborRight).toBeGreaterThanOrEqual(1);
+    expect(reminderBox).not.toBeNull();
+    if (reminderBox) {
+      const reminderRight = reminderBox.x + reminderBox.width;
+      expect(
+        target.targetLeft - reminderRight,
+        "the profile hit surface must remain separated from the visible route reminder target",
+      ).toBeGreaterThanOrEqual(1);
     }
 
     await action.focus();
