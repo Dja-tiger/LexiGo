@@ -2,18 +2,18 @@
 
 ## Task
 
-- Branch: `agent/issue-70-final-acceptance-audit`
-- Base SHA: `ec1295c5458f280998c08aaef53a9e68d3c4fc86`
+- Branch: `agent/issue-70-public-webkit-sw-guard`
+- Base SHA: `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`
 - Head SHA: resolve from live branch ref
-- PR: #382
+- PR: #383
 
 ## Skills used
 
-### GitHub repository operations
+### GitHub workflow and artifact diagnostics
 
 Purpose:
 
-Reconstruct live post-reconciliation state, create an isolated branch and publish a single executable acceptance contract without touching production runtime.
+Classify the exact-image stage failure from primary evidence before changing code or retrying.
 
 Instruction source:
 
@@ -25,208 +25,123 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-04 live `main`.
+2026-08-04 live `main` and stage records.
 
 Inputs:
 
-Issue #70 acceptance criteria, product SHA `2cdb35d2c8184ea75d27fcf0e078cf400dfa2eb9`, docs reconciliation SHA `ec1295c5458f280998c08aaef53a9e68d3c4fc86`, reviewed manifest, focused proof contracts and public architecture documents.
+Product SHA `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`, main CI run `30902346811`, failed stage run `30903056155`, job `91971692028`, artifact `8889938105`, previous stage run `30892205056` and job `91936700171`.
 
 Files inspected:
 
-Agent Harness state, Issue #70, overlap manifest, proof-family CSS/source/browser files, package scripts, production app-entry contract, global style contract, route bundle budget, README, `docs/architecture.md`, isolated frontend-container harness and its shell test.
+Issue #12 deployment body, stage workflow, public runtime test, build-version guard, service-worker registration/update owners, local recovery test and both extracted error contexts.
 
 Actions performed:
 
-- Verified exact base and absence of intersecting product work.
-- Created `agent/issue-70-final-acceptance-audit` from the exact main SHA.
-- Restored the documented `frontend/components/architecture-documentation-contract.test.ts` path.
-- Read the new test back from the branch before PR publication.
-- Opened Draft PR #382 and tracked each immutable developer-authored head separately.
-- Retrieved failing frontend and deployment-script logs instead of retrying workflows blindly.
+- Confirmed deploy and public smoke succeeded on the exact image.
+- Downloaded the artifact and inspected initial/retry failure contexts.
+- Compared the failed run with a previous successful run containing the same WebKit diagnostic.
+- Verified build marker, stale cache, recovery storage, route and CSP invariants all recovered.
+- Created an isolated branch from the exact main SHA without a blind rerun.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads, branch creation, create-file write, explicit existing-file updates, branch read-back, workflow job inspection and decoded Actions log analysis.
+Exact-ref reads, workflow job/log retrieval, artifact digest verification/download, ZIP inspection and cross-run comparison.
 
 Artifacts produced:
 
-One central Vitest acceptance contract, a narrow read-only documentation mount, its shell-level contract and current Agent Harness records.
+A classified post-merge blocker record and isolated Draft PR #383.
 
 Result:
 
-The branch has executable cross-family registry and public-document acceptance evidence without production runtime changes.
+The blocker is a reproducible iOS WebKit lifecycle cancellation diagnostic, not failed deployment or failed application recovery.
 
 Failures:
 
-- The first new-file write was attempted through `update_file` and rejected by schema validation because no existing blob SHA exists.
-- CI #2693/run `30900646997` failed one of 564 unit tests because the frontend task container attempted to open `/README.md`.
-- Deployment scripts check run `30901123947` rejected its synthetic checkout because the old fixture did not create the newly required README/docs sources.
+Stage public browser validation failed after the initial attempt and one Playwright retry.
 
 Root cause:
 
-- The connector separates create and replace operations.
-- The frontend CI volume contains only the contents of `frontend/`; `process.cwd()` is `/workspace`, so resolving its parent produced `/` rather than the repository checkout.
-- The shell harness modeled the old minimum checkout and therefore failed the new production script's fail-closed source-existence checks before the Docker stub ran.
+The public test treated every page error as fatal and lacked recovery-scoped current-build service-worker classification.
 
 Fallback:
 
-- Loaded the dedicated `create_file` operation, corrected the unpublished draft and created the file on the existing isolated branch.
-- Inspected `scripts/ci/frontend-container.sh`, mounted only the checked-out `README.md` and `docs/` read-only at `/repository`, and retained repository-parent discovery for local execution.
-- Extended `scripts/ci/frontend-container.test.sh` with representative README/docs fixtures and exact `:ro` mount assertions.
+Do not weaken retries or suppress generic access-control errors. Encode the exact category and strengthen replacement-worker assertions.
 
 Limitations:
 
-Direct local `git` and package execution remain unavailable; authoritative repository CI is the execution source of truth.
+Authoritative CI and exact-image stage remain the execution sources of truth.
 
 Reusable lesson:
 
-Use `create_file` for a new repository path and reserve `update_file` for an exact current blob SHA. A frontend-only Docker workspace cannot validate repository-root documentation unless the exact public sources are exposed explicitly; prefer narrow read-only mounts over copies or broad checkout mounts. Fail-closed production preconditions must be reflected in their synthetic harness fixtures.
+Compare artifacts and runtime invariants before labelling a browser error transient. A benign lifecycle diagnostic may be exempted only together with proof that the replacement resource is healthy.
 
-### Fail-closed semantic ownership registry
+### Fail-closed public runtime classifier
 
 Purpose:
 
-Convert six focused Issue #70 proof families into one exhaustive semantic registry and connect them to all seven public acceptance criteria.
+Ignore only the known WebKit current-build service-worker cancellation during stale-build recovery while keeping real failures visible.
 
 Instruction source:
 
-- `.agents/AGENTS.issue-261-css-specificity.md`
-- `.agents/PROJECT_STATE.md`
-- Issue #70 body
-- existing focused source/browser contracts
+- `frontend/e2e/build-version-recovery.spec.ts`
+- `frontend/e2e/public-runtime-smoke.spec.ts`
+- `frontend/lib/build-version-guard.ts`
+- `frontend/components/service-worker-registration.tsx`
+- `frontend/lib/service-worker-update.ts`
 
 Version or verification date:
 
-2026-08-04 product state after PR #380.
+2026-08-04 product SHA `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`.
 
 Inputs:
 
-71-item reviewed exact-selector manifest, six proof-family counts, stronger production owner selectors, four unique computed-cascade specs, package scripts, app-entry/global-style/bundle/visual/performance/documentation evidence.
+Observed split WebKit diagnostic, browser name, active recovery state and exact current-build service-worker URL.
 
 Files inspected:
 
-- `frontend/app/global-feature-style-overlap-manifest.json`
-- `frontend/app/global-feature-style-overlap-source.test.ts`
-- proof-family CSS and source-contract files
-- four computed-cascade Playwright specs
-- `frontend/package.json`
-- `frontend/components/production-app-entry.test.ts`
-- `frontend/app/global-style-ownership.test.ts`
-- `frontend/e2e/route-bundle-budget.spec.ts`
-- `frontend/bundle-budgets.json`
-- `README.md`
-- `docs/architecture.md`
+Public/local recovery tests and service-worker/build-version owners.
 
 Actions performed:
 
-- Added strict manifest and package-script parsers.
-- Added six mutually exclusive family predicates with exact expected counts totaling 21.
-- Required every reviewed proof item to map exactly once.
-- Required stronger owner markers in production CSS and focused source contracts.
-- Required each unique browser proof in both authoritative UI commands.
-- Connected production entry, retired-root absence, root/body/button/input ownership, fallback-exclusive bundles, route budgets, visual/performance scripts and public documents to one executable contract.
-- Replaced over-specific generic source markers with family-specific markers after exact source inspection.
-- Corrected Account Security stronger-owner lookup from its fallback file to `account-security.css`.
+- Added `frontend/lib/public-runtime-errors.ts` with pure diagnostic normalization and exact classification.
+- Added Vitest coverage for split/full diagnostics and adversarial browser/state/build/origin/path boundaries.
+- Integrated the classifier into the public Playwright test only during the recovery window.
+- Kept crashes, non-exact page errors, fatal console errors and CSP violations fatal.
+- Required the exact current-build service-worker registration and no service-worker error UI after recovery.
+- Removed the inline public-spec boundary test so the stage matrix remains 12 tests.
+- Read all functional writes back from the branch.
 
 Commands or procedures:
 
-Static source graph inspection, exact manifest classification/count reconciliation, semantic owner marker registry, fail-closed command/document assertions and authoritative unit evidence.
+Pure exact-string classification, Vitest boundary testing, state-scoped Playwright integration and service-worker registration polling.
 
 Artifacts produced:
 
-`frontend/components/architecture-documentation-contract.test.ts`.
+- `frontend/lib/public-runtime-errors.ts`
+- `frontend/lib/public-runtime-errors.test.ts`
+- updated `frontend/e2e/public-runtime-smoke.spec.ts`
+- current Agent Harness records
 
 Result:
 
-CI #2693 proved the manifest totals, exhaustive 21/21 mapping, all semantic owner/source/browser links and authoritative command registration. Only repository-document availability failed; 563 other tests passed.
+The classification logic now executes before merge in Vitest, while the real public recovery remains the post-merge exact-image gate.
 
 Failures:
 
-One public-document acceptance group could not open the repository README inside the frontend-only task container.
+CI #2704 started on an earlier head before the unit module was added and is intentionally superseded.
 
 Root cause:
 
-The contract correctly requested the actual public documents, but the CI isolation boundary did not expose them.
+The public Playwright config is stage-only; inline classifier assertions would otherwise first execute after merge.
 
 Fallback:
 
-Do not replace the real documents with duplicated frontend fixtures. Expose the two authoritative public sources read-only and resolve `/repository` only when mounted.
+Treat only CI on the newest immutable head as authoritative.
 
 Limitations:
 
-The central registry intentionally audits the reviewed global import graph and delivered stronger owners; it does not claim arbitrary future feature CSS is safe unless the manifest or registry changes and CI reviews it.
+The exemption covers only the exact same-origin current-build `sw.js` cancellation during active recovery. Every other diagnostic remains a failure.
 
 Reusable lesson:
 
-Incremental proof families are closure-grade only when one central contract guarantees exhaustive, non-overlapping mapping and ties technical evidence back to the real public acceptance documents. CI isolation must preserve source authority, not force duplicated snapshots.
-
-### Isolated frontend public-document mount
-
-Purpose:
-
-Allow frontend Vitest to validate the actual repository README and architecture document while preserving Docker workspace isolation.
-
-Instruction source:
-
-- `scripts/ci/frontend-container.sh`
-- `scripts/ci/frontend-container.test.sh`
-- Issue #70 public documentation acceptance criterion
-- CI #2693 failing job log
-- Deployment scripts check run `30901123947`
-
-Version or verification date:
-
-2026-08-04.
-
-Inputs:
-
-`GITHUB_WORKSPACE/README.md`, `GITHUB_WORKSPACE/docs`, the existing private frontend Docker volume, `/deploy` read-only mount and the synthetic shell harness checkout.
-
-Files inspected:
-
-- `scripts/ci/frontend-container.sh`
-- `scripts/ci/frontend-container.test.sh`
-- `frontend/components/architecture-documentation-contract.test.ts`
-- decoded Frontend core quality log for job `91964009329`
-- decoded deployment scripts validation log for job `91965408265`
-
-Actions performed:
-
-- Added fail-closed host checks for README and docs existence.
-- Mounted README as `/repository/README.md:ro`.
-- Mounted docs as `/repository/docs:ro`.
-- Kept the mutable frontend workspace in its existing Docker volume.
-- Added local/CI path resolution that uses `/repository` only when the mounted README exists.
-- Updated the shell harness to create README/docs fixtures and assert both exact read-only mount arguments.
-
-Commands or procedures:
-
-Exact job-log classification, container mount graph inspection, minimal read-only bind-mount addition and shell-stub contract extension.
-
-Artifacts produced:
-
-Updated frontend container script, its shell test and repository path resolution in the architecture contract.
-
-Result:
-
-Prepared for a new immutable-head full CI and deployment-script validation. No public document is copied into or writable from the frontend workspace.
-
-Failures:
-
-The first deployment-script validation after adding production preconditions failed because its fixture checkout lacked README/docs.
-
-Root cause:
-
-The harness did not yet model the new minimum source tree required by the production script.
-
-Fallback:
-
-Create representative fixture files and verify the production script forwards exact `:ro` mounts; do not remove the fail-closed checks.
-
-Limitations:
-
-Only README and docs are exposed; arbitrary repository-root files remain unavailable by design.
-
-Reusable lesson:
-
-For source-of-truth documentation tests in isolated language workspaces, mount only the authoritative files read-only, keep local path discovery compatible with normal repository execution, and test both host preconditions and exact container mount flags.
+Stage-only browser logic should expose pure classification boundaries to the pre-merge unit gate, while keeping the real environment assertion in stage validation.

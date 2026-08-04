@@ -6,6 +6,11 @@ import {
   BUILD_RECOVERY_STORAGE_KEY,
 } from "../lib/build-version-guard";
 import { isExpectedContentSecurityPolicyConsoleDiagnostic } from "../lib/content-security-policy";
+import {
+  isExpectedWebKitGuardServiceWorkerCancellation,
+  normalizeRuntimePageError,
+} from "../lib/public-runtime-errors";
+import { serviceWorkerScriptURL } from "../lib/service-worker-update";
 
 const ROUTES = ["/", "/learn", "/phrases", "/dictionary", "/progress"] as const;
 const FATAL_RUNTIME_PATTERN = /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed|hydration failed|UI_RENDER_FAILURE|UI_VERSION_MISMATCH|ROOT_RENDER_FAILURE|ROOT_VERSION_MISMATCH|Content Security Policy/i;
@@ -16,6 +21,11 @@ const EXPECTED_CSP_MODE = (() => {
   }
   return configured;
 })();
+
+type RuntimeFailureCapture = {
+  failures: string[];
+  setGuardRecoveryServiceWorkerURL: (scriptURL: string | null) => void;
+};
 
 async function captureCSPViolations(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -48,10 +58,22 @@ async function expectCSPContract(page: Page, headers: Record<string, string>): P
   expect(await page.evaluate(() => Reflect.get(window, "__lexigoCSPViolations") as string[] ?? [])).toEqual([]);
 }
 
-function captureFatalRuntimeErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on("crash", () => errors.push("pagecrash: browser renderer terminated"));
-  page.on("pageerror", (error) => errors.push(`pageerror: ${error.name}: ${error.message}`));
+function captureFatalRuntimeErrors(page: Page, browserName: string): RuntimeFailureCapture {
+  const failures: string[] = [];
+  let guardServiceWorkerURL: string | null = null;
+
+  page.on("crash", () => failures.push("pagecrash: browser renderer terminated"));
+  page.on("pageerror", (error) => {
+    if (isExpectedWebKitGuardServiceWorkerCancellation({
+      browserName,
+      errorName: error.name,
+      errorMessage: error.message,
+      guardServiceWorkerURL,
+    })) {
+      return;
+    }
+    failures.push(`pageerror: ${normalizeRuntimePageError(error.name, error.message)}`);
+  });
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     const text = message.text();
@@ -59,10 +81,16 @@ function captureFatalRuntimeErrors(page: Page): string[] {
       FATAL_RUNTIME_PATTERN.test(text)
       && !isExpectedContentSecurityPolicyConsoleDiagnostic(text, EXPECTED_CSP_MODE)
     ) {
-      errors.push(`console: ${text}`);
+      failures.push(`console: ${text}`);
     }
   });
-  return errors;
+
+  return {
+    failures,
+    setGuardRecoveryServiceWorkerURL(scriptURL) {
+      guardServiceWorkerURL = scriptURL;
+    },
+  };
 }
 
 async function exercisePublicScrollBursts(page: Page): Promise<void> {
@@ -94,11 +122,22 @@ async function tolerateGuardNavigation(operation: Promise<unknown>): Promise<voi
   }
 }
 
+async function registeredServiceWorkerScriptURL(page: Page): Promise<string | null> {
+  return page.evaluate(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      const worker = registration.active ?? registration.waiting ?? registration.installing;
+      if (worker?.scriptURL) return worker.scriptURL;
+    }
+    return null;
+  });
+}
+
 test.describe.configure({ mode: "serial" });
 
 for (const route of ROUTES) {
-  test(`${route} remains usable after hydration and scrolling`, async ({ page }) => {
-    const fatalErrors = captureFatalRuntimeErrors(page);
+  test(`${route} remains usable after hydration and scrolling`, async ({ page, browserName }) => {
+    const runtimeFailures = captureFatalRuntimeErrors(page, browserName);
     await captureCSPViolations(page);
     const response = await page.goto(route, { waitUntil: "domcontentloaded" });
 
@@ -116,18 +155,22 @@ for (const route of ROUTES) {
     await expect(page.getByText("LexiGo не смог открыть страницу", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Загружены файлы разных версий", { exact: false })).toHaveCount(0);
     await expectCSPContract(page, response?.headers() ?? {});
-    expect(fatalErrors).toEqual([]);
+    expect(runtimeFailures.failures).toEqual([]);
   });
 }
 
-test("an existing public browser context recovers after its build marker becomes stale", async ({ page }) => {
-  const fatalErrors = captureFatalRuntimeErrors(page);
+test("an existing public browser context recovers after its build marker becomes stale", async ({ page, browserName }) => {
+  const runtimeFailures = captureFatalRuntimeErrors(page, browserName);
   await captureCSPViolations(page);
   await page.goto("/dictionary?source=mixed#catalog", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible();
 
   const currentBuild = await page.locator("html").getAttribute("data-lexigo-build");
   expect(currentBuild).toBeTruthy();
+  const expectedServiceWorkerURL = new URL(
+    serviceWorkerScriptURL(currentBuild ?? ""),
+    page.url(),
+  ).href;
 
   await page.evaluate(async ({ markerKey }) => {
     window.localStorage.setItem(markerKey, "stale-public-browser-build");
@@ -138,6 +181,7 @@ test("an existing public browser context recovers after its build marker becomes
     );
   }, { markerKey: BUILD_MARKER_STORAGE_KEY });
 
+  runtimeFailures.setGuardRecoveryServiceWorkerURL(expectedServiceWorkerURL);
   await tolerateGuardNavigation(page.reload({ waitUntil: "domcontentloaded" }));
   await expect(page.locator('[data-app-router-shell="true"]')).toBeVisible({ timeout: 20_000 });
 
@@ -152,11 +196,19 @@ test("an existing public browser context recovers after its build marker becomes
     "lexigo-shell-stale-public-browser-build",
   );
 
+  await expect.poll(
+    () => registeredServiceWorkerScriptURL(page),
+    { timeout: 20_000 },
+  ).toBe(expectedServiceWorkerURL);
+  await expect(page.locator('[data-testid="service-worker-error"]')).toHaveCount(0);
+
   const finalURL = new URL(page.url());
   expect(finalURL.pathname).toBe("/dictionary");
   expect(finalURL.searchParams.get("source")).toBe("mixed");
   expect(finalURL.searchParams.has(BUILD_CACHE_BUSTER_QUERY)).toBe(false);
   expect(finalURL.hash).toBe("#catalog");
   expect(await page.evaluate(() => Reflect.get(window, "__lexigoCSPViolations") as string[] ?? [])).toEqual([]);
-  expect(fatalErrors).toEqual([]);
+
+  runtimeFailures.setGuardRecoveryServiceWorkerURL(null);
+  expect(runtimeFailures.failures).toEqual([]);
 });

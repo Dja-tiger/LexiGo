@@ -1,59 +1,59 @@
 # Current Task Progress
 
-## 2026-08-04 13:46 Europe/Moscow
+## 2026-08-04 14:08 Europe/Moscow
 
 ### Verified
 
-- Live `main` before branch creation: `ec1295c5458f280998c08aaef53a9e68d3c4fc86`.
-- Issue #70 remains open and its seven acceptance criteria are unchanged.
-- No intersecting Issue #70 product PR is open; Dependabot PRs #304–#306 remain unrelated.
-- `.agents/PROJECT_STATE.md` records zero remaining exact-selector corrections and 21 reviewed `requires-proof` items across six proof families.
-- README and `docs/architecture.md` both name `frontend/components/architecture-documentation-contract.test.ts` as executable ownership evidence.
-- The documented architecture contract file was absent from the live production tree before this slice.
-- `scripts/ci/frontend-container.sh` copies only `frontend/` into `/workspace`; repository-root README/docs were not available to frontend Vitest before the current fix.
-- `scripts/ci/frontend-container.test.sh` originally created only frontend/deploy fixture directories, so the new fail-closed README/docs host checks correctly rejected the incomplete harness checkout.
+- Live `main` before branch creation: `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`.
+- Exact-SHA main CI run `30902346811` succeeded and published immutable web/API images.
+- Exact-image stage run `30903056155` deployed successfully and public smoke passed.
+- Public browser validation failed only in the iOS WebKit stale-build recovery test; 11/12 checks passed.
+- Both the initial attempt and Playwright retry emitted the same current-build `sw.js` access-control page error.
+- The recovery itself completed: current build marker restored, recovery marker cleared, stale cache deleted, route/search/hash preserved and CSP violations remained empty.
+- Previous exact-image stage run `30892205056` emitted the same WebKit diagnostic once and passed on retry, proving the failure category predates the final Issue #70 acceptance slice.
+- Local `build-version-recovery.spec.ts` already classifies narrowly scoped WebKit guard cancellations, while the public equivalent treated every page error as fatal.
+- `public-runtime-smoke.spec.ts` executes only in the post-merge stage workflow, so pure classification boundaries were moved into a Vitest-covered module before merge.
+- No intersecting Issue #70 product PR is open; only unrelated Dependabot PRs #304–#306 remain open.
 
 ### Finding
 
-Focused source/browser contracts prove all six semantic owner families, but no single executable registry guaranteed that all 21 reviewed manifest items were covered exactly once or that all seven Issue #70 acceptance criteria remained connected to current evidence. Public documentation additionally referenced a missing architecture contract path. Authoritative execution then exposed both sides of the isolation contract: frontend Vitest needed real repository documents, and the shell harness needed representative README/docs fixtures plus exact read-only mount assertions.
+The stage failure is a public-test classification gap rather than a runtime regression. WebKit can surface cancellation of the build-scoped service-worker load while the guard unregisters stale runtime state and replaces the document. The public test correctly proved all recovery invariants but lacked the narrow recovery-scoped diagnostic handling already used by local guard coverage.
 
 ### Root cause
 
-Issue #70 was delivered incrementally through isolated cleanup and computed-cascade slices. Each slice added local evidence, while the final cross-family registry and public-document contract had not yet been materialized as one source-controlled test. Frontend CI intentionally copies only `frontend/` into a private Docker volume, so resolving `process.cwd()/..` from `/workspace` produced `/README.md` rather than the checkout. The shell harness modeled the old minimum checkout and therefore lacked the newly required public-document sources.
+`captureFatalRuntimeErrors` had no knowledge of the browser engine, active guard-recovery window or expected current-build service-worker URL. Consequently the known WebKit cancellation remained in `fatalErrors` even when the replacement service worker and application recovered successfully.
 
 ### Changed files
 
-- `frontend/components/architecture-documentation-contract.test.ts`
-- `scripts/ci/frontend-container.sh`
-- `scripts/ci/frontend-container.test.sh`
+- `frontend/lib/public-runtime-errors.ts`
+- `frontend/lib/public-runtime-errors.test.ts`
+- `frontend/e2e/public-runtime-smoke.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ### Checks passed
 
-- Branch `agent/issue-70-final-acceptance-audit` created from exact main SHA.
-- New contract parses and validates manifest structure and classification values fail-closed.
-- Registry count is fixed at resource stack 1, Async State 1, Learn switch 8, adaptive Lesson Composer 6, Phrases grid 4 and Account Security 1.
-- Contract requires every `requires-proof` item to map to exactly one family and requires every family count to match.
-- CI #2693/run `30900646997` on head `a616ea7e51b1acc4a4e44fc520d1cc07cc0341b7` passed lint, TypeScript and three of four new acceptance tests.
-- The manifest totals, exhaustive 21/21 family mapping, semantic owner/source/browser links and authoritative UI command registration all passed in CI.
-- The remaining 563 existing tests passed; no production or focused proof regression was reported.
-- Bash syntax passed for the read-only mount implementation.
-- `README.md` and `docs/` are mounted read-only at `/repository`; local execution retains the repository-parent fallback.
-- The shell harness now creates representative public-document fixtures and asserts both exact `:ro` mount arguments.
+- Diagnostic artifact `8889938105` downloaded and inspected; both error contexts contain the same exact failure and successful application state.
+- Failed stage job `91971692028` and previous successful stage job `91936700171` were compared from decoded logs.
+- Branch `agent/issue-70-public-webkit-sw-guard` created from exact main SHA.
+- Classifier normalizes WebKit's split `Error.name`/`Error.message` diagnostic.
+- Exemption requires WebKit, an explicitly active recovery window and exact equality with the same-origin current-build `sw.js` URL.
+- Vitest adversarial coverage preserves failure behavior for Chromium, inactive recovery, another build, another origin and API requests.
+- Public recovery additionally requires the exact current-build service-worker registration and absence of service-worker error UI.
+- New module, unit test and public integration were read back from the isolated branch.
+- Draft PR #383 opened.
+- Initial CI #2704 on superseded head `076a977989ef6830638372a540bbea9e21653017` passed frontend core, but is no longer authoritative after adding pre-merge unit evidence.
 
 ### Checks failed
 
-- An initial attempt used the existing-file `update_file` operation for a new path and was rejected before any repository write.
-- CI #2693 frontend unit step failed one assertion group with `ENOENT: no such file or directory, open '/README.md'` because the repository documents were outside the isolated frontend volume.
-- Deployment scripts check run `30901123947` failed its environment-forwarding harness because the fixture checkout did not contain README/docs; the production script failed closed before invoking the Docker stub.
-- Both failures were deterministic evidence-contract gaps, not production, manifest, semantic mapping, lint, type or Bash syntax defects. Neither workflow was retried without a code/test change.
+- Exact-image stage run `30903056155`: public iOS WebKit stale-build recovery failed after one Playwright retry because the known service-worker cancellation was classified as fatal.
+- No product runtime, deploy, public smoke, CSP, route-state or stale-cache cleanup assertion failed.
 
 ### Current branch head
 
-Resolve from live branch ref; latest known functional write before this progress update: `2eba148e81ae81b1763a31204c4e5e0443d6eb2d`.
+Resolve from live branch ref; latest known task-record commit: `7e0d4ab349c61c4e161242c2f07e4b80f7b02b0c`.
 
 ### Next action
 
-Treat the newest immutable head CI and Deployment scripts check as authoritative. Merge only after the complete frontend/backend/browser/visual/performance/container matrix and the shell harness are green.
+Complete execution provenance, verify the six-file diff and track only CI on the newest immutable head. Merge only after the full matrix is green.
