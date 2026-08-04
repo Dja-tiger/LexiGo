@@ -64,7 +64,6 @@ const canonicalCascadeBlock = `/* Issue #70: canonical Phrases computed-cascade 
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
