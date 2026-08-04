@@ -19,7 +19,6 @@ import "./calendar-reminders.css";
 import "./error-boundary.css";
 import "./accessibility-focus.css";
 import "./accessibility-navigation.css";
-import "./header-touch-targets.css";
 import "./adaptive-navigation.css";
 import "./adaptive-layout.css";
 import "./route-navigation.css";
@@ -54,6 +53,7 @@ import "./scenario-lessons-accessibility.css";
 import "./appearance.css";
 import "./profile.css";
 import "./system-states.css";
+import "./connectivity-touch-targets.css";
 import "./active-lesson-queued-state.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
