@@ -33,7 +33,7 @@ Issue #70 acceptance criteria, product SHA `2cdb35d2c8184ea75d27fcf0e078cf400dfa
 
 Files inspected:
 
-Agent Harness state, Issue #70, overlap manifest, proof-family CSS/source/browser files, package scripts, production app-entry contract, global style contract, route bundle budget, README, `docs/architecture.md` and the isolated frontend-container harness.
+Agent Harness state, Issue #70, overlap manifest, proof-family CSS/source/browser files, package scripts, production app-entry contract, global style contract, route bundle budget, README, `docs/architecture.md`, isolated frontend-container harness and its shell test.
 
 Actions performed:
 
@@ -42,7 +42,7 @@ Actions performed:
 - Restored the documented `frontend/components/architecture-documentation-contract.test.ts` path.
 - Read the new test back from the branch before PR publication.
 - Opened Draft PR #382 and tracked each immutable developer-authored head separately.
-- Retrieved the failing frontend job log instead of retrying the workflow blindly.
+- Retrieved failing frontend and deployment-script logs instead of retrying workflows blindly.
 
 Commands or procedures:
 
@@ -50,7 +50,7 @@ GitHub connector exact-ref reads, branch creation, create-file write, explicit e
 
 Artifacts produced:
 
-One central Vitest acceptance contract, a narrow read-only documentation mount and current Agent Harness records.
+One central Vitest acceptance contract, a narrow read-only documentation mount, its shell-level contract and current Agent Harness records.
 
 Result:
 
@@ -60,16 +60,19 @@ Failures:
 
 - The first new-file write was attempted through `update_file` and rejected by schema validation because no existing blob SHA exists.
 - CI #2693/run `30900646997` failed one of 564 unit tests because the frontend task container attempted to open `/README.md`.
+- Deployment scripts check run `30901123947` rejected its synthetic checkout because the old fixture did not create the newly required README/docs sources.
 
 Root cause:
 
 - The connector separates create and replace operations.
 - The frontend CI volume contains only the contents of `frontend/`; `process.cwd()` is `/workspace`, so resolving its parent produced `/` rather than the repository checkout.
+- The shell harness modeled the old minimum checkout and therefore failed the new production script's fail-closed source-existence checks before the Docker stub ran.
 
 Fallback:
 
 - Loaded the dedicated `create_file` operation, corrected the unpublished draft and created the file on the existing isolated branch.
 - Inspected `scripts/ci/frontend-container.sh`, mounted only the checked-out `README.md` and `docs/` read-only at `/repository`, and retained repository-parent discovery for local execution.
+- Extended `scripts/ci/frontend-container.test.sh` with representative README/docs fixtures and exact `:ro` mount assertions.
 
 Limitations:
 
@@ -77,7 +80,7 @@ Direct local `git` and package execution remain unavailable; authoritative repos
 
 Reusable lesson:
 
-Use `create_file` for a new repository path and reserve `update_file` for an exact current blob SHA. A frontend-only Docker workspace cannot validate repository-root documentation unless the exact public sources are exposed explicitly; prefer narrow read-only mounts over copies or broad checkout mounts.
+Use `create_file` for a new repository path and reserve `update_file` for an exact current blob SHA. A frontend-only Docker workspace cannot validate repository-root documentation unless the exact public sources are exposed explicitly; prefer narrow read-only mounts over copies or broad checkout mounts. Fail-closed production preconditions must be reflected in their synthetic harness fixtures.
 
 ### Fail-closed semantic ownership registry
 
@@ -166,22 +169,26 @@ Allow frontend Vitest to validate the actual repository README and architecture 
 Instruction source:
 
 - `scripts/ci/frontend-container.sh`
+- `scripts/ci/frontend-container.test.sh`
 - Issue #70 public documentation acceptance criterion
 - CI #2693 failing job log
+- Deployment scripts check run `30901123947`
 
 Version or verification date:
 
-2026-08-04 CI run `30900646997`.
+2026-08-04.
 
 Inputs:
 
-`GITHUB_WORKSPACE/README.md`, `GITHUB_WORKSPACE/docs`, the existing private frontend Docker volume and `/deploy` read-only mount.
+`GITHUB_WORKSPACE/README.md`, `GITHUB_WORKSPACE/docs`, the existing private frontend Docker volume, `/deploy` read-only mount and the synthetic shell harness checkout.
 
 Files inspected:
 
 - `scripts/ci/frontend-container.sh`
+- `scripts/ci/frontend-container.test.sh`
 - `frontend/components/architecture-documentation-contract.test.ts`
 - decoded Frontend core quality log for job `91964009329`
+- decoded deployment scripts validation log for job `91965408265`
 
 Actions performed:
 
@@ -190,30 +197,31 @@ Actions performed:
 - Mounted docs as `/repository/docs:ro`.
 - Kept the mutable frontend workspace in its existing Docker volume.
 - Added local/CI path resolution that uses `/repository` only when the mounted README exists.
+- Updated the shell harness to create README/docs fixtures and assert both exact read-only mount arguments.
 
 Commands or procedures:
 
-Exact job-log classification, container mount graph inspection and minimal read-only bind-mount addition.
+Exact job-log classification, container mount graph inspection, minimal read-only bind-mount addition and shell-stub contract extension.
 
 Artifacts produced:
 
-Updated `scripts/ci/frontend-container.sh` and repository path resolution in the architecture contract.
+Updated frontend container script, its shell test and repository path resolution in the architecture contract.
 
 Result:
 
-Prepared for a new immutable-head full CI. No public document is copied into or writable from the frontend workspace.
+Prepared for a new immutable-head full CI and deployment-script validation. No public document is copied into or writable from the frontend workspace.
 
 Failures:
 
-No execution result on the corrected mount yet.
+The first deployment-script validation after adding production preconditions failed because its fixture checkout lacked README/docs.
 
 Root cause:
 
-Not applicable until the newest head CI runs.
+The harness did not yet model the new minimum source tree required by the production script.
 
 Fallback:
 
-If Docker rejects the file mount on a supported runner, mount the repository root read-only only after adding an explicit path-access contract; do not copy documents into frontend or weaken the public-document assertions.
+Create representative fixture files and verify the production script forwards exact `:ro` mounts; do not remove the fail-closed checks.
 
 Limitations:
 
@@ -221,4 +229,4 @@ Only README and docs are exposed; arbitrary repository-root files remain unavail
 
 Reusable lesson:
 
-For source-of-truth documentation tests in isolated language workspaces, mount only the authoritative files read-only and keep local path discovery compatible with normal repository execution.
+For source-of-truth documentation tests in isolated language workspaces, mount only the authoritative files read-only, keep local path discovery compatible with normal repository execution, and test both host preconditions and exact container mount flags.
