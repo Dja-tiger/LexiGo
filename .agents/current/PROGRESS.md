@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 01:57 Europe/Moscow
+## 2026-08-05 02:03 Europe/Moscow
 
 ### Verified
 
@@ -11,7 +11,7 @@
 - Current mobile presentation sets every direct radio button in these groups to at least 44px but has no coarse-pointer 48px owner.
 - Existing visual gap between adjacent options is 6px.
 - Figma file `3xXmBWnf38jbvLjtziwber`, expanded Learn node `203:5`, defines mode node `203:66` at 32px painted height, material node `203:77` at 45px and size node `203:92` at 32px, all with 6px spacing.
-- Draft PR #393 contains exactly the eight allowed paths and is not behind its base.
+- Draft PR #393 contains exactly the eight allowed paths and remains based on the exact task base.
 
 ### Finding
 
@@ -32,38 +32,60 @@ The adaptive Lesson Composer presentation predates the Issue #74 input-modality 
 
 ### Pre-CI read-back corrections
 
-- Initial browser proof referenced an outer helper from a Playwright page callback. Because outer functions are not serialized into browser context, the measurement helper was moved inside each `evaluate`/`evaluateAll` callback before CI.
-- Initial source contract expected a literal `aria-label="Размер урока"`. The live runtime correctly names that group through `<legend id="lesson-size-label">` plus `aria-labelledby="lesson-size-label"`; the contract was aligned with the actual accessibility owner.
-- Source inspection confirmed four `role="radio"` templates: three inline option maps plus the reusable collection-card radio component.
+- Moved geometry measurement inside each Playwright `evaluate`/`evaluateAll` callback because outer helper functions are not serialized into browser context.
+- Aligned the size-group contract to its real `<legend>` plus `aria-labelledby` accessible-name owner.
+- Replaced inferred whole-file role counts with exact option-map and `CollectionCard` ownership evidence.
+- Corrected a pre-rerun source assertion from `sourceOptions` to the exact runtime owner `SOURCE_OPTIONS` after read-back.
 - No production CSS or runtime component changed during these corrections.
 
-### CI diagnosis
+### First CI diagnosis
 
-Authoritative CI #2775 / run `30958010741` ran on developer head `02be8af2e74cd0e18932dace0c74a47dd7cc0835`.
+CI #2775 / run `30958010741` ran on developer head `02be8af2e74cd0e18932dace0c74a47dd7cc0835`.
 
-Passed before the frontend-core failure:
+Passed before failure:
 
-- change classifier and full product-pipeline selection;
-- frontend lint;
-- frontend TypeScript;
-- completed backend checks continued independently, but this run is superseded and is not merge evidence.
+- classifier and full product-pipeline selection;
+- frontend lint and TypeScript;
+- 96 unrelated unit files and 595 tests.
 
 Failed:
 
-- Frontend core quality job `92155520449`, unit/source contract step.
+- Frontend core quality job `92155520449`, unit/source-contract step.
+
+Evidence and correction:
+
+- a global `role="radiogroup"` count included one unrelated group in the large runtime file;
+- raw substring `width:` incorrectly matched allowed `max-width: 767px`;
+- removed the global group count and replaced raw CSS substrings with line-anchored declaration regexes;
+- correction commit `4826f8225f87634ab6d22aefc59f87430e4d1ae8`;
+- production CSS, runtime source and Playwright proof were unchanged.
+
+### Second CI diagnosis
+
+CI #2778 / run `30958253291` ran on developer head `bc9ca34ed00646779956502e96466c41fac68d5a`.
+
+Passed before failure:
+
+- classifier and full product-pipeline selection;
+- frontend lint and TypeScript;
+- all declaration-level source checks introduced after the first diagnosis;
+- 96 unrelated unit files and 596 tests.
+
+Failed:
+
+- Frontend core quality job `92156308008`, one source-contract assertion.
 
 Exact evidence:
 
-- `lesson-composer-option-touch-target-source.test.ts` produced two failures;
-- global `runtime.match(/role="radiogroup"/g)` found four groups because the large source file contains one unrelated radiogroup outside this slice;
-- the naive forbidden substring `width:` matched the allowed media query `max-width: 767px` rather than a visual `width` declaration;
-- 96 other unit files and 595 tests passed in the same run.
+- `runtime.match(/role="radio"/g)` expected four templates but found five because `lexigo-learn-app.tsx` contains an unrelated radio owner outside this slice;
+- the three exact radiogroup-owner strings, import order, interaction-only CSS checks and blocking-script registrations all passed.
 
 Correction:
 
-- removed the ambiguous global radiogroup count while retaining exact assertions for the three targeted group owners;
-- replaced forbidden declaration substrings with line-anchored CSS declaration regexes, so `width:` is prohibited but `max-width:` is allowed;
-- correction commit: `4826f8225f87634ab6d22aefc59f87430e4d1ae8`;
+- removed the remaining whole-file role count;
+- asserted exact `MODE_OPTIONS`, `SOURCE_OPTIONS`, `SIZE_OPTIONS` maps plus the reusable `CollectionCard` radio owner;
+- corrected the exact source-map identifier to uppercase `SOURCE_OPTIONS` during mandatory read-back before the next CI run;
+- corrections committed as `b346fa47f5c985e88733f2cc8c4dabf3d1c71465` and `769b0b3f13c0e5ffabc4d012511d93430f1afdac`;
 - production CSS, runtime components and browser proof remain unchanged.
 
 ### Changed files
@@ -84,13 +106,14 @@ Correction:
 - Runtime visibility, accessibility-tree semantics, computed source ownership and exact Figma-node inspection.
 - Atomic allowed-path and rollback pre-flight.
 - Full read-back of every product/test/package write.
-- Branch compare: eight allowed paths, no runtime component, adaptive presentation or snapshot change.
+- Branch compares limited to the eight allowed paths, with no runtime component, adaptive presentation or snapshot change.
 - Exact search confirmed no existing conflicting `::before` owner on the targeted option buttons.
-- CI #2775 lint and typecheck passed; failure was isolated to the new source contract.
+- Both superseded CI runs passed lint and typecheck and isolated their failures to the new source contract.
 
 ### Checks failed
 
-- CI #2775 source contract on superseded head `02be8af2…`, for the two exact test-only causes described above.
+- CI #2775: two ambiguous source-contract assertions on superseded head `02be8af2…`.
+- CI #2778: one remaining whole-file radio-count assertion on superseded head `bc9ca34e…`.
 
 ### Current branch head
 
