@@ -102,9 +102,12 @@ test.describe("Issue #75 Phrases search acceptance", () => {
     await expect(page.getByText("1 результатов", { exact: true })).toBeVisible();
 
     const releaseRadio = page.locator('input[type="radio"][name="phrase-topic"][value="Release"]');
-    await releaseRadio.check();
+    const releaseChip = page
+      .getByRole("navigation", { name: "Быстрый выбор темы" })
+      .getByRole("button", { name: /Релиз|Release/ });
+    await releaseChip.click();
+    await expect(releaseChip).toHaveAttribute("aria-pressed", "true");
     await expect(releaseRadio).toBeChecked();
-    await expect(page.getByRole("button", { name: /Релиз|Release/ })).toHaveAttribute("aria-pressed", "true");
     await expect.poll(() => {
       const url = new URL(page.url());
       return [url.searchParams.get("query"), url.searchParams.get("topic")];
