@@ -4,8 +4,8 @@
 
 - Branch: `fix/issue-74-learn-composer-disclosure-targets`
 - Base SHA: `6a8c885a6a7950c25cada8374b2d71dcf253b34e`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from the live branch after this write
+- PR: #391
 
 ## Skills used
 
@@ -43,19 +43,21 @@ Actions performed:
 - rejected stale `Все режимы` wording after exact source search;
 - selected the mutually exclusive mobile Lesson Composer disclosure owner;
 - created the branch from the exact main SHA;
-- recorded allowed/prohibited paths and rollback.
+- recorded allowed/prohibited paths and rollback;
+- created Draft PR #391;
+- read back every changed product file and confirmed the branch diff is limited to the eight allowed paths.
 
 Commands or procedures:
 
-GitHub connector reads, issue/PR/workflow inspection, exact branch creation and per-write read-back.
+GitHub connector reads, issue/PR/workflow inspection, exact branch creation, contents API writes, branch compare and per-write read-back.
 
 Artifacts produced:
 
-Current TASK, PROGRESS and EXECUTION records on the task branch.
+Task branch, Draft PR #391 and current TASK/PROGRESS/EXECUTION records.
 
 Result:
 
-Pre-flight complete; no product write outside the task branch.
+Atomic branch and PR established without any direct `main` write.
 
 Failures:
 
@@ -67,7 +69,7 @@ The generic fetch action does not accept encoded slash-bearing branch paths for 
 
 Fallback:
 
-Use connector-native `create_branch`, `search_branches`, explicit-ref `fetch_file`, compare and commit results instead of generic encoded branch URLs.
+Use connector-native branch, explicit-ref file, compare and commit actions instead of generic encoded branch URLs.
 
 Limitations:
 
@@ -75,7 +77,7 @@ Local clone/test execution is unavailable in the current environment; authoritat
 
 Reusable lesson:
 
-No new production failure category established; keep task-specific connector fallback in this execution record.
+No new production failure category established; keep the connector fallback task-local.
 
 ### Figma inspection
 
@@ -113,7 +115,7 @@ Verified dimensions: collapsed 318×42 in Figma; expanded summary 358×58.
 
 Result:
 
-Implementation must preserve painted geometry and add only an invisible 44/48px hit-surface contract.
+Implementation preserves painted geometry and adds only an invisible 44/48px hit-surface contract.
 
 Failures:
 
@@ -129,17 +131,17 @@ Not applicable.
 
 Limitations:
 
-Figma frames describe approved visuals, not browser event-target resolution; Playwright must prove the effective hit surface.
+Figma frames describe approved visuals, not browser event-target resolution; Playwright provides the runtime proof.
 
 Reusable lesson:
 
-No new category; apply the existing visual-owner versus interaction-owner separation used by prior Issue #74 slices.
+No new category; retain the established visual-owner versus interaction-owner separation.
 
-### Frontend validation
+### Frontend implementation and source validation
 
 Purpose:
 
-Protect runtime visibility, input-modality target size, focus, adjacency and reflow without snapshot churn.
+Add input-modality target ownership without changing component semantics, painted geometry or lesson lifecycle.
 
 Instruction source:
 
@@ -147,48 +149,79 @@ Instruction source:
 
 Version or verification date:
 
-Current repository toolchain at main `6a8c885a6a7950c25cada8374b2d71dcf253b34e`.
+Current repository toolchain at base `6a8c885a6a7950c25cada8374b2d71dcf253b34e`.
 
 Inputs:
 
-Live accessibility names, computed CSS, pointer media query and compact viewport geometry.
+Live accessibility names, adaptive presentation owner, global focus owner and package-level blocking commands.
 
 Files inspected:
 
-Existing Playwright and source-test patterns listed above.
+Existing Lesson Composer component/CSS plus prior touch-target source and browser tests.
 
 Actions performed:
 
-Validation implementation pending.
+- added a dedicated stylesheet with a 44px default and 48px coarse-pointer variable;
+- scoped the owner to the live mobile Learn main and the two mutually exclusive disclosure classes;
+- used a transparent absolute pseudo-element for event-surface expansion;
+- imported the owner after adaptive Lesson Composer presentation and accessibility styles;
+- added a source contract prohibiting visual declarations and protecting import/runtime/test ownership;
+- added Playwright proof for geometry, perimeter hit testing, adjacency, keyboard focus and horizontal reflow;
+- registered the proof in `test:e2e:ui` and `test:e2e:a11y`.
 
 Commands or procedures:
 
-Planned: source contract, lint/typecheck/unit/build, focused desktop Chromium/Android Chromium/iOS WebKit proof, then full required CI.
+GitHub contents writes and read-back; authoritative CI for lint, typecheck, unit/source contracts, build, browser, visual, security, performance and dependency validation.
 
 Artifacts produced:
 
-Pending.
+- `frontend/app/lesson-composer-disclosure-touch-targets.css`;
+- `frontend/components/lesson-composer-disclosure-touch-target-source.test.ts`;
+- `frontend/e2e/lesson-composer-disclosure-touch-targets.spec.ts`;
+- import and package-script registrations.
 
 Result:
 
-Pending.
+Production ownership is implemented; final validation remains pending on the post-diagnosis immutable head.
 
 Failures:
 
-None yet.
+Authoritative CI #2761 / run `30953705424` failed only in Linux UI shard 2 job `92142111376` on head `50aadc37e1c4dc57d3cd466fe836560b6b7819e1`.
 
 Root cause:
 
-Not applicable.
+The Playwright helper computed only the absolutely positioned pseudo-element's padding-box rectangle. Since the pseudo-element is positioned from the button padding box, the helper removed the native button's 1px left and right borders and reported 310px for a 312px clickable button. The implementation itself was not undersized.
 
-Fallback:
+Evidence:
 
-If pseudo-element hit testing overlaps a neighbor, reduce the slice and adjust directional slop while preserving the 48px coarse contract.
+Downloaded workflow artifact `frontend-playwright-report-ui-2` with artifact id `8910344928`. Android Chromium and iOS WebKit produced the same `targetWidth` assertion: expected 312px, received 310px.
+
+Fallback or correction:
+
+Measure the union of the native clickable button border box and the pseudo-element hit-slop rectangle. Correction committed as `4fbbe995aee1a3a0f8295cce970f975fe6e62553`; production CSS was not changed.
+
+Passed gates from the diagnosed run:
+
+- classifier;
+- frontend lint, TypeScript, unit/source contracts, production build and dependency audit;
+- backend unit, security and integration;
+- accessibility audit, iOS PWA, controlled Service Worker and Dictionary smoke;
+- visual regression without baseline changes;
+- performance budgets, content security, lesson completion and UI shard 1.
 
 Limitations:
 
-Physical-device evidence remains outside automated browser emulation and is not claimed by this slice.
+Physical-device evidence remains outside automated browser emulation and is not claimed by this slice. A fresh full CI run is required because the test correction changed the developer head.
 
 Reusable lesson:
 
-Pending only if a new evidenced failure category appears.
+When a pseudo-element expands a native control, geometry assertions must measure the union of the control border box and pseudo-element box. Measuring the pseudo-element alone can incorrectly discard still-clickable border pixels.
+
+## Required next evidence
+
+- fresh full authoritative PR CI on the final head produced by this execution-record write;
+- PR review-thread and mergeability inspection;
+- Ready transition only after immutable-head green;
+- expected-head squash merge;
+- `main` CI and exact-image stage/public validation;
+- separate documentation reconciliation PR and Issue #74 progress comment.
