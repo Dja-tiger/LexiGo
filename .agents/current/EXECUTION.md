@@ -45,7 +45,7 @@ Actions performed:
 - created the branch from the exact main SHA;
 - recorded allowed/prohibited paths and rollback;
 - created Draft PR #391;
-- read back every changed product file and confirmed the branch diff is limited to the eight allowed paths.
+- read back every changed product file and confirmed branch compares are limited to the eight allowed paths.
 
 Commands or procedures:
 
@@ -184,42 +184,71 @@ Result:
 
 Production ownership is implemented; final validation remains pending on the post-diagnosis immutable head.
 
-Failures:
+#### CI diagnosis 1 — target union
 
-Authoritative CI #2761 / run `30953705424` failed only in Linux UI shard 2 job `92142111376` on head `50aadc37e1c4dc57d3cd466fe836560b6b7819e1`.
+Run:
 
-Root cause:
-
-The Playwright helper computed only the absolutely positioned pseudo-element's padding-box rectangle. Since the pseudo-element is positioned from the button padding box, the helper removed the native button's 1px left and right borders and reported 310px for a 312px clickable button. The implementation itself was not undersized.
+CI #2761 / `30953705424`, head `50aadc37e1c4dc57d3cd466fe836560b6b7819e1`, failed UI shard 2 job `92142111376`.
 
 Evidence:
 
-Downloaded workflow artifact `frontend-playwright-report-ui-2` with artifact id `8910344928`. Android Chromium and iOS WebKit produced the same `targetWidth` assertion: expected 312px, received 310px.
+Downloaded artifact `frontend-playwright-report-ui-2`, artifact id `8910344928`. Android Chromium and iOS WebKit expected 312px target width but the helper reported 310px.
 
-Fallback or correction:
+Root cause:
 
-Measure the union of the native clickable button border box and the pseudo-element hit-slop rectangle. Correction committed as `4fbbe995aee1a3a0f8295cce970f975fe6e62553`; production CSS was not changed.
+The helper measured only the pseudo-element padding box and dropped the native button's 1px left/right border even though the native border box remains clickable.
 
-Passed gates from the diagnosed run:
+Correction:
+
+Measure the union of the native button border box and pseudo-element rectangle. Commit `4fbbe995aee1a3a0f8295cce970f975fe6e62553`. No production CSS change.
+
+Reusable lesson:
+
+When a pseudo-element expands a native control, geometry assertions must measure the union of both clickable surfaces.
+
+#### CI diagnosis 2 — viewport chrome interception
+
+Run:
+
+CI #2764 / `30954584839`, head `66c8dabebee0b7c882c9ab3122d3982ece63104c`, failed UI shard 2 job `92144962020`.
+
+Evidence:
+
+Downloaded artifact `frontend-playwright-report-ui-2`, artifact id `8910704697`. Android Chromium and iOS WebKit both returned `[true, true, false, true]` for top/right/bottom/left perimeter probes. Failure screenshots showed the collapsed disclosure at the bottom of the viewport with its lower edge behind the fixed mobile navigation.
+
+Root cause:
+
+The test evaluated the control at its initial document position. Fixed viewport chrome intercepted the lower perimeter point even though the Lesson Composer target itself was correctly sized and separated from adjacent composer controls.
+
+Correction:
+
+Center each disclosure control in the viewport with `scrollIntoView({ block: "center" })` before geometry and `elementFromPoint` assertions. Commit `2aa6db33115ef09d3f5b0f32e39a8c3adeeaddc7`. No production CSS change.
+
+Independent failure in the same shard:
+
+Existing `lesson-result.spec.ts` flaked under iOS WebKit because the recall textbox became empty after `fill("backlog")`. This file and its runtime owner are outside the current slice and were not changed. Any recurrence must be handled through evidence-driven CI diagnosis, not by silently expanding scope.
+
+Reusable lesson:
+
+Perimeter hit-testing for fixed-shell mobile layouts must first place the target away from fixed viewport chrome; otherwise `elementFromPoint` validates occlusion by shell navigation rather than the component's own event surface.
+
+Passed gates across the two diagnosed runs:
 
 - classifier;
 - frontend lint, TypeScript, unit/source contracts, production build and dependency audit;
 - backend unit, security and integration;
-- accessibility audit, iOS PWA, controlled Service Worker and Dictionary smoke;
+- accessibility audit, content security, iOS PWA, controlled Service Worker and Dictionary smoke;
 - visual regression without baseline changes;
-- performance budgets, content security, lesson completion and UI shard 1.
+- performance budgets, lesson completion and UI shard 1.
 
 Limitations:
 
-Physical-device evidence remains outside automated browser emulation and is not claimed by this slice. A fresh full CI run is required because the test correction changed the developer head.
-
-Reusable lesson:
-
-When a pseudo-element expands a native control, geometry assertions must measure the union of the control border box and pseudo-element box. Measuring the pseudo-element alone can incorrectly discard still-clickable border pixels.
+Physical-device evidence remains outside automated browser emulation and is not claimed by this slice. A fresh full CI run is required because the second test correction and this execution record changed the developer head.
 
 ## Required next evidence
 
 - fresh full authoritative PR CI on the final head produced by this execution-record write;
+- corrected target proof green in Android Chromium and iOS WebKit;
 - PR review-thread and mergeability inspection;
 - Ready transition only after immutable-head green;
 - expected-head squash merge;
