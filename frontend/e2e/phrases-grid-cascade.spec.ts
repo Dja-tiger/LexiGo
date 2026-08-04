@@ -18,6 +18,7 @@ type GridSnapshot = Readonly<{
   gridTemplateColumns: string;
   gap: string;
   marginTop: string;
+  paddingTop: string;
   horizontalOverflow: boolean;
 }>;
 
@@ -85,9 +86,8 @@ async function readGridSnapshot(page: Page): Promise<GridSnapshot> {
     const items = Array.from(grid.children).filter(
       (item): item is HTMLElement => item instanceof HTMLElement,
     );
-    const firstLeft = items[0]?.getBoundingClientRect().left;
     const firstTop = items[0]?.getBoundingClientRect().top;
-    if (firstLeft === undefined || firstTop === undefined) throw new Error("Missing grid items");
+    if (firstTop === undefined) throw new Error("Missing grid items");
 
     const columns = items.filter((item) => {
       const rect = item.getBoundingClientRect();
@@ -101,6 +101,7 @@ async function readGridSnapshot(page: Page): Promise<GridSnapshot> {
       gridTemplateColumns: style.gridTemplateColumns,
       gap: style.gap,
       marginTop: style.marginTop,
+      paddingTop: style.paddingTop,
       horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
     };
   });
@@ -121,6 +122,7 @@ test.describe("Phrases result grid computed cascade", () => {
         expect(snapshot.display, `${cascade.name} display`).toBe("grid");
         expect(snapshot.columns, `${cascade.name} columns`).toBe(1);
         expect(snapshot.gap, `${cascade.name} gap`).toBe("10px");
+        expect(snapshot.paddingTop, `${cascade.name} result spacing`).toBe("24px");
         expect(snapshot.gridTemplateColumns, `${cascade.name} template`).not.toBe("none");
         expect(snapshot.horizontalOverflow, `${cascade.name} horizontal overflow`).toBe(false);
 
