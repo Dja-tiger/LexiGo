@@ -67,12 +67,19 @@ async function expectTarget(locator: Locator, expectedMinimum: number): Promise<
   ]);
 
   await locator.focus();
-  const focus = await locator.evaluate((element) => ({
-    focusVisible: element.matches(":focus-visible"),
-    expandedShadow: window.getComputedStyle(element, "::before").boxShadow,
-  }));
+  const focus = await locator.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      focusVisible: element.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+      boxShadow: style.boxShadow,
+    };
+  });
   expect(focus.focusVisible).toBe(true);
-  expect(focus.expandedShadow).not.toBe("none");
+  expect(focus.outlineStyle).not.toBe("none");
+  expect(Number.parseFloat(focus.outlineWidth)).toBeGreaterThanOrEqual(3);
+  expect(focus.boxShadow).not.toBe("none");
   return target;
 }
 
