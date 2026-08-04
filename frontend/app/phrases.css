@@ -942,6 +942,15 @@
   padding-top: 24px;
 }
 
+.lx-app[data-route-client-island="phrases"] .lx-phrase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 @media (forced-colors: active) {
   .lx-app[data-route-client-island="phrases"] .lx-catalog-sort,
   .lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {
