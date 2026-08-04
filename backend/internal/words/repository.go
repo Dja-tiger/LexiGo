@@ -49,6 +49,11 @@ const catalogListFilter = `
 		          from unnest(w.aliases) as alias
 		          where lower(alias) like ('%' || lower($6) || '%')
 		      )
+		      or exists (
+		          select 1
+		          from jsonb_array_elements_text(coalesce(w.examples, '[]'::jsonb)) as example_text
+		          where lower(example_text) like ('%' || lower($6) || '%')
+		      )
 		  )
 		  and ($7 = '' or uw.status = $7)
 `
