@@ -10,24 +10,25 @@
 
 ## Objective
 
-Make shared production header controls meet minimum effective touch-target size without changing their visible icon/avatar geometry or surrounding layout.
+Make the live Dictionary reminder control meet minimum effective touch-target size without changing its 19px visible icon, 42px button geometry, adjacent avatar or surrounding layout.
 
 ## Scope
 
-- Add one narrow routed stylesheet with a shared semantic target: 44 CSS px by default and 48 CSS px for coarse-pointer environments.
+- Add one narrow routed stylesheet with a 44 CSS px target by default and 48 CSS px for coarse-pointer environments.
 - Import it without reordering existing global style owners.
-- Apply visually inert effective hit slop to live shared header `streak`, reminder icon and avatar buttons.
-- Preserve visible dimensions, spacing and the existing global keyboard-focus owner.
+- Expand only the existing reminder SVG border box through transparent padding while preserving a 19×19 px content box.
+- Preserve the visual button, avatar, spacing and existing global keyboard-focus owner.
 - Add fail-closed source ownership evidence and real Chromium/iOS/Android hit-testing coverage.
 - Register the focused browser suite in authoritative UI and accessibility CI.
 
 ## Non-goals
 
-- No broad route-by-route control audit in this slice.
-- No mobile navigation label change; current compact navigation already has 48×52 targets and 11–12 px labels.
-- No text-only card/action remediation outside shared headers.
-- No manual real-device acceptance claim; that remains required before Issue #74 closure.
-- No new focus visual, Figma redesign, DOM change, runtime behavior, visual baseline, budget or dependency change.
+- No Home streak/avatar or Dictionary avatar remediation in this slice.
+- No broad route-by-route control audit.
+- No mobile navigation label change; compact navigation already has 48×52 targets and 11–12 px labels.
+- No text-only action remediation.
+- No manual real-device acceptance claim; it remains required before Issue #74 closure.
+- No JSX/runtime, focus visual, Figma redesign, visual baseline, budget or dependency change.
 
 ## Allowed paths
 
@@ -51,11 +52,9 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Runtime owners
 
-- `frontend/app/header-touch-targets.css` — routed shared header effective hit slop.
+- `frontend/app/header-touch-targets.css` — routed Dictionary reminder SVG hit surface.
 - `frontend/app/accessibility-focus.css` — unchanged global keyboard-focus visual owner.
-- `frontend/components/lexigo-home-app.tsx` — interactive streak and avatar.
-- `frontend/components/lexigo-dictionary-app.tsx` — reminder icon and avatar.
-- routed header shells preserve existing layout and safe-area ownership.
+- `frontend/components/lexigo-dictionary-app.tsx` — unchanged reminder button and 19×19 BellIcon renderer.
 
 ## Documentation owners
 
@@ -64,23 +63,22 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Invariants
 
-- Visible icon/avatar geometry, raster output and header layout footprint remain unchanged.
-- Existing navigation controls remain at least 48 px in compact/rail layouts.
-- Effective target is at least 44×44 with a fine pointer and 48×48 with a coarse pointer.
-- Expanded targets do not overlap adjacent header controls.
-- Pointer events at the expanded perimeter resolve to the intended control.
+- Bell path viewport remains exactly 19×19 CSS px.
+- Reminder SVG hit surface is exactly 44×44 with a fine pointer and 48×48 with a coarse pointer.
+- The 42×42 button, avatar text raster and header layout remain unchanged.
+- The SVG hit surface does not overlap the adjacent avatar.
+- Pointer events at all four padded perimeter points resolve inside the reminder button.
 - Existing keyboard focus remains visible and no semantic role/name changes.
-- The hit-slop pseudo-element has no transform, shadow, background or other painted output.
-- No horizontal overflow at minimum compact widths.
+- No button positioning, pseudo-element, transform, background, shadow or painted output is introduced.
+- No horizontal overflow at compact widths.
 - Existing global stylesheet imports remain in their current relative order.
 
 ## Acceptance criteria
 
-- Home streak and avatar meet the effective target contract.
-- Dictionary reminder icon and avatar meet the effective target contract.
-- Coarse-pointer projects enforce 48 px; desktop fine-pointer enforces 44 px.
-- Adjacent expanded header targets retain non-overlapping spacing.
-- Source contract maps CSS owner, existing focus owner, coarse override, runtime class owners and authoritative browser registration.
+- Dictionary reminder exposes a 44/48 px effective hit surface around an unchanged 19px icon.
+- Desktop Chromium, iOS WebKit and Android Chromium prove perimeter hit-testing.
+- The expanded SVG remains separated from the adjacent avatar.
+- Source contract maps CSS owner, exact BellIcon size, existing focus owner and authoritative browser registration.
 - Existing visual hashes remain unchanged.
 - Full immutable-head CI, expected-head merge, exact-SHA main CI and exact-image stage/public validation succeed.
 
@@ -94,10 +92,10 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Risks
 
-- A pseudo-element may interactively overlap an adjacent control if spacing is insufficient.
-- Coarse-pointer media emulation may differ across browser projects.
-- Even transparent transformed layers can alter deterministic raster output; transforms and painted focus effects are prohibited in this owner.
+- SVG padding may not participate in hit testing identically across browser engines.
+- A 48px SVG border box may overlap the adjacent avatar if header spacing is insufficient.
+- CSS replaced-element sizing must retain a 19px content box under `box-sizing: border-box`.
 
 ## Rollback
 
-Revert the narrow stylesheet/import, source/browser contracts, command registration and current Agent Harness records. No data, API or visual snapshot rollback is required.
+Revert the narrow stylesheet/import, source/browser contracts, command registration and current Agent Harness records. No data, API, JSX or visual snapshot rollback is required.
