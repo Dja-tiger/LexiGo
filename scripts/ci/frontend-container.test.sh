@@ -6,7 +6,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf -- "$TMP_DIR"' EXIT
 
-mkdir -p "$TMP_DIR/bin" "$TMP_DIR/workspace/frontend" "$TMP_DIR/workspace/deploy"
+mkdir -p \
+  "$TMP_DIR/bin" \
+  "$TMP_DIR/workspace/frontend" \
+  "$TMP_DIR/workspace/deploy" \
+  "$TMP_DIR/workspace/docs"
+printf '# Test repository\n' > "$TMP_DIR/workspace/README.md"
+printf '# Test architecture\n' > "$TMP_DIR/workspace/docs/architecture.md"
 
 cat > "$TMP_DIR/bin/docker" <<'DOCKER_STUB'
 #!/usr/bin/env bash
@@ -56,6 +62,8 @@ CONTAINER_SCRIPT
 grep -Fq -- '--env PUBLIC_URL=https://stage.example.test' "$TMP_DIR/docker.calls"
 grep -Fq -- '--env EXPECTED_CSP_MODE=report-only' "$TMP_DIR/docker.calls"
 grep -Fq -- '--name lexigo-frontend-task-stage-public-123-1' "$TMP_DIR/docker.calls"
+grep -Fq -- "--volume $TMP_DIR/workspace/README.md:/repository/README.md:ro" "$TMP_DIR/docker.calls"
+grep -Fq -- "--volume $TMP_DIR/workspace/docs:/repository/docs:ro" "$TMP_DIR/docker.calls"
 
 if env "${COMMON_ENV[@]}" \
   GITHUB_JOB="frontend-browser" \
@@ -119,4 +127,4 @@ if [[ "${exclusive_events[*]}" != "${expected_events[*]}" ]]; then
   exit 1
 fi
 
-printf '[frontend-container-test] environment forwarding and resource locks passed\n'
+printf '[frontend-container-test] environment forwarding, read-only docs and resource locks passed\n'
