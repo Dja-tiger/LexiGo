@@ -11,10 +11,10 @@ const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.me
   scripts?: Record<string, string>;
 };
 
-const GROUPS = [
-  { selector: ".lx-mode-selector > button", name: "Режим обучения" },
-  { selector: ".lx-source-selector > button", name: "Раздел обучения" },
-  { selector: ".lx-size-control > button", name: "Размер урока" },
+const GROUP_SELECTORS = [
+  ".lx-mode-selector > button",
+  ".lx-source-selector > button",
+  ".lx-size-control > button",
 ] as const;
 
 describe("Issue #74 Lesson Composer option touch-target ownership", () => {
@@ -29,12 +29,15 @@ describe("Issue #74 Lesson Composer option touch-target ownership", () => {
   });
 
   it("targets every live option radiogroup and no lesson action owner", () => {
-    for (const group of GROUPS) {
-      expect(touchTargets).toContain(group.selector);
-      expect(runtime).toContain(`aria-label="${group.name}"`);
+    for (const selector of GROUP_SELECTORS) {
+      expect(touchTargets).toContain(selector);
     }
+    expect(runtime).toContain('className="lx-mode-selector" role="radiogroup" aria-label="Режим обучения"');
+    expect(runtime).toContain('className="lx-source-selector" role="radiogroup" aria-label="Раздел обучения"');
+    expect(runtime).toContain('<legend id="lesson-size-label">Размер урока</legend>');
+    expect(runtime).toContain('className="lx-size-control" role="radiogroup" aria-labelledby="lesson-size-label"');
     expect(runtime.match(/role="radiogroup"/g)).toHaveLength(3);
-    expect(runtime.match(/role="radio"/g)).toHaveLength(3);
+    expect(runtime.match(/role="radio"/g)).toHaveLength(4);
     expect(runtime).toContain("aria-checked={selected}");
     expect(runtime).toContain("tabIndex={selected ? 0 : -1}");
     expect(touchTargets).not.toContain(".lx-recommended-lesson__start");
@@ -47,8 +50,8 @@ describe("Issue #74 Lesson Composer option touch-target ownership", () => {
     expect(touchTargets).toContain("--lx-lesson-composer-option-touch-target: 44px;");
     expect(touchTargets).toContain("@media (max-width: 767px) and (pointer: coarse)");
     expect(touchTargets).toContain("--lx-lesson-composer-option-touch-target: 48px;");
-    for (const group of GROUPS) {
-      expect(touchTargets).toContain(`${group.selector}::before`);
+    for (const selector of GROUP_SELECTORS) {
+      expect(touchTargets).toContain(`${selector}::before`);
     }
     expect(touchTargets).toContain("position: relative;");
     expect(touchTargets).toContain("position: absolute;");
