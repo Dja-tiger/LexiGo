@@ -54,6 +54,7 @@ import "./appearance.css";
 import "./profile.css";
 import "./system-states.css";
 import "./connectivity-touch-targets.css";
+import "./header-profile-touch-targets.css";
 import "./active-lesson-queued-state.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
