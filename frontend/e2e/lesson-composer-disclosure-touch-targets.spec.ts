@@ -20,6 +20,13 @@ type EffectiveTarget = {
   pseudoBoxShadow: string;
 };
 
+async function centerForHitTesting(button: Locator): Promise<void> {
+  await button.evaluate((element) => {
+    element.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+  });
+  await expect(button).toBeInViewport();
+}
+
 async function disclosureTarget(button: Locator): Promise<EffectiveTarget> {
   return button.evaluate((element) => {
     const control = element as HTMLButtonElement;
@@ -137,6 +144,7 @@ test.describe("Issue #74 Lesson Composer disclosure touch targets", () => {
     await expect(collapsed).toBeVisible();
     await expect(collapsed).toHaveAttribute("aria-expanded", "false");
     await expect(recommendedStart).toBeVisible();
+    await centerForHitTesting(collapsed);
 
     const collapsedTarget = await disclosureTarget(collapsed);
     const recommendedStartBox = await recommendedStart.boundingBox();
@@ -160,6 +168,7 @@ test.describe("Issue #74 Lesson Composer disclosure touch targets", () => {
     await expect(expanded).toBeVisible();
     await expect(expanded).toHaveAttribute("aria-expanded", "true");
     await expect(firstMode).toBeVisible();
+    await centerForHitTesting(expanded);
 
     const expandedTarget = await disclosureTarget(expanded);
     const firstModeBox = await firstMode.boundingBox();
