@@ -48,11 +48,20 @@ describe("Issue #74 header profile touch-target ownership", () => {
     expect(touchTargets).toContain(`.lx-routed-app ${LIVE_SELECTOR}::before {`);
     expect(touchTargets).toContain("position: relative;");
     expect(touchTargets).toContain("position: absolute;");
-    expect(touchTargets).toContain("calc((100% - var(--lx-header-profile-touch-target)) / 2)");
-    expect(touchTargets).toContain("inset-block: min(");
+    expect(touchTargets).toContain("inset-block-start: 0;");
+    expect(touchTargets).toContain("inset-block-end: min(");
+    expect(touchTargets).toContain("calc(100% - var(--lx-header-profile-touch-target))");
     expect(touchTargets).toContain("inset-inline: min(");
+    expect(touchTargets).toContain("calc((100% - var(--lx-header-profile-touch-target)) / 2)");
     expect(touchTargets).toContain("pointer-events: auto;");
     expect(touchTargets).toContain("touch-action: manipulation;");
+  });
+
+  it("directs block-axis hit slop below the compact viewport edge", () => {
+    expect(touchTargets).not.toContain("inset-block: min(");
+    expect(touchTargets).not.toContain("inset-block-start: min(");
+    expect(touchTargets).toContain("inset-block-start: 0;");
+    expect(touchTargets).toContain("calc(100% - var(--lx-header-profile-touch-target))");
   });
 
   it("preserves the 44px desktop and 42px compact painted avatar geometry", () => {
