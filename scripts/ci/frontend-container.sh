@@ -18,7 +18,10 @@ EXPECTED_CSP_MODE="${EXPECTED_CSP_MODE:-}"
 NEXT_PUBLIC_RUM_SAMPLE_RATE="${NEXT_PUBLIC_RUM_SAMPLE_RATE:-0.1}"
 SOURCE_DIR="${GITHUB_WORKSPACE}/frontend"
 DEPLOY_DIR="${GITHUB_WORKSPACE}/deploy"
+REPOSITORY_README="${GITHUB_WORKSPACE}/README.md"
+REPOSITORY_DOCS_DIR="${GITHUB_WORKSPACE}/docs"
 WORK_DIR="/workspace"
+REPOSITORY_DOCS_MOUNT="/repository"
 ARTIFACT_DIR="${SOURCE_DIR}/ci-artifacts"
 LEASE_CONTAINER="lexigo-frontend-lease-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 TASK_CONTAINER="lexigo-frontend-task-${FRONTEND_CI_SLOT}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
@@ -68,6 +71,12 @@ done
 [[ -d "$DEPLOY_DIR" ]] || \
   die "deploy directory does not exist: $DEPLOY_DIR"
 
+[[ -f "$REPOSITORY_README" ]] || \
+  die "repository README does not exist: $REPOSITORY_README"
+
+[[ -d "$REPOSITORY_DOCS_DIR" ]] || \
+  die "repository docs directory does not exist: $REPOSITORY_DOCS_DIR"
+
 with_frontend_resource_lock() {
   local mode="$1"
   shift
@@ -111,6 +120,8 @@ container_run() {
     --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     --volume "$FRONTEND_CI_VOLUME:$WORK_DIR" \
     --volume "$DEPLOY_DIR:/deploy:ro" \
+    --volume "$REPOSITORY_README:$REPOSITORY_DOCS_MOUNT/README.md:ro" \
+    --volume "$REPOSITORY_DOCS_DIR:$REPOSITORY_DOCS_MOUNT/docs:ro" \
     --workdir "$WORK_DIR" \
     "$PLAYWRIGHT_IMAGE" \
     "$@"
