@@ -1,0 +1,29 @@
+.lx-routed-app {
+  --lx-header-profile-touch-target: 44px;
+}
+
+.lx-routed-app button.lx-avatar[aria-label="Открыть профиль"] {
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-routed-app button.lx-avatar[aria-label="Открыть профиль"]::before {
+  position: absolute;
+  content: "";
+  inset-block-start: 0;
+  inset-block-end: min(
+    0px,
+    calc(100% - var(--lx-header-profile-touch-target))
+  );
+  inset-inline: min(
+    0px,
+    calc((100% - var(--lx-header-profile-touch-target)) / 2)
+  );
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app {
+    --lx-header-profile-touch-target: 48px;
+  }
+}
