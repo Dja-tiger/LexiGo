@@ -17,26 +17,13 @@
   button.lx-avatar
 )::before {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: max(100%, var(--lx-shared-header-touch-target));
-  height: max(100%, var(--lx-shared-header-touch-target));
-  transform: translate(-50%, -50%);
-  border-radius: 14px;
+  top: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));
+  right: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));
+  bottom: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));
+  left: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));
+  border-radius: inherit;
   content: "";
   pointer-events: auto;
-}
-
-.lx-routed-app[data-route-path] .lx-header-tools button.lx-avatar::before {
-  border-radius: 50%;
-}
-
-.lx-routed-app[data-route-path] .lx-header-tools :is(
-  button.lx-streak,
-  button.lx-icon-button,
-  button.lx-avatar
-):focus-visible::before {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lx-purple) 72%, white 28%);
 }
 
 @media (pointer: coarse) {
