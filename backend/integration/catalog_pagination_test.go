@@ -70,7 +70,7 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 		       'phrase',
 		       'Pagination Test',
 		       array[format('catalog alias %s', lpad(series::text, 3, '0'))],
-		       '[]'::jsonb,
+		       jsonb_build_array(format('example checkpoint %s', lpad(series::text, 3, '0'))),
 		       '',
 		       'integration-pagination',
 		       'phrase',
@@ -159,9 +159,17 @@ func TestCatalogPaginationFilteringAndServerSorting(t *testing.T) {
 	if searched.Total != 1 || len(searched.Items) != 1 || searched.Items[0].Lemma != "page phrase 007" {
 		t.Fatalf("unexpected search page: %+v", searched)
 	}
+	russianSearch := readPage(filter+"&query="+url.QueryEscape("страничная фраза 125")+"&limit=48", http.StatusOK)
+	if russianSearch.Total != 1 || len(russianSearch.Items) != 1 || russianSearch.Items[0].Lemma != "page phrase 125" {
+		t.Fatalf("unexpected Russian translation search page: %+v", russianSearch)
+	}
 	aliasSearch := readPage(filter+"&query="+url.QueryEscape("catalog alias 007")+"&limit=48", http.StatusOK)
 	if aliasSearch.Total != 1 || len(aliasSearch.Items) != 1 || aliasSearch.Items[0].Lemma != "page phrase 007" {
 		t.Fatalf("unexpected alias search page: %+v", aliasSearch)
+	}
+	exampleSearch := readPage(filter+"&query="+url.QueryEscape("example checkpoint 007")+"&limit=48", http.StatusOK)
+	if exampleSearch.Total != 1 || len(exampleSearch.Items) != 1 || exampleSearch.Items[0].Lemma != "page phrase 007" {
+		t.Fatalf("unexpected example search page: %+v", exampleSearch)
 	}
 	mastered := readPage(filter+"&status=mastered&limit=48", http.StatusOK)
 	if mastered.Total != 1 || len(mastered.Items) != 1 || mastered.Items[0].Status != "mastered" {
