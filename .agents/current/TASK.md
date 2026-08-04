@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-learn-option-targets`
 - Base SHA: `b42f540f240883cfd4b23ce6e248512ac1f21316`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #393
 
 ## Objective
 
@@ -48,7 +48,7 @@ All repository paths not listed above, including `frontend/components/lexigo-lea
 
 - `LexigoLearnApp` owns radio state, roving tabindex, callbacks and preview/session behavior.
 - `adaptive-lesson-composer.css` owns approved painted geometry and 6px option spacing.
-- `lesson-composer-option-touch-targets.css` will own only invisible block-axis hit-surface expansion and touch-action semantics.
+- `lesson-composer-option-touch-targets.css` owns only invisible block-axis hit-surface expansion and touch-action semantics.
 - global `accessibility-focus.css` remains the keyboard focus-ring owner.
 
 ## Documentation owners
