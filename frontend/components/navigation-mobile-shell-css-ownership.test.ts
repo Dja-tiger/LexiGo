@@ -239,8 +239,9 @@ describe("navigation, mobile-shell and async-state computed-cascade ownership", 
     expect(occurrenceCount(adaptive, ".lx-routed-app")).toBe(16);
     expect(occurrenceCount(adaptive, "!important")).toBe(3);
     expect(adaptive).toContain(".lx-routed-app .lx-async-state");
-    expect(adaptive).not.toContain(".lx-routed-app .lx-async-state {
-    width: min(");
+    expect(adaptive).not.toMatch(
+      /\.lx-routed-app \.lx-async-state\s*\{[\s\S]*?width:\s*min\(/,
+    );
   });
 
   it("keeps compact mobile geometry and spacing fallbacks", () => {
