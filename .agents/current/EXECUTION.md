@@ -5,7 +5,7 @@
 - Branch: `agent/issue-74-header-touch-targets`
 - Base SHA: `c56485511c752aacd3e2f43cd0d102f229a9c25f`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #387
 
 ## Skills used
 
@@ -82,11 +82,11 @@ Reusable lesson:
 
 Audit effective hit regions separately from visible icon size. Already compliant navigation should be protected, not rewritten as part of a broad accessibility task.
 
-### Transparent routed hit slop and browser hit testing
+### Visually inert routed hit slop and browser hit testing
 
 Purpose:
 
-Provide 44 px fine-pointer and 48 px coarse-pointer effective shared header targets while preserving visual geometry and layout.
+Provide 44 px fine-pointer and 48 px coarse-pointer effective shared header targets while preserving deterministic raster output, visible geometry and layout.
 
 Instruction source:
 
@@ -111,12 +111,12 @@ Actions performed:
 
 - Added `frontend/app/header-touch-targets.css` with unique routed selectors.
 - Added a 44 px custom-property default and a 48 px `(pointer: coarse)` override.
-- Added absolutely positioned transparent `::before` hit slop with pointer events and an expanded focus-visible perimeter.
+- Added absolutely positioned transparent `::before` hit slop with pointer events.
 - Preserved visible button widths/heights and header layout footprint.
 - Imported the stylesheet between existing accessibility and adaptive owners without reordering them.
 - Added a Vitest source contract for import placement, values, runtime owners, navigation invariants and command registration.
 - Added desktop Chromium, iOS WebKit and Android Chromium browser evidence using `elementFromPoint` at all four expanded perimeter points.
-- Added non-overlap, focus and horizontal-overflow assertions.
+- Added non-overlap, existing global focus and horizontal-overflow assertions.
 - Serialized focus checks because only one control can own focus at a time.
 
 Commands or procedures:
@@ -132,24 +132,98 @@ Artifacts produced:
 
 Result:
 
-The isolated branch contains a narrow shared-header target contract ready for read-back and CI.
+The focused target contract passed frontend core and the desktop Chromium/iOS WebKit/Android Chromium accessibility group on the first PR head.
 
 Failures:
 
-An initial test draft focused multiple controls concurrently; it was corrected before PR publication.
+- CI #2718 / run `30919648741` visual regression failed on immutable head `0235786f6a6d85df44f7f87d0a035e85a42f3317`.
+- Lesson composer desktop changed from approved hash `3be9635d…` to `deb39b8c…`.
+- Desktop offline dark changed from approved hash `8f3b6192…` to `fa3c8dfb…`.
+- Initial attempts and retries produced the same hashes.
 
 Root cause:
 
-Parallel focus assertions are invalid because focus is exclusive even when geometry checks are independent.
+The first hit-slop implementation used a transformed transparent pseudo-element and added a separate painted focus shadow. Visual artifacts showed the changed pages shared routed header targets, while all non-visual functional contracts remained green. The owner was therefore not sufficiently paint-inert for content-addressed screenshots.
 
 Fallback:
 
-Keep geometry/perimeter assertions independent but perform focus verification sequentially.
+Do not promote baselines. Remove transform/compositing and additional paint while retaining the same interactive perimeter.
 
 Limitations:
 
-The browser suite covers emulated pointer profiles, not physical-device ergonomics or every route action.
+Pixel equality must be confirmed by a new immutable-head visual run; the failed head is superseded and cannot be merge evidence.
 
 Reusable lesson:
 
-For invisible hit slop, verify actual perimeter hit-testing and adjacent target separation; bounding-box assertions alone cannot prove the expanded area is interactive.
+A transparent element can still perturb deterministic rendering when it introduces transformed/composited paint descendants. Accessibility hit slop must be validated against exact visual hashes, not only geometry and screenshots viewed by eye.
+
+### Visual-blocker correction
+
+Purpose:
+
+Restore approved visual hashes without reducing target size or browser hit-testing coverage.
+
+Instruction source:
+
+- CI #2718 workflow jobs
+- visual artifact `8896656119`
+- content-addressed lesson composer and system-state baselines
+- `frontend/app/accessibility-focus.css`
+
+Version or verification date:
+
+2026-08-04 failed immutable head `0235786f6a6d85df44f7f87d0a035e85a42f3317`.
+
+Inputs:
+
+Failed screenshots, exact expected/received hashes, page snapshots and the initial hit-slop CSS.
+
+Files inspected:
+
+- visual Playwright report and traces
+- failed lesson composer and desktop offline screenshots
+- `frontend/app/header-touch-targets.css`
+- `frontend/app/accessibility-focus.css`
+- focused source/browser contracts
+
+Actions performed:
+
+- Downloaded and inspected artifact `8896656119` with digest `sha256:aa0320af18b01651281f7c6373f00fa3c1d0a396313c383299ae3da430876e95`.
+- Refused baseline/hash updates.
+- Replaced transformed centered width/height expansion with four negative `min(0px, calc(...))` inset boundaries.
+- Removed the additional pseudo-element focus shadow.
+- Preserved `pointer-events: auto`, 44/48 px values and live routed selectors.
+- Kept `accessibility-focus.css` as the sole keyboard-focus visual owner.
+- Updated source tests to reject transform/shadow and browser tests to verify the existing outline/halo.
+
+Commands or procedures:
+
+Workflow artifact inspection, exact hash comparison, screenshot inspection, CSS paint-path reduction and fail-closed source-contract update.
+
+Artifacts produced:
+
+Corrected functional files on the same PR branch and factual Agent Harness records.
+
+Result:
+
+A new immutable head is ready for read-back and authoritative full CI.
+
+Failures:
+
+The first visual run remains failed and superseded.
+
+Root cause:
+
+The initial implementation added unnecessary compositing and paint to a contract whose purpose is purely hit geometry.
+
+Fallback:
+
+If exact hashes still differ, remove pseudo-element hit slop and redesign the slice around an explicit layout wrapper rather than accepting visual drift.
+
+Limitations:
+
+No claim of visual restoration is made until the next full visual gate succeeds.
+
+Reusable lesson:
+
+When a non-visual accessibility change trips deterministic baselines, reduce the paint path first; do not normalize or promote the changed output without proving the visual difference is intentional.
