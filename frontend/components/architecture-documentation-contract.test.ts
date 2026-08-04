@@ -167,10 +167,10 @@ const proofFamilies: readonly ProofFamily[] = [
     id: "routed-account-security",
     expectedCount: 1,
     matches: (id) => id.startsWith(".lx-account-security | width | normal ->"),
-    cssPath: "app/adaptive-knowledge-coach-home.css",
+    cssPath: "app/account-security.css",
     ownerMarkers: [".lx-routed-app .lx-account-security"],
     sourceContractPath: "components/account-security-css-ownership.test.ts",
-    sourceMarkers: [".lx-routed-app .lx-account-security", "ROUTED_SELECTOR"],
+    sourceMarkers: [".lx-routed-app .lx-account-security", "routedOwner"],
     browserSpecPath: "e2e/account-security-width-cascade.spec.ts",
   },
 ];
