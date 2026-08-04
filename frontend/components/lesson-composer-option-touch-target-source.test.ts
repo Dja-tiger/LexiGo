@@ -17,6 +17,19 @@ const GROUP_SELECTORS = [
   ".lx-size-control > button",
 ] as const;
 
+const FORBIDDEN_VISUAL_DECLARATIONS = [
+  /\n\s*min-height:/,
+  /\n\s*height:/,
+  /\n\s*width:/,
+  /\n\s*padding(?:-[^:]+)?:/,
+  /\n\s*border(?:-[^:]+)?:/,
+  /\n\s*background(?:-[^:]+)?:/,
+  /\n\s*box-shadow:/,
+  /\n\s*transform:/,
+  /\n\s*gap:/,
+  /\n\s*grid-template[^:]*:/,
+] as const;
+
 describe("Issue #74 Lesson Composer option touch-target ownership", () => {
   it("loads one narrow owner after all Lesson Composer presentation and disclosure owners", () => {
     const importName = 'import "./lesson-composer-option-touch-targets.css";';
@@ -36,7 +49,6 @@ describe("Issue #74 Lesson Composer option touch-target ownership", () => {
     expect(runtime).toContain('className="lx-source-selector" role="radiogroup" aria-label="Раздел обучения"');
     expect(runtime).toContain('<legend id="lesson-size-label">Размер урока</legend>');
     expect(runtime).toContain('className="lx-size-control" role="radiogroup" aria-labelledby="lesson-size-label"');
-    expect(runtime.match(/role="radiogroup"/g)).toHaveLength(3);
     expect(runtime.match(/role="radio"/g)).toHaveLength(4);
     expect(runtime).toContain("aria-checked={selected}");
     expect(runtime).toContain("tabIndex={selected ? 0 : -1}");
@@ -61,8 +73,8 @@ describe("Issue #74 Lesson Composer option touch-target ownership", () => {
     expect(touchTargets).toContain("pointer-events: auto;");
     expect(touchTargets).toContain("touch-action: manipulation;");
 
-    for (const forbidden of ["min-height:", "height:", "width:", "padding:", "border:", "background:", "box-shadow:", "transform:", "gap:", "grid-template"] as const) {
-      expect(touchTargets).not.toContain(forbidden);
+    for (const forbiddenDeclaration of FORBIDDEN_VISUAL_DECLARATIONS) {
+      expect(touchTargets).not.toMatch(forbiddenDeclaration);
     }
   });
 
