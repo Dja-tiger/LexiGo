@@ -205,6 +205,10 @@
   .lx-routed-app .lx-resource-stack {
     width: 100%;
   }
+
+  .lx-routed-app .lx-async-state {
+    width: 100%;
+  }
 }
 
 @media (max-width: 719px) {
