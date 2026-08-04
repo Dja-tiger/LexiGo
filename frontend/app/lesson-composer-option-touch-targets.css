@@ -1,0 +1,38 @@
+/*
+ * Issue #74 — mobile Lesson Composer option touch targets.
+ *
+ * adaptive-lesson-composer.css remains the painted presentation and spacing
+ * owner. This layer only expands the block-axis event surface when the live
+ * radio option is smaller than the input-modality minimum.
+ */
+.lx-progressive-lesson-composer {
+  --lx-lesson-composer-option-touch-target: 44px;
+}
+
+@media (max-width: 767px) {
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector > button,
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector > button,
+  .lx-main-content[aria-label="Обучение"] .lx-size-control > button {
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-mode-selector > button::before,
+  .lx-main-content[aria-label="Обучение"] .lx-source-selector > button::before,
+  .lx-main-content[aria-label="Обучение"] .lx-size-control > button::before {
+    position: absolute;
+    content: "";
+    inset-block: min(
+      0px,
+      calc((100% - var(--lx-lesson-composer-option-touch-target)) / 2)
+    );
+    inset-inline: 0;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 767px) and (pointer: coarse) {
+  .lx-progressive-lesson-composer {
+    --lx-lesson-composer-option-touch-target: 48px;
+  }
+}
