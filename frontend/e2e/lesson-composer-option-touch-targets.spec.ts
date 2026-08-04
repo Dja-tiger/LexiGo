@@ -25,37 +25,6 @@ type EffectiveTarget = TargetRect & {
 
 const GROUP_NAMES = ["Режим обучения", "Раздел обучения", "Размер урока"] as const;
 
-function targetRectForElement(control: HTMLElement): TargetRect {
-  const rect = control.getBoundingClientRect();
-  const style = window.getComputedStyle(control);
-  const hitSlop = window.getComputedStyle(control, "::before");
-  const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
-  const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
-  const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
-  const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
-  const topInset = Number.parseFloat(hitSlop.top) || 0;
-  const rightInset = Number.parseFloat(hitSlop.right) || 0;
-  const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
-  const leftInset = Number.parseFloat(hitSlop.left) || 0;
-  const pseudoTop = rect.top + borderTop + topInset;
-  const pseudoRight = rect.right - borderRight - rightInset;
-  const pseudoBottom = rect.bottom - borderBottom - bottomInset;
-  const pseudoLeft = rect.left + borderLeft + leftInset;
-  const top = Math.min(rect.top, pseudoTop);
-  const right = Math.max(rect.right, pseudoRight);
-  const bottom = Math.max(rect.bottom, pseudoBottom);
-  const left = Math.min(rect.left, pseudoLeft);
-
-  return {
-    top,
-    right,
-    bottom,
-    left,
-    height: bottom - top,
-    width: right - left,
-  };
-}
-
 async function centerForHitTesting(control: Locator): Promise<void> {
   await control.evaluate((element) => {
     element.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
@@ -65,10 +34,41 @@ async function centerForHitTesting(control: Locator): Promise<void> {
 
 async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
   return control.evaluate((element) => {
+    const measureTarget = (targetElement: HTMLElement) => {
+      const rect = targetElement.getBoundingClientRect();
+      const style = window.getComputedStyle(targetElement);
+      const hitSlop = window.getComputedStyle(targetElement, "::before");
+      const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+      const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+      const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+      const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+      const topInset = Number.parseFloat(hitSlop.top) || 0;
+      const rightInset = Number.parseFloat(hitSlop.right) || 0;
+      const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
+      const leftInset = Number.parseFloat(hitSlop.left) || 0;
+      const pseudoTop = rect.top + borderTop + topInset;
+      const pseudoRight = rect.right - borderRight - rightInset;
+      const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+      const pseudoLeft = rect.left + borderLeft + leftInset;
+      const top = Math.min(rect.top, pseudoTop);
+      const right = Math.max(rect.right, pseudoRight);
+      const bottom = Math.max(rect.bottom, pseudoBottom);
+      const left = Math.min(rect.left, pseudoLeft);
+
+      return {
+        top,
+        right,
+        bottom,
+        left,
+        height: bottom - top,
+        width: right - left,
+      };
+    };
+
     const button = element as HTMLButtonElement;
     const visual = button.getBoundingClientRect();
     const hitSlop = window.getComputedStyle(button, "::before");
-    const target = targetRectForElement(button);
+    const target = measureTarget(button);
     const centerX = (target.left + target.right) / 2;
     const centerY = (target.top + target.bottom) / 2;
     const inset = 1;
@@ -100,9 +100,40 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
 }
 
 async function groupTargetRects(group: Locator): Promise<TargetRect[]> {
-  return group.getByRole("radio").evaluateAll((elements) => (
-    elements.map((element) => targetRectForElement(element as HTMLElement))
-  ));
+  return group.getByRole("radio").evaluateAll((elements) => {
+    const measureTarget = (targetElement: HTMLElement) => {
+      const rect = targetElement.getBoundingClientRect();
+      const style = window.getComputedStyle(targetElement);
+      const hitSlop = window.getComputedStyle(targetElement, "::before");
+      const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+      const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+      const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+      const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+      const topInset = Number.parseFloat(hitSlop.top) || 0;
+      const rightInset = Number.parseFloat(hitSlop.right) || 0;
+      const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
+      const leftInset = Number.parseFloat(hitSlop.left) || 0;
+      const pseudoTop = rect.top + borderTop + topInset;
+      const pseudoRight = rect.right - borderRight - rightInset;
+      const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+      const pseudoLeft = rect.left + borderLeft + leftInset;
+      const top = Math.min(rect.top, pseudoTop);
+      const right = Math.max(rect.right, pseudoRight);
+      const bottom = Math.max(rect.bottom, pseudoBottom);
+      const left = Math.min(rect.left, pseudoLeft);
+
+      return {
+        top,
+        right,
+        bottom,
+        left,
+        height: bottom - top,
+        width: right - left,
+      };
+    };
+
+    return elements.map((element) => measureTarget(element as HTMLElement));
+  });
 }
 
 function overlapArea(first: TargetRect, second: TargetRect): number {
@@ -211,10 +242,11 @@ test.describe("Issue #74 Lesson Composer option touch targets", () => {
       const group = page.getByRole("radiogroup", { name: groupName, exact: true });
       await expect(group).toBeVisible();
       const radios = group.getByRole("radio");
-      expect(await radios.count()).toBeGreaterThanOrEqual(2);
+      const radioCount = await radios.count();
+      expect(radioCount).toBeGreaterThanOrEqual(2);
       await expectNoTargetOverlap(group);
 
-      for (let index = 0; index < await radios.count(); index += 1) {
+      for (let index = 0; index < radioCount; index += 1) {
         const radio = radios.nth(index);
         await centerForHitTesting(radio);
         const target = await effectiveTarget(radio);
