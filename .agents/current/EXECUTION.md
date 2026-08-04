@@ -2,6 +2,7 @@
 
 ## Task
 
+- Issue: #74
 - Branch: `agent/issue-74-header-touch-targets`
 - Base SHA: `c56485511c752aacd3e2f43cd0d102f229a9c25f`
 - Head SHA: resolve from live branch ref
@@ -9,11 +10,11 @@
 
 ## Skills used
 
-### Shared touch-target ownership audit
+### Live touch-target ownership audit
 
 Purpose:
 
-Identify the first measurable Issue #74 defect without broad visual redesign or duplicating already compliant navigation work.
+Select the first measurable Issue #74 defect from the production accessibility tree rather than from dormant component markup.
 
 Instruction source:
 
@@ -22,7 +23,7 @@ Instruction source:
 - `.agents/AGENTS.base.md`
 - `.agents/AGENTS.issue-261-css-specificity.md`
 - `docs/agent-harness.md`
-- Issue #74 testing guidance
+- Issue #74 body and testing comment
 
 Version or verification date:
 
@@ -30,70 +31,131 @@ Version or verification date:
 
 Inputs:
 
-Issue #74 acceptance criteria, live routed header renderers, shared CSS geometry, compact/rail navigation contracts and existing keyboard/navigation browser suites.
+Issue #74 acceptance criteria, routed UI owners, computed CSS ownership, existing Playwright suites and the accessibility tree from authoritative CI artifacts.
 
 Files inspected:
 
-- `frontend/app/premium-ui.css`
-- `frontend/app/adaptive-navigation.css`
-- `frontend/app/layout.tsx`
-- `frontend/components/lexigo-home-app.tsx`
 - `frontend/components/lexigo-dictionary-app.tsx`
-- `frontend/e2e/adaptive-navigation.spec.ts`
+- `frontend/components/calendar-reminder-route-entry.tsx`
+- `frontend/components/review-outbox-runtime.tsx`
+- `frontend/app/calendar-reminder-entry.css`
+- `frontend/app/system-states.css`
+- `frontend/app/accessibility-focus.css`
+- `frontend/e2e/system-states.spec.ts`
 - `frontend/e2e/accessibility-keyboard.spec.ts`
 - `frontend/package.json`
 
 Actions performed:
 
-- Verified compact navigation already owns 48×52 px targets and 11–12 px labels.
-- Identified the live 42×42 reminder icon, 44×44 avatars and interactive streak as shared header controls lacking one coarse-pointer contract.
-- Excluded unrelated route actions, text links, mobile labels and manual device validation from the first slice.
-- Chose a unique routed stylesheet rather than modifying a large existing global owner.
+- Verified compact navigation already provides 48×52 px targets and 11–12 px labels.
+- Confirmed the legacy Dictionary bell exists in JSX but is intentionally hidden by the later canonical route-reminder owner.
+- Rejected the hidden bell as a production target.
+- Located the live ReviewOutbox actions named by Issue #74, including `Подробнее`, `Обновить состояние` and `Повторить сейчас`.
+- Confirmed visible action height is 40px normally and 36px inside Active Lesson, below the 44/48 minimum.
+- Narrowed the slice to `.lx-review-sync__actions` only.
 
 Commands or procedures:
 
-Exact-ref code search, renderer/CSS ownership mapping, existing browser-contract comparison and atomic-scope review.
+Exact-ref file reads, repository search, computed-cascade ownership review, role/name mapping and live CI artifact inspection.
 
 Artifacts produced:
 
-Issue #74 current task and progress records with an explicit shared-header-only boundary.
+Corrected `TASK.md` and a bounded eight-file implementation plan.
 
 Result:
 
-The first slice is limited to measurable shared header targets and leaves the broader Issue open.
+The atomic slice now targets a live text action that directly matches Issue #74 instead of a hidden duplicate control.
 
 Failures:
 
-None during discovery.
+The initial ownership audit was incomplete because it checked JSX presence without checking the later `display: none !important` owner.
 
 Root cause:
 
-Visible header geometry had component-specific 42/44 px values but no semantic fine/coarse effective target.
+Runtime ownership was inferred from component source rather than the final computed cascade and accessibility tree.
 
 Fallback:
 
-If transparent hit slop overlaps adjacent controls, preserve visible dimensions and reduce the slice to a layout-aware wrapper contract rather than lowering the target minimum.
+If the selected action is not exposed in a target browser, stop and inspect the project-specific accessibility snapshot rather than changing selectors or runtime semantics.
 
 Limitations:
 
-Automated emulation does not satisfy Issue #74 real-device acceptance; that remains a later gate.
+This slice does not close Issue #74; remaining route controls, enlarged text and physical-device acceptance remain separate work.
 
 Reusable lesson:
 
-Audit effective hit regions separately from visible icon size. Already compliant navigation should be protected, not rewritten as part of a broad accessibility task.
+A source contract must prove that a control is live and exposed, not merely that dormant JSX and an accessible label exist.
 
-### Visually inert routed hit slop and browser hit testing
+### Authoritative CI artifact diagnosis
 
 Purpose:
 
-Provide 44 px fine-pointer and 48 px coarse-pointer effective shared header targets while preserving deterministic raster output, visible geometry and layout.
+Classify the two failed UI shards from CI #2728 before any retry or correction.
 
 Instruction source:
 
+- `gh-fix-ci` procedure
+- repository CI-classification rules
+- Issue #74 mobile E2E warning
+
+Version or verification date:
+
+2026-08-04 superseded head `7ace030a368f107f93fa7a174e05195ad6bb8eea`.
+
+Inputs:
+
+Workflow run `30922599313`, failed UI jobs and Playwright report artifacts.
+
+Artifacts inspected:
+
+- `frontend-playwright-report-ui-1`, artifact `8897981374`, digest `sha256:fb3693f653142c8b30f7c411ed686907d724b8429900f79acc7ac4ebee3f4e4d`;
+- `frontend-playwright-report-ui-2`, artifact `8897961032`, digest `sha256:b8aa678b6b170c602267f0515f676579392f02b9fac7d5158c135762bf5da63b`.
+
+Actions performed:
+
+- Inspected desktop Chromium, iOS WebKit and Android Chromium failures.
+- Verified application bootstrap and Dictionary route island were healthy.
+- Verified the locator failed because no button named `Напоминание о занятии` existed in the live accessibility tree.
+- Compared screenshots and accessibility snapshots with the hidden-control CSS owner.
+- Classified the failure as stale test plus invalid runtime-owner selection.
+- Refused blind retry, selector weakening, `.first()`, timeout increase and runtime label mutation.
+
+Result:
+
+CI #2728 is superseded and cannot be merge evidence. Its visual, backend and other green jobs remain diagnostic evidence only.
+
+Failures:
+
+The original browser contract targeted a hidden legacy control in all three browser projects.
+
+Root cause:
+
+The E2E was authored against dormant JSX and violated the Issue-specific instruction not to target hidden controls.
+
+Fallback:
+
+Use the live route reminder or another confirmed production action only after proving its actual defect; do not create a test solely to preserve the abandoned implementation.
+
+Limitations:
+
+Downloaded artifacts diagnose the superseded head only and do not validate the corrected implementation.
+
+Reusable lesson:
+
+Cross-browser agreement on a missing role/name usually indicates an ownership or selector error, not three simultaneous browser flakes.
+
+### Paint-inert connectivity action hit surface
+
+Purpose:
+
+Provide a 44px fine-pointer and 48px coarse-pointer effective height for live connectivity actions while preserving the existing 40px/36px painted button boxes.
+
+Instruction source:
+
+- `frontend/app/system-states.css`
 - `frontend/app/accessibility-focus.css`
-- `frontend/app/adaptive-navigation.css`
-- live shared header renderers
-- Playwright project profiles
+- ReviewOutbox runtime labels
+- Playwright desktop Chromium, iOS WebKit and Android Chromium project profiles
 
 Version or verification date:
 
@@ -101,129 +163,52 @@ Version or verification date:
 
 Inputs:
 
-Live `.lx-streak`, `.lx-icon-button`, `.lx-avatar` controls beneath `.lx-routed-app[data-route-path] .lx-header-tools`.
-
-Files inspected:
-
-Existing global import order, shared header CSS, runtime class owners and authoritative UI/a11y command registration.
+Live `.lx-system-connectivity .lx-review-sync__actions > button` controls and the canonical system-state layout.
 
 Actions performed:
 
-- Added `frontend/app/header-touch-targets.css` with unique routed selectors.
-- Added a 44 px custom-property default and a 48 px `(pointer: coarse)` override.
-- Added absolutely positioned transparent `::before` hit slop with pointer events.
-- Preserved visible button widths/heights and header layout footprint.
-- Imported the stylesheet between existing accessibility and adaptive owners without reordering them.
-- Added a Vitest source contract for import placement, values, runtime owners, navigation invariants and command registration.
-- Added desktop Chromium, iOS WebKit and Android Chromium browser evidence using `elementFromPoint` at all four expanded perimeter points.
-- Added non-overlap, existing global focus and horizontal-overflow assertions.
-- Serialized focus checks because only one control can own focus at a time.
+- Added `frontend/app/connectivity-touch-targets.css` after `system-states.css`.
+- Declared a 44px default semantic target and a 48px `(pointer: coarse)` override.
+- Preserved visible geometry by expanding a transparent `::before` only along the block axis with negative inset boundaries.
+- Kept `inset-inline: 0`, preventing horizontal overlap between adjacent actions.
+- Added no transform, background, border, shadow or new focus paint.
+- Kept `accessibility-focus.css` as the sole global focus visual owner.
+- Added a source contract for import order, live runtime labels, canonical 40px/36px geometry, hidden legacy absence and authoritative command registration.
+- Added real offline-state hit testing against the exact `Подробнее` accessible name in desktop Chromium, iOS WebKit and Android Chromium.
+- Added top/bottom perimeter `elementFromPoint`, visible-geometry, keyboard-focus and horizontal-overflow checks.
+- Removed all superseded hidden Dictionary bell implementation and test artifacts from the branch.
 
 Commands or procedures:
 
-CSS pseudo-element hit slop, coarse-pointer media query, exact source assertions and request-scoped Playwright quality fixtures.
+Unique CSS owner, negative logical insets, exact source assertions, role/name Playwright locators and keyboard-driven focus proof.
 
 Artifacts produced:
 
-- `frontend/app/header-touch-targets.css`
-- `frontend/components/header-touch-target-source.test.ts`
-- `frontend/e2e/header-touch-targets.spec.ts`
+- `frontend/app/connectivity-touch-targets.css`
+- `frontend/components/connectivity-touch-target-source.test.ts`
+- `frontend/e2e/connectivity-touch-targets.spec.ts`
 - layout import and package command registration
 
 Result:
 
-The focused target contract passed frontend core and the desktop Chromium/iOS WebKit/Android Chromium accessibility group on the first PR head.
+The corrected implementation is present on the branch and every changed path has been read back. Authoritative CI remains pending.
 
 Failures:
 
-- CI #2718 / run `30919648741` visual regression failed on immutable head `0235786f6a6d85df44f7f87d0a035e85a42f3317`.
-- Lesson composer desktop changed from approved hash `3be9635d…` to `deb39b8c…`.
-- Desktop offline dark changed from approved hash `8f3b6192…` to `fa3c8dfb…`.
-- Initial attempts and retries produced the same hashes.
+Local clone and targeted execution were unavailable because the isolated execution container could not resolve `github.com`. This is an environment limitation and is not counted as validation.
 
 Root cause:
 
-The first hit-slop implementation used a transformed transparent pseudo-element and added a separate painted focus shadow. Visual artifacts showed the changed pages shared routed header targets, while all non-visual functional contracts remained green. The owner was therefore not sufficiently paint-inert for content-addressed screenshots.
+The live text actions had only presentation-sized 40px/36px boxes and no independent fine/coarse semantic target owner.
 
 Fallback:
 
-Do not promote baselines. Remove transform/compositing and additional paint while retaining the same interactive perimeter.
+If transparent pseudo-element hit testing differs across browser engines or changes deterministic visual hashes, remove the pseudo-element and use a layout-aware wrapper rather than lowering the target minimum or promoting new baselines.
 
 Limitations:
 
-Pixel equality must be confirmed by a new immutable-head visual run; the failed head is superseded and cannot be merge evidence.
+No merge, exact-SHA main validation, stage deployment or physical-device acceptance has occurred.
 
 Reusable lesson:
 
-A transparent element can still perturb deterministic rendering when it introduces transformed/composited paint descendants. Accessibility hit slop must be validated against exact visual hashes, not only geometry and screenshots viewed by eye.
-
-### Visual-blocker correction
-
-Purpose:
-
-Restore approved visual hashes without reducing target size or browser hit-testing coverage.
-
-Instruction source:
-
-- CI #2718 workflow jobs
-- visual artifact `8896656119`
-- content-addressed lesson composer and system-state baselines
-- `frontend/app/accessibility-focus.css`
-
-Version or verification date:
-
-2026-08-04 failed immutable head `0235786f6a6d85df44f7f87d0a035e85a42f3317`.
-
-Inputs:
-
-Failed screenshots, exact expected/received hashes, page snapshots and the initial hit-slop CSS.
-
-Files inspected:
-
-- visual Playwright report and traces
-- failed lesson composer and desktop offline screenshots
-- `frontend/app/header-touch-targets.css`
-- `frontend/app/accessibility-focus.css`
-- focused source/browser contracts
-
-Actions performed:
-
-- Downloaded and inspected artifact `8896656119` with digest `sha256:aa0320af18b01651281f7c6373f00fa3c1d0a396313c383299ae3da430876e95`.
-- Refused baseline/hash updates.
-- Replaced transformed centered width/height expansion with four negative `min(0px, calc(...))` inset boundaries.
-- Removed the additional pseudo-element focus shadow.
-- Preserved `pointer-events: auto`, 44/48 px values and live routed selectors.
-- Kept `accessibility-focus.css` as the sole keyboard-focus visual owner.
-- Updated source tests to reject transform/shadow and browser tests to verify the existing outline/halo.
-
-Commands or procedures:
-
-Workflow artifact inspection, exact hash comparison, screenshot inspection, CSS paint-path reduction and fail-closed source-contract update.
-
-Artifacts produced:
-
-Corrected functional files on the same PR branch and factual Agent Harness records.
-
-Result:
-
-A new immutable head is ready for read-back and authoritative full CI.
-
-Failures:
-
-The first visual run remains failed and superseded.
-
-Root cause:
-
-The initial implementation added unnecessary compositing and paint to a contract whose purpose is purely hit geometry.
-
-Fallback:
-
-If exact hashes still differ, remove pseudo-element hit slop and redesign the slice around an explicit layout wrapper rather than accepting visual drift.
-
-Limitations:
-
-No claim of visual restoration is made until the next full visual gate succeeds.
-
-Reusable lesson:
-
-When a non-visual accessibility change trips deterministic baselines, reduce the paint path first; do not normalize or promote the changed output without proving the visual difference is intentional.
+For adjacent text actions, expand only the deficient axis. This can meet touch minimums without changing visual dimensions or creating overlapping horizontal hit areas.
