@@ -87,6 +87,9 @@ test.describe("Issue #74 connectivity action touch targets", () => {
       .toEqual([true, true]);
 
     await action.focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(action).toBeFocused();
     const focus = await action.evaluate((element) => {
       const style = window.getComputedStyle(element);
       return {
