@@ -10,9 +10,10 @@
 .lx-routed-app button.lx-avatar[aria-label="Открыть профиль"]::before {
   position: absolute;
   content: "";
-  inset-block: min(
+  inset-block-start: 0;
+  inset-block-end: min(
     0px,
-    calc((100% - var(--lx-header-profile-touch-target)) / 2)
+    calc(100% - var(--lx-header-profile-touch-target))
   );
   inset-inline: min(
     0px,
