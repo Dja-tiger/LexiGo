@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const touchTargets = readFileSync(new URL("../app/header-touch-targets.css", import.meta.url), "utf8");
+const focusStyles = readFileSync(new URL("../app/accessibility-focus.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const adaptiveNavigation = readFileSync(new URL("../app/adaptive-navigation.css", import.meta.url), "utf8");
 const home = readFileSync(new URL("./lexigo-home-app.tsx", import.meta.url), "utf8");
@@ -27,15 +28,25 @@ describe("Issue #74 shared header touch-target ownership", () => {
     expect(layout.match(/header-touch-targets\.css/g)).toHaveLength(1);
   });
 
-  it("provides 44px fine-pointer and 48px coarse-pointer effective targets", () => {
+  it("provides 44px fine-pointer and 48px coarse-pointer visually inert targets", () => {
     expect(touchTargets).toContain("--lx-shared-header-touch-target: 44px;");
     expect(touchTargets).toContain("@media (pointer: coarse)");
     expect(touchTargets).toContain("--lx-shared-header-touch-target: 48px;");
     expect(touchTargets).toContain(sharedOwner);
-    expect(touchTargets).toContain("width: max(100%, var(--lx-shared-header-touch-target));");
-    expect(touchTargets).toContain("height: max(100%, var(--lx-shared-header-touch-target));");
+    expect(touchTargets).toContain("top: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));");
+    expect(touchTargets).toContain("right: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));");
+    expect(touchTargets).toContain("bottom: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));");
+    expect(touchTargets).toContain("left: min(0px, calc((100% - var(--lx-shared-header-touch-target)) / 2));");
     expect(touchTargets).toContain("pointer-events: auto;");
-    expect(touchTargets).toContain(":focus-visible::before");
+    expect(touchTargets).not.toContain("transform:");
+    expect(touchTargets).not.toContain("box-shadow:");
+  });
+
+  it("retains the existing global keyboard focus owner", () => {
+    expect(focusStyles).toContain(":focus-visible {");
+    expect(focusStyles).toContain("outline: var(--lx-focus-width) solid var(--lx-focus-ring) !important;");
+    expect(focusStyles).toContain("0 0 0 7px var(--lx-focus-halo) !important;");
+    expect(touchTargets).not.toContain(":focus-visible");
   });
 
   it("targets only live interactive header owners", () => {
