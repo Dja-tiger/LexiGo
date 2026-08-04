@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-learn-composer-disclosure-targets`
 - Base SHA: `6a8c885a6a7950c25cada8374b2d71dcf253b34e`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #391
 
 ## Objective
 
@@ -47,7 +47,7 @@ All repository paths not listed above, including `frontend/components/lesson-com
 
 - `LessonComposerProgressiveShell` owns disclosure state and accessible button semantics.
 - `adaptive-lesson-composer.css` owns approved painted presentation.
-- `lesson-composer-disclosure-touch-targets.css` will own only invisible hit-surface expansion and touch-action semantics.
+- `lesson-composer-disclosure-touch-targets.css` owns only invisible hit-surface expansion and touch-action semantics.
 - global `accessibility-focus.css` remains the keyboard focus-ring owner.
 
 ## Documentation owners
