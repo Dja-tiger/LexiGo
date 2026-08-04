@@ -12,6 +12,7 @@
 - The recovery itself completed: current build marker restored, recovery marker cleared, stale cache deleted, route/search/hash preserved and CSP violations remained empty.
 - Previous exact-image stage run `30892205056` emitted the same WebKit diagnostic once and passed on retry, proving the failure category predates the final Issue #70 acceptance slice.
 - Local `build-version-recovery.spec.ts` already classifies narrowly scoped WebKit guard cancellations, while the public equivalent treated every page error as fatal.
+- `public-runtime-smoke.spec.ts` executes only in the post-merge stage workflow, so pure classification boundaries were moved into a Vitest-covered module before merge.
 - No intersecting Issue #70 product PR is open; only unrelated Dependabot PRs #304–#306 remain open.
 
 ### Finding
@@ -24,6 +25,8 @@ The stage failure is a public-test classification gap rather than a runtime regr
 
 ### Changed files
 
+- `frontend/lib/public-runtime-errors.ts`
+- `frontend/lib/public-runtime-errors.test.ts`
 - `frontend/e2e/public-runtime-smoke.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -34,11 +37,13 @@ The stage failure is a public-test classification gap rather than a runtime regr
 - Diagnostic artifact `8889938105` downloaded and inspected; both error contexts contain the same exact failure and successful application state.
 - Failed stage job `91971692028` and previous successful stage job `91936700171` were compared from decoded logs.
 - Branch `agent/issue-70-public-webkit-sw-guard` created from exact main SHA.
-- Public runtime test now normalizes WebKit's split `Error.name`/`Error.message` diagnostic.
+- Classifier normalizes WebKit's split `Error.name`/`Error.message` diagnostic.
 - Exemption requires WebKit, an explicitly active recovery window and exact equality with the same-origin current-build `sw.js` URL.
-- Adversarial assertions preserve failure behavior for Chromium, inactive recovery, another build and API requests.
-- Recovery additionally requires the exact current-build service-worker registration and absence of service-worker error UI.
-- Functional test write was read back from the isolated branch.
+- Vitest adversarial coverage preserves failure behavior for Chromium, inactive recovery, another build, another origin and API requests.
+- Public recovery additionally requires the exact current-build service-worker registration and absence of service-worker error UI.
+- New module, unit test and public integration were read back from the isolated branch.
+- Draft PR #383 opened.
+- Initial CI #2704 on superseded head `076a977989ef6830638372a540bbea9e21653017` passed frontend core, but is no longer authoritative after adding pre-merge unit evidence.
 
 ### Checks failed
 
@@ -47,8 +52,8 @@ The stage failure is a public-test classification gap rather than a runtime regr
 
 ### Current branch head
 
-Resolve from live branch ref; latest known task-record commit: `cced2fca9b2fc554ed46abcdd6442bddb38ba177`.
+Resolve from live branch ref; latest known task-record commit: `7e0d4ab349c61c4e161242c2f07e4b80f7b02b0c`.
 
 ### Next action
 
-Complete current execution provenance, verify the four-file diff and unchanged main, then publish a Draft PR and treat only the newest immutable-head CI as merge evidence.
+Complete execution provenance, verify the six-file diff and track only CI on the newest immutable head. Merge only after the full matrix is green.
