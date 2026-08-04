@@ -4,16 +4,16 @@
 
 - Last verified: 2026-08-04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `aec24578f73ace80ea8ef653f7a4c1081066973e`.
-- Latest deployed product SHA: `aec24578f73ace80ea8ef653f7a4c1081066973e`.
-- Latest completed Issue #70 slice: Phrases result-grid source-order independence.
-- Completion PR: #376.
-- PR #376 immutable developer-authored head: `e6e1a40235477fb16450bbd07577bd016d720e43`.
-- Authoritative PR CI: #2679 / run `30888370211`, complete success after correcting a deterministic 24px Phrases result-spacing regression without changing visual baselines.
-- Expected-head squash merge produced product SHA `aec24578f73ace80ea8ef653f7a4c1081066973e`.
-- Exact-SHA main CI run `30889114516` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-SHA stage run `30889691437` deployed web/API images tagged `aec24578f73ace80ea8ef653f7a4c1081066973e`; deployment, public smoke and all 12 public browser checks succeeded directly.
-- PR #376 had no comments, reviews or unresolved review threads before merge.
+- Product base verified before this documentation slice: `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`.
+- Latest deployed product SHA: `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`.
+- Latest completed Issue #70 slice: routed Account Security desktop width ownership.
+- Completion PR: #378.
+- PR #378 immutable developer-authored head: `f78843b8e9e5bda4165a67d9c8fdceb4a8a88e2a`.
+- Authoritative PR CI: #2683 / run `30890799578`, complete success.
+- Expected-head squash merge produced product SHA `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`.
+- Exact-SHA main CI run `30891539487` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-SHA stage run `30892205056` deployed web/API images tagged `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`; deployment and public smoke succeeded. Public browser validation concluded successfully after one transient iOS WebKit service-worker access-control error passed on retry.
+- PR #378 had no comments, reviews or unresolved review threads before merge.
 - No intersecting Issue #70 product PR remains open. Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
@@ -47,7 +47,7 @@
 - `frontend/app/global-feature-style-overlap-manifest.json` is the reviewed fail-closed inventory; its companion test protects exact totals, owner pairs and classifications.
 - The manifest remains at 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
 - Accessibility-layer overrides remain intentional and separately contract-protected.
-- Compact Home, Phrases sorting/grid, navigation/mobile shell, routed resource-stack, Learn switch placement and adaptive Lesson Composer tablet geometry have adversarial source-order browser/source contracts.
+- Compact Home, Phrases sorting/grid, navigation/mobile shell, routed resource-stack, Learn switch placement, adaptive Lesson Composer tablet geometry and Account Security desktop width have adversarial source-order browser/source contracts.
 
 ## Completed navigation and mobile-shell ownership
 
@@ -114,6 +114,16 @@
 - Final visual regression passed against the unchanged content-addressed hashes; route budgets, fallbacks, breakpoints, dependencies, tolerances, timeouts and runtime behavior remain unchanged.
 - The four exact conflicts remain in the reviewed manifest as `requires-proof`; deterministic behavior is supplied by the stronger route-island owner and companion source/browser evidence.
 
+### PR #378 — routed Account Security width ownership
+
+- Preserved the global `account-security.css` width fallback and the existing `adaptive-knowledge-coach-home.css` desktop-shell fallback for `.lx-account-security`.
+- Confirmed `AccountSecurityPanel` is `/profile`-only, is mounted by `LexigoBootstrappedApp`, and remains a sibling of `.lx-app` beneath the stable `.lx-routed-app` shell.
+- Added `.lx-routed-app .lx-account-security` inside the existing 1024px desktop range as the stronger canonical owner with identical rail-aware width, margins and border-box geometry.
+- Added source evidence for exact manifest membership, both fallback owners, import order, runtime ancestry, specificity and approved values.
+- Added Chromium computed-cascade proof under production, reversed and repeated-fallback orders at 719, 720, 1023, 1024, 1099, 1100 and 1440 px.
+- Mobile and tablet geometry, security/session behavior, visual baselines, budgets, breakpoints, dependencies, tolerances and timeouts remain unchanged.
+- The exact Account Security conflict remains in the reviewed manifest as `requires-proof`; deterministic behavior is supplied by the stronger routed owner and companion source/browser evidence.
+
 ## Current Issue #70 acceptance evidence
 
 - `frontend/components/production-app-entry.test.ts` fail-closes the production application-root inventory, retired-root absence and layout → routed shell → bootstrap chain.
@@ -121,29 +131,24 @@
 - `frontend/e2e/route-bundle-budget.spec.ts` verifies canonical routes exclude compatibility-fallback-exclusive assets.
 - `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
 - Navigation/mobile-shell source contracts protect canonical routed owners, compatibility fallbacks and live resource-stack renderer boundaries.
-- The Chromium cascade matrix exercises production and adversarial orders across responsive boundaries, including Learn switch placement, adaptive Lesson Composer geometry and Phrases grid ownership.
+- The Chromium cascade matrix exercises production and adversarial orders across responsive boundaries, including Learn switch placement, adaptive Lesson Composer geometry, Phrases grid ownership and Account Security width.
 - README and architecture documentation describe the actual route/runtime/global-style ownership graph.
 - Authoritative Linux visual, accessibility, PWA, CSP, functional browser and performance gates are unchanged and green on the latest deployed product SHA.
 
 ## In progress
 
 - No product slice is active during this documentation reconciliation.
-- The completed PR #376 task context is being reset.
-- Issue #70 remains open because two exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
+- The completed PR #378 task context is being reset.
+- Issue #70 remains open because one exact-selector item requires proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
 
 ## Remaining roadmap
 
-### 1. Account Security width — 1 conflict
-
-- Reconcile account-security global width with routed desktop shell placement using an explicit runtime modifier rather than import-order dependence.
-- Preserve the broad account-security fallback width and security/session behavior.
-
-### 2. Async State width — 1 conflict
+### 1. Async State width — 1 conflict
 
 - Reconcile adaptive navigation and `system-states.css` width ownership as an isolated shared-state slice.
 - Preserve shared compact/fallback state geometry while giving routed tablet states an explicit canonical owner.
 
-### 3. Final Issue #70 acceptance reconciliation
+### 2. Final Issue #70 acceptance reconciliation
 
 - Audit semantically overlapping selectors that are not textually identical.
 - Reconcile exact-selector evidence with app-entry, compatibility reachability, fallback-exclusive bundle, global ownership, visual regression and public architecture documentation.
@@ -151,8 +156,8 @@
 
 ## Validation pending
 
-- Remaining exact-selector inventory requiring additional proof/correction: two items across Account Security and Async State.
-- The already proven resource-stack, Learn switch, adaptive Lesson Composer and Phrases grid fallbacks remain in the 71-item manifest as reviewed `requires-proof` items with current source/browser evidence.
+- Remaining exact-selector inventory requiring additional proof/correction: one `.lx-async-state` width item.
+- The already proven resource-stack, Learn switch, adaptive Lesson Composer, Phrases grid and Account Security fallbacks remain in the 71-item manifest as reviewed `requires-proof` items with current source/browser evidence.
 - Semantic non-identical selector overlap is not claimed safe by the exact-selector parser.
 - Guest Profile auth/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
@@ -160,20 +165,19 @@
 
 ## Recent production evidence
 
-1. #376 — `style(frontend): make Phrases grid order-independent` → `aec24578f73ace80ea8ef653f7a4c1081066973e`.
-2. #375 — `docs(agent): reconcile PR 374 delivery` → `c51b1d0ff41ec9cc3dfcfdfd1f7a8b1304937fb4`.
-3. #374 — `test(frontend): prove adaptive layout ownership` → `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-4. #373 — `docs(agent): reconcile PR 372 delivery` → `ad577c1ab8dba6734d8172df7b5bb1fc151f2cf3`.
-5. #372 — `style(frontend): make Learn switch placement order-independent` → `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
+1. #378 — `style(frontend): make Account Security width order-independent` → `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`.
+2. #377 — `docs(agent): reconcile PR 376 delivery` → `8b6b2491a49c556d236a60018842cbf8318778ab`.
+3. #376 — `style(frontend): make Phrases grid order-independent` → `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+4. #375 — `docs(agent): reconcile PR 374 delivery` → `c51b1d0ff41ec9cc3dfcfdfd1f7a8b1304937fb4`.
+5. #374 — `test(frontend): prove adaptive layout ownership` → `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
 
 ## Evidence
 
-- PR #376 immutable head `e6e1a40235477fb16450bbd07577bd016d720e43` passed authoritative full CI #2679 / run `30888370211`.
-- Frontend parser/source contracts, lint, TypeScript, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded on the final head.
-- The earlier diagnostic head failed four Phrases catalog visual baselines because a new route owner unintentionally reset the existing 24px result spacing. The correction restored the approved layout and all unchanged hashes passed without baseline updates.
-- Expected-head squash merge produced `aec24578f73ace80ea8ef653f7a4c1081066973e`.
-- Exact-SHA main CI run `30889114516` completed successfully with the full product matrix and image publication.
-- Stage run `30889691437` deployed the exact SHA; deployment, public smoke and all 12 public browser checks succeeded directly.
+- PR #378 immutable head `f78843b8e9e5bda4165a67d9c8fdceb4a8a88e2a` passed authoritative full CI #2683 / run `30890799578`.
+- Frontend parser/source contracts, lint, TypeScript, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded.
+- Expected-head squash merge produced `fd5c6b16eb971f60cb218cd94b7afcc485fcb5c0`.
+- Exact-SHA main CI run `30891539487` completed successfully with the full product matrix and image publication.
+- Stage run `30892205056` deployed the exact SHA; deploy and public smoke succeeded. Public browser validation concluded successfully after one transient iOS WebKit service-worker access-control page error passed on retry.
 - Indexed search remains discovery only; final claims use exact refs, files, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
