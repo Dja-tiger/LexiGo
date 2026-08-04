@@ -5,7 +5,7 @@
 - Branch: `agent/issue-70-final-acceptance-audit`
 - Base SHA: `ec1295c5458f280998c08aaef53a9e68d3c4fc86`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #382
 
 ## Skills used
 
@@ -33,7 +33,7 @@ Issue #70 acceptance criteria, product SHA `2cdb35d2c8184ea75d27fcf0e078cf400dfa
 
 Files inspected:
 
-Agent Harness state, Issue #70, overlap manifest, proof-family CSS/source/browser files, package scripts, production app-entry contract, global style contract, route bundle budget, README and `docs/architecture.md`.
+Agent Harness state, Issue #70, overlap manifest, proof-family CSS/source/browser files, package scripts, production app-entry contract, global style contract, route bundle budget, README, `docs/architecture.md` and the isolated frontend-container harness.
 
 Actions performed:
 
@@ -41,30 +41,35 @@ Actions performed:
 - Created `agent/issue-70-final-acceptance-audit` from the exact main SHA.
 - Restored the documented `frontend/components/architecture-documentation-contract.test.ts` path.
 - Read the new test back from the branch before PR publication.
+- Opened Draft PR #382 and tracked each immutable developer-authored head separately.
+- Retrieved the failing frontend job log instead of retrying the workflow blindly.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads, branch creation, create-file write, explicit existing-file updates and branch read-back.
+GitHub connector exact-ref reads, branch creation, create-file write, explicit existing-file updates, branch read-back, workflow job inspection and decoded Actions log analysis.
 
 Artifacts produced:
 
-One central Vitest acceptance contract and current Agent Harness records.
+One central Vitest acceptance contract, a narrow read-only documentation mount and current Agent Harness records.
 
 Result:
 
-The branch now has an executable cross-family registry and acceptance evidence without production runtime changes.
+The branch has executable cross-family registry and public-document acceptance evidence without production runtime changes.
 
 Failures:
 
-The first new-file write was attempted through `update_file` and rejected by schema validation because no existing blob SHA exists.
+- The first new-file write was attempted through `update_file` and rejected by schema validation because no existing blob SHA exists.
+- CI #2693/run `30900646997` failed one of 564 unit tests because the frontend task container attempted to open `/README.md`.
 
 Root cause:
 
-The connector separates create and replace operations.
+- The connector separates create and replace operations.
+- The frontend CI volume contains only the contents of `frontend/`; `process.cwd()` is `/workspace`, so resolving its parent produced `/` rather than the repository checkout.
 
 Fallback:
 
-Loaded the dedicated `create_file` operation, corrected the unpublished draft and created the file on the existing isolated branch.
+- Loaded the dedicated `create_file` operation, corrected the unpublished draft and created the file on the existing isolated branch.
+- Inspected `scripts/ci/frontend-container.sh`, mounted only the checked-out `README.md` and `docs/` read-only at `/repository`, and retained repository-parent discovery for local execution.
 
 Limitations:
 
@@ -72,7 +77,7 @@ Direct local `git` and package execution remain unavailable; authoritative repos
 
 Reusable lesson:
 
-Use `create_file` for a new repository path and reserve `update_file` for an exact current blob SHA; schema rejection is non-mutating and should be classified before retry.
+Use `create_file` for a new repository path and reserve `update_file` for an exact current blob SHA. A frontend-only Docker workspace cannot validate repository-root documentation unless the exact public sources are exposed explicitly; prefer narrow read-only mounts over copies or broad checkout mounts.
 
 ### Fail-closed semantic ownership registry
 
@@ -117,10 +122,12 @@ Actions performed:
 - Required stronger owner markers in production CSS and focused source contracts.
 - Required each unique browser proof in both authoritative UI commands.
 - Connected production entry, retired-root absence, root/body/button/input ownership, fallback-exclusive bundles, route budgets, visual/performance scripts and public documents to one executable contract.
+- Replaced over-specific generic source markers with family-specific markers after exact source inspection.
+- Corrected Account Security stronger-owner lookup from its fallback file to `account-security.css`.
 
 Commands or procedures:
 
-Static source graph inspection, exact manifest classification/count reconciliation, semantic owner marker registry and fail-closed command/document assertions.
+Static source graph inspection, exact manifest classification/count reconciliation, semantic owner marker registry, fail-closed command/document assertions and authoritative unit evidence.
 
 Artifacts produced:
 
@@ -128,19 +135,19 @@ Artifacts produced:
 
 Result:
 
-Prepared for authoritative full CI. No production declaration, runtime path, budget, snapshot, tolerance or timeout changed.
+CI #2693 proved the manifest totals, exhaustive 21/21 mapping, all semantic owner/source/browser links and authoritative command registration. Only repository-document availability failed; 563 other tests passed.
 
 Failures:
 
-No executed contract failure yet.
+One public-document acceptance group could not open the repository README inside the frontend-only task container.
 
 Root cause:
 
-Not applicable before CI publication.
+The contract correctly requested the actual public documents, but the CI isolation boundary did not expose them.
 
 Fallback:
 
-If CI exposes a stale marker, classify whether the underlying acceptance evidence is absent or the marker is over-specific; do not weaken counts or coverage to make the test pass.
+Do not replace the real documents with duplicated frontend fixtures. Expose the two authoritative public sources read-only and resolve `/repository` only when mounted.
 
 Limitations:
 
@@ -148,4 +155,70 @@ The central registry intentionally audits the reviewed global import graph and d
 
 Reusable lesson:
 
-Incremental proof families are only closure-grade when one central contract guarantees exhaustive, non-overlapping mapping and ties the technical evidence back to the public acceptance criteria.
+Incremental proof families are closure-grade only when one central contract guarantees exhaustive, non-overlapping mapping and ties technical evidence back to the real public acceptance documents. CI isolation must preserve source authority, not force duplicated snapshots.
+
+### Isolated frontend public-document mount
+
+Purpose:
+
+Allow frontend Vitest to validate the actual repository README and architecture document while preserving Docker workspace isolation.
+
+Instruction source:
+
+- `scripts/ci/frontend-container.sh`
+- Issue #70 public documentation acceptance criterion
+- CI #2693 failing job log
+
+Version or verification date:
+
+2026-08-04 CI run `30900646997`.
+
+Inputs:
+
+`GITHUB_WORKSPACE/README.md`, `GITHUB_WORKSPACE/docs`, the existing private frontend Docker volume and `/deploy` read-only mount.
+
+Files inspected:
+
+- `scripts/ci/frontend-container.sh`
+- `frontend/components/architecture-documentation-contract.test.ts`
+- decoded Frontend core quality log for job `91964009329`
+
+Actions performed:
+
+- Added fail-closed host checks for README and docs existence.
+- Mounted README as `/repository/README.md:ro`.
+- Mounted docs as `/repository/docs:ro`.
+- Kept the mutable frontend workspace in its existing Docker volume.
+- Added local/CI path resolution that uses `/repository` only when the mounted README exists.
+
+Commands or procedures:
+
+Exact job-log classification, container mount graph inspection and minimal read-only bind-mount addition.
+
+Artifacts produced:
+
+Updated `scripts/ci/frontend-container.sh` and repository path resolution in the architecture contract.
+
+Result:
+
+Prepared for a new immutable-head full CI. No public document is copied into or writable from the frontend workspace.
+
+Failures:
+
+No execution result on the corrected mount yet.
+
+Root cause:
+
+Not applicable until the newest head CI runs.
+
+Fallback:
+
+If Docker rejects the file mount on a supported runner, mount the repository root read-only only after adding an explicit path-access contract; do not copy documents into frontend or weaken the public-document assertions.
+
+Limitations:
+
+Only README and docs are exposed; arbitrary repository-root files remain unavailable by design.
+
+Reusable lesson:
+
+For source-of-truth documentation tests in isolated language workspaces, mount only the authoritative files read-only and keep local path discovery compatible with normal repository execution.
