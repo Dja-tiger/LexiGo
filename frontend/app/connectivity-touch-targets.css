@@ -1,0 +1,25 @@
+.lx-system-connectivity {
+  --lx-connectivity-action-touch-target: 44px;
+}
+
+.lx-system-connectivity .lx-review-sync__actions > button {
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-system-connectivity .lx-review-sync__actions > button::before {
+  content: "";
+  position: absolute;
+  inset-block: min(
+    0px,
+    calc((100% - var(--lx-connectivity-action-touch-target)) / 2)
+  );
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-system-connectivity {
+    --lx-connectivity-action-touch-target: 48px;
+  }
+}
