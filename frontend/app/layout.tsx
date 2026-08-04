@@ -39,6 +39,7 @@ import "./adaptive-knowledge-coach-home.css";
 import "./adaptive-knowledge-coach-accessibility.css";
 import "./adaptive-lesson-composer.css";
 import "./adaptive-lesson-composer-accessibility.css";
+import "./lesson-composer-disclosure-touch-targets.css";
 import "./active-lesson.css";
 import "./focused-lesson-exit.css";
 import "./lesson-result.css";
