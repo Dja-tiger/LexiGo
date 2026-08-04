@@ -6,6 +6,10 @@ import {
   BUILD_RECOVERY_STORAGE_KEY,
 } from "../lib/build-version-guard";
 import { isExpectedContentSecurityPolicyConsoleDiagnostic } from "../lib/content-security-policy";
+import {
+  isExpectedWebKitGuardServiceWorkerCancellation,
+  normalizeRuntimePageError,
+} from "../lib/public-runtime-errors";
 import { serviceWorkerScriptURL } from "../lib/service-worker-update";
 
 const ROUTES = ["/", "/learn", "/phrases", "/dictionary", "/progress"] as const;
@@ -22,24 +26,6 @@ type RuntimeFailureCapture = {
   failures: string[];
   setGuardRecoveryServiceWorkerURL: (scriptURL: string | null) => void;
 };
-
-function normalizedPageError(name: string, message: string): string {
-  const diagnostic = [name.trim(), message.trim()].filter(Boolean).join(": ");
-  return diagnostic
-    .replace(/^Error:\s*/i, "")
-    .replace(/^Cannot load (https?):\s*\/\//i, "Cannot load $1://");
-}
-
-function shouldIgnoreWebKitGuardServiceWorkerCancellation(input: {
-  browserName: string;
-  errorName: string;
-  errorMessage: string;
-  guardServiceWorkerURL: string | null;
-}): boolean {
-  if (input.browserName !== "webkit" || !input.guardServiceWorkerURL) return false;
-  return normalizedPageError(input.errorName, input.errorMessage)
-    === `Cannot load ${input.guardServiceWorkerURL} due to access control checks.`;
-}
 
 async function captureCSPViolations(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -78,7 +64,7 @@ function captureFatalRuntimeErrors(page: Page, browserName: string): RuntimeFail
 
   page.on("crash", () => failures.push("pagecrash: browser renderer terminated"));
   page.on("pageerror", (error) => {
-    if (shouldIgnoreWebKitGuardServiceWorkerCancellation({
+    if (isExpectedWebKitGuardServiceWorkerCancellation({
       browserName,
       errorName: error.name,
       errorMessage: error.message,
@@ -86,7 +72,7 @@ function captureFatalRuntimeErrors(page: Page, browserName: string): RuntimeFail
     })) {
       return;
     }
-    failures.push(`pageerror: ${normalizedPageError(error.name, error.message)}`);
+    failures.push(`pageerror: ${normalizeRuntimePageError(error.name, error.message)}`);
   });
   page.on("console", (message) => {
     if (message.type() !== "error") return;
@@ -148,34 +134,6 @@ async function registeredServiceWorkerScriptURL(page: Page): Promise<string | nu
 }
 
 test.describe.configure({ mode: "serial" });
-
-test("WebKit guard service-worker cancellation filtering is exact and recovery-scoped", () => {
-  const scriptURL = "https://lexigo.example/sw.js?build=build-1";
-  const splitWebKitDiagnostic = {
-    browserName: "webkit",
-    errorName: "Cannot load https",
-    errorMessage: "//lexigo.example/sw.js?build=build-1 due to access control checks.",
-    guardServiceWorkerURL: scriptURL,
-  };
-
-  expect(shouldIgnoreWebKitGuardServiceWorkerCancellation(splitWebKitDiagnostic)).toBe(true);
-  expect(shouldIgnoreWebKitGuardServiceWorkerCancellation({
-    ...splitWebKitDiagnostic,
-    browserName: "chromium",
-  })).toBe(false);
-  expect(shouldIgnoreWebKitGuardServiceWorkerCancellation({
-    ...splitWebKitDiagnostic,
-    guardServiceWorkerURL: null,
-  })).toBe(false);
-  expect(shouldIgnoreWebKitGuardServiceWorkerCancellation({
-    ...splitWebKitDiagnostic,
-    errorMessage: "//lexigo.example/sw.js?build=another-build due to access control checks.",
-  })).toBe(false);
-  expect(shouldIgnoreWebKitGuardServiceWorkerCancellation({
-    ...splitWebKitDiagnostic,
-    errorMessage: "//lexigo.example/api/v1/auth/refresh due to access control checks.",
-  })).toBe(false);
-});
 
 for (const route of ROUTES) {
   test(`${route} remains usable after hydration and scrolling`, async ({ page, browserName }) => {
