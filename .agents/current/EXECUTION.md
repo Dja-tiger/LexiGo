@@ -5,7 +5,7 @@
 - Branch: `agent/issue-74-header-profile-touch-target`
 - Base SHA: `cda65e39ba65cd00651be3ae7e39da651cc57f1c`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #389
 
 ## Skills used
 
@@ -30,61 +30,70 @@ Version or verification date:
 
 Inputs:
 
-Issue #74, live `main`, open PRs, current deployment ledger, route component sources, global stylesheet owners and existing Issue #74 connectivity evidence.
+Issue #74, live `main`, open PRs, deployment ledger, route component sources, global stylesheet owners, previous connectivity-target evidence and three PR CI attempts.
 
 Files inspected:
 
 - Root and specialized Agent Harness documents.
 - `.agents/PROJECT_STATE.md` and current templates.
-- `frontend/components/lexigo-*-app.tsx` route owners.
-- `frontend/app/premium-ui.css`, `mobile-pwa-fixes.css`, `profile.css`, `appearance.css`, `adaptive-knowledge-coach-home.css`, `layout.tsx`.
-- Existing connectivity target CSS, source contract and browser proof.
-- `frontend/e2e/support/quality-gates.ts` and `frontend/package.json`.
+- Canonical route islands exposing `Открыть профиль`.
+- Decorative Profile avatar owner.
+- Header, compact, reminder, focus and profile CSS owners.
+- Existing connectivity target CSS/source/browser evidence.
+- Playwright quality fixtures, package scripts, failed-job logs and uploaded reports/traces.
 
 Actions performed:
 
-- Verified `main`, deployment evidence, Issue state and non-overlapping Dependabot PRs.
-- Identified exact interactive and decorative `.lx-avatar` consumers.
-- Created an explicit branch from the verified main SHA.
+- Verified exact base, deployment evidence, Issue state and non-overlapping Dependabot PRs.
+- Created the branch from the verified base.
 - Defined allowed/prohibited paths, invariants, browser matrix and rollback before functional writes.
+- Opened Draft PR #389 and kept it Draft through diagnosis.
+- Classified two superseded UI failures before modifying evidence/runtime.
+- Preserved exact-head merge discipline and separated factual docs updates from functional code.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads, repository search, branch creation, file read-back and planned source/browser validation ladder.
+GitHub exact-ref reads, repository search, branch/file writes with read-back, PR diff comparison, workflow/job/log/artifact inspection and one evidence-backed isolated visual rerun.
 
 Artifacts produced:
 
-Active TASK, PROGRESS and EXECUTION records; product implementation and tests pending.
+PR #389, current Agent Harness records and immutable CI evidence.
 
 Result:
 
-Pre-flight complete. The live compact profile button is confirmed as a product accessibility defect rather than a stale test or hidden-control mismatch.
+Functional head `bbddd0bfeb69dd1d997aec831a94f01521eba032` passed CI #2753 / run `30934135674`, including frontend/backend/browser/container gates.
 
 Failures:
 
-Local clone execution is unavailable because the isolated execution environment cannot resolve `github.com`.
+- CI #2745: stale hidden compact streak locator.
+- CI #2750: real symmetric top-perimeter viewport-edge failure in both mobile engines.
+- CI #2753 first visual attempt: unrelated raw-PNG hash mismatch in one existing Dictionary empty-state contract.
 
 Root cause:
 
-Execution-container DNS limitation, unrelated to repository or product behavior.
+- Live-neighbor ownership was initially selected from DOM presence rather than visible runtime state.
+- Compact symmetric block expansion terminated at the viewport/header top edge and was not fully hit-testable.
+- The visual gate hashes PNG bytes exactly; the isolated rerun passed without code or baseline changes after local pixel-equivalence evidence.
 
 Fallback:
 
-Use exact GitHub refs/files and authoritative CI/browser artifacts; do not count unavailable local validation as evidence.
+- Replaced hidden-neighbor evidence with the visible route reminder summary.
+- Directed vertical hit slop downward while retaining symmetric horizontal expansion.
+- Used one controlled visual rerun only after proving the pseudo geometry variants were pixel-identical under compiled CSS.
 
 Limitations:
 
-Browser-computed target geometry remains to be proven by the new Playwright test and full CI.
+Local repository clone validation was unavailable because the isolated execution environment could not resolve `github.com`; exact connector reads and authoritative CI/browser evidence were used. Physical-device, system-text and 200% zoom acceptance remain outside this slice.
 
 Reusable lesson:
 
-Shared class names are not sufficient selector ownership. A touch-target owner must encode the interactive element type and accessible contract so a decorative consumer is excluded by construction.
+Runtime visibility, not DOM existence, defines adjacent-control evidence. At a viewport edge, a nominal pseudo-element rectangle is insufficient: target acceptance must prove actual `elementFromPoint` ownership at each perimeter.
 
-### Frontend validation
+### Frontend implementation and validation
 
 Purpose:
 
-Protect the live header target across desktop Chromium, iOS WebKit and Android Chromium without changing presentation or navigation semantics.
+Provide a mobile-safe 44/48px profile-avatar target without changing presentation or navigation semantics.
 
 Instruction source:
 
@@ -95,48 +104,57 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-04 repository sources.
+2026-08-04 repository sources and CI #2753.
 
 Inputs:
 
-Computed source cascade: 44px desktop avatar, 42px compact avatar, 10px header-tools gap, global focus owner and authenticated quality-gate fixture.
+44px desktop avatar, 42px compact avatar, global focus owner, fixed route reminder entry and authenticated quality-gate fixture.
 
 Files inspected:
 
-Existing route sources, CSS owners, package scripts and Issue #74 connectivity test pattern.
+Route runtimes, `premium-ui.css`, `mobile-pwa-fixes.css`, `profile.css`, `calendar-reminder-entry.css`, `accessibility-focus.css`, `layout.tsx`, package scripts and existing target evidence.
 
 Actions performed:
 
-Planned exact `button.lx-avatar[aria-label="Открыть профиль"]` pseudo-element hit slop, source-level ownership assertions and four-perimeter browser hit testing.
+- Added a selector scoped to `button.lx-avatar[aria-label="Открыть профиль"]`.
+- Added paint-inert pseudo-element hit slop.
+- Configured 44px fine-pointer and 48px coarse-pointer targets.
+- Anchored block-start at zero and extended block-end downward to avoid the top viewport boundary.
+- Kept inline expansion symmetric.
+- Added source contracts for selector scope, route consumers, decorative exclusion, geometry, import order, reminder ownership, focus ownership and command registration.
+- Added browser checks for painted/effective geometry, four perimeter hits, reminder separation, focus-visible and overflow across desktop Chromium, Android Chromium and iOS WebKit.
 
 Commands or procedures:
 
-Source contract → lint/typecheck/unit/build → desktop/iOS/Android focused proof → full authoritative CI → Linux visual and stage validation.
+Source contract → lint/typecheck/unit/build → full UI/accessibility/visual/performance/PWA/service-worker matrix → backend integration/security → container builds.
 
 Artifacts produced:
 
-Pending CSS owner, source contract and browser proof.
+- `frontend/app/header-profile-touch-targets.css`
+- `frontend/components/header-profile-touch-target-source.test.ts`
+- `frontend/e2e/header-profile-touch-targets.spec.ts`
+- layout import and authoritative script registration.
 
 Result:
 
-Implementation contract defined; functional validation pending.
+All functional and presentation contracts passed on the immutable functional head. Visual baselines were not modified.
 
 Failures:
 
-None.
+See CI diagnoses above.
 
 Root cause:
 
-Not applicable.
+The compact painted avatar was smaller than the required pointer target and located at a viewport edge that invalidated symmetric top expansion.
 
 Fallback:
 
-If pseudo-element hit testing conflicts with neighboring controls, reduce the slice and use an owner-specific wrapper only after proving JSX change is necessary.
+A downward-only block-axis expansion preserved visual geometry while making the full target hit-testable.
 
 Limitations:
 
-Physical-device and system-text acceptance remain outside this atomic slice.
+Issue #74 remains open for other controls, enlarged-text, zoom and physical-device acceptance.
 
 Reusable lesson:
 
-Painted size and effective pointer target should be independently owned when preserving an approved visual design.
+Painted size and effective pointer target should be independently owned. Logical inset geometry must also account for clipping and viewport-edge hit testing, not only computed dimensions.
