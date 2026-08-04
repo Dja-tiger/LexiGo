@@ -14,11 +14,12 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Scope
 
-- Add one shared semantic touch-target token: 44 CSS px by default and 48 CSS px for coarse-pointer environments.
-- Apply transparent effective hit slop to live shared header `streak`, reminder icon and avatar controls.
+- Add one narrow routed stylesheet with a shared semantic target: 44 CSS px by default and 48 CSS px for coarse-pointer environments.
+- Import it without reordering existing global style owners.
+- Apply transparent effective hit slop to live shared header `streak`, reminder icon and avatar buttons.
 - Preserve visible dimensions, spacing and existing focus styling while extending the focus/touch rectangle.
 - Add fail-closed source ownership evidence and real Chromium/iOS/Android hit-testing coverage.
-- Register the focused browser suite in authoritative UI/a11y CI.
+- Register the focused browser suite in authoritative UI and accessibility CI.
 
 ## Non-goals
 
@@ -30,7 +31,8 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Allowed paths
 
-- `frontend/app/premium-ui.css`
+- `frontend/app/header-touch-targets.css`
+- `frontend/app/layout.tsx`
 - `frontend/components/header-touch-target-source.test.ts`
 - `frontend/e2e/header-touch-targets.spec.ts`
 - `frontend/package.json`
@@ -41,7 +43,7 @@ Make shared production header controls meet minimum effective touch-target size 
 ## Prohibited paths
 
 - component JSX/TSX runtime
-- other CSS owners and global import order
+- existing CSS owner files and global import reordering
 - visual snapshots and route budgets
 - backend, API, migrations and deployment workflows
 - dependencies and lockfiles
@@ -49,7 +51,7 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Runtime owners
 
-- `frontend/app/premium-ui.css` — shared header control geometry.
+- `frontend/app/header-touch-targets.css` — routed shared header effective hit slop.
 - `frontend/components/lexigo-home-app.tsx` — interactive streak and avatar.
 - `frontend/components/lexigo-dictionary-app.tsx` — reminder icon and avatar.
 - routed header shells preserve existing layout and safe-area ownership.
@@ -66,8 +68,9 @@ Make shared production header controls meet minimum effective touch-target size 
 - Effective target is at least 44×44 with a fine pointer and 48×48 with a coarse pointer.
 - Expanded targets do not overlap adjacent header controls.
 - Pointer events at the expanded perimeter resolve to the intended control.
-- Keyboard focus remains visible and no semantic role/name changes.
+- Keyboard focus remains visible over the expanded perimeter and no semantic role/name changes.
 - No horizontal overflow at minimum compact widths.
+- Existing global stylesheet imports remain in their current relative order.
 
 ## Acceptance criteria
 
@@ -75,7 +78,7 @@ Make shared production header controls meet minimum effective touch-target size 
 - Dictionary reminder icon and avatar meet the effective target contract.
 - Coarse-pointer projects enforce 48 px; desktop fine-pointer enforces 44 px.
 - Adjacent expanded header targets retain non-overlapping spacing.
-- Source contract maps CSS token, coarse override, runtime class owners and authoritative browser registration.
+- Source contract maps CSS owner, coarse override, runtime class owners and authoritative browser registration.
 - Full immutable-head CI, expected-head merge, exact-SHA main CI and exact-image stage/public validation succeed.
 
 ## Required checks
@@ -94,4 +97,4 @@ Make shared production header controls meet minimum effective touch-target size 
 
 ## Rollback
 
-Revert the shared token/hit-slop CSS, source/browser contracts, command registration and current Agent Harness records. No data, API or visual snapshot rollback is required.
+Revert the narrow stylesheet/import, source/browser contracts, command registration and current Agent Harness records. No data, API or visual snapshot rollback is required.
