@@ -173,13 +173,13 @@ Actions performed:
 - expanded only the block-axis event surface through a transparent absolute pseudo-element;
 - kept inline expansion zero so horizontal mode/size controls cannot overlap;
 - loaded the owner after adaptive presentation/accessibility and the prior disclosure interaction owner;
-- added a source contract for exact runtime names, role templates, import order, visual-owner boundaries and blocking registration;
+- added a source contract for exact runtime names, option-map/component owners, import order, visual-owner boundaries and blocking registration;
 - added Playwright proof for every rendered radio, target union geometry, four perimeter hits, pairwise non-overlap, focus-visible, alternate selection and compact reflow;
 - registered the proof exactly once in `test:e2e:ui` and `test:e2e:a11y`.
 
 Commands or procedures:
 
-GitHub contents writes, exact file read-back, source search, branch compare and authoritative CI inspection.
+GitHub contents writes, exact file read-back, source search, branch compare and authoritative CI/log inspection.
 
 Artifacts produced:
 
@@ -204,31 +204,31 @@ Playwright serializes page callbacks but not arbitrary outer helper functions.
 
 Correction:
 
-Moved the geometry measurement function inside each browser callback. No production CSS or runtime change.
+Moved geometry measurement inside each browser callback. No production CSS or runtime change.
 
 Reusable lesson:
 
 Playwright page callbacks must be self-contained.
 
-#### Pre-CI correction 2 — accessibility naming and radio templates
+#### Pre-CI correction 2 — accessibility naming
 
 Failure found during mandatory read-back:
 
-The first source contract expected `aria-label="Размер урока"` and only three `role="radio"` templates.
+The first source contract expected `aria-label="Размер урока"`.
 
 Root cause:
 
-The live size group is correctly named by `<legend id="lesson-size-label">` plus `aria-labelledby`, and reusable `CollectionCard` contributes the fourth radio template.
+The live size group is correctly named by `<legend id="lesson-size-label">` plus `aria-labelledby`.
 
 Correction:
 
-Aligned the contract with the exact naming relation and four source templates. No runtime change.
+Aligned the contract with the exact naming relationship. No runtime change.
 
 Reusable lesson:
 
-Source contracts must model actual `aria-label` versus `aria-labelledby` ownership and reusable component templates.
+Source contracts must model actual `aria-label` versus `aria-labelledby` ownership.
 
-#### CI diagnosis — exact source assertions
+#### CI diagnosis 1 — group scope and CSS declarations
 
 Run:
 
@@ -236,33 +236,61 @@ CI #2775 / run `30958010741`, developer head `02be8af2e74cd0e18932dace0c74a47dd7
 
 Failed job:
 
-Frontend core quality `92155520449`, unit/source-contract step. Lint and TypeScript passed. The same run reported 96 passing unit files and 595 passing tests outside the two new assertions.
+Frontend core quality `92155520449`, unit/source-contract step. Lint and TypeScript passed; 96 unrelated unit files and 595 tests passed.
 
 Evidence:
 
-Exact job logs showed:
-
-1. `runtime.match(/role="radiogroup"/g)` returned four because `lexigo-learn-app.tsx` contains another unrelated radiogroup outside this slice.
-2. `not.toContain("width:")` matched the allowed media condition `max-width: 767px`, not a CSS `width` declaration.
+1. Whole-file `role="radiogroup"` count returned four because the runtime file contains an unrelated group outside this slice.
+2. Raw forbidden substring `width:` matched the allowed media feature `max-width: 767px` rather than a CSS declaration.
 
 Root cause:
 
-The source contract used global file-level counts and raw substring checks where exact owner strings and declaration-level checks were required.
+The contract used global counts and raw substring checks where exact owner fragments and declaration-level checks were required.
 
 Correction:
 
-- removed the ambiguous global radiogroup count while retaining exact assertions for each of the three target owner strings;
-- replaced raw forbidden declaration substrings with line-anchored regular expressions for actual CSS declarations, allowing `max-width` while still rejecting `width`;
+- removed the global group count while retaining exact assertions for all three target groups;
+- replaced raw CSS substrings with line-anchored declaration regexes;
 - committed as `4826f8225f87634ab6d22aefc59f87430e4d1ae8`;
+- production CSS, runtime source and browser proof were unchanged.
+
+Reusable lesson:
+
+Large owner files require exact slice-scoped assertions, and CSS declaration checks must distinguish properties from media features.
+
+#### CI diagnosis 2 — radio-owner scope
+
+Run:
+
+CI #2778 / run `30958253291`, developer head `bc9ca34ed00646779956502e96466c41fac68d5a`.
+
+Failed job:
+
+Frontend core quality `92156308008`, one unit/source-contract assertion. Lint and TypeScript passed; 96 unrelated unit files and 596 tests passed.
+
+Evidence:
+
+The remaining whole-file `runtime.match(/role="radio"/g)` expected four templates but found five because `lexigo-learn-app.tsx` contains another unrelated radio owner outside this slice. All declaration checks introduced after the first diagnosis passed.
+
+Root cause:
+
+The final whole-file count was still broader than the selected Lesson Composer option owner.
+
+Correction:
+
+- removed the global radio count;
+- asserted the exact `MODE_OPTIONS`, `SOURCE_OPTIONS`, `SIZE_OPTIONS` maps and reusable `CollectionCard` radio owner;
+- committed the structural correction as `b346fa47f5c985e88733f2cc8c4dabf3d1c71465`;
+- mandatory read-back then found the source-map assertion used `sourceOptions` instead of the exact uppercase runtime identifier `SOURCE_OPTIONS`; corrected before rerun as `769b0b3f13c0e5ffabc4d012511d93430f1afdac`;
 - production CSS, runtime source and Playwright proof were unchanged.
+
+Reusable lesson:
+
+Do not infer slice ownership from whole-file role totals. Assert exact render maps and reusable component owners, including identifier case, from the current source.
 
 Limitations:
 
 Physical-device acceptance, enlarged-text behavior and 200% zoom remain outside this slice. Browser emulation cannot be represented as physical-device evidence.
-
-Reusable lesson:
-
-A source contract for a large owner file must assert exact target fragments instead of total counts unless the whole-file count is itself the invariant. CSS declaration prohibitions must distinguish declarations from media-feature names such as `max-width`.
 
 ## Required next evidence
 
