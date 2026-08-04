@@ -4,8 +4,8 @@
 
 - Branch: `fix/issue-74-learn-option-targets`
 - Base SHA: `b42f540f240883cfd4b23ce6e248512ac1f21316`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from the live branch after this write
+- PR: #393
 
 ## Skills used
 
@@ -17,7 +17,7 @@ Reconstruct live state after PR #391 reconciliation, isolate the next Issue #74 
 
 Instruction source:
 
-`AGENTS.md`, `.agents/AGENTS.md`, all mandatory specialist documents previously read in this execution, `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, `.agents/current/**`, `docs/agent-harness.md` and the GitHub connector skill.
+`AGENTS.md`, `.agents/AGENTS.md`, all mandatory specialist documents, `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, `.agents/current/**`, `docs/agent-harness.md` and the GitHub connector skill.
 
 Version or verification date:
 
@@ -31,29 +31,35 @@ Files inspected:
 
 - Agent Harness entrypoint, index, state and idle current records;
 - `frontend/components/lexigo-learn-app.tsx`;
+- `frontend/components/lesson-composer-progressive-shell.tsx`;
 - `frontend/app/adaptive-lesson-composer.css`;
+- `frontend/app/premium-ui.css`;
+- `frontend/app/accessibility-focus.css`;
 - `frontend/app/layout.tsx`;
-- previous disclosure target implementation and validation patterns.
+- previous connectivity, profile and disclosure touch-target contracts.
 
 Actions performed:
 
 - verified no active product slice or intersecting PR;
-- confirmed three live expanded mobile radiogroups and their runtime selectors;
+- confirmed three live expanded mobile radiogroups and all direct radio owners;
 - confirmed current 44px floor, 6px visual gaps and absence of a 48px coarse owner;
 - created the task branch from exact live main;
-- recorded allowed/prohibited paths, invariants, acceptance criteria and rollback.
+- recorded allowed/prohibited paths, invariants, acceptance criteria and rollback;
+- created Draft PR #393;
+- read back every changed path;
+- confirmed branch compare contains only the eight allowed paths and is not behind base.
 
 Commands or procedures:
 
-Connector-native file, Issue, PR, workflow, branch and exact-ref operations with write read-back.
+Connector-native file, Issue, PR, workflow, branch, compare and exact-ref operations with write read-back.
 
 Artifacts produced:
 
-Current TASK, PROGRESS and EXECUTION records on the task branch.
+Task branch, Draft PR #393 and current TASK/PROGRESS/EXECUTION records.
 
 Result:
 
-Pre-flight complete; no product write has occurred yet.
+Atomic product branch and Draft PR established without direct `main` writes.
 
 Failures:
 
@@ -65,7 +71,7 @@ Not applicable.
 
 Fallback:
 
-If the target owner cannot maintain non-overlap across the 6px option gap, stop and reduce or redesign the slice rather than changing approved presentation implicitly.
+If live target overlap cannot be prevented inside the current 6px spacing contract, stop and reduce or redesign the slice rather than silently modifying approved presentation.
 
 Limitations:
 
@@ -73,7 +79,7 @@ Local clone execution is unavailable; authoritative CI remains the validation so
 
 Reusable lesson:
 
-No new failure category established at pre-flight.
+No new repository-operation failure category established.
 
 ### Figma inspection
 
@@ -101,7 +107,7 @@ Files inspected:
 
 Actions performed:
 
-Read metadata and exact design context for all three control groups.
+Read frame metadata and exact design context for all three control groups.
 
 Commands or procedures:
 
@@ -113,7 +119,7 @@ Verified painted heights and gaps: mode 32px, material 45px, size 32px, gap 6px.
 
 Result:
 
-The implementation must not resize or re-baseline controls; only an invisible block-axis coarse-pointer surface is allowed.
+Implementation does not resize or re-baseline controls; only an invisible block-axis interaction surface is added.
 
 Failures:
 
@@ -135,60 +141,90 @@ Reusable lesson:
 
 Retain visual-owner versus interaction-owner separation.
 
-### Frontend validation
+### Frontend implementation and source validation
 
 Purpose:
 
-Prove all live option radios satisfy fine/coarse target size, non-overlap, focus, interaction and compact reflow.
+Provide fine/coarse target ownership for every live Lesson Composer option radio without changing visual or behavioral owners.
 
 Instruction source:
 
-Existing Issue #74 source/browser contracts and `.agents/AGENTS.progress-pr214.md`.
+Existing Issue #74 source/browser contracts, `.agents/AGENTS.progress-pr214.md` and the live runtime/accessibility source.
 
 Version or verification date:
 
-Current repository browser/toolchain at live main.
+Current repository frontend toolchain at base `b42f540f240883cfd4b23ce6e248512ac1f21316`.
 
 Inputs:
 
-Radiogroup names, direct radio selectors, pointer media query, selected roving-tabindex controls and compact viewport.
+Three radiogroup names, direct option selectors, current 44px mobile floor, 6px gaps, pointer media query and roving-tabindex semantics.
 
 Files inspected:
 
-Existing disclosure, profile and connectivity touch-target contracts.
+- `frontend/components/lexigo-learn-app.tsx`;
+- `frontend/app/adaptive-lesson-composer.css`;
+- existing Issue #74 interaction-owner styles, source tests and Playwright geometry helpers;
+- package-level blocking test commands.
 
 Actions performed:
 
-Implementation pending.
+- added `lesson-composer-option-touch-targets.css` with a 44px default and 48px coarse-pointer token;
+- scoped it to direct mode, source and size option buttons inside the live Learn main;
+- expanded only the block-axis event surface through a transparent absolute pseudo-element;
+- kept inline expansion zero so horizontal mode/size controls cannot overlap;
+- loaded the owner after adaptive presentation/accessibility and the prior disclosure interaction owner;
+- added a source contract for exact runtime names, role templates, import order, visual-owner boundaries and blocking registration;
+- added Playwright proof for every rendered radio, target union geometry, four perimeter hits, pairwise non-overlap, focus-visible, alternate selection and compact reflow;
+- registered the proof exactly once in `test:e2e:ui` and `test:e2e:a11y`.
 
 Commands or procedures:
 
-Planned source contract, lint, typecheck, unit, build, focused Chromium/Android/WebKit proof and full authoritative CI.
+GitHub contents writes, exact file read-back, source search and branch compare. Full lint/typecheck/unit/build/browser validation is pending authoritative CI.
 
 Artifacts produced:
 
-Pending.
+- `frontend/app/lesson-composer-option-touch-targets.css`;
+- `frontend/components/lesson-composer-option-touch-target-source.test.ts`;
+- `frontend/e2e/lesson-composer-option-touch-targets.spec.ts`;
+- layout import and package command registrations.
 
 Result:
 
-Pending.
+Production and validation ownership implemented; no final validation claim yet.
 
 Failures:
 
-None yet.
+Two defects were found during mandatory read-back before CI:
+
+1. The first E2E version referenced a top-level `targetRectForElement` helper from inside Playwright `evaluate` and `evaluateAll` callbacks.
+2. The first source contract expected a literal `aria-label="Размер урока"` and counted only three `role="radio"` templates.
 
 Root cause:
 
-Not applicable.
+1. Playwright serializes page callbacks but not arbitrary outer helper functions.
+2. The live size group is correctly named by `<legend id="lesson-size-label">` plus `aria-labelledby`, and the reusable `CollectionCard` contributes the fourth radio template.
 
-Fallback:
+Fallback or correction:
 
-Center each target before perimeter hit-testing and measure the union of the native border box plus pseudo-element box, preserving the proven PR #391 evidence model.
+- moved the geometry helper inside each browser callback so it is fully serializable;
+- aligned the source contract to the exact legend/`aria-labelledby` ownership and four radio templates;
+- kept production CSS and runtime components unchanged.
 
 Limitations:
 
-Physical-device acceptance and enlarged-text/zoom work remain outside this atomic slice.
+Physical-device acceptance, enlarged-text behavior and 200% zoom remain outside this slice. Browser emulation cannot be represented as physical-device evidence.
 
 Reusable lesson:
 
-Reuse the validated union geometry and viewport-chrome isolation model from PR #391.
+Playwright page callbacks must be self-contained. Accessibility source contracts must model the actual naming relation (`aria-label` versus `aria-labelledby`) and reusable component templates rather than infer structure from the rendered count.
+
+## Required next evidence
+
+- fresh full authoritative PR CI on the immutable head produced by this execution-record write;
+- focused target proof green in desktop Chromium, Android Chromium and iOS WebKit;
+- all standard frontend/backend/browser/visual/security/performance/container gates green;
+- no comments, reviews or unresolved threads;
+- Ready transition followed by expected-head squash merge;
+- exact-SHA main CI and immutable image publication;
+- exact-image stage deploy, public endpoint smoke and public browser validation;
+- separate Agent Docs reconciliation PR and Issue #74 progress comment.
