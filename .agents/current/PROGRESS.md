@@ -5,52 +5,51 @@
 ### Verified
 
 - Repository: `Dja-tiger/LexiGo`.
-- Live `main`: `cda65e39ba65cd00651be3ae7e39da651cc57f1c`.
-- Latest deployed product SHA: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+- Product base: `cda65e39ba65cd00651be3ae7e39da651cc57f1c`.
+- Previously deployed product SHA: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
 - Issue #74 remains open after the completed connectivity-action slice.
-- Open PRs #304, #305 and #306 are Dependabot-only and do not overlap this product scope.
-- Branch `agent/issue-74-header-profile-touch-target` was created from the exact live `main` SHA.
-- Mandatory Agent Harness documents and Issue comments were read before writes.
-- Draft PR #389 was opened on head `3ea5a50ebacf50e7b7043396b1707d2cb0a0681e`.
+- Open PRs #304, #305 and #306 are Dependabot-only and do not overlap this scope.
+- Branch `agent/issue-74-header-profile-touch-target` was created from the exact live base.
+- Draft PR #389 is mergeable and contains eight allowed files.
 
 ### Finding
 
-The live interactive header button with accessible name `Открыть профиль` is present across canonical route islands. Its base painted box is 44×44 px on desktop, while `mobile-pwa-fixes.css` reduces it to 42×42 px on compact viewports. The compact live control therefore fails both the 44px fine-pointer and 48px coarse-pointer target contract.
+The live interactive header button with accessible name `Открыть профиль` is present across canonical route islands. Its painted box is 44×44 px on desktop and 42×42 px on compact viewports. The compact control therefore failed the 44px fine-pointer and 48px coarse-pointer target contract.
 
-The Profile route also uses `.lx-avatar` for a decorative `span[aria-hidden="true"]`; the implementation uses an exact interactive button selector and does not affect this decorative owner.
+The Profile route also uses `.lx-avatar` for a decorative `span[aria-hidden="true"]`; the implementation uses an exact interactive button selector and excludes this decorative owner.
 
 ### Implemented
 
-- Added exact button-scoped paint-inert hit slop with a 44px fine-pointer and 48px coarse-pointer variable.
-- Registered the CSS owner after presentation owners.
-- Added fail-closed source ownership covering route consumers, decorative exclusion, painted geometry, focus ownership and command registration.
-- Added desktop Chromium, iOS WebKit and Android Chromium geometry/perimeter/focus/overflow evidence.
+- Added exact `button.lx-avatar[aria-label="Открыть профиль"]` paint-inert hit slop.
+- Exposed a 44×44 fine-pointer and 48×48 coarse-pointer effective target.
+- Preserved the 44×44 desktop and 42×42 compact painted boxes.
+- Kept inline expansion symmetric and directed block-axis expansion downward to avoid the compact viewport/header top boundary.
+- Preserved navigation callbacks, accessible name, focus visuals, colors, layout and route ownership.
+- Added fail-closed source ownership and desktop Chromium, iOS WebKit and Android Chromium geometry/perimeter/focus/overflow evidence.
 
-### CI #2745 diagnosis
+### Superseded CI diagnoses
 
-Authoritative PR run `30931603617` on head `3ea5a50ebacf50e7b7043396b1707d2cb0a0681e` passed classifier, frontend core, backend unit/security, backend integration, UI shard 1, lesson completion, content security, controlled service worker, accessibility audit, visual regression, Dictionary smoke, performance budgets and iOS PWA.
+- CI #2745 / run `30931603617` on `3ea5a50ebacf50e7b7043396b1707d2cb0a0681e`: UI shard 2 used the intentionally hidden compact streak as the neighbor. Artifact review identified the actual visible adjacent control as `.lx-route-reminder-entry > summary`. Classified as a stale test/live-owner error.
+- CI #2750 / run `30932839239` on `e70fd21032dd036f966f125fde1890cd79254862`: corrected evidence exposed a real mobile viewport-edge defect. The computed coarse target was 48×48, but the symmetric top perimeter was not hit-testable in Android Chromium or iOS WebKit. Right, bottom and left passed. The owner was corrected to direct block-axis hit slop downward.
 
-Only UI shard 2 failed. Playwright report artifact `frontend-playwright-report-ui-2` (`8901594340`) showed that the new test waited for `.lx-header-tools .lx-streak` to be visible on compact devices. Runtime evidence and screenshots showed that this streak button is intentionally hidden in compact presentation; the actual visible adjacent control is `.lx-route-reminder-entry > summary`, the fixed dark calendar reminder entry.
+Neither superseded run is merge evidence.
 
-Classification: stale test/live-neighbor ownership error, not production rendering failure and not browser flake. CI #2745 is superseded and is not merge evidence.
+### Successful validation run
 
-### CI #2750 diagnosis
+CI #2753 / run `30934135674` completed successfully on immutable functional head `bbddd0bfeb69dd1d997aec831a94f01521eba032` after one controlled visual-job rerun.
 
-The corrected authoritative run `30932839239` on head `e70fd21032dd036f966f125fde1890cd79254862` again passed frontend core, backend, accessibility, visual, performance, PWA, service-worker and all non-UI-shard-2 gates. UI shard 2 reached the actual target geometry proof and failed deterministically in Android Chromium and iOS WebKit, including retries.
+Passed evidence includes:
 
-Playwright report artifact `frontend-playwright-report-ui-2` (`8902076913`) confirmed:
+- classifier and Agent Docs routing contract;
+- frontend lint, TypeScript, Vitest source contracts, production build and dependency audit;
+- both UI shards;
+- exact 44/48px square target, all four perimeter hits, visible reminder separation, focus-visible and compact overflow in desktop Chromium, Android Chromium and iOS WebKit;
+- lesson completion, content security, controlled service worker, accessibility audit, Dictionary smoke, performance budgets and iOS PWA Dictionary;
+- backend unit/security and PostgreSQL integration;
+- frontend quality aggregate;
+- API and web container builds.
 
-- painted compact box: 42×42 px;
-- computed coarse pseudo target: 48×48 px;
-- right, bottom and left perimeter points resolve to the profile button;
-- only the top perimeter point resolves outside the button in both mobile engines;
-- the live reminder summary is visible and the application remains healthy.
-
-The compact header places the avatar at the viewport/header top boundary. Symmetric block-axis hit slop reaches that boundary, where mobile hit testing does not expose the upper pseudo perimeter as part of the button. This is a real runtime target-shape defect, not a stale locator and not a retryable browser flake.
-
-Correction: keep inline expansion symmetric, but anchor block-start at the button padding edge and direct the additional block-axis area downward. This preserves the painted 42/44px geometry, keeps the target at or above 44/48px, avoids the viewport edge, and remains inside the compact header footprint.
-
-CI #2750 is superseded and is not merge evidence.
+The first visual attempt failed only the pre-existing `compact Dictionary empty light` raw-PNG hash while Home, Profile and the other 125 visual cases passed. The failure reproduced the same non-approved PNG hash on its internal retry. A controlled local Chromium reproduction using the compiled CSS produced pixel-identical symmetric and corrected pseudo-element renders with zero differing pixels. One isolated rerun of the visual job then passed all 126 cases without baseline changes. Classification: transient exact-PNG/hash nondeterminism, not a raster regression and not justification for baseline promotion.
 
 ### Changed files
 
@@ -63,25 +62,10 @@ CI #2750 is superseded and is not merge evidence.
 - `frontend/e2e/header-profile-touch-targets.spec.ts`
 - `frontend/package.json`
 
-### Checks passed
+### Current state
 
-- Live main, open PR and deployment-state verification.
-- Exact route-source and CSS-owner inspection.
-- Branch creation and all changed-file read-backs.
-- CI #2745 and CI #2750 frontend lint, TypeScript, Vitest, production build and dependency audit.
-- CI #2745 and CI #2750 all non-UI-shard-2 product/browser/backend gates, including visual regression without baseline updates.
-- Both failed-job logs, screenshots, accessibility snapshots, Playwright reports and traces reviewed.
-
-### Checks failed
-
-- CI #2745 UI shard 2: stale hidden-streak neighbor locator.
-- CI #2750 UI shard 2: symmetric top expansion is not hit-testable at the compact viewport/header boundary in Android Chromium and iOS WebKit.
-- Local clone validation remains unavailable because the isolated execution environment cannot resolve `github.com`; connector and authoritative CI evidence are used.
-
-### Current branch head
-
-`e70fd21032dd036f966f125fde1890cd79254862` is the failed immutable head for CI #2750. The block-axis correction will create a new head.
+Production code is complete. This factual Agent Harness update creates a final documentation head; a new full immutable-head CI run is required before expected-head squash merge.
 
 ### Next action
 
-Apply the one-owner block-axis correction, update source evidence and PR diagnosis, compare the exact diff against live `main`, then run a new full authoritative CI. Neither CI #2745 nor CI #2750 will be used as merge evidence.
+Run final authoritative CI on the documentation-complete immutable head, verify no unresolved review threads, mark PR #389 Ready, expected-head squash merge, then perform exact-SHA main CI and exact-image stage/public validation.
