@@ -20,6 +20,7 @@ type ProofFamily = Readonly<{
   cssPath: string;
   ownerMarkers: readonly string[];
   sourceContractPath: string;
+  sourceMarkers: readonly string[];
   browserSpecPath: string;
 }>;
 
@@ -97,6 +98,7 @@ const proofFamilies: readonly ProofFamily[] = [
     cssPath: "app/adaptive-navigation.css",
     ownerMarkers: [".lx-routed-app .lx-resource-stack"],
     sourceContractPath: "components/navigation-mobile-shell-css-ownership.test.ts",
+    sourceMarkers: [".lx-routed-app .lx-resource-stack", "resourceStackMatchesMainContent"],
     browserSpecPath: "e2e/navigation-mobile-shell-cascade.spec.ts",
   },
   {
@@ -106,6 +108,7 @@ const proofFamilies: readonly ProofFamily[] = [
     cssPath: "app/adaptive-navigation.css",
     ownerMarkers: [".lx-routed-app .lx-async-state"],
     sourceContractPath: "components/navigation-mobile-shell-css-ownership.test.ts",
+    sourceMarkers: [".lx-routed-app .lx-async-state", "asyncStateMatchesResourceStack"],
     browserSpecPath: "e2e/navigation-mobile-shell-cascade.spec.ts",
   },
   {
@@ -117,6 +120,7 @@ const proofFamilies: readonly ProofFamily[] = [
       ".lx-routed-app[data-route-path=\"/learn\"] .lx-learning-section-switch--learn",
     ],
     sourceContractPath: "components/learning-section-switch-css-ownership.test.ts",
+    sourceMarkers: ["ROUTED_SELECTOR", "FALLBACK_SELECTOR", "switchMarginLeft", "switchWidth"],
     browserSpecPath: "e2e/navigation-mobile-shell-cascade.spec.ts",
   },
   {
@@ -136,6 +140,12 @@ const proofFamilies: readonly ProofFamily[] = [
       ".lx-main-content[aria-label=\"Обучение\"] .lx-setup-submit",
     ],
     sourceContractPath: "components/adaptive-layout-css-ownership.test.ts",
+    sourceMarkers: [
+      "CANONICAL_ANCESTRY",
+      ".lx-source-selector > button",
+      ".lx-setup-footer",
+      ".lx-setup-submit",
+    ],
     browserSpecPath: "e2e/adaptive-layout-cascade.spec.ts",
   },
   {
@@ -147,6 +157,10 @@ const proofFamilies: readonly ProofFamily[] = [
       ".lx-app[data-route-client-island=\"phrases\"] .lx-phrase-grid",
     ],
     sourceContractPath: "components/phrases-css-ownership.test.ts",
+    sourceMarkers: [
+      ".lx-app[data-route-client-island=\"phrases\"] .lx-phrase-grid",
+      "canonicalCascadeBlock",
+    ],
     browserSpecPath: "e2e/phrases-grid-cascade.spec.ts",
   },
   {
@@ -156,6 +170,7 @@ const proofFamilies: readonly ProofFamily[] = [
     cssPath: "app/adaptive-knowledge-coach-home.css",
     ownerMarkers: [".lx-routed-app .lx-account-security"],
     sourceContractPath: "components/account-security-css-ownership.test.ts",
+    sourceMarkers: [".lx-routed-app .lx-account-security", "ROUTED_SELECTOR"],
     browserSpecPath: "e2e/account-security-width-cascade.spec.ts",
   },
 ];
@@ -199,7 +214,9 @@ describe("Issue #70 final frontend ownership acceptance", () => {
 
       for (const ownerMarker of family.ownerMarkers) {
         expect(css, `${family.id}: production owner ${ownerMarker}`).toContain(ownerMarker);
-        expect(sourceContract, `${family.id}: source owner ${ownerMarker}`).toContain(ownerMarker);
+      }
+      for (const sourceMarker of family.sourceMarkers) {
+        expect(sourceContract, `${family.id}: source marker ${sourceMarker}`).toContain(sourceMarker);
       }
 
       expect(sourceContract, `${family.id}: manifest contract`).toContain(
