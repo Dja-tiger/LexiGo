@@ -50,7 +50,7 @@ describe("Issue #74 Lesson Composer option touch-target ownership", () => {
     expect(runtime).toContain('<legend id="lesson-size-label">Размер урока</legend>');
     expect(runtime).toContain('className="lx-size-control" role="radiogroup" aria-labelledby="lesson-size-label"');
     expect(runtime).toContain("MODE_OPTIONS.map((option) => {");
-    expect(runtime).toContain("sourceOptions.map((option) => {");
+    expect(runtime).toContain("SOURCE_OPTIONS.map((option) => {");
     expect(runtime).toContain("SIZE_OPTIONS.map((option) => {");
     expect(runtime).toMatch(/function CollectionCard[\s\S]*?className=\{`lx-themed-selector[\s\S]*?role="radio"[\s\S]*?aria-checked=\{selected\}/);
     expect(runtime).toContain("aria-checked={selected}");
