@@ -5,15 +5,15 @@
 - Branch: `agent/issue-70-public-webkit-sw-guard`
 - Base SHA: `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #383
 
 ## Skills used
 
-### GitHub repository and workflow diagnostics
+### GitHub workflow and artifact diagnostics
 
 Purpose:
 
-Classify the exact-image stage failure from primary workflow evidence before deciding whether a retry or code/test change was justified.
+Classify the exact-image stage failure from primary evidence before changing code or retrying.
 
 Instruction source:
 
@@ -25,62 +25,61 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-04 live `main` and stage deployment records.
+2026-08-04 live `main` and stage records.
 
 Inputs:
 
-Product SHA `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`, main CI run `30902346811`, stage run `30903056155`, failed job `91971692028`, diagnostics artifact `8889938105`, previous stage run `30892205056` and job `91936700171`.
+Product SHA `35b9f8bc48e90cbb29ab65c9f2ec90c498be5767`, main CI run `30902346811`, failed stage run `30903056155`, job `91971692028`, artifact `8889938105`, previous stage run `30892205056` and job `91936700171`.
 
 Files inspected:
 
-Issue #12 deployment body, stage workflow, public runtime test, build-version guard, service-worker registration/update owners, local build-version recovery test and extracted public-browser error contexts.
+Issue #12 deployment body, stage workflow, public runtime test, build-version guard, service-worker registration/update owners, local recovery test and both extracted error contexts.
 
 Actions performed:
 
-- Confirmed exact-image deployment and public smoke succeeded.
-- Downloaded and extracted the stage public-browser diagnostics artifact.
-- Inspected both initial and retry error contexts.
+- Confirmed deploy and public smoke succeeded on the exact image.
+- Downloaded the artifact and inspected initial/retry failure contexts.
 - Compared the failed run with a previous successful run containing the same WebKit diagnostic.
-- Verified successful recovery invariants and isolated the failure to page-error classification.
-- Created an isolated branch from the exact main SHA without retrying blindly.
+- Verified build marker, stale cache, recovery storage, route and CSP invariants all recovered.
+- Created an isolated branch from the exact main SHA without a blind rerun.
 
 Commands or procedures:
 
-GitHub exact-ref reads, workflow job/log retrieval, artifact digest verification/download, ZIP inspection and cross-run diagnostic comparison.
+Exact-ref reads, workflow job/log retrieval, artifact digest verification/download, ZIP inspection and cross-run comparison.
 
 Artifacts produced:
 
-A classified failure record and isolated blocker branch.
+A classified post-merge blocker record and isolated Draft PR #383.
 
 Result:
 
-The failure is a reproducible iOS WebKit guard-cancellation diagnostic, not evidence of failed deployment, route recovery, CSP enforcement or stale-state cleanup.
+The blocker is a reproducible iOS WebKit lifecycle cancellation diagnostic, not failed deployment or failed application recovery.
 
 Failures:
 
-Stage run `30903056155` failed public browser validation after both the initial attempt and Playwright retry.
+Stage public browser validation failed after the initial attempt and one Playwright retry.
 
 Root cause:
 
-The public test treated all page errors as fatal and lacked the narrow guard-recovery classification already present in local browser coverage.
+The public test treated every page error as fatal and lacked recovery-scoped current-build service-worker classification.
 
 Fallback:
 
-Do not weaken retries or ignore generic access-control errors. Add exact recovery-scoped classification and stronger post-recovery service-worker assertions.
+Do not weaken retries or suppress generic access-control errors. Encode the exact category and strengthen replacement-worker assertions.
 
 Limitations:
 
-Direct local package execution is unavailable; authoritative CI and exact-image stage validation remain the execution sources of truth.
+Authoritative CI and exact-image stage remain the execution sources of truth.
 
 Reusable lesson:
 
-A repeated browser diagnostic should not be dismissed as transient solely because a prior retry passed. Compare artifacts and runtime invariants first, then encode the narrow known cancellation while strengthening the success condition it could otherwise hide.
+Compare artifacts and runtime invariants before labelling a browser error transient. A benign lifecycle diagnostic may be exempted only together with proof that the replacement resource is healthy.
 
-### Fail-closed public WebKit guard classification
+### Fail-closed public runtime classifier
 
 Purpose:
 
-Prevent a known benign service-worker cancellation from blocking exact-image validation without masking a real service-worker or application failure.
+Ignore only the known WebKit current-build service-worker cancellation during stale-build recovery while keeping real failures visible.
 
 Instruction source:
 
@@ -96,54 +95,53 @@ Version or verification date:
 
 Inputs:
 
-Observed WebKit split diagnostic, current build ID, exact same-origin service-worker URL and stale-build recovery state.
+Observed split WebKit diagnostic, browser name, active recovery state and exact current-build service-worker URL.
 
 Files inspected:
 
-- `frontend/e2e/public-runtime-smoke.spec.ts`
-- `frontend/e2e/build-version-recovery.spec.ts`
-- `frontend/lib/build-version-guard.ts`
-- `frontend/lib/service-worker-update.ts`
-- `frontend/components/service-worker-registration.tsx`
+Public/local recovery tests and service-worker/build-version owners.
 
 Actions performed:
 
-- Normalized WebKit's split page-error name/message representation.
-- Added an exact matcher requiring WebKit, an active recovery window and the expected current-build service-worker URL.
-- Added adversarial assertions for browser, state, build and path boundaries.
-- Activated the matcher only immediately before stale-build reload and disabled it after recovery validation.
-- Required the recovered context to expose the exact current-build service-worker registration.
-- Required service-worker error presentation to remain absent.
-- Preserved all unrelated crashes, page errors, console failures and CSP violations as fatal.
+- Added `frontend/lib/public-runtime-errors.ts` with pure diagnostic normalization and exact classification.
+- Added Vitest coverage for split/full diagnostics and adversarial browser/state/build/origin/path boundaries.
+- Integrated the classifier into the public Playwright test only during the recovery window.
+- Kept crashes, non-exact page errors, fatal console errors and CSP violations fatal.
+- Required the exact current-build service-worker registration and no service-worker error UI after recovery.
+- Removed the inline public-spec boundary test so the stage matrix remains 12 tests.
+- Read all functional writes back from the branch.
 
 Commands or procedures:
 
-Exact diagnostic normalization, state-scoped comparison and post-recovery registration polling.
+Pure exact-string classification, Vitest boundary testing, state-scoped Playwright integration and service-worker registration polling.
 
 Artifacts produced:
 
-Updated `frontend/e2e/public-runtime-smoke.spec.ts` and current Agent Harness records.
+- `frontend/lib/public-runtime-errors.ts`
+- `frontend/lib/public-runtime-errors.test.ts`
+- updated `frontend/e2e/public-runtime-smoke.spec.ts`
+- current Agent Harness records
 
 Result:
 
-Prepared for authoritative CI with no production runtime, workflow, retry, timeout, dependency, baseline or budget change.
+The classification logic now executes before merge in Vitest, while the real public recovery remains the post-merge exact-image gate.
 
 Failures:
 
-No branch CI has executed yet.
+CI #2704 started on an earlier head before the unit module was added and is intentionally superseded.
 
 Root cause:
 
-Not applicable before CI publication.
+The public Playwright config is stage-only; inline classifier assertions would otherwise first execute after merge.
 
 Fallback:
 
-If authoritative browser evidence shows registration is not restored, remove the exemption and fix the production service-worker lifecycle instead.
+Treat only CI on the newest immutable head as authoritative.
 
 Limitations:
 
-The exemption intentionally covers only the exact current-build service-worker cancellation during stale-build recovery; other WebKit access-control diagnostics remain failures.
+The exemption covers only the exact same-origin current-build `sw.js` cancellation during active recovery. Every other diagnostic remains a failure.
 
 Reusable lesson:
 
-When a browser reports cancellation caused by deliberate lifecycle cleanup, pair the narrow diagnostic exception with a stronger assertion that the replacement resource is actually registered and healthy.
+Stage-only browser logic should expose pure classification boundaries to the pre-merge unit gate, while keeping the real environment assertion in stage validation.
