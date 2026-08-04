@@ -4,12 +4,26 @@ import { describe, expect, it } from "vitest";
 
 const layoutUrl = new URL("../app/layout.tsx", import.meta.url);
 const sharedCatalogCssUrl = new URL("../app/catalog-enhancements.css", import.meta.url);
+const premiumCssUrl = new URL("../app/premium-ui.css", import.meta.url);
 const phrasesCssUrl = new URL("../app/phrases.css", import.meta.url);
 const compatibilityCssUrl = new URL("../app/phrases-compat.css", import.meta.url);
+const overlapManifestUrl = new URL("../app/global-feature-style-overlap-manifest.json", import.meta.url);
+const phrasesCatalogUrl = new URL("./phrases-catalog.tsx", import.meta.url);
+const packageUrl = new URL("../package.json", import.meta.url);
 
 const layout = readFileSync(layoutUrl, "utf8");
 const sharedCatalogCss = readFileSync(sharedCatalogCssUrl, "utf8");
+const premiumCss = readFileSync(premiumCssUrl, "utf8");
 const phrasesCss = readFileSync(phrasesCssUrl, "utf8");
+const phrasesCatalog = readFileSync(phrasesCatalogUrl, "utf8");
+const packageJson = JSON.parse(readFileSync(packageUrl, "utf8")) as {
+  scripts: Record<string, string>;
+};
+const overlapManifest = JSON.parse(readFileSync(overlapManifestUrl, "utf8")) as Array<{
+  id: string;
+  classification: string;
+  evidence: string;
+}>;
 
 const canonicalCascadeBlock = `/* Issue #70: canonical Phrases computed-cascade ownership. */
 
@@ -43,6 +57,14 @@ const canonicalCascadeBlock = `/* Issue #70: canonical Phrases computed-cascade 
 /* Keep the first result below the restored catalog viewport boundary. */
 .lx-app[data-route-client-island="phrases"] .lx-phrases-results {
   padding-top: 24px;
+}
+
+.lx-app[data-route-client-island="phrases"] .lx-phrase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  list-style: none;
 }
 
 @media (forced-colors: active) {
@@ -143,6 +165,43 @@ describe("Phrases CSS ownership", () => {
     expect(selectorSpecificity(".lx-catalog-sort select")).toEqual([0, 1, 1]);
   });
 
+  it("preserves exactly four reviewed Phrases grid fallback conflicts", () => {
+    const items = overlapManifest.filter((item) => item.id.startsWith(".lx-phrase-grid |"));
+
+    expect(items).toHaveLength(4);
+    expect(items.every((item) => item.classification === "requires-proof")).toBe(true);
+    expect(items.map((item) => item.id).sort()).toEqual([
+      '.lx-phrase-grid | gap | normal -> premium-ui.css [global] = "13px" -> phrases.css [global] = "10px"',
+      '.lx-phrase-grid | grid-template-columns | normal -> premium-ui.css [@media (max-width: 1040px)] = "repeat(2, 1fr)" -> phrases.css [global] = "minmax(0, 1fr)"',
+      '.lx-phrase-grid | grid-template-columns | normal -> premium-ui.css [@media (max-width: 760px)] = "1fr" -> phrases.css [global] = "minmax(0, 1fr)"',
+      '.lx-phrase-grid | grid-template-columns | normal -> premium-ui.css [global] = "repeat(3, minmax(0, 1fr))" -> phrases.css [global] = "minmax(0, 1fr)"',
+    ].sort());
+  });
+
+  it("preserves premium fallback geometry and gives the live island a stronger owner", () => {
+    const fallbackSelector = ".lx-phrase-grid";
+    const routeSelector = '.lx-app[data-route-client-island="phrases"] .lx-phrase-grid';
+
+    expect(premiumCss).toContain(
+      ".lx-phrase-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-top: 18px; }",
+    );
+    expect(premiumCss).toContain(".lx-phrase-grid { grid-template-columns: repeat(2, 1fr); }");
+    expect(premiumCss).toContain(".lx-phrase-grid, .lx-library-grid { grid-template-columns: 1fr; }");
+    expect(phrasesCss).toContain(`${routeSelector} {`);
+    expect(phrasesCss).toContain("grid-template-columns: minmax(0, 1fr);");
+    expect(phrasesCss).toContain("gap: 10px;");
+    expect(selectorSpecificity(fallbackSelector)).toEqual([0, 1, 0]);
+    expect(selectorSpecificity(routeSelector)).toEqual([0, 3, 0]);
+    expect(compareSpecificity(selectorSpecificity(routeSelector), selectorSpecificity(fallbackSelector)))
+      .toBeGreaterThan(0);
+  });
+
+  it("keeps the production grid reachable only below the Phrases route island", () => {
+    expect(occurrences(phrasesCatalog, 'className="lx-phrases-results lx-phrase-grid"')).toBe(1);
+    expect(phrasesCss).toContain('.lx-app[data-route-client-island="phrases"] .lx-phrase-grid');
+    expect(phrasesCatalog).not.toContain('className="lx-phrase-grid"');
+  });
+
   it("owns the complete route-scoped computed cascade exactly once", () => {
     expect(occurrences(phrasesCss, canonicalCascadeBlock)).toBe(1);
     expect(phrasesCss.trimEnd().endsWith(canonicalCascadeBlock)).toBe(true);
@@ -159,10 +218,17 @@ describe("Phrases CSS ownership", () => {
       ['.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select {', 2],
       ['.lx-app[data-route-client-island="phrases"] .lx-phrases-topic-chips button[aria-pressed="true"] {', 2],
       ['.lx-app[data-route-client-island="phrases"] .lx-phrases-results {', 1],
+      ['.lx-app[data-route-client-island="phrases"] .lx-phrase-grid {', 1],
     ]);
 
     for (const [selector, expected] of selectorCounts) {
       expect(occurrences(phrasesCss, selector), `canonical selector ${selector}`).toBe(expected);
     }
+  });
+
+  it("registers the focused grid cascade proof in both authoritative UI commands", () => {
+    const spec = "e2e/phrases-grid-cascade.spec.ts";
+    expect(packageJson.scripts["test:e2e:ui"]).toContain(spec);
+    expect(packageJson.scripts["test:e2e:responsive"]).toContain(spec);
   });
 });
