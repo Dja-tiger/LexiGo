@@ -14,22 +14,22 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 
 ## Scope
 
-- Add one frontend Vitest contract that parses the reviewed exact-selector manifest.
-- Map every one of the 21 `requires-proof` items to exactly one stronger non-identical semantic owner family.
+- Restore the public architecture contract path already named by README and architecture documentation.
+- Parse the reviewed exact-selector manifest and map every one of the 21 `requires-proof` items to exactly one stronger non-identical semantic owner family.
 - Verify each family retains its focused source contract, adversarial computed-cascade browser proof and authoritative command registration.
 - Reconcile the seven Issue #70 acceptance criteria with executable app-entry, global-style, bundle, visual, performance and public documentation evidence.
 - Run full immutable-head product CI, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Non-goals
 
-- No production CSS, component, route, API, dependency, workflow, snapshot or budget change.
+- No production CSS, component runtime, route, API, dependency, workflow, snapshot or budget change.
 - No deletion of intentionally live compatibility runtime.
 - No redesign or visual baseline update.
 - No unrelated Dependabot or product work.
 
 ## Allowed paths
 
-- `frontend/app/issue-70-acceptance-contract.test.ts`
+- `frontend/components/architecture-documentation-contract.test.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -50,6 +50,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 ## Documentation owners
 
 - `README.md` and `docs/architecture.md` — public frontend structure and ownership.
+- `frontend/components/architecture-documentation-contract.test.ts` — executable public-document and final Issue #70 acceptance owner.
 - `.agents/PROJECT_STATE.md` after final product merge and stage validation.
 - `.agents/current/**` during the active audit.
 
