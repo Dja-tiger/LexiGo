@@ -4,16 +4,16 @@
 
 - Last verified: 2026-08-04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-- Latest deployed product SHA: `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-- Latest completed Issue #70 slice: adaptive Lesson Composer tablet ownership proof.
-- Completion PR: #374.
-- PR #374 immutable developer-authored head: `17c932b6d0857849e4103d208cf2e190edb02982`.
-- Authoritative PR CI: #2671 / run `30863778481`, complete success.
-- Expected-head squash merge produced product SHA `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-- Exact-SHA main CI run `30864395711` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-SHA stage run `30864867222` deployed web/API images tagged `a26c4bc90d094e1a3eed4be4e4257537d5c90617`; deployment, public smoke and all 12 public browser checks succeeded directly.
-- PR #374 had no comments, reviews or unresolved review threads before merge.
+- Product base verified before this documentation slice: `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+- Latest deployed product SHA: `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+- Latest completed Issue #70 slice: Phrases result-grid source-order independence.
+- Completion PR: #376.
+- PR #376 immutable developer-authored head: `e6e1a40235477fb16450bbd07577bd016d720e43`.
+- Authoritative PR CI: #2679 / run `30888370211`, complete success after correcting a deterministic 24px Phrases result-spacing regression without changing visual baselines.
+- Expected-head squash merge produced product SHA `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+- Exact-SHA main CI run `30889114516` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-SHA stage run `30889691437` deployed web/API images tagged `aec24578f73ace80ea8ef653f7a4c1081066973e`; deployment, public smoke and all 12 public browser checks succeeded directly.
+- PR #376 had no comments, reviews or unresolved review threads before merge.
 - No intersecting Issue #70 product PR remains open. Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
@@ -47,7 +47,7 @@
 - `frontend/app/global-feature-style-overlap-manifest.json` is the reviewed fail-closed inventory; its companion test protects exact totals, owner pairs and classifications.
 - The manifest remains at 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
 - Accessibility-layer overrides remain intentional and separately contract-protected.
-- Compact Home, Phrases sorting, navigation/mobile shell, routed resource-stack, Learn switch placement and adaptive Lesson Composer tablet geometry have adversarial source-order browser/source contracts.
+- Compact Home, Phrases sorting/grid, navigation/mobile shell, routed resource-stack, Learn switch placement and adaptive Lesson Composer tablet geometry have adversarial source-order browser/source contracts.
 
 ## Completed navigation and mobile-shell ownership
 
@@ -103,39 +103,47 @@
 - Production CSS, declaration values, breakpoints, import order, visual baselines, performance budgets, tolerances, timeouts and runtime behavior were unchanged.
 - The six exact conflicts remain in the reviewed manifest as `requires-proof`; deterministic behavior is supplied by the stronger non-identical route owner and companion source/browser evidence.
 
+### PR #376 — Phrases result-grid ownership
+
+- Preserved all four reviewed `premium-ui.css` → `phrases.css` fallback conflicts for `.lx-phrase-grid`: `gap` plus the global, 1040px and 760px column declarations.
+- Added `.lx-app[data-route-client-island="phrases"] .lx-phrase-grid` as the stronger canonical production owner with the existing one-column `minmax(0, 1fr)` geometry and 10px gap.
+- Confirmed `PhrasesCatalog` is the sole production renderer and the dual-class result list remains below the dedicated Phrases route island.
+- Added source evidence for exact manifest membership, fallback preservation, renderer reachability, selector specificity and authoritative command registration.
+- Added Chromium computed-cascade proof under production and two adversarial stylesheet orders at 390, 760, 761, 1040, 1041 and 1440 px.
+- The first implementation copied `padding: 0` from the unscoped group and deterministically removed the existing 24px result spacing in four Phrases catalog visual baselines. The baseline was not changed; the owner was narrowed to grid/gap/margin properties and the browser proof now fail-closes `padding-top: 24px`.
+- Final visual regression passed against the unchanged content-addressed hashes; route budgets, fallbacks, breakpoints, dependencies, tolerances, timeouts and runtime behavior remain unchanged.
+- The four exact conflicts remain in the reviewed manifest as `requires-proof`; deterministic behavior is supplied by the stronger route-island owner and companion source/browser evidence.
+
 ## Current Issue #70 acceptance evidence
 
 - `frontend/components/production-app-entry.test.ts` fail-closes the production application-root inventory, retired-root absence and layout → routed shell → bootstrap chain.
 - `frontend/app/global-style-ownership.test.ts` protects the sole document `body` and shared `button, input` font-inheritance owners.
 - `frontend/e2e/route-bundle-budget.spec.ts` verifies canonical routes exclude compatibility-fallback-exclusive assets.
 - `frontend/bundle-budgets.json` owns blocking JavaScript/request ceilings and immutable route baselines.
-- Navigation/mobile-shell source contracts protect canonical routed owners, compatibility fallbacks and six live resource-stack renderer boundaries.
-- The Chromium cascade matrix exercises production and adversarial orders across responsive boundaries, including routed Learn switch placement and adaptive Lesson Composer geometry.
+- Navigation/mobile-shell source contracts protect canonical routed owners, compatibility fallbacks and live resource-stack renderer boundaries.
+- The Chromium cascade matrix exercises production and adversarial orders across responsive boundaries, including Learn switch placement, adaptive Lesson Composer geometry and Phrases grid ownership.
 - README and architecture documentation describe the actual route/runtime/global-style ownership graph.
 - Authoritative Linux visual, accessibility, PWA, CSP, functional browser and performance gates are unchanged and green on the latest deployed product SHA.
 
 ## In progress
 
 - No product slice is active during this documentation reconciliation.
-- The completed PR #374 task context is being reset.
-- Issue #70 remains open because six additional exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
+- The completed PR #376 task context is being reset.
+- Issue #70 remains open because two exact-selector items require proof or correction, semantic non-identical-selector overlaps remain unaudited and final acceptance reconciliation is incomplete.
 
 ## Remaining roadmap
 
-### 1. Phrases grid — 4 conflicts
+### 1. Account Security width — 1 conflict
 
-- Preserve the extracted Phrases route as canonical `.lx-phrase-grid` owner independently of premium fallback order.
-- Prove route-island reachability and computed presentation without changing approved grid geometry, visual baselines or route budgets.
+- Reconcile account-security global width with routed desktop shell placement using an explicit runtime modifier rather than import-order dependence.
+- Preserve the broad account-security fallback width and security/session behavior.
 
-### 2. Account Security width — 1 conflict
-
-- Reconcile account-security global width with routed desktop shell placement using explicit runtime ownership rather than import-order dependence.
-
-### 3. Async State width — 1 conflict
+### 2. Async State width — 1 conflict
 
 - Reconcile adaptive navigation and `system-states.css` width ownership as an isolated shared-state slice.
+- Preserve shared compact/fallback state geometry while giving routed tablet states an explicit canonical owner.
 
-### 4. Final Issue #70 acceptance reconciliation
+### 3. Final Issue #70 acceptance reconciliation
 
 - Audit semantically overlapping selectors that are not textually identical.
 - Reconcile exact-selector evidence with app-entry, compatibility reachability, fallback-exclusive bundle, global ownership, visual regression and public architecture documentation.
@@ -143,8 +151,8 @@
 
 ## Validation pending
 
-- Remaining exact-selector inventory requiring additional proof/correction: six items across three bounded clusters.
-- The already proven resource-stack, eight Learn switch and six adaptive Lesson Composer fallbacks remain in the 71-item manifest as reviewed `requires-proof` items with current source/browser evidence.
+- Remaining exact-selector inventory requiring additional proof/correction: two items across Account Security and Async State.
+- The already proven resource-stack, Learn switch, adaptive Lesson Composer and Phrases grid fallbacks remain in the 71-item manifest as reviewed `requires-proof` items with current source/browser evidence.
 - Semantic non-identical selector overlap is not claimed safe by the exact-selector parser.
 - Guest Profile auth/recovery, Library, Lesson, unknown/product-route fallback and shared account/session runtime remain intentionally live.
 - Dictionary product-history compatibility remains intentionally live.
@@ -152,19 +160,20 @@
 
 ## Recent production evidence
 
-1. #374 — `test(frontend): prove adaptive layout ownership` → `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-2. #373 — `docs(agent): reconcile PR 372 delivery` → `ad577c1ab8dba6734d8172df7b5bb1fc151f2cf3`.
-3. #372 — `style(frontend): make Learn switch placement order-independent` → `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
-4. #371 — `docs(agent): reconcile PR 370 delivery` → `cc3636872f47c44948d9be5f3aec4784fb2c5a79`.
-5. #370 — `style(frontend): prove routed resource stack width ownership` → `740de92a4c6b748d9bcc6232b1c69d1601ca2be4`.
+1. #376 — `style(frontend): make Phrases grid order-independent` → `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+2. #375 — `docs(agent): reconcile PR 374 delivery` → `c51b1d0ff41ec9cc3dfcfdfd1f7a8b1304937fb4`.
+3. #374 — `test(frontend): prove adaptive layout ownership` → `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
+4. #373 — `docs(agent): reconcile PR 372 delivery` → `ad577c1ab8dba6734d8172df7b5bb1fc151f2cf3`.
+5. #372 — `style(frontend): make Learn switch placement order-independent` → `e8288ef1c91e948594168aa869bdd5a275d6b3b8`.
 
 ## Evidence
 
-- PR #374 immutable head `17c932b6d0857849e4103d208cf2e190edb02982` passed authoritative full CI #2671 / run `30863778481`.
-- Frontend parser/source contracts, lint, TypeScript, 550 unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded.
-- Expected-head squash merge produced `a26c4bc90d094e1a3eed4be4e4257537d5c90617`.
-- Exact-SHA main CI run `30864395711` completed successfully with the full product matrix and image publication.
-- Stage run `30864867222` deployed the exact SHA; deployment, public smoke and all 12 public browser checks succeeded directly.
+- PR #376 immutable head `e6e1a40235477fb16450bbd07577bd016d720e43` passed authoritative full CI #2679 / run `30888370211`.
+- Frontend parser/source contracts, lint, TypeScript, unit tests, production build, dependency audit, backend unit/security/integration, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, Linux visual regression, accessibility, performance and both container builds succeeded on the final head.
+- The earlier diagnostic head failed four Phrases catalog visual baselines because a new route owner unintentionally reset the existing 24px result spacing. The correction restored the approved layout and all unchanged hashes passed without baseline updates.
+- Expected-head squash merge produced `aec24578f73ace80ea8ef653f7a4c1081066973e`.
+- Exact-SHA main CI run `30889114516` completed successfully with the full product matrix and image publication.
+- Stage run `30889691437` deployed the exact SHA; deployment, public smoke and all 12 public browser checks succeeded directly.
 - Indexed search remains discovery only; final claims use exact refs, files, Issues, PRs, workflow jobs and deployment records.
 
 ## State semantics
