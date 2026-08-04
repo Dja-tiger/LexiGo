@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -25,7 +25,10 @@ type ProofFamily = Readonly<{
 }>;
 
 const frontendDirectory = process.cwd();
-const repositoryDirectory = path.resolve(frontendDirectory, "..");
+const mountedRepositoryDirectory = "/repository";
+const repositoryDirectory = existsSync(path.join(mountedRepositoryDirectory, "README.md"))
+  ? mountedRepositoryDirectory
+  : path.resolve(frontendDirectory, "..");
 
 function readFrontendFile(relativePath: string): string {
   return readFileSync(path.join(frontendDirectory, relativePath), "utf8");
