@@ -19,6 +19,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 - Verify each family retains its focused source contract, adversarial computed-cascade browser proof and authoritative command registration.
 - Reconcile the seven Issue #70 acceptance criteria with executable app-entry, global-style, bundle, visual, performance and public documentation evidence.
 - Mount only `README.md` and `docs/` read-only into the isolated frontend CI task container so the public-document contract validates the real repository sources.
+- Extend the existing frontend-container harness test with fail-closed read-only mount evidence.
 - Run full immutable-head product CI, expected-head squash merge and exact-SHA stage/public validation.
 
 ## Non-goals
@@ -33,6 +34,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 
 - `frontend/components/architecture-documentation-contract.test.ts`
 - `scripts/ci/frontend-container.sh`
+- `scripts/ci/frontend-container.test.sh`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -55,6 +57,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 - `README.md` and `docs/architecture.md` — public frontend structure and ownership.
 - `frontend/components/architecture-documentation-contract.test.ts` — executable public-document and final Issue #70 acceptance owner.
 - `scripts/ci/frontend-container.sh` — read-only public-document availability inside isolated frontend tasks.
+- `scripts/ci/frontend-container.test.sh` — shell-level mount, environment and lock contract.
 - `.agents/PROJECT_STATE.md` after final product merge and stage validation.
 - `.agents/current/**` during the active audit.
 
@@ -65,6 +68,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 - Existing canonical owners, compatibility fallbacks, browser assertions and CI command registration remain unchanged.
 - Production application entry, global document ownership, fallback-exclusive bundle evidence, route budgets, visual regression and documentation contracts remain executable.
 - Public documents are mounted read-only and remain outside the mutable frontend Docker volume.
+- The deployment-script check must prove both exact read-only mounts before the full product matrix is authoritative.
 - No production behavior, generated baseline or deployment contract changes.
 
 ## Acceptance criteria
@@ -72,6 +76,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 - Central registry covers resource stack (1), Async State (1), Learn switch (8), adaptive Lesson Composer (6), Phrases grid (4) and Account Security (1).
 - Each registry entry proves the stronger semantic owner marker exists in production CSS and the focused source/browser evidence remains registered.
 - The central contract reads the actual repository README and architecture document in local and isolated CI execution.
+- The shell harness creates representative README/docs fixtures and asserts exact `:ro` mount arguments.
 - The central contract fail-closes all seven Issue #70 acceptance criteria.
 - Full immutable-head CI succeeds without changing baselines, budgets, tolerances or timeouts.
 - Expected-head squash merge, exact-SHA main CI and exact-image stage/public validation succeed.
@@ -79,7 +84,7 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 ## Required checks
 
 - Frontend Vitest source contracts, lint, TypeScript and production build.
-- CI runner/container policy and read-only document mount behavior.
+- Deployment scripts check, including Bash syntax and read-only document mount behavior.
 - Full browser, accessibility, visual, performance, PWA, CSP and container matrix.
 - Backend required gates because this is a product/test PR.
 - Exact-SHA main CI and stage/public validation after merge.
@@ -90,7 +95,8 @@ Close the remaining Issue #70 evidence gap with one centralized fail-closed sema
 - String markers could be too weak and pass after a proof file stops protecting the intended owner.
 - A documentation assertion could couple to prose without checking executable ownership.
 - A broad or writable repository mount could weaken frontend workspace isolation; only the required public sources may be mounted read-only.
+- A harness fixture that omits README/docs could produce a false infrastructure failure; the test must build the same minimum checkout shape required by production CI.
 
 ## Rollback
 
-Revert the acceptance-contract test, the two read-only CI mounts and current Agent Harness records. No runtime, data, API, snapshot or deployment rollback is required.
+Revert the acceptance-contract test, the two read-only CI mounts, their shell contract and current Agent Harness records. No runtime, data, API, snapshot or deployment rollback is required.
