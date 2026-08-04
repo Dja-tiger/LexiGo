@@ -1,66 +1,81 @@
 # Current Task Progress
 
-## 2026-08-04 16:26 Europe/Moscow
+## 2026-08-04 18:55 Europe/Moscow
 
 ### Verified
 
-- Live `main` before branch creation: `c56485511c752aacd3e2f43cd0d102f229a9c25f`.
-- Latest deployed product SHA: `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c`; stage run `30917349721` passed deploy, public smoke and 12/12 public browser checks.
-- Issue #75 is closed and its current Agent Harness context is reset.
-- No active product PR intersects Issue #74; open PRs #304–#306 are unrelated Dependabot work.
-- Compact/rail primary navigation already provides at least 48×52 px targets and 11–12 px labels.
-- Shared header reminder controls use `.lx-icon-button` with a visible 42×42 px box.
-- Shared avatars use a visible 44×44 px box.
-- Home streak and avatar plus Dictionary reminder and avatar are live routed header controls.
-- Existing browser coverage verifies navigation target size but did not verify effective shared header hit areas or coarse-pointer 48 px behavior.
+- Live `main`: `c56485511c752aacd3e2f43cd0d102f229a9c25f`.
+- Latest deployed product SHA before this slice: `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c`; stage run `30917349721` passed deploy, public smoke and 12/12 public browser checks.
+- Issue #70 is fully closed and Issue #75 is fully reconciled; active product work remains Issue #74 in Draft PR #387.
+- Branch `agent/issue-74-header-touch-targets` is based on the current `main` and remains mergeable.
+- Issue #74 explicitly names `Подробнее` and other text actions as controls without guaranteed minimum hit area.
+- `frontend/app/system-states.css` gives live `.lx-review-sync` actions only 40px visible height and reduces active-lesson actions to 36px.
+- `frontend/app/calendar-reminder-entry.css` intentionally hides the legacy routed-header `.lx-icon-button`; the initial Dictionary bell target was therefore not a live user control.
 
-### Finding
+### Confirmed failure and classification
 
-The first concrete Issue #74 defect is shared header hit-area inconsistency. Visible geometry should remain compact, but icon/avatar/streak controls need a larger semantic hit rectangle, especially under coarse pointer input.
+CI #2728 / run `30922599313` on superseded head `7ace030a368f107f93fa7a174e05195ad6bb8eea` passed frontend core, backend, axe, visual, performance, service-worker and PWA gates but failed UI shards 1 and 3.
+
+Downloaded artifacts:
+
+- `frontend-playwright-report-ui-1`, artifact `8897981374`, digest `sha256:fb3693f653142c8b30f7c411ed686907d724b8429900f79acc7ac4ebee3f4e4d`;
+- `frontend-playwright-report-ui-2`, artifact `8897961032`, digest `sha256:b8aa678b6b170c602267f0515f676579392f02b9fac7d5158c135762bf5da63b`.
+
+Desktop Chromium, iOS WebKit and Android Chromium all failed because `getByRole("button", { name: "Напоминание о занятии" })` found no element. The page and Dictionary island were healthy. Accessibility snapshots and screenshots showed the live route reminder `<summary>` plus the routed header without the hidden legacy bell.
+
+Classification: stale test plus invalid runtime-owner selection, not a browser flake and not a production rendering failure.
 
 ### Root cause
 
-`premium-ui.css` owns visible header geometry but has no shared effective touch-target contract. The 42 px reminder button therefore remains below the iOS minimum, and none of the shared header controls adapts to the 48 px Android/coarse-pointer target.
+The first slice inferred ownership from dormant JSX in `lexigo-dictionary-app.tsx` without applying the later canonical CSS rule that hides `.lx-routed-app .lx-header-tools > .lx-icon-button` as duplicate UI. The source contract proved that dead markup existed, but did not prove that it was rendered and exposed in the live accessibility tree. The E2E warning attached to Issue #74 explicitly prohibited this pattern.
 
-The first implementation used a transformed transparent pseudo-element and added a new painted focus shadow. Although target, accessibility, performance and PWA checks passed, deterministic visual hashes changed for lesson composer and desktop offline state. The transform introduced a composited descendant in every header target, so the owner was not visually inert.
+### Corrected scope
 
-### Changed files
+- Removed the hidden Dictionary reminder CSS owner and its source/browser contracts.
+- Selected the live ReviewOutbox connectivity actions, beginning with `Подробнее`, as the first concrete Issue #74 defect.
+- Added `frontend/app/connectivity-touch-targets.css` after `system-states.css`.
+- Preserved the existing 40px default and 36px active-lesson visible button boxes.
+- Added transparent block-axis hit slop using negative inset boundaries: 44px fine pointer and 48px coarse pointer.
+- Kept inline inset at zero so adjacent action targets cannot overlap horizontally.
+- Added no transform, background, border, shadow or visual baseline change.
+- Added a fail-closed source contract that maps the live runtime owner and rejects the hidden legacy bell.
+- Added desktop Chromium, iOS WebKit and Android Chromium perimeter hit-testing against the real offline `Подробнее` action.
+- Registered the corrected suite in authoritative UI and accessibility commands.
 
-- `frontend/app/header-touch-targets.css`
+### Files in scope
+
+- `frontend/app/connectivity-touch-targets.css`
 - `frontend/app/layout.tsx`
-- `frontend/components/header-touch-target-source.test.ts`
-- `frontend/e2e/header-touch-targets.spec.ts`
+- `frontend/components/connectivity-touch-target-source.test.ts`
+- `frontend/e2e/connectivity-touch-targets.spec.ts`
 - `frontend/package.json`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
-### Checks passed
+Superseded branch-only files removed:
 
-- Mandatory Agent Harness and live main/open PR/Issue state verified before writes.
-- Issue #74 was decomposed to shared routed header targets only.
-- New stylesheet uses unique routed selectors and does not reorder existing imports.
-- Default effective target is 44 px; coarse-pointer target is 48 px.
-- Source contract protects import placement, exact target values, live runtime owners, compact navigation invariants and authoritative command registration.
-- CI #2718 / run `30919648741` on superseded head `0235786f6a6d85df44f7f87d0a035e85a42f3317` passed frontend core, backend unit/security/integration, focused accessibility target proof, performance, CSP, iOS PWA, controlled service worker and Dictionary smoke.
-- Focused browser proof passed perimeter hit-testing, global focus visibility, non-overlap and horizontal overflow in desktop Chromium, iOS WebKit and Android Chromium.
-- Visual artifact `8896656119` was downloaded and inspected; lesson composer and desktop offline screenshots changed consistently on initial and retry while no baseline was modified.
-- The corrected owner removes transform/compositing and additional painted focus output.
-- Effective expansion now uses visually inert negative inset boundaries.
-- Existing `accessibility-focus.css` remains the sole keyboard-focus visual owner.
-- Source/browser contracts were updated to reject transform/shadow and verify the existing global focus ring.
+- `frontend/app/header-touch-targets.css`
+- `frontend/components/header-touch-target-source.test.ts`
+- `frontend/e2e/header-touch-targets.spec.ts`
 
-### Checks failed
+### Checks completed
 
-- CI #2718 visual regression failed on superseded head `0235786f6a6d85df44f7f87d0a035e85a42f3317`:
-  - lesson composer desktop expected `3be9635d…`, received `deb39b8c…`;
-  - desktop offline dark expected `8f3b6192…`, received `fa3c8dfb…`.
-- No baseline/hash was updated or accepted.
+- Mandatory Issue, comments, Agent Harness rules and live owners re-read before corrected functional writes.
+- Every new/updated/deleted path read back from the target branch after write.
+- Current `main` re-read and confirmed unchanged at `c5648551…`.
+- Source-level contract inputs verified against live ReviewOutbox, system-state geometry, hidden legacy selector, focus owner and package registration.
+- Superseded paths verified absent from the branch.
+- Local clone/test execution was unavailable because the isolated execution container could not resolve `github.com`; this is an environment limitation, not validation evidence.
 
-### Current branch head
+### Validation pending
 
-Resolve from live branch ref; latest known corrected task-record commit: `6bb0084e378d157c48df79ca2c820a27e5b16910`.
+- New authoritative CI has not yet been registered for the corrected immutable head.
+- Source contract, lint, typecheck, Vitest, build and focused browser proof remain pending in GitHub Actions.
+- Full UI/a11y/axe/visual/performance/PWA/backend/container matrices remain pending.
+- PR remains Draft.
+- Merge, exact-SHA main CI, exact-image stage/public validation and manual real-device acceptance have not occurred.
 
 ### Next action
 
-Read back the corrected four functional contracts, verify the eight-file diff remains in scope, and track only a new immutable-head full CI run. CI #2718 is no longer merge evidence.
+Read back the final eight-file diff, update PR metadata to the corrected connectivity-action scope, and track one authoritative full CI run on the final developer-authored head. Do not retry superseded CI #2728 and do not merge until every required gate is green.
