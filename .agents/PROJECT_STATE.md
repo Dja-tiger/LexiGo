@@ -4,17 +4,17 @@
 
 - Last verified: 2026-08-04 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-- Latest deployed product SHA: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-- Latest completed product slice: Issue #74 live connectivity action touch-target contract.
-- Completion PR: #387.
-- PR #387 immutable developer-authored head: `fd0b7ca6c860d0855ee225cf66eb1bc69405e40c`.
-- Authoritative PR CI: #2740 / run `30926104141`, complete success.
-- Expected-head squash merge produced product SHA `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-- Exact-SHA main CI run `30927084922` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-image stage run `30928015471` deployed web/API images tagged `9ee68f15d623bc7d0e001967b94eff3946b246b3`; deployment, public smoke and public browser validation succeeded, including 12/12 public runtime checks.
-- PR #387 had no comments, reviews or unresolved review threads before merge.
-- No product or documentation PR remains open at reconciliation start.
+- Product base verified before this documentation slice: `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- Latest deployed product SHA: `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- Latest completed product slice: Issue #74 live header profile touch-target contract.
+- Completion PR: #389.
+- PR #389 immutable developer-authored head: `4877caa8e92288b8688d05600cb0498a9f0bd874`.
+- Authoritative PR CI: #2755 / run `30935579733`, complete success.
+- Expected-head squash merge produced product SHA `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- Exact-SHA main CI run `30936575035` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-image stage run `30937320392` deployed web/API images tagged `29151758bae0b4220ee48213d0fc49a2290ba20a`; deployment, public smoke and public browser validation succeeded, including 12/12 public runtime checks.
+- PR #389 had no comments, reviews or unresolved review threads before merge.
+- No intersecting product or documentation PR remains open; Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
 
@@ -33,69 +33,59 @@
 - `LexigoPremiumApp` remains a narrow compatibility fallback for guest authentication/recovery, live Library history, Lesson and unknown/product-route fallback states.
 - Broad compatibility deletion remains prohibited without exact reachability, fallback-exclusive bundle and browser evidence.
 
-### Issue #70 architecture and global-style ownership
+### Completed architecture and search ownership
 
-- Issue #70 is completed and closed.
-- The production application entry, retired-root absence, compatibility reachability, fallback-exclusive route bundles, shared document-level style ownership and public architecture documentation are fail-closed.
-- The reviewed exact-selector inventory remains 71 items: 50 `intentional`, 21 `requires-proof`, 0 `protected`.
-- All 21 `requires-proof` items map exactly once to stronger canonical owners and focused source/browser evidence.
-- Exact-selector and semantic non-identical-selector ownership roadmaps are exhausted.
-- Product SHA `45ba441da5f8faf1248389311461cf2adf787786` completed the Issue #70 runtime work; subsequent product SHA `9ee68f15d623bc7d0e001967b94eff3946b246b3` preserves those contracts.
+- Issue #70 is completed and closed; application entry, compatibility reachability, shared style ownership and architecture contracts remain fail-closed.
+- Issue #75 is completed and closed; authenticated PostgreSQL phrase search and URL/filter/history/scroll ownership remain fail-closed.
+- Product SHA `45ba441da5f8faf1248389311461cf2adf787786` completed Issue #70 and product SHA `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c` completed Issue #75; current product SHA preserves both deliveries.
 
-### Issue #75 Phrases search ownership
-
-- Issue #75 is completed and closed.
-- Authenticated PostgreSQL phrase search covers lemma, translation, topic, aliases and JSONB examples while preserving user, kind, source, status, pagination and case-insensitive bounds.
-- Phrases URL/filter/history/scroll ownership and all seven acceptance criteria remain fail-closed through PostgreSQL integration, source contracts and focused Chromium/WebKit browser evidence.
-- Product SHA `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c` completed Issue #75; current product SHA preserves those contracts.
-
-## Completed Issue #74 slice
-
-### Live owner correction
-
-- The initial branch implementation targeted a legacy Dictionary bell that exists in dormant JSX but is intentionally hidden by `calendar-reminder-entry.css`.
-- Superseded CI #2728 / run `30922599313` failed consistently in desktop Chromium, iOS WebKit and Android Chromium because the hidden control was absent from the live accessibility tree.
-- Playwright report artifacts `8897981374` and `8897961032` proved the application and Dictionary route were healthy; the failure was classified as stale test plus invalid runtime-owner selection, not a browser flake.
-- The corrected slice follows the Issue #74 warning not to bind mobile tests to hidden desktop or legacy controls.
+## Completed Issue #74 slices
 
 ### PR #387 — connectivity action touch targets
 
-- Selected the live `ReviewOutboxRuntime` connectivity actions, beginning with `Подробнее`, which Issue #74 explicitly names as lacking a guaranteed hit area.
-- Added `frontend/app/connectivity-touch-targets.css` after canonical `system-states.css`.
-- Preserved the existing painted 40px default and 36px Active Lesson button boxes.
-- Added a paint-inert block-axis hit surface of 44 CSS px for fine pointers and 48 CSS px for coarse pointers.
-- Kept inline hit expansion at zero, preventing horizontal overlap between adjacent actions.
-- Added no transform, background, border, shadow, visual baseline or runtime semantic change.
-- Preserved `accessibility-focus.css` as the single global keyboard-focus visual owner.
-- Added a fail-closed source contract mapping live runtime labels, canonical visible geometry, import order, focus ownership, hidden legacy exclusion and authoritative browser registration.
-- Added desktop Chromium, iOS WebKit and Android Chromium proof for exact `Подробнее` role/name lookup, effective target height, top/bottom perimeter hit-testing, keyboard focus and compact-width overflow.
-- Visual regression remained byte-stable without baseline updates.
+- The live `ReviewOutboxRuntime` connectivity actions expose a 44px fine-pointer / 48px coarse-pointer effective target without changing the painted 40px default or 36px Active Lesson boxes.
+- Inline expansion remains zero, preventing horizontal overlap between adjacent actions.
+- Desktop Chromium, iOS WebKit and Android Chromium prove the live `Подробнее` role/name, target height, perimeter hits, keyboard focus and compact overflow.
+- The intentionally hidden legacy Dictionary bell is excluded from ownership.
+- Product SHA: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+
+### PR #389 — header profile touch target
+
+- The live `button.lx-avatar[aria-label="Открыть профиль"]` now exposes a 44×44 fine-pointer and 48×48 coarse-pointer effective target.
+- Existing 44×44 desktop and 42×42 compact painted avatar geometry remains unchanged.
+- The exact button-and-accessible-name selector excludes the decorative Profile-page `span.lx-avatar[aria-hidden="true"]`.
+- Inline expansion remains symmetric; block-axis expansion is directed downward because compact headers place the avatar at the viewport top boundary.
+- The initial test incorrectly selected the hidden compact streak; the corrected evidence uses the visible `.lx-route-reminder-entry > summary` adjacent control.
+- Superseded CI #2750 proved symmetric top expansion was not hit-testable in Android Chromium or iOS WebKit despite a computed 48×48 rectangle. The viewport-safe owner makes all four perimeter points resolve to the profile button.
+- Desktop Chromium, Android Chromium and iOS WebKit prove target geometry, all four perimeter hits, reminder separation, focus-visible and compact overflow.
+- Visual regression passed without baseline updates. One earlier unrelated exact-PNG Dictionary hash drift passed an evidence-backed isolated rerun and did not recur in final CI #2755.
+- Product SHA: `29151758bae0b4220ee48213d0fc49a2290ba20a`.
 
 ## Issue #74 acceptance status
 
-Completed by PR #387:
+Completed:
 
-- The live global connectivity text actions now expose a 44px fine-pointer / 48px coarse-pointer effective target without changing presentation.
-- Expanded hit regions do not overlap horizontally.
-- `Подробнее` has a full keyboard-focus and touch rectangle in the tested desktop/mobile browser matrix.
-- The hidden legacy Dictionary bell is explicitly excluded from ownership and future source/browser contracts.
+- Global connectivity text actions have guaranteed 44/48px effective targets.
+- The shared live header profile button has a guaranteed 44/48px square target across desktop Chromium, Android Chromium and iOS WebKit.
+- Expanded targets preserve presentation, keyboard focus, accessible names, runtime callbacks and adjacent-control separation.
+- Hidden/decorative consumers are explicitly excluded from ownership.
 
 Still open:
 
-- Audit and remediate remaining live controls named by Issue #74, including `Все режимы`, preview actions and any remaining exposed header/icon controls.
-- Prove all primary, secondary and icon controls meet the minimum target contract across affected routes.
+- Audit and remediate remaining live controls named by Issue #74, including `Все режимы`, preview actions and other exposed header/icon controls.
+- Prove all primary, secondary and icon controls meet minimum target and spacing contracts across affected routes.
 - Verify mobile navigation labels and target spacing under default and enlarged text.
 - Verify 200% browser zoom and system text enlargement without clipping, overlap or inaccessible actions.
 - Complete manual physical-device acceptance before Issue #74 can close.
 
-Issue #74 remains open. PR #387 is one completed atomic production slice, not full Issue closure.
+Issue #74 remains open. PRs #387 and #389 are completed atomic production slices, not full Issue closure.
 
 ## Current state
 
 - No product slice is active.
-- Product runtime and stage are validated on `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+- Product runtime and stage are validated on `29151758bae0b4220ee48213d0fc49a2290ba20a`.
 - This documentation reconciliation resets `.agents/current/**`.
-- The next Issue #74 slice must begin from live GitHub state and select only a confirmed exposed control after computed-style and accessibility-tree verification.
+- The next Issue #74 slice must begin from live GitHub state and select only a confirmed exposed control after computed-style, runtime-visibility and accessibility-tree verification.
 
 ## Remaining roadmap
 
@@ -105,21 +95,21 @@ Issue #74 remains open. PR #387 is one completed atomic production slice, not fu
 
 ## Recent production evidence
 
-1. #387 — `fix(frontend): expand connectivity action touch targets` → `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-2. #386 — `docs(agent): reconcile Issue 75 delivery` → `c56485511c752aacd3e2f43cd0d102f229a9c25f`.
-3. #385 — `fix(phrases): align authenticated example search` → `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c`.
-4. #384 — `docs(agent): close Issue 70 delivery state` → `1a2eec84d5886b6e9ab15755feacbcb639440c4e`.
+1. #389 — `fix(frontend): expand header profile touch target` → `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+2. #388 — `docs(agent): reconcile Issue 74 connectivity slice` → `cda65e39ba65cd00651be3ae7e39da651cc57f1c`.
+3. #387 — `fix(frontend): expand connectivity action touch targets` → `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+4. #386 — `docs(agent): reconcile Issue 75 delivery` → `c56485511c752aacd3e2f43cd0d102f229a9c25f`.
 
 ## Evidence
 
-- PR #387 immutable head `fd0b7ca6c860d0855ee225cf66eb1bc69405e40c` passed authoritative full CI #2740 / run `30926104141`.
-- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, focused Chromium/iOS WebKit/Android connectivity target proof, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded.
-- Expected-head squash merge produced `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-- Exact-SHA main CI run `30927084922` completed successfully with the same full product gates and immutable image publication.
-- Stage run `30928015471` deployed the exact image; deploy, public smoke and all 12 Chromium/iOS WebKit public runtime checks passed.
-- PR #387 had no comments, reviews or unresolved review threads before merge.
+- PR #389 immutable head `4877caa8e92288b8688d05600cb0498a9f0bd874` passed authoritative full CI #2755 / run `30935579733`.
+- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, focused desktop/iOS/Android profile-target proof, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded.
+- Expected-head squash merge produced `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- Exact-SHA main CI run `30936575035` completed successfully with the same full product gates and immutable image publication.
+- Stage run `30937320392` deployed the exact image; deploy, public smoke and all 12 Chromium/iOS WebKit public runtime checks passed.
+- PR #389 had no comments, reviews or unresolved review threads before merge.
 - Local clone execution was unavailable because the isolated execution container could not resolve `github.com`; no local result was counted as validation evidence.
-- Indexed search remains discovery only; final claims use exact refs, files, Issues, PRs, workflow jobs, artifacts and deployment records.
+- Final claims use exact refs, files, Issues, PRs, workflow jobs, artifacts and deployment records.
 
 ## State semantics
 
