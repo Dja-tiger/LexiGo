@@ -12,38 +12,51 @@
 - Phrases runtime already owns search controls, accessible topic filters, URL state, result count, clear/empty states, detail navigation, scroll restoration and React/data-layer sorting.
 - Existing app-router browser evidence proves detail Back restores filters, page and scroll.
 - Existing UI ownership evidence proves one React sorting toolbar.
-- Existing authenticated backend search covers lemma, translation, topic and aliases but not `examples`.
-- Guest Phrases search already covers prompt, answer, topic and examples.
-- `phrases-production.spec.ts` exists but is not registered in the authoritative `test:e2e:ui` command.
+- Existing authenticated backend search covered lemma, translation, topic and aliases but not `examples`.
+- Guest Phrases search already covered prompt, answer, topic and examples.
+- `phrases-production.spec.ts` existed but was not registered in the authoritative `test:e2e:ui` command.
 
 ### Finding
 
-The remaining product defect is guest/authenticated search-field divergence: a phrase found by example text while signed out disappears after authentication. Acceptance evidence is also fragmented and the focused production Phrases spec is not part of authoritative UI CI.
+The remaining product defect was guest/authenticated search-field divergence: a phrase found by example text while signed out disappeared after authentication. Acceptance evidence was also fragmented and the focused production Phrases contract was not part of authoritative UI CI.
 
 ### Root cause
 
-`backend/internal/words/repository.go` does not expand the JSONB `examples` array in its case-insensitive search predicate. Browser fixtures forward query/topic but do not filter responses, so they cannot prove the resulting authenticated behavior.
+`backend/internal/words/repository.go` did not expand the JSONB `examples` array in its case-insensitive search predicate. Existing browser fixtures forwarded query/topic but returned static endpoint-wide data, so they could not prove filtered outcomes.
 
 ### Changed files
 
+- `backend/internal/words/repository.go`
+- `backend/integration/catalog_pagination_test.go`
+- `frontend/e2e/phrases-search-acceptance.spec.ts`
+- `frontend/components/phrases-search-acceptance-source.test.ts`
+- `frontend/package.json`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 
 ### Checks passed
 
 - Mandatory Agent Harness and specialized rules read from exact live `main` before writes.
 - Current main/open PR/Issue/stage state verified.
 - Seven-item Issue #75 acceptance matrix mapped to current runtime, source and browser owners.
-- Branch `agent/issue-75-search-parity` created from exact base.
+- Branch `agent/issue-75-search-parity` created from exact base and remains `behind_by=0`.
+- PostgreSQL search predicate now expands `examples` inside all existing user/kind/source/topic/status bounds.
+- Real integration fixture now stores example text and asserts English lemma, Russian translation, alias and example queries.
+- Focused browser fixture applies request-scoped topic/query/sort/page semantics rather than returning static data.
+- Browser journey covers Russian search, English example search, query+topic empty result, selected chip/radio state, Back/Forward, reset, result count, detail return and scroll restoration in desktop Chromium/iOS WebKit.
+- Source contract maps all seven acceptance owners and requires the focused spec exactly once in `test:e2e:ui`.
+- All functional writes were read back from the isolated branch.
+- Diff audit contains only the eight allowed files; no frontend runtime, CSS, snapshot, budget, schema, workflow, dependency or lockfile changed.
 
 ### Checks failed
 
-- No implementation checks run yet.
+- No CI result yet.
 
 ### Current branch head
 
-Resolve from live branch ref; first task-record commit: `f450a98b363b23771946a0af1ea1189a557df9fe`.
+Resolve from live branch ref; latest known commit: `0c94711df29f85eec02d497d89332bb84673613b`.
 
 ### Next action
 
-Add the bounded PostgreSQL example predicate, real integration assertions, focused browser/source acceptance evidence and authoritative UI registration without changing presentation.
+Open a Draft PR, treat only CI on its newest immutable head as authoritative, and fix any real compile/integration/browser failure without weakening the acceptance contract.
