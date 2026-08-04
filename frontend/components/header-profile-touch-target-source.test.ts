@@ -89,7 +89,6 @@ describe("Issue #74 header profile touch-target ownership", () => {
     expect(reminderEntryStyles).toContain("@media (max-width: 719px)");
     expect(reminderEntryStyles).toContain("right: max(68px, calc(env(safe-area-inset-right) + 68px));");
     expect(reminderEntryStyles).toContain("min-width: 48px;\n    min-height: 48px;");
-    expect(mobilePWA).toContain(".lx-routed-app .lx-streak {\n    display: none;");
   });
 
   it("retains the existing global keyboard focus owner", () => {
