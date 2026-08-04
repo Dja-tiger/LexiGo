@@ -10,41 +10,44 @@
 
 ## Objective
 
-Make the live Dictionary reminder control meet minimum effective touch-target size without changing its 19px visible icon, 42px button geometry, adjacent avatar or surrounding layout.
+Make the live global connectivity actions, beginning with `Подробнее`, expose a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer touch target without changing their visible 40px/36px button geometry or surrounding banner layout.
 
 ## Scope
 
-- Add one narrow routed stylesheet with a 44 CSS px target by default and 48 CSS px for coarse-pointer environments.
-- Import it without reordering existing global style owners.
-- Expand only the existing reminder SVG border box through transparent padding while preserving a 19×19 px content box.
-- Preserve the visual button, avatar, spacing and existing global keyboard-focus owner.
-- Add fail-closed source ownership evidence and real Chromium/iOS/Android hit-testing coverage.
+- Replace the invalid hidden Dictionary reminder slice with the first confirmed live Issue #74 defect.
+- Add one narrow stylesheet imported after `system-states.css`.
+- Expand only the block-axis hit surface of buttons inside `.lx-review-sync__actions`; keep their inline area unchanged.
+- Preserve existing button paint, text, layout, global focus owner and ReviewOutbox runtime behavior.
+- Add fail-closed source ownership evidence and real desktop Chromium, iOS WebKit and Android Chromium perimeter hit-testing.
 - Register the focused browser suite in authoritative UI and accessibility CI.
 
 ## Non-goals
 
-- No Home streak/avatar or Dictionary avatar remediation in this slice.
+- No change to the hidden legacy Dictionary bell or route reminder entry.
 - No broad route-by-route control audit.
 - No mobile navigation label change; compact navigation already has 48×52 targets and 11–12 px labels.
-- No text-only action remediation.
-- No manual real-device acceptance claim; it remains required before Issue #74 closure.
-- No JSX/runtime, focus visual, Figma redesign, visual baseline, budget or dependency change.
+- No connectivity state, IndexedDB, sync, API or session behavior change.
+- No visible button resize, Figma redesign, visual baseline, budget or dependency change.
+- No claim that Issue #74 is fully closed; real-device and remaining route controls stay pending.
 
 ## Allowed paths
 
-- `frontend/app/header-touch-targets.css`
+- `frontend/app/connectivity-touch-targets.css`
 - `frontend/app/layout.tsx`
-- `frontend/components/header-touch-target-source.test.ts`
-- `frontend/e2e/header-touch-targets.spec.ts`
+- `frontend/components/connectivity-touch-target-source.test.ts`
+- `frontend/e2e/connectivity-touch-targets.spec.ts`
 - `frontend/package.json`
+- deletion of superseded `frontend/app/header-touch-targets.css`
+- deletion of superseded `frontend/components/header-touch-target-source.test.ts`
+- deletion of superseded `frontend/e2e/header-touch-targets.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ## Prohibited paths
 
-- component JSX/TSX runtime
-- existing CSS owner files and global import reordering
+- runtime component JSX/TSX
+- `frontend/app/system-states.css` and existing visual owners
 - visual snapshots and route budgets
 - backend, API, migrations and deployment workflows
 - dependencies and lockfiles
@@ -52,9 +55,10 @@ Make the live Dictionary reminder control meet minimum effective touch-target si
 
 ## Runtime owners
 
-- `frontend/app/header-touch-targets.css` — routed Dictionary reminder SVG hit surface.
+- `frontend/components/review-outbox-runtime.tsx` — unchanged live connectivity actions and state behavior.
+- `frontend/app/system-states.css` — unchanged 40px default and 36px active-lesson visible button geometry.
+- `frontend/app/connectivity-touch-targets.css` — effective 44/48px block-axis hit surface only.
 - `frontend/app/accessibility-focus.css` — unchanged global keyboard-focus visual owner.
-- `frontend/components/lexigo-dictionary-app.tsx` — unchanged reminder button and 19×19 BellIcon renderer.
 
 ## Documentation owners
 
@@ -63,22 +67,22 @@ Make the live Dictionary reminder control meet minimum effective touch-target si
 
 ## Invariants
 
-- Bell path viewport remains exactly 19×19 CSS px.
-- Reminder SVG hit surface is exactly 44×44 with a fine pointer and 48×48 with a coarse pointer.
-- The 42×42 button, avatar text raster and header layout remain unchanged.
-- The SVG hit surface does not overlap the adjacent avatar.
-- Pointer events at all four padded perimeter points resolve inside the reminder button.
+- The live action is selected by role and exact accessible name, not by hidden legacy markup.
+- Visible button border box, paint, typography and layout remain unchanged.
+- Effective target height is at least 44px with a fine pointer and 48px with a coarse pointer.
+- Inline hit area is not expanded, so adjacent action targets cannot overlap horizontally.
+- Pointer events at the expanded top and bottom perimeter resolve to the intended button.
 - Existing keyboard focus remains visible and no semantic role/name changes.
-- No button positioning, pseudo-element, transform, background, shadow or painted output is introduced.
+- The hit-slop pseudo-element has no transform, background, border, shadow or other painted output.
 - No horizontal overflow at compact widths.
 - Existing global stylesheet imports remain in their current relative order.
 
 ## Acceptance criteria
 
-- Dictionary reminder exposes a 44/48 px effective hit surface around an unchanged 19px icon.
-- Desktop Chromium, iOS WebKit and Android Chromium prove perimeter hit-testing.
-- The expanded SVG remains separated from the adjacent avatar.
-- Source contract maps CSS owner, exact BellIcon size, existing focus owner and authoritative browser registration.
+- `Подробнее` in the live offline connectivity banner meets the 44/48px effective target contract.
+- Desktop Chromium, iOS WebKit and Android Chromium prove top/bottom perimeter hit-testing.
+- The active-lesson 36px visible override remains covered by the same source contract.
+- Source contract maps CSS owner, runtime labels, existing visible geometry, focus owner and authoritative browser registration.
 - Existing visual hashes remain unchanged.
 - Full immutable-head CI, expected-head merge, exact-SHA main CI and exact-image stage/public validation succeed.
 
@@ -92,9 +96,9 @@ Make the live Dictionary reminder control meet minimum effective touch-target si
 
 ## Risks
 
-- SVG padding may not participate in hit testing identically across browser engines.
-- A 48px SVG border box may overlap the adjacent avatar if header spacing is insufficient.
-- CSS replaced-element sizing must retain a 19px content box under `box-sizing: border-box`.
+- Pseudo-element hit testing may differ across Chromium and WebKit.
+- Vertical hit slop could escape the fixed banner at compact widths if spacing is insufficient.
+- A transparent positioned pseudo-element could still perturb deterministic raster output; visual CI must remain byte-identical.
 
 ## Rollback
 
