@@ -12,7 +12,7 @@
 - Shared header reminder controls use `.lx-icon-button` with a visible 42×42 px box.
 - Shared avatars use a visible 44×44 px box.
 - Home streak and avatar plus Dictionary reminder and avatar are live routed header controls.
-- Existing browser coverage verifies navigation target size but does not verify effective shared header hit areas or coarse-pointer 48 px behavior.
+- Existing browser coverage verifies navigation target size but did not verify effective shared header hit areas or coarse-pointer 48 px behavior.
 
 ### Finding
 
@@ -21,6 +21,8 @@ The first concrete Issue #74 defect is shared header hit-area inconsistency. Vis
 ### Root cause
 
 `premium-ui.css` owns visible header geometry but has no shared effective touch-target contract. The 42 px reminder button therefore remains below the iOS minimum, and none of the shared header controls adapts to the 48 px Android/coarse-pointer target.
+
+The first implementation used a transformed transparent pseudo-element and added a new painted focus shadow. Although target, accessibility, performance and PWA checks passed, deterministic visual hashes changed for lesson composer and desktop offline state. The transform introduced a composited descendant in every header target, so the owner was not visually inert.
 
 ### Changed files
 
@@ -39,20 +41,26 @@ The first concrete Issue #74 defect is shared header hit-area inconsistency. Vis
 - Issue #74 was decomposed to shared routed header targets only.
 - New stylesheet uses unique routed selectors and does not reorder existing imports.
 - Default effective target is 44 px; coarse-pointer target is 48 px.
-- Transparent pseudo-element hit slop preserves visible geometry and layout footprint.
-- Focus-visible state receives an expanded perimeter.
 - Source contract protects import placement, exact target values, live runtime owners, compact navigation invariants and authoritative command registration.
-- Browser journey checks perimeter hit-testing, expanded focus, non-overlap and horizontal overflow in desktop Chromium, iOS WebKit and Android Chromium.
-- Functional files were written on the isolated branch.
+- CI #2718 / run `30919648741` on superseded head `0235786f6a6d85df44f7f87d0a035e85a42f3317` passed frontend core, backend unit/security/integration, focused accessibility target proof, performance, CSP, iOS PWA, controlled service worker and Dictionary smoke.
+- Focused browser proof passed perimeter hit-testing, global focus visibility, non-overlap and horizontal overflow in desktop Chromium, iOS WebKit and Android Chromium.
+- Visual artifact `8896656119` was downloaded and inspected; lesson composer and desktop offline screenshots changed consistently on initial and retry while no baseline was modified.
+- The corrected owner removes transform/compositing and additional painted focus output.
+- Effective expansion now uses visually inert negative inset boundaries.
+- Existing `accessibility-focus.css` remains the sole keyboard-focus visual owner.
+- Source/browser contracts were updated to reject transform/shadow and verify the existing global focus ring.
 
 ### Checks failed
 
-- No CI result yet.
+- CI #2718 visual regression failed on superseded head `0235786f6a6d85df44f7f87d0a035e85a42f3317`:
+  - lesson composer desktop expected `3be9635d…`, received `deb39b8c…`;
+  - desktop offline dark expected `8f3b6192…`, received `fa3c8dfb…`.
+- No baseline/hash was updated or accepted.
 
 ### Current branch head
 
-Resolve from live branch ref; latest known implementation commit: `b1c4cf01b178b698597837151b299a0708142379`.
+Resolve from live branch ref; latest known corrected task-record commit: `6bb0084e378d157c48df79ca2c820a27e5b16910`.
 
 ### Next action
 
-Read back the complete slice, audit the exact diff and open a Draft PR for full immutable-head CI.
+Read back the corrected four functional contracts, verify the eight-file diff remains in scope, and track only a new immutable-head full CI run. CI #2718 is no longer merge evidence.
