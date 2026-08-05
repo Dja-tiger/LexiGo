@@ -3,7 +3,9 @@
  *
  * phrases.css remains the painted geometry, color, positioning and responsive
  * layout owner. This layer expands only the transparent event surface of the
- * live `Очистить поиск` icon control to the input-modality minimum.
+ * live `Очистить поиск` icon control to the input-modality minimum. The inline
+ * expansion is directed toward the search field so the adjacent submit action
+ * keeps an independent event surface.
  */
 .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear {
   --lx-phrases-search-clear-touch-target: 44px;
@@ -13,7 +15,8 @@
 .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear::before {
   position: absolute;
   content: "";
-  inset: min(0px, calc((100% - var(--lx-phrases-search-clear-touch-target)) / 2));
+  inset-block: min(0px, calc((100% - var(--lx-phrases-search-clear-touch-target)) / 2));
+  inset-inline: min(0px, calc(100% - var(--lx-phrases-search-clear-touch-target))) 0;
   pointer-events: auto;
 }
 
