@@ -35,7 +35,7 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(layout.match(/mobile-navigation-labels\.css/g)).toHaveLength(1);
   });
 
-  it("targets only the confirmed route-owned four-link mobile navigation", () => {
+  it("targets only the confirmed mounted route-owned four-link mobile navigation", () => {
     expect(routeRuntime).toContain('const labelMode = variant === "mobile" ? "short" : "full";');
     expect(routeRuntime).toContain('className={`lx-route-nav lx-route-nav--${variant}`}');
     expect(routeRuntime).toContain("{PRIMARY_NAVIGATION.map((entry) => {");
@@ -45,7 +45,10 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(navigationModel).toContain('{ view: "library", label: "Словарь", shortLabel: "Словарь" }');
     expect(navigationModel).toContain('{ view: "progress", label: "Прогресс", shortLabel: "Прогресс" }');
 
-    expect(labelsOwner).toContain(".lx-routed-app .lx-route-nav--mobile");
+    const mountedOwner = ".lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile";
+    expect(labelsOwner).toContain(mountedOwner);
+    expect(labelsOwner).toContain(`${mountedOwner} a {`);
+    expect(labelsOwner).not.toContain("\n  .lx-routed-app .lx-route-nav--mobile a {");
     expect(labelsOwner).not.toContain(".lx-mobile-nav");
     expect(labelsOwner).not.toContain(".lx-route-nav--rail");
     expect(labelsOwner).not.toContain(".lx-route-nav--header");
@@ -64,7 +67,7 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
 
     expect(labelsOwner).toContain("--lx-route-mobile-navigation-label-size: max(12px, 0.75rem);");
     expect(labelsOwner).toContain("@media (max-width: 390px)");
-    expect(labelsOwner).toContain(".lx-routed-app .lx-route-nav--mobile a {");
+    expect(labelsOwner).toContain(":has(.lx-route-nav--mobile) .lx-route-nav--mobile a {");
     expect(labelsOwner).toContain("font-size: var(--lx-route-mobile-navigation-label-size);");
     expect(labelsOwner).toContain("overflow: visible;");
     expect(labelsOwner).toContain("text-overflow: clip;");
