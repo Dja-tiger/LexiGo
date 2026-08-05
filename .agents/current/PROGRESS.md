@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 16:04 Europe/Moscow
+## 2026-08-05 16:08 Europe/Moscow
 
 ### Verified
 
@@ -9,7 +9,7 @@
 - Draft PR #397 targets `main` from `fix/issue-74-mobile-navigation-labels`;
 - Issue #74 remains open;
 - canonical mobile navigation is rendered by `RoutePrimaryNavigation` as `.lx-route-nav--mobile` with exactly four links;
-- current mobile link targets are already at least 48×52px;
+- current mobile link targets are already at least 48×54px in the effective late Figma owner;
 - the effective live cascade forced 11px labels and a fixed 92px content reserve from `adaptive-knowledge-coach-home.css` after the canonical route owner;
 - legacy `.lx-mobile-nav` is not part of this slice;
 - route/history runtime files remain unchanged.
@@ -42,7 +42,7 @@ The route presentation stack contains multiple mobile owners. The late Home/appl
 - exact PR patch review;
 - root layout readback restored all runtime markup and ordering; only the new CSS import plus the pre-existing missing-final-newline normalization remain;
 - post-cascade audit against `adaptive-knowledge-coach-home.css`;
-- source contract covers import order, mounted live owner, old 11px cascade, rem growth, mounted-navigation reserve and blocking command registration;
+- source contract covers import order, mounted live owner, old 11px cascade, rem growth, default 72px/54px geometry, mounted-navigation reserve and blocking command registration;
 - focused proof covers 390px default, 320px narrow, 200% root text, target separation, clipping, focus, content reserve and canonical navigation in desktop Chromium, Android Chromium and iOS WebKit;
 - CI #2832 / run `31007795954` on obsolete head `287de486ef6ca42ae870adca7b45d38a559f1064`: classifier, lint and TypeScript passed; 98 test files and 610 tests otherwise passed.
 
@@ -50,12 +50,13 @@ The route presentation stack contains multiple mobile owners. The late Home/appl
 
 - an initial early import lost to the later Home/Figma cascade; corrected before CI;
 - an initial full-file `layout.tsx` replacement unintentionally changed runtime composition; detected by readback and reverted before CI;
-- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts in `global-feature-style-overlap-source.test.ts`; production build and browser jobs were consequently skipped.
+- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts in `global-feature-style-overlap-source.test.ts`; production build and browser jobs were consequently skipped;
+- CI #2836 was superseded before its core gates completed because geometry review found the candidate increased bar/link height at default text.
 
 ### Current branch head
 
-Resolve from live branch `fix/issue-74-mobile-navigation-labels`. The failed CI head `287de486ef6ca42ae870adca7b45d38a559f1064` is obsolete.
+Resolve from live branch `fix/issue-74-mobile-navigation-labels`. Failed CI head `287de486ef6ca42ae870adca7b45d38a559f1064` and superseded CI head `27ad5db9e337bfd1a1e60817eeb524d3162f1a26` are obsolete.
 
 ### Next action
 
-Run authoritative CI on the final mounted-navigation selector head. The new owner uses `:has(.lx-route-nav--mobile)` for semantic runtime scoping, so it no longer claims the broad exact selector rejected by the global overlap inventory while preserving the same computed mobile behavior.
+Run authoritative CI on the final mounted-navigation selector and default-geometry-preserving head. Default mobile bar/link/reserve stay at 72px, 54px and 92px; only labels move from 11px to 12px, while 200% text expands the geometry automatically.
