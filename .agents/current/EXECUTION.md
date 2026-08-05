@@ -4,8 +4,8 @@
 
 - Branch: `agent/issue-74-word-detail-back-target`
 - Base SHA: `ecbb16dd42cd0567f3a9c760f2ea938aede8bb6b`
-- Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- Head SHA: current branch ref; final immutable-head CI pending after the evidence commit
+- PR: #411 (Draft)
 
 ## Skills used
 
@@ -35,7 +35,7 @@ Root cause: not applicable.
 
 Fallback: stop writes and reconstruct from live refs if `main` moves or branch ownership becomes ambiguous.
 
-Limitations: connector-backed work has not yet executed the frontend validation ladder.
+Limitations: connector-backed work uses GitHub Actions as the executable validation boundary because no usable local checkout is available in this runtime.
 
 Reusable lesson: select the live semantic owner before choosing a touch-target slice; stale Issue wording and hidden compatibility controls are not implementation evidence.
 
@@ -51,13 +51,13 @@ Inputs: canonical route inventory, Word Detail runtime/presentation/CSS, existin
 
 Files inspected: `frontend/components/word-detail-presentation.tsx`, `frontend/components/lexigo-dictionary-app.tsx`, `frontend/app/word-detail.css`, `frontend/app/layout.tsx`, `frontend/e2e/support/word-detail-fixture.ts`, `frontend/e2e/word-detail-visual.spec.ts`, prior touch-target CSS/source/E2E contracts and `frontend/package.json`.
 
-Actions performed: excluded hidden legacy bell and orphan preview CSS; confirmed `.lx-word-detail-back` is live in all Word Detail states; audited accessible names, 42px painted height, route-header clearance, adjacent status semantics, visual owners and blocking test commands.
+Actions performed: excluded hidden legacy bell and orphan preview CSS; confirmed `.lx-word-detail-back` is live in all Word Detail states; audited accessible names, 42px painted height, route-section clearance, adjacent status semantics, visual owners and blocking test commands.
 
 Commands or procedures: repository-wide source search, exact path reads, runtime/semantic/CSS ownership matrix and interaction geometry analysis.
 
-Artifacts produced: atomic contract in `.agents/current/TASK.md`.
+Artifacts produced: route-scoped interaction stylesheet, fail-closed source contract, cross-browser Playwright proof and blocking command registration.
 
-Result: selected block-axis-only transparent target expansion as the minimal implementation.
+Result: implemented block-axis-only transparent target expansion while retaining the approved painted owner and runtime behavior.
 
 Failures: none.
 
@@ -68,3 +68,33 @@ Fallback: if cross-browser computed geometry cannot remain non-overlapping and v
 Limitations: physical-device acceptance and whole-application 200% browser zoom remain outside this slice.
 
 Reusable lesson: for an already-wide text action, block-axis-only hit slop satisfies target height without creating inline overlap or visual drift.
+
+### Authoritative immutable-head validation
+
+Purpose: execute the complete repository validation ladder against one immutable product/test head before Ready and merge.
+
+Instruction source: `.agents/AGENTS.base.md`, `.agents/AGENTS.progress-pr214.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`.
+
+Version or verification date: CI workflow at product/test head `fd06113d9670ed67954043a98799bc5595fd1494`, verified 2026-08-06.
+
+Inputs: Draft PR #411, immutable product/test head `fd06113d9670ed67954043a98799bc5595fd1494`, CI #2904 / workflow run `31052177676`.
+
+Files inspected: PR metadata, workflow run, every workflow job and step conclusion.
+
+Actions performed: monitored the exact-head run, classified each gate and preserved the branch head while browser, visual, performance, security and container jobs executed.
+
+Commands or procedures: commit-scoped workflow lookup, full job/step inspection and no blind retries.
+
+Artifacts produced: authoritative green evidence for the product/test diff.
+
+Result: success. Classifier, Agent Docs routing, backend unit/integration/security, frontend lint/typecheck/unit/build/audit, lesson completion, accessibility, both UI shards, unchanged Linux visual regression, performance, Service Worker, iOS PWA Dictionary, CSP, Dictionary smoke, frontend aggregation and web/API container builds all passed.
+
+Failures: none.
+
+Root cause: not applicable.
+
+Fallback: any future failed gate must be classified from exact job logs before changing code or rerunning.
+
+Limitations: the current evidence-only harness commit changes the branch head and therefore requires one final full immutable-head CI run before Ready.
+
+Reusable lesson: keep the production/test head immutable through the complete matrix, then record its evidence in one bounded harness commit and validate that final documentation head separately.

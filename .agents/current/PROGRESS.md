@@ -1,37 +1,55 @@
 # Current Task Progress
 
-## 2026-08-06 01:20 Europe/Moscow
+## 2026-08-06 02:27 Europe/Moscow
 
 ### Verified
 
-- Live `main` is `ecbb16dd42cd0567f3a9c760f2ea938aede8bb6b`.
-- No product PR is active; open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
-- Issue #74 remains open after completed PR #409 and Agent Docs reconciliation #410.
-- Canonical `/words/[id]` is owned by `LexigoDictionaryApp` and `WordDetailPresentation`.
-- `.lx-word-detail-back` is a live native button in loading, error and ready states.
-- Its painted minimum height is 42px; desktop accessible name is `Словарь`, compact accessible name is `Слово`.
-- The adjacent status chip is non-interactive and the route header provides sufficient vertical clearance for block-axis-only expansion.
-- Existing Word Detail content-addressed Linux baselines cover compact/desktop Light/Dark and must remain unchanged.
+- Live `main` remains `ecbb16dd42cd0567f3a9c760f2ea938aede8bb6b`.
+- Draft PR #411 targets `main` from `agent/issue-74-word-detail-back-target`.
+- PR #411 contains exactly eight allowed paths: three current-harness records and five frontend product/test paths.
+- Canonical `/words/[id]` remains owned by `LexigoDictionaryApp` and `WordDetailPresentation`.
+- `.lx-word-detail-back` remains a native button with desktop name `Словарь`, compact name `Слово` and existing `onBack` behavior.
+- The new interaction stylesheet expands only the transparent block-axis event surface to 44px fine / 48px coarse while retaining the 42px painted border box.
+- No runtime, API, History, storage, focus, visual baseline or existing Word Detail presentation owner changed.
 
 ### Finding
 
-The canonical Word Detail Back action does not meet the Issue #74 44px fine-pointer / 48px coarse-pointer target-height contract. Its existing width is sufficient, so no inline expansion or painted geometry change is necessary.
+The canonical Word Detail Back action previously failed the Issue #74 minimum target-height contract because its 42px painted control had no separate interaction-only hit surface.
 
 ### Root cause
 
-`frontend/app/word-detail.css` owns a 42px minimum painted height but no separate interaction-only hit surface for the text-only Back action.
+`frontend/app/word-detail.css` correctly owned the approved painted presentation, but no route-scoped interaction layer expanded the live text-only action to the input-modality minimum.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/app/layout.tsx`
+- `frontend/app/word-detail-back-touch-targets.css`
+- `frontend/components/word-detail-back-touch-target-source.test.ts`
+- `frontend/e2e/word-detail-back-touch-targets.spec.ts`
+- `frontend/package.json`
 
 ### Checks passed
 
-- Mandatory Agent Harness and specialized rules read from exact `main`.
-- Live repository, Issue #74, open PRs and current project state reconciled.
-- Runtime visibility, semantic owner, CSS owner, responsive accessible names and existing visual evidence verified.
-- Isolated branch `agent/issue-74-word-detail-back-target` created from exact base SHA.
+Authoritative CI #2904, run `31052177676`, completed successfully on immutable product/test head `fd06113d9670ed67954043a98799bc5595fd1494`:
+
+- change-scope classification and Agent Docs routing contract;
+- backend formatting, static analysis, race unit tests, vulnerability scan and integration race tests;
+- frontend lint, TypeScript, unit/source contracts, production build and dependency audit;
+- lesson completion;
+- accessibility audit;
+- both UI shards, including the new desktop Chromium, Android Chromium and iOS WebKit Word Detail target proof;
+- unchanged Linux visual regression baselines;
+- performance budgets;
+- controlled Service Worker;
+- iOS PWA Dictionary;
+- content security and Dictionary smoke;
+- web and API container builds;
+- final frontend quality aggregation.
+
+The browser proof verified 42px painted geometry, 44/48px effective height, transparent pseudo styles, four perimeter hits, status separation, route-content clearance, existing visible focus, URL-backed Dictionary restoration and no horizontal overflow at 1440px, 390px and 320px.
 
 ### Checks failed
 
@@ -39,8 +57,9 @@ The canonical Word Detail Back action does not meet the Issue #74 44px fine-poin
 
 ### Current branch head
 
-- Resolve from live branch ref after this commit; previous verified head `e1ba9f834526833e9da86a4ed904ae7d7c1434ed`.
+- Product/test head validated by CI #2904: `fd06113d9670ed67954043a98799bc5595fd1494`.
+- Final evidence-only head: resolve from live branch ref after the current-harness commit.
 
 ### Next action
 
-Add the route-scoped block-axis interaction layer, source contract and cross-browser proof, then register the proof in blocking commands and run targeted validation.
+Run full authoritative CI on the final evidence-only head, verify PR metadata/reviews and exact diff, mark PR #411 Ready, squash-merge with expected head, then validate exact merged SHA on `main` and stage before repository-memory reconciliation.

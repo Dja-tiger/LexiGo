@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `agent/issue-74-word-detail-back-target`
 - Base SHA: `ecbb16dd42cd0567f3a9c760f2ea938aede8bb6b`
-- Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- Head SHA: current branch ref; final immutable-head CI pending after the evidence commit
+- PR: #411 (Draft)
 
 ## Objective
 
@@ -51,7 +51,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Route/state/API/History owner: `frontend/components/lexigo-dictionary-app.tsx`.
 - Semantic action and callback owner: `frontend/components/word-detail-presentation.tsx`.
 - Painted geometry, focus and responsive presentation owner: `frontend/app/word-detail.css`.
-- New interaction-only owner: `frontend/app/word-detail-back-touch-targets.css`.
+- Interaction-only owner: `frontend/app/word-detail-back-touch-targets.css`.
 - Blocking browser proof: `frontend/e2e/word-detail-back-touch-targets.spec.ts`.
 
 ## Documentation owners
@@ -66,7 +66,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Desktop accessible name remains `Словарь`; compact accessible name remains `Слово`.
 - Painted border box remains 42px high and keeps existing color, padding, typography and focus styling.
 - Expanded event surface is transparent, has no border or shadow, and does not expand inline toward the status chip.
-- The target does not overlap route content, create horizontal overflow or change Linux visual hashes.
+- The target remains inside the Word Detail route section, clears the following layout, does not overlap the status chip and creates no horizontal overflow.
 - Direct entry, loading/error/ready states, Back/Forward and Dictionary scroll restoration remain unchanged.
 
 ## Acceptance criteria
@@ -75,7 +75,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Coarse-pointer effective target height is at least 48px.
 - Effective target width remains at least the applicable minimum through the existing painted width.
 - Top, right, bottom and left perimeter points resolve to the Back button.
-- The target remains inside the route-header vertical space and has no overlap with the status chip.
+- The target remains inside the Word Detail section, clears route content and has no overlap with the status chip.
 - Keyboard focus remains visibly owned by the existing Word Detail presentation.
 - Clicking the action returns to the URL-backed Dictionary results state.
 - Desktop Chromium, Android Chromium and iOS WebKit pass at desktop, 390px and 320px widths without horizontal overflow.
@@ -85,10 +85,11 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 
 - New source contract through `npm test` / Vitest.
 - Frontend lint and TypeScript.
-- Production build.
+- Production build and dependency audit.
 - Targeted Playwright in desktop Chromium, Android Chromium and iOS WebKit.
 - Blocking `test:e2e:ui` and `test:e2e:a11y` registration.
-- Accessibility, visual, performance, CSP/PWA and full authoritative CI on final developer-authored head.
+- Accessibility, visual, performance, CSP/PWA, backend and container gates.
+- Full authoritative CI on the final developer-authored head.
 - Expected-head squash merge, exact-SHA main CI and exact-image stage/public validation.
 
 ## Risks
