@@ -1,0 +1,27 @@
+/*
+ * Issue #74 — canonical Word Detail Back touch target.
+ *
+ * word-detail.css remains the painted-geometry, color, typography, focus and
+ * responsive-layout owner. This interaction-only layer expands the transparent
+ * block-axis event surface of the already-wide `Словарь` / `Слово` action to
+ * the input-modality minimum while preserving its existing 42px border box.
+ */
+.lx-routed-app[data-route-path^="/words/"] .lx-word-detail-back {
+  --lx-word-detail-back-touch-target: 44px;
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-word-detail-back::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-word-detail-back-touch-target)) / 2));
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-back {
+    --lx-word-detail-back-touch-target: 48px;
+  }
+}
