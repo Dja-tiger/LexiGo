@@ -1,0 +1,27 @@
+/*
+ * Issue #74 — canonical Home progress CTA touch target.
+ *
+ * adaptive-knowledge-coach-home.css remains the painted geometry, color,
+ * spacing and responsive-layout owner. This layer expands only the block-axis
+ * event surface when the live progress action is smaller than the current
+ * input-modality minimum.
+ */
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-button {
+  --lx-home-progress-touch-target: 44px;
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-button::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-home-progress-touch-target)) / 2));
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel > .lx-button {
+    --lx-home-progress-touch-target: 48px;
+  }
+}
