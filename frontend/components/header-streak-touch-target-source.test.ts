@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const touchTargets = readFileSync(new URL("../app/header-streak-touch-targets.css", import.meta.url), "utf8");
+const reminderEntry = readFileSync(new URL("../app/calendar-reminder-entry.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const premiumUI = readFileSync(new URL("../app/premium-ui.css", import.meta.url), "utf8");
 const adaptiveHome = readFileSync(new URL("../app/adaptive-knowledge-coach-home.css", import.meta.url), "utf8");
@@ -51,22 +52,21 @@ describe("Issue #74 header streak touch-target ownership", () => {
     expect(layout.match(/header-streak-touch-targets\.css/g)).toHaveLength(1);
   });
 
-  it("expands the exact live button to 44px fine and 48px coarse on the block axis only", () => {
+  it("gives the exact live button a real 44px fine and 48px coarse border box", () => {
     expect(touchTargets).toContain("--lx-header-streak-touch-target: 44px;");
     expect(touchTargets).toContain("@media (pointer: coarse)");
     expect(touchTargets).toContain("--lx-header-streak-touch-target: 48px;");
     expect(touchTargets).toContain(`.lx-routed-app ${LIVE_SELECTOR} {`);
-    expect(touchTargets).toContain(`.lx-routed-app ${LIVE_SELECTOR}::before {`);
-    expect(touchTargets).toContain("position: relative;");
-    expect(touchTargets).toContain("position: absolute;");
-    expect(touchTargets).toContain("inset-block: min(");
-    expect(touchTargets).toContain("calc((100% - var(--lx-header-streak-touch-target)) / 2)");
-    expect(touchTargets).toContain("inset-inline: 0;");
-    expect(touchTargets).toContain("pointer-events: auto;");
+    expect(touchTargets).toContain("min-block-size: var(--lx-header-streak-touch-target);");
+    expect(touchTargets).toContain("min-inline-size: var(--lx-header-streak-touch-target);");
     expect(touchTargets).toContain("touch-action: manipulation;");
+    expect(touchTargets).not.toContain(`${LIVE_SELECTOR}::before`);
+    expect(touchTargets).not.toContain("position:");
+    expect(touchTargets).not.toContain("inset-");
+    expect(touchTargets).not.toContain("pointer-events:");
   });
 
-  it("remains interaction-only and preserves painted geometry", () => {
+  it("changes only minimum interaction geometry and preserves painted presentation ownership", () => {
     expect(premiumUI).toContain(".lx-streak {\n  gap: 8px;\n  padding: 10px 11px;");
     expect(premiumUI).toContain(".lx-streak span { font-size: 14px; font-weight: 720; }");
 
@@ -74,8 +74,6 @@ describe("Issue #74 header streak touch-target ownership", () => {
     for (const prohibited of [
       "width",
       "height",
-      "min-width",
-      "min-height",
       "padding",
       "margin",
       "gap",
@@ -85,6 +83,11 @@ describe("Issue #74 header streak touch-target ownership", () => {
       "box-shadow",
       "font",
       "display",
+      "position",
+      "top",
+      "right",
+      "bottom",
+      "left",
     ]) {
       expect(declarations, `${prohibited} must remain owned by the painted presentation layers`)
         .not.toContain(prohibited);
@@ -101,8 +104,7 @@ describe("Issue #74 header streak touch-target ownership", () => {
     expect(dictionaryRuntime).toContain('<span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>');
     expect(dictionaryRuntime).not.toContain('<button className="lx-streak"');
     expect(touchTargets).toContain(LIVE_SELECTOR);
-    expect(touchTargets).toContain(`.lx-routed-app ${LIVE_SELECTOR}::before {`);
-    expect(touchTargets).not.toMatch(/\.lx-routed-app\s+\.lx-streak::before\s*\{/);
+    expect(touchTargets).not.toContain(`${LIVE_SELECTOR}::before`);
     expect(touchTargets).not.toContain("span.lx-streak");
     expect(touchTargets).not.toContain(".lx-icon-button");
     expect(touchTargets).not.toContain(".lx-avatar");
@@ -116,11 +118,18 @@ describe("Issue #74 header streak touch-target ownership", () => {
     expect(touchTargets).not.toContain("visibility:");
   });
 
-  it("protects the adjacent profile target without adding inline hit expansion", () => {
+  it("keeps the profile and reminder targets separated from the streak without moving painted pixels", () => {
     expect(profileTargets).toContain('button.lx-avatar[aria-label="Открыть профиль"]::before');
     expect(profileTargets).toContain("--lx-header-profile-touch-target: 48px;");
-    expect(touchTargets).toContain("inset-inline: 0;");
-    expect(touchTargets).not.toContain("inset-inline: min(");
+
+    expect(reminderEntry).toContain("@media (min-width: 720px)");
+    expect(reminderEntry).toContain(".lx-route-reminder-entry > summary {\n    position: relative;\n    pointer-events: none;");
+    expect(reminderEntry).toContain(".lx-route-reminder-entry > summary::before {");
+    expect(reminderEntry).toContain("inset-inline-start: -16px;");
+    expect(reminderEntry).toContain("inset-inline-end: 16px;");
+    expect(reminderEntry).toContain("pointer-events: auto;");
+    expect(reminderEntry).toContain("right: max(150px, calc((100vw - 1540px) / 2 + 150px));");
+    expect(reminderEntry).not.toContain("transform:");
   });
 
   it("retains the existing global keyboard focus owner", () => {
