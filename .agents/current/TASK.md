@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-mobile-navigation-labels`
 - Base SHA: `091b8ffdbf0bb70edbbe963f9fd88e40c3ef848a`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #397
 
 ## Objective
 
