@@ -69,7 +69,9 @@ Actions performed:
 - scoped content reserve through `:has(.lx-route-nav--mobile)` so focused routes without mounted mobile navigation are unaffected;
 - inspected CI #2832 diagnostics after frontend unit failure;
 - confirmed all feature source tests passed and only the global exact-selector overlap inventory rejected the candidate;
-- replaced the broad exact route selector with a mounted-navigation semantic selector, retaining computed behavior without adding a broad global conflict classification.
+- replaced the broad exact route selector with a mounted-navigation semantic selector, retaining computed behavior without adding a broad global conflict classification;
+- superseded CI #2836 before completion after a geometry audit found its formula increased default bar/link height;
+- revised the growth formulas to preserve the effective 72px bar, 54px link and 92px route reserve at default text while retaining automatic growth for enlarged text.
 
 Commands or procedures:
 
@@ -86,23 +88,25 @@ Artifacts produced:
 
 Result:
 
-The current candidate owns only live mounted canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. Runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged. The rejected exact-selector candidate is obsolete.
+The current candidate owns only live mounted canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. At default text, existing painted bar/link/reserve geometry is preserved; runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged. Rejected and superseded candidate heads are obsolete.
 
 Failures:
 
 - Initial import immediately after `route-navigation.css` was insufficient because `adaptive-knowledge-coach-home.css` later restored 11px and fixed padding.
 - Initial full replacement of `layout.tsx` accidentally changed runtime child composition.
 - CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts between the late Figma owner and the first accessibility owner.
+- The first semantically scoped growth formula still increased default bar/link geometry and was superseded before its CI could be considered authoritative.
 
 Root cause:
 
 - The effective label owner was a later Figma/application-shell stylesheet, not the canonical route-navigation file alone.
 - The connector write required complete-file replacement and the initially reconstructed tail did not exactly match `main`.
 - The first final-cascade selector deliberately reused the same broad exact selector as the prior owner, which violated the fail-closed global feature-style conflict inventory even though focused source tests passed.
+- The first growth constants reserved two enlarged label rows unconditionally instead of using the existing default geometry as the max() floor.
 
 Fallback:
 
-The first two failures were corrected before authoritative CI. The CI failure was corrected by narrowing the owner to `.lx-routed-app:has(.lx-route-nav--mobile)`, which describes the mounted runtime condition directly and avoids broad selector ownership. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap or reserve assertions.
+The first two failures were corrected before authoritative CI. The CI failure was corrected by narrowing the owner to `.lx-routed-app:has(.lx-route-nav--mobile)`, which describes the mounted runtime condition directly and avoids broad selector ownership. Default geometry is now protected by max() floors matching the live Figma owner. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap, geometry or reserve assertions.
 
 Limitations:
 
@@ -110,4 +114,4 @@ No physical-device result will be claimed. The test uses 200% root text enlargem
 
 Reusable lesson:
 
-For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid. When a fail-closed exact-selector inventory rejects an accessibility override, prefer a narrower semantic runtime selector over broadening the conflict manifest unless the broad ownership is genuinely required.
+For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid. When a fail-closed exact-selector inventory rejects an accessibility override, prefer a narrower semantic runtime selector over broadening the conflict manifest unless the broad ownership is genuinely required. Text-growth formulas should use established painted geometry as the default max() floor rather than altering the default state.
