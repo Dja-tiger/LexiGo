@@ -33,6 +33,7 @@ Inputs:
 - Issue #12 exact-image deployment status;
 - `.github/workflows/deploy-stage.yml`;
 - `scripts/ci/agent_docs_scope_test.py`;
+- deployment-scripts validation workflow;
 - live `main`, Issue #398 and latest deployed product state.
 
 Files inspected:
@@ -49,39 +50,46 @@ Actions performed:
 - identified the later skipped Dependabot workflow_run as the cancelling member of the static concurrency group;
 - confirmed GitHub refuses retry because the cancelled workflow contains no failed/cancelled job;
 - created Issue #398 with exact evidence and acceptance criteria;
-- selected job-level concurrency after the existing fail-closed deploy condition as the bounded fix;
-- created the atomic branch and current task handoff.
+- created the atomic branch and current task handoff;
+- removed static workflow-level concurrency from `deploy-stage.yml`;
+- added the same `deploy-stage` / `cancel-in-progress: true` contract to `jobs.deploy` after the existing fail-closed deploy condition;
+- left the scope job, exact artifact validation, image selection, SSH deployment, public smoke/browser checks and Issue #12 reporting unchanged;
+- extended `agent_docs_scope_test.py` to reject workflow-level or scope-job concurrency and require deploy-job concurrency;
+- read both modified product/test files back from commit `90c0fcba144625754c96ff9509b2cc200307ca4e`;
+- updated the final pre-CI handoff.
 
 Commands or procedures:
 
-GitHub connector reads/writes, workflow/job inspection, source search and official primary-documentation verification.
+GitHub connector reads/writes, workflow/job inspection, source search, official primary-documentation verification and branch-explicit readback.
 
 Artifacts produced:
 
 - Issue #398;
 - branch `fix/issue-398-stage-deploy-concurrency`;
-- populated `.agents/current/**` handoff.
+- job-scoped stage concurrency owner;
+- workflow source regression contract;
+- updated `.agents/current/**` handoff.
 
 Result:
 
-Root cause and bounded implementation path are confirmed. Product workflow and regression-test changes are not yet written.
+Non-deployable workflow runs no longer have workflow-level access to the shared deployment concurrency group in source. Only the accepted `deploy` job carries serial cancellation. Authoritative CI and live post-merge deployment validation remain pending.
 
 Failures:
 
-GitHub Actions refused retry of #2689 because there was no failed or cancelled job to rerun.
+GitHub Actions refused retry of #2689 because there was no failed or cancelled job to rerun. No source or implementation check has failed yet.
 
 Root cause:
 
-Workflow-level concurrency is acquired by every workflow run before the existing deploy job condition can reject non-deployable events.
+Workflow-level concurrency was acquired by every workflow run before the existing deploy job condition could reject non-deployable events.
 
 Fallback:
 
-If job-level concurrency does not validate in GitHub Actions, preserve the existing deploy gate and redesign the workflow into an unconstrained scope gate plus a separately invoked serial deploy workflow. Do not weaken exact-scope validation or allow parallel stage mutation.
+If GitHub rejects job-level concurrency or post-merge behavior is incorrect, preserve the existing deploy gate and redesign the workflow into an unconstrained scope gate plus a separately invoked serial deploy workflow. Do not weaken exact-scope validation or allow parallel stage mutation.
 
 Limitations:
 
-A static/source contract can prove placement and preserved gates; post-merge exact-image deployment proves the accepted path. Reproducing a live collision requires a second non-deployable workflow_run while deployment is active and must not be fabricated by bypassing repository controls.
+Source contracts prove placement and preserved gates; post-merge exact-image deployment will prove the accepted path. A live cancellation collision can only be observed when a second non-deployable workflow_run arrives while deployment is active and must not be fabricated by bypassing repository controls.
 
 Reusable lesson:
 
-Place concurrency at the narrowest state-mutating job after fail-closed eligibility is known. Workflow-level concurrency is unsafe when the workflow intentionally receives events that later become skipped jobs.
+Place concurrency at the narrowest state-mutating job after fail-closed eligibility is known. Workflow-level concurrency is unsafe when a workflow intentionally receives events whose jobs are later skipped.
