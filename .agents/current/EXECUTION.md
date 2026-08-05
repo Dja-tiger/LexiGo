@@ -45,7 +45,7 @@ Files inspected:
 - `frontend/app/layout.tsx`;
 - focused source/browser contracts from PRs #389 and #393;
 - `frontend/package.json`;
-- frontend core logs from CI #2787/run `30997037306`.
+- frontend core logs from CI #2787/run `30997037306` and CI #2791/run `30997354326`.
 
 Actions performed:
 
@@ -58,8 +58,9 @@ Actions performed:
 - added a source ownership contract covering exact selector, import order, interactive route consumers, decorative Dictionary exclusion, painted geometry, phone-width hiding, focus and command registration;
 - added desktop Chromium, Android Chromium and iOS WebKit proof for geometry, perimeter hit testing, profile separation, focus and `/progress` navigation;
 - registered the proof in blocking UI and accessibility commands;
-- opened Draft PR #395 and inspected the authoritative CI result;
-- corrected the source inventory after CI proved that Dictionary owns a decorative `span.lx-streak`, not an interactive Progress button;
+- opened Draft PR #395 and inspected two authoritative CI failures;
+- corrected the route inventory after CI proved Dictionary owns a decorative `span.lx-streak`;
+- replaced a broad substring-negative selector assertion with a regex that rejects only an unqualified `.lx-streak::before` rule while accepting the exact `button.lx-streak::before` owner;
 - read every write back from the task branch and rechecked that `main` remained unchanged.
 
 Commands or procedures:
@@ -79,30 +80,32 @@ Artifacts produced:
 
 Result:
 
-The runtime implementation remains unchanged after CI inspection. The exact source contract now protects four interactive button runtimes and explicitly excludes the decorative Dictionary span. A new immutable-head authoritative CI run is required.
+The runtime implementation has remained unchanged through both CI diagnoses. The exact source contract now protects four interactive button runtimes, explicitly excludes the decorative Dictionary span and rejects only a genuinely unqualified streak pseudo-element selector. A new immutable-head authoritative CI run is required.
 
 Failures:
 
 - one attempted `PROGRESS.md` update returned HTTP 409 because the caller used a stale blob SHA;
 - a local clone attempt failed because the execution environment could not resolve `github.com`;
-- CI #2787/run `30997037306` failed one new Vitest assertion after the initial inventory incorrectly treated Dictionary's decorative streak span as an interactive Progress button.
+- CI #2787/run `30997037306` failed one new Vitest assertion after the initial inventory incorrectly treated Dictionary's decorative streak span as an interactive Progress button;
+- CI #2791/run `30997354326` failed one new Vitest assertion because `.not.toContain(".lx-streak::before")` also matched the exact element-qualified selector.
 
 Root cause:
 
 - the docs reconciliation changed the template blob SHA after the previously cached value;
 - the local container has no external DNS/network access;
-- the initial source contract grouped visually shared `.lx-streak` consumers by class name without first separating element semantics and callbacks.
+- the initial source contract grouped visually shared `.lx-streak` consumers by class name without first separating element semantics and callbacks;
+- the second negative assertion tested a substring rather than the full selector shape.
 
 Fallback:
 
 - refetched the exact branch blob and repeated the progress update successfully;
 - used the connected GitHub source of truth and authoritative CI for validation;
-- inspected decoded frontend logs, retained the exact `button.lx-streak` runtime selector, split interactive route owners from the decorative Dictionary owner, and updated task evidence without touching product runtime code.
+- retained the exact `button.lx-streak` runtime selector, split interactive route owners from the decorative Dictionary owner, and changed the selector guard to a full unqualified-rule regex without touching product runtime code.
 
 Limitations:
 
-No local lint, TypeScript, Vitest, build or Playwright result is claimed. CI #2787 established that lint and TypeScript pass, while the corrected source contract and all runtime/browser assumptions still require validation on the latest head.
+No local lint, TypeScript, Vitest, build or Playwright result is claimed. Both CI runs established that lint and TypeScript pass, while the corrected source contract and all runtime/browser assumptions still require validation on the latest head.
 
 Reusable lesson:
 
-Do not infer interactivity from a shared visual class. Inventory exact element semantics and callbacks first. For a shared header control that is horizontally wide but vertically undersized, use a dedicated exact-button owner with block-axis-only pseudo-element hit slop; keep inline expansion at zero and explicitly measure the adjacent control's effective rectangle.
+Do not infer interactivity from a shared visual class, and do not use substring-negative assertions to prove selector qualification. Inventory exact element semantics and callbacks, then validate the complete selector shape. For a horizontally wide but vertically undersized header action, use exact-button block-axis pseudo-element hit slop, keep inline expansion at zero and measure the adjacent control's effective rectangle.
