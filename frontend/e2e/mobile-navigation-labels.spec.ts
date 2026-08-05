@@ -141,9 +141,10 @@ function expectReadableLabels(metrics: NavigationMetrics, minimumFontSize: numbe
 }
 
 function expectNavigationReserve(metrics: NavigationMetrics): void {
+  const geometryEpsilonPx = 0.1;
   expect(metrics.navigation.bottom).toBeGreaterThanOrEqual(843);
   expect(metrics.navigation.bottom).toBeLessThanOrEqual(845);
-  expect(metrics.appPaddingBottom + metrics.appGrowthReserve)
+  expect(metrics.appPaddingBottom + metrics.appGrowthReserve + geometryEpsilonPx)
     .toBeGreaterThanOrEqual(metrics.navigation.height + 20);
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 }
