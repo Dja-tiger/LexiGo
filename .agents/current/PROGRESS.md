@@ -1,11 +1,12 @@
 # Current Task Progress
 
-## 2026-08-05 19:12 Europe/Moscow
+## 2026-08-05 19:15 Europe/Moscow
 
 ### Verified
 
 - live product/docs `main` at slice start: `173258f9e9bf61ac97d1c053556d1bf96fe46763`;
 - latest deployed product SHA: `597e1fcf5c707ca07b6b3fb4783352be91d0555b`;
+- Draft PR #400 targets `main` from `fix/issue-398-stage-deploy-concurrency`;
 - Issue #398 records the Deploy Stage concurrency race;
 - Deploy Stage #2689 / run `31022198395` completed both jobs and all deployment/public steps successfully before workflow-level cancellation;
 - later skipped Dependabot-triggered run #2690 / `31022367262` entered the static workflow-level group `deploy-stage` and caused the cancellation;
@@ -38,7 +39,8 @@ Static top-level `concurrency.group: deploy-stage` applied to every `workflow_ru
 - unchanged fail-closed `scope` and `deploy.if` gates read back from product/test commit;
 - `jobs.deploy.concurrency.group: deploy-stage` and `cancel-in-progress: true` read back from product/test commit;
 - source regression contract now rejects top-level concurrency, rejects concurrency on `scope`, and requires deploy-job concurrency after the deploy condition;
-- both changed product/test files were read back from immutable commit `90c0fcba144625754c96ff9509b2cc200307ca4e`.
+- both changed product/test files were read back from immutable commit `90c0fcba144625754c96ff9509b2cc200307ca4e`;
+- Draft PR #400 opened with exactly five changed paths.
 
 ### Checks failed
 
@@ -50,4 +52,4 @@ Resolve from live branch `fix/issue-398-stage-deploy-concurrency`; `90c0fcba1446
 
 ### Next action
 
-Open a Draft PR and run authoritative repository CI plus Deployment scripts check on the final documented head. If green, verify diff/reviews, perform expected-head squash merge, then validate exact merge-SHA main CI and automatic exact-image stage/public deployment under job-level concurrency.
+Run authoritative repository CI plus Deployment scripts check on the final documented PR #400 head. If green, verify diff/reviews, perform expected-head squash merge, then validate exact merge-SHA main CI and automatic exact-image stage/public deployment under job-level concurrency.
