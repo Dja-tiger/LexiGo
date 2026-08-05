@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-phrases-search-clear-target`
 - Base SHA: `6d55091e55d2ac1340a15c4179b02f206605d4dd`
 - Head SHA: resolve from live branch ref after the final evidence update.
-- PR: create as Draft after the exact implementation scope is read back.
+- PR: #407 — Draft.
 
 ## Objective
 
@@ -15,6 +15,7 @@ Guarantee a 44×44 CSS px fine-pointer and 48×48 CSS px coarse-pointer effectiv
 ## Scope
 
 - Add one route-scoped interaction-only CSS owner for `.lx-phrases-search-clear`.
+- Direct inline hit-slop expansion toward the search field and away from the adjacent submit action.
 - Keep the existing conditional runtime owner and `onSearchClear` callback unchanged.
 - Add a fail-closed source ownership contract.
 - Add desktop Chromium, Android Chromium and iOS WebKit proof at desktop, 390px and 320px widths.
@@ -52,7 +53,7 @@ Guarantee a 44×44 CSS px fine-pointer and 48×48 CSS px coarse-pointer effectiv
 
 - `frontend/components/phrases-catalog.tsx` conditionally exposes the button with exact accessible name `Очистить поиск` and callback `onSearchClear`.
 - `frontend/app/phrases.css` owns the 36×36 painted box, absolute positioning, 48px search field, responsive `right` offsets and Phrases focus visuals.
-- `frontend/app/phrases-search-clear-touch-targets.css` owns only the transparent effective event surface.
+- `frontend/app/phrases-search-clear-touch-targets.css` owns only the transparent effective event surface and directs its inline expansion toward the input.
 - `frontend/components/lexigo-phrases-app.tsx` continues to own search state, URL/history synchronization and clear behavior.
 
 ## Documentation owners
@@ -75,7 +76,7 @@ Guarantee a 44×44 CSS px fine-pointer and 48×48 CSS px coarse-pointer effectiv
 
 ## Acceptance criteria
 
-- Source contract proves exact route/runtime selector ownership, import order, 44/48 tokens and absence of visual declarations.
+- Source contract proves exact route/runtime selector ownership, import order, directional logical insets, 44/48 tokens and absence of painted-geometry declarations.
 - Browser proof passes in desktop Chromium, Android Chromium and iOS WebKit.
 - Browser proof covers 1440px desktop plus 390px and 320px compact widths, painted/effective geometry, transparent pseudo surface, all perimeter hits, input containment, submit separation, focus-visible, callback behavior and no horizontal overflow.
 - Frontend lint, TypeScript, unit/source contracts, production build and dependency audit pass.
@@ -98,7 +99,7 @@ Guarantee a 44×44 CSS px fine-pointer and 48×48 CSS px coarse-pointer effectiv
 ## Risks
 
 - A pseudo-element may be visually transparent but fail hit-testing in one browser engine.
-- Inline expansion could overlap `Найти` if the existing responsive positioning is misunderstood.
+- Inline expansion may overlap `Найти` unless the target is expanded only toward the search field; CI #2875 proved symmetric expansion is invalid on Android Chromium and iOS WebKit.
 - An overly broad selector could affect hidden, stale or unrelated Phrases controls.
 - Replacing `package.json` or `layout.tsx` could accidentally alter unrelated command/import order; exact compare and source contracts must fail closed.
 
