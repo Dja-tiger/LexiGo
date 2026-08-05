@@ -33,7 +33,8 @@ Inputs:
 - canonical and late route-navigation CSS owners;
 - route navigation runtime and label model;
 - existing adaptive-navigation browser contracts;
-- frontend test command registration.
+- frontend test command registration;
+- CI #2832 frontend-core diagnostics.
 
 Files inspected:
 
@@ -44,6 +45,8 @@ Files inspected:
 - `frontend/app/route-navigation.css`;
 - `frontend/app/adaptive-navigation.css`;
 - `frontend/app/adaptive-knowledge-coach-home.css`;
+- `frontend/app/global-feature-style-overlap-source.test.ts`;
+- `frontend/app/global-feature-style-overlap-manifest.json`;
 - `frontend/app/layout.tsx`;
 - `frontend/e2e/adaptive-navigation.spec.ts`;
 - `frontend/package.json`;
@@ -63,11 +66,14 @@ Actions performed:
 - read back every changed path and inspected the exact PR patch;
 - detected and corrected an early-import cascade failure;
 - detected and reverted unintended root-layout composition changes before CI;
-- scoped content reserve through `:has(.lx-route-nav--mobile)` so focused routes without mounted mobile navigation are unaffected.
+- scoped content reserve through `:has(.lx-route-nav--mobile)` so focused routes without mounted mobile navigation are unaffected;
+- inspected CI #2832 diagnostics after frontend unit failure;
+- confirmed all feature source tests passed and only the global exact-selector overlap inventory rejected the candidate;
+- replaced the broad exact route selector with a mounted-navigation semantic selector, retaining computed behavior without adding a broad global conflict classification.
 
 Commands or procedures:
 
-GitHub connector reads/writes, exact-ref comparisons, changed-file listing and per-file PR patch inspection. Local clone execution is unavailable and no local result is counted as evidence.
+GitHub connector reads/writes, exact-ref comparisons, changed-file listing, per-file PR patch inspection, workflow/job inspection and diagnostic artifact analysis. Local clone execution is unavailable and no local result is counted as evidence.
 
 Artifacts produced:
 
@@ -75,25 +81,28 @@ Artifacts produced:
 - `frontend/components/mobile-navigation-labels-source.test.ts`;
 - `frontend/e2e/mobile-navigation-labels.spec.ts`;
 - Draft PR #397;
-- populated `.agents/current/**` task records.
+- populated `.agents/current/**` task records;
+- CI #2832 diagnostic evidence for the rejected selector candidate.
 
 Result:
 
-The candidate now owns only live canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. Runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged.
+The current candidate owns only live mounted canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. Runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged. The rejected exact-selector candidate is obsolete.
 
 Failures:
 
 - Initial import immediately after `route-navigation.css` was insufficient because `adaptive-knowledge-coach-home.css` later restored 11px and fixed padding.
 - Initial full replacement of `layout.tsx` accidentally changed runtime child composition.
+- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts between the late Figma owner and the first accessibility owner.
 
 Root cause:
 
 - The effective label owner was a later Figma/application-shell stylesheet, not the canonical route-navigation file alone.
 - The connector write required complete-file replacement and the initially reconstructed tail did not exactly match `main`.
+- The first final-cascade selector deliberately reused the same broad exact selector as the prior owner, which violated the fail-closed global feature-style conflict inventory even though focused source tests passed.
 
 Fallback:
 
-Both failures were corrected before authoritative CI: the owner moved to the final global cascade, specificity was aligned with live route selectors, and `layout.tsx` was restored from exact `main` content with only one import added. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap or reserve assertions.
+The first two failures were corrected before authoritative CI. The CI failure was corrected by narrowing the owner to `.lx-routed-app:has(.lx-route-nav--mobile)`, which describes the mounted runtime condition directly and avoids broad selector ownership. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap or reserve assertions.
 
 Limitations:
 
@@ -101,4 +110,4 @@ No physical-device result will be claimed. The test uses 200% root text enlargem
 
 Reusable lesson:
 
-For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid.
+For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid. When a fail-closed exact-selector inventory rejects an accessibility override, prefer a narrower semantic runtime selector over broadening the conflict manifest unless the broad ownership is genuinely required.
