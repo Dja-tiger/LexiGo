@@ -9,49 +9,63 @@
 
 ## Workflow
 
-Used the connected GitHub CI-remediation workflow and the repository Agent Harness. All writes target the task branch only; `main` remains unchanged.
+Used the connected GitHub CI-remediation workflow and repository Agent Harness. All writes target the task branch only; `main` remains unchanged.
 
 ## Evidence inspected
 
-- CI #2795/run `30998706501`;
-- frontend core, backend, accessibility, performance, security, PWA and service-worker jobs;
-- UI shard 1 and UI shard 2 Playwright artifacts;
-- desktop Chromium, Android Chromium and iOS WebKit failure contexts;
-- visual-regression artifact and screenshots;
-- rendered trace DOM;
+- CI #2795/run `30998706501` and CI #2811/run `31001271804`;
+- all workflow jobs and exact-head conclusions;
+- UI shard 1 and UI shard 2 diagnostic artifacts;
+- desktop Chromium, Android Chromium and iOS WebKit error contexts, traces and screenshots;
+- compiled CSS and rendered trace DOM;
 - streak, reminder, profile, focus and responsive source owners.
 
-## Confirmed result from superseded head
+## Confirmed CI state on superseded head `0fc9d55075b43711db508ef76b73acbc4633b575`
 
-Frontend lint, TypeScript, all 98 Vitest files, production build and dependency audit passed. Backend and most browser gates also passed.
+The following gates passed:
 
-The focused test failed identically in all three browser projects: the left streak perimeter point belonged to the adjacent fixed reminder target. The fixed reminder ended about 14px inside the streak border box. Two desktop visual states also rejected the generated streak pseudo-element. These were deterministic product/test signals, not unrelated flakes.
+- classifier;
+- backend unit/security/integration;
+- frontend lint, TypeScript, 98 Vitest files, production build and dependency audit;
+- accessibility, content security, performance, controlled service worker, iOS PWA, dictionary smoke and lesson completion;
+- visual regression without baseline changes.
 
-## Correction implemented
+Only UI shard 1 and UI shard 2 failed. All three browser projects reported the same assertion: the left streak border-box point resolved outside the button.
 
-- replaced the streak pseudo-element with a real 44px fine / 48px coarse minimum border box;
-- removed streak positioning and generated hit slop;
-- retained streak content, horizontal padding, route callback and phone-width hiding;
-- added a transparent reminder pointer surface shifted 16px left at `min-width: 720px`;
-- used border-aware offsets so the shifted surface retains the full outer target dimensions;
-- kept the reminder card visually stationary;
-- preserved the summary keyboard role and native details disclosure;
-- updated the source contract for exact interactive/decorative ownership;
-- updated the browser proof to measure reminder, streak and profile targets, require non-overlap, activate the shifted reminder edge, verify focus and navigate to `/progress`.
+## Root cause isolated from artifacts
 
-## Local behavior proof
+The real streak border box and shifted summary pseudo target were correct. The fixed parent `<details class="lx-route-reminder-entry">` still retained pointer ownership across its original border box. Because the details element has a higher stacking level, its transparent right-edge strip intercepted the first streak pixel even after the summary target moved left.
 
-A standalone headless Chromium page reproduced the reminder pattern. Clicks on the shifted-left surface and its center toggled the native details element; clicks in the excluded former overlap strip did not. A border-aware geometry check measured the corrected generated target at 48×48 CSS pixels. This is supporting evidence only. Android Chromium and iOS WebKit remain authoritative CI requirements.
+## Minimal correction
 
-## Files in the corrected slice
+- set `pointer-events: none` on `.lx-route-reminder-entry` at `min-width: 720px`;
+- retain `pointer-events: none` on the summary's original box;
+- retain `pointer-events: auto` on the shifted `summary::before` target;
+- set `pointer-events: auto` on `.lx-route-reminder-preview` so disclosed content remains operable;
+- extend the source contract to lock all three pointer-ownership rules;
+- keep the focused browser test unchanged so it continues to prove the actual streak boundary rather than accepting the defect.
+
+## Supporting local proof
+
+A standalone Chromium reproduction with the same fixed details, summary and generated target geometry showed:
+
+- the streak-left point resolves to the streak button once the details parent is disabled;
+- the shifted generated surface remains clickable;
+- clicking it opens and closes the native details element;
+- the former right-side overlap strip no longer belongs to the reminder;
+- the disclosed preview remains eligible for explicit pointer interaction.
+
+This is supporting evidence only. Full repository CI remains authoritative for Chromium, Android Chromium and iOS WebKit.
+
+## Files in scope
 
 - `frontend/app/header-streak-touch-targets.css`;
 - `frontend/app/calendar-reminder-entry.css`;
 - `frontend/components/header-streak-touch-target-source.test.ts`;
 - `frontend/e2e/header-streak-touch-targets.spec.ts`;
-- existing import and command-registration files already present in PR #395;
-- `.agents/current/**` task records.
+- existing import and test-command registration files in PR #395;
+- `.agents/current/**` records.
 
 ## Next gate
 
-Read back all changed files, compare the branch against current `main`, then run authoritative CI on one immutable head. Do not mark ready or merge until frontend core, three-browser focused proof, existing reminder tests, visual regression and every required repository gate are green.
+Read back the current files, compare the branch with `main`, then run authoritative CI on one immutable head. Do not mark ready or merge until both UI shards and every required repository gate pass.
