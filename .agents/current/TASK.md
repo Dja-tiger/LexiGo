@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `fix/issue-74-home-progress-target`
 - Base SHA: `6563e7e2dbdefe6d42f6cd3c30b747030c6acca5`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from the live branch ref after the final evidence commit
+- PR: #405
 
 ## Objective
 
@@ -51,7 +51,7 @@ Guarantee fine-pointer and coarse-pointer effective target sizes for the live ca
 - Canonical Home runtime: `frontend/components/lexigo-home-app.tsx`.
 - Home painted presentation and visibility: `frontend/app/adaptive-knowledge-coach-home.css`.
 - Base button geometry: `frontend/app/premium-ui.css` and the Home route override.
-- New event-surface owner: `frontend/app/home-progress-touch-targets.css`.
+- Event-surface owner: `frontend/app/home-progress-touch-targets.css`.
 - Global focus-visible owner: `frontend/app/accessibility-focus.css`.
 
 ## Documentation owners
