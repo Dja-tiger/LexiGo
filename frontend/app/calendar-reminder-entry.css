@@ -101,7 +101,8 @@
  * At widths where the streak is visible, the reminder's painted card and its
  * 48px target used to overlap the left edge of the streak button. Keep the
  * pixels stationary, but shift the summary's pointer surface 16px left so the
- * two adjacent controls remain independently operable.
+ * two adjacent controls remain independently operable. The offsets include
+ * the summary's 1px border, preserving the full outer target dimensions.
  */
 @media (min-width: 720px) {
   .lx-route-reminder-entry > summary {
@@ -112,9 +113,9 @@
   .lx-route-reminder-entry > summary::before {
     position: absolute;
     content: "";
-    inset-block: 0;
-    inset-inline-start: -16px;
-    inset-inline-end: 16px;
+    inset-block: -1px;
+    inset-inline-start: -17px;
+    inset-inline-end: 15px;
     pointer-events: auto;
   }
 }
