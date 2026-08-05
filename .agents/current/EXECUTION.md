@@ -33,6 +33,7 @@ The focused test failed identically in all three browser projects: the left stre
 - removed streak positioning and generated hit slop;
 - retained streak content, horizontal padding, route callback and phone-width hiding;
 - added a transparent reminder pointer surface shifted 16px left at `min-width: 720px`;
+- used border-aware offsets so the shifted surface retains the full outer target dimensions;
 - kept the reminder card visually stationary;
 - preserved the summary keyboard role and native details disclosure;
 - updated the source contract for exact interactive/decorative ownership;
@@ -40,7 +41,7 @@ The focused test failed identically in all three browser projects: the left stre
 
 ## Local behavior proof
 
-A standalone headless Chromium page reproduced the reminder pattern. Clicks on the shifted-left surface and its center toggled the native details element; clicks in the excluded former overlap strip did not. This is supporting evidence only. Android Chromium and iOS WebKit remain authoritative CI requirements.
+A standalone headless Chromium page reproduced the reminder pattern. Clicks on the shifted-left surface and its center toggled the native details element; clicks in the excluded former overlap strip did not. A border-aware geometry check measured the corrected generated target at 48×48 CSS pixels. This is supporting evidence only. Android Chromium and iOS WebKit remain authoritative CI requirements.
 
 ## Files in the corrected slice
 
