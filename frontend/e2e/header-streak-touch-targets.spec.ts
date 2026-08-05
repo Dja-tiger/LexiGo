@@ -22,28 +22,6 @@ type EffectiveTarget = {
 
 type GeneratedTarget = Omit<EffectiveTarget, "visualHeight" | "visualWidth" | "pseudoContent">;
 
-function perimeterHitResults(
-  control: HTMLElement,
-  top: number,
-  right: number,
-  bottom: number,
-  left: number,
-): boolean[] {
-  const centerX = (left + right) / 2;
-  const centerY = (top + bottom) / 2;
-  const inset = 1;
-
-  return [
-    [centerX, top + inset],
-    [right - inset, centerY],
-    [centerX, bottom - inset],
-    [left + inset, centerY],
-  ].map(([x, y]) => {
-    const hit = document.elementFromPoint(x, y);
-    return hit === control || (hit instanceof Node && control.contains(hit));
-  });
-}
-
 async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
   return control.evaluate((element) => {
     const button = element as HTMLButtonElement;
@@ -68,7 +46,6 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
     const left = Math.min(rect.left, pseudoLeft);
     const centerX = (left + right) / 2;
     const centerY = (top + bottom) / 2;
-
     const inset = 1;
     const perimeterHits = [
       [centerX, top + inset],
@@ -162,7 +139,7 @@ test.describe("Issue #74 shared header streak touch target", () => {
     const streak = page.getByRole("button", { name: /^\d+ дн\.$/ });
     const profile = page.getByRole("button", { name: "Открыть профиль", exact: true });
     const reminderDetails = page.locator(".lx-route-reminder-entry");
-    const reminder = reminderDetails.locator("> summary");
+    const reminder = page.locator(".lx-route-reminder-entry > summary");
     await expect(streak).toBeVisible();
     await expect(profile).toBeVisible();
     await expect(reminder).toBeVisible();
