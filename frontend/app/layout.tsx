@@ -109,11 +109,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
-          <a className="lx-global-skip-link" href="#lexigo-main-content">Перейти к основному содержимому</a>
-          <ServiceWorkerRegistration />
-          <RoutedLexigoApp>{children}</RoutedLexigoApp>
-          <LegalFooter />
           <WebVitalsReporter />
+          <ServiceWorkerRegistration />
+          <RoutedLexigoApp />
+          {children}
+          <LegalFooter />
         </ApplicationErrorBoundary>
       </body>
     </html>
