@@ -72,13 +72,13 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(labelsOwner).toContain("overflow-wrap: anywhere;");
   });
 
-  it("grows the link, fixed navigation and every live route reserve from enlarged text", () => {
+  it("grows the link, mounted fixed navigation and every live route reserve from enlarged text", () => {
     expect(labelsOwner).toContain("--lx-route-mobile-navigation-block-size: max(");
     expect(labelsOwner).toContain("calc(38px + 2.4rem)");
     expect(labelsOwner).toContain("min-block-size: var(--lx-route-mobile-navigation-block-size);");
     expect(labelsOwner).toContain("min-block-size: max(52px, calc(31px + 2.4em));");
-    expect(labelsOwner).toContain('.lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),');
-    expect(labelsOwner).toContain('.lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode)');
+    expect(labelsOwner).toContain(':has(.lx-route-nav--mobile) .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),');
+    expect(labelsOwner).toContain(':has(.lx-route-nav--mobile) .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode)');
     expect(labelsOwner).toContain("padding-bottom: calc(");
     expect(labelsOwner).toContain("+ 28px");
     expect(labelsOwner).toContain("+ env(safe-area-inset-bottom)");
