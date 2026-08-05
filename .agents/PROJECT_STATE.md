@@ -4,32 +4,28 @@
 
 - Last verified: 2026-08-05 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
-- Latest deployed product SHA: `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
-- Latest completed product slice: Issue #398 Deploy Stage concurrency admission.
-- Completion PR: #400.
-- PR #400 immutable developer-authored head: `a3d8d97a98f72869461e521122cd874453acfc17`.
-- Authoritative PR CI: #2858 / run `31023810906`, complete success.
-- PR Deployment scripts check: #174 / run `31023815171`, complete success.
-- Expected-head squash merge produced product SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f` and closed Issue #398.
-- Exact-SHA main CI #2859 / run `31024797316` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-SHA Deployment scripts check #175 / run `31024798176` completed successfully.
-- Exact-image Deploy Stage #2697 / run `31025592760` validated the exact CI scope, deployed SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f` and completed with overall conclusion `success`.
-- Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success` for exact image SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
-- PR #400 had no comments, reviews or unresolved review threads before merge.
+- Product base verified before this documentation slice: `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- Latest deployed product SHA: `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- Latest completed product slice: Issue #74 Learn unfinished-lesson resume-action touch targets.
+- Completion PR: #402.
+- PR #402 immutable developer-authored head: `e5efe16f83117e15e0f148d6bea80819c8d1f296`.
+- Authoritative PR CI: #2863 / run `31028638187`, complete success.
+- Expected-head squash merge produced product SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- Exact-SHA main CI #2864 / run `31029438007` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-image Deploy Stage #2702 / run `31030179687` validated the exact CI scope, deployed SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090` and completed with overall conclusion `success`.
+- Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success` for exact image SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- PR #402 had no comments, reviews or unresolved review threads before merge.
 - Issue #74 remains open because remaining live controls, whole-application 200% browser zoom and final physical-device acceptance are separate slices.
 - Open PRs #304, #305 and #306 are unrelated Dependabot maintenance and do not intersect this Agent Docs reconciliation.
 
 ## Delivery contract
 
 - Product and mixed changes require backend unit/race/integration/security gates plus frontend lint, typecheck, unit, production build, browser matrix, accessibility, visual, performance and container gates.
-- Workflow/deployment-script changes additionally require the dedicated Deployment scripts check.
 - Product delivery requires immutable-head PR CI, expected-head squash merge, exact-SHA main CI and exact-image stage/public validation.
 - Exact deployment claims require immutable image tags, exact CI-scope validation, healthy deployed services, public endpoint smoke and public browser evidence.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy stage.
 - One PR contains one atomic slice. Product work does not continue through stale Agent Harness state.
-- Stage concurrency belongs to the accepted state-mutating `deploy` job, not the workflow or scope job. Non-deployable runs must never enter the shared deployment concurrency group.
-- Real automatic and manual deploy jobs share `group: deploy-stage` with `cancel-in-progress: true`, preserving serial stage mutation while allowing a newer accepted deploy to replace an older accepted deploy.
+- Real automatic and manual deploy jobs share `group: deploy-stage` with `cancel-in-progress: true`; only an accepted state-mutating deploy job enters that concurrency group.
 
 ## Production ownership foundations
 
@@ -91,8 +87,17 @@
 - Navigation height and route bottom reserve grow together under enlarged root text; reserve remains at least navigation height plus 20px within a bounded 0.1 CSS px browser-serialization tolerance.
 - Route targets, accessible names, hrefs, active state, navigation callbacks, history ownership, desktop header and tablet rail remain unchanged.
 - Focused proof covers 390px default, 320px narrow and 200% root text in desktop Chromium, Android Chromium and iOS WebKit.
-- Compact visual hashes were promoted only after artifact-level review; desktop and unrelated hashes remained unchanged, and a retry-only Dictionary empty-state hash was not promoted.
 - Product SHA: `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
+
+### PR #402 — Learn unfinished-lesson resume-action touch targets
+
+- The live conditional `/learn` actions `Сбросить` and `Продолжить урок` retain their existing 44px painted button boxes and 10px visual gap.
+- A dedicated interaction-only owner guarantees a 48px coarse-pointer effective target through transparent block-axis-only expansion; inline expansion remains zero, so adjacent targets cannot overlap.
+- Exact labels, `discardActiveLesson` / `openLesson("lesson_start")` callbacks, focus-visible behavior, lesson lifecycle, navigation, storage and visual baselines remain unchanged.
+- A source ownership contract protects selector scope, import order, callback/name ownership, absence of visual declarations and blocking test-command ownership.
+- Desktop Chromium, Android Chromium and iOS WebKit prove visual/effective geometry, all four perimeter hits, non-overlap, focus and no horizontal overflow at 390px and 320px.
+- Recommended and manual start buttons were not changed because their existing painted minimum is already 54px.
+- Product SHA: `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
 
 ## Issue #74 acceptance status
 
@@ -101,18 +106,19 @@ Completed:
 - Global connectivity text actions have guaranteed 44/48px effective targets.
 - Shared live header profile and streak buttons have guaranteed 44/48px targets with adjacent-control separation.
 - Mobile Lesson Composer disclosure states and all currently rendered option radios have guaranteed 44/48px effective targets with preserved semantics.
+- Conditional unfinished-lesson actions `Сбросить` and `Продолжить урок` have guaranteed 44/48px effective targets without painted growth or overlap.
 - Canonical mobile-navigation labels are readable at default compact width and scale with enlarged root text without clipping, ellipsis, target overlap or horizontal overflow.
 - Expanded targets and enlarged labels preserve presentation ownership, keyboard focus, accessible names, runtime callbacks, route navigation and content clearance.
 - Hidden/decorative consumers and stale issue wording are excluded from ownership; no live `Все режимы` control exists in the current `/learn` runtime.
 
 Still open:
 
-- Audit and remediate remaining live preview, recommended/manual start, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395 and #397.
+- Audit and remediate remaining live preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397 and #402.
 - Prove all remaining primary, secondary, text-only and icon controls meet minimum target and spacing contracts across affected routes.
 - Verify whole-application 200% browser zoom without clipping, overlap or inaccessible actions; PR #397 proves 200% root-text enlargement only for canonical mobile navigation.
 - Complete manual physical-device acceptance before Issue #74 can close.
 
-Issue #74 remains open. PRs #387, #389, #391, #393, #395 and #397 are completed atomic production slices, not full Issue closure.
+Issue #74 remains open. PRs #387, #389, #391, #393, #395, #397 and #402 are completed atomic production slices, not full Issue closure.
 
 ## Completed CI/CD control-plane slice
 
@@ -123,17 +129,14 @@ Issue #74 remains open. PRs #387, #389, #391, #393, #395 and #397 are completed 
 - Only an accepted `deploy` job carries `group: deploy-stage` and `cancel-in-progress: true`.
 - Skipped pull-request, Dependabot, docs-only and otherwise non-deployable workflow runs cannot enter deployment concurrency or cancel an authoritative deployment.
 - Automatic successful main-push deployments and explicit manual deployments remain serialized through the same group.
-- Source regression coverage rejects workflow-level concurrency, rejects scope-job concurrency and requires deploy-job concurrency after the existing eligibility condition.
-- The accepted automatic path was proven live by main CI #2859 and Deploy Stage #2697, which retained overall `success` after exact-image deployment and all public checks.
-- Issue #398 is closed.
 - Product SHA: `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
 
 ## Current state
 
 - No product slice is active.
-- Product runtime and stage are validated on exact image SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
+- Product runtime and stage are validated on exact image SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
 - `.agents/current/**` is reset to canonical templates by this documentation reconciliation.
-- Issue #398 is closed; the previous workflow-level cancellation race is resolved and protected by source contracts plus live stage evidence.
+- Issue #74 remains open; its latest completed slice is PR #402.
 - The next Issue #74 slice must begin from live GitHub state and select only a confirmed exposed control or a bounded 200% zoom surface after runtime-visibility, accessibility-tree and computed-style verification.
 - Dependabot PRs #304, #305 and #306 remain separate maintenance work and must not be merged implicitly into an Issue #74 product slice.
 
@@ -146,26 +149,22 @@ Issue #74 remains open. PRs #387, #389, #391, #393, #395 and #397 are completed 
 
 ## Recent production evidence
 
-1. #400 — `fix(ci): scope stage concurrency to real deploy jobs` → `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
-2. #399 — Agent Docs reconciliation → `173258f9e9bf61ac97d1c053556d1bf96fe46763`.
-3. #397 — `fix(a11y): make mobile navigation labels scalable` → `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
-4. #396 — Agent Docs reconciliation → `091b8ffdbf0bb70edbbe963f9fd88e40c3ef848a`.
-5. #395 — `fix(a11y): guarantee header streak touch target` → `346b9690ab6029776eeac614f2d26472160af927`.
+1. #402 — `fix(a11y): expand Learn resume action touch targets` → `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+2. #401 — Agent Docs reconciliation → `78e3c18af88d86fbdfb6ee1f9d1a7dad0f006372`.
+3. #400 — `fix(ci): scope stage concurrency to real deploy jobs` → `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
+4. #399 — Agent Docs reconciliation → `173258f9e9bf61ac97d1c053556d1bf96fe46763`.
+5. #397 — `fix(a11y): make mobile navigation labels scalable` → `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
 
 ## Evidence
 
-- PR #400 immutable head `a3d8d97a98f72869461e521122cd874453acfc17` passed authoritative full CI #2858 / run `31023810906`.
-- PR Deployment scripts check #174 / run `31023815171` validated workflow syntax, deployment contracts, Compose, Caddy build/modules/config and systemd behavior.
+- PR #402 immutable head `e5efe16f83117e15e0f148d6bea80819c8d1f296` passed authoritative full CI #2863 / run `31028638187`.
 - Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded.
-- Expected-head squash merge produced `ad45e9ca4b21114dee979495dfb89da3b43eab7f` and closed Issue #398.
-- Exact-SHA main CI #2859 / run `31024797316` completed successfully with the full product gates and immutable web/API image publication.
-- Exact-SHA Deployment scripts check #175 / run `31024798176` completed successfully.
-- Deploy Stage #2697 / run `31025592760` validated exact CI scope, deployed exact SHA and completed with overall conclusion `success`.
-- Issue #12 confirms exact deployed images, healthy services, frontend/API HTTP 200 smoke and 12 public browser checks in desktop Chromium and iOS WebKit.
-- Non-deployable Deploy Stage runs no longer carry a deployment job and therefore cannot enter the shared deploy concurrency group.
-- PR #400 had no comments, reviews or unresolved review threads before merge.
-- Issue #398 received a factual completion comment with immutable CI and deployment evidence.
-- Issue #74 remains open for remaining acceptance scope.
+- Expected-head squash merge produced `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- Exact-SHA main CI #2864 / run `31029438007` completed successfully with the full product gates and immutable web/API image publication.
+- Deploy Stage #2702 / run `31030179687` validated the exact CI scope artifact, deployed exact image SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`, verified healthy services and public endpoints, and completed public browser validation successfully.
+- Issue #12 confirms the exact deployed web/API image tags, healthy containers, HTTP 200 frontend/API smoke and public desktop Chromium / iOS WebKit route checks.
+- PR #402 had no comments, reviews or unresolved review threads before merge.
+- Issue #74 received a factual completion comment and remains open for its remaining acceptance scope.
 - Local clone execution was unavailable; no local result is counted as authoritative product evidence.
 - Final claims use exact refs, files, Issues, PRs, workflow jobs, deployment records and Issue #12 status.
 
