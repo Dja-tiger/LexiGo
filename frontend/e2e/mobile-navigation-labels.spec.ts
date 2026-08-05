@@ -33,6 +33,7 @@ type NavigationMetrics = {
     whiteSpace: string;
   }>;
   appPaddingBottom: number;
+  appGrowthReserve: number;
   documentWidth: number;
   viewportWidth: number;
 };
@@ -64,6 +65,8 @@ async function navigationMetrics(navigation: Locator): Promise<NavigationMetrics
         whiteSpace: style.whiteSpace,
       };
     });
+    const app = document.querySelector<HTMLElement>(".lx-app");
+    if (!app) throw new Error("route application shell is missing");
 
     return {
       navigation: {
@@ -87,7 +90,8 @@ async function navigationMetrics(navigation: Locator): Promise<NavigationMetrics
         };
       }),
       labels,
-      appPaddingBottom: Number.parseFloat(window.getComputedStyle(document.querySelector<HTMLElement>(".lx-app")!).paddingBottom),
+      appPaddingBottom: Number.parseFloat(window.getComputedStyle(app).paddingBottom),
+      appGrowthReserve: Number.parseFloat(window.getComputedStyle(app, "::after").blockSize),
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth,
     };
@@ -139,7 +143,8 @@ function expectReadableLabels(metrics: NavigationMetrics, minimumFontSize: numbe
 function expectNavigationReserve(metrics: NavigationMetrics): void {
   expect(metrics.navigation.bottom).toBeGreaterThanOrEqual(843);
   expect(metrics.navigation.bottom).toBeLessThanOrEqual(845);
-  expect(metrics.appPaddingBottom).toBeGreaterThanOrEqual(metrics.navigation.height + 20);
+  expect(metrics.appPaddingBottom + metrics.appGrowthReserve)
+    .toBeGreaterThanOrEqual(metrics.navigation.height + 20);
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 }
 
@@ -167,6 +172,9 @@ test.describe("Issue #74 mobile navigation label readability", () => {
     expectSeparatedTargets(defaultMetrics);
     expectReadableLabels(defaultMetrics, 12);
     expectNavigationReserve(defaultMetrics);
+    expect(defaultMetrics.navigation.height).toBeGreaterThanOrEqual(71.9);
+    expect(defaultMetrics.navigation.height).toBeLessThanOrEqual(72.1);
+    expect(defaultMetrics.appGrowthReserve).toBeLessThanOrEqual(0.1);
 
     const firstLink = navigation.getByRole("link", { name: "Главная", exact: true });
     await firstLink.focus();
@@ -188,7 +196,8 @@ test.describe("Issue #74 mobile navigation label readability", () => {
     expectReadableLabels(enlargedMetrics, 24);
     expectNavigationReserve(enlargedMetrics);
     expect(enlargedMetrics.navigation.height).toBeGreaterThan(defaultMetrics.navigation.height + 20);
-    expect(enlargedMetrics.appPaddingBottom).toBeGreaterThan(defaultMetrics.appPaddingBottom + 20);
+    expect(enlargedMetrics.appPaddingBottom).toBeCloseTo(defaultMetrics.appPaddingBottom, 1);
+    expect(enlargedMetrics.appGrowthReserve).toBeGreaterThan(defaultMetrics.appGrowthReserve + 20);
 
     await navigation.getByRole("link", { name: "Словарь", exact: true }).click();
     await expect(page).toHaveURL(/\/dictionary(?:\?.*)?$/);
