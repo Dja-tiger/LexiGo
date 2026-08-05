@@ -8,16 +8,16 @@ const premiumUI = readFileSync(new URL("../app/premium-ui.css", import.meta.url)
 const adaptiveHome = readFileSync(new URL("../app/adaptive-knowledge-coach-home.css", import.meta.url), "utf8");
 const profileTargets = readFileSync(new URL("../app/header-profile-touch-targets.css", import.meta.url), "utf8");
 const focusStyles = readFileSync(new URL("../app/accessibility-focus.css", import.meta.url), "utf8");
-const routeRuntimes = [
+const interactiveRouteRuntimes = [
   "lexigo-home-app.tsx",
   "lexigo-learn-app.tsx",
-  "lexigo-dictionary-app.tsx",
   "lexigo-active-lesson-app.tsx",
   "lexigo-premium-app.tsx",
 ].map((path) => ({
   path,
   source: readFileSync(new URL(`./${path}`, import.meta.url), "utf8"),
 }));
+const dictionaryRuntime = readFileSync(new URL("./lexigo-dictionary-app.tsx", import.meta.url), "utf8");
 const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
   scripts?: Record<string, string>;
 };
@@ -78,15 +78,18 @@ describe("Issue #74 header streak touch-target ownership", () => {
     }
   });
 
-  it("maps every confirmed live route consumer to an exact button selector", () => {
-    for (const runtime of routeRuntimes) {
+  it("maps every confirmed interactive route consumer and excludes the decorative Dictionary streak", () => {
+    for (const runtime of interactiveRouteRuntimes) {
       expect(runtime.source, runtime.path).toContain('className="lx-streak"');
       expect(runtime.source, runtime.path).toContain("<button");
       expect(runtime.source, runtime.path).toContain('navigate({ view: "progress" })');
     }
 
+    expect(dictionaryRuntime).toContain('<span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>');
+    expect(dictionaryRuntime).not.toContain('<button className="lx-streak"');
     expect(touchTargets).toContain(LIVE_SELECTOR);
     expect(touchTargets).not.toContain(".lx-streak::before");
+    expect(touchTargets).not.toContain("span.lx-streak");
     expect(touchTargets).not.toContain(".lx-icon-button");
     expect(touchTargets).not.toContain(".lx-avatar");
   });
