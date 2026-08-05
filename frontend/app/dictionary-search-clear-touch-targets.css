@@ -1,0 +1,26 @@
+/*
+ * Issue #74 — canonical Dictionary search-clear touch target.
+ *
+ * dictionary-catalog.css remains the painted-geometry, color, focus and
+ * responsive-layout owner. This interaction-only layer expands the transparent
+ * event surface of the conditional `Очистить поиск` icon to the input-modality
+ * minimum while keeping the 36×36 painted control inside the existing 48px
+ * search field.
+ */
+.lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-search-clear {
+  --lx-dictionary-search-clear-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-search-clear::before {
+  position: absolute;
+  content: "";
+  inset: min(0px, calc((100% - var(--lx-dictionary-search-clear-touch-target)) / 2));
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-search-clear {
+    --lx-dictionary-search-clear-touch-target: 48px;
+  }
+}
