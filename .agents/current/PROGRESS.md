@@ -1,40 +1,31 @@
 # Current Task Progress
 
-## 2026-08-05 15:05 Europe/Moscow
+## 2026-08-05 15:30 Europe/Moscow
 
-### Verified
+### Completed evidence
 
-- `main` and task base remain `e46881b9fc9def630343e3ee69425492bc0aefe7`;
-- Draft PR #395 remains the active Issue #74 slice;
-- CI #2815/run `31002439266` ran on exact head `b59f7242de5ee5a5035dbbea45ee358c6478c38f`;
-- classifier, backend unit/security/integration, frontend lint, TypeScript, all 98 Vitest files, production build, dependency audit, accessibility, performance, security, service worker, PWA, dictionary, lesson completion and visual regression passed;
-- UI shard 2 passed, proving Android Chromium and iOS WebKit target geometry;
-- only UI shard 1 failed, and only in desktop Chromium at the left streak perimeter point.
+- Draft PR #395 exact head: `ab86d442bba2420a5445b2c92427f924ddee780f`;
+- branch base and live `main`: `e46881b9fc9def630343e3ee69425492bc0aefe7`;
+- branch is not behind `main` and changes only nine allowed paths;
+- authoritative CI #2820/run `31003511778` passed completely;
+- frontend core passed: lint, TypeScript, 98 Vitest files, production build and dependency audit;
+- backend unit/security/integration passed;
+- both UI shards passed, including desktop Chromium, Android Chromium and iOS WebKit focused target proof;
+- visual regression passed without baseline changes;
+- accessibility, performance, content security, service worker, PWA, dictionary smoke and lesson completion passed;
+- web and api container builds passed;
+- PR comments, reviews and unresolved review threads are empty.
 
-### Latest diagnosis
+### Delivered behavior
 
-The 16px reminder-target translation is correct for 720–1099px, where the reminder label is hidden. On desktop the visible label widens the fixed summary. The streak real border box is about 81.92px wide, and the translated reminder target still ended roughly 10px inside its left edge. The parent pointer strip was already removed; this failure is pure desktop target geometry.
-
-### Correction now present
-
-- 16px border-aware reminder-target translation remains for 720–1099px;
-- a `min-width: 1100px` override translates the same full-size target 28px left;
-- painted reminder and streak output remains unchanged;
-- generated target, preview, native disclosure, focus and route navigation remain unchanged;
-- source-contract coverage locks both responsive translations.
-
-### Current changed paths
-
-- `.agents/current/TASK.md`;
-- `.agents/current/PROGRESS.md`;
-- `.agents/current/EXECUTION.md`;
-- `frontend/app/calendar-reminder-entry.css`;
-- `frontend/app/header-streak-touch-targets.css`;
-- `frontend/app/layout.tsx`;
-- `frontend/components/header-streak-touch-target-source.test.ts`;
-- `frontend/e2e/header-streak-touch-targets.spec.ts`;
-- `frontend/package.json`.
+- live `button.lx-streak` uses a real 44px fine / 48px coarse minimum border box;
+- decorative Dictionary streak remains excluded;
+- fixed reminder parent and original summary box do not intercept the streak boundary;
+- reminder generated target remains full-size, native-disclosure capable and shifts 16px on 720–1099px and 28px from 1100px;
+- disclosed preview remains interactive;
+- reminder, streak and profile targets are separated;
+- painted output, phone hiding, focus and `/progress` navigation remain unchanged.
 
 ### Next action
 
-Read back the final responsive owner and Agent records, compare against current `main`, freeze the new branch head, and observe a full authoritative CI. Do not mark ready or merge until UI shard 1, UI shard 2, visual regression and every required gate are green.
+Mark PR #395 Ready and perform expected-head squash merge. Then validate the exact merge SHA through main CI, stage deployment and public browser checks. Issue #74 remains open for later slices.
