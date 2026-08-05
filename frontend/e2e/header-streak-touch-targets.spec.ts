@@ -17,10 +17,32 @@ type EffectiveTarget = {
   centerX: number;
   centerY: number;
   perimeterHits: boolean[];
-  pseudoBackground: string;
-  pseudoBorderWidths: string[];
-  pseudoBoxShadow: string;
+  pseudoContent: string;
 };
+
+type GeneratedTarget = Omit<EffectiveTarget, "visualHeight" | "visualWidth" | "pseudoContent">;
+
+function perimeterHitResults(
+  control: HTMLElement,
+  top: number,
+  right: number,
+  bottom: number,
+  left: number,
+): boolean[] {
+  const centerX = (left + right) / 2;
+  const centerY = (top + bottom) / 2;
+  const inset = 1;
+
+  return [
+    [centerX, top + inset],
+    [right - inset, centerY],
+    [centerX, bottom - inset],
+    [left + inset, centerY],
+  ].map(([x, y]) => {
+    const hit = document.elementFromPoint(x, y);
+    return hit === control || (hit instanceof Node && control.contains(hit));
+  });
+}
 
 async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
   return control.evaluate((element) => {
@@ -46,6 +68,7 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
     const left = Math.min(rect.left, pseudoLeft);
     const centerX = (left + right) / 2;
     const centerY = (top + bottom) / 2;
+
     const inset = 1;
     const perimeterHits = [
       [centerX, top + inset],
@@ -69,14 +92,48 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
       centerX,
       centerY,
       perimeterHits,
-      pseudoBackground: hitSlop.backgroundColor,
-      pseudoBorderWidths: [
-        hitSlop.borderTopWidth,
-        hitSlop.borderRightWidth,
-        hitSlop.borderBottomWidth,
-        hitSlop.borderLeftWidth,
-      ],
-      pseudoBoxShadow: hitSlop.boxShadow,
+      pseudoContent: hitSlop.content,
+    };
+  });
+}
+
+async function generatedTarget(control: Locator): Promise<GeneratedTarget> {
+  return control.evaluate((element) => {
+    const target = element as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const style = window.getComputedStyle(target);
+    const hitSlop = window.getComputedStyle(target, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+    const top = rect.top + borderTop + (Number.parseFloat(hitSlop.top) || 0);
+    const right = rect.right - borderRight - (Number.parseFloat(hitSlop.right) || 0);
+    const bottom = rect.bottom - borderBottom - (Number.parseFloat(hitSlop.bottom) || 0);
+    const left = rect.left + borderLeft + (Number.parseFloat(hitSlop.left) || 0);
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const inset = 1;
+    const perimeterHits = [
+      [centerX, top + inset],
+      [right - inset, centerY],
+      [centerX, bottom - inset],
+      [left + inset, centerY],
+    ].map(([x, y]) => {
+      const hit = document.elementFromPoint(x, y);
+      return hit === target || (hit instanceof Node && target.contains(hit));
+    });
+
+    return {
+      top,
+      right,
+      bottom,
+      left,
+      height: bottom - top,
+      width: right - left,
+      centerX,
+      centerY,
+      perimeterHits,
     };
   });
 }
@@ -104,28 +161,44 @@ test.describe("Issue #74 shared header streak touch target", () => {
 
     const streak = page.getByRole("button", { name: /^\d+ дн\.$/ });
     const profile = page.getByRole("button", { name: "Открыть профиль", exact: true });
+    const reminderDetails = page.locator(".lx-route-reminder-entry");
+    const reminder = reminderDetails.locator("> summary");
     await expect(streak).toBeVisible();
     await expect(profile).toBeVisible();
+    await expect(reminder).toBeVisible();
 
     const expectedMinimum = await page.evaluate(() => (
       window.matchMedia("(pointer: coarse)").matches ? 48 : 44
     ));
     const streakTarget = await effectiveTarget(streak);
     const profileTarget = await effectiveTarget(profile);
+    const reminderTarget = await generatedTarget(reminder);
 
     expect(streakTarget.height).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
     expect(streakTarget.width).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
+    expect(streakTarget.height).toBeCloseTo(streakTarget.visualHeight, 3);
     expect(streakTarget.width).toBeCloseTo(streakTarget.visualWidth, 3);
-    expect(streakTarget.visualHeight).toBeLessThanOrEqual(streakTarget.height + 0.1);
-    expect(streakTarget.perimeterHits, "all four streak target perimeter points must resolve inside the button")
+    expect(streakTarget.pseudoContent).toBe("none");
+    expect(streakTarget.perimeterHits, "all four streak border-box points must resolve inside the button")
       .toEqual([true, true, true, true]);
-    expect(streakTarget.pseudoBackground).toBe("rgba(0, 0, 0, 0)");
-    expect(streakTarget.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
-    expect(streakTarget.pseudoBoxShadow).toBe("none");
+
+    expect(reminderTarget.height).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
+    expect(reminderTarget.width).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
+    expect(reminderTarget.perimeterHits, "the shifted reminder surface must remain fully operable")
+      .toEqual([true, true, true, true]);
+    expect(
+      streakTarget.left - reminderTarget.right,
+      "the reminder and streak targets must remain separated",
+    ).toBeGreaterThanOrEqual(1);
     expect(
       profileTarget.left - streakTarget.right,
       "the streak and profile effective target rectangles must remain separated",
     ).toBeGreaterThanOrEqual(1);
+
+    await page.mouse.click(reminderTarget.left + 1, reminderTarget.centerY);
+    await expect(reminderDetails).toHaveAttribute("open", "");
+    await page.mouse.click(reminderTarget.left + 1, reminderTarget.centerY);
+    await expect(reminderDetails).not.toHaveAttribute("open", "");
 
     await streak.focus();
     await page.keyboard.press("Tab");
