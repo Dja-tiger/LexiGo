@@ -18,6 +18,7 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer target for every c
 - use a real minimum border box instead of a generated streak pseudo-element;
 - shift only the reminder summary's invisible pointer surface 16px left at widths where the streak is visible;
 - preserve the reminder's painted card position and native `<details>/<summary>` disclosure behavior;
+- account for the reminder's 1px border so the shifted surface retains its full outer target dimensions;
 - prove separation from both adjacent reminder and profile targets;
 - retain exact source ownership that distinguishes interactive buttons from the decorative Dictionary streak span;
 - run desktop Chromium, Android Chromium and iOS WebKit geometry, hit-testing, focus, disclosure and navigation proof;
@@ -110,7 +111,7 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer target for every c
 
 ## Risks
 
-- `pointer-events: none` on summary must be restored by its generated surface in every supported browser;
+- disabling the summary's native pointer box must be offset by the generated surface in every supported browser;
 - a shifted reminder surface can overlap another left-side action if its offset expands beyond the measured 16px;
 - a phone-width test can target an intentionally hidden streak and create false ownership;
 - broad `.lx-streak` selectors can capture the decorative Dictionary span;
