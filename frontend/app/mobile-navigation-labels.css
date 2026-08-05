@@ -32,12 +32,12 @@
     );
   }
 
-  .lx-routed-app .lx-route-nav--mobile {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile {
     min-block-size: var(--lx-route-mobile-navigation-block-size);
     align-items: stretch;
   }
 
-  .lx-routed-app .lx-route-nav--mobile a {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a {
     /*
      * 31px accounts for the 20px icon, 3px content gap and 8px link padding.
      * Two 1.2-line label rows can then grow with the link's computed font.
@@ -47,11 +47,11 @@
     line-height: 1.2;
   }
 
-  .lx-routed-app .lx-route-nav--mobile a > span {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span {
     min-inline-size: 0;
   }
 
-  .lx-routed-app .lx-route-nav--mobile a > span > span {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span > span {
     max-inline-size: 100%;
     overflow: visible;
     text-align: center;
@@ -66,7 +66,7 @@
  * this breakpoint remain owned by route-specific presentation layers.
  */
 @media (max-width: 390px) {
-  .lx-routed-app .lx-route-nav--mobile a {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a {
     font-size: var(--lx-route-mobile-navigation-label-size);
   }
 }
