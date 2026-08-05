@@ -107,7 +107,11 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       ));
       const target = await effectiveTarget(action);
       const inputBox = await search.boundingBox();
+      const actionBox = await action.boundingBox();
       const submitBox = await submit.boundingBox();
+      const paddingRight = await search.evaluate((element) => (
+        Number.parseFloat(window.getComputedStyle(element).paddingRight) || 0
+      ));
 
       expect(target.visualHeight).toBeCloseTo(36, 3);
       expect(target.visualWidth).toBeCloseTo(36, 3);
@@ -118,6 +122,7 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       expect(target.pseudoBackground).toBe("rgba(0, 0, 0, 0)");
       expect(target.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
       expect(target.pseudoBoxShadow).toBe("none");
+      expect(paddingRight).toBeCloseTo(width <= 767 ? 120 : 48, 3);
 
       expect(inputBox).not.toBeNull();
       if (inputBox) {
@@ -127,12 +132,17 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
         expect(target.targetRight).toBeLessThanOrEqual(inputBox.x + inputBox.width + 0.5);
       }
 
+      expect(actionBox).not.toBeNull();
       expect(submitBox).not.toBeNull();
-      if (submitBox) {
+      if (actionBox && submitBox) {
+        expect(
+          submitBox.x - (actionBox.x + actionBox.width),
+          "the painted clear and submit actions must remain visually separate",
+        ).toBeGreaterThanOrEqual(width <= 767 ? 3 : 1);
         expect(
           submitBox.x - target.targetRight,
           "the expanded clear target must not overlap the visible submit action",
-        ).toBeGreaterThanOrEqual(1);
+        ).toBeGreaterThanOrEqual(width <= 767 ? 3 : 1);
       }
 
       await action.focus();
