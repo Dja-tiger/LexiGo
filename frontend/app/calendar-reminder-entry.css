@@ -97,6 +97,49 @@
   margin-top: 2px;
 }
 
+/*
+ * At widths where the streak is visible, the reminder's painted card and its
+ * 48px target used to overlap the left edge of the streak button. Keep the
+ * pixels stationary, but shift only the pointer surface left so the controls
+ * remain independently operable. The offsets include the summary's 1px border
+ * and therefore preserve the full outer target dimensions.
+ *
+ * Tablet/coarse layouts hide the reminder label, so 16px is sufficient. The
+ * wider desktop label needs a 28px shift to clear the 81.92px streak border box.
+ * Disable the fixed details box itself so its old right edge cannot remain an
+ * invisible interception strip above the neighboring streak button.
+ */
+@media (min-width: 720px) {
+  .lx-route-reminder-entry {
+    pointer-events: none;
+  }
+
+  .lx-route-reminder-entry > summary {
+    position: relative;
+    pointer-events: none;
+  }
+
+  .lx-route-reminder-entry > summary::before {
+    position: absolute;
+    content: "";
+    inset-block: -1px;
+    inset-inline-start: -17px;
+    inset-inline-end: 15px;
+    pointer-events: auto;
+  }
+
+  .lx-route-reminder-preview {
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 1100px) {
+  .lx-route-reminder-entry > summary::before {
+    inset-inline-start: -29px;
+    inset-inline-end: 27px;
+  }
+}
+
 @media (min-width: 720px) and (max-width: 1099px) {
   .lx-route-reminder-entry {
     top: calc(14px + env(safe-area-inset-top));

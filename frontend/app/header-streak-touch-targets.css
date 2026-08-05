@@ -1,0 +1,22 @@
+/*
+ * Issue #74 — shared header streak touch target.
+ *
+ * premium-ui.css and adaptive-knowledge-coach-home.css remain the painted
+ * presentation and responsive-visibility owners. This layer guarantees a
+ * real 44/48px button border box without changing the painted child content.
+ */
+.lx-routed-app {
+  --lx-header-streak-touch-target: 44px;
+}
+
+.lx-routed-app button.lx-streak {
+  min-block-size: var(--lx-header-streak-touch-target);
+  min-inline-size: var(--lx-header-streak-touch-target);
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app {
+    --lx-header-streak-touch-target: 48px;
+  }
+}
