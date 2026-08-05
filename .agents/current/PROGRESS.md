@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 13:26 Europe/Moscow
+## 2026-08-05 13:31 Europe/Moscow
 
 ### Verified
 
@@ -39,21 +39,22 @@ The shared presentation layer predates the Issue #74 minimum-target contract. It
 - source inspection confirms no painted geometry or phone-width visibility owner was modified;
 - the exact element-qualified selector excludes the decorative Dictionary span;
 - focused proof is registered exactly once in both blocking UI and accessibility commands;
-- CI #2787/run `30997037306` passed change classification, frontend lint and TypeScript before the source-contract failure;
-- 97 existing Vitest files and 604 tests passed in the same run.
+- CI #2787/run `30997037306` and CI #2791/run `30997354326` both passed change classification, frontend lint and TypeScript before their source-contract failures;
+- existing Vitest coverage remained green in both runs; only the newly added source-contract assertion failed.
 
 ### Checks failed
 
-- CI #2787/run `30997037306` failed one new Vitest assertion because the initial source inventory incorrectly required the decorative Dictionary span to contain the interactive Progress navigation callback;
-- production build, browser and downstream frontend jobs were correctly skipped after the unit-test failure;
+- CI #2787/run `30997037306` failed because the initial source inventory incorrectly required the decorative Dictionary span to contain the interactive Progress navigation callback;
+- CI #2791/run `30997354326` failed because a broad negative substring assertion for `.lx-streak::before` also matched the intentionally exact `button.lx-streak::before` selector;
+- production build, browser and downstream frontend jobs were correctly skipped after each unit-test failure;
 - no runtime CSS, TypeScript or existing test failed;
 - no local validation is claimed because the current environment cannot resolve GitHub for a local clone.
 
 ### Current branch head
 
-- corrected implementation head before this progress update: `b151639535afc60f8cce46aaebfe6fa9f3dc9719`;
+- corrected source-contract implementation before this progress update: `4335144660f22cade7766c3fcfb8db34d9b77916`;
 - resolve the current head from the live branch ref after this record commit.
 
 ### Next action
 
-Validate the corrected exact ownership contract on the new immutable PR head. Continue only after frontend core, focused cross-browser proof and the full authoritative CI matrix are green.
+Validate the selector-qualified source contract on the next immutable PR head. Continue only after frontend core, focused cross-browser proof and the full authoritative CI matrix are green.
