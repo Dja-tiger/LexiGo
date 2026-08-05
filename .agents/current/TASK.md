@@ -6,7 +6,7 @@
 - Branch: `fix/issue-398-stage-deploy-concurrency`
 - Base SHA: `173258f9e9bf61ac97d1c053556d1bf96fe46763`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #400
 
 ## Objective
 
