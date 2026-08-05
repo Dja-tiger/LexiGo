@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 
 const SESSION = {
   user: {
@@ -84,6 +84,24 @@ const METADATA = {
   topics: [{ topic: "Product UX", count: 1, words: 1, phrases: 0 }],
 };
 
+type TargetRect = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  height: number;
+  width: number;
+};
+
+type EffectiveTarget = TargetRect & {
+  visualHeight: number;
+  visualWidth: number;
+  perimeterHits: boolean[];
+  pseudoBackground: string;
+  pseudoBorderWidths: string[];
+  pseudoBoxShadow: string;
+};
+
 async function fulfillJSON(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -122,10 +140,103 @@ async function installAPI(page: Page) {
   });
 }
 
-async function boxOrFail(locator: ReturnType<Page["locator"]>) {
+async function boxOrFail(locator: Locator) {
   const box = await locator.boundingBox();
   expect(box).not.toBeNull();
   return box!;
+}
+
+async function centerForHitTesting(control: Locator): Promise<void> {
+  await control.evaluate((element) => {
+    element.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+  });
+  await expect(control).toBeInViewport();
+}
+
+async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
+  return control.evaluate((element) => {
+    const button = element as HTMLButtonElement;
+    const rect = button.getBoundingClientRect();
+    const style = window.getComputedStyle(button);
+    const hitSlop = window.getComputedStyle(button, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+    const topInset = Number.parseFloat(hitSlop.top) || 0;
+    const rightInset = Number.parseFloat(hitSlop.right) || 0;
+    const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
+    const leftInset = Number.parseFloat(hitSlop.left) || 0;
+    const pseudoTop = rect.top + borderTop + topInset;
+    const pseudoRight = rect.right - borderRight - rightInset;
+    const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+    const pseudoLeft = rect.left + borderLeft + leftInset;
+    const top = Math.min(rect.top, pseudoTop);
+    const right = Math.max(rect.right, pseudoRight);
+    const bottom = Math.max(rect.bottom, pseudoBottom);
+    const left = Math.min(rect.left, pseudoLeft);
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const inset = 1;
+    const perimeterHits = [
+      [centerX, top + inset],
+      [right - inset, centerY],
+      [centerX, bottom - inset],
+      [left + inset, centerY],
+    ].map(([x, y]) => {
+      const hit = document.elementFromPoint(x, y);
+      return hit === button || (hit instanceof Node && button.contains(hit));
+    });
+
+    return {
+      top,
+      right,
+      bottom,
+      left,
+      height: bottom - top,
+      width: right - left,
+      visualHeight: rect.height,
+      visualWidth: rect.width,
+      perimeterHits,
+      pseudoBackground: hitSlop.backgroundColor,
+      pseudoBorderWidths: [
+        hitSlop.borderTopWidth,
+        hitSlop.borderRightWidth,
+        hitSlop.borderBottomWidth,
+        hitSlop.borderLeftWidth,
+      ],
+      pseudoBoxShadow: hitSlop.boxShadow,
+    };
+  });
+}
+
+async function expectTransparentHitSlop(target: EffectiveTarget): Promise<void> {
+  expect(target.pseudoBackground).toBe("rgba(0, 0, 0, 0)");
+  expect(target.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
+  expect(target.pseudoBoxShadow).toBe("none");
+  expect(target.perimeterHits, "all target perimeter points must resolve to the Home progress CTA")
+    .toEqual([true, true, true, true]);
+}
+
+async function expectFocusVisible(control: Locator, page: Page): Promise<void> {
+  await centerForHitTesting(control);
+  await control.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(control).toBeFocused();
+  const focus = await control.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      focusVisible: element.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(focus.focusVisible).toBe(true);
+  expect(focus.outlineStyle).not.toBe("none");
+  expect(Number.parseFloat(focus.outlineWidth)).toBeGreaterThanOrEqual(3);
+  expect(focus.boxShadow).not.toBe("none");
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -247,5 +358,49 @@ test.describe("Adaptive Knowledge Coach application shell and Home", () => {
 
     expect(motion.transitionDuration).toBe("0s");
     expect(motion.animationName).toBe("none");
+  });
+
+  test("Issue #74 Home progress CTA touch target preserves presentation and content separation", async ({ page }, testInfo) => {
+    test.skip(
+      !["desktop-chromium", "android-chromium", "ios-webkit"].includes(testInfo.project.name),
+      "The Home progress target contract runs in desktop Chromium, Android Chromium and iOS WebKit.",
+    );
+
+    await page.emulateMedia({ colorScheme: "dark" });
+    await installAPI(page);
+
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+
+      const main = page.getByRole("main", { name: "Главная", exact: true });
+      const panel = main.locator(".lx-progress-panel");
+      const action = panel.getByRole("button", { name: "Открыть прогресс", exact: true });
+
+      await expect(main).toBeVisible();
+      await expect(panel).toBeVisible();
+      await expect(action).toBeVisible();
+      await expect(main.locator(".lx-home-paths")).toBeHidden();
+      await centerForHitTesting(action);
+
+      const target = await effectiveTarget(action);
+      const expectedMinimum = await page.evaluate(() => (
+        window.matchMedia("(pointer: coarse)").matches ? 48 : 44
+      ));
+      const panelBox = await boxOrFail(panel);
+      const precedingBottom = await action.evaluate((element) => (
+        element.previousElementSibling?.getBoundingClientRect().bottom ?? Number.NEGATIVE_INFINITY
+      ));
+
+      expect(target.visualHeight).toBeCloseTo(44, 1);
+      expect(target.height).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
+      expect(target.width).toBeCloseTo(target.visualWidth, 3);
+      expect(target.top).toBeGreaterThanOrEqual(precedingBottom - 0.1);
+      expect(target.top).toBeGreaterThanOrEqual(panelBox.y - 0.1);
+      expect(target.bottom).toBeLessThanOrEqual(panelBox.y + panelBox.height + 0.1);
+      await expectTransparentHitSlop(target);
+      await expectFocusVisible(action, page);
+      await expectNoHorizontalOverflow(page);
+    }
   });
 });
