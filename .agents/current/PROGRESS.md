@@ -73,3 +73,32 @@ Resolve from the live branch ref after this task-record synchronization commit.
 ### Next action
 
 Read back the synchronized task records, re-run exact compare against unchanged `main`, then monitor the authoritative PR CI. PR #409 remains Draft until the complete required matrix passes on the final developer-authored head.
+
+## 2026-08-05 23:45 Europe/Moscow
+
+### Authoritative CI #2898 diagnosis
+
+- CI run `31045012416` classified the PR as a product change and checked the synthetic PR merge ref `a8f436efe9e3f4beb6f28208c00bc85ee13ab984` for branch head `0c63cf89d6d400800c30f247ee812c564647900c`.
+- Change-scope classification passed.
+- Backend unit, race, coverage, vulnerability and integration gates passed.
+- Frontend dependency installation added 395 packages and lint passed with only pre-existing warnings.
+- Frontend TypeScript failed before unit, build and audit; browser jobs did not become authoritative.
+- Job `92438429957` and artifact `8946111786` show `TS2307: Cannot find module '@playwright/test'` across every existing Playwright file, followed by implicit-any cascade errors.
+
+### CI root cause
+
+The branch version of `frontend/package.json` accidentally omitted the pre-existing dev dependency `@playwright/test: ^1.61.1` while the complete file was rewritten to register the new E2E command. `frontend/package-lock.json` still contains the exact dependency and was not modified. `npm ci` therefore completed but did not expose the Playwright package required by TypeScript.
+
+### Focused correction
+
+- Restore the exact pre-existing `@playwright/test: ^1.61.1` entry in `frontend/package.json`.
+- Do not change `frontend/package-lock.json`, runtime code, CSS, browser proof or scope.
+- Record the failed gate and root cause in current Agent Harness evidence.
+
+### Current branch head
+
+- Before the focused correction: `0c63cf89d6d400800c30f247ee812c564647900c`.
+
+### Next action
+
+Publish one focused dependency-restoration commit with factual harness evidence, read the corrected paths back, verify the exact eight-path compare and require a new full CI run on the new developer-authored head.
