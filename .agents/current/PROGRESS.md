@@ -103,3 +103,41 @@ Resolve from the live branch ref after this evidence and execution record are co
 ### Next action
 
 Read back all eight changed paths, verify the exact allow-list diff and unchanged `main`, then run a fresh full authoritative CI on the new immutable head. PR #407 remains Draft.
+
+## 2026-08-05 22:29 Europe/Moscow
+
+### Third authoritative result
+
+- Candidate head `95cb0fc71ebbd6431e00721f985a3bfca722c29a` ran in CI #2886 / run `31038367821`.
+- Frontend core passed in full: lint, TypeScript, unit/source contracts, production build and dependency audit.
+- Backend unit/security and integration passed.
+- UI shard 1, accessibility audit, controlled service worker, dictionary smoke, performance budgets, content security, iOS PWA dictionary and lesson completion passed.
+- Critical `Frontend E2E (UI tests (shard 2/2))`, job `92416718719`, passed. This is the first authoritative proof that Android Chromium and iOS WebKit both satisfy 48×48 target dimensions, four-point perimeter hit-testing, compact input containment, painted separation, effective-target separation, focus behavior and clear callback at 390px and 320px.
+- CI #2886 remained terminally red only because `Frontend E2E (Visual regression)`, job `92416718754`, failed.
+
+### Visual diagnosis
+
+- Downloaded failed visual artifact `frontend-playwright-report-visual` / ID `8943656629` from run `31038367821`.
+- Downloaded comparison artifact `frontend-playwright-report-visual` / ID `8932166073` from known-good run `31009993569`.
+- Compact Phrases Light and Dark current screenshots differed from their content-addressed baselines by exactly 62 pixels each.
+- The difference was confined to x `224..234`, y `407..414`, at the trailing end of the empty-search placeholder.
+- No button, icon, surface, border, spacing block or route-shell pixel changed.
+- Root cause: unconditional compact `padding-right: 120px` applied even when `Очистить поиск` was absent, reducing the placeholder rasterization area by 12 CSS px and clipping one additional glyph.
+- Visual baselines were not updated because empty-search presentation is outside the intended rendered-control correction.
+
+### Third corrective change
+
+- Kept compact clear action `right: 80px`.
+- Scoped `padding-right: 120px` to `.lx-phrases-search:has(.lx-phrases-search-clear) input`.
+- Empty search now retains the original compact `padding-right: 108px`; active search receives 120px only while the clear action is rendered; clicking clear restores 108px automatically.
+- Source contract now requires the exact rendered-state `:has(...)` selector and rejects an unconditional Phrases input override.
+- Browser proof now records and asserts empty, active and restored input padding separately at desktop, 390px and 320px.
+- Existing Light/Dark visual baselines remain authoritative and must pass without updates.
+
+### Current branch head
+
+Resolve from the live branch ref after this progress record and execution record are committed.
+
+### Next action
+
+Read back the rendered-state CSS/source/browser contracts, verify the exact eight-file allow-list and unchanged `main`, then run a fresh full authoritative CI. PR #407 remains Draft until visual regression and the complete matrix pass together on one immutable head.
