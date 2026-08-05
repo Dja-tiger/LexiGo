@@ -2,22 +2,23 @@
 
 ## Verification
 
-- Last verified: 2026-08-05 Europe/Moscow.
+- Last verified: 2026-08-06 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-- Latest deployed product SHA: `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-- Latest completed product slice: Issue #74 conditional Dictionary `Очистить поиск` touch target.
-- Completion PR: #409.
-- PR #409 immutable developer-authored head: `28d7c9f2281fc1f883e236dbffb9293918b2de27`.
-- Authoritative PR CI: #2899 / run `31045633706`, complete success.
-- Expected-head squash merge produced product SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-- Exact-SHA main CI #2900 / run `31046511686` completed successfully with the full product matrix and immutable web/API image publication.
-- Immutable web image: `ghcr.io/dja-tiger/lexigo-web:65cb8c675e40ed654f5b1779d0ee57e34cf112ec@sha256:106819bb09d32fdbc63d33d48ce31348cf471a538865f03036c927c041a875dc`.
-- Immutable API image: `ghcr.io/dja-tiger/lexigo-api:65cb8c675e40ed654f5b1779d0ee57e34cf112ec@sha256:0c10b2020dcc03bd6071114cad8ac3079f4cc2ab5bddf80addaee4d441fa8ae8`.
-- Exact-image Deploy Stage #2738 / run `31047225070` validated the exact CI scope, deployed SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec` and completed with overall conclusion `success`.
-- Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success` for exact image SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`; 12/12 public desktop Chromium and iOS WebKit checks passed, including `/dictionary`.
-- PR #409 had no comments, reviews or unresolved review threads before merge.
-- Issue #74 received factual completion comment `5197403412` and remains open because remaining live controls, whole-application 200% browser zoom and final physical-device acceptance are separate slices.
+- Product base verified before this documentation slice: `3b8f3c39faee1223e3773935c761eb7903409868`.
+- Latest deployed product SHA: `3b8f3c39faee1223e3773935c761eb7903409868`.
+- Latest completed product slice: Issue #74 canonical Word Detail Back touch target.
+- Completion PR: #411.
+- PR #411 immutable product/test head: `fd06113d9670ed67954043a98799bc5595fd1494`.
+- PR #411 final developer-authored evidence head: `cc554a0b8f8edf455198b57ed61f1685ed7a6230`.
+- Product/test CI #2904 / run `31052177676` and final immutable-head CI #2905 / run `31053003711` both completed successfully without retries.
+- Expected-head squash merge produced product SHA `3b8f3c39faee1223e3773935c761eb7903409868`.
+- Exact-SHA main CI #2906 / run `31053619452` completed successfully with the full product matrix and immutable web/API image publication.
+- Immutable web image tag: `ghcr.io/dja-tiger/lexigo-web:3b8f3c39faee1223e3773935c761eb7903409868`.
+- Immutable API image tag: `ghcr.io/dja-tiger/lexigo-api:3b8f3c39faee1223e3773935c761eb7903409868`.
+- Exact-image Deploy Stage #2744 / run `31054188460` validated the exact CI scope, deployed SHA `3b8f3c39faee1223e3773935c761eb7903409868` and completed with overall conclusion `success`.
+- Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success` for exact image SHA `3b8f3c39faee1223e3773935c761eb7903409868`; web and API containers were healthy and 12/12 public desktop Chromium / iOS WebKit checks passed.
+- PR #411 had no comments, reviews or unresolved review threads before merge.
+- Issue #74 received factual completion comment `5198315936` and remains open because remaining live controls, whole-application 200% browser zoom and final physical-device acceptance are separate slices.
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance and do not intersect this Agent Docs reconciliation.
 
 ## Delivery contract
@@ -124,6 +125,15 @@
 - Desktop Chromium, Android Chromium and iOS WebKit prove 44/48px target geometry, all four perimeter hits, search-field containment, painted trailing inset, focus, clear behavior and no horizontal overflow at 1440px, 390px and 320px.
 - Product SHA: `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
 
+### PR #411 — canonical Word Detail Back touch target
+
+- The live `/words/[id]` native Back action retains its existing 42px painted border box, desktop accessible name `Словарь`, compact name `Слово` and existing `onBack` callback.
+- A route-scoped interaction-only owner exposes a transparent 44px fine-pointer / 48px coarse-pointer block-axis event surface; inline expansion remains zero, preventing collision with the adjacent status chip.
+- Runtime, API, History, storage, focus styling, typography, spacing, colors and content-addressed Word Detail visual baselines remain unchanged.
+- A fail-closed source contract protects selector/import ownership, responsive names, native-button callback ownership, absence of visual declarations and blocking UI/accessibility command registration.
+- Desktop Chromium, Android Chromium and iOS WebKit prove the 42px painted box, 44/48px effective height, four perimeter hits, transparent pseudo styles, route-content clearance, status separation, visible focus, URL-backed Dictionary-state restoration and no horizontal overflow at 1440px, 390px and 320px.
+- Product SHA: `3b8f3c39faee1223e3773935c761eb7903409868`.
+
 ## Issue #74 acceptance status
 
 Completed:
@@ -135,18 +145,19 @@ Completed:
 - Canonical Home `Открыть прогресс` has a guaranteed 44/48px effective target without visual growth or collision with progress content.
 - Conditional Phrases `Очистить поиск` has a guaranteed 44/48px effective target, compact separation from `Найти` and rendered-only input clearance.
 - Conditional Dictionary `Очистить поиск` has a guaranteed 44/48px effective target contained inside its 48px search field without painted growth.
+- Canonical Word Detail Back has a guaranteed 44/48px effective target without painted growth, status-chip overlap or loss of Dictionary URL state.
 - Canonical mobile-navigation labels are readable at default compact width and scale with enlarged root text without clipping, ellipsis, target overlap or horizontal overflow.
 - Expanded targets and enlarged labels preserve presentation ownership, keyboard focus, accessible names, runtime callbacks, route navigation and content clearance.
 - Hidden/decorative consumers and stale issue wording are excluded from ownership; no live `Все режимы` control exists in the current `/learn` runtime.
 
 Still open:
 
-- Audit and remediate remaining live preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397, #402, #405, #407 and #409.
+- Audit and remediate remaining live related-phrase, retry, preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397, #402, #405, #407, #409 and #411.
 - Prove all remaining primary, secondary, text-only and icon controls meet minimum target and spacing contracts across affected routes.
 - Verify whole-application 200% browser zoom without clipping, overlap or inaccessible actions; PR #397 proves 200% root-text enlargement only for canonical mobile navigation.
 - Complete manual physical-device acceptance before Issue #74 can close.
 
-Issue #74 remains open. PRs #387, #389, #391, #393, #395, #397, #402, #405, #407 and #409 are completed atomic production slices, not full Issue closure.
+Issue #74 remains open. PRs #387, #389, #391, #393, #395, #397, #402, #405, #407, #409 and #411 are completed atomic production slices, not full Issue closure.
 
 ## Completed CI/CD control-plane slice
 
@@ -162,9 +173,9 @@ Issue #74 remains open. PRs #387, #389, #391, #393, #395, #397, #402, #405, #407
 ## Current state
 
 - No product slice is active.
-- Product runtime and stage are validated on exact image SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
+- Product runtime and stage are validated on exact image SHA `3b8f3c39faee1223e3773935c761eb7903409868`.
 - `.agents/current/**` is reset to canonical templates by this documentation reconciliation.
-- Issue #74 remains open; its latest completed slice is PR #409.
+- Issue #74 remains open; its latest completed slice is PR #411.
 - The next Issue #74 slice must begin from live GitHub state and select only a confirmed exposed control or a bounded 200% zoom surface after runtime-visibility, accessibility-tree and computed-style verification.
 - Dependabot PRs #304, #305 and #403 remain separate maintenance work and must not be merged implicitly into an Issue #74 product slice.
 
@@ -177,26 +188,25 @@ Issue #74 remains open. PRs #387, #389, #391, #393, #395, #397, #402, #405, #407
 
 ## Recent production evidence
 
-1. #409 — `fix(a11y): expand Dictionary search clear touch target` → `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-2. #408 — Agent Docs reconciliation → `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
-3. #407 — `fix(a11y): expand Phrases search clear touch target` → `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
-4. #406 — Agent Docs reconciliation → `6d55091e55d2ac1340a15c4179b02f206605d4dd`.
-5. #405 — `fix(a11y): expand Home progress action touch target` → `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
+1. #411 — `fix(a11y): expand Word Detail Back touch target` → `3b8f3c39faee1223e3773935c761eb7903409868`.
+2. #410 — Agent Docs reconciliation → `ecbb16dd42cd0567f3a9c760f2ea938aede8bb6b`.
+3. #409 — `fix(a11y): expand Dictionary search clear touch target` → `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
+4. #408 — Agent Docs reconciliation → `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
+5. #407 — `fix(a11y): expand Phrases search clear touch target` → `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
 
 ## Evidence
 
-- PR #409 immutable head `28d7c9f2281fc1f883e236dbffb9293918b2de27` passed authoritative full CI #2899 / run `31045633706`.
-- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded together on the immutable head.
-- The Dictionary target proof passed in desktop Chromium, Android Chromium and iOS WebKit at 1440px, 390px and 320px; visual baselines passed without updates.
-- Initial CI #2898 / run `31045012416` correctly failed because the branch manifest accidentally omitted the existing `@playwright/test` dev dependency. The exact dependency was restored without changing the lockfile or product behavior; the failed run is not accepted as completion evidence.
-- Expected-head squash merge produced `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-- Exact-SHA main CI #2900 / run `31046511686` completed successfully with the full product gates and immutable web/API image publication.
-- Web image digest: `sha256:106819bb09d32fdbc63d33d48ce31348cf471a538865f03036c927c041a875dc`.
-- API image digest: `sha256:0c10b2020dcc03bd6071114cad8ac3079f4cc2ab5bddf80addaee4d441fa8ae8`.
-- Deploy Stage #2738 / run `31047225070` validated the exact CI scope artifact, deployed exact image SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`, verified healthy services and public endpoints, and completed public browser validation successfully.
-- Issue #12 confirms exact image SHA, healthy containers, HTTP 200 frontend/API smoke and 12/12 public desktop Chromium / iOS WebKit checks.
-- PR #409 had no comments, reviews or unresolved review threads before merge.
-- Issue #74 received factual completion comment `5197403412` and remains open for its remaining acceptance scope.
+- PR #411 product/test head `fd06113d9670ed67954043a98799bc5595fd1494` passed full CI #2904 / run `31052177676`.
+- PR #411 final developer-authored head `cc554a0b8f8edf455198b57ed61f1685ed7a6230` passed full CI #2905 / run `31053003711` after the single evidence-only Agent Harness commit.
+- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded together on both immutable heads.
+- The Word Detail target proof passed in desktop Chromium, Android Chromium and iOS WebKit at 1440px, 390px and 320px; content-addressed visual baselines passed without updates.
+- PR #411 had no failed authoritative run and required no retry.
+- Expected-head squash merge produced `3b8f3c39faee1223e3773935c761eb7903409868`.
+- Exact-SHA main CI #2906 / run `31053619452` completed successfully with the full product gates and immutable web/API image publication.
+- Deploy Stage #2744 / run `31054188460` validated the exact CI scope artifact, deployed exact image SHA `3b8f3c39faee1223e3773935c761eb7903409868`, verified healthy services and public endpoints, and completed public browser validation successfully.
+- Issue #12 confirms exact image SHA, healthy web/API/PostgreSQL/Redis containers, HTTP 200 frontend/API smoke and 12/12 public desktop Chromium / iOS WebKit checks.
+- PR #411 had no comments, reviews or unresolved review threads before merge.
+- Issue #74 received factual completion comment `5198315936` and remains open for its remaining acceptance scope.
 - Local clone execution was unavailable because the execution environment could not resolve GitHub; no local result is counted as authoritative product evidence.
 - Final claims use exact refs, files, Issues, PRs, workflow jobs, deployment records and Issue #12 status.
 
