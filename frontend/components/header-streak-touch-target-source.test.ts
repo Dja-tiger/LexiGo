@@ -88,7 +88,8 @@ describe("Issue #74 header streak touch-target ownership", () => {
     expect(dictionaryRuntime).toContain('<span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>');
     expect(dictionaryRuntime).not.toContain('<button className="lx-streak"');
     expect(touchTargets).toContain(LIVE_SELECTOR);
-    expect(touchTargets).not.toContain(".lx-streak::before");
+    expect(touchTargets).toContain(`.lx-routed-app ${LIVE_SELECTOR}::before {`);
+    expect(touchTargets).not.toMatch(/\.lx-routed-app\s+\.lx-streak::before\s*\{/);
     expect(touchTargets).not.toContain("span.lx-streak");
     expect(touchTargets).not.toContain(".lx-icon-button");
     expect(touchTargets).not.toContain(".lx-avatar");
