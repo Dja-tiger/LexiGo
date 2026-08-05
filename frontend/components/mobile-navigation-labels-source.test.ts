@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const labelsOwner = readFileSync(new URL("../app/mobile-navigation-labels.css", import.meta.url), "utf8");
 const routeNavigation = readFileSync(new URL("../app/route-navigation.css", import.meta.url), "utf8");
+const adaptiveNavigation = readFileSync(new URL("../app/adaptive-navigation.css", import.meta.url), "utf8");
 const adaptiveHome = readFileSync(new URL("../app/adaptive-knowledge-coach-home.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const routeRuntime = readFileSync(new URL("./route-primary-navigation.tsx", import.meta.url), "utf8");
@@ -63,7 +64,6 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(routeNavigation).toContain("white-space: nowrap;");
     expect(adaptiveHome).toContain(".lx-routed-app .lx-route-nav--mobile a {");
     expect(adaptiveHome).toContain("font-size: 11px;");
-    expect(adaptiveHome).toContain("padding: 0 24px calc(92px + env(safe-area-inset-bottom));");
 
     expect(labelsOwner).toContain("--lx-route-mobile-navigation-label-size: max(12px, 0.75rem);");
     expect(labelsOwner).toContain("@media (max-width: 390px)");
@@ -75,16 +75,24 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(labelsOwner).toContain("overflow-wrap: anywhere;");
   });
 
-  it("preserves default geometry and grows mounted navigation with enlarged text", () => {
-    expect(labelsOwner).toContain("--lx-route-mobile-navigation-block-size: max(");
-    expect(labelsOwner).toContain("calc(33.6px + 2.4rem)");
+  it("preserves each default route reserve and adds only enlarged-text growth", () => {
+    expect(adaptiveNavigation).toContain("--lx-compact-navigation-height: 76px;");
+    expect(adaptiveHome).toContain("min-height: calc(72px + env(safe-area-inset-bottom));");
+    expect(adaptiveHome).toContain("padding: 0 24px calc(92px + env(safe-area-inset-bottom));");
+
+    expect(labelsOwner).toContain("--lx-route-mobile-navigation-block-size: max(72px, calc(33.6px + 2.4rem));");
+    expect(labelsOwner).toContain("--lx-route-mobile-navigation-growth: max(0px, calc(2.4rem - 38.4px));");
+    expect(labelsOwner).toContain(':has(.lx-route-nav--mobile) .lx-app::after {');
+    expect(labelsOwner).toContain("display: block;");
+    expect(labelsOwner).toContain("block-size: var(--lx-route-mobile-navigation-growth);");
+    expect(labelsOwner).toContain('content: "";');
+    expect(labelsOwner).not.toContain("padding-bottom:");
+    expect(labelsOwner).not.toContain("var(--lx-compact-navigation-height)");
+  });
+
+  it("preserves default link geometry and grows mounted navigation with enlarged text", () => {
     expect(labelsOwner).toContain("min-block-size: var(--lx-route-mobile-navigation-block-size);");
     expect(labelsOwner).toContain("min-block-size: max(54px, calc(25.2px + 2.4em));");
-    expect(labelsOwner).toContain(':has(.lx-route-nav--mobile) .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),');
-    expect(labelsOwner).toContain(':has(.lx-route-nav--mobile) .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode)');
-    expect(labelsOwner).toContain("padding-bottom: calc(");
-    expect(labelsOwner).toContain("+ 20px");
-    expect(labelsOwner).toContain("+ env(safe-area-inset-bottom)");
     expect(labelsOwner).toContain("min-inline-size: 0;");
   });
 
@@ -96,7 +104,6 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
       "right",
       "bottom",
       "left",
-      "display",
       "grid-template-columns",
       "gap",
       "border",
