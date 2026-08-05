@@ -27,23 +27,44 @@ Phrases presentation defines the icon button's visual dimensions and focus state
 - Added `frontend/e2e/phrases-search-clear-touch-targets.spec.ts`.
 - Updated `frontend/app/layout.tsx` with one ordered CSS import.
 - Updated `frontend/package.json` to include the browser proof in blocking UI and accessibility suites.
-- Updated `.agents/current/TASK.md` and this progress record.
+- Updated `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md`.
 
 ### Checks passed
 
 - Exact branch creation from base `6d55091e55d2ac1340a15c4179b02f206605d4dd`.
 - Source/runtime inspection confirms exact role/name/callback and painted geometry ownership.
-- Branch ref and unchanged `main` ref were read back after implementation writes.
+- Exact initial base-to-head compare contained only the eight allowed paths.
+- Draft PR #407 was opened on initial head `962c05c217abf4afc8120e1638372b714a4aecf2`.
+- Initial CI #2875 / run `31035970966` passed classifier, backend gates, frontend lint, TypeScript, unit/source contracts, production build, dependency audit, CSP, accessibility audit, visual regression, performance budgets, controlled service worker, dictionary smoke, iOS PWA, lesson completion and UI shard 1.
+- The new desktop Chromium proof passed in UI shard 1.
+- Branch and unchanged `main` refs were read back after implementation writes.
 
 ### Checks failed
 
-- None yet.
-- Local execution is unavailable because the execution environment cannot resolve GitHub for a repository clone; no local result is counted as evidence.
+- Initial CI #2875 failed in `Frontend E2E (UI tests (shard 2/2))`, job `92408580507`.
+- Android Chromium and iOS WebKit rejected the compact target because symmetric 48px expansion overlapped the visible `Найти` action by approximately 12 CSS px.
+- Playwright diagnostics were downloaded from artifact `frontend-playwright-report-ui-2` / artifact ID `8942780688`; the assertion failed at `submitBox.x - target.targetRight >= 1`.
+- Local execution remains unavailable because the execution environment cannot resolve GitHub for a repository clone; no local result is counted as evidence.
+
+## 2026-08-05 21:53 Europe/Moscow
+
+### Failure analysis
+
+The first implementation used one symmetric `inset` value. That correctly produced a 48×48 coarse-pointer square and passed perimeter hit-testing, but expanded six pixels toward the adjacent submit control. On the compact layout, the pre-existing separation between the painted clear button and `Найти` is insufficient for symmetric expansion.
+
+### Corrective change
+
+- Replaced symmetric `inset` with logical directional hit slop:
+  - block expansion remains centered vertically;
+  - inline expansion uses the full delta toward the search input;
+  - the submit-facing edge remains aligned with the existing 36px painted box.
+- Updated the source contract to require the directional logical insets and reject reintroduction of symmetric `inset`.
+- Kept runtime markup, callback, painted dimensions, positioning, input padding, focus styling and visual baselines unchanged.
 
 ### Current branch head
 
-Resolve from the live branch ref after `.agents/current/EXECUTION.md` and final read-back are committed. Implementation head before the current Agent Docs updates was `b2ad8a7947005dca171f57f10d2f2b6d4539c566`.
+Resolve from the live branch ref after the execution record is updated. Corrective implementation head before Agent Docs updates was `ccc8352998b1c5d359f3f6605524fb3dbf565339`.
 
 ### Next action
 
-Complete the execution record, read back all eight allowed paths, compare exact base to head, open a Draft PR and use authoritative CI to validate source contracts, frontend core and the full browser matrix.
+Read back the corrected files and exact diff, then validate the new final branch head with a fresh full authoritative CI. Do not mark PR #407 Ready until Android Chromium and iOS WebKit both prove 48×48 containment and submit separation on the immutable head.
