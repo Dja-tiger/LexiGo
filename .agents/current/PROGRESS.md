@@ -1,46 +1,59 @@
 # Current Task Progress
 
-## 2026-08-05 15:38 Europe/Moscow
+## 2026-08-05 15:58 Europe/Moscow
 
 ### Verified
 
 - live `main`: `091b8ffdbf0bb70edbbe963f9fd88e40c3ef848a`;
 - latest deployed product SHA: `346b9690ab6029776eeac614f2d26472160af927`;
-- no intersecting product or Agent Docs PR is open;
+- Draft PR #397 targets `main` from `fix/issue-74-mobile-navigation-labels`;
 - Issue #74 remains open;
 - canonical mobile navigation is rendered by `RoutePrimaryNavigation` as `.lx-route-nav--mobile` with exactly four links;
 - current mobile link targets are already at least 48×52px;
-- current compact labels use 12px at 391–719px and are forced to 11px at 390px and below;
-- current label boxes use `overflow: hidden`, `text-overflow: ellipsis` and `white-space: nowrap`;
-- legacy `.lx-mobile-nav` is not part of this slice.
+- the effective live cascade forced 11px labels and a fixed 92px content reserve from `adaptive-knowledge-coach-home.css` after the canonical route owner;
+- legacy `.lx-mobile-nav` is not part of this slice;
+- route/history runtime files remain unchanged.
 
 ### Finding
 
-The live route-owned mobile navigation satisfies target geometry but not the remaining Issue #74 label contract. At phone widths the canonical labels are deliberately reduced and clipped, and their fixed pixel size does not respond to enlarged root text.
+The live route-owned mobile navigation satisfies target geometry but not the remaining Issue #74 label contract. Phone labels were fixed at 11px by a late Figma layer, while single-line clipping and a fixed content reserve prevented text enlargement from reflowing safely.
 
 ### Root cause
 
-The canonical presentation owner optimizes the four-column bar for a fixed compact height by lowering the smallest breakpoint to 11px and enforcing single-line ellipsis. Application bottom reserve is also tied to the fixed compact navigation token rather than text-driven growth.
+The route presentation stack contains multiple mobile owners. The late Home/application-shell layer wins the original 12px rule, sets 11px, and fixes bottom padding independently of text size. A correct remediation therefore requires a final narrowly scoped owner with equal-or-higher specificity, not an early override beside `route-navigation.css`.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/app/layout.tsx`
+- `frontend/app/mobile-navigation-labels.css`
+- `frontend/components/mobile-navigation-labels-source.test.ts`
+- `frontend/e2e/mobile-navigation-labels.spec.ts`
+- `frontend/package.json`
 
 ### Checks passed
 
 - repository and Harness pre-flight;
 - live `main`, open PR and Issue verification;
-- runtime owner and cascade inspection;
-- existing adaptive-navigation browser contract inspection.
+- runtime visibility and route-owner inspection;
+- fail-closed changed-path audit: exactly eight allowed files;
+- exact PR patch review;
+- root layout readback restored all runtime markup and ordering; only the new CSS import plus the pre-existing missing-final-newline normalization remain;
+- post-cascade audit against `adaptive-knowledge-coach-home.css`;
+- source contract covers import order, exact live owner, old 11px cascade, rem growth, mounted-navigation reserve and blocking command registration;
+- focused proof covers 390px default, 320px narrow, 200% root text, target separation, clipping, focus, content reserve and canonical navigation in desktop Chromium, Android Chromium and iOS WebKit.
 
 ### Checks failed
 
-- none yet.
+- an initial early import lost to the later Home/Figma cascade; corrected before CI;
+- an initial full-file `layout.tsx` replacement unintentionally changed runtime composition; detected by readback and reverted before CI.
 
 ### Current branch head
 
-Resolve from live branch `fix/issue-74-mobile-navigation-labels`.
+Resolve from live branch `fix/issue-74-mobile-navigation-labels`. The code/test candidate before this progress update was `94bf64cab84394ffb39aaed3a3b722cc20a2c8a1`.
 
 ### Next action
 
-Add one narrow post-cascade mobile label owner, source contract and focused browser proof, then read back the exact branch diff before opening a Draft PR.
+Run authoritative CI on the final documentation-adjusted head, inspect focused browser output and any visual/cascade failures, then amend only within the declared atomic scope.
