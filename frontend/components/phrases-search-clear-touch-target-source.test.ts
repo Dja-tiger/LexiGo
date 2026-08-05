@@ -13,7 +13,7 @@ const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.me
 
 const TARGET_SELECTOR = '.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear';
 const COMPACT_LAYOUT_CORRECTION = `@media (max-width: 767px) {
-  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search input {
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search:has(.lx-phrases-search-clear) input {
     padding-right: 120px;
   }
 
@@ -46,11 +46,12 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(layout.match(/phrases-search-clear-touch-targets\.css/g)).toHaveLength(1);
   });
 
-  it("limits ownership to the conditional clear action and its compact input clearance", () => {
+  it("limits ownership to the conditional clear action and its rendered-state input clearance", () => {
     expect(runtime).toMatch(/searchInput \? \(\s*<button className="lx-phrases-search-clear" type="button" onClick=\{onSearchClear\} aria-label="Очистить поиск">×<\/button>\s*\) : null/);
     expect(touchTargets).toContain(TARGET_SELECTOR);
     expect(touchTargets).toContain(`${TARGET_SELECTOR}::before`);
-    expect(touchTargets).toContain('.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search input');
+    expect(touchTargets).toContain('.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search:has(.lx-phrases-search-clear) input');
+    expect(touchTargets).not.toContain('.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search input {');
     expect(touchTargets).not.toContain(".lx-phrases-topic-chips");
     expect(touchTargets).not.toContain(".lx-phrases-search-submit");
     expect(touchTargets).not.toContain(".lx-phrases-filters");
@@ -68,8 +69,9 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(touchTargets).toContain("touch-action: manipulation;");
   });
 
-  it("corrects only the compact painted overlap and reserves matching input clearance", () => {
+  it("corrects only rendered compact overlap and preserves empty-search padding", () => {
     expect(touchTargets).toContain(COMPACT_LAYOUT_CORRECTION);
+    expect(touchTargets.match(/:has\(\.lx-phrases-search-clear\)/g)).toHaveLength(1);
     expect(touchTargets.match(/padding-right:/g)).toHaveLength(1);
     expect(touchTargets.match(/\n\s*right:/g)).toHaveLength(1);
 
@@ -79,7 +81,7 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     }
   });
 
-  it("preserves the base painted box, desktop position and focus owner", () => {
+  it("preserves the base painted box, empty compact padding, desktop position and focus owner", () => {
     expect(presentation).toContain(".lx-phrases-search input {\n  width: 100%;\n  min-height: 48px;");
     expect(presentation).toContain(".lx-phrases-search-clear {\n  position: absolute;");
     expect(presentation).toContain("width: 36px;\n  min-height: 36px;");
@@ -100,6 +102,7 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(browserProof).toContain("Issue #74 Phrases search-clear touch target");
     expect(browserProof).toContain('name: "Очистить поиск"');
     expect(browserProof).toContain('"desktop-chromium", "android-chromium", "ios-webkit"');
-    expect(browserProof).toContain("paddingRight");
+    expect(browserProof).toContain("emptyPaddingRight");
+    expect(browserProof).toContain("activePaddingRight");
   });
 });
