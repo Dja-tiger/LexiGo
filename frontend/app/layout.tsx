@@ -22,6 +22,7 @@ import "./accessibility-navigation.css";
 import "./adaptive-navigation.css";
 import "./adaptive-layout.css";
 import "./route-navigation.css";
+import "./mobile-navigation-labels.css";
 import "./route-boundaries.css";
 import "./legal.css";
 import "./account-security.css";
@@ -108,11 +109,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
-          <WebVitalsReporter />
+          <a className="lx-global-skip-link" href="#lexigo-main-content">Перейти к основному содержимому</a>
           <ServiceWorkerRegistration />
-          <RoutedLexigoApp />
-          {children}
+          <RoutedLexigoApp>{children}</RoutedLexigoApp>
           <LegalFooter />
+          <WebVitalsReporter />
         </ApplicationErrorBoundary>
       </body>
     </html>
