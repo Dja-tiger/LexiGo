@@ -11,10 +11,6 @@ on:
         required: false
         type: string
 
-concurrency:
-  group: deploy-stage
-  cancel-in-progress: true
-
 permissions:
   contents: read
   packages: read
@@ -64,6 +60,9 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main'))
+    concurrency:
+      group: deploy-stage
+      cancel-in-progress: true
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 40
     environment: stage

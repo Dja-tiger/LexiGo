@@ -260,8 +260,12 @@ class WorkflowContractTest(unittest.TestCase):
                 self.assertIn(contract, self.ci)
 
     def test_stage_deploy_consumes_exact_ci_scope_and_keeps_manual_dispatch(self) -> None:
+        workflow_header = self.deploy.split("\njobs:\n", maxsplit=1)[0]
+        self.assertNotIn("\nconcurrency:\n", workflow_header)
         self.assertIn("actions: read", self.deploy)
+
         scope_job = _job_block(self.deploy, "scope")
+        self.assertNotIn("concurrency:", scope_job)
         self.assertIn("actions/download-artifact@v7", scope_job)
         self.assertIn("name: ci-scope-${{ github.event.workflow_run.head_sha }}", scope_job)
         self.assertIn("run-id: ${{ github.event.workflow_run.id }}", scope_job)
@@ -274,6 +278,13 @@ class WorkflowContractTest(unittest.TestCase):
         self.assertIn("always()", deploy_job)
         self.assertIn("github.event_name == 'workflow_dispatch'", deploy_job)
         self.assertIn("needs.scope.outputs.agent_docs_only != 'true'", deploy_job)
+        self.assertIn(
+            "    concurrency:\n"
+            "      group: deploy-stage\n"
+            "      cancel-in-progress: true",
+            deploy_job,
+        )
+        self.assertLess(deploy_job.index("    if: >-"), deploy_job.index("    concurrency:"))
         self.assertIn('run: bash scripts/ci/deploy-over-ssh.sh stage "$IMAGE_TAG"', deploy_job)
 
 
