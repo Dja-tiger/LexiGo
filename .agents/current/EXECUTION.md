@@ -6,7 +6,7 @@
 - Branch: `fix/issue-398-stage-deploy-concurrency`
 - Base SHA: `173258f9e9bf61ac97d1c053556d1bf96fe46763`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #400
 
 ## Skills used
 
@@ -56,6 +56,7 @@ Actions performed:
 - left the scope job, exact artifact validation, image selection, SSH deployment, public smoke/browser checks and Issue #12 reporting unchanged;
 - extended `agent_docs_scope_test.py` to reject workflow-level or scope-job concurrency and require deploy-job concurrency;
 - read both modified product/test files back from commit `90c0fcba144625754c96ff9509b2cc200307ca4e`;
+- opened Draft PR #400 with exactly five changed paths;
 - updated the final pre-CI handoff.
 
 Commands or procedures:
@@ -65,6 +66,7 @@ GitHub connector reads/writes, workflow/job inspection, source search, official 
 Artifacts produced:
 
 - Issue #398;
+- PR #400;
 - branch `fix/issue-398-stage-deploy-concurrency`;
 - job-scoped stage concurrency owner;
 - workflow source regression contract;
