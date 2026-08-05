@@ -20,7 +20,7 @@ Instruction source:
 
 - repository `AGENTS.md` and mandatory `.agents/**` overlays;
 - `docs/agent-harness.md`;
-- connected GitHub skill.
+- connected GitHub and CI-diagnostics skills.
 
 Version or verification date:
 
@@ -28,90 +28,75 @@ Version or verification date:
 
 Inputs:
 
-- live `main` and open PR state;
-- Issue #74 acceptance criteria;
-- canonical and late route-navigation CSS owners;
-- route navigation runtime and label model;
-- existing adaptive-navigation browser contracts;
-- frontend test command registration;
-- CI #2832 frontend-core diagnostics.
+- live `main`, PR #397 and Issue #74 state;
+- final mobile-navigation cascade and runtime ownership;
+- CI #2832 selector-conflict diagnostics;
+- CI #2843 UI and visual reports, traces and screenshots;
+- exact local Git object hashes for candidate test files.
 
 Files inspected:
 
-- `.agents/PROJECT_STATE.md`;
-- `.agents/current/**`;
-- `frontend/components/route-primary-navigation.tsx`;
-- `frontend/lib/navigation.ts`;
-- `frontend/app/route-navigation.css`;
-- `frontend/app/adaptive-navigation.css`;
-- `frontend/app/adaptive-knowledge-coach-home.css`;
-- `frontend/app/global-feature-style-overlap-source.test.ts`;
-- `frontend/app/global-feature-style-overlap-manifest.json`;
-- `frontend/app/layout.tsx`;
-- `frontend/e2e/adaptive-navigation.spec.ts`;
-- `frontend/package.json`;
-- Lesson Composer and header owners used to exclude already-compliant or hidden controls.
+- all mandatory repository Harness documents;
+- canonical, adaptive and late Figma navigation CSS owners;
+- route navigation runtime and history owners;
+- focused mobile-navigation test;
+- all visual specifications reported by CI #2843;
+- downloaded Playwright reports and attached PNG artifacts for failed UI and visual jobs.
 
 Actions performed:
 
-- completed the previous PR #395 product and PR #396 reconciliation lifecycle;
-- verified no active intersecting slice remained;
-- selected the canonical mobile route-label gap after excluding already-compliant start buttons and hidden legacy header bell ownership;
-- created `fix/issue-74-mobile-navigation-labels` from live `main`;
-- initialized the current task contract and opened Draft PR #397;
-- added a dedicated final mobile label/reflow owner;
-- added a source-level import/cascade/runtime ownership contract;
-- added focused default, narrow and 200% root-text browser proof;
-- registered the proof in UI, accessibility and responsive commands;
-- read back every changed path and inspected the exact PR patch;
-- detected and corrected an early-import cascade failure;
-- detected and reverted unintended root-layout composition changes before CI;
-- scoped content reserve through `:has(.lx-route-nav--mobile)` so focused routes without mounted mobile navigation are unaffected;
-- inspected CI #2832 diagnostics after frontend unit failure;
-- confirmed all feature source tests passed and only the global exact-selector overlap inventory rejected the candidate;
-- replaced the broad exact route selector with a mounted-navigation semantic selector, retaining computed behavior without adding a broad global conflict classification;
-- superseded CI #2836 before completion after a geometry audit found its formula increased default bar/link height;
-- revised the growth formulas to preserve the effective 72px bar, 54px link and 92px route reserve at default text while retaining automatic growth for enlarged text.
+- continued the already-open atomic Issue #74 slice instead of starting a new task;
+- verified the live branch, PR and immutable CI #2843 head;
+- localized the focused failure to a 0.000025 CSS px serialization difference, not a reserve defect;
+- added a bounded 0.1 CSS px geometry tolerance while preserving the required navigation-height-plus-20px invariant;
+- extracted every changed compact screenshot from CI #2843 and manually reviewed the rendered deltas;
+- confirmed that changed visuals preserve route geometry and differ meaningfully only in the intended bottom-navigation label typography;
+- promoted content-addressed compact hashes and immutable CI provenance in phrases, profile, system-state and word-detail visual owners;
+- retained both manually reviewed compact-light Profile hashes because Linux masked-profile rasterization produced a bounded three-pixel difference without a meaningful rendered change;
+- verified all five replacement files by exact local Git blob SHA;
+- created Git blobs, a Git tree and commit `c4b682b1f5469cb39e623394501df89494ddb9e9`, then advanced the branch without force-push;
+- rejected an attempted large `visual-regression.spec.ts` blob because its SHA differed from the exact local object and it decoded as invalid UTF-8;
+- reconciled `TASK.md` so reviewed compact visual owners are explicitly allowed and unrelated baselines remain prohibited;
+- updated progress and execution handoff before further product writes.
 
 Commands or procedures:
 
-GitHub connector reads/writes, exact-ref comparisons, changed-file listing, per-file PR patch inspection, workflow/job inspection and diagnostic artifact analysis. Local clone execution is unavailable and no local result is counted as evidence.
+GitHub connector reads/writes, workflow/job and artifact inspection, Playwright trace extraction, manual PNG review, local `git hash-object`, exact Git blob/tree/commit construction, non-force branch update and readback verification. Local results are used only for object-integrity verification; GitHub CI remains authoritative for product acceptance.
 
 Artifacts produced:
 
-- `frontend/app/mobile-navigation-labels.css`;
-- `frontend/components/mobile-navigation-labels-source.test.ts`;
-- `frontend/e2e/mobile-navigation-labels.spec.ts`;
-- Draft PR #397;
-- populated `.agents/current/**` task records;
-- CI #2832 diagnostic evidence for the rejected selector candidate.
+- bounded focused geometry assertion;
+- reviewed compact visual hashes with CI #2843 provenance;
+- exact Git blobs for five test owners;
+- commit `c4b682b1f5469cb39e623394501df89494ddb9e9`;
+- updated `.agents/current/**` handoff;
+- CI #2844, later superseded by required handoff commits.
 
 Result:
 
-The current candidate owns only live mounted canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. At default text, existing painted bar/link/reserve geometry is preserved; runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged. Rejected and superseded candidate heads are obsolete.
+The runtime/CSS candidate remains unchanged. Five exact test owners now encode the intended compact navigation result, and the focused geometry contract tolerates browser serialization noise without weakening product reserve. The central `visual-regression.spec.ts` compact hash reconciliation remains pending because no exact transport for its 20.5 KB replacement has yet been proven.
 
 Failures:
 
-- Initial import immediately after `route-navigation.css` was insufficient because `adaptive-knowledge-coach-home.css` later restored 11px and fixed padding.
-- Initial full replacement of `layout.tsx` accidentally changed runtime child composition.
-- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts between the late Figma owner and the first accessibility owner.
-- The first semantically scoped growth formula still increased default bar/link geometry and was superseded before its CI could be considered authoritative.
+- CI #2843 focused reserve assertion failed by 0.000025 CSS px.
+- CI #2843 visual gate rejected intended compact screenshots containing the updated navigation.
+- One UI shard recorded a first-attempt unrelated iOS WebKit Lesson Result textbox miss.
+- The first manually transmitted large blob failed SHA verification and decoded as invalid UTF-8.
 
 Root cause:
 
-- The effective label owner was a later Figma/application-shell stylesheet, not the canonical route-navigation file alone.
-- The connector write required complete-file replacement and the initially reconstructed tail did not exactly match `main`.
-- The first final-cascade selector deliberately reused the same broad exact selector as the prior owner, which violated the fail-closed global feature-style conflict inventory even though focused source tests passed.
-- The first growth constants reserved two enlarged label rows unconditionally instead of using the existing default geometry as the max() floor.
+- independent fractional geometry serialization made an exact comparison more precise than the CSS invariant requires;
+- complete-viewport content-addressed baselines necessarily changed when a visible global compact navigation label changed;
+- the connector has no mounted-file or batch upload parameter for Git blob creation, so manual large payload reconstruction is unsafe unless exact SHA verification succeeds.
 
 Fallback:
 
-The first two failures were corrected before authoritative CI. The CI failure was corrected by narrowing the owner to `.lx-routed-app:has(.lx-route-nav--mobile)`, which describes the mounted runtime condition directly and avoids broad selector ownership. Default geometry is now protected by max() floors matching the live Figma owner. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap, geometry or reserve assertions.
+Do not attach any mismatching blob or weaken visual gates. Keep the reviewed local file and either use a transport that preserves the exact Git object or refactor the affected baseline constants into a smaller owned module only if that refactor remains transparent, test-equivalent and within the atomic Issue #74 scope.
 
 Limitations:
 
-No physical-device result will be claimed. The test uses 200% root text enlargement; whole-application browser zoom remains a later Issue #74 acceptance slice.
+No physical-device result is claimed. Whole-application 200% browser zoom remains a later Issue #74 slice. The current branch is not merge-ready until the central visual owner is reconciled and full immutable-head CI passes.
 
 Reusable lesson:
 
-For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid. When a fail-closed exact-selector inventory rejects an accessibility override, prefer a narrower semantic runtime selector over broadening the conflict manifest unless the broad ownership is genuinely required. Text-growth formulas should use established painted geometry as the default max() floor rather than altering the default state.
+For global typography changes, treat content-addressed compact screenshots as expected downstream contracts, but promote them only after artifact-level review. Geometry assertions should encode a bounded browser precision tolerance rather than exact equality across separately serialized values. Never attach a connector-created Git blob until its SHA matches the locally expected object.
