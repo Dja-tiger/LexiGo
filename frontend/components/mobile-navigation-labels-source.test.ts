@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const labelsOwner = readFileSync(new URL("../app/mobile-navigation-labels.css", import.meta.url), "utf8");
 const routeNavigation = readFileSync(new URL("../app/route-navigation.css", import.meta.url), "utf8");
+const adaptiveHome = readFileSync(new URL("../app/adaptive-knowledge-coach-home.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const routeRuntime = readFileSync(new URL("./route-primary-navigation.tsx", import.meta.url), "utf8");
 const navigationModel = readFileSync(new URL("../lib/navigation.ts", import.meta.url), "utf8");
@@ -16,13 +17,21 @@ function declarationNames(source: string): string[] {
 }
 
 describe("Issue #74 canonical mobile navigation label ownership", () => {
-  it("loads one narrow owner immediately after canonical route navigation", () => {
-    expect(layout).toContain('import "./route-navigation.css";');
+  it("loads one final owner after every route presentation layer", () => {
     expect(layout).toContain('import "./mobile-navigation-labels.css";');
-    expect(layout.indexOf('import "./route-navigation.css";'))
-      .toBeLessThan(layout.indexOf('import "./mobile-navigation-labels.css";'));
+    for (const earlierOwner of [
+      "./route-navigation.css",
+      "./adaptive-knowledge-coach-home.css",
+      "./scenario-catalog.css",
+      "./profile.css",
+      "./header-streak-touch-targets.css",
+    ]) {
+      expect(layout).toContain(`import "${earlierOwner}";`);
+      expect(layout.indexOf(`import "${earlierOwner}";`))
+        .toBeLessThan(layout.indexOf('import "./mobile-navigation-labels.css";'));
+    }
     expect(layout.indexOf('import "./mobile-navigation-labels.css";'))
-      .toBeLessThan(layout.indexOf('import "./route-boundaries.css";'));
+      .toBeLessThan(layout.indexOf('import "./active-lesson-queued-state.css";'));
     expect(layout.match(/mobile-navigation-labels\.css/g)).toHaveLength(1);
   });
 
@@ -36,22 +45,26 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(navigationModel).toContain('{ view: "library", label: "Словарь", shortLabel: "Словарь" }');
     expect(navigationModel).toContain('{ view: "progress", label: "Прогресс", shortLabel: "Прогресс" }');
 
-    expect(labelsOwner).toContain(".lx-route-nav--mobile");
+    expect(labelsOwner).toContain(".lx-routed-app .lx-route-nav--mobile");
     expect(labelsOwner).not.toContain(".lx-mobile-nav");
     expect(labelsOwner).not.toContain(".lx-route-nav--rail");
     expect(labelsOwner).not.toContain(".lx-route-nav--header");
     expect(labelsOwner).not.toContain(".lx-primary-navigation");
   });
 
-  it("replaces the 11px clipped fallback with a 12px rem-responsive label floor", () => {
+  it("wins the live 11px cascade with a 12px rem-responsive label floor", () => {
     expect(routeNavigation).toContain("@media (max-width: 390px)");
     expect(routeNavigation).toContain("font-size: 11px;");
     expect(routeNavigation).toContain("overflow: hidden;");
     expect(routeNavigation).toContain("text-overflow: ellipsis;");
     expect(routeNavigation).toContain("white-space: nowrap;");
+    expect(adaptiveHome).toContain(".lx-routed-app .lx-route-nav--mobile a {");
+    expect(adaptiveHome).toContain("font-size: 11px;");
+    expect(adaptiveHome).toContain("padding: 0 24px calc(92px + env(safe-area-inset-bottom));");
 
     expect(labelsOwner).toContain("--lx-route-mobile-navigation-label-size: max(12px, 0.75rem);");
     expect(labelsOwner).toContain("@media (max-width: 390px)");
+    expect(labelsOwner).toContain(".lx-routed-app .lx-route-nav--mobile a {");
     expect(labelsOwner).toContain("font-size: var(--lx-route-mobile-navigation-label-size);");
     expect(labelsOwner).toContain("overflow: visible;");
     expect(labelsOwner).toContain("text-overflow: clip;");
@@ -59,11 +72,13 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
     expect(labelsOwner).toContain("overflow-wrap: anywhere;");
   });
 
-  it("grows the link, fixed navigation and route reserve from enlarged text", () => {
+  it("grows the link, fixed navigation and every live route reserve from enlarged text", () => {
     expect(labelsOwner).toContain("--lx-route-mobile-navigation-block-size: max(");
     expect(labelsOwner).toContain("calc(38px + 2.4rem)");
     expect(labelsOwner).toContain("min-block-size: var(--lx-route-mobile-navigation-block-size);");
     expect(labelsOwner).toContain("min-block-size: max(52px, calc(31px + 2.4em));");
+    expect(labelsOwner).toContain('.lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),');
+    expect(labelsOwner).toContain('.lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode)');
     expect(labelsOwner).toContain("padding-bottom: calc(");
     expect(labelsOwner).toContain("+ 28px");
     expect(labelsOwner).toContain("+ env(safe-area-inset-bottom)");
@@ -90,7 +105,7 @@ describe("Issue #74 canonical mobile navigation label ownership", () => {
       "z-index",
       "pointer-events",
     ]) {
-      expect(declarations, `${prohibited} must remain owned by canonical route presentation`)
+      expect(declarations, `${prohibited} must remain owned by route presentation`)
         .not.toContain(prohibited);
     }
 
