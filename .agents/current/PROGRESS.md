@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 16:08 Europe/Moscow
+## 2026-08-05 17:40 Europe/Moscow
 
 ### Verified
 
@@ -9,18 +9,22 @@
 - Draft PR #397 targets `main` from `fix/issue-74-mobile-navigation-labels`;
 - Issue #74 remains open;
 - canonical mobile navigation is rendered by `RoutePrimaryNavigation` as `.lx-route-nav--mobile` with exactly four links;
-- current mobile link targets are already at least 48×54px in the effective late Figma owner;
-- the effective live cascade forced 11px labels and a fixed 92px content reserve from `adaptive-knowledge-coach-home.css` after the canonical route owner;
-- legacy `.lx-mobile-nav` is not part of this slice;
-- route/history runtime files remain unchanged.
+- current mobile link targets remain at least 48×54px in the effective late Figma owner;
+- the previous effective cascade forced 11px labels and a fixed 92px content reserve;
+- legacy `.lx-mobile-nav`, route/history runtime and canonical navigation ownership remain unchanged;
+- PR head advanced through `c4b682b1f5469cb39e623394501df89494ddb9e9`; resolve the final live head after documentation commits.
 
 ### Finding
 
-The live route-owned mobile navigation satisfies target geometry but not the remaining Issue #74 label contract. Phone labels were fixed at 11px by a late Figma layer, while single-line clipping and a fixed content reserve prevented text enlargement from reflowing safely.
+The runtime implementation is correct, but CI #2843 exposed two test-contract consequences of the approved 11px→12px compact navigation change:
+
+1. the focused reserve assertion compared independently serialized subpixel values and failed by 0.000025 CSS px;
+2. content-addressed compact screenshots containing the canonical mobile navigation changed, while desktop and unaffected screenshots remained stable.
 
 ### Root cause
 
-The route presentation stack contains multiple mobile owners. The late Home/application-shell layer wins the original 12px rule, sets 11px, and fixes bottom padding independently of text size. The first CI candidate reused the same exact selector for the deliberate later `font-size` override, so the fail-closed global style-overlap inventory correctly rejected the unclassified exact-selector conflict.
+- CSS layout and `DOMRect` values can be serialized with slightly different fractional precision across the browser/Playwright boundary; exact `>=` comparison was stricter than the product invariant.
+- The visual gate hashes the complete compact viewport. Raising the visible navigation labels from 11px to 12px intentionally changes every compact screenshot carrying that navigation even when route geometry is otherwise preserved.
 
 ### Changed files
 
@@ -31,32 +35,39 @@ The route presentation stack contains multiple mobile owners. The late Home/appl
 - `frontend/app/mobile-navigation-labels.css`
 - `frontend/components/mobile-navigation-labels-source.test.ts`
 - `frontend/e2e/mobile-navigation-labels.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/e2e/profile-visual.spec.ts`
+- `frontend/e2e/system-states-visual.spec.ts`
+- `frontend/e2e/word-detail-visual.spec.ts`
 - `frontend/package.json`
+
+`frontend/e2e/visual-regression.spec.ts` remains the only reviewed baseline owner not yet committed because the available connector transport did not reproduce its exact local Git blob SHA; a mismatching invalid UTF-8 blob was explicitly discarded and never attached to the branch.
 
 ### Checks passed
 
 - repository and Harness pre-flight;
 - live `main`, open PR and Issue verification;
-- runtime visibility and route-owner inspection;
-- fail-closed changed-path audit: exactly eight allowed files;
-- exact PR patch review;
-- root layout readback restored all runtime markup and ordering; only the new CSS import plus the pre-existing missing-final-newline normalization remain;
-- post-cascade audit against `adaptive-knowledge-coach-home.css`;
-- source contract covers import order, mounted live owner, old 11px cascade, rem growth, default 72px/54px geometry, mounted-navigation reserve and blocking command registration;
-- focused proof covers 390px default, 320px narrow, 200% root text, target separation, clipping, focus, content reserve and canonical navigation in desktop Chromium, Android Chromium and iOS WebKit;
-- CI #2832 / run `31007795954` on obsolete head `287de486ef6ca42ae870adca7b45d38a559f1064`: classifier, lint and TypeScript passed; 98 test files and 610 tests otherwise passed.
+- runtime visibility, final cascade and route-owner inspection;
+- source contract for import order, mounted live owner, rem growth and default 72px/54px/92px geometry;
+- focused proof for 390px default, 320px narrow and 200% root text in desktop Chromium, Android Chromium and iOS WebKit;
+- CI #2843 core, backend, accessibility, PWA, service-worker, security, performance and smoke gates;
+- manual inspection of all failed visual artifacts from CI #2843: meaningful deltas are confined to the compact bottom navigation labels; desktop hashes remain unchanged;
+- exact local Git blob verification for the five committed test files;
+- branch update to `c4b682b1f5469cb39e623394501df89494ddb9e9` without force-push;
+- task-scope reconciliation authorizing only the reviewed compact visual contracts.
 
-### Checks failed
+### Checks failed or superseded
 
-- an initial early import lost to the later Home/Figma cascade; corrected before CI;
-- an initial full-file `layout.tsx` replacement unintentionally changed runtime composition; detected by readback and reverted before CI;
-- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts in `global-feature-style-overlap-source.test.ts`; production build and browser jobs were consequently skipped;
-- CI #2836 was superseded before its core gates completed because geometry review found the candidate increased bar/link height at default text.
+- CI #2832 rejected an obsolete broad exact-selector conflict; corrected with the mounted-navigation semantic selector.
+- CI #2836 was superseded because its obsolete formula changed default navigation geometry.
+- CI #2843 failed the focused test by 0.000025 CSS px and failed expected compact visual hashes after the intentional label-size change.
+- UI shard 2 also recorded a first-attempt iOS WebKit Lesson Result textbox miss; this is outside the changed ownership and must only be acted on if reproduced on the current immutable head.
+- CI #2844 started on `c4b682b1f5469cb39e623394501df89494ddb9e9` but became non-authoritative after the required task-handoff update.
 
 ### Current branch head
 
-Resolve from live branch `fix/issue-74-mobile-navigation-labels`. Failed CI head `287de486ef6ca42ae870adca7b45d38a559f1064` and superseded CI head `27ad5db9e337bfd1a1e60817eeb524d3162f1a26` are obsolete.
+Resolve from live branch `fix/issue-74-mobile-navigation-labels`; `c4b682b1f5469cb39e623394501df89494ddb9e9` is the last product/test commit before handoff documentation updates.
 
 ### Next action
 
-Run authoritative CI on the final mounted-navigation selector and default-geometry-preserving head. Default mobile bar/link/reserve stay at 72px, 54px and 92px; only labels move from 11px to 12px, while 200% text expands the geometry automatically.
+Run authoritative CI on the final documented head. Expected result: focused UI shards and the five reconciled visual owners turn green; any remaining visual failure should be limited to the five reviewed compact baselines still stored in `frontend/e2e/visual-regression.spec.ts`. Do not merge until that final owner is reconciled exactly and the complete immutable-head CI is green.
