@@ -1,31 +1,40 @@
 # Current Task Progress
 
-## 2026-08-05 14:20 Europe/Moscow
+## 2026-08-05 14:40 Europe/Moscow
 
 ### Verified
 
 - live `main` and branch base remain `e46881b9fc9def630343e3ee69425492bc0aefe7`;
-- Draft PR #395 remains the only active product slice; unrelated Dependabot PRs are outside scope;
+- Draft PR #395 remains the active Issue #74 product slice;
 - Home, Learn, Active Lesson and compatibility runtimes render interactive `button.lx-streak` controls that navigate to Progress;
-- Dictionary renders a decorative `span.lx-streak` and remains excluded by the exact selector;
+- Dictionary renders a decorative `span.lx-streak` and remains excluded;
 - the streak remains intentionally hidden below 720px on applicable route islands;
-- the fixed reminder summary ends at `right: 150px`, while the live streak begins about 14px earlier in the tested desktop and 820px header layouts;
-- CI artifacts and traces prove the reminder receives the left streak perimeter point in desktop Chromium, Android Chromium and iOS WebKit;
-- an isolated Chromium proof confirmed that a disabled summary pointer box plus an explicitly interactive shifted `summary::before` retains native `<details>` toggling and excludes the old right-side overlap strip;
-- a second local geometry proof confirmed that border-aware offsets `inset-block: -1px`, `inset-inline-start: -17px` and `inset-inline-end: 15px` preserve a full 48×48 outer target shifted exactly 16px left.
+- CI #2811/run `31001271804` executed on exact head `0fc9d55075b43711db508ef76b73acbc4633b575`;
+- classifier, backend unit/security/integration, frontend lint, TypeScript, all 98 Vitest files, production build, dependency audit, accessibility, performance, content security, service worker, PWA, dictionary smoke, lesson completion and visual regression all passed;
+- visual regression passed without any baseline update;
+- UI shard 1 and UI shard 2 failed only the focused streak test: the left streak border-box point was still intercepted in desktop Chromium, Android Chromium and iOS WebKit.
 
-### Finding
+### Latest diagnosis
 
-The original block-axis streak pseudo-element was not sufficient. The visible controls already had a physical 14px overlap between the fixed reminder target and the streak's left edge. The pseudo-element also introduced deterministic desktop visual failures in states that include the shared header. The correct boundary is a real streak border box plus a pixel-stable shifted reminder pointer surface.
+The summary generated surface was shifted correctly, but the fixed parent `<details class="lx-route-reminder-entry">` retained its original pointer box through the old right edge. On fractional/coarse layouts that transparent parent strip remained above the first pixel inside the streak button.
 
-### Root cause
+A standalone Chromium reproduction confirmed the minimal correction:
 
-Two independently evolved header owners used incompatible geometry:
+- `pointer-events: none` on the fixed `<details>` removes the stale parent interception strip;
+- `pointer-events: auto` on `summary::before` preserves the shifted reminder target and native details toggling;
+- `pointer-events: auto` on `.lx-route-reminder-preview` preserves interaction after disclosure;
+- the streak left point then resolves to the streak button;
+- the excluded former reminder-right strip resolves through to the underlying control.
 
-- `button.lx-streak` relied on text metrics plus `10px 11px` padding and had no guaranteed minimum border-box height;
-- `.lx-route-reminder-entry` used a fixed `right: 150px` target that occupied the first approximately 14px of the streak button at widths where both controls are visible.
+### Implementation now present
 
-The initial test calculated a 44/48px streak pseudo target but CI correctly demonstrated that its left perimeter remained owned by the higher-z-index reminder.
+- `button.lx-streak` uses a real 44px fine / 48px coarse minimum border box;
+- the streak has no generated hit-slop pseudo-element;
+- the reminder summary target remains a full border-aware 48×48 surface shifted exactly 16px left;
+- the fixed reminder parent no longer participates in pointer hit-testing at widths where the streak is visible;
+- the generated summary surface and disclosed preview explicitly remain interactive;
+- painted reminder/streak pixels, keyboard focus, disclosure semantics, phone hiding and Progress navigation are unchanged;
+- source-contract coverage now locks parent, generated target and preview pointer ownership.
 
 ### Changed files
 
@@ -39,36 +48,16 @@ The initial test calculated a 44/48px streak pseudo target but CI correctly demo
 - `frontend/e2e/header-streak-touch-targets.spec.ts`;
 - `frontend/package.json`.
 
-### Implementation now present
+### Superseded CI evidence
 
-- streak owner uses `min-block-size` and `min-inline-size` from a 44px fine / 48px coarse token;
-- the streak no longer creates `::before`, `position: relative` or stacking-sensitive hit slop;
-- at `min-width: 720px`, the reminder summary keeps painted pixels stationary while its full outer target moves exactly 16px left with border-aware generated-surface offsets;
-- the summary remains keyboard-focusable and the generated surface preserves native disclosure clicks;
-- the focused browser proof measures real streak/profile boxes and the shifted reminder surface, verifies both gaps, clicks the extended reminder edge, checks focus and navigates through the streak to `/progress`.
-
-### Checks passed
-
-- CI #2795/run `30998706501` passed classifier, backend unit/security/integration, frontend lint, TypeScript, all 98 Vitest files, production build, dependency audit, accessibility, performance, content security, service worker, PWA, dictionary smoke and lesson completion;
-- the corrected source inventory and route-specific Progress navigation assertions passed in CI #2795;
-- downloaded UI artifacts identified one deterministic focused-test failure per browser project rather than an unrelated suite failure;
-- downloaded visual artifacts identified exactly two deterministic desktop screenshot failures on the pseudo-element implementation;
-- standalone Chromium interaction proof passed for the shifted summary surface;
-- standalone border geometry proof measured the corrected target at exactly 48×48 CSS pixels;
-- every new write was made only on `fix/issue-74-header-streak-target`; `main` remains unchanged.
-
-### Checks failed on superseded head `e070d3d0d4edbab3d3877a94329fa281ab5dbb5b`
-
-- UI shard 1: desktop Chromium left streak perimeter point resolved outside the button;
-- UI shard 2: Android Chromium and iOS WebKit failed the identical left-perimeter assertion;
-- visual regression: lesson composer desktop and offline dark desktop hashes changed under the generated streak pseudo-element;
-- all failures are addressed by replacing the streak pseudo-element and shifting the reminder interaction surface; no baseline update is planned.
+- CI #2795/run `30998706501` rejected the original streak pseudo-element because it still overlapped the reminder and changed two desktop visual states;
+- CI #2811/run `31001271804` confirmed the real streak border box and visual stability, then isolated the final stale parent pointer-box defect in both UI shards;
+- no unrelated product or infrastructure failure remains on the superseded exact head.
 
 ### Current branch head
 
-- product and test implementation before this progress update: `9dbcd1a6a6cd8981d0ed0d4a86f55707d00f170a`;
-- resolve the immutable CI head from the live branch after this record commit.
+Resolve the immutable head from the live branch after this Agent record commit.
 
 ### Next action
 
-Read back all changed owners, compare the complete branch against current `main`, and run a new authoritative CI on the resulting immutable head. Continue only after frontend core, focused cross-browser proof, existing reminder tests, visual regression and the remaining product matrix are green.
+Read back the corrected CSS and source contract, compare the complete branch against current `main`, and run authoritative CI on one immutable head. Do not mark ready or merge until both UI shards, visual regression and every required repository gate are green.
