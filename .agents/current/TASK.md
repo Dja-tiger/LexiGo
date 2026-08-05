@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-header-streak-target`
 - Base SHA: `e46881b9fc9def630343e3ee69425492bc0aefe7`
 - Head SHA: resolve from live branch ref
-- PR: Draft after the first coherent implementation commit
+- PR: #395 (Draft)
 
 ## Objective
 
@@ -17,13 +17,14 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer effective target f
 - add one interaction-only CSS owner for `button.lx-streak`;
 - expand only the block-axis event surface because the painted control is already wider than the target minimum;
 - preserve the adjacent profile target and prove the two effective regions do not overlap;
-- add an exact source ownership contract;
+- add an exact source ownership contract that distinguishes interactive buttons from the decorative Dictionary streak span;
 - add focused desktop Chromium, Android Chromium and iOS WebKit geometry, hit-testing, focus and navigation proof;
 - register the focused proof in blocking UI and accessibility commands.
 
 ## Non-goals
 
 - no changes to streak data, progress loading or navigation ownership;
+- no changes to the decorative Dictionary `span.lx-streak`;
 - no changes to painted padding, typography, icon, color or layout;
 - no change to the intentional `max-width: 719px` phone-width hiding contract;
 - no changes to profile, reminder, Lesson Composer, mobile navigation, enlarged-text or 200% zoom owners;
@@ -50,10 +51,11 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer effective target f
 
 ## Runtime owners
 
-- live streak buttons: Home, Learn, Dictionary, Active Lesson and compatibility route runtimes;
+- live streak buttons: Home, Learn, Active Lesson and compatibility route runtimes;
+- decorative non-interactive streak: Dictionary route runtime, explicitly excluded from this selector and slice;
 - streak presentation: `frontend/app/premium-ui.css` and `frontend/app/adaptive-knowledge-coach-home.css`;
 - adjacent profile hit surface: `frontend/app/header-profile-touch-targets.css`;
-- navigation callback: each route runtime's existing Progress navigation handler.
+- navigation callback: each interactive route runtime's existing Progress navigation handler.
 
 ## Documentation owners
 
@@ -65,8 +67,9 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer effective target f
 - visual geometry and spacing remain unchanged;
 - inline hit expansion remains zero;
 - the streak and profile effective target rectangles never overlap;
+- the Dictionary streak remains a non-interactive span;
 - the phone-width hidden state remains hidden;
-- role, accessible name, focus-visible and Progress navigation remain unchanged;
+- role, accessible name, focus-visible and Progress navigation remain unchanged for interactive buttons;
 - no horizontal overflow is introduced.
 
 ## Acceptance criteria
@@ -79,6 +82,7 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer effective target f
 - the adjacent profile target remains separated by at least 1 CSS pixel;
 - keyboard focus-visible remains owned by the global focus layer;
 - activating the expanded target still navigates to `/progress`;
+- the decorative Dictionary `span.lx-streak` is not captured by the interaction owner;
 - Chromium, Android Chromium and iOS WebKit focused proof passes;
 - full authoritative CI passes on an immutable PR head.
 
@@ -96,7 +100,7 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer effective target f
 
 - pseudo-element hit slop can overlap the adjacent profile target if inline expansion is introduced;
 - a phone-width test can target an intentionally hidden control and create false ownership;
-- broad `.lx-streak` selectors can capture non-button consumers if exact element ownership is lost;
+- broad `.lx-streak` selectors can capture the decorative Dictionary span if exact element ownership is lost;
 - CSS import ordering can allow later layers to override interaction geometry.
 
 ## Rollback
