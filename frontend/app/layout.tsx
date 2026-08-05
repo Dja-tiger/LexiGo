@@ -37,6 +37,7 @@ import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
 import "./adaptive-knowledge-coach-home.css";
 import "./adaptive-knowledge-coach-accessibility.css";
+import "./home-progress-touch-targets.css";
 import "./adaptive-lesson-composer.css";
 import "./adaptive-lesson-composer-accessibility.css";
 import "./lesson-composer-disclosure-touch-targets.css";
