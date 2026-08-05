@@ -1,60 +1,72 @@
 # Current Task Progress
 
-## 2026-08-05 13:31 Europe/Moscow
+## 2026-08-05 14:12 Europe/Moscow
 
 ### Verified
 
 - live `main` and branch base remain `e46881b9fc9def630343e3ee69425492bc0aefe7`;
-- only unrelated Dependabot PRs #304–#306 are open outside Draft PR #395;
+- Draft PR #395 remains the only active product slice; unrelated Dependabot PRs are outside scope;
 - Home, Learn, Active Lesson and compatibility runtimes render interactive `button.lx-streak` controls that navigate to Progress;
-- Dictionary renders a decorative, non-interactive `span.lx-streak` and is intentionally excluded by the exact `button.lx-streak` selector;
-- the interactive streak is intentionally hidden below 720px for applicable non-Dictionary route islands;
-- the shared painted owner uses content height plus `10px 11px` padding and does not guarantee the required fine/coarse target height;
-- the adjacent profile button already has a dedicated 44/48px target owner.
+- Dictionary renders a decorative `span.lx-streak` and remains excluded by the exact selector;
+- the streak remains intentionally hidden below 720px on applicable route islands;
+- the fixed reminder summary ends at `right: 150px`, while the live streak begins about 14px earlier in the tested desktop and 820px header layouts;
+- CI artifacts and traces prove the reminder receives the left streak perimeter point in desktop Chromium, Android Chromium and iOS WebKit;
+- an isolated Chromium proof confirmed that `pointer-events: none` on `<summary>` plus an explicitly interactive shifted `summary::before` retains native `<details>` toggling inside the generated target and excludes the old right-side overlap strip.
 
 ### Finding
 
-The visible interactive streak buttons are horizontally wide enough but their height depends on text metrics and padding. They need an interaction-only block-axis expansion while preserving the existing inline gap to the profile target. The Dictionary streak is presentation-only and must not receive button semantics or hit-surface expansion.
+The original block-axis streak pseudo-element was not sufficient. The visible controls already had a physical 14px overlap between the fixed reminder target and the streak's left edge. The pseudo-element also introduced deterministic desktop visual failures in states that include the shared header. The correct boundary is a real streak border box plus a pixel-stable shifted reminder pointer surface.
 
 ### Root cause
 
-The shared presentation layer predates the Issue #74 minimum-target contract. It styles both interactive and decorative streak variants visually but has no input-modality-aware effective hit-surface owner for the interactive buttons.
+Two independently evolved header owners used incompatible geometry:
+
+- `button.lx-streak` relied on text metrics plus `10px 11px` padding and had no guaranteed minimum border-box height;
+- `.lx-route-reminder-entry` used a fixed `right: 150px` target that occupied the first approximately 14px of the streak button at widths where both controls are visible.
+
+The initial test calculated a 44/48px streak pseudo target but CI correctly demonstrated that its left perimeter remained owned by the higher-z-index reminder.
 
 ### Changed files
 
 - `.agents/current/TASK.md`;
 - `.agents/current/PROGRESS.md`;
 - `.agents/current/EXECUTION.md`;
+- `frontend/app/calendar-reminder-entry.css`;
 - `frontend/app/header-streak-touch-targets.css`;
 - `frontend/app/layout.tsx`;
 - `frontend/components/header-streak-touch-target-source.test.ts`;
 - `frontend/e2e/header-streak-touch-targets.spec.ts`;
 - `frontend/package.json`.
 
+### Implementation now present
+
+- streak owner uses `min-block-size` and `min-inline-size` from a 44px fine / 48px coarse token;
+- the streak no longer creates `::before`, `position: relative` or stacking-sensitive hit slop;
+- at `min-width: 720px`, the reminder summary keeps painted pixels stationary while its generated pointer surface moves 16px left using `inset-inline-start: -16px` and `inset-inline-end: 16px`;
+- the summary remains keyboard-focusable and the generated surface preserves native disclosure clicks;
+- the focused browser proof measures real streak/profile boxes and the shifted reminder surface, verifies both gaps, clicks the extended reminder edge, checks focus and navigates through the streak to `/progress`.
+
 ### Checks passed
 
-- all writes were read back from `fix/issue-74-header-streak-target`;
-- `main` remained unchanged after every write;
-- import order places the new interaction owner after the profile target owner and before queued-state overrides;
-- source inspection confirms no painted geometry or phone-width visibility owner was modified;
-- the exact element-qualified selector excludes the decorative Dictionary span;
-- focused proof is registered exactly once in both blocking UI and accessibility commands;
-- CI #2787/run `30997037306` and CI #2791/run `30997354326` both passed change classification, frontend lint and TypeScript before their source-contract failures;
-- existing Vitest coverage remained green in both runs; only the newly added source-contract assertion failed.
+- CI #2795/run `30998706501` passed classifier, backend unit/security/integration, frontend lint, TypeScript, all 98 Vitest files, production build, dependency audit, accessibility, performance, content security, service worker, PWA, dictionary smoke and lesson completion;
+- the corrected source inventory and route-specific Progress navigation assertions passed in CI #2795;
+- downloaded UI artifacts identified one deterministic focused-test failure per browser project rather than an unrelated suite failure;
+- downloaded visual artifacts identified exactly two deterministic desktop screenshot failures on the pseudo-element implementation;
+- standalone Chromium interaction proof passed for the shifted summary surface: extended left and center points toggle details, while the excluded right strip does not;
+- every new write was made only on `fix/issue-74-header-streak-target`; `main` remains unchanged.
 
-### Checks failed
+### Checks failed on superseded head `e070d3d0d4edbab3d3877a94329fa281ab5dbb5b`
 
-- CI #2787/run `30997037306` failed because the initial source inventory incorrectly required the decorative Dictionary span to contain the interactive Progress navigation callback;
-- CI #2791/run `30997354326` failed because a broad negative substring assertion for `.lx-streak::before` also matched the intentionally exact `button.lx-streak::before` selector;
-- production build, browser and downstream frontend jobs were correctly skipped after each unit-test failure;
-- no runtime CSS, TypeScript or existing test failed;
-- no local validation is claimed because the current environment cannot resolve GitHub for a local clone.
+- UI shard 1: desktop Chromium left streak perimeter point resolved outside the button;
+- UI shard 2: Android Chromium and iOS WebKit failed the identical left-perimeter assertion;
+- visual regression: lesson composer desktop and offline dark desktop hashes changed under the generated streak pseudo-element;
+- all failures are addressed by replacing the streak pseudo-element and shifting the reminder interaction surface; no baseline update is planned.
 
 ### Current branch head
 
-- corrected source-contract implementation before this progress update: `4335144660f22cade7766c3fcfb8db34d9b77916`;
-- resolve the current head from the live branch ref after this record commit.
+- product/test implementation before Agent record updates: `b5304f8b6adcaf2d6d653776c9cff3657b66ef2a`;
+- resolve the current immutable head from the live branch after this record commit.
 
 ### Next action
 
-Validate the selector-qualified source contract on the next immutable PR head. Continue only after frontend core, focused cross-browser proof and the full authoritative CI matrix are green.
+Read back all changed owners, compare the complete branch against current `main`, and run a new authoritative CI on the resulting immutable head. Continue only after frontend core, focused cross-browser proof, existing reminder tests, visual regression and the remaining product matrix are green.
