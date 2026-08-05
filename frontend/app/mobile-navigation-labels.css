@@ -1,11 +1,11 @@
 /*
  * Issue #74 — canonical route-owned mobile navigation labels.
  *
- * `route-navigation.css` keeps ownership of the painted route chrome. This
- * post-cascade layer owns only compact-label readability and text-driven
- * reflow. The default 12px rendering is preserved above the former 11px
- * smallest breakpoint, while the rem floor lets user text enlargement grow
- * labels without clipping them inside a fixed single-line box.
+ * Route-specific Figma layers keep ownership of painted route chrome. This
+ * final post-cascade layer owns only compact-label readability and text-driven
+ * reflow. The default 12px floor replaces the former 11px compact rendering,
+ * while the rem component lets user text enlargement grow labels without
+ * clipping them inside a fixed single-line box.
  */
 @media (max-width: 719px) {
   .lx-routed-app {
@@ -17,11 +17,13 @@
   }
 
   /*
-   * Reserve the same text-driven block size below route content. The extra
-   * 28px matches the existing compact-shell clearance contract and prevents
-   * an enlarged fixed navigation bar from covering the last route action.
+   * Reserve the same text-driven block size below route content. The first
+   * selector matches the late Home/Learn/Phrases/Progress presentation owner;
+   * the second covers the canonical Dictionary island. The extra 28px retains
+   * the existing compact-shell clearance between content and fixed chrome.
    */
-  .lx-routed-app .lx-app {
+  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),
+  .lx-routed-app .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode) {
     padding-bottom: calc(
       var(--lx-route-mobile-navigation-block-size)
       + 28px
@@ -29,12 +31,12 @@
     );
   }
 
-  .lx-route-nav--mobile {
+  .lx-routed-app .lx-route-nav--mobile {
     min-block-size: var(--lx-route-mobile-navigation-block-size);
     align-items: stretch;
   }
 
-  .lx-route-nav--mobile a {
+  .lx-routed-app .lx-route-nav--mobile a {
     /*
      * 31px accounts for the 20px icon, 3px content gap and 8px link padding.
      * Two 1.2-line label rows can then grow with the link's computed font.
@@ -44,11 +46,11 @@
     line-height: 1.2;
   }
 
-  .lx-route-nav--mobile a > span {
+  .lx-routed-app .lx-route-nav--mobile a > span {
     min-inline-size: 0;
   }
 
-  .lx-route-nav--mobile a > span > span {
+  .lx-routed-app .lx-route-nav--mobile a > span > span {
     max-inline-size: 100%;
     overflow: visible;
     text-align: center;
@@ -59,11 +61,11 @@
 }
 
 /*
- * Override only the old 11px compact fallback. All other painted properties
- * at this breakpoint remain owned by `route-navigation.css`.
+ * Override only the old 11px compact fallbacks. All painted properties at
+ * this breakpoint remain owned by route-specific presentation layers.
  */
 @media (max-width: 390px) {
-  .lx-route-nav--mobile a {
+  .lx-routed-app .lx-route-nav--mobile a {
     font-size: var(--lx-route-mobile-navigation-label-size);
   }
 }
