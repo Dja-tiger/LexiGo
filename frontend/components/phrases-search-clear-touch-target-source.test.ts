@@ -12,6 +12,15 @@ const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.me
 };
 
 const TARGET_SELECTOR = '.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear';
+const COMPACT_LAYOUT_CORRECTION = `@media (max-width: 767px) {
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search input {
+    padding-right: 120px;
+  }
+
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear {
+    right: 80px;
+  }
+}`;
 const FORBIDDEN_VISUAL_DECLARATIONS = [
   /\n\s*min-height:/,
   /\n\s*height:/,
@@ -29,7 +38,7 @@ const FORBIDDEN_VISUAL_DECLARATIONS = [
 ] as const;
 
 describe("Issue #74 Phrases search-clear touch-target ownership", () => {
-  it("loads one route-scoped interaction owner immediately after Phrases presentation", () => {
+  it("loads one route-scoped correction owner immediately after Phrases presentation", () => {
     const importName = 'import "./phrases-search-clear-touch-targets.css";';
     expect(layout).toContain(importName);
     expect(layout.indexOf('import "./phrases.css";')).toBeLessThan(layout.indexOf(importName));
@@ -37,10 +46,11 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(layout.match(/phrases-search-clear-touch-targets\.css/g)).toHaveLength(1);
   });
 
-  it("targets only the conditionally exposed search-clear icon control", () => {
+  it("limits ownership to the conditional clear action and its compact input clearance", () => {
     expect(runtime).toMatch(/searchInput \? \(\s*<button className="lx-phrases-search-clear" type="button" onClick=\{onSearchClear\} aria-label="Очистить поиск">×<\/button>\s*\) : null/);
     expect(touchTargets).toContain(TARGET_SELECTOR);
     expect(touchTargets).toContain(`${TARGET_SELECTOR}::before`);
+    expect(touchTargets).toContain('.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search input');
     expect(touchTargets).not.toContain(".lx-phrases-topic-chips");
     expect(touchTargets).not.toContain(".lx-phrases-search-submit");
     expect(touchTargets).not.toContain(".lx-phrases-filters");
@@ -56,18 +66,26 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(touchTargets).not.toMatch(/\n\s*inset:/);
     expect(touchTargets).toContain("pointer-events: auto;");
     expect(touchTargets).toContain("touch-action: manipulation;");
+  });
 
+  it("corrects only the compact painted overlap and reserves matching input clearance", () => {
+    expect(touchTargets).toContain(COMPACT_LAYOUT_CORRECTION);
+    expect(touchTargets.match(/padding-right:/g)).toHaveLength(1);
+    expect(touchTargets.match(/\n\s*right:/g)).toHaveLength(1);
+
+    const interactionOnly = touchTargets.replace(COMPACT_LAYOUT_CORRECTION, "");
     for (const forbiddenDeclaration of FORBIDDEN_VISUAL_DECLARATIONS) {
-      expect(touchTargets).not.toMatch(forbiddenDeclaration);
+      expect(interactionOnly).not.toMatch(forbiddenDeclaration);
     }
   });
 
-  it("preserves the existing painted box, input clearance, responsive positioning and focus owner", () => {
+  it("preserves the base painted box, desktop position and focus owner", () => {
     expect(presentation).toContain(".lx-phrases-search input {\n  width: 100%;\n  min-height: 48px;");
     expect(presentation).toContain(".lx-phrases-search-clear {\n  position: absolute;");
     expect(presentation).toContain("width: 36px;\n  min-height: 36px;");
-    expect(presentation).toContain("top: 6px;");
+    expect(presentation).toContain("right: calc(100% - min(720px, calc(100% - 92px)) + 100px);");
     expect(presentation).toContain(".lx-phrases-search-clear {\n    right: 70px;\n    top: 6px;");
+    expect(presentation).toContain(".lx-phrases-search input {\n    padding-right: 108px;");
     expect(presentation).toContain(".lx-phrases-catalog button:focus-visible,");
     expect(touchTargets).not.toContain(":focus-visible");
   });
@@ -82,5 +100,6 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(browserProof).toContain("Issue #74 Phrases search-clear touch target");
     expect(browserProof).toContain('name: "Очистить поиск"');
     expect(browserProof).toContain('"desktop-chromium", "android-chromium", "ios-webkit"');
+    expect(browserProof).toContain("paddingRight");
   });
 });
