@@ -46,12 +46,14 @@ describe("Issue #74 Phrases search-clear touch-target ownership", () => {
     expect(touchTargets).not.toContain(".lx-phrases-filters");
   });
 
-  it("provides transparent 44px fine and 48px coarse square event surfaces", () => {
+  it("provides transparent 44px fine and 48px coarse square event surfaces directed away from submit", () => {
     expect(touchTargets).toContain("--lx-phrases-search-clear-touch-target: 44px;");
     expect(touchTargets).toContain("@media (pointer: coarse)");
     expect(touchTargets).toContain("--lx-phrases-search-clear-touch-target: 48px;");
     expect(touchTargets).toContain("position: absolute;");
-    expect(touchTargets).toContain("inset: min(0px, calc((100% - var(--lx-phrases-search-clear-touch-target)) / 2));");
+    expect(touchTargets).toContain("inset-block: min(0px, calc((100% - var(--lx-phrases-search-clear-touch-target)) / 2));");
+    expect(touchTargets).toContain("inset-inline: min(0px, calc(100% - var(--lx-phrases-search-clear-touch-target))) 0;");
+    expect(touchTargets).not.toMatch(/\n\s*inset:/);
     expect(touchTargets).toContain("pointer-events: auto;");
     expect(touchTargets).toContain("touch-action: manipulation;");
 
