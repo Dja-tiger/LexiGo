@@ -22,7 +22,6 @@ import "./accessibility-navigation.css";
 import "./adaptive-navigation.css";
 import "./adaptive-layout.css";
 import "./route-navigation.css";
-import "./mobile-navigation-labels.css";
 import "./route-boundaries.css";
 import "./legal.css";
 import "./account-security.css";
@@ -59,6 +58,7 @@ import "./system-states.css";
 import "./connectivity-touch-targets.css";
 import "./header-profile-touch-targets.css";
 import "./header-streak-touch-targets.css";
+import "./mobile-navigation-labels.css";
 import "./active-lesson-queued-state.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
