@@ -9,12 +9,25 @@ const adaptiveHome = readFileSync(new URL("../app/adaptive-knowledge-coach-home.
 const profileTargets = readFileSync(new URL("../app/header-profile-touch-targets.css", import.meta.url), "utf8");
 const focusStyles = readFileSync(new URL("../app/accessibility-focus.css", import.meta.url), "utf8");
 const interactiveRouteRuntimes = [
-  "lexigo-home-app.tsx",
-  "lexigo-learn-app.tsx",
-  "lexigo-active-lesson-app.tsx",
-  "lexigo-premium-app.tsx",
-].map((path) => ({
+  {
+    path: "lexigo-home-app.tsx",
+    progressNavigation: 'navigate({ view: "progress" })',
+  },
+  {
+    path: "lexigo-learn-app.tsx",
+    progressNavigation: 'navigate({ view: "progress" })',
+  },
+  {
+    path: "lexigo-active-lesson-app.tsx",
+    progressNavigation: 'navigate({ view: "progress" })',
+  },
+  {
+    path: "lexigo-premium-app.tsx",
+    progressNavigation: 'navigatePrimary("progress")',
+  },
+].map(({ path, progressNavigation }) => ({
   path,
+  progressNavigation,
   source: readFileSync(new URL(`./${path}`, import.meta.url), "utf8"),
 }));
 const dictionaryRuntime = readFileSync(new URL("./lexigo-dictionary-app.tsx", import.meta.url), "utf8");
@@ -82,7 +95,7 @@ describe("Issue #74 header streak touch-target ownership", () => {
     for (const runtime of interactiveRouteRuntimes) {
       expect(runtime.source, runtime.path).toContain('className="lx-streak"');
       expect(runtime.source, runtime.path).toContain("<button");
-      expect(runtime.source, runtime.path).toContain('navigate({ view: "progress" })');
+      expect(runtime.source, runtime.path).toContain(runtime.progressNavigation);
     }
 
     expect(dictionaryRuntime).toContain('<span className="lx-streak" aria-label={`Серия: ${progress.currentStreak} дней`}>');
