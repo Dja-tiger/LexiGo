@@ -10,25 +10,20 @@
 @media (max-width: 719px) {
   .lx-routed-app {
     --lx-route-mobile-navigation-label-size: max(12px, 0.75rem);
-    --lx-route-mobile-navigation-block-size: max(
-      var(--lx-compact-navigation-height),
-      calc(33.6px + 2.4rem)
-    );
+    --lx-route-mobile-navigation-block-size: max(72px, calc(33.6px + 2.4rem));
+    --lx-route-mobile-navigation-growth: max(0px, calc(2.4rem - 38.4px));
   }
 
   /*
-   * Reserve the same text-driven block size below route content only while the
-   * canonical mobile navigation is mounted. The 20px clearance preserves the
-   * effective 92px compact-shell reserve when the bar remains at its existing
-   * 72px default height and grows together with enlarged labels thereafter.
+   * Every route keeps its existing, independently reviewed compact bottom
+   * padding. Only the amount by which enlarged labels grow the fixed bar is
+   * appended as normal-flow space. At the default 16px root size this spacer
+   * is exactly 0px, so existing compact screenshot dimensions remain stable.
    */
-  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),
-  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode) {
-    padding-bottom: calc(
-      var(--lx-route-mobile-navigation-block-size)
-      + 20px
-      + env(safe-area-inset-bottom)
-    );
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app::after {
+    display: block;
+    block-size: var(--lx-route-mobile-navigation-growth);
+    content: "";
   }
 
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile {
