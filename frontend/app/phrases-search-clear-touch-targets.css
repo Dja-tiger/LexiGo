@@ -1,0 +1,38 @@
+/*
+ * Issue #74 — canonical Phrases search-clear touch target and compact spacing.
+ *
+ * phrases.css remains the base painted-geometry, color and responsive-layout
+ * owner. This layer expands the transparent event surface of the live
+ * `Очистить поиск` icon control to the input-modality minimum. On compact
+ * layouts it also corrects the pre-existing painted overlap with `Найти` and
+ * reserves matching input clearance only while the clear action is rendered;
+ * empty-search and desktop presentation remain unchanged.
+ */
+.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear {
+  --lx-phrases-search-clear-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-phrases-search-clear-touch-target)) / 2));
+  inset-inline: min(0px, calc(100% - var(--lx-phrases-search-clear-touch-target))) 0;
+  pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search:has(.lx-phrases-search-clear) input {
+    padding-right: 120px;
+  }
+
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear {
+    right: 80px;
+  }
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-search-clear {
+    --lx-phrases-search-clear-touch-target: 48px;
+  }
+}
