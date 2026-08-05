@@ -129,6 +129,9 @@ describe("Issue #74 header streak touch-target ownership", () => {
     expect(reminderEntry).toContain("inset-block: -1px;");
     expect(reminderEntry).toContain("inset-inline-start: -17px;");
     expect(reminderEntry).toContain("inset-inline-end: 15px;");
+    expect(reminderEntry).toContain("@media (min-width: 1100px)");
+    expect(reminderEntry).toContain("inset-inline-start: -29px;");
+    expect(reminderEntry).toContain("inset-inline-end: 27px;");
     expect(reminderEntry).toContain("pointer-events: auto;");
     expect(reminderEntry).toContain(".lx-route-reminder-preview {\n    pointer-events: auto;");
     expect(reminderEntry).toContain("right: max(150px, calc((100vw - 1540px) / 2 + 150px));");
