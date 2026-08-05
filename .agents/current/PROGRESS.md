@@ -68,3 +68,38 @@ Resolve from the live branch ref after the execution record is updated. Correcti
 ### Next action
 
 Read back the corrected files and exact diff, then validate the new final branch head with a fresh full authoritative CI. Do not mark PR #407 Ready until Android Chromium and iOS WebKit both prove 48×48 containment and submit separation on the immutable head.
+
+## 2026-08-05 22:12 Europe/Moscow
+
+### Second authoritative result
+
+- Final-head candidate `a8574f02b9bcdf569244be3c4e449cb451df4ebc` ran in CI #2880 / run `31037006551`.
+- Classifier, backend/security gates, frontend lint, TypeScript, unit/source contracts, production build, dependency audit and the majority of the browser matrix passed before the terminal UI shard result.
+- `Frontend E2E (UI tests (shard 2/2))`, job `92412275989`, failed the target contract on Android Chromium and iOS WebKit, including retries.
+- Artifact `frontend-playwright-report-ui-2` / ID `8943266089` was downloaded and unpacked.
+- The exact failed value was `submitBox.x - target.targetRight = -6.046875` with expected minimum `1`.
+- Perimeter hit-testing and target dimensions had already passed; the remaining overlap equalled the legacy painted-box overlap rather than pseudo-element expansion.
+- The same artifact contained one unrelated Lesson Result retry diagnostic where an iOS answer input remained empty. It is outside this slice and is not used to explain the deterministic Phrases failure.
+
+### Refined root cause
+
+Directional hit slop correctly kept the pseudo-element's submit-facing edge aligned with the 36px button. However, compact `phrases.css` places the submit action at `right: 6px` and the clear action at `right: 70px`. With the rendered `Найти` width, the two painted boxes already overlap by approximately 6.05 CSS px. Therefore no transparent expansion strategy can satisfy independent targets while preserving that compact offset.
+
+### Second corrective change
+
+- Kept the clear button at 36×36 and preserved all desktop values.
+- Added a route-scoped compact correction at `max-width: 767px`:
+  - clear action `right: 80px`;
+  - search input `padding-right: 120px`.
+- The 10px inward shift creates approximately 3.95 CSS px painted and effective-target separation with the current submit geometry.
+- The 12px input-clearance increase leaves approximately 4 CSS px between the text content edge and shifted clear button.
+- Extended the source contract to allow exactly these two compact declarations and reject every other visual declaration.
+- Extended browser proof to assert input `paddingRight`, painted action separation and effective-target separation separately at 390px and 320px.
+
+### Current branch head
+
+Resolve from the live branch ref after this evidence and execution record are committed.
+
+### Next action
+
+Read back all eight changed paths, verify the exact allow-list diff and unchanged `main`, then run a fresh full authoritative CI on the new immutable head. PR #407 remains Draft.
