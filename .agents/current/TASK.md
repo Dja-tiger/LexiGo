@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `fix/issue-74-learn-resume-action-targets`
 - Base SHA: `78e3c18af88d86fbdfb6ee1f9d1a7dad0f006372`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from the live branch ref after the final evidence commit
+- PR: #402
 
 ## Objective
 
@@ -18,7 +18,7 @@ Guarantee minimum fine-pointer and coarse-pointer event surfaces for the live `/
 - Add one narrow interaction-only CSS owner for both resume actions.
 - Preserve the existing 44px painted minimum while guaranteeing a 48px coarse-pointer effective target.
 - Prove exact accessible-name ownership, target geometry, perimeter hits, separation, keyboard focus and compact overflow in desktop Chromium, Android Chromium and iOS WebKit.
-- Record source-level ownership and keep the browser proof in an existing blocking UI/accessibility command.
+- Record source-level ownership and keep the browser proof in existing blocking UI/accessibility commands.
 
 ## Non-goals
 
@@ -51,7 +51,7 @@ Guarantee minimum fine-pointer and coarse-pointer event surfaces for the live `/
 
 - Conditional resume-strip runtime: `frontend/components/lexigo-learn-app.tsx`.
 - Painted button geometry and resume layout: `frontend/app/premium-ui.css` and `frontend/app/adaptive-lesson-composer.css`.
-- New event-surface owner: `frontend/app/lesson-composer-resume-touch-targets.css`.
+- Event-surface owner: `frontend/app/lesson-composer-resume-touch-targets.css`.
 - Global focus-visible owner: `frontend/app/accessibility-focus.css`.
 
 ## Documentation owners
@@ -74,14 +74,14 @@ Guarantee minimum fine-pointer and coarse-pointer event surfaces for the live `/
 - Both live resume actions have an effective height of at least 44 CSS px for fine pointer and 48 CSS px for coarse pointer.
 - All four effective-target perimeter points resolve to the owning button.
 - Effective target rectangles do not overlap.
-- The visual border boxes and horizontal dimensions remain unchanged.
+- Visual border boxes and horizontal dimensions remain unchanged.
 - Keyboard focus-visible remains present.
 - Compact 320px and canonical 390px layouts have no horizontal overflow.
 - Source contract and blocking browser proof pass without snapshot changes.
 
 ## Required checks
 
-- Agent Harness validation.
+- Agent Harness routing validation.
 - Focused Vitest source contract.
 - Frontend lint and TypeScript.
 - Targeted Playwright in desktop Chromium, Android Chromium and iOS WebKit.
