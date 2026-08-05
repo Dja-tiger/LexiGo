@@ -22,7 +22,8 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - matching application bottom reserve so enlarged navigation does not cover route content;
 - source-level ownership contract;
 - focused Playwright proof in desktop Chromium, Android Chromium and iOS WebKit;
-- blocking registration in UI, accessibility and responsive commands.
+- blocking registration in UI, accessibility and responsive commands;
+- exact compact visual-baseline reconciliation only for screenshots whose rendered canonical mobile navigation changed from the approved 11px state to the approved 12px state.
 
 ## Non-goals
 
@@ -32,7 +33,8 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - desktop header or tablet rail presentation;
 - 200% browser zoom acceptance for the whole application;
 - physical-device acceptance;
-- unrelated touch targets in Issue #74.
+- unrelated touch targets in Issue #74;
+- unrelated desktop, tablet or compact visual baseline changes.
 
 ## Allowed paths
 
@@ -43,6 +45,11 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - `frontend/app/mobile-navigation-labels.css`
 - `frontend/components/mobile-navigation-labels-source.test.ts`
 - `frontend/e2e/mobile-navigation-labels.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/e2e/profile-visual.spec.ts`
+- `frontend/e2e/system-states-visual.spec.ts`
+- `frontend/e2e/visual-regression.spec.ts`
+- `frontend/e2e/word-detail-visual.spec.ts`
 - `frontend/package.json`
 
 ## Prohibited paths
@@ -52,7 +59,7 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - `frontend/components/route-primary-navigation.tsx`;
 - `frontend/lib/navigation.ts`;
 - compatibility runtime and `.lx-mobile-nav` owners;
-- visual baseline files;
+- visual baselines not proven by CI #2843 artifacts to contain the changed canonical compact mobile navigation;
 - workflow and deployment files;
 - dependency manifests other than the test-script entries in `frontend/package.json`.
 
@@ -78,9 +85,10 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - enlarged root text increases label size and navigation height;
 - navigation links and effective boxes do not overlap;
 - no horizontal document overflow is introduced;
-- application bottom padding remains at least navigation height plus 20px;
+- application bottom reserve remains at least navigation height plus 20px within a 0.1 CSS px geometry tolerance;
 - header and rail variants remain unaffected;
-- visual baselines are not updated to conceal regressions.
+- compact visual baselines are promoted only after manual artifact review confirms that the intended navigation-label change is the sole meaningful rendered delta;
+- desktop and unaffected compact visual hashes remain unchanged.
 
 ## Acceptance criteria
 
@@ -90,6 +98,7 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - all label scroll boxes fit inside their link boxes.
 - all four links remain keyboard-focusable and one representative link completes canonical navigation.
 - focused tests pass in desktop Chromium, Android Chromium and iOS WebKit.
+- all affected compact visual hashes are content-addressed to CI #2843 artifacts at immutable head `6ba40fbdafccc4cd34ad3869a7004a6c0c4ea9c2`.
 - full authoritative product CI passes on one immutable branch head.
 - expected-head squash merge, exact-SHA main CI and exact-image stage/public validation complete before reconciliation.
 
@@ -101,6 +110,7 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - focused mobile-navigation-label browser matrix;
 - full UI, accessibility, responsive, PWA, visual, performance and security gates selected by CI;
 - backend and container gates selected by product CI;
+- manual review of all changed compact visual artifacts before hash promotion;
 - no PR comments, reviews or unresolved review threads before merge;
 - exact merge-SHA stage and public browser validation.
 
@@ -109,8 +119,9 @@ Make the canonical route-owned mobile navigation labels readable at the default 
 - rem-based growth can increase the fixed bottom bar beyond the previous content reserve;
 - long labels may wrap inside narrow grid tracks and increase navigation height;
 - late global CSS may accidentally affect tablet/desktop navigation if selectors are insufficiently narrow;
-- a default-size typography change may expose an existing visual-regression snapshot.
+- content-addressed screenshots may expose every compact route carrying the canonical mobile navigation;
+- Linux rasterization may produce a bounded alternate hash for an otherwise visually identical masked compact profile screenshot.
 
 ## Rollback
 
-Revert the dedicated stylesheet import, stylesheet, source contract, focused browser proof and package-script registration as one atomic change. The unchanged canonical route-navigation owner then restores the previous 11/12px ellipsized behavior.
+Revert the dedicated stylesheet import, stylesheet, source contract, focused browser proof, package-script registration and the exact compact visual hash promotions as one atomic change. The unchanged canonical route-navigation owner then restores the previous 11/12px ellipsized behavior and prior visual contracts.
