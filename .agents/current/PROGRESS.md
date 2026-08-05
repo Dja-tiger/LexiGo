@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 15:58 Europe/Moscow
+## 2026-08-05 16:04 Europe/Moscow
 
 ### Verified
 
@@ -20,7 +20,7 @@ The live route-owned mobile navigation satisfies target geometry but not the rem
 
 ### Root cause
 
-The route presentation stack contains multiple mobile owners. The late Home/application-shell layer wins the original 12px rule, sets 11px, and fixes bottom padding independently of text size. A correct remediation therefore requires a final narrowly scoped owner with equal-or-higher specificity, not an early override beside `route-navigation.css`.
+The route presentation stack contains multiple mobile owners. The late Home/application-shell layer wins the original 12px rule, sets 11px, and fixes bottom padding independently of text size. The first CI candidate reused the same exact selector for the deliberate later `font-size` override, so the fail-closed global style-overlap inventory correctly rejected the unclassified exact-selector conflict.
 
 ### Changed files
 
@@ -42,18 +42,20 @@ The route presentation stack contains multiple mobile owners. The late Home/appl
 - exact PR patch review;
 - root layout readback restored all runtime markup and ordering; only the new CSS import plus the pre-existing missing-final-newline normalization remain;
 - post-cascade audit against `adaptive-knowledge-coach-home.css`;
-- source contract covers import order, exact live owner, old 11px cascade, rem growth, mounted-navigation reserve and blocking command registration;
-- focused proof covers 390px default, 320px narrow, 200% root text, target separation, clipping, focus, content reserve and canonical navigation in desktop Chromium, Android Chromium and iOS WebKit.
+- source contract covers import order, mounted live owner, old 11px cascade, rem growth, mounted-navigation reserve and blocking command registration;
+- focused proof covers 390px default, 320px narrow, 200% root text, target separation, clipping, focus, content reserve and canonical navigation in desktop Chromium, Android Chromium and iOS WebKit;
+- CI #2832 / run `31007795954` on obsolete head `287de486ef6ca42ae870adca7b45d38a559f1064`: classifier, lint and TypeScript passed; 98 test files and 610 tests otherwise passed.
 
 ### Checks failed
 
 - an initial early import lost to the later Home/Figma cascade; corrected before CI;
-- an initial full-file `layout.tsx` replacement unintentionally changed runtime composition; detected by readback and reverted before CI.
+- an initial full-file `layout.tsx` replacement unintentionally changed runtime composition; detected by readback and reverted before CI;
+- CI #2832 frontend unit gate rejected two unclassified exact-selector `font-size` conflicts in `global-feature-style-overlap-source.test.ts`; production build and browser jobs were consequently skipped.
 
 ### Current branch head
 
-Resolve from live branch `fix/issue-74-mobile-navigation-labels`. The code/test candidate before this progress update was `94bf64cab84394ffb39aaed3a3b722cc20a2c8a1`.
+Resolve from live branch `fix/issue-74-mobile-navigation-labels`. The failed CI head `287de486ef6ca42ae870adca7b45d38a559f1064` is obsolete.
 
 ### Next action
 
-Run authoritative CI on the final documentation-adjusted head, inspect focused browser output and any visual/cascade failures, then amend only within the declared atomic scope.
+Run authoritative CI on the final mounted-navigation selector head. The new owner uses `:has(.lx-route-nav--mobile)` for semantic runtime scoping, so it no longer claims the broad exact selector rejected by the global overlap inventory while preserving the same computed mobile behavior.
