@@ -103,8 +103,14 @@
  * pixels stationary, but shift the summary's pointer surface 16px left so the
  * two adjacent controls remain independently operable. The offsets include
  * the summary's 1px border, preserving the full outer target dimensions.
+ * Disable the fixed details box itself so its old right edge cannot remain an
+ * invisible interception strip above the neighboring streak button.
  */
 @media (min-width: 720px) {
+  .lx-route-reminder-entry {
+    pointer-events: none;
+  }
+
   .lx-route-reminder-entry > summary {
     position: relative;
     pointer-events: none;
@@ -116,6 +122,10 @@
     inset-block: -1px;
     inset-inline-start: -17px;
     inset-inline-end: 15px;
+    pointer-events: auto;
+  }
+
+  .lx-route-reminder-preview {
     pointer-events: auto;
   }
 }
