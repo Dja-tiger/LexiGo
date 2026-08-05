@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   installDeterministicRuntime,
   installQualityGateAPI,
+  QUALITY_WORDS,
 } from "./support/quality-gates";
 
 type TargetRect = {
@@ -24,6 +25,7 @@ type EffectiveTarget = TargetRect & {
 };
 
 const GROUP_NAMES = ["Режим обучения", "Раздел обучения", "Размер урока"] as const;
+const RESUME_ACTION_NAMES = ["Сбросить", "Продолжить урок"] as const;
 
 async function centerForHitTesting(control: Locator): Promise<void> {
   await control.evaluate((element) => {
@@ -99,8 +101,8 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
   });
 }
 
-async function groupTargetRects(group: Locator): Promise<TargetRect[]> {
-  return group.getByRole("radio").evaluateAll((elements) => {
+async function targetRects(controls: Locator): Promise<TargetRect[]> {
+  return controls.evaluateAll((elements) => {
     const measureTarget = (targetElement: HTMLElement) => {
       const rect = targetElement.getBoundingClientRect();
       const style = window.getComputedStyle(targetElement);
@@ -142,14 +144,14 @@ function overlapArea(first: TargetRect, second: TargetRect): number {
   return width * height;
 }
 
-async function expectNoTargetOverlap(group: Locator): Promise<void> {
-  const targets = await groupTargetRects(group);
+async function expectNoTargetOverlap(controls: Locator): Promise<void> {
+  const targets = await targetRects(controls);
   expect(targets.length).toBeGreaterThan(1);
   for (let leftIndex = 0; leftIndex < targets.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < targets.length; rightIndex += 1) {
       expect(
         overlapArea(targets[leftIndex], targets[rightIndex]),
-        `radio targets ${leftIndex} and ${rightIndex} must not overlap`,
+        `targets ${leftIndex} and ${rightIndex} must not overlap`,
       ).toBeLessThanOrEqual(0.1);
     }
   }
@@ -159,19 +161,17 @@ async function expectTransparentHitSlop(target: EffectiveTarget): Promise<void> 
   expect(target.pseudoBackground).toBe("rgba(0, 0, 0, 0)");
   expect(target.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
   expect(target.pseudoBoxShadow).toBe("none");
-  expect(target.perimeterHits, "all target perimeter points must resolve to the owning radio")
+  expect(target.perimeterHits, "all target perimeter points must resolve to the owning control")
     .toEqual([true, true, true, true]);
 }
 
-async function expectSelectedRadioFocus(group: Locator, page: Page): Promise<void> {
-  const selected = group.getByRole("radio", { checked: true });
-  await expect(selected).toHaveCount(1);
-  await centerForHitTesting(selected);
-  await selected.focus();
+async function expectFocusVisible(control: Locator, page: Page): Promise<void> {
+  await centerForHitTesting(control);
+  await control.focus();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
-  await expect(selected).toBeFocused();
-  const focus = await selected.evaluate((element) => {
+  await expect(control).toBeFocused();
+  const focus = await control.evaluate((element) => {
     const style = window.getComputedStyle(element);
     return {
       focusVisible: element.matches(":focus-visible"),
@@ -216,6 +216,31 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 }
 
+async function installActiveLesson(page: Page): Promise<void> {
+  await page.route("**/api/v1/lessons/active", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "00000000-0000-0000-0000-000000000074",
+        source: "mixed",
+        studyMode: "recall",
+        lessonSize: "30",
+        currentIndex: 1,
+        version: 3,
+        status: "active",
+        items: QUALITY_WORDS.map((item, position) => ({
+          ...item,
+          position,
+          ...(position === 0 ? { rating: "good" } : {}),
+        })),
+        createdAt: "2026-08-05T12:00:00Z",
+        updatedAt: "2026-08-05T12:05:00Z",
+      }),
+    });
+  });
+}
+
 test.describe("Issue #74 Lesson Composer option touch targets", () => {
   test.beforeEach(async ({ context, page }) => {
     await installDeterministicRuntime(page);
@@ -244,7 +269,7 @@ test.describe("Issue #74 Lesson Composer option touch targets", () => {
       const radios = group.getByRole("radio");
       const radioCount = await radios.count();
       expect(radioCount).toBeGreaterThanOrEqual(2);
-      await expectNoTargetOverlap(group);
+      await expectNoTargetOverlap(radios);
 
       for (let index = 0; index < radioCount; index += 1) {
         const radio = radios.nth(index);
@@ -256,10 +281,62 @@ test.describe("Issue #74 Lesson Composer option touch targets", () => {
         await expectTransparentHitSlop(target);
       }
 
-      await expectSelectedRadioFocus(group, page);
+      await expectFocusVisible(group.getByRole("radio", { checked: true }), page);
       await selectAlternateRadio(group);
     }
 
     await expectNoHorizontalOverflow(page);
+  });
+});
+
+test.describe("Issue #74 Learn resume-action touch targets", () => {
+  test.beforeEach(async ({ context, page }) => {
+    await installDeterministicRuntime(page);
+    await installQualityGateAPI(context);
+    await installActiveLesson(page);
+  });
+
+  test("unfinished-lesson actions expose separated 44/48px targets without visual growth", async ({ page }, testInfo) => {
+    test.skip(
+      !["desktop-chromium", "ios-webkit", "android-chromium"].includes(testInfo.project.name),
+      "The resume-action target contract runs in desktop Chromium, iOS WebKit and Android Chromium.",
+    );
+
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/learn", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("main", { name: "Обучение", exact: true })).toBeVisible();
+
+      const resumeActions = page.locator(".lx-resume-actions");
+      await expect(resumeActions).toBeVisible();
+      const buttons = resumeActions.getByRole("button");
+      await expect(buttons).toHaveCount(2);
+      await expectNoTargetOverlap(buttons);
+
+      const expectedMinimum = await page.evaluate(() => (
+        window.matchMedia("(pointer: coarse)").matches ? 48 : 44
+      ));
+
+      for (const actionName of RESUME_ACTION_NAMES) {
+        const action = resumeActions.getByRole("button", { name: actionName, exact: true });
+        await expect(action).toBeVisible();
+        await centerForHitTesting(action);
+        const target = await effectiveTarget(action);
+        expect(target.visualHeight).toBeCloseTo(44, 1);
+        expect(target.height).toBeGreaterThanOrEqual(expectedMinimum - 0.1);
+        expect(target.width).toBeCloseTo(target.visualWidth, 3);
+        await expectTransparentHitSlop(target);
+        await expectFocusVisible(action, page);
+      }
+
+      const visualGap = await buttons.evaluateAll((elements) => {
+        const first = elements[0]?.getBoundingClientRect();
+        const second = elements[1]?.getBoundingClientRect();
+        if (!first || !second) return -1;
+        return second.left - first.right;
+      });
+      expect(visualGap).toBeGreaterThanOrEqual(9.9);
+      await expectNoHorizontalOverflow(page);
+    }
   });
 });
