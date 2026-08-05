@@ -4,16 +4,17 @@
 
 - Last verified: 2026-08-05 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation slice: `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-- Latest deployed product SHA: `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-- Latest completed product slice: Issue #74 live mobile Lesson Composer option-radio touch-target contract.
-- Completion PR: #393.
-- PR #393 immutable developer-authored head: `662976c583bae7f7a270d2842bc2f31e748d9a9c`.
-- Authoritative PR CI: #2782 / run `30958611950`, complete success.
-- Expected-head squash merge produced product SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-- Exact-SHA main CI #2783 / run `30959228573` completed successfully with the full product matrix and immutable web/API image publication.
-- Exact-image Deploy Stage #2621 / run `30959742951` validated the exact CI scope, deployed SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`, and passed deployment, public endpoint smoke and public browser UI validation.
-- PR #393 had no comments, reviews or unresolved review threads before merge.
+- Product base verified before this documentation slice: `346b9690ab6029776eeac614f2d26472160af927`.
+- Latest deployed product SHA: `346b9690ab6029776eeac614f2d26472160af927`.
+- Latest completed product slice: Issue #74 shared-header streak touch-target contract.
+- Completion PR: #395.
+- PR #395 immutable developer-authored head: `c58770e73e7793e472ae8b83e3a219a7e81ccd97`.
+- Authoritative PR CI: #2821 / run `31004280198`, complete success.
+- Expected-head squash merge produced product SHA `346b9690ab6029776eeac614f2d26472160af927`.
+- Exact-SHA main CI #2822 / run `31004935200` completed successfully with the full product matrix and immutable web/API image publication.
+- Exact-image Deploy Stage #2660 / run `31005628787` validated the exact CI scope, deployed SHA `346b9690ab6029776eeac614f2d26472160af927`, and passed deployment, public endpoint smoke and public browser UI validation.
+- PR #395 had no comments, reviews or unresolved review threads before merge.
+- Issue #74 remains open because remaining live controls, enlarged-text/200% zoom evidence and final physical-device acceptance are separate slices.
 - No intersecting product or documentation PR remains open; Dependabot PRs #304–#306 remain unrelated maintenance work.
 
 ## Delivery contract
@@ -80,6 +81,18 @@
 - Visual baselines were not changed.
 - Product SHA: `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
 
+### PR #395 — shared-header streak touch target
+
+- Every confirmed live shared-header `button.lx-streak` exposes a real minimum 44px fine-pointer and 48px coarse-pointer border box.
+- The decorative Dictionary streak remains excluded by the exact button selector.
+- `header-streak-touch-targets.css` is the dedicated interaction owner and is imported globally after the existing header presentation owners.
+- Painted streak geometry, focus behavior, `/progress` navigation and responsive hiding remain unchanged.
+- The fixed reminder parent and native summary box do not intercept the streak boundary; the generated reminder target remains full-size and disclosure-capable.
+- Reminder target translation remains 16px on 720–1099px layouts and 28px from 1100px, preserving separation from both streak and profile targets.
+- Desktop Chromium, Android Chromium and iOS WebKit prove target dimensions, all four perimeter hits, reminder/profile separation, disclosure behavior, focus and compact overflow.
+- Visual regression passed without baseline changes.
+- Product SHA: `346b9690ab6029776eeac614f2d26472160af927`.
+
 ## Issue #74 acceptance status
 
 Completed:
@@ -88,23 +101,24 @@ Completed:
 - The shared live header profile button has a guaranteed 44/48px square target across desktop Chromium, Android Chromium and iOS WebKit.
 - The two live mobile Lesson Composer disclosure states have guaranteed 44/48px effective targets across the same browser matrix.
 - All currently rendered mobile Lesson Composer mode, source and size radio options have guaranteed 44/48px effective targets, non-overlapping hit regions and preserved radio semantics.
-- Expanded targets preserve presentation, keyboard focus, accessible names, runtime callbacks and adjacent-control separation.
+- Confirmed live shared-header streak buttons have guaranteed 44/48px real button targets with reminder and profile separation.
+- Expanded targets preserve presentation, keyboard focus, accessible names, runtime callbacks, navigation and adjacent-control separation.
 - Hidden/decorative consumers and stale issue wording are explicitly excluded from ownership; no live `Все режимы` control exists in the current `/learn` runtime.
 
 Still open:
 
-- Audit and remediate the remaining live preview, recommended/manual start, sticky-action, header/icon and route-specific controls that are not covered by PRs #387, #389, #391 and #393.
+- Audit and remediate the remaining live preview, recommended/manual start, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393 and #395.
 - Prove all remaining primary, secondary and icon controls meet minimum target and spacing contracts across affected routes.
 - Verify mobile navigation labels and target spacing under default and enlarged text.
 - Verify 200% browser zoom and system text enlargement without clipping, overlap or inaccessible actions.
 - Complete manual physical-device acceptance before Issue #74 can close.
 
-Issue #74 remains open. PRs #387, #389, #391 and #393 are completed atomic production slices, not full Issue closure.
+Issue #74 remains open. PRs #387, #389, #391, #393 and #395 are completed atomic production slices, not full Issue closure.
 
 ## Current state
 
 - No product slice is active.
-- Product runtime and stage are validated on `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
+- Product runtime and stage are validated on `346b9690ab6029776eeac614f2d26472160af927`.
 - This documentation reconciliation resets `.agents/current/**` to canonical templates.
 - The next Issue #74 slice must begin from live GitHub state and select only a confirmed exposed control after runtime-visibility, accessibility-tree and computed-style verification.
 
@@ -116,21 +130,21 @@ Issue #74 remains open. PRs #387, #389, #391 and #393 are completed atomic produ
 
 ## Recent production evidence
 
-1. #393 — `fix(a11y): guarantee Learn option touch targets` → `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-2. #392 — `docs(agent): reconcile Issue 74 Learn disclosure slice` → `b42f540f240883cfd4b23ce6e248512ac1f21316`.
-3. #391 — `fix(a11y): guarantee Learn disclosure touch targets` → `0535f6641b6624b5f07266137942c3c5ae73c167`.
-4. #390 — `docs(agent): reconcile Issue 74 profile target slice` → `6a8c885a6a7950c25cada8374b2d71dcf253b34e`.
-5. #389 — `fix(frontend): expand header profile touch target` → `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+1. #395 — `fix(a11y): guarantee header streak touch target` → `346b9690ab6029776eeac614f2d26472160af927`.
+2. #394 — previous Agent Docs reconciliation → `e46881b9fc9def630343e3ee69425492bc0aefe7`.
+3. #393 — `fix(a11y): guarantee Learn option touch targets` → `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
+4. #392 — `docs(agent): reconcile Issue 74 Learn disclosure slice` → `b42f540f240883cfd4b23ce6e248512ac1f21316`.
+5. #391 — `fix(a11y): guarantee Learn disclosure touch targets` → `0535f6641b6624b5f07266137942c3c5ae73c167`.
 
 ## Evidence
 
-- PR #393 immutable head `662976c583bae7f7a270d2842bc2f31e748d9a9c` passed authoritative full CI #2782 / run `30958611950`.
-- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, focused desktop/iOS/Android option-target proof, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded.
-- Two superseded CI runs exposed slice-local source-contract defects rather than production defects: whole-file role totals included unrelated radio owners, and a raw `width:` substring matched `max-width`. The final contract uses exact render-map/component evidence and declaration-level CSS checks; production CSS and runtime components were unchanged by those corrections.
-- Expected-head squash merge produced `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-- Exact-SHA main CI #2783 / run `30959228573` completed successfully with the full product gates and immutable web/API image publication.
-- Deploy Stage #2621 / run `30959742951` validated the exact CI scope, deployed the exact SHA, and passed deployment, public endpoint smoke and public browser UI validation.
-- PR #393 had no comments, reviews or unresolved review threads before merge.
+- PR #395 immutable head `c58770e73e7793e472ae8b83e3a219a7e81ccd97` passed authoritative full CI #2821 / run `31004280198`.
+- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, focused desktop/iOS/Android streak-target proof, Lesson, Dictionary, iOS PWA, controlled service worker, CSP, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded.
+- Expected-head squash merge produced `346b9690ab6029776eeac614f2d26472160af927`.
+- Exact-SHA main CI #2822 / run `31004935200` completed successfully with the full product gates and immutable web/API image publication.
+- Deploy Stage #2660 / run `31005628787` validated the exact CI scope, deployed the exact SHA, and passed deployment, public endpoint smoke and public browser UI validation.
+- PR #395 had no comments, reviews or unresolved review threads before merge.
+- Issue #74 received a factual completion comment recording this atomic slice and remains open for the remaining acceptance scope.
 - Local clone execution was unavailable in the current environment; no local result was counted as validation evidence.
 - Final claims use exact refs, files, Issues, PRs, workflow jobs and deployment records.
 
