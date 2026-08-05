@@ -12,22 +12,21 @@
     --lx-route-mobile-navigation-label-size: max(12px, 0.75rem);
     --lx-route-mobile-navigation-block-size: max(
       var(--lx-compact-navigation-height),
-      calc(38px + 2.4rem)
+      calc(33.6px + 2.4rem)
     );
   }
 
   /*
    * Reserve the same text-driven block size below route content only while the
-   * canonical mobile navigation is mounted. The first selector matches the
-   * late Home/Learn/Phrases/Progress presentation owner; the second covers the
-   * Dictionary island. The extra 28px retains the existing compact-shell
-   * clearance between content and fixed chrome.
+   * canonical mobile navigation is mounted. The 20px clearance preserves the
+   * effective 92px compact-shell reserve when the bar remains at its existing
+   * 72px default height and grows together with enlarged labels thereafter.
    */
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode) {
     padding-bottom: calc(
       var(--lx-route-mobile-navigation-block-size)
-      + 28px
+      + 20px
       + env(safe-area-inset-bottom)
     );
   }
@@ -39,10 +38,10 @@
 
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a {
     /*
-     * 31px accounts for the 20px icon, 3px content gap and 8px link padding.
-     * Two 1.2-line label rows can then grow with the link's computed font.
+     * The max() preserves the existing 54px painted link at default text.
+     * The calculated branch reserves two 1.2-line label rows when text grows.
      */
-    min-block-size: max(52px, calc(31px + 2.4em));
+    min-block-size: max(54px, calc(25.2px + 2.4em));
     font-size: var(--lx-route-mobile-navigation-label-size);
     line-height: 1.2;
   }
