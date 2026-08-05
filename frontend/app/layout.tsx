@@ -34,6 +34,7 @@ import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
 import "./dictionary-search-clear-touch-targets.css";
 import "./word-detail.css";
+import "./word-detail-back-touch-targets.css";
 import "./compact-home.css";
 import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
