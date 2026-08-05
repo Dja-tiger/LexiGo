@@ -1,0 +1,32 @@
+/*
+ * Issue #74 — shared header streak touch target.
+ *
+ * premium-ui.css and adaptive-knowledge-coach-home.css remain the painted
+ * presentation and responsive-visibility owners. This layer expands only the
+ * block-axis event surface of the confirmed live button.
+ */
+.lx-routed-app {
+  --lx-header-streak-touch-target: 44px;
+}
+
+.lx-routed-app button.lx-streak {
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-routed-app button.lx-streak::before {
+  position: absolute;
+  content: "";
+  inset-block: min(
+    0px,
+    calc((100% - var(--lx-header-streak-touch-target)) / 2)
+  );
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app {
+    --lx-header-streak-touch-target: 48px;
+  }
+}
