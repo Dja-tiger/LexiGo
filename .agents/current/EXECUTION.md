@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-mobile-navigation-labels`
 - Base SHA: `091b8ffdbf0bb70edbbe963f9fd88e40c3ef848a`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #397
 
 ## Skills used
 
@@ -14,7 +14,7 @@
 
 Purpose:
 
-Continue one atomic production slice through repository inspection, branch writes, CI, expected-head merge and deployment evidence.
+Continue one atomic production slice through repository inspection, branch writes, authoritative CI, expected-head merge and deployment evidence.
 
 Instruction source:
 
@@ -30,8 +30,9 @@ Inputs:
 
 - live `main` and open PR state;
 - Issue #74 acceptance criteria;
-- canonical route navigation component and CSS;
-- adaptive navigation browser tests;
+- canonical and late route-navigation CSS owners;
+- route navigation runtime and label model;
+- existing adaptive-navigation browser contracts;
 - frontend test command registration.
 
 Files inspected:
@@ -42,6 +43,7 @@ Files inspected:
 - `frontend/lib/navigation.ts`;
 - `frontend/app/route-navigation.css`;
 - `frontend/app/adaptive-navigation.css`;
+- `frontend/app/adaptive-knowledge-coach-home.css`;
 - `frontend/app/layout.tsx`;
 - `frontend/e2e/adaptive-navigation.spec.ts`;
 - `frontend/package.json`;
@@ -50,41 +52,53 @@ Files inspected:
 Actions performed:
 
 - completed the previous PR #395 product and PR #396 reconciliation lifecycle;
-- verified no active intersecting slice remains;
+- verified no active intersecting slice remained;
 - selected the canonical mobile route-label gap after excluding already-compliant start buttons and hidden legacy header bell ownership;
 - created `fix/issue-74-mobile-navigation-labels` from live `main`;
-- initialized the current task contract.
+- initialized the current task contract and opened Draft PR #397;
+- added a dedicated final mobile label/reflow owner;
+- added a source-level import/cascade/runtime ownership contract;
+- added focused default, narrow and 200% root-text browser proof;
+- registered the proof in UI, accessibility and responsive commands;
+- read back every changed path and inspected the exact PR patch;
+- detected and corrected an early-import cascade failure;
+- detected and reverted unintended root-layout composition changes before CI;
+- scoped content reserve through `:has(.lx-route-nav--mobile)` so focused routes without mounted mobile navigation are unaffected.
 
 Commands or procedures:
 
-GitHub connector reads, branch creation and fail-closed owner comparison. Local clone execution is unavailable and will not be counted as evidence.
+GitHub connector reads/writes, exact-ref comparisons, changed-file listing and per-file PR patch inspection. Local clone execution is unavailable and no local result is counted as evidence.
 
 Artifacts produced:
 
-- populated `.agents/current/TASK.md`;
-- populated `.agents/current/PROGRESS.md`;
-- this execution record.
+- `frontend/app/mobile-navigation-labels.css`;
+- `frontend/components/mobile-navigation-labels-source.test.ts`;
+- `frontend/e2e/mobile-navigation-labels.spec.ts`;
+- Draft PR #397;
+- populated `.agents/current/**` task records.
 
 Result:
 
-The task is constrained to one dedicated mobile-label/reflow owner plus source and browser contracts. Runtime navigation semantics and compatibility owners remain out of scope.
+The candidate now owns only live canonical mobile label size, wrapping, text-driven navigation growth and matching route reserve. Runtime links, labels, hrefs, active state, history and compatibility navigation remain unchanged.
 
 Failures:
 
-None yet.
+- Initial import immediately after `route-navigation.css` was insufficient because `adaptive-knowledge-coach-home.css` later restored 11px and fixed padding.
+- Initial full replacement of `layout.tsx` accidentally changed runtime child composition.
 
 Root cause:
 
-The canonical mobile navigation combines fixed 11/12px labels, single-line ellipsis and a fixed content reserve, preventing enlarged text from remaining readable without clipping.
+- The effective label owner was a later Figma/application-shell stylesheet, not the canonical route-navigation file alone.
+- The connector write required complete-file replacement and the initially reconstructed tail did not exactly match `main`.
 
 Fallback:
 
-If the dedicated owner cannot preserve non-overlap and content reserve across the required browser matrix, revert the atomic branch and retain the previous behavior until a narrower layout strategy is proven.
+Both failures were corrected before authoritative CI: the owner moved to the final global cascade, specificity was aligned with live route selectors, and `layout.tsx` was restored from exact `main` content with only one import added. If browser proof still fails, revert the atomic branch rather than weakening clipping, overlap or reserve assertions.
 
 Limitations:
 
-No physical-device result will be claimed. Whole-application 200% browser zoom remains a later Issue #74 acceptance slice.
+No physical-device result will be claimed. The test uses 200% root text enlargement; whole-application browser zoom remains a later Issue #74 acceptance slice.
 
 Reusable lesson:
 
-Confirm runtime visibility and existing computed target geometry before remediating stale Issue wording; the live gap is label scaling/reflow, not target size or route semantics.
+For global CSS slices, inspect every later presentation owner and the exact final computed cascade before implementation. For complete-file connector writes, read back and compare the resulting PR patch before counting the change as valid.
