@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-05 14:12 Europe/Moscow
+## 2026-08-05 14:20 Europe/Moscow
 
 ### Verified
 
@@ -11,7 +11,8 @@
 - the streak remains intentionally hidden below 720px on applicable route islands;
 - the fixed reminder summary ends at `right: 150px`, while the live streak begins about 14px earlier in the tested desktop and 820px header layouts;
 - CI artifacts and traces prove the reminder receives the left streak perimeter point in desktop Chromium, Android Chromium and iOS WebKit;
-- an isolated Chromium proof confirmed that `pointer-events: none` on `<summary>` plus an explicitly interactive shifted `summary::before` retains native `<details>` toggling inside the generated target and excludes the old right-side overlap strip.
+- an isolated Chromium proof confirmed that a disabled summary pointer box plus an explicitly interactive shifted `summary::before` retains native `<details>` toggling and excludes the old right-side overlap strip;
+- a second local geometry proof confirmed that border-aware offsets `inset-block: -1px`, `inset-inline-start: -17px` and `inset-inline-end: 15px` preserve a full 48×48 outer target shifted exactly 16px left.
 
 ### Finding
 
@@ -42,7 +43,7 @@ The initial test calculated a 44/48px streak pseudo target but CI correctly demo
 
 - streak owner uses `min-block-size` and `min-inline-size` from a 44px fine / 48px coarse token;
 - the streak no longer creates `::before`, `position: relative` or stacking-sensitive hit slop;
-- at `min-width: 720px`, the reminder summary keeps painted pixels stationary while its generated pointer surface moves 16px left using `inset-inline-start: -16px` and `inset-inline-end: 16px`;
+- at `min-width: 720px`, the reminder summary keeps painted pixels stationary while its full outer target moves exactly 16px left with border-aware generated-surface offsets;
 - the summary remains keyboard-focusable and the generated surface preserves native disclosure clicks;
 - the focused browser proof measures real streak/profile boxes and the shifted reminder surface, verifies both gaps, clicks the extended reminder edge, checks focus and navigates through the streak to `/progress`.
 
@@ -52,7 +53,8 @@ The initial test calculated a 44/48px streak pseudo target but CI correctly demo
 - the corrected source inventory and route-specific Progress navigation assertions passed in CI #2795;
 - downloaded UI artifacts identified one deterministic focused-test failure per browser project rather than an unrelated suite failure;
 - downloaded visual artifacts identified exactly two deterministic desktop screenshot failures on the pseudo-element implementation;
-- standalone Chromium interaction proof passed for the shifted summary surface: extended left and center points toggle details, while the excluded right strip does not;
+- standalone Chromium interaction proof passed for the shifted summary surface;
+- standalone border geometry proof measured the corrected target at exactly 48×48 CSS pixels;
 - every new write was made only on `fix/issue-74-header-streak-target`; `main` remains unchanged.
 
 ### Checks failed on superseded head `e070d3d0d4edbab3d3877a94329fa281ab5dbb5b`
@@ -64,8 +66,8 @@ The initial test calculated a 44/48px streak pseudo target but CI correctly demo
 
 ### Current branch head
 
-- product/test implementation before Agent record updates: `b5304f8b6adcaf2d6d653776c9cff3657b66ef2a`;
-- resolve the current immutable head from the live branch after this record commit.
+- product and test implementation before this progress update: `9dbcd1a6a6cd8981d0ed0d4a86f55707d00f170a`;
+- resolve the immutable CI head from the live branch after this record commit.
 
 ### Next action
 
