@@ -73,6 +73,12 @@ async function effectiveTarget(button: Locator): Promise<EffectiveTarget> {
   });
 }
 
+async function paddingRight(input: Locator): Promise<number> {
+  return input.evaluate((element) => (
+    Number.parseFloat(window.getComputedStyle(element).paddingRight) || 0
+  ));
+}
+
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 }
@@ -96,6 +102,9 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       await expect(page.getByRole("main", { name: "Технические фразы", exact: true })).toBeVisible();
 
       const search = page.getByRole("searchbox", { name: "Поиск по фразам", exact: true });
+      const emptyPaddingRight = await paddingRight(search);
+      expect(emptyPaddingRight).toBeCloseTo(width <= 767 ? 108 : 48, 3);
+
       await search.fill("root cause");
       const action = page.getByRole("button", { name: "Очистить поиск", exact: true });
       const submit = page.getByRole("button", { name: "Найти", exact: true });
@@ -109,9 +118,7 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       const inputBox = await search.boundingBox();
       const actionBox = await action.boundingBox();
       const submitBox = await submit.boundingBox();
-      const paddingRight = await search.evaluate((element) => (
-        Number.parseFloat(window.getComputedStyle(element).paddingRight) || 0
-      ));
+      const activePaddingRight = await paddingRight(search);
 
       expect(target.visualHeight).toBeCloseTo(36, 3);
       expect(target.visualWidth).toBeCloseTo(36, 3);
@@ -122,7 +129,7 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       expect(target.pseudoBackground).toBe("rgba(0, 0, 0, 0)");
       expect(target.pseudoBorderWidths).toEqual(["0px", "0px", "0px", "0px"]);
       expect(target.pseudoBoxShadow).toBe("none");
-      expect(paddingRight).toBeCloseTo(width <= 767 ? 120 : 48, 3);
+      expect(activePaddingRight).toBeCloseTo(width <= 767 ? 120 : 48, 3);
 
       expect(inputBox).not.toBeNull();
       if (inputBox) {
@@ -164,6 +171,7 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
       await action.click();
       await expect(search).toHaveValue("");
       await expect(action).toHaveCount(0);
+      expect(await paddingRight(search)).toBeCloseTo(width <= 767 ? 108 : 48, 3);
       await expectNoHorizontalOverflow(page);
     }
   });
