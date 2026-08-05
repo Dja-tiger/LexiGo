@@ -23,15 +23,15 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, {
 }> = {
   "compact-loading-dark": {
     figmaNode: "79:69",
-    sha256: "0445cb0016887f4c54993cbf3706f4b720e01cf9b13c0bfebf37efc77f1bb61d",
+    sha256: "45956af4fd18983b56d9c6ae38714b1ba5ed984a930c8ffca7472dd65a699368",
   },
   "compact-empty-light": {
     figmaNode: "79:93",
-    sha256: "d21af9c2f2e194eb6c5a447c5913107cc414f216f28a7fba7a78dfc05b211aa2",
+    sha256: "e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf",
   },
   "compact-error-dark": {
     figmaNode: "79:117",
-    sha256: "acd7f5437ba3994b140f0123f4734678dff7a82188abba8d6cbb5532ec0bc5c0",
+    sha256: "84576205fe0619b9e1707f5c2e8ccf4a6ce7e6c285c5a261170709efa1549b11",
   },
   "desktop-offline-dark": {
     figmaNode: "79:194",

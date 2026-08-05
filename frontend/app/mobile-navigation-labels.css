@@ -1,0 +1,66 @@
+/*
+ * Issue #74 — canonical route-owned mobile navigation labels.
+ *
+ * Route-specific Figma layers keep ownership of painted route chrome. This
+ * final post-cascade layer owns only compact-label readability and text-driven
+ * reflow. The default 12px floor replaces the former 11px compact rendering,
+ * while the rem component lets user text enlargement grow labels without
+ * clipping them inside a fixed single-line box.
+ */
+@media (max-width: 719px) {
+  .lx-routed-app {
+    --lx-route-mobile-navigation-label-size: max(12px, 0.75rem);
+    --lx-route-mobile-navigation-block-size: max(72px, calc(33.6px + 2.4rem));
+    --lx-route-mobile-navigation-growth: max(0px, calc(2.4rem - 38.4px));
+  }
+
+  /*
+   * Every route keeps its existing, independently reviewed compact bottom
+   * padding. Only the amount by which enlarged labels grow the fixed bar is
+   * appended as normal-flow space. At the default 16px root size this spacer
+   * is exactly 0px, so existing compact screenshot dimensions remain stable.
+   */
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app::after {
+    display: block;
+    block-size: var(--lx-route-mobile-navigation-growth);
+    content: "";
+  }
+
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile {
+    min-block-size: var(--lx-route-mobile-navigation-block-size);
+    align-items: stretch;
+  }
+
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a {
+    /*
+     * The max() preserves the existing 54px painted link at default text.
+     * The calculated branch reserves two 1.2-line label rows when text grows.
+     */
+    min-block-size: max(54px, calc(25.2px + 2.4em));
+    font-size: var(--lx-route-mobile-navigation-label-size);
+    line-height: 1.2;
+  }
+
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span {
+    min-inline-size: 0;
+  }
+
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span > span {
+    max-inline-size: 100%;
+    overflow: visible;
+    text-align: center;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/*
+ * Override only the old 11px compact fallbacks. All painted properties at
+ * this breakpoint remain owned by route-specific presentation layers.
+ */
+@media (max-width: 390px) {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a {
+    font-size: var(--lx-route-mobile-navigation-label-size);
+  }
+}
