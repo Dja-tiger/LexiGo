@@ -1,0 +1,33 @@
+/*
+ * Issue #74 — Learn unfinished-lesson action touch targets.
+ *
+ * premium-ui.css and adaptive-lesson-composer.css remain the painted geometry,
+ * spacing and responsive-layout owners. This layer only expands the block-axis
+ * event surface when a live resume action is smaller than the input-modality
+ * minimum.
+ */
+.lx-main-content[aria-label="Обучение"] .lx-resume-actions {
+  --lx-learn-resume-action-touch-target: 44px;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-resume-actions > .lx-button {
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-main-content[aria-label="Обучение"] .lx-resume-actions > .lx-button::before {
+  position: absolute;
+  content: "";
+  inset-block: min(
+    0px,
+    calc((100% - var(--lx-learn-resume-action-touch-target)) / 2)
+  );
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-main-content[aria-label="Обучение"] .lx-resume-actions {
+    --lx-learn-resume-action-touch-target: 48px;
+  }
+}
