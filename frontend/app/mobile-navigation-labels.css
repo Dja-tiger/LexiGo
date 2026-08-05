@@ -17,13 +17,14 @@
   }
 
   /*
-   * Reserve the same text-driven block size below route content. The first
-   * selector matches the late Home/Learn/Phrases/Progress presentation owner;
-   * the second covers the canonical Dictionary island. The extra 28px retains
-   * the existing compact-shell clearance between content and fixed chrome.
+   * Reserve the same text-driven block size below route content only while the
+   * canonical mobile navigation is mounted. The first selector matches the
+   * late Home/Learn/Phrases/Progress presentation owner; the second covers the
+   * Dictionary island. The extra 28px retains the existing compact-shell
+   * clearance between content and fixed chrome.
    */
-  .lx-routed-app .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),
-  .lx-routed-app .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode) {
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app:not(.lx-lesson-focus-mode):not([data-route-client-island="dictionary"]),
+  .lx-routed-app:has(.lx-route-nav--mobile) .lx-app[data-route-client-island="dictionary"]:not(.lx-lesson-focus-mode) {
     padding-bottom: calc(
       var(--lx-route-mobile-navigation-block-size)
       + 28px
