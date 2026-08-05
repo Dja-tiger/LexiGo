@@ -6,7 +6,7 @@
 
 - Live `main` is `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
 - The latest completed product slice is PR #407 on product SHA `f36c70d4b21477f2df63500d97c20715bc4b3db3`; exact-SHA main CI and exact-image stage/public validation succeeded.
-- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance; no feature PR or active current harness slice exists.
+- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance; no feature PR or active current harness slice existed before this branch.
 - Issue #74 remains open for remaining live controls, whole-application 200% zoom and final physical-device acceptance.
 - All mandatory Agent Harness documents, live Issue #74, README, architecture, current `main`, open PRs and branch inventory were read before writes.
 - Branch `fix/issue-74-dictionary-search-clear-target` was created and read back at exact base `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
@@ -23,8 +23,6 @@ Dictionary presentation defines the clear action's visual dimensions, position, 
 
 ### Changed files
 
-Prepared for one atomic branch commit:
-
 - added `frontend/app/dictionary-search-clear-touch-targets.css`;
 - added `frontend/components/dictionary-search-clear-touch-target-source.test.ts`;
 - added `frontend/e2e/dictionary-search-clear-touch-targets.spec.ts`;
@@ -37,7 +35,7 @@ Prepared for one atomic branch commit:
 - Live route, session, runtime, presentation, controlled input, URL update and focus owners were inspected.
 - Existing Issue #74 touch-target patterns and the completed Phrases clear-action slice were inspected as prior evidence.
 - Scope is restricted to eight explicit paths; runtime JSX, API, history and base Dictionary presentation remain prohibited.
-- The planned CSS contains no painted size, padding, margin, border, background, shadow, transform, position offset or focus declarations.
+- The dedicated CSS contains no painted size, padding, margin, border, background, shadow, transform, position offset or focus declarations.
 - Browser proof covers 1440px, 390px and 320px in desktop Chromium, Android Chromium and iOS WebKit.
 
 ### Checks failed
@@ -46,8 +44,32 @@ Prepared for one atomic branch commit:
 
 ### Current branch head
 
-- `dc6dd82091b2d0076da6e4663936ff75a2852d28` before publishing the prepared atomic commit.
+- Initial implementation head: `e58c6ca3d1e10e9e8e89d52136c8604b185d88bc`.
 
 ### Next action
 
-Create one tree and developer-authored commit from the exact base, advance only the verified feature branch, read every changed path back, confirm the eight-path compare and unchanged `main`, then open a Draft PR and run authoritative full CI.
+Publish the factual PR/head synchronization commit, verify the final branch and exact diff, then run authoritative full CI on the final developer-authored head.
+
+## 2026-08-05 23:39 Europe/Moscow
+
+### Published and read back
+
+- One developer-authored implementation commit `e58c6ca3d1e10e9e8e89d52136c8604b185d88bc` was created from exact parent `dc6dd82091b2d0076da6e4663936ff75a2852d28` and advanced only `fix/issue-74-dictionary-search-clear-target`.
+- All eight changed paths were read back from the feature branch; their blob SHAs match the prepared content.
+- `main` remained `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
+- Corrected exact compare reports `ahead_by: 1`, `behind_by: 0`, one commit and only the eight allowed paths.
+- Draft PR #409 was opened with base `main`, head `fix/issue-74-dictionary-search-clear-target`, base SHA `dc6dd82091b2d0076da6e4663936ff75a2852d28` and head SHA `e58c6ca3d1e10e9e8e89d52136c8604b185d88bc`.
+
+### Process correction
+
+- The first compare read was rejected before execution because it used `repository_full_name` instead of the required `repo_full_name` field.
+- No ref, file, commit or PR changed from the rejected call.
+- `main` and the feature branch ref were re-read, the exact schema was loaded and compare succeeded with the correct field.
+
+### Current branch head
+
+Resolve from the live branch ref after this task-record synchronization commit.
+
+### Next action
+
+Read back the synchronized task records, re-run exact compare against unchanged `main`, then monitor the authoritative PR CI. PR #409 remains Draft until the complete required matrix passes on the final developer-authored head.

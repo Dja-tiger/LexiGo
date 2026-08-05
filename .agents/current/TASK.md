@@ -5,8 +5,8 @@
 - Issue: #74 — increase small touch targets and mobile labels.
 - Branch: `fix/issue-74-dictionary-search-clear-target`.
 - Base SHA: `dc6dd82091b2d0076da6e4663936ff75a2852d28`.
-- Head SHA: resolve from live branch ref after the implementation commit.
-- PR: pending Draft publication.
+- Head SHA: implementation head before task-record synchronization `e58c6ca3d1e10e9e8e89d52136c8604b185d88bc`; resolve the final head from the live branch ref.
+- PR: #409 — Draft.
 
 ## Objective
 
@@ -106,4 +106,4 @@ Guarantee a minimum 44×44 CSS px fine-pointer and 48×48 CSS px coarse-pointer 
 
 ## Rollback
 
-Revert the single product commit or remove the dedicated stylesheet import, source contract, browser proof and command registrations. Runtime search and URL-state code require no rollback because they are unchanged.
+Revert the product changes or remove the dedicated stylesheet import, source contract, browser proof and command registrations. Runtime search and URL-state code require no rollback because they are unchanged.
