@@ -10,28 +10,27 @@
 
 ## Objective
 
-Guarantee a minimum 44px fine-pointer and 48px coarse-pointer target for every confirmed live shared header streak button, while preserving painted pixels, navigation, focus behavior and intentional phone-width hiding. Keep the adjacent fixed reminder and profile targets independently operable without overlap.
+Guarantee a minimum 44px fine-pointer and 48px coarse-pointer target for every confirmed live shared-header streak button. Preserve navigation, focus, responsive hiding and painted output while keeping reminder, streak and profile targets independently operable.
 
 ## Scope
 
-- keep one exact interaction owner for `button.lx-streak`;
-- use a real minimum border box instead of a generated streak pseudo-element;
-- shift only the reminder summary's invisible pointer surface 16px left at widths where the streak is visible;
-- preserve the reminder's painted card position and native `<details>/<summary>` disclosure behavior;
-- account for the reminder's 1px border so the shifted surface retains its full outer target dimensions;
-- prove separation from both adjacent reminder and profile targets;
-- retain exact source ownership that distinguishes interactive buttons from the decorative Dictionary streak span;
-- run desktop Chromium, Android Chromium and iOS WebKit geometry, hit-testing, focus, disclosure and navigation proof;
-- keep the focused proof registered in blocking UI and accessibility commands.
+- exact interaction owner for `button.lx-streak`;
+- real 44/48px streak border box, without a streak pseudo-element;
+- reminder pointer surface shifted 16px left on 720–1099px layouts where its label is hidden;
+- reminder pointer surface shifted 28px left from 1100px where the visible label makes the fixed control wider;
+- border-aware offsets that retain the reminder target’s outer dimensions;
+- disable stale pointer ownership on the fixed `<details>` and original summary box;
+- keep the generated summary target and disclosed preview interactive;
+- prove non-overlap with reminder and profile in desktop Chromium, Android Chromium and iOS WebKit;
+- retain exact interactive-versus-decorative streak ownership.
 
 ## Non-goals
 
-- no changes to streak data, progress loading or navigation ownership;
-- no changes to the decorative Dictionary `span.lx-streak`;
+- no changes to streak data or Progress navigation callbacks;
+- no changes to decorative Dictionary `span.lx-streak`;
 - no changes to streak typography, icons, color or horizontal padding;
 - no movement or repainting of the visible reminder card;
-- no change to the intentional `max-width: 719px` phone-width hiding contract;
-- no changes to profile, Lesson Composer, mobile navigation, enlarged-text or 200% zoom owners;
+- no change to phone-width streak hiding;
 - no visual baseline updates;
 - no Issue #74 closure.
 
@@ -50,73 +49,55 @@ Guarantee a minimum 44px fine-pointer and 48px coarse-pointer target for every c
 ## Prohibited paths
 
 - backend and database code;
-- workflow and dependency manifests other than the focused `frontend/package.json` command registration;
+- workflows and dependency manifests outside focused command registration;
 - painted streak presentation owners;
-- reminder component behavior or visible-position owners outside its interaction surface;
+- visible reminder-position changes;
 - visual baselines;
 - `.agents/PROJECT_STATE.md` before post-merge reconciliation.
 
 ## Runtime owners
 
-- live streak buttons: Home, Learn, Active Lesson and compatibility route runtimes;
-- decorative non-interactive streak: Dictionary route runtime, explicitly excluded;
 - streak presentation: `frontend/app/premium-ui.css` and `frontend/app/adaptive-knowledge-coach-home.css`;
-- streak minimum target: `frontend/app/header-streak-touch-targets.css`;
-- adjacent reminder presentation and shifted pointer surface: `frontend/app/calendar-reminder-entry.css`;
-- adjacent profile hit surface: `frontend/app/header-profile-touch-targets.css`;
-- navigation callback: each interactive route runtime's existing Progress navigation handler.
-
-## Documentation owners
-
-- active task evidence: `.agents/current/**`;
-- durable completion evidence: `.agents/PROJECT_STATE.md` in a separate post-deployment reconciliation slice.
+- streak target: `frontend/app/header-streak-touch-targets.css`;
+- reminder presentation and pointer surface: `frontend/app/calendar-reminder-entry.css`;
+- profile target: `frontend/app/header-profile-touch-targets.css`;
+- route navigation: existing Home, Learn, Active Lesson and compatibility callbacks.
 
 ## Invariants
 
-- visible streak content, reminder card and header spacing remain pixel-stable;
-- the streak uses its real border box and no generated hit-slop pseudo-element;
-- the reminder's invisible target remains at least 44/48px and shifts left without moving painted content;
-- reminder, streak and profile effective targets do not overlap;
-- the Dictionary streak remains a non-interactive span;
-- the phone-width hidden state remains hidden;
-- role, accessible name, focus-visible and Progress navigation remain unchanged;
-- native reminder disclosure remains operable from its shifted target;
+- painted header pixels remain stable;
+- reminder, streak and profile target rectangles do not overlap;
+- reminder target remains at least 44/48px and native disclosure remains operable;
+- streak uses its real border box and no generated target;
+- Dictionary streak remains decorative;
+- phone hidden state, accessible names, focus-visible and `/progress` navigation remain unchanged;
 - no horizontal overflow is introduced.
 
 ## Acceptance criteria
 
-- fine-pointer streak border-box height and width are at least 44px;
-- coarse-pointer streak border-box height and width are at least 48px;
-- all four streak border-box perimeter points resolve to the button;
-- the streak has no generated `::before` hit surface;
-- the shifted reminder target remains at least 44/48px, fully hit-testable and opens/closes the native details element;
-- reminder-to-streak and streak-to-profile target gaps are at least 1 CSS pixel;
-- keyboard focus-visible remains owned by the global focus layer;
-- activating the streak target still navigates to `/progress`;
-- the decorative Dictionary `span.lx-streak` is not captured;
-- Chromium, Android Chromium and iOS WebKit focused proof passes;
+- streak border box is at least 44×44 fine and 48×48 coarse;
+- all four streak perimeter points hit the button;
+- reminder target remains fully hit-testable and opens/closes `<details>`;
+- reminder-to-streak and streak-to-profile gaps are at least 1 CSS px;
+- desktop, Android and iOS focused proof passes;
 - visual regression passes without baseline changes;
-- full authoritative CI passes on an immutable PR head.
+- full authoritative CI passes on one immutable PR head.
 
 ## Required checks
 
-- frontend lint;
-- TypeScript;
-- Vitest source contract and full unit suite;
-- production build and dependency audit;
-- blocking UI and accessibility browser matrices;
-- visual regression without baseline changes;
-- existing reminder disclosure tests;
-- remaining repository product gates required by authoritative CI.
+- lint, TypeScript, Vitest, production build and dependency audit;
+- full UI and accessibility matrices;
+- visual regression;
+- existing reminder disclosure coverage;
+- all remaining repository product gates.
 
 ## Risks
 
-- disabling the summary's native pointer box must be offset by the generated surface in every supported browser;
-- a shifted reminder surface can overlap another left-side action if its offset expands beyond the measured 16px;
-- a phone-width test can target an intentionally hidden streak and create false ownership;
-- broad `.lx-streak` selectors can capture the decorative Dictionary span;
-- CSS import ordering can allow later layers to override minimum geometry.
+- desktop and tablet reminder widths require different target translations;
+- disabling ancestor pointer ownership must not disable the generated target or preview;
+- broad streak selectors can capture the Dictionary span;
+- later CSS owners can override minimum geometry.
 
 ## Rollback
 
-Revert the atomic product merge. The previous streak and reminder presentation remains available because this slice changes only minimum interaction geometry, a transparent shifted reminder surface, source contracts and focused tests.
+Revert the atomic product merge. The previous presentation remains available because the slice changes only interaction geometry, source contracts and focused tests.
