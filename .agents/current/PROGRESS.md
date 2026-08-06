@@ -11,8 +11,9 @@
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 - Issue #74 remains open and no product slice was active after PR #413/#414 reconciliation.
 - Branch `fix/issue-74-word-detail-related-phrase-retry-target` was created from the exact live base.
+- Draft PR #415 is open from the focused branch to `main`.
 - `main` remained unchanged after every branch write.
-- Current focused compare is ahead by six commits, behind by zero and contains only the six expected implementation/task paths before this progress update.
+- Pre-PR focused compare was ahead by eight commits, behind by zero and contained only the eight expected task/implementation paths.
 
 ### Finding
 
@@ -31,6 +32,7 @@ The related-phrase retry action was intentionally presented as a compact 36px se
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/word-detail-related-phrase-retry-touch-targets.css`
 - `frontend/components/word-detail-related-phrase-retry-touch-target-source.test.ts`
@@ -47,6 +49,7 @@ The related-phrase retry action was intentionally presented as a compact 36px se
 - Focused compare: branch is not behind base and contains only allowed paths.
 - Source contract protects exact native retry ownership, existing `relatedRetry` callback, 36px painted geometry, 44/48px transparent event surfaces, zero inline expansion and blocking-suite registration.
 - Browser proof covers desktop Chromium, Android Chromium and iOS WebKit; 1440px, 390px and 320px; computed geometry, four perimeter hits, message separation, visible focus, same-request retry semantics and horizontal overflow.
+- Draft PR #415 was created on verified head `a2c99b64d561794942e1e3e787fc7c3a519524c3`; subsequent Agent Harness-only commits intentionally moved the final candidate head.
 
 ### Checks failed
 
@@ -54,8 +57,8 @@ The related-phrase retry action was intentionally presented as a compact 36px se
 
 ### Current branch head
 
-Resolve from the live branch ref after the remaining Agent Harness write. The last verified implementation head before this progress record was `e271ed0c48a9512aaea02188987a9771047f130e`.
+Resolve from the live branch ref after this factual PR-link update. Full required CI must run on the exact latest developer-authored head.
 
 ### Next action
 
-Write and verify the execution record, re-run the final allowed-path compare, open a Draft PR and use authoritative GitHub Actions to validate source contracts, lint, TypeScript, unit/build, full browser/accessibility/visual/performance/security/container gates.
+Verify the final branch/main refs and allowed-path compare, then inspect authoritative CI for Draft PR #415. Classify every failure before changing code; do not mark Ready or merge until every required job is green on the immutable final head.
