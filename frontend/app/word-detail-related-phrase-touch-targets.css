@@ -1,0 +1,30 @@
+/*
+ * Issue #74 — canonical Word Detail related-phrase touch targets.
+ *
+ * word-detail.css remains the painted-geometry, color, typography, hover,
+ * focus and responsive-layout owner. This interaction layer expands only the
+ * transparent block-axis event surface of the live related-phrase pills.
+ */
+.lx-routed-app[data-route-path^="/words/"] .lx-word-detail-phrase-list button {
+  --lx-word-detail-related-phrase-touch-target: 44px;
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path^="/words/"] .lx-word-detail-phrase-list button::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-word-detail-related-phrase-touch-target)) / 2));
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-phrase-list {
+    row-gap: 14px;
+  }
+
+  .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-phrase-list button {
+    --lx-word-detail-related-phrase-touch-target: 48px;
+  }
+}
