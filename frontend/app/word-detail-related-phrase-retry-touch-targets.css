@@ -2,7 +2,7 @@
  * Issue #74 — conditional Word Detail related-phrase retry touch target.
  *
  * word-detail.css remains the painted-geometry, color, typography, focus,
- * forced-colors and responsive-layout owner. This interaction layer expands
+ * high-contrast and responsive-layout owner. This interaction layer expands
  * only the transparent block-axis event surface of the live retry button.
  */
 .lx-routed-app[data-route-path^="/words/"] .lx-word-detail-inline-error button {
