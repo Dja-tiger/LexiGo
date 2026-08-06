@@ -3,112 +3,89 @@
 ## Identity
 
 - Issue: #74
-- Branch: `fix/issue-74-word-detail-related-phrase-targets`
-- Base SHA: `078f842740bbed27deed92888e8f482cb133f616`
+- Branch: `docs/issue-74-related-phrase-targets-reconciliation`
+- Base SHA: `477bccd8f38e648a3ad536dcc58526303297a376`
 - Head SHA: resolve from live branch ref
-- PR: #413 (Draft)
+- PR: not opened yet
 
 ## Objective
 
-Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effective target for every live related-phrase action on canonical `/words/[id]`, while preserving the approved 34px painted pill presentation and existing phrase-detail navigation.
+Reconcile the completed PR #413 product delivery into canonical repository memory, publish the factual Issue #74 completion evidence, and reset `.agents/current/**` without changing runtime behavior.
 
 ## Scope
 
-- Confirm the canonical authenticated Word Detail related-phrase list as the only runtime owner in this slice.
-- Add one route-scoped interaction layer for `.lx-word-detail-phrase-list button`.
-- Preserve inline dimensions and expand only the block-axis event surface.
-- Reserve sufficient wrapped-row separation for coarse-pointer targets without changing the painted pills.
-- Add fail-closed source ownership and cross-browser geometry, hit-testing, focus, navigation and compact-overflow evidence.
-- Register the browser proof in the blocking UI and accessibility commands.
-- Accept the exact compact Light/Dark content-addressed Word Detail baselines produced by authoritative CI #2913 after the intentional 10px to 14px coarse-pointer wrapped-row separation; preserve both desktop baselines unchanged.
+- Update `.agents/PROJECT_STATE.md` with PR #413, authoritative PR CI #2917, squash SHA `477bccd8f38e648a3ad536dcc58526303297a376`, exact-SHA main CI #2918 and Deploy Stage #2756 evidence.
+- Record the completed Word Detail related-phrase target slice and remaining Issue #74 acceptance scope.
+- Add one factual completion comment to Issue #74.
+- Reset `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` to canonical templates before opening the PR.
+- Deliver the reconciliation through the fail-closed docs-only CI path.
 
 ## Non-goals
 
-- Related-phrase loading/error retry action.
-- Word Detail Back, speech, practice or sticky knowledge actions.
-- API, session, History, storage or route-owner changes.
-- Text, typography, color, border, radius, painted padding or visual changes beyond the exact 4px compact page-height increase required by non-overlapping coarse-pointer rows.
-- Whole-application 200% browser zoom or physical-device closure of Issue #74.
-- Dependabot PRs #304, #305 and #403.
+- No frontend, backend, workflow, dependency, deployment or runtime change.
+- No closure of Issue #74.
+- No new product slice.
+- No changes to Dependabot PRs #304, #305 or #403.
+- No stage deployment from the docs-only reconciliation.
 
 ## Allowed paths
 
+- `.agents/PROJECT_STATE.md`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `frontend/app/layout.tsx`
-- `frontend/app/word-detail-related-phrase-touch-targets.css`
-- `frontend/components/word-detail-related-phrase-touch-target-source.test.ts`
-- `frontend/e2e/word-detail-related-phrase-touch-targets.spec.ts`
-- `frontend/e2e/word-detail-visual.spec.ts`
-- `frontend/package.json`
 
 ## Prohibited paths
 
-- `frontend/components/word-detail-presentation.tsx`
-- `frontend/app/word-detail.css`
-- API, backend, migrations, session, navigation, storage and service-worker owners.
-- Existing visual snapshot image files; only the two compact content-addressed constants in `word-detail-visual.spec.ts` may change.
-- Workflow files.
-- Dependabot branches and manifests beyond the required test-script registration.
+- All product, test, workflow, dependency and deployment paths.
+- Issue state changes other than one factual comment on Issue #74.
+- Any product code or visual-baseline modification.
 
 ## Runtime owners
 
-- Canonical route entry: `LexigoDictionaryApp` on `/words/[id]`.
-- Data/state owner: `WordDetailRoute`.
-- Native related-phrase actions and callbacks: `RelatedPhrases` in `frontend/components/word-detail-presentation.tsx`.
-- Phrase-detail navigation: `DictionaryCatalog` maps the selected phrase slug to canonical `/phrases/[slug]` navigation.
-- Painted presentation and focus owner: `frontend/app/word-detail.css`.
-- New interaction-only owner: `frontend/app/word-detail-related-phrase-touch-targets.css`.
+- None. This is an Agent Docs reconciliation slice.
 
 ## Documentation owners
 
-- Current task facts: `.agents/current/**`.
-- Final completed evidence: `.agents/PROJECT_STATE.md` and Issue #74 in the later reconciliation slice.
+- Durable repository memory: `.agents/PROJECT_STATE.md`.
+- Active-task records during execution and canonical reset before merge: `.agents/current/**`.
+- External factual completion evidence: Issue #74.
 
 ## Invariants
 
-- Each related phrase remains a native button with its exact English accessible name and existing callback.
-- Painted minimum height remains 34px; padding, border, radius, typography, colors and hover/focus presentation remain owned by `word-detail.css`.
-- Fine-pointer target is at least 44px; coarse-pointer target is at least 48px.
-- Inline target expansion remains zero so adjacent same-row phrase targets cannot overlap.
-- Wrapped coarse-pointer rows reserve at least the combined block-axis expansion and do not overlap.
-- Clicking any effective target perimeter navigates to the selected canonical phrase detail.
-- No horizontal overflow at desktop, 390px and 320px widths.
-- Existing Back target and all unrelated Word Detail controls remain outside the new selector ownership.
-- Compact visual baselines may change only by the deterministic 4px page-height increase and corresponding Light/Dark content hashes from CI #2913; desktop baseline dimensions and hashes remain immutable.
+- Product SHA remains `477bccd8f38e648a3ad536dcc58526303297a376`.
+- PR #413, CI #2917, main CI #2918 and Deploy Stage #2756 facts are recorded exactly.
+- Issue #74 remains open for remaining live controls, whole-application 200% browser zoom and physical-device acceptance.
+- Final changed paths are exactly the four allowed Agent Docs files.
+- Final `.agents/current/**` contents equal the canonical reset templates.
+- Docs-only CI must classify the change as Agent Docs only and must not run product or deployment jobs.
 
 ## Acceptance criteria
 
-- Every visible canonical related-phrase action has a 44px fine-pointer or 48px coarse-pointer effective block size.
-- The existing 34px painted pill geometry remains unchanged.
-- Effective targets are transparent, borderless and shadowless.
-- Same-row targets retain non-overlapping inline geometry and visible separation.
-- Wrapped rows retain non-overlapping effective block geometry on coarse-pointer projects.
-- All four effective perimeter points resolve to the owning native button.
-- Keyboard focus remains visible through the existing Word Detail focus owner.
-- A perimeter click preserves the phrase slug and opens canonical `/phrases/[slug]`.
-- Desktop Chromium, Android Chromium and iOS WebKit prove the contract at applicable compact/desktop widths.
-- Visual CI accepts only the authoritative compact Light/Dark outputs from run #2913 and continues to reject every unrelated Word Detail visual change.
+- `.agents/PROJECT_STATE.md` identifies PR #413 as the latest completed product slice and `477bccd8...` as the latest deployed product SHA.
+- The completed related-phrase target contract, exact visual provenance and remaining Issue #74 scope are recorded accurately.
+- Issue #74 contains one factual completion comment with immutable refs and remains open.
+- `.agents/current/**` is reset to canonical templates.
+- The docs PR contains exactly four allowed paths, has no unresolved review threads, passes lightweight CI, is squash-merged with expected-head protection, and exact merged-SHA docs CI succeeds.
 
 ## Required checks
 
-- Source ownership contract.
-- Frontend lint and TypeScript.
-- Frontend unit suite and production build.
-- Targeted Playwright proof in desktop Chromium, Android Chromium and iOS WebKit.
-- Blocking UI and accessibility commands.
-- Existing Word Detail, Dictionary/Phrases navigation, accessibility, visual, performance, PWA, security and container gates through authoritative full CI.
-- Final developer-authored immutable-head CI, no unresolved review threads, expected-head squash merge, exact-SHA main CI and exact-image stage/public validation.
+- Readback after every write.
+- Exact branch/main ref verification.
+- Focused compare against base SHA.
+- Docs-only change-scope classifier and Agent Harness validation.
+- Review-thread and review-state inspection.
+- Expected-head squash merge.
+- Exact merged-SHA lightweight main CI.
+- Verify that no stage deployment is triggered by the docs-only merge.
 
 ## Risks
 
-- Transparent block-axis expansion can overlap wrapped rows if coarse-pointer row gap remains 10px.
-- Long phrase text can produce a painted control taller than the nominal 34px; the interaction rule must use a minimum target rather than force a fixed height.
-- Pseudo-element hit testing can be masked by adjacent stacking contexts or escape the Word Detail content owner.
-- Cross-island phrase navigation can expose stale fixtures if the test asserts destination presentation rather than the canonical URL handoff.
-- A broad visual-baseline update could hide an unrelated regression; therefore only two compact dimensions/hashes and their provenance may change.
+- Stale or imprecise workflow identifiers could corrupt repository memory.
+- Resetting current task files before durable evidence is complete could lose delivery context.
+- A non-doc path would incorrectly activate product CI/deployment.
+- Duplicate Issue #74 completion comments would create conflicting evidence.
 
 ## Rollback
 
-Remove the route-scoped interaction stylesheet and its import, source contract, browser proof, package-script registrations and the two compact content-addressed baseline updates. The existing 34px controls, prior compact baselines and navigation callbacks remain intact in `word-detail.css`, `word-detail-visual.spec.ts` and `word-detail-presentation.tsx`.
+Revert the docs-only reconciliation commit. Product code, images and stage deployment remain unchanged because this slice has no runtime paths.
