@@ -4,8 +4,8 @@
 
 - Branch: `test/issue-74-word-detail-browser-zoom`
 - Base SHA: `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Verified pre-ledger head SHA: `257f5f222fc29d4964d86c5303c691220d12f678`
+- PR: #417
 
 ## Skills used
 
@@ -52,6 +52,7 @@ Actions performed:
 - Created `test/issue-74-word-detail-browser-zoom` from exact main SHA.
 - Read the branch ref back and confirmed the expected base.
 - Performed post-write branch/main isolation checks after each branch commit.
+- Opened Draft PR #417 against exact base `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`.
 
 Commands or procedures:
 
@@ -59,7 +60,7 @@ GitHub connector/API reads plus explicit branch/ref and Git Data API operations.
 
 Artifacts produced:
 
-Verified branch and pre-flight contract.
+Verified branch, PR and pre-flight contract.
 
 Result:
 
@@ -146,7 +147,7 @@ Feasible design identified and implemented test-first.
 
 Failures:
 
-None before authoritative execution.
+None.
 
 Root cause:
 
@@ -217,15 +218,15 @@ Git Data API atomic tree/commit/ref update followed by exact-path read-back and 
 
 Artifacts produced:
 
-Test-first commit `2bbc926ab49210ee5fc6114d975dd1b67d3ecb2d`.
+Test-first commit `2bbc926ab49210ee5fc6114d975dd1b67d3ecb2d` and PR #417.
 
 Result:
 
-Source implementation complete; authoritative execution pending.
+Source implementation complete. No product CSS remediation was required.
 
 Failures:
 
-None yet.
+None.
 
 Root cause:
 
@@ -233,7 +234,7 @@ Not applicable.
 
 Fallback:
 
-If the extension harness itself fails, fix only the test infrastructure and rerun. If the browser-owned metrics succeed but route assertions fail, treat that as reproduced production evidence before changing route CSS.
+If future Chromium/extension behavior changes, the fail-closed service-worker, exact-tab and dual-telemetry checks prevent the suite from reporting a false green.
 
 Limitations:
 
@@ -242,3 +243,69 @@ The audit runs only in authoritative desktop Chromium. It deliberately does not 
 Reusable lesson:
 
 Exact URL tab selection and dual zoom telemetry prevent false positives caused by active-tab ordering, root text enlargement, pinch scale or device emulation.
+
+### Authoritative PR CI and review audit
+
+Purpose:
+
+Prove the browser-owned zoom harness and the unchanged Word Detail layout satisfy the repository's full product quality matrix before merge.
+
+Instruction source:
+
+- `.agents/AGENTS.base.md`
+- `.agents/AGENTS.progress-pr214-ci1732.md`
+- `.agents/SKILLS.md`
+- `.github/workflows/ci.yml`
+- Current `TASK.md`
+
+Version or verification date:
+
+2026-08-06.
+
+Inputs:
+
+Draft PR #417, exact pre-ledger head `257f5f222fc29d4964d86c5303c691220d12f678`, CI #2936 / run `31093355530`.
+
+Actions performed:
+
+- Verified workflow provenance: pull-request event, exact head SHA and exact base SHA.
+- Inspected job-level state rather than relying only on the aggregate workflow status.
+- Verified Frontend core quality job `92589406580` passed lint, TypeScript, unit tests, production build and dependency audit.
+- Verified Visual regression job `92589715848` passed the new true browser-zoom audit in the pinned Playwright container.
+- Verified UI shard 1 job `92589715854` and UI shard 2 job `92589715849` passed.
+- Verified Performance budgets job `92589715907`, Backend integration job `92589406579` and Backend unit/security job `92589406597` passed.
+- Verified the complete required check suite had no failed, queued or in-progress check runs before accepting the aggregate success.
+- Audited PR discussion and review surfaces; no comments, reviews or inline feedback were present.
+
+Commands or procedures:
+
+GitHub workflow-run, job, check-suite and normalized PR discussion reads.
+
+Artifacts produced:
+
+- CI #2936 / run `31093355530` success on exact head `257f5f222fc29d4964d86c5303c691220d12f678`.
+- Empty PR review/discussion audit.
+
+Result:
+
+Success. The canonical Word Detail route passed true 200% browser zoom without runtime or CSS changes.
+
+Failures:
+
+None.
+
+Root cause:
+
+Not applicable.
+
+Fallback:
+
+The final evidence commit changes the immutable head, so merge remains blocked until a second full authoritative CI run passes on that final head.
+
+Limitations:
+
+This result is automated Chromium evidence for one canonical route. It does not close the broader physical-device requirements of Issue #74.
+
+Reusable lesson:
+
+A test-only accessibility slice still requires the complete product matrix because changes to mandatory browser gates can affect release confidence even when production bundles are unchanged.

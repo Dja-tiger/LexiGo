@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `test/issue-74-word-detail-browser-zoom`
 - Base SHA: `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Verified pre-ledger head SHA: `257f5f222fc29d4964d86c5303c691220d12f678`
+- PR: #417
 
 ## Objective
 
@@ -57,8 +57,8 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 
 - Route/bootstrap owner: `frontend/components/lexigo-dictionary-app.tsx` and the existing Dictionary route island; unchanged.
 - Word Detail state/API/navigation owner: `frontend/components/word-detail-route.tsx`; unchanged.
-- Word Detail semantic presentation owner: `frontend/components/word-detail-presentation.tsx`; unchanged unless a semantic defect is independently proven.
-- Word Detail responsive presentation owner: `frontend/app/word-detail.css`.
+- Word Detail semantic presentation owner: `frontend/components/word-detail-presentation.tsx`; unchanged.
+- Word Detail responsive presentation owner: `frontend/app/word-detail.css`; inspected and unchanged because the true zoom audit passed.
 - Browser zoom control owner: test-only Manifest V3 extension under `frontend/e2e/support/browser-zoom-extension/`.
 - Deterministic API owners: existing `installQualityGateAPI` and `installCanonicalWordDetailFixture` fixtures.
 
@@ -72,11 +72,11 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 ## Invariants
 
 - Browser zoom is applied by Chromium itself through `chrome.tabs.setZoom`; no CSS or device emulation substitute is accepted.
-- The test must fail when browser zoom cannot be applied or independently observed.
+- The test fails when browser zoom cannot be applied or independently observed.
 - Root `font-size` remains at its pre-zoom value.
 - Existing API requests, navigation callbacks, accessible names and route ownership remain unchanged.
 - The canonical Word Detail route retains one unambiguous visible primary practice action after responsive reflow.
-- No existing visual baseline is updated unless a separately reviewed visual change becomes unavoidable.
+- Existing visual baselines remain unchanged.
 - The extension is local test infrastructure only and is never bundled into the production application.
 
 ## Acceptance criteria
@@ -102,15 +102,22 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 - Targeted Chromium browser-zoom spec with one worker.
 - Existing Word Detail visual/reflow and touch-target suites.
 - Full required CI, review-thread audit and expected-head squash merge.
-- Exact-SHA main CI and exact-image stage/public validation when product files change; test-only delivery follows the repository's validated full-CI and post-merge policy.
+- Exact-SHA main CI and repository-required post-merge validation.
+
+## Current evidence
+
+- PR #417 CI #2936 / run `31093355530` passed on exact head `257f5f222fc29d4964d86c5303c691220d12f678`.
+- Frontend lint, TypeScript, unit tests, production build and dependency audit passed.
+- The authoritative Visual regression job `92589715848` passed the new browser-owned zoom audit in the pinned Playwright Chromium container.
+- Both UI shards and all required backend, accessibility, security, PWA and performance jobs passed.
+- PR discussion audit returned no review comments.
+- Product CSS and runtime owners remain unchanged.
 
 ## Risks
 
-- New headless Chromium extension behavior may differ from the ordinary temporary-context matrix.
-- Browser zoom can reset on navigation; the audit must apply it only after the canonical route is loaded.
-- Extension tab discovery can become ambiguous without exact URL matching.
-- A real zoom breakpoint may reveal production clipping or duplicate visible actions that root-text tests did not exercise.
+- The final Agent Harness evidence commit changes the immutable PR head and therefore requires a second full authoritative CI run.
+- This automation is Chromium-specific; final physical-device acceptance and the broader Issue #74 closure remain separate work.
 
 ## Rollback
 
-Revert the focused audit commit and its required-gate registration. If production CSS is changed, revert only the route-scoped declaration together with the regression assertion that required it; no data or API rollback is needed.
+Revert the focused audit commit and its required-gate registration. No product CSS, data, API or runtime rollback is required.

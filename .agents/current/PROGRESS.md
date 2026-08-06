@@ -1,19 +1,17 @@
 # Current Task Progress
 
-## 2026-08-06 13:34 Europe/Moscow
+## 2026-08-06 13:40 Europe/Moscow
 
 ### Verified
 
 - Live repository is `Dja-tiger/LexiGo`.
-- Live `main` and selected base are `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`.
+- Live `main` and selected base remain `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`.
 - Main CI #2935 / run `31088745138` completed successfully on the exact base SHA.
-- Latest validated deployed product remains `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`; PR #415 and exact-image stage/public validation are complete.
-- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
-- Issue #74 remains open and repository memory selects a bounded canonical `/words/[id]` 200% browser-zoom audit as the next slice.
-- Branch `test/issue-74-word-detail-browser-zoom` was created from the exact live base and read back at the same SHA.
-- Existing `word-detail-visual.spec.ts` and `profile-reflow.spec.ts` apply `html { font-size: 200% }`; they prove enlarged text, not browser zoom.
-- No repository test previously used a persistent Chromium extension context or `chrome.tabs.setZoom`.
-- Official Chromium/Playwright contracts support a Manifest V3 extension in `chromium.launchPersistentContext`, `chrome.tabs.setZoom`, `chrome.tabs.getZoom`, and independent CDP `cssVisualViewport.zoom` evidence.
+- Latest validated deployed product before this test-only slice remains `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
+- Issue #74 remains open; this slice covers only the canonical `/words/[id]` true 200% browser-zoom audit.
+- Branch `test/issue-74-word-detail-browser-zoom` was created from the exact live base and remained isolated from `main` after every write.
+- Draft PR #417 was opened with base `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb` and pre-ledger head `257f5f222fc29d4964d86c5303c691220d12f678`.
+- PR discussion audit returned no issue comments, review submissions or inline review comments.
 
 ### Finding
 
@@ -23,15 +21,15 @@ The previous automated coverage did not satisfy the remaining Issue #74 browser-
 
 Previous reflow coverage was designed for system/enlarged text and used direct root `font-size` injection. A browser-owned zoom control and independent zoom telemetry were not present in the Playwright harness.
 
-### Implemented test-first audit
+### Implemented audit
 
 - Added a test-only Manifest V3 extension with exact target-URL selection and fail-closed unique-tab ownership.
-- The extension normalizes zoom, applies `chrome.tabs.setZoom(tabId, 2)`, and returns `getZoom` plus zoom settings.
+- The extension normalizes zoom, applies `chrome.tabs.setZoom(tabId, 2)`, and reports `chrome.tabs.getZoom` plus zoom settings.
 - Added an authoritative `visual-desktop` audit to the existing Word Detail visual spec.
-- The audit separately verifies CDP `cssVisualViewport.zoom`, unchanged root font size and contracted CSS viewport width.
+- The audit independently verifies CDP `cssVisualViewport.zoom`, unchanged root font size and contracted CSS viewport width.
 - Added assertions for single-column reflow, non-sticky knowledge content, horizontal containment, Back/status and term/speech separation, document-order panel placement, visible focus and runtime-error absence.
 - Existing root-text reflow coverage and all content-addressed visual hashes remain unchanged.
-- No product CSS, runtime, API, session, History, storage, Service Worker or dependency file changed.
+- No product CSS, runtime, API, session, History, storage, Service Worker, dependency or workflow file changed.
 
 ### Changed files
 
@@ -42,31 +40,42 @@ Previous reflow coverage was designed for system/enlarged text and used direct r
 - `frontend/e2e/support/browser-zoom-extension/background.js`
 - `frontend/e2e/word-detail-visual.spec.ts`
 
-### Checks passed
+### Checks passed on pre-ledger head `257f5f222fc29d4964d86c5303c691220d12f678`
 
-- Mandatory Agent Harness and architecture reading.
-- Live GitHub/main/PR/CI/stage reconciliation.
-- Exact branch-base and post-write main-isolation verification.
-- Existing Word Detail runtime, CSS, visual/reflow and deterministic fixture inspection.
-- External primary-source feasibility check for Chromium extension zoom and Playwright persistent contexts.
-- Read-back verification for every changed test file and exact blob SHA.
-- Source review confirms no `deviceScaleFactor`, CSS zoom/transform or page-scale emulation is used by the new audit.
+- CI #2936 / run `31093355530`: completed successfully.
+- Frontend core quality job `92589406580`: lint, TypeScript, unit tests, production build and dependency audit passed.
+- Visual regression job `92589715848`: the extension loaded in persistent new-headless Chromium, the browser-owned 200% zoom contract passed, and existing visual hashes remained stable.
+- UI shard 1 job `92589715854`: passed.
+- UI shard 2 job `92589715849`: passed.
+- Performance budgets job `92589715907`: passed.
+- Backend integration job `92589406579`: passed.
+- Backend unit and security job `92589406597`: passed.
+- Remaining required content-security, controlled-Service-Worker, lesson-completion, iOS PWA dictionary, accessibility and dictionary-smoke jobs passed in the same authoritative run.
+- Source review confirms the audit uses no `deviceScaleFactor`, CSS zoom/transform or `Emulation.setPageScaleFactor` substitute.
+- Read-back verification completed for every changed source/test file and exact blob SHA.
+- PR review/discussion audit is empty.
+
+### Result
+
+The canonical Word Detail route already satisfies the true 200% browser-zoom layout contract. The missing production asset was permanent browser-owned zoom evidence, not a CSS remediation. Product presentation and runtime owners remain unchanged.
 
 ### Checks pending
 
-- Frontend lint and TypeScript.
-- Targeted visual Chromium execution in the pinned Playwright container.
-- Full required CI matrix.
-- Review audit, Ready transition, expected-head squash merge and post-merge validation.
+- Full required CI on the final Agent Harness evidence head created by this ledger update.
+- Ready-for-review transition.
+- Final review-thread audit.
+- Expected-head squash merge.
+- Exact-SHA main CI and repository-required post-merge validation.
+- Separate post-merge reconciliation of `.agents/PROJECT_STATE.md` and reset of `.agents/current/**`.
 
 ### Checks failed
 
-- None yet. The new Chromium extension path has not run in authoritative CI.
+- None.
 
 ### Current branch head
 
-`2bbc926ab49210ee5fc6114d975dd1b67d3ecb2d` before this ledger update.
+`257f5f222fc29d4964d86c5303c691220d12f678` before this final evidence commit.
 
 ### Next action
 
-Commit this factual ledger update, open a Draft PR, inspect the first authoritative CI run and distinguish harness defects from any reproduced Word Detail layout defect before changing product CSS.
+Commit and read back the final evidence ledger, run the complete authoritative matrix on the resulting immutable head, then mark PR #417 Ready and squash-merge only with the expected head SHA.
