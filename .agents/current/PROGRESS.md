@@ -13,7 +13,7 @@
 - Branch `fix/issue-74-word-detail-related-phrase-retry-target` was created from the exact live base.
 - Draft PR #415 is open from the focused branch to `main`.
 - `main` remained unchanged after every branch write.
-- Pre-PR focused compare was ahead by eight commits, behind by zero and contained only the eight expected task/implementation paths.
+- Pre-PR and post-PR compares were behind by zero and contained only the eight expected task/implementation paths.
 
 ### Finding
 
@@ -49,16 +49,26 @@ The related-phrase retry action was intentionally presented as a compact 36px se
 - Focused compare: branch is not behind base and contains only allowed paths.
 - Source contract protects exact native retry ownership, existing `relatedRetry` callback, 36px painted geometry, 44/48px transparent event surfaces, zero inline expansion and blocking-suite registration.
 - Browser proof covers desktop Chromium, Android Chromium and iOS WebKit; 1440px, 390px and 320px; computed geometry, four perimeter hits, message separation, visible focus, same-request retry semantics and horizontal overflow.
-- Draft PR #415 was created on verified head `a2c99b64d561794942e1e3e787fc7c3a519524c3`; subsequent Agent Harness-only commits intentionally moved the final candidate head.
+- Draft PR #415 was created on verified head `a2c99b64d561794942e1e3e787fc7c3a519524c3`.
+- Authoritative CI #2925/run `31084992832` on head `8426cbd480abddbde03ec4118a51310f1504efac` passed scope classification, frontend lint and TypeScript.
+- The failed frontend diagnostic artifact was downloaded and inspected. Vitest reported 651 passing tests and one deterministic failure in the new source contract.
 
-### Checks failed
+### Failure classification and fix
 
-- Local shallow clone could not start because the isolated execution container could not resolve `github.com`. No local source or test command executed. This is an infrastructure limitation, not a product test result.
+- Failed contract: `does not take painted presentation, spacing or focus ownership`.
+- Exact cause: the negative assertion correctly rejected the literal token `forced-colors`, but that token existed only in the ownership comment of the new interaction stylesheet; no `forced-colors` media query or declaration existed.
+- Product behavior was not implicated. All other 651 unit tests passed.
+- Focused fix: changed the ownership comment from `forced-colors` to `high-contrast`, preserving the strict negative gate and leaving every CSS declaration byte-for-byte unchanged.
+- Fix commit: `f7e43cde3fd7f6ba9cda32e02c09709e3e66383a`.
+
+### Infrastructure limitation
+
+- Local shallow clone could not start because the isolated execution container could not resolve `github.com`. No local source or test command executed. This is not a product test result.
 
 ### Current branch head
 
-Resolve from the live branch ref after this factual PR-link update. Full required CI must run on the exact latest developer-authored head.
+Resolve from the live branch ref after the final factual Agent Harness updates. Full required CI must run on that exact latest developer-authored head.
 
 ### Next action
 
-Verify the final branch/main refs and allowed-path compare, then inspect authoritative CI for Draft PR #415. Classify every failure before changing code; do not mark Ready or merge until every required job is green on the immutable final head.
+Verify final branch/main refs and allowed-path compare, then use the new authoritative CI run for PR #415. Do not mark Ready or merge until frontend core, complete browser matrix, visual/performance/security/container gates and review audit are green on the immutable final head.
