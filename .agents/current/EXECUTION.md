@@ -5,7 +5,7 @@
 - Branch: `test/issue-74-home-browser-zoom`
 - Base SHA: `ce7db6538174fe9fc805e163abeedbe40c015d37`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #419
 
 ## Skills used
 
@@ -21,13 +21,13 @@ Inputs: repository `Dja-tiger/LexiGo`, live `main`, Issue #74, open PRs, stage e
 
 Files inspected: mandatory `.agents/AGENTS*.md` rules, `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, `.agents/current/**`, `README.md`, `docs/architecture.md`, `frontend/components/lexigo-home-app.tsx`, `frontend/components/route-primary-navigation.tsx`, `frontend/app/information-architecture.css`, `frontend/app/route-navigation.css`, existing Home/mobile/visual tests and PR #417 Word Detail browser-zoom patch.
 
-Actions performed: verified live state; selected Home browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and test specification; rechecked branch and `main` refs.
+Actions performed: verified live state; selected Home browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and test specification; rechecked branch and `main` refs; compared the branch; opened Draft PR #419.
 
-Commands or procedures: GitHub connector exact-ref reads, `create_branch`, explicit branch `update_file`/`create_file`, changed-path readback and blob/ref verification.
+Commands or procedures: GitHub connector exact-ref reads, `create_branch`, explicit branch `update_file`/`create_file`, changed-path readback, blob/ref verification, allowed-path compare and Draft PR creation.
 
-Artifacts produced: branch `test/issue-74-home-browser-zoom`, current task contract and `frontend/e2e/home-browser-zoom.spec.ts`.
+Artifacts produced: branch `test/issue-74-home-browser-zoom`, Draft PR #419, current task records and `frontend/e2e/home-browser-zoom.spec.ts`.
 
-Result: isolated implementation exists on a non-default branch; authoritative CI pending.
+Result: isolated four-path Draft PR is published; authoritative CI pending on the harness-synchronized head.
 
 Failures: none.
 
@@ -57,7 +57,7 @@ Commands or procedures: Playwright `visual-desktop` project through authoritativ
 
 Artifacts produced: `home-browser-zoom-metrics.json` test attachment on execution.
 
-Result: source implementation complete; execution evidence pending CI.
+Result: source implementation complete and published in Draft PR #419; executable evidence pending CI.
 
 Failures: none yet.
 
