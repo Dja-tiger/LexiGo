@@ -20,13 +20,14 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Reserve sufficient wrapped-row separation for coarse-pointer targets without changing the painted pills.
 - Add fail-closed source ownership and cross-browser geometry, hit-testing, focus, navigation and compact-overflow evidence.
 - Register the browser proof in the blocking UI and accessibility commands.
+- Accept the exact compact Light/Dark content-addressed Word Detail baselines produced by authoritative CI #2913 after the intentional 10px to 14px coarse-pointer wrapped-row separation; preserve both desktop baselines unchanged.
 
 ## Non-goals
 
 - Related-phrase loading/error retry action.
 - Word Detail Back, speech, practice or sticky knowledge actions.
 - API, session, History, storage or route-owner changes.
-- Text, typography, color, border, radius, painted padding or visual-baseline changes.
+- Text, typography, color, border, radius, painted padding or visual changes beyond the exact 4px compact page-height increase required by non-overlapping coarse-pointer rows.
 - Whole-application 200% browser zoom or physical-device closure of Issue #74.
 - Dependabot PRs #304, #305 and #403.
 
@@ -39,6 +40,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - `frontend/app/word-detail-related-phrase-touch-targets.css`
 - `frontend/components/word-detail-related-phrase-touch-target-source.test.ts`
 - `frontend/e2e/word-detail-related-phrase-touch-targets.spec.ts`
+- `frontend/e2e/word-detail-visual.spec.ts`
 - `frontend/package.json`
 
 ## Prohibited paths
@@ -46,7 +48,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - `frontend/components/word-detail-presentation.tsx`
 - `frontend/app/word-detail.css`
 - API, backend, migrations, session, navigation, storage and service-worker owners.
-- Existing visual snapshots.
+- Existing visual snapshot image files; only the two compact content-addressed constants in `word-detail-visual.spec.ts` may change.
 - Workflow files.
 - Dependabot branches and manifests beyond the required test-script registration.
 
@@ -74,6 +76,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Clicking any effective target perimeter navigates to the selected canonical phrase detail.
 - No horizontal overflow at desktop, 390px and 320px widths.
 - Existing Back target and all unrelated Word Detail controls remain outside the new selector ownership.
+- Compact visual baselines may change only by the deterministic 4px page-height increase and corresponding Light/Dark content hashes from CI #2913; desktop baseline dimensions and hashes remain immutable.
 
 ## Acceptance criteria
 
@@ -86,6 +89,7 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Keyboard focus remains visible through the existing Word Detail focus owner.
 - A perimeter click preserves the phrase slug and opens canonical `/phrases/[slug]`.
 - Desktop Chromium, Android Chromium and iOS WebKit prove the contract at applicable compact/desktop widths.
+- Visual CI accepts only the authoritative compact Light/Dark outputs from run #2913 and continues to reject every unrelated Word Detail visual change.
 
 ## Required checks
 
@@ -103,7 +107,8 @@ Guarantee a minimum 44 CSS px fine-pointer and 48 CSS px coarse-pointer effectiv
 - Long phrase text can produce a painted control taller than the nominal 34px; the interaction rule must use a minimum target rather than force a fixed height.
 - Pseudo-element hit testing can be masked by adjacent stacking contexts or escape the Word Detail content owner.
 - Cross-island phrase navigation can expose stale fixtures if the test asserts destination presentation rather than the canonical URL handoff.
+- A broad visual-baseline update could hide an unrelated regression; therefore only two compact dimensions/hashes and their provenance may change.
 
 ## Rollback
 
-Remove the route-scoped interaction stylesheet and its import, source contract, browser proof and package-script registrations. The existing 34px painted related-phrase controls and navigation callbacks remain intact in `word-detail.css` and `word-detail-presentation.tsx`.
+Remove the route-scoped interaction stylesheet and its import, source contract, browser proof, package-script registrations and the two compact content-addressed baseline updates. The existing 34px controls, prior compact baselines and navigation callbacks remain intact in `word-detail.css`, `word-detail-visual.spec.ts` and `word-detail-presentation.tsx`.
