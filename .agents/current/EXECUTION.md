@@ -54,10 +54,11 @@ Actions performed:
 - Re-read `main` after branch writes and confirmed it remained unchanged.
 - Compared the branch against its exact base and confirmed an allowed-path-only diff.
 - Opened Draft PR #415 from the verified focused branch to `main`.
+- Inspected authoritative CI #2925 and downloaded its frontend diagnostic artifact.
 
 Commands or procedures:
 
-GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification, commit comparison and Draft PR creation.
+GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification, commit comparison, Draft PR creation, CI job inspection and workflow-artifact analysis.
 
 Artifacts produced:
 
@@ -69,19 +70,24 @@ Artifacts produced:
 
 Result:
 
-The isolated branch and Draft PR #415 contain the complete bounded implementation and test ownership. Authoritative GitHub Actions remains required before Ready or merge.
+The isolated branch and Draft PR #415 contain the complete bounded implementation and test ownership. The first authoritative run produced one deterministic source-contract failure, which was classified and fixed without changing product behavior. Full CI remains required on the final head before Ready or merge.
 
 Failures:
 
-A local shallow clone failed before checkout because the isolated execution container could not resolve `github.com`.
+- Local shallow clone failed before checkout because the isolated execution container could not resolve `github.com`.
+- CI #2925 frontend core failed in one new source-contract assertion after lint and TypeScript passed. Vitest evidence: 651 passed, one failed.
 
 Root cause:
 
-Execution-container DNS isolation.
+- Clone failure: execution-container DNS isolation.
+- Unit failure: the stylesheet ownership comment contained the literal token `forced-colors`, while the negative source contract intentionally rejected that token anywhere in the interaction owner. No forbidden CSS rule or declaration existed.
 
-Fallback:
+Fallback and fix:
 
-Use repository-native compare and authoritative GitHub Actions. Do not represent the failed clone as a product or test failure.
+- Used repository-native compare and authoritative GitHub Actions instead of claiming local validation.
+- Downloaded `frontend-core-diagnostics` artifact `8961059674` and inspected `vitest.log`.
+- Changed only the explanatory comment token from `forced-colors` to `high-contrast` in commit `f7e43cde3fd7f6ba9cda32e02c09709e3e66383a`.
+- Kept the strict negative test unchanged; all CSS declarations and product behavior remained unchanged.
 
 Limitations:
 
@@ -89,7 +95,7 @@ Whole-application 200% browser zoom, other live controls and physical-device acc
 
 Reusable lesson:
 
-Repository writes remain safe when every operation names the exact branch, every resulting path is read back and the default branch ref is rechecked after each write sequence.
+Repository writes remain safe when every operation names the exact branch, every resulting path is read back and the default branch ref is rechecked after each write sequence. Negative source contracts should inspect actual ownership tokens strictly, while ownership comments must avoid accidentally claiming forbidden selectors or media owners.
 
 ### Frontend accessibility validation
 
@@ -155,7 +161,7 @@ The source and browser contracts are complete on the focused branch. Runtime, AP
 
 Failures:
 
-No local frontend test result is available because checkout could not start in the isolated container.
+The first authoritative unit run exposed only a comment-token false positive in the new negative ownership contract. The strict contract passed every other assertion and the fix removed only the misleading comment token.
 
 Root cause:
 
