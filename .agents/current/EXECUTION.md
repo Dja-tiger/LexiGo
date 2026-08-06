@@ -5,7 +5,7 @@
 - Branch: `fix/issue-74-word-detail-related-phrase-retry-target`
 - Base SHA: `f4de7ead2851065d8bb0df083ac3203bc7828d9e`
 - Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- PR: #415 (Draft)
 
 ## Skills used
 
@@ -53,10 +53,11 @@ Actions performed:
 - Read every changed path back and verified its blob SHA.
 - Re-read `main` after branch writes and confirmed it remained unchanged.
 - Compared the branch against its exact base and confirmed an allowed-path-only diff.
+- Opened Draft PR #415 from the verified focused branch to `main`.
 
 Commands or procedures:
 
-GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification and commit comparison.
+GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification, commit comparison and Draft PR creation.
 
 Artifacts produced:
 
@@ -64,10 +65,11 @@ Artifacts produced:
 - `.agents/current/PROGRESS.md`.
 - This execution record.
 - Focused product implementation and permanent regression contracts.
+- Draft PR #415.
 
 Result:
 
-The isolated branch contains the complete bounded implementation and test ownership required for Draft PR publication. Authoritative GitHub Actions remains required before Ready or merge.
+The isolated branch and Draft PR #415 contain the complete bounded implementation and test ownership. Authoritative GitHub Actions remains required before Ready or merge.
 
 Failures:
 
