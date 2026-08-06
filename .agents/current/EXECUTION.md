@@ -4,7 +4,8 @@
 
 - Branch: `test/issue-74-learn-browser-zoom`
 - Base SHA: `4223ecacc7c2e6942cbd5449ecb9684915954b37`
-- Head SHA: resolve from live branch ref after this write
+- First validated head SHA: `ad4de149a0c5bb65928241af7fdcd4d165affd6f`
+- Final candidate head SHA: resolve from the live branch ref after this evidence write
 - PR: #421
 
 ## Skills used
@@ -21,11 +22,11 @@ Instruction source:
 
 Version or verification date:
 
-Repository state verified 2026-08-06.
+Repository, PR and CI state verified 2026-08-06.
 
 Inputs:
 
-Repository `Dja-tiger/LexiGo`, live `main`, Issue #74, open PRs, prior Home/Word Detail browser-zoom deliveries and current Agent Harness templates.
+Repository `Dja-tiger/LexiGo`, live `main`, Issue #74, open PRs, prior Home/Word Detail browser-zoom deliveries and current Agent Harness records.
 
 Files inspected:
 
@@ -33,11 +34,11 @@ Mandatory `.agents/AGENTS*.md` rules, `.agents/SKILLS.md`, `.agents/PROJECT_STAT
 
 Actions performed:
 
-Verified live state; selected canonical `/learn` true 200% browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and dedicated Playwright specification; rechecked branch and `main` refs; verified the exact four-path compare; opened Draft PR #421.
+Verified live state; selected canonical `/learn` true 200% browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and dedicated Playwright specification; rechecked branch and `main` refs; verified the exact four-path compare; opened Draft PR #421; audited reviews and threads; monitored authoritative CI #2953 through core, browser, aggregate and container gates.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads, branch creation, explicit branch file writes, source-contract inspection, branch readback, commit compare and Draft PR creation.
+GitHub connector exact-ref reads, branch creation, explicit branch file writes, source-contract inspection, branch readback, commit compare, Draft PR creation, review-thread queries and immutable-head workflow/job inspection.
 
 Artifacts produced:
 
@@ -45,7 +46,7 @@ Branch `test/issue-74-learn-browser-zoom`, Draft PR #421, current task records a
 
 Result:
 
-Isolated four-path Draft PR is published; authoritative CI is pending on the harness-synchronized final head.
+The isolated four-path implementation passed authoritative CI #2953 / run `31105742758` on immutable head `ad4de149a0c5bb65928241af7fdcd4d165affd6f`; the evidence-synchronized final head requires a fresh full run before merge.
 
 Failures:
 
@@ -79,7 +80,7 @@ Issue #74 acceptance criteria, existing Lesson Composer E2E/source contracts and
 
 Version or verification date:
 
-Browser-zoom mechanism and route patterns verified against current `main` on 2026-08-06.
+Browser-zoom mechanism and `/learn` evidence verified by CI #2953 on 2026-08-06.
 
 Inputs:
 
@@ -95,27 +96,27 @@ Added a pinned Chromium persistent-context test; installed deterministic authent
 
 Commands or procedures:
 
-Playwright `visual-desktop` project through authoritative CI, extension service worker, `chrome.tabs.setZoom`, CDP `Page.getLayoutMetrics`, DOM geometry, semantic locators and focus-visible computed styles.
+Playwright `visual-desktop` project in authoritative CI, extension service worker, `chrome.tabs.setZoom`, CDP `Page.getLayoutMetrics`, DOM geometry, semantic locators and focus-visible computed styles.
 
 Artifacts produced:
 
-`learn-browser-zoom-metrics.json` test attachment on execution.
+`learn-browser-zoom-metrics.json` test attachment during execution.
 
 Result:
 
-Source implementation complete and published in Draft PR #421; executable evidence is pending authoritative CI.
+`Frontend E2E (Visual regression)` job `92630751794` passed in CI #2953. Independent evidence proved browser zoom factor `2`, unchanged root font size, contracted CSS viewport, expected route-rail breakpoint, correct collapsed/expanded Lesson Composer reflow, visible focus, no overlap/overflow and no runtime errors. No production remediation is justified.
 
 Failures:
 
-None yet.
+None.
 
 Root cause:
 
-No product defect established; this slice addresses missing route-level acceptance evidence.
+Missing route-level acceptance coverage, not a product defect.
 
 Fallback:
 
-If CI identifies a deterministic product defect, classify the exact route/CSS owner and expand scope only after updating the task contract. If the failure is test-owned, modify only the permitted test and current harness files.
+If a later immutable-head run identifies a deterministic regression, classify the exact test or product owner before modifying scope; do not retry blindly.
 
 Limitations:
 
@@ -124,3 +125,57 @@ This slice does not claim real iPhone or other physical-device acceptance.
 Reusable lesson:
 
 True zoom evidence must combine exact-tab extension state, independent CDP zoom, unchanged root font size, CSS viewport contraction and route-specific responsive assertions rather than infer behavior from a narrow viewport alone.
+
+### Authoritative CI
+
+Purpose:
+
+Validate the exact developer-authored PR head across repository-required gates.
+
+Instruction source:
+
+`.github/workflows/ci.yml`, repository harness and PR delivery rules.
+
+Version or verification date:
+
+CI #2953 / workflow run `31105742758`, completed 2026-08-06 13:33:32 UTC.
+
+Inputs:
+
+Immutable head `ad4de149a0c5bb65928241af7fdcd4d165affd6f` and exact four-path PR diff.
+
+Actions performed:
+
+Observed classifier, backend, frontend core, browser groups, aggregate frontend quality and both container jobs through completion; inspected the critical visual job and both UI shards separately; audited PR reviews and threads.
+
+Commands or procedures:
+
+Workflow run and job API reads against exact run and head SHA.
+
+Artifacts produced:
+
+CI #2953 and job-level GitHub Actions evidence.
+
+Result:
+
+Completed with conclusion `success`. All required executed checks passed; conditional non-applicable steps were skipped by design.
+
+Failures:
+
+None.
+
+Root cause:
+
+Not applicable.
+
+Fallback:
+
+The evidence-only documentation head must pass a new full authoritative CI run before Ready or merge.
+
+Limitations:
+
+CI is browser automation and container-build evidence, not physical-device validation.
+
+Reusable lesson:
+
+Record evidence only after the immutable run is terminal, then treat the evidence commit as a new candidate requiring its own authoritative run.
