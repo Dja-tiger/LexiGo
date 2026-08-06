@@ -10,7 +10,8 @@
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 - Issue #74 remains open and no product slice was active after PR #411/#412 reconciliation.
 - Branch `fix/issue-74-word-detail-related-phrase-targets` was created from exact live `main`.
-- Current task record commit `db9ab00ac039f29370bfcc15eb71a20d268eaafc` and blob `b24ac848e679a690a81f50af18b33ae9fd2b5537` were read back successfully; `main` remained unchanged.
+- Every changed path was read back after its write; branch heads matched the returned commit SHA and `main` remained unchanged.
+- Compare against exact base reports `ahead_by: 8`, `behind_by: 0` and exactly the eight allowed paths listed in the task record.
 
 ### Finding
 
@@ -19,25 +20,34 @@
 - Fine-pointer 44px expansion needs 5px transparent block-axis slop per side; the existing 10px row gap is sufficient.
 - Coarse-pointer 48px expansion needs 7px per side; wrapped rows therefore require a 14px row gap to prevent effective-target overlap.
 - `DictionaryCatalog` already routes each selected phrase slug to canonical `/phrases/[slug]`; no runtime callback or History change is required.
+- The execution container cannot resolve `github.com`, so a local shallow clone failed before checkout. This is classified as an infrastructure limitation, not a test result; authoritative validation must run in repository CI.
 
 ### Root cause
 
-The related-phrase pills were designed as compact 34px visual chips, but they do not have a separate interaction owner that guarantees the minimum 44px fine-pointer and 48px coarse-pointer hit area required by Issue #74.
+The related-phrase pills were designed as compact 34px visual chips, but they did not have a separate interaction owner that guarantees the minimum 44px fine-pointer and 48px coarse-pointer hit area required by Issue #74.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/app/layout.tsx`
+- `frontend/app/word-detail-related-phrase-touch-targets.css`
+- `frontend/components/word-detail-related-phrase-touch-target-source.test.ts`
+- `frontend/e2e/word-detail-related-phrase-touch-targets.spec.ts`
+- `frontend/package.json`
 
 ### Checks passed
 
 - Mandatory repository-harness reading and live GitHub pre-flight.
 - Source ownership audit for Word Detail presentation, CSS, Dictionary route/navigation and canonical E2E fixture.
-- Branch/base/readback verification.
+- Explicit branch/base/readback verification after every write.
+- Allowed-path compare: eight expected paths only; branch is not behind `main`.
+- Static contract design covers native semantic ownership, 34px painted geometry, 44/48px effective targets, transparent perimeter hit testing, non-overlap, focus, canonical phrase navigation and compact overflow.
 
 ### Checks failed
 
-- None.
+- Local shallow clone could not start because the isolated execution container could not resolve `github.com`; no source or test command executed locally.
 
 ### Current branch head
 
@@ -45,4 +55,4 @@ Resolve from live branch ref after this write.
 
 ### Next action
 
-Create the route-scoped interaction-only stylesheet, read it back, verify branch/main refs, then add source and browser regression contracts.
+Open a Draft PR from the verified focused diff, update current task records with the PR identity, then analyze authoritative CI from the exact branch head.
