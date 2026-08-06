@@ -20,7 +20,7 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 - Prove the root font size is unchanged and the CSS layout viewport contracts as expected at browser zoom.
 - Audit the canonical ready state at a deterministic desktop host viewport, including route header, term, pronunciation, meaning, related phrases, primary practice action and knowledge panel.
 - Prove responsive single-column reflow, de-sticky knowledge presentation, visible keyboard focus, target separation and zero horizontal overflow.
-- Add the audit to an existing required frontend browser gate.
+- Add the audit to the existing required authoritative Word Detail visual gate.
 - Change `frontend/app/word-detail.css` only if the real zoom audit proves a production layout defect.
 
 ## Non-goals
@@ -37,6 +37,7 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
+- `frontend/e2e/word-detail-visual.spec.ts`
 - `frontend/e2e/word-detail-browser-zoom.spec.ts`
 - `frontend/e2e/support/browser-zoom-extension/manifest.json`
 - `frontend/e2e/support/browser-zoom-extension/background.js`
@@ -112,4 +113,4 @@ Add a permanent, fail-closed Chromium audit for the canonical authenticated `/wo
 
 ## Rollback
 
-Revert the focused audit commit and its package script entry. If production CSS is changed, revert only the route-scoped declaration together with the regression assertion that required it; no data or API rollback is needed.
+Revert the focused audit commit and its required-gate registration. If production CSS is changed, revert only the route-scoped declaration together with the regression assertion that required it; no data or API rollback is needed.
