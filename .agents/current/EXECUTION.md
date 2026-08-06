@@ -5,7 +5,7 @@
 - Branch: `test/issue-74-learn-browser-zoom`
 - Base SHA: `4223ecacc7c2e6942cbd5449ecb9684915954b37`
 - Head SHA: resolve from live branch ref after this write
-- PR: pending
+- PR: #421
 
 ## Skills used
 
@@ -33,19 +33,19 @@ Mandatory `.agents/AGENTS*.md` rules, `.agents/SKILLS.md`, `.agents/PROJECT_STAT
 
 Actions performed:
 
-Verified live state; selected canonical `/learn` true 200% browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and dedicated Playwright specification; rechecked branch and `main` refs.
+Verified live state; selected canonical `/learn` true 200% browser zoom as one bounded slice; created an explicit branch from exact `main`; recorded allowed/prohibited paths; wrote and read back the task contract and dedicated Playwright specification; rechecked branch and `main` refs; verified the exact four-path compare; opened Draft PR #421.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads, branch creation, explicit branch file writes, source-contract inspection and branch readback.
+GitHub connector exact-ref reads, branch creation, explicit branch file writes, source-contract inspection, branch readback, commit compare and Draft PR creation.
 
 Artifacts produced:
 
-Branch `test/issue-74-learn-browser-zoom`, current task records and `frontend/e2e/learn-browser-zoom.spec.ts`.
+Branch `test/issue-74-learn-browser-zoom`, Draft PR #421, current task records and `frontend/e2e/learn-browser-zoom.spec.ts`.
 
 Result:
 
-Isolated test-only implementation exists on a non-default branch; authoritative CI and PR publication are pending.
+Isolated four-path Draft PR is published; authoritative CI is pending on the harness-synchronized final head.
 
 Failures:
 
@@ -57,7 +57,7 @@ Not applicable to repository operations.
 
 Fallback:
 
-Stop writes and reconstruct live refs if `main`, branch ownership or allowed-path compare changes unexpectedly.
+Stop writes and reconstruct live refs if `main`, branch ownership, review state or allowed-path compare changes unexpectedly.
 
 Limitations:
 
@@ -103,7 +103,7 @@ Artifacts produced:
 
 Result:
 
-Source implementation complete; executable evidence pending authoritative CI.
+Source implementation complete and published in Draft PR #421; executable evidence is pending authoritative CI.
 
 Failures:
 
