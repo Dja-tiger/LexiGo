@@ -13,7 +13,7 @@
 
 Purpose:
 
-Safely reconstruct live repository state, isolate the Issue #74 slice, perform explicit branch writes and prepare immutable-head delivery evidence.
+Safely reconstruct live repository state, isolate the Issue #74 slice, perform explicit branch writes and maintain immutable-head CI evidence.
 
 Instruction source:
 
@@ -23,6 +23,7 @@ Instruction source:
 - `.agents/AGENTS.tool-selection.md`
 - `.agents/SKILLS.md`
 - `docs/agent-harness.md`
+- GitHub plugin `github` and `gh-fix-ci` skills.
 
 Version or verification date:
 
@@ -42,23 +43,25 @@ Files inspected:
 - Issue #12 stage status.
 - Word Detail presentation, route, Dictionary route island, CSS, canonical fixtures and existing touch-target contracts.
 - `frontend/package.json` blocking suite owners.
+- CI #2925 and #2928 jobs and uploaded diagnostic artifacts.
 
 Actions performed:
 
 - Verified live main, unrelated open PRs, active Issue and stage deployment.
-- Confirmed repository memory matches GitHub and no product slice is active.
+- Confirmed repository memory matches GitHub and no product slice was active.
 - Selected the bounded conditional related-phrase retry control as the next atomic Issue #74 slice.
 - Created `fix/issue-74-word-detail-related-phrase-retry-target` from exact live main.
 - Wrote every task and implementation path with explicit branch ownership.
 - Read every changed path back and verified its blob SHA.
 - Re-read `main` after branch writes and confirmed it remained unchanged.
-- Compared the branch against its exact base and confirmed an allowed-path-only diff.
-- Opened Draft PR #415 from the verified focused branch to `main`.
-- Inspected authoritative CI #2925 and downloaded its frontend diagnostic artifact.
+- Compared the branch against its exact base and confirmed an allowed-path-only diff with zero behind commits.
+- Opened Draft PR #415.
+- Inspected authoritative CI #2925, downloaded frontend diagnostics artifact `8961059674` and classified the single source-contract failure.
+- Inspected authoritative CI #2928, downloaded browser diagnostics artifact `8961417554` and classified the UI shard 2 failures.
 
 Commands or procedures:
 
-GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification, commit comparison, Draft PR creation, CI job inspection and workflow-artifact analysis.
+GitHub connector reads, exact branch creation, explicit contents writes, changed-path readback, branch/main ref verification, commit comparison, Draft PR creation, CI job inspection, artifact download and extracted log/report analysis.
 
 Artifacts produced:
 
@@ -70,24 +73,27 @@ Artifacts produced:
 
 Result:
 
-The isolated branch and Draft PR #415 contain the complete bounded implementation and test ownership. The first authoritative run produced one deterministic source-contract failure, which was classified and fixed without changing product behavior. Full CI remains required on the final head before Ready or merge.
+The focused implementation remains isolated to eight allowed paths. Two deterministic defects in newly authored validation code were classified from authoritative artifacts and corrected without changing Word Detail runtime or painted presentation. Full CI remains required on the final head before Ready or merge.
 
 Failures:
 
 - Local shallow clone failed before checkout because the isolated execution container could not resolve `github.com`.
-- CI #2925 frontend core failed in one new source-contract assertion after lint and TypeScript passed. Vitest evidence: 651 passed, one failed.
+- CI #2925 frontend core: one new source-contract failure; 651 tests passed.
+- CI #2928 UI shard 2: the new Android Chromium and iOS WebKit proof calculated an effective width 2px narrower than the native button. The same shard also recorded an unrelated existing iOS Lesson Result input-clearing failure.
 
 Root cause:
 
 - Clone failure: execution-container DNS isolation.
-- Unit failure: the stylesheet ownership comment contained the literal token `forced-colors`, while the negative source contract intentionally rejected that token anywhere in the interaction owner. No forbidden CSS rule or declaration existed.
+- CI #2925: an ownership comment contained the literal token `forced-colors`, which the strict negative contract intentionally rejects.
+- CI #2928 new-proof failure: the helper modeled only the absolutely positioned pseudo-element padding box. A native button's interactive surface also includes its painted border box, so the effective target is the union of the native control and pseudo-element.
+- CI #2928 Lesson Result failure: existing test/runtime evidence outside all changed paths; no relationship to Word Detail CSS or retry flow was found.
 
-Fallback and fix:
+Fallback and fixes:
 
 - Used repository-native compare and authoritative GitHub Actions instead of claiming local validation.
-- Downloaded `frontend-core-diagnostics` artifact `8961059674` and inspected `vitest.log`.
-- Changed only the explanatory comment token from `forced-colors` to `high-contrast` in commit `f7e43cde3fd7f6ba9cda32e02c09709e3e66383a`.
-- Kept the strict negative test unchanged; all CSS declarations and product behavior remained unchanged.
+- Changed only the misleading comment token to `high-contrast` in `f7e43cde3fd7f6ba9cda32e02c09709e3e66383a`; the strict negative test and all CSS declarations remained unchanged.
+- Updated the browser helper in `beeeee35de0cbb8bb00db4c02093a2f1c65e9ebd` to compute pseudo bounds and take their geometric union with the native button bounds.
+- Preserved the strict assertion that effective width equals painted width, because inline expansion remains zero.
 
 Limitations:
 
@@ -95,7 +101,7 @@ Whole-application 200% browser zoom, other live controls and physical-device acc
 
 Reusable lesson:
 
-Repository writes remain safe when every operation names the exact branch, every resulting path is read back and the default branch ref is rechecked after each write sequence. Negative source contracts should inspect actual ownership tokens strictly, while ownership comments must avoid accidentally claiming forbidden selectors or media owners.
+Repository writes remain safe when every operation names the exact branch, every resulting path is read back and the default branch ref is rechecked. Pseudo-element touch-target proofs must measure the union of the native element and its generated event surface, not the pseudo box in isolation.
 
 ### Frontend accessibility validation
 
@@ -133,6 +139,7 @@ Files inspected:
 - `frontend/app/word-detail.css`.
 - Existing Word Detail back and related-phrase touch-target owners/contracts.
 - Request-failure classification and request-scoped error fixtures.
+- CI Playwright report, traces, screenshots and error contexts for the new proof.
 
 Actions performed:
 
@@ -143,10 +150,11 @@ Actions performed:
 - Added Playwright proof for computed effective geometry, all four perimeter hits, error-message non-overlap, focus-visible, same-request retry behavior and compact overflow.
 - Scoped the intentional failure fixture to the exact related-phrase GET request and returned canonical data only for its retry.
 - Registered the proof in blocking UI and accessibility commands.
+- Corrected the proof to model the effective target as the native-button/pseudo-element union.
 
 Commands or procedures:
 
-Source ownership audit, computed-target geometry design, request-state fixture design, explicit branch writes and authoritative-CI registration.
+Source ownership audit, computed-target geometry design, request-state fixture design, explicit branch writes, authoritative-CI registration and artifact-driven failure classification.
 
 Artifacts produced:
 
@@ -157,19 +165,11 @@ Artifacts produced:
 
 Result:
 
-The source and browser contracts are complete on the focused branch. Runtime, API, History, session, storage and painted Word Detail owners are unchanged.
-
-Failures:
-
-The first authoritative unit run exposed only a comment-token false positive in the new negative ownership contract. The strict contract passed every other assertion and the fix removed only the misleading comment token.
-
-Root cause:
-
-The compact retry control had a painted presentation owner but no independent minimum-target interaction owner.
+Runtime, API, History, session, storage and painted Word Detail owners are unchanged. The final browser proof retains strict 44/48px, zero-overlap, zero-inline-expansion and same-request retry assertions.
 
 Fallback:
 
-Remove the new stylesheet, its import, contracts and package registrations. The existing Word Detail implementation remains unchanged.
+Remove the new stylesheet, its import, contracts and package registrations. Existing Word Detail implementation remains unchanged.
 
 Limitations:
 
