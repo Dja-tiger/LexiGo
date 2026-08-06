@@ -4,20 +4,20 @@
 
 - Last verified: 2026-08-06 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation reconciliation: `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Latest deployed product SHA: `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Latest completed product slice: Issue #74 canonical Home true 200% browser-zoom audit.
-- Completion PR: #419.
-- PR #419 final developer-authored head: `50ddec4250467d7336e4f2327f258d5f07d2f18f`.
-- Authoritative final PR CI #2946 / run `31102333376` completed successfully on the exact final head across every required product gate.
-- Expected-head squash merge produced product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Exact-SHA main CI #2947 / run `31103156069` completed successfully with the full product matrix and immutable web/API image publication.
-- Immutable web image tag: `ghcr.io/dja-tiger/lexigo-web:c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Immutable API image tag: `ghcr.io/dja-tiger/lexigo-api:c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Exact-image Deploy Stage #2785 / run `31103847794` validated the exact CI scope artifact, deployed SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c` and completed with overall conclusion `success`.
-- Deploy Stage #2785 records `deploy: success`, public endpoint smoke `success`, public browser UI `success` and deployment report `success` for the exact image.
-- PR #419 had no submitted reviews, requested changes or unresolved review threads before merge.
-- Issue #74 received factual completion comment `5204990855` and remains open because physical-device acceptance, remaining controls and additional route-bounded 200% browser-zoom audits are separate slices.
+- Product base verified before this documentation reconciliation: `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Latest deployed product SHA: `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Latest completed product slice: Issue #74 canonical Lesson Composer true 200% browser-zoom audit.
+- Completion PR: #421.
+- PR #421 final developer-authored head: `571780134442f66b915b1a1cc4b5e0402e6f6100`.
+- Authoritative final PR CI #2955 / run `31106609141` completed successfully on the exact final head across every required product gate.
+- Expected-head squash merge produced product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Exact-SHA main CI #2956 / run `31107500280` completed successfully with the full required product matrix and immutable web/API image publication.
+- Immutable web image tag: `ghcr.io/dja-tiger/lexigo-web:45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Immutable API image tag: `ghcr.io/dja-tiger/lexigo-api:45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Exact-image Deploy Stage #2794 / run `31108331428` validated the exact CI scope artifact, deployed SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4` and completed with overall conclusion `success`.
+- Deploy Stage #2794 records `deploy: success`, public endpoint smoke `success`, public browser UI `success` and deployment report `success` for the exact image.
+- PR #421 had no submitted reviews, requested changes or unresolved review threads before merge.
+- Issue #74 received factual completion comment `5206125891` and remains open because physical-device acceptance, remaining controls and additional route-bounded 200% browser-zoom audits are separate slices.
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance and do not intersect this Agent Docs reconciliation.
 
 ## Delivery contract
@@ -135,6 +135,15 @@
 - Product CSS, runtime, API, session, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
 - Product SHA: `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
 
+### PR #421 — canonical Lesson Composer true 200% browser zoom
+
+- The established test-only Manifest V3 controller applies per-tab automatic browser zoom `2` to the exact canonical authenticated `/learn` URL and fails closed on unavailable or ambiguous tab ownership.
+- Independent CDP `Page.getLayoutMetrics().cssVisualViewport.zoom` evidence confirms browser-owned factor `2`; root font size remains unchanged while the CSS layout viewport contracts from 1440px to approximately 720px.
+- Canonical Lesson Composer activates its expected route rail and preserves both the collapsed recommendation and expanded manual-composer states without horizontal overflow, clipping, overlap or route-chrome obstruction.
+- Recommendation actions, disclosure, source/mode/size options and `Начать урок` remain enabled, keyboard-focusable and visibly focused; runtime error capture remains empty.
+- Product CSS, runtime, recommendation logic, lesson lifecycle, API, navigation, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
+- Product SHA: `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+
 ## Issue #74 acceptance status
 
 Completed:
@@ -147,15 +156,15 @@ Completed:
 - Conditional Phrases and Dictionary search-clear controls have guaranteed 44/48px targets with route-specific containment and adjacent-control separation.
 - Canonical Word Detail Back, related-phrase pills and conditional related-phrase retry action have guaranteed 44/48px effective targets with preserved navigation/retry behavior.
 - Canonical mobile-navigation labels are readable at compact width and scale with enlarged root text without clipping, ellipsis, target overlap or horizontal overflow.
-- Canonical Word Detail and canonical Home have permanent automated Chromium evidence for true 200% browser-owned zoom, responsive reflow, accessible actions and zero horizontal overflow.
+- Canonical Word Detail, Home and Lesson Composer have permanent automated Chromium evidence for true 200% browser-owned zoom, responsive reflow, accessible actions and zero horizontal overflow.
 - Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance.
 - Hidden/decorative consumers and stale issue wording are excluded from ownership; no live `Все режимы` control exists in the current `/learn` runtime.
 
 Still open:
 
-- Audit and remediate remaining confirmed live preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397, #402, #405, #407, #409, #411, #413, #415, #417 and #419.
+- Audit and remediate remaining confirmed live preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397, #402, #405, #407, #409, #411, #413, #415, #417, #419 and #421.
 - Prove all remaining primary, secondary, text-only and icon controls meet minimum target and spacing contracts across affected routes.
-- Continue whole-application 200% browser-zoom acceptance through separate bounded route slices; PR #417 proves Word Detail, PR #419 proves Home and PR #397 proves root-text enlargement for canonical mobile navigation.
+- Continue whole-application 200% browser-zoom acceptance through separate bounded route slices; PR #417 proves Word Detail, PR #419 proves Home, PR #421 proves Lesson Composer and PR #397 proves root-text enlargement for canonical mobile navigation.
 - Complete final physical-device acceptance before Issue #74 can close.
 
 Issue #74 remains open. The listed PRs are completed atomic production slices, not full Issue closure.
@@ -173,11 +182,11 @@ Issue #74 remains open. The listed PRs are completed atomic production slices, n
 ## Current state
 
 - No product slice is active.
-- Product runtime and stage are validated on exact image SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
+- Product runtime and stage are validated on exact image SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
 - `.agents/current/**` is reset to canonical templates by this documentation reconciliation.
-- Issue #74 remains open; its latest completed slice is PR #419.
-- Canonical `/words/[id]` and `/` now have permanent fail-closed true 200% Chromium browser-zoom evidence; neither route required product CSS remediation.
-- The next Issue #74 slice must start from live GitHub state and select one remaining route/control acceptance boundary rather than extending PR #419.
+- Issue #74 remains open; its latest completed slice is PR #421.
+- Canonical `/words/[id]`, `/` and `/learn` now have permanent fail-closed true 200% Chromium browser-zoom evidence; none of these routes required product CSS remediation.
+- The next Issue #74 slice must start from live GitHub state and select one remaining route/control acceptance boundary rather than extending PR #421.
 - Dependabot PRs #304, #305 and #403 remain separate maintenance work and must not be merged implicitly into Issue #74.
 
 ## Remaining roadmap
@@ -189,23 +198,23 @@ Issue #74 remains open. The listed PRs are completed atomic production slices, n
 
 ## Recent production evidence
 
-1. #419 — `test(a11y): audit Home at true 200% browser zoom` → `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-2. #418 — Agent Docs reconciliation → `ce7db6538174fe9fc805e163abeedbe40c015d37`.
-3. #417 — `test(a11y): audit Word Detail at true 200% browser zoom` → `5d864970103479863fc74ad76009a33030842420`.
-4. #416 — Agent Docs reconciliation → `5e2b3e59ac0b34c3e4572bca8a97c656f7e234fb`.
-5. #415 — `fix(a11y): expand Word Detail related-phrase retry touch target` → `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
+1. #421 — `test(a11y): audit Learn at true 200% browser zoom` → `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+2. #420 — Agent Docs reconciliation → `4223ecacc7c2e6942cbd5449ecb9684915954b37`.
+3. #419 — `test(a11y): audit Home at true 200% browser zoom` → `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
+4. #418 — Agent Docs reconciliation → `ce7db6538174fe9fc805e163abeedbe40c015d37`.
+5. #417 — `test(a11y): audit Word Detail at true 200% browser zoom` → `5d864970103479863fc74ad76009a33030842420`.
 
 ## Evidence
 
-- PR #419 final developer-authored head `50ddec4250467d7336e4f2327f258d5f07d2f18f` passed authoritative CI #2946 / run `31102333376` across every required product gate.
-- An earlier implementation head `535bcee2ef49aab4e1e6507a5716852d1ea0ace7` also passed full CI #2944 / run `31101435459`; it is supporting evidence, not the merge authorization head.
+- PR #421 final developer-authored head `571780134442f66b915b1a1cc4b5e0402e6f6100` passed authoritative CI #2955 / run `31106609141` across every required product gate.
+- An earlier implementation head `ad4de149a0c5bb65928241af7fdcd4d165affd6f` also passed full CI #2953 / run `31105742758`; it is supporting evidence, not the merge authorization head.
 - Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled Service Worker, content security, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded together on the immutable final head.
-- The Visual regression gate loaded the existing local Manifest V3 extension in pinned Playwright Chromium, applied browser-owned factor `2`, verified extension and CDP zoom telemetry, and proved canonical Home route-rail/single-column reflow, containment, non-overlap and focus without changing product CSS.
-- Expected-head squash merge produced `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-- Exact-SHA main CI #2947 / run `31103156069` completed successfully with the full 18-job product matrix and immutable image publication.
-- Deploy Stage #2785 / run `31103847794` validated the exact CI scope artifact, deployed exact image SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`, verified public endpoints, completed public browser UI validation and reported the deployment successfully.
-- PR #419 had zero submitted reviews and zero unresolved review threads before merge.
-- Issue #74 received factual completion comment `5204990855` and remains open for remaining acceptance scope.
+- The Visual regression gate loaded the existing local Manifest V3 extension in pinned Playwright Chromium, applied browser-owned factor `2`, verified extension and CDP zoom telemetry, and proved canonical Lesson Composer route-rail behavior, collapsed/expanded reflow, containment, non-overlap and focus without changing product CSS.
+- Expected-head squash merge produced `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
+- Exact-SHA main CI #2956 / run `31107500280` completed successfully with the full required product matrix and immutable image publication.
+- Deploy Stage #2794 / run `31108331428` validated the exact CI scope artifact, deployed exact image SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`, verified public endpoints, completed public browser UI validation and reported the deployment successfully.
+- PR #421 had zero submitted reviews and zero unresolved review threads before merge.
+- Issue #74 received factual completion comment `5206125891` and remains open for remaining acceptance scope.
 - Local clone execution was unavailable in the isolated connector environment; no local result is counted as authoritative product evidence.
 - Final claims use exact refs, files, Issues, PRs, workflow jobs, deployment records and immutable image tags.
 
