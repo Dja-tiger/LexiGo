@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-word-detail-related-phrase-retry-target`
 - Base SHA: `f4de7ead2851065d8bb0df083ac3203bc7828d9e`
 - Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- PR: #415 (Draft)
 
 ## Objective
 
