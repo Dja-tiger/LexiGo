@@ -51,10 +51,11 @@ Actions performed:
 - Reconciled live main, PRs, Issue #74, exact main CI and stage state.
 - Created `test/issue-74-word-detail-browser-zoom` from exact main SHA.
 - Read the branch ref back and confirmed the expected base.
+- Performed post-write branch/main isolation checks after each branch commit.
 
 Commands or procedures:
 
-GitHub connector/API reads plus explicit `create_branch` with exact SHA.
+GitHub connector/API reads plus explicit branch/ref and Git Data API operations.
 
 Artifacts produced:
 
@@ -111,6 +112,7 @@ Current Playwright configuration, Word Detail presentation/CSS, visual/reflow co
 Files inspected:
 
 - `frontend/playwright.config.ts`
+- `frontend/playwright.visual.config.ts`
 - `frontend/package.json`
 - `scripts/ci/frontend-container.sh`
 - `.github/workflows/ci.yml`
@@ -124,10 +126,11 @@ Files inspected:
 Actions performed:
 
 - Classified existing 200% coverage as root-text scaling rather than browser zoom.
-- Confirmed no current extension or persistent-context zoom harness exists.
+- Confirmed no current extension or persistent-context zoom harness existed.
 - Selected Chromium `chrome.tabs.setZoom` as browser-owned control.
 - Selected `chrome.tabs.getZoom` and CDP `cssVisualViewport.zoom` as independent proof.
 - Explicitly rejected `deviceScaleFactor`, CSS zoom/transforms and page-scale emulation as substitutes.
+- Routed the permanent audit through the existing required Word Detail visual gate, avoiding workflow and package-script changes.
 
 Commands or procedures:
 
@@ -139,11 +142,11 @@ Bounded contract matrix and allowed-path inventory in `TASK.md`.
 
 Result:
 
-Feasible design identified; implementation pending.
+Feasible design identified and implemented test-first.
 
 Failures:
 
-None.
+None before authoritative execution.
 
 Root cause:
 
@@ -160,3 +163,82 @@ This slice is Chromium-only automation. Final physical-device and full cross-rou
 Reusable lesson:
 
 A 200% root font and a 200% browser zoom are different contracts. Permanent evidence should assert both the controlling browser API value and an independent browser metric before making layout claims.
+
+### Manifest V3 browser-zoom audit implementation
+
+Purpose:
+
+Create permanent browser-owned 200% zoom evidence for canonical Word Detail without modifying production presentation before a defect is reproduced.
+
+Instruction source:
+
+- Current `TASK.md`
+- Issue #74 acceptance criteria
+- official Playwright Chrome extension fixture pattern
+- official Chrome `tabs.setZoom`, `tabs.getZoom` and zoom-settings contracts
+- official CDP `Page.getLayoutMetrics` contract
+
+Version or verification date:
+
+2026-08-06; pinned Playwright/Chromium container `mcr.microsoft.com/playwright:v1.61.1-noble`.
+
+Inputs:
+
+Canonical Word Detail fixture, quality-gate API fixture, authoritative `visual-desktop` project and route-scoped Word Detail CSS.
+
+Files inspected:
+
+- `frontend/e2e/word-detail-visual.spec.ts`
+- `frontend/e2e/support/word-detail-fixture.ts`
+- `frontend/e2e/support/quality-gates.ts`
+- `frontend/app/word-detail.css`
+- `frontend/components/word-detail-presentation.tsx`
+
+Files changed:
+
+- `frontend/e2e/support/browser-zoom-extension/manifest.json`
+- `frontend/e2e/support/browser-zoom-extension/background.js`
+- `frontend/e2e/word-detail-visual.spec.ts`
+
+Actions performed:
+
+- Added a local test-only Manifest V3 extension with `tabs` permission and loopback host permission.
+- Added exact URL matching with a unique-tab fail-closed check.
+- Normalized per-tab automatic zoom, applied factor `2`, and returned before/after zoom plus settings.
+- Launched a separate persistent new-headless Chromium context only for `visual-desktop`.
+- Verified extension service-worker identity and exact application tab ownership.
+- Added independent CDP and DOM telemetry, including browser zoom, CSS viewport contraction, unchanged root font and visual-viewport scale.
+- Added route assertions for single-column grid, static knowledge panel, horizontal containment, non-overlap, document order, action enablement, visible focus and runtime errors.
+- Preserved existing root-text reflow assertions and all content-addressed visual metadata.
+
+Commands or procedures:
+
+Git Data API atomic tree/commit/ref update followed by exact-path read-back and blob verification.
+
+Artifacts produced:
+
+Test-first commit `2bbc926ab49210ee5fc6114d975dd1b67d3ecb2d`.
+
+Result:
+
+Source implementation complete; authoritative execution pending.
+
+Failures:
+
+None yet.
+
+Root cause:
+
+Not applicable.
+
+Fallback:
+
+If the extension harness itself fails, fix only the test infrastructure and rerun. If the browser-owned metrics succeed but route assertions fail, treat that as reproduced production evidence before changing route CSS.
+
+Limitations:
+
+The audit runs only in authoritative desktop Chromium. It deliberately does not claim WebKit browser-zoom automation or final physical-device acceptance.
+
+Reusable lesson:
+
+Exact URL tab selection and dual zoom telemetry prevent false positives caused by active-tab ordering, root text enlargement, pinch scale or device emulation.
