@@ -7,11 +7,12 @@
 - Repository: `Dja-tiger/LexiGo`.
 - Live `main`: `078f842740bbed27deed92888e8f482cb133f616`.
 - Stage remains healthy on exact product image SHA `3b8f3c39faee1223e3773935c761eb7903409868`; Issue #12 records deploy, public smoke and public browser success.
-- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
+- Open unrelated PRs #304, #305 and #403 are Dependabot maintenance.
 - Issue #74 remains open and no product slice was active after PR #411/#412 reconciliation.
 - Branch `fix/issue-74-word-detail-related-phrase-targets` was created from exact live `main`.
+- Draft PR #413 is open from the focused branch to `main`.
 - Every changed path was read back after its write; branch heads matched the returned commit SHA and `main` remained unchanged.
-- Compare against exact base reports `ahead_by: 8`, `behind_by: 0` and exactly the eight allowed paths listed in the task record.
+- Pre-PR compare against exact base reported `behind_by: 0` and exactly the eight allowed paths listed in the task record.
 
 ### Finding
 
@@ -42,8 +43,9 @@ The related-phrase pills were designed as compact 34px visual chips, but they di
 - Mandatory repository-harness reading and live GitHub pre-flight.
 - Source ownership audit for Word Detail presentation, CSS, Dictionary route/navigation and canonical E2E fixture.
 - Explicit branch/base/readback verification after every write.
-- Allowed-path compare: eight expected paths only; branch is not behind `main`.
-- Static contract design covers native semantic ownership, 34px painted geometry, 44/48px effective targets, transparent perimeter hit testing, non-overlap, focus, canonical phrase navigation and compact overflow.
+- Allowed-path compare: eight expected paths only; branch was not behind `main`.
+- Static contract covers native semantic ownership, 34px painted geometry, 44/48px effective targets, transparent perimeter hit testing, pairwise non-overlap, focus, canonical phrase navigation and compact overflow.
+- Draft PR #413 created from the verified focused branch.
 
 ### Checks failed
 
@@ -51,8 +53,8 @@ The related-phrase pills were designed as compact 34px visual chips, but they di
 
 ### Current branch head
 
-Resolve from live branch ref after this write.
+Resolve from live branch ref after this write. This commit is the candidate developer-authored head for authoritative CI.
 
 ### Next action
 
-Open a Draft PR from the verified focused diff, update current task records with the PR identity, then analyze authoritative CI from the exact branch head.
+Verify final branch/main refs and focused compare, then monitor the authoritative PR workflow on the exact final head. Fix any deterministic CI failure before Ready; do not merge while the PR is Draft or while any required gate is incomplete.
