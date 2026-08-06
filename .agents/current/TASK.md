@@ -6,7 +6,7 @@
 - Branch: `test/issue-74-home-browser-zoom`
 - Base SHA: `ce7db6538174fe9fc805e163abeedbe40c015d37`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #419
 
 ## Objective
 
