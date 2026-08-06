@@ -5,7 +5,7 @@
 - Branch: `fix/issue-74-word-detail-related-phrase-targets`
 - Base SHA: `078f842740bbed27deed92888e8f482cb133f616`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #413 (Draft)
 
 ## Skills used
 
@@ -54,33 +54,36 @@ Actions performed:
 - Verified live main, open PRs, active Issue and stage deployment.
 - Confirmed no active product slice and selected one bounded remaining Issue #74 control family.
 - Created `fix/issue-74-word-detail-related-phrase-targets` from exact live main.
-- Wrote and read back the current task/pre-flight records with explicit branch ownership.
+- Wrote and read back every current-task and implementation path with explicit branch ownership.
+- Compared the branch against the exact base: not behind and only eight allow-listed paths changed.
+- Opened Draft PR #413 from the verified branch.
 
 Commands or procedures:
 
-GitHub connector reads, branch creation, explicit branch file writes, changed-path readback and branch/main ref verification.
+GitHub connector reads, branch creation, explicit branch file writes, changed-path readback, branch/main ref verification, commit compare and Draft PR creation.
 
 Artifacts produced:
 
 - `.agents/current/TASK.md`.
 - `.agents/current/PROGRESS.md`.
 - This execution record.
+- Draft PR #413.
 
 Result:
 
-Pre-flight completed. The selected slice is limited to canonical Word Detail related-phrase native buttons and their cross-browser interaction evidence.
+The focused implementation and permanent source/browser regression contracts are present on the PR branch. Authoritative CI is pending on the final developer-authored head.
 
 Failures:
 
-None.
+A local shallow clone failed before checkout because the isolated execution container could not resolve `github.com`.
 
 Root cause:
 
-Not applicable.
+Execution-container DNS isolation; no repository test command ran locally.
 
 Fallback:
 
-If the transparent hit surface conflicts with wrapped layout or destination handoff, remove the interaction layer and reduce the proof to the smallest reproducible viewport before changing production presentation.
+Use repository-native compare and authoritative GitHub Actions. Do not represent the failed clone as a product or test failure.
 
 Limitations:
 
@@ -124,33 +127,40 @@ Files inspected:
 
 Actions performed:
 
-- Built the target matrix for fine/coarse pointer, same-row/wrapped-row placement, focus, perimeter hit testing and compact overflow.
-- Established that fine-pointer expansion fits the current 10px row gap, while coarse-pointer expansion requires a 14px row gap.
-- Kept API, session, History, storage, visible styling and visual snapshots out of scope.
+- Added a route-scoped interaction-only stylesheet after the existing Word Detail owners.
+- Expanded only block-axis event geometry to 44px fine and 48px coarse pointer minimums.
+- Preserved zero inline expansion and reserved a 14px coarse-pointer wrapped-row gap.
+- Added a source contract for native semantic ownership, canonical phrase slug navigation, import order, preserved 34px painted geometry and prohibited visual ownership.
+- Added Playwright evidence for computed effective rectangles, four-point perimeter hit testing, pairwise non-overlap, row gap, existing focus styling, canonical destination URL and 1440/390/320px overflow.
+- Registered the browser proof in blocking UI and accessibility commands.
 
 Commands or procedures:
 
-Source ownership audit followed by planned source-contract, lint/typecheck/unit/build, focused Playwright and authoritative full-CI ladder.
+Source ownership audit, focused immutable implementation, source-contract design, Playwright geometry design and authoritative full-CI registration.
 
 Artifacts produced:
 
-Regression artifacts will be added in the next implementation commits.
+- `frontend/app/word-detail-related-phrase-touch-targets.css`.
+- `frontend/components/word-detail-related-phrase-touch-target-source.test.ts`.
+- `frontend/e2e/word-detail-related-phrase-touch-targets.spec.ts`.
+- `frontend/app/layout.tsx` import.
+- `frontend/package.json` blocking suite registration.
 
 Result:
 
-Implementation contract is ready for an interaction-only stylesheet and fail-closed source/browser evidence.
+Implementation is ready for GitHub Actions validation. No runtime/API/History/storage or painted-presentation owner changed.
 
 Failures:
 
-None.
+No frontend test result is available locally because checkout could not start in the isolated container.
 
 Root cause:
 
-The existing compact visual owner does not independently guarantee touch minimums or wrapped-target separation.
+The prior compact visual owner did not independently guarantee touch minimums or wrapped-target separation.
 
 Fallback:
 
-Preserve the painted CSS unchanged and remove only the new route-scoped interaction owner.
+Preserve `word-detail.css` and runtime callbacks; remove only the new interaction owner and regression registrations.
 
 Limitations:
 
