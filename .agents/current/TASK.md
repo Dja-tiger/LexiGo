@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-word-detail-related-phrase-targets`
 - Base SHA: `078f842740bbed27deed92888e8f482cb133f616`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #413 (Draft)
 
 ## Objective
 
