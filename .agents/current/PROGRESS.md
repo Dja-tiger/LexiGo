@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-06 16:21 +03:00
+## 2026-08-06 16:22 +03:00
 
 ### Verified
 
@@ -8,7 +8,7 @@
 - No active conflicting product PR exists; open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 - Issue #74 remains open after completed Home and Word Detail browser-zoom slices.
 - Branch `test/issue-74-learn-browser-zoom` was created from the exact verified `main` SHA.
-- Current implementation head before this progress write is `5fc84b78171d73b032f03b7abbad6091e9e11da3`.
+- Draft PR #421 targets `main` from the expected branch and exact base.
 
 ### Finding
 
@@ -22,9 +22,8 @@ Coverage gap only. No production CSS, runtime, lesson lifecycle, recommendation,
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `frontend/e2e/learn-browser-zoom.spec.ts`
-
-The final planned diff additionally includes `.agents/current/EXECUTION.md` and no other path.
 
 ### Checks passed
 
@@ -36,15 +35,17 @@ The final planned diff additionally includes `.agents/current/EXECUTION.md` and 
 - Static contract review confirms deterministic authenticated fixtures, canonical Lesson Composer semantic owners, extension-controlled exact-tab zoom and independent CDP evidence.
 - The test exercises both collapsed recommendation and expanded manual-composer states without modifying product code.
 - The test asserts responsive breakpoint ownership, horizontal containment, non-overlap, route-rail clearance, enabled controls, visible keyboard focus and empty runtime-error capture.
+- Pre-PR compare is ahead-only, `behind=0` and contains exactly the four pre-authorized paths.
+- Draft PR #421 was opened with explicit scope, non-goals, validation boundary, risks and rollback.
 
 ### Checks failed
 
-- None yet. Authoritative GitHub Actions CI has not run on this implementation.
+- None yet. Authoritative GitHub Actions CI is pending on the harness-synchronized final head.
 
 ### Current branch head
 
-`5fc84b78171d73b032f03b7abbad6091e9e11da3` before this documentation write.
+Resolve from the live branch ref after the final PR-link documentation writes.
 
 ### Next action
 
-Complete the execution record, verify the exact four-path ahead-only compare, open a Draft PR and classify authoritative CI before any production change.
+Verify the final four-path compare and analyze authoritative CI on the immutable final candidate head before any product change or Ready transition.
