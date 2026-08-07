@@ -15,13 +15,14 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 ## Scope
 
 - Audit canonical `/lesson/active` controls whose current CSS minimum is 44px.
-- Add paint-inert block-axis hit slop for the live utility, text-action, confidence-rating and compact Back/Close controls.
+- Add a route-scoped paint-inert block-axis hit-slop owner for the live utility, text-action, confidence-rating and compact Back/Close controls.
+- Import that owner from the canonical root layout after the Active Lesson presentation stylesheet.
 - Add permanent browser acceptance in the existing collected lesson-flow owner for effective geometry, perimeter hit testing, non-overlap, keyboard focus and compact containment.
 - Keep Agent Harness task/progress/execution records factual for this atomic slice.
 
 ## Non-goals
 
-- No Active Lesson redesign, typography or layout change.
+- No Active Lesson redesign, typography or painted-layout change.
 - No API, review, scheduler, history, session or outbox behavior change.
 - No changes to other Issue #74 routes in this PR.
 - No visual baseline update.
@@ -29,7 +30,8 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 
 ## Allowed paths
 
-- `frontend/app/active-lesson.css`
+- `frontend/app/active-lesson-touch-targets.css`
+- `frontend/app/layout.tsx`
 - `frontend/e2e/lesson-flow.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -38,6 +40,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 ## Prohibited paths
 
 - Backend, API and migrations.
+- Existing Active Lesson presentation declarations outside the dedicated touch-target owner.
 - Other route presentation owners.
 - Visual snapshots and Figma assets.
 - CI workflow definitions and dependency manifests.
@@ -45,7 +48,9 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 ## Runtime owners
 
 - Presentation: `frontend/components/active-lesson-presentation.tsx`
-- CSS: `frontend/app/active-lesson.css`
+- Canonical painted CSS: `frontend/app/active-lesson.css`
+- Touch-target overlay: `frontend/app/active-lesson-touch-targets.css`
+- Root stylesheet import boundary: `frontend/app/layout.tsx`
 - Existing browser fixture/acceptance owner: `frontend/e2e/lesson-flow.spec.ts`
 
 ## Documentation owners
@@ -58,15 +63,16 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 
 - Existing 44px painted controls remain visually unchanged on fine and coarse pointers.
 - Coarse-pointer effective height is 48px and fine-pointer effective height is at least 44px.
-- Hit slop is block-axis only and must not create horizontal overlap or horizontal overflow.
+- Hit slop is block-axis only except the compact icon-like Back control, whose 44×44 target expands symmetrically to 48×48 on coarse pointers.
+- Expanded regions must not overlap adjacent live controls or escape compact viewport containment.
 - Existing accessible names, focus-visible behavior, callbacks, review semantics, safe-exit behavior and lesson navigation remain unchanged.
 - Existing authoritative visual baselines remain unchanged.
 
 ## Acceptance criteria
 
 - Live Active Lesson utility buttons, text actions and confidence ratings expose at least 44px fine-pointer / 48px coarse-pointer effective height.
-- Compact Active Lesson Back and Close controls expose at least 44×44px fine-pointer / 48×48px coarse-pointer effective targets.
-- Top/bottom effective-target perimeter points resolve to the owning control.
+- Compact Active Lesson Back and Close controls expose at least 44×44px fine-pointer / 48px coarse-pointer effective targets where their painted width is below 48px.
+- Effective-target perimeter points resolve to the owning control.
 - Expanded targets do not overlap adjacent live controls.
 - Keyboard focus remains visible and compact layout has no horizontal overflow.
 - Permanent acceptance executes in desktop Chromium, iOS WebKit and Android Chromium.
@@ -81,10 +87,10 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 
 ## Risks
 
-- Pseudo-element hit slop can intercept a neighbouring control if vertical spacing is insufficient.
+- Pseudo-element hit slop can intercept a neighbouring control if spacing is insufficient.
 - A direct min-height change would alter approved compact geometry and visual baselines; it is intentionally avoided.
 - Off-screen perimeter probes can produce false negatives unless the control is scrolled into view before `elementFromPoint` checks.
 
 ## Rollback
 
-Revert the Active Lesson hit-slop CSS and its matching lesson-flow acceptance while preserving all prior Issue #74 deliveries.
+Remove the dedicated Active Lesson touch-target stylesheet/import and its matching lesson-flow acceptance while preserving all prior Issue #74 deliveries.
