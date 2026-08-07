@@ -10,10 +10,11 @@
 
 Следствие: наличие test source, зелёный workflow и даже успешный stage/public smoke сами по себе не доказывают acceptance criterion, если целевой тест не был собран effective Playwright config.
 
-После включения dormant owners authoritative CI дополнительно подтвердил два класса stale test contracts:
+После включения dormant owners authoritative CI дополнительно подтвердил три класса stale test contracts:
 
 - нельзя выводить ожидаемый responsive breakpoint только из номинального `viewport / zoom`: сначала нужно проверить фактического CSS owner, specificity и точную media-query boundary. Для routed Home при 1440px и browser zoom 2 effective width находится на 720px, тогда как canonical one-column override начинается только с `max-width: 719px`;
-- для ARIA radio groups с roving `tabindex` keyboard-focus acceptance должен целиться в текущий checked/tabbable radio. Произвольный `.first()` может иметь `tabindex="-1"` и не обязан получать фокус при Tab/Shift+Tab.
+- для ARIA radio groups с roving `tabindex` keyboard-focus acceptance должен целиться в текущий checked/tabbable radio. Произвольный `.first()` может иметь `tabindex="-1"` и не обязан получать фокус при Tab/Shift+Tab;
+- geometry assertions должны быть совместимы с уже доказанной layout model. Если computed grid подтверждён как двухколоночный, нельзя одновременно требовать вертикальный stacking тех же соседних panels. Для same-row grid проверяйте containment, отсутствие overlap и согласованное top alignment.
 
 ## Обязательные правила
 
@@ -27,6 +28,7 @@
 8. Content-addressed visual baselines нельзя обновлять из-за добавления browser-zoom telemetry. Их изменение требует отдельного осознанного visual change с Figma/CI evidence.
 9. Responsive assertion обязан следовать effective computed owner: перед жёстким ожиданием числа columns/rows сверяйте specificity, точную media-query boundary и фактический CSS pixel width после browser-owned zoom. Reflow acceptance нельзя подменять предположением о breakpoint.
 10. Для composite widgets с roving `tabindex` проверяйте keyboard-visible focus на элементе, который реально находится в tab sequence (`checked`, `selected` или иной canonical active owner), а не на произвольном DOM-первом элементе.
+11. После подтверждения layout topology проверяйте только совместимую geometry: для двухколоночного same-row layout — horizontal containment, no-overlap и top alignment; для stacked layout — vertical order. Не смешивайте взаимоисключающие topology assertions в одном acceptance state.
 
 ## Минимальная проверка перед Ready
 
@@ -37,6 +39,7 @@
 - runtime errors отсутствуют;
 - horizontal overflow, clipping/overlap и focus-visible проверены в zoomed state;
 - responsive expectations привязаны к effective CSS owner и точной breakpoint boundary;
+- geometry assertions соответствуют подтверждённой layout topology;
 - roving-tabindex controls проверяются на реально tabbable active owner;
 - существующие content-addressed baselines не изменены без отдельного design approval;
 - review/thread audit чистый.
