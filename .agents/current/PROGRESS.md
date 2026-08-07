@@ -66,12 +66,9 @@ Diagnostics:
 
 #### Home
 
-`home-browser-zoom.spec.ts` failed before applying zoom because it expected three legacy path cards:
+`home-browser-zoom.spec.ts` failed before applying zoom because it expected three legacy path cards: expected `3`, received `0`.
 
-- expected `3`;
-- received `0`.
-
-This expectation is stale. The current canonical `information-architecture.spec.ts` explicitly requires `Назначение основных разделов` to be hidden and states that Home delegates Learn/Dictionary/Progress destinations to the application shell. `LexigoHomeApp` still contains the section as hidden compatibility/structure, but it is not a visible Home acceptance owner.
+This expectation is stale. The current canonical `information-architecture.spec.ts` explicitly requires `Назначение основных разделов` to be hidden and states that Home delegates Learn/Dictionary/Progress destinations to the application shell.
 
 Classification: stale dormant test contract, not product runtime/CSS defect.
 
@@ -79,14 +76,7 @@ Repair applied: visible path-card/grid assertions were removed and replaced with
 
 #### Learn / Active Lesson
 
-Both specs failed at the same pattern:
-
-- helper called `locator.focus()`;
-- locator was focused;
-- `element.matches(":focus-visible")` was `false`;
-- test required it to be `true`.
-
-Programmatic focus is not proof of keyboard modality. The test claimed keyboard-visible focus but did not create keyboard-originated focus.
+Both specs called `locator.focus()` and then required `:focus-visible`; programmatic focus does not prove keyboard modality.
 
 Classification: incorrect test interaction semantics, not product runtime/CSS defect.
 
@@ -107,54 +97,73 @@ Authoritative Visual regression job: `92822695865`.
 The decoded job log proves the repaired collection boundary is active:
 
 - Playwright reported `Running 141 tests using 1 worker`;
-- Home, Learn and Active standalone browser-zoom owners are explicitly listed in compact/medium as skipped-by-project and in `visual-desktop` as executed;
-- Phrases browser-owned zoom is explicitly listed at `e2e/phrases-visual.spec.ts:388` and executed in `visual-desktop`;
-- Active Lesson desktop browser-owned zoom completed without failure;
-- Phrases desktop browser-owned zoom completed without failure;
+- Home, Learn and Active standalone browser-zoom owners are explicitly collected and executed in `visual-desktop`;
+- Phrases browser-owned zoom is explicitly collected and executed in `visual-desktop`;
+- Active Lesson and Phrases desktop browser-owned zoom completed without failure;
 - all eight Phrases content-addressed baseline cases completed without baseline mismatch;
 - final summary: `55 passed`, `84 skipped`, `2 failed`.
 
-The two remaining failures were deterministic on attempt and retry:
-
 ### Home follow-up classification
 
-Failure:
-
-- test required `lx-home-next-action` to become a single column at browser zoom 2;
-- effective computed grid remained two columns: `243.992px 300px`.
-
-Canonical CSS evidence:
-
-- `adaptive-knowledge-coach-home.css` owns the routed Home grid with a more-specific two-column selector;
-- its matching one-column override is `@media (max-width: 719px)`;
-- the exact 1440px desktop / zoom=2 case lands at approximately 720 CSS px, so the canonical routed Home intentionally remains in the bounded two-column state at that boundary;
-- the acceptance criterion is reflow/usability without clipping or horizontal overflow, not an invented one-column breakpoint at 720px.
+The test required a single-column Home action grid at browser zoom 2, while the computed grid remained `243.992px 300px`. Canonical routed Home CSS switches to one column only at `max-width: 719px`; exact 1440px / zoom=2 lands at about 720 CSS px.
 
 Classification: over-constrained test expectation, not product defect.
 
-Required repair: assert the canonical two-column 720px boundary (plus existing geometry, no-overflow and no-overlap checks) instead of requiring one column.
+Repair applied: the test now asserts the canonical bounded two-column 720px boundary while retaining containment, no-overflow and no-overlap checks.
 
 ### Learn follow-up classification
 
-Failure:
-
-- `expectVisibleFocus(modeGroup.getByRole("radio").first())` could not return keyboard focus to the same first radio;
-- CI shows the first mode radio has `tabindex="-1"` and `aria-checked="false"`.
-
-This is standard roving-tabindex radio-group semantics: only the checked/current radio participates in the tab sequence. `Tab` followed by `Shift+Tab` returns to the group’s checked tabbable radio, not an arbitrary unchecked `.first()` element.
+The test targeted `.first()` in roving-tabindex radio groups; CI showed that radio had `tabindex="-1"` and `aria-checked="false"`.
 
 Classification: test selected a non-tabbable ARIA radio owner, not product defect.
 
-Required repair: apply keyboard-focus assertions to each group’s `{ checked: true }` radio rather than `.first()`.
+Repair applied: keyboard focus assertions now target each group’s `{ checked: true }` radio.
 
 ### Additional signal
 
-The log contains `/api/v1/performance/rum` proxy `ECONNREFUSED 127.0.0.1:8080` messages during browser runs. They did not produce an Active/Phrases failure and are unrelated to the two deterministic assertions above; no observability/runtime scope expansion is justified by this run.
+The log contains `/api/v1/performance/rum` proxy `ECONNREFUSED 127.0.0.1:8080` messages during browser runs. They did not produce an acceptance failure and are unrelated to the deterministic assertions; no observability/runtime scope expansion is justified.
+
+## 2026-08-07 12:29 Europe/Moscow — third authoritative collection run
+
+### CI #2979 / run `31165575226`
+
+Exact developer-authored head: `8427cfbb16ec77826c8fe58e9d39911189887979`.
+
+Authoritative Visual regression job: `92825844195`.
+
+Confirmed from the exact decoded job log:
+
+- Playwright again reported `Running 141 tests using 1 worker`;
+- Active Lesson desktop true browser zoom executed and passed;
+- Learn desktop true browser zoom executed and passed, proving the checked-radio repair;
+- Phrases desktop true browser zoom executed and passed;
+- all eight Phrases content-addressed baseline cases executed without mismatch;
+- Word Detail browser-owned zoom also executed without failure;
+- final summary: `56 passed`, `84 skipped`, `1 failed`.
+
+Diagnostics:
+
+- artifact: `frontend-playwright-report-visual` / `8988935251`;
+- artifact digest: `sha256:369e7011029a09d52c2ba24feaa0d516ee883f8efcac94aa9dafccd4eae5b7f2`;
+- Home failure reproduced on the initial attempt and retry.
+
+### Only remaining failure
+
+Home already asserts the canonical two-column grid and no overlap, but a leftover assertion also required the progress panel to be vertically stacked after the hero:
+
+- hero bottom expected threshold: `496.8359375`;
+- progress `y`: `106`.
+
+Those values are consistent with the already-confirmed same-row two-column layout. The assertion therefore contradicts the canonical grid it immediately precedes.
+
+Classification: final stale test-contract assumption, not product runtime/CSS defect.
+
+Required repair: retain the two-column, containment, no-overflow and no-overlap checks, and replace the vertical stacking requirement with same-row/top-alignment evidence that is compatible with the canonical two-column layout. Add a fail-closed source-contract guard so the contradictory stacking assertion cannot return.
 
 ### Current scope decision
 
-No runtime/CSS/API/workflow/dependency/baseline change is justified. The next commit stays within the already-approved browser-zoom test owners and corrects only the two proven test assumptions above.
+No runtime/CSS/API/workflow/dependency/baseline change is justified. The next write remains strictly inside the Home browser-zoom owner, source contract and reusable harness lesson.
 
 ### Next action
 
-Correct the Home 720px grid expectation and Learn roving-radio focus targets, rerun the full required CI on the resulting developer-authored head, inspect exact successful visual logs, then perform review/thread audit and Ready/merge only if all required gates are green.
+Apply the final Home geometry contract repair, strengthen the source guard, rerun the complete required CI on the resulting authored head, inspect exact successful visual evidence, then perform review/thread audit and Ready/merge only if the whole workflow is green.
