@@ -292,8 +292,8 @@ test.describe("Home browser-owned zoom", () => {
       }));
       expect(
         responsiveStyles.nextActionColumns.split(/\s+/).filter(Boolean),
-        "200% browser zoom must activate the single-column Home action breakpoint",
-      ).toHaveLength(1);
+        "the exact 1440px/200% boundary must preserve the canonical bounded two-column Home action layout",
+      ).toHaveLength(2);
 
       await expectHorizontallyContained(main, afterDOM.clientWidth, "Home main");
       await expectHorizontallyContained(hero, afterDOM.clientWidth, "Home hero");
