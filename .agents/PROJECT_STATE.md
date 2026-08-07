@@ -2,17 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-08-06 Europe/Moscow.
+- Last verified: 2026-08-07 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified `main` before this reconciliation: `e390469466e881ee49f5009752e60e545f5cf898`.
-- Latest deployed product SHA: `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Latest merged Issue #74 slice: PR #423, final developer-authored head `6a480d3d6ea059a5554456fb8f3e3daa3960411a`, squash product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- PR #423 CI #2959 / run `31112824242`, exact-SHA main CI #2960 / run `31113769002` and Deploy Stage #2798 / run `31114604343` completed successfully for the configured repository gates and immutable product image.
-- Exact deployed image tags remain `ghcr.io/dja-tiger/lexigo-web:00774b8a4299d652c1433a5093f18e3265de5e4f` and `ghcr.io/dja-tiger/lexigo-api:00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Stage deploy, public endpoint smoke and public browser smoke remain valid for the deployed product image.
-- The intended Home, Learn and Active Lesson true-browser-zoom acceptance evidence is **validation pending**, not completed: their standalone specs are excluded from the authoritative visual configuration and were not executed by PR #423 CI.
-- Word Detail remains the only confirmed true-browser-zoom route because its browser-owned zoom case is inside the allow-listed `word-detail-visual.spec.ts` and appears in the authoritative visual job log.
-- Issue #74 remains open. Its previous completion comments for PRs #419, #421 and #423 overstate browser-zoom evidence and must not be used as acceptance proof until the gate is repaired and rerun.
+- Verified `main` before this reconciliation: `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- Latest deployed product SHA: `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- Latest merged Issue #74 slice: PR #426, final developer-authored head `10b4cc87d7d4af2f04498506ed758414f76a8e7a`, squash product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- PR #426 CI #2983 / run `31166237906`, exact-SHA main CI #2984 / run `31167034122` and Deploy Stage #2826 / run `31167741474` completed successfully.
+- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:7c641b2eea330363c80e6c666721a31eb5d60b9c` and `ghcr.io/dja-tiger/lexigo-api:7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- Stage deployment, public endpoint smoke and public browser smoke succeeded for that exact immutable image SHA. Deployment status Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success`.
+- PR #426 has no review threads and no reviews requiring action.
+- Issue #74 remains open. The authoritative browser-zoom collection gap is closed; remaining completion work is the residual live-control audit and final real-physical-device acceptance. Real-device evidence must not be synthesized from desktop CI.
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 
 ## Delivery contract
@@ -58,46 +57,54 @@
 - PR #411: Word Detail Back 44/48px target with Dictionary-state restoration. Product SHA `3b8f3c39faee1223e3773935c761eb7903409868`.
 - PR #413: Word Detail related-phrase 44/48px targets with non-overlap. Product SHA `477bccd8f38e648a3ad536dcc58526303297a376`.
 - PR #415: retryable Word Detail related-phrase `Повторить` 44/48px target and same-request recovery. Product SHA `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
-- PR #417: confirmed canonical Word Detail true 200% browser-owned Chromium zoom, responsive reflow, containment, de-sticky content, visible focus and no runtime errors. The case is collected by `playwright.visual.config.ts` through `word-detail-visual.spec.ts`. Product SHA `5d864970103479863fc74ad76009a33030842420`.
+- PR #417: canonical Word Detail true 200% browser-owned Chromium zoom, responsive reflow, containment, de-sticky content, visible focus and no runtime errors. Product SHA `5d864970103479863fc74ad76009a33030842420`.
+- PR #419: Home true-browser-zoom source merged. Product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`; authoritative collection evidence was completed later by PR #426.
+- PR #421: Lesson Composer true-browser-zoom source merged. Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`; authoritative collection evidence was completed later by PR #426.
+- PR #423: Active Lesson true-browser-zoom source merged. Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; authoritative collection evidence was completed later by PR #426.
+- PR #426: repaired the explicit authoritative visual collection, added fail-closed collection/semantic contracts, synchronized dormant Home/Learn/Active tests with current canonical IA/CSS/ARIA behavior and added canonical Phrases true-browser-owned 200% acceptance without product runtime/CSS/API changes. Product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
 
-## Merged Issue #74 browser-zoom specs with validation pending
+## Issue #74 browser-zoom evidence
 
-### PR #419 — Home
+PR #426 final authoritative Visual regression evidence on immutable head `10b4cc87d7d4af2f04498506ed758414f76a8e7a`:
 
-- Added `frontend/e2e/home-browser-zoom.spec.ts` with exact-tab MV3 zoom ownership, independent CDP telemetry, responsive Home geometry and focus assertions.
-- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI did not execute it.
-- Product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c` records the merged source, not completed zoom acceptance.
+- CI #2983 / run `31166237906` completed successfully across every required product gate.
+- Visual job `92828059911` reported `Running 141 tests`, `57 passed`, `84 skipped`, `0 failed`.
+- The log explicitly executed the Home, Learn and Active Lesson standalone true-browser-zoom owners, the Phrases browser-owned zoom case and the previously authoritative Word Detail browser-owned zoom case.
+- Home expectations follow the effective 720px CSS boundary rather than assuming a non-existent one-column breakpoint.
+- Learn roving-radio focus evidence targets the checked/tabbable radio instead of a DOM-first `tabindex=-1` item.
+- Home geometry evidence follows the confirmed same-row two-column topology and does not assert contradictory vertical stacking.
+- Home, Learn, Active Lesson and Phrases focus-visible evidence originates from keyboard navigation rather than direct programmatic focus.
+- All eight existing Phrases Light/Dark compact/desktop content-addressed visual cases executed without baseline mismatch or baseline update.
+- Browser-owned zoom is controlled through the established per-tab MV3 mechanism and independently checked through browser/CDP/DOM telemetry as required by the Issue #74 harness rule.
 
-### PR #421 — Lesson Composer
+Post-merge evidence for product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`:
 
-- Added `frontend/e2e/learn-browser-zoom.spec.ts` for collapsed and expanded `/learn` states under browser-owned zoom factor `2`.
-- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI did not execute it.
-- Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4` records the merged source, not completed zoom acceptance.
-
-### PR #423 — Active Lesson
-
-- Added `frontend/e2e/active-lesson-browser-zoom.spec.ts` for canonical Recall geometry, focus and `backlog` → reveal → `Знал` → `Дальше` review semantics.
-- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI #2959 visual job `92655323130` did not execute it.
-- Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f` records the merged source and deployed unchanged runtime, not completed Active Lesson zoom acceptance.
+- exact-SHA main CI #2984 / run `31167034122`: complete success;
+- Deploy Stage #2826 / run `31167741474`: complete success;
+- exact CI deployment scope validation: success;
+- exact immutable image deployment: success;
+- public frontend/API smoke: success;
+- public browser UI validation: success;
+- deployment Issue #12 confirms both exact images healthy on stage.
 
 ## Issue #74 acceptance status
 
-Completed:
+Completed automated evidence:
 
 - Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413 and #415 meet their route-specific 44/48px target, spacing, focus and callback contracts.
 - Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
-- Word Detail has authoritative automated Chromium evidence for true 200% browser-owned zoom.
-- Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance.
+- Word Detail has permanent authoritative true 200% browser-owned zoom evidence.
+- The authoritative collection now permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
+- Canonical Phrases has authoritative true-browser-owned 200% zoom evidence inside the already collected Phrases visual owner.
+- Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance for the delivered slices.
 
-Validation pending / still open:
+Remaining / validation pending:
 
-- Add `home-browser-zoom.spec.ts`, `learn-browser-zoom.spec.ts` and `active-lesson-browser-zoom.spec.ts` to an authoritative Playwright collection boundary and prove from CI logs that each named case executes on the immutable PR head.
-- Continue whole-application true 200% browser-zoom acceptance with separate route-bounded slices after the dormant gate is repaired; Phrases is the next selected route boundary.
-- Audit and remediate remaining confirmed live preview, sticky-action, header/icon and route-specific controls.
-- Prove all remaining primary, secondary, text-only and icon controls meet minimum target and spacing contracts across affected routes.
-- Complete final physical-device acceptance before Issue #74 can close.
+- Perform the residual whole-application live-control inventory against the Issue #74 affected screens and remediate only controls still confirmed below the 44px fine-pointer / 48px coarse-pointer contracts or with intersecting target geometry.
+- Confirm that all remaining primary, secondary, text-only and icon controls in the affected Header, bottom navigation, Home, Learn, Phrases, Dictionary, Lesson and Progress surfaces are either already covered by canonical shared contracts or receive explicit bounded regression evidence.
+- Perform final manual acceptance on real physical mobile hardware. This is a required Issue criterion and cannot be replaced by Playwright emulation, desktop browser zoom, root-font enlargement or stage smoke.
 
-Issue #74 remains open. Merged source and green configured CI are not equivalent to completed acceptance when the intended test was not collected.
+Issue #74 stays open until those remaining criteria are proven.
 
 ## Completed CI/CD control-plane slice
 
@@ -111,29 +118,31 @@ Issue #74 remains open. Merged source and green configured CI are not equivalent
 
 ## Current state
 
-- No product slice is active while this documentation discrepancy is reconciled.
-- Product runtime and stage remain validated on exact image SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; no runtime regression was discovered.
-- Home, Learn and Active Lesson browser-zoom acceptance is validation pending because their standalone specs are dormant.
-- The next product slice must first repair the authoritative visual collection boundary, retain all existing content-addressed baselines, and add the bounded canonical `/phrases` browser-owned zoom audit without changing product runtime unless a reproduced defect requires it.
+- No product slice is active while this post-merge repository-memory reconciliation is being delivered.
+- Current product runtime and stage are validated on exact image SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`; no product runtime regression was discovered by PR #426.
+- The dormant browser-zoom collection defect is closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
+- After this docs-only reconciliation/reset, the next product slice is the remaining Issue #74 live-control inventory/remediation. Physical-device acceptance remains a separate final manual validation gate.
 - Dependabot PRs #304, #305 and #403 remain separate maintenance work.
 
 ## Remaining roadmap
 
-- Issue #74: repair dormant browser-zoom collection, run Home/Learn/Active Lesson evidence, add Phrases true-browser-zoom acceptance, audit remaining live controls and complete physical-device validation.
+- Issue #74: finish the residual live-control audit/remediation and final real-device acceptance; close the Issue only after both are evidenced.
 - Issue #78 CSP implementation and stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
 - Dependabot PRs #304, #305 and #403 require separate review, immutable-head CI and deployment treatment according to changed scope.
-- Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices.
+- Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices after Issue #74 is completed or explicitly blocked by the manual hardware gate.
 
 ## Reconciliation evidence
 
+- PR #426 merged from final developer-authored head `10b4cc87d7d4af2f04498506ed758414f76a8e7a` to product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
 - `frontend/package.json` maps `test:e2e:visual` to `playwright test --config=playwright.visual.config.ts`.
-- At verified `main`, `playwright.visual.config.ts.testMatch` contains only `visual-regression.spec.ts`, `word-detail-visual.spec.ts`, `profile-visual.spec.ts`, `system-states-visual.spec.ts` and `phrases-visual.spec.ts`.
-- PR #423 authoritative Visual regression job `92655323130` reported `Running 129 tests`, `53 passed`, `76 skipped` and listed only those five files.
-- The same job explicitly executed `Word Detail browser-owned zoom › desktop 200% browser zoom reflows without clipping, overlap or sticky obstruction` from `word-detail-visual.spec.ts`.
-- The job log contains no Home, Lesson Composer or Active Lesson browser-owned zoom test name and no reference to their standalone spec files.
-- Therefore PR CI success, main CI success and stage deployment remain valid for configured code and runtime, but they do not prove the excluded zoom acceptance cases.
-- The rejected initial `create_branch` call during this reconciliation used invalid argument names and produced no ref mutation. `main` remained `e390469466e881ee49f5009752e60e545f5cf898`; the target branch remained absent until the exact connector schema was reloaded and the branch was created from that immutable SHA.
-- Local clone execution is unavailable in the isolated connector environment; no local result is counted as authoritative evidence.
+- `frontend/playwright.visual.config.ts.testMatch` now includes the three standalone Home/Learn/Active browser-zoom owners in addition to the existing collected visual owners.
+- `frontend/components/browser-zoom-collection-contract.test.ts` fail-closes the collection boundary and semantic keyboard/geometry expectations.
+- Phrases true-browser-zoom lives inside `frontend/e2e/phrases-visual.spec.ts`, preventing another standalone collection gap.
+- PR #426 authoritative visual evidence explicitly executed Home, Learn, Active Lesson, Phrases and Word Detail browser-owned zoom cases.
+- PR #426 preserved all existing content-addressed Phrases baseline images byte-for-byte.
+- Exact-SHA main CI and exact-image stage/public validation are green on the product merge SHA.
+- Live PR audit found no unresolved review threads and no reviews requiring action.
+- No local clone result is counted as authoritative evidence; GitHub CI/stage remain the execution source of truth.
 
 ## State semantics
 
