@@ -22,14 +22,16 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Refresh frontend lockfile
         working-directory: frontend
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm update nanoid --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Commit lockfile refresh
         run: |
           set -Eeuo pipefail
           git diff --check
           git add frontend/package-lock.json
           if git diff --cached --quiet; then
-            echo "package-lock.json already matches package.json"
+            echo "package-lock.json already matches patched dependency constraints"
             exit 0
           fi
           git config user.name "github-actions[bot]"
