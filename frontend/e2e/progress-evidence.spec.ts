@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 
 const SESSION = {
   user: {
@@ -154,6 +154,21 @@ type DueRequest = {
   source: string | null;
 };
 
+type ControlBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type EffectiveTarget = ControlBox & {
+  visualWidth: number;
+  visualHeight: number;
+  insetInlineStart: string;
+  insetInlineEnd: string;
+  perimeterHits: boolean[];
+};
+
 async function fulfillJSON(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -247,6 +262,76 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
+async function expectEffectiveTarget(control: Locator, minimum: number): Promise<EffectiveTarget> {
+  await expect(control).toBeVisible();
+  await control.scrollIntoViewIfNeeded();
+  const target = await control.evaluate((element) => {
+    const controlElement = element as HTMLElement;
+    const rect = controlElement.getBoundingClientRect();
+    const style = window.getComputedStyle(controlElement);
+    const hitSlop = window.getComputedStyle(controlElement, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const topInset = Number.parseFloat(hitSlop.top) || 0;
+    const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
+    const hitSlopTop = rect.top + borderTop + topInset;
+    const hitSlopBottom = rect.bottom - borderBottom - bottomInset;
+    const targetTop = Math.min(rect.top, hitSlopTop);
+    const targetBottom = Math.max(rect.bottom, hitSlopBottom);
+    const centerX = rect.left + rect.width / 2;
+    const perimeterInset = 1;
+    const perimeterHits = [targetTop + perimeterInset, targetBottom - perimeterInset].map((y) => {
+      const hit = document.elementFromPoint(centerX, y);
+      return hit === controlElement || (hit instanceof Node && controlElement.contains(hit));
+    });
+
+    return {
+      x: rect.x,
+      y: targetTop,
+      width: rect.width,
+      height: targetBottom - targetTop,
+      visualWidth: rect.width,
+      visualHeight: rect.height,
+      insetInlineStart: hitSlop.insetInlineStart,
+      insetInlineEnd: hitSlop.insetInlineEnd,
+      perimeterHits,
+    };
+  });
+
+  expect(target.width).toBeGreaterThanOrEqual(minimum);
+  expect(target.height).toBeGreaterThanOrEqual(minimum);
+  expect(target.insetInlineStart).toBe("0px");
+  expect(target.insetInlineEnd).toBe("0px");
+  expect(target.perimeterHits).toEqual([true, true]);
+  return target;
+}
+
+function expectNoIntersection(left: ControlBox, right: ControlBox, label: string): void {
+  const intersects = left.x < right.x + right.width
+    && left.x + left.width > right.x
+    && left.y < right.y + right.height
+    && left.y + left.height > right.y;
+  expect(intersects, label).toBe(false);
+}
+
+async function expectKeyboardFocus(page: Page, control: Locator): Promise<void> {
+  await control.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(control).toBeFocused();
+  const focus = await control.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      focusVisible: element.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth) || 0,
+    };
+  });
+  expect(focus.focusVisible).toBe(true);
+  expect(focus.outlineStyle).not.toBe("none");
+  expect(focus.outlineWidth).toBeGreaterThanOrEqual(3);
+}
+
 async function applyTextZoom(page: Page, percent = 200) {
   const stylesheetPath = `/__e2e__/text-zoom-${percent}.css`;
   await page.route(`**${stylesheetPath}`, async (route) => {
@@ -333,6 +418,69 @@ test.describe("Progress retained-learning evidence", () => {
       lessonSize: "15",
       wordIds: DUE_ITEMS.filter((item) => item.partOfSpeech === "noun").map((item) => item.id),
     }]);
+  });
+
+  test("keeps populated Progress controls at the effective 44/48px touch target contract without overlap", async ({ page }, testInfo) => {
+    test.skip(
+      !["desktop-chromium", "ios-webkit", "android-chromium"].includes(testInfo.project.name),
+      "The Progress target contract runs in desktop Chromium, iOS WebKit and Android Chromium.",
+    );
+
+    const compact = testInfo.project.name !== "desktop-chromium";
+    const expectedMinimum = compact ? 48 : 44;
+    await page.setViewportSize(compact ? { width: 390, height: 844 } : { width: 1440, height: 1024 });
+    await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+    await installAPI(page, []);
+
+    await page.goto("/progress");
+
+    const dashboard = page.locator(".lx-progress-evidence");
+    await expect(dashboard.getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
+    const isCoarsePointer = await page.evaluate(() => window.matchMedia("(pointer: coarse)").matches);
+    expect(isCoarsePointer).toBe(compact);
+
+    const nextAction = dashboard.locator(".lx-progress-evidence__next-action button");
+    const weakButtons = dashboard.locator(".lx-progress-evidence__weak button");
+    const statusBadges = dashboard.locator(".lx-progress-evidence__topic-status");
+    const activityDisclosure = dashboard.locator(".lx-progress-evidence__activity summary");
+    await expect(weakButtons).toHaveCount(3);
+    await expect(statusBadges).toHaveCount(3);
+
+    await expectEffectiveTarget(nextAction, expectedMinimum);
+    await expectEffectiveTarget(activityDisclosure, expectedMinimum);
+    await expectKeyboardFocus(page, nextAction);
+
+    const weakTargets: EffectiveTarget[] = [];
+    for (let index = 0; index < 3; index += 1) {
+      const button = weakButtons.nth(index);
+      const status = statusBadges.nth(index);
+      const buttonTarget = await expectEffectiveTarget(button, expectedMinimum);
+      expect(buttonTarget.visualHeight).toBeLessThan(expectedMinimum);
+      weakTargets.push(buttonTarget);
+
+      const statusBox = await status.boundingBox();
+      expect(statusBox).not.toBeNull();
+      if (!statusBox) throw new Error("Expected a visible weak-area status bounding box");
+      expectNoIntersection(
+        buttonTarget,
+        statusBox,
+        `weak-area row ${index + 1} effective action target must not overlap its status badge`,
+      );
+      await expectKeyboardFocus(page, button);
+    }
+
+    for (let index = 0; index < weakTargets.length - 1; index += 1) {
+      expectNoIntersection(
+        weakTargets[index],
+        weakTargets[index + 1],
+        `weak-area effective action targets ${index + 1} and ${index + 2} must remain separated`,
+      );
+    }
+
+    await expectKeyboardFocus(page, activityDisclosure);
+    await activityDisclosure.click();
+    await expect(dashboard.getByText("Поддержанное узнавание")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
   });
 
   test("reflows the dark compact dashboard at 200% text size without hiding evidence", async ({ page }, testInfo) => {
