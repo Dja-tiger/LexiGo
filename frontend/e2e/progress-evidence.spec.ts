@@ -264,6 +264,7 @@ async function expectNoHorizontalOverflow(page: Page) {
 
 async function expectEffectiveTarget(control: Locator, minimum: number): Promise<EffectiveTarget> {
   await expect(control).toBeVisible();
+  await control.scrollIntoViewIfNeeded();
   const target = await control.evaluate((element) => {
     const controlElement = element as HTMLElement;
     const rect = controlElement.getBoundingClientRect();
