@@ -77,7 +77,9 @@ describe("authoritative browser zoom collection", () => {
     expect(source).toContain('page.locator(".lx-home-paths")');
     expect(source).toContain("await expect(paths).toBeHidden()");
     expect(source).toContain("canonical bounded two-column Home action layout");
+    expect(source).toContain("canonical two-column Home action layout must top-align");
     expect(source).not.toContain("single-column Home action breakpoint");
+    expect(source).not.toContain("responsive progress panel must follow the Home hero in document order");
     expect(source).not.toContain("Home path card");
     expect(source).not.toContain("pathColumns");
   });
