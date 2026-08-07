@@ -72,12 +72,20 @@ describe("authoritative browser zoom collection", () => {
     }
   });
 
-  it("keeps Home zoom aligned with the shell-owned information architecture", () => {
+  it("keeps Home zoom aligned with the shell-owned information architecture and exact 720px boundary", () => {
     const source = readE2ESource("home-browser-zoom.spec.ts");
     expect(source).toContain('page.locator(".lx-home-paths")');
     expect(source).toContain("await expect(paths).toBeHidden()");
+    expect(source).toContain("canonical bounded two-column Home action layout");
+    expect(source).not.toContain("single-column Home action breakpoint");
     expect(source).not.toContain("Home path card");
     expect(source).not.toContain("pathColumns");
+  });
+
+  it("keeps Learn zoom focus aligned with roving-tabindex radio semantics", () => {
+    const source = readE2ESource("learn-browser-zoom.spec.ts");
+    expect(source.match(/getByRole\("radio", \{ checked: true \}\)/g)).toHaveLength(3);
+    expect(source).not.toContain('getByRole("radio").first()');
   });
 
   it("keeps Phrases true browser zoom inside an already-collected visual owner", () => {
