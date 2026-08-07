@@ -23,6 +23,10 @@ const STANDALONE_BROWSER_ZOOM_OWNERS = [
   "active-lesson-browser-zoom.spec.ts",
 ] as const;
 const PHRASES_VISUAL_OWNER = "phrases-visual.spec.ts";
+const KEYBOARD_FOCUS_OWNERS = [
+  ...STANDALONE_BROWSER_ZOOM_OWNERS,
+  PHRASES_VISUAL_OWNER,
+] as const;
 
 function readE2ESource(fileName: string): string {
   return readFileSync(path.join(e2eRoot, fileName), "utf8");
@@ -53,6 +57,27 @@ describe("authoritative browser zoom collection", () => {
       expect(source).toContain("cssVisualViewport.zoom");
       expect(source).toContain("rootFontSize");
     }
+  });
+
+  it("requires keyboard-originated focus evidence in every browser-zoom owner", () => {
+    for (const owner of KEYBOARD_FOCUS_OWNERS) {
+      const source = readE2ESource(owner);
+      expect(source, `${owner} must move focus with the keyboard before focus-visible checks`).toContain(
+        'keyboard.press("Tab")',
+      );
+      expect(source, `${owner} must return focus with keyboard navigation`).toContain(
+        'keyboard.press("Shift+Tab")',
+      );
+      expect(source).toContain('matches(":focus-visible")');
+    }
+  });
+
+  it("keeps Home zoom aligned with the shell-owned information architecture", () => {
+    const source = readE2ESource("home-browser-zoom.spec.ts");
+    expect(source).toContain('page.locator(".lx-home-paths")');
+    expect(source).toContain("await expect(paths).toBeHidden()");
+    expect(source).not.toContain("Home path card");
+    expect(source).not.toContain("pathColumns");
   });
 
   it("keeps Phrases true browser zoom inside an already-collected visual owner", () => {
