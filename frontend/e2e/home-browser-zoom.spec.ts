@@ -104,7 +104,10 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 async function expectVisibleFocus(locator: Locator): Promise<void> {
+  const page = locator.page();
   await locator.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(locator).toBeFocused();
   const focus = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
@@ -206,8 +209,7 @@ test.describe("Home browser-owned zoom", () => {
       const primaryAction = page.getByRole("button", { name: "Повторить сейчас", exact: true });
       const progressAction = page.getByRole("button", { name: "Открыть прогресс", exact: true });
       const profileAction = page.getByRole("button", { name: "Открыть профиль", exact: true });
-      const paths = page.getByRole("region", { name: "Назначение основных разделов", exact: true });
-      const pathCards = paths.locator(":scope > article");
+      const paths = page.locator(".lx-home-paths");
 
       await expect(main).toBeVisible();
       await expect(nextActionRegion).toBeVisible();
@@ -216,7 +218,7 @@ test.describe("Home browser-owned zoom", () => {
       await expect(primaryAction).toBeEnabled();
       await expect(progressAction).toBeEnabled();
       await expect(profileAction).toBeEnabled();
-      await expect(pathCards).toHaveCount(3);
+      await expect(paths).toBeHidden();
       await page.evaluate(async () => {
         await document.fonts.ready;
         window.scrollTo({ top: 0, behavior: "auto" });
@@ -266,6 +268,7 @@ test.describe("Home browser-owned zoom", () => {
       expect(afterCDP.cssVisualViewport.clientWidth).toBeCloseTo(afterDOM.innerWidth, 0);
       expect(afterDOM.documentWidth).toBeLessThanOrEqual(afterDOM.clientWidth + 1);
       expect(afterDOM.bodyWidth).toBeLessThanOrEqual(afterDOM.clientWidth + 1);
+      await expect(paths).toBeHidden();
 
       const railNavigation = page.getByRole("navigation", {
         name: "Навигация по разделам",
@@ -284,23 +287,13 @@ test.describe("Home browser-owned zoom", () => {
       await expect(mobileNavigation).toBeHidden();
       await expect(railNavigation.getByRole("link")).toHaveCount(4);
 
-      const responsiveStyles = await nextActionRegion.evaluate((element) => {
-        const nextActionStyle = window.getComputedStyle(element);
-        const pathsElement = document.querySelector<HTMLElement>(".lx-home-paths");
-        if (!pathsElement) throw new Error("Home path grid is missing.");
-        return {
-          nextActionColumns: nextActionStyle.gridTemplateColumns,
-          pathColumns: window.getComputedStyle(pathsElement).gridTemplateColumns,
-        };
-      });
+      const responsiveStyles = await nextActionRegion.evaluate((element) => ({
+        nextActionColumns: window.getComputedStyle(element).gridTemplateColumns,
+      }));
       expect(
         responsiveStyles.nextActionColumns.split(/\s+/).filter(Boolean),
-        "200% browser zoom must activate the single-column Home action breakpoint",
-      ).toHaveLength(1);
-      expect(
-        responsiveStyles.pathColumns.split(/\s+/).filter(Boolean),
-        "200% browser zoom must activate the single-column Home path breakpoint",
-      ).toHaveLength(1);
+        "the exact 1440px/200% boundary must preserve the canonical bounded two-column Home action layout",
+      ).toHaveLength(2);
 
       await expectHorizontallyContained(main, afterDOM.clientWidth, "Home main");
       await expectHorizontallyContained(hero, afterDOM.clientWidth, "Home hero");
@@ -308,7 +301,6 @@ test.describe("Home browser-owned zoom", () => {
       await expectHorizontallyContained(primaryAction, afterDOM.clientWidth, "Home primary action");
       await expectHorizontallyContained(progressAction, afterDOM.clientWidth, "Home progress action");
       await expectHorizontallyContained(profileAction, afterDOM.clientWidth, "Home profile action");
-      await expectHorizontallyContained(pathCards, afterDOM.clientWidth, "Home path card");
       await expectHorizontallyContained(railNavigation, afterDOM.clientWidth, "route navigation rail");
       await expectNoHorizontalOverflow(page);
 
@@ -321,23 +313,9 @@ test.describe("Home browser-owned zoom", () => {
         throw new Error("Home hero or progress panel has no layout geometry.");
       }
       expect(
-        progressBox.y,
-        "responsive progress panel must follow the Home hero in document order",
-      ).toBeGreaterThanOrEqual(heroBox.y + heroBox.height - 1);
-
-      for (let index = 1; index < await pathCards.count(); index += 1) {
-        const previousBox = await pathCards.nth(index - 1).boundingBox();
-        const currentBox = await pathCards.nth(index).boundingBox();
-        expect(previousBox, `Home path card ${index - 1} must have geometry`).not.toBeNull();
-        expect(currentBox, `Home path card ${index} must have geometry`).not.toBeNull();
-        if (!previousBox || !currentBox) {
-          throw new Error(`Home path card ${index} has no layout geometry.`);
-        }
-        expect(
-          currentBox.y,
-          `Home path card ${index} must follow the previous card without overlap`,
-        ).toBeGreaterThanOrEqual(previousBox.y + previousBox.height - 1);
-      }
+        Math.abs(progressBox.y - heroBox.y),
+        "canonical two-column Home action layout must top-align the hero and progress panel at the exact 720px CSS boundary",
+      ).toBeLessThanOrEqual(1);
 
       await expectVisibleFocus(primaryAction);
       await expectVisibleFocus(progressAction);

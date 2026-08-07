@@ -1,6 +1,15 @@
 import { createHash } from "node:crypto";
+import { resolve } from "node:path";
 
-import { expect, test, type Page } from "@playwright/test";
+import {
+  chromium,
+  expect,
+  test,
+  type CDPSession,
+  type Locator,
+  type Page,
+  type Worker,
+} from "@playwright/test";
 
 import {
   captureRuntimeErrors,
@@ -16,6 +25,45 @@ type ContentAddressedVisualBaseline = {
   sha256: string;
   sourceRun: number;
   sourceHeadSha: string;
+};
+
+type BrowserZoomResult = {
+  tabId: number;
+  url: string;
+  previousZoom: number;
+  zoom: number;
+  mode: string | null;
+  scope: string | null;
+};
+
+type BrowserLayoutMetrics = {
+  cssLayoutViewport: {
+    clientWidth: number;
+    clientHeight: number;
+  };
+  cssVisualViewport: {
+    clientWidth: number;
+    clientHeight: number;
+    scale: number;
+    zoom: number;
+  };
+};
+
+type DOMZoomMetrics = {
+  innerWidth: number;
+  innerHeight: number;
+  clientWidth: number;
+  documentWidth: number;
+  bodyWidth: number;
+  rootFontSize: number;
+  visualViewportScale: number;
+};
+
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 const PHRASES_VISUAL_BASELINES = {
@@ -85,21 +133,23 @@ const PHRASES_VISUAL_BASELINES = {
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
-async function prepareStableScreenshot(page: Page): Promise<void> {
-  const dimensions = await page.evaluate(async () => {
-    await document.fonts.ready;
-    window.scrollTo({ top: 0, behavior: "auto" });
-    const root = document.documentElement;
-    return {
-      viewportWidth: root.clientWidth,
-      contentWidth: Math.max(root.scrollWidth, document.body.scrollWidth),
-    };
-  });
-
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  }));
   expect(
     dimensions.contentWidth,
     `Phrases must not overflow horizontally: viewport=${dimensions.viewportWidth}px, content=${dimensions.contentWidth}px`,
   ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+}
+
+async function prepareStableScreenshot(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  });
+  await expectNoHorizontalOverflow(page);
   await page.waitForTimeout(100);
 }
 
@@ -153,6 +203,106 @@ async function openDetail(page: Page): Promise<void> {
   await page.goto(`/phrases/${QUALITY_PHRASES[0].slug}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1, name: QUALITY_PHRASES[0].lemma })).toBeVisible();
   await expect(page.locator('[data-route-client-island="phrases"]')).toBeVisible();
+}
+
+async function setBrowserZoom(
+  worker: Worker,
+  targetURL: string,
+  zoomFactor: number,
+): Promise<BrowserZoomResult> {
+  return worker.evaluate(async ({ targetURL: exactTargetURL, zoomFactor: exactZoomFactor }) => {
+    type ZoomController = {
+      setZoomForURL: (url: string, factor: number) => Promise<BrowserZoomResult>;
+    };
+    const controller = (
+      globalThis as typeof globalThis & { lexigoBrowserZoomController?: ZoomController }
+    ).lexigoBrowserZoomController;
+
+    if (!controller) {
+      throw new Error("LexiGo browser zoom extension controller is unavailable.");
+    }
+
+    return controller.setZoomForURL(exactTargetURL, exactZoomFactor);
+  }, { targetURL, zoomFactor });
+}
+
+async function readBrowserLayoutMetrics(cdp: CDPSession): Promise<BrowserLayoutMetrics> {
+  return await cdp.send("Page.getLayoutMetrics") as BrowserLayoutMetrics;
+}
+
+async function readDOMZoomMetrics(page: Page): Promise<DOMZoomMetrics> {
+  return page.evaluate(() => ({
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    clientWidth: document.documentElement.clientWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    bodyWidth: document.body.scrollWidth,
+    rootFontSize: Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize),
+    visualViewportScale: window.visualViewport?.scale ?? 1,
+  }));
+}
+
+async function expectVisibleFocus(locator: Locator): Promise<void> {
+  const page = locator.page();
+  await locator.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(locator).toBeFocused();
+  const focus = await locator.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return {
+      focusVisible: element.matches(":focus-visible"),
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+      outlineStyle: style.outlineStyle,
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(focus.focusVisible).toBe(true);
+  const visibleOutline = focus.outlineWidth >= 2 && focus.outlineStyle !== "none";
+  const visibleShadow = focus.boxShadow !== "none";
+  expect(
+    visibleOutline || visibleShadow,
+    `Focused Phrases control must expose an outline or focus ring: ${JSON.stringify(focus)}`,
+  ).toBe(true);
+}
+
+async function expectHorizontallyContained(
+  locator: Locator,
+  viewportWidth: number,
+  label: string,
+): Promise<void> {
+  const count = await locator.count();
+  expect(count, `${label} must resolve at least one element`).toBeGreaterThan(0);
+
+  for (let index = 0; index < count; index += 1) {
+    const item = locator.nth(index);
+    await expect(item, `${label}[${index}] must be visible`).toBeVisible();
+    const box = await item.boundingBox();
+    expect(box, `${label}[${index}] must have layout geometry`).not.toBeNull();
+    if (!box) throw new Error(`${label}[${index}] has no layout geometry.`);
+    expect(box.x, `${label}[${index}] must not clip on the inline start`).toBeGreaterThanOrEqual(-1);
+    expect(
+      box.x + box.width,
+      `${label}[${index}] must not clip on the inline end`,
+    ).toBeLessThanOrEqual(viewportWidth + 1);
+  }
+}
+
+function rectanglesOverlap(left: Rect, right: Rect): boolean {
+  return (
+    left.x < right.x + right.width
+    && left.x + left.width > right.x
+    && left.y < right.y + right.height
+    && left.y + left.height > right.y
+  );
+}
+
+async function expectNoOverlap(left: Locator, right: Locator, label: string): Promise<void> {
+  const [leftBox, rightBox] = await Promise.all([left.boundingBox(), right.boundingBox()]);
+  expect(leftBox, `${label}: left element must have geometry`).not.toBeNull();
+  expect(rightBox, `${label}: right element must have geometry`).not.toBeNull();
+  if (!leftBox || !rightBox) throw new Error(`${label}: missing layout geometry.`);
+  expect(rectanglesOverlap(leftBox, rightBox), `${label}: elements must not overlap`).toBe(false);
 }
 
 test.describe("Phrases content-addressed Linux visual baselines", () => {
@@ -229,5 +379,161 @@ test.describe("Phrases content-addressed Linux visual baselines", () => {
     await openDetail(page);
     await expectContentAddressedScreenshot(page, PHRASES_VISUAL_BASELINES.detailDesktopDark);
     expect(runtimeErrors).toEqual([]);
+  });
+});
+
+test.describe("Phrases browser-owned zoom", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  test("desktop 200% browser zoom preserves canonical catalog discovery and practice actions", async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== "visual-desktop", "true browser zoom runs once in authoritative desktop Chromium");
+
+    const extensionPath = resolve(process.cwd(), "e2e/support/browser-zoom-extension");
+    const context = await chromium.launchPersistentContext("", {
+      baseURL: "http://127.0.0.1:3000",
+      channel: "chromium",
+      headless: true,
+      locale: "ru-RU",
+      colorScheme: "light",
+      reducedMotion: "reduce",
+      serviceWorkers: "allow",
+      viewport: { width: 1440, height: 900 },
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+      ],
+    });
+
+    try {
+      const page = context.pages()[0] ?? await context.newPage();
+      await installDeterministicRuntime(page);
+      await installQualityGateAPI(context);
+      const runtimeErrors = captureRuntimeErrors(page);
+
+      await openCatalog(page);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        window.scrollTo({ top: 0, behavior: "auto" });
+      });
+
+      let serviceWorker = context.serviceWorkers().find((worker) => (
+        worker.url().startsWith("chrome-extension://")
+      ));
+      if (!serviceWorker) {
+        serviceWorker = await context.waitForEvent("serviceworker", {
+          predicate: (worker) => worker.url().startsWith("chrome-extension://"),
+        });
+      }
+      expect(serviceWorker.url()).toMatch(/^chrome-extension:\/\/[a-z]+\/background\.js$/);
+
+      const targetURL = page.url();
+      const cdp = await context.newCDPSession(page);
+      const normalizedZoom = await setBrowserZoom(serviceWorker, targetURL, 1);
+      expect(normalizedZoom.url).toBe(targetURL);
+      expect(normalizedZoom.zoom).toBeCloseTo(1, 5);
+      expect(normalizedZoom.mode).toBe("automatic");
+      expect(normalizedZoom.scope).toBe("per-tab");
+
+      const beforeDOM = await readDOMZoomMetrics(page);
+      const beforeCDP = await readBrowserLayoutMetrics(cdp);
+      expect(beforeCDP.cssVisualViewport.zoom).toBeCloseTo(1, 5);
+      expect(beforeDOM.rootFontSize).toBeGreaterThanOrEqual(16);
+
+      const appliedZoom = await setBrowserZoom(serviceWorker, targetURL, 2);
+      expect(appliedZoom.url).toBe(targetURL);
+      expect(appliedZoom.previousZoom).toBeCloseTo(1, 5);
+      expect(appliedZoom.zoom).toBeCloseTo(2, 5);
+      expect(appliedZoom.mode).toBe("automatic");
+      expect(appliedZoom.scope).toBe("per-tab");
+
+      await expect.poll(async () => (
+        await readBrowserLayoutMetrics(cdp)
+      ).cssVisualViewport.zoom).toBeCloseTo(2, 4);
+      await expect.poll(async () => (
+        await readDOMZoomMetrics(page)
+      ).innerWidth).toBeLessThanOrEqual(Math.ceil(beforeDOM.innerWidth / 1.9));
+
+      const afterDOM = await readDOMZoomMetrics(page);
+      const afterCDP = await readBrowserLayoutMetrics(cdp);
+      expect(afterDOM.rootFontSize).toBeCloseTo(beforeDOM.rootFontSize, 5);
+      expect(afterDOM.visualViewportScale).toBeCloseTo(1, 5);
+      expect(afterDOM.innerWidth).toBeGreaterThanOrEqual(Math.floor(beforeDOM.innerWidth / 2.1));
+      expect(afterDOM.innerWidth).toBeLessThanOrEqual(Math.ceil(beforeDOM.innerWidth / 1.9));
+      expect(afterCDP.cssVisualViewport.zoom).toBeCloseTo(2, 4);
+      expect(afterCDP.cssLayoutViewport.clientWidth).toBeCloseTo(afterDOM.innerWidth, 0);
+      expect(afterCDP.cssVisualViewport.clientWidth).toBeCloseTo(afterDOM.innerWidth, 0);
+      expect(afterDOM.documentWidth).toBeLessThanOrEqual(afterDOM.clientWidth + 1);
+      expect(afterDOM.bodyWidth).toBeLessThanOrEqual(afterDOM.clientWidth + 1);
+
+      const main = page.locator('#lexigo-main-content[aria-label="Технические фразы"]');
+      const catalog = page.locator(".lx-phrases-catalog");
+      const search = page.getByRole("search", { name: "Поиск по фразам", exact: true });
+      const searchInput = search.getByRole("searchbox");
+      const searchSubmit = search.getByRole("button", { name: "Найти", exact: true });
+      const topics = page.getByRole("navigation", { name: "Быстрый выбор темы", exact: true });
+      const firstTopic = topics.getByRole("button").first();
+      const sort = page.getByRole("combobox", { name: "Сортировка каталога", exact: true });
+      const resultsPanel = page.locator(".lx-phrases-results-panel");
+      const results = page.getByRole("list", { name: "Результаты каталога фраз", exact: true });
+      const firstResult = results.getByRole("link").first();
+      const lessonAction = page.getByRole("button", { name: "Урок по теме", exact: true });
+      const railNavigation = page.getByRole("navigation", {
+        name: "Навигация по разделам",
+        exact: true,
+      });
+
+      await expect(main).toBeVisible();
+      await expect(catalog).toBeVisible();
+      await expect(search).toBeVisible();
+      await expect(searchInput).toBeEnabled();
+      await expect(searchSubmit).toBeEnabled();
+      await expect(topics).toBeVisible();
+      await expect(firstTopic).toBeEnabled();
+      await expect(sort).toBeEnabled();
+      await expect(resultsPanel).toBeVisible();
+      await expect(firstResult).toBeEnabled();
+      await expect(lessonAction).toBeEnabled();
+      await expect(railNavigation).toBeVisible();
+
+      await expectHorizontallyContained(main, afterDOM.clientWidth, "Phrases main");
+      await expectHorizontallyContained(catalog, afterDOM.clientWidth, "Phrases catalog");
+      await expectHorizontallyContained(search, afterDOM.clientWidth, "Phrases search");
+      await expectHorizontallyContained(searchInput, afterDOM.clientWidth, "Phrases search input");
+      await expectHorizontallyContained(searchSubmit, afterDOM.clientWidth, "Phrases search submit");
+      await expectHorizontallyContained(topics, afterDOM.clientWidth, "Phrases topic navigation");
+      await expectHorizontallyContained(sort, afterDOM.clientWidth, "Phrases sort");
+      await expectHorizontallyContained(resultsPanel, afterDOM.clientWidth, "Phrases results panel");
+      await expectHorizontallyContained(firstResult, afterDOM.clientWidth, "Phrases first result");
+      await expectHorizontallyContained(lessonAction, afterDOM.clientWidth, "Phrases lesson action");
+      await expectHorizontallyContained(railNavigation, afterDOM.clientWidth, "route navigation rail");
+      await expectNoHorizontalOverflow(page);
+
+      await expectNoOverlap(railNavigation, main, "route navigation rail and Phrases main");
+      await expectNoOverlap(search, topics, "Phrases search and topic navigation");
+      await expectNoOverlap(topics, resultsPanel, "Phrases topic navigation and results panel");
+
+      await expectVisibleFocus(searchInput);
+      await expectVisibleFocus(searchSubmit);
+      await expectVisibleFocus(firstTopic);
+      await expectVisibleFocus(sort);
+      await expectVisibleFocus(firstResult);
+      await expectVisibleFocus(lessonAction);
+
+      expect(runtimeErrors).toEqual([]);
+      await testInfo.attach("phrases-browser-zoom-metrics.json", {
+        body: Buffer.from(JSON.stringify({
+          targetURL,
+          normalizedZoom,
+          appliedZoom,
+          beforeDOM,
+          beforeCDP,
+          afterDOM,
+          afterCDP,
+        }, null, 2)),
+        contentType: "application/json",
+      });
+    } finally {
+      await context.close();
+    }
   });
 });

@@ -251,7 +251,10 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 async function expectVisibleFocus(locator: Locator): Promise<void> {
+  const page = locator.page();
   await locator.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(locator).toBeFocused();
   const focus = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
@@ -496,9 +499,9 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       await expectNoHorizontalOverflow(page);
 
       await expectVisibleFocus(manualSummary);
-      await expectVisibleFocus(modeGroup.getByRole("radio").first());
-      await expectVisibleFocus(sourceGroup.getByRole("radio").first());
-      await expectVisibleFocus(sizeGroup.getByRole("radio").first());
+      await expectVisibleFocus(modeGroup.getByRole("radio", { checked: true }));
+      await expectVisibleFocus(sourceGroup.getByRole("radio", { checked: true }));
+      await expectVisibleFocus(sizeGroup.getByRole("radio", { checked: true }));
       await expectVisibleFocus(manualStart);
 
       expect(runtimeErrors).toEqual([]);
