@@ -16,6 +16,9 @@ export default defineConfig({
   testDir: "./e2e",
   testMatch: [
     "visual-regression.spec.ts",
+    "home-browser-zoom.spec.ts",
+    "learn-browser-zoom.spec.ts",
+    "active-lesson-browser-zoom.spec.ts",
     "word-detail-visual.spec.ts",
     "profile-visual.spec.ts",
     "system-states-visual.spec.ts",
