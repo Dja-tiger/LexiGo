@@ -6,7 +6,7 @@
 
 - PR #425 was made Ready and expected-head squash-merged as `0a120092d89f7fffcb63b010acb2cb71ea615740`.
 - Exact-SHA post-merge CI #2966 / run `31162312821` completed successfully.
-- `main` remained `0a120092d89f7fffcb63b010acb2cb71ea615740` through branch creation, pre-CI writes and the first CI-failure classification.
+- `main` remained `0a120092d89f7fffcb63b010acb2cb71ea615740` through branch creation and all product-branch writes classified below.
 - New branch `feat/issue-74-phrases-browser-zoom` was created from that exact SHA.
 - The original `frontend/playwright.visual.config.ts` explicit allow-list omitted Home/Learn/Active standalone browser-zoom specs.
 - Existing Home, Learn and Active standalone specs each implement true per-tab Chromium zoom factor 2 via the MV3 browser-zoom controller and independent CDP/DOM telemetry.
@@ -75,7 +75,7 @@ This expectation is stale. The current canonical `information-architecture.spec.
 
 Classification: stale dormant test contract, not product runtime/CSS defect.
 
-Required repair: remove visible path-card/grid assertions from the Home zoom owner and assert the current hidden-section + shell-owned navigation invariant instead.
+Repair applied: visible path-card/grid assertions were removed and replaced with the current hidden-section + shell-owned navigation invariant.
 
 #### Learn / Active Lesson
 
@@ -90,16 +90,71 @@ Programmatic focus is not proof of keyboard modality. The test claimed keyboard-
 
 Classification: incorrect test interaction semantics, not product runtime/CSS defect.
 
-Required repair: focus each target through real keyboard traversal before asserting `:focus-visible` and computed focus styling. Home contains the same stale helper and the new Phrases case inherited it, so all four zoom owners must use one equivalent keyboard-originated pattern.
+Repair applied: all four zoom owners now move focus with keyboard traversal before asserting `:focus-visible`; the source contract requires this pattern.
 
 ### Scope decision
 
 Runtime, CSS, API, dependencies, workflows and baselines remain prohibited. Allowed test scope was expanded only to the three existing standalone Home/Learn/Active browser-zoom owners because authoritative CI proved their dormant contracts need synchronization.
 
-### Current branch head
+## 2026-08-07 12:13 Europe/Moscow — second authoritative collection run
 
-Resolve from live branch ref after this write. The pre-classification developer head was `ad2dd2697eff12b8277bf6a86e2635263d091bbf`; TASK classification commit is `be682c17c8fdec35d4683a7222cc41c9908c5200`.
+### CI #2974 / run `31164577017`
+
+Exact developer-authored head: `1c45430dd7e54163438c348399f0e7994defde7a`.
+
+Authoritative Visual regression job: `92822695865`.
+
+The decoded job log proves the repaired collection boundary is active:
+
+- Playwright reported `Running 141 tests using 1 worker`;
+- Home, Learn and Active standalone browser-zoom owners are explicitly listed in compact/medium as skipped-by-project and in `visual-desktop` as executed;
+- Phrases browser-owned zoom is explicitly listed at `e2e/phrases-visual.spec.ts:388` and executed in `visual-desktop`;
+- Active Lesson desktop browser-owned zoom completed without failure;
+- Phrases desktop browser-owned zoom completed without failure;
+- all eight Phrases content-addressed baseline cases completed without baseline mismatch;
+- final summary: `55 passed`, `84 skipped`, `2 failed`.
+
+The two remaining failures were deterministic on attempt and retry:
+
+### Home follow-up classification
+
+Failure:
+
+- test required `lx-home-next-action` to become a single column at browser zoom 2;
+- effective computed grid remained two columns: `243.992px 300px`.
+
+Canonical CSS evidence:
+
+- `adaptive-knowledge-coach-home.css` owns the routed Home grid with a more-specific two-column selector;
+- its matching one-column override is `@media (max-width: 719px)`;
+- the exact 1440px desktop / zoom=2 case lands at approximately 720 CSS px, so the canonical routed Home intentionally remains in the bounded two-column state at that boundary;
+- the acceptance criterion is reflow/usability without clipping or horizontal overflow, not an invented one-column breakpoint at 720px.
+
+Classification: over-constrained test expectation, not product defect.
+
+Required repair: assert the canonical two-column 720px boundary (plus existing geometry, no-overflow and no-overlap checks) instead of requiring one column.
+
+### Learn follow-up classification
+
+Failure:
+
+- `expectVisibleFocus(modeGroup.getByRole("radio").first())` could not return keyboard focus to the same first radio;
+- CI shows the first mode radio has `tabindex="-1"` and `aria-checked="false"`.
+
+This is standard roving-tabindex radio-group semantics: only the checked/current radio participates in the tab sequence. `Tab` followed by `Shift+Tab` returns to the group’s checked tabbable radio, not an arbitrary unchecked `.first()` element.
+
+Classification: test selected a non-tabbable ARIA radio owner, not product defect.
+
+Required repair: apply keyboard-focus assertions to each group’s `{ checked: true }` radio rather than `.first()`.
+
+### Additional signal
+
+The log contains `/api/v1/performance/rum` proxy `ECONNREFUSED 127.0.0.1:8080` messages during browser runs. They did not produce an Active/Phrases failure and are unrelated to the two deterministic assertions above; no observability/runtime scope expansion is justified by this run.
+
+### Current scope decision
+
+No runtime/CSS/API/workflow/dependency/baseline change is justified. The next commit stays within the already-approved browser-zoom test owners and corrects only the two proven test assumptions above.
 
 ### Next action
 
-Correct Home to the canonical information-architecture contract, replace programmatic-focus evidence with keyboard-originated focus evidence across Home/Learn/Active/Phrases, strengthen the source contract against regression, then rerun the full required CI on the new developer-authored head.
+Correct the Home 720px grid expectation and Learn roving-radio focus targets, rerun the full required CI on the resulting developer-authored head, inspect exact successful visual logs, then perform review/thread audit and Ready/merge only if all required gates are green.
