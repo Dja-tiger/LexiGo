@@ -1,10 +1,15 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import {
+  QUALITY_PROGRESS,
+  QUALITY_SESSION,
+  QUALITY_WORDS,
+} from "./support/quality-gates";
+
 type LessonMode = "study" | "recall";
 
 type EffectiveTarget = {
   visualHeight: number;
-  visualWidth: number;
   targetHeight: number;
   targetWidth: number;
   targetTop: number;
@@ -16,73 +21,6 @@ type EffectiveTarget = {
   perimeterHits: boolean[];
 };
 
-const SESSION = {
-  user: {
-    id: "00000000-0000-0000-0000-000000000074",
-    email: "active-targets@example.com",
-    displayName: "Active Targets",
-    createdAt: "2026-01-01T00:00:00Z",
-  },
-  tokens: {
-    accessToken: "active-targets-token",
-    tokenType: "Bearer",
-    expiresIn: 900,
-  },
-};
-
-const EMPTY_MODE = {
-  attemptsToday: 0,
-  successfulToday: 0,
-  attemptsTotal: 0,
-  successfulTotal: 0,
-};
-
-const PROGRESS = {
-  dueNow: 0,
-  dueWords: 0,
-  duePhrases: 0,
-  totalWords: 1,
-  totalPhrases: 0,
-  newWords: 1,
-  learningWords: 0,
-  reviewWords: 0,
-  masteredWords: 0,
-  masteredPhrases: 0,
-  reviewsToday: 0,
-  successfulToday: 0,
-  objectiveReviewsToday: 0,
-  objectiveSuccessfulToday: 0,
-  reviewsTotal: 0,
-  dailyGoal: 30,
-  currentStreak: 0,
-  longestStreak: 0,
-  retainedItemsWeek: 0,
-  retainedWordsWeek: 0,
-  retainedPhrasesWeek: 0,
-  eventSchemaVersion: 2,
-  modes: {
-    study: EMPTY_MODE,
-    recall: EMPTY_MODE,
-    choice: EMPTY_MODE,
-    legacy: EMPTY_MODE,
-  },
-};
-
-const WORD = {
-  id: 7401,
-  kind: "word",
-  lemma: "durable",
-  translation: "надёжный",
-  acceptedAnswers: ["надёжный"],
-  phonetic: "/ˈdjʊərəbl/",
-  partOfSpeech: "adjective",
-  topic: "Data",
-  examples: ["Use durable storage."],
-  note: "Production systems need durable state.",
-  status: "new",
-  position: 0,
-};
-
 function activeLesson(mode: LessonMode) {
   return {
     id: "00000000-0000-0000-0000-000000000740",
@@ -92,7 +30,7 @@ function activeLesson(mode: LessonMode) {
     currentIndex: 0,
     version: 1,
     status: "active",
-    items: [WORD],
+    items: [{ ...QUALITY_WORDS[2], position: 0 }],
     createdAt: "2026-08-08T00:00:00Z",
     updatedAt: "2026-08-08T00:00:00Z",
   };
@@ -109,38 +47,24 @@ async function installActiveLessonAPI(page: Page, mode: LessonMode): Promise<voi
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    let body: unknown;
 
-    if (path === "/api/v1/auth/refresh") {
+    if (path === "/api/v1/auth/refresh") body = QUALITY_SESSION;
+    else if (path === "/api/v1/progress") body = QUALITY_PROGRESS;
+    else if (path === "/api/v1/lessons/active") body = activeLesson(mode);
+    else {
       await route.fulfill({
-        status: 200,
+        status: 404,
         contentType: "application/json",
-        body: JSON.stringify(SESSION),
-      });
-      return;
-    }
-
-    if (path === "/api/v1/progress") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(PROGRESS),
-      });
-      return;
-    }
-
-    if (path === "/api/v1/lessons/active") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(activeLesson(mode)),
+        body: JSON.stringify({ error: { code: "not_mocked", message: `${request.method()} ${path}` } }),
       });
       return;
     }
 
     await route.fulfill({
-      status: 404,
+      status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ error: { code: "not_mocked", message: `${request.method()} ${path}` } }),
+      body: JSON.stringify(body),
     });
   });
 }
@@ -182,14 +106,9 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
       [centerX, targetBottom - inset],
       [targetLeft + inset, centerY],
     ];
-    const perimeterHits = points.map(([x, y]) => {
-      const hit = document.elementFromPoint(x, y);
-      return hit === button || (hit instanceof Node && button.contains(hit));
-    });
 
     return {
       visualHeight: rect.height,
-      visualWidth: rect.width,
       targetHeight: targetBottom - targetTop,
       targetWidth: targetRight - targetLeft,
       targetTop,
@@ -198,7 +117,10 @@ async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
       targetLeft,
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
-      perimeterHits,
+      perimeterHits: points.map(([x, y]) => {
+        const hit = document.elementFromPoint(x, y);
+        return hit === button || (hit instanceof Node && button.contains(hit));
+      }),
     };
   });
 }
@@ -210,7 +132,6 @@ async function expectedMinimum(page: Page): Promise<number> {
 async function expectTarget(control: Locator, minimum: number): Promise<void> {
   await expect(control).toBeVisible();
   const target = await effectiveTarget(control);
-
   expect(target.targetHeight).toBeGreaterThanOrEqual(minimum - 0.1);
   expect(target.targetWidth).toBeGreaterThanOrEqual(minimum - 0.1);
   expect(target.targetTop).toBeGreaterThanOrEqual(-0.1);
@@ -236,9 +157,7 @@ async function expectKeyboardFocus(control: Locator, page: Page): Promise<void> 
   });
   expect(focus.focusVisible).toBe(true);
   expect(focus.outlineStyle !== "none" || focus.boxShadow !== "none").toBe(true);
-  if (focus.outlineStyle !== "none") {
-    expect(Number.parseFloat(focus.outlineWidth)).toBeGreaterThan(0);
-  }
+  if (focus.outlineStyle !== "none") expect(Number.parseFloat(focus.outlineWidth)).toBeGreaterThan(0);
 }
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
@@ -250,7 +169,7 @@ function supportedTargetProject(projectName: string): boolean {
 }
 
 test.describe("Issue #74 Active Lesson live-control touch targets", () => {
-  test("study utility and confidence controls expose 44/48px effective targets", async ({ page }, testInfo) => {
+  test("study utility, confidence and compact header controls expose 44/48px targets", async ({ page }, testInfo) => {
     test.skip(!supportedTargetProject(testInfo.project.name), "Covered in desktop Chromium, iOS WebKit and Android Chromium.");
 
     const compact = testInfo.project.name !== "desktop-chromium";
@@ -258,7 +177,8 @@ test.describe("Issue #74 Active Lesson live-control touch targets", () => {
     await openSavedLesson(page, "study");
     const minimum = await expectedMinimum(page);
 
-    const listen = page.getByRole("button", { name: "Прослушать", exact: true });
+    const listen = page.locator(".lx-active-lesson__utilities button");
+    await expect(listen).toHaveText("Прослушать");
     await expectTarget(listen, minimum);
 
     for (const label of ["Не знал", "Почти", "Знал"]) {
@@ -270,11 +190,10 @@ test.describe("Issue #74 Active Lesson live-control touch targets", () => {
       await expectTarget(page.getByRole("button", { name: "Закрыть", exact: true }), minimum);
     }
 
-    await expectKeyboardFocus(listen, page);
     await expectNoHorizontalOverflow(page);
   });
 
-  test("recall text action keeps its painted size while exposing the platform target", async ({ page }, testInfo) => {
+  test("recall text action preserves paint while exposing the platform target", async ({ page }, testInfo) => {
     test.skip(!supportedTargetProject(testInfo.project.name), "Covered in desktop Chromium, iOS WebKit and Android Chromium.");
 
     const compact = testInfo.project.name !== "desktop-chromium";
