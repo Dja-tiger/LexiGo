@@ -313,9 +313,9 @@ test.describe("Home browser-owned zoom", () => {
         throw new Error("Home hero or progress panel has no layout geometry.");
       }
       expect(
-        progressBox.y,
-        "responsive progress panel must follow the Home hero in document order",
-      ).toBeGreaterThanOrEqual(heroBox.y + heroBox.height - 1);
+        Math.abs(progressBox.y - heroBox.y),
+        "canonical two-column Home action layout must top-align the hero and progress panel at the exact 720px CSS boundary",
+      ).toBeLessThanOrEqual(1);
 
       await expectVisibleFocus(primaryAction);
       await expectVisibleFocus(progressAction);
