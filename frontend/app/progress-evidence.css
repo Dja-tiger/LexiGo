@@ -7,6 +7,7 @@
   --lx-progress-milestone-subtle: #f8edcf;
   --lx-progress-weak-text: #b3374d;
   --lx-progress-milestone-text: #7b570d;
+  --lx-progress-control-touch-target: 44px;
   display: grid;
   width: min(100%, 1192px);
   gap: 1.75rem;
@@ -357,7 +358,7 @@
 }
 
 .lx-progress-evidence__weak button {
-  min-height: 2.75rem;
+  min-height: 2.25rem;
   padding: 0.45rem 0.75rem;
   font-size: 0.75rem;
 }
@@ -392,13 +393,34 @@
 
 .lx-progress-evidence__activity summary {
   width: fit-content;
-  min-height: 2.75rem;
   border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 32%, transparent);
   border-radius: var(--ak-radius-md);
   padding: 0.7rem 1rem;
   background: var(--ak-color-surface);
   font: var(--ak-text-label);
   cursor: pointer;
+}
+
+.lx-progress-evidence__next-action button,
+.lx-progress-evidence__weak button,
+.lx-progress-evidence__empty button,
+.lx-progress-evidence__activity summary {
+  position: relative;
+  touch-action: manipulation;
+}
+
+.lx-progress-evidence__next-action button::before,
+.lx-progress-evidence__weak button::before,
+.lx-progress-evidence__empty button::before,
+.lx-progress-evidence__activity summary::before {
+  content: "";
+  position: absolute;
+  inset-block: min(
+    0px,
+    calc((100% - var(--lx-progress-control-touch-target)) / 2)
+  );
+  inset-inline: 0;
+  pointer-events: auto;
 }
 
 .lx-progress-evidence__activity dl {
@@ -463,11 +485,8 @@
 }
 
 @media (pointer: coarse) {
-  .lx-progress-evidence__next-action button,
-  .lx-progress-evidence__weak button,
-  .lx-progress-evidence__empty button,
-  .lx-progress-evidence__activity summary {
-    min-height: 3rem;
+  .lx-progress-evidence {
+    --lx-progress-control-touch-target: 48px;
   }
 }
 
