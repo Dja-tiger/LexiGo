@@ -499,9 +499,9 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       await expectNoHorizontalOverflow(page);
 
       await expectVisibleFocus(manualSummary);
-      await expectVisibleFocus(modeGroup.getByRole("radio").first());
-      await expectVisibleFocus(sourceGroup.getByRole("radio").first());
-      await expectVisibleFocus(sizeGroup.getByRole("radio").first());
+      await expectVisibleFocus(modeGroup.getByRole("radio", { checked: true }));
+      await expectVisibleFocus(sourceGroup.getByRole("radio", { checked: true }));
+      await expectVisibleFocus(sizeGroup.getByRole("radio", { checked: true }));
       await expectVisibleFocus(manualStart);
 
       expect(runtimeErrors).toEqual([]);
