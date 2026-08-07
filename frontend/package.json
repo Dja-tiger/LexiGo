@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm view nanoid@3.3.17 version dist.tarball dist.integrity",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e:lesson": "playwright test e2e/active-lesson-figma.spec.ts e2e/lesson-result.spec.ts e2e/lesson-flow.spec.ts e2e/next-lesson-progression.spec.ts e2e/academic-technical-english.spec.ts e2e/offline-review-outbox.spec.ts e2e/review-outbox-auth-lifecycle.spec.ts",
