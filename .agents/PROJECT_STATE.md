@@ -4,14 +4,14 @@
 
 - Last verified: 2026-08-07 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified `main` before this reconciliation: `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- Latest deployed product SHA: `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- Latest merged Issue #74 slice: PR #426, final developer-authored head `10b4cc87d7d4af2f04498506ed758414f76a8e7a`, squash product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- PR #426 CI #2983 / run `31166237906`, exact-SHA main CI #2984 / run `31167034122` and Deploy Stage #2826 / run `31167741474` completed successfully.
-- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:7c641b2eea330363c80e6c666721a31eb5d60b9c` and `ghcr.io/dja-tiger/lexigo-api:7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- Stage deployment, public endpoint smoke and public browser smoke succeeded for that exact immutable image SHA. Deployment status Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success`.
-- PR #426 has no review threads and no reviews requiring action.
-- Issue #74 remains open. The authoritative browser-zoom collection gap is closed; remaining completion work is the residual live-control audit and final real-physical-device acceptance. Real-device evidence must not be synthesized from desktop CI.
+- Verified product `main` before this reconciliation: `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- Latest deployed product SHA: `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- Latest merged Issue #74 slice: PR #428, final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0`, squash product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- PR #428 immutable-head CI #2995 / run `31207726893`, exact-SHA main CI #2996 / run `31208560099` and Deploy Stage #2838 / run `31209280600` completed successfully.
+- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and `ghcr.io/dja-tiger/lexigo-api:69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- Stage deployment, public endpoint smoke and public browser smoke succeeded for that exact immutable image SHA. Deployment status Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success`; the public browser job passed 12/12 desktop Chromium and iOS WebKit checks, including `/progress`.
+- PR #428 has no review threads and no reviews requiring action.
+- Issue #74 remains open. The canonical Progress target gap delivered by PR #428 is closed; remaining completion work is the residual whole-application live-control audit and final real-physical-device/manual acceptance. Real-device evidence must not be synthesized from Playwright emulation, desktop CI or Stage browser smoke.
 - Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 
 ## Delivery contract
@@ -62,6 +62,7 @@
 - PR #421: Lesson Composer true-browser-zoom source merged. Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`; authoritative collection evidence was completed later by PR #426.
 - PR #423: Active Lesson true-browser-zoom source merged. Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; authoritative collection evidence was completed later by PR #426.
 - PR #426: repaired the explicit authoritative visual collection, added fail-closed collection/semantic contracts, synchronized dormant Home/Learn/Active tests with current canonical IA/CSS/ARIA behavior and added canonical Phrases true-browser-owned 200% acceptance without product runtime/CSS/API changes. Product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- PR #428: canonical populated Progress actions now expose 44px fine-pointer / 48px coarse-pointer effective targets through paint-inert block-axis hit slop while preserving approved painted geometry. Permanent desktop Chromium, iOS WebKit and Android Chromium acceptance verifies effective geometry, actual perimeter hit testing, non-overlap, keyboard focus, compact containment and existing global/topic/source Recall callbacks. Product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
 
 ## Issue #74 browser-zoom evidence
 
@@ -87,15 +88,42 @@ Post-merge evidence for product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`:
 - public browser UI validation: success;
 - deployment Issue #12 confirms both exact images healthy on stage.
 
+## Issue #74 Progress effective-target evidence
+
+PR #428 final immutable-head evidence on `b84a88f6f3d250ce54c4098c9847d994361a61d0`:
+
+- CI #2995 / run `31207726893`: complete success across backend, frontend core, browser matrix, accessibility, visual, performance and both container gates.
+- Linux Visual regression passed the existing Progress and calendar-dialog baselines without snapshot updates, proving the accessibility implementation is paint-inert at the approved layout boundary.
+- The Progress target acceptance ran in desktop Chromium, iOS WebKit and Android Chromium and requires actual `document.elementFromPoint` perimeter hits rather than painted-box size alone.
+- Effective target expansion is block-axis only (`inset-inline: 0`), with explicit non-overlap assertions against weak-area status badges and neighboring actions.
+- Weak-area painted buttons intentionally remain below the 44/48px effective minimum; transparent hit slop supplies the accessibility target without redesigning the card layout.
+- Keyboard focus-visible behavior, native `details/summary` disclosure semantics, compact horizontal containment and exact global/topic/source Recall callbacks remain covered.
+
+Post-merge evidence for product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`:
+
+- exact-SHA main CI #2996 / run `31208560099`: complete success;
+- Deploy Stage #2838 / run `31209280600`: complete success;
+- exact CI deployment scope validation: success;
+- exact immutable API/Web image deployment: success;
+- public frontend/API smoke: success;
+- public browser UI validation: 12/12 passed across desktop Chromium and iOS WebKit, including `/progress`;
+- deployment Issue #12 confirms both exact images healthy on stage.
+
+CI failure classification during PR #428 development:
+
+- Initial direct `min-height` expansion produced a real compact visual regression (Progress/calendar-dialog height 1900px -> 1916px). It was not retried or baselined away; production CSS was corrected to the existing paint-inert hit-slop pattern.
+- A later compact Progress hit-test failure was traced from Playwright evidence to `document.elementFromPoint()` receiving off-screen coordinates for the activity disclosure. The test helper was corrected with `scrollIntoViewIfNeeded()` before viewport-relative hit testing; production CSS was intentionally unchanged.
+
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413 and #415 meet their route-specific 44/48px target, spacing, focus and callback contracts.
+- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415 and #428 meet their route-specific 44/48px target, spacing, focus and callback contracts.
 - Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has permanent authoritative true 200% browser-owned zoom evidence.
-- The authoritative collection now permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
+- The authoritative collection permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
 - Canonical Phrases has authoritative true-browser-owned 200% zoom evidence inside the already collected Phrases visual owner.
+- Canonical populated Progress now has explicit desktop/mobile effective-target and real hit-testing acceptance while preserving approved visual baselines.
 - Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance for the delivered slices.
 
 Remaining / validation pending:
@@ -119,8 +147,9 @@ Issue #74 stays open until those remaining criteria are proven.
 ## Current state
 
 - No product slice is active while this post-merge repository-memory reconciliation is being delivered.
-- Current product runtime and stage are validated on exact image SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`; no product runtime regression was discovered by PR #426.
-- The dormant browser-zoom collection defect is closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
+- Current product runtime and Stage are validated on exact image SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`; no runtime regression was discovered after PR #428.
+- The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
+- The Progress effective-target slice is merged, independently revalidated on `main`, deployed as exact images and publicly smoke/browser validated.
 - After this docs-only reconciliation/reset, the next product slice is the remaining Issue #74 live-control inventory/remediation. Physical-device acceptance remains a separate final manual validation gate.
 - Dependabot PRs #304, #305 and #403 remain separate maintenance work.
 
@@ -133,16 +162,16 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Reconciliation evidence
 
-- PR #426 merged from final developer-authored head `10b4cc87d7d4af2f04498506ed758414f76a8e7a` to product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- `frontend/package.json` maps `test:e2e:visual` to `playwright test --config=playwright.visual.config.ts`.
-- `frontend/playwright.visual.config.ts.testMatch` now includes the three standalone Home/Learn/Active browser-zoom owners in addition to the existing collected visual owners.
-- `frontend/components/browser-zoom-collection-contract.test.ts` fail-closes the collection boundary and semantic keyboard/geometry expectations.
-- Phrases true-browser-zoom lives inside `frontend/e2e/phrases-visual.spec.ts`, preventing another standalone collection gap.
-- PR #426 authoritative visual evidence explicitly executed Home, Learn, Active Lesson, Phrases and Word Detail browser-owned zoom cases.
-- PR #426 preserved all existing content-addressed Phrases baseline images byte-for-byte.
-- Exact-SHA main CI and exact-image stage/public validation are green on the product merge SHA.
+- PR #428 merged from final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0` to product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- Production `frontend/app/progress-evidence.css` owns the route-level 44px target token, 48px coarse-pointer override and transparent block-axis hit surface without inline expansion.
+- Existing collected `frontend/e2e/progress-evidence.spec.ts` owns the permanent effective-target, perimeter hit-test, non-overlap, focus and callback contracts.
+- PR #428 CI #2995 / run `31207726893` completed successfully on the exact immutable PR head.
+- Exact-SHA main CI #2996 / run `31208560099` completed successfully on the squash product SHA.
+- Deploy Stage #2838 / run `31209280600` consumed the exact CI scope, deployed exact API/Web image tags for `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and completed public endpoint plus 12/12 public browser validation successfully.
+- Deployment status Issue #12 records the exact image SHA and successful deploy/public-smoke/public-browser state.
 - Live PR audit found no unresolved review threads and no reviews requiring action.
-- No local clone result is counted as authoritative evidence; GitHub CI/stage remain the execution source of truth.
+- Issue #74 delivery comment `5220946408` records the product evidence while explicitly leaving the Issue open for residual audit and physical-device/manual acceptance.
+- No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
 ## State semantics
 
