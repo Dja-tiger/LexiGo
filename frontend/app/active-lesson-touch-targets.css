@@ -1,0 +1,53 @@
+/*
+ * Issue #74 — Active Lesson effective touch targets.
+ *
+ * Keep the approved painted 44px controls unchanged while extending only the
+ * interactive hit surface to the platform minimum: 44 CSS px for fine-pointer
+ * input and 48 CSS px for coarse-pointer input.
+ */
+
+.lx-active-lesson {
+  --lx-active-lesson-touch-target: 44px;
+}
+
+.lx-active-lesson__utilities button,
+.lx-active-lesson__text-action,
+.lx-active-lesson__rating,
+.lx-active-lesson__mobile-back,
+.lx-active-lesson__mobile-close {
+  position: relative;
+}
+
+.lx-active-lesson__utilities button::before,
+.lx-active-lesson__text-action::before,
+.lx-active-lesson__rating::before,
+.lx-active-lesson__mobile-back::before,
+.lx-active-lesson__mobile-close::before {
+  content: "";
+  position: absolute;
+  inset-block: min(
+    0px,
+    calc((100% - var(--lx-active-lesson-touch-target)) / 2)
+  );
+  inset-inline: 0;
+  pointer-events: auto;
+}
+
+/*
+ * The compact Back control is visually 44×44. Expand its inline hit surface as
+ * well so the coarse-pointer target is a true 48×48 square. Close already has
+ * text width above the minimum, and min(..., 0px) therefore remains paint-inert.
+ */
+.lx-active-lesson__mobile-back::before,
+.lx-active-lesson__mobile-close::before {
+  inset-inline: min(
+    0px,
+    calc((100% - var(--lx-active-lesson-touch-target)) / 2)
+  );
+}
+
+@media (pointer: coarse) {
+  .lx-active-lesson {
+    --lx-active-lesson-touch-target: 48px;
+  }
+}
