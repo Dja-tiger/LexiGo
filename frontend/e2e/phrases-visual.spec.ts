@@ -243,7 +243,10 @@ async function readDOMZoomMetrics(page: Page): Promise<DOMZoomMetrics> {
 }
 
 async function expectVisibleFocus(locator: Locator): Promise<void> {
+  const page = locator.page();
   await locator.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(locator).toBeFocused();
   const focus = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
