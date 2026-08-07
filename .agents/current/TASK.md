@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-active-lesson-live-targets-v2`
 - Base SHA: `a2cb82b2415e0695120ec666b86690cbcd91f12d`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #433
 
 ## Objective
 
