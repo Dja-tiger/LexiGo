@@ -4,31 +4,27 @@
 
 - Last verified: 2026-08-06 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product base verified before this documentation reconciliation: `00774b8a4299d652c1433a5093f18e3265de5e4f`.
+- Verified `main` before this reconciliation: `e390469466e881ee49f5009752e60e545f5cf898`.
 - Latest deployed product SHA: `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Latest completed product slice: Issue #74 canonical Active Lesson true 200% browser-zoom audit.
-- Completion PR: #423.
-- PR #423 final developer-authored head: `6a480d3d6ea059a5554456fb8f3e3daa3960411a`.
-- Authoritative final PR CI #2959 / run `31112824242` completed successfully on the exact final head across every required product gate.
-- Expected-head squash merge produced product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Exact-SHA main CI #2960 / run `31113769002` completed successfully with the full required product matrix and immutable web/API image publication.
-- Immutable web image tag: `ghcr.io/dja-tiger/lexigo-web:00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Immutable API image tag: `ghcr.io/dja-tiger/lexigo-api:00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Exact-image Deploy Stage #2798 / run `31114604343` completed successfully on attempt 2 after exact CI-scope validation, deployment, public endpoint smoke, public browser UI validation and deployment reporting.
-- Deploy Stage #2798 attempt 1 failed only in GitHub-hosted runner `Set up job` for `Resolve CI deployment scope`, before checkout, scope validation or deployment; the single failed job was rerun on the same run and unchanged exact SHA.
-- PR #423 had no submitted reviews, requested changes or unresolved review threads before merge.
-- Issue #74 received factual completion comment `5206825779` and remains open because physical-device acceptance, remaining controls and additional route-bounded 200% browser-zoom audits are separate slices.
-- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance and do not intersect this Agent Docs reconciliation.
+- Latest merged Issue #74 slice: PR #423, final developer-authored head `6a480d3d6ea059a5554456fb8f3e3daa3960411a`, squash product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`.
+- PR #423 CI #2959 / run `31112824242`, exact-SHA main CI #2960 / run `31113769002` and Deploy Stage #2798 / run `31114604343` completed successfully for the configured repository gates and immutable product image.
+- Exact deployed image tags remain `ghcr.io/dja-tiger/lexigo-web:00774b8a4299d652c1433a5093f18e3265de5e4f` and `ghcr.io/dja-tiger/lexigo-api:00774b8a4299d652c1433a5093f18e3265de5e4f`.
+- Stage deploy, public endpoint smoke and public browser smoke remain valid for the deployed product image.
+- The intended Home, Learn and Active Lesson true-browser-zoom acceptance evidence is **validation pending**, not completed: their standalone specs are excluded from the authoritative visual configuration and were not executed by PR #423 CI.
+- Word Detail remains the only confirmed true-browser-zoom route because its browser-owned zoom case is inside the allow-listed `word-detail-visual.spec.ts` and appears in the authoritative visual job log.
+- Issue #74 remains open. Its previous completion comments for PRs #419, #421 and #423 overstate browser-zoom evidence and must not be used as acceptance proof until the gate is repaired and rerun.
+- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
 
 ## Delivery contract
 
 - Product and mixed changes require backend unit/race/integration/security gates plus frontend lint, typecheck, unit, production build, browser matrix, accessibility, visual, performance and container gates.
 - Product delivery requires immutable-head PR CI, review audit, expected-head squash merge, exact-SHA main CI and exact-image stage/public validation.
+- A green workflow proves only the tests selected by its effective command and configuration. A source file that is not collected by Playwright is not acceptance evidence.
 - Exact deployment claims require immutable image tags, exact CI-scope validation, healthy deployed services, public endpoint smoke and public browser evidence.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy stage.
 - One PR contains one atomic slice. Product work does not continue through stale Agent Harness state.
 - Automatic and manual deploy jobs share `group: deploy-stage` with `cancel-in-progress: true`; only an accepted state-mutating deploy job enters that concurrency group.
-- Skipped workflow-run consumers, including Dependabot-triggered consumers, are not deployment evidence and cannot replace correlation to the authoritative main CI run.
+- Skipped workflow-run consumers, including Dependabot-triggered consumers, are not deployment evidence.
 - A GitHub-hosted runner setup failure before checkout is infrastructure evidence only; an exact-job rerun is acceptable only when the workflow run and product SHA remain unchanged and full scope/deploy validation subsequently succeeds.
 
 ## Production ownership foundations
@@ -45,141 +41,63 @@
 
 - Issue #70 is completed and closed; application entry, compatibility reachability, shared style ownership and architecture contracts remain fail-closed.
 - Issue #75 is completed and closed; authenticated PostgreSQL phrase search and URL/filter/history/scroll ownership remain fail-closed.
-- Product SHA `45ba441da5f8faf1248389311461cf2adf787786` completed Issue #70 and product SHA `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c` completed Issue #75; current product SHA preserves both deliveries.
+- Product SHA `45ba441da5f8faf1248389311461cf2adf787786` completed Issue #70 and product SHA `ac9af9a9656ad9bc9b4a6614ba7f4b01a9b7aa3c` completed Issue #75; the current deployed product preserves both deliveries.
 
 ## Completed Issue #74 slices
 
-### PR #387 — connectivity action touch targets
+- PR #387: connectivity action 44px fine-pointer / 48px coarse-pointer effective targets. Product SHA `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+- PR #389: live shared-header profile button 44/48px target. Product SHA `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- PR #391: mobile Lesson Composer disclosure 44/48px targets. Product SHA `0535f6641b6624b5f07266137942c3c5ae73c167`.
+- PR #393: visible Lesson Composer option-radio 44/48px targets. Product SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
+- PR #395: live shared-header streak 44/48px target. Product SHA `346b9690ab6029776eeac614f2d26472160af927`.
+- PR #397: readable rem-responsive canonical mobile-navigation labels and 48px targets under compact width and 200% root-text enlargement. Product SHA `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
+- PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- PR #405: canonical Home `Открыть прогресс` 44/48px target. Product SHA `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
+- PR #407: Phrases `Очистить поиск` contained 44/48px target with separation from `Найти`. Product SHA `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
+- PR #409: Dictionary `Очистить поиск` contained 44/48px target. Product SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
+- PR #411: Word Detail Back 44/48px target with Dictionary-state restoration. Product SHA `3b8f3c39faee1223e3773935c761eb7903409868`.
+- PR #413: Word Detail related-phrase 44/48px targets with non-overlap. Product SHA `477bccd8f38e648a3ad536dcc58526303297a376`.
+- PR #415: retryable Word Detail related-phrase `Повторить` 44/48px target and same-request recovery. Product SHA `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
+- PR #417: confirmed canonical Word Detail true 200% browser-owned Chromium zoom, responsive reflow, containment, de-sticky content, visible focus and no runtime errors. The case is collected by `playwright.visual.config.ts` through `word-detail-visual.spec.ts`. Product SHA `5d864970103479863fc74ad76009a33030842420`.
 
-- Live `ReviewOutboxRuntime` connectivity actions expose 44px fine-pointer / 48px coarse-pointer effective targets without changing painted boxes or inline separation.
-- Product SHA: `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
+## Merged Issue #74 browser-zoom specs with validation pending
 
-### PR #389 — header profile touch target
+### PR #419 — Home
 
-- Live `button.lx-avatar[aria-label="Открыть профиль"]` exposes 44×44 fine-pointer / 48×48 coarse-pointer effective geometry while decorative Profile-page avatars remain excluded.
-- Product SHA: `29151758bae0b4220ee48213d0fc49a2290ba20a`.
+- Added `frontend/e2e/home-browser-zoom.spec.ts` with exact-tab MV3 zoom ownership, independent CDP telemetry, responsive Home geometry and focus assertions.
+- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI did not execute it.
+- Product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c` records the merged source, not completed zoom acceptance.
 
-### PR #391 — mobile Lesson Composer disclosure touch targets
+### PR #421 — Lesson Composer
 
-- Live `/learn` disclosure states `Настроить урок` and `Ручная настройка` expose 44px fine-pointer / 48px coarse-pointer effective targets with unchanged lesson lifecycle and navigation.
-- Product SHA: `0535f6641b6624b5f07266137942c3c5ae73c167`.
+- Added `frontend/e2e/learn-browser-zoom.spec.ts` for collapsed and expanded `/learn` states under browser-owned zoom factor `2`.
+- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI did not execute it.
+- Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4` records the merged source, not completed zoom acceptance.
 
-### PR #393 — mobile Lesson Composer option touch targets
+### PR #423 — Active Lesson
 
-- Every visible mode, source and size radio in expanded mobile `/learn` exposes minimum 44px fine-pointer / 48px coarse-pointer effective targets with preserved native semantics and selection callbacks.
-- Product SHA: `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-
-### PR #395 — shared-header streak touch target
-
-- Every confirmed live shared-header `button.lx-streak` exposes a minimum 44px fine-pointer / 48px coarse-pointer target; decorative Dictionary streak remains excluded.
-- Product SHA: `346b9690ab6029776eeac614f2d26472160af927`.
-
-### PR #397 — scalable canonical mobile-navigation labels
-
-- The live four-link mobile navigation keeps at least 48×48 targets and readable rem-responsive labels under compact widths and 200% root-text enlargement without clipping or reserve mismatch.
-- This slice proves root-text enlargement for mobile navigation, not whole-application browser zoom.
-- Product SHA: `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
-
-### PR #402 — Learn unfinished-lesson resume actions
-
-- Conditional `/learn` actions `Сбросить` and `Продолжить урок` retain their 44px painted boxes and gain 48px coarse-pointer block-axis event surfaces without overlap.
-- Product SHA: `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
-
-### PR #405 — canonical Home progress CTA
-
-- Canonical Home `Открыть прогресс` retains its full-width 44px presentation and exposes a 48px coarse-pointer target without collision with preceding progress content.
-- Product SHA: `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
-
-### PR #407 — conditional Phrases search-clear target
-
-- `/phrases` `Очистить поиск` remains a native 36×36 control and exposes a 44×44 fine-pointer / 48×48 coarse-pointer target with compact separation from `Найти`.
-- Product SHA: `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
-
-### PR #409 — conditional Dictionary search-clear target
-
-- Authenticated `/dictionary` `Очистить поиск` remains a native 36×36 control inside the 48px search field and exposes a contained 44×44 / 48×48 transparent event surface.
-- Product SHA: `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-
-### PR #411 — canonical Word Detail Back target
-
-- `/words/[id]` Back retains its 42px painted box, responsive accessible names and Dictionary-state restoration while exposing a 44px fine-pointer / 48px coarse-pointer block target.
-- Product SHA: `3b8f3c39faee1223e3773935c761eb7903409868`.
-
-### PR #413 — canonical Word Detail related-phrase targets
-
-- Every related-phrase pill remains a native 34px painted button with canonical phrase navigation and gains a 44px fine-pointer / 48px coarse-pointer effective target.
-- Coarse wrapped rows reserve sufficient separation to prevent expanded-target overlap; compact Light/Dark visual metadata changed only for the deterministic 4px page-height delta.
-- Product SHA: `477bccd8f38e648a3ad536dcc58526303297a376`.
-
-### PR #415 — conditional Word Detail related-phrase retry target
-
-- The retryable related-phrase error state keeps a native `Повторить` button with the exact accessible name, existing `relatedRetry` state owner and the same semantic phrase lookup.
-- The painted button remains 36px high; a route-scoped interaction-only owner exposes a 44px fine-pointer / 48px coarse-pointer block target with zero inline expansion.
-- Desktop Chromium, Android Chromium and iOS WebKit prove union geometry, perimeter hit points, message non-overlap, visible focus, same-request recovery and no horizontal overflow.
-- Runtime, API, History, session, storage and Word Detail presentation ownership remain unchanged.
-- Product SHA: `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
-
-### PR #417 — canonical Word Detail true 200% browser zoom
-
-- A test-only Manifest V3 controller owns Chromium browser zoom through `chrome.tabs.setZoom(tabId, 2)` in a dedicated persistent context.
-- Exact-URL tab selection and independent extension/CDP telemetry prove browser-owned factor `2`; root font size remains unchanged while the CSS viewport contracts.
-- Canonical Word Detail proves single-column responsive reflow, de-sticky knowledge content, horizontal containment, non-overlap, document order, visible focus, enabled actions and no runtime errors.
-- Product CSS, runtime, API, session, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
-- Product SHA: `5d864970103479863fc74ad76009a33030842420`.
-
-### PR #419 — canonical Home true 200% browser zoom
-
-- The existing test-only Manifest V3 controller applies per-tab automatic browser zoom `2` to the exact canonical authenticated Home URL and fails closed on unavailable or ambiguous ownership.
-- Independent CDP `Page.getLayoutMetrics().cssVisualViewport.zoom` evidence confirms browser-owned factor `2`; root font size remains unchanged while the CSS layout viewport contracts to approximately half width.
-- Canonical Home activates its expected route rail and single-column next-action/path layouts without horizontal overflow, clipping, overlap or route-chrome obstruction.
-- Primary Home actions, profile action and route navigation remain enabled, keyboard-focusable and visibly focused; runtime error capture remains empty.
-- Product CSS, runtime, API, session, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
-- Product SHA: `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-
-### PR #421 — canonical Lesson Composer true 200% browser zoom
-
-- The established test-only Manifest V3 controller applies per-tab automatic browser zoom `2` to the exact canonical authenticated `/learn` URL and fails closed on unavailable or ambiguous tab ownership.
-- Independent CDP `Page.getLayoutMetrics().cssVisualViewport.zoom` evidence confirms browser-owned factor `2`; root font size remains unchanged while the CSS layout viewport contracts from 1440px to approximately 720px.
-- Canonical Lesson Composer activates its expected route rail and preserves both the collapsed recommendation and expanded manual-composer states without horizontal overflow, clipping, overlap or route-chrome obstruction.
-- Recommendation actions, disclosure, source/mode/size options and `Начать урок` remain enabled, keyboard-focusable and visibly focused; runtime error capture remains empty.
-- Product CSS, runtime, recommendation logic, lesson lifecycle, API, navigation, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
-- Product SHA: `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
-
-### PR #423 — canonical Active Lesson true 200% browser zoom
-
-- The established test-only Manifest V3 controller applies per-tab automatic browser zoom `2` to the exact canonical authenticated Recall `/lesson/active` URL and fails closed on unavailable or ambiguous tab ownership.
-- Independent CDP `Page.getLayoutMetrics().cssVisualViewport.zoom` evidence confirms browser-owned factor `2`; root font size remains unchanged while the CSS layout viewport contracts from 1440px to approximately 720px.
-- Canonical Active Lesson activates its existing mobile presentation: mobile Back/Close controls are visible, desktop chrome is hidden, the progress row becomes block layout and answer actions become one column.
-- Topbar, workspace, progress, lesson card, prompt, answer field, actions, feedback, confidence controls and advance action remain horizontally contained and non-overlapping with visible keyboard focus.
-- The Recall `backlog` → answer reveal → `Знал` → `Дальше` flow remains functional and preserves the exact review payload: Recall mode, submitted answer `backlog`, revealed answer and rating `known`.
-- Runtime error capture remains empty; product CSS, runtime, answer judgement, lesson lifecycle, API, navigation, History, storage, Service Worker, dependency and workflow owners remain unchanged because the existing presentation satisfies the contract.
-- Product SHA: `00774b8a4299d652c1433a5093f18e3265de5e4f`.
+- Added `frontend/e2e/active-lesson-browser-zoom.spec.ts` for canonical Recall geometry, focus and `backlog` → reveal → `Знал` → `Дальше` review semantics.
+- The file is not present in `playwright.visual.config.ts.testMatch`; authoritative CI #2959 visual job `92655323130` did not execute it.
+- Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f` records the merged source and deployed unchanged runtime, not completed Active Lesson zoom acceptance.
 
 ## Issue #74 acceptance status
 
 Completed:
 
-- Global connectivity text actions have guaranteed 44/48px effective targets.
-- Shared live header profile and streak buttons have guaranteed 44/48px targets with adjacent-control separation.
-- Mobile Lesson Composer disclosure states and visible option radios have guaranteed 44/48px effective targets with preserved semantics.
-- Conditional unfinished-lesson actions have guaranteed 44/48px effective targets without painted growth or overlap.
-- Canonical Home progress CTA has a guaranteed 44/48px effective target.
-- Conditional Phrases and Dictionary search-clear controls have guaranteed 44/48px targets with route-specific containment and adjacent-control separation.
-- Canonical Word Detail Back, related-phrase pills and conditional related-phrase retry action have guaranteed 44/48px effective targets with preserved navigation/retry behavior.
-- Canonical mobile-navigation labels are readable at compact width and scale with enlarged root text without clipping, ellipsis, target overlap or horizontal overflow.
-- Canonical Word Detail, Home, Lesson Composer and Recall Active Lesson have permanent automated Chromium evidence for true 200% browser-owned zoom, responsive reflow, accessible actions and zero horizontal overflow.
-- Active Lesson browser-zoom evidence preserves the exact prompt-to-feedback interaction and server review payload, not only static geometry.
+- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413 and #415 meet their route-specific 44/48px target, spacing, focus and callback contracts.
+- Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
+- Word Detail has authoritative automated Chromium evidence for true 200% browser-owned zoom.
 - Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance.
-- Hidden/decorative consumers and stale issue wording are excluded from ownership; no live `Все режимы` control exists in the current `/learn` runtime.
 
-Still open:
+Validation pending / still open:
 
-- Audit and remediate remaining confirmed live preview, sticky-action, header/icon and route-specific controls not covered by PRs #387, #389, #391, #393, #395, #397, #402, #405, #407, #409, #411, #413, #415, #417, #419, #421 and #423.
+- Add `home-browser-zoom.spec.ts`, `learn-browser-zoom.spec.ts` and `active-lesson-browser-zoom.spec.ts` to an authoritative Playwright collection boundary and prove from CI logs that each named case executes on the immutable PR head.
+- Continue whole-application true 200% browser-zoom acceptance with separate route-bounded slices after the dormant gate is repaired; Phrases is the next selected route boundary.
+- Audit and remediate remaining confirmed live preview, sticky-action, header/icon and route-specific controls.
 - Prove all remaining primary, secondary, text-only and icon controls meet minimum target and spacing contracts across affected routes.
-- Continue whole-application 200% browser-zoom acceptance through separate bounded route slices; PR #417 proves Word Detail, PR #419 proves Home, PR #421 proves Lesson Composer, PR #423 proves Recall Active Lesson and PR #397 proves root-text enlargement for canonical mobile navigation.
 - Complete final physical-device acceptance before Issue #74 can close.
 
-Issue #74 remains open. The listed PRs are completed atomic production slices, not full Issue closure.
+Issue #74 remains open. Merged source and green configured CI are not equivalent to completed acceptance when the intended test was not collected.
 
 ## Completed CI/CD control-plane slice
 
@@ -189,46 +107,33 @@ Issue #74 remains open. The listed PRs are completed atomic production slices, n
 - The exact CI-scope job remains unconstrained and fail-closed.
 - Only an accepted state-mutating deploy job carries `group: deploy-stage` and `cancel-in-progress: true`.
 - Skipped pull-request, Dependabot, docs-only and otherwise non-deployable workflow runs cannot cancel an authoritative deployment.
-- Product SHA: `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
+- Product SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
 
 ## Current state
 
-- No product slice is active.
-- Product runtime and stage are validated on exact image SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- `.agents/current/**` is reset to canonical templates by this documentation reconciliation.
-- Issue #74 remains open; its latest completed slice is PR #423.
-- Canonical `/words/[id]`, `/`, `/learn` and Recall `/lesson/active` now have permanent fail-closed true 200% Chromium browser-zoom evidence; none of these routes required product CSS remediation.
-- The next Issue #74 slice must start from live GitHub state and select one remaining route/control acceptance boundary rather than extending PR #423.
-- Dependabot PRs #304, #305 and #403 remain separate maintenance work and must not be merged implicitly into Issue #74.
+- No product slice is active while this documentation discrepancy is reconciled.
+- Product runtime and stage remain validated on exact image SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; no runtime regression was discovered.
+- Home, Learn and Active Lesson browser-zoom acceptance is validation pending because their standalone specs are dormant.
+- The next product slice must first repair the authoritative visual collection boundary, retain all existing content-addressed baselines, and add the bounded canonical `/phrases` browser-owned zoom audit without changing product runtime unless a reproduced defect requires it.
+- Dependabot PRs #304, #305 and #403 remain separate maintenance work.
 
 ## Remaining roadmap
 
-- Issue #74: continue atomic route-bounded 200% browser-zoom slices, audit remaining live controls and complete final physical-device acceptance.
+- Issue #74: repair dormant browser-zoom collection, run Home/Learn/Active Lesson evidence, add Phrases true-browser-zoom acceptance, audit remaining live controls and complete physical-device validation.
 - Issue #78 CSP implementation and stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
 - Dependabot PRs #304, #305 and #403 require separate review, immutable-head CI and deployment treatment according to changed scope.
 - Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices.
 
-## Recent production evidence
+## Reconciliation evidence
 
-1. #423 — `test(a11y): audit Active Lesson at true 200% browser zoom` → `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-2. #422 — Agent Docs reconciliation → `9085cc1f886c1d4d8119ef6d9b98291d1bf76309`.
-3. #421 — `test(a11y): audit Learn at true 200% browser zoom` → `45ed5a1d5b65887b519807b8726b65cb416a11a4`.
-4. #420 — Agent Docs reconciliation → `4223ecacc7c2e6942cbd5449ecb9684915954b37`.
-5. #419 — `test(a11y): audit Home at true 200% browser zoom` → `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`.
-
-## Evidence
-
-- PR #423 final developer-authored head `6a480d3d6ea059a5554456fb8f3e3daa3960411a` passed authoritative CI #2959 / run `31112824242` across every required product gate.
-- Frontend lint, TypeScript, unit/source contracts, production build, dependency audit, both UI shards, Lesson completion, Dictionary smoke, iOS PWA, controlled Service Worker, content security, visual regression, accessibility, performance, backend unit/security/integration and both container builds succeeded together on the immutable final head.
-- The Visual regression gate loaded the existing local Manifest V3 extension in pinned Playwright Chromium, applied browser-owned factor `2`, verified exact-tab extension and independent CDP zoom telemetry, and proved canonical Recall Active Lesson mobile reflow, containment, non-overlap, visible focus and the full `backlog` → `Знал` review interaction without changing product CSS or runtime behavior.
-- Expected-head squash merge produced `00774b8a4299d652c1433a5093f18e3265de5e4f`.
-- Exact-SHA main CI #2960 / run `31113769002` completed successfully with the full required product matrix and immutable image publication.
-- Deploy Stage #2798 / run `31114604343` attempt 1 failed only during GitHub-hosted runner setup for the scope job, before repository checkout or any deployment action; the deploy job was skipped.
-- The single failed scope job was rerun on the same workflow run and unchanged SHA. Attempt 2 validated the exact CI-scope artifact, deployed exact image SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`, verified public endpoints, completed public browser UI validation and reported the deployment successfully.
-- PR #423 had zero submitted reviews and zero unresolved review threads before merge.
-- Issue #74 received factual completion comment `5206825779` and remains open for remaining acceptance scope.
-- Local clone execution was unavailable in the isolated connector environment; no local result is counted as authoritative product evidence.
-- Final claims use exact refs, files, Issues, PRs, workflow jobs, deployment records and immutable image tags.
+- `frontend/package.json` maps `test:e2e:visual` to `playwright test --config=playwright.visual.config.ts`.
+- At verified `main`, `playwright.visual.config.ts.testMatch` contains only `visual-regression.spec.ts`, `word-detail-visual.spec.ts`, `profile-visual.spec.ts`, `system-states-visual.spec.ts` and `phrases-visual.spec.ts`.
+- PR #423 authoritative Visual regression job `92655323130` reported `Running 129 tests`, `53 passed`, `76 skipped` and listed only those five files.
+- The same job explicitly executed `Word Detail browser-owned zoom › desktop 200% browser zoom reflows without clipping, overlap or sticky obstruction` from `word-detail-visual.spec.ts`.
+- The job log contains no Home, Lesson Composer or Active Lesson browser-owned zoom test name and no reference to their standalone spec files.
+- Therefore PR CI success, main CI success and stage deployment remain valid for configured code and runtime, but they do not prove the excluded zoom acceptance cases.
+- The rejected initial `create_branch` call during this reconciliation used invalid argument names and produced no ref mutation. `main` remained `e390469466e881ee49f5009752e60e545f5cf898`; the target branch remained absent until the exact connector schema was reloaded and the branch was created from that immutable SHA.
+- Local clone execution is unavailable in the isolated connector environment; no local result is counted as authoritative evidence.
 
 ## State semantics
 
