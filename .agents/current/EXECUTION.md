@@ -73,7 +73,7 @@ Artifacts produced:
 
 Result:
 
-Implementation preserves painted layout by construction; authoritative visual confirmation remains a required CI gate.
+Implementation preserves painted layout by construction; CI #2992 later confirmed unchanged Linux visual baselines.
 
 ### Browser acceptance
 
@@ -92,6 +92,7 @@ Actions performed:
 - Verifies the weak painted height remains below the required effective target, proving the accessibility fix is hit slop rather than hidden layout inflation.
 - Retains keyboard-returned `:focus-visible`, native disclosure opening and compact no-horizontal-overflow checks.
 - Runs the target contract in desktop Chromium, iOS WebKit and Android Chromium.
+- Calls `scrollIntoViewIfNeeded()` before viewport-relative `elementFromPoint` assertions so each measured control is actually inside the browser viewport.
 
 Artifacts produced:
 
@@ -99,7 +100,7 @@ Artifacts produced:
 
 Result:
 
-Regression protection is implemented and included in the existing Progress browser owner; final CI execution is pending on the last task-doc head.
+Regression protection remains inside the collected Progress browser owner and now distinguishes document visibility from viewport hit-testability.
 
 ### CI debugging and visual regression classification
 
@@ -134,26 +135,55 @@ Reverted the painted size changes and implemented block-axis transparent hit slo
 
 Why blind retry was rejected:
 
-The 1916px Progress actual was stable and directly attributable to source. Source changed, so the failed run is historical evidence only; the correction requires a new full immutable-head run.
+The 1916px Progress actual was stable and directly attributable to source. Source changed, so the failed run is historical evidence only; the correction required a new full immutable-head run.
+
+### CI #2992 viewport-test classification
+
+Purpose:
+
+Classify the remaining UI shard 2 failure on corrected production CSS before deciding whether another production change was warranted.
+
+Evidence:
+
+- Immutable candidate `c0e470de15c06b35badd12386ca1e224c0ea67fb` ran CI #2992 / `31206575801`.
+- Backend unit/security, Frontend core, Backend integration, Lesson completion, Accessibility audit, iOS PWA dictionary, Controlled service worker, Performance budgets, Dictionary smoke, Content security, UI shard 1 and Linux Visual regression were green.
+- Linux Visual regression passed existing Progress and calendar-dialog baselines with no snapshot update.
+- UI shard 2 failed the new Progress target acceptance on compact iOS and Android, including retry, at `activity summary` `perimeterHits` only.
+- Downloaded Playwright traces showed `nextAction` passed the same effective-target helper immediately before `activity summary`.
+- The compact `activity summary` is below the 844px viewport. `document.elementFromPoint()` accepts viewport coordinates only, so passing the off-screen `getBoundingClientRect()` Y positions returned no owning element and produced `[false, false]`.
+- The same shard also captured an unrelated pre-existing iOS connectivity test race: `getByText("Нет подключения к сети", { exact: true })` resolved to four simultaneous messages. That failure is outside this PR's allowed paths and does not invalidate the Progress implementation.
+
+Failure classification:
+
+New-test harness defect for Progress viewport-relative hit testing; separate existing flake/race in connectivity acceptance. No production CSS defect was demonstrated.
+
+Correction:
+
+Added Playwright `control.scrollIntoViewIfNeeded()` before each effective-target measurement. Production CSS was intentionally left unchanged. This preserves strict real-browser perimeter hit assertions instead of weakening them.
+
+Why blind retry was rejected:
+
+The Progress failure repeated on both compact engines and retry with the same off-screen geometry, so it was deterministic test logic. The helper source changed and requires a fresh full immutable-head CI run.
 
 ### Review and scope audit
 
 - PR #428 changed paths remain exactly the three current task documents plus `frontend/app/progress-evidence.css` and `frontend/e2e/progress-evidence.spec.ts`.
 - PR diff contains no workflow, dependency, backend, API, migration, visual-baseline or unrelated route changes.
-- Review-thread audit found zero review threads.
-- Submitted-review audit found zero reviews requiring action.
-- `main` remained `adde2a0124ae90d15e2e038afd266c31927b9a67` through the implementation writes recorded here.
+- Review-thread audit found zero review threads at the previous audit.
+- Submitted-review audit found zero reviews requiring action at the previous audit.
+- `main` remained `adde2a0124ae90d15e2e038afd266c31927b9a67` through all source/task-document writes recorded here.
 
 ## Remaining execution gates
 
 1. Treat the branch head after this execution-log write as the new immutable candidate.
-2. Update PR description without changing code head so it accurately describes effective hit slop and the classified visual failure.
-3. Require complete product CI on that exact head, with the Progress target test collected in desktop Chromium, iOS WebKit and Android Chromium and Linux visual regression green without snapshot update.
-4. Re-audit diff, branch/base, reviews and threads.
-5. Mark PR Ready and squash-merge using the expected final head SHA.
-6. Verify new `main`, exact-SHA main CI and automatic exact-image Stage deploy/public smoke/public browser evidence.
-7. Record the delivered slice in Issue #74 while leaving the Issue open for residual whole-app audit/real-device acceptance unless live acceptance evidence proves otherwise.
-8. Reconcile `.agents/PROJECT_STATE.md` and reset `.agents/current/**` in the normal follow-up Agent Docs slice.
+2. Update PR description without changing source head so it records both CI classifications and the viewport correction.
+3. Require complete product CI on that exact head, with Progress target acceptance collected in desktop Chromium, iOS WebKit and Android Chromium and Linux visual regression green without snapshot update.
+4. If the independently classified connectivity race reappears, inspect evidence and use only a justified source-free retry; do not broaden this PR's allowed paths.
+5. Re-audit diff, branch/base, reviews and threads.
+6. Mark PR Ready and squash-merge using the expected final head SHA.
+7. Verify new `main`, exact-SHA main CI and automatic exact-image Stage deploy/public smoke/public browser evidence.
+8. Record the delivered slice in Issue #74 while leaving the Issue open for residual whole-app audit/real-device acceptance unless live acceptance evidence proves otherwise.
+9. Reconcile `.agents/PROJECT_STATE.md` and reset `.agents/current/**` in the normal follow-up Agent Docs slice.
 
 ## Limitations
 
@@ -161,4 +191,4 @@ Real physical-device acceptance cannot be synthesized from Playwright emulation 
 
 ## Reusable lesson
 
-When an accessibility criterion specifies effective target area and explicitly permits invisible hit slop, preserve approved painted geometry unless redesign is intended. A browser acceptance test must prove the expanded region is actually hit-testable and non-overlapping; a larger layout `boundingBox()` is neither necessary nor sufficient.
+When browser acceptance uses `document.elementFromPoint`, the probed coordinates must be inside the current viewport. Playwright visibility is not the same as viewport intersection: scroll the target into view first, then assert the expanded hit region. For accessibility criteria that permit hit slop, preserve approved painted geometry and test the actual hit surface rather than inflating layout solely to satisfy `boundingBox()` dimensions.
