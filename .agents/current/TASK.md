@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-active-lesson-live-targets`
 - Base SHA: `b9119d8f2b57e454d1bfa24b0cefe3875801102e`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #430
 
 ## Objective
 
@@ -17,7 +17,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Audit canonical `/lesson/active` controls whose current CSS minimum is 44px.
 - Add a route-scoped paint-inert hit-slop owner for the live utility, text-action, confidence-rating and compact Back/Close controls.
 - Import that owner from the canonical root layout after the Active Lesson presentation stylesheet.
-- Add a dedicated permanent Playwright acceptance owner; the default `playwright.config.ts` has no explicit `testMatch`, so the new spec is automatically collected by the authoritative browser matrix.
+- Add a dedicated permanent Playwright acceptance owner and register it in the already-authoritative `test:e2e:lesson` command so CI executes the acceptance in the normal browser matrix.
 - Keep Agent Harness task/progress/execution records factual for this atomic slice.
 
 ## Non-goals
@@ -25,6 +25,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - No Active Lesson redesign, typography or painted-layout change.
 - No API, review, scheduler, history, session or outbox behavior change.
 - No changes to other Issue #74 routes in this PR.
+- No dependency version or lockfile change in this product PR.
 - No visual baseline update.
 - No claim of final physical-device acceptance; that remains a manual Issue #74 gate.
 
@@ -33,6 +34,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - `frontend/app/active-lesson-touch-targets.css`
 - `frontend/app/layout.tsx`
 - `frontend/e2e/active-lesson-touch-targets.spec.ts`
+- `frontend/package.json` — test-script collection only; dependency fields are invariant
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -43,7 +45,8 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Existing Active Lesson presentation declarations outside the dedicated touch-target owner.
 - Other route presentation owners.
 - Visual snapshots and Figma assets.
-- CI workflow definitions, Playwright collection configuration and dependency manifests.
+- CI workflow definitions.
+- Dependency versions, overrides and `frontend/package-lock.json` in this product PR.
 
 ## Runtime owners
 
@@ -52,6 +55,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Touch-target overlay: `frontend/app/active-lesson-touch-targets.css`
 - Root stylesheet import boundary: `frontend/app/layout.tsx`
 - Browser acceptance: `frontend/e2e/active-lesson-touch-targets.spec.ts`
+- Authoritative lesson-gate collection: `frontend/package.json` → `test:e2e:lesson`
 
 ## Documentation owners
 
@@ -66,7 +70,7 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Hit slop is block-axis only except compact Back/Close controls, where inline expansion is bounded by the same target token and only applies when painted width is below the platform minimum.
 - Expanded regions must not overlap adjacent live controls or escape compact viewport containment.
 - Existing accessible names, focus-visible behavior, callbacks, review semantics, safe-exit behavior and lesson navigation remain unchanged.
-- Existing authoritative visual baselines remain unchanged.
+- Existing dependency versions, lockfile and authoritative visual baselines remain unchanged by PR #430.
 
 ## Acceptance criteria
 
@@ -75,13 +79,14 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Effective-target perimeter points resolve to the owning control.
 - Expanded targets do not overlap adjacent live controls.
 - Keyboard focus remains visible and compact layout has no horizontal overflow.
-- Permanent acceptance executes in desktop Chromium, iOS WebKit and Android Chromium.
+- Permanent acceptance executes from the authoritative lesson gate in desktop Chromium, iOS WebKit and Android Chromium.
 
 ## Required checks
 
 - Targeted frontend source/lint/typecheck/unit checks for the changed area.
 - Targeted Active Lesson touch-target browser acceptance in desktop Chromium, iOS WebKit and Android Chromium.
 - Full required immutable-head CI, including accessibility, authoritative Linux visual, performance and container gates.
+- A repeatedly failing production dependency audit is a separate prerequisite blocker and must be remediated without weakening or bypassing the audit.
 - Clean review/thread audit before Ready.
 - Exact-SHA main CI and exact-image Stage/public validation after squash merge.
 
@@ -90,7 +95,8 @@ Close the confirmed residual Active Lesson live-control gap in Issue #74 by givi
 - Pseudo-element hit slop can intercept a neighbouring control if spacing is insufficient.
 - A direct min-height change would alter approved compact geometry and visual baselines; it is intentionally avoided.
 - Off-screen perimeter probes can produce false negatives unless the control is scrolled into view before `elementFromPoint` checks.
+- Explicit npm E2E script lists can silently omit a new spec; this slice therefore registers the acceptance in `test:e2e:lesson` and treats collection as part of the product contract.
 
 ## Rollback
 
-Remove the dedicated Active Lesson touch-target stylesheet/import and its matching browser acceptance while preserving all prior Issue #74 deliveries.
+Remove the dedicated Active Lesson touch-target stylesheet/import, its browser acceptance and the corresponding `test:e2e:lesson` collection entry while preserving all prior Issue #74 deliveries.
