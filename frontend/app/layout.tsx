@@ -34,6 +34,7 @@ import "./service-worker-update.css";
 import "./catalog-pagination.css";
 import "./dictionary-catalog.css";
 import "./dictionary-search-clear-touch-targets.css";
+import "./dictionary-catalog-touch-targets.css";
 import "./word-detail.css";
 import "./word-detail-back-touch-targets.css";
 import "./word-detail-related-phrase-touch-targets.css";
@@ -119,13 +120,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body>
+        <a className="lx-skip-link" href="#main-content">К основному содержимому</a>
         <ApplicationErrorBoundary>
-          <WebVitalsReporter />
-          <ServiceWorkerRegistration />
-          <RoutedLexigoApp />
-          {children}
-          <LegalFooter />
+          <RoutedLexigoApp>{children}</RoutedLexigoApp>
         </ApplicationErrorBoundary>
+        <LegalFooter />
+        <ServiceWorkerRegistration />
+        <WebVitalsReporter />
       </body>
     </html>
   );
