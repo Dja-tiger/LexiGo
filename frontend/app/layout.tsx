@@ -64,6 +64,7 @@ import "./scenario-lessons-accessibility.css";
 import "./appearance.css";
 import "./profile.css";
 import "./system-states.css";
+import "./system-state-touch-targets.css";
 import "./connectivity-touch-targets.css";
 import "./header-profile-touch-targets.css";
 import "./header-streak-touch-targets.css";
