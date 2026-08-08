@@ -4,30 +4,31 @@
 
 - Last verified: 2026-08-08 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- Latest deployed product SHA: `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- Latest merged Issue #74 product slice is PR #442, final developer-authored head `41bf1fd4212c1f01c9f003943e95deef627ef9c2`, squash product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- PR #442 immutable-head CI #3045 / run `31252513692` succeeded across the full product matrix after the deterministic focus-visible acceptance defect was corrected without weakening the target assertions.
-- Exact-SHA main CI #3046 / run `31252873711` succeeded for `2ee32d075b20dca000f1e10726ba8842b4685434` across the full product matrix including both container builds.
-- Deploy Stage #2887 / run `31253248441` succeeded for the same exact SHA after validating the exact CI deployment-scope artifact.
-- Exact currently deployed image tags are `ghcr.io/dja-tiger/lexigo-web:2ee32d075b20dca000f1e10726ba8842b4685434` and `ghcr.io/dja-tiger/lexigo-api:2ee32d075b20dca000f1e10726ba8842b4685434`; both services were healthy in deployment evidence.
-- Stage PostgreSQL, Redis, API and Web services were healthy; public frontend and API readiness returned HTTP 200 on the first attempt.
+- Verified product `main` before this reconciliation: `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- Latest deployed product SHA: `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- Latest merged Issue #74 product slice is PR #444, final developer-authored head `c38c4504d4f69260256b17f17e8622cec78f1003`, squash product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- PR #444 immutable-head CI #3058 / run `31273755526` succeeded across the full product matrix, including both authoritative UI shards and both container builds.
+- Exact-SHA main CI #3059 / run `31274280827` succeeded for `2b835258477e05f00a7f29fd6972e62853dea1f9` across the full product matrix, including desktop Chromium, Android Chromium, iOS WebKit, visual, accessibility, performance, CSP/PWA and immutable API/Web container publication.
+- Deploy Stage #2900 / run `31274687604` succeeded for the same exact product SHA after validating the exact CI deployment-scope artifact.
+- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:2b835258477e05f00a7f29fd6972e62853dea1f9` and `ghcr.io/dja-tiger/lexigo-api:2b835258477e05f00a7f29fd6972e62853dea1f9`; both services were healthy in deployment evidence.
+- Stage PostgreSQL, Redis, API and Web services were healthy; public frontend root and API readiness returned HTTP 200 on the first attempt.
 - Public browser validation passed 12/12 across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
-- Security baseline from prerequisite PR #431 remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #442 changed no dependency or lockfile version.
-- Issue #74 remains open. The Phrases catalog live-control target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
+- Deployment Issue #12 records Stage `success`, image SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`, deploy `success`, public smoke `success` and public browser `success`.
+- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #444 changed no dependency or lockfile version.
+- Issue #74 remains open. The reusable AsyncStatePanel/system-state recovery-action target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
 - Dependabot PRs #304, #403 and #432 remain unrelated maintenance.
 
 ## Delivery contract
 
 - Product and mixed changes require backend unit/race/integration/security gates plus frontend lint, typecheck, unit, production build, browser matrix, accessibility, visual, performance and container gates.
-- Product delivery requires immutable-head PR CI, review audit, expected-head squash merge, exact-SHA main CI and exact-image stage/public validation.
+- Product delivery requires immutable-head PR CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
 - A green workflow proves only the tests selected by its effective command and configuration. A source file that is not collected by Playwright is not acceptance evidence.
 - Exact deployment claims require immutable image tags, exact CI-scope validation, healthy deployed services, public endpoint smoke and public browser evidence.
-- Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy stage.
+- Pure Agent Docs changes use the fail-closed lightweight classifier and must not deploy Stage.
 - One PR contains one atomic slice. Product work does not continue through stale Agent Harness state.
 - Automatic and manual deploy jobs share `group: deploy-stage` with `cancel-in-progress: true`; only an accepted state-mutating deploy job enters that concurrency group.
-- Skipped workflow-run consumers, including Dependabot-triggered consumers, are not deployment evidence.
-- A GitHub-hosted runner setup failure before checkout is infrastructure evidence only; an exact-job rerun is acceptable only when the workflow run and product SHA remain unchanged and full scope/deploy validation subsequently succeeds.
+- Skipped workflow-run consumers are not deployment evidence.
+- A GitHub-hosted runner setup failure before checkout is infrastructure evidence only; an exact-job rerun is acceptable only when the workflow run and product SHA remain unchanged and all required validation subsequently succeeds.
 
 ## Production ownership foundations
 
@@ -52,7 +53,7 @@
 - PR #391: mobile Lesson Composer disclosure 44/48px targets. Product SHA `0535f6641b6624b5f07266137942c3c5ae73c167`.
 - PR #393: visible Lesson Composer option-radio 44/48px targets. Product SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
 - PR #395: live shared-header streak 44/48px target. Product SHA `346b9690ab6029776eeac614f2d26472160af927`.
-- PR #397: readable rem-responsive canonical mobile-navigation labels and 48px targets under compact width and 200% root-text enlargement. Product SHA `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
+- PR #397: rem-responsive canonical mobile-navigation labels and 48px targets under compact width and 200% root-text enlargement. Product SHA `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
 - PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
 - PR #405: canonical Home `Открыть прогресс` 44/48px target. Product SHA `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
 - PR #407: Phrases `Очистить поиск` contained 44/48px target with separation from `Найти`. Product SHA `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
@@ -61,171 +62,89 @@
 - PR #413: Word Detail related-phrase 44/48px targets with non-overlap. Product SHA `477bccd8f38e648a3ad536dcc58526303297a376`.
 - PR #415: retryable Word Detail related-phrase `Повторить` 44/48px target and same-request recovery. Product SHA `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
 - PR #417: canonical Word Detail true 200% browser-owned Chromium zoom, responsive reflow, containment, de-sticky content, visible focus and no runtime errors. Product SHA `5d864970103479863fc74ad76009a33030842420`.
-- PR #419: Home true-browser-zoom source merged. Product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`; authoritative collection evidence was completed later by PR #426.
-- PR #421: Lesson Composer true-browser-zoom source merged. Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`; authoritative collection evidence was completed later by PR #426.
-- PR #423: Active Lesson true-browser-zoom source merged. Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; authoritative collection evidence was completed later by PR #426.
-- PR #426: repaired the explicit authoritative visual collection, added fail-closed collection/semantic contracts, synchronized dormant Home/Learn/Active tests with current canonical IA/CSS/ARIA behavior and added canonical Phrases true-browser-owned 200% acceptance without product runtime/CSS/API changes. Product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- PR #428: canonical populated Progress actions expose 44px fine-pointer / 48px coarse-pointer effective targets through paint-inert block-axis hit slop while preserving approved painted geometry. Product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- PR #435: canonical Active Lesson utility, recall text-action, confidence-rating and compact Back/Close controls expose 44px fine-pointer / 48px coarse-pointer effective targets through a dedicated paint-inert target owner while preserving approved 44px painted geometry. Product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
-- PR #442: canonical Phrases catalog topic chips, catalog-kind controls, filter rows, search/lesson/reset/pagination actions and coarse-pointer semantic sort-label target expose 44px fine-pointer / 48px coarse-pointer effective hit surfaces while preserving approved compact painted geometry. Product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
+- PR #419: Home true-browser-zoom source merged. Product SHA `c40cd72a6ffde59f2a795b031b0dac2f3a48a38c`; authoritative collection evidence was completed by PR #426.
+- PR #421: Lesson Composer true-browser-zoom source merged. Product SHA `45ed5a1d5b65887b519807b8726b65cb416a11a4`; authoritative collection evidence was completed by PR #426.
+- PR #423: Active Lesson true-browser-zoom source merged. Product SHA `00774b8a4299d652c1433a5093f18e3265de5e4f`; authoritative collection evidence was completed by PR #426.
+- PR #426: repaired the authoritative visual collection and added fail-closed collection/semantic contracts plus Phrases true-browser-owned 200% acceptance. Product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
+- PR #428: canonical populated Progress actions expose paint-inert 44/48px effective targets. Product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- PR #435: canonical Active Lesson utility, recall, confidence-rating and compact navigation controls expose paint-inert 44/48px effective targets. Product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
+- PR #442: canonical Phrases catalog controls expose 44/48px effective targets while preserving approved compact painted geometry. Product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
+- PR #444: reusable AsyncStatePanel primary/secondary recovery actions expose a 44px fine-pointer border-box target and a border-aware 48px coarse-pointer effective target through paint-inert block-axis hit slop. Product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
 
-## Issue #74 browser-zoom evidence
+## Issue #74 system-state effective-target evidence
 
-PR #426 final authoritative Visual regression evidence on immutable head `10b4cc87d7d4af2f04498506ed758414f76a8e7a`:
+PR #444 final immutable-head evidence on `c38c4504d4f69260256b17f17e8622cec78f1003`:
 
-- CI #2983 / run `31166237906` completed successfully across every required product gate.
-- Visual job `92828059911` reported `Running 141 tests`, `57 passed`, `84 skipped`, `0 failed`.
-- The log explicitly executed the Home, Learn and Active Lesson standalone true-browser-zoom owners, the Phrases browser-owned zoom case and the previously authoritative Word Detail browser-owned zoom case.
-- Home expectations follow the effective 720px CSS boundary rather than assuming a non-existent one-column breakpoint.
-- Learn roving-radio focus evidence targets the checked/tabbable radio instead of a DOM-first `tabindex=-1` item.
-- Home geometry evidence follows the confirmed same-row two-column topology and does not assert contradictory vertical stacking.
-- Home, Learn, Active Lesson and Phrases focus-visible evidence originates from keyboard navigation rather than direct programmatic focus.
-- All eight existing Phrases Light/Dark compact/desktop content-addressed visual cases executed without baseline mismatch or baseline update.
-- Browser-owned zoom is controlled through the established per-tab MV3 mechanism and independently checked through browser/CDP/DOM telemetry as required by the Issue #74 harness rule.
+- Exact product base was docs-only reconciled SHA `f7067b5d30ed944c8431233fbb21ae1d9b27a765` from PR #443.
+- The shared AsyncStatePanel action owner was a confirmed residual gap: routed actions already had a 44px painted button border box but no guaranteed 48px coarse-pointer target.
+- `frontend/app/system-state-touch-targets.css` supplies a narrowly scoped paint-inert pseudo hit surface. Fine pointers keep the normal button border box; coarse pointers add 3px on each block edge and no inline expansion.
+- The 3px coarse inset is border-aware: routed primary/ghost buttons may have a 1px border, so the absolutely positioned pseudo element can start from a 42px padding box; 3px per block edge guarantees a 48px worst-case pseudo surface.
+- `frontend/e2e/system-state-touch-targets.spec.ts` exercises the live Dictionary correlated-error/retry action and is explicitly collected by authoritative UI and accessibility suites.
+- Acceptance runs in desktop Chromium, Android Chromium and iOS WebKit and requires 44/48px minimum effective geometry, four `document.elementFromPoint` perimeter hits, transparent/borderless/shadowless pseudo paint, visible keyboard focus, retry recovery, preserved query and no horizontal overflow.
+- Effective geometry is measured as the union of the clickable button border box and the transparent pseudo surface; viewport normalization keeps that complete union inside a safe viewport margin before hit probing.
+- Existing visual baselines remained unchanged, confirming the accessibility implementation is paint-inert.
+- Review/thread audit before Ready found no PR comments or review threads; expected-head squash merge used the immutable final developer-authored head.
 
-Post-merge evidence for product SHA `7c641b2eea330363c80e6c666721a31eb5d60b9c`:
+Development failure classification retained for future slices:
 
-- exact-SHA main CI #2984 / run `31167034122`: complete success;
-- Deploy Stage #2826 / run `31167741474`: complete success;
-- exact CI deployment scope validation: success;
-- exact immutable image deployment: success;
-- public frontend/API smoke: success;
-- public browser UI validation: success;
-- deployment Issue #12 confirms both exact images healthy on stage.
+- CI #3050 / run `31253827648` on candidate `6e37feee6dc62b242004e7e53207a34b3f39303b` failed only UI shard 2 because Android Chromium and iOS WebKit missed the lower perimeter point after `scrollIntoViewIfNeeded()`. Size assertions had already passed. Root cause was acceptance viewport normalization, not product CSS; commit `43bbe0edfe9bedfd75e162dcf439710cf3d7d088` centered the owner and kept the complete effective target inside the viewport without weakening any target assertion.
+- CI #3054 / run `31273126592` on candidate `e29649157939c719775fdf5d552a9e2296f818f3` exposed two distinct facts: desktop 42px was an acceptance-model error from measuring the pseudo padding box alone, while Android/iOS 46px was a real product gap because `inset-block: -2px` expanded a 42px pseudo base only to 46px.
+- Product recovery `d9688d649945d3e928df50cc425559ed5cd613f6` changed coarse block inset from -2px to -3px; acceptance recovery `34637795268b65c09b7101a46ef6209a88baebfe` measures the union of the button border box and pseudo surface.
+- Final immutable-head CI #3058 / run `31273755526` completed successfully across the full product matrix on `c38c4504d4f69260256b17f17e8622cec78f1003`.
 
-## Issue #74 Progress effective-target evidence
+Post-merge evidence for product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`:
 
-PR #428 final immutable-head evidence on `b84a88f6f3d250ce54c4098c9847d994361a61d0`:
-
-- CI #2995 / run `31207726893`: complete success across backend, frontend core, browser matrix, accessibility, visual, performance and both container gates.
-- Linux Visual regression passed the existing Progress and calendar-dialog baselines without snapshot updates, proving the accessibility implementation is paint-inert at the approved layout boundary.
-- The Progress target acceptance ran in desktop Chromium, iOS WebKit and Android Chromium and requires actual `document.elementFromPoint` perimeter hits rather than painted-box size alone.
-- Effective target expansion is block-axis only (`inset-inline: 0`), with explicit non-overlap assertions against weak-area status badges and neighboring actions.
-- Weak-area painted buttons intentionally remain below the 44/48px effective minimum; transparent hit slop supplies the accessibility target without redesigning the card layout.
-- Keyboard focus-visible behavior, native `details/summary` disclosure semantics, compact horizontal containment and exact global/topic/source Recall callbacks remain covered.
-
-Post-merge evidence for product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`:
-
-- exact-SHA main CI #2996 / run `31208560099`: complete success;
-- Deploy Stage #2838 / run `31209280600`: complete success;
-- exact CI deployment scope validation: success;
-- exact immutable API/Web image deployment: success;
-- public frontend/API smoke: success;
-- public browser UI validation: 12/12 passed across desktop Chromium and iOS WebKit, including `/progress`;
-- deployment Issue #12 confirms both exact images healthy on stage.
-
-CI failure classification during PR #428 development:
-
-- Initial direct `min-height` expansion produced a real compact visual regression (Progress/calendar-dialog height 1900px -> 1916px). It was not retried or baselined away; production CSS was corrected to the existing paint-inert hit-slop pattern.
-- A later compact Progress hit-test failure was traced from Playwright evidence to `document.elementFromPoint()` receiving off-screen coordinates for the activity disclosure. The test helper was corrected with `scrollIntoViewIfNeeded()` before viewport-relative hit testing; production CSS was intentionally unchanged.
-
-## Security prerequisite after PR #428
-
-PR #431 remediated newly published dependency-audit blockers before the next Issue #74 product slice:
-
-- product/dependency SHA: `a2cb82b2415e0695120ec666b86690cbcd91f12d`;
-- exact-SHA main CI run `31222428133`: success;
-- Deploy Stage #2852 / run `31223081467`: success on the same SHA;
-- PostCSS baseline: `8.5.23`;
-- Nano ID baseline: `3.3.18`;
-- Next remains `16.2.11` and Sharp remains `0.35.3`;
-- this security delivery is a prerequisite preserved by the current deployed product.
-
-## Issue #74 Active Lesson effective-target evidence
-
-PR #435 final immutable-head evidence on `18f3dcd48cbec48ccf7bdb706d43bfab0e48f0fb`:
-
-- PR #435 was recreated from exact reconciled base `c73011f423a5d46afa433bbdff49b9223b0552c0` after docs-only reconciliation #434, rather than carrying stale #433 branch ancestry.
-- CI #3023 / run `31232953312`: complete success across backend, frontend core, full browser matrix, accessibility, visual, performance and both container gates.
-- Review audit before merge found 0 comments, 0 reviews and 0 review threads; the developer-authored head remained immutable through Ready and merge.
-- The route-scoped `frontend/app/active-lesson-touch-targets.css` expands only the effective hit surface to 44px fine-pointer / 48px coarse-pointer minimums; approved painted 44px geometry remains unchanged.
-- Permanent acceptance is explicitly collected by `test:e2e:lesson` and runs on desktop Chromium, iOS WebKit and Android Chromium.
-- Acceptance verifies effective width/height, viewport containment, all four `document.elementFromPoint` perimeter hits, keyboard focus-visible behavior and compact horizontal containment.
-- The first #433 CI exposed a deterministic iOS WebKit test-harness edge case: Playwright scrolled the 44px border box into view but not the larger pseudo hit surface. The retained trace identified `Не знал` as the failing control; the remediation scrolls the expanded target into the viewport without reducing the 48px minimum or weakening perimeter assertions.
-- Linux Visual regression passed without snapshot updates, confirming the final target implementation is paint-inert at the approved layout boundary.
-
-Post-merge evidence for product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`:
-
-- exact-SHA main CI #3024 / run `31233432643`: complete success across the full product matrix;
-- both exact-SHA `api` and `web` container builds succeeded and published immutable GHCR images;
-- Deploy Stage #2865 / run `31233790755`: complete success;
+- exact-SHA main CI #3059 / run `31274280827`: complete success across the full product matrix;
+- authoritative UI shard 1 and shard 2 both completed successfully on the merge SHA;
+- exact-SHA API and Web container builds completed successfully and published immutable GHCR images;
+- Deploy Stage #2900 / run `31274687604`: complete success;
 - exact CI deployment-scope artifact validation: success;
 - exact immutable API/Web image deployment: success;
-- stage `api`, `web`, PostgreSQL and Redis services healthy in deployment evidence;
-- public frontend root returned HTTP 200 on attempt 1;
-- public API readiness returned HTTP 200 on attempt 1;
+- stage PostgreSQL, Redis, API and Web services healthy;
+- public frontend root HTTP 200 on attempt 1;
+- public API readiness HTTP 200 on attempt 1;
 - public smoke passed with expected CSP mode `report-only`;
-- public browser UI validation: 12/12 passed across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery;
-- deployment Issue #12 records `Stage: success`, image SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`, deploy `success`, public smoke `success`, public browser `success`.
-
-## Issue #74 Phrases catalog effective-target evidence
-
-PR #442 final immutable-head evidence on `41bf1fd4212c1f01c9f003943e95deef627ef9c2`:
-
-- Exact product base was `faf466e56e05b6d365b8a0acf14d63a25140a36b`; the base preserved the corrected exact PR #402 historical SHA and canonical idle current-task state.
-- Final PR CI #3045 / run `31252513692` completed successfully across backend, frontend core, full browser matrix, accessibility, visual, performance, CSP/PWA and both container gates.
-- Review audit before merge found 0 reviews and 0 unresolved review threads; expected-head squash merge used the immutable final developer-authored head.
-- `frontend/app/phrases-catalog-touch-targets.css` supplies route-scoped paint-inert target expansion while preserving 36px topic/filter painted geometry, compact search positioning, desktop search containing-block ownership and the approved 44px native sort-select paint box.
-- Topic chips, catalog-kind controls, search/lesson/reset/pagination actions and visible filter rows expose at least 44px fine-pointer / 48px coarse-pointer effective targets; adjacent expanded radio rows remain positively separated.
-- The coarse sort target expands through its semantic wrapping `label`, retains native `label.control` / `select.labels` association and receives a browser-trusted pointer click in label padding outside the painted select.
-- Acceptance is explicitly collected by both authoritative UI and accessibility suites and runs in desktop Chromium, Android Chromium and iOS WebKit.
-- Acceptance proves all four `document.elementFromPoint` perimeter hits for pseudo-expanded controls, 320px/390px horizontal containment and visible keyboard focus through an actual keyboard modality transition.
-- CI #3044 / run `31238883968` on the preceding head failed only the new focus-visible assertion after a trusted pointer probe. Real target and trusted-click assertions already passed. Root cause was test modality: programmatic focus correctly retained pointer modality in Chromium/WebKit. The final test uses `Shift+Tab` then `Tab`, preserving the focus-visible requirement rather than weakening it.
-- The unrelated Issue #75 iOS history case retried successfully during the failed diagnostic run and was not modified by this slice.
-- Existing Phrases content-addressed visual baselines remained unchanged, confirming the effective-target work is paint-inert at the approved visual boundary.
-
-Post-merge evidence for product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`:
-
-- exact-SHA main CI #3046 / run `31252873711`: complete success across the full product matrix;
-- both exact-SHA `api` and `web` container builds succeeded and published immutable GHCR images;
-- Deploy Stage #2887 / run `31253248441`: complete success;
-- exact CI deployment-scope artifact validation: success;
-- exact immutable API/Web image deployment: success;
-- stage PostgreSQL, Redis, API and Web services healthy in deployment evidence;
-- public frontend root returned HTTP 200 on attempt 1;
-- public API readiness returned HTTP 200 on attempt 1;
-- public smoke passed with expected CSP mode `report-only`;
-- public browser UI validation: 12/12 passed across desktop Chromium and iOS WebKit, including `/phrases` and stale-build recovery;
-- deployment reporting records Stage `success`, image SHA `2ee32d075b20dca000f1e10726ba8842b4685434`, deploy `success`, public smoke `success` and public browser `success`.
+- public browser validation: 12/12 passed across desktop Chromium and iOS WebKit;
+- deployment Issue #12 confirms the same exact image SHA and all deploy/public validation states as `success`.
 
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435 and #442 meet their route-specific 44/48px target, spacing, focus and callback contracts.
+- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442 and #444 meet their route-specific 44/48px target, spacing, focus and callback contracts.
 - Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has permanent authoritative true 200% browser-owned zoom evidence.
 - The authoritative collection permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
-- Canonical Phrases has authoritative true-browser-owned 200% zoom evidence plus explicit desktop/mobile real-hit-target acceptance for its catalog controls.
-- Canonical populated Progress has explicit desktop/mobile effective-target and real hit-testing acceptance while preserving approved visual baselines.
-- Canonical Active Lesson utility, recall action, rating and compact navigation controls have explicit desktop/mobile effective-target and real hit-testing acceptance while preserving approved visual geometry.
-- Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance for the delivered slices.
+- Canonical Phrases has authoritative true-browser-owned 200% zoom evidence plus explicit desktop/mobile real-hit-target acceptance for catalog controls.
+- Canonical populated Progress and Active Lesson have explicit desktop/mobile effective-target and real-hit-testing acceptance while preserving approved visual baselines.
+- Reusable AsyncStatePanel recovery actions now have explicit desktop/mobile effective-target, real hit ownership, keyboard focus and live retry-callback acceptance.
+- Expanded targets preserve accessible names, runtime callbacks, navigation/API semantics and compact visual layout for the delivered slices.
 
 Remaining / validation pending:
 
-- Perform the residual whole-application live-control inventory against the Issue #74 affected screens and remediate only controls still confirmed below the 44px fine-pointer / 48px coarse-pointer contracts or with intersecting target geometry.
-- Confirm that all remaining primary, secondary, text-only and icon controls in the affected Header, bottom navigation, Home, Learn, Phrases, Dictionary, Lesson and Progress surfaces are either already covered by canonical shared contracts or receive explicit bounded regression evidence.
+- Perform the residual whole-application live-control inventory against Issue #74 affected screens and remediate only controls still confirmed below the 44px fine-pointer / 48px coarse-pointer contracts or with intersecting target geometry.
+- Confirm all remaining primary, secondary, text-only and icon controls in Header, bottom navigation, Home, Learn, Phrases, Dictionary, Lesson and Progress are either covered by canonical shared contracts or receive explicit bounded regression evidence.
 - Perform final manual acceptance on real physical mobile hardware. This is a required Issue criterion and cannot be replaced by Playwright emulation, desktop browser zoom, root-font enlargement or Stage smoke.
 
 Issue #74 stays open until those remaining criteria are proven.
 
 ## Completed CI/CD control-plane slice
 
-### PR #400 — deploy-job-only stage concurrency
+### PR #400 — deploy-job-only Stage concurrency
 
 - Workflow-level concurrency was removed from `Deploy Stage`.
-- The exact CI-scope job remains unconstrained and fail-closed.
+- Exact CI-scope resolution remains unconstrained and fail-closed.
 - Only an accepted state-mutating deploy job carries `group: deploy-stage` and `cancel-in-progress: true`.
 - Skipped pull-request, Dependabot, docs-only and otherwise non-deployable workflow runs cannot cancel an authoritative deployment.
 - Product SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
 
 ## Current state
 
-- Product PR #442 is merged and fully delivered through immutable-head CI, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Current product runtime and Stage are validated on exact image SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- Repository memory is being reconciled in a docs-only PR from that exact product base; `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset to canonical templates before the next product slice.
+- Product PR #444 is merged and fully delivered through immutable-head CI, clean review audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Current product runtime and Stage are validated on exact image SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- Repository memory is being reconciled in a docs-only PR from that exact product base; `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates before the next product slice.
 - The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
-- Progress, Active Lesson and Phrases catalog effective-target slices are merged and preserved by the current deployed product.
+- Progress, Active Lesson, Phrases catalog and reusable system-state effective-target slices are merged and preserved by the current deployed product.
 - The next product work is residual whole-application Issue #74 live-control inventory; only evidenced gaps should produce additional product slices.
 - Physical-device acceptance remains a separate final manual validation gate and is not claimed by automated browser evidence.
 - Dependabot PRs #304, #403 and #432 remain separate maintenance work.
@@ -233,30 +152,17 @@ Issue #74 stays open until those remaining criteria are proven.
 ## Remaining roadmap
 
 - Issue #74: complete residual live-control audit/remediation and final real-device acceptance; close the Issue only after all mandatory criteria are evidenced.
-- Issue #78 CSP implementation and stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
+- Issue #78 CSP implementation and Stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
 - Dependabot PRs #304, #403 and #432 require separate review, immutable-head CI and deployment treatment according to changed scope.
 - Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices after Issue #74 is completed or explicitly blocked by the manual hardware gate.
 
 ## Reconciliation evidence
 
-- PR #428 merged from final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0` to product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- Production `frontend/app/progress-evidence.css` owns the route-level 44px target token, 48px coarse-pointer override and transparent block-axis hit surface without inline expansion.
-- Existing collected `frontend/e2e/progress-evidence.spec.ts` owns the permanent effective-target, perimeter hit-test, non-overlap, focus and callback contracts.
-- PR #428 CI #2995 / run `31207726893` completed successfully on the exact immutable PR head.
-- Exact-SHA main CI #2996 / run `31208560099` completed successfully on the squash product SHA.
-- Deploy Stage #2838 / run `31209280600` consumed the exact CI scope, deployed exact API/Web image tags for `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and completed public endpoint plus 12/12 public browser validation successfully.
-- Security prerequisite #431 advanced product/dependency runtime to `a2cb82b2415e0695120ec666b86690cbcd91f12d`; exact-SHA main CI run `31222428133` and Deploy Stage #2852 / run `31223081467` both succeeded for that exact SHA.
-- Docs-only reconciliation #434 updated repository memory before the replacement product delivery and merged as `c73011f423a5d46afa433bbdff49b9223b0552c0` after CI #3020 / run `31232770284` validated its one-file Agent Docs scope.
-- Stale PR #433 was closed without merge after its CI artifacts were used to diagnose and correct the iOS WebKit pseudo-target scrolling edge case; its later successful CI was diagnostic only, not merge evidence.
-- PR #435 merged from final developer-authored head `18f3dcd48cbec48ccf7bdb706d43bfab0e48f0fb` to product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
-- PR #435 CI #3023 / run `31232953312` completed successfully on the exact immutable PR head after a clean review/thread audit.
-- Exact-SHA main CI #3024 / run `31233432643` completed successfully on the squash product SHA and published exact API/Web images.
-- Deploy Stage #2865 / run `31233790755` consumed the exact CI scope, deployed exact API/Web image tags for `3ec8b92509d72b3b435779a9ede65adc7222a50a` and completed public endpoint plus 12/12 public browser validation successfully.
-- Docs-only reconciliation #436 merged as `27055d4ea6253dea7d4594c9b838fc0705e799ed`; exact docs-only main CI #3026 / run `31234043180` succeeded without changing the deployed product image.
-- Deployment Issue #12 confirms Stage `success`, exact image SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`, deploy `success`, public smoke `success` and public browser `success`.
-- Docs-only PRs #439 and #441 reconciled live repository facts and restored the exact historical PR #402 product SHA; #441 merged as `faf466e56e05b6d365b8a0acf14d63a25140a36b` and became the exact base for PR #442.
-- PR #442 merged from final developer-authored head `41bf1fd4212c1f01c9f003943e95deef627ef9c2` to product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- PR #442 CI #3045 / run `31252513692`, exact-SHA main CI #3046 / run `31252873711` and Deploy Stage #2887 / run `31253248441` all completed successfully; exact deployed API/Web image tags are the product SHA and public browser validation passed 12/12.
+- Docs-only reconciliation #443 merged as `f7067b5d30ed944c8431233fbb21ae1d9b27a765`; exact docs-only main CI #3049 / run `31253606487` succeeded and became the exact base for PR #444.
+- PR #444 merged from final developer-authored head `c38c4504d4f69260256b17f17e8622cec78f1003` to product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- PR #444 final immutable-head CI #3058 / run `31273755526` completed successfully.
+- Exact-SHA main CI #3059 / run `31274280827` completed successfully and published exact API/Web images.
+- Deploy Stage #2900 / run `31274687604` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus 12/12 public browser validation successfully.
 - Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
