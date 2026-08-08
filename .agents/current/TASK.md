@@ -30,6 +30,7 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 
 ## Allowed paths
 
+- `frontend/app/calendar-reminders.css` — canonical compact weekday layout owner only
 - `frontend/app/calendar-reminder-entry.css`
 - `frontend/app/calendar-reminder-touch-targets.css`
 - `frontend/app/layout.tsx` — stylesheet import only
@@ -51,6 +52,7 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 
 - `frontend/components/calendar-reminder-route-entry.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
+- `frontend/app/calendar-reminders.css`
 - `frontend/app/calendar-reminder-entry.css`
 - `frontend/app/calendar-reminder-touch-targets.css`
 - `frontend/app/layout.tsx`
@@ -69,6 +71,7 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 - Route disclosure remains independently operable from streak/profile targets.
 - Hit slop is transparent and does not create inline overlap.
 - Seven weekday targets never intersect at compact widths.
+- Compact weekday grid/gap remain owned by `calendar-reminders.css`; the dedicated touch-target stylesheet owns only paint-inert hit surfaces.
 
 ## Acceptance criteria
 
