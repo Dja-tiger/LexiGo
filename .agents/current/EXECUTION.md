@@ -38,6 +38,7 @@ Inputs:
 - Canonical Dictionary catalog component, catalog pagination component and their CSS owners.
 - Existing Dictionary search-clear and Phrases catalog Issue #74 target implementations as repository precedents.
 - Authoritative UI/a11y collection commands and deterministic quality-gate fixtures.
+- CI #3089 / run `31284029667` exact Frontend core job logs for superseded head `38dd2cbbebcf2e288f9197aa10091d774733f08f`.
 
 Files inspected:
 
@@ -52,6 +53,7 @@ Files inspected:
 - `frontend/e2e/catalog-pagination.spec.ts`
 - `frontend/e2e/support/quality-gates.ts`
 - `frontend/package.json`
+- `frontend/package-lock.json`
 - `frontend/app/layout.tsx`
 - `frontend/app/global-feature-style-overlap-source.test.ts`
 
@@ -68,10 +70,13 @@ Actions performed:
 - Added a source contract locking stylesheet import order, live selector ownership, paint-inert declarations and authoritative UI/a11y collection.
 - Rejected the first pre-CI `layout.tsx` candidate after `compare_commits` exposed unintended root-body drift caused by an incomplete file view. Restored exact `main` runtime ownership and retained only the one allowed stylesheet import before accepting the candidate for CI.
 - Opened Draft PR #448 against exact base `80b0a8d3d13f0d7ac12350867eba64f312fe750c`.
+- Classified CI #3089 / run `31284029667`: Frontend core failed at `npm ci` with `ETARGET No matching version found for @types/react-dom@^19.2.8`; no source-quality/browser step executed on that head.
+- Compared branch package metadata to exact `main`/lockfile ownership and confirmed the failing range was accidental scope drift from the earlier full-file package write. Exact `main` and lockfile both use `@types/react-dom: ^19.1.0`.
+- Restored `frontend/package.json` to exact `main` dependency/devDependency metadata while retaining only the two allowed UI/a11y collection insertions. `frontend/package-lock.json` remains unchanged.
 
 Commands or procedures:
 
-GitHub connector exact-ref audit, repository/code search, exact-file reads, bounded branch writes with post-write file/head/default-branch verification, fail-closed base/head diff audit, and immutable-head CI delivery through the repository harness.
+GitHub connector exact-ref audit, repository/code search, exact-file reads, bounded branch writes with post-write file/head/default-branch verification, fail-closed base/head diff audit, exact Actions job-log inspection and immutable-head CI delivery through the repository harness.
 
 Artifacts produced:
 
@@ -85,19 +90,20 @@ Artifacts produced:
 
 Result:
 
-Implementation is complete and the pre-CI diff is bounded to eight allow-listed files with `layout.tsx` import-only and `behind_by=0`. The next developer-authored head is the immutable CI candidate. No Dictionary API, component behavior, dependency, workflow or snapshot file changed.
+The Dictionary product implementation remains unchanged. Two edit-scope defects have been removed: root-layout drift before CI and package dependency drift exposed by CI #3089. The corrected candidate keeps exact `main` runtime/dependency ownership plus the bounded Dictionary target implementation and acceptance.
 
 Failures:
 
-No CI failure yet on this slice. One pre-CI candidate was rejected because an incomplete file view caused unintended `layout.tsx` root-shell drift; the existing fail-closed diff audit caught it before validation and the branch was corrected.
+- Pre-CI candidate: unintended `layout.tsx` root-shell drift from an incomplete file view; rejected before CI.
+- CI #3089 / run `31284029667` on superseded `38dd2cbbebcf2e288f9197aa10091d774733f08f`: deterministic `npm ETARGET` caused by accidental `@types/react-dom ^19.2.8` branch metadata; corrected to exact `main`/lockfile `^19.1.0`. No rerun of that stale head is valid.
 
 Root cause:
 
-The canonical Dictionary catalog intentionally retained compact Figma-backed 34/38/44px painted controls, while earlier Issue #74 remediation covered only the search-clear icon. No interaction-only owner expanded the remaining live catalog controls or reserved separation for coarse stacked hit slop. The rejected root-layout change was an editing-scope error, not a product requirement and not a new failure category.
+The product root cause remains missing effective-target ownership for compact canonical Dictionary catalog controls. The two rejected candidates were editing-scope errors, not product requirements: full-file rewrites carried unrelated root-layout/package metadata that exact-owner reads and fail-closed CI subsequently exposed.
 
 Fallback:
 
-If browser CI fails, inspect exact geometry, hit ownership and trace artifacts before changing painted CSS. Do not enlarge controls or weaken 44/48px assertions unless deterministic evidence proves the canonical visual owner itself must change.
+If the next browser run fails, inspect exact geometry, hit ownership and trace artifacts before changing painted CSS. Do not enlarge controls or weaken 44/48px assertions unless deterministic evidence proves the canonical visual owner itself must change. Do not alter package/lock metadata beyond exact `main` unless the slice explicitly owns a dependency change.
 
 Limitations:
 
@@ -105,4 +111,4 @@ Automated browser evidence cannot satisfy the final physical-device acceptance c
 
 Reusable lesson:
 
-A shared 44px visual component is not automatically coarse-pointer compliant on every route. Route-specific interaction layers may need border-aware 48px event ownership while leaving the shared painted component unchanged. Import-only root-layout scope must remain fail-closed in the pre-CI diff audit.
+A shared 44px visual component is not automatically coarse-pointer compliant on every route. Route-specific interaction layers may need border-aware 48px event ownership while leaving the shared painted component unchanged. Repository metadata and root-shell files must be edited from exact owner state; full-file reconstruction is unacceptable when scope permits only narrow collection/import changes.
