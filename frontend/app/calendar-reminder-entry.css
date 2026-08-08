@@ -93,8 +93,32 @@
 }
 
 .lx-route-reminder-preview .lx-button {
+  position: relative;
   width: 100%;
   margin-top: 2px;
+}
+
+/*
+ * Issue #74: the routed primary button paints a 44px border box but its
+ * absolutely positioned pseudo surface starts from the 42px padding box when
+ * the routed 1px border is present. Three transparent block-axis pixels on
+ * each side therefore guarantee a real 48px coarse-pointer target without
+ * changing the approved preview layout or stealing inline space.
+ */
+.lx-route-reminder-preview .lx-button::before {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+@media (pointer: coarse) {
+  .lx-route-reminder-preview .lx-button::before {
+    inset-block: -3px;
+  }
 }
 
 /*
