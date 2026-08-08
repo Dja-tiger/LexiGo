@@ -228,6 +228,19 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
           expect(sortLabelBox.y).toBeLessThan(sortBox.y - 0.5);
           expect(sortLabelBox.y + sortLabelBox.height).toBeGreaterThan(sortBox.y + sortBox.height + 0.5);
 
+          const semanticAssociation = await sort.evaluate((element) => {
+            const select = element as HTMLSelectElement;
+            const label = select.closest("label");
+            return {
+              labelControlsSelect: label instanceof HTMLLabelElement && label.control === select,
+              selectListsLabel: Boolean(label && select.labels && Array.from(select.labels).includes(label)),
+            };
+          });
+          expect(semanticAssociation).toEqual({
+            labelControlsSelect: true,
+            selectListsLabel: true,
+          });
+
           const hitPoint = {
             x: sortBox.x + sortBox.width / 2,
             y: sortLabelBox.y + 1,
@@ -240,8 +253,37 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
           expect(labelOwnsPaddingHit, "coarse sort-label padding must be a real clickable target outside the painted select")
             .toBe(true);
 
+          await sortLabel.evaluate((element) => {
+            const label = element as HTMLLabelElement;
+            label.dataset.lexigoSortPaddingClick = "pending";
+            label.addEventListener("click", (event) => {
+              const mouseEvent = event as MouseEvent;
+              label.dataset.lexigoSortPaddingClick = [
+                event.isTrusted ? "trusted" : "untrusted",
+                event.target === label ? "label" : "other",
+                String(mouseEvent.clientX),
+                String(mouseEvent.clientY),
+              ].join("|");
+            }, { once: true });
+          });
+
           await page.mouse.click(hitPoint.x, hitPoint.y);
-          await expect(sort).toBeFocused();
+          const clickEvidence = await sortLabel.evaluate((element) => {
+            const raw = (element as HTMLElement).dataset.lexigoSortPaddingClick ?? "";
+            const [trust, target, clientX, clientY] = raw.split("|");
+            return {
+              trusted: trust === "trusted",
+              targetIsLabel: target === "label",
+              clientX: Number(clientX),
+              clientY: Number(clientY),
+            };
+          });
+          expect(clickEvidence.trusted, "coarse sort-label padding must receive a browser-trusted pointer click")
+            .toBe(true);
+          expect(clickEvidence.targetIsLabel, "the padding click must target the semantic label outside the painted select")
+            .toBe(true);
+          expect(Math.abs(clickEvidence.clientX - hitPoint.x)).toBeLessThanOrEqual(1.5);
+          expect(Math.abs(clickEvidence.clientY - hitPoint.y)).toBeLessThanOrEqual(1.5);
         }
       }
 

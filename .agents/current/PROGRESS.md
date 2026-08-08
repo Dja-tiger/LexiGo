@@ -11,19 +11,22 @@
 - Existing Phrases search-clear is independently covered; its compact target expands only toward inline-start and its painted control sits at `right: 80px`, leaving clearance for the submit target.
 - CI #3038 / run `31237309890` diagnosed the first topic-margin regression; relative `var(--ak-space-lg)` compensation restored desktop layout and browser-zoom separation.
 - CI #3039 was cancelled after branch advancement and is not merge evidence.
-- CI #3040 / run `31237750501` on `1b3afc313f84e58d3431f3910d09305ee0e31520` restored desktop Phrases Light/Dark baselines and true 200% browser-zoom no-overlap.
-- CI #3040 Visual job `93053573636` fails only compact Light/Dark: expected `390x1628`, received `390x1678`; retained current and historical green screenshots show `Найти` alone falling into a separate full-width row.
-- Retained compiled CSS proves the source: the mixed route `:is(...)` positioning selector inherits type specificity from `.lx-phrases-topic-chips button`, outranking the submit-only compact override.
-- Concurrent commit `8a8cd37c10cf7b38ecb3e81ce6725fa7e043a7f4` independently removes submit from that mixed selector; commit `477103ee1b69864ba1333215e22aa4ce178a3cee` additionally centers target probes away from fixed mobile-nav occlusion and relaxes compact lesson paint from exact 40px to a legitimate >=40px minimum. Both are preserved.
-- The only live native Phrases select is the catalog-sort select; the filter sidebar contains radio rows, not a select.
+- CI #3040 / run `31237750501` restored desktop Phrases Light/Dark baselines and true 200% browser-zoom no-overlap while isolating the compact submit specificity defect.
+- Concurrent commits `8a8cd37c10cf7b38ecb3e81ce6725fa7e043a7f4` and `477103ee1b69864ba1333215e22aa4ce178a3cee` were inspected and preserved.
+- CI #3043 / run `31238422518` ran on exact head `8ff76253c6ff75a146ae58d664f11d4142bcd390` and proved the production implementation is paint-inert: frontend core, backend unit/security/integration, CSP, accessibility, iOS PWA, controlled service worker, dictionary smoke, performance, lesson, UI shard 1 and Visual regression all succeeded.
+- CI #3043 Visual job `93055344152` restored all existing Phrases compact/desktop Light/Dark content-addressed baselines without snapshot updates and kept true-browser 200% zoom/no-overlap green.
+- Only UI shard 2 job `93055344133` failed: 91 passed, 85 skipped, 2 failed, both in the new Phrases target spec on Android Chromium and iOS WebKit.
+- In both failures every geometry/ownership assertion passed through the coarse sort-label padding hit; only `await expect(sort).toBeFocused()` failed after `page.mouse.click()`.
+- Therefore the red gate is an acceptance-portability defect, not a target-geometry/product-paint defect: automated mobile engines do not provide a portable focus contract for a synthetic mouse activation of a native `<select>` label.
+- Repository search found no existing LexiGo browser contract that requires native-select focus after clicking label padding.
 
 ### Finding
 
-The final candidate must combine the proven specificity fix with two containment/preservation details: desktop submit still needs `position: relative` so its absolute pseudo-element is button-relative, and coarse sort needs a 48px semantic target without changing the approved 44px painted select.
+The coarse sort acceptance must prove the actual requirement — a 48px real clickable semantic target associated with the 44px painted select — without treating platform-specific native-select focus/picker side effects as a cross-browser invariant.
 
 ### Root cause
 
-CSS `:is()` takes the specificity of its most specific argument. Removing submit from the mixed rule fixes compact positioning, but leaving desktop submit static would make its absolute `::before` resolve against the positioned search container. Direct `min-height: 48px` on the native select would change compact visual geometry. Equal-specificity standalone submit rules plus a 48px wrapping-label target solve both without redesign.
+The wrapping `<label>` already owns the padding hit under `document.elementFromPoint`, but Playwright Android/iOS mouse activation does not reliably expose the native select as `document.activeElement`. Requiring focus therefore conflates target delivery with mobile native-picker behavior. Native association plus a browser-trusted click event delivered at the padding point is portable evidence of the target itself; final picker/focus behavior remains part of the mandatory physical-device gate.
 
 ### Changed files
 
@@ -38,21 +41,20 @@ CSS `:is()` takes the specificity of its most specific argument. Removing submit
 ### Checks passed
 
 - Live `main` remains exact PR base `faf466e56e05b6d365b8a0acf14d63a25140a36b`.
-- #3040 confirms desktop baselines and true-browser 200% Phrases no-overlap are restored.
+- #3043 proves unchanged Visual baselines, browser zoom, backend gates and every frontend product group except the two mobile native-focus assertions.
 - New acceptance remains explicitly collected by both `test:e2e:ui` and `test:e2e:a11y`.
-- Existing search-clear geometry was re-read and remains separated from the submit's symmetric target.
-- Concurrent `8a8cd37c...` and `477103ee...` were inspected and retained rather than overwritten.
-- No backend, dependency, lockfile, snapshot or catalog-semantic change is required.
+- Existing search-clear geometry remains separated from the submit target.
+- No backend, dependency, lockfile, snapshot, runtime CSS or catalog-semantic change is required for this remediation.
 
 ### Checks failed
 
-- #3040 compact Phrases Light/Dark baselines remain red because the submit computed to flow layout on that head; #3040 is diagnostic only.
-- A first non-force publication attempt correctly failed when the branch advanced concurrently; no history was overwritten.
+- CI #3043 UI shard 2 job `93055344133`: Android Chromium and iOS WebKit both failed only at `toBeFocused()` after a coarse sort-label padding click; frontend aggregate failed and container builds were correctly skipped.
+- CI #3043 becomes diagnostic only after this acceptance correction and is not merge evidence.
 
 ### Current branch head
 
-- Resolve from live branch after this merged specificity/semantic-label remediation commit.
+- Resolve from live branch after the acceptance-portability remediation commit.
 
 ### Next action
 
-Require a fresh complete immutable-head CI. The candidate must restore exact compact content-addressed baselines without snapshot updates, keep desktop/200% zoom green, execute the UI/a11y target acceptance, prove real coarse label-padding activation, and pass every backend/container/product gate.
+Treat the next head as immutable and require complete full-product CI again. The corrected UI/a11y acceptance must prove 48px label geometry, native label/select association, `elementFromPoint` ownership and a browser-trusted click at the exact padding point while all existing visual/zoom/backend/container gates remain green.
