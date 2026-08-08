@@ -20,13 +20,14 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - Preserve independent targets when compact quick filters wrap to two rows at <=340px and when coarse-pointer panel filters are vertically stacked.
 - Preserve the 44px painted Dictionary topic select while proving a semantic 48px coarse-pointer label target.
 - Add desktop Chromium, Android Chromium and iOS WebKit real-hit acceptance and collect it in authoritative UI/accessibility suites.
+- Update only the content-addressed 768px Dictionary Light visual-baseline metadata after CI #3092 proved the exact intended coarse-pointer row-gap delta.
 
 ## Non-goals
 
 - No Dictionary API, metadata, pagination-data, filtering, sorting, URL-state or history changes.
 - No search-clear change; PR #409 already owns that contract.
 - No result-card, mobile filter-toggle, Word Detail or shared navigation change; those surfaces are already compliant or separately owned.
-- No visual snapshot update unless deterministic product evidence proves an intended painted-layout change.
+- No unrelated visual-baseline update; only the evidenced 768px Dictionary Light content-addressed metadata may move.
 - No dependency, workflow or `.agents/PROJECT_STATE.md` change in this product PR.
 
 ## Allowed paths
@@ -34,6 +35,7 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - `frontend/app/dictionary-catalog-touch-targets.css`
 - `frontend/app/layout.tsx` — stylesheet import only
 - `frontend/e2e/dictionary-catalog-touch-targets.spec.ts`
+- `frontend/e2e/visual-regression.spec.ts` — `DICTIONARY_VISUAL_BASELINES.mediumLight` metadata only after deterministic CI evidence
 - `frontend/package.json` — authoritative UI/a11y collection registration only
 - `frontend/components/dictionary-catalog-touch-target-source.test.ts` — source/ownership contract only if required
 - `.agents/current/TASK.md`
@@ -48,7 +50,7 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - `frontend/components/dictionary-catalog.tsx` behavior/markup unless deterministic acceptance proves a semantic defect that CSS cannot solve.
 - `frontend/app/dictionary-catalog.css` painted geometry unless deterministic evidence proves the canonical owner itself must change.
 - Dependency versions, lockfile or workflows.
-- Existing visual snapshots without deterministic product evidence.
+- Any visual baseline other than `DICTIONARY_VISUAL_BASELINES.mediumLight` without separate deterministic product evidence.
 
 ## Runtime owners
 
@@ -59,6 +61,7 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - `frontend/app/dictionary-catalog-touch-targets.css`
 - `frontend/app/layout.tsx`
 - `frontend/e2e/dictionary-catalog-touch-targets.spec.ts`
+- `frontend/e2e/visual-regression.spec.ts` — content-addressed medium Dictionary baseline metadata only
 
 ## Documentation owners
 
@@ -76,6 +79,7 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - Compact <=340px quick-filter rows remain horizontally contained.
 - Cross-target geometry is compared only in one common coordinate frame.
 - The 44px topic select remains painted at its approved size; coarse-pointer expansion is semantic label padding, not a visual resize.
+- Compact 390px and desktop 1440px Dictionary visual baselines remain unchanged.
 
 ## Acceptance criteria
 
@@ -87,6 +91,7 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - Keyboard focus remains visibly discernible.
 - Representative filter and pagination activation preserves existing navigation/filter behavior.
 - Acceptance is collected by authoritative UI and accessibility suites.
+- The 768px coarse-pointer Dictionary Light baseline records exactly the evidenced +48px vertical growth and immutable screenshot hash from CI #3092; no other baseline moves.
 
 ## Required checks
 
@@ -103,7 +108,8 @@ Close the confirmed live Dictionary catalog interaction gaps in Issue #74 while 
 - At <=340px quick filters wrap into two rows; a 48px target around a 34px painted pill requires enough row gap to keep targets independent.
 - Fixed/mobile navigation can cover off-screen perimeter probes; acceptance must normalize each individual target into a safe viewport before real hit testing.
 - Pairwise overlap must be measured from one shared scroll state.
+- Coarse-pointer row-gap remediation intentionally changes the 768px touch/tablet full-page height; baseline metadata must match the exact CI artifact rather than an unverified local render.
 
 ## Rollback
 
-Remove the Dictionary catalog interaction-only stylesheet, its layout import, dedicated acceptance/source contracts and collection entries. Dictionary filtering/navigation behavior remains otherwise unchanged.
+Remove the Dictionary catalog interaction-only stylesheet, its layout import, dedicated acceptance/source contracts and collection entries, and restore the previous 768px Dictionary Light baseline metadata. Dictionary filtering/navigation behavior remains otherwise unchanged.
