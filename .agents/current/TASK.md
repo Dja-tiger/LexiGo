@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-system-state-targets`
 - Base SHA: `f7067b5d30ed944c8431233fbb21ae1d9b27a765`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #444
 
 ## Objective
 
