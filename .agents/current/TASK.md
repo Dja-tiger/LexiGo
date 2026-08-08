@@ -19,7 +19,7 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 - Guarantee 44/48px effective targets and non-overlap for all seven custom weekday buttons.
 - Reflow custom weekday buttons to four columns on compact widths so independent targets fit at 320–390px.
 - Add collected desktop Chromium, Android Chromium and iOS WebKit hit-ownership acceptance.
-- Record the confirmed scroll-coordinate acceptance failure exposed by CI #3077 as a mandatory reusable geometry rule.
+- Record the confirmed scroll-coordinate acceptance failure exposed by CI #3075 as a mandatory reusable geometry rule.
 
 ## Non-goals
 
