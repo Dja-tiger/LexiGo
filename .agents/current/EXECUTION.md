@@ -35,6 +35,7 @@ Inputs:
 - Canonical Active Lesson presentation/CSS.
 - Established Issue #74 paint-inert hit-slop pattern.
 - Previously reviewed but stale Active Lesson branch, replayed only after exact-base security delivery.
+- CI #3016 lesson-completion logs and retained Playwright report/trace for the deterministic iOS WebKit failure.
 
 Files inspected:
 
@@ -43,6 +44,9 @@ Files inspected:
 - `frontend/app/layout.tsx`
 - `frontend/package.json`
 - existing Issue #74 touch-target CSS/E2E owners
+- `frontend/e2e/active-lesson-touch-targets.spec.ts`
+- CI #3016 `Frontend E2E (Lesson completion)` log
+- CI #3016 `frontend-playwright-report-lesson` screenshot, error context and trace
 
 Actions performed:
 
@@ -52,10 +56,13 @@ Actions performed:
 - Added fail-closed browser acceptance with four-side perimeter hit tests and containment checks.
 - Registered the spec in the authoritative lesson browser command.
 - Preserved dependency versions/lockfile and approved visual baselines.
+- Investigated CI #3016 instead of rerunning it as infrastructure noise: 117 lesson tests passed, 6 skipped, and the new Study target case failed only on iOS WebKit, identically on retry.
+- Used the retained trace to identify the exact failing control as `Не знал` and confirm `locator.scrollIntoViewIfNeeded()` had made only the 44px painted border box visible while the 48px pseudo hit surface still extended ~1.17 CSS px below the viewport.
+- Adjusted only the browser-harness preparation: after Playwright scrolls the element border box, the test scrolls any residual vertical overflow of the expanded target into the viewport, then re-runs the unchanged 48x48, viewport-bound and four-perimeter-hit assertions.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads/writes, branch creation and CI/deployment inspection. Repository changes were made through explicit GitHub contents API refs.
+GitHub connector exact-ref reads/writes, branch creation, CI/deployment inspection, workflow artifact download, and local read-only inspection of the retained Playwright ZIP/trace. Repository changes were made through explicit GitHub contents API refs.
 
 Artifacts produced:
 
@@ -64,22 +71,26 @@ Artifacts produced:
 - root CSS import
 - authoritative lesson-gate collection entry
 - current Agent Harness records
+- inspected CI artifact `frontend-playwright-report-lesson` from run #3016
 
 Result:
 
-PR #433 is ready for immutable-head validation on the post-security exact base.
+The deterministic first-CI failure has a bounded test-setup remediation that preserves all acceptance assertions. The final recorded branch head now requires a fresh full immutable-head CI run before Ready/merge.
 
 Failures:
 
-The earlier stale PR was blocked by a newly published dependency advisory; that prerequisite is now remediated independently and fully delivered.
+- The earlier stale PR was blocked by a newly published dependency advisory; that prerequisite is now remediated independently and fully delivered.
+- CI #3016 failed the lesson-completion job only on iOS WebKit because Playwright's element visibility scroll does not include pseudo-element hit slop. The aggregate quality job failed only as a consequence.
 
 Root cause:
 
-Active Lesson controls had painted 44px minimums but no coarse-pointer 48px effective-target overlay.
+Product root cause: Active Lesson controls had painted 44px minimums but no coarse-pointer 48px effective-target overlay.
+
+CI root cause: the acceptance test initially relied on `scrollIntoViewIfNeeded()` to make the full effective target measurable, but that API only considers the DOM element border box, not the expanded `::before` pointer surface.
 
 Fallback:
 
-If browser acceptance finds interception/containment problems, adjust only the bounded hit-slop selector/geometry; do not weaken perimeter assertions or enlarge painted UI solely to satisfy tests.
+If fresh browser acceptance still finds interception/containment problems, inspect the exact trace and adjust only bounded test setup or hit-slop selector/geometry based on evidence; do not weaken perimeter assertions, reduce the 48px coarse-pointer minimum, or enlarge painted UI solely to satisfy tests.
 
 Limitations:
 
@@ -87,4 +98,4 @@ Automated browser and Stage validation cannot substitute for the final real phys
 
 Reusable lesson:
 
-Standalone Playwright specs must be registered in the repository's explicit authoritative npm test lists; file presence alone does not guarantee CI execution.
+Standalone Playwright specs must be registered in the repository's explicit authoritative npm test lists; file presence alone does not guarantee CI execution. When acceptance measures a pseudo-element pointer surface larger than the painted border box, test scrolling must account for that expanded surface before `elementFromPoint` perimeter checks; otherwise a browser can legitimately consider the painted element visible while part of the effective target remains outside the viewport.
