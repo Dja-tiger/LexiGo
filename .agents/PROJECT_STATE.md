@@ -5,6 +5,7 @@
 - Last verified: 2026-08-08 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
 - Verified product `main` before this reconciliation: `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
+- Repository `main` after docs-only PR #436 is `27055d4ea6253dea7d4594c9b838fc0705e799ed`; CI #3026 / run `31234043180` succeeded for that exact docs-only SHA.
 - Latest deployed product SHA: `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
 - Latest merged Issue #74 product slice is PR #435, final developer-authored head `18f3dcd48cbec48ccf7bdb706d43bfab0e48f0fb`, squash product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
 - Exact-SHA main CI #3024 / run `31233432643` succeeded for `3ec8b92509d72b3b435779a9ede65adc7222a50a` across the full product matrix including both container builds.
@@ -13,7 +14,7 @@
 - Public Stage frontend and API smoke returned HTTP 200 on the first attempt; public browser validation passed 12/12 across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
 - Security baseline from prerequisite PR #431 remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #435 changed no dependency or lockfile version.
 - Issue #74 remains open. The Active Lesson live-control target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
-- Dependabot PRs #304, #305 and #403 remain unrelated maintenance.
+- Dependabot PRs #304, #403 and #432 remain unrelated maintenance.
 
 ## Delivery contract
 
@@ -51,7 +52,7 @@
 - PR #393: visible Lesson Composer option-radio 44/48px targets. Product SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
 - PR #395: live shared-header streak 44/48px target. Product SHA `346b9690ab6029776eeac614f2d26472160af927`.
 - PR #397: readable rem-responsive canonical mobile-navigation labels and 48px targets under compact width and 200% root-text enlargement. Product SHA `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
-- PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
+- PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f2d1182bf5db090`.
 - PR #405: canonical Home `Открыть прогресс` 44/48px target. Product SHA `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
 - PR #407: Phrases `Очистить поиск` contained 44/48px target with separation from `Найти`. Product SHA `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
 - PR #409: Dictionary `Очистить поиск` contained 44/48px target. Product SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
@@ -188,20 +189,20 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Current state
 
-- Repository-memory reconciliation is active on docs-only branch `docs/reconcile-project-state-3ec8-issue74-active`; no product/runtime file is allowed in that diff.
+- Repository memory is reconciled through docs-only PR #436; no Issue #74 product slice is currently active, and stale PR #435 current-task records are reset to canonical templates before the next product slice.
 - Current product runtime and Stage are validated on exact image SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a` after PR #435.
 - PR #435 is merged and fully delivered through immutable-head CI, exact-SHA main CI and exact-image Stage/public validation.
 - The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
 - The Progress and Active Lesson effective-target slices are merged and preserved by the current deployed product.
 - The next product work is residual whole-application Issue #74 live-control inventory; only evidenced gaps should produce additional product slices.
 - Physical-device acceptance remains a separate final manual validation gate and is not claimed by automated browser evidence.
-- Dependabot PRs #304, #305 and #403 remain separate maintenance work.
+- Dependabot PRs #304, #403 and #432 remain separate maintenance work.
 
 ## Remaining roadmap
 
 - Issue #74: complete residual live-control audit/remediation and final real-device acceptance; close the Issue only after all mandatory criteria are evidenced.
 - Issue #78 CSP implementation and stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
-- Dependabot PRs #304, #305 and #403 require separate review, immutable-head CI and deployment treatment according to changed scope.
+- Dependabot PRs #304, #403 and #432 require separate review, immutable-head CI and deployment treatment according to changed scope.
 - Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices after Issue #74 is completed or explicitly blocked by the manual hardware gate.
 
 ## Reconciliation evidence
@@ -219,6 +220,7 @@ Issue #74 stays open until those remaining criteria are proven.
 - PR #435 CI #3023 / run `31232953312` completed successfully on the exact immutable PR head after a clean review/thread audit.
 - Exact-SHA main CI #3024 / run `31233432643` completed successfully on the squash product SHA and published exact API/Web images.
 - Deploy Stage #2865 / run `31233790755` consumed the exact CI scope, deployed exact API/Web image tags for `3ec8b92509d72b3b435779a9ede65adc7222a50a` and completed public endpoint plus 12/12 public browser validation successfully.
+- Docs-only reconciliation #436 merged as `27055d4ea6253dea7d4594c9b838fc0705e799ed`; exact docs-only main CI #3026 / run `31234043180` succeeded without changing the deployed product image.
 - Deployment Issue #12 confirms Stage `success`, exact image SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`, deploy `success`, public smoke `success` and public browser `success`.
 - Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
