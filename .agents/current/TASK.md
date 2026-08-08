@@ -16,9 +16,10 @@ Close the confirmed residual Phrases catalog live-control gap in Issue #74 by pr
 
 - Add a Phrases route-scoped paint-inert hit-slop owner for topic chips, catalog-kind navigation, search/lesson/reset actions, filter radio rows and pagination actions.
 - Keep topic pills at their existing document position while reserving cross-axis scrollport gutter required for the expanded hit surface.
-- Increase the native Phrases filter select to 48px only for coarse pointers because native selects do not expose a reliable pseudo-element hit surface.
+- Preserve the native sort select at its approved 44px painted geometry while expanding its semantic wrapping-label target to 48px for coarse pointers with real clickable padding and compensated outer flow.
 - Increase coarse-pointer radio-row spacing enough to keep expanded 48px targets non-overlapping.
-- Add permanent browser acceptance for effective geometry, four-side hit testing, adjacent radio-row separation, focus and compact overflow.
+- Preserve the compact search submit's canonical absolute positioning and desktop positioned containing block while giving it an independent 44/48px effective target owner.
+- Add permanent browser acceptance for effective geometry, four-side hit testing, adjacent radio-row separation, semantic sort-label activation, focus and compact overflow.
 - Register the acceptance in authoritative UI and accessibility browser collections.
 
 ## Non-goals
@@ -70,6 +71,9 @@ Close the confirmed residual Phrases catalog live-control gap in Issue #74 by pr
 ## Invariants
 
 - Topic-chip and radio-row painted height remains 36px.
+- Compact search submit remains absolute inside the search field at its approved 36px painted height; compact lesson action remains at least its 40px minimum.
+- Desktop search submit remains positioned relative so its absolute pseudo target is contained by the button rather than the search container.
+- Native sort select remains 44px painted while its coarse semantic label target is at least 48px and forwards activation to the select.
 - Topic pills retain their prior document position and downstream flow despite the scrollport-gutter reservation.
 - Fine-pointer effective target is at least 44px; coarse-pointer target is at least 48px.
 - Expanded adjacent radio-row targets do not overlap.
@@ -81,10 +85,12 @@ Close the confirmed residual Phrases catalog live-control gap in Issue #74 by pr
 
 - Phrases topic chips expose at least 44/48px effective hit surfaces while retaining 36px painted height and contained hit geometry.
 - Filter radio rows expose at least 44/48px effective hit surfaces with positive separation from adjacent rows on fine-pointer desktop and coarse-pointer 820px touch layout.
-- Catalog-kind and 44px action controls expose at least 44/48px effective targets.
-- Native sort select is at least 44px fine / 48px coarse.
-- Four perimeter hit-test points resolve to the owning pseudo-expanded control.
+- Catalog-kind and compact/search/lesson actions expose at least 44/48px effective targets while preserving canonical painted geometry.
+- Compact search submit computes to `position: absolute`; desktop submit computes to `position: relative` for pseudo-target containment.
+- Native sort select remains at least 44px painted; its wrapping label is at least 48px on coarse pointers, and clicking label padding outside the select focuses the select.
+- Four perimeter hit-test points resolve to the owning pseudo-expanded controls.
 - Keyboard focus remains visible and 320px/390px compact layouts have no horizontal overflow.
+- Existing Phrases content-addressed Light/Dark compact/desktop baselines remain unchanged and true 200% browser-zoom no-overlap remains green.
 - Acceptance runs on desktop Chromium, Android Chromium and iOS WebKit through authoritative UI/a11y collections.
 
 ## Required checks
@@ -99,9 +105,10 @@ Close the confirmed residual Phrases catalog live-control gap in Issue #74 by pr
 ## Risks
 
 - Pseudo hit slop can be clipped by overflow containers or intercept neighbouring controls if scrollport gutter/spacing is insufficient.
-- Compensating negative margin must preserve the previous topic-pill document position and not create target overlap with preceding content.
-- Browser scrolling must account for the pseudo target before perimeter `elementFromPoint` checks.
-- Native form controls require real geometry rather than pseudo hit slop.
+- Mixed `:is()` selectors can inherit maximum argument specificity and silently override responsive geometry owners.
+- Compensating padding/margins must preserve previous painted positions and total outer flow.
+- Semantic label padding must be an actual hit surface and activate/focus the wrapped native select.
+- Fixed mobile navigation can occlude valid targets unless viewport-relative hit probes center the owner first.
 - An unregistered standalone Playwright spec can silently avoid authoritative CI.
 
 ## Rollback

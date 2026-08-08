@@ -7,22 +7,23 @@
 - Prior Active Lesson Issue #74 slice #435 is fully delivered through exact-SHA main CI and Stage/public validation.
 - Current-task reset #437 restored canonical `.agents/current/**` templates.
 - Repository-memory drift from #439 was corrected by #440; exact-SHA main CI #3034 / run `31236793082` succeeded.
-- Concurrent #441 is an empty docs squash: commit `faf466e56e05b6d365b8a0acf14d63a25140a36b` and parent #440 share the exact tree `8e944c4bb8157938da631c426371da0fed824252`.
-- PR #442 remains based exactly on `faf466e56e05b6d365b8a0acf14d63a25140a36b` and within the seven allowed files.
-- Residual Phrases inventory confirms 36px topic-chip buttons and filter radio-row labels plus 44px controls without a coarse-pointer 48px owner.
-- Existing Phrases search-clear is independently covered and excluded from this slice.
-- Compact widths below 768px intentionally hide the desktop filter sidebar; coarse radio-row evidence uses an 820px touch viewport.
-- CI #3038 / run `31237309890` on former live head `e39c252b2a8b6af185b47cb693807e20a4e4761c` proved frontend core, accessibility collection, performance budget, content security and controlled service-worker gates before exposing a deterministic Visual regression failure.
-- Visual logs ran 141 tests and showed only Phrases catalog regressions: compact Light/Dark full-page height `1628 -> 1658`, desktop Light/Dark `1185 -> 1169`, plus 200% browser-zoom overlap between search and topic navigation.
-- The retained log proves this is production layout drift, not a stale-baseline-only failure: `expectNoOverlap(search, topics)` also failed twice.
+- Concurrent #441 is an empty docs squash; PR #442 remains based exactly on `faf466e56e05b6d365b8a0acf14d63a25140a36b` and within the seven allowed files.
+- Existing Phrases search-clear is independently covered; its compact target expands only toward inline-start and its painted control sits at `right: 80px`, leaving clearance for the submit target.
+- CI #3038 / run `31237309890` diagnosed the first topic-margin regression; relative `var(--ak-space-lg)` compensation restored desktop layout and browser-zoom separation.
+- CI #3039 was cancelled after branch advancement and is not merge evidence.
+- CI #3040 / run `31237750501` on `1b3afc313f84e58d3431f3910d09305ee0e31520` restored desktop Phrases Light/Dark baselines and true 200% browser-zoom no-overlap.
+- CI #3040 Visual job `93053573636` fails only compact Light/Dark: expected `390x1628`, received `390x1678`; retained current and historical green screenshots show `Найти` alone falling into a separate full-width row.
+- Retained compiled CSS proves the source: the mixed route `:is(...)` positioning selector inherits type specificity from `.lx-phrases-topic-chips button`, outranking the submit-only compact override.
+- Concurrent commit `8a8cd37c10cf7b38ecb3e81ce6725fa7e043a7f4` independently removes submit from that mixed selector; commit `477103ee1b69864ba1333215e22aa4ce178a3cee` additionally centers target probes away from fixed mobile-nav occlusion and relaxes compact lesson paint from exact 40px to a legitimate >=40px minimum. Both are preserved.
+- The only live native Phrases select is the catalog-sort select; the filter sidebar contains radio rows, not a select.
 
 ### Finding
 
-The first topic-scrollport compensation accidentally replaced the canonical `margin-top: var(--ak-space-lg)` with a negative absolute margin instead of subtracting only the newly added padding delta.
+The final candidate must combine the proven specificity fix with two containment/preservation details: desktop submit still needs `position: relative` so its absolute pseudo-element is button-relative, and coarse sort needs a 48px semantic target without changing the approved 44px painted select.
 
 ### Root cause
 
-`margin-top: -2px` / `-4px` removed the whole canonical topic spacing. The intended math is relative compensation: fine pointer changes top padding `2 -> 4` and therefore must use `calc(var(--ak-space-lg) - 2px)`; coarse changes `2 -> 6` and must use `calc(var(--ak-space-lg) - 4px)`. That preserves the original painted pill Y coordinate and the topic rail's total outer block contribution while still reserving unclipped hit-slop gutter.
+CSS `:is()` takes the specificity of its most specific argument. Removing submit from the mixed rule fixes compact positioning, but leaving desktop submit static would make its absolute `::before` resolve against the positioned search container. Direct `min-height: 48px` on the native select would change compact visual geometry. Equal-specificity standalone submit rules plus a 48px wrapping-label target solve both without redesign.
 
 ### Changed files
 
@@ -36,22 +37,22 @@ The first topic-scrollport compensation accidentally replaced the canonical `mar
 
 ### Checks passed
 
-- Exact live-tip ancestry and seven-file scope.
-- New acceptance is explicitly collected by both `test:e2e:ui` and `test:e2e:a11y`; Accessibility audit on #3038 succeeded.
-- Frontend lint/typecheck/unit/build/dependency audit on #3038 succeeded.
-- Performance budget, content-security and controlled-service-worker gates on #3038 succeeded.
-- No backend, dependency, lockfile, snapshot or catalog-semantic change.
-- Failure classification uses retained Visual job `93052328695`; no baseline update or blind rerun is used.
+- Live `main` remains exact PR base `faf466e56e05b6d365b8a0acf14d63a25140a36b`.
+- #3040 confirms desktop baselines and true-browser 200% Phrases no-overlap are restored.
+- New acceptance remains explicitly collected by both `test:e2e:ui` and `test:e2e:a11y`.
+- Existing search-clear geometry was re-read and remains separated from the submit's symmetric target.
+- Concurrent `8a8cd37c...` and `477103ee...` were inspected and retained rather than overwritten.
+- No backend, dependency, lockfile, snapshot or catalog-semantic change is required.
 
 ### Checks failed
 
-- CI #3038 Visual regression job `93052328695` failed on the former head because absolute negative topic margins changed canonical Phrases layout and caused real browser-zoom overlap.
-- CI #3038 is diagnostic only after this remediation commit and cannot be merge evidence.
+- #3040 compact Phrases Light/Dark baselines remain red because the submit computed to flow layout on that head; #3040 is diagnostic only.
+- A first non-force publication attempt correctly failed when the branch advanced concurrently; no history was overwritten.
 
 ### Current branch head
 
-- Resolve from live branch after the relative-margin remediation commit.
+- Resolve from live branch after this merged specificity/semantic-label remediation commit.
 
 ### Next action
 
-Treat the remediation head as the new immutable candidate; require a fresh complete CI run, with unchanged Phrases content-addressed baselines and the 200% no-overlap contract both green before review/merge.
+Require a fresh complete immutable-head CI. The candidate must restore exact compact content-addressed baselines without snapshot updates, keep desktop/200% zoom green, execute the UI/a11y target acceptance, prove real coarse label-padding activation, and pass every backend/container/product gate.

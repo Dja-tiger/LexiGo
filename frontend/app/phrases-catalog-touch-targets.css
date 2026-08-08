@@ -32,14 +32,24 @@
 }
 
 /*
- * phrases.css owns the compact submit action's absolute positioning. Do not
- * replace that layout contract merely to create a pseudo-element containing
- * block: an absolutely positioned button is already a positioned element.
+ * Keep the submit outside the mixed :is() positioning selector above: its
+ * `.lx-phrases-topic-chips button` arm gives the shared rule type specificity.
+ * Standalone equal-specificity rules let the canonical compact absolute owner
+ * win by source order, while desktop still has a positioned containing block
+ * for the transparent pseudo target.
  */
 .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
   .lx-phrases-search-submit {
+  position: relative;
   --lx-phrases-catalog-touch-target: 44px;
   touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-search-submit {
+    position: absolute;
+  }
 }
 
 .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
@@ -98,9 +108,16 @@
     gap: 14px;
   }
 
-  /* Native select elements do not expose a reliable pseudo-element hit area. */
+  /*
+   * Keep the native sort select at its approved 44px painted geometry. Its
+   * wrapping label contributes 2px of real clickable padding above and below;
+   * matching negative margins preserve the original outer layout while the
+   * semantic label target becomes 48px and forwards activation to the select.
+   */
   .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
-    .lx-phrases-catalog > .lx-catalog-sort select {
-    min-height: 48px;
+    .lx-phrases-catalog > .lx-catalog-sort label {
+    padding-block: 2px;
+    margin-block: -2px;
+    touch-action: manipulation;
   }
 }

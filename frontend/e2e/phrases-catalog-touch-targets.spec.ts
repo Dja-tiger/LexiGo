@@ -197,8 +197,10 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
       const searchSubmit = page.getByRole("button", { name: "Найти", exact: true });
       const submitTarget = await expectEffectiveMinimum(searchSubmit, expectedMinimum);
       if (width < 768) {
+        expect(await searchSubmit.evaluate((element) => window.getComputedStyle(element).position)).toBe("absolute");
         expect(submitTarget.visualHeight).toBeCloseTo(36, 3);
       } else {
+        expect(await searchSubmit.evaluate((element) => window.getComputedStyle(element).position)).toBe("relative");
         expect(submitTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
       }
 
@@ -212,11 +214,35 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
       }
 
       const sort = page.getByRole("combobox", { name: "Сортировка каталога", exact: true });
-      await sort.scrollIntoViewIfNeeded();
-      const sortBox = await sort.boundingBox();
+      const sortLabel = sort.locator("xpath=..");
+      await sortLabel.scrollIntoViewIfNeeded();
+      const [sortBox, sortLabelBox] = await Promise.all([sort.boundingBox(), sortLabel.boundingBox()]);
       expect(sortBox).not.toBeNull();
-      if (sortBox) {
-        expect(sortBox.height).toBeGreaterThanOrEqual(expectedMinimum - 0.5);
+      expect(sortLabelBox).not.toBeNull();
+      if (sortBox && sortLabelBox) {
+        expect(sortBox.height).toBeGreaterThanOrEqual(44 - 0.5);
+        expect(sortLabelBox.height).toBeGreaterThanOrEqual(expectedMinimum - 0.5);
+
+        if (expectedMinimum === 48) {
+          expect(sortBox.height).toBeCloseTo(44, 3);
+          expect(sortLabelBox.y).toBeLessThan(sortBox.y - 0.5);
+          expect(sortLabelBox.y + sortLabelBox.height).toBeGreaterThan(sortBox.y + sortBox.height + 0.5);
+
+          const hitPoint = {
+            x: sortBox.x + sortBox.width / 2,
+            y: sortLabelBox.y + 1,
+          };
+          const labelOwnsPaddingHit = await page.evaluate(({ x, y }) => {
+            const hit = document.elementFromPoint(x, y);
+            const label = document.querySelector(".lx-phrases-catalog > .lx-catalog-sort label");
+            return Boolean(label && (hit === label || (hit instanceof Node && label.contains(hit))));
+          }, hitPoint);
+          expect(labelOwnsPaddingHit, "coarse sort-label padding must be a real clickable target outside the painted select")
+            .toBe(true);
+
+          await page.mouse.click(hitPoint.x, hitPoint.y);
+          await expect(sort).toBeFocused();
+        }
       }
 
       await firstTopic.focus();

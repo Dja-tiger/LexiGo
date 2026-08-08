@@ -35,7 +35,8 @@ Inputs:
 - Live Issue #74 acceptance criteria and current Phrases route/CSS owners.
 - Delivered Phrases search-clear and Active Lesson paint-inert target patterns.
 - Authoritative UI/a11y/visual collections.
-- CI #3038 retained Visual job log `93052328695`.
+- CI #3038 Visual job `93052328695` and CI #3040 Visual job `93053573636`.
+- Retained #3040 visual artifact `9016067521`, historical green baseline artifact `8932166073` and compiled #3040 trace CSS.
 
 Files inspected:
 
@@ -45,28 +46,32 @@ Files inspected:
 - `frontend/app/phrases.css`
 - `frontend/app/phrases-search-clear-touch-targets.css`
 - `frontend/app/information-architecture.css`
+- `frontend/app/catalog-enhancements.css`
 - `frontend/app/catalog-pagination.css`
 - `frontend/app/premium-ui.css`
 - `frontend/app/layout.tsx`
 - `frontend/e2e/phrases-search-clear-touch-targets.spec.ts`
 - `frontend/e2e/phrases-visual.spec.ts`
 - `frontend/e2e/phrases-catalog-touch-targets.spec.ts`
+- `frontend/playwright.visual.config.ts`
 - `frontend/package.json`
 
 Actions performed:
 
-- Reconciled stale current-task/project-state prerequisites before product work and replayed from the exact live base.
-- Added route-scoped 44px fine / 48px coarse transparent effective targets and authoritative browser acceptance.
-- Preserved compact painted control dimensions in the acceptance, including mobile 36px search submit and 40px lesson action.
-- Ran immutable-head CI #3038 on `e39c252b2a8b6af185b47cb693807e20a4e4761c`.
-- Read the exact failed Visual job log instead of updating baselines or retrying blindly.
-- Confirmed four content-addressed Phrases catalog baseline mismatches and a separate 200% browser-zoom `search`/`topics` overlap assertion.
-- Traced both symptoms to the same CSS bug: the compensation margin replaced the base `var(--ak-space-lg)` rather than subtracting only the added scrollport padding.
-- Corrected fine-pointer compensation to `calc(var(--ak-space-lg) - 2px)` and coarse-pointer compensation to `calc(var(--ak-space-lg) - 4px)` while leaving hit-target size, radio spacing and select geometry unchanged.
+- Reconciled current-task/project-state prerequisites and replayed the product slice from exact live base.
+- Added route-scoped 44px fine / 48px coarse targets and authoritative browser acceptance.
+- Classified #3038 from exact Visual logs and corrected topic-scrollport compensation relative to canonical spacing rather than updating baselines.
+- Treated cancelled #3039 as non-evidence.
+- Classified #3040 from exact Visual logs/artifacts: desktop baselines and 200% zoom pass; only compact Light/Dark fail `1628 -> 1678`.
+- Compared current and historical green screenshots and read retained compiled CSS, proving the compact submit was displaced by `:is()` maximum specificity.
+- Preserved concurrent `8a8cd37c...`, which independently removed submit from the mixed high-specificity positioning rule, and `477103ee...`, which centers hit probes away from fixed mobile-nav occlusion and accepts localized lesson controls taller than their 40px minimum.
+- Give submit its own default `position: relative` plus equal-specificity `<768px` `position: absolute`, preserving both desktop pseudo containment and compact canonical placement.
+- Replace direct coarse select resize with paint-inert semantic label expansion: 2px clickable block padding plus `-2px` compensated margins, keeping select paint 44px and label target 48px.
+- Extend acceptance to assert submit computed positioning and to click the sort-label padding outside the painted select, requiring the wrapped select to receive focus.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads/writes, exact failed-job log inspection, Git tree/commit construction, immutable CI/PR lifecycle and deployment inspection.
+GitHub connector exact-ref reads/writes, failed-job log inspection, workflow artifact download, historical/current image comparison, trace CSS inspection, non-force Git tree/commit construction, immutable CI/PR lifecycle and deployment inspection.
 
 Artifacts produced:
 
@@ -75,28 +80,31 @@ Artifacts produced:
 - root CSS import
 - UI/a11y collection registration
 - current Agent Harness records
-- diagnostic evidence from CI #3038 Visual job `93052328695`
+- retained diagnostic evidence from CI #3038 and #3040
 
 Result:
 
-The deterministic Phrases layout regression is corrected without changing approved visual baselines or weakening the 44/48px effective-target contract.
+The current remediation combines all proven fixes without overwriting concurrent branch work, without snapshot updates and without changing approved compact paint. A fresh immutable CI head is required.
 
 Failures:
 
-- CI #3038 Visual regression failed on head `e39c252b2a8b6af185b47cb693807e20a4e4761c`: compact catalog height changed `1628 -> 1658`; desktop catalog height changed `1185 -> 1169`; true 200% browser zoom reported real search/topic overlap.
+- CI #3038: compact/desktop Phrases baseline drift plus true 200% search/topics overlap from wrong topic-margin compensation.
+- CI #3039: cancelled after branch advancement; no product verdict.
+- CI #3040: compact Light/Dark only at `390x1678` vs expected `390x1628`; desktop/200% zoom pass.
+- First publication of an equivalent remediation commit was rejected non-force because the branch advanced; this is expected race protection, not a product failure.
 
 Root cause:
 
-The initial compensation used absolute negative margins (`-2px` / `-4px`), unintentionally deleting the canonical `var(--ak-space-lg)` topic separation. The correct compensation is relative to that owned spacing.
+The residual compact failure is CSS specificity, not a stale baseline. A shared `:is()` rule inherited type specificity from another arm and overrode the compact submit layout owner. Separately, a direct 48px native-select resize would alter paint; the semantic wrapper can own the extra clickable area.
 
 Fallback:
 
-If the fresh immutable CI still detects Phrases geometry drift, inspect the new exact trace/geometry and modify only the route-scoped scrollport/target owner. Do not update content-addressed baselines unless a separately approved product visual change is intended, and do not weaken target-size/perimeter/non-overlap assertions.
+If fresh CI still detects compact drift or semantic-label activation is inconsistent, inspect the exact new trace/geometry before changing CSS. Do not update content-addressed baselines, weaken target/perimeter/non-overlap assertions or resize canonical painted controls without an independently approved visual change.
 
 Limitations:
 
-Automated Chromium/WebKit and Stage validation cannot substitute for the final physical-device acceptance required to close Issue #74.
+Automated Chromium/WebKit and Stage validation cannot substitute for final physical-device acceptance required to close Issue #74.
 
 Reusable lesson:
 
-When compensating accessibility-only padding, preserve the original authored margin expression and subtract only the delta introduced by the accessibility layer. An absolute negative margin can accidentally erase canonical layout spacing while appearing locally symmetrical.
+Mixed `:is()` selectors can acquire specificity from an unrelated arm. Isolate positioned responsive controls into equal-specificity owners when later breakpoint rules must win. Native form controls can gain paint-inert target area through semantic labels when that label contributes real clickable padding and compensated margins.
