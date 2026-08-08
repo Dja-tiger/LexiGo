@@ -1,0 +1,123 @@
+/*
+ * Issue #74 — Phrases catalog effective touch targets.
+ *
+ * phrases.css and information-architecture.css remain the canonical painted
+ * geometry owners. This layer expands only the event surface for live catalog
+ * controls that are smaller than the input-modality target.
+ */
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
+  /*
+   * overflow-x:auto also clips the cross axis. Reserve the 4px fine-pointer
+   * top hit slop inside the scrollport while compensating only the added 2px
+   * so the canonical var(--ak-space-lg) outer spacing and painted pill Y stay
+   * unchanged.
+   */
+  padding-top: 4px;
+  margin-top: calc(var(--ak-space-lg) - 2px);
+}
+
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+  :is(
+    .lx-phrases-topic-chips button,
+    .lx-phrases-sign-in,
+    .lx-phrases-lesson-action,
+    .lx-phrases-reset,
+    .lx-phrases-filters fieldset label,
+    .lx-catalog-kind-navigation button,
+    .lx-catalog-pagination .lx-button
+  ) {
+  position: relative;
+  --lx-phrases-catalog-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+/*
+ * Keep the submit outside the mixed :is() positioning selector above: its
+ * `.lx-phrases-topic-chips button` arm gives the shared rule type specificity.
+ * Standalone equal-specificity rules let the canonical compact absolute owner
+ * win by source order, while desktop still has a positioned containing block
+ * for the transparent pseudo target.
+ */
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+  .lx-phrases-search-submit {
+  position: relative;
+  --lx-phrases-catalog-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-search-submit {
+    position: absolute;
+  }
+}
+
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+  :is(
+    .lx-phrases-topic-chips button,
+    .lx-phrases-sign-in,
+    .lx-phrases-lesson-action,
+    .lx-phrases-search-submit,
+    .lx-phrases-reset,
+    .lx-phrases-filters fieldset label,
+    .lx-catalog-kind-navigation button,
+    .lx-catalog-pagination .lx-button
+  )::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-phrases-catalog-touch-target)) / 2));
+  inset-inline: min(0px, calc((100% - var(--lx-phrases-catalog-touch-target)) / 2));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
+    /*
+     * A 48px target around a 36px pill needs 6px cross-axis clearance. The
+     * base stylesheet already owns 2px top padding, so compensate only the
+     * additional 4px and preserve the canonical outer topic spacing.
+     */
+    padding-top: 6px;
+    margin-top: calc(var(--ak-space-lg) - 4px);
+  }
+
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    :is(
+      .lx-phrases-topic-chips button,
+      .lx-phrases-sign-in,
+      .lx-phrases-lesson-action,
+      .lx-phrases-search-submit,
+      .lx-phrases-reset,
+      .lx-phrases-filters fieldset label,
+      .lx-catalog-kind-navigation button,
+      .lx-catalog-pagination .lx-button
+    ) {
+    --lx-phrases-catalog-touch-target: 48px;
+  }
+
+  /*
+   * A 36px radio row expanded to 48px consumes 6px above and below. The base
+   * 10px fieldset gap would overlap neighbouring targets by 2px, so coarse
+   * pointers receive a 14px gap and retain a 2px separation between targets.
+   */
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-filters fieldset {
+    gap: 14px;
+  }
+
+  /*
+   * Keep the native sort select at its approved 44px painted geometry. Its
+   * wrapping label contributes 2px of real clickable padding above and below;
+   * matching negative margins preserve the original outer layout while the
+   * semantic label target becomes 48px and forwards activation to the select.
+   */
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-catalog > .lx-catalog-sort label {
+    padding-block: 2px;
+    margin-block: -2px;
+    touch-action: manipulation;
+  }
+}
