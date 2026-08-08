@@ -18,7 +18,8 @@ async function scrollEffectiveTargetIntoView(control: Locator): Promise<void> {
      * Playwright visibility is based on the painted control and does not prove
      * that transparent hit slop is clear of fixed mobile chrome. Center the
      * painted owner before viewport-relative elementFromPoint probes, then
-     * keep the complete effective target inside a small viewport margin.
+     * keep the union of the button border box and pseudo hit surface inside a
+     * small viewport margin.
      */
     element.scrollIntoView({ block: "center", inline: "nearest" });
 
@@ -29,8 +30,10 @@ async function scrollEffectiveTargetIntoView(control: Locator): Promise<void> {
     const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
     const topInset = Number.parseFloat(pseudo.top) || 0;
     const bottomInset = Number.parseFloat(pseudo.bottom) || 0;
-    const targetTop = rect.top + borderTop + topInset;
-    const targetBottom = rect.bottom - borderBottom - bottomInset;
+    const pseudoTop = rect.top + borderTop + topInset;
+    const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+    const targetTop = Math.min(rect.top, pseudoTop);
+    const targetBottom = Math.max(rect.bottom, pseudoBottom);
     const margin = 8;
 
     if (targetTop < margin) {
@@ -55,10 +58,14 @@ async function effectiveTarget(control: Locator) {
     const rightInset = Number.parseFloat(pseudo.right) || 0;
     const bottomInset = Number.parseFloat(pseudo.bottom) || 0;
     const leftInset = Number.parseFloat(pseudo.left) || 0;
-    const targetTop = rect.top + borderTop + topInset;
-    const targetRight = rect.right - borderRight - rightInset;
-    const targetBottom = rect.bottom - borderBottom - bottomInset;
-    const targetLeft = rect.left + borderLeft + leftInset;
+    const pseudoTop = rect.top + borderTop + topInset;
+    const pseudoRight = rect.right - borderRight - rightInset;
+    const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+    const pseudoLeft = rect.left + borderLeft + leftInset;
+    const targetTop = Math.min(rect.top, pseudoTop);
+    const targetRight = Math.max(rect.right, pseudoRight);
+    const targetBottom = Math.max(rect.bottom, pseudoBottom);
+    const targetLeft = Math.min(rect.left, pseudoLeft);
     const centerX = (targetLeft + targetRight) / 2;
     const centerY = (targetTop + targetBottom) / 2;
     const perimeterInset = 1;
