@@ -240,14 +240,24 @@ Issue #74 stays open until those remaining criteria are proven.
 ## Reconciliation evidence
 
 - PR #428 merged from final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0` to product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- PR #428 CI #2995 / run `31207726893` completed successfully on the exact immutable PR head; exact-SHA main CI #2996 / run `31208560099` and Deploy Stage #2838 / run `31209280600` also succeeded.
+- Production `frontend/app/progress-evidence.css` owns the route-level 44px target token, 48px coarse-pointer override and transparent block-axis hit surface without inline expansion.
+- Existing collected `frontend/e2e/progress-evidence.spec.ts` owns the permanent effective-target, perimeter hit-test, non-overlap, focus and callback contracts.
+- PR #428 CI #2995 / run `31207726893` completed successfully on the exact immutable PR head.
+- Exact-SHA main CI #2996 / run `31208560099` completed successfully on the squash product SHA.
+- Deploy Stage #2838 / run `31209280600` consumed the exact CI scope, deployed exact API/Web image tags for `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and completed public endpoint plus 12/12 public browser validation successfully.
 - Security prerequisite #431 advanced product/dependency runtime to `a2cb82b2415e0695120ec666b86690cbcd91f12d`; exact-SHA main CI run `31222428133` and Deploy Stage #2852 / run `31223081467` both succeeded for that exact SHA.
-- Docs-only reconciliation #434 merged as `c73011f423a5d46afa433bbdff49b9223b0552c0` before the replacement Active Lesson delivery.
-- PR #435 merged from final developer-authored head `18f3dcd48cbec48ccf7bdb706d43bfab0e48f0fb` to product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`; PR CI #3023 / run `31232953312`, exact-SHA main CI #3024 / run `31233432643` and Deploy Stage #2865 / run `31233790755` all succeeded.
+- Docs-only reconciliation #434 updated repository memory before the replacement product delivery and merged as `c73011f423a5d46afa433bbdff49b9223b0552c0` after CI #3020 / run `31232770284` validated its one-file Agent Docs scope.
+- Stale PR #433 was closed without merge after its CI artifacts were used to diagnose and correct the iOS WebKit pseudo-target scrolling edge case; its later successful CI was diagnostic only, not merge evidence.
+- PR #435 merged from final developer-authored head `18f3dcd48cbec48ccf7bdb706d43bfab0e48f0fb` to product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
+- PR #435 CI #3023 / run `31232953312` completed successfully on the exact immutable PR head after a clean review/thread audit.
+- Exact-SHA main CI #3024 / run `31233432643` completed successfully on the squash product SHA and published exact API/Web images.
+- Deploy Stage #2865 / run `31233790755` consumed the exact CI scope, deployed exact API/Web image tags for `3ec8b92509d72b3b435779a9ede65adc7222a50a` and completed public endpoint plus 12/12 public browser validation successfully.
 - Docs-only reconciliation #436 merged as `27055d4ea6253dea7d4594c9b838fc0705e799ed`; exact docs-only main CI #3026 / run `31234043180` succeeded without changing the deployed product image.
+- Deployment Issue #12 confirms Stage `success`, exact image SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`, deploy `success`, public smoke `success` and public browser `success`.
 - Docs-only PRs #439 and #441 reconciled live repository facts and restored the exact historical PR #402 product SHA; #441 merged as `faf466e56e05b6d365b8a0acf14d63a25140a36b` and became the exact base for PR #442.
 - PR #442 merged from final developer-authored head `41bf1fd4212c1f01c9f003943e95deef627ef9c2` to product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
 - PR #442 CI #3045 / run `31252513692`, exact-SHA main CI #3046 / run `31252873711` and Deploy Stage #2887 / run `31253248441` all completed successfully; exact deployed API/Web image tags are the product SHA and public browser validation passed 12/12.
+- Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
 ## State semantics
