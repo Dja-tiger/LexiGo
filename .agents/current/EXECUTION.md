@@ -13,7 +13,7 @@
 
 Purpose:
 
-Audit the remaining calendar-reminder interaction surface and deliver one bounded production slice with fail-closed cross-browser target evidence.
+Audit the remaining live calendar-reminder interaction surface and deliver one bounded production slice with fail-closed cross-browser target evidence.
 
 Instruction source:
 
@@ -34,14 +34,16 @@ Version or verification date:
 Inputs:
 
 - Live Issue #74 acceptance criteria and prior delivery history.
-- Calendar route-entry component, calendar integration component, calendar CSS and existing dialog/entry browser tests.
-- Existing Issue #74 border-aware effective-target model from system-state, Phrases and Active Lesson slices.
-- PR #446 CI #3064 / run `31275409335` logs and exact failing source-contract output.
+- Calendar route-entry/integration components, calendar CSS and dialog/entry browser tests.
+- CI #3064 / run `31275409335` source-contract logs.
+- CI #3073 / run `31276456917` UI shard artifact `frontend-playwright-report-ui-1`.
 
 Files inspected:
 
 - `frontend/components/calendar-reminder-route-entry.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
+- `frontend/components/lexigo-premium-app.tsx`
+- `frontend/components/lexigo-profile-app.tsx`
 - `frontend/app/calendar-reminder-entry.css`
 - `frontend/app/calendar-reminders.css`
 - `frontend/app/calendar-reminder-touch-targets.css`
@@ -50,57 +52,51 @@ Files inspected:
 - `frontend/components/application-error-boundary.test.ts`
 - `frontend/e2e/calendar-reminder-entry.spec.ts`
 - `frontend/e2e/calendar-dialog-accessibility.spec.ts`
-- `frontend/e2e/visual-regression.spec.ts`
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
+- `frontend/e2e/support/quality-gates.ts`
 - `frontend/package.json`
 - `frontend/app/layout.tsx`
 
 Actions performed:
 
 - Excluded already-compliant route disclosure, form controls and Google/Apple provider buttons.
-- Confirmed live residual controls: route-preview action, Progress-card action, modal close and seven custom weekday buttons.
-- Added transparent block-axis coarse hit slop to routed 44px reminder actions.
+- Added transparent coarse hit slop to the live routed 44px preview action.
 - Added transparent 44/48px owner to the painted 42px close control.
-- Added block-axis weekday hit slop and compact four-column reflow with 10px gaps so 320-390px weekday targets can be independent rather than overlapping.
-- Added dedicated browser acceptance measuring the union of button border box and pseudo surface, four perimeter hits, pairwise weekday non-overlap, focus visibility, callback continuity and overflow.
-- Registered the acceptance in authoritative UI and accessibility collections.
-- Classified CI #3064 instead of retrying it blindly.
-- Reverted unrelated `layout.tsx` root-shell movement so `WebVitalsReporter` and `ServiceWorkerRegistration` remain inside the existing `ApplicationErrorBoundary`; the product PR now uses `layout.tsx` only for the stylesheet import as required.
-- Moved the compact weekday `grid-template-columns` and `gap` change from the dedicated hit-target stylesheet into canonical `calendar-reminders.css`, eliminating three new exact-selector cross-file conflicts without adding an exception to the global conflict manifest.
-- Expanded the current-task allowed/runtime owner inventory to include `calendar-reminders.css` for the compact presentation reflow only.
+- Added weekday hit slop plus compact 4+3 reflow so seven 44/48px targets remain independent at 320–390px.
+- Added browser acceptance measuring border+pseudo effective geometry, real perimeter ownership, pairwise weekday non-overlap, focus-visible and overflow in desktop Chromium, Android Chromium and iOS WebKit; registered it in authoritative UI/a11y collections.
+- Classified CI #3064 and restored unrelated `layout.tsx` root-shell ownership; moved compact weekday presentation to canonical `calendar-reminders.css` rather than weakening the CSS conflict inventory.
+- Classified CI #3073 from its downloaded Playwright report. The failing locator was `.lx-calendar-reminder-card` before geometry checks; all production callers of `CalendarReminderIntegration` use `showCard={false}`.
+- Removed the dead-card assertion and dead-card hit CSS instead of fabricating a fixture or making inaccessible product UI reachable solely for acceptance.
 
 Commands or procedures:
 
-GitHub connector exact-ref audit, repository search, exact-file reads, workflow/job log inspection, classified root-cause recovery, bounded branch writes and post-write blob/head/default-branch verification.
+GitHub connector exact-ref audit, repository/code search, exact-file reads, Actions run/job/artifact inspection, downloaded Playwright report inspection, bounded branch writes and mandatory post-write file/head/default-branch verification.
 
 Artifacts produced:
 
 - `frontend/app/calendar-reminder-touch-targets.css`
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
-- compact 4+3 weekday presentation in canonical `frontend/app/calendar-reminders.css`
-- target owner additions in `calendar-reminder-entry.css`
-- root import and UI/a11y collection entries
+- compact 4+3 weekday presentation in `frontend/app/calendar-reminders.css`
+- route-preview target owner in `frontend/app/calendar-reminder-entry.css`
+- root stylesheet import and UI/a11y collection entries
 - current Agent Harness records
 
 Result:
 
-The pre-recovery candidate `af6bafbab9da5257762407553dc685bdb8c877b1` failed Frontend core in CI #3064 for two deterministic ownership defects. Both defects were fixed at their actual owners without weakening unit/source contracts, target minima, browser coverage or visual gates. The recovered developer-authored head requires a fresh immutable-head full CI.
+Two superseded candidates were rejected for deterministic, classified reasons. The current live-only candidate preserves target minima and browser coverage, removes stale reachability assumptions and requires a fresh immutable-head full CI before delivery.
 
 Failures:
 
-- CI #3064 / run `31275409335`: `global-feature-style-overlap-source.test.ts` found three unclassified cross-file weekday layout conflicts introduced by the new stylesheet.
-- CI #3064 / run `31275409335`: `application-error-boundary.test.ts` found unrelated root-shell ownership drift in `layout.tsx`.
-- Both are deterministic branch defects; no retry of the failed head is valid.
+- CI #3064 / `af6bafbab9da5257762407553dc685bdb8c877b1`: root-shell scope drift plus unclassified CSS ownership conflicts.
+- CI #3073 / `f372b5966a3718e5202c32b9956d7a020af27dd7`: stale dead-card reachability assumption in the new UI acceptance; all other executed product gates passed.
 
 Root cause:
 
-The calendar reminder surface predated the Issue #74 effective-target contract. A 44px routed button is insufficient for coarse-pointer 48px acceptance, the close control is only 42px, and seven 39px compact weekday controls cannot receive independent 44/48px inline targets in a single row.
-
-The first candidate also mixed presentation ownership into a dedicated hit-area stylesheet and accidentally carried unrelated root-layout movement. Fail-closed source contracts correctly rejected both conditions.
+The live calendar reminder surface predates the Issue #74 44/48px effective-target contract. Separately, the initial acceptance inventory treated a dormant `showCard` branch as live even though route/profile owners explicitly pass `false`; fail-closed browser evidence exposed that mismatch.
 
 Fallback:
 
-If browser evidence fails, inspect exact target geometry and hit owner before changing production CSS. Do not weaken 44/48px minima, omit a required browser, allow intersecting weekday targets, classify a new CSS conflict merely to silence the inventory, or update snapshots without deterministic product evidence.
+If the next browser run fails, inspect exact geometry/hit owner and trace artifact before changing production CSS. Do not weaken 44/48px minima, omit required browsers, force clicks, synthesize dead UI, allow intersecting weekday targets, silence CSS ownership with a manifest exception, or update snapshots without deterministic product evidence.
 
 Limitations:
 
@@ -108,4 +104,4 @@ Automated browser and Stage evidence cannot satisfy the final physical-device ac
 
 Reusable lesson:
 
-When a dense seven-item selector cannot geometrically fit independent minimum targets on a compact viewport, transparent inline expansion is invalid; responsive reflow is required so target separation is real rather than nominal. Responsive presentation stays with the canonical feature stylesheet, while a dedicated accessibility stylesheet should own only its paint-inert hit surface when that separation is enforceable by source contracts.
+Reachability is part of acceptance ownership: a target must be proven on a live product path, not by manufacturing dormant markup. Dense compact selectors still require real responsive separation rather than nominal overlapping hit slop.
