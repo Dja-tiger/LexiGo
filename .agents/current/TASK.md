@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-calendar-reminder-targets`
 - Base SHA: `0969a5fdff0484d23099e66d7f4f0b31965a689c`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #446
 
 ## Objective
 
