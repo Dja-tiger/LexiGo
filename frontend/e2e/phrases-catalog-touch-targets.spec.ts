@@ -287,7 +287,15 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
         }
       }
 
+      /*
+       * Exercise :focus-visible through an actual keyboard transition. A direct
+       * Locator.focus() after the trusted pointer probe above preserves the
+       * browser's pointer modality in Chromium/WebKit, so :focus-visible may
+       * correctly remain false even though the control itself is focused.
+       */
       await firstTopic.focus();
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
       await expect(firstTopic).toBeFocused();
       const focus = await firstTopic.evaluate((element) => {
         const style = window.getComputedStyle(element);
