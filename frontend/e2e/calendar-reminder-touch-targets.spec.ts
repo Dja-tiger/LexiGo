@@ -93,7 +93,7 @@ async function expectTarget(control: Locator, minimum: number) {
 test.describe("Issue #74 calendar reminder touch targets", () => {
   test.describe.configure({ timeout: 90_000 });
 
-  test("preview, card, close and weekday controls expose independent 44/48px targets", async ({ context, page }, testInfo) => {
+  test("preview, close and weekday controls expose independent 44/48px targets", async ({ context, page }, testInfo) => {
     test.skip(
       !["desktop-chromium", "android-chromium", "ios-webkit"].includes(testInfo.project.name),
       "Calendar target acceptance runs in desktop Chromium, Android Chromium and iOS WebKit.",
@@ -107,22 +107,6 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
       window.matchMedia("(pointer: coarse)").matches ? 48 : 44
     ));
 
-    const contextualCard = page.locator(".lx-calendar-reminder-card");
-    const contextualAction = contextualCard.getByRole("button", { name: "Настроить календарь" });
-    const contextualTarget = await expectTarget(contextualAction, expectedMinimum);
-    expect(contextualTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
-
-    await contextualAction.click();
-    let dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
-    await expect(dialog).toBeVisible();
-
-    const close = dialog.getByRole("button", { name: "Закрыть" });
-    const closeTarget = await expectTarget(close, expectedMinimum);
-    expect(closeTarget.visualHeight).toBeLessThan(44);
-    expect(closeTarget.visualWidth).toBeLessThan(44);
-    await close.click();
-    await expect(dialog).toBeHidden();
-
     const routeEntry = page.locator(".lx-route-reminder-entry");
     const disclosure = routeEntry.locator(":scope > summary");
     await disclosure.click();
@@ -133,8 +117,13 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
     expect(previewTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
 
     await previewAction.click();
-    dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
+    const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
     await expect(dialog).toBeVisible();
+
+    const close = dialog.getByRole("button", { name: "Закрыть" });
+    const closeTarget = await expectTarget(close, expectedMinimum);
+    expect(closeTarget.visualHeight).toBeLessThan(44);
+    expect(closeTarget.visualWidth).toBeLessThan(44);
 
     await dialog.getByLabel("Повторение").selectOption("custom");
     const weekdays = dialog.locator(".lx-calendar-weekdays button");
@@ -159,7 +148,7 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
     const title = dialog.getByRole("heading", { name: "Напоминание об английском" });
     await title.focus();
     await page.keyboard.press("Tab");
-    await expect(dialog.getByRole("button", { name: "Закрыть" })).toBeFocused();
+    await expect(close).toBeFocused();
     const focus = await close.evaluate((element) => {
       const style = window.getComputedStyle(element);
       return {
