@@ -10,11 +10,11 @@
 
 ## Objective
 
-Close the confirmed calendar-reminder interaction gaps in Issue #74 without changing reminder persistence, calendar-provider behavior or approved non-custom visual states.
+Close the confirmed live calendar-reminder interaction gaps in Issue #74 without changing reminder persistence, calendar-provider behavior or approved non-custom visual states.
 
 ## Scope
 
-- Guarantee 44px fine-pointer / 48px coarse-pointer effective targets for the route preview and Progress-card `Настроить календарь` actions.
+- Guarantee 44px fine-pointer / 48px coarse-pointer effective target for the live route-preview `Настроить календарь` action.
 - Guarantee 44/48px effective target for the calendar modal `Закрыть` button while preserving its 42px painted box.
 - Guarantee 44/48px effective targets and non-overlap for all seven custom weekday buttons.
 - Reflow custom weekday buttons to four columns on compact widths so independent targets fit at 320–390px.
@@ -22,6 +22,7 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 
 ## Non-goals
 
+- No dead `CalendarReminderIntegration(showCard=true)` card contract; all live callers pass `showCard={false}`.
 - No calendar persistence, ICS, Google/Apple provider or dialog lifecycle changes.
 - No provider-button or form-control changes; those already exceed 48px.
 - No route-reminder disclosure change; it already has a 48px production target.
@@ -69,17 +70,18 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 - Existing exact accessible names and native button semantics are unchanged.
 - Calendar settings storage, dialog focus lifecycle and provider callbacks are unchanged.
 - Route disclosure remains independently operable from streak/profile targets.
+- Dead/inaccessible controls are not mounted or made reachable solely to satisfy acceptance.
 - Hit slop is transparent and does not create inline overlap.
 - Seven weekday targets never intersect at compact widths.
-- Compact weekday grid/gap remain owned by `calendar-reminders.css`; the dedicated touch-target stylesheet owns only paint-inert hit surfaces.
+- Compact weekday grid/gap remain owned by `calendar-reminders.css`; the dedicated touch-target stylesheet owns only paint-inert modal hit surfaces.
 
 ## Acceptance criteria
 
-- Route preview and contextual Progress-card actions expose >=44px fine / >=48px coarse effective height and real perimeter hit ownership.
+- Live route-preview action exposes >=44px fine / >=48px coarse effective height and real perimeter hit ownership.
 - Modal close exposes >=44x44 fine / >=48x48 coarse effective target with all four perimeter points owned by the button.
 - Every weekday exposes >=44x44 fine / >=48x48 coarse effective target.
 - Weekday effective rectangles do not intersect at 320/390px compact widths.
-- Keyboard focus remains visible and opening/closing/configuring the dialog retains existing behavior.
+- Keyboard focus remains visible and opening/configuring the dialog retains existing behavior.
 - No horizontal overflow.
 - Acceptance is explicitly collected by authoritative UI and accessibility suites.
 
