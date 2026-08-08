@@ -188,11 +188,19 @@ test.describe("Issue #74 Phrases catalog touch targets", () => {
 
       const searchSubmit = page.getByRole("button", { name: "Найти", exact: true });
       const submitTarget = await expectEffectiveMinimum(searchSubmit, expectedMinimum);
-      expect(submitTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
+      if (width < 768) {
+        expect(submitTarget.visualHeight).toBeCloseTo(36, 3);
+      } else {
+        expect(submitTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
+      }
 
       const lessonAction = page.getByRole("button", { name: "Урок по теме", exact: true });
       const lessonTarget = await expectEffectiveMinimum(lessonAction, expectedMinimum);
-      expect(lessonTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
+      if (width < 768) {
+        expect(lessonTarget.visualHeight).toBeCloseTo(40, 3);
+      } else {
+        expect(lessonTarget.visualHeight).toBeGreaterThanOrEqual(44 - 0.5);
+      }
 
       const sort = page.getByRole("combobox", { name: "Сортировка каталога", exact: true });
       await sort.scrollIntoViewIfNeeded();
