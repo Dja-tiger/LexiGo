@@ -52,7 +52,7 @@
 - PR #393: visible Lesson Composer option-radio 44/48px targets. Product SHA `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
 - PR #395: live shared-header streak 44/48px target. Product SHA `346b9690ab6029776eeac614f2d26472160af927`.
 - PR #397: readable rem-responsive canonical mobile-navigation labels and 48px targets under compact width and 200% root-text enlargement. Product SHA `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
-- PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f2d1182bf5db090`.
+- PR #402: unfinished-lesson `Сбросить` and `Продолжить урок` 44/48px effective targets. Product SHA `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
 - PR #405: canonical Home `Открыть прогресс` 44/48px target. Product SHA `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
 - PR #407: Phrases `Очистить поиск` contained 44/48px target with separation from `Найти`. Product SHA `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
 - PR #409: Dictionary `Очистить поиск` contained 44/48px target. Product SHA `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
@@ -102,7 +102,7 @@ PR #428 final immutable-head evidence on `b84a88f6f3d250ce54c4098c9847d994361a61
 - Weak-area painted buttons intentionally remain below the 44/48px effective minimum; transparent hit slop supplies the accessibility target without redesigning the card layout.
 - Keyboard focus-visible behavior, native `details/summary` disclosure semantics, compact horizontal containment and exact global/topic/source Recall callbacks remain covered.
 
-Post-merge evidence for product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`:
+Post-merge evidence for product SHA `69dc1fd2e893a932dce54c4098c9847d994361a61d0`:
 
 - exact-SHA main CI #2996 / run `31208560099`: complete success;
 - Deploy Stage #2838 / run `31209280600`: complete success;
