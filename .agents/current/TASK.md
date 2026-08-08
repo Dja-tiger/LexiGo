@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-dictionary-catalog-targets`
 - Base SHA: `80b0a8d3d13f0d7ac12350867eba64f312fe750c`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #448
 
 ## Objective
 
