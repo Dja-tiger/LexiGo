@@ -5,8 +5,8 @@
 - Issue: #74 — Increase small touch targets and mobile labels
 - Branch: `fix/issue-74-phrases-catalog-targets-v3`
 - Base SHA: `faf466e56e05b6d365b8a0acf14d63a25140a36b`
-- Head SHA: resolve from live branch ref after these records are committed
-- PR: pending
+- Head SHA: resolve from live branch ref
+- PR: #442
 
 ## Objective
 
@@ -15,7 +15,7 @@ Close the confirmed residual Phrases catalog live-control gap in Issue #74 by pr
 ## Scope
 
 - Add a Phrases route-scoped paint-inert hit-slop owner for topic chips, catalog-kind navigation, search/lesson/reset actions, filter radio rows and pagination actions.
-- Keep the topic pills at their existing document position while reserving cross-axis scrollport gutter required for the expanded hit surface.
+- Keep topic pills at their existing document position while reserving cross-axis scrollport gutter required for the expanded hit surface.
 - Increase the native Phrases filter select to 48px only for coarse pointers because native selects do not expose a reliable pseudo-element hit surface.
 - Increase coarse-pointer radio-row spacing enough to keep expanded 48px targets non-overlapping.
 - Add permanent browser acceptance for effective geometry, four-side hit testing, adjacent radio-row separation, focus and compact overflow.

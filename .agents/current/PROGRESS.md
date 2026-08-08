@@ -5,15 +5,15 @@
 ### Verified
 
 - Prior Active Lesson Issue #74 slice #435 is fully delivered through exact-SHA main CI and Stage/public validation.
-- Completed-task reset #437 passed Agent Docs CI and restored canonical `.agents/current/**` templates.
-- Repository-memory reconciliation #439 introduced a truncated PR #402 squash SHA; clean correction #440 restored the exact GitHub merge SHA and preserved the verified PR #428 product SHA.
-- #440 merged as `100684cd0512c65fcb82585d4dfce4f7d69c2ef4`; exact-SHA main CI #3034 / run `31236793082` succeeded.
-- Concurrent PR #441 then merged an empty tree-equivalent docs commit `faf466e56e05b6d365b8a0acf14d63a25140a36b`: its tree SHA is exactly the same `8e944c4bb8157938da631c426371da0fed824252` as #440, so it changes no repository file or product fact.
-- Residual Phrases inventory confirms live topic-chip buttons and filter radio-row labels retain 36px painted height.
-- Phrases catalog actions and shared catalog-kind buttons retain 44px minimums without a coarse-pointer 48px effective-target owner.
-- Native Phrases filter select retains 44px minimum height and cannot rely on pseudo-element hit slop.
-- Existing Phrases search-clear control is already independently covered by the delivered `phrases-search-clear-touch-targets.css` owner and browser acceptance.
-- Compact widths below 768px intentionally hide the desktop filter sidebar; coarse radio-row evidence therefore requires a wider touch viewport rather than a false 390px/320px expectation.
+- Current-task reset #437 restored canonical `.agents/current/**` templates.
+- Repository-memory drift from #439 was corrected by #440; exact-SHA main CI #3034 / run `31236793082` succeeded.
+- Concurrent #441 is an empty docs squash: commit `faf466e56e05b6d365b8a0acf14d63a25140a36b` and parent #440 share the exact tree `8e944c4bb8157938da631c426371da0fed824252`.
+- The final product replay is based exactly on `faf466e56e05b6d365b8a0acf14d63a25140a36b`.
+- Residual Phrases inventory confirms 36px topic-chip buttons and filter radio-row labels plus 44px controls without a coarse-pointer 48px owner.
+- Existing Phrases search-clear is independently covered and excluded from this slice.
+- Compact widths below 768px intentionally hide the desktop filter sidebar; coarse radio-row evidence therefore uses an 820px touch viewport.
+- Exact pre-PR compare contains only the seven allowed files.
+- PR #442 is open as Draft from the exact final replay branch.
 
 ### Finding
 
@@ -21,7 +21,7 @@ The `/phrases` catalog still contains live controls below the Issue #74 44/48px 
 
 ### Root cause
 
-The Figma-backed Phrases catalog intentionally uses compact 36px chips/radio rows and legacy 44px actions. Those painted dimensions predate the later Issue #74 pointer-modality target contract. In addition, the horizontal topic scroller clips its cross axis, so a nominal pseudo target is not valid unless the scrollport reserves enough transparent gutter.
+The Figma-backed Phrases catalog intentionally uses compact 36px chips/radio rows and legacy 44px actions. Those painted dimensions predate the later Issue #74 pointer-modality target contract. The horizontal topic scroller also clips its cross axis, so a nominal pseudo target is invalid unless the scrollport reserves transparent gutter.
 
 ### Changed files
 
@@ -35,21 +35,21 @@ The Figma-backed Phrases catalog intentionally uses compact 36px chips/radio row
 
 ### Checks passed
 
-- Exact final replay branch is based on live `main` `faf466e56e05b6d365b8a0acf14d63a25140a36b`; its parent tree is byte-identical to the already validated #440 tree.
-- Scope review confirms no backend, dependency, lockfile, snapshot or semantic catalog changes are required.
-- Target geometry preserves topic-pill document position by balancing extra scrollport top padding with a compensating negative margin.
-- Coarse-only radio spacing/select geometry is limited to touch layouts where transparent pseudo hit slop cannot safely satisfy the contract alone.
-- Acceptance distinguishes hidden compact filter sidebar from visible desktop/tablet controls and includes 820px coarse touch evidence.
-- The new browser spec is explicitly present in both `test:e2e:ui` and `test:e2e:a11y` collections.
+- Exact live-tip ancestry and seven-file scope.
+- Target design preserves 36px painted topic pills while supplying 44/48px effective geometry.
+- Coarse-only radio spacing keeps 48px targets positively separated.
+- Native coarse-pointer sort select uses real 48px geometry.
+- New acceptance is explicitly collected by both `test:e2e:ui` and `test:e2e:a11y`.
+- No backend, dependency, lockfile, snapshot or catalog-semantic change.
 
 ### Checks failed
 
-- None yet on the final replay candidate; immutable-head PR CI has not run.
+- None on the final candidate yet; full immutable-head PR CI begins after this PR-record update.
 
 ### Current branch head
 
-- Resolve from live branch after the final replay tree is committed.
+- Resolve from live branch after this atomic PR-record commit.
 
 ### Next action
 
-Commit the bounded seven-file final replay candidate, verify exact branch diff/read-back and unchanged main, open Draft PR, record the PR number in current-task docs, then require complete immutable-head CI. Any deterministic browser or visual failure must be classified from retained evidence before changing production CSS or test expectations.
+Treat the next branch head as immutable; require complete PR #442 CI, classify any deterministic failure from retained evidence, audit comments/reviews/threads, then Ready + expected-head squash merge only if every required gate is green.

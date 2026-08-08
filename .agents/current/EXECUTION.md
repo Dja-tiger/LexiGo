@@ -4,8 +4,8 @@
 
 - Branch: `fix/issue-74-phrases-catalog-targets-v3`
 - Base SHA: `faf466e56e05b6d365b8a0acf14d63a25140a36b`
-- Head SHA: resolve from live branch ref after these records are committed
-- PR: pending
+- Head SHA: resolve from live branch ref
+- PR: #442
 
 ## Skills used
 
@@ -13,7 +13,7 @@
 
 Purpose:
 
-Continue Issue #74 from live GitHub state through the next confirmed Phrases catalog target gap with exact-base writes, authoritative browser collection and full CI/merge/stage evidence.
+Deliver the confirmed Phrases catalog residual target gap through exact-base writes, authoritative browser collection, full immutable-head CI, merge and deployment evidence.
 
 Instruction source:
 
@@ -28,16 +28,15 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-08 Europe/Moscow; final product replay base `faf466e56e05b6d365b8a0acf14d63a25140a36b`. Its tree `8e944c4bb8157938da631c426371da0fed824252` is byte-identical to the already validated #440 tree because concurrent #441 is an empty docs-only squash commit.
+2026-08-08 Europe/Moscow; final replay base `faf466e56e05b6d365b8a0acf14d63a25140a36b`, whose tree is byte-identical to already validated parent #440.
 
 Inputs:
 
 - Live Issue #74 acceptance criteria.
-- Current Phrases catalog presentation and CSS owners.
-- Existing delivered Phrases search-clear hit-slop pattern and browser acceptance.
-- Existing Active Lesson pseudo-target viewport-scrolling lesson.
-- Authoritative frontend UI/a11y test collection commands.
-- Live GitHub PR #402 and #428 merge metadata used to repair repository-memory drift before product writes.
+- Current Phrases catalog presentation/CSS owners.
+- Delivered Phrases search-clear and Active Lesson hit-slop patterns.
+- Authoritative frontend UI/a11y collection commands.
+- Live GitHub historical merge metadata used to repair repository-memory drift before product writes.
 
 Files inspected:
 
@@ -52,30 +51,23 @@ Files inspected:
 - `frontend/app/layout.tsx`
 - `frontend/e2e/phrases-search-clear-touch-targets.spec.ts`
 - `frontend/package.json`
-- GitHub PR #402 and PR #428 metadata
 
 Actions performed:
 
-- Reset completed current-task records independently in #437 before new product work.
-- Detected concurrent #439 main advancement after the first stale candidate write and stopped that branch from becoming a merge candidate.
-- Verified #439 introduced a truncated PR #402 product SHA and independently verified PR #402's exact squash merge SHA from GitHub.
-- Rejected a concurrent correction branch because it also replaced the correct PR #428 squash SHA with the PR developer head; GitHub PR #428 metadata proved the distinction.
-- Delivered clean one-line repository-memory correction #440 through docs-only CI, clean review audit, expected-head squash merge and exact-SHA main CI.
-- Detected concurrent #441 after the second candidate write; verified through Git commit metadata that #441 has exactly the same tree SHA as parent #440 and therefore changes no file, runtime or project-state fact.
-- Replayed the identical bounded product source/test changes one final time from exact live tip `faf466e56e05b6d365b8a0acf14d63a25140a36b` to retain strict main ancestry.
-- Inventoried live Phrases controls and isolated 36px topic chips/radio rows plus 44px controls without coarse-pointer expansion.
-- Kept the previously delivered search-clear owner independent.
-- Designed a route-scoped transparent pseudo hit surface with 44px fine / 48px coarse targets.
-- Reserved topic-scrollport cross-axis gutter while compensating with a negative margin so the painted pill position and downstream flow remain unchanged.
-- Increased coarse-only radio-row gap from 10px to 14px so two 48px expanded targets remain positively separated.
-- Increased the native filter select to 48px only for coarse pointers.
-- Added browser acceptance that measures effective geometry and four `elementFromPoint` perimeter points after scrolling the expanded target into the viewport.
-- Corrected pre-CI test assumptions: search submit may stretch above its 44px minimum, and compact widths intentionally hide the filter sidebar; the test now proves coarse radio rows on an 820px touch viewport instead.
-- Registered the new spec in both authoritative UI and accessibility test collections.
+- Reconciled stale current-task and project-state prerequisites before product work.
+- Stopped stale candidates when concurrent repository-memory changes advanced `main`; verified #441 was tree-identical before the exact-tip final replay.
+- Inventoried live Phrases controls and isolated 36px topic chips/radio rows plus 44px controls without coarse expansion.
+- Kept the already-delivered search-clear owner independent.
+- Added route-scoped transparent pseudo hit surfaces with 44px fine / 48px coarse targets.
+- Reserved topic-scrollport cross-axis gutter with compensating negative margin to preserve painted pill placement/downstream flow.
+- Raised coarse radio-row gap to 14px for positive 48px-target separation and native sort select to 48px.
+- Added effective-geometry and four-perimeter `elementFromPoint` acceptance, including coarse 820px sidebar evidence and compact 390/320 overflow checks.
+- Registered the spec in authoritative UI and accessibility suites.
+- Opened Draft PR #442 from the exact final replay branch.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads/writes, Git tree/commit construction for atomic candidates, immutable branch verification, PR lifecycle, CI/deployment inspection and retained artifact inspection when needed.
+GitHub connector exact-ref reads/writes, Git tree/commit construction, immutable branch verification, PR lifecycle, CI/deployment inspection and retained artifact inspection.
 
 Artifacts produced:
 
@@ -84,30 +76,29 @@ Artifacts produced:
 - root CSS import
 - UI/a11y collection registration
 - current Agent Harness records
-- prerequisite repository-memory correction #440
+- Draft PR #442
 
 Result:
 
-A bounded final-replay Phrases catalog Issue #74 candidate is prepared for exact-diff verification and full immutable-head CI on the exact live repository tip.
+PR #442 is ready for immutable-head CI after this final Agent Harness record update.
 
 Failures:
 
-- Initial pre-PR candidate became stale when concurrent repository-memory reconciliation #439 advanced `main`; it is intentionally not merge evidence.
-- Concurrent correction branch `docs/fix-project-state-pr402-sha` contained one valid PR #402 repair and one invalid PR #428 product-SHA replacement; it is intentionally not used.
-- Second product candidate was based on #440 when concurrent #441 appended a tree-identical empty docs commit; it is also intentionally not used as merge ancestry despite identical file state.
+- Earlier candidates were intentionally abandoned when repository ancestry moved; none is merge evidence.
+- A concurrent repository-memory correction was rejected when it confused PR #428 developer head with squash product SHA; clean #440 correction preserved the verified product SHA.
 
 Root cause:
 
-Compact Phrases catalog controls predate the repository's later pointer-modality target contract; the base CSS therefore encodes 36px/44px painted sizes without an effective 44/48px input surface. Repository-memory drift was a separate prerequisite issue caused by incorrect historical SHA transcription, not by product runtime.
+Compact Phrases catalog controls predate the later pointer-modality target contract, and the horizontal topic scroller can clip pseudo hit slop without explicit cross-axis gutter.
 
 Fallback:
 
-If browser acceptance finds clipping or interception, inspect the exact failing geometry/trace and adjust only the route-scoped gutter, spacing or hit-slop selector based on evidence. Do not weaken target-size/non-overlap assertions or update visual snapshots to conceal a regression.
+If browser acceptance finds clipping/interception, use the retained trace/geometry to adjust only route-scoped gutter, spacing or hit-slop ownership. Do not weaken 44/48px, perimeter-hit or non-overlap assertions, and do not update visual snapshots to conceal a regression.
 
 Limitations:
 
-Automated Chromium/WebKit and Stage validation cannot substitute for final physical-device acceptance required to close Issue #74.
+Automated Chromium/WebKit and Stage validation cannot substitute for the final physical-device acceptance required to close Issue #74.
 
 Reusable lesson:
 
-An expanded pseudo-element target inside a horizontal scroll container needs explicit cross-axis gutter; if preserving visual placement matters, reserve that gutter while compensating its outer flow. Repository-memory SHAs must distinguish a developer-authored PR head from the squash product merge SHA. An empty docs merge with an unchanged tree does not alter product state, but exact-tip replay can still be used to preserve unambiguous ancestry before a product PR.
+Expanded pseudo targets inside scroll containers require explicit cross-axis clearance, and new browser acceptance must be registered in the authoritative collection rather than merely existing as a standalone spec.
