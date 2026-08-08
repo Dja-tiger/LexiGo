@@ -1,27 +1,14 @@
 /*
- * Issue #74: calendar-reminder controls keep their approved painted geometry
- * while their effective hit areas satisfy 44 CSS px on fine pointers and
- * 48 CSS px on coarse pointers.
+ * Issue #74: live calendar-reminder controls keep their approved painted
+ * geometry while their effective hit areas satisfy 44 CSS px on fine pointers
+ * and 48 CSS px on coarse pointers.
  *
- * Routed `.lx-button.primary` controls paint a 44px border box and may carry a
- * 1px border, so their pseudo element starts from a 42px padding box. Three
- * transparent block-axis pixels per side guarantee a 48px coarse target while
- * leaving inline geometry unchanged.
+ * The route-preview action is owned by `calendar-reminder-entry.css`. This
+ * stylesheet owns only modal close and custom-weekday paint-inert hit surfaces.
  */
-.lx-calendar-reminder-card .lx-button,
 .lx-calendar-modal-close,
 .lx-calendar-weekdays button {
   position: relative;
-}
-
-.lx-calendar-reminder-card .lx-button::before {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  box-shadow: none;
-  content: "";
 }
 
 /*
@@ -57,10 +44,6 @@
 }
 
 @media (pointer: coarse) {
-  .lx-calendar-reminder-card .lx-button::before {
-    inset-block: -3px;
-  }
-
   .lx-calendar-modal-close::before {
     inset: -4px;
   }
