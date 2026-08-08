@@ -32,6 +32,18 @@
   touch-action: manipulation;
 }
 
+/*
+ * phrases.css intentionally positions the compact submit action inside the
+ * search field. Keep that painted owner authoritative while the button itself
+ * remains the containing block for the transparent target pseudo-element.
+ */
+@media (max-width: 767px) {
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-search-submit {
+    position: absolute;
+  }
+}
+
 .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
   :is(
     .lx-phrases-topic-chips button,
@@ -90,7 +102,7 @@
 
   /* Native select elements do not expose a reliable pseudo-element hit area. */
   .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
-    .lx-phrases-filters select {
+    .lx-phrases-catalog > .lx-catalog-sort select {
     min-height: 48px;
   }
 }
