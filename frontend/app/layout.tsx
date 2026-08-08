@@ -41,6 +41,7 @@ import "./word-detail-related-phrase-retry-touch-targets.css";
 import "./compact-home.css";
 import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
+import "./calendar-reminder-touch-targets.css";
 import "./adaptive-knowledge-coach-home.css";
 import "./adaptive-knowledge-coach-accessibility.css";
 import "./home-progress-touch-targets.css";
@@ -119,12 +120,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
-          <WebVitalsReporter />
-          <ServiceWorkerRegistration />
           <RoutedLexigoApp />
           {children}
           <LegalFooter />
         </ApplicationErrorBoundary>
+        <WebVitalsReporter />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
