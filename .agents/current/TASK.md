@@ -19,6 +19,7 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 - Guarantee 44/48px effective targets and non-overlap for all seven custom weekday buttons.
 - Reflow custom weekday buttons to four columns on compact widths so independent targets fit at 320–390px.
 - Add collected desktop Chromium, Android Chromium and iOS WebKit hit-ownership acceptance.
+- Record the confirmed scroll-coordinate acceptance failure exposed by CI #3077 as a mandatory reusable geometry rule.
 
 ## Non-goals
 
@@ -37,6 +38,8 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 - `frontend/app/layout.tsx` — stylesheet import only
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 - `frontend/package.json` — UI/a11y collection registration only
+- `.agents/AGENTS.md` — mandatory specialized-rule index entry only
+- `.agents/AGENTS.issue-74-scroll-normalized-geometry.md` — confirmed CI geometry lesson only
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -61,6 +64,8 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 
 ## Documentation owners
 
+- `.agents/AGENTS.md`
+- `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -74,6 +79,7 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 - Hit slop is transparent and does not create inline overlap.
 - Seven weekday targets never intersect at compact widths.
 - Compact weekday grid/gap remain owned by `calendar-reminders.css`; the dedicated touch-target stylesheet owns only paint-inert modal hit surfaces.
+- Pairwise geometry is compared only in one common coordinate frame; scrolling one candidate must not invalidate previously sampled rectangles.
 
 ## Acceptance criteria
 
@@ -99,6 +105,7 @@ Close the confirmed live calendar-reminder interaction gaps in Issue #74 without
 - Pseudo hit slop can overlap neighboring weekday rows if compact row gaps are insufficient.
 - Modal-close hit slop must stay within an unobstructed modal header area.
 - Compact weekday reflow is a deliberate custom-state presentation change and must remain horizontally contained.
+- Viewport-relative geometry sampled across separate scroll states can manufacture false overlap; cross-target comparisons must use one scroll state or a normalized coordinate system.
 
 ## Rollback
 
