@@ -1,0 +1,85 @@
+/*
+ * Issue #74 — Phrases catalog effective touch targets.
+ *
+ * phrases.css and information-architecture.css remain the canonical painted
+ * geometry owners. This layer only expands pointer hit surfaces for live
+ * catalog controls that are visually smaller than the input-modality target.
+ * Topic pills keep their 36px painted height; the horizontal scroller reserves
+ * just enough vertical gutter so their transparent hit slop is not clipped.
+ */
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
+  padding-top: 4px;
+}
+
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+  :is(
+    .lx-phrases-topic-chips button,
+    .lx-phrases-sign-in,
+    .lx-phrases-lesson-action,
+    .lx-phrases-search-submit,
+    .lx-phrases-reset,
+    .lx-phrases-filters fieldset label,
+    .lx-catalog-kind-navigation button,
+    .lx-catalog-pagination .lx-button
+  ) {
+  position: relative;
+  --lx-phrases-catalog-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+  :is(
+    .lx-phrases-topic-chips button,
+    .lx-phrases-sign-in,
+    .lx-phrases-lesson-action,
+    .lx-phrases-search-submit,
+    .lx-phrases-reset,
+    .lx-phrases-filters fieldset label,
+    .lx-catalog-kind-navigation button,
+    .lx-catalog-pagination .lx-button
+  )::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-phrases-catalog-touch-target)) / 2));
+  inset-inline: min(0px, calc((100% - var(--lx-phrases-catalog-touch-target)) / 2));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
+    padding-top: 6px;
+  }
+
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    :is(
+      .lx-phrases-topic-chips button,
+      .lx-phrases-sign-in,
+      .lx-phrases-lesson-action,
+      .lx-phrases-search-submit,
+      .lx-phrases-reset,
+      .lx-phrases-filters fieldset label,
+      .lx-catalog-kind-navigation button,
+      .lx-catalog-pagination .lx-button
+    ) {
+    --lx-phrases-catalog-touch-target: 48px;
+  }
+
+  /*
+   * A 36px radio row expanded to 48px consumes 6px above and below. The base
+   * 10px fieldset gap would overlap neighbouring targets by 2px, so coarse
+   * pointers receive a 14px gap and retain a 2px separation between targets.
+   */
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-filters fieldset {
+    gap: 14px;
+  }
+
+  /* Native select elements do not expose a reliable pseudo-element hit area. */
+  .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
+    .lx-phrases-filters select {
+    min-height: 48px;
+  }
+}

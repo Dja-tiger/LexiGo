@@ -15,6 +15,7 @@ import "./mobile-pwa-fixes.css";
 import "./themed-vocabulary.css";
 import "./phrases.css";
 import "./phrases-search-clear-touch-targets.css";
+import "./phrases-catalog-touch-targets.css";
 import "./catalog-enhancements.css";
 import "./calendar-reminders.css";
 import "./error-boundary.css";
