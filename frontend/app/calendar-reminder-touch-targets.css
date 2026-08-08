@@ -1,0 +1,92 @@
+/*
+ * Issue #74: calendar-reminder controls keep their approved painted geometry
+ * while their effective hit areas satisfy 44 CSS px on fine pointers and
+ * 48 CSS px on coarse pointers.
+ *
+ * Routed `.lx-button.primary` controls paint a 44px border box and may carry a
+ * 1px border, so their pseudo element starts from a 42px padding box. Three
+ * transparent block-axis pixels per side guarantee a 48px coarse target while
+ * leaving inline geometry unchanged.
+ */
+.lx-calendar-reminder-card .lx-button,
+.lx-calendar-modal-close,
+.lx-calendar-weekdays button {
+  position: relative;
+}
+
+.lx-calendar-reminder-card .lx-button::before {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+/*
+ * The close control paints a 42px border box. Its pseudo surface starts from
+ * the 40px padding box, so 2px per edge gives a 44px fine target and 4px per
+ * edge gives a 48px coarse target without enlarging the visible icon button.
+ */
+.lx-calendar-modal-close::before {
+  position: absolute;
+  inset: -2px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+/*
+ * Desktop weekday buttons paint at least 42px high. Expand only the block axis
+ * so adjacent weekday columns never overlap. Compact widths reflow to four
+ * columns because seven independent 44/48px targets cannot fit in one row at
+ * 320-390px without intersecting.
+ */
+.lx-calendar-weekdays button::before {
+  position: absolute;
+  inset-block: -2px;
+  inset-inline: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+@media (pointer: coarse) {
+  .lx-calendar-reminder-card .lx-button::before {
+    inset-block: -3px;
+  }
+
+  .lx-calendar-modal-close::before {
+    inset: -4px;
+  }
+
+  .lx-calendar-weekdays button::before {
+    inset-block: -4px;
+  }
+}
+
+@media (max-width: 440px) {
+  .lx-calendar-weekdays > div {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* The compact painted box remains 39px; 4px around its 37px padding box
+   * yields a 45px fine-pointer target without visible growth. */
+  .lx-calendar-weekdays button::before {
+    inset-block: -4px;
+  }
+}
+
+@media (max-width: 440px) and (pointer: coarse) {
+  /* 37px padding box + 6px on each block edge = 49px coarse target. The 10px
+   * row gap keeps neighboring expanded targets disjoint. */
+  .lx-calendar-weekdays button::before {
+    inset-block: -6px;
+  }
+}
