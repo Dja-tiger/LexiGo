@@ -5,7 +5,7 @@
 - Branch: `fix/issue-74-dictionary-catalog-targets`
 - Base SHA: `80b0a8d3d13f0d7ac12350867eba64f312fe750c`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #448
 
 ## Skills used
 
@@ -66,10 +66,12 @@ Actions performed:
 - Added browser acceptance in desktop Chromium, Android Chromium and iOS WebKit covering all four quick filters, all 18 panel buttons, pagination, real perimeter ownership, common-frame non-overlap, semantic select labeling, visible focus and horizontal containment.
 - Added a deterministic two-page Dictionary response inside the acceptance so shared pagination controls are live and actionable rather than synthetically mounted.
 - Added a source contract locking stylesheet import order, live selector ownership, paint-inert declarations and authoritative UI/a11y collection.
+- Rejected the first pre-CI `layout.tsx` candidate after `compare_commits` exposed unintended root-body drift caused by an incomplete file view. Restored exact `main` runtime ownership and retained only the one allowed stylesheet import before accepting the candidate for CI.
+- Opened Draft PR #448 against exact base `80b0a8d3d13f0d7ac12350867eba64f312fe750c`.
 
 Commands or procedures:
 
-GitHub connector exact-ref audit, repository/code search, exact-file reads, bounded branch writes with post-write file/head/default-branch verification, and final diff/CI delivery through the repository harness.
+GitHub connector exact-ref audit, repository/code search, exact-file reads, bounded branch writes with post-write file/head/default-branch verification, fail-closed base/head diff audit, and immutable-head CI delivery through the repository harness.
 
 Artifacts produced:
 
@@ -78,19 +80,20 @@ Artifacts produced:
 - `frontend/components/dictionary-catalog-touch-target-source.test.ts`
 - one stylesheet import in `frontend/app/layout.tsx`
 - authoritative UI/a11y collection entries in `frontend/package.json`
+- Draft PR #448
 - current Agent Harness records
 
 Result:
 
-Implementation is complete and ready for immutable-head CI. No Dictionary API, component behavior, dependency, workflow or snapshot file changed.
+Implementation is complete and the pre-CI diff is bounded to eight allow-listed files with `layout.tsx` import-only and `behind_by=0`. The next developer-authored head is the immutable CI candidate. No Dictionary API, component behavior, dependency, workflow or snapshot file changed.
 
 Failures:
 
-None yet on this slice; immutable-head CI has not run on the final candidate.
+No CI failure yet on this slice. One pre-CI candidate was rejected because an incomplete file view caused unintended `layout.tsx` root-shell drift; the existing fail-closed diff audit caught it before validation and the branch was corrected.
 
 Root cause:
 
-The canonical Dictionary catalog intentionally retained compact Figma-backed 34/38/44px painted controls, while earlier Issue #74 remediation covered only the search-clear icon. No interaction-only owner expanded the remaining live catalog controls or reserved separation for coarse stacked hit slop.
+The canonical Dictionary catalog intentionally retained compact Figma-backed 34/38/44px painted controls, while earlier Issue #74 remediation covered only the search-clear icon. No interaction-only owner expanded the remaining live catalog controls or reserved separation for coarse stacked hit slop. The rejected root-layout change was an editing-scope error, not a product requirement and not a new failure category.
 
 Fallback:
 
@@ -102,4 +105,4 @@ Automated browser evidence cannot satisfy the final physical-device acceptance c
 
 Reusable lesson:
 
-A shared 44px visual component is not automatically coarse-pointer compliant on every route. Route-specific interaction layers may need border-aware 48px event ownership while leaving the shared painted component unchanged.
+A shared 44px visual component is not automatically coarse-pointer compliant on every route. Route-specific interaction layers may need border-aware 48px event ownership while leaving the shared painted component unchanged. Import-only root-layout scope must remain fail-closed in the pre-CI diff audit.
