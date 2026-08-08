@@ -21,6 +21,11 @@ The coherent live Issue #74 calendar slice is route preview + modal close + cust
 - CI #3073 / run `31276456917` on `f372b5966a3718e5202c32b9956d7a020af27dd7` passed frontend core/build/audit, backend, accessibility, CSP, service worker, PWA keyboard, performance, visual regression, lesson completion and UI shard 2/2. UI shard 1/2 failed deterministically in the new calendar acceptance.
 - The downloaded Playwright artifact `frontend-playwright-report-ui-1` proved the CI #3073 failure occurred before any hit-geometry assertion: the spec expected `.lx-calendar-reminder-card` on `/progress`, but the live route does not render that card. It was a stale reachability assumption, not evidence of pointer overlap or production CSS failure.
 - Following the existing Issue #74 hidden-control precedent, the dead card assertion and its dedicated hit-area CSS were removed rather than adding a synthetic fixture or weakening Playwright actionability.
+- CI #3075 / run `31277262935` on `513a54b9a7e2bf8b1e824b8026a81dda9db8570c` passed Frontend core, backend unit/integration, Content Security, UI shard 1/2, accessibility and iOS PWA dictionary, but UI shard 2/2 failed in the calendar acceptance on Android Chromium and iOS WebKit, including CI retries.
+- Downloaded artifact `frontend-playwright-report-ui-2` / artifact `9027459472` proved all individual coarse-pointer weekday minimum-size and perimeter-hit assertions had already passed. The failure was only `weekday targets 0 and 4 must remain independent`.
+- The trace showed `.lx-calendar-modal` scrolling while individual weekday rectangles were sampled: an earlier frame used `scrollTop=265`, while a later sample used `scrollTop=314`. The test stored viewport-relative `getBoundingClientRect()` values across those different scroll states, manufacturing a false overlap between row 1 and row 2.
+- Production CSS was therefore not changed. The acceptance now keeps the individual actionability/real-hit checks, then re-samples all seven effective target rectangles together through one `evaluateAll` call before pairwise non-overlap comparison.
+- The confirmed coordinate-frame failure is recorded in `.agents/AGENTS.issue-74-scroll-normalized-geometry.md` and indexed as mandatory project guidance.
 
 ### Changed files
 
@@ -30,6 +35,8 @@ The coherent live Issue #74 calendar slice is route preview + modal close + cust
 - `frontend/app/layout.tsx`
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 - `frontend/package.json`
+- `.agents/AGENTS.md`
+- `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -40,17 +47,19 @@ The coherent live Issue #74 calendar slice is route preview + modal close + cust
 - Dedicated acceptance is registered in both authoritative UI and accessibility collections.
 - Root shell is restored to `main` ownership; `layout.tsx` product diff is stylesheet import only.
 - Compact 4+3 weekday layout is owned by `calendar-reminders.css`; dedicated touch-target CSS owns only paint-inert modal close/weekday surfaces.
-- CI #3073 proves the recovery head passes every executed product gate except the stale dead-card assumption in UI shard 1/2; visual baselines remained unchanged.
+- CI #3073 proves the earlier recovery head passed every executed product gate except the stale dead-card assumption in UI shard 1/2; visual baselines remained unchanged.
+- CI #3075 proves the live-only head passed the individual 48px real-hit contract in both failing mobile browser traces; the remaining failure was stale cross-scroll coordinate comparison, not a target-size or overlap defect.
 
 ### Checks failed
 
 - CI #3064: classified Frontend source-contract failures on superseded head `af6bafbab9da5257762407553dc685bdb8c877b1`.
 - CI #3073: classified stale reachability assumption on superseded head `f372b5966a3718e5202c32b9956d7a020af27dd7`; no retry of that head is valid.
+- CI #3075: classified stale viewport-coordinate comparison on superseded head `513a54b9a7e2bf8b1e824b8026a81dda9db8570c`; no production CSS remediation or blind retry is valid.
 
 ### Current branch head
 
-Resolve from live branch ref after the final Agent Harness recovery record is written.
+Resolve from live branch ref after the final Agent Harness execution record is written.
 
 ### Next action
 
-Require a fresh full immutable-head CI on the live-only acceptance. If green, complete clean review/thread audit, mark PR Ready, expected-head squash merge, exact-main CI and exact-image Stage/public validation, then reconcile Agent Harness state in a separate docs PR.
+Require a fresh full immutable-head CI with the common-coordinate geometry repair and mandatory lesson present. If green, complete clean review/thread audit, mark PR Ready, expected-head squash merge, exact-main CI and exact-image Stage/public validation, then reconcile Agent Harness state in a separate docs PR.
