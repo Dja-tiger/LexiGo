@@ -19,13 +19,14 @@
 13. [`AGENTS.issue-132-pg-array-snapshots.md`](./AGENTS.issue-132-pg-array-snapshots.md) — non-null snapshot semantics для пустых PostgreSQL arrays.
 14. [`AGENTS.issue-132-dictionary-input-sync.md`](./AGENTS.issue-132-dictionary-input-sync.md) — controlled-input synchronization без stale initial frame.
 15. [`AGENTS.issue-74-browser-zoom-collection.md`](./AGENTS.issue-74-browser-zoom-collection.md) — authoritative Playwright collection boundary, fail-closed ownership contract и browser-owned zoom evidence.
-16. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
-17. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
-18. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
-19. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
-20. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
-21. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
-22. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
+16. [`AGENTS.issue-74-scroll-normalized-geometry.md`](./AGENTS.issue-74-scroll-normalized-geometry.md) — единый coordinate frame для cross-target geometry внутри scrollable owners и запрет сравнения stale viewport rectangles.
+17. [`SKILLS.md`](./SKILLS.md) — реестр проверенных skills и воспроизводимых project procedures.
+18. [`PROJECT_STATE.md`](./PROJECT_STATE.md) — последнее проверенное состояние проекта, roadmap, validation gaps и update protocol.
+19. [`current/TASK.md`](./current/TASK.md) — текущий atomic slice, scope, non-goals и invariants.
+20. [`current/PROGRESS.md`](./current/PROGRESS.md) — короткий проверяемый журнал фактов.
+21. [`current/EXECUTION.md`](./current/EXECUTION.md) — фактически применённые skills и результаты.
+22. [`../docs/agent-harness.md`](../docs/agent-harness.md) — архитектура repository memory и полный delivery loop.
+23. [`../README.md`](../README.md) и [`../docs/architecture.md`](../docs/architecture.md) — production entrypoints и системные boundaries.
 
 Все специализированные `.agents/AGENTS.*.md` обязательны и применяются совместно. При конфликте более конкретное подтверждённое правило специализированного документа имеет приоритет в своей предметной области. Существующие записи об ошибках нельзя удалять, сокращать до общих формулировок или заменять новым handoff.
 
