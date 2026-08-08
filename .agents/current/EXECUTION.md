@@ -28,15 +28,14 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-08 Europe/Moscow; final replay base `faf466e56e05b6d365b8a0acf14d63a25140a36b`, whose tree is byte-identical to already validated parent #440.
+2026-08-08 Europe/Moscow; PR #442 base remains exact `faf466e56e05b6d365b8a0acf14d63a25140a36b`.
 
 Inputs:
 
-- Live Issue #74 acceptance criteria.
-- Current Phrases catalog presentation/CSS owners.
-- Delivered Phrases search-clear and Active Lesson hit-slop patterns.
-- Authoritative frontend UI/a11y collection commands.
-- Live GitHub historical merge metadata used to repair repository-memory drift before product writes.
+- Live Issue #74 acceptance criteria and current Phrases route/CSS owners.
+- Delivered Phrases search-clear and Active Lesson paint-inert target patterns.
+- Authoritative UI/a11y/visual collections.
+- CI #3038 retained Visual job log `93052328695`.
 
 Files inspected:
 
@@ -50,24 +49,24 @@ Files inspected:
 - `frontend/app/premium-ui.css`
 - `frontend/app/layout.tsx`
 - `frontend/e2e/phrases-search-clear-touch-targets.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/e2e/phrases-catalog-touch-targets.spec.ts`
 - `frontend/package.json`
 
 Actions performed:
 
-- Reconciled stale current-task and project-state prerequisites before product work.
-- Stopped stale candidates when concurrent repository-memory changes advanced `main`; verified #441 was tree-identical before the exact-tip final replay.
-- Inventoried live Phrases controls and isolated 36px topic chips/radio rows plus 44px controls without coarse expansion.
-- Kept the already-delivered search-clear owner independent.
-- Added route-scoped transparent pseudo hit surfaces with 44px fine / 48px coarse targets.
-- Reserved topic-scrollport cross-axis gutter with compensating negative margin to preserve painted pill placement/downstream flow.
-- Raised coarse radio-row gap to 14px for positive 48px-target separation and native sort select to 48px.
-- Added effective-geometry and four-perimeter `elementFromPoint` acceptance, including coarse 820px sidebar evidence and compact 390/320 overflow checks.
-- Registered the spec in authoritative UI and accessibility suites.
-- Opened Draft PR #442 from the exact final replay branch.
+- Reconciled stale current-task/project-state prerequisites before product work and replayed from the exact live base.
+- Added route-scoped 44px fine / 48px coarse transparent effective targets and authoritative browser acceptance.
+- Preserved compact painted control dimensions in the acceptance, including mobile 36px search submit and 40px lesson action.
+- Ran immutable-head CI #3038 on `e39c252b2a8b6af185b47cb693807e20a4e4761c`.
+- Read the exact failed Visual job log instead of updating baselines or retrying blindly.
+- Confirmed four content-addressed Phrases catalog baseline mismatches and a separate 200% browser-zoom `search`/`topics` overlap assertion.
+- Traced both symptoms to the same CSS bug: the compensation margin replaced the base `var(--ak-space-lg)` rather than subtracting only the added scrollport padding.
+- Corrected fine-pointer compensation to `calc(var(--ak-space-lg) - 2px)` and coarse-pointer compensation to `calc(var(--ak-space-lg) - 4px)` while leaving hit-target size, radio spacing and select geometry unchanged.
 
 Commands or procedures:
 
-GitHub connector exact-ref reads/writes, Git tree/commit construction, immutable branch verification, PR lifecycle, CI/deployment inspection and retained artifact inspection.
+GitHub connector exact-ref reads/writes, exact failed-job log inspection, Git tree/commit construction, immutable CI/PR lifecycle and deployment inspection.
 
 Artifacts produced:
 
@@ -76,24 +75,23 @@ Artifacts produced:
 - root CSS import
 - UI/a11y collection registration
 - current Agent Harness records
-- Draft PR #442
+- diagnostic evidence from CI #3038 Visual job `93052328695`
 
 Result:
 
-PR #442 is ready for immutable-head CI after this final Agent Harness record update.
+The deterministic Phrases layout regression is corrected without changing approved visual baselines or weakening the 44/48px effective-target contract.
 
 Failures:
 
-- Earlier candidates were intentionally abandoned when repository ancestry moved; none is merge evidence.
-- A concurrent repository-memory correction was rejected when it confused PR #428 developer head with squash product SHA; clean #440 correction preserved the verified product SHA.
+- CI #3038 Visual regression failed on head `e39c252b2a8b6af185b47cb693807e20a4e4761c`: compact catalog height changed `1628 -> 1658`; desktop catalog height changed `1185 -> 1169`; true 200% browser zoom reported real search/topic overlap.
 
 Root cause:
 
-Compact Phrases catalog controls predate the later pointer-modality target contract, and the horizontal topic scroller can clip pseudo hit slop without explicit cross-axis gutter.
+The initial compensation used absolute negative margins (`-2px` / `-4px`), unintentionally deleting the canonical `var(--ak-space-lg)` topic separation. The correct compensation is relative to that owned spacing.
 
 Fallback:
 
-If browser acceptance finds clipping/interception, use the retained trace/geometry to adjust only route-scoped gutter, spacing or hit-slop ownership. Do not weaken 44/48px, perimeter-hit or non-overlap assertions, and do not update visual snapshots to conceal a regression.
+If the fresh immutable CI still detects Phrases geometry drift, inspect the new exact trace/geometry and modify only the route-scoped scrollport/target owner. Do not update content-addressed baselines unless a separately approved product visual change is intended, and do not weaken target-size/perimeter/non-overlap assertions.
 
 Limitations:
 
@@ -101,4 +99,4 @@ Automated Chromium/WebKit and Stage validation cannot substitute for the final p
 
 Reusable lesson:
 
-Expanded pseudo targets inside scroll containers require explicit cross-axis clearance, and new browser acceptance must be registered in the authoritative collection rather than merely existing as a standalone spec.
+When compensating accessibility-only padding, preserve the original authored margin expression and subtract only the delta introduced by the accessibility layer. An absolute negative margin can accidentally erase canonical layout spacing while appearing locally symmetrical.

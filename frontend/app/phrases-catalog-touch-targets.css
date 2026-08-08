@@ -8,11 +8,12 @@
 .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
   /*
    * overflow-x:auto also clips the cross axis. Reserve the 4px fine-pointer
-   * top hit slop inside the scrollport while compensating with a negative
-   * margin so the painted pills and downstream layout remain in place.
+   * top hit slop inside the scrollport while compensating only the added 2px
+   * so the canonical var(--ak-space-lg) outer spacing and painted pill Y stay
+   * unchanged.
    */
   padding-top: 4px;
-  margin-top: -2px;
+  margin-top: calc(var(--ak-space-lg) - 2px);
 }
 
 .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
@@ -54,9 +55,13 @@
 
 @media (pointer: coarse) {
   .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"]) .lx-phrases-topic-chips {
-    /* 48px target around a 36px pill needs 6px cross-axis clearance. */
+    /*
+     * A 48px target around a 36px pill needs 6px cross-axis clearance. The
+     * base stylesheet already owns 2px top padding, so compensate only the
+     * additional 4px and preserve the canonical outer topic spacing.
+     */
     padding-top: 6px;
-    margin-top: -4px;
+    margin-top: calc(var(--ak-space-lg) - 4px);
   }
 
   .lx-routed-app:is([data-route-path="/phrases"], [data-route-path^="/phrases/"])
