@@ -120,13 +120,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body>
-        <a className="lx-skip-link" href="#main-content">К основному содержимому</a>
         <ApplicationErrorBoundary>
-          <RoutedLexigoApp>{children}</RoutedLexigoApp>
+          <WebVitalsReporter />
+          <ServiceWorkerRegistration />
+          <RoutedLexigoApp />
+          {children}
+          <LegalFooter />
         </ApplicationErrorBoundary>
-        <LegalFooter />
-        <ServiceWorkerRegistration />
-        <WebVitalsReporter />
       </body>
     </html>
   );
