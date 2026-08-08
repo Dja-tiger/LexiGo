@@ -1,0 +1,70 @@
+/*
+ * Issue #74: live calendar-reminder controls keep their approved painted
+ * geometry while their effective hit areas satisfy 44 CSS px on fine pointers
+ * and 48 CSS px on coarse pointers.
+ *
+ * The route-preview action is owned by `calendar-reminder-entry.css`. This
+ * stylesheet owns only modal close and custom-weekday paint-inert hit surfaces.
+ */
+.lx-calendar-modal-close,
+.lx-calendar-weekdays button {
+  position: relative;
+}
+
+/*
+ * The close control paints a 42px border box. Its pseudo surface starts from
+ * the 40px padding box, so 2px per edge gives a 44px fine target and 4px per
+ * edge gives a 48px coarse target without enlarging the visible icon button.
+ */
+.lx-calendar-modal-close::before {
+  position: absolute;
+  inset: -2px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+/*
+ * Desktop weekday buttons paint at least 42px high. Expand only the block axis
+ * so adjacent weekday columns never overlap. The canonical compact 4+3 grid
+ * and its 10px row/column gap remain owned by `calendar-reminders.css`; this
+ * file owns only the paint-inert hit surface.
+ */
+.lx-calendar-weekdays button::before {
+  position: absolute;
+  inset-block: -2px;
+  inset-inline: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+@media (pointer: coarse) {
+  .lx-calendar-modal-close::before {
+    inset: -4px;
+  }
+
+  .lx-calendar-weekdays button::before {
+    inset-block: -4px;
+  }
+}
+
+@media (max-width: 440px) {
+  /* The compact painted box remains 39px; 4px around its 37px padding box
+   * yields a 45px fine-pointer target without visible growth. */
+  .lx-calendar-weekdays button::before {
+    inset-block: -4px;
+  }
+}
+
+@media (max-width: 440px) and (pointer: coarse) {
+  /* 37px padding box + 6px on each block edge = 49px coarse target. The 10px
+   * canonical grid gap keeps neighboring expanded targets disjoint. */
+  .lx-calendar-weekdays button::before {
+    inset-block: -6px;
+  }
+}
