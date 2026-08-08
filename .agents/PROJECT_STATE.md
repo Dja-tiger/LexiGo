@@ -2,20 +2,18 @@
 
 ## Verification
 
-- Last verified: 2026-08-08 Europe/Moscow.
+- Last verified: 2026-08-09 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `2b835258477e05f00a7f29fd6972e62853dea1f9`.
-- Latest deployed product SHA: `2b835258477e05f00a7f29fd6972e62853dea1f9`.
-- Latest merged Issue #74 product slice is PR #444, final developer-authored head `c38c4504d4f69260256b17f17e8622cec78f1003`, squash product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
-- PR #444 immutable-head CI #3058 / run `31273755526` succeeded across the full product matrix, including both authoritative UI shards and both container builds.
-- Exact-SHA main CI #3059 / run `31274280827` succeeded for `2b835258477e05f00a7f29fd6972e62853dea1f9` across the full product matrix, including desktop Chromium, Android Chromium, iOS WebKit, visual, accessibility, performance, CSP/PWA and immutable API/Web container publication.
-- Deploy Stage #2900 / run `31274687604` succeeded for the same exact product SHA after validating the exact CI deployment-scope artifact.
-- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:2b835258477e05f00a7f29fd6972e62853dea1f9` and `ghcr.io/dja-tiger/lexigo-api:2b835258477e05f00a7f29fd6972e62853dea1f9`; both services were healthy in deployment evidence.
-- Stage PostgreSQL, Redis, API and Web services were healthy; public frontend root and API readiness returned HTTP 200 on the first attempt.
-- Public browser validation passed 12/12 across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
-- Deployment Issue #12 records Stage `success`, image SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`, deploy `success`, public smoke `success` and public browser `success`.
-- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #444 changed no dependency or lockfile version.
-- Issue #74 remains open. The reusable AsyncStatePanel/system-state recovery-action target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
+- Verified product `main` before this reconciliation: `0700fed4f77758bc193b87d30a698ed2217a7dad`.
+- Latest deployed product SHA: `0700fed4f77758bc193b87d30a698ed2217a7dad`.
+- Latest merged Issue #74 product slice is PR #446, final developer-authored head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`, squash product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
+- PR #446 immutable-head CI #3082 / run `31282237623` succeeded across the full product matrix after the deterministic scroll-coordinate acceptance defect was corrected without weakening target assertions.
+- Exact-SHA main CI #3083 / run `31282660741` succeeded for `0700fed4f77758bc193b87d30a698ed2217a7dad` across the full product matrix, including desktop Chromium, Android Chromium, iOS WebKit, accessibility, visual, performance, CSP/PWA and immutable API/Web container publication.
+- Deploy Stage #2924 / run `31283056543` succeeded for the same exact product SHA after validating the exact CI deployment-scope artifact.
+- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:0700fed4f77758bc193b87d30a698ed2217a7dad` and `ghcr.io/dja-tiger/lexigo-api:0700fed4f77758bc193b87d30a698ed2217a7dad`; both container build gates succeeded before Stage deployment.
+- Stage deployment, public frontend/API endpoint verification and public browser UI validation all succeeded on the exact product SHA.
+- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #446 changed no dependency or lockfile version.
+- Issue #74 remains open. The live calendar-reminder route-preview, modal-close and custom-weekday target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
 - Dependabot PRs #304, #403 and #432 remain unrelated maintenance.
 
 ## Delivery contract
@@ -70,6 +68,7 @@
 - PR #435: canonical Active Lesson utility, recall, confidence-rating and compact navigation controls expose paint-inert 44/48px effective targets. Product SHA `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
 - PR #442: canonical Phrases catalog controls expose 44/48px effective targets while preserving approved compact painted geometry. Product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
 - PR #444: reusable AsyncStatePanel primary/secondary recovery actions expose a 44px fine-pointer border-box target and a border-aware 48px coarse-pointer effective target through paint-inert block-axis hit slop. Product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- PR #446: live calendar reminder route-preview action, modal close and seven custom weekday controls expose independent 44px fine-pointer / 48px coarse-pointer effective targets; compact weekdays reflow to 4+3 without target intersection. Product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
 
 ## Issue #74 system-state effective-target evidence
 
@@ -107,17 +106,48 @@ Post-merge evidence for product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`:
 - public browser validation: 12/12 passed across desktop Chromium and iOS WebKit;
 - deployment Issue #12 confirms the same exact image SHA and all deploy/public validation states as `success`.
 
+## Issue #74 calendar-reminder effective-target evidence
+
+PR #446 final immutable-head evidence on `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`:
+
+- Exact product/docs base was `0969a5fdff0484d23099e66d7f4f0b31965a689c` from reconciliation PR #445.
+- Source inventory proved the live residual calendar gaps were the routed preview `Настроить календарь` action, the 42x42 modal close control and seven custom weekday buttons; route disclosure, form controls and provider buttons were already compliant.
+- All live `CalendarReminderIntegration` callers pass `showCard={false}`; dormant card markup was deliberately excluded rather than made reachable solely for acceptance.
+- `frontend/app/calendar-reminder-entry.css` owns the live route-preview effective target; `frontend/app/calendar-reminder-touch-targets.css` owns paint-inert modal close/weekday hit surfaces; canonical compact weekday presentation remains in `frontend/app/calendar-reminders.css`.
+- Compact custom weekdays reflow to four columns plus a second three-item row so every 44/48px target remains independent at compact widths.
+- `frontend/e2e/calendar-reminder-touch-targets.spec.ts` is collected by authoritative UI and accessibility suites and runs target evidence in desktop Chromium, Android Chromium and iOS WebKit.
+- Acceptance requires minimum effective geometry, real four-side `document.elementFromPoint` ownership, transparent/borderless/shadowless pseudo paint, pairwise weekday non-overlap, keyboard focus-visible and no horizontal overflow.
+- CI #3064 / run `31275409335` exposed product-scope/CSS-owner drift and was corrected at the canonical owners rather than whitelisted.
+- CI #3073 / run `31276456917` exposed a stale test assumption about dormant `.lx-calendar-reminder-card`; the dead-card assertion and dead-card hit CSS were removed instead of manufacturing unreachable UI.
+- CI #3075 / run `31277262935` proved every individual 48px mobile target and perimeter hit before a false pairwise overlap failure. Playwright traces showed `.lx-calendar-modal` changing `scrollTop` while viewport-relative rectangles were accumulated, so rectangles from different coordinate frames were being compared.
+- Production CSS was not changed for that test defect. Cross-target rectangles are now re-sampled together in one `evaluateAll` browser evaluation before pairwise comparison, while individual real-hit checks remain unchanged.
+- The reusable rule is permanently recorded in `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`: cross-target viewport geometry inside scrollable owners must use one shared scroll state or an explicitly normalized coordinate system.
+- Final immutable-head CI #3082 / run `31282237623` completed successfully across the full product matrix; clean review/thread audit found no review submissions or unresolved inline threads; squash merge used exact expected head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`.
+
+Post-merge evidence for product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`:
+
+- exact-SHA main CI #3083 / run `31282660741`: complete success across the full product matrix;
+- the repaired UI shard 2 completed successfully on the merge SHA;
+- frontend core, backend unit/security, backend integration and Frontend quality aggregate all succeeded;
+- exact-SHA API and Web container builds completed successfully and published immutable images;
+- Deploy Stage #2924 / run `31283056543`: complete success on the same exact SHA;
+- exact CI deployment-scope artifact validation: success;
+- Stage deployment and public frontend/API endpoint verification: success;
+- public browser UI validation: success;
+- no retry, target-threshold weakening, force-click or visual-baseline update was used to obtain the final green evidence.
+
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442 and #444 meet their route-specific 44/48px target, spacing, focus and callback contracts.
+- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444 and #446 meet their route-specific 44/48px target, spacing, focus and callback contracts.
 - Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has permanent authoritative true 200% browser-owned zoom evidence.
 - The authoritative collection permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
 - Canonical Phrases has authoritative true-browser-owned 200% zoom evidence plus explicit desktop/mobile real-hit-target acceptance for catalog controls.
 - Canonical populated Progress and Active Lesson have explicit desktop/mobile effective-target and real-hit-testing acceptance while preserving approved visual baselines.
-- Reusable AsyncStatePanel recovery actions now have explicit desktop/mobile effective-target, real hit ownership, keyboard focus and live retry-callback acceptance.
+- Reusable AsyncStatePanel recovery actions have explicit desktop/mobile effective-target, real hit ownership, keyboard focus and live retry-callback acceptance.
+- Live calendar reminder preview/close/weekdays have explicit desktop/mobile effective-target, real-hit ownership, non-overlap and keyboard-focus acceptance.
 - Expanded targets preserve accessible names, runtime callbacks, navigation/API semantics and compact visual layout for the delivered slices.
 
 Remaining / validation pending:
@@ -140,11 +170,12 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Current state
 
-- Product PR #444 is merged and fully delivered through immutable-head CI, clean review audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Current product runtime and Stage are validated on exact image SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
+- Product PR #446 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Current product runtime and Stage are validated on exact image SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
 - Repository memory is being reconciled in a docs-only PR from that exact product base; `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates before the next product slice.
 - The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
-- Progress, Active Lesson, Phrases catalog and reusable system-state effective-target slices are merged and preserved by the current deployed product.
+- Scroll-sensitive cross-target geometry is now protected by `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
+- Progress, Active Lesson, Phrases catalog, reusable system-state and live calendar-reminder effective-target slices are merged and preserved by the current deployed product.
 - The next product work is residual whole-application Issue #74 live-control inventory; only evidenced gaps should produce additional product slices.
 - Physical-device acceptance remains a separate final manual validation gate and is not claimed by automated browser evidence.
 - Dependabot PRs #304, #403 and #432 remain separate maintenance work.
@@ -158,11 +189,11 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Reconciliation evidence
 
-- Docs-only reconciliation #443 merged as `f7067b5d30ed944c8431233fbb21ae1d9b27a765`; exact docs-only main CI #3049 / run `31253606487` succeeded and became the exact base for PR #444.
-- PR #444 merged from final developer-authored head `c38c4504d4f69260256b17f17e8622cec78f1003` to product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
-- PR #444 final immutable-head CI #3058 / run `31273755526` completed successfully.
-- Exact-SHA main CI #3059 / run `31274280827` completed successfully and published exact API/Web images.
-- Deploy Stage #2900 / run `31274687604` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus 12/12 public browser validation successfully.
+- Docs-only reconciliation #445 merged as `0969a5fdff0484d23099e66d7f4f0b31965a689c` and became the exact base for PR #446.
+- PR #446 merged from final developer-authored head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0` to product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
+- PR #446 final immutable-head CI #3082 / run `31282237623` completed successfully.
+- Exact-SHA main CI #3083 / run `31282660741` completed successfully and published exact API/Web images.
+- Deploy Stage #2924 / run `31283056543` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus public browser UI validation successfully.
 - Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
