@@ -78,8 +78,34 @@ async function openSavedLesson(page: Page, mode: LessonMode): Promise<void> {
   await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", mode);
 }
 
-async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
+async function scrollExpandedTargetIntoView(control: Locator): Promise<void> {
   await control.scrollIntoViewIfNeeded();
+  await control.evaluate((element) => {
+    const button = element as HTMLButtonElement;
+    const rect = button.getBoundingClientRect();
+    const style = window.getComputedStyle(button);
+    const hitSlop = window.getComputedStyle(button, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const topInset = Number.parseFloat(hitSlop.top) || 0;
+    const bottomInset = Number.parseFloat(hitSlop.bottom) || 0;
+    const targetTop = rect.top + borderTop + topInset;
+    const targetBottom = rect.bottom - borderBottom - bottomInset;
+    const viewportInset = 1;
+    let deltaY = 0;
+
+    if (targetBottom > window.innerHeight - viewportInset) {
+      deltaY = targetBottom - (window.innerHeight - viewportInset);
+    } else if (targetTop < viewportInset) {
+      deltaY = targetTop - viewportInset;
+    }
+
+    if (Math.abs(deltaY) > 0.01) window.scrollBy(0, deltaY);
+  });
+}
+
+async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
+  await scrollExpandedTargetIntoView(control);
   return control.evaluate((element) => {
     const button = element as HTMLButtonElement;
     const rect = button.getBoundingClientRect();
