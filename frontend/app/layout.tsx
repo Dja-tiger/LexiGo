@@ -120,12 +120,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
+          <WebVitalsReporter />
+          <ServiceWorkerRegistration />
           <RoutedLexigoApp />
           {children}
           <LegalFooter />
         </ApplicationErrorBoundary>
-        <WebVitalsReporter />
-        <ServiceWorkerRegistration />
       </body>
     </html>
   );
