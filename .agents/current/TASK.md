@@ -31,7 +31,8 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 ## Allowed paths
 
 - `frontend/app/calendar-reminder-entry.css`
-- `frontend/app/calendar-reminders.css`
+- `frontend/app/calendar-reminder-touch-targets.css`
+- `frontend/app/layout.tsx` — stylesheet import only
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 - `frontend/package.json` — UI/a11y collection registration only
 - `.agents/current/TASK.md`
@@ -51,7 +52,8 @@ Close the confirmed calendar-reminder interaction gaps in Issue #74 without chan
 - `frontend/components/calendar-reminder-route-entry.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
 - `frontend/app/calendar-reminder-entry.css`
-- `frontend/app/calendar-reminders.css`
+- `frontend/app/calendar-reminder-touch-targets.css`
+- `frontend/app/layout.tsx`
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 
 ## Documentation owners
