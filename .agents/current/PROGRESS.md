@@ -7,24 +7,20 @@
 - Exact product/docs base is `0969a5fdff0484d23099e66d7f4f0b31965a689c`; deployed product image remains `2b835258477e05f00a7f29fd6972e62853dea1f9`.
 - `.agents/current/*` was canonical idle before this slice.
 - Existing route reminder disclosure already paints at least 48px; provider buttons and form controls are at least 48px.
-- Confirmed residual gaps: preview/card `Настроить календарь` stops at routed 44px; modal close paints 42x42; weekday buttons paint 42px and shrink to 39px at <=440px.
-- Seven independent weekday targets cannot satisfy 44/48px width in one 320-390px row without overlap.
-- PR #446 CI #3064 / run `31275409335` ran on candidate `af6bafbab9da5257762407553dc685bdb8c877b1`; backend unit/security and integration passed, while Frontend core stopped at two deterministic unit/source-contract failures before browser/container jobs.
+- Live residual gaps are the route-preview `Настроить календарь` action at routed 44px, modal close at 42x42 and weekday buttons at 42px / 39px at <=440px.
+- Seven independent weekday targets cannot satisfy 44/48px width in one 320-390px row without compact reflow.
+- All live callers of `CalendarReminderIntegration` pass `showCard={false}`; `.lx-calendar-reminder-card` is not a reachable production surface.
 
 ### Finding
 
-Calendar reminder preview/card actions, modal close and custom weekday selectors are a coherent residual Issue #74 interaction surface requiring explicit effective-target ownership.
+The coherent live Issue #74 calendar slice is route preview + modal close + custom weekdays. Dead card markup must not be mounted or made reachable solely to satisfy acceptance.
 
-CI #3064 also proved two branch-specific ownership defects in the candidate: an unrelated root-shell movement in `layout.tsx`, and compact weekday layout declarations living in the new hit-target stylesheet rather than the canonical calendar presentation owner.
+### Root cause and classified CI
 
-### Root cause
-
-The calendar surface predates the Issue #74 effective-target contract. Compact weekday layout prioritized seven single-row painted controls, while routed 44px buttons and the 42px close control had no coarse-pointer hit owner.
-
-For CI #3064:
-
-- `ApplicationErrorBoundary` source contract failed because the branch accidentally moved `WebVitalsReporter` and `ServiceWorkerRegistration` outside the boundary even though `layout.tsx` was allowed for stylesheet import only. The runtime movement was unrelated drift and was reverted to the exact `main` ownership order.
-- `global-feature-style-overlap-source.test.ts` failed because `grid-template-columns` and `gap` for `.lx-calendar-weekdays > div` were overridden from `calendar-reminder-touch-targets.css`, creating three new cross-file exact-selector conflicts. The compact 4+3 reflow is presentation, so its canonical owner is `calendar-reminders.css`; the dedicated touch-target stylesheet now owns only paint-inert pseudo hit surfaces.
+- CI #3064 / run `31275409335` on `af6bafbab9da5257762407553dc685bdb8c877b1` failed Frontend core because unrelated root-shell movement escaped the allowed `layout.tsx` import-only scope and because compact weekday presentation was placed in the new hit-target stylesheet, creating fail-closed CSS ownership conflicts. Both defects were fixed at their real owners.
+- CI #3073 / run `31276456917` on `f372b5966a3718e5202c32b9956d7a020af27dd7` passed frontend core/build/audit, backend, accessibility, CSP, service worker, PWA keyboard, performance, visual regression, lesson completion and UI shard 2/2. UI shard 1/2 failed deterministically in the new calendar acceptance.
+- The downloaded Playwright artifact `frontend-playwright-report-ui-1` proved the CI #3073 failure occurred before any hit-geometry assertion: the spec expected `.lx-calendar-reminder-card` on `/progress`, but the live route does not render that card. It was a stale reachability assumption, not evidence of pointer overlap or production CSS failure.
+- Following the existing Issue #74 hidden-control precedent, the dead card assertion and its dedicated hit-area CSS were removed rather than adding a synthetic fixture or weakening Playwright actionability.
 
 ### Changed files
 
@@ -41,15 +37,15 @@ For CI #3064:
 ### Checks passed
 
 - Source audit confirms form/provider controls and route disclosure need no remediation.
-- Dedicated acceptance is explicitly registered in both authoritative UI and accessibility collections.
-- Product implementation keeps preview/card/close/weekday painted heights unchanged; only custom <=440px weekday column flow changes to 4+3 with 10px gap.
-- CI #3064 lint and typecheck passed before the source-contract failure.
-- CI #3064 backend unit/race/security and backend integration passed.
-- Post-failure readback confirms root-shell ownership is restored and compact grid/gap declarations are now in `calendar-reminders.css`, eliminating the new cross-file exact-selector conflict without changing the conflict manifest.
+- Dedicated acceptance is registered in both authoritative UI and accessibility collections.
+- Root shell is restored to `main` ownership; `layout.tsx` product diff is stylesheet import only.
+- Compact 4+3 weekday layout is owned by `calendar-reminders.css`; dedicated touch-target CSS owns only paint-inert modal close/weekday surfaces.
+- CI #3073 proves the recovery head passes every executed product gate except the stale dead-card assumption in UI shard 1/2; visual baselines remained unchanged.
 
 ### Checks failed
 
-- CI #3064 / run `31275409335`: Frontend core unit/source contracts failed on the pre-recovery candidate `af6bafbab9da5257762407553dc685bdb8c877b1` for the two classified ownership defects above. Browser and container jobs were correctly skipped after the core gate failed.
+- CI #3064: classified Frontend source-contract failures on superseded head `af6bafbab9da5257762407553dc685bdb8c877b1`.
+- CI #3073: classified stale reachability assumption on superseded head `f372b5966a3718e5202c32b9956d7a020af27dd7`; no retry of that head is valid.
 
 ### Current branch head
 
@@ -57,4 +53,4 @@ Resolve from live branch ref after the final Agent Harness recovery record is wr
 
 ### Next action
 
-Verify the recovered developer-authored head and allowed-path diff against unchanged `main`, require a fresh full immutable-head product CI, classify any remaining failure from exact artifacts, then complete clean review audit, Ready, expected-head squash merge, exact-main CI and exact-image Stage/public validation.
+Require a fresh full immutable-head CI on the live-only acceptance. If green, complete clean review/thread audit, mark PR Ready, expected-head squash merge, exact-main CI and exact-image Stage/public validation, then reconcile Agent Harness state in a separate docs PR.
