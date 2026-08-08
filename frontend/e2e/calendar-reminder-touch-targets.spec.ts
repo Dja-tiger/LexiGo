@@ -72,6 +72,38 @@ async function effectiveTarget(control: Locator) {
   });
 }
 
+async function effectiveTargetRects(controls: Locator): Promise<EffectiveRect[]> {
+  // Measure every candidate in one browser evaluation after the individual hit
+  // checks have finished. Mobile calendar controls live inside a scrollable
+  // bottom sheet; viewport-relative rectangles sampled before and after
+  // scrollIntoView() belong to different coordinate frames and cannot be
+  // compared for overlap.
+  return controls.evaluateAll((elements) => elements.map((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const pseudo = window.getComputedStyle(element, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+    const topInset = Number.parseFloat(pseudo.top) || 0;
+    const rightInset = Number.parseFloat(pseudo.right) || 0;
+    const bottomInset = Number.parseFloat(pseudo.bottom) || 0;
+    const leftInset = Number.parseFloat(pseudo.left) || 0;
+    const pseudoTop = rect.top + borderTop + topInset;
+    const pseudoRight = rect.right - borderRight - rightInset;
+    const pseudoBottom = rect.bottom - borderBottom - bottomInset;
+    const pseudoLeft = rect.left + borderLeft + leftInset;
+
+    return {
+      top: Math.min(rect.top, pseudoTop),
+      right: Math.max(rect.right, pseudoRight),
+      bottom: Math.max(rect.bottom, pseudoBottom),
+      left: Math.min(rect.left, pseudoLeft),
+    };
+  }));
+}
+
 function targetsIntersect(first: EffectiveRect, second: EffectiveRect): boolean {
   const overlapWidth = Math.min(first.right, second.right) - Math.max(first.left, second.left);
   const overlapHeight = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
@@ -129,13 +161,11 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
     const weekdays = dialog.locator(".lx-calendar-weekdays button");
     await expect(weekdays).toHaveCount(7);
 
-    const weekdayRects: EffectiveRect[] = [];
     for (let index = 0; index < 7; index += 1) {
-      const weekday = weekdays.nth(index);
-      const target = await expectTarget(weekday, expectedMinimum);
-      weekdayRects.push(target.targetRect);
+      await expectTarget(weekdays.nth(index), expectedMinimum);
     }
 
+    const weekdayRects = await effectiveTargetRects(weekdays);
     for (let first = 0; first < weekdayRects.length; first += 1) {
       for (let second = first + 1; second < weekdayRects.length; second += 1) {
         expect(
