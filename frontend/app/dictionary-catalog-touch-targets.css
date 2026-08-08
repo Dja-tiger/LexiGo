@@ -69,14 +69,14 @@
     :is(.lx-dictionary-filter-stack, .lx-dictionary-filter-grid) {
     row-gap: 12px;
   }
+}
 
-  /*
-   * Wrapped 34px quick filters need 7px above and below for a 48px target.
-   * Sixteen pixels leaves the same 2px positive separation between rows.
-   */
-  @media (max-width: 340px) {
-    .lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-quick-filters {
-      row-gap: 16px;
-    }
+/*
+ * Wrapped 34px quick filters need 7px above and below for a 48px target.
+ * Sixteen pixels leaves the same 2px positive separation between rows.
+ */
+@media (pointer: coarse) and (max-width: 340px) {
+  .lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-quick-filters {
+    row-gap: 16px;
   }
 }
