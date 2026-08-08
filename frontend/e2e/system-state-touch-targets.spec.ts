@@ -11,19 +11,54 @@ async function fulfillJSON(route: Route, status: number, body: unknown, headers:
   });
 }
 
-async function effectiveTarget(control: Locator) {
+async function scrollEffectiveTargetIntoView(control: Locator): Promise<void> {
   await control.scrollIntoViewIfNeeded();
+  await control.evaluate((element) => {
+    /*
+     * Playwright visibility is based on the painted control and does not prove
+     * that transparent hit slop is clear of fixed mobile chrome. Center the
+     * painted owner before viewport-relative elementFromPoint probes, then
+     * keep the complete effective target inside a small viewport margin.
+     */
+    element.scrollIntoView({ block: "center", inline: "nearest" });
+
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const pseudo = window.getComputedStyle(element, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const topInset = Number.parseFloat(pseudo.top) || 0;
+    const bottomInset = Number.parseFloat(pseudo.bottom) || 0;
+    const targetTop = rect.top + borderTop + topInset;
+    const targetBottom = rect.bottom - borderBottom - bottomInset;
+    const margin = 8;
+
+    if (targetTop < margin) {
+      window.scrollBy(0, targetTop - margin);
+    } else if (targetBottom > window.innerHeight - margin) {
+      window.scrollBy(0, targetBottom - window.innerHeight + margin);
+    }
+  });
+}
+
+async function effectiveTarget(control: Locator) {
+  await scrollEffectiveTargetIntoView(control);
   return control.evaluate((element) => {
     const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
     const pseudo = window.getComputedStyle(element, "::before");
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
     const topInset = Number.parseFloat(pseudo.top) || 0;
     const rightInset = Number.parseFloat(pseudo.right) || 0;
     const bottomInset = Number.parseFloat(pseudo.bottom) || 0;
     const leftInset = Number.parseFloat(pseudo.left) || 0;
-    const targetTop = rect.top + topInset;
-    const targetRight = rect.right - rightInset;
-    const targetBottom = rect.bottom - bottomInset;
-    const targetLeft = rect.left + leftInset;
+    const targetTop = rect.top + borderTop + topInset;
+    const targetRight = rect.right - borderRight - rightInset;
+    const targetBottom = rect.bottom - borderBottom - bottomInset;
+    const targetLeft = rect.left + borderLeft + leftInset;
     const centerX = (targetLeft + targetRight) / 2;
     const centerY = (targetTop + targetBottom) / 2;
     const perimeterInset = 1;
