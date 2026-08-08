@@ -49,6 +49,7 @@ import "./lesson-composer-disclosure-touch-targets.css";
 import "./lesson-composer-option-touch-targets.css";
 import "./lesson-composer-resume-touch-targets.css";
 import "./active-lesson.css";
+import "./active-lesson-touch-targets.css";
 import "./focused-lesson-exit.css";
 import "./lesson-result.css";
 import "./lesson-result-handoff.css";
