@@ -2,17 +2,16 @@
 
 ## Verification
 
-- Last verified: 2026-08-07 Europe/Moscow.
+- Last verified: 2026-08-08 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- Latest deployed product SHA: `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- Latest merged Issue #74 slice: PR #428, final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0`, squash product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- PR #428 immutable-head CI #2995 / run `31207726893`, exact-SHA main CI #2996 / run `31208560099` and Deploy Stage #2838 / run `31209280600` completed successfully.
-- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and `ghcr.io/dja-tiger/lexigo-api:69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- Stage deployment, public endpoint smoke and public browser smoke succeeded for that exact immutable image SHA. Deployment status Issue #12 records `deploy: success`, `public smoke: success` and `public browser: success`; the public browser job passed 12/12 desktop Chromium and iOS WebKit checks, including `/progress`.
-- PR #428 has no review threads and no reviews requiring action.
-- Issue #74 remains open. The canonical Progress target gap delivered by PR #428 is closed; remaining completion work is the residual whole-application live-control audit and final real-physical-device/manual acceptance. Real-device evidence must not be synthesized from Playwright emulation, desktop CI or Stage browser smoke.
-- Open PRs #304, #305 and #403 are unrelated Dependabot maintenance.
+- Verified product `main` before this reconciliation: `a2cb82b2415e0695120ec666b86690cbcd91f12d`.
+- Latest deployed product SHA: `a2cb82b2415e0695120ec666b86690cbcd91f12d`.
+- Latest merged Issue #74 product slice remains PR #428, final developer-authored head `b84a88f6f3d250ce54c4098c9847d994361a61d0`, squash product SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
+- Security prerequisite PR #431 subsequently merged as product/dependency SHA `a2cb82b2415e0695120ec666b86690cbcd91f12d`; exact-SHA main CI run `31222428133` succeeded and Deploy Stage #2852 / run `31223081467` succeeded for the same SHA.
+- Exact currently deployed image tags are `ghcr.io/dja-tiger/lexigo-web:a2cb82b2415e0695120ec666b86690cbcd91f12d` and `ghcr.io/dja-tiger/lexigo-api:a2cb82b2415e0695120ec666b86690cbcd91f12d`.
+- Security baseline after PR #431 keeps Next `16.2.11` and Sharp `0.35.3`, raises PostCSS to `8.5.23` and Nano ID to `3.3.18`, and restores the dependency-audit gate required before Issue #74 product delivery.
+- Issue #74 remains open. The canonical Progress target gap delivered by PR #428 is closed; active Draft PR #433 owns the next bounded Active Lesson live-control target slice on the verified security base. Final real-physical-device/manual acceptance is still mandatory and must not be synthesized from Playwright emulation, desktop CI or Stage browser smoke.
+- Open product PR #433 is active; Dependabot PRs #304, #305 and #403 remain unrelated maintenance.
 
 ## Delivery contract
 
@@ -114,6 +113,18 @@ CI failure classification during PR #428 development:
 - Initial direct `min-height` expansion produced a real compact visual regression (Progress/calendar-dialog height 1900px -> 1916px). It was not retried or baselined away; production CSS was corrected to the existing paint-inert hit-slop pattern.
 - A later compact Progress hit-test failure was traced from Playwright evidence to `document.elementFromPoint()` receiving off-screen coordinates for the activity disclosure. The test helper was corrected with `scrollIntoViewIfNeeded()` before viewport-relative hit testing; production CSS was intentionally unchanged.
 
+## Security prerequisite after PR #428
+
+PR #431 remediated newly published dependency-audit blockers before the next Issue #74 product slice:
+
+- `main` product/dependency SHA: `a2cb82b2415e0695120ec666b86690cbcd91f12d`;
+- exact-SHA main CI run `31222428133`: success;
+- Deploy Stage #2852 / run `31223081467`: success on the same SHA;
+- PostCSS baseline: `8.5.23`;
+- Nano ID baseline: `3.3.18`;
+- Next remains `16.2.11` and Sharp remains `0.35.3`;
+- this security delivery is a prerequisite, not a claim that the remaining Issue #74 accessibility acceptance is complete.
+
 ## Issue #74 acceptance status
 
 Completed automated evidence:
@@ -126,8 +137,14 @@ Completed automated evidence:
 - Canonical populated Progress now has explicit desktop/mobile effective-target and real hit-testing acceptance while preserving approved visual baselines.
 - Expanded targets preserve keyboard focus, accessible names, runtime callbacks, route navigation, API semantics and content clearance for the delivered slices.
 
+Active bounded slice:
+
+- Draft PR #433 (`fix/issue-74-active-lesson-live-targets-v2`) is based on exact security SHA `a2cb82b2415e0695120ec666b86690cbcd91f12d` and owns only the Active Lesson Study/Recall/confidence/compact-header effective-target remediation plus its explicit browser acceptance and current Agent Harness records.
+- PR #433 must still pass full CI on its final developer-authored head after reconciliation is merged and the product branch is recreated/rebased from the resulting exact `main`; no pre-reconciliation CI is merge evidence.
+
 Remaining / validation pending:
 
+- Deliver PR #433 through full immutable-head CI, review audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
 - Perform the residual whole-application live-control inventory against the Issue #74 affected screens and remediate only controls still confirmed below the 44px fine-pointer / 48px coarse-pointer contracts or with intersecting target geometry.
 - Confirm that all remaining primary, secondary, text-only and icon controls in the affected Header, bottom navigation, Home, Learn, Phrases, Dictionary, Lesson and Progress surfaces are either already covered by canonical shared contracts or receive explicit bounded regression evidence.
 - Perform final manual acceptance on real physical mobile hardware. This is a required Issue criterion and cannot be replaced by Playwright emulation, desktop browser zoom, root-font enlargement or stage smoke.
@@ -146,16 +163,17 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Current state
 
-- No product slice is active while this post-merge repository-memory reconciliation is being delivered.
-- Current product runtime and Stage are validated on exact image SHA `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`; no runtime regression was discovered after PR #428.
+- Repository-memory reconciliation is active on docs-only branch `docs/reconcile-project-state-a2cb-issue74`; no product/runtime file is allowed in that diff.
+- Current product runtime and Stage are validated on exact image SHA `a2cb82b2415e0695120ec666b86690cbcd91f12d` after security prerequisite #431.
+- Draft product PR #433 is active for the next bounded Issue #74 slice but must be returned to the exact post-reconciliation `main` before final immutable-head CI/merge evidence is accepted.
 - The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
-- The Progress effective-target slice is merged, independently revalidated on `main`, deployed as exact images and publicly smoke/browser validated.
-- After this docs-only reconciliation/reset, the next product slice is the remaining Issue #74 live-control inventory/remediation. Physical-device acceptance remains a separate final manual validation gate.
+- The Progress effective-target slice is merged and remains preserved by the current deployed security SHA.
+- Physical-device acceptance remains a separate final manual validation gate and is not claimed by automated browser evidence.
 - Dependabot PRs #304, #305 and #403 remain separate maintenance work.
 
 ## Remaining roadmap
 
-- Issue #74: finish the residual live-control audit/remediation and final real-device acceptance; close the Issue only after both are evidenced.
+- Issue #74: finish PR #433, residual live-control audit/remediation and final real-device acceptance; close the Issue only after all mandatory criteria are evidenced.
 - Issue #78 CSP implementation and stage evidence are complete, but final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
 - Dependabot PRs #304, #305 and #403 require separate review, immutable-head CI and deployment treatment according to changed scope.
 - Other open product/design Issues must be selected from live GitHub state and decomposed into separate atomic slices after Issue #74 is completed or explicitly blocked by the manual hardware gate.
@@ -168,9 +186,10 @@ Issue #74 stays open until those remaining criteria are proven.
 - PR #428 CI #2995 / run `31207726893` completed successfully on the exact immutable PR head.
 - Exact-SHA main CI #2996 / run `31208560099` completed successfully on the squash product SHA.
 - Deploy Stage #2838 / run `31209280600` consumed the exact CI scope, deployed exact API/Web image tags for `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1` and completed public endpoint plus 12/12 public browser validation successfully.
-- Deployment status Issue #12 records the exact image SHA and successful deploy/public-smoke/public-browser state.
-- Live PR audit found no unresolved review threads and no reviews requiring action.
-- Issue #74 delivery comment `5220946408` records the product evidence while explicitly leaving the Issue open for residual audit and physical-device/manual acceptance.
+- Security prerequisite #431 advanced product/dependency `main` to `a2cb82b2415e0695120ec666b86690cbcd91f12d`; exact-SHA main CI run `31222428133` and Deploy Stage #2852 / run `31223081467` both succeeded for that exact SHA.
+- Live GitHub audit on 2026-08-08 found Draft PR #433 active on Issue #74 and Dependabot PRs #304, #305 and #403 separate from the product slice.
+- PR #433 CI #3016 exposed one deterministic iOS WebKit test-setup edge case while all other product jobs were green; the failure was diagnosed from the retained Playwright artifact instead of being classified as infrastructure noise. A subsequent developer-authored test-setup remediation preserves the 48x48 minimum, viewport containment and four-side perimeter assertions.
+- Issue #74 remains open for the active slice, residual audit and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
 ## State semantics
