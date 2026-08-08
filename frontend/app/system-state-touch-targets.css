@@ -1,0 +1,28 @@
+/*
+ * Issue #74: keep AsyncStatePanel actions visually compact while making the
+ * coarse-pointer target meet the 48 CSS px Android-oriented minimum.
+ *
+ * `.lx-button` already owns a 44px painted minimum. The pseudo element only
+ * adds two transparent block-axis pixels on each side for coarse pointers;
+ * inline geometry is intentionally unchanged so neighbouring wrapped actions
+ * cannot steal each other's horizontal hit surface.
+ */
+.lx-async-state-actions .lx-button {
+  position: relative;
+}
+
+.lx-async-state-actions .lx-button::before {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  content: "";
+}
+
+@media (pointer: coarse) {
+  .lx-async-state-actions .lx-button::before {
+    inset-block: -2px;
+  }
+}
