@@ -57,31 +57,35 @@ Actions performed:
 - Extended the source contract to prove guest runtime/shared-control ownership and the 44px-wide / 48px-compact canonical paint boundary.
 - Extended the already-blocking Dictionary Playwright spec with guest acceptance at 768px and 390px, including real perimeter hits, effective-target separation, focus, route navigation and overflow.
 - Read back every changed product file and audited the exact base/head path set.
+- Inspected PR #452 CI #3114 after frontend unit failed; lint and typecheck were green and 108/109 unit files passed.
+- Traced the only failure to the source contract searching for literal `width: 768` although the browser spec expresses the same requirement through `[768]` / `[768, 390]` arrays.
+- Replaced the brittle assertion with an exact binding to the actual viewport collection expression and read back the corrected source contract.
 
 Commands or procedures:
 
-GitHub connector reads/writes with exact blob SHA replacement and immediate readback after mutation; no local `gh` fallback is available in this environment. CI execution is delegated to the repository's authoritative GitHub Actions matrix.
+GitHub connector reads/writes with exact blob SHA replacement and immediate readback after mutation; workflow status/jobs/logs were inspected through GitHub Actions connector endpoints. No local `gh` fallback is available in this environment.
 
 Artifacts produced:
 
 - Draft PR #452 with six allowed changed files.
 - Route-scoped CSS remediation, source ownership contract and cross-browser acceptance evidence.
+- CI failure diagnosis for run `31314481248` and corrected source-contract assertion.
 
 Result:
 
-Implementation is complete and exact-diff scoped. The next authoritative gate is immutable-head full product CI.
+Implementation and CI-contract correction are complete. A fresh full product CI run on the final immutable head is required before Ready.
 
 Failures:
 
-No implementation failure observed before CI. Local repository/CLI execution is unavailable, so validation relies on repository CI and GitHub workflow evidence.
+PR #452 CI #3114 / run `31314481248` failed one frontend unit assertion in `dictionary-catalog-touch-target-source.test.ts`. The assertion expected source text `width: 768`, but the browser spec defines the required viewport through the `widths` array. This was a source-proof wording defect; lint, typecheck and all other completed unit tests were green.
 
 Root cause:
 
-The shared catalog-kind control is painted at 44px above 640px, while Dictionary's interaction owner omitted the selector. Phrases already has the equivalent selector owner, and compact Dictionary widths hid the omission with their existing painted 48px breakpoint.
+Product gap: Dictionary omitted `.lx-catalog-kind-navigation button` from its route-scoped coarse-pointer target owner. CI-contract gap: the first source assertion described the required 768px viewport using a literal that does not exist in the actual Playwright source.
 
 Fallback:
 
-Use existing blocking GitHub Actions frontend unit/UI/a11y/full-product matrix as authoritative execution evidence and inspect exact workflow jobs/artifacts.
+Bind source proof to the actual browser collection expression and require a new full CI run rather than rerunning or accepting the failed immutable head.
 
 Limitations:
 
@@ -89,4 +93,4 @@ Physical mobile hardware acceptance cannot be synthesized from Playwright and re
 
 Reusable lesson:
 
-Residual target inventory must test wider coarse-pointer layouts as well as compact mobile widths; a mobile breakpoint that paints 48px can hide missing modality-specific ownership.
+Residual target inventory must test wider coarse-pointer layouts as well as compact mobile widths, and source contracts should bind exact executable collection expressions rather than prose-like literals that the test source never contains.
