@@ -9,22 +9,27 @@
 - Issue #74 remains open for residual live-control inventory/remediation and physical-device acceptance.
 - Guest `/dictionary` renders `CatalogKindNavigation` with `Слова и термины` and `Рабочие фразы`.
 - `information-architecture.css` paints these buttons at 44px minimum height above 640px and 48px at <=640px.
-- Phrases already gives the shared buttons a 44/48px effective owner; Dictionary's route-scoped touch layer does not currently include them.
+- Phrases already gives the shared buttons a 44/48px effective owner; Dictionary's route-scoped touch layer omitted them.
 - `e2e/dictionary-catalog-touch-targets.spec.ts` is already collected by both blocking UI and accessibility commands.
+- Draft PR #452 targets exact base `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86`.
+- Exact base/head diff contains only the six allowed files and is zero commits behind `main` at the audited point.
 
 ### Finding
 
-A coarse-pointer guest Dictionary viewport wider than 640px exposes the shared catalog-kind buttons with only the 44px painted target. They lack the 48px coarse-pointer effective target required by Issue #74.
+A coarse-pointer guest Dictionary viewport wider than 640px exposed the shared catalog-kind buttons with only the 44px painted target. They lacked the 48px coarse-pointer effective target required by Issue #74.
 
 ### Root cause
 
-`frontend/app/dictionary-catalog-touch-targets.css` owns quick filters, filter-panel buttons and pagination but omits `.lx-catalog-kind-navigation button`. The existing <=640px painted 48px rule masks the omission on compact mobile widths, so the gap is observable only on wider coarse-pointer layouts.
+`frontend/app/dictionary-catalog-touch-targets.css` owned quick filters, filter-panel buttons and pagination but omitted `.lx-catalog-kind-navigation button`. The existing <=640px painted 48px rule masked the omission on compact mobile widths.
 
 ### Changed files
 
-- `.agents/current/TASK.md` — initialized exact slice ownership and acceptance.
-- `.agents/current/PROGRESS.md` — recorded pre-flight evidence and root cause.
-- `.agents/current/EXECUTION.md` — records execution tooling and evidence.
+- `.agents/current/TASK.md` — exact slice ownership and PR binding.
+- `.agents/current/PROGRESS.md` — pre-flight, root cause and delivery progress.
+- `.agents/current/EXECUTION.md` — execution tooling and evidence.
+- `frontend/app/dictionary-catalog-touch-targets.css` — adds the shared catalog-kind buttons to the existing route-scoped transparent 44/48px block-axis hit owner.
+- `frontend/components/dictionary-catalog-touch-target-source.test.ts` — locks guest runtime/shared control ownership, canonical 44/48 paint boundary and browser-proof collection.
+- `frontend/e2e/dictionary-catalog-touch-targets.spec.ts` — adds guest real-hit acceptance at 768px fine/coarse plus compact 390px coarse, non-overlap, focus, navigation and overflow assertions.
 
 ### Checks passed
 
@@ -32,15 +37,17 @@ A coarse-pointer guest Dictionary viewport wider than 640px exposes the shared c
 - Exact `main` SHA verification.
 - Previous reconciliation post-merge CI and Stage skip validation.
 - Static owner/runtime audit proving the residual gap and existing collection path.
+- Write/readback verification for every product mutation.
+- Exact diff path audit: six changed files, all allowed; no runtime component, package script, dependency, lockfile, workflow or visual-baseline drift.
 
 ### Checks failed
 
-- None yet; product mutation has not been applied.
+- None at the pre-CI product audit stage.
 
 ### Current branch head
 
-Resolve from live branch ref after this write.
+Resolve from live PR #452 head after the final harness write.
 
 ### Next action
 
-Create the Draft PR early, then extend only the Dictionary interaction selector, source contract and existing cross-browser acceptance spec; audit the exact diff before immutable-head CI.
+Inspect the final immutable head and run/audit full PR CI. If green, audit review/comments/threads, mark Ready, expected-head squash merge, then validate exact-SHA main CI and Stage/public runtime before docs-only reconciliation.
