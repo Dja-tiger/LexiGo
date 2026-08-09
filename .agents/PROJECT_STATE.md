@@ -4,17 +4,18 @@
 
 - Last verified: 2026-08-09 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- Latest deployed product SHA: `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- Latest merged Issue #74 product slice is PR #446, final developer-authored head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`, squash product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- PR #446 immutable-head CI #3082 / run `31282237623` succeeded across the full product matrix after the deterministic scroll-coordinate acceptance defect was corrected without weakening target assertions.
-- Exact-SHA main CI #3083 / run `31282660741` succeeded for `0700fed4f77758bc193b87d30a698ed2217a7dad` across the full product matrix, including desktop Chromium, Android Chromium, iOS WebKit, accessibility, visual, performance, CSP/PWA and immutable API/Web container publication.
-- Deploy Stage #2924 / run `31283056543` succeeded for the same exact product SHA after validating the exact CI deployment-scope artifact.
-- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:0700fed4f77758bc193b87d30a698ed2217a7dad` and `ghcr.io/dja-tiger/lexigo-api:0700fed4f77758bc193b87d30a698ed2217a7dad`; both container build gates succeeded before Stage deployment.
-- Stage deployment, public frontend/API endpoint verification and public browser UI validation all succeeded on the exact product SHA.
-- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #446 changed no dependency or lockfile version.
-- Issue #74 remains open. The live calendar-reminder route-preview, modal-close and custom-weekday target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
-- Dependabot PRs #304, #403 and #432 remain unrelated maintenance.
+- Verified product `main` before this reconciliation: `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- Latest deployed product SHA: `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- Latest merged Issue #74 product slice is PR #448, final developer-authored head `448faae28f91b39989bc46f8701811d48e68e832`, squash product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- PR #448 immutable-head CI #3095 / run `31295450246` succeeded across the full product matrix, including the re-bound deterministic Linux Dictionary medium-Light content-addressed visual contract.
+- Exact-SHA main CI #3096 / run `31295869109` succeeded for `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f` across backend unit/race/security, backend integration, frontend lint/typecheck/unit/build/audit, UI shards, accessibility, visual, performance, CSP/PWA and immutable API/Web container publication.
+- Deploy Stage #2937 / run `31296173844` succeeded for the same exact product SHA after validating the exact CI deployment-scope artifact.
+- Exact deployed image tags are `ghcr.io/dja-tiger/lexigo-web:237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f` and `ghcr.io/dja-tiger/lexigo-api:237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- Stage PostgreSQL, Redis, API and Web services were healthy; public frontend root and API readiness returned HTTP 200 on attempt 1; public smoke and public browser UI validation succeeded.
+- Deployment Issue #12 records the same exact image SHA with deploy, public smoke and public browser states all `success`.
+- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #448 changed no dependency or lockfile version.
+- Issue #74 remains open. The canonical Dictionary catalog control target slice is fully delivered; residual whole-application live-control inventory and final real-physical-device/manual acceptance remain mandatory.
+- Open unrelated maintenance PRs verified at reconciliation time: Dependabot #304, #403 and #432.
 
 ## Delivery contract
 
@@ -69,86 +70,59 @@
 - PR #442: canonical Phrases catalog controls expose 44/48px effective targets while preserving approved compact painted geometry. Product SHA `2ee32d075b20dca000f1e10726ba8842b4685434`.
 - PR #444: reusable AsyncStatePanel primary/secondary recovery actions expose a 44px fine-pointer border-box target and a border-aware 48px coarse-pointer effective target through paint-inert block-axis hit slop. Product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`.
 - PR #446: live calendar reminder route-preview action, modal close and seven custom weekday controls expose independent 44px fine-pointer / 48px coarse-pointer effective targets; compact weekdays reflow to 4+3 without target intersection. Product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
+- PR #448: canonical Dictionary quick filters, source/status/sort/reset controls and shared pagination expose 44px fine-pointer / 48px coarse-pointer effective targets while preserving compact painted geometry; wrapped and stacked coarse targets reserve independent separation. Product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
 
-## Issue #74 system-state effective-target evidence
+## Issue #74 reusable target evidence
 
-PR #444 final immutable-head evidence on `c38c4504d4f69260256b17f17e8622cec78f1003`:
+- Reusable AsyncStatePanel recovery actions remain protected by explicit desktop/mobile effective-target, real-hit ownership, keyboard-focus and live retry-callback acceptance from PR #444.
+- Live calendar reminder preview/close/weekdays remain protected by desktop/mobile effective-target, real-hit ownership, common-frame non-overlap and keyboard-focus acceptance from PR #446.
+- Scroll-sensitive pairwise target geometry must be sampled from one shared scroll state or normalized coordinate system as recorded in `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
+- Browser-owned zoom acceptance must remain explicitly collected by the authoritative suites as recorded in `.agents/AGENTS.issue-74-browser-zoom-collection.md`.
 
-- Exact product base was docs-only reconciled SHA `f7067b5d30ed944c8431233fbb21ae1d9b27a765` from PR #443.
-- The shared AsyncStatePanel action owner was a confirmed residual gap: routed actions already had a 44px painted button border box but no guaranteed 48px coarse-pointer target.
-- `frontend/app/system-state-touch-targets.css` supplies a narrowly scoped paint-inert pseudo hit surface. Fine pointers keep the normal button border box; coarse pointers add 3px on each block edge and no inline expansion.
-- The 3px coarse inset is border-aware: routed primary/ghost buttons may have a 1px border, so the absolutely positioned pseudo element can start from a 42px padding box; 3px per block edge guarantees a 48px worst-case pseudo surface.
-- `frontend/e2e/system-state-touch-targets.spec.ts` exercises the live Dictionary correlated-error/retry action and is explicitly collected by authoritative UI and accessibility suites.
-- Acceptance runs in desktop Chromium, Android Chromium and iOS WebKit and requires 44/48px minimum effective geometry, four `document.elementFromPoint` perimeter hits, transparent/borderless/shadowless pseudo paint, visible keyboard focus, retry recovery, preserved query and no horizontal overflow.
-- Effective geometry is measured as the union of the clickable button border box and the transparent pseudo surface; viewport normalization keeps that complete union inside a safe viewport margin before hit probing.
-- Existing visual baselines remained unchanged, confirming the accessibility implementation is paint-inert.
-- Review/thread audit before Ready found no PR comments or review threads; expected-head squash merge used the immutable final developer-authored head.
+## Issue #74 Dictionary catalog effective-target evidence
 
-Development failure classification retained for future slices:
+PR #448 final immutable-head evidence on `448faae28f91b39989bc46f8701811d48e68e832`:
 
-- CI #3050 / run `31253827648` on candidate `6e37feee6dc62b242004e7e53207a34b3f39303b` failed only UI shard 2 because Android Chromium and iOS WebKit missed the lower perimeter point after `scrollIntoViewIfNeeded()`. Size assertions had already passed. Root cause was acceptance viewport normalization, not product CSS; commit `43bbe0edfe9bedfd75e162dcf439710cf3d7d088` centered the owner and kept the complete effective target inside the viewport without weakening any target assertion.
-- CI #3054 / run `31273126592` on candidate `e29649157939c719775fdf5d552a9e2296f818f3` exposed two distinct facts: desktop 42px was an acceptance-model error from measuring the pseudo padding box alone, while Android/iOS 46px was a real product gap because `inset-block: -2px` expanded a 42px pseudo base only to 46px.
-- Product recovery `d9688d649945d3e928df50cc425559ed5cd613f6` changed coarse block inset from -2px to -3px; acceptance recovery `34637795268b65c09b7101a46ef6209a88baebfe` measures the union of the button border box and pseudo surface.
-- Final immutable-head CI #3058 / run `31273755526` completed successfully across the full product matrix on `c38c4504d4f69260256b17f17e8622cec78f1003`.
+- Exact product/docs base was `80b0a8d3d13f0d7ac12350867eba64f312fe750c` from reconciliation PR #447.
+- Canonical `/dictionary` inventory found four quick-filter buttons painted at 34px, source/status/sort panel buttons painted at 38px, reset at 46px and shared pagination at the generic 44px minimum.
+- Search clear was already owned by PR #409; result-card buttons and the mobile filter toggle were already compliant; the 44px topic select already sits inside a semantic label whose clickable area exceeds 48px.
+- `frontend/app/dictionary-catalog-touch-targets.css` adds route-scoped, paint-inert block-axis effective ownership: >=44px for fine pointers and >=48px for coarse pointers without changing painted button size, border, background, transform or focus ownership.
+- At <=340px wrapped quick-filter rows reserve sufficient gap for independent effective targets; coarse stacked panel groups reserve positive separation.
+- `frontend/e2e/dictionary-catalog-touch-targets.spec.ts` is collected by authoritative UI and accessibility suites and runs in desktop Chromium, Android Chromium and iOS WebKit.
+- Acceptance uses border-aware effective geometry, real four-side `document.elementFromPoint` ownership, one-common-frame pairwise overlap checks, semantic select labeling, visible focus and horizontal containment.
+- `frontend/components/dictionary-catalog-touch-target-source.test.ts` locks stylesheet import order, live selector ownership, paint-inert declarations and authoritative collection.
+- A pre-CI full-file edit briefly introduced unrelated root-layout drift; fail-closed base/head comparison rejected it and the final `layout.tsx` diff is one stylesheet import only.
+- CI #3089 / run `31284029667` on superseded head `38dd2cbbebcf2e288f9197aa10091d774733f08f` exposed accidental `@types/react-dom@^19.2.8` package metadata drift through deterministic `npm ETARGET`; package metadata was restored to exact `main`/lockfile ownership and `package-lock.json` remained unchanged.
+- CI #3092 / run `31284198024` and CI #3093 / run `31284616220` independently produced the same Linux Dictionary medium-Light actual: `768x1664`, SHA-256 `3e0215d2af6b4d024fddffd585752d125094b6737d987426b63f620f74577af3`.
+- The previous content-addressed baseline was `768x1616`; the exact +48px page-height delta was reviewed as the intended aggregate coarse-pointer row-gap increase. Only `DICTIONARY_VISUAL_BASELINES.mediumLight` provenance/dimensions/hash changed; compact/desktop Dictionary baselines and all binary snapshots remained unchanged.
+- Final immutable-head CI #3095 / run `31295450246` completed successfully across the full product matrix; the review/thread audit was clean; expected-head squash merge used exact final head `448faae28f91b39989bc46f8701811d48e68e832`.
 
-Post-merge evidence for product SHA `2b835258477e05f00a7f29fd6972e62853dea1f9`:
+Post-merge evidence for product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`:
 
-- exact-SHA main CI #3059 / run `31274280827`: complete success across the full product matrix;
-- authoritative UI shard 1 and shard 2 both completed successfully on the merge SHA;
-- exact-SHA API and Web container builds completed successfully and published immutable GHCR images;
-- Deploy Stage #2900 / run `31274687604`: complete success;
-- exact CI deployment-scope artifact validation: success;
-- exact immutable API/Web image deployment: success;
-- stage PostgreSQL, Redis, API and Web services healthy;
-- public frontend root HTTP 200 on attempt 1;
-- public API readiness HTTP 200 on attempt 1;
-- public smoke passed with expected CSP mode `report-only`;
-- public browser validation: 12/12 passed across desktop Chromium and iOS WebKit;
-- deployment Issue #12 confirms the same exact image SHA and all deploy/public validation states as `success`.
-
-## Issue #74 calendar-reminder effective-target evidence
-
-PR #446 final immutable-head evidence on `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`:
-
-- Exact product/docs base was `0969a5fdff0484d23099e66d7f4f0b31965a689c` from reconciliation PR #445.
-- Source inventory proved the live residual calendar gaps were the routed preview `Настроить календарь` action, the 42x42 modal close control and seven custom weekday buttons; route disclosure, form controls and provider buttons were already compliant.
-- All live `CalendarReminderIntegration` callers pass `showCard={false}`; dormant card markup was deliberately excluded rather than made reachable solely for acceptance.
-- `frontend/app/calendar-reminder-entry.css` owns the live route-preview effective target; `frontend/app/calendar-reminder-touch-targets.css` owns paint-inert modal close/weekday hit surfaces; canonical compact weekday presentation remains in `frontend/app/calendar-reminders.css`.
-- Compact custom weekdays reflow to four columns plus a second three-item row so every 44/48px target remains independent at compact widths.
-- `frontend/e2e/calendar-reminder-touch-targets.spec.ts` is collected by authoritative UI and accessibility suites and runs target evidence in desktop Chromium, Android Chromium and iOS WebKit.
-- Acceptance requires minimum effective geometry, real four-side `document.elementFromPoint` ownership, transparent/borderless/shadowless pseudo paint, pairwise weekday non-overlap, keyboard focus-visible and no horizontal overflow.
-- CI #3064 / run `31275409335` exposed product-scope/CSS-owner drift and was corrected at the canonical owners rather than whitelisted.
-- CI #3073 / run `31276456917` exposed a stale test assumption about dormant `.lx-calendar-reminder-card`; the dead-card assertion and dead-card hit CSS were removed instead of manufacturing unreachable UI.
-- CI #3075 / run `31277262935` proved every individual 48px mobile target and perimeter hit before a false pairwise overlap failure. Playwright traces showed `.lx-calendar-modal` changing `scrollTop` while viewport-relative rectangles were accumulated, so rectangles from different coordinate frames were being compared.
-- Production CSS was not changed for that test defect. Cross-target rectangles are now re-sampled together in one `evaluateAll` browser evaluation before pairwise comparison, while individual real-hit checks remain unchanged.
-- The reusable rule is permanently recorded in `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`: cross-target viewport geometry inside scrollable owners must use one shared scroll state or an explicitly normalized coordinate system.
-- Final immutable-head CI #3082 / run `31282237623` completed successfully across the full product matrix; clean review/thread audit found no review submissions or unresolved inline threads; squash merge used exact expected head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0`.
-
-Post-merge evidence for product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`:
-
-- exact-SHA main CI #3083 / run `31282660741`: complete success across the full product matrix;
-- the repaired UI shard 2 completed successfully on the merge SHA;
-- frontend core, backend unit/security, backend integration and Frontend quality aggregate all succeeded;
+- exact-SHA main CI #3096 / run `31295869109`: complete success across the full product matrix;
+- backend unit/security and integration race tests succeeded;
+- frontend core, both UI shards, accessibility, visual, performance, Dictionary smoke, iOS PWA, content-security and controlled-service-worker gates succeeded;
 - exact-SHA API and Web container builds completed successfully and published immutable images;
-- Deploy Stage #2924 / run `31283056543`: complete success on the same exact SHA;
-- exact CI deployment-scope artifact validation: success;
-- Stage deployment and public frontend/API endpoint verification: success;
-- public browser UI validation: success;
-- no retry, target-threshold weakening, force-click or visual-baseline update was used to obtain the final green evidence.
+- Deploy Stage #2937 / run `31296173844`: complete success on the same exact SHA;
+- exact CI deployment-scope artifact validation and exact immutable API/Web image deployment: success;
+- stage PostgreSQL, Redis, API and Web services healthy;
+- public frontend root HTTP 200 on attempt 1 and public API readiness HTTP 200 on attempt 1;
+- public smoke passed with expected CSP mode `report-only`;
+- public browser validation completed successfully across the 12-test desktop Chromium/iOS WebKit matrix;
+- deployment Issue #12 confirms the same exact image SHA and deploy/public states as `success`.
 
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444 and #446 meet their route-specific 44/48px target, spacing, focus and callback contracts.
+- Confirmed live controls covered by PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446 and #448 meet their route-specific 44/48px target, spacing, focus and callback contracts.
 - Canonical mobile-navigation labels scale under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has permanent authoritative true 200% browser-owned zoom evidence.
 - The authoritative collection permanently executes Home, Learn and Active Lesson true-browser-zoom owners and contains fail-closed source protection against silently dropping them.
 - Canonical Phrases has authoritative true-browser-owned 200% zoom evidence plus explicit desktop/mobile real-hit-target acceptance for catalog controls.
 - Canonical populated Progress and Active Lesson have explicit desktop/mobile effective-target and real-hit-testing acceptance while preserving approved visual baselines.
-- Reusable AsyncStatePanel recovery actions have explicit desktop/mobile effective-target, real hit ownership, keyboard focus and live retry-callback acceptance.
-- Live calendar reminder preview/close/weekdays have explicit desktop/mobile effective-target, real-hit ownership, non-overlap and keyboard-focus acceptance.
-- Expanded targets preserve accessible names, runtime callbacks, navigation/API semantics and compact visual layout for the delivered slices.
+- Reusable AsyncStatePanel, calendar-reminder and Dictionary catalog target owners have explicit multi-browser real-hit and non-overlap regression protection.
+- Expanded targets preserve accessible names, runtime callbacks, navigation/API semantics and approved compact painted geometry for the delivered slices.
 
 Remaining / validation pending:
 
@@ -170,12 +144,12 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Current state
 
-- Product PR #446 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Current product runtime and Stage are validated on exact image SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- Repository memory is being reconciled in a docs-only PR from that exact product base; `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates before the next product slice.
-- The dormant browser-zoom collection defect remains closed and protected by `.agents/AGENTS.issue-74-browser-zoom-collection.md` plus `frontend/components/browser-zoom-collection-contract.test.ts`.
-- Scroll-sensitive cross-target geometry is now protected by `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
-- Progress, Active Lesson, Phrases catalog, reusable system-state and live calendar-reminder effective-target slices are merged and preserved by the current deployed product.
+- Product PR #448 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Current product runtime and Stage are validated on exact image SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- Repository memory is being reconciled in docs-only branch `docs/issue-74-dictionary-catalog-reconcile` from that exact product base; reconciliation PR number is pending creation at this record revision.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates before the next product slice.
+- The browser-zoom collection contract and scroll-normalized geometry rules remain permanent fail-closed protection.
+- Progress, Active Lesson, Phrases catalog, reusable system-state, live calendar-reminder and Dictionary catalog effective-target slices are merged and preserved by the current deployed product.
 - The next product work is residual whole-application Issue #74 live-control inventory; only evidenced gaps should produce additional product slices.
 - Physical-device acceptance remains a separate final manual validation gate and is not claimed by automated browser evidence.
 - Dependabot PRs #304, #403 and #432 remain separate maintenance work.
@@ -189,11 +163,13 @@ Issue #74 stays open until those remaining criteria are proven.
 
 ## Reconciliation evidence
 
-- Docs-only reconciliation #445 merged as `0969a5fdff0484d23099e66d7f4f0b31965a689c` and became the exact base for PR #446.
-- PR #446 merged from final developer-authored head `9074b4a18b51fac67ff6fc5964dcfb5d49abf9a0` to product SHA `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- PR #446 final immutable-head CI #3082 / run `31282237623` completed successfully.
-- Exact-SHA main CI #3083 / run `31282660741` completed successfully and published exact API/Web images.
-- Deploy Stage #2924 / run `31283056543` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus public browser UI validation successfully.
+- Docs-only reconciliation PR #447 merged as `80b0a8d3d13f0d7ac12350867eba64f312fe750c` and became the exact base for PR #448.
+- PR #448 merged from final developer-authored head `448faae28f91b39989bc46f8701811d48e68e832` to product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
+- PR #448 final immutable-head CI #3095 / run `31295450246` completed successfully.
+- Exact-SHA main CI #3096 / run `31295869109` completed successfully and published exact API/Web images.
+- Deploy Stage #2937 / run `31296173844` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus public browser UI validation successfully.
+- Deployment Issue #12 records the exact product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f` with deploy, public smoke and public browser states all `success`.
+- Current reconciliation branch is `docs/issue-74-dictionary-catalog-reconcile`; its PR number and final docs merge SHA must be appended after the PR is opened and validated.
 - Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
