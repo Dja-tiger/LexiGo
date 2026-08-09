@@ -25,7 +25,14 @@ type EffectiveTarget = EffectiveRect & {
 };
 
 async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
-  await control.scrollIntoViewIfNeeded();
+  // `scrollIntoViewIfNeeded()` may leave a fully intersecting control beneath the
+  // fixed mobile navigation in WebKit. Center the control before real-hit
+  // sampling so elementFromPoint measures the target itself, not the app chrome.
+  await control.evaluate((element) => {
+    element.scrollIntoView({ block: "center", inline: "nearest" });
+  });
+  await expect(control).toBeVisible();
+
   return control.evaluate((element) => {
     const rect = element.getBoundingClientRect();
     const style = window.getComputedStyle(element);
