@@ -2,67 +2,72 @@
 
 ## Identity
 
-- Issue: #74
-- Branch: `fix/issue-74-final-residual-touch-targets`
-- Base SHA: `e5c20118b12023ae2b961365a64e01e814be7561`
-- Product head before final harness checkpoint: `5b0ad8d48dc024d90787a6604d567407ca047b94`; resolve live branch ref before merge
-- PR: #459
+- Issue: #18
+- Branch: `feat/issue-18-adaptive-queue`
+- Base SHA: `e1980c973d524048d2fb079d79d51b8bfd50f0a4`
+- PR: pending
 
 ## Objective
 
-Close the remaining in-scope engineering touch-target gaps for Issue #74 in one bounded residual pass: active Scenario Lesson controls (including the portal safe-exit dialog) and the global Service Worker update banner.
+Deliver the first large production slice of Issue #18: a server-owned adaptive lesson queue that prioritizes recent failures and weak topics, supports a controlled review/new ratio, avoids avoidable topic/POS streaks, and persists an explainable selection reason for every newly created lesson item.
 
 ## Scope
 
-- Scenario Lesson `.lx-scenario button` controls.
-- Scenario safe-exit portal `.lx-scenario-dialog button` controls.
-- Global Service Worker update banner `.lx-sw-update button` actions.
-- One interaction-only CSS owner loaded after the canonical painted owners.
-- One source contract plus one cross-browser real-hit/non-overlap browser contract.
-- Blocking Scenario, Service Worker, UI and accessibility command registration.
+- Adaptive candidate signals from existing objective review events and user-word state.
+- Priority order: recent failure -> due -> weak topic -> new -> scheduled.
+- Optional `reviewRatio` request contract with a backwards-compatible 70% default and 0..100 validation.
+- Review/new quota with shortage fill so lessons do not become artificially short.
+- Greedy anti-streak ordering within the same priority tier for topic and part of speech.
+- Durable `selection_reason` and `review_ratio` persistence for resumable lessons.
+- Active/resumed lesson responses rehydrate stored reasons instead of recomputing them.
+- Deterministic unit contracts for ranking, ratio, shortage fill, reasons, and diversification.
 
 ## Non-goals
 
-- Profile controls discovered during the residual audit; they are outside the original Issue #74 affected-screen set and require a separate accessibility follow-up.
-- Scenario Catalog card links; delivered by PR #458 on base SHA `e5c20118b12023ae2b961365a64e01e814be7561`.
-- Any visual redesign, typography, spacing, colors, border geometry, backend/API behavior, service-worker lifecycle semantics or Scenario submission semantics.
-- Physical-device acceptance; this environment cannot execute the required real-hardware validation.
+- Diagnostic onboarding UI and learner self-mark (`Знаю / Не уверен / Новое`); this is the next coherent Issue #18 phase after this production slice is delivered.
+- A redesign of Lesson Composer, Active Lesson or Profile.
+- Changes to scheduler grading semantics or review event truth.
+- Guessing physical-device behavior.
 
 ## Allowed paths
 
-- `frontend/app/issue-74-final-touch-targets.css`
-- `frontend/app/layout.tsx`
-- `frontend/components/issue-74-final-touch-target-source.test.ts`
-- `frontend/e2e/issue-74-final-touch-targets.spec.ts`
-- `frontend/package.json`
+- `backend/internal/learning/lesson.go`
+- `backend/internal/learning/lesson_composer.go`
+- `backend/internal/learning/lesson_composer_test.go`
+- `backend/internal/learning/lesson_http.go`
+- `backend/internal/learning/lesson_progression.go`
+- `backend/internal/learning/lesson_reasons.go`
+- `backend/internal/platform/migrate/migrations/000018_adaptive_lesson_queue.up.sql`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ## Prohibited paths
 
-All paths not listed above, especially canonical Scenario/SW painted CSS, runtime components, backend/API code, lockfiles, visual baselines and CI workflow definitions.
+All paths not listed above in this slice, including frontend visual owners, deployment workflows, lockfiles and unrelated API/runtime code.
 
 ## Invariants
 
-- Canonical Scenario button paint remains 44px minimum where originally defined; existing 52px primary/secondary controls remain unchanged.
-- Canonical Service Worker update button paint remains 42px minimum.
-- Fine-pointer effective targets are at least 44 x 44 CSS px; coarse-pointer targets are at least 48 x 48 CSS px.
-- Expansion is transparent, borderless and shadowless and changes interaction geometry only, never canonical layout/paint.
-- Existing accessible names, focus behavior, Scenario routing/submission semantics and Service Worker activation/defer semantics remain unchanged.
-- Effective sibling targets do not overlap.
+- Existing clients that omit `reviewRatio` keep working and receive the 70% default policy.
+- Recall/choice due-only filtering remains server-owned.
+- Manual `wordIds` lessons preserve exact caller order and are marked `manual` rather than re-ranked.
+- Recent completed lesson exclusion remains active.
+- Candidate ranking is deterministic for the same snapshot.
+- Anti-streak logic never crosses priority tiers and only reorders when a same-priority alternative exists.
+- Lesson resume uses persisted reasons, not mutable current learner state.
 
 ## Acceptance criteria
 
-- Desktop Chromium, Android Chromium and iOS WebKit prove 44 x 44 / 48 x 48 effective geometry with four-side real hit testing for both residual families.
-- Scenario safe-exit portal actions receive the same target contract and remain independent.
-- Service Worker update actions remain independent.
-- Source contract fails closed on import order, live owners, canonical painted sizes, paint-inert expansion and browser-command registration.
-- Product diff contains only the eight allowed paths.
-- Full immutable-head CI passes before expected-head squash merge.
+- Recent failures rank before ordinary due items.
+- Due items rank before weak-topic items; weak-topic items rank before ordinary new/scheduled items.
+- Configured review/new share is honored when inventory allows and shortages are filled from the other side.
+- A third same-topic or same-POS item is avoided when a same-priority alternative exists.
+- New adaptive lesson items persist one valid reason; manual items persist `manual`.
+- Active lesson responses expose the persisted reason after resume.
+- Invalid `reviewRatio` outside 0..100 returns 422.
+- Backend unit/integration/race gates and immutable-head CI pass before merge.
 - Exact-SHA main CI and Stage/public validation pass after merge.
-- Issue #74 engineering delivery is then complete; the issue must remain explicitly hardware-blocked if the mandatory physical-device gate is still unexecuted.
 
 ## Rollback
 
-Remove the final touch-target stylesheet, its layout import, source/browser proofs and package registrations; restore the three current Agent Harness files through the normal reconciliation lifecycle. No backend/data rollback is required.
+Revert the Issue #18 adaptive queue commit/PR. The migration is additive: legacy sessions remain readable because `selection_reason` is nullable and `review_ratio` has a 70 default. No destructive data rewrite is required.

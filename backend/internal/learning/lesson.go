@@ -2,30 +2,46 @@ package learning
 
 import "time"
 
+type LessonSelectionReason string
+
+const (
+	LessonReasonRecentFailure LessonSelectionReason = "recent_failure"
+	LessonReasonDue           LessonSelectionReason = "due"
+	LessonReasonWeakTopic     LessonSelectionReason = "weak_topic"
+	LessonReasonNew           LessonSelectionReason = "new"
+	LessonReasonScheduled     LessonSelectionReason = "scheduled"
+	LessonReasonManual        LessonSelectionReason = "manual"
+)
+
 type LessonCreateRequest struct {
-	Source     string     `json:"source"`
-	StudyMode  AnswerMode `json:"studyMode"`
-	LessonSize string     `json:"lessonSize"`
-	Topic      string     `json:"topic,omitempty"`
-	WordIDs    []int64    `json:"wordIds,omitempty"`
+	Source      string     `json:"source"`
+	StudyMode   AnswerMode `json:"studyMode"`
+	LessonSize  string     `json:"lessonSize"`
+	Topic       string     `json:"topic,omitempty"`
+	WordIDs     []int64    `json:"wordIds,omitempty"`
+	ReviewRatio *int       `json:"reviewRatio,omitempty"`
 }
 
 type LessonPreviewRequest struct {
-	Source     string     `json:"source"`
-	StudyMode  AnswerMode `json:"studyMode"`
-	LessonSize string     `json:"lessonSize"`
-	Topic      string     `json:"topic,omitempty"`
+	Source      string     `json:"source"`
+	StudyMode   AnswerMode `json:"studyMode"`
+	LessonSize  string     `json:"lessonSize"`
+	Topic       string     `json:"topic,omitempty"`
+	ReviewRatio *int       `json:"reviewRatio,omitempty"`
 }
 
 type LessonComposition struct {
-	Total            int    `json:"total"`
-	Words            int    `json:"words"`
-	Phrases          int    `json:"phrases"`
-	Due              int    `json:"due"`
-	New              int    `json:"new"`
-	Scheduled        int    `json:"scheduled"`
-	AvailableWords   int    `json:"availableWords"`
-	AvailablePhrases int    `json:"availablePhrases"`
+	Total            int `json:"total"`
+	Words            int `json:"words"`
+	Phrases          int `json:"phrases"`
+	Due              int `json:"due"`
+	New              int `json:"new"`
+	Scheduled        int `json:"scheduled"`
+	RecentFailures   int `json:"recentFailures"`
+	WeakTopics       int `json:"weakTopics"`
+	ReviewRatio      int `json:"reviewRatio"`
+	AvailableWords   int `json:"availableWords"`
+	AvailablePhrases int `json:"availablePhrases"`
 	Fallback         string `json:"fallback,omitempty"`
 }
 
@@ -42,24 +58,25 @@ type LessonReviewRequest struct {
 }
 
 type LessonItem struct {
-	Position        int        `json:"position"`
-	WordID          int64      `json:"id"`
-	Kind            string     `json:"kind"`
-	Slug            string     `json:"slug,omitempty"`
-	Lemma           string     `json:"lemma"`
-	Translation     string     `json:"translation"`
-	Phonetic        string     `json:"phonetic"`
-	PartOfSpeech    string     `json:"partOfSpeech"`
-	Topic           string     `json:"topic"`
-	Aliases         []string   `json:"aliases,omitempty"`
-	AcceptedAnswers []string   `json:"acceptedAnswers"`
-	Examples        []string   `json:"examples"`
-	Note            string     `json:"note"`
-	Cloze           string     `json:"cloze,omitempty"`
-	ClozeAnswer     string     `json:"clozeAnswer,omitempty"`
-	Status          string     `json:"status"`
-	Rating          *Rating    `json:"rating,omitempty"`
-	ReviewedAt      *time.Time `json:"reviewedAt,omitempty"`
+	Position        int                   `json:"position"`
+	WordID          int64                 `json:"id"`
+	Kind            string                `json:"kind"`
+	Slug            string                `json:"slug,omitempty"`
+	Lemma           string                `json:"lemma"`
+	Translation     string                `json:"translation"`
+	Phonetic        string                `json:"phonetic"`
+	PartOfSpeech    string                `json:"partOfSpeech"`
+	Topic           string                `json:"topic"`
+	Aliases         []string              `json:"aliases,omitempty"`
+	AcceptedAnswers []string              `json:"acceptedAnswers"`
+	Examples        []string              `json:"examples"`
+	Note            string                `json:"note"`
+	Cloze           string                `json:"cloze,omitempty"`
+	ClozeAnswer     string                `json:"clozeAnswer,omitempty"`
+	Status          string                `json:"status"`
+	Reason          LessonSelectionReason `json:"reason,omitempty"`
+	Rating          *Rating               `json:"rating,omitempty"`
+	ReviewedAt      *time.Time            `json:"reviewedAt,omitempty"`
 }
 
 type LessonSession struct {

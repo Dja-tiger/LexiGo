@@ -29,6 +29,9 @@ func TestComposeMixedLessonAlternatesWithinPriorityTiers(t *testing.T) {
 	if composition.Total != 6 || composition.Words != 3 || composition.Phrases != 3 || composition.Due != 2 || composition.New != 2 || composition.Scheduled != 2 || composition.Fallback != "" {
 		t.Fatalf("unexpected composition: %+v", composition)
 	}
+	if composition.ReviewRatio != defaultLessonReviewRatio {
+		t.Fatalf("review ratio = %d, want %d", composition.ReviewRatio, defaultLessonReviewRatio)
+	}
 }
 
 func TestComposeMixedLessonNeverSelectsNewBeforeRemainingDue(t *testing.T) {
@@ -110,5 +113,96 @@ func TestExcludeLessonCandidatesWithoutPreviousLessonReturnsOriginalQueue(t *tes
 	filtered := excludeLessonCandidates(candidates, nil)
 	if len(filtered) != 2 || &filtered[0] != &candidates[0] {
 		t.Fatal("queue without exclusions should be returned unchanged")
+	}
+}
+
+func TestAdaptivePriorityExplainsRecentFailureBeforeDueAndWeakTopic(t *testing.T) {
+	now := time.Date(2026, 8, 10, 8, 0, 0, 0, time.UTC)
+	candidates := []lessonCandidate{
+		{WordID: 4, Kind: "word", Status: "review", DueAt: now.Add(4 * time.Hour)},
+		{WordID: 2, Kind: "word", Status: "review", DueAt: now.Add(-time.Hour), Due: true},
+		{WordID: 3, Kind: "word", Status: "review", DueAt: now.Add(2 * time.Hour), WeakTopic: true},
+		{WordID: 1, Kind: "word", Status: "learning", DueAt: now.Add(time.Hour), RecentFailure: true},
+	}
+
+	selected, _ := composeLessonCandidates(candidates, "noun", 4, 100)
+	ids := []int64{selected[0].WordID, selected[1].WordID, selected[2].WordID, selected[3].WordID}
+	want := []int64{1, 2, 3, 4}
+	if !reflect.DeepEqual(ids, want) {
+		t.Fatalf("selected ids = %v, want %v", ids, want)
+	}
+	reasons := []LessonSelectionReason{
+		lessonCandidateReason(selected[0]),
+		lessonCandidateReason(selected[1]),
+		lessonCandidateReason(selected[2]),
+		lessonCandidateReason(selected[3]),
+	}
+	wantReasons := []LessonSelectionReason{LessonReasonRecentFailure, LessonReasonDue, LessonReasonWeakTopic, LessonReasonScheduled}
+	if !reflect.DeepEqual(reasons, wantReasons) {
+		t.Fatalf("reasons = %v, want %v", reasons, wantReasons)
+	}
+}
+
+func TestAdaptiveReviewRatioIsControlledAndFillsShortages(t *testing.T) {
+	now := time.Date(2026, 8, 10, 8, 0, 0, 0, time.UTC)
+	candidates := []lessonCandidate{
+		{WordID: 1, Kind: "word", Status: "review", DueAt: now.Add(-4 * time.Hour), Due: true},
+		{WordID: 2, Kind: "word", Status: "review", DueAt: now.Add(-3 * time.Hour), Due: true},
+		{WordID: 3, Kind: "word", Status: "review", DueAt: now.Add(time.Hour)},
+		{WordID: 4, Kind: "word", Status: "review", DueAt: now.Add(2 * time.Hour)},
+		{WordID: 5, Kind: "word", Status: "new", DueAt: now.Add(3 * time.Hour)},
+		{WordID: 6, Kind: "word", Status: "new", DueAt: now.Add(4 * time.Hour)},
+		{WordID: 7, Kind: "word", Status: "new", DueAt: now.Add(5 * time.Hour)},
+		{WordID: 8, Kind: "word", Status: "new", DueAt: now.Add(6 * time.Hour)},
+	}
+
+	selected, composition := composeLessonCandidates(candidates, "noun", 6, 50)
+	if len(selected) != 6 || composition.ReviewRatio != 50 || composition.New != 3 {
+		t.Fatalf("unexpected 50/50 composition: %+v", composition)
+	}
+	reviews := 0
+	for _, candidate := range selected {
+		if candidate.Status != "new" {
+			reviews++
+		}
+	}
+	if reviews != 3 {
+		t.Fatalf("review items = %d, want 3", reviews)
+	}
+
+	selected, composition = composeLessonCandidates(candidates[:5], "noun", 5, 20)
+	if len(selected) != 5 || composition.New != 1 {
+		t.Fatalf("short new queue must be filled by review items: %+v", composition)
+	}
+}
+
+func TestAdaptiveQueueAvoidsThirdSameTopicAndPartOfSpeechWhenAlternativeExists(t *testing.T) {
+	now := time.Date(2026, 8, 10, 8, 0, 0, 0, time.UTC)
+	candidates := []lessonCandidate{
+		{WordID: 1, Kind: "word", Status: "review", DueAt: now, Topic: "Data Engineering", PartOfSpeech: "noun"},
+		{WordID: 2, Kind: "word", Status: "review", DueAt: now.Add(time.Minute), Topic: "Data Engineering", PartOfSpeech: "noun"},
+		{WordID: 3, Kind: "word", Status: "review", DueAt: now.Add(2 * time.Minute), Topic: "Data Engineering", PartOfSpeech: "noun"},
+		{WordID: 4, Kind: "word", Status: "review", DueAt: now.Add(3 * time.Minute), Topic: "Backend Development", PartOfSpeech: "verb"},
+	}
+
+	selected, _ := composeLessonCandidates(candidates, "mixed", 4, 100)
+	ids := []int64{selected[0].WordID, selected[1].WordID, selected[2].WordID, selected[3].WordID}
+	want := []int64{1, 2, 4, 3}
+	if !reflect.DeepEqual(ids, want) {
+		t.Fatalf("diversified ids = %v, want %v", ids, want)
+	}
+}
+
+func TestResolveLessonReviewRatioDefaultsAndClamps(t *testing.T) {
+	if got := resolveLessonReviewRatio(nil); got != defaultLessonReviewRatio {
+		t.Fatalf("default ratio = %d, want %d", got, defaultLessonReviewRatio)
+	}
+	negative := -10
+	if got := resolveLessonReviewRatio(&negative); got != 0 {
+		t.Fatalf("negative ratio = %d, want 0", got)
+	}
+	tooHigh := 150
+	if got := resolveLessonReviewRatio(&tooHigh); got != 100 {
+		t.Fatalf("high ratio = %d, want 100", got)
 	}
 }

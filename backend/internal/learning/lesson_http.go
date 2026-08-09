@@ -22,7 +22,7 @@ func (h *Handler) PreviewLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
 		return
 	}
-	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic) {
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
 	preview, err := h.repository.PreviewLesson(r.Context(), userID, request)
@@ -46,7 +46,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "invalid JSON request")
 		return
 	}
-	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic) {
+	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
 	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 60 || !uniquePositiveWordIDs(request.WordIDs)) {
@@ -70,7 +70,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusCreated, lesson)
 }
 
-func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode AnswerMode, lessonSize, topic string) bool {
+func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode AnswerMode, lessonSize, topic string, reviewRatio *int) bool {
 	if !validLessonSource(source) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported vocabulary or phrase collection")
 		return false
@@ -87,6 +87,10 @@ func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_topic", "topic must contain at most 120 characters")
 		return false
 	}
+	if reviewRatio != nil && (*reviewRatio < 0 || *reviewRatio > 100) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_review_ratio", "reviewRatio must be between 0 and 100")
+		return false
+	}
 	return true
 }
 
@@ -96,7 +100,7 @@ func (h *Handler) ActiveLesson(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
 		return
 	}
-	lesson, err := h.repository.ActiveLesson(r.Context(), userID)
+	lesson, err := h.repository.ActiveLessonWithReasons(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, ErrNoActiveLesson) {
 			httpx.WriteError(w, http.StatusNotFound, "active_lesson_not_found", "there is no active lesson")
