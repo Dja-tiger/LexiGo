@@ -1,0 +1,30 @@
+/*
+ * Issue #74 — shared Learning subsection effective touch targets.
+ *
+ * scenario-catalog.css remains the painted owner for the canonical
+ * «Уроки / Сценарии» switch. The links are already at the 44px fine-pointer
+ * minimum and at least 120px wide, so this interaction-only layer preserves
+ * those pixels and expands only the block-axis hit surface for coarse input.
+ */
+.lx-learning-section-switch a {
+  position: relative;
+  --lx-learning-section-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-learning-section-switch a::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-learning-section-touch-target)) / 2));
+  inset-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-learning-section-switch a {
+    --lx-learning-section-touch-target: 48px;
+  }
+}
