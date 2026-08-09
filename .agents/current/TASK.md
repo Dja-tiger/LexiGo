@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `fix/issue-74-scenario-catalog-card-touch-targets`
 - Base SHA: `64c0ef866e85348cf7e57279e14983d0c3f5f709`
-- Head SHA: resolve from live branch ref
-- PR:
+- Head SHA: `fa1ed888d7950aec56f7f747b607d7860ce7fee0` before this harness checkpoint; resolve live branch ref before merge
+- PR: #458
 
 ## Objective
 

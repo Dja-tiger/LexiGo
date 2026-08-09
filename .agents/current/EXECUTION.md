@@ -4,8 +4,8 @@
 
 - Branch: `fix/issue-74-scenario-catalog-card-touch-targets`
 - Base SHA: `64c0ef866e85348cf7e57279e14983d0c3f5f709`
-- Head SHA: resolve from live branch ref
-- PR:
+- Head SHA: `fa1ed888d7950aec56f7f747b607d7860ce7fee0` before this harness checkpoint; resolve live branch ref before merge
+- PR: #458
 
 ## Skills used
 
@@ -53,6 +53,10 @@ Actions performed:
 - Designed a route-specific transparent block-axis effective target owner and fail-closed source/browser evidence.
 - Reused deterministic authenticated Scenario Catalog fixtures rather than adding test-only product behavior.
 - Removed an unused browser-test helper during self-review before any branch commit.
+- Created one atomic tree commit `fa1ed888d7950aec56f7f747b607d7860ce7fee0` with exactly the eight allowed paths.
+- Read all eight changed paths back from the branch and confirmed intended blob contents/import order/collection registration.
+- Compared exact base to product head: `ahead 1 / behind 0`, no unexpected paths.
+- Opened Draft PR #458 against exact base.
 
 Commands or procedures:
 
@@ -60,11 +64,15 @@ GitHub connector reads/writes only. No local checkout or local test execution is
 
 Artifacts produced:
 
-Prepared blobs for the new interaction stylesheet, source ownership contract, cross-browser Playwright proof, layout/package registration and current Agent Harness task state. These are attached to the branch only through the atomic tree commit.
+- `frontend/app/scenario-catalog-card-touch-targets.css`
+- `frontend/components/scenario-catalog-card-touch-target-source.test.ts`
+- `frontend/e2e/scenario-catalog-card-touch-targets.spec.ts`
+- layout/package collection registration
+- PR #458 and current Agent Harness evidence
 
 Result:
 
-Pre-write implementation is internally scoped to eight allowed paths and ready for atomic branch commit/read-back/diff validation.
+The product implementation is branch-scoped, read back successfully and limited to the intended eight-path slice. PR #458 is ready for the final harness checkpoint followed by immutable-head product CI.
 
 Failures:
 

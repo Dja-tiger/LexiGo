@@ -23,8 +23,6 @@ The Scenario Catalog presentation established a 44px card action when the route 
 
 ### Changed files
 
-Planned atomic branch write:
-
 - `frontend/app/scenario-catalog-card-touch-targets.css`
 - `frontend/app/layout.tsx`
 - `frontend/components/scenario-catalog-card-touch-target-source.test.ts`
@@ -37,19 +35,22 @@ Planned atomic branch write:
 ### Checks passed
 
 - Exact-main and branch-existence preflight.
-- Runtime/presentation ownership audit.
-- Neighboring-control exclusion audit.
+- Runtime/presentation ownership audit and neighboring-control exclusion audit.
 - Existing Issue #74 geometry/test-pattern review, including border-aware pseudo geometry and common-scroll-frame pairwise sampling.
-- Draft source and browser proof self-review removed an unused helper before any branch commit.
+- Draft browser proof self-review removed an unused helper before repository write.
+- Atomic product/tree commit `fa1ed888d7950aec56f7f747b607d7860ce7fee0` attached to the exact-base feature branch.
+- Fail-closed read-back completed for all eight changed paths; blob contents match the intended CSS/import/source/browser/package/harness state.
+- Compare `64c0ef8…fa1ed88` is `ahead 1 / behind 0` with exactly the eight allowed paths and no lockfile/runtime/backend/visual/CI-workflow drift.
+- Draft PR #458 opened against exact base `64c0ef866e85348cf7e57279e14983d0c3f5f709`.
 
 ### Checks failed
 
-None yet. Local checkout/test execution is unavailable in this environment; GitHub CI will remain the execution source of truth after the atomic branch write.
+None yet. Local checkout/test execution is unavailable in this environment; GitHub CI is the execution source of truth.
 
 ### Current branch head
 
-Resolve after the atomic tree commit is attached to `fix/issue-74-scenario-catalog-card-touch-targets`.
+`fa1ed888d7950aec56f7f747b607d7860ce7fee0` before this harness checkpoint; resolve the live branch ref after the checkpoint commit.
 
 ### Next action
 
-Write the eight allowed paths in one branch commit, read every changed path back, compare against exact base, open a Draft PR and run the immutable-head product CI gate.
+Commit this PR/head checkpoint on the same eight-path scope, then validate the resulting immutable PR head through full product CI. Classify any failures without weakening assertions or widening the slice.
