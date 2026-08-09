@@ -15,22 +15,25 @@
 ### Implemented
 
 - Added `frontend/app/issue-74-final-touch-targets.css` as one interaction-only owner.
-- Fine-pointer target variable is 44px; coarse-pointer variable is 48px.
-- Expansion is block-axis only through a transparent, borderless, shadowless `::before` surface; canonical paint/layout remains unchanged.
+- Fine-pointer effective minimum is 44 x 44 CSS px; coarse-pointer minimum is 48 x 48 CSS px.
+- Expansion uses a transparent, borderless, shadowless `::before` surface on both axes only when the painted control is narrower/shorter than the target; canonical paint/layout remains unchanged.
 - Owner covers Scenario route buttons, Scenario portal-dialog buttons and global Service Worker update actions.
 - Added `frontend/e2e/issue-74-final-touch-targets.spec.ts` with desktop Chromium, Android Chromium and iOS WebKit real-hit geometry, transparent-paint and sibling non-overlap assertions.
 - Added source ownership test and registered the browser proof in focused Scenario/SW plus blocking UI/accessibility commands.
 
-### Product head before harness checkpoint
+### CI finding and correction
 
-`d40485b19f5ad6d83d69adf3130a6719b3552a16`; resolve the live branch ref after harness documentation commits.
+- PR #459 initial immutable head `d8d0b8b28c1fd237db812f43c8f3e4329c856bcb` passed frontend lint/type/unit/build/audit.
+- Controlled Service Worker shard exposed a real iOS geometry gap: Scenario header back button effective size was 36 x 48 CSS px; height remediation alone was insufficient.
+- Corrected the interaction owner from block-axis-only expansion to a minimum square on both axes; source contract was updated accordingly.
+- Product correction head before final harness checkpoint: `5b0ad8d48dc024d90787a6604d567407ca047b94`.
 
 ### Validation status
 
-- Source ownership and test design self-review complete.
 - Local execution is unavailable; immutable GitHub CI is the execution source of truth.
-- Predecessor merge `e5c20118…` post-merge CI was still in progress when this branch was started; validate it independently and require the final residual PR's own immutable-head CI before merge.
+- A fresh immutable CI is required after this harness checkpoint because the branch head changed.
+- Predecessor merge `e5c20118…` post-merge CI is tracked independently.
 
 ### Next action
 
-Open the final residual PR, validate exact changed-path scope and immutable-head CI, fix only confirmed failures, then expected-head squash merge. After exact-SHA main CI and Stage/public validation, reconcile #74 as engineering-complete with only mandatory physical-device acceptance remaining if that hardware gate cannot be executed here.
+Validate final PR #459 head through the full CI matrix, fix only confirmed failures, then expected-head squash merge. After exact-SHA main CI and Stage/public validation, reconcile #74 as engineering-complete with only mandatory physical-device acceptance remaining if that hardware gate cannot be executed here.
