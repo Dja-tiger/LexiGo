@@ -136,14 +136,14 @@ func matchingRecentActiveLessonID(
 		          where item.session_id = lesson.id and word.topic <> $6
 		      )
 		  )
-		  and lesson.review_ratio = $8
+		  and lesson.review_ratio = $7
 		  and (
-		      $9::bigint[] is null
+		      $8::bigint[] is null
 		      or coalesce((
 		          select array_agg(item.word_id order by item.position)
 		          from lesson_session_items item
 		          where item.session_id = lesson.id
-		      ), '{}'::bigint[]) = $9::bigint[]
+		      ), '{}'::bigint[]) = $8::bigint[]
 		  )
 		order by lesson.updated_at desc
 		limit 1
@@ -155,7 +155,6 @@ func matchingRecentActiveLessonID(
 		request.LessonSize,
 		int64(duplicateLessonCreationWindow/time.Second),
 		strings.TrimSpace(request.Topic),
-		request.WordIDs,
 		resolveLessonReviewRatio(request.ReviewRatio),
 		request.WordIDs,
 	).Scan(&lessonID)
