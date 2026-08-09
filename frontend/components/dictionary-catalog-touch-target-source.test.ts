@@ -96,6 +96,6 @@ describe("Issue #74 Dictionary catalog touch-target ownership", () => {
     expect(browserProof).toContain('name: "Тип каталога", exact: true');
     expect(browserProof).toContain('name: "Рабочие фразы", exact: true');
     expect(browserProof).toContain("authenticated: false");
-    expect(browserProof).toContain("width: 768");
+    expect(browserProof).toContain('testInfo.project.name === "desktop-chromium" ? [768] : [768, 390]');
   });
 });
