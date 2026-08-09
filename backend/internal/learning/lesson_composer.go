@@ -17,12 +17,12 @@ const (
 	lessonFallbackPhrasesOnly = "phrases_only"
 	lessonFallbackEmpty       = "empty"
 
-	defaultLessonReviewRatio     = 70
-	maxLessonCandidatePriority   = 4
-	maxLessonDimensionStreak     = 2
-	recentLessonFailureWindow    = 14 * 24 * time.Hour
-	weakLessonTopicMaxEasiness   = 2.30
-	weakLessonTopicMinReviewed   = 3
+	defaultLessonReviewRatio   = 70
+	maxLessonCandidatePriority = 4
+	maxLessonDimensionStreak   = 2
+	recentLessonFailureWindow  = 14 * 24 * time.Hour
+	weakLessonTopicMaxEasiness = 2.30
+	weakLessonTopicMinReviewed = 3
 )
 
 type lessonCandidate struct {

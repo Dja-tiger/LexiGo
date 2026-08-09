@@ -31,17 +31,17 @@ type LessonPreviewRequest struct {
 }
 
 type LessonComposition struct {
-	Total            int `json:"total"`
-	Words            int `json:"words"`
-	Phrases          int `json:"phrases"`
-	Due              int `json:"due"`
-	New              int `json:"new"`
-	Scheduled        int `json:"scheduled"`
-	RecentFailures   int `json:"recentFailures"`
-	WeakTopics       int `json:"weakTopics"`
-	ReviewRatio      int `json:"reviewRatio"`
-	AvailableWords   int `json:"availableWords"`
-	AvailablePhrases int `json:"availablePhrases"`
+	Total            int    `json:"total"`
+	Words            int    `json:"words"`
+	Phrases          int    `json:"phrases"`
+	Due              int    `json:"due"`
+	New              int    `json:"new"`
+	Scheduled        int    `json:"scheduled"`
+	RecentFailures   int    `json:"recentFailures"`
+	WeakTopics       int    `json:"weakTopics"`
+	ReviewRatio      int    `json:"reviewRatio"`
+	AvailableWords   int    `json:"availableWords"`
+	AvailablePhrases int    `json:"availablePhrases"`
 	Fallback         string `json:"fallback,omitempty"`
 }
 
