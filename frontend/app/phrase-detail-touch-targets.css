@@ -1,0 +1,51 @@
+/*
+ * Issue #74 — Phrase Detail effective touch targets.
+ *
+ * phrases.css remains the canonical painted-geometry owner. Every live Phrase
+ * Detail action already has a >=44px painted height and a text-bearing width
+ * above the modality minimum, so this layer expands only the block-axis event
+ * surface for coarse pointers without changing approved visual geometry.
+ */
+.lx-routed-app[data-route-path^="/phrases/"]
+  :is(
+    .lx-phrase-detail-back,
+    .lx-phrase-listen,
+    .lx-phrase-detail-primary,
+    .lx-phrase-detail-secondary,
+    .lx-phrase-detail-side button
+  ) {
+  position: relative;
+  --lx-phrase-detail-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path^="/phrases/"]
+  :is(
+    .lx-phrase-detail-back,
+    .lx-phrase-listen,
+    .lx-phrase-detail-primary,
+    .lx-phrase-detail-secondary,
+    .lx-phrase-detail-side button
+  )::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-phrase-detail-touch-target)) / 2));
+  inset-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path^="/phrases/"]
+    :is(
+      .lx-phrase-detail-back,
+      .lx-phrase-listen,
+      .lx-phrase-detail-primary,
+      .lx-phrase-detail-secondary,
+      .lx-phrase-detail-side button
+    ) {
+    --lx-phrase-detail-touch-target: 48px;
+  }
+}

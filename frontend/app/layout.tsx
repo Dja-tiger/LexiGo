@@ -16,6 +16,7 @@ import "./themed-vocabulary.css";
 import "./phrases.css";
 import "./phrases-search-clear-touch-targets.css";
 import "./phrases-catalog-touch-targets.css";
+import "./phrase-detail-touch-targets.css";
 import "./catalog-enhancements.css";
 import "./calendar-reminders.css";
 import "./error-boundary.css";
