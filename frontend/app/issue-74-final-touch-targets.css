@@ -2,14 +2,14 @@
  * Issue #74 final residual ownership.
  *
  * Scenario Lesson and the global Service Worker update banner still expose
- * compact painted controls whose border boxes are below the 48 CSS px
+ * compact painted controls whose border boxes can be below the 48 CSS px
  * coarse-pointer target used by the rest of the product. Keep their visual
- * geometry unchanged and expand only the transparent block-axis hit surface.
+ * geometry unchanged and expand only a transparent hit surface.
  *
  * The percentage is resolved against each button padding box. Combined with
- * the button border this yields at least 44 CSS px for fine pointers and
- * 48 CSS px for coarse pointers without changing layout, paint or inline
- * spacing. Disabled buttons keep their native disabled interaction semantics.
+ * the button border this yields at least 44 x 44 CSS px for fine pointers and
+ * 48 x 48 CSS px for coarse pointers without changing layout or paint.
+ * Disabled buttons keep their native disabled interaction semantics.
  */
 .lx-scenario button,
 .lx-scenario-dialog button,
@@ -23,7 +23,7 @@
 .lx-sw-update button::before {
   position: absolute;
   inset-block: calc((100% - var(--lx-issue-74-final-touch-target)) / 2);
-  inset-inline: 0;
+  inset-inline: calc((100% - var(--lx-issue-74-final-touch-target)) / 2);
   border: 0;
   border-radius: inherit;
   background: transparent;
