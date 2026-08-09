@@ -6,7 +6,7 @@
 
 - Exact reconciled base is `main` SHA `85c3b69350e87cb5ed399f93a418a020ef9170c9`; latest deployed product remains `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
 - `.agents/current/*` was canonical idle before this slice.
-- Open PRs at pre-flight are unrelated Dependabot PRs #304, #403 and #432; no competing product PR is active.
+- Open PRs at pre-flight were unrelated Dependabot PRs #304, #403 and #432; no competing product PR was active.
 - Issue #74 remains open for residual live-control inventory/remediation and final physical-device/manual acceptance.
 - The old Issue literal `Подробнее` is already covered by connectivity target PR #387 and its cross-browser acceptance; `Все режимы` is no longer a live runtime literal.
 - Canonical Phrase Detail is owned by `frontend/components/phrase-detail-presentation.tsx` and deterministic `/phrases/:slug` fixtures already exist in `frontend/e2e/phrases-visual.spec.ts`.
@@ -15,6 +15,7 @@
 - AsyncStatePanel error actions are excluded because shared system-state target ownership from PR #444 already covers them.
 - SpeechPlayerButton uses no `::before` pseudo target, so the route-scoped transparent hit surface does not collide with an existing speech pseudo owner.
 - Existing Phrase Detail content-addressed visual baselines cover compact 390px and desktop 1440px Light/Dark presentations and remain immutable for this paint-inert slice.
+- Draft PR #450 is open from `fix/issue-74-phrase-detail-targets` against exact base `85c3b69350e87cb5ed399f93a418a020ef9170c9`.
 
 ### Finding
 
@@ -51,12 +52,12 @@ Phrase Detail was delivered with a consistent visual 44px button minimum before 
 
 ### Checks failed
 
-None yet. CI has not run on the implementation head.
+None yet. Final immutable-head CI is pending after PR identity records are frozen.
 
 ### Current branch head
 
-Resolve from live `fix/issue-74-phrase-detail-targets` branch ref after this harness record is finalized.
+Resolve from live `fix/issue-74-phrase-detail-targets` branch ref after final PR identity records are written.
 
 ### Next action
 
-Re-verify `main` and exact branch diff, open the product PR as Draft, then require full immutable-head CI. Classify any failure at its exact owner without weakening target or visual contracts.
+Freeze the final developer-authored head, require full immutable-head CI for PR #450, then classify any failure at its exact owner without weakening target or visual contracts. On full green: clean review/thread audit, Ready, expected-head squash merge, exact-SHA main CI, exact-image Stage/public validation and separate docs reconciliation.
