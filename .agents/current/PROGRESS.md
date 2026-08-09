@@ -37,6 +37,7 @@ The Figma-backed catalog intentionally preserves compact 34/38/44px painted cont
 - `frontend/app/dictionary-catalog-touch-targets.css`
 - `frontend/app/layout.tsx` — one stylesheet import only
 - `frontend/e2e/dictionary-catalog-touch-targets.spec.ts`
+- `frontend/e2e/visual-regression.spec.ts` — only `DICTIONARY_VISUAL_BASELINES.mediumLight` content-addressed metadata
 - `frontend/components/dictionary-catalog-touch-target-source.test.ts`
 - `frontend/package.json` — UI/a11y collection entries only
 - `.agents/current/TASK.md`
@@ -51,15 +52,19 @@ The Figma-backed catalog intentionally preserves compact 34/38/44px painted cont
 - Dedicated acceptance uses border-aware effective geometry, real four-side `elementFromPoint` ownership and common-frame pairwise overlap checks.
 - Dedicated acceptance is registered once in both authoritative `test:e2e:ui` and `test:e2e:a11y` commands.
 - `layout.tsx` is import-only; package dependency metadata now matches exact `main`/lockfile ownership; branch remains based on exact `80b0a8d3...`.
+- CI #3092 / run `31284198024` on head `8c5c5d5313ba2916b24eafedc526b4b4c9b4979d` and CI #3093 / run `31284616220` on head `0c7b09291001010c20f747f476a919ccf46ff6bf` independently produced the same Linux Dictionary medium Light actual: `768x1664`, SHA-256 `3e0215d2af6b4d024fddffd585752d125094b6737d987426b63f620f74577af3`.
+- The reviewed CI actual contains the intended coarse-pointer stacked-filter spacing and no unrelated visual corruption. The previous baseline was `768x1616`; the exact +48px full-page delta is the expected aggregate row-gap change from this slice.
+- `DICTIONARY_VISUAL_BASELINES.mediumLight` now records the CI #3092 provenance, `768x1664` dimensions and immutable hash. Compact 390px and desktop 1440px Dictionary baselines are unchanged, and no binary snapshot was updated.
 
 ### Checks failed
 
 - CI #3089 / run `31284029667` on superseded `38dd2cbb...`: deterministic package metadata scope drift (`@types/react-dom@^19.2.8`), corrected at the package owner. No rerun of that stale head is valid.
+- CI #3092 / run `31284198024` and CI #3093 / run `31284616220`: all relevant runtime/core/browser gates inspected were green except the deterministic `Frontend E2E (Visual regression)` Dictionary medium Light content-addressed assertion, which still expected the pre-slice `768x1616` hash. This was classified as an evidenced stale baseline contract, not a product defect; the metadata owner is corrected without weakening the visual assertion.
 
 ### Current branch head
 
-Resolve from live branch ref after `.agents/current/EXECUTION.md` is finalized.
+Latest product/test evidence commit after the visual metadata correction is `f989b414c876eba2c24e2fd861cfd0af97c0e942`; resolve the final developer-authored head again after the current Agent Harness record is finalized.
 
 ### Next action
 
-Freeze the corrected developer-authored head and require a fresh full immutable-head product CI. Classify any deterministic failure before changing code; if green, complete clean review/thread audit, mark PR #448 Ready, expected-head squash merge, exact-SHA main CI, exact-image Stage/public validation and separate docs reconciliation.
+Freeze the final developer-authored head and require a fresh full immutable-head product CI. If green, complete clean review/thread audit, update PR #448 scope text to include the evidenced content-addressed metadata change, mark Ready, expected-head squash merge, exact-SHA main CI, exact-image Stage/public validation and separate docs reconciliation.
