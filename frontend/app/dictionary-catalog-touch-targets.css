@@ -1,0 +1,82 @@
+/*
+ * Issue #74 — canonical Dictionary catalog effective touch targets.
+ *
+ * dictionary-catalog.css and catalog-pagination.css remain the painted layout
+ * owners. This interaction-only layer expands live compact controls to the
+ * input-modality minimum without changing their painted dimensions.
+ */
+.lx-routed-app[data-route-path="/dictionary"]
+  :is(
+    .lx-dictionary-quick-filters button,
+    .lx-dictionary-filter-panel button,
+    .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
+  ) {
+  position: relative;
+  --lx-dictionary-catalog-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-routed-app[data-route-path="/dictionary"]
+  :is(
+    .lx-dictionary-quick-filters button,
+    .lx-dictionary-filter-panel button,
+    .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
+  )::before {
+  position: absolute;
+  content: "";
+  /*
+   * Absolute percentages resolve against the padding box. That is intentional:
+   * bordered 44/46px controls need the extra border-aware expansion that a
+   * border-box-only calculation would miss.
+   *
+   * Dictionary pills and pagination actions are already wider than 48px, so
+   * expand only on the block axis and preserve neighbouring inline ownership.
+   */
+  inset-block: min(0px, calc((100% - var(--lx-dictionary-catalog-touch-target)) / 2));
+  inset-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+/*
+ * At <=340px the four quick filters wrap to two rows. A 34px painted pill
+ * expanded to 44px consumes 5px above and below, so reserve 12px row spacing
+ * and keep a positive 2px gap between effective targets.
+ */
+@media (max-width: 340px) {
+  .lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-quick-filters {
+    row-gap: 12px;
+  }
+}
+
+@media (pointer: coarse) {
+  .lx-routed-app[data-route-path="/dictionary"]
+    :is(
+      .lx-dictionary-quick-filters button,
+      .lx-dictionary-filter-panel button,
+      .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
+    ) {
+    --lx-dictionary-catalog-touch-target: 48px;
+  }
+
+  /*
+   * Stacked 38px panel pills need 5px hit slop on each block edge. Preserve a
+   * positive 2px separation by increasing the existing 8px row gap to 12px.
+   */
+  .lx-routed-app[data-route-path="/dictionary"]
+    :is(.lx-dictionary-filter-stack, .lx-dictionary-filter-grid) {
+    row-gap: 12px;
+  }
+}
+
+/*
+ * Wrapped 34px quick filters need 7px above and below for a 48px target.
+ * Sixteen pixels leaves the same 2px positive separation between rows.
+ */
+@media (pointer: coarse) and (max-width: 340px) {
+  .lx-routed-app[data-route-path="/dictionary"] .lx-dictionary-quick-filters {
+    row-gap: 16px;
+  }
+}
