@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `fix/issue-74-final-residual-touch-targets`
 - Base SHA: `e5c20118b12023ae2b961365a64e01e814be7561`
-- Product head before harness checkpoint: `d40485b19f5ad6d83d69adf3130a6719b3552a16`; resolve live branch ref before merge
-- PR: pending
+- Product head before final harness checkpoint: `5b0ad8d48dc024d90787a6604d567407ca047b94`; resolve live branch ref before merge
+- PR: #459
 
 ## Purpose
 
@@ -33,9 +33,10 @@ Finish Issue #74 engineering work without another chain of per-screen micro-slic
 - Audited remaining live controls and bounded this pass to Scenario Lesson/portal-dialog buttons plus the global Service Worker update banner.
 - Kept Profile findings out of #74 scope rather than expanding the issue indefinitely; they require a separate accessibility follow-up.
 - Added one final interaction-only stylesheet after canonical Scenario/SW paint owners.
-- Used the repository's established transparent pseudo-element pattern to preserve approved visual geometry while guaranteeing 44px fine / 48px coarse effective targets.
 - Added one cross-browser browser contract proving effective geometry, four-side real hits, paint inertness and sibling non-overlap on desktop Chromium, Android Chromium and iOS WebKit.
 - Added one source contract for import order, live ownership, canonical painted sizes and blocking command registration.
+- Initial PR #459 head passed frontend core but the Controlled Service Worker iOS journey proved the Scenario header back control was only 36 x 48 CSS px. This was a real width gap, not a test occlusion defect.
+- Corrected the transparent pseudo-element owner to enforce a minimum square on both axes: 44 x 44 CSS px for fine pointers and 48 x 48 CSS px for coarse pointers. Canonical visual geometry remains unchanged and non-overlap stays enforced by browser assertions.
 
 ## Changed paths
 
