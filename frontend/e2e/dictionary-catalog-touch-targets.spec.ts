@@ -299,4 +299,58 @@ test.describe("Issue #74 Dictionary catalog touch targets", () => {
       await expectNoHorizontalOverflow(page);
     }
   });
+
+  test("guest catalog-kind switch exposes independent 44/48px real-hit targets", async ({ context, page }, testInfo) => {
+    test.skip(
+      !["desktop-chromium", "android-chromium", "ios-webkit"].includes(testInfo.project.name),
+      "The guest Dictionary catalog-kind contract runs in desktop Chromium, Android Chromium and iOS WebKit.",
+    );
+
+    await context.unroute("**/api/v1/**");
+    await installQualityGateAPI(context, { authenticated: false });
+
+    const widths = testInfo.project.name === "desktop-chromium" ? [768] : [768, 390];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { level: 1, name: "Каталог слов и терминов", exact: true })).toBeVisible();
+
+      const expectedMinimum = await page.evaluate(() => (
+        window.matchMedia("(pointer: coarse)").matches ? 48 : 44
+      ));
+      const catalogKinds = page
+        .getByRole("navigation", { name: "Тип каталога", exact: true })
+        .getByRole("button");
+      await expect(catalogKinds).toHaveCount(2);
+
+      for (let index = 0; index < 2; index += 1) {
+        const target = await expectEffectiveMinimum(catalogKinds.nth(index), expectedMinimum);
+        if (width > 640) {
+          expect(target.visualHeight).toBeCloseTo(44, 3);
+        } else {
+          expect(target.visualHeight).toBeGreaterThanOrEqual(48 - 0.5);
+        }
+      }
+      expectIndependent(await effectiveRects(catalogKinds), "guest catalog-kind targets");
+
+      const phrases = page.getByRole("button", { name: "Рабочие фразы", exact: true });
+      await phrases.focus();
+      await expect(phrases).toBeFocused();
+      const focus = await phrases.evaluate((element) => {
+        const style = window.getComputedStyle(element);
+        return {
+          focusVisible: element.matches(":focus-visible"),
+          outlineStyle: style.outlineStyle,
+          outlineWidth: Number.parseFloat(style.outlineWidth),
+        };
+      });
+      expect(focus.focusVisible).toBe(true);
+      expect(focus.outlineStyle).not.toBe("none");
+      expect(focus.outlineWidth).toBeGreaterThanOrEqual(3);
+      await expectNoHorizontalOverflow(page);
+
+      await phrases.click();
+      await expect(page).toHaveURL(/\/phrases$/);
+    }
+  });
 });
