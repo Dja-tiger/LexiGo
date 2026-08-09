@@ -4,53 +4,33 @@
 
 ### Verified
 
-- Live repository `main` at branch creation: `64c0ef866e85348cf7e57279e14983d0c3f5f709`.
-- Previous Issue #74 PR #456 is fully delivered on product SHA `08210f4182dfdc0f9611e054c16c399e9da492dd`; reconciliation PR #457 is merged and post-merge docs-only CI #3137 succeeded without Stage deployment.
-- Canonical authenticated `/scenarios` is owned by `LexigoScenarioCatalogApp`.
-- Every catalog card renders one `Link` with accessible name `Открыть сценарий «${scenario.title}»` and canonical `scenarioPath(scenario.slug)` href.
-- `scenario-catalog.css` paints `.lx-scenario-catalog-card > a` at `min-height: 44px` and does not raise it to 48px on mobile/coarse input.
-- No existing Scenario Catalog card touch-target owner was found.
-- Neighboring recommendation CTA is already `min-height: 48px`; shared Learning subsection switch is already independently covered by PR #454 and excluded from this slice.
-- Existing `QUALITY_SCENARIOS` and `installQualityGateAPI` provide deterministic authenticated catalog data for browser proof.
+- Exact branch base is `main=e5c20118b12023ae2b961365a64e01e814be7561`, the squash merge of PR #458.
+- PR #458 removed the Scenario Catalog card-link residual and its blocking iOS/WebKit test defect before merge.
+- Residual source audit identified two remaining in-scope engineering families: Scenario Lesson controls and the global Service Worker update banner.
+- `scenario-lessons.css` keeps generic Scenario buttons at 44px with no coarse-pointer 48px owner; primary/secondary actions already paint at 52px.
+- `service-worker-update.css` paints update-banner buttons at 42px.
+- No existing `.lx-scenario button::before`, `.lx-scenario-dialog button::before` or `.lx-sw-update button::before` owner conflicts were found.
+- Profile 42px/38px controls were also discovered, but Profile is outside the original Issue #74 affected-screen set and is explicitly excluded from this final bounded pass.
 
-### Finding
+### Implemented
 
-The live Scenario Catalog card-link family satisfies the 44px fine-pointer minimum but has no final-cascade 48px coarse-pointer effective target owner. This is a bounded residual Issue #74 gap.
+- Added `frontend/app/issue-74-final-touch-targets.css` as one interaction-only owner.
+- Fine-pointer target variable is 44px; coarse-pointer variable is 48px.
+- Expansion is block-axis only through a transparent, borderless, shadowless `::before` surface; canonical paint/layout remains unchanged.
+- Owner covers Scenario route buttons, Scenario portal-dialog buttons and global Service Worker update actions.
+- Added `frontend/e2e/issue-74-final-touch-targets.spec.ts` with desktop Chromium, Android Chromium and iOS WebKit real-hit geometry, transparent-paint and sibling non-overlap assertions.
+- Added source ownership test and registered the browser proof in focused Scenario/SW plus blocking UI/accessibility commands.
 
-### Root cause
+### Product head before harness checkpoint
 
-The Scenario Catalog presentation established a 44px card action when the route was introduced. Later Issue #74 remediation covered the shared Learning subsection switch but not the separate per-card discovery links, so coarse input still inherits only the painted 44px surface.
+`d40485b19f5ad6d83d69adf3130a6719b3552a16`; resolve the live branch ref after harness documentation commits.
 
-### Changed files
+### Validation status
 
-- `frontend/app/scenario-catalog-card-touch-targets.css`
-- `frontend/app/layout.tsx`
-- `frontend/components/scenario-catalog-card-touch-target-source.test.ts`
-- `frontend/e2e/scenario-catalog-card-touch-targets.spec.ts`
-- `frontend/package.json`
-- `.agents/current/TASK.md`
-- `.agents/current/PROGRESS.md`
-- `.agents/current/EXECUTION.md`
-
-### Checks passed
-
-- Exact-main and branch-existence preflight.
-- Runtime/presentation ownership audit and neighboring-control exclusion audit.
-- Existing Issue #74 geometry/test-pattern review, including border-aware pseudo geometry and common-scroll-frame pairwise sampling.
-- Draft browser proof self-review removed an unused helper before repository write.
-- Atomic product/tree commit `fa1ed888d7950aec56f7f747b607d7860ce7fee0` attached to the exact-base feature branch.
-- Fail-closed read-back completed for all eight changed paths; blob contents match the intended CSS/import/source/browser/package/harness state.
-- Compare `64c0ef8…fa1ed88` is `ahead 1 / behind 0` with exactly the eight allowed paths and no lockfile/runtime/backend/visual/CI-workflow drift.
-- Draft PR #458 opened against exact base `64c0ef866e85348cf7e57279e14983d0c3f5f709`.
-
-### Checks failed
-
-None yet. Local checkout/test execution is unavailable in this environment; GitHub CI is the execution source of truth.
-
-### Current branch head
-
-`fa1ed888d7950aec56f7f747b607d7860ce7fee0` before this harness checkpoint; resolve the live branch ref after the checkpoint commit.
+- Source ownership and test design self-review complete.
+- Local execution is unavailable; immutable GitHub CI is the execution source of truth.
+- Predecessor merge `e5c20118…` post-merge CI was still in progress when this branch was started; validate it independently and require the final residual PR's own immutable-head CI before merge.
 
 ### Next action
 
-Commit this PR/head checkpoint on the same eight-path scope, then validate the resulting immutable PR head through full product CI. Classify any failures without weakening assertions or widening the slice.
+Open the final residual PR, validate exact changed-path scope and immutable-head CI, fix only confirmed failures, then expected-head squash merge. After exact-SHA main CI and Stage/public validation, reconcile #74 as engineering-complete with only mandatory physical-device acceptance remaining if that hardware gate cannot be executed here.
