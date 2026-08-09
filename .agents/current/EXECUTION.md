@@ -58,23 +58,36 @@ Actions performed:
 
 - Verified `Подробнее` is already owned by the connectivity target slice and `Все режимы` is not a current runtime literal, so neither is duplicated.
 - Identified exactly five live canonical Phrase Detail actions outside existing Phrases catalog target ownership.
-- Confirmed every in-scope control has an existing 44px painted minimum while coarse-pointer 48px ownership is absent.
+- Confirmed every in-scope control has an existing 44px painted minimum while coarse-pointer 48px ownership was absent.
 - Excluded AsyncStatePanel error actions because reusable system-state target ownership already covers them.
 - Confirmed SpeechPlayerButton has no `::before` owner and its route-specific speech action can safely receive a paint-inert pseudo hit surface.
 - Confirmed existing compact/desktop Phrase Detail content-addressed visual baselines can serve as a fail-closed no-paint-regression gate.
 - Created `fix/issue-74-phrase-detail-targets` from exact reconciled `main` SHA.
+- Added `frontend/app/phrase-detail-touch-targets.css` scoped only to `/phrases/:slug` with 44px fine / 48px coarse effective target variables, block-axis-only transparent pseudo ownership and no focus/paint overrides.
+- Added one import after existing Phrases catalog target ownership; the resulting `layout.tsx` base/head diff is exactly one added line.
+- Added browser acceptance covering back, speech, primary lesson, secondary return and visible side-practice actions in desktop Chromium, Android Chromium and iOS WebKit at representative desktop/tablet/compact widths.
+- Acceptance measures border-aware effective rectangles, probes all four perimeter points with `document.elementFromPoint`, measures the two main actions in one shared scroll frame, verifies existing visible keyboard focus and rejects horizontal overflow.
+- Compact acceptance treats the side-practice aside as intentionally hidden below 768px and does not manufacture a mobile target for a non-visible control.
+- Added a Vitest source contract for runtime selectors, canonical 44px painted ownership, paint-inert interaction declarations, import order and blocking collection.
+- Registered the browser proof exactly once in `test:e2e:ui` and `test:e2e:a11y` while preserving exact-main dependency/devDependency/override metadata; lockfile remains untouched.
+- Fail-closed exact-base comparison shows exactly the eight allowed paths and no prohibited product/runtime/visual/dependency/workflow drift.
 
 Commands or procedures:
 
-GitHub connector exact-ref audit, Issue/open-PR search, repository code search, exact-file reads and repository harness pre-flight.
+GitHub connector exact-ref audit, Issue/open-PR search, repository code search, exact-file reads, bounded branch writes with per-path post-write verification and exact base/head comparison.
 
 Artifacts produced:
 
-- current Agent Harness task/progress/execution records for the bounded Phrase Detail slice.
+- `frontend/app/phrase-detail-touch-targets.css`
+- `frontend/e2e/phrase-detail-touch-targets.spec.ts`
+- `frontend/components/phrase-detail-touch-target-source.test.ts`
+- one stylesheet import in `frontend/app/layout.tsx`
+- authoritative UI/a11y collection entries in `frontend/package.json`
+- current Agent Harness task/progress/execution records
 
 Result:
 
-Pre-flight and ownership audit are complete. The product implementation is not yet written.
+The bounded implementation and permanent acceptance ownership are written. CI has not yet classified the implementation head.
 
 Failures:
 
@@ -86,7 +99,7 @@ Phrase Detail retained its original 44px visual button contract while later Issu
 
 Fallback:
 
-If real-hit acceptance exposes clipping or stacking ownership, adjust only route-scoped interaction geometry and spacing. Do not enlarge painted controls or change runtime callbacks without separate evidence.
+If real-hit acceptance exposes clipping or stacking ownership, adjust only route-scoped interaction geometry and spacing. Do not enlarge painted controls, change runtime callbacks, update visual baselines or alter package metadata beyond the two test-collection entries without separate evidence.
 
 Limitations:
 
@@ -94,4 +107,4 @@ Automated browser evidence cannot satisfy the final physical-device acceptance c
 
 Reusable lesson:
 
-Treat catalog and detail surfaces as separate interaction owners even when they share presentation CSS. A route-level 44px painted minimum is not sufficient evidence for the required coarse-pointer 48px effective target.
+Treat catalog and detail surfaces as separate interaction owners even when they share presentation CSS. Use the route's existing content-addressed visual baselines as a fail-closed guarantee that transparent target remediation does not mutate approved paint.
