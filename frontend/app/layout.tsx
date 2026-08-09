@@ -62,6 +62,7 @@ import "./progress-evidence-accessibility.css";
 import "./progress-evidence-layout.css";
 import "./progress-guest-login-touch-targets.css";
 import "./scenario-catalog.css";
+import "./scenario-catalog-card-touch-targets.css";
 import "./learning-section-switch.css";
 import "./learning-section-switch-touch-targets.css";
 import "./scenario-lessons.css";
