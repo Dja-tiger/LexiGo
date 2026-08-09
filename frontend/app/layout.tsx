@@ -67,6 +67,7 @@ import "./learning-section-switch.css";
 import "./learning-section-switch-touch-targets.css";
 import "./scenario-lessons.css";
 import "./scenario-lessons-accessibility.css";
+import "./issue-74-final-touch-targets.css";
 import "./appearance.css";
 import "./profile.css";
 import "./system-states.css";
