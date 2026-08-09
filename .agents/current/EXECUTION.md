@@ -5,7 +5,7 @@
 - Branch: `fix/issue-74-phrase-detail-targets`
 - Base SHA: `85c3b69350e87cb5ed399f93a418a020ef9170c9`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #450
 
 ## Skills used
 
@@ -39,7 +39,7 @@ Inputs:
 - Existing Phrases catalog Issue #74 effective-target implementation and browser acceptance as repository precedent.
 - Existing content-addressed Phrase Detail visual baselines and deterministic quality-gate phrase fixture.
 - SpeechPlayerButton component/CSS ownership to rule out pseudo-element conflicts.
-- Live open-PR inventory confirming only unrelated Dependabot maintenance PRs.
+- Live open-PR inventory confirming only unrelated Dependabot maintenance PRs before this slice.
 
 Files inspected:
 
@@ -71,10 +71,11 @@ Actions performed:
 - Added a Vitest source contract for runtime selectors, canonical 44px painted ownership, paint-inert interaction declarations, import order and blocking collection.
 - Registered the browser proof exactly once in `test:e2e:ui` and `test:e2e:a11y` while preserving exact-main dependency/devDependency/override metadata; lockfile remains untouched.
 - Fail-closed exact-base comparison shows exactly the eight allowed paths and no prohibited product/runtime/visual/dependency/workflow drift.
+- Opened Draft PR #450 against exact base `85c3b69350e87cb5ed399f93a418a020ef9170c9`.
 
 Commands or procedures:
 
-GitHub connector exact-ref audit, Issue/open-PR search, repository code search, exact-file reads, bounded branch writes with per-path post-write verification and exact base/head comparison.
+GitHub connector exact-ref audit, Issue/open-PR search, repository code search, exact-file reads, bounded branch writes with per-path post-write verification, exact base/head comparison and Draft PR creation.
 
 Artifacts produced:
 
@@ -83,11 +84,12 @@ Artifacts produced:
 - `frontend/components/phrase-detail-touch-target-source.test.ts`
 - one stylesheet import in `frontend/app/layout.tsx`
 - authoritative UI/a11y collection entries in `frontend/package.json`
+- Draft PR #450
 - current Agent Harness task/progress/execution records
 
 Result:
 
-The bounded implementation and permanent acceptance ownership are written. CI has not yet classified the implementation head.
+The bounded implementation and permanent acceptance ownership are written in Draft PR #450. Final immutable-head CI remains the next gate.
 
 Failures:
 
