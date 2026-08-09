@@ -1,0 +1,29 @@
+/*
+ * Issue #74 — canonical guest Progress login effective target.
+ *
+ * premium-ui.css remains the painted owner for the existing 44px button.
+ * This route-scoped interaction layer preserves those pixels and expands only
+ * the block-axis hit surface to 48px for coarse pointers.
+ */
+.lx-main-content[aria-label="Прогресс"] .lx-empty > .lx-button.primary {
+  position: relative;
+  --lx-progress-guest-login-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-main-content[aria-label="Прогресс"] .lx-empty > .lx-button.primary::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-progress-guest-login-touch-target)) / 2));
+  inset-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-main-content[aria-label="Прогресс"] .lx-empty > .lx-button.primary {
+    --lx-progress-guest-login-touch-target: 48px;
+  }
+}
