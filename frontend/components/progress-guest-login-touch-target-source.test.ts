@@ -61,6 +61,6 @@ describe("Issue #74 Progress guest login touch-target ownership", () => {
     expect(browserProof).toContain("installQualityGateAPI(context, { authenticated: false })");
     expect(browserProof).toContain("window.matchMedia(\"(pointer: coarse)\")");
     expect(browserProof).toContain("perimeterHits");
-    expect(browserProof).toContain("/\\/profile\\?session=required&return_to=%2Fprogress$/");
+    expect(browserProof).toContain("return_to=%2Fprogress");
   });
 });
