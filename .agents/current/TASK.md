@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-progress-guest-login-touch-target`
 - Base SHA: `f472865cdd91fde04a9ff0c26dc34fa283f725bb`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #456
 
 ## Objective
 
