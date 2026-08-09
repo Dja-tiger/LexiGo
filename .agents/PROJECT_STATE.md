@@ -4,18 +4,18 @@
 
 - Last verified: 2026-08-09 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- Latest deployed product SHA: `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- Latest merged Issue #74 product slice: PR #452, final developer-authored head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`, squash product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- PR #452 immutable-head CI #3120 / run `31317896670`: full product matrix `success`.
-- Exact-SHA main CI #3121 / run `31318401885`: full product matrix `success`, including immutable API/Web container publication.
-- Deploy Stage #2962 / run `31318829889`: `success` for the same exact product SHA after exact CI-scope validation.
-- Deployed images: `ghcr.io/dja-tiger/lexigo-web:eb10bdefdeec0b1328b0ad885d898e12895e3019` and `ghcr.io/dja-tiger/lexigo-api:eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- Stage PostgreSQL, Redis, API and Web were healthy. Public frontend root and API readiness returned HTTP 200 on attempt 1. Public smoke passed with CSP mode `report-only`; 12/12 public desktop Chromium/iOS WebKit tests passed, including `/dictionary`.
+- Verified product `main` before this reconciliation: `3cd07146524724e70647d9fa05eb5907f12597bb`.
+- Latest deployed product SHA: `3cd07146524724e70647d9fa05eb5907f12597bb`.
+- Latest merged Issue #74 product slice: PR #454, final developer-authored head `adbaf4187247eff3ab9c45c96b8c98de74b18dff`, squash product SHA `3cd07146524724e70647d9fa05eb5907f12597bb`.
+- PR #454 immutable-head CI #3127 / run `31320359239`: full product matrix `success`.
+- Exact-SHA main CI #3128 / run `31320946429`: final attempt 2 `success`, including immutable API/Web container publication. Attempt 1 had an unrelated nondeterministic iOS WebKit UI-shard failure in existing Dictionary/Lesson Result tests; the exact unchanged SHA/workflow rerun passed without a product patch.
+- Deploy Stage #2970 / run `31321881749`: `success` for the same exact product SHA after exact CI-scope validation.
+- Deployed images: `ghcr.io/dja-tiger/lexigo-web:3cd07146524724e70647d9fa05eb5907f12597bb` and `ghcr.io/dja-tiger/lexigo-api:3cd07146524724e70647d9fa05eb5907f12597bb`.
+- Stage PostgreSQL, Redis, API and Web were healthy. Public frontend root and API readiness returned HTTP 200 on attempt 1. Public smoke passed with CSP mode `report-only`; 12/12 public desktop Chromium/iOS WebKit tests passed, including `/learn` and `/dictionary`.
 - Deployment Issue #12 records the same image SHA with deploy, public smoke and public browser states all `success`.
-- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #452 changed no dependency or lockfile version.
+- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #454 changed no dependency or lockfile version.
 - Issue #74 remains open for residual whole-application live-control inventory/remediation and final physical-device/manual acceptance.
-- Unrelated maintenance PRs verified at reconciliation time: Dependabot #304, #403 and #432.
+- Unrelated maintenance PRs remain separate work, including Dependabot #304, #403 and #432.
 
 ## Delivery contract
 
@@ -26,7 +26,7 @@
 - Pure Agent Docs changes use the fail-closed lightweight classifier and must not deploy Stage.
 - One PR contains one atomic slice; product work must not continue through stale Agent Harness state.
 - Deploy Stage concurrency belongs only to accepted state-mutating deploy jobs. Skipped workflow-run consumers are not deployment evidence.
-- GitHub-hosted setup failures before checkout are infrastructure evidence only; a rerun counts only when the exact workflow/product SHA remains unchanged and all required validation later succeeds.
+- GitHub-hosted/browser setup failures and nondeterministic browser interactions are infrastructure/test-stability evidence only; a rerun counts only when the exact workflow/product SHA remains unchanged and all required validation later succeeds.
 
 ## Production ownership foundations
 
@@ -62,13 +62,14 @@
 - PR #448 Dictionary quick filters, panel filters/reset and pagination 44/48px targets — `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
 - PR #450 Phrase Detail back, speech, lesson-configuration, return-to-catalog and visible side-practice 44/48px effective targets — `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
 - PR #452 guest Dictionary `Слова и термины` / `Рабочие фразы` catalog-kind navigation 44px fine-pointer / 48px coarse-pointer effective targets — `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- PR #454 shared Learning `Уроки` / `Сценарии` subsection navigation 44px fine-pointer / 48px coarse-pointer effective targets on canonical `/learn` and `/scenarios` — `3cd07146524724e70647d9fa05eb5907f12597bb`.
 
 ## Issue #74 permanent evidence rules
 
 - Scroll-sensitive pairwise target geometry must be sampled from one common scroll frame or normalized coordinate system per `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
 - Browser-owned zoom acceptance must remain explicitly collected by authoritative suites per `.agents/AGENTS.issue-74-browser-zoom-collection.md`.
 - Reusable AsyncStatePanel and calendar reminder target owners have explicit desktop/mobile real-hit, non-overlap, focus and callback evidence.
-- Dictionary catalog, guest Dictionary catalog-kind navigation and Phrase Detail owners have explicit desktop Chromium, Android Chromium and iOS WebKit real-hit/non-overlap evidence.
+- Dictionary catalog, guest Dictionary catalog-kind navigation, Phrase Detail and shared Learning subsection navigation owners have explicit desktop Chromium, Android Chromium and iOS WebKit real-hit/non-overlap evidence.
 - Expanded target layers must preserve accessible names, runtime callbacks, navigation/API semantics and approved painted geometry unless a separate slice explicitly owns paint.
 - Guest browser acceptance must isolate persisted authentication state as well as network fixtures; replacing auth routes alone does not create a guest browser context when authenticated cookies remain.
 
@@ -104,15 +105,27 @@
 - Exact-SHA main CI #3121 / run `31318401885` completed successfully and published exact API/Web images.
 - Stage #2962 / run `31318829889` validated exact CI scope, deployed exact SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`, verified healthy services/public HTTP 200 endpoints and passed 12/12 public Chromium/iOS WebKit tests, including `/dictionary`.
 
+## Learning subsection switch evidence — PR #454
+
+- Final developer head `adbaf4187247eff3ab9c45c96b8c98de74b18dff`; exact reconciled base `d202c193928e28366606990683067403802ec55b` from PR #453.
+- Inventory explicitly rejected already-compliant nearby controls before selecting this slice: Lesson Result CTA `52px`, Learn primary CTA `54px`, route brand/header navigation `48px`, rail `>=48px`, and mobile navigation `52px`.
+- Canonical `/learn` `RouteChrome` and authenticated `/scenarios` `LexigoScenarioCatalogApp` share `Разделы обучения` links `Уроки` / `Сценарии`. Their painted owner is `scenario-catalog.css`: `44px` height and at least `120px` width; the residual gap was only the missing `48px` coarse-pointer effective block-axis target.
+- `frontend/app/learning-section-switch-touch-targets.css` adds a transparent, borderless, shadowless `::before` event owner: `44px` fine, `48px` coarse, block-axis expansion only. Painted geometry, focus styling, accessible names and navigation callbacks remain owned by existing presentation/runtime layers.
+- `frontend/components/learning-section-switch-touch-target-source.test.ts` locks import order, both canonical runtime owners, canonical 44px paint/120px width, paint-inert expansion and exact blocking UI/a11y collection.
+- `frontend/e2e/learning-section-switch-touch-targets.spec.ts` proves `/learn` and `/scenarios` in desktop Chromium, Android Chromium and iOS WebKit using effective geometry, four-side `elementFromPoint`, sibling non-overlap, `aria-current`, focus-visible and overflow checks.
+- Immutable-head PR CI #3127 / run `31320359239` completed successfully; visual regression remained green, proving the interaction-only layer did not change the approved painted baseline. PR comments, submitted reviews and unresolved review threads were empty; expected-head squash merge used exact head `adbaf4187247eff3ab9c45c96b8c98de74b18dff`.
+- Exact-SHA main CI #3128 / run `31320946429` attempt 1 failed only in existing iOS WebKit Dictionary/Lesson Result browser interactions. Failure diagnostics did not implicate the new Learning switch spec. The unchanged exact SHA/workflow rerun attempt 2 passed, including both UI shards, frontend aggregate and API/Web image publication; no corrective product patch was made.
+- Stage #2970 / run `31321881749` validated exact CI scope, deployed exact SHA `3cd07146524724e70647d9fa05eb5907f12597bb`, reported healthy PostgreSQL/Redis/API/Web, returned public frontend/API HTTP 200 on attempt 1 and passed 12/12 public desktop Chromium/iOS WebKit tests.
+
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Delivered target owners from PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446, #448, #450 and #452 meet their bounded 44/48px, spacing, focus and callback contracts.
+- Delivered target owners from PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446, #448, #450, #452 and #454 meet their bounded 44/48px, spacing, focus and callback contracts.
 - Canonical mobile navigation scales under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has authoritative true 200% browser-owned zoom evidence; Home, Learn, Active Lesson and Phrases zoom owners are permanently collected fail-closed.
 - Phrases has explicit multi-browser real-hit acceptance for catalog and Phrase Detail controls.
-- Progress, Active Lesson, AsyncStatePanel, calendar reminder, Dictionary catalog, guest Dictionary catalog-kind navigation and Phrase Detail have explicit effective-target regression protection.
+- Progress, Active Lesson, AsyncStatePanel, calendar reminder, Dictionary catalog, guest Dictionary catalog-kind navigation, Phrase Detail and Learning subsection navigation have explicit effective-target regression protection.
 
 Remaining mandatory work:
 
@@ -128,9 +141,9 @@ Issue #74 stays open until those criteria are proven.
 
 ## Current state
 
-- Product PR #452 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Product runtime and Stage are validated on exact image SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- Docs-only reconciliation uses branch `docs/issue-74-dictionary-kind-reconcile`; its merge may advance repository `main` but must not replace the deployed product SHA above.
+- Product PR #454 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Product runtime and Stage are validated on exact image SHA `3cd07146524724e70647d9fa05eb5907f12597bb`.
+- Docs-only reconciliation uses branch `docs/issue-74-learning-switch-reconcile`; its merge may advance repository `main` but must not replace the deployed product SHA above.
 - `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates by this reconciliation.
 - Next product work is the residual Issue #74 live-control inventory; only evidenced gaps should create product slices.
 - Physical-device acceptance remains a separate final manual gate and is not claimed by automated evidence.
@@ -145,13 +158,14 @@ Issue #74 stays open until those criteria are proven.
 
 ## Reconciliation evidence
 
-- PR #451 merged as docs SHA `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86` and became the exact base for product PR #452.
-- PR #452 final developer head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5` merged to product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- PR #452 immutable-head CI #3120 / `31317896670`, exact-SHA main CI #3121 / `31318401885`, and Stage #2962 / `31318829889` all completed successfully.
-- Deployment Issue #12 records exact product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019` with deploy/public-smoke/public-browser states all `success`.
+- PR #453 merged as docs SHA `d202c193928e28366606990683067403802ec55b` and became the exact base for product PR #454.
+- PR #454 final developer head `adbaf4187247eff3ab9c45c96b8c98de74b18dff` merged to product SHA `3cd07146524724e70647d9fa05eb5907f12597bb`.
+- PR #454 immutable-head CI #3127 / `31320359239` completed successfully.
+- Exact-SHA main CI #3128 / `31320946429` completed successfully on unchanged-SHA attempt 2 after an unrelated nondeterministic existing iOS WebKit UI-shard failure on attempt 1; exact API/Web images were published.
+- Deploy Stage #2970 / `31321881749` validated exact CI scope and completed successfully; Deployment Issue #12 records exact product SHA `3cd07146524724e70647d9fa05eb5907f12597bb` with deploy/public-smoke/public-browser states all `success` and 12/12 public browser tests passed.
 - This docs-only reconciliation records the delivery and resets current task state. Its merge is documentation-only and must not replace the deployed product SHA.
 - Issue #74 remains open for residual inventory/remediation and physical-device/manual acceptance.
-- GitHub CI/Stage are the execution source of truth; local clone results are not counted as authoritative delivery evidence.
+- GitHub CI/Stage are the execution source of truth; the locally downloaded failed Playwright artifact was used only to classify the attempt-1 flake, not as delivery evidence.
 
 ## State semantics
 
