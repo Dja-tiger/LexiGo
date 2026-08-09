@@ -10,6 +10,7 @@
 - `scenario-catalog.css` owns a painted `min-height: 44px` and `minmax(120px, 1fr)` columns for both links.
 - No existing interaction layer expanded this switch to the `48px` coarse-pointer Issue #74 contract.
 - Lesson Result CTA (`52px`), Learn primary CTA (`54px`), route brand (`48px`), route header navigation (`48px`), rail (`>=48px`) and mobile navigation (`52px`) were explicitly inspected and rejected as false-positive gaps before selecting this slice.
+- PR #454 is open against `main` for this atomic slice.
 
 ### Finding
 
@@ -35,17 +36,18 @@ The original Scenario Catalog presentation established a fixed painted `44px` li
 - CSS source inspection confirms the painted owner remains unchanged at `44px`.
 - New interaction layer source confirms `44px` fine / `48px` coarse variables, block-only expansion, transparent background, zero border/shadow and real pointer ownership.
 - Layout read-back confirms the new layer loads after `scenario-catalog.css` and `learning-section-switch.css` and before scenario lesson presentation.
-- Package read-back confirms the browser spec appears exactly once in each blocking `test:e2e:ui` and `test:e2e:a11y` command by construction; the fail-closed source test will enforce this in CI.
+- Package read-back confirms the browser spec is registered in both blocking `test:e2e:ui` and `test:e2e:a11y` commands; the fail-closed source test enforces uniqueness in CI.
+- Pre-PR comparison reported `ahead 8 / behind 0`, the expected merge base, and only the eight declared paths.
 
 ### Checks failed
 
 - None observed yet.
-- Local lint/type/unit/browser execution is unavailable because this environment has no repository checkout/network clone path; these checks must be executed by GitHub CI after PR creation and are not claimed as locally passed.
+- Local lint/type/unit/browser execution is unavailable because this environment has no repository checkout/network clone path; these checks must be executed by GitHub CI and are not claimed as locally passed.
 
 ### Current branch head
 
-Resolve from the live `fix/issue-74-learning-section-switch-touch-targets` branch ref after the final harness write.
+Resolve from the live `fix/issue-74-learning-section-switch-touch-targets` branch ref after this harness commit; treat that resulting PR head as immutable unless CI identifies a concrete defect.
 
 ### Next action
 
-Compare the branch against `main`, confirm only allowed paths changed, open the atomic PR for Issue #74, then inspect and address all GitHub CI results before merge.
+Inspect all GitHub workflow runs for PR #454. Fix only evidenced failures, otherwise merge the immutable green head and perform the required post-merge Agent Harness reconciliation.
