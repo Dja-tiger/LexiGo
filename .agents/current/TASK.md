@@ -5,8 +5,8 @@
 - Issue: #74
 - Branch: `fix/issue-74-final-residual-touch-targets`
 - Base SHA: `e5c20118b12023ae2b961365a64e01e814be7561`
-- Product head before harness checkpoint: `d40485b19f5ad6d83d69adf3130a6719b3552a16`; resolve live branch ref before merge
-- PR: pending
+- Product head before final harness checkpoint: `5b0ad8d48dc024d90787a6604d567407ca047b94`; resolve live branch ref before merge
+- PR: #459
 
 ## Objective
 
@@ -47,14 +47,14 @@ All paths not listed above, especially canonical Scenario/SW painted CSS, runtim
 
 - Canonical Scenario button paint remains 44px minimum where originally defined; existing 52px primary/secondary controls remain unchanged.
 - Canonical Service Worker update button paint remains 42px minimum.
-- Fine-pointer effective targets are at least 44 CSS px; coarse-pointer targets are at least 48 CSS px.
-- Expansion is transparent, borderless, shadowless and block-axis only.
+- Fine-pointer effective targets are at least 44 x 44 CSS px; coarse-pointer targets are at least 48 x 48 CSS px.
+- Expansion is transparent, borderless and shadowless and changes interaction geometry only, never canonical layout/paint.
 - Existing accessible names, focus behavior, Scenario routing/submission semantics and Service Worker activation/defer semantics remain unchanged.
 - Effective sibling targets do not overlap.
 
 ## Acceptance criteria
 
-- Desktop Chromium, Android Chromium and iOS WebKit prove 44/48px effective geometry with four-side real hit testing for both residual families.
+- Desktop Chromium, Android Chromium and iOS WebKit prove 44 x 44 / 48 x 48 effective geometry with four-side real hit testing for both residual families.
 - Scenario safe-exit portal actions receive the same target contract and remain independent.
 - Service Worker update actions remain independent.
 - Source contract fails closed on import order, live owners, canonical painted sizes, paint-inert expansion and browser-command registration.
