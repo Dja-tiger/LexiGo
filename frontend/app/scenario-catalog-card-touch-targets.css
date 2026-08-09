@@ -1,0 +1,30 @@
+/*
+ * Issue #74 — Scenario Catalog card-link effective touch targets.
+ *
+ * scenario-catalog.css remains the painted owner for canonical catalog cards.
+ * The links are already at the 44px fine-pointer minimum, so this
+ * interaction-only layer preserves those pixels and expands only the
+ * block-axis hit surface for coarse input.
+ */
+.lx-scenario-catalog-card > a {
+  position: relative;
+  --lx-scenario-catalog-card-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-scenario-catalog-card > a::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-scenario-catalog-card-touch-target)) / 2));
+  inset-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-scenario-catalog-card > a {
+    --lx-scenario-catalog-card-touch-target: 48px;
+  }
+}
