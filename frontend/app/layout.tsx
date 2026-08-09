@@ -60,6 +60,7 @@ import "./lesson-result-handoff.css";
 import "./progress-evidence.css";
 import "./progress-evidence-accessibility.css";
 import "./progress-evidence-layout.css";
+import "./progress-guest-login-touch-targets.css";
 import "./scenario-catalog.css";
 import "./learning-section-switch.css";
 import "./learning-section-switch-touch-targets.css";
