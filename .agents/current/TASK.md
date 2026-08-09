@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-dictionary-kind-nav-targets`
 - Base SHA: `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #452
 
 ## Objective
 
