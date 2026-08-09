@@ -31,12 +31,12 @@ describe("Issue #74 final residual touch-target ownership", () => {
     expect(serviceWorkerRuntime).toContain("Позже");
   });
 
-  it("expands only the transparent block-axis hit surface to 44px fine and 48px coarse", () => {
+  it("expands a transparent 44px fine / 48px coarse minimum square without paint changes", () => {
     expect(touchTargets).toContain("--lx-issue-74-final-touch-target: 44px;");
     expect(touchTargets).toContain("@media (pointer: coarse)");
     expect(touchTargets).toContain("--lx-issue-74-final-touch-target: 48px;");
-    expect(touchTargets).toContain("calc((100% - var(--lx-issue-74-final-touch-target)) / 2)");
-    expect(touchTargets).toContain("inset-inline: 0;");
+    expect(touchTargets).toContain("inset-block: calc((100% - var(--lx-issue-74-final-touch-target)) / 2);");
+    expect(touchTargets).toContain("inset-inline: calc((100% - var(--lx-issue-74-final-touch-target)) / 2);");
     expect(touchTargets).toContain("pointer-events: auto;");
     expect(touchTargets).toContain("background: transparent;");
     expect(touchTargets).toContain("border: 0;");
