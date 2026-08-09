@@ -11,6 +11,7 @@
 - Authenticated `ProgressEvidenceDashboard` controls already have explicit Issue #74 ownership from PR #428 and are outside this slice.
 - `system-state-touch-targets.css` scopes only async-state actions and does not cover this direct guest CTA.
 - Home path CTA candidates were rejected because canonical adaptive Home hides `.lx-home-paths`; Home rail was rejected because the later accessibility layer restores the final rail target to `48px`.
+- PR #456 is open against `main` for this atomic product slice.
 
 ### Finding
 
@@ -32,12 +33,13 @@ The guest empty state reuses the canonical base `.lx-button` presentation. Progr
 ### Checks passed
 
 - Branch created from the exact verified `main` SHA.
-- Product writes were read back from the explicit feature branch.
+- Product writes and Agent Harness writes were read back from the explicit feature branch.
 - CSS read-back confirms block-only transparent pseudo hit ownership with `44px` fine / `48px` coarse variables.
 - Layout read-back confirms the interaction layer loads after `progress-evidence-layout.css` and before later unrelated route presentation.
 - Package read-back confirms the browser spec is present in both blocking UI and accessibility commands.
 - Browser source isolates guest state with `context.clearCookies()` plus `installQualityGateAPI(..., { authenticated: false })`.
 - Source-contract assertion was hardened to stable return-to semantics rather than brittle regex-source escaping.
+- Exact-base comparison before PR creation reported `ahead 9 / behind 0`, merge base `f472865cdd91fde04a9ff0c26dc34fa283f725bb`, and exactly the eight declared paths.
 
 ### Checks failed
 
@@ -46,8 +48,8 @@ The guest empty state reuses the canonical base `.lx-button` presentation. Progr
 
 ### Current branch head
 
-Resolve from the live `fix/issue-74-progress-guest-login-touch-target` branch ref after final harness writes.
+Resolve from the live `fix/issue-74-progress-guest-login-touch-target` branch ref after PR metadata harness commits; treat the resulting PR head as immutable unless CI identifies a concrete defect.
 
 ### Next action
 
-Read back the completed harness, re-verify live `main`, compare the branch against the exact base, confirm only the eight declared paths changed, open the atomic PR, then inspect and address all immutable-head CI results before merge.
+Inspect all GitHub workflow runs for PR #456. Fix only evidenced failures; otherwise perform clean review/comment/thread audit and expected-head squash merge, then exact-SHA main CI and Stage/public delivery validation.
