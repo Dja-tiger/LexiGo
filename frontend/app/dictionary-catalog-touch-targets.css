@@ -1,12 +1,14 @@
 /*
  * Issue #74 — canonical Dictionary catalog effective touch targets.
  *
- * dictionary-catalog.css and catalog-pagination.css remain the painted layout
- * owners. This interaction-only layer expands live compact controls to the
- * input-modality minimum without changing their painted dimensions.
+ * dictionary-catalog.css, information-architecture.css and
+ * catalog-pagination.css remain the painted layout owners. This
+ * interaction-only layer expands only live compact controls below the
+ * input-modality target without changing their painted dimensions.
  */
 .lx-routed-app[data-route-path="/dictionary"]
   :is(
+    .lx-catalog-kind-navigation button,
     .lx-dictionary-quick-filters button,
     .lx-dictionary-filter-panel button,
     .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
@@ -18,6 +20,7 @@
 
 .lx-routed-app[data-route-path="/dictionary"]
   :is(
+    .lx-catalog-kind-navigation button,
     .lx-dictionary-quick-filters button,
     .lx-dictionary-filter-panel button,
     .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
@@ -29,8 +32,9 @@
    * bordered 44/46px controls need the extra border-aware expansion that a
    * border-box-only calculation would miss.
    *
-   * Dictionary pills and pagination actions are already wider than 48px, so
-   * expand only on the block axis and preserve neighbouring inline ownership.
+   * Dictionary catalog-kind actions, pills and pagination actions are already
+   * wider than 48px, so expand only on the block axis and preserve neighbouring
+   * inline ownership.
    */
   inset-block: min(0px, calc((100% - var(--lx-dictionary-catalog-touch-target)) / 2));
   inset-inline: 0;
@@ -54,6 +58,7 @@
 @media (pointer: coarse) {
   .lx-routed-app[data-route-path="/dictionary"]
     :is(
+      .lx-catalog-kind-navigation button,
       .lx-dictionary-quick-filters button,
       .lx-dictionary-filter-panel button,
       .lx-dictionary-results-panel .lx-catalog-pagination .lx-button
