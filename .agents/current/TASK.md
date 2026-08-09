@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-learning-section-switch-touch-targets`
 - Base SHA: `d202c193928e28366606990683067403802ec55b`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #454
 
 ## Objective
 
