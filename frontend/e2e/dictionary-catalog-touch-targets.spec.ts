@@ -307,6 +307,7 @@ test.describe("Issue #74 Dictionary catalog touch targets", () => {
     );
 
     await context.unroute("**/api/v1/**");
+    await context.clearCookies();
     await installQualityGateAPI(context, { authenticated: false });
 
     const widths = testInfo.project.name === "desktop-chromium" ? [768] : [768, 390];
