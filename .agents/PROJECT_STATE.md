@@ -146,7 +146,7 @@ Issue #74 stays open until those remaining criteria are proven.
 
 - Product PR #448 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
 - Current product runtime and Stage are validated on exact image SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
-- Repository memory is being reconciled in docs-only branch `docs/issue-74-dictionary-catalog-reconcile` from that exact product base; reconciliation PR number is pending creation at this record revision.
+- Docs-only reconciliation for this product delivery is PR #449 from branch `docs/issue-74-dictionary-catalog-reconcile`; its merge advances repository memory only and must not change the product/deployed SHA.
 - `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates before the next product slice.
 - The browser-zoom collection contract and scroll-normalized geometry rules remain permanent fail-closed protection.
 - Progress, Active Lesson, Phrases catalog, reusable system-state, live calendar-reminder and Dictionary catalog effective-target slices are merged and preserved by the current deployed product.
@@ -169,7 +169,7 @@ Issue #74 stays open until those remaining criteria are proven.
 - Exact-SHA main CI #3096 / run `31295869109` completed successfully and published exact API/Web images.
 - Deploy Stage #2937 / run `31296173844` consumed the exact CI scope, deployed the exact product image SHA and completed public endpoint plus public browser UI validation successfully.
 - Deployment Issue #12 records the exact product SHA `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f` with deploy, public smoke and public browser states all `success`.
-- Current reconciliation branch is `docs/issue-74-dictionary-catalog-reconcile`; its PR number and final docs merge SHA must be appended after the PR is opened and validated.
+- Docs-only reconciliation PR #449 records this delivery and resets current task state; its merge is documentation-only and does not replace the exact deployed product SHA above.
 - Issue #74 remains open only for residual live-control inventory/remediation and physical-device/manual acceptance.
 - No local clone result is counted as authoritative evidence; GitHub CI/Stage remain the execution source of truth.
 
