@@ -6,7 +6,7 @@
 - Branch: `fix/issue-74-phrase-detail-targets`
 - Base SHA: `85c3b69350e87cb5ed399f93a418a020ef9170c9`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #450
 
 ## Objective
 
