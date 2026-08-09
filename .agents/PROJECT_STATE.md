@@ -4,18 +4,18 @@
 
 - Last verified: 2026-08-09 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- Latest deployed product SHA: `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- Latest merged Issue #74 product slice: PR #450, final developer-authored head `09417a3fb97f201c2e3431554e2db2618e640fd5`, squash product SHA `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- PR #450 immutable-head CI #3103 / run `31296902303`: full product matrix `success`.
-- Exact-SHA main CI #3104 / run `31297293933`: full product matrix `success`, including immutable API/Web container publication.
-- Deploy Stage #2945 / run `31297652617`: `success` for the same exact product SHA after exact CI-scope validation.
-- Deployed images: `ghcr.io/dja-tiger/lexigo-web:dcc03d589a660fff6bd56872a53e5b7f3560d09a` and `ghcr.io/dja-tiger/lexigo-api:dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- Stage PostgreSQL, Redis, API and Web were healthy. Public frontend and API readiness returned HTTP 200 on attempt 1. Public smoke passed with CSP mode `report-only`; 12/12 public desktop Chromium/iOS WebKit tests passed.
+- Verified product `main` before this reconciliation: `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- Latest deployed product SHA: `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- Latest merged Issue #74 product slice: PR #452, final developer-authored head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`, squash product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- PR #452 immutable-head CI #3120 / run `31317896670`: full product matrix `success`.
+- Exact-SHA main CI #3121 / run `31318401885`: full product matrix `success`, including immutable API/Web container publication.
+- Deploy Stage #2962 / run `31318829889`: `success` for the same exact product SHA after exact CI-scope validation.
+- Deployed images: `ghcr.io/dja-tiger/lexigo-web:eb10bdefdeec0b1328b0ad885d898e12895e3019` and `ghcr.io/dja-tiger/lexigo-api:eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- Stage PostgreSQL, Redis, API and Web were healthy. Public frontend root and API readiness returned HTTP 200 on attempt 1. Public smoke passed with CSP mode `report-only`; 12/12 public desktop Chromium/iOS WebKit tests passed, including `/dictionary`.
 - Deployment Issue #12 records the same image SHA with deploy, public smoke and public browser states all `success`.
-- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #450 changed no dependency or lockfile version.
+- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #452 changed no dependency or lockfile version.
 - Issue #74 remains open for residual whole-application live-control inventory/remediation and final physical-device/manual acceptance.
-- Unrelated maintenance PRs at the product-slice pre-flight: Dependabot #304, #403 and #432.
+- Unrelated maintenance PRs verified at reconciliation time: Dependabot #304, #403 and #432.
 
 ## Delivery contract
 
@@ -61,14 +61,16 @@
 - PR #446 calendar reminder preview/close/weekdays 44/48px targets — `0700fed4f77758bc193b87d30a698ed2217a7dad`.
 - PR #448 Dictionary quick filters, panel filters/reset and pagination 44/48px targets — `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
 - PR #450 Phrase Detail back, speech, lesson-configuration, return-to-catalog and visible side-practice 44/48px effective targets — `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
+- PR #452 guest Dictionary `Слова и термины` / `Рабочие фразы` catalog-kind navigation 44px fine-pointer / 48px coarse-pointer effective targets — `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
 
 ## Issue #74 permanent evidence rules
 
 - Scroll-sensitive pairwise target geometry must be sampled from one common scroll frame or normalized coordinate system per `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
 - Browser-owned zoom acceptance must remain explicitly collected by authoritative suites per `.agents/AGENTS.issue-74-browser-zoom-collection.md`.
 - Reusable AsyncStatePanel and calendar reminder target owners have explicit desktop/mobile real-hit, non-overlap, focus and callback evidence.
-- Dictionary catalog and Phrase Detail owners have explicit desktop Chromium, Android Chromium and iOS WebKit real-hit/non-overlap evidence.
+- Dictionary catalog, guest Dictionary catalog-kind navigation and Phrase Detail owners have explicit desktop Chromium, Android Chromium and iOS WebKit real-hit/non-overlap evidence.
 - Expanded target layers must preserve accessible names, runtime callbacks, navigation/API semantics and approved painted geometry unless a separate slice explicitly owns paint.
+- Guest browser acceptance must isolate persisted authentication state as well as network fixtures; replacing auth routes alone does not create a guest browser context when authenticated cookies remain.
 
 ## Dictionary catalog evidence — PR #448
 
@@ -85,25 +87,32 @@
 - Canonical `/phrases/:slug` has five live in-scope controls: `К списку фраз`, `Прослушать`, `Настроить урок`, `К другим фразам`, and `Начать практику` when the side panel is visible.
 - All five already had >=44px painted height; the missing contract was a route-specific 48px coarse-pointer effective owner.
 - `frontend/app/phrase-detail-touch-targets.css` adds only transparent block-axis 44px fine / 48px coarse event ownership. It does not alter painted dimensions, color, borders, typography, focus or callbacks.
-- `layout.tsx` changed by one import. `package.json` changed only by one collection entry in each blocking UI/a11y command. Lockfile, dependencies, runtime components, canonical `phrases.css`, workflows and visual baseline metadata were untouched.
 - `frontend/e2e/phrase-detail-touch-targets.spec.ts` runs deterministic fixtures in desktop Chromium, Android Chromium and iOS WebKit at 1440/820/390/320 widths with border-aware effective geometry, four-side `elementFromPoint`, common-frame non-overlap, focus and horizontal-containment checks.
-- Below 768px the side-practice aside is intentionally hidden and is asserted hidden rather than synthetically exposed.
 - `frontend/components/phrase-detail-touch-target-source.test.ts` locks live selectors, 44px paint ownership, paint-inert declarations, import order and authoritative collection.
 - Existing Phrase Detail content-addressed compact/desktop Light/Dark visual baselines remained unchanged; visual regression passed on the immutable PR head and exact merge SHA.
-- Fail-closed diff audit showed exactly eight allowed paths and no prohibited runtime/visual/dependency/workflow drift.
-- PR CI #3103 / run `31296902303` completed successfully across the full product matrix. Review submissions, PR comments and unresolved review threads were empty. Expected-head squash merge used exact head `09417a3fb97f201c2e3431554e2db2618e640fd5`.
-- Exact-SHA main CI #3104 / run `31297293933` completed successfully and published exact API/Web images.
-- Stage #2945 / run `31297652617` validated exact CI scope, deployed exact SHA `dcc03d589a660fff6bd56872a53e5b7f3560d09a`, verified healthy services/public HTTP 200 endpoints and passed 12/12 public Chromium/iOS WebKit tests.
+- PR CI #3103 / run `31296902303`, exact-SHA main CI #3104 / run `31297293933`, and Stage #2945 / run `31297652617` all succeeded.
+
+## Guest Dictionary catalog-kind evidence — PR #452
+
+- Final developer head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`; exact reconciled base `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86` from PR #451.
+- Guest `/dictionary` renders shared `CatalogKindNavigation` buttons `Слова и термины` and `Рабочие фразы`. Canonical paint is 44px above 640px and 48px at <=640px; the residual gap was the missing 48px coarse-pointer effective target on wider layouts.
+- `frontend/app/dictionary-catalog-touch-targets.css` now includes `.lx-catalog-kind-navigation button` in the exact-`/dictionary` transparent block-axis 44/48px interaction owner without changing paint, focus or callbacks.
+- `frontend/components/dictionary-catalog-touch-target-source.test.ts` locks shared runtime ownership, canonical paint boundaries, route-scoped effective ownership and exact blocking browser collection.
+- `frontend/e2e/dictionary-catalog-touch-targets.spec.ts` covers guest 768px fine/coarse plus compact coarse layouts in desktop Chromium, Android Chromium and iOS WebKit with border-aware effective geometry, four-side `elementFromPoint`, non-overlap, focus, `/phrases` navigation and overflow checks.
+- CI #3114 exposed a source-proof wording defect and CI #3117 exposed authenticated-cookie leakage into the guest fixture. The final fixture explicitly clears inherited cookies before installing the guest API contract; product session semantics were not weakened.
+- Final immutable-head CI #3120 / run `31317896670` succeeded across the full matrix, including both previously failing UI shards. PR comments, submitted reviews and unresolved review threads were empty; expected-head squash merge used exact head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`.
+- Exact-SHA main CI #3121 / run `31318401885` completed successfully and published exact API/Web images.
+- Stage #2962 / run `31318829889` validated exact CI scope, deployed exact SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`, verified healthy services/public HTTP 200 endpoints and passed 12/12 public Chromium/iOS WebKit tests, including `/dictionary`.
 
 ## Issue #74 acceptance status
 
 Completed automated evidence:
 
-- Delivered target owners from PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446, #448 and #450 meet their bounded 44/48px, spacing, focus and callback contracts.
+- Delivered target owners from PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446, #448, #450 and #452 meet their bounded 44/48px, spacing, focus and callback contracts.
 - Canonical mobile navigation scales under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
 - Word Detail has authoritative true 200% browser-owned zoom evidence; Home, Learn, Active Lesson and Phrases zoom owners are permanently collected fail-closed.
-- Phrases now has explicit multi-browser real-hit acceptance for catalog and Phrase Detail controls.
-- Progress, Active Lesson, AsyncStatePanel, calendar reminder, Dictionary catalog and Phrase Detail have explicit effective-target regression protection.
+- Phrases has explicit multi-browser real-hit acceptance for catalog and Phrase Detail controls.
+- Progress, Active Lesson, AsyncStatePanel, calendar reminder, Dictionary catalog, guest Dictionary catalog-kind navigation and Phrase Detail have explicit effective-target regression protection.
 
 Remaining mandatory work:
 
@@ -119,10 +128,10 @@ Issue #74 stays open until those criteria are proven.
 
 ## Current state
 
-- Product PR #450 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Product runtime and Stage are validated on exact image SHA `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- Docs-only reconciliation is PR #451 from branch `docs/issue-74-phrase-detail-reconcile`; its merge may advance repository `main` but must not replace the deployed product SHA above.
-- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates.
+- Product PR #452 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Product runtime and Stage are validated on exact image SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- Docs-only reconciliation uses branch `docs/issue-74-dictionary-kind-reconcile`; its merge may advance repository `main` but must not replace the deployed product SHA above.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates by this reconciliation.
 - Next product work is the residual Issue #74 live-control inventory; only evidenced gaps should create product slices.
 - Physical-device acceptance remains a separate final manual gate and is not claimed by automated evidence.
 - Dependabot PRs #304, #403 and #432 remain separate maintenance work.
@@ -136,11 +145,11 @@ Issue #74 stays open until those criteria are proven.
 
 ## Reconciliation evidence
 
-- PR #449 merged as docs SHA `85c3b69350e87cb5ed399f93a418a020ef9170c9` and became the exact base for product PR #450.
-- PR #450 final developer head `09417a3fb97f201c2e3431554e2db2618e640fd5` merged to product SHA `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- PR #450 immutable-head CI #3103 / `31296902303`, exact-SHA main CI #3104 / `31297293933`, and Stage #2945 / `31297652617` all completed successfully.
-- Deployment Issue #12 records exact product SHA `dcc03d589a660fff6bd56872a53e5b7f3560d09a` with deploy/public-smoke/public-browser states all `success`.
-- Docs-only reconciliation PR #451 records this delivery and resets current task state. Its merge is documentation-only and must not replace the deployed product SHA.
+- PR #451 merged as docs SHA `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86` and became the exact base for product PR #452.
+- PR #452 final developer head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5` merged to product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
+- PR #452 immutable-head CI #3120 / `31317896670`, exact-SHA main CI #3121 / `31318401885`, and Stage #2962 / `31318829889` all completed successfully.
+- Deployment Issue #12 records exact product SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019` with deploy/public-smoke/public-browser states all `success`.
+- This docs-only reconciliation records the delivery and resets current task state. Its merge is documentation-only and must not replace the deployed product SHA.
 - Issue #74 remains open for residual inventory/remediation and physical-device/manual acceptance.
 - GitHub CI/Stage are the execution source of truth; local clone results are not counted as authoritative delivery evidence.
 
