@@ -96,10 +96,10 @@ const DICTIONARY_VISUAL_BASELINES = {
   mediumLight: {
     name: "dictionary-medium-light.png",
     width: 768,
-    height: 1616,
-    sha256: "a0e187ffe7dedf4fefc29b4ae8f4ecf7ca859b66de178395c7b928647c19b80f",
-    sourceRun: 30197233623,
-    sourceHeadSha: "b13a09739849eef853a8e6c65f295f4358764b6d",
+    height: 1664,
+    sha256: "3e0215d2af6b4d024fddffd585752d125094b6737d987426b63f620f74577af3",
+    sourceRun: 31284198024,
+    sourceHeadSha: "8c5c5d5313ba2916b24eafedc526b4b4c9b4979d",
   },
   desktopLight: {
     name: "dictionary-desktop-light.png",
