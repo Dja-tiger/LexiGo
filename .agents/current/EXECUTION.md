@@ -5,7 +5,7 @@
 - Branch: `fix/issue-74-dictionary-kind-nav-targets`
 - Base SHA: `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #452
 
 ## Skills used
 
@@ -50,30 +50,34 @@ Actions performed:
 
 - Completed and merged previous docs reconciliation PR #451 and validated docs-only post-merge CI/Stage skip behavior.
 - Reconciled live `main` to `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86`.
-- Audited residual Issue #74 live controls.
-- Rejected the legacy Dictionary header bell as a false gap because `calendar-reminder-entry.css` hides it and the routed reminder owns the live action.
+- Audited residual Issue #74 live controls and rejected the hidden legacy reminder bell as a false gap.
 - Identified guest Dictionary CatalogKindNavigation as a real 44px-on-wide-coarse gap.
-- Created this exact-base branch and initialized fail-closed task ownership.
+- Created exact-base branch `fix/issue-74-dictionary-kind-nav-targets` and Draft PR #452.
+- Added `.lx-catalog-kind-navigation button` to the existing exact-`/dictionary` 44/48px transparent block-axis interaction owner.
+- Extended the source contract to prove guest runtime/shared-control ownership and the 44px-wide / 48px-compact canonical paint boundary.
+- Extended the already-blocking Dictionary Playwright spec with guest acceptance at 768px and 390px, including real perimeter hits, effective-target separation, focus, route navigation and overflow.
+- Read back every changed product file and audited the exact base/head path set.
 
 Commands or procedures:
 
-GitHub connector reads/writes with exact blob SHA replacement and immediate readback after mutation; no local `gh` fallback is available in this environment.
+GitHub connector reads/writes with exact blob SHA replacement and immediate readback after mutation; no local `gh` fallback is available in this environment. CI execution is delegated to the repository's authoritative GitHub Actions matrix.
 
 Artifacts produced:
 
-- Active Agent Harness task/progress/execution state for this atomic slice.
+- Draft PR #452 with six allowed changed files.
+- Route-scoped CSS remediation, source ownership contract and cross-browser acceptance evidence.
 
 Result:
 
-Pre-flight complete. Product change remains narrowly bounded to the existing Dictionary interaction layer plus source/browser evidence.
+Implementation is complete and exact-diff scoped. The next authoritative gate is immutable-head full product CI.
 
 Failures:
 
-No product failure yet. Local repository/CLI execution is unavailable, so validation will rely on repository CI and GitHub-hosted/self-hosted workflow evidence.
+No implementation failure observed before CI. Local repository/CLI execution is unavailable, so validation relies on repository CI and GitHub workflow evidence.
 
 Root cause:
 
-The shared catalog-kind control is painted at 44px above 640px, while Dictionary's interaction owner omitted the selector. Phrases already has the equivalent selector owner.
+The shared catalog-kind control is painted at 44px above 640px, while Dictionary's interaction owner omitted the selector. Phrases already has the equivalent selector owner, and compact Dictionary widths hid the omission with their existing painted 48px breakpoint.
 
 Fallback:
 
