@@ -110,3 +110,65 @@ Physical-device acceptance from Issue #461 is not part of this engineering slice
 Reusable lesson:
 
 Source-contract filename assertions must match the exact import statement, not a filename suffix, when repository owners have compound names such as `header-profile-touch-targets.css`. Keep the runtime fix unchanged when the only failure is an overbroad ownership-test selector.
+
+## Delivery update — 2026-08-11 02:35 Europe/Moscow
+
+### Additional instruction sources inspected
+
+- `.agents/AGENTS.issue-74-browser-zoom-collection.md`
+- `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`
+- `.agents/AGENTS.issue-261-css-specificity.md`
+- installed GitHub plugin skills `gh-fix-ci` and `yeet`
+
+### Additional files inspected
+
+- `frontend/app/account-security.css`
+- `frontend/app/premium-ui.css`
+- `frontend/components/account-email-panel.tsx`
+- `frontend/app/calendar-reminder-entry.css`
+- `frontend/components/calendar-reminder-route-entry.tsx`
+- `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
+- Issue #466 / PR #467 mobile-navigation fix state
+- Issue #468 / PR #469 shared route-reminder blocker state and CI
+
+### Additional actions performed
+
+- Reproduced the failing acceptance state from immutable-head CI #3169 / run `31393415580` without weakening the test.
+- Used the page-level overflow diagnostic to separate shared route-reminder geometry from Profile/account CTA intrinsic width.
+- Created Issue #468 for the independent closed-route-reminder WebKit overflow instead of mixing a shared-shell fix into PR #465.
+- Implemented atomic PR #469 with explicit closed `<details>` preview layout removal, a fail-closed source contract, and Android Chromium/iOS WebKit 320px / 200% browser regression.
+- Required and observed full immutable-head CI #3170 success for PR #469, including both UI shards, accessibility, backend, production builds, audit and container builds.
+- Rechecked PR #469 exact head, mergeability, reviews and unresolved threads; marked it Ready and squash-merged with `expected_head_sha=a2e7a0d37cc01b16a4a299d47641c856a9c6b30a`.
+- Verified new `main` SHA is `362fe3efe1f03dc595c123db7e73b7d862b9c12f`; exact-SHA push CI #3175 / run `31442691462` is the post-merge validation run.
+- Expanded Issue #460 harness scope only for the confirmed Profile/account CTA owner; shared reminder ownership remains explicitly out of scope.
+- Added local account-form CTA inline containment in `account-security.css`: `min-width: 0`, `max-width: 100%`, `overflow-wrap: anywhere`, `white-space: normal`.
+- Added a source contract that requires those exact containment properties and forbids font-size, letter-spacing, color, hidden overflow and text-overflow workarounds.
+- Added explicit iOS WebKit runtime evidence for `Отправить ссылку подтверждения`: visible at 320px / 200%, wrapping enabled and final `getBoundingClientRect()` fully inside the viewport before the global overflow assertion.
+- Synchronized `feat/issue-460-profile-touch-targets` with exact merged `main` using a real two-parent merge commit. The merge tree copied the three #469 blocker blobs from `main` while preserving the Profile feature tree.
+- Verified compare from `362fe3efe1f03dc595c123db7e73b7d862b9c12f` to synchronization head `0b81b8ed47ad10e58948caa3a3fb4f88f7aac615` reports `behind_by: 0` and only the nine Issue #460 net files; no #468 reminder file remains in the Profile diff.
+
+### Current result
+
+The original #465 browser failure is no longer treated as one monolithic defect. The independent shared-shell portion is implemented, fully CI-validated and merged. The remaining Profile-owned CTA intrinsic-width defect has an owner-local implementation plus source and runtime proof. The feature branch is current with `main` and ready for one final immutable-head validation after the harness record itself is committed.
+
+### Historical failures and disposition
+
+- CI #3158 source uniqueness failure: fixed by exact import-statement matching; no runtime change required.
+- CI #3169 320px / 200% page overflow: decomposed into shared reminder Issue #468 and Profile/account CTA containment. Shared reminder is merged; Profile CTA correction is now implemented.
+
+### Remaining gates
+
+- Resolve the new exact #465 head after this execution-record write.
+- Require final immutable-head CI success on that exact head with merged #469 ancestry.
+- Recheck review/thread gate and mergeability.
+- Mark PR #465 Ready and squash-merge with expected head SHA only after the complete matrix is green.
+- Validate exact-SHA `main` CI after #465 merge.
+- Validate exact-image Stage deployment, public HTTP smoke and browser smoke before considering Issue #460 delivered.
+
+### Fallback
+
+If the final 320px / 200% browser gate still reports overflow, use the existing offender diagnostic to identify the next concrete layout owner. Do not add broad `overflow-x: hidden`, viewport clipping, font shrinking or test tolerance increases; repair only the owning component and split unrelated shared-shell defects into their own atomic issues.
+
+### Reusable lesson
+
+A route-level accessibility reflow gate can expose several independent owners through one document-level symptom. Keep the global assertion because it catches real user-visible overflow, then decompose failures by measured offending element and canonical CSS owner. Shared-shell fixes should merge separately and be brought into the feature branch through ancestry, so the feature PR remains atomic while still validating against the real release baseline.
