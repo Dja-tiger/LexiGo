@@ -81,6 +81,29 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(browserProof).toContain("overflowWrap");
   });
 
+  it("keeps long account form actions shrinkable and wrap-safe without repainting", () => {
+    const selector = ".lx-account-form .lx-button";
+    const ruleStart = accountSecurity.indexOf(`${selector} {`);
+    const ruleEnd = accountSecurity.indexOf("}", ruleStart);
+    const rule = accountSecurity.slice(ruleStart, ruleEnd + 1);
+
+    expect(ruleStart).toBeGreaterThanOrEqual(0);
+    expect(rule).toContain("min-width: 0;");
+    expect(rule).toContain("max-width: 100%;");
+    expect(rule).toContain("justify-self: start;");
+    expect(rule).toContain("margin-top: 4px;");
+    expect(rule).toContain("overflow-wrap: anywhere;");
+    expect(rule).toContain("white-space: normal;");
+    expect(rule).not.toContain("font-size:");
+    expect(rule).not.toContain("letter-spacing:");
+    expect(rule).not.toContain("color:");
+    expect(rule).not.toContain("overflow: hidden");
+    expect(rule).not.toContain("text-overflow:");
+
+    expect(browserProof).toContain("Отправить ссылку подтверждения");
+    expect(browserProof).toContain("accountActionReflow");
+  });
+
   it("targets the existing semantic Profile controls without changing their runtime owner", () => {
     expect(profile).toContain('className="lx-profile-secondary-button"');
     expect(profile).toContain('className="lx-profile-goal-option"');
@@ -105,7 +128,7 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(browserProof).toContain("document.elementFromPoint");
     expect(browserProof).toContain("perimeterHits");
     expect(browserProof).toContain("expectIndependent");
-    expect(browserProof).toContain("window.matchMedia(\"(pointer: coarse)\")");
+    expect(browserProof).toContain('window.matchMedia("(pointer: coarse)")');
     expect(browserProof).toContain("width: 320");
     expect(browserProof).toContain("percent = 200");
     expect(browserProof).toContain('forcedColors: "active"');
