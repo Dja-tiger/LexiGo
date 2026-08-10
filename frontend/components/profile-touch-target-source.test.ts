@@ -55,18 +55,29 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(touchTargets).not.toContain("transform:");
   });
 
-  it("keeps the compact account-data eyebrow wrap-safe without changing its paint tokens", () => {
+  it("keeps compact account headings wrap-safe without changing their paint tokens", () => {
     const eyebrowSelector = ".lx-account-security-heading > div > span";
-    const ruleStart = accountSecurity.indexOf(`${eyebrowSelector} {`);
-    const ruleEnd = accountSecurity.indexOf("}", ruleStart);
-    const eyebrowRule = accountSecurity.slice(ruleStart, ruleEnd + 1);
+    const eyebrowRuleStart = accountSecurity.indexOf(`${eyebrowSelector} {`);
+    const eyebrowRuleEnd = accountSecurity.indexOf("}", eyebrowRuleStart);
+    const eyebrowRule = accountSecurity.slice(eyebrowRuleStart, eyebrowRuleEnd + 1);
+    const headingSelector = ".lx-account-security h2";
+    const headingRuleStart = accountSecurity.indexOf(`${headingSelector} {`);
+    const headingRuleEnd = accountSecurity.indexOf("}", headingRuleStart);
+    const headingRule = accountSecurity.slice(headingRuleStart, headingRuleEnd + 1);
 
-    expect(ruleStart).toBeGreaterThanOrEqual(0);
+    expect(eyebrowRuleStart).toBeGreaterThanOrEqual(0);
     expect(eyebrowRule).toContain("overflow-wrap: anywhere;");
     expect(eyebrowRule).toContain("font-size: 0.78rem;");
     expect(eyebrowRule).toContain("font-weight: 800;");
     expect(eyebrowRule).toContain("letter-spacing: 0.08em;");
+
+    expect(headingRuleStart).toBeGreaterThanOrEqual(0);
+    expect(headingRule).toContain("overflow-wrap: anywhere;");
+    expect(headingRule).toContain("font-size: clamp(1.65rem, 4vw, 2.55rem);");
+    expect(headingRule).toContain("letter-spacing: -0.04em;");
+
     expect(browserProof).toContain("ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ");
+    expect(browserProof).toContain("Пароль и активные устройства");
     expect(browserProof).toContain("overflowWrap");
   });
 
@@ -98,5 +109,6 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(browserProof).toContain("width: 320");
     expect(browserProof).toContain("percent = 200");
     expect(browserProof).toContain('forcedColors: "active"');
+    expect(browserProof).toContain("horizontal overflow:");
   });
 });

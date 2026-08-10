@@ -21,6 +21,15 @@ type EffectiveTarget = EffectiveRect & {
   pseudoPointerEvents: string;
 };
 
+type OverflowDiagnostic = {
+  selector: string;
+  text: string;
+  left: number;
+  right: number;
+  width: number;
+  position: string;
+};
+
 async function effectiveTarget(control: Locator): Promise<EffectiveTarget> {
   await control.evaluate((element) => {
     element.scrollIntoView({ block: "center", inline: "nearest" });
@@ -158,13 +167,45 @@ async function expectFamilyContract(controls: Locator, minimum: number, label: s
 }
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
-  const dimensions = await page.evaluate(() => ({
-    viewport: window.innerWidth,
-    document: document.documentElement.scrollWidth,
-    body: document.body.scrollWidth,
-  }));
-  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
-  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
+  const dimensions = await page.evaluate(() => {
+    const viewport = window.innerWidth;
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element): OverflowDiagnostic => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        const id = element.id ? `#${element.id}` : "";
+        const classes = (element.getAttribute("class") ?? "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 3)
+          .map((className) => `.${className}`)
+          .join("");
+        return {
+          selector: `${element.tagName.toLowerCase()}${id}${classes}`,
+          text: (element.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 80),
+          left: Math.round(rect.left * 100) / 100,
+          right: Math.round(rect.right * 100) / 100,
+          width: Math.round(rect.width * 100) / 100,
+          position: style.position,
+        };
+      })
+      .filter((entry) => entry.width > 0 && (entry.left < -1 || entry.right > viewport + 1))
+      .sort((first, second) => (
+        Math.max(second.right - viewport, -second.left) - Math.max(first.right - viewport, -first.left)
+      ))
+      .slice(0, 12);
+
+    return {
+      viewport,
+      document: document.documentElement.scrollWidth,
+      body: document.body.scrollWidth,
+      offenders,
+    };
+  });
+  const diagnostic = `horizontal overflow: ${JSON.stringify(dimensions.offenders)}`;
+  expect(dimensions.document, diagnostic).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.body, diagnostic).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
 async function applyTextZoom(page: Page, percent = 200): Promise<void> {
@@ -248,8 +289,13 @@ test.describe("Issue #460 Profile touch targets", () => {
     );
 
     const accountDataEyebrow = page.getByText("ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ", { exact: true });
+    const accountSecurityHeading = page.getByRole("heading", { level: 2, name: "Пароль и активные устройства" });
     await expect(accountDataEyebrow).toBeVisible();
+    await expect(accountSecurityHeading).toBeVisible();
     await expect.poll(async () => accountDataEyebrow.evaluate((element) => (
+      window.getComputedStyle(element).overflowWrap
+    ))).toBe("anywhere");
+    await expect.poll(async () => accountSecurityHeading.evaluate((element) => (
       window.getComputedStyle(element).overflowWrap
     ))).toBe("anywhere");
     await expectNoHorizontalOverflow(page);
