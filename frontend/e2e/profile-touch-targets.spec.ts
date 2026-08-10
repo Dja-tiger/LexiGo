@@ -290,14 +290,32 @@ test.describe("Issue #460 Profile touch targets", () => {
 
     const accountDataEyebrow = page.getByText("ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ", { exact: true });
     const accountSecurityHeading = page.getByRole("heading", { level: 2, name: "Пароль и активные устройства" });
+    const emailConfirmationAction = page.getByRole("button", { name: "Отправить ссылку подтверждения" });
     await expect(accountDataEyebrow).toBeVisible();
     await expect(accountSecurityHeading).toBeVisible();
+    await expect(emailConfirmationAction).toBeVisible();
     await expect.poll(async () => accountDataEyebrow.evaluate((element) => (
       window.getComputedStyle(element).overflowWrap
     ))).toBe("anywhere");
     await expect.poll(async () => accountSecurityHeading.evaluate((element) => (
       window.getComputedStyle(element).overflowWrap
     ))).toBe("anywhere");
+
+    const accountActionReflow = await emailConfirmationAction.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return {
+        overflowWrap: style.overflowWrap,
+        whiteSpace: style.whiteSpace,
+        left: rect.left,
+        right: rect.right,
+        viewport: window.innerWidth,
+      };
+    });
+    expect(accountActionReflow.overflowWrap).toBe("anywhere");
+    expect(accountActionReflow.whiteSpace).toBe("normal");
+    expect(accountActionReflow.left).toBeGreaterThanOrEqual(-0.5);
+    expect(accountActionReflow.right).toBeLessThanOrEqual(accountActionReflow.viewport + 0.5);
     await expectNoHorizontalOverflow(page);
   });
 
