@@ -81,6 +81,38 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(browserProof).toContain("overflowWrap");
   });
 
+  it("keeps dynamic account copy breakable at compact enlarged text sizes", () => {
+    const copyGroup = [
+      ".lx-account-security-heading p,",
+      ".lx-account-card-heading p,",
+      ".lx-session-row span,",
+      ".lx-audit-list span,",
+      ".lx-session-list > p,",
+      ".lx-audit-list > p {",
+    ].join("\n");
+    const copyRuleStart = accountSecurity.indexOf(copyGroup);
+    const copyRuleEnd = accountSecurity.indexOf("}", copyRuleStart);
+    const copyRule = accountSecurity.slice(copyRuleStart, copyRuleEnd + 1);
+    const labelSelector = ".lx-account-form label > span";
+    const labelRuleStart = accountSecurity.indexOf(`${labelSelector} {`);
+    const labelRuleEnd = accountSecurity.indexOf("}", labelRuleStart);
+    const labelRule = accountSecurity.slice(labelRuleStart, labelRuleEnd + 1);
+    const smallSelector = ".lx-account-form > small";
+    const smallRuleStart = accountSecurity.indexOf(`${smallSelector} {`);
+    const smallRuleEnd = accountSecurity.indexOf("}", smallRuleStart);
+    const smallRule = accountSecurity.slice(smallRuleStart, smallRuleEnd + 1);
+
+    expect(copyRuleStart).toBeGreaterThanOrEqual(0);
+    expect(copyRule).toContain("overflow-wrap: anywhere;");
+    expect(labelRuleStart).toBeGreaterThanOrEqual(0);
+    expect(labelRule).toContain("overflow-wrap: anywhere;");
+    expect(labelRule).toContain("font-size: 0.82rem;");
+    expect(labelRule).not.toContain("overflow: hidden");
+    expect(labelRule).not.toContain("text-overflow:");
+    expect(smallRuleStart).toBeGreaterThanOrEqual(0);
+    expect(smallRule).toContain("overflow-wrap: anywhere;");
+  });
+
   it("keeps long account form actions shrinkable and wrap-safe without repainting", () => {
     const selector = ".lx-account-form .lx-button";
     const ruleStart = accountSecurity.indexOf(`${selector} {`);
