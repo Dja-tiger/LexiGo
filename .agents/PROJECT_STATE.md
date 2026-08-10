@@ -4,28 +4,25 @@
 
 - Last verified: 2026-08-10 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Verified product `main` before this reconciliation: `08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- Latest deployed product SHA: `08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- Latest merged Issue #74 product slice: PR #456, final developer-authored head `d7e30771a6321a250937e74db7cb6e7440979d62`, squash product SHA `08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- PR #456 immutable-head CI #3134 / run `31322904276`: full product matrix `success`.
-- Exact-SHA main CI #3135 / run `31323381497`: full product matrix `success`, including immutable API/Web container publication.
-- Deploy Stage #2977 / run `31323872220`: final attempt 2 `success` for the same exact product SHA after exact CI-scope validation. Attempt 1 hit a transient Docker Compose recreate race (`No such container`) after API/Web had already become healthy and local probes returned HTTP 200; the unchanged exact-SHA deploy-job retry passed without a product patch.
-- Deployed images: `ghcr.io/dja-tiger/lexigo-web:08210f4182dfdc0f9611e054c16c399e9da492dd` and `ghcr.io/dja-tiger/lexigo-api:08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- Stage PostgreSQL, Redis, API and Web were healthy. Public frontend root and API readiness returned HTTP 200 on attempt 1. Public smoke passed with CSP mode `report-only`; 12/12 public desktop Chromium/iOS WebKit tests passed, including `/progress`.
-- Deployment Issue #12 records the same image SHA with deploy, public smoke and public browser states all `success`.
-- Security baseline remains Next `16.2.11`, PostCSS `8.5.23`, Nano ID `3.3.18` and Sharp `0.35.3`; PR #456 changed no dependency or lockfile version.
-- Issue #74 remains open for residual whole-application live-control inventory/remediation and final physical-device/manual acceptance.
-- Unrelated maintenance PRs remain separate work, including Dependabot #304, #403 and #432.
+- Product `main` before this reconciliation: `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- Latest deployed product SHA: `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- Issue #18 Phase 1: PR #462, final developer-authored head `12d37443cd96aa465acd71044b096488918a6e3b`, squash product SHA `edcfd3dbee62a4dba253df07d984fa326350c984`.
+- Issue #18 Phase 2: PR #463, final developer-authored head `246c8943d08151b2ff2428bee6580346da1c1e3b`, squash product SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- PR #463 immutable-head CI #3154 / run `31345340693`: full required product matrix `success`.
+- Exact-SHA `main` CI #3155 / run `31345862698`: full required product matrix `success`, including backend unit/race/integration/security, frontend/browser/PWA/performance gates, frontend aggregate and immutable API/Web container publication.
+- Deploy Stage #2998 / run `31346356268`: `success` for exact SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6` after exact CI-scope validation.
+- Stage deploy, public frontend/API smoke and public browser smoke are all `success`; 12/12 public desktop Chromium and iOS WebKit tests passed.
+- Deployment Issue #12 records image SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6` with deploy/public-smoke/public-browser states all `success`.
+- Issue #74 is completed/closed. Its detailed historical delivery evidence remains available in Git history and dedicated `.agents/AGENTS.issue-74-*` lessons.
 
 ## Delivery contract
 
-- Product and mixed changes require backend unit/race/integration/security plus frontend lint, typecheck, unit, production build, browser matrix, accessibility, visual, performance and container gates.
-- Product delivery requires immutable-head PR CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
+- Product and mixed changes require backend unit/race/integration/security plus frontend lint, typecheck, unit, production build, browser matrix, accessibility, visual, performance and container gates according to changed scope.
+- Product delivery requires immutable-head PR CI, clean review/thread audit, expected-head squash merge, exact-SHA `main` CI and exact-image Stage/public validation.
 - A green workflow proves only tests actually selected by its effective command/configuration; uncollected source is not acceptance evidence.
 - Exact deployment claims require immutable image tags, exact CI-scope validation, healthy services, public endpoint smoke and public browser evidence.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and must not deploy Stage.
 - One PR contains one atomic slice; product work must not continue through stale Agent Harness state.
-- Deploy Stage concurrency belongs only to accepted state-mutating deploy jobs. Skipped workflow-run consumers are not deployment evidence.
 - GitHub-hosted/browser setup failures, nondeterministic browser interactions and classified deployment races are infrastructure/test-stability evidence only; a rerun counts only when the exact workflow/product SHA remains unchanged and all required validation later succeeds.
 
 ## Production ownership foundations
@@ -37,151 +34,57 @@
 - Issue #70 is completed/closed; application entry, compatibility reachability, shared style ownership and architecture contracts remain fail-closed.
 - Issue #75 is completed/closed; authenticated PostgreSQL phrase search and URL/filter/history/scroll ownership remain fail-closed.
 
-## Completed Issue #74 slices
+## Issue #18 delivered foundation
 
-- PR #387 connectivity action 44/48px targets — product `9ee68f15d623bc7d0e001967b94eff3946b246b3`.
-- PR #389 shared-header profile 44/48px target — `29151758bae0b4220ee48213d0fc49a2290ba20a`.
-- PR #391 mobile Lesson Composer disclosure 44/48px targets — `0535f6641b6624b5f07266137942c3c5ae73c167`.
-- PR #393 Lesson Composer option-radio 44/48px targets — `9a02252f83e20c9f7daffc4bbd52d919dd1a9788`.
-- PR #395 shared-header streak 44/48px target — `346b9690ab6029776eeac614f2d26472160af927`.
-- PR #397 rem-responsive mobile navigation labels/48px targets — `597e1fcf5c707ca07b6b3fb4783352be91d0555b`.
-- PR #402 unfinished-lesson reset/continue 44/48px targets — `ecbd6ac3ec16f77f7d34aca8782d1182bf5db090`.
-- PR #405 Home `Открыть прогресс` 44/48px target — `2ba2c279f0a460dacd8972ac08b8c0e277342a0b`.
-- PR #407 Phrases search-clear 44/48px target — `f36c70d4b21477f2df63500d97c20715bc4b3db3`.
-- PR #409 Dictionary search-clear 44/48px target — `65cb8c675e40ed654f5b1779d0ee57e34cf112ec`.
-- PR #411 Word Detail Back 44/48px target — `3b8f3c39faee1223e3773935c761eb7903409868`.
-- PR #413 Word Detail related-phrase 44/48px targets — `477bccd8f38e648a3ad536dcc58526303297a376`.
-- PR #415 Word Detail related-phrase retry 44/48px target — `51e3ee5a6ea63146bdb7eb7d0faa9e351c52f56b`.
-- PR #417 Word Detail authoritative true 200% browser zoom/reflow — `5d864970103479863fc74ad76009a33030842420`.
-- PRs #419/#421/#423 added Home/Learn/Active Lesson true-browser-zoom sources; PR #426 made their authoritative collection fail-closed and added Phrases true 200% acceptance — product `7c641b2eea330363c80e6c666721a31eb5d60b9c`.
-- PR #428 populated Progress 44/48px effective targets — `69dc1fd2e893a932dce9facccaebc5afd5a6d2c1`.
-- PR #435 Active Lesson controls 44/48px effective targets — `3ec8b92509d72b3b435779a9ede65adc7222a50a`.
-- PR #442 Phrases catalog 44/48px effective targets — `2ee32d075b20dca000f1e10726ba8842b4685434`.
-- PR #444 reusable AsyncStatePanel 44/48px effective targets — `2b835258477e05f00a7f29fd6972e62853dea1f9`.
-- PR #446 calendar reminder preview/close/weekdays 44/48px targets — `0700fed4f77758bc193b87d30a698ed2217a7dad`.
-- PR #448 Dictionary quick filters, panel filters/reset and pagination 44/48px targets — `237eda1ad38a30a2b9b811b9415b1c9cd4fa1f0f`.
-- PR #450 Phrase Detail back, speech, lesson-configuration, return-to-catalog and visible side-practice 44/48px effective targets — `dcc03d589a660fff6bd56872a53e5b7f3560d09a`.
-- PR #452 guest Dictionary `Слова и термины` / `Рабочие фразы` catalog-kind navigation 44px fine-pointer / 48px coarse-pointer effective targets — `eb10bdefdeec0b1328b0ad885d898e12895e3019`.
-- PR #454 shared Learning `Уроки` / `Сценарии` subsection navigation 44px fine-pointer / 48px coarse-pointer effective targets on canonical `/learn` and `/scenarios` — `3cd07146524724e70647d9fa05eb5907f12597bb`.
-- PR #456 guest Progress `Войти и открыть прогресс` 44px fine-pointer / 48px coarse-pointer effective target — `08210f4182dfdc0f9611e054c16c399e9da492dd`.
+### Phase 1 — adaptive lesson queue
 
-## Issue #74 permanent evidence rules
+- Server-owned adaptive ranking prioritizes `recent_failure`, then ordinary due items, while preserving weak-topic/new/scheduled behavior and deterministic selection.
+- Optional `reviewRatio` is persisted and enforced when inventory permits, with bounded fallback when one side is undersupplied.
+- Avoidable long same-topic/same-POS streaks are prevented without discarding higher-priority work.
+- `selection_reason` is persisted and rehydrated for `new`, `due`, `weak_topic`, `recent_failure` and manual selections instead of being recomputed from mutable learner state.
+- Explicit manual `wordIds` preserve caller order and remain marked `manual`.
 
-- Scroll-sensitive pairwise target geometry must be sampled from one common scroll frame or normalized coordinate system per `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
-- Browser-owned zoom acceptance must remain explicitly collected by authoritative suites per `.agents/AGENTS.issue-74-browser-zoom-collection.md`.
-- Reusable AsyncStatePanel and calendar reminder target owners have explicit desktop/mobile real-hit, non-overlap, focus and callback evidence.
-- Dictionary catalog, guest Dictionary catalog-kind navigation, Phrase Detail, shared Learning subsection navigation and guest Progress login owners have explicit desktop Chromium, Android Chromium and iOS WebKit real-hit/non-overlap evidence.
-- Expanded target layers must preserve accessible names, runtime callbacks, navigation/API semantics and approved painted geometry unless a separate slice explicitly owns paint.
-- Guest browser acceptance must isolate persisted authentication state as well as network fixtures; replacing auth routes alone does not create a guest browser context when authenticated cookies remain.
+### Phase 2 — diagnostic onboarding backend
 
-## Dictionary catalog evidence — PR #448
+- Server-owned onboarding states: `not_started`, `in_progress`, `completed`, `skipped`.
+- API contract provides onboarding status, start, sequential self-mark, complete and skip operations.
+- Diagnostic selection is deterministic and bounded to at most 12 items, with phrase, technical-topic and noun/verb/adjective representation when available in user inventory.
+- The prompt does not expose translation before the learner records `known`, `unsure` or `new`.
+- Marks are persisted sequentially before reveal; completion is rejected until every selected item is marked.
+- Completion initializes only `user_words` rows still in `new` state, preserving existing learned scheduler state and avoiding synthetic review events.
+- `known` starts in bounded review state; `unsure` starts in learning; `new` remains unchanged. Skip does not mutate scheduler state.
+- Per-user transaction/advisory locking protects start/mark/complete/skip concurrency.
+- Unit contracts cover deterministic/bounded selection, representative coverage, mark vocabulary and initialization policy.
 
-- Final developer head `448faae28f91b39989bc46f8701811d48e68e832`; exact base `80b0a8d3d13f0d7ac12350867eba64f312fe750c`.
-- Route-scoped paint-inert ownership covers quick filters, source/status/sort/reset and pagination; existing search-clear/result/mobile-toggle owners were not duplicated.
-- Browser acceptance uses border-aware geometry, four-side `elementFromPoint`, common-frame non-overlap, focus and containment.
-- CI #3092 and #3093 independently rendered the same intended Linux medium-Light `768x1664`, SHA-256 `3e0215d2af6b4d024fddffd585752d125094b6737d987426b63f620f74577af3`; only evidenced content-addressed metadata changed.
-- Immutable-head CI #3095 / `31295450246`, main CI #3096 / `31295869109`, and Stage #2937 / `31296173844` all succeeded.
+## Issue #18 remaining work
 
-## Phrase Detail evidence — PR #450
-
-- Final developer head `09417a3fb97f201c2e3431554e2db2618e640fd5`; exact reconciled base `85c3b69350e87cb5ed399f93a418a020ef9170c9` from PR #449.
-- The stale Issue literal `Подробнее` was already owned by connectivity PR #387; `Все режимы` is no longer a live runtime literal.
-- Canonical `/phrases/:slug` has five live in-scope controls: `К списку фраз`, `Прослушать`, `Настроить урок`, `К другим фразам`, and `Начать практику` when the side panel is visible.
-- All five already had >=44px painted height; the missing contract was a route-specific 48px coarse-pointer effective owner.
-- `frontend/app/phrase-detail-touch-targets.css` adds only transparent block-axis 44px fine / 48px coarse event ownership. It does not alter painted dimensions, color, borders, typography, focus or callbacks.
-- `frontend/e2e/phrase-detail-touch-targets.spec.ts` runs deterministic fixtures in desktop Chromium, Android Chromium and iOS WebKit at 1440/820/390/320 widths with border-aware effective geometry, four-side `elementFromPoint`, common-frame non-overlap, focus and horizontal-containment checks.
-- `frontend/components/phrase-detail-touch-target-source.test.ts` locks live selectors, 44px paint ownership, paint-inert declarations, import order and authoritative collection.
-- Existing Phrase Detail content-addressed compact/desktop Light/Dark visual baselines remained unchanged; visual regression passed on the immutable PR head and exact merge SHA.
-- PR CI #3103 / run `31296902303`, exact-SHA main CI #3104 / run `31297293933`, and Stage #2945 / run `31297652617` all succeeded.
-
-## Guest Dictionary catalog-kind evidence — PR #452
-
-- Final developer head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`; exact reconciled base `b75d8a4c3a5fbba2be94c091f1e27ab6f9306c86` from PR #451.
-- Guest `/dictionary` renders shared `CatalogKindNavigation` buttons `Слова и термины` and `Рабочие фразы`. Canonical paint is 44px above 640px and 48px at <=640px; the residual gap was the missing 48px coarse-pointer effective target on wider layouts.
-- `frontend/app/dictionary-catalog-touch-targets.css` now includes `.lx-catalog-kind-navigation button` in the exact-`/dictionary` transparent block-axis 44/48px interaction owner without changing paint, focus or callbacks.
-- `frontend/components/dictionary-catalog-touch-target-source.test.ts` locks shared runtime ownership, canonical paint boundaries, route-scoped effective ownership and exact blocking browser collection.
-- `frontend/e2e/dictionary-catalog-touch-targets.spec.ts` covers guest 768px fine/coarse plus compact coarse layouts in desktop Chromium, Android Chromium and iOS WebKit with border-aware effective geometry, four-side `elementFromPoint`, non-overlap, focus, `/phrases` navigation and overflow checks.
-- CI #3114 exposed a source-proof wording defect and CI #3117 exposed authenticated-cookie leakage into the guest fixture. The final fixture explicitly clears inherited cookies before installing the guest API contract; product session semantics were not weakened.
-- Final immutable-head CI #3120 / run `31317896670` succeeded across the full matrix, including both previously failing UI shards. PR comments, submitted reviews and unresolved review threads were empty; expected-head squash merge used exact head `1539fae217ddc34687021ebbc7e52a35b2a4c5e5`.
-- Exact-SHA main CI #3121 / run `31318401885` completed successfully and published exact API/Web images.
-- Stage #2962 / run `31318829889` validated exact CI scope, deployed exact SHA `eb10bdefdeec0b1328b0ad885d898e12895e3019`, verified healthy services/public HTTP 200 endpoints and passed 12/12 public Chromium/iOS WebKit tests, including `/dictionary`.
-
-## Learning subsection switch evidence — PR #454
-
-- Final developer head `adbaf4187247eff3ab9c45c96b8c98de74b18dff`; exact reconciled base `d202c193928e28366606990683067403802ec55b` from PR #453.
-- Inventory explicitly rejected already-compliant nearby controls before selecting this slice: Lesson Result CTA `52px`, Learn primary CTA `54px`, route brand/header navigation `48px`, rail `>=48px`, and mobile navigation `52px`.
-- Canonical `/learn` `RouteChrome` and authenticated `/scenarios` `LexigoScenarioCatalogApp` share `Разделы обучения` links `Уроки` / `Сценарии`. Their painted owner is `scenario-catalog.css`: `44px` height and at least `120px` width; the residual gap was only the missing `48px` coarse-pointer effective block-axis target.
-- `frontend/app/learning-section-switch-touch-targets.css` adds a transparent, borderless, shadowless `::before` event owner: `44px` fine, `48px` coarse, block-axis expansion only. Painted geometry, focus styling, accessible names and navigation callbacks remain owned by existing presentation/runtime layers.
-- `frontend/components/learning-section-switch-touch-target-source.test.ts` locks import order, both canonical runtime owners, canonical 44px paint/120px width, paint-inert expansion and exact blocking UI/a11y collection.
-- `frontend/e2e/learning-section-switch-touch-targets.spec.ts` proves `/learn` and `/scenarios` in desktop Chromium, Android Chromium and iOS WebKit using effective geometry, four-side `elementFromPoint`, sibling non-overlap, `aria-current`, focus-visible and overflow checks.
-- Immutable-head PR CI #3127 / run `31320359239` completed successfully; visual regression remained green, proving the interaction-only layer did not change the approved painted baseline. PR comments, submitted reviews and unresolved review threads were empty; expected-head squash merge used exact head `adbaf4187247eff3ab9c45c96b8c98de74b18dff`.
-- Exact-SHA main CI #3128 / run `31320946429` attempt 1 failed only in existing iOS WebKit Dictionary/Lesson Result browser interactions. Failure diagnostics did not implicate the new Learning switch spec. The unchanged exact SHA/workflow rerun attempt 2 passed, including both UI shards, frontend aggregate and API/Web image publication; no corrective product patch was made.
-- Stage #2970 / run `31321881749` validated exact CI scope, deployed exact SHA `3cd07146524724e70647d9fa05eb5907f12597bb`, reported healthy PostgreSQL/Redis/API/Web, returned public frontend/API HTTP 200 on attempt 1 and passed 12/12 public desktop Chromium/iOS WebKit tests.
-
-## Progress guest login evidence — PR #456
-
-- Final developer head `d7e30771a6321a250937e74db7cb6e7440979d62`; exact reconciled base `f472865cdd91fde04a9ff0c26dc34fa283f725bb` from PR #455.
-- Canonical guest `/progress` renders exactly one `Войти и открыть прогресс` CTA inside `LexigoProgressApp`; authenticated `ProgressEvidenceDashboard` remains owned by PR #428 and was not modified.
-- `premium-ui.css` keeps the painted button at `44px`; `frontend/app/progress-guest-login-touch-targets.css` adds only transparent block-axis 44px fine / 48px coarse effective hit ownership.
-- `frontend/components/progress-guest-login-touch-target-source.test.ts` locks runtime callback ownership, canonical paint, paint-inert expansion, import order and exact blocking collection.
-- `frontend/e2e/progress-guest-login-touch-targets.spec.ts` isolates guest state by clearing inherited cookies and proves desktop Chromium, Android Chromium and iOS WebKit real perimeter hits, focus-visible, overflow safety and exact navigation to `/profile?session=required&return_to=%2Fprogress`.
-- Immutable-head PR CI #3134 / run `31322904276` completed successfully; PR comments and unresolved review threads were empty before merge.
-- Exact-SHA main CI #3135 / run `31323381497` completed successfully and published exact API/Web images.
-- Deploy Stage #2977 / run `31323872220` attempt 1 failed in a Docker Compose container-recreate race after services became healthy; unchanged exact-SHA attempt 2 completed successfully, verified public HTTP endpoints and passed 12/12 public desktop Chromium/iOS WebKit tests including `/progress`.
-
-## Issue #74 acceptance status
-
-Completed automated evidence:
-
-- Delivered target owners from PRs #387, #389, #391, #393, #395, #402, #405, #407, #409, #411, #413, #415, #428, #435, #442, #444, #446, #448, #450, #452, #454 and #456 meet their bounded 44/48px, spacing, focus and callback contracts.
-- Canonical mobile navigation scales under root-text enlargement without clipping, ellipsis, target overlap or horizontal overflow.
-- Word Detail has authoritative true 200% browser-owned zoom evidence; Home, Learn, Active Lesson and Phrases zoom owners are permanently collected fail-closed.
-- Phrases has explicit multi-browser real-hit acceptance for catalog and Phrase Detail controls.
-- Progress, Active Lesson, AsyncStatePanel, calendar reminder, Dictionary catalog, guest Dictionary catalog-kind navigation, Phrase Detail, Learning subsection navigation and guest Progress login have explicit effective-target regression protection.
-
-Remaining mandatory work:
-
-- Continue residual whole-application live-control inventory across Issue #74 affected screens and remediate only evidenced controls below 44px fine / 48px coarse or with intersecting target geometry.
-- Confirm remaining Header, bottom navigation, Home, Learn, Phrases, Dictionary, Lesson and Progress primary/secondary/text/icon controls are either covered by canonical shared owners or explicit bounded regression evidence.
-- Perform final manual acceptance on real physical mobile hardware. Playwright emulation, browser zoom, root-font enlargement and Stage smoke do not satisfy this criterion.
-
-Issue #74 stays open until those criteria are proven.
-
-## CI/CD control-plane state
-
-- PR #400 moved `deploy-stage` concurrency to the accepted state-mutating deploy job only; skipped PR/Dependabot/docs-only consumers cannot cancel authoritative deployments. Product SHA `ad45e9ca4b21114dee979495dfb89da3b43eab7f`.
+- Issue #18 remains open; the backend personalization/diagnostic foundation is delivered but the first-use product flow is not yet complete.
+- Visual First Use/onboarding implementation is owned by Issue #201.
+- Issue #201 explicitly requires canonical Figma node IDs for Guest Home mobile/desktop, onboarding desktop, diagnostic question states, skip/continue, loading/error/recovery and Light/Dark variants before implementation code begins.
+- Until those IDs are present in #201 and the Screen Map, no speculative First Use UI implementation is permitted.
+- After the Figma gate is cleared, the remaining acceptance must prove onboarding duration/skip behavior, pre-answer self-mark UX, resume/recovery, mobile/desktop, Light/Dark, keyboard/screen-reader and visual-regression behavior against the approved design source of truth.
 
 ## Current state
 
-- Product PR #456 is merged and fully delivered through immutable-head CI, clean review/thread audit, expected-head squash merge, exact-SHA main CI and exact-image Stage/public validation.
-- Product runtime and Stage are validated on exact image SHA `08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- Docs-only reconciliation uses branch `docs/issue-74-progress-guest-login-reconcile`; its merge may advance repository `main` but must not replace the deployed product SHA above.
-- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset exactly to canonical templates by this reconciliation.
-- Next product work is the residual Issue #74 live-control inventory; only evidenced gaps should create product slices.
-- Physical-device acceptance remains a separate final manual gate and is not claimed by automated evidence.
-- Dependabot PRs #304, #403 and #432 remain separate maintenance work.
+- Product runtime and Stage are validated on exact image SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- PR #463 is merged and its Phase 2 delivery receipt is recorded in Issue #18.
+- Issue #18 remains open intentionally because #201 still gates the visual First Use implementation.
+- Issue #74 is closed and is no longer the active product task.
+- This reconciliation uses branch `docs/issue-18-diagnostic-onboarding-reconcile` and is Agent-Docs-only; its eventual merge may advance repository `main` but must not replace the latest deployed product SHA above.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset to canonical templates by this reconciliation before another product task starts.
 
 ## Remaining roadmap
 
-- Issue #74: complete residual live-control audit/remediation and final real-device acceptance; close only after all mandatory criteria are evidenced.
-- Issue #78 CSP implementation and Stage evidence are complete; final acceptance requires an authorized manual `Deploy Production` workflow dispatch with enforcing public smoke. No repository workaround or synthetic trigger is permitted.
-- Dependabot PRs #304, #403 and #432 require separate review, immutable-head CI and deployment treatment according to changed scope.
-- Other product/design Issues must be selected from live GitHub state and decomposed into atomic slices after Issue #74 is completed or explicitly blocked by the hardware gate.
+- #201: supply all missing canonical Figma node IDs before any First Use/onboarding UI implementation.
+- #18: after #201 is unblocked, implement and validate the approved first-use UI and close only when the remaining acceptance criteria are evidenced.
+- Any product work selected while #201 is blocked must come from live GitHub state, be independently unblocked, and be decomposed into an atomic slice; do not invent design ownership or bypass source-of-truth requirements.
+- Production-only/manual deployment gates remain manual where repository policy explicitly requires an authorized workflow dispatch; no synthetic trigger or repository workaround is permitted.
 
 ## Reconciliation evidence
 
-- PR #455 merged as docs SHA `f472865cdd91fde04a9ff0c26dc34fa283f725bb` and became the exact base for product PR #456.
-- PR #456 final developer head `d7e30771a6321a250937e74db7cb6e7440979d62` merged to product SHA `08210f4182dfdc0f9611e054c16c399e9da492dd`.
-- PR #456 immutable-head CI #3134 / `31322904276` and exact-SHA main CI #3135 / `31323381497` completed successfully; exact API/Web images were published.
-- Deploy Stage #2977 / `31323872220` completed successfully on unchanged exact-SHA attempt 2 after a classified transient Docker Compose recreate race on attempt 1; Deployment Issue #12 records exact product SHA `08210f4182dfdc0f9611e054c16c399e9da492dd` with deploy/public-smoke/public-browser states all `success` and 12/12 public browser tests passed.
-- This docs-only reconciliation records the delivery and resets current task state. Its merge is documentation-only and must not replace the deployed product SHA.
-- Issue #74 remains open for residual inventory/remediation and physical-device/manual acceptance.
-- GitHub CI/Stage are the execution source of truth; no product patch was made for the classified deployment race.
-
-## State semantics
-
-This file records the exact product base verified before the current task/documentation slice, latest deployed product SHA and active delivery boundaries. A docs-only merge does not make this state stale solely by advancing `main`; staleness is determined by unrecorded product, roadmap, Issue, deployment or dependency changes.
-
-## Update protocol
-
-Update this file before a new task when product, roadmap, Issue, deployment or dependency facts are stale; after material product deployment; and after any discrepancy in recorded facts. Always verify live GitHub tip and open PR set separately before writes. Do not create recursive reconciliation PRs solely because a docs-only merge advanced `main`.
+- Phase 1 PR #462 merged to `edcfd3dbee62a4dba253df07d984fa326350c984` and established the adaptive lesson queue foundation.
+- Phase 2 PR #463 immutable-head CI #3154 / run `31345340693` passed on exact developer head `246c8943d08151b2ff2428bee6580346da1c1e3b`.
+- PR #463 had no submitted reviews or unresolved inline review threads at the final merge gate and was squash-merged with expected-head protection to `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- Exact-SHA `main` CI #3155 / run `31345862698` completed `success` and published immutable API/Web images for the same SHA.
+- Deploy Stage #2998 / run `31346356268` completed `success` for the same exact SHA; Deployment Issue #12 records deploy/public-smoke/public-browser `success` and 12/12 public browser tests passed.
+- This docs-only reconciliation records delivery state and resets current task state. Its merge is documentation-only and must not be treated as a newly deployed product SHA.
