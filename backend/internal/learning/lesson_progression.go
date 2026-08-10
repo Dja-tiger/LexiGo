@@ -40,22 +40,26 @@ func (r *Repository) CreateProgressiveLesson(
 		if err := tx.Commit(ctx); err != nil {
 			return LessonSession{}, fmt.Errorf("commit duplicate lesson lookup: %w", err)
 		}
-		return r.lessonByID(ctx, userID, activeLessonID, "active")
+		return r.lessonByIDWithReasons(ctx, userID, activeLessonID, "active")
 	}
 
+	reviewRatio := resolveLessonReviewRatio(request.ReviewRatio)
 	wordIDs := request.WordIDs
+	selectionReasons := make([]string, 0)
 	if wordIDs == nil {
 		candidates, candidateErr := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode, request.Topic)
 		if candidateErr != nil {
 			return LessonSession{}, candidateErr
 		}
-		selected, _ := composeLessonCandidates(candidates, request.Source, lessonSizeLimit(request.LessonSize))
+		selected, _ := composeLessonCandidates(candidates, request.Source, lessonSizeLimit(request.LessonSize), reviewRatio)
 		if len(selected) == 0 {
 			return LessonSession{}, ErrLessonQueueEmpty
 		}
 		wordIDs = make([]int64, 0, len(selected))
+		selectionReasons = make([]string, 0, len(selected))
 		for _, candidate := range selected {
 			wordIDs = append(wordIDs, candidate.WordID)
+			selectionReasons = append(selectionReasons, string(lessonCandidateReason(candidate)))
 		}
 	} else {
 		var assigned int
@@ -69,6 +73,10 @@ func (r *Repository) CreateProgressiveLesson(
 		if assigned != len(wordIDs) {
 			return LessonSession{}, ErrInvalidLessonWords
 		}
+		selectionReasons = make([]string, len(wordIDs))
+		for index := range selectionReasons {
+			selectionReasons[index] = string(LessonReasonManual)
+		}
 	}
 
 	if _, err := tx.Exec(ctx, `
@@ -81,25 +89,26 @@ func (r *Repository) CreateProgressiveLesson(
 
 	var lessonID string
 	if err := tx.QueryRow(ctx, `
-		insert into lesson_sessions(user_id, source, study_mode, lesson_size)
-		values ($1::uuid, $2, $3, $4)
+		insert into lesson_sessions(user_id, source, study_mode, lesson_size, review_ratio)
+		values ($1::uuid, $2, $3, $4, $5)
 		returning id::text
-	`, userID, request.Source, request.StudyMode, request.LessonSize).Scan(&lessonID); err != nil {
+	`, userID, request.Source, request.StudyMode, request.LessonSize, reviewRatio).Scan(&lessonID); err != nil {
 		return LessonSession{}, fmt.Errorf("insert progressive lesson: %w", err)
 	}
 
 	if _, err := tx.Exec(ctx, `
-		insert into lesson_session_items(session_id, position, word_id)
-		select $1::uuid, (ordinality - 1)::int, word_id
-		from unnest($2::bigint[]) with ordinality as selected(word_id, ordinality)
-	`, lessonID, wordIDs); err != nil {
+		insert into lesson_session_items(session_id, position, word_id, selection_reason)
+		select $1::uuid, (ordinality - 1)::int, word_id, selection_reason
+		from unnest($2::bigint[], $3::text[]) with ordinality
+		     as selected(word_id, selection_reason, ordinality)
+	`, lessonID, wordIDs, selectionReasons); err != nil {
 		return LessonSession{}, fmt.Errorf("insert progressive lesson items: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return LessonSession{}, fmt.Errorf("commit progressive lesson transaction: %w", err)
 	}
-	return r.lessonByID(ctx, userID, lessonID, "active")
+	return r.lessonByIDWithReasons(ctx, userID, lessonID, "active")
 }
 
 func matchingRecentActiveLessonID(
@@ -127,13 +136,14 @@ func matchingRecentActiveLessonID(
 		          where item.session_id = lesson.id and word.topic <> $6
 		      )
 		  )
+		  and lesson.review_ratio = $7
 		  and (
-		      $7::bigint[] is null
+		      $8::bigint[] is null
 		      or coalesce((
 		          select array_agg(item.word_id order by item.position)
 		          from lesson_session_items item
 		          where item.session_id = lesson.id
-		      ), '{}'::bigint[]) = $7::bigint[]
+		      ), '{}'::bigint[]) = $8::bigint[]
 		  )
 		order by lesson.updated_at desc
 		limit 1
@@ -145,6 +155,7 @@ func matchingRecentActiveLessonID(
 		request.LessonSize,
 		int64(duplicateLessonCreationWindow/time.Second),
 		strings.TrimSpace(request.Topic),
+		resolveLessonReviewRatio(request.ReviewRatio),
 		request.WordIDs,
 	).Scan(&lessonID)
 	if errors.Is(err, pgx.ErrNoRows) {

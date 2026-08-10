@@ -16,14 +16,25 @@ const (
 	lessonFallbackWordsOnly   = "words_only"
 	lessonFallbackPhrasesOnly = "phrases_only"
 	lessonFallbackEmpty       = "empty"
+
+	defaultLessonReviewRatio   = 70
+	maxLessonCandidatePriority = 4
+	maxLessonDimensionStreak   = 2
+	recentLessonFailureWindow  = 14 * 24 * time.Hour
+	weakLessonTopicMaxEasiness = 2.30
+	weakLessonTopicMinReviewed = 3
 )
 
 type lessonCandidate struct {
-	WordID int64
-	Kind   string
-	Status string
-	DueAt  time.Time
-	Due    bool
+	WordID        int64
+	Kind          string
+	Status        string
+	DueAt         time.Time
+	Due           bool
+	Topic         string
+	PartOfSpeech  string
+	RecentFailure bool
+	WeakTopic     bool
 }
 
 func (r *Repository) PreviewLesson(ctx context.Context, userID string, request LessonPreviewRequest) (LessonPreview, error) {
@@ -37,7 +48,8 @@ func (r *Repository) PreviewLesson(ctx context.Context, userID string, request L
 	if err != nil {
 		return LessonPreview{}, err
 	}
-	_, composition := composeLessonCandidates(candidates, request.Source, lessonSizeLimit(request.LessonSize))
+	reviewRatio := resolveLessonReviewRatio(request.ReviewRatio)
+	_, composition := composeLessonCandidates(candidates, request.Source, lessonSizeLimit(request.LessonSize), reviewRatio)
 	if err := tx.Commit(ctx); err != nil {
 		return LessonPreview{}, fmt.Errorf("commit lesson preview snapshot: %w", err)
 	}
@@ -63,13 +75,49 @@ func queryLessonCandidates(
 	}
 	dueOnly := studyMode == AnswerModeRecall || studyMode == AnswerModeChoice
 	rows, err := tx.Query(ctx, `
+		with latest_review as (
+			select distinct on (review_event.word_id)
+			       review_event.word_id,
+			       review_event.effective_rating,
+			       review_event.correct,
+			       review_event.reviewed_at
+			from review_events review_event
+			where review_event.user_id = $1::uuid
+			order by review_event.word_id, review_event.reviewed_at desc, review_event.id desc
+		),
+		topic_signal as (
+			select word.topic,
+			       count(*) filter (where user_word.status <> 'new')::int as reviewed_count,
+			       avg(user_word.easiness::float8) filter (where user_word.status <> 'new') as avg_easiness
+			from user_words user_word
+			join words word on word.id = user_word.word_id
+			where user_word.user_id = $1::uuid
+			group by word.topic
+		)
 		select word.id,
 		       word.kind,
 		       user_word.status,
 		       user_word.due_at,
-		       user_word.status <> 'new' and user_word.due_at <= now()
+		       user_word.status <> 'new' and user_word.due_at <= now(),
+		       word.topic,
+		       coalesce(word.part_of_speech, ''),
+		       coalesce(
+		           latest_review.reviewed_at >= now() - ($6::bigint * interval '1 second')
+		           and (
+		               latest_review.effective_rating = 'again'
+		               or latest_review.correct is false
+		           ),
+		           false
+		       ),
+		       coalesce(
+		           topic_signal.reviewed_count >= $8
+		           and topic_signal.avg_easiness < $7,
+		           false
+		       )
 		from user_words user_word
 		join words word on word.id = user_word.word_id
+		left join latest_review on latest_review.word_id = user_word.word_id
+		left join topic_signal on topic_signal.topic = word.topic
 		where user_word.user_id = $1::uuid
 		  and (not $3 or user_word.due_at <= now())
 		  and (
@@ -86,7 +134,16 @@ func queryLessonCandidates(
 		  )
 		  and ($4 = '' or word.topic = $4)
 		order by user_word.due_at, word.id
-	`, userID, source, dueOnly, strings.TrimSpace(topic), catalog.Source)
+	`,
+		userID,
+		source,
+		dueOnly,
+		strings.TrimSpace(topic),
+		catalog.Source,
+		int64(recentLessonFailureWindow/time.Second),
+		weakLessonTopicMaxEasiness,
+		weakLessonTopicMinReviewed,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("query lesson candidates: %w", err)
 	}
@@ -95,7 +152,17 @@ func queryLessonCandidates(
 	candidates := make([]lessonCandidate, 0)
 	for rows.Next() {
 		var candidate lessonCandidate
-		if err := rows.Scan(&candidate.WordID, &candidate.Kind, &candidate.Status, &candidate.DueAt, &candidate.Due); err != nil {
+		if err := rows.Scan(
+			&candidate.WordID,
+			&candidate.Kind,
+			&candidate.Status,
+			&candidate.DueAt,
+			&candidate.Due,
+			&candidate.Topic,
+			&candidate.PartOfSpeech,
+			&candidate.RecentFailure,
+			&candidate.WeakTopic,
+		); err != nil {
 			return nil, fmt.Errorf("scan lesson candidate: %w", err)
 		}
 		candidates = append(candidates, candidate)
@@ -145,7 +212,7 @@ func recentCompletedLessonWordIDs(
 		excluded[wordID] = struct{}{}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate recent completed lesson items: %w", err)
+		return nil, fmt.Errorf("iterate recent completed lesson item: %w", err)
 	}
 	return excluded, nil
 }
@@ -164,7 +231,12 @@ func excludeLessonCandidates(candidates []lessonCandidate, excluded map[int64]st
 	return filtered
 }
 
-func composeLessonCandidates(candidates []lessonCandidate, source string, limit int) ([]lessonCandidate, LessonComposition) {
+func composeLessonCandidates(candidates []lessonCandidate, source string, limit int, reviewRatio ...int) ([]lessonCandidate, LessonComposition) {
+	ratio := defaultLessonReviewRatio
+	if len(reviewRatio) > 0 {
+		ratio = normalizeLessonReviewRatio(reviewRatio[0])
+	}
+
 	wordQueue := make([]lessonCandidate, 0)
 	phraseQueue := make([]lessonCandidate, 0)
 	for _, candidate := range candidates {
@@ -180,6 +252,7 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 	composition := LessonComposition{
 		AvailableWords:   len(wordQueue),
 		AvailablePhrases: len(phraseQueue),
+		ReviewRatio:      ratio,
 	}
 	if len(wordQueue) == 0 && len(phraseQueue) == 0 {
 		composition.Fallback = lessonFallbackEmpty
@@ -196,16 +269,20 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 	if limit <= 0 || limit > len(candidates) {
 		limit = len(candidates)
 	}
-	selected := make([]lessonCandidate, 0, limit)
+
+	ordered := make([]lessonCandidate, 0, len(candidates))
 	if source == "mixed" {
-		selected = composeMixedPriorityTiers(wordQueue, phraseQueue, limit)
+		ordered = composeMixedPriorityTiers(wordQueue, phraseQueue, len(candidates))
 	} else {
 		queue := wordQueue
 		if source == "phrases" {
 			queue = phraseQueue
 		}
-		selected = append(selected, queue[:min(limit, len(queue))]...)
+		ordered = append(ordered, queue...)
 	}
+
+	selected := applyLessonReviewRatio(ordered, limit, ratio)
+	selected = diversifyLessonDimensions(selected, maxLessonDimensionStreak)
 
 	for _, candidate := range selected {
 		composition.Total++
@@ -214,21 +291,77 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 		} else {
 			composition.Words++
 		}
-		switch {
-		case candidate.Due:
+		if candidate.Due {
 			composition.Due++
-		case candidate.Status == "new":
+		}
+		if candidate.Status == "new" {
 			composition.New++
-		default:
+		} else if !candidate.Due {
 			composition.Scheduled++
+		}
+		if candidate.RecentFailure {
+			composition.RecentFailures++
+		}
+		if candidate.WeakTopic {
+			composition.WeakTopics++
 		}
 	}
 	return selected, composition
 }
 
+func applyLessonReviewRatio(ordered []lessonCandidate, limit, reviewRatio int) []lessonCandidate {
+	if limit <= 0 || limit > len(ordered) {
+		limit = len(ordered)
+	}
+	if limit == 0 {
+		return nil
+	}
+
+	reviewAvailable := 0
+	for _, candidate := range ordered {
+		if candidate.Status != "new" {
+			reviewAvailable++
+		}
+	}
+	newAvailable := len(ordered) - reviewAvailable
+	desiredReview := (limit*normalizeLessonReviewRatio(reviewRatio) + 99) / 100
+	reviewTake := min(desiredReview, reviewAvailable)
+	newTake := min(limit-reviewTake, newAvailable)
+	remaining := limit - reviewTake - newTake
+	if remaining > 0 {
+		extraReview := min(remaining, reviewAvailable-reviewTake)
+		reviewTake += extraReview
+		remaining -= extraReview
+	}
+	if remaining > 0 {
+		newTake += min(remaining, newAvailable-newTake)
+	}
+
+	selected := make([]lessonCandidate, 0, limit)
+	reviewSelected, newSelected := 0, 0
+	for _, candidate := range ordered {
+		if candidate.Status == "new" {
+			if newSelected >= newTake {
+				continue
+			}
+			newSelected++
+		} else {
+			if reviewSelected >= reviewTake {
+				continue
+			}
+			reviewSelected++
+		}
+		selected = append(selected, candidate)
+		if len(selected) == limit {
+			break
+		}
+	}
+	return selected
+}
+
 func composeMixedPriorityTiers(words, phrases []lessonCandidate, limit int) []lessonCandidate {
 	selected := make([]lessonCandidate, 0, limit)
-	for priority := 0; priority <= 2 && len(selected) < limit; priority++ {
+	for priority := 0; priority <= maxLessonCandidatePriority && len(selected) < limit; priority++ {
 		tierWords := candidatesAtPriority(words, priority)
 		tierPhrases := candidatesAtPriority(phrases, priority)
 		if len(tierWords) == 0 && len(tierPhrases) == 0 {
@@ -273,13 +406,76 @@ func sortLessonQueue(queue []lessonCandidate) {
 }
 
 func lessonCandidatePriority(candidate lessonCandidate) int {
-	if candidate.Due {
+	switch lessonCandidateReason(candidate) {
+	case LessonReasonRecentFailure:
 		return 0
-	}
-	if candidate.Status == "new" {
+	case LessonReasonDue:
 		return 1
+	case LessonReasonWeakTopic:
+		return 2
+	case LessonReasonNew:
+		return 3
+	default:
+		return 4
 	}
-	return 2
+}
+
+func lessonCandidateReason(candidate lessonCandidate) LessonSelectionReason {
+	switch {
+	case candidate.RecentFailure:
+		return LessonReasonRecentFailure
+	case candidate.Due:
+		return LessonReasonDue
+	case candidate.WeakTopic:
+		return LessonReasonWeakTopic
+	case candidate.Status == "new":
+		return LessonReasonNew
+	default:
+		return LessonReasonScheduled
+	}
+}
+
+func diversifyLessonDimensions(queue []lessonCandidate, maxStreak int) []lessonCandidate {
+	if len(queue) < 3 || maxStreak < 1 {
+		return queue
+	}
+	result := append([]lessonCandidate(nil), queue...)
+	for index := range result {
+		if !createsLessonDimensionStreak(result[:index], result[index], maxStreak) {
+			continue
+		}
+		priority := lessonCandidatePriority(result[index])
+		for alternative := index + 1; alternative < len(result); alternative++ {
+			if lessonCandidatePriority(result[alternative]) != priority {
+				break
+			}
+			if createsLessonDimensionStreak(result[:index], result[alternative], maxStreak) {
+				continue
+			}
+			result[index], result[alternative] = result[alternative], result[index]
+			break
+		}
+	}
+	return result
+}
+
+func createsLessonDimensionStreak(prefix []lessonCandidate, candidate lessonCandidate, maxStreak int) bool {
+	return createsStringStreak(prefix, candidate.Topic, maxStreak, func(item lessonCandidate) string { return item.Topic }) ||
+		createsStringStreak(prefix, candidate.PartOfSpeech, maxStreak, func(item lessonCandidate) string { return item.PartOfSpeech })
+}
+
+func createsStringStreak(prefix []lessonCandidate, value string, maxStreak int, field func(lessonCandidate) string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	if normalized == "" || len(prefix) < maxStreak {
+		return false
+	}
+	for offset := 1; offset <= maxStreak; offset++ {
+		previous := strings.ToLower(strings.TrimSpace(field(prefix[len(prefix)-offset])))
+		if previous != normalized {
+			return false
+		}
+	}
+	return true
 }
 
 func alternateLessonKinds(words, phrases []lessonCandidate, limit int, startKind string) []lessonCandidate {
@@ -310,6 +506,23 @@ func alternateLessonKinds(words, phrases []lessonCandidate, limit int, startKind
 		}
 	}
 	return selected
+}
+
+func resolveLessonReviewRatio(value *int) int {
+	if value == nil {
+		return defaultLessonReviewRatio
+	}
+	return normalizeLessonReviewRatio(*value)
+}
+
+func normalizeLessonReviewRatio(value int) int {
+	if value < 0 {
+		return 0
+	}
+	if value > 100 {
+		return 100
+	}
+	return value
 }
 
 func lessonSizeLimit(value string) int {
