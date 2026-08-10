@@ -21,7 +21,7 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(layout).toContain(touchImport);
     expect(layout.indexOf(presentationImport)).toBeLessThan(layout.indexOf(touchImport));
     expect(layout.indexOf(touchImport)).toBeLessThan(layout.indexOf(nextOwnerImport));
-    expect(layout.match(/profile-touch-targets\.css/g)).toHaveLength(1);
+    expect(layout.match(/import "\.\/profile-touch-targets\.css";/g)).toHaveLength(1);
   });
 
   it("keeps Profile paint in profile.css and expands only transparent hit ownership", () => {
