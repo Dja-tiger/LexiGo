@@ -92,3 +92,57 @@ The first frontend unit run found one source-contract assertion bug; the impleme
 ### Next action
 
 Anchor the uniqueness assertion to the exact `import "./profile-touch-targets.css";` statement, leave product CSS/runtime logic unchanged, then validate only the resulting final branch head with a fresh immutable-head CI run.
+
+## 2026-08-11 02:34 Europe/Moscow
+
+### Verified
+
+- The earlier import-contract false negative was corrected without changing Profile runtime behavior; subsequent developer heads progressed through the browser matrix.
+- PR #465 immutable-head CI run `31393415580` on head `cd79000db63d77e791b53720e90c17b85f29cbfe` isolated the only failing gate to `Frontend E2E (UI tests shard 2/2)`: the 320px / 200% iOS WebKit page-level overflow assertion.
+- The failing diagnostic identified two independent owners: a closed shared route-reminder preview retaining WebKit overflow geometry, and the long Profile email-confirmation CTA exceeding its account form inline size.
+- The shared route-reminder defect was split into Issue #468 and atomic PR #469. PR #469 changed exactly three shared reminder files, passed immutable-head CI #3170 / run `31441895137` completely, including UI shards, accessibility, backend and both container builds, and was squash-merged with expected head `a2e7a0d37cc01b16a4a299d47641c856a9c6b30a`.
+- `main` after PR #469 is exactly `362fe3efe1f03dc595c123db7e73b7d862b9c12f`; exact-SHA push CI #3175 / run `31442691462` is running on that SHA.
+- The Profile-specific account CTA is owned by `.lx-account-form .lx-button` in `frontend/app/account-security.css`; global `.lx-button` intrinsic width plus horizontal padding caused the 200% text overflow.
+- The Profile CTA fix is local and paint-preserving at normal width: `min-width: 0`, `max-width: 100%`, `overflow-wrap: anywhere`, and `white-space: normal` were added without changing font, color, padding, border, background or normal intrinsic sizing when space is available.
+- `profile-touch-target-source.test.ts` now fail-closes the CTA owner and prohibits font/color/truncation hacks.
+- `profile-touch-targets.spec.ts` now explicitly proves the email-confirmation CTA is visible, wrap-enabled and geometrically inside the 320px viewport before the global no-overflow assertion.
+- Feature branch was synchronized with merged `main` through merge commit `0b81b8ed47ad10e58948caa3a3fb4f88f7aac615`, with parents `cfa543fc764f293e0533cc29091d983b2ff04fe6` and `362fe3efe1f03dc595c123db7e73b7d862b9c12f`.
+- Compare `362fe3ef...0b81b8ed` is `ahead`, `behind_by: 0`; the net PR diff contains only the nine declared Issue #460 files. The three Issue #468 reminder files are identical to `main` and absent from the Profile diff.
+
+### Finding
+
+The 320px / 200% gate was correctly doing page-level validation and exposed defects outside the original target geometry. The correct repair is owner-specific containment, not weakening the acceptance assertion: shared reminder behavior was delivered independently, while the Profile/account CTA fix remains inside Issue #460.
+
+### Root cause
+
+Two independent min-content/layout mechanisms contributed to the same document `scrollWidth`: WebKit retained geometry from a closed `<details>` descendant owned by the shared route reminder, and the account-form CTA retained an intrinsic width wider than its compact grid cell under 200% root text enlargement. Both owners now have explicit layout contracts.
+
+### Changed files since the previous progress entry
+
+- `.agents/current/TASK.md` — documents the confirmed CTA owner and keeps shared reminder work out of Profile scope.
+- `frontend/app/account-security.css` — local shrink/wrap containment for the account form CTA; existing eyebrow and `h2` wrap contracts retained.
+- `frontend/components/profile-touch-target-source.test.ts` — source contract for CTA shrinkability/wrapping and no repaint/truncation hacks.
+- `frontend/e2e/profile-touch-targets.spec.ts` — explicit 320px / 200% CTA runtime geometry proof.
+- Feature branch history additionally contains a merge from exact `main` SHA `362fe3ef...`; shared reminder files are not part of the net PR diff.
+
+### Checks passed
+
+- Issue #468 / PR #469 immutable-head CI #3170: full `success`.
+- PR #469 review gate: no reviews requiring changes and no unresolved review threads.
+- PR #469 guarded squash merge: `success`, merge SHA `362fe3efe1f03dc595c123db7e73b7d862b9c12f`.
+- Post-merge feature synchronization: `behind_by: 0`; no shared reminder files in #465 net diff.
+- Read-back verification for the Profile CTA CSS, source contract and runtime E2E assertions.
+
+### Checks in progress
+
+- Exact-SHA `main` CI #3175 / run `31442691462` for merged blocker SHA `362fe3efe1f03dc595c123db7e73b7d862b9c12f`.
+- A fresh immutable-head PR #465 CI will be authoritative only after this Agent Harness evidence update advances the branch one final time.
+
+### Current branch head
+
+- Product/synchronization head before this progress write: `0b81b8ed47ad10e58948caa3a3fb4f88f7aac615`.
+- This progress write advances the branch; resolve the live branch ref and validate only that final head.
+
+### Next action
+
+Update the execution record, resolve the final branch head, run immutable-head CI for PR #465 with merged reminder containment present, require clean review/thread gates, then squash-merge #465 only if the complete matrix is green. After merge, validate exact-SHA `main` CI, Stage exact image, public HTTP and browser smoke before closing Issue #460.
