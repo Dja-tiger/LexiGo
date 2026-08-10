@@ -3,27 +3,30 @@
 ## Pre-flight
 
 - Repository: `Dja-tiger/LexiGo`
-- Base branch: `main`
-- Verified base SHA: `e1980c973d524048d2fb079d79d51b8bfd50f0a4`
-- Branch: `feat/issue-18-adaptive-queue`
-- Required `.agents` governance files read before write.
-- No specialist `AGENTS.issue-18*` file exists.
-- Local GitHub clone is unavailable in this runtime because outbound DNS to github.com is blocked; repository CI is the authoritative execution environment.
+- Base SHA: `edcfd3dbee62a4dba253df07d984fa326350c984`
+- Branch: `feat/issue-18-diagnostic-onboarding-backend`
+- Phase 1 exact-SHA main CI #3151 and Stage #2994 are green.
+- Issue #18 is open.
+- Issue #201 is open and its body still requires missing canonical Figma node IDs before onboarding UI implementation.
+- Required `.agents` governance and current task state were read before write.
 
-## Production-safety plan
+## Safety decisions
 
-- Keep ranking truth server-owned inside the same repeatable-read candidate snapshot.
-- Use existing objective review evidence; do not introduce heuristic browser state.
-- Keep migration additive and backwards compatible.
-- Preserve explicit manual `wordIds` ordering.
-- Persist reasons so resume is deterministic even if learner state changes later.
-- Do not merge on partial checks; use immutable-head CI and expected-head squash merge.
+- Keep onboarding state server-owned and cross-device.
+- Never infer objective correctness from `known/unsure/new`.
+- Never insert synthetic `review_events` for onboarding self-marks.
+- Only initialize `user_words` rows that are still `new`; preserve existing learned state.
+- Bound diagnostic to 12 items to remain compatible with the <=5 minute product requirement.
+- Return no translation in status/start prompt; reveal translation only after current item mark is stored.
+- Serialize state changes with a per-user advisory transaction lock.
+- Keep UI/Figma paths prohibited in this phase.
 
-## Intended validation
+## Validation plan
 
-- Backend formatting/static analysis.
-- Learning package unit tests, including new adaptive queue contracts.
-- PostgreSQL integration/migration tests.
-- Race tests.
-- Full repository CI required by scope classification.
-- Exact-SHA main CI + Stage/public gates after merge.
+- gofmt/static analysis.
+- learning package unit + race tests.
+- PostgreSQL migration/integration tests.
+- full scope-classified repository CI.
+- immutable-head review/thread audit.
+- expected-head squash merge.
+- exact-SHA main CI and Stage/public validation.
