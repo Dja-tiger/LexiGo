@@ -186,8 +186,12 @@
 }
 
 .lx-account-form .lx-button {
+  min-width: 0;
+  max-width: 100%;
   justify-self: start;
   margin-top: 4px;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .lx-account-audit {
