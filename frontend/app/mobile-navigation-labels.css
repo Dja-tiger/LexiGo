@@ -42,10 +42,19 @@
   }
 
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span {
+    /*
+     * Percentage max sizes alone are indefinite while this grid item is
+     * shrink-to-fit. Bind the label grid to its link track so a 320px shell at
+     * 200% text enlargement cannot grow the document's scrollable inline size.
+     */
+    inline-size: 100%;
     min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .lx-routed-app:has(.lx-route-nav--mobile) .lx-route-nav--mobile a > span > span {
+    inline-size: 100%;
+    min-inline-size: 0;
     max-inline-size: 100%;
     overflow: visible;
     text-align: center;
