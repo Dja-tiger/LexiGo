@@ -44,3 +44,51 @@ Profile was implemented from its approved visual geometry before the later repos
 ### Next action
 
 Create `frontend/app/profile-touch-targets.css`, wire it immediately after `profile.css`, add a source ownership contract and cross-browser Profile real-hit E2E proof, then add that proof exactly once to both blocking UI and accessibility commands.
+
+## 2026-08-10 04:33 Europe/Moscow
+
+### Verified
+
+- Draft PR #465 is open for `feat/issue-460-profile-touch-targets`; initial immutable developer head under validation was `f177158323d143e32bbd074c2136236413e5c71d`.
+- Net PR diff remains inside the declared eight-path scope. `profile.css` and `lexigo-profile-app.tsx` are unchanged.
+- `frontend/package.json` diff changes only `test:e2e:ui` and `test:e2e:a11y`, adding `e2e/profile-touch-targets.spec.ts` exactly once to each. Dependency versions and lockfiles are unchanged.
+- CI #3158 / run `31347281430` classified the PR as product scope. Frontend lint and TypeScript checks passed before unit execution.
+
+### Finding
+
+The first frontend unit run found one source-contract assertion bug; the implementation CSS and runtime ownership assertions themselves passed. The failing uniqueness assertion was broader than the exact import path it intended to protect.
+
+### Root cause
+
+`layout.match(/profile-touch-targets\.css/g)` also matches the existing `header-profile-touch-targets.css` import because `profile-touch-targets.css` is a suffix of that filename. The assertion therefore counted two occurrences even though `./profile-touch-targets.css` is imported exactly once.
+
+### Changed files
+
+- `frontend/app/profile-touch-targets.css` — interaction-only 44px fine / 48px coarse effective hit ownership.
+- `frontend/app/layout.tsx` — loads the interaction owner immediately after `profile.css`.
+- `frontend/components/profile-touch-target-source.test.ts` — source ownership and blocking-suite collection contract.
+- `frontend/e2e/profile-touch-targets.spec.ts` — real-hit, non-overlap, compact-reflow and forced-colors evidence.
+- `frontend/package.json` — collects the new proof in blocking UI and accessibility suites only.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md`, `.agents/current/EXECUTION.md` — task state/evidence.
+
+### Checks passed
+
+- PR changed-file audit matches the allowed path set.
+- `frontend/package.json` per-file patch confirms no dependency changes.
+- CI #3158 `Frontend core quality`: lint `success`; typecheck `success`.
+- In the failing unit run, 113 test files / 688 tests passed; only the new import-uniqueness assertion failed.
+- The remaining three assertions in `profile-touch-target-source.test.ts` passed, including paint ownership and blocking-suite collection checks.
+
+### Checks failed
+
+- CI #3158 `Frontend core quality` unit step: `profile-touch-target-source.test.ts` expected one `/profile-touch-targets\.css/` match and received two because of the pre-existing `header-profile-touch-targets.css` import.
+- Production build/audit were skipped after the unit failure, so this head is not mergeable evidence.
+
+### Current branch head
+
+- Head before recording this failure: `f177158323d143e32bbd074c2136236413e5c71d`.
+- This Agent Harness update advances the branch; resolve the live ref before the corrective source-test write.
+
+### Next action
+
+Anchor the uniqueness assertion to the exact `import "./profile-touch-targets.css";` statement, leave product CSS/runtime logic unchanged, then validate only the resulting final branch head with a fresh immutable-head CI run.
