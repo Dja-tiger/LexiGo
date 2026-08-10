@@ -48,6 +48,7 @@
 .lx-audit-list span,
 .lx-session-list > p,
 .lx-audit-list > p {
+  overflow-wrap: anywhere;
   color: var(--lx-muted, #94a3b8);
   line-height: 1.55;
 }
@@ -56,6 +57,7 @@
   margin-top: 18px;
   border-radius: 14px;
   padding: 13px 16px;
+  overflow-wrap: anywhere;
   font-weight: 700;
 }
 
@@ -161,9 +163,14 @@
 }
 
 .lx-account-form label > span {
+  overflow-wrap: anywhere;
   font-size: 0.82rem;
   font-weight: 750;
   color: #cbd5e1;
+}
+
+.lx-account-form > small {
+  overflow-wrap: anywhere;
 }
 
 .lx-account-form input {
