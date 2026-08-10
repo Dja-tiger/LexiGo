@@ -205,10 +205,10 @@ test.describe("Issue #74 mobile navigation label readability", () => {
     await expect(page.getByRole("main", { name: "Словарь", exact: true })).toBeVisible();
   });
 
-  test("the narrowest supported route shell keeps four separated labels without document overflow", async ({ page }, testInfo) => {
+  test("the narrowest supported route shell keeps four separated labels at 200% without document overflow", async ({ page }, testInfo) => {
     test.skip(
-      testInfo.project.name !== "android-chromium",
-      "One coarse-pointer 320px viewport protects the narrowest compact layout.",
+      !["android-chromium", "ios-webkit"].includes(testInfo.project.name),
+      "Android Chromium and iOS WebKit protect the 320px / 200% compact layout.",
     );
 
     await page.setViewportSize({ width: 320, height: 700 });
@@ -216,9 +216,27 @@ test.describe("Issue #74 mobile navigation label readability", () => {
     await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
 
     const navigation = page.getByRole("navigation", { name: "Мобильная навигация", exact: true });
-    const metrics = await navigationMetrics(navigation);
-    expectSeparatedTargets(metrics);
-    expectReadableLabels(metrics, 12);
-    expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+    await expect(navigation).toBeVisible();
+
+    const defaultMetrics = await navigationMetrics(navigation);
+    expectSeparatedTargets(defaultMetrics);
+    expectReadableLabels(defaultMetrics, 12);
+    expect(defaultMetrics.documentWidth).toBeLessThanOrEqual(defaultMetrics.viewportWidth + 1);
+
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    await expect.poll(async () => (
+      Number.parseFloat(await navigation.getByText("Прогресс", { exact: true }).evaluate((label) => (
+        window.getComputedStyle(label).fontSize
+      )))
+    )).toBeGreaterThanOrEqual(24);
+
+    const enlargedMetrics = await navigationMetrics(navigation);
+    expectSeparatedTargets(enlargedMetrics);
+    expectReadableLabels(enlargedMetrics, 24);
+    expect(enlargedMetrics.navigation.left).toBeGreaterThanOrEqual(-0.1);
+    expect(enlargedMetrics.navigation.right).toBeLessThanOrEqual(enlargedMetrics.viewportWidth + 0.1);
+    expect(enlargedMetrics.documentWidth).toBeLessThanOrEqual(enlargedMetrics.viewportWidth + 1);
   });
 });
