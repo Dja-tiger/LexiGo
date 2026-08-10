@@ -72,6 +72,17 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.46);
 }
 
+/*
+ * WebKit can retain geometry for absolutely/fixed-positioned descendants of a
+ * closed <details> element. Native disclosure semantics keep the preview out of
+ * the accessibility tree, but that stale geometry can still expand the page's
+ * scrollable overflow area at narrow widths with enlarged text. Make the closed
+ * layout state explicit; the canonical open-state grid above remains unchanged.
+ */
+.lx-route-reminder-entry:not([open]) > .lx-route-reminder-preview {
+  display: none;
+}
+
 .lx-route-reminder-preview > span {
   color: #8aa0c3;
   font-size: 11px;

@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { installQualityGateAPI } from "./support/quality-gates";
 
@@ -122,6 +122,32 @@ async function expectTarget(control: Locator, minimum: number) {
   return target;
 }
 
+async function applyTextZoom(page: Page, percent = 200): Promise<void> {
+  const stylesheetPath = `/__e2e__/calendar-reminder-text-zoom-${percent}.css`;
+  await page.route(`**${stylesheetPath}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/css",
+      body: `html { font-size: ${percent}% !important; }`,
+    });
+  });
+  await page.addStyleTag({ url: new URL(stylesheetPath, page.url()).toString() });
+  await expect.poll(async () => page.evaluate(() => (
+    Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize)
+  ))).toBeGreaterThanOrEqual(32);
+}
+
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth,
+  }));
+
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
+}
+
 test.describe("Issue #74 calendar reminder touch targets", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -192,5 +218,54 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
     expect(focus.outlineWidth).toBeGreaterThanOrEqual(3);
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  });
+
+  test("closed preview has no 320px / 200% overflow geometry and opens inside the viewport", async ({ context, page }, testInfo) => {
+    test.skip(
+      !["android-chromium", "ios-webkit"].includes(testInfo.project.name),
+      "Closed-preview reflow acceptance runs in the two coarse mobile browser projects.",
+    );
+
+    await installQualityGateAPI(context);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await applyTextZoom(page);
+
+    const routeEntry = page.locator(".lx-route-reminder-entry");
+    const disclosure = routeEntry.locator(":scope > summary");
+    const preview = routeEntry.locator(":scope > .lx-route-reminder-preview");
+
+    await expect(disclosure).toBeVisible();
+    await expect(routeEntry).not.toHaveAttribute("open", "");
+    await expect(preview).toBeHidden();
+
+    const closedState = await preview.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        display: window.getComputedStyle(element).display,
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+    expect(closedState).toEqual({ display: "none", width: 0, height: 0 });
+    await expectNoHorizontalOverflow(page);
+
+    await disclosure.click();
+    await expect(routeEntry).toHaveAttribute("open", "");
+    await expect(preview).toBeVisible();
+
+    const openRect = await preview.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+      };
+    });
+    expect(openRect.width).toBeGreaterThan(0);
+    expect(openRect.left).toBeGreaterThanOrEqual(-0.5);
+    expect(openRect.right).toBeLessThanOrEqual(320.5);
+    await expect(preview.getByRole("button", { name: "Настроить календарь" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
   });
 });
