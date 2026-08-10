@@ -1,0 +1,36 @@
+/*
+ * Issue #460 — authenticated Profile effective touch targets.
+ *
+ * profile.css remains the sole painted owner. This interaction-only layer is
+ * intentionally loaded after it and expands only the hit surface around the
+ * smaller Profile controls. The pseudo-element is fully transparent and does
+ * not participate in layout, typography, borders, focus paint or shadows.
+ */
+.lx-profile-secondary-button,
+.lx-profile-goal-option,
+.lx-profile-appearance-option {
+  position: relative;
+  --lx-profile-touch-target: 44px;
+  touch-action: manipulation;
+}
+
+.lx-profile-secondary-button::before,
+.lx-profile-goal-option::before,
+.lx-profile-appearance-option::before {
+  position: absolute;
+  content: "";
+  inset-block: min(0px, calc((100% - var(--lx-profile-touch-target)) / 2));
+  inset-inline: min(0px, calc((100% - var(--lx-profile-touch-target)) / 2));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .lx-profile-secondary-button,
+  .lx-profile-goal-option,
+  .lx-profile-appearance-option {
+    --lx-profile-touch-target: 48px;
+  }
+}
