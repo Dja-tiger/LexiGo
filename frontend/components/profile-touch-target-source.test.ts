@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const touchTargets = readFileSync(new URL("../app/profile-touch-targets.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../app/profile.css", import.meta.url), "utf8");
+const accountSecurity = readFileSync(new URL("../app/account-security.css", import.meta.url), "utf8");
 const profile = readFileSync(new URL("./lexigo-profile-app.tsx", import.meta.url), "utf8");
 const browserProof = readFileSync(new URL("../e2e/profile-touch-targets.spec.ts", import.meta.url), "utf8");
 const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
@@ -52,6 +53,21 @@ describe("Issue #460 Profile touch-target ownership", () => {
     expect(touchTargets).not.toContain("padding:");
     expect(touchTargets).not.toContain("border-radius:");
     expect(touchTargets).not.toContain("transform:");
+  });
+
+  it("keeps the compact account-data eyebrow wrap-safe without changing its paint tokens", () => {
+    const eyebrowSelector = ".lx-account-security-heading > div > span";
+    const ruleStart = accountSecurity.indexOf(`${eyebrowSelector} {`);
+    const ruleEnd = accountSecurity.indexOf("}", ruleStart);
+    const eyebrowRule = accountSecurity.slice(ruleStart, ruleEnd + 1);
+
+    expect(ruleStart).toBeGreaterThanOrEqual(0);
+    expect(eyebrowRule).toContain("overflow-wrap: anywhere;");
+    expect(eyebrowRule).toContain("font-size: 0.78rem;");
+    expect(eyebrowRule).toContain("font-weight: 800;");
+    expect(eyebrowRule).toContain("letter-spacing: 0.08em;");
+    expect(browserProof).toContain("ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ");
+    expect(browserProof).toContain("overflowWrap");
   });
 
   it("targets the existing semantic Profile controls without changing their runtime owner", () => {

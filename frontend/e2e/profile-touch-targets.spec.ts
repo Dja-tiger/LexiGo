@@ -246,6 +246,12 @@ test.describe("Issue #460 Profile touch targets", () => {
       minimum,
       "Zoomed Profile appearance option",
     );
+
+    const accountDataEyebrow = page.getByText("ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ", { exact: true });
+    await expect(accountDataEyebrow).toBeVisible();
+    await expect.poll(async () => accountDataEyebrow.evaluate((element) => (
+      window.getComputedStyle(element).overflowWrap
+    ))).toBe("anywhere");
     await expectNoHorizontalOverflow(page);
   });
 
@@ -258,6 +264,9 @@ test.describe("Issue #460 Profile touch targets", () => {
     const appearanceGroup = page.getByRole("radiogroup", { name: "Оформление приложения" });
     const light = appearanceGroup.getByRole("radio", { name: "Светлая: Всегда светлая" });
     await expectTargetContract(light, minimum, "Forced-colors appearance option");
+    await light.click();
+    await expect(light).toHaveAttribute("aria-checked", "true");
+    await expect(light).toHaveAttribute("tabindex", "0");
     await light.focus();
     await page.keyboard.press("ArrowRight");
     await expect(appearanceGroup.getByRole("radio", { name: "Тёмная: Всегда тёмная" })).toBeFocused();

@@ -23,6 +23,7 @@
 }
 
 .lx-account-security-heading > div > span {
+  overflow-wrap: anywhere;
   color: #a78bfa;
   font-size: 0.78rem;
   font-weight: 800;
