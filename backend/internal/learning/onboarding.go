@@ -286,7 +286,9 @@ func selectDiagnosticCandidates(candidates []diagnosticCandidate, limit int) []d
 	take(2, func(candidate diagnosticCandidate) bool { return isTechnicalDiagnosticTopic(candidate.Topic) })
 	take(2, func(candidate diagnosticCandidate) bool { return strings.EqualFold(candidate.PartOfSpeech, "noun") })
 	take(2, func(candidate diagnosticCandidate) bool { return strings.EqualFold(candidate.PartOfSpeech, "verb") })
-	take(2, func(candidate diagnosticCandidate) bool { return strings.EqualFold(candidate.PartOfSpeech, "adjective") })
+	take(2, func(candidate diagnosticCandidate) bool {
+		return strings.EqualFold(candidate.PartOfSpeech, "adjective")
+	})
 	take(limit-len(selected), func(diagnosticCandidate) bool { return true })
 	return selected
 }
