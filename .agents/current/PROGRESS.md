@@ -1,30 +1,31 @@
 # Progress
 
-## Status
+## Delivered before this slice
 
-Issue #74 is closed and its exact merge SHA `e1980c973d524048d2fb079d79d51b8bfd50f0a4` passed main CI #3148 plus Stage #2991 public HTTP/browser gates. Manual physical-device QA is tracked separately in #461.
+- Issue #74 closed after exact-SHA Stage/public delivery.
+- Issue #18 Phase 1 PR #462 delivered adaptive ranking, review/new ratio, anti-streak and durable lesson reasons.
+- Phase 1 merge SHA `edcfd3dbee62a4dba253df07d984fa326350c984` passed main CI #3151 and Stage #2994, including public HTTP/browser smoke.
+- Issue #18 was reopened after GitHub incorrectly marked the XL issue completed at the Phase 1 merge boundary.
 
-Issue #18 is now active on `feat/issue-18-adaptive-queue`.
+## Active phase
 
-## Completed in this slice
+Backend-only diagnostic onboarding and learner self-mark contract on `feat/issue-18-diagnostic-onboarding-backend`.
 
-- Verified current composer is only `due -> new -> scheduled` and has no durable reason, review/new control, recent-failure signal or weak-topic signal.
-- Verified objective review evidence and weekly weak-topic data already exist; no new client-owned truth is required.
-- Designed a backwards-compatible adaptive queue policy using existing `review_events`, `user_words` and `words` data.
-- Added deterministic unit contracts for priority, ratio, shortage fill and anti-streak behavior.
+## Implemented in change-set
 
-## Current implementation
-
-- Add recent-failure and weak-topic candidate metadata in the repeatable-read snapshot.
-- Add optional 0..100 `reviewRatio` with default 70.
-- Persist `lesson_sessions.review_ratio` and `lesson_session_items.selection_reason`.
-- Rehydrate persisted reasons on active/resumed lessons.
+- Additive onboarding state + diagnostic-item persistence migration.
+- Deterministic bounded representative candidate selector.
+- Resumable status/start/mark/complete/skip repository contract.
+- Prompt-without-answer and reveal-after-mark response split.
+- Scheduler initialization policy that does not create review history.
+- Authenticated route wiring.
+- Deterministic unit contracts for coverage, bounds, mark vocabulary and initialization policy.
 
 ## Next gates
 
-1. Create the bounded implementation commit.
-2. Open Draft PR against `main`.
-3. Run immutable-head CI and fix only proven failures.
-4. Ready + expected-head squash merge when green.
+1. Commit bounded change-set.
+2. Open Draft PR.
+3. Run immutable-head CI; fix only proven failures.
+4. Ready + expected-head squash merge after full green and empty review-thread audit.
 5. Verify exact-SHA main CI and Stage/public gates.
-6. Continue Issue #18 with diagnostic onboarding + learner self-mark as the next coherent phase.
+6. Continue #18 only within non-visual backend scope until #201 Figma design gate is cleared.
