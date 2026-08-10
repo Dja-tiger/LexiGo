@@ -40,8 +40,8 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@types/node": "^22.15.0",
-    "@types/react": "^19.2.8",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
     "eslint": "^9.28.0",
     "eslint-config-next": "16.2.11",
     "typescript": "^5.8.3",
