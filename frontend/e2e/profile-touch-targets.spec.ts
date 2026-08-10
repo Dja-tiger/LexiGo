@@ -116,6 +116,20 @@ function expectIndependent(rects: EffectiveRect[], label: string): void {
   }
 }
 
+function computedColorAlpha(value: string): number | null {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "transparent") return 0;
+
+  const legacyRgba = normalized.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+%?)\s*\)$/);
+  const modernRgb = normalized.match(/^rgba?\(.+?\/\s*([\d.]+%?)\s*\)$/);
+  const rawAlpha = legacyRgba?.[1] ?? modernRgb?.[1];
+  if (!rawAlpha) return null;
+
+  const alpha = Number.parseFloat(rawAlpha);
+  if (!Number.isFinite(alpha)) return null;
+  return rawAlpha.endsWith("%") ? alpha / 100 : alpha;
+}
+
 async function expectedMinimum(page: Page): Promise<number> {
   return page.evaluate(() => window.matchMedia("(pointer: coarse)").matches ? 48 : 44);
 }
@@ -125,7 +139,7 @@ async function expectTargetContract(control: Locator, minimum: number, label: st
   expect(target.targetHeight, `${label} effective height`).toBeGreaterThanOrEqual(minimum - 0.5);
   expect(target.targetWidth, `${label} effective width`).toBeGreaterThanOrEqual(minimum - 0.5);
   expect(target.perimeterHits, `${label} four-side real-hit proof`).toEqual([true, true, true, true]);
-  expect(target.pseudoBackground, `${label} pseudo background`).toBe("rgba(0, 0, 0, 0)");
+  expect(computedColorAlpha(target.pseudoBackground), `${label} pseudo background alpha`).toBe(0);
   expect(target.pseudoBorderWidths, `${label} pseudo border`).toEqual(["0px", "0px", "0px", "0px"]);
   expect(target.pseudoBoxShadow, `${label} pseudo shadow`).toBe("none");
   expect(target.pseudoPointerEvents, `${label} pseudo pointer ownership`).toBe("auto");
