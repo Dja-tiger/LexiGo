@@ -19,7 +19,7 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - Protect non-overlap, transparent pseudo-element ownership and import order with a source contract.
 - Add cross-browser real-hit E2E coverage for desktop Chromium, Android Chromium and iOS WebKit.
 - Reuse existing Profile reflow/forced-colors contracts and explicitly verify no horizontal overflow at compact width / 200% text size where relevant.
-- Repair only the confirmed compact text-reflow overflow exposed by that required 320px / 200% acceptance: the long account-data eyebrow owned by `account-security.css` must be allowed to wrap without changing its typography, color, spacing or normal-width presentation.
+- Repair only the confirmed compact text-reflow overflows exposed by that required 320px / 200% acceptance at their canonical `account-security.css` owner: the long account-data eyebrow and otherwise-unbreakable enlarged account `h2` words must be allowed to wrap without changing typography, color, spacing or normal-width presentation.
 - Add the new browser proof to blocking UI and accessibility commands.
 
 ## Non-goals
@@ -37,7 +37,7 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - `.agents/current/EXECUTION.md`
 - `frontend/app/layout.tsx`
 - `frontend/app/profile-touch-targets.css` (new)
-- `frontend/app/account-security.css` (only the confirmed compact wrap-safe account eyebrow correction)
+- `frontend/app/account-security.css` (only the confirmed compact wrap-safe account eyebrow and account `h2` corrections)
 - `frontend/components/profile-touch-target-source.test.ts` (new)
 - `frontend/e2e/profile-touch-targets.spec.ts` (new)
 - `frontend/package.json`
@@ -49,7 +49,7 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - `.github/workflows/**`
 - `frontend/components/lexigo-profile-app.tsx`
 - `frontend/app/profile.css`
-- shared navigation/touch-target owners outside the exact `account-security.css` reflow correction above
+- shared navigation/touch-target owners outside the exact `account-security.css` reflow corrections above
 - dependency lockfiles unless a required tool unexpectedly changes them (not expected)
 
 ## Runtime owners
@@ -57,7 +57,7 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - Painted Profile presentation: `frontend/app/profile.css` — read-only for this slice.
 - Authenticated Profile semantics/business logic: `frontend/components/lexigo-profile-app.tsx` — read-only for this slice.
 - Effective Profile hit-area ownership: `frontend/app/profile-touch-targets.css` — new interaction-only owner.
-- Compact account-panel reflow: `frontend/app/account-security.css` — existing owner; this slice may add only wrap-safe behavior for the long uppercase account-data eyebrow exposed by the required 320px / 200% gate.
+- Compact account-panel reflow: `frontend/app/account-security.css` — existing owner; this slice may add only wrap-safe behavior for the long uppercase account-data eyebrow and enlarged account `h2` words exposed by the required 320px / 200% gate.
 - Global CSS import ordering: `frontend/app/layout.tsx`.
 
 ## Documentation owners
@@ -74,7 +74,7 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - Fine-pointer effective dimensions are at least 44 x 44 CSS px; coarse-pointer effective dimensions are at least 48 x 48 CSS px.
 - Neighboring effective targets do not intersect.
 - Existing keyboard roving focus, disabled behavior and focus-visible semantics remain unchanged.
-- The compact account reflow fix may only permit wrapping of an otherwise unbreakable long eyebrow; it must not reduce font size, alter letter-spacing, recolor, hide, truncate or clip the content.
+- The compact account reflow fixes may only permit wrapping of otherwise-unbreakable text; they must not reduce font size, alter letter-spacing, recolor, hide, truncate or clip the content.
 - Existing Issue #466/#467 mobile-navigation containment remains unchanged.
 - Forced-colors mode remains operable and no horizontal overflow is introduced.
 - The new E2E proof must be collected by both blocking `test:e2e:ui` and `test:e2e:a11y` commands.
@@ -111,9 +111,9 @@ Close the residual Profile accessibility gap from Issue #74 without redesigning 
 - Horizontal pseudo expansion can overlap neighboring radio options when the visual gap is smaller than the missing target width.
 - A blanket block-axis expansion is insufficient for narrow goal/appearance pills; the contract must expand both axes only when needed and prove non-overlap.
 - Pseudo-element geometry calculations must account for control borders consistently with the existing Issue #74 E2E helper.
-- A long uppercase account eyebrow can create min-content overflow under 200% root text enlargement even after shared navigation containment is correct; wrapping must be fixed at its canonical `account-security.css` owner rather than masked by Profile or navigation CSS.
+- Long account eyebrow text and enlarged account `h2` words can create min-content overflow under 200% root text enlargement even after shared navigation containment is correct; wrapping must be fixed at their canonical `account-security.css` owner rather than masked by Profile or navigation CSS.
 - Global import order can accidentally allow later CSS to replace the interaction owner.
 
 ## Rollback
 
-Revert the Issue #460 product commit/PR. Because the implementation is an isolated Profile interaction-only CSS owner plus tests/import wiring and one wrap-only compact account reflow correction, rollback returns to the previous painted Profile/account presentation without data/schema changes.
+Revert the Issue #460 product commit/PR. Because the implementation is an isolated Profile interaction-only CSS owner plus tests/import wiring and wrap-only compact account reflow corrections, rollback returns to the previous painted Profile/account presentation without data/schema changes.
