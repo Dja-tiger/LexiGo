@@ -68,8 +68,8 @@ function FeedbackCard({
       aria-atomic="true"
       onMouseEnter={onPause}
       onMouseLeave={() => onResume?.()}
-      onFocusCapture={onPause}
-      onBlurCapture={(event) => onResume?.(event)}
+      onFocus={onPause}
+      onBlur={(event) => onResume?.(event)}
     >
       <div className="lx-feedback__copy">
         {item.title ? <strong>{item.title}</strong> : null}
