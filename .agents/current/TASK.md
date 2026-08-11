@@ -20,6 +20,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - Gate practice/auth-required actions before lesson creation or long configuration work.
 - Explain consistently that guest browsing/demo activity does not persist learning progress.
 - Preserve current Dictionary/Phrases route, filters and detail selection through authentication and return to that canonical context after successful login/registration.
+- Document the delivered guest catalog capability, public/authenticated data boundary and exact validated authentication return semantics in `docs/architecture.md`.
 - Add focused backend/frontend/browser/source-contract coverage for the guest/public boundary and return path.
 
 ## Non-goals
@@ -34,6 +35,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 ## Allowed paths
 
 - `.agents/current/**`
+- `docs/architecture.md` only for the Issue #72 guest catalog access/data-boundary/auth-return policy
 - `api/openapi.yaml`
 - `backend/go.mod` and `backend/go.sum` only when required by the focused full-document OpenAPI parser contract
 - `backend/internal/server/**`
@@ -71,6 +73,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 
 ## Documentation owners
 
+- `docs/architecture.md` for the durable guest catalog capability/data-boundary/auth-return contract.
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -94,6 +97,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - Attempting practice/auth-required actions presents the login gate before creating a lesson; copy states that guest progress is not saved.
 - Successful login or registration returns to the exact originating catalog/detail context, including canonical filters/search/page where applicable.
 - Malformed/external `return_to` values are ignored rather than navigated.
+- `docs/architecture.md` documents guest Words/Phrases browse, the content-only public Words projection, authenticated-only personalized/persistence state and validated exact `return_to` behavior.
 - Authenticated words/phrases, scheduler state, lesson creation and progress behavior remain green.
 - Browser E2E covers guest browse -> detail -> auth gate -> login/register return path and Back/Forward URL-state behavior.
 
@@ -104,6 +108,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - Frontend lint, typecheck, unit/source-contract and production build.
 - Blocking Chromium/WebKit browser matrix for changed guest/auth navigation behavior.
 - Accessibility/visual/performance/PWA/container gates selected by the repository scope router.
+- Architecture/documentation ownership checks selected by the full repository CI after the durable guest-policy update.
 - Immutable-head PR CI, review/thread audit, expected-head squash merge.
 - Exact-SHA `main` CI and exact-image Stage/public smoke/browser validation after product merge.
 
@@ -114,6 +119,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - Auth return path becoming an open redirect or losing canonical URL state.
 - Word Detail accidentally fabricating scheduler values for guest content.
 - Compatibility graph auth handoff diverging from route-island navigation.
+- Public architecture documentation describing the historical auth-gated Dictionary after runtime guest access has changed.
 
 ## Rollback
 
