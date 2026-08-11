@@ -83,6 +83,11 @@ test.describe("interface copy contract", () => {
     await expect(page.getByRole("button", { name: interfaceActionLabel("continueLesson"), exact: true })).toBeVisible();
     await expect(page.getByText("Путешествия · карточка 1 из 1.", { exact: true })).toHaveCount(0);
 
+    // The active lesson fixture belongs only to the Home assertion above. Remove
+    // the page-level override before opening Learn so the shared quality-gate
+    // API can return its canonical no-active-lesson state and expose composer controls.
+    await page.unroute("**/api/v1/lessons/active");
+
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
     if (await configureLesson.isVisible()) await configureLesson.click();
