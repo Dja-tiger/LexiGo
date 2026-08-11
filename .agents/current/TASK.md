@@ -15,7 +15,7 @@
 ## Scope
 
 - Расширить `frontend/lib/interface-copy.ts` canonical contract для lesson-source labels, system-state eyebrows и повторяющихся системных CTA.
-- Перевести Home, Learn, Active Lesson и compatibility fallback на один canonical `lessonSourceLabel` owner.
+- Перевести динамический Home lesson-source copy на canonical `lessonSourceLabel` owner и защитить существующие Learn/Active Lesson/compatibility labels от повторного drift source-contract тестом.
 - Перевести `AsyncStatePanel`/route boundaries на canonical state/action labels без изменения поведения.
 - Согласовать 404 CTA с существующим `На главную` contract.
 - Добавить unit/source/browser regression evidence, подтверждающий ownership и пользовательский copy contract.
@@ -27,6 +27,7 @@
 - Не менять backend/API payloads, source identifiers, query values, navigation semantics, lesson scheduling, auth или persistence.
 - Не менять CSS, Figma geometry, визуальные токены или responsive layout.
 - Не менять CI/workflows/dependencies.
+- Не переписывать крупные Learn/Active Lesson/compatibility route owners только ради устранения уже совпадающих literal labels; их consistency фиксируется fail-closed contract тестом.
 
 ## Allowed paths
 
@@ -61,8 +62,9 @@
 
 - `frontend/lib/interface-copy.ts`: canonical user-visible terminology and labels.
 - `frontend/components/async-state.tsx`: canonical presentation shell for loading/empty/error/success resource states.
-- `frontend/components/lexigo-home-app.tsx`, `lexigo-learn-app.tsx`, `lexigo-active-lesson-app.tsx`: canonical route owners for lesson source copy.
-- `frontend/components/lexigo-premium-app.tsx`: compatibility fallback; may consume the same copy contract but must not create a second copy owner.
+- `frontend/components/lexigo-home-app.tsx`: dynamic active-lesson source presentation consumes `lessonSourceLabel` directly.
+- `frontend/components/lexigo-learn-app.tsx` and `frontend/components/lexigo-active-lesson-app.tsx`: canonical route owners whose existing source labels must remain equal to the shared contract.
+- `frontend/components/lexigo-premium-app.tsx`: compatibility fallback; existing source labels remain under the same consistency guard and must not diverge from the primary routes.
 - `frontend/app/{error,global-error,not-found}.tsx`: route/root boundary CTA consumers.
 
 ## Documentation owners
@@ -80,13 +82,13 @@
 
 ## Acceptance criteria
 
-- All `LessonSource` values shown in Home/Learn/Active Lesson/compatibility fallback resolve through one canonical mapping.
+- Dynamic Home active-lesson source presentation resolves through the canonical `lessonSourceLabel` mapping; known Learn/Active Lesson/compatibility labels match that mapping and are guarded against drift.
 - Home no longer calls the same source `Путешествия`/`Фразы` while Learn/Active Lesson use `Для путешествий`/`Технические фразы`.
-- loading/empty/error/success eyebrow copy is owned by `interface-copy`, and retry/home/continue labels use one canonical action mapping.
+- loading/empty/error/success eyebrow copy is owned by `interface-copy`, and retry/home/continue labels use one canonical action mapping where those generic actions are rendered.
 - 404 and root recovery use the same `На главную` label for the same destination.
 - No ambiguous standalone `Открыть` CTA is introduced; descriptive `Открыть профиль/прогресс` labels remain allowed where the destination is explicit.
 - Existing interface-copy and async-state E2E behavior remains green across the blocking browser matrix.
-- Source contract fails closed if route owners recreate local lesson-source label tables/functions.
+- Source contract fails closed if Home recreates a local lesson-source label helper or if known Learn/Active/fallback labels drift back to conflicting names.
 
 ## Required checks
 
@@ -102,7 +104,7 @@
 
 ## Risks
 
-- Compatibility fallback may contain duplicate source definitions not currently reached by primary route islands; centralization must not change its identifiers or behavior.
+- Compatibility fallback may contain duplicate source definitions not currently reached by primary route islands; consistency guard must detect drift without changing its identifiers or behavior.
 - String-based resume intent currently recognizes `Продолжить урок`; both producer and consumer must use the same canonical constant.
 - Copy changes can invalidate semantic Playwright locators; tests should be updated only when the user-facing contract intentionally changes.
 
