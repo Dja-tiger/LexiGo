@@ -160,3 +160,41 @@ test("removes shimmer motion without removing loading evidence", async ({ contex
   await expect(bar).toHaveCSS("animation-name", "none");
   release();
 });
+
+test("queues repeated calendar feedback, pauses it on focus and advances exactly one item on dismiss", async ({ context, page }) => {
+  await installQualityGateAPI(context);
+  await page.addInitScript(() => {
+    window.open = () => null;
+  });
+  await page.goto("/progress");
+
+  const calendarCard = page.locator(".lx-calendar-reminder-card");
+  await expect(calendarCard).toBeVisible();
+  await calendarCard.getByRole("button", { name: "Настроить календарь", exact: true }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
+  await expect(dialog).toBeVisible();
+  const googleCalendar = dialog.getByRole("button", { name: /Google Calendar/ });
+  await googleCalendar.click();
+  await googleCalendar.click();
+
+  const toast = page.locator(".lx-feedback--toast");
+  await expect(toast).toHaveCount(1);
+  await expect(toast).toHaveAttribute("role", "status");
+  await expect(toast).toHaveAttribute("aria-live", "polite");
+  await expect(toast).toHaveAttribute("data-feedback-queued", "1");
+  await expect(toast).toContainText("Google Calendar открыт");
+  await expect(dialog.getByRole("status")).toHaveAttribute("aria-live", "off");
+
+  const dismiss = toast.getByRole("button", { name: "Закрыть уведомление", exact: true });
+  await dismiss.focus();
+  await expect(toast).toHaveAttribute("data-feedback-paused", "true");
+  await dismiss.click();
+
+  await expect(toast).toHaveCount(1);
+  await expect(toast).toHaveAttribute("data-feedback-queued", "0");
+  await expect(toast).toContainText("Google Calendar открыт");
+
+  await toast.getByRole("button", { name: "Закрыть уведомление", exact: true }).click();
+  await expect(page.locator(".lx-feedback-center")).toHaveCount(0);
+});
