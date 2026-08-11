@@ -70,6 +70,7 @@ import "./scenario-lessons-accessibility.css";
 import "./issue-74-final-touch-targets.css";
 import "./appearance.css";
 import "./profile.css";
+import "./profile-touch-targets.css";
 import "./system-states.css";
 import "./system-state-touch-targets.css";
 import "./connectivity-touch-targets.css";
