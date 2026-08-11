@@ -5,14 +5,15 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useReducer,
   useRef,
   useState,
   type FocusEvent,
   type PropsWithChildren,
+  type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 
 import {
   INITIAL_FEEDBACK_STATE,
@@ -29,7 +30,9 @@ type FeedbackController = {
 };
 
 type FeedbackHostController = {
-  registerHost: (element: HTMLElement) => () => void;
+  registerHost: (id: string) => () => void;
+  activeHostID: string | null;
+  feedbackLayer: ReactNode;
 };
 
 const FeedbackContext = createContext<FeedbackController | null>(null);
@@ -44,24 +47,30 @@ export function useFeedback(): FeedbackController {
 }
 
 /**
- * Declares a modal-local target for the shared feedback layer.
+ * Declares a modal-local render location for the shared feedback layer.
  *
- * React context is preserved through AccessibleDialog's portal, so the host
- * can register with the single root FeedbackCenter without creating a second
- * queue or announcement owner. The most recently mounted host wins, which
- * matches the dialog stack for nested modals. When it unmounts, feedback
- * automatically returns to the previous host (or the root layer).
+ * React context is preserved through AccessibleDialog's audited portal, so
+ * this host can render the single root-owned feedback layer inside the modal
+ * without creating another queue or another portal primitive. The most
+ * recently mounted host wins, matching nested dialog order. When it unmounts,
+ * feedback falls back to the previous dialog host or to the root layer.
  */
 export function FeedbackDialogHost() {
   const controller = useContext(FeedbackHostContext);
-  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const hostID = useId();
 
   useEffect(() => {
-    if (!controller || !element) return;
-    return controller.registerHost(element);
-  }, [controller, element]);
+    if (!controller) return;
+    return controller.registerHost(hostID);
+  }, [controller, hostID]);
 
-  return <div ref={setElement} data-feedback-dialog-host="true" />;
+  if (!controller) return null;
+
+  return (
+    <div data-feedback-dialog-host="true">
+      {controller.activeHostID === hostID ? controller.feedbackLayer : null}
+    </div>
+  );
 }
 
 type FeedbackCardProps = {
@@ -121,7 +130,7 @@ function FeedbackCard({
 export function FeedbackCenter({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(feedbackReducer, INITIAL_FEEDBACK_STATE);
   const [pausedToastID, setPausedToastID] = useState<string | null>(null);
-  const [feedbackHosts, setFeedbackHosts] = useState<HTMLElement[]>([]);
+  const [feedbackHostIDs, setFeedbackHostIDs] = useState<string[]>([]);
   const sequenceRef = useRef(0);
 
   const publish = useCallback((input: FeedbackInput) => {
@@ -141,21 +150,20 @@ export function FeedbackCenter({ children }: PropsWithChildren) {
     dispatch({ type: "clear-key", key });
   }, []);
 
-  const registerHost = useCallback((element: HTMLElement) => {
-    setFeedbackHosts((current) => [
-      ...current.filter((candidate) => candidate !== element),
-      element,
+  const registerHost = useCallback((id: string) => {
+    setFeedbackHostIDs((current) => [
+      ...current.filter((candidate) => candidate !== id),
+      id,
     ]);
 
     return () => {
-      setFeedbackHosts((current) => current.filter((candidate) => candidate !== element));
+      setFeedbackHostIDs((current) => current.filter((candidate) => candidate !== id));
     };
   }, []);
 
   const controller = useMemo<FeedbackController>(() => ({ publish, dismiss, clearKey }), [clearKey, dismiss, publish]);
-  const hostController = useMemo<FeedbackHostController>(() => ({ registerHost }), [registerHost]);
   const activeToast = state.activeToast;
-  const activeHost = feedbackHosts.at(-1) ?? null;
+  const activeHostID = feedbackHostIDs.at(-1) ?? null;
   const toastPaused = activeToast !== null && pausedToastID === activeToast.id;
 
   useEffect(() => {
@@ -190,15 +198,17 @@ export function FeedbackCenter({ children }: PropsWithChildren) {
     </aside>
   ) : null;
 
+  const hostController = useMemo<FeedbackHostController>(() => ({
+    registerHost,
+    activeHostID,
+    feedbackLayer,
+  }), [activeHostID, feedbackLayer, registerHost]);
+
   return (
     <FeedbackContext.Provider value={controller}>
       <FeedbackHostContext.Provider value={hostController}>
         {children}
-        {feedbackLayer
-          ? activeHost
-            ? createPortal(feedbackLayer, activeHost)
-            : feedbackLayer
-          : null}
+        {activeHostID === null ? feedbackLayer : null}
       </FeedbackHostContext.Provider>
     </FeedbackContext.Provider>
   );
