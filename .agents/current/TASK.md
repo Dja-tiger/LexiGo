@@ -5,8 +5,8 @@
 - Issue: #71 — [Medium][UX] Стандартизировать feedback, toast и status messages
 - Branch: `feat/issue-71-feedback-taxonomy`
 - Base SHA: `b1e238000803936e694b032564be0ed6fc97d1b7`
-- Head SHA: resolve from live branch ref after each write
-- PR: pending
+- Head SHA: resolve from live PR head immediately before immutable-head validation
+- PR: #473
 
 ## Objective
 
