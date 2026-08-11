@@ -4,6 +4,8 @@ import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { FeedbackDialogHost } from "./feedback-center";
+
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
   "a[href]",
@@ -238,6 +240,7 @@ export function AccessibleDialog({
         tabIndex={-1}
       >
         {children}
+        <FeedbackDialogHost />
       </section>
     </div>,
     portalRoot,

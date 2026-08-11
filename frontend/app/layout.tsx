@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { ApplicationErrorBoundary } from "@/components/application-error-boundary";
+import { FeedbackCenter } from "@/components/feedback-center";
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
@@ -78,6 +79,7 @@ import "./header-profile-touch-targets.css";
 import "./header-streak-touch-targets.css";
 import "./mobile-navigation-labels.css";
 import "./active-lesson-queued-state.css";
+import "./feedback.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const APPEARANCE_BOOTSTRAP = createAppearanceBootstrapScript();
@@ -127,11 +129,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
-          <WebVitalsReporter />
-          <ServiceWorkerRegistration />
-          <RoutedLexigoApp />
-          {children}
-          <LegalFooter />
+          <FeedbackCenter>
+            <WebVitalsReporter />
+            <ServiceWorkerRegistration />
+            <RoutedLexigoApp />
+            {children}
+            <LegalFooter />
+          </FeedbackCenter>
         </ApplicationErrorBoundary>
       </body>
     </html>

@@ -23,6 +23,7 @@ import {
   type CalendarReminderPersistenceResult,
 } from "../lib/calendar-reminder-storage";
 import { AccessibleDialog } from "./accessible-dialog";
+import { useFeedback } from "./feedback-center";
 
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60];
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60];
@@ -92,6 +93,7 @@ export function CalendarReminderIntegration({
   onOpen,
   onClose,
 }: CalendarReminderIntegrationProps) {
+  const { publish } = useFeedback();
   const [settings, setSettings] = useState<CalendarReminderSettings>(defaultCalendarReminderSettings);
   const [status, setStatus] = useState("");
   const [appleCalendarPending, setAppleCalendarPending] = useState(false);
@@ -144,10 +146,16 @@ export function CalendarReminderIntegration({
       appURL: window.location.origin,
     });
     window.open(url, "_blank", "noopener,noreferrer");
-    setStatus(sessionOnlyStatus(
+    const message = sessionOnlyStatus(
       "Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.",
       persistence.persisted,
-    ));
+    );
+    setStatus(message);
+    publish({
+      category: "info",
+      title: "Google Calendar открыт",
+      message,
+    });
   }
 
   async function addToAppleCalendar() {
@@ -169,9 +177,21 @@ export function CalendarReminderIntegration({
         calendar,
         createCalendarDownloadURL(persistence.settings, start),
       );
-      setStatus(sessionOnlyStatus(appleCalendarStatus(method), persistence.persisted));
+      const message = sessionOnlyStatus(appleCalendarStatus(method), persistence.persisted);
+      setStatus(message);
+      publish({
+        category: "info",
+        title: method === "cancelled" ? "Добавление отменено" : "Apple Calendar подготовлен",
+        message,
+      });
     } catch {
-      setStatus("Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.");
+      const message = "Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.";
+      setStatus(message);
+      publish({
+        category: "error",
+        title: "Не удалось открыть Apple Calendar",
+        message,
+      });
     } finally {
       appleCalendarPendingRef.current = false;
       setAppleCalendarPending(false);
@@ -304,7 +324,7 @@ export function CalendarReminderIntegration({
         <p className="lx-calendar-privacy-note">
           LexiGo не получает доступ к вашим календарям. Финальное добавление и разрешение уведомлений подтверждаются в Google или Apple Calendar.
         </p>
-        {status ? <p className="lx-calendar-status" role="status">{status}</p> : null}
+        {status ? <p className="lx-calendar-status" role="status" aria-live="off">{status}</p> : null}
       </AccessibleDialog>
     </>
   );

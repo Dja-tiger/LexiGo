@@ -16,6 +16,7 @@ import {
   speechControlLabel,
   type SpeechPlaybackState,
 } from "../lib/speech-player";
+import { useFeedback } from "./feedback-center";
 
 type SpeechPlayerButtonProps = {
   text: string;
@@ -46,6 +47,7 @@ export function SpeechPlayerButton({
 }: SpeechPlayerButtonProps) {
   const value = normalizeSpeechText(text);
   const feedbackID = useId();
+  const { publish: publishFeedback } = useFeedback();
   const [playback, setPlayback] = useState<SpeechPlaybackSnapshot>(() => ({
     text: value,
     state: "idle",
@@ -65,7 +67,14 @@ export function SpeechPlayerButton({
   const publish = useCallback((nextState: SpeechPlaybackState, nextMessage: string) => {
     if (!mountedRef.current) return;
     setPlayback({ text: value, state: nextState, message: nextMessage });
-  }, [value]);
+    if (nextState === "error" && nextMessage) {
+      publishFeedback({
+        category: "error",
+        title: "Не удалось озвучить",
+        message: nextMessage,
+      });
+    }
+  }, [publishFeedback, value]);
 
   const detachUtterance = useCallback(() => {
     const utterance = utteranceRef.current;
@@ -257,8 +266,8 @@ export function SpeechPlayerButton({
       <span
         id={feedbackID}
         className={visibleFeedback ? `lx-speech-feedback ${state}` : "lx-visually-hidden"}
-        role={state === "error" ? "alert" : "status"}
-        aria-live={state === "error" ? "assertive" : "polite"}
+        role={state === "error" ? undefined : "status"}
+        aria-live={state === "error" ? "off" : "polite"}
         aria-atomic="true"
       >
         {message}
