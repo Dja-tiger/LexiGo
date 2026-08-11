@@ -57,12 +57,13 @@ export function useFeedback(): FeedbackController {
  */
 export function FeedbackDialogHost() {
   const controller = useContext(FeedbackHostContext);
+  const registerHost = controller?.registerHost;
   const hostID = useId();
 
   useEffect(() => {
-    if (!controller) return;
-    return controller.registerHost(hostID);
-  }, [controller, hostID]);
+    if (!registerHost) return;
+    return registerHost(hostID);
+  }, [hostID, registerHost]);
 
   if (!controller) return null;
 
