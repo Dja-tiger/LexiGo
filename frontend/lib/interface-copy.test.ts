@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   catalogStatusLabel,
+  interfaceActionLabel,
   learningTermCopy,
+  lessonSourceLabel,
   partOfSpeechLabel,
+  systemStateEyebrow,
   topicLabel,
 } from "./interface-copy";
 
@@ -55,5 +58,30 @@ describe("interface copy", () => {
       label: "Готовая фраза",
       explanation: "Устойчивый фрагмент речи, который полезно запоминать целиком.",
     });
+  });
+
+  it("uses one canonical label for every lesson source shown across routes", () => {
+    expect(lessonSourceLabel("mixed")).toBe("Смешанная практика");
+    expect(lessonSourceLabel("noun")).toBe("Существительные");
+    expect(lessonSourceLabel("verb")).toBe("Глаголы");
+    expect(lessonSourceLabel("adjective")).toBe("Прилагательные");
+    expect(lessonSourceLabel("phrases")).toBe("Технические фразы");
+    expect(lessonSourceLabel("daily-life")).toBe("Бытовой английский");
+    expect(lessonSourceLabel("travel")).toBe("Для путешествий");
+    expect(lessonSourceLabel("data-engineering")).toBe("Инженерия данных");
+    expect(lessonSourceLabel("backend")).toBe("Backend-разработка");
+    expect(lessonSourceLabel("academic-technical-english")).toBe("Academic Technical English");
+    expect(lessonSourceLabel(" future-source ")).toBe("future-source");
+    expect(lessonSourceLabel(" ")).toBe("Раздел не указан");
+  });
+
+  it("keeps generic async-state and recovery actions stable", () => {
+    expect(systemStateEyebrow("loading")).toBe("ЗАГРУЗКА");
+    expect(systemStateEyebrow("empty")).toBe("НИЧЕГО НЕ НАЙДЕНО");
+    expect(systemStateEyebrow("error")).toBe("НЕ УДАЛОСЬ ЗАГРУЗИТЬ");
+    expect(systemStateEyebrow("success")).toBe("ГОТОВО");
+    expect(interfaceActionLabel("retry")).toBe("Повторить");
+    expect(interfaceActionLabel("home")).toBe("На главную");
+    expect(interfaceActionLabel("continueLesson")).toBe("Продолжить урок");
   });
 });
