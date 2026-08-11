@@ -37,7 +37,8 @@ test.describe("interface copy contract", () => {
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
     const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-    if (await configureLesson.isVisible()) await configureLesson.click();
+    await expect(configureLesson).toBeVisible();
+    await configureLesson.click();
     const recallMode = page.getByRole("radio", { name: new RegExp(recall.label) });
     await expect(recallMode).toBeVisible();
     await expect(recallMode).toContainText(recall.explanation);
@@ -90,7 +91,8 @@ test.describe("interface copy contract", () => {
 
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-    if (await configureLesson.isVisible()) await configureLesson.click();
+    await expect(configureLesson).toBeVisible();
+    await configureLesson.click();
     await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("travel")) })).toBeVisible();
     await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("phrases")) })).toBeVisible();
 
