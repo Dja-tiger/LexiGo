@@ -16,6 +16,45 @@ type Handler struct{ repository *Repository }
 
 func NewHandler(repository *Repository) *Handler { return &Handler{repository: repository} }
 
+func (h *Handler) PublicAll(w http.ResponseWriter, r *http.Request) {
+	options, ok := commonListOptions(w, r)
+	if !ok {
+		return
+	}
+	if !validPublicCatalogSource(options.Source) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported public word catalog section")
+		return
+	}
+	if strings.TrimSpace(r.URL.Query().Get("status")) != "" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_status", "status is available only for an authenticated catalog")
+		return
+	}
+	result, err := h.repository.ListPublicPage(r.Context(), options)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) PublicDetail(w http.ResponseWriter, r *http.Request) {
+	wordID, err := positiveWordID(r.PathValue("wordID"))
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "catalog item id must be a positive integer")
+		return
+	}
+	item, err := h.repository.GetPublic(r.Context(), wordID)
+	if errors.Is(err, ErrCatalogItemNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "catalog_item_not_found", "catalog item was not found")
+		return
+	}
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, item)
+}
+
 func (h *Handler) All(w http.ResponseWriter, r *http.Request) {
 	h.list(w, r, false)
 }
@@ -30,8 +69,8 @@ func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
 		return
 	}
-	wordID, err := strconv.ParseInt(r.PathValue("wordID"), 10, 64)
-	if err != nil || wordID <= 0 {
+	wordID, err := positiveWordID(r.PathValue("wordID"))
+	if err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_word_id", "catalog item id must be a positive integer")
 		return
 	}
@@ -57,7 +96,7 @@ func (h *Handler) PhraseDetail(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	if !ValidPhraseSlug(slug) {
 		// Invalid and absent identifiers deliberately share one response. This
-		// keeps the public route contract simple and avoids exposing catalog shape.
+		// keeps the route contract simple and avoids exposing personalized shape.
 		httpx.WriteError(w, http.StatusNotFound, "phrase_not_found", "phrase is not available to the current user")
 		return
 	}
@@ -81,19 +120,16 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 		return
 	}
 
-	queryValues := r.URL.Query()
-	page, ok := positiveQueryInteger(queryValues.Get("page"), 1, 1_000_000)
+	options, ok := commonListOptions(w, r)
 	if !ok {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_page", "page must be a positive integer")
 		return
 	}
-	limit, ok := positiveQueryInteger(queryValues.Get("limit"), 30, 100)
-	if !ok {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_limit", "limit must be between 1 and 100")
+	if !validCatalogSource(options.Source) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported catalog section")
 		return
 	}
 
-	kind := strings.TrimSpace(queryValues.Get("kind"))
+	kind := strings.TrimSpace(r.URL.Query().Get("kind"))
 	if kind == "" {
 		kind = "word"
 	}
@@ -104,39 +140,14 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 	if kind == "all" {
 		kind = ""
 	}
-
-	source := strings.TrimSpace(queryValues.Get("source"))
-	if !validCatalogSource(source) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_source", "source must be a supported catalog section")
-		return
-	}
-	topic := strings.TrimSpace(queryValues.Get("topic"))
-	search := strings.TrimSpace(queryValues.Get("query"))
-	if search == "" {
-		search = strings.TrimSpace(queryValues.Get("q"))
-	}
-	if utf8.RuneCountInString(topic) > maxCatalogFilterLength || utf8.RuneCountInString(search) > maxCatalogFilterLength {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_catalog_filter", "topic and query must contain at most 120 characters")
-		return
-	}
-	status := strings.TrimSpace(queryValues.Get("status"))
+	status := strings.TrimSpace(r.URL.Query().Get("status"))
 	if !validCatalogStatus(status) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_status", "status must be new, learning, review or mastered")
 		return
 	}
-	sortMode := strings.TrimSpace(queryValues.Get("sort"))
-	if sortMode == "" {
-		sortMode = "default"
-	}
-	if sortMode != "default" && sortMode != "az" && sortMode != "za" {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_sort", "sort must be default, az or za")
-		return
-	}
+	options.Kind = kind
+	options.Status = status
 
-	options := ListOptions{
-		Page: page, Limit: limit, Kind: kind, Source: source,
-		Topic: topic, Query: search, Status: status, Sort: sortMode,
-	}
 	var result Page
 	var err error
 	if dueOnly {
@@ -151,6 +162,53 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request, dueOnly bool) {
 	httpx.WriteJSON(w, http.StatusOK, result)
 }
 
+func commonListOptions(w http.ResponseWriter, r *http.Request) (ListOptions, bool) {
+	queryValues := r.URL.Query()
+	page, ok := positiveQueryInteger(queryValues.Get("page"), 1, 1_000_000)
+	if !ok {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_page", "page must be a positive integer")
+		return ListOptions{}, false
+	}
+	limit, ok := positiveQueryInteger(queryValues.Get("limit"), 30, 100)
+	if !ok {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_limit", "limit must be between 1 and 100")
+		return ListOptions{}, false
+	}
+
+	source := strings.TrimSpace(queryValues.Get("source"))
+	topic := strings.TrimSpace(queryValues.Get("topic"))
+	search := strings.TrimSpace(queryValues.Get("query"))
+	if search == "" {
+		search = strings.TrimSpace(queryValues.Get("q"))
+	}
+	if utf8.RuneCountInString(topic) > maxCatalogFilterLength || utf8.RuneCountInString(search) > maxCatalogFilterLength {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_catalog_filter", "topic and query must contain at most 120 characters")
+		return ListOptions{}, false
+	}
+
+	sortMode := strings.TrimSpace(queryValues.Get("sort"))
+	if sortMode == "" {
+		sortMode = "default"
+	}
+	if sortMode != "default" && sortMode != "az" && sortMode != "za" {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_sort", "sort must be default, az or za")
+		return ListOptions{}, false
+	}
+
+	return ListOptions{
+		Page: page, Limit: limit, Source: source,
+		Topic: topic, Query: search, Sort: sortMode,
+	}, true
+}
+
+func positiveWordID(raw string) (int64, error) {
+	wordID, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || wordID <= 0 {
+		return 0, errors.New("invalid word id")
+	}
+	return wordID, nil
+}
+
 func positiveQueryInteger(raw string, defaultValue, maximum int) (int, bool) {
 	if strings.TrimSpace(raw) == "" {
 		return defaultValue, true
@@ -162,9 +220,18 @@ func positiveQueryInteger(raw string, defaultValue, maximum int) (int, bool) {
 	return value, true
 }
 
+func validPublicCatalogSource(value string) bool {
+	switch value {
+	case "", "mixed", "noun", "verb", "adjective", "daily-life", "travel", "data-engineering", "backend", "academic-technical-english":
+		return true
+	default:
+		return false
+	}
+}
+
 func validCatalogSource(value string) bool {
 	switch value {
-	case "", "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend":
+	case "", "mixed", "noun", "verb", "adjective", "phrases", "daily-life", "travel", "data-engineering", "backend", "academic-technical-english":
 		return true
 	default:
 		return false
