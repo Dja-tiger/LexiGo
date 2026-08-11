@@ -41,7 +41,7 @@ const PERSONALIZED_WORD = {
 const AUTHENTICATED_PHRASE = {
   id: 201,
   kind: "phrase",
-  slug: "we-need-to-identify-the-root-cause",
+  slug: "root-cause",
   lemma: "We need to identify the root cause.",
   translation: "Нам нужно определить первопричину.",
   phonetic: "",
@@ -168,7 +168,7 @@ async function installCatalogAPI(context: BrowserContext): Promise<{
     authenticatedRequests.push(route.request().url());
     return fulfillJSON(route, 200, PERSONALIZED_WORD);
   });
-  await context.route("**/api/v1/phrases/we-need-to-identify-the-root-cause", async (route) => {
+  await context.route("**/api/v1/phrases/root-cause", async (route) => {
     authenticatedRequests.push(route.request().url());
     return fulfillJSON(route, 200, AUTHENTICATED_PHRASE);
   });
@@ -240,14 +240,14 @@ test.describe("Issue #72 guest catalog parity", () => {
 
     await page.goto("/phrases?query=root+cause", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1, name: "Находите готовые формулировки" })).toBeVisible();
-    await expect(page.getByRole("note")).toContainText("прогресс не сохраняются без аккаунта");
+    await expect(page.getByRole("note")).toContainText("Статусы, повторения и прогресс не сохраняются без аккаунта.");
     await expect(page.getByRole("link", { name: /We need to identify the root cause\./ })).toBeVisible();
     expect(requests.authenticatedRequests).toEqual([]);
 
     await page.getByRole("link", { name: /We need to identify the root cause\./ }).click();
     await expect(page.getByRole("heading", { level: 1, name: "We need to identify the root cause." })).toBeVisible();
     const detailTarget = `${new URL(page.url()).pathname}${new URL(page.url()).search}`;
-    await expect(page.getByRole("note")).toContainText("прогресс и история практики не сохраняются");
+    await expect(page.getByRole("note")).toContainText("прогресс и история повторений не сохраняются");
 
     await page.getByRole("button", { name: "Войти и сохранить прогресс", exact: true }).click();
     await expect(page).toHaveURL((url) => url.pathname === "/profile");
@@ -262,7 +262,7 @@ test.describe("Issue #72 guest catalog parity", () => {
 
     await expect(page).toHaveURL((url) => `${url.pathname}${url.search}` === detailTarget);
     await expect(page.getByRole("heading", { level: 1, name: "We need to identify the root cause." })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Настроить урок с этой фразой", exact: true })).toBeVisible();
-    expect(requests.authenticatedRequests.some((url) => new URL(url).pathname === "/api/v1/phrases/we-need-to-identify-the-root-cause")).toBe(true);
+    await expect(page.getByRole("button", { name: "Настроить урок", exact: true })).toBeVisible();
+    expect(requests.authenticatedRequests.some((url) => new URL(url).pathname === "/api/v1/phrases/root-cause")).toBe(true);
   });
 });
