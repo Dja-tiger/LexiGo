@@ -5,7 +5,8 @@
 - Issue: #71 — [Medium][UX] Стандартизировать feedback, toast и status messages
 - Branch: `feat/issue-71-feedback-taxonomy`
 - Base SHA: `b1e238000803936e694b032564be0ed6fc97d1b7`
-- Head SHA: resolve from live PR head before immutable-head validation
+- Last product-validation head: `7e008c5e44b75b2a374fd74f4acc956e13c6806e`
+- Final PR head: resolve from live PR after this evidence-only commit
 - PR: #473
 
 ## Evidence summary
@@ -18,9 +19,12 @@ Issue #71 centralizes cross-route transient feedback without taking ownership aw
 - CI #3202 / run `31510010687`: the same assertion failed after a focus-event-only repair; artifact `9108974014` established that root feedback was outside the open calendar modal and therefore made inert/hidden by correct dialog isolation.
 - CI #3208 / run `31511442545`: the first modal-host implementation was rejected by `react-dom-ownership.test.ts` because it introduced a second `createPortal` owner outside `AccessibleDialog`.
 - Runtime was refactored to declarative host rendering: React context crosses the existing audited dialog portal, `FeedbackDialogHost` lives inside the dialog section, and the root `FeedbackCenter` keeps the sole queue/state/timers.
-- CI #3213 / run `31511894053` on head `09ab010c46e7cdba3b86feadc3eeacbb92e8b7b8` passed frontend lint/typecheck/unit/production build/dependency audit, backend integration/unit/security, performance budgets, accessibility audit, dictionary smoke, controlled service worker and visual regression.
-- The completed iOS PWA and Content Security jobs in #3213 then exposed a deterministic strict-locator ambiguity in existing `apple-calendar-pwa.spec.ts`: the active dialog now correctly contains two `role="status"` descendants, the contextual `.lx-calendar-status` with `aria-live="off"` and the shared live toast with `aria-live="polite"`.
-- The failure is a test ownership mismatch, not a product failure. It also directly proves that shared feedback is now inside the modal DOM/accessibility boundary; one WebKit failure snapshot showed the toast with `data-feedback-paused="true"`.
+- CI #3213 / run `31511894053` on `09ab010c46e7cdba3b86feadc3eeacbb92e8b7b8` passed core/backend and multiple browser gates, then exposed a deterministic strict-locator ambiguity in calendar regressions because the active dialog correctly contained the contextual `.lx-calendar-status` and shared live toast.
+- Calendar PWA assertions were corrected to target `.lx-calendar-status` explicitly; no positional selector, skip or timeout change was used.
+- CI #3217 / run `31512758177` on `63802d8f908666eb0059eafc869f50aaf2978cb3` exposed the same ambiguity in `system-states.spec.ts`. This was classified as a stale/ambiguous test locator caused by intentional coexistence of two semantic status owners, not a production defect.
+- Commit `7e008c5e44b75b2a374fd74f4acc956e13c6806e` changed only that acceptance locator to `dialog.locator(".lx-calendar-status")`, preserving the exact `aria-live="off"` assertion for the contextual owner.
+- The one WebKit Lesson Result controlled-input failure observed in #3217 did not recur in the next exact-head run and matches an existing documented browser-test category; no unrelated lesson implementation was changed.
+- CI #3218 / run `31514023345` on exact head `7e008c5e44b75b2a374fd74f4acc956e13c6806e` completed `success`. It passed backend unit/race/security/integration; frontend lint/typecheck/unit/production build/dependency audit; both blocking UI shards; Lesson completion; accessibility; visual regression; performance budgets; Content Security; Dictionary smoke; iOS PWA dictionary; controlled service worker; frontend aggregate quality; and API/Web container builds.
 
 ## Final architecture
 
@@ -32,36 +36,24 @@ Issue #71 centralizes cross-route transient feedback without taking ownership aw
 - Stable host registration avoids state-driven unregister/register churn.
 - No additional portal, imperative DOM host, MutationObserver or delegated document interaction was introduced.
 
-## Calendar regression adaptation
+## Feedback contract proved by source/unit/browser gates
 
-Before changing the test, `.agents/current/TASK.md` was expanded to allow `frontend/e2e/apple-calendar-pwa.spec.ts` and require semantic ownership rather than positional selection.
-
-All three contextual calendar assertions now use `dialog.locator(".lx-calendar-status")` instead of `dialog.getByRole("status")`:
-
-- Google Calendar prepared-event copy;
-- installed iOS PWA successful file-share copy;
-- desktop ICS download copy.
-
-This does not weaken the regression: it still checks the same operation result text in the same dialog and browser flows, while explicitly distinguishing the local contextual owner from the shared live feedback owner. No `.first()`, browser skip, timeout increase or hidden-control action was added.
-
-## Current implementation evidence
-
-- `9db5bbdb8df6e146293d77097d0cd1cbfe58df6b`: modal feedback host placement.
-- `e21a35da592f1a86cd7d6afcc13e0dd982c4b926`: stable declarative host state/rendering.
-- `17c15ff297d92c6545fa3f05355722da2ea0e1af`: declarative ownership source contract.
-- `47eebb3cc29999a018bbd06cc55eea4c267688c9`: scope calendar regression adaptation.
-- `248e76d26e4d88490282f08d4644e43c84582c22`: semantic calendar status locators.
+- `blocking-error` is a persistent assertive banner with no auto-dismiss timer.
+- `error`, `success` and `info` use polite, dismissible transient feedback with bounded text-sensitive duration from 5 to 12 seconds.
+- Repeated transient messages are FIFO; one transient item is active at a time and dismiss/expiry advances exactly one queued item.
+- Hover/focus pauses transient expiry.
+- Migrated speech/calendar local status remains visible where useful but is no longer a competing live error/status announcement owner.
+- Calendar contextual result assertions target `.lx-calendar-status`; shared toast assertions target the feedback layer, avoiding role-only ambiguity.
+- Compact feedback CSS accounts for top/right/bottom/left safe areas and reserves vertical space from the bottom navigation area.
+- Confirmed account outcomes route through shared success feedback; unconfirmed hand-off actions such as calendar preparation remain informational rather than false success.
 
 ## Invariants preserved
 
 - Critical errors remain persistent according to their existing owner.
-- Repeated transient messages remain FIFO and one transient item is active at a time.
-- Hover/focus pauses transient expiry; dismiss/expiry advances one queued item.
-- Migrated local status regions do not duplicate live announcements.
 - Modal `aria-modal`, background isolation and focus containment are unchanged.
 - Route/history, backend/API/auth contracts, dependencies and visual baselines are unchanged.
-- The original `system-states.spec.ts` acceptance test remains unchanged and must provide final cross-browser proof.
+- No `.first()`, timeout inflation, browser skip, hidden-control interaction or acceptance weakening was introduced.
 
 ## Final validation requirement
 
-Resolve the live PR head after this evidence write and require full CI success on that exact immutable SHA. The unchanged calendar feedback regression in `system-states.spec.ts` must pass in its blocking UI/browser collections, and `apple-calendar-pwa.spec.ts` must pass PWA/security collections using the contextual status owner. Only then mark PR #473 Ready and squash-merge with expected-head protection.
+This evidence-only commit intentionally moves the PR head after the successful product-validation run. Resolve the new live head and require full CI success on that exact developer-authored SHA. Re-check changed paths, unresolved review threads, reviews and mergeability. Only then mark PR #473 Ready and squash-merge with expected-head protection. Post-merge completion additionally requires exact-SHA `main` CI plus Stage/public validation before repository memory is reconciled and current task context is reset.
