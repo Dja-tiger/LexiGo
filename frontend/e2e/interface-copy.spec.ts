@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { learningTermCopy } from "../lib/interface-copy";
+import {
+  interfaceActionLabel,
+  learningTermCopy,
+  lessonSourceLabel,
+} from "../lib/interface-copy";
 import {
   installDeterministicRuntime,
   installQualityGateAPI,
   QUALITY_PROGRESS,
+  QUALITY_WORDS,
 } from "./support/quality-gates";
 
 const FORBIDDEN_UI_TERMS = /\b(?:due|retained items?|active recall|recall|cloze practice|chunks|learning status|incident updates|composer|server lesson session|legacy)\b/i;
@@ -51,6 +56,42 @@ test.describe("interface copy contract", () => {
     await expect(page.getByText(recall.label, { exact: true })).toBeVisible();
     await expect(page.getByText(recall.explanation, { exact: true })).toBeVisible();
     await expectNoUnexplainedTechnicalUI(await page.locator("body").innerText());
+  });
+
+  test("lesson sources and recovery actions use one user-facing copy contract", async ({ page }) => {
+    await page.route("**/api/v1/lessons/active", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "quality-copy-active-lesson",
+          source: "travel",
+          studyMode: "study",
+          lessonSize: "15",
+          currentIndex: 0,
+          version: 1,
+          status: "active",
+          items: [{ ...QUALITY_WORDS[0], position: 0 }],
+          createdAt: "2026-07-20T10:00:00Z",
+          updatedAt: "2026-07-20T10:00:00Z",
+        }),
+      });
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(`${lessonSourceLabel("travel")} · карточка 1 из 1.`, { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: interfaceActionLabel("continueLesson"), exact: true })).toBeVisible();
+    await expect(page.getByText("Путешествия · карточка 1 из 1.", { exact: true })).toHaveCount(0);
+
+    await page.goto("/learn", { waitUntil: "domcontentloaded" });
+    const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+    if (await configureLesson.isVisible()) await configureLesson.click();
+    await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("travel")) })).toBeVisible();
+    await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("phrases")) })).toBeVisible();
+
+    await page.goto("/this-route-does-not-exist", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("link", { name: interfaceActionLabel("home"), exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Открыть главную", exact: true })).toHaveCount(0);
   });
 
   test("phrase catalog localizes topics and explains the missing-fragment exercise", async ({ page }) => {
