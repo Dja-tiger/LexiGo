@@ -7,6 +7,7 @@ import {
   claimDailyGoalCelebration,
   clearLessonResultSnapshot,
   isDistinctLessonResultCandidate,
+  lessonResultPrimaryAction,
   readLessonResultSnapshot,
   resolveLessonResultContinuation,
   writeLessonResultSnapshot,
@@ -30,6 +31,7 @@ class MemoryStorage {
 }
 
 const COMPLETED_AT = "2026-07-24T18:00:00.000Z";
+const NEXT_DUE_AT = "2026-07-25T09:30:00.000Z";
 
 function snapshot(overrides: Partial<LessonResultSnapshot> = {}): LessonResultSnapshot {
   return {
@@ -51,6 +53,7 @@ function snapshot(overrides: Partial<LessonResultSnapshot> = {}): LessonResultSn
     confidence: { known: 2, almost: 1, again: 0 },
     skipped: 0,
     dueNow: 4,
+    nextDueAt: NEXT_DUE_AT,
     dailyGoal: 30,
     reviewsBefore: 27,
     reviewsAfter: 30,
@@ -91,6 +94,7 @@ describe("lesson result evidence", () => {
       ratings: { "101": "known", "102": "again" },
       skipped: 0,
       dueNow: 2,
+      nextDueAt: NEXT_DUE_AT,
       dailyGoal: 15,
       reviewsBefore: 14,
       reviewsAfter: 16,
@@ -100,6 +104,29 @@ describe("lesson result evidence", () => {
     expect(result.dailyGoalJustReached).toBe(true);
     expect(result.evidence.recognition).toEqual({ attempted: 2, correct: 1 });
     expect(result.confidence).toEqual({ known: 1, almost: 0, again: 1 });
+    expect(result.nextDueAt).toBe(NEXT_DUE_AT);
+  });
+
+  it("does not invent a next review timestamp when the authoritative value is invalid", () => {
+    const result = buildLessonResultSnapshot({
+      userId: "user-194",
+      lessonId: "lesson-194-a",
+      source: "mixed",
+      studyMode: "study",
+      lessonSize: "15",
+      completedAt: COMPLETED_AT,
+      itemIds: [101],
+      judgements: { "101": { mode: "study", correct: null } },
+      ratings: { "101": "known" },
+      skipped: 0,
+      dueNow: 0,
+      nextDueAt: "not-a-date",
+      dailyGoal: 15,
+      reviewsBefore: 4,
+      reviewsAfter: 5,
+    });
+
+    expect(result.nextDueAt).toBeNull();
   });
 });
 
@@ -116,9 +143,25 @@ describe("lesson result continuation", () => {
     })).toEqual({ kind: "daily-goal" });
   });
 
+  it("prioritizes persisted weak due work over unrelated new material", () => {
+    expect(resolveLessonResultContinuation({
+      snapshot: snapshot({
+        dailyGoalJustReached: false,
+        dailyGoalReached: false,
+        confidence: { known: 1, almost: 1, again: 1 },
+        dueNow: 4,
+      }),
+      previewTotal: 15,
+      nextTitle: "Academic Technical English",
+    })).toEqual({ kind: "due", dueCount: 4 });
+  });
+
   it("routes to the next distinct block, due review, or home", () => {
     expect(resolveLessonResultContinuation({
-      snapshot: snapshot({ dailyGoalJustReached: false }),
+      snapshot: snapshot({
+        dailyGoalJustReached: false,
+        confidence: { known: 3, almost: 0, again: 0 },
+      }),
       previewTotal: 15,
       nextTitle: "Academic Technical English",
       estimatedMinutes: 8,
@@ -138,6 +181,24 @@ describe("lesson result continuation", () => {
       snapshot: snapshot({ dailyGoalJustReached: false, dueNow: 0 }),
       previewTotal: 0,
     })).toEqual({ kind: "home" });
+  });
+
+  it("maps the resolved state to exactly one retention action", () => {
+    expect(lessonResultPrimaryAction(
+      snapshot({ dailyGoalJustReached: false, dailyGoalReached: false }),
+      { kind: "due", dueCount: 3 },
+    )).toBe("review_due");
+    expect(lessonResultPrimaryAction(
+      snapshot({ dailyGoalJustReached: false, dailyGoalReached: false }),
+      { kind: "next", title: "Next", itemCount: 15, estimatedMinutes: 8 },
+    )).toBe("continue_goal");
+    expect(lessonResultPrimaryAction(
+      snapshot({ dailyGoalJustReached: false, dailyGoalReached: true }),
+      { kind: "next", title: "Next", itemCount: 15, estimatedMinutes: 8 },
+    )).toBe("next_lesson");
+    expect(lessonResultPrimaryAction(snapshot(), { kind: "daily-goal" })).toBe("home");
+    expect(lessonResultPrimaryAction(snapshot(), { kind: "checking" })).toBeNull();
+    expect(lessonResultPrimaryAction(snapshot(), { kind: "sync-pending" })).toBeNull();
   });
 
   it("rejects the completed lesson id and the same item set", () => {
@@ -168,6 +229,18 @@ describe("lesson result persistence", () => {
     expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();
   });
 
+  it("restores a legacy v1 snapshot without nextDueAt as an explicit unknown", () => {
+    const storage = new MemoryStorage();
+    const legacy = snapshot();
+    delete legacy.nextDueAt;
+    storage.setItem("lexigo.lesson-result.v1.user-194", JSON.stringify(legacy));
+
+    expect(readLessonResultSnapshot(storage, legacy.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual({
+      ...legacy,
+      nextDueAt: null,
+    });
+  });
+
   it("drops stale or malformed snapshots instead of restoring invented state", () => {
     const storage = new MemoryStorage();
     const result = snapshot();
@@ -182,12 +255,19 @@ describe("lesson result persistence", () => {
     expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT))).toBeNull();
   });
 
+  it("rejects an invalid persisted nextDueAt instead of interpreting it client-side", () => {
+    const storage = new MemoryStorage();
+    const result = snapshot({ nextDueAt: "not-a-date" });
+    storage.setItem("lexigo.lesson-result.v1.user-194", JSON.stringify(result));
+
+    expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();
+  });
+
   it("claims daily-goal celebration at most once per user and day", () => {
     const storage = new MemoryStorage();
     const result = snapshot();
     expect(claimDailyGoalCelebration(storage, result)).toBe(true);
     expect(claimDailyGoalCelebration(storage, result)).toBe(false);
-    expect(claimDailyGoalCelebration(storage, result,)).toBe(false);
     expect(claimDailyGoalCelebration(storage, snapshot({ dailyGoalJustReached: false }))).toBe(false);
   });
 });
