@@ -10,10 +10,12 @@ import (
 )
 
 type recordingStore struct {
-	reports    []Report
-	journeys   []JourneyEvent
-	err        error
-	journeyErr error
+	reports             []Report
+	journeys            []JourneyEvent
+	productRetention    []ProductRetentionEvent
+	err                 error
+	journeyErr          error
+	productRetentionErr error
 }
 
 func (store *recordingStore) StoreReport(_ context.Context, report Report) error {
@@ -29,6 +31,14 @@ func (store *recordingStore) StoreJourney(_ context.Context, event JourneyEvent)
 		return store.journeyErr
 	}
 	store.journeys = append(store.journeys, event)
+	return nil
+}
+
+func (store *recordingStore) StoreProductRetention(_ context.Context, event ProductRetentionEvent) error {
+	if store.productRetentionErr != nil {
+		return store.productRetentionErr
+	}
+	store.productRetention = append(store.productRetention, event)
 	return nil
 }
 
