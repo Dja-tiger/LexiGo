@@ -126,6 +126,7 @@ func NewWithOptions(
 	mux.HandleFunc("GET /api/v1/catalog/metadata", wordsHandler.Metadata)
 	mux.Handle("POST /api/v1/performance/rum", limiter.MiddlewareFailClosed("performance", 120, http.HandlerFunc(performanceHandler.Report)))
 	mux.Handle("POST /api/v1/product/journey", limiter.MiddlewareFailClosed("product-journey", 120, http.HandlerFunc(performanceHandler.Journey)))
+	mux.Handle("POST /api/v1/product/retention", limiter.MiddlewareFailClosed("product-retention", 120, http.HandlerFunc(performanceHandler.ProductRetention)))
 	mux.Handle("POST /api/v1/auth/register", limiter.Middleware(10, http.HandlerFunc(authHandler.Register)))
 	mux.Handle("POST /api/v1/auth/login", limiter.Middleware(20, http.HandlerFunc(authHandler.Login)))
 	mux.Handle("POST /api/v1/auth/password-reset/request", limiter.Middleware(5, http.HandlerFunc(authHandler.RequestPasswordReset)))
