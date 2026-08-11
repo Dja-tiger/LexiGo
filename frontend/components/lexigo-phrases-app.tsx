@@ -170,7 +170,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
   const navigationRef = useRef(navigation);
   const searchInputRef = useRef(searchInput);
   const committedQueryRef = useRef(initialFilters.query);
-  const filters = phraseCatalogFilters(navigation);
+  const filters = useMemo(() => phraseCatalogFilters(navigation), [navigation]);
   const detailSlug = navigation.detail?.trim() || "";
 
   const adoptSession = useCallback((next: Session) => {
