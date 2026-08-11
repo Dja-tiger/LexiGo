@@ -6,7 +6,7 @@
 - Branch: `feat/issue-73-lesson-result-retention`
 - Base SHA: `e6b2d74891fb4e52f23152758812551361717857`
 - Head SHA: resolve from live branch ref
-- PR: create Draft immediately after task bootstrap
+- PR: #475 (Draft)
 
 ## Objective
 
@@ -22,7 +22,7 @@ Make Lesson Result a truthful retention surface: summarize only persisted review
 
 ## Non-goals
 
-- No speculative Figma redesign; preserve canonical Lesson Result structure from node `1247:18473`.
+- No speculative Figma redesign; preserve the canonical Lesson Result matrix from `frontend/docs/lesson-result-figma.md`, Figma nodes `217:5` through `217:14`.
 - No change to scheduler ranking, review grading semantics or onboarding.
 - No user/session/lesson/word IDs, free-form content, raw URL/query/referrer or authentication data in retention telemetry.
 - No production deployment dispatch or physical-device-only acceptance.
@@ -35,6 +35,7 @@ Make Lesson Result a truthful retention surface: summarize only persisted review
 - new focused frontend retention telemetry helper/tests
 - existing Lesson Result E2E/source tests
 - `backend/internal/performance/*`
+- `backend/internal/server/server.go` only for the focused anonymous retention endpoint registration
 - next migration pair under `backend/internal/platform/migrate/migrations/*`
 - `backend/integration/*` focused retention analytics tests
 - `api/openapi.yaml`
