@@ -317,7 +317,7 @@ test("a guest lesson deep link is protected and preserves its return target", as
 test("arbitrary lesson identifiers and unknown routes use the not-found boundary", async ({ page }) => {
   await page.goto("/lesson/another-users-session");
   await expect(page.getByRole("heading", { name: "Такого раздела нет" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Открыть главную" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "На главную" })).toHaveAttribute("href", "/");
   await page.goto("/route-that-does-not-exist");
   await expect(page.getByRole("heading", { name: "Такого раздела нет" })).toBeVisible();
 });
