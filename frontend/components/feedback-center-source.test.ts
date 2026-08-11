@@ -10,6 +10,7 @@ const componentsDirectory = path.join(frontendDirectory, "components");
 const layoutSource = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const feedbackStyles = readFileSync(path.join(appDirectory, "feedback.css"), "utf8");
 const centerSource = readFileSync(path.join(componentsDirectory, "feedback-center.tsx"), "utf8");
+const dialogSource = readFileSync(path.join(componentsDirectory, "accessible-dialog.tsx"), "utf8");
 const bootstrapSource = readFileSync(path.join(componentsDirectory, "lexigo-bootstrapped-app.tsx"), "utf8");
 const speechSource = readFileSync(path.join(componentsDirectory, "speech-player-button.tsx"), "utf8");
 const calendarSource = readFileSync(path.join(componentsDirectory, "calendar-reminder-integration.tsx"), "utf8");
@@ -33,6 +34,17 @@ describe("shared feedback ownership", () => {
     expect(speechSource).toContain('aria-live={state === "error" ? "off" : "polite"}');
     expect(calendarSource).toContain('className="lx-calendar-status" role="status" aria-live="off"');
     expect(calendarSource).not.toContain('className="lx-calendar-status" role="status">');
+  });
+
+  it("hosts shared feedback inside the active accessible dialog instead of bypassing modal isolation", () => {
+    expect(centerSource).toContain('import { createPortal } from "react-dom";');
+    expect(centerSource).toContain('data-feedback-dialog-host="true"');
+    expect(centerSource).toContain("const activeHost = feedbackHosts.at(-1) ?? null;");
+    expect(centerSource).toContain("createPortal(feedbackLayer, activeHost)");
+    expect(dialogSource).toContain('import { FeedbackDialogHost } from "./feedback-center";');
+    expect(dialogSource).toContain("<FeedbackDialogHost />");
+    expect(dialogSource).toContain('aria-modal="true"');
+    expect(dialogSource).toContain('document.addEventListener("focusin", containProgrammaticFocus)');
   });
 
   it("routes only confirmed account outcomes through shared success feedback", () => {
