@@ -78,3 +78,31 @@ func (handler *Handler) Journey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(http.StatusAccepted)
 }
+
+func (handler *Handler) ProductRetention(w http.ResponseWriter, r *http.Request) {
+	var event ProductRetentionEvent
+	if err := httpx.DecodeJSONLimit(w, r, &event, MaxProductRetentionEventBytes); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_json", "request body must contain one valid product retention event")
+		return
+	}
+	if err := event.Validate(); err != nil {
+		var validationError *ValidationError
+		if errors.As(err, &validationError) {
+			httpx.WriteFieldError(w, http.StatusUnprocessableEntity, "invalid_product_retention", validationError.Message, validationError.Field)
+			return
+		}
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_product_retention", "product retention event is invalid")
+		return
+	}
+	if err := handler.store.StoreProductRetention(r.Context(), event); err != nil {
+		handler.logger.Error("product retention storage failed",
+			slog.String("event", event.Event),
+			slog.String("error", err.Error()),
+		)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusAccepted)
+}
