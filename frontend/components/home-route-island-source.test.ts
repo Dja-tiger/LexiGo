@@ -75,7 +75,8 @@ describe("Home route client-island ownership", () => {
     const homeApp = readComponent("lexigo-home-app.tsx");
 
     expect(asyncState).toContain("consumeLessonResumeIntent(window.location, window.history)");
-    expect(asyncState).toContain('actionLabel !== "Продолжить урок"');
+    expect(asyncState).toContain('const CONTINUE_LESSON_ACTION_LABEL = interfaceActionLabel("continueLesson")');
+    expect(asyncState).toContain("actionLabel !== CONTINUE_LESSON_ACTION_LABEL");
     expect(routeNavigation).toContain('target.view === "home"');
     expect(routeNavigation).toContain("pathname: transition.nextPathname");
     expect(routeNavigation).toContain("routeGraph: transition.nextGraph");
