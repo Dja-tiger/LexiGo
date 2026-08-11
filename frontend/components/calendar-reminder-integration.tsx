@@ -95,6 +95,7 @@ export function CalendarReminderIntegration({
 }: CalendarReminderIntegrationProps) {
   const { publish } = useFeedback();
   const [settings, setSettings] = useState<CalendarReminderSettings>(defaultCalendarReminderSettings);
+  const [status, setStatus] = useState("");
   const [appleCalendarPending, setAppleCalendarPending] = useState(false);
   const appleCalendarPendingRef = useRef(false);
   const dialogTitleRef = useRef<HTMLHeadingElement | null>(null);
@@ -109,11 +110,13 @@ export function CalendarReminderIntegration({
   }, []);
 
   function openSettings() {
+    setStatus("");
     onOpen();
   }
 
   function updateSettings(patch: Partial<CalendarReminderSettings>) {
     setSettings((current) => normalizeCalendarReminderSettings({ ...current, ...patch }));
+    setStatus("");
   }
 
   function toggleWeekday(weekday: CalendarWeekday) {
@@ -125,6 +128,7 @@ export function CalendarReminderIntegration({
         : [...current.weekdays, weekday];
       return normalizeCalendarReminderSettings({ ...current, recurrence: "custom", weekdays });
     });
+    setStatus("");
   }
 
   function persistSettings(): CalendarReminderPersistenceResult {
@@ -142,13 +146,15 @@ export function CalendarReminderIntegration({
       appURL: window.location.origin,
     });
     window.open(url, "_blank", "noopener,noreferrer");
+    const message = sessionOnlyStatus(
+      "Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.",
+      persistence.persisted,
+    );
+    setStatus(message);
     publish({
       category: "info",
       title: "Google Calendar открыт",
-      message: sessionOnlyStatus(
-        "Событие подготовлено. Подтвердите сохранение и уведомление в Google Calendar.",
-        persistence.persisted,
-      ),
+      message,
     });
   }
 
@@ -156,6 +162,7 @@ export function CalendarReminderIntegration({
     if (appleCalendarPendingRef.current) return;
     appleCalendarPendingRef.current = true;
     setAppleCalendarPending(true);
+    setStatus("");
 
     try {
       const persistence = persistSettings();
@@ -170,16 +177,20 @@ export function CalendarReminderIntegration({
         calendar,
         createCalendarDownloadURL(persistence.settings, start),
       );
+      const message = sessionOnlyStatus(appleCalendarStatus(method), persistence.persisted);
+      setStatus(message);
       publish({
         category: "info",
         title: method === "cancelled" ? "Добавление отменено" : "Apple Calendar подготовлен",
-        message: sessionOnlyStatus(appleCalendarStatus(method), persistence.persisted),
+        message,
       });
     } catch {
+      const message = "Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.";
+      setStatus(message);
       publish({
         category: "error",
         title: "Не удалось открыть Apple Calendar",
-        message: "Не удалось запустить импорт. Откройте LexiGo в Safari и повторите попытку.",
+        message,
       });
     } finally {
       appleCalendarPendingRef.current = false;
@@ -313,6 +324,7 @@ export function CalendarReminderIntegration({
         <p className="lx-calendar-privacy-note">
           LexiGo не получает доступ к вашим календарям. Финальное добавление и разрешение уведомлений подтверждаются в Google или Apple Calendar.
         </p>
+        {status ? <p className="lx-calendar-status" role="status" aria-live="off">{status}</p> : null}
       </AccessibleDialog>
     </>
   );
