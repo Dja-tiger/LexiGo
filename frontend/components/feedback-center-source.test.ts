@@ -36,11 +36,12 @@ describe("shared feedback ownership", () => {
     expect(calendarSource).not.toContain('className="lx-calendar-status" role="status">');
   });
 
-  it("hosts shared feedback inside the active accessible dialog instead of bypassing modal isolation", () => {
-    expect(centerSource).toContain('import { createPortal } from "react-dom";');
+  it("renders shared feedback declaratively inside the active accessible dialog without adding another portal owner", () => {
+    expect(centerSource).not.toContain('import { createPortal } from "react-dom";');
+    expect(centerSource).not.toContain("createPortal(");
     expect(centerSource).toContain('data-feedback-dialog-host="true"');
-    expect(centerSource).toContain("const activeHost = feedbackHosts.at(-1) ?? null;");
-    expect(centerSource).toContain("createPortal(feedbackLayer, activeHost)");
+    expect(centerSource).toContain("controller.activeHostID === hostID ? controller.feedbackLayer : null");
+    expect(centerSource).toContain("activeHostID === null ? feedbackLayer : null");
     expect(dialogSource).toContain('import { FeedbackDialogHost } from "./feedback-center";');
     expect(dialogSource).toContain("<FeedbackDialogHost />");
     expect(dialogSource).toContain('aria-modal="true"');
