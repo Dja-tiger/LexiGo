@@ -190,7 +190,7 @@ test("Google Calendar action creates a safe external event template", async ({ p
   expect(calendarURL.pathname).toBe("/calendar/render");
   expect(calendarURL.searchParams.get("action")).toBe("TEMPLATE");
   expect(calendarURL.searchParams.get("recur")).toBeTruthy();
-  await expect(dialog.getByRole("status")).toContainText("Подтвердите сохранение");
+  await expect(dialog.locator(".lx-calendar-status")).toContainText("Подтвердите сохранение");
 });
 
 test("installed iOS PWA shares one real ICS file without opening an error page", async ({ context, page }, testInfo) => {
@@ -224,7 +224,7 @@ test("installed iOS PWA shares one real ICS file without opening an error page",
   expect(attachmentRequests).toEqual([]);
   await expect(page).toHaveURL(/\/progress$/);
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("status")).toContainText("Файл передан выбранному приложению");
+  await expect(dialog.locator(".lx-calendar-status")).toContainText("Файл передан выбранному приложению");
 });
 
 test("desktop fallback downloads the ICS attachment with the expected filename and content", async ({ context, page }, testInfo) => {
@@ -244,5 +244,5 @@ test("desktop fallback downloads the ICS attachment with the expected filename a
   expect(content).toContain("BEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\n");
   expect(content).toContain("RRULE:FREQ=DAILY\r\n");
   expect(content).toContain("BEGIN:VALARM\r\n");
-  await expect(dialog.getByRole("status")).toContainText("lexigo-study-reminder.ics загружен");
+  await expect(dialog.locator(".lx-calendar-status")).toContainText("lexigo-study-reminder.ics загружен");
 });
