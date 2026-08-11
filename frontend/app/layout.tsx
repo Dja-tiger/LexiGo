@@ -79,6 +79,7 @@ import "./header-profile-touch-targets.css";
 import "./header-streak-touch-targets.css";
 import "./mobile-navigation-labels.css";
 import "./active-lesson-queued-state.css";
+import "./feedback.css";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local";
 const APPEARANCE_BOOTSTRAP = createAppearanceBootstrapScript();
