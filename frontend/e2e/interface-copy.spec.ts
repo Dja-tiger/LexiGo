@@ -36,10 +36,13 @@ test.describe("interface copy contract", () => {
 
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
-    const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-    await expect(configureLesson).toBeVisible();
-    await configureLesson.click();
+    await expect(page.getByRole("region", { name: "Настройка следующего урока" })).toBeVisible();
     const recallMode = page.getByRole("radio", { name: new RegExp(recall.label) });
+    if (!(await recallMode.isVisible())) {
+      const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+      await expect(configureLesson).toBeVisible();
+      await configureLesson.click();
+    }
     await expect(recallMode).toBeVisible();
     await expect(recallMode).toContainText(recall.explanation);
     await expect(page.locator(".lx-heading-badge")).toContainText(`${due.label}: ${QUALITY_PROGRESS.dueNow}`);
@@ -90,10 +93,14 @@ test.describe("interface copy contract", () => {
     await page.unroute("**/api/v1/lessons/active");
 
     await page.goto("/learn", { waitUntil: "domcontentloaded" });
-    const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
-    await expect(configureLesson).toBeVisible();
-    await configureLesson.click();
-    await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("travel")) })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Настройка следующего урока" })).toBeVisible();
+    const travelSource = page.getByRole("radio", { name: new RegExp(lessonSourceLabel("travel")) });
+    if (!(await travelSource.isVisible())) {
+      const configureLesson = page.getByRole("button", { name: "Настроить урок", exact: true });
+      await expect(configureLesson).toBeVisible();
+      await configureLesson.click();
+    }
+    await expect(travelSource).toBeVisible();
     await expect(page.getByRole("radio", { name: new RegExp(lessonSourceLabel("phrases")) })).toBeVisible();
 
     await page.goto("/this-route-does-not-exist", { waitUntil: "domcontentloaded" });
