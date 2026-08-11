@@ -23,6 +23,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Migrate account/session success notices, non-blocking speech error feedback and calendar operation confirmation/error into the shared owner where the event is genuinely global/user-action feedback.
 - Preserve contextual operational speech state (`loading`, `playing`, `stopped`) and browser-unsupported capability guidance at the speech control.
 - Keep shared feedback inside the currently active accessible modal layer so modal isolation does not make toast announcements/actions inert or `aria-hidden`.
+- Keep calendar PWA regression tests semantically scoped to the contextual `.lx-calendar-status` when the same dialog also contains the shared live feedback status.
 - Add source/unit/browser regression protection for taxonomy, queueing, dismiss/live-region semantics and compact safe-area placement.
 
 ## Non-goals
@@ -34,6 +35,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Do not centralize route announcements, AsyncStatePanel content states, review-outbox connectivity state, form validation or focused-lesson exit guidance; those are separate semantic owners, not transient feedback.
 - Do not change whether Google/Apple Calendar actually creates an external event; success copy must remain truthful about the confirmed client-side result only.
 - Do not weaken `AccessibleDialog` modal isolation; feedback must participate in the modal focus/ARIA boundary instead of bypassing it.
+- Do not hide the intentional coexistence of contextual calendar status and shared feedback with `.first()` or another positional locator.
 
 ## Allowed paths
 
@@ -51,6 +53,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `frontend/components/speech-player-button.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
 - `frontend/e2e/system-states.spec.ts`
+- `frontend/e2e/apple-calendar-pwa.spec.ts`
 
 ## Prohibited paths
 
@@ -90,6 +93,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Transient auto-dismiss pauses during pointer hover or keyboard focus.
 - When an `AccessibleDialog` is active, shared feedback is rendered inside the top dialog so its live region and dismiss/action controls are not inert, hidden or forced outside the focus trap.
 - Closing a nested/top dialog returns shared feedback to the previous dialog host or root owner without losing queue state.
+- Calendar PWA tests distinguish the contextual local status from the shared live feedback by semantic ownership (`.lx-calendar-status`), not DOM order.
 - Global feedback does not overlap persistent bottom navigation, virtual keyboard safe areas or device safe-area insets.
 - No product test is weakened through `.first()`, browser skips, timeout inflation or hidden-control interaction.
 
@@ -102,6 +106,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Confirmed success is not emitted before the underlying operation result.
 - Shared feedback has one announcement owner and avoids duplicate screen-reader announcements from migrated producers.
 - Shared feedback remains operable and announced while an accessible modal is open.
+- Calendar contextual result copy remains directly verifiable even while shared feedback is present in the same dialog.
 - Compact/mobile feedback remains actionable and clear of bottom navigation/safe areas.
 - Existing session, speech and calendar functional behavior remains intact.
 
@@ -110,7 +115,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Source ownership/search contract, including active-modal feedback host integration.
 - Frontend lint/typecheck/unit/production build.
 - `system-states.spec.ts` targeted in Chromium/WebKit/Android/iOS; it is already collected by blocking UI and accessibility commands, avoiding a new collection boundary.
-- Existing auth/session, speech and calendar browser regression coverage.
+- Existing auth/session and speech coverage plus `apple-calendar-pwa.spec.ts` across its blocking PWA/security collections, with contextual status assertions scoped to `.lx-calendar-status`.
 - Keyboard and accessibility/axe collection.
 - Reduced-motion, PWA/service-worker, visual regression without baseline updates, performance/bundle gates.
 - Full immutable-head CI before Ready/merge.
@@ -122,6 +127,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Fixed feedback positioning could overlap bottom navigation/keyboard on compact PWA.
 - Over-centralization could turn contextual content/loading state into inappropriate global feedback.
 - Rendering feedback outside an active modal makes it inert/`aria-hidden`; bypassing the dialog trap instead would break modal semantics. The feedback host must therefore live inside the active dialog boundary.
+- Generic role-only test locators become ambiguous when contextual and shared statuses intentionally coexist inside the same modal; tests must target the semantic owner rather than positional order.
 
 ## Rollback
 
