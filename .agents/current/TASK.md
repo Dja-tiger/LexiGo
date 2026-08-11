@@ -32,6 +32,8 @@ Make Lesson Result a truthful retention surface: summarize only persisted review
 - `frontend/lib/lesson-result*`
 - `frontend/components/lesson-result-presentation*`
 - `frontend/components/lexigo-active-lesson-app.tsx`
+- `frontend/components/lesson-retention-reporter.tsx`
+- `frontend/app/layout.tsx` only to mount the global return-to-next-session reporter
 - new focused frontend retention telemetry helper/tests
 - existing Lesson Result E2E/source tests
 - `backend/internal/performance/*`
@@ -52,6 +54,7 @@ Make Lesson Result a truthful retention surface: summarize only persisted review
 - `frontend/lib/lesson-result.ts`: persisted completion snapshot and continuation policy.
 - `frontend/components/lesson-result-presentation.tsx`: Lesson Result evidence and primary CTA presentation.
 - `frontend/components/lexigo-active-lesson-app.tsx`: completion boundary and action execution.
+- focused retention telemetry helper + `lesson-retention-reporter.tsx`: anonymous completion/action/return instrumentation; `layout.tsx` only mounts the reporter.
 - `backend/internal/performance`: anonymous bounded operational/product telemetry owner.
 
 ## Documentation owners
