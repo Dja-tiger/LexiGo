@@ -4,15 +4,19 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
 import type { ResourceStatus } from "../lib/account-resources";
+import {
+  interfaceActionLabel,
+  systemStateEyebrow,
+  type SystemStateKind,
+} from "../lib/interface-copy";
 import { consumeLessonResumeIntent } from "../lib/lesson-resume-intent";
 import type { RequestProblem } from "../lib/request-failure";
 
-type AsyncStateKind = "loading" | "empty" | "error" | "success";
 type AsyncSkeletonVariant = "catalog" | "home";
 
 type AsyncStatePanelProps = {
   label: string;
-  kind: AsyncStateKind;
+  kind: SystemStateKind;
   title: string;
   message: string;
   actionLabel?: string;
@@ -25,14 +29,10 @@ type AsyncStatePanelProps = {
   focusResult?: boolean;
 };
 
-function stateEyebrow(kind: AsyncStateKind): string {
-  if (kind === "loading") return "ЗАГРУЗКА";
-  if (kind === "empty") return "НИЧЕГО НЕ НАЙДЕНО";
-  if (kind === "error") return "НЕ УДАЛОСЬ ЗАГРУЗИТЬ";
-  return "ГОТОВО";
-}
+const RETRY_ACTION_LABEL = interfaceActionLabel("retry");
+const CONTINUE_LESSON_ACTION_LABEL = interfaceActionLabel("continueLesson");
 
-function stateIcon(kind: AsyncStateKind): string {
+function stateIcon(kind: SystemStateKind): string {
   if (kind === "loading") return "…";
   if (kind === "empty") return "⌕";
   if (kind === "error") return "!";
@@ -62,7 +62,7 @@ export function AsyncStatePanel({
   }, [focusResult, kind, title, message, reference]);
 
   useEffect(() => {
-    if (resumeIntentConsumedRef.current || actionLabel !== "Продолжить урок" || !onAction) return;
+    if (resumeIntentConsumedRef.current || actionLabel !== CONTINUE_LESSON_ACTION_LABEL || !onAction) return;
     if (!consumeLessonResumeIntent(window.location, window.history)) return;
 
     resumeIntentConsumedRef.current = true;
@@ -85,7 +85,7 @@ export function AsyncStatePanel({
     >
       <span className="lx-async-state-icon" aria-hidden="true">{stateIcon(kind)}</span>
       <div className="lx-async-state-copy">
-        <span>{stateEyebrow(kind)}</span>
+        <span>{systemStateEyebrow(kind)}</span>
         <strong>{title}</strong>
         <p>{message}</p>
         {reference ? <small>Код запроса: {reference}</small> : null}
@@ -126,7 +126,7 @@ export function AsyncResourceNotice({
       kind="error"
       title={problem.title}
       message={problem.message}
-      actionLabel={problem.retryable ? "Повторить" : undefined}
+      actionLabel={problem.retryable ? RETRY_ACTION_LABEL : undefined}
       onAction={problem.retryable ? onRetry : undefined}
       compact
       reference={problem.correlationId || problem.code}
