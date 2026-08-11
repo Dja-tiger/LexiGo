@@ -11,6 +11,7 @@ import (
 type Store interface {
 	StoreReport(ctx context.Context, report Report) error
 	StoreJourney(ctx context.Context, event JourneyEvent) error
+	StoreProductRetention(ctx context.Context, event ProductRetentionEvent) error
 }
 
 type Repository struct {
@@ -89,6 +90,35 @@ func (repository *Repository) StoreJourney(ctx context.Context, event JourneyEve
 	}
 	if command.RowsAffected() != 1 {
 		return fmt.Errorf("store product journey: inserted %d rows", command.RowsAffected())
+	}
+	return nil
+}
+
+func (repository *Repository) StoreProductRetention(ctx context.Context, event ProductRetentionEvent) error {
+	command, err := repository.pool.Exec(
+		ctx,
+		`insert into product_retention_events (
+			app_version,
+			event_name,
+			action,
+			delay_bucket,
+			device_class,
+			browser_family,
+			display_mode
+		) values ($1, $2, $3, $4, $5, $6, $7)`,
+		event.AppVersion,
+		event.Event,
+		event.Action,
+		event.DelayBucket,
+		event.DeviceClass,
+		event.BrowserFamily,
+		event.DisplayMode,
+	)
+	if err != nil {
+		return fmt.Errorf("store product retention event: %w", err)
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("store product retention event: inserted %d rows", command.RowsAffected())
 	}
 	return nil
 }
