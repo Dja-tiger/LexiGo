@@ -12,6 +12,7 @@ import {
   type FocusEvent,
   type PropsWithChildren,
 } from "react";
+import { createPortal } from "react-dom";
 
 import {
   INITIAL_FEEDBACK_STATE,
@@ -27,7 +28,12 @@ type FeedbackController = {
   clearKey: (key: string) => void;
 };
 
+type FeedbackHostController = {
+  registerHost: (element: HTMLElement) => () => void;
+};
+
 const FeedbackContext = createContext<FeedbackController | null>(null);
+const FeedbackHostContext = createContext<FeedbackHostController | null>(null);
 
 export function useFeedback(): FeedbackController {
   const controller = useContext(FeedbackContext);
@@ -35,6 +41,27 @@ export function useFeedback(): FeedbackController {
     throw new Error("useFeedback must be used inside FeedbackCenter");
   }
   return controller;
+}
+
+/**
+ * Declares a modal-local target for the shared feedback layer.
+ *
+ * React context is preserved through AccessibleDialog's portal, so the host
+ * can register with the single root FeedbackCenter without creating a second
+ * queue or announcement owner. The most recently mounted host wins, which
+ * matches the dialog stack for nested modals. When it unmounts, feedback
+ * automatically returns to the previous host (or the root layer).
+ */
+export function FeedbackDialogHost() {
+  const controller = useContext(FeedbackHostContext);
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!controller || !element) return;
+    return controller.registerHost(element);
+  }, [controller, element]);
+
+  return <div ref={setElement} data-feedback-dialog-host="true" />;
 }
 
 type FeedbackCardProps = {
@@ -94,6 +121,7 @@ function FeedbackCard({
 export function FeedbackCenter({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(feedbackReducer, INITIAL_FEEDBACK_STATE);
   const [pausedToastID, setPausedToastID] = useState<string | null>(null);
+  const [feedbackHosts, setFeedbackHosts] = useState<HTMLElement[]>([]);
   const sequenceRef = useRef(0);
 
   const publish = useCallback((input: FeedbackInput) => {
@@ -113,8 +141,21 @@ export function FeedbackCenter({ children }: PropsWithChildren) {
     dispatch({ type: "clear-key", key });
   }, []);
 
+  const registerHost = useCallback((element: HTMLElement) => {
+    setFeedbackHosts((current) => [
+      ...current.filter((candidate) => candidate !== element),
+      element,
+    ]);
+
+    return () => {
+      setFeedbackHosts((current) => current.filter((candidate) => candidate !== element));
+    };
+  }, []);
+
   const controller = useMemo<FeedbackController>(() => ({ publish, dismiss, clearKey }), [clearKey, dismiss, publish]);
+  const hostController = useMemo<FeedbackHostController>(() => ({ registerHost }), [registerHost]);
   const activeToast = state.activeToast;
+  const activeHost = feedbackHosts.at(-1) ?? null;
   const toastPaused = activeToast !== null && pausedToastID === activeToast.id;
 
   useEffect(() => {
@@ -130,27 +171,35 @@ export function FeedbackCenter({ children }: PropsWithChildren) {
     setPausedToastID(null);
   }, []);
 
+  const feedbackLayer = state.banners.length > 0 || activeToast ? (
+    <aside className="lx-feedback-center" aria-label="Системные уведомления" data-feedback-center="true">
+      {state.banners.map((banner) => (
+        <FeedbackCard key={banner.id} item={banner} onDismiss={dismiss} />
+      ))}
+      {activeToast ? (
+        <FeedbackCard
+          key={activeToast.id}
+          item={activeToast}
+          onDismiss={dismiss}
+          onPause={() => setPausedToastID(activeToast.id)}
+          onResume={resumeToast}
+          paused={toastPaused}
+          queuedCount={state.toastQueue.length}
+        />
+      ) : null}
+    </aside>
+  ) : null;
+
   return (
     <FeedbackContext.Provider value={controller}>
-      {children}
-      {state.banners.length > 0 || activeToast ? (
-        <aside className="lx-feedback-center" aria-label="Системные уведомления" data-feedback-center="true">
-          {state.banners.map((banner) => (
-            <FeedbackCard key={banner.id} item={banner} onDismiss={dismiss} />
-          ))}
-          {activeToast ? (
-            <FeedbackCard
-              key={activeToast.id}
-              item={activeToast}
-              onDismiss={dismiss}
-              onPause={() => setPausedToastID(activeToast.id)}
-              onResume={resumeToast}
-              paused={toastPaused}
-              queuedCount={state.toastQueue.length}
-            />
-          ) : null}
-        </aside>
-      ) : null}
+      <FeedbackHostContext.Provider value={hostController}>
+        {children}
+        {feedbackLayer
+          ? activeHost
+            ? createPortal(feedbackLayer, activeHost)
+            : feedbackLayer
+          : null}
+      </FeedbackHostContext.Provider>
     </FeedbackContext.Provider>
   );
 }
