@@ -1,55 +1,36 @@
 # Current Task Progress
 
-## 2026-08-11 19:22 Europe/Moscow
+## 2026-08-11 19:32 Europe/Moscow
 
 ### Verified
 
 - Live repository: `Dja-tiger/LexiGo`.
 - Issue #71 remains the scoped task; Draft PR #473 is `feat/issue-71-feedback-taxonomy` -> `main`.
-- Base SHA is `b1e238000803936e694b032564be0ed6fc97d1b7`.
-- The implementation has one typed feedback taxonomy and one root `FeedbackCenter`; route/content/connectivity/form-validation owners remain separate.
-- Session/account confirmed outcomes, non-blocking speech failures and calendar action feedback are the migrated cross-route producers.
-- `AccessibleDialog` intentionally isolates every other body child with `inert` + `aria-hidden="true"` and contains focus inside the top modal.
-- Repository DOM ownership explicitly confines `createPortal`, imperative portal host creation and focus containment to `accessible-dialog.tsx`.
+- Base SHA: `b1e238000803936e694b032564be0ed6fc97d1b7`.
+- One root `FeedbackCenter` owns the typed feedback reducer/FIFO queue/timers; route/content/connectivity/form-validation owners remain separate.
+- `AccessibleDialog` remains the sole audited `createPortal`/focus-containment primitive and preserves background `inert` + `aria-hidden` isolation.
+- Shared feedback is rendered declaratively through `FeedbackDialogHost` inside the active dialog, so toast actions/live regions remain inside the modal accessibility boundary.
 - PR #473 remains Draft until full immutable-head CI is green.
 
-### CI findings and root cause evolution
+### CI findings and repairs
 
-1. CI #3198 exposed the calendar feedback regression: FIFO worked, but focusing the dismiss action did not pause the active toast in Chromium/WebKit.
-2. A focus-event-only repair (`onFocusCapture` -> `onFocus`) was insufficient; CI #3202 reproduced the exact assertion.
-3. The second Playwright artifact proved the real cause: root feedback was outside the active calendar `AccessibleDialog`, therefore the dialog correctly made it inert/`aria-hidden` and redirected focus back into the modal.
-4. An initial modal-host implementation used `createPortal` from `feedback-center.tsx`. CI #3208 caught this at unit level through `react-dom-ownership.test.ts`: portal/focus infrastructure is intentionally allowed only in the audited dialog primitive.
-5. The final architecture is fully declarative outside that primitive: `AccessibleDialog` renders `FeedbackDialogHost` inside its section; React context already crosses the dialog's existing audited portal. The root `FeedbackCenter` keeps the single reducer/FIFO state and exposes the current feedback layer through context. The most recently registered dialog host renders that layer; the root renders it only when no dialog host is active.
+1. CI #3198: `system-states.spec.ts` proved FIFO worked but pause-on-focus failed in Chromium/WebKit.
+2. CI #3202: focus-event-only repair failed the same assertion; artifact evidence showed root feedback was outside the active modal and therefore inert/hidden.
+3. A temporary second-portal implementation moved feedback into the modal, but CI #3208 correctly rejected it via `react-dom-ownership.test.ts` because portal infrastructure is confined to `accessible-dialog.tsx`.
+4. The final runtime architecture is declarative: React context crosses the existing dialog portal; the active `FeedbackDialogHost` renders the single root-owned feedback layer.
+5. CI #3213 on `09ab010c46e7cdba3b86feadc3eeacbb92e8b7b8` passed frontend core quality in full (lint, typecheck, unit including DOM ownership, production build, dependency audit), backend integration/unit/security, performance budgets, accessibility audit, dictionary smoke, controlled service worker and visual regression.
+6. CI #3213 exposed only an expected test-ownership consequence in completed calendar collections: `apple-calendar-pwa.spec.ts` used `dialog.getByRole("status")`, but the dialog now intentionally contains both contextual `.lx-calendar-status` (`aria-live="off"`) and the shared live toast (`role="status"`, `aria-live="polite"`). Playwright correctly rejected that ambiguous locator in iOS PWA and Content Security jobs.
+7. The calendar regression tests now target `.lx-calendar-status` explicitly. This preserves direct validation of contextual operation copy while allowing the shared toast to coexist in the same modal. No `.first()`, timeout inflation, browser skip, hidden-control interaction or product assertion was introduced.
+8. The #3213 UI shard was cancelled automatically after the new commit and therefore is not final evidence. A WebKit failure snapshot from the calendar collection already showed shared feedback inside the dialog and, in one flow, `data-feedback-paused="true"`, but the unchanged `system-states.spec.ts` gate remains authoritative for final pause/FIFO validation.
 
-### Changed files for the modal-containment repair
+### Current implementation evidence
 
-- `frontend/components/feedback-center.tsx`: single feedback state owner, ordered dialog-host registration, declarative host rendering, stable registration dependency, no `createPortal` or imperative DOM ownership.
-- `frontend/components/accessible-dialog.tsx`: `FeedbackDialogHost` lives inside the existing `role="dialog"`; inert/focus-trap implementation is unchanged.
-- `frontend/components/feedback-center-source.test.ts`: requires declarative modal ownership and explicitly rejects a second portal owner.
-- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md`, `.agents/current/EXECUTION.md`: task boundary and evidence.
-
-### Checks passed
-
-- Issue #71 acceptance criteria and semantic owners re-verified.
-- CI #3202 passed Frontend core quality, backend integration/unit/security, Content Security, Dictionary smoke, Visual Regression, Lesson completion, iOS PWA Dictionary, Controlled SW, Accessibility audit and Performance budgets before the known UI shard failure.
-- Playwright artifacts from #3198 (`9107680890`) and #3202 (`9108974014`) both gave deterministic cross-browser evidence for the same pause-on-focus failure.
-- CI #3208 lint and typecheck passed.
-- CI #3208 unit output confirmed all Issue #71 feedback model/source tests passed; only `react-dom-ownership.test.ts` rejected the temporary second portal owner.
-- The temporary feedback `createPortal` implementation has been removed rather than allowlisted.
-- `AccessibleDialog` remains the sole audited portal/focus-containment primitive.
-- Existing E2E acceptance assertion, timeouts and browser coverage remain unchanged.
-
-### Superseded intermediate commits
-
-- `63bf6e3e55ae2bdf721cfe7475a03ad6044bd039`: focus-event symptom repair only.
-- `35e3caef1e6dd5bcb55bee5c55d829d108b4f56a`: initial modal-host implementation with a second portal owner; superseded after CI #3208 ownership gate.
-
-### Current implementation commits
-
-- `9db5bbdb8df6e146293d77097d0cd1cbfe58df6b`: place feedback host inside `AccessibleDialog`.
-- `e21a35da592f1a86cd7d6afcc13e0dd982c4b926`: stable declarative feedback-host registration/state ownership.
-- `17c15ff297d92c6545fa3f05355722da2ea0e1af`: source contract for declarative modal feedback ownership.
+- `9db5bbdb8df6e146293d77097d0cd1cbfe58df6b`: feedback host inside `AccessibleDialog`.
+- `e21a35da592f1a86cd7d6afcc13e0dd982c4b926`: stable declarative host registration/rendering under the single feedback state owner.
+- `17c15ff297d92c6545fa3f05355722da2ea0e1af`: source contract rejects a second portal owner.
+- `47eebb3cc29999a018bbd06cc55eea4c267688c9`: scope the calendar regression adaptation before changing the test.
+- `248e76d26e4d88490282f08d4644e43c84582c22`: calendar PWA regression locators target the contextual `.lx-calendar-status` rather than an ambiguous role-only query.
 
 ### Next action
 
-Finalize execution evidence, resolve the exact PR head and require full CI on that immutable SHA. The unchanged `system-states.spec.ts` calendar test must prove FIFO + focus pause/dismiss inside the open modal. If green, mark PR #473 Ready, squash-merge with expected-head protection, verify Issue #71 closure and continue with the next independently automatable live backlog slice.
+Finalize execution evidence, resolve the exact branch head and require a full CI run on that immutable SHA. The unchanged cross-browser `system-states.spec.ts` test must prove FIFO + focus pause/dismiss inside the open modal, while PWA/security calendar collections must prove contextual status copy with the semantic locator. If all gates are green, mark PR #473 Ready, squash-merge with expected-head protection, verify Issue #71 closure and continue to the next independently automatable live backlog slice.
