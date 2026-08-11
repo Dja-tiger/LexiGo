@@ -48,6 +48,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - `frontend/lib/navigation.ts` and focused navigation/auth-return helpers/tests if required
 - `frontend/lib/word-detail.ts`
 - `frontend/lib/interface-copy.ts` only for shared guest-access copy
+- `frontend/scripts/dictionary-navigation-smoke.sh` only for canonical guest/auth Dictionary navigation smoke ownership
 - focused `frontend/**/*.test.*`, `frontend/e2e/**`, accessibility/visual/performance ownership files required by the changed behavior
 
 ## Prohibited paths
