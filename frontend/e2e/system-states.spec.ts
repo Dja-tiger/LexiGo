@@ -188,7 +188,7 @@ test("queues repeated calendar feedback, pauses it on focus and advances exactly
   await expect(toast).toHaveAttribute("aria-live", "polite");
   await expect(toast).toHaveAttribute("data-feedback-queued", "1");
   await expect(toast).toContainText("Google Calendar открыт");
-  await expect(dialog.getByRole("status")).toHaveAttribute("aria-live", "off");
+  await expect(dialog.locator(".lx-calendar-status")).toHaveAttribute("aria-live", "off");
 
   const dismiss = toast.getByRole("button", { name: "Закрыть уведомление", exact: true });
   await dismiss.focus();
