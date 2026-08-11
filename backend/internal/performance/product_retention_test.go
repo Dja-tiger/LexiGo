@@ -49,34 +49,34 @@ func TestProductRetentionEventValidateAcceptsSupportedCombinations(t *testing.T)
 
 func TestProductRetentionEventValidateRejectsUnsupportedOrCrossEventFields(t *testing.T) {
 	tests := []struct {
-		name  string
+		name   string
 		mutate func(*ProductRetentionEvent)
-		field string
+		field  string
 	}{
 		{
-			name: "unknown event",
+			name:   "unknown event",
 			mutate: func(event *ProductRetentionEvent) { event.Event = "opened_word" },
-			field: "event",
+			field:  "event",
 		},
 		{
-			name: "unknown action",
+			name:   "unknown action",
 			mutate: func(event *ProductRetentionEvent) { event.Action = "open_dictionary" },
-			field: "action",
+			field:  "action",
 		},
 		{
-			name: "unknown delay",
+			name:   "unknown delay",
 			mutate: func(event *ProductRetentionEvent) { event.DelayBucket = "tomorrow" },
-			field: "delayBucket",
+			field:  "delayBucket",
 		},
 		{
-			name: "completed without recommendation",
+			name:   "completed without recommendation",
 			mutate: func(event *ProductRetentionEvent) { event.Action = ProductRetentionActionNone },
-			field: "action",
+			field:  "action",
 		},
 		{
-			name: "completed with delay",
+			name:   "completed with delay",
 			mutate: func(event *ProductRetentionEvent) { event.DelayBucket = ProductRetentionDelayUnder1Minute },
-			field: "delayBucket",
+			field:  "delayBucket",
 		},
 		{
 			name: "next action without action",
