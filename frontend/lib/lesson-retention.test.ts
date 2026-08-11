@@ -29,6 +29,7 @@ class MemoryStorage {
 
 const COMPLETION_KEY = "lexigo:lesson-retention-completion:v1";
 const COMPLETION_SESSION_KEY = "lexigo:lesson-retention-session:v1";
+const LAST_REPORTED_COMPLETION_KEY = "lexigo:lesson-retention-last-completion:v1";
 
 function installBrowser(options: { doNotTrack?: string } = {}) {
   const localStorage = new MemoryStorage();
@@ -118,6 +119,17 @@ describe("lesson retention reporting", () => {
       expect(serialized).not.toContain(forbidden);
     }
     expect(localStorage.getItem(COMPLETION_KEY)).toContain('"actionReported":true');
+    expect(localStorage.getItem(LAST_REPORTED_COMPLETION_KEY)).toBe(String(completedAt));
+  });
+
+  it("deduplicates a remount of the same persisted completion", () => {
+    const { fetchMock } = installBrowser();
+    const completedAt = Date.UTC(2026, 7, 11, 18, 0, 0);
+
+    reportLessonCompletion("next_lesson", completedAt);
+    reportLessonCompletion("next_lesson", completedAt);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("does not count a reload in the completion browser session as a return", () => {
@@ -130,13 +142,14 @@ describe("lesson retention reporting", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("reports one return when a later browser session has no matching session marker", () => {
+  it("reports one return and does not reclassify a restored result as a new completion", () => {
     const { localStorage, sessionStorage, fetchMock } = installBrowser();
     const completedAt = Date.UTC(2026, 7, 11, 18, 0, 0);
 
     reportLessonCompletion("home", completedAt);
     sessionStorage.removeItem(COMPLETION_SESSION_KEY);
     reportPendingLessonReturn(completedAt + 26 * 60 * 60_000);
+    reportLessonCompletion("home", completedAt);
     reportPendingLessonReturn(completedAt + 27 * 60 * 60_000);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -148,12 +161,17 @@ describe("lesson retention reporting", () => {
     expect(localStorage.getItem(COMPLETION_KEY)).toBeNull();
   });
 
-  it("honors browser privacy opt-out and keeps no cross-session marker", () => {
-    const { localStorage, fetchMock } = installBrowser({ doNotTrack: "1" });
+  it("honors browser privacy opt-out and clears cross-session control state", () => {
+    const { localStorage, fetchMock } = installBrowser();
+    const completedAt = Date.UTC(2026, 7, 11, 18, 0, 0);
+    reportLessonCompletion("next_lesson", completedAt);
+    expect(localStorage.getItem(LAST_REPORTED_COMPLETION_KEY)).toBe(String(completedAt));
 
-    reportLessonCompletion("next_lesson", Date.UTC(2026, 7, 11, 18, 0, 0));
+    Object.defineProperty(navigator, "doNotTrack", { configurable: true, value: "1" });
+    reportLessonCompletion("next_lesson", completedAt + 1_000);
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem(COMPLETION_KEY)).toBeNull();
+    expect(localStorage.getItem(LAST_REPORTED_COMPLETION_KEY)).toBeNull();
   });
 });
