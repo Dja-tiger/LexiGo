@@ -5,7 +5,7 @@
 - Issue: #72 `[Medium][UX] Унифицировать гостевой доступ к словам и фразам`
 - Branch: `feat/issue-72-guest-catalog-parity`
 - Base SHA: `e6b2d74891fb4e52f23152758812551361717857`
-- Latest code/dependency SHA before final Agent Docs write: `90a72b873086ab09895527fb67019cd95b325889`
+- Latest smoke implementation SHA before final Agent Docs write: `7252096289ef6917d9f14f74817c987d2c15a0c9`
 - Head SHA: resolve from live branch ref after this final Agent Docs write
 - PR: #476 `feat(catalog): unify guest words and phrases access` (Draft until final immutable-head gates/review audit are clean)
 
@@ -27,7 +27,7 @@ Version or verification date:
 
 Inputs:
 
-Issue #72, Draft PR #476, live `main`, feature branch, CI workflow runs, changed files, backend/frontend/OpenAPI/runtime contracts.
+Issue #72, Draft PR #476, live `main`, feature branch, CI workflow runs, changed files, backend/frontend/OpenAPI/runtime/smoke contracts.
 
 Files inspected:
 
@@ -42,6 +42,7 @@ Files inspected:
 - `frontend/components/lexigo-premium-app.tsx`.
 - `frontend/lib/auth-return.ts`, navigation/phrase helpers.
 - focused frontend source contracts and Playwright suites.
+- `frontend/scripts/dictionary-navigation-smoke.sh`.
 - `frontend/package.json`, `backend/go.mod`, `backend/go.sum`.
 
 Actions performed:
@@ -60,7 +61,10 @@ Actions performed:
 - Added `gopkg.in/yaml.v3` as the focused parser dependency.
 - Captured the repository-standard `go mod tidy` diff emitted by CI #3286 and committed the exact required indirect module/checksum graph to `backend/go.mod` and `backend/go.sum`.
 - Audited PR #476 review state: mergeable, no review threads, no submitted reviews; reconciled PR body with actual completed scope/evidence.
-- Performed read-back and generated-diff checks after writes, including large-file replacements.
+- Diagnosed CI #3290 `Frontend E2E (Dictionary smoke)` from its job log. The product correctly rendered the new guest Dictionary, while `dictionary-navigation-smoke.sh` still required the historical `Словарь доступен после входа` auth gate.
+- Updated only the canonical Dictionary smoke owner so the unauthenticated shell smoke now requires `data-route-client-island="dictionary"`, the `Словарь` catalog heading, explicit demo/non-persistence guidance, and absence of the historical auth gate.
+- Expanded the Issue #72 task allowlist narrowly for that required smoke owner before the script write.
+- Performed read-back and generated-diff checks after writes, including large-file replacements and the smoke correction.
 
 Commands or procedures:
 
@@ -69,6 +73,7 @@ Commands or procedures:
 - GitHub Actions commit-run/job/log inspection.
 - Generated commit patch inspection before accepting large-file writes.
 - `go mod verify` / `go mod tidy` output was taken from the repository CI runner rather than reconstructed heuristically; the emitted manifest diff became the committed source of truth.
+- Dictionary smoke failure was classified against Issue #72 acceptance before modification; no runtime guest behavior was reverted and no smoke bypass/skip was introduced.
 - No direct write to `main` and no bypass of CI/review lifecycle.
 
 Artifacts produced:
@@ -79,21 +84,23 @@ Artifacts produced:
 - Exact canonical auth-return handoff.
 - Public OpenAPI paths/schemas plus full-YAML/leakage contract.
 - Blocking browser acceptance `frontend/e2e/guest-catalog-parity.spec.ts`.
+- Canonical unauthenticated Dictionary navigation smoke aligned with guest read-only/demo semantics.
 - Focused source/backend contracts, tidy dependency manifests, and updated Agent Harness evidence.
 
 Result:
 
-Implementation is coherent on the feature branch. Intermediate CI demonstrated green frontend core and backend unit/race/security/integration after runtime fixes. CI #3286 then isolated one dependency-manifest gate introduced by the new YAML parser; its exact tidy diff is now committed. Final immutable-head validation is required on the head produced by this final Agent Docs write.
+Implementation is coherent on the feature branch. Intermediate CI demonstrated green frontend core and backend unit/race/security/integration after runtime fixes. CI #3286 isolated and resolved the YAML-parser dependency-manifest gate. CI #3290 then passed frontend core and full backend unit/security including dependency verification, and isolated one stale Dictionary smoke assertion. The smoke owner is now corrected without changing runtime behavior. A fresh immutable-head validation is required on the SHA produced by this final Agent Docs write.
 
 Failures:
 
 - Historical CI #3255 failed frontend unit/source contracts. One failure was caused by missing runtime rendering of shared `CatalogKindNavigation`; one contract was JSX-format fragile; Word Detail still asserted the pre-guest auth guard.
 - Manual inspection found a Phrases referential-identity effect loop, missing auth-success `return_to` consumption, and absent public OpenAPI documentation.
-- CI #3286 / run `31528279920` failed only `Backend unit and security -> Verify dependency files`: `go mod tidy` added `github.com/kr/text`, `github.com/rogpeppe/go-internal` and their transitive checksums required by yaml.v3 test parsing. Commits `d6612f3c978f10be2a394d9acc564e5a7818f8d4` and `90a72b873086ab09895527fb67019cd95b325889` apply that exact diff.
+- CI #3286 / run `31528279920` failed only `Backend unit and security -> Verify dependency files`: `go mod tidy` added `github.com/kr/text`, `github.com/rogpeppe/go-internal` and transitive checksums required by yaml.v3 test parsing. Commits `d6612f3c978f10be2a394d9acc564e5a7818f8d4` and `90a72b873086ab09895527fb67019cd95b325889` apply that exact diff.
+- CI #3290 / run `31528597976` on `67a9124df6382a5813fc6655581daad9768a978f` failed `Frontend E2E (Dictionary smoke)` because its shell smoke still asserted `aria-label="Словарь доступен после входа"`. Issue #72 intentionally removed that route-level auth gate, so the smoke was stale. Commit `7252096289ef6917d9f14f74817c987d2c15a0c9` replaces only that assertion block with semantic guest-Dictionary checks and a negative historical-gate assertion.
 
 Root cause:
 
-The guest parity slice crossed backend public projection, route islands, compatibility auth handoff and source-contract ownership. Earlier partial implementation changed behavior without completing every downstream contract/consumer, Phrases used an unstable derived object as an effect dependency, and the first YAML-parser dependency commit did not include the full transitive graph produced by the repository's mandatory tidy gate.
+The guest parity slice crossed backend public projection, route islands, compatibility auth handoff, source-contract ownership, OpenAPI and standalone navigation smoke ownership. Earlier partial implementation changed behavior without completing every downstream contract/consumer. Phrases used an unstable derived object as an effect dependency, the first YAML-parser dependency commit omitted the pinned-toolchain tidy graph, and the Dictionary smoke encoded the pre-Issue-72 authorization model rather than the canonical route contract.
 
 Fallback:
 
@@ -107,7 +114,7 @@ Limitations:
 
 Reusable lesson:
 
-When guest/auth parity introduces a public projection, lock the boundary at route middleware, repository/query ownership, and closed OpenAPI schemas simultaneously. A safe auth-return producer is insufficient unless the successful auth owner consumes the validated canonical target. React effect dependencies derived from navigation need stable identity. If a new test parser changes Go module requirements, treat `go mod tidy` output from the pinned CI toolchain as an immutable dependency-file contract and commit it before final CI.
+When guest/auth parity introduces a public projection, lock the boundary at route middleware, repository/query ownership, closed OpenAPI schemas, browser acceptance and any standalone shell smoke that encodes authorization expectations. A safe auth-return producer is insufficient unless the successful auth owner consumes the validated canonical target. React effect dependencies derived from navigation need stable identity. If a new test parser changes Go module requirements, treat `go mod tidy` output from the pinned CI toolchain as an immutable dependency-file contract. When product access semantics intentionally change, update stale smoke assertions to prove the new behavior rather than preserving the old gate or skipping the route.
 
 ### gh-fix-ci
 
@@ -125,11 +132,11 @@ Version or verification date:
 
 Inputs:
 
-PR #476 CI #3255, CI #3286 and subsequent commit-associated workflow jobs/logs.
+PR #476 CI #3255, CI #3286, CI #3290 and subsequent commit-associated workflow jobs/logs.
 
 Files inspected:
 
-Frontend source-contract tests and runtime owners; backend module manifests; GitHub Actions workflow jobs/logs; relevant changed files.
+Frontend source-contract tests and runtime owners; backend module manifests; `frontend/scripts/dictionary-navigation-smoke.sh`; GitHub Actions workflow jobs/logs; relevant changed files.
 
 Actions performed:
 
@@ -137,8 +144,10 @@ Actions performed:
 - Mapped each frontend failure to the runtime owner instead of deleting/weakening tests.
 - Fixed missing shared navigation rendering and stale/format-fragile assertions.
 - For CI #3286, read the exact `Verify dependency files` job log and classified the failure as deterministic `go mod tidy` metadata drift rather than runtime/test failure.
-- Applied the exact two indirect `go.mod` additions and exact `go.sum` additions shown by the runner.
-- Advanced to a new head rather than re-running a stale failed head.
+- Applied the exact indirect `go.mod` additions and `go.sum` additions shown by the runner.
+- For CI #3290, read the Dictionary smoke job log and compared the failing expected auth-gate marker with the Issue #72 guest-browse acceptance and current Dictionary runtime.
+- Replaced the stale smoke expectation with positive canonical guest-island/catalog/demo assertions plus an explicit negative check for the retired auth gate; no skip, retry inflation or product rollback was added.
+- Advanced to new heads rather than re-running stale failed heads.
 
 Commands or procedures:
 
@@ -146,19 +155,19 @@ GitHub Actions run/job/log inspection and commit-associated workflow polling.
 
 Artifacts produced:
 
-Corrected runtime/source contracts plus tidy-clean Go dependency manifests.
+Corrected runtime/source contracts, tidy-clean Go dependency manifests, and a guest-aware Dictionary navigation smoke.
 
 Result:
 
-The original frontend blocker and the later deterministic dependency-manifest blocker are both addressed without weakening product acceptance.
+The original frontend blocker, deterministic dependency-manifest blocker and stale Dictionary smoke blocker are all addressed without weakening product acceptance. Final head still requires a complete new CI run.
 
 Failures:
 
-No unresolved failure from CI #3255 or #3286 is known; final head still requires a complete new CI run.
+No unresolved failure from CI #3255, #3286 or the classified #3290 smoke contract is known; final immutable-head validation remains the source of truth.
 
 Root cause:
 
-Mixed stale source assertions plus one genuine omitted runtime owner, followed later by incomplete module metadata for a new test-only YAML parser.
+Mixed stale source assertions plus one genuine omitted runtime owner, incomplete module metadata for a new test-only YAML parser, and a standalone smoke that still encoded the historical authentication model.
 
 Fallback:
 
@@ -166,8 +175,8 @@ Not required; corrective commits are branch-scoped and final CI will validate th
 
 Limitations:
 
-Final CI must be evaluated on the final Agent-Docs-inclusive head, not on intermediate runs #3280/#3283/#3286.
+Final CI must be evaluated on the final Agent-Docs-inclusive head, not on intermediate runs #3280/#3283/#3286/#3290.
 
 Reusable lesson:
 
-Treat source-contract CI failures as ownership evidence and dependency-file CI failures as deterministic build metadata evidence. Fix the semantic owner or commit the exact toolchain-emitted manifest diff; do not suppress the gate.
+Treat source-contract and smoke CI failures as ownership evidence. First compare the assertion to the current issue acceptance and canonical runtime; fix the semantic owner when runtime is wrong, or update the stale acceptance owner when product behavior intentionally changed. Never suppress the gate merely to make CI green.
