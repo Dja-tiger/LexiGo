@@ -7,18 +7,37 @@ import {
 } from "./support/lesson-result-fixture";
 
 test.describe("canonical Lesson Result", () => {
-  test("shows separated evidence and creates one distinct next lesson", async ({ page }) => {
-    const fixture = await installLessonResultFixture(page, { previewTotal: 1 });
+  test("shows authoritative review timing, separated evidence, and one personalized next action", async ({ page }) => {
+    const nextDueAt = "2026-08-12T09:30:00Z";
+    const fixture = await installLessonResultFixture(page, {
+      previewTotal: 1,
+      nextDueAt,
+    });
     await completeRecallLesson(page);
 
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
-    await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Можно продолжить цель дня" })).toBeVisible();
     await expect(page.getByText("1 / 1", { exact: true })).toBeVisible();
     await expect(page.getByText("Самостоятельно", { exact: true })).toBeVisible();
     await expect(page.getByText("С выбором", { exact: true })).toBeVisible();
     await expect(page.getByText("Просмотрено", { exact: true })).toBeVisible();
 
-    const next = page.getByRole("button", { name: "Следующий урок", exact: true });
+    const formattedNextDueAt = await page.evaluate((value) => new Intl.DateTimeFormat("ru-RU", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(Date.parse(value)), nextDueAt);
+    await expect(page.getByText(`Следующее повторение — ${formattedNextDueAt}`, { exact: true })).toBeVisible();
+
+    await expect.poll(() => fixture.retentionEvents().length).toBe(1);
+    expect(fixture.retentionEvents()[0]).toMatchObject({
+      event: "lesson_completed",
+      action: "continue_goal",
+      delayBucket: "none",
+    });
+
+    const next = page.getByRole("button", { name: "Продолжить цель дня", exact: true });
     await next.evaluate((element) => {
       const button = element as HTMLButtonElement;
       button.click();
@@ -33,6 +52,29 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.getByText("The pipeline is delayed by a backlog.", { exact: true })).toHaveCount(0);
     expect(fixture.reviewRequests()).toBe(1);
     expect(fixture.lessonCreateRequests()).toBe(2);
+
+    await expect.poll(() => fixture.retentionEvents().length).toBe(2);
+    const retentionEvents = fixture.retentionEvents();
+    expect(retentionEvents[1]).toMatchObject({
+      event: "completion_to_next_action",
+      action: "continue_goal",
+      delayBucket: "under_1m",
+    });
+    for (const event of retentionEvents) {
+      for (const property of [
+        "userId",
+        "sessionId",
+        "lessonId",
+        "contentId",
+        "url",
+        "query",
+        "referrer",
+        "cookie",
+        "userAgent",
+      ]) {
+        expect(event).not.toHaveProperty(property);
+      }
+    }
   });
 
   test("restores the completed result after reload and browser history without duplicate review", async ({ page }) => {
@@ -41,13 +83,13 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
 
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Можно продолжить цель дня" })).toBeVisible();
     expect(fixture.reviewRequests()).toBe(1);
 
     await page.getByRole("button", { name: "На главную", exact: true }).click();
     await expect(page.getByRole("heading", { name: /Добавьте новые слова|готов(?:ы)? к повторению/ })).toBeVisible();
     await page.goBack();
-    await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Можно продолжить цель дня" })).toBeVisible();
     expect(fixture.reviewRequests()).toBe(1);
   });
 
@@ -75,12 +117,14 @@ test.describe("canonical Lesson Result", () => {
     await installLessonResultFixture(page, {
       previewTotal: 0,
       dueNow: 6,
+      nextDueAt: "2026-08-12T09:30:00Z",
     });
     await completeRecallLesson(page);
 
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");
-    await expect(page.getByRole("heading", { name: "Новых блоков пока нет" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Сначала закрепим слабые элементы" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Повторить 6 элементов", exact: true })).toBeVisible();
+    await expect(page.getByText(/^Следующее повторение — /)).toBeVisible();
   });
 
   test("rejects a server response that repeats the completed lesson", async ({ page }) => {
@@ -91,8 +135,8 @@ test.describe("canonical Lesson Result", () => {
     await completeRecallLesson(page);
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
 
-    await page.getByRole("button", { name: "Следующий урок", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
+    await page.getByRole("button", { name: "Продолжить цель дня", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Можно продолжить цель дня" })).toBeVisible();
     await expect(page.getByRole("alert").filter({ hasText: "Следующий урок совпал" })).toBeVisible();
     expect(fixture.lessonCreateRequests()).toBe(2);
   });
@@ -120,7 +164,7 @@ test.describe("canonical Lesson Result", () => {
       document.documentElement.style.zoom = "2";
     });
 
-    await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Продолжить цель дня", exact: true })).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       viewport: document.documentElement.clientWidth,
       content: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
