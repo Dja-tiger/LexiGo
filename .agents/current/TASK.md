@@ -19,8 +19,8 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Queue transient messages instead of overwriting them.
 - Make transient feedback dismissible and pause auto-dismiss while hovered/focused.
 - Keep critical/blocking errors persistent until their owning state resolves; never auto-dismiss them.
-- Migrate account/session success notices, non-blocking speech error/unsupported feedback and calendar operation confirmation/error into the shared owner where the event is genuinely global/user-action feedback.
-- Preserve contextual operational speech state (`loading`, `playing`, `stopped`) at the speech control.
+- Migrate account/session success notices, non-blocking speech error feedback and calendar operation confirmation/error into the shared owner where the event is genuinely global/user-action feedback.
+- Preserve contextual operational speech state (`loading`, `playing`, `stopped`) and browser-unsupported capability guidance at the speech control.
 - Add source/unit/browser regression protection for taxonomy, queueing, dismiss/live-region semantics and compact safe-area placement.
 
 ## Non-goals
@@ -46,8 +46,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `frontend/components/speech-player-button.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
 - `frontend/app/system-states.css`
-- `frontend/e2e/feedback.spec.ts`
-- `frontend/playwright.config.ts` only if authoritative collection is proven to require an explicit allow-list update.
+- `frontend/e2e/system-states.spec.ts`
 
 ## Prohibited paths
 
@@ -55,7 +54,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `api/**`
 - `deploy/**`
 - `.github/workflows/**`
-- dependency lockfiles/manifests unless an existing required command proves a dependency defect
+- dependency lockfiles/manifests
 - visual snapshot PNGs
 - unrelated route components/styles/tests
 
@@ -98,7 +97,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 
 - Source ownership/search contract.
 - Frontend lint/typecheck/unit/production build.
-- Targeted feedback browser tests in Chromium and WebKit, then Android Chromium and iOS WebKit.
+- `system-states.spec.ts` targeted in Chromium/WebKit/Android/iOS; it is already collected by blocking UI and accessibility commands, avoiding a new collection boundary.
 - Existing auth/session, speech and calendar browser regression coverage.
 - Keyboard and accessibility/axe collection.
 - Reduced-motion, PWA/service-worker, visual regression without baseline updates, performance/bundle gates.
