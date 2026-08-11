@@ -31,8 +31,9 @@ describe("Issue #75 Phrases search acceptance source contract", () => {
     expect(acceptanceJourney).toContain("await expect(releaseRadio).toBeChecked()");
   });
 
-  it("keeps query and topic combined in URL-backed History state", () => {
-    expect(phrasesApp).toContain("phraseCatalogFilters(navigation)");
+  it("keeps query and topic combined in URL-backed History state with stable filter identity", () => {
+    expect(phrasesApp).toContain("const filters = useMemo(() => phraseCatalogFilters(navigation), [navigation]);");
+    expect(phrasesApp).not.toContain("const filters = phraseCatalogFilters(navigation);");
     expect(phrasesApp).toContain("phraseCatalogTarget");
     expect(phrasesApp).toContain('window.addEventListener("popstate", syncNavigation)');
     expect(acceptanceJourney).toContain('["первопричину", "Release"]');
