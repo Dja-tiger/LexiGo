@@ -102,7 +102,7 @@ export async function installLessonResultFixture(
 ): Promise<LessonResultFixture> {
   const previewTotal = options.previewTotal ?? 1;
   const dueNow = options.dueNow ?? 0;
-  const nextDueAt = options.nextDueAt ?? null;
+  const nextDueAt = options.nextDueAt;
   const reviewsBefore = options.reviewsBefore ?? 2;
   const reviewsAfter = options.reviewsAfter ?? reviewsBefore + 1;
   const dailyGoal = options.dailyGoal ?? 15;
@@ -190,7 +190,7 @@ export async function installLessonResultFixture(
           choice: EMPTY_MODE,
           legacy: EMPTY_MODE,
         },
-        nextDueAt,
+        ...(typeof nextDueAt === "string" ? { nextDueAt } : {}),
       });
     }
     if (path === "/api/v1/lessons/active") {
