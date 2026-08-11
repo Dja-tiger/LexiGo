@@ -5,8 +5,8 @@
 - Issue: #72 `[Medium][UX] Унифицировать гостевой доступ к словам и фразам`
 - Branch: `feat/issue-72-guest-catalog-parity`
 - Base SHA: `e6b2d74891fb4e52f23152758812551361717857`
-- Latest product/test SHA before Agent Docs: `f0bacc3a564afb418c25a877a503d6b7131d87c6`
-- Head SHA: resolve from live branch ref after this Agent Docs write
+- Latest code/dependency SHA before final Agent Docs write: `90a72b873086ab09895527fb67019cd95b325889`
+- Head SHA: resolve from live branch ref after this final Agent Docs write
 - PR: #476 `feat(catalog): unify guest words and phrases access` (Draft until final immutable-head gates/review audit are clean)
 
 ## Skills used
@@ -57,14 +57,18 @@ Actions performed:
 - Registered the acceptance suite in blocking UI CI.
 - Documented public word list/detail endpoints and content-only response schemas in OpenAPI.
 - Added full-document YAML parsing to the backend OpenAPI test and explicit negative assertions for public auth/status/SRS leakage.
+- Added `gopkg.in/yaml.v3` as the focused parser dependency.
+- Captured the repository-standard `go mod tidy` diff emitted by CI #3286 and committed the exact required indirect module/checksum graph to `backend/go.mod` and `backend/go.sum`.
+- Audited PR #476 review state: mergeable, no review threads, no submitted reviews; reconciled PR body with actual completed scope/evidence.
 - Performed read-back and generated-diff checks after writes, including large-file replacements.
 
 Commands or procedures:
 
 - GitHub connector file/commit/PR/Issue reads.
 - GitHub branch-scoped file create/update operations with expected blob SHA where applicable.
-- GitHub Actions commit-run/job inspection.
+- GitHub Actions commit-run/job/log inspection.
 - Generated commit patch inspection before accepting large-file writes.
+- `go mod verify` / `go mod tidy` output was taken from the repository CI runner rather than reconstructed heuristically; the emitted manifest diff became the committed source of truth.
 - No direct write to `main` and no bypass of CI/review lifecycle.
 
 Artifacts produced:
@@ -75,19 +79,21 @@ Artifacts produced:
 - Exact canonical auth-return handoff.
 - Public OpenAPI paths/schemas plus full-YAML/leakage contract.
 - Blocking browser acceptance `frontend/e2e/guest-catalog-parity.spec.ts`.
-- Focused source/backend contracts and updated Agent Harness evidence.
+- Focused source/backend contracts, tidy dependency manifests, and updated Agent Harness evidence.
 
 Result:
 
-Implementation is coherent on the feature branch. Intermediate CI demonstrated green frontend core and backend unit/race/security/integration after the runtime fixes. Final immutable-head validation remains required because subsequent browser/OpenAPI/Agent Docs commits advanced the head.
+Implementation is coherent on the feature branch. Intermediate CI demonstrated green frontend core and backend unit/race/security/integration after runtime fixes. CI #3286 then isolated one dependency-manifest gate introduced by the new YAML parser; its exact tidy diff is now committed. Final immutable-head validation is required on the head produced by this final Agent Docs write.
 
 Failures:
 
-Historical CI #3255 failed frontend unit/source contracts. One failure was caused by missing runtime rendering of shared `CatalogKindNavigation`; one contract was JSX-format fragile; Word Detail still asserted the pre-guest auth guard. Additional manual inspection found a Phrases referential-identity effect loop, missing auth-success `return_to` consumption, and absent public OpenAPI documentation.
+- Historical CI #3255 failed frontend unit/source contracts. One failure was caused by missing runtime rendering of shared `CatalogKindNavigation`; one contract was JSX-format fragile; Word Detail still asserted the pre-guest auth guard.
+- Manual inspection found a Phrases referential-identity effect loop, missing auth-success `return_to` consumption, and absent public OpenAPI documentation.
+- CI #3286 / run `31528279920` failed only `Backend unit and security -> Verify dependency files`: `go mod tidy` added `github.com/kr/text`, `github.com/rogpeppe/go-internal` and their transitive checksums required by yaml.v3 test parsing. Commits `d6612f3c978f10be2a394d9acc564e5a7818f8d4` and `90a72b873086ab09895527fb67019cd95b325889` apply that exact diff.
 
 Root cause:
 
-The guest parity slice crossed backend public projection, route islands, compatibility auth handoff and source-contract ownership. Earlier partial implementation changed behavior without completing every downstream contract/consumer, and Phrases used an unstable derived object as an effect dependency.
+The guest parity slice crossed backend public projection, route islands, compatibility auth handoff and source-contract ownership. Earlier partial implementation changed behavior without completing every downstream contract/consumer, Phrases used an unstable derived object as an effect dependency, and the first YAML-parser dependency commit did not include the full transitive graph produced by the repository's mandatory tidy gate.
 
 Fallback:
 
@@ -95,13 +101,13 @@ If final validation finds a product regression that cannot be corrected within I
 
 Limitations:
 
-- Final immutable-head CI is still pending after the Agent Docs commits.
-- PR review/thread audit, Ready transition, merge, exact-SHA `main` CI and Stage/public acceptance have not yet been completed.
+- Final immutable-head CI is still pending on the head created by this write.
+- Ready transition, merge, exact-SHA `main` CI and Stage/public acceptance have not yet been completed.
 - `.agents/PROJECT_STATE.md` intentionally remains unchanged until delivered product evidence exists.
 
 Reusable lesson:
 
-When guest/auth parity introduces a public projection, lock the boundary at three levels simultaneously: route middleware ownership, repository/query ownership, and closed OpenAPI response schemas. For auth return, implementing a safe producer is insufficient; the successful auth owner must explicitly consume the validated canonical target. React effect dependencies derived from navigation should be memoized when object identity participates in load effects.
+When guest/auth parity introduces a public projection, lock the boundary at route middleware, repository/query ownership, and closed OpenAPI schemas simultaneously. A safe auth-return producer is insufficient unless the successful auth owner consumes the validated canonical target. React effect dependencies derived from navigation need stable identity. If a new test parser changes Go module requirements, treat `go mod tidy` output from the pinned CI toolchain as an immutable dependency-file contract and commit it before final CI.
 
 ### gh-fix-ci
 
@@ -119,47 +125,49 @@ Version or verification date:
 
 Inputs:
 
-PR #476 CI #3255 and subsequent CI runs/jobs.
+PR #476 CI #3255, CI #3286 and subsequent commit-associated workflow jobs/logs.
 
 Files inspected:
 
-Frontend source-contract tests, their runtime owners, workflow jobs/artifacts and the relevant changed files.
+Frontend source-contract tests and runtime owners; backend module manifests; GitHub Actions workflow jobs/logs; relevant changed files.
 
 Actions performed:
 
-- Confirmed backend jobs were green while frontend unit/source contracts failed.
-- Mapped each failing assertion to the runtime owner instead of deleting/weakening the test.
-- Fixed the missing shared navigation runtime owner and updated stale/format-fragile assertions.
-- Re-ran validation through new immutable-head commits rather than re-running a stale head.
+- Confirmed backend jobs were green while initial frontend unit/source contracts failed.
+- Mapped each frontend failure to the runtime owner instead of deleting/weakening tests.
+- Fixed missing shared navigation rendering and stale/format-fragile assertions.
+- For CI #3286, read the exact `Verify dependency files` job log and classified the failure as deterministic `go mod tidy` metadata drift rather than runtime/test failure.
+- Applied the exact two indirect `go.mod` additions and exact `go.sum` additions shown by the runner.
+- Advanced to a new head rather than re-running a stale failed head.
 
 Commands or procedures:
 
-GitHub Actions run/job/artifact inspection and commit-associated workflow polling.
+GitHub Actions run/job/log inspection and commit-associated workflow polling.
 
 Artifacts produced:
 
-Corrected runtime/source contracts and subsequent green frontend core on intermediate CI #3280.
+Corrected runtime/source contracts plus tidy-clean Go dependency manifests.
 
 Result:
 
-The original frontend unit blocker was removed without weakening the intended ownership contract.
+The original frontend blocker and the later deterministic dependency-manifest blocker are both addressed without weakening product acceptance.
 
 Failures:
 
-No unresolved failure from CI #3255 remains.
+No unresolved failure from CI #3255 or #3286 is known; final head still requires a complete new CI run.
 
 Root cause:
 
-Mixed stale source assertions plus one genuine omitted runtime owner.
+Mixed stale source assertions plus one genuine omitted runtime owner, followed later by incomplete module metadata for a new test-only YAML parser.
 
 Fallback:
 
-Not required; corrective commits were branch-scoped and validated by later CI.
+Not required; corrective commits are branch-scoped and final CI will validate them together.
 
 Limitations:
 
-Final CI must be evaluated on the final Agent-Docs-inclusive head, not on intermediate run #3280/#3283.
+Final CI must be evaluated on the final Agent-Docs-inclusive head, not on intermediate runs #3280/#3283/#3286.
 
 Reusable lesson:
 
-Treat source-contract CI failures as ownership evidence: first determine whether the implementation or the assertion is stale, then preserve the semantic owner and make the assertion formatting-independent where possible.
+Treat source-contract CI failures as ownership evidence and dependency-file CI failures as deterministic build metadata evidence. Fix the semantic owner or commit the exact toolchain-emitted manifest diff; do not suppress the gate.
