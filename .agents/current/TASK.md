@@ -15,7 +15,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 ## Scope
 
 - Add a pure typed feedback model with explicit presentation and accessibility policy.
-- Add one persistent feedback center above route islands in the App Router shell.
+- Mount one persistent client feedback center in RootLayout above `RoutedLexigoApp` and route children, leaving route/navigation ownership unchanged.
 - Queue transient messages instead of overwriting them.
 - Make transient feedback dismissible and pause auto-dismiss while hovered/focused.
 - Keep critical/blocking errors persistent until their owning state resolves; never auto-dismiss them.
@@ -41,7 +41,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `frontend/lib/feedback.test.ts`
 - `frontend/components/feedback-center.tsx`
 - `frontend/components/feedback-center-source.test.ts`
-- `frontend/components/routed-lexigo-app.tsx`
+- `frontend/app/layout.tsx`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/speech-player-button.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
@@ -56,11 +56,13 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `.github/workflows/**`
 - dependency lockfiles/manifests
 - visual snapshot PNGs
+- route/navigation implementation files, including `frontend/components/routed-lexigo-app.tsx`
 - unrelated route components/styles/tests
 
 ## Runtime owners
 
-- Persistent shell: `frontend/components/routed-lexigo-app.tsx`.
+- Persistent provider mount: `frontend/app/layout.tsx`.
+- Route/navigation/route-announcement lifecycle remains `frontend/components/routed-lexigo-app.tsx` and is intentionally unchanged.
 - Session/account runtime: `frontend/components/lexigo-bootstrapped-app.tsx`.
 - Speech action owner: `frontend/components/speech-player-button.tsx`.
 - Calendar action owner: `frontend/components/calendar-reminder-integration.tsx`.
@@ -69,7 +71,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 ## Documentation owners
 
 - `.agents/current/**` for task-local evidence only.
-- No public architecture ownership change is planned.
+- No public architecture ownership change is planned because RootLayout already owns composition of persistent client runtime shells.
 
 ## Invariants
 
@@ -112,4 +114,4 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 
 ## Rollback
 
-Remove the shared feedback center and producer publishing calls, restoring the previous local session/speech/calendar presentation. No server data or persistent schema migration is involved.
+Remove the RootLayout feedback provider and producer publishing calls, restoring the previous local session/speech/calendar presentation. No server data or persistent schema migration is involved.
