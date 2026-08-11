@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 
+import { interfaceActionLabel } from "@/lib/interface-copy";
 import { clearLexigoRuntimeState, isVersionMismatchError } from "@/lib/service-worker-update";
+
+const RETRY_ACTION_LABEL = interfaceActionLabel("retry");
+const HOME_ACTION_LABEL = interfaceActionLabel("home");
 
 export default function GlobalError({
   error,
@@ -61,10 +65,10 @@ export default function GlobalError({
             {error.digest ? <code style={{ display: "block", marginBottom: "16px" }}>{error.digest}</code> : null}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <button type="button" onClick={() => void recover()} style={{ minHeight: "44px", padding: "0 18px", border: 0, borderRadius: "12px", fontWeight: 700 }}>
-                {versionMismatch ? "Очистить кэш и обновить" : "Повторить"}
+                {versionMismatch ? "Очистить кэш и обновить" : RETRY_ACTION_LABEL}
               </button>
               <button type="button" onClick={() => window.location.assign("/")} style={{ minHeight: "44px", padding: "0 18px", border: "1px solid #66738e", borderRadius: "12px", background: "transparent", color: "inherit" }}>
-                На главную
+                {HOME_ACTION_LABEL}
               </button>
             </div>
           </section>
