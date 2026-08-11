@@ -4,15 +4,16 @@ import type { ResourceStatus } from "../lib/account-resources";
 import { partOfSpeechLabel, topicLabel } from "../lib/interface-copy";
 import type { LearningItem } from "../lib/learning";
 import {
+  isWordDetailItem,
   wordDetailSchedule,
   wordDetailStatus,
-  type WordDetailItem,
 } from "../lib/word-detail";
 import { AsyncSkeletonGrid, AsyncStatePanel } from "./async-state";
 import { SpeechPlayerButton } from "./speech-player-button";
 
 type WordDetailPresentationProps = {
-  item: WordDetailItem | null;
+  authenticated: boolean;
+  item: LearningItem | null;
   status: ResourceStatus;
   relatedPhrases: LearningItem[];
   relatedStatus: ResourceStatus;
@@ -20,7 +21,7 @@ type WordDetailPresentationProps = {
   onBack: () => void;
   onRetry: () => void;
   onRetryRelated: () => void;
-  onPractice: (item: WordDetailItem) => void;
+  onPractice: (item: LearningItem) => void;
   onOpenPhrase: (phrase: LearningItem) => void;
 };
 
@@ -98,6 +99,7 @@ function RelatedPhrases({
 }
 
 export function WordDetailPresentation({
+  authenticated,
   item,
   status,
   relatedPhrases,
@@ -131,16 +133,18 @@ export function WordDetailPresentation({
     );
   }
 
-  const learningStatus = wordDetailStatus(item.status);
-  const schedule = wordDetailSchedule(item);
+  const personalizedItem = authenticated && isWordDetailItem(item) ? item : null;
+  const learningStatus = personalizedItem ? wordDetailStatus(personalizedItem.status) : null;
+  const schedule = personalizedItem ? wordDetailSchedule(personalizedItem) : null;
   const practiceProblem = practiceStatus.problem;
   const practicePending = practiceStatus.phase === "loading";
+  const practiceLabel = learningStatus?.action ?? "Войти для практики";
 
   return (
     <section className="lx-word-detail" aria-labelledby="word-detail-title">
       <WordDetailRouteHeader
-        statusLabel={learningStatus.label}
-        statusTone={learningStatus.tone}
+        statusLabel={learningStatus?.label}
+        statusTone={learningStatus?.tone}
         onBack={onBack}
       />
 
@@ -181,18 +185,26 @@ export function WordDetailPresentation({
             </section>
           ) : null}
 
-          <RelatedPhrases
-            phrases={relatedPhrases}
-            status={relatedStatus}
-            onRetry={onRetryRelated}
-            onOpen={onOpenPhrase}
-          />
+          {authenticated ? (
+            <RelatedPhrases
+              phrases={relatedPhrases}
+              status={relatedStatus}
+              onRetry={onRetryRelated}
+              onOpen={onOpenPhrase}
+            />
+          ) : null}
 
           {item.note ? (
             <section className="lx-word-detail-context" aria-labelledby="word-detail-context-title">
               <h2 id="word-detail-context-title">Контекст</h2>
               <p>{item.note}</p>
             </section>
+          ) : null}
+
+          {!authenticated ? (
+            <p className="lx-word-detail-inline-status" role="note">
+              Демо-режим: карточку можно просматривать без аккаунта, но прогресс и история повторений не сохраняются.
+            </p>
           ) : null}
 
           <div className="lx-word-detail-actions">
@@ -203,7 +215,7 @@ export function WordDetailPresentation({
               aria-busy={practicePending}
               onClick={() => onPractice(item)}
             >
-              {practicePending ? "Создаём практику…" : learningStatus.action}
+              {practicePending ? "Создаём практику…" : practiceLabel}
             </button>
           </div>
 
@@ -216,37 +228,45 @@ export function WordDetailPresentation({
           ) : null}
         </article>
 
-        <aside className="lx-word-detail-knowledge" aria-labelledby="word-detail-knowledge-title">
-          <h2 id="word-detail-knowledge-title">Статус знания</h2>
-          <strong data-tone={learningStatus.tone}>{learningStatus.label}</strong>
-          <p>{learningStatus.description}</p>
-          <dl>
-            <div>
-              <dt>Следующее повторение</dt>
-              <dd>{schedule.due}</dd>
-            </div>
-            <div>
-              <dt>Текущий интервал</dt>
-              <dd>{schedule.interval}</dd>
-            </div>
-            <div>
-              <dt>Повторений</dt>
-              <dd>{schedule.repetitions}</dd>
-            </div>
-            <div>
-              <dt>Последнее повторение</dt>
-              <dd>{schedule.lastReviewed}</dd>
-            </div>
-          </dl>
-          <button
-            type="button"
-            disabled={practicePending}
-            aria-busy={practicePending}
-            onClick={() => onPractice(item)}
-          >
-            {practicePending ? "Создаём практику…" : learningStatus.action}
-          </button>
-        </aside>
+        {learningStatus && schedule ? (
+          <aside className="lx-word-detail-knowledge" aria-labelledby="word-detail-knowledge-title">
+            <h2 id="word-detail-knowledge-title">Статус знания</h2>
+            <strong data-tone={learningStatus.tone}>{learningStatus.label}</strong>
+            <p>{learningStatus.description}</p>
+            <dl>
+              <div>
+                <dt>Следующее повторение</dt>
+                <dd>{schedule.due}</dd>
+              </div>
+              <div>
+                <dt>Текущий интервал</dt>
+                <dd>{schedule.interval}</dd>
+              </div>
+              <div>
+                <dt>Повторений</dt>
+                <dd>{schedule.repetitions}</dd>
+              </div>
+              <div>
+                <dt>Последнее повторение</dt>
+                <dd>{schedule.lastReviewed}</dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              disabled={practicePending}
+              aria-busy={practicePending}
+              onClick={() => onPractice(item)}
+            >
+              {practicePending ? "Создаём практику…" : learningStatus.action}
+            </button>
+          </aside>
+        ) : (
+          <aside className="lx-word-detail-knowledge" aria-labelledby="word-detail-guest-title">
+            <h2 id="word-detail-guest-title">Демо без сохранения</h2>
+            <p>Содержание слова доступно сразу. Статус знания, интервалы и результаты практики появятся после входа.</p>
+            <button type="button" onClick={() => onPractice(item)}>Войти и сохранить прогресс</button>
+          </aside>
+        )}
       </div>
     </section>
   );
