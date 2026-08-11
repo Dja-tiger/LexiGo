@@ -77,7 +77,7 @@ function persistedEvidenceCopy(snapshot: LessonResultSnapshot): { title: string;
   }
   return {
     title: `Сохранены все ${reviewed} ответов`,
-    body: "Объективная проверка и самооценка показаны отдельно и не подменяют друг друга.",
+    body: "Объективная проверка и самооценка показаны отдельно и не смешиваются.",
   };
 }
 
