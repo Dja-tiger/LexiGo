@@ -152,6 +152,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /api/v1/product/retention:
+    post:
+      operationId: reportProductRetention
+      tags: [analytics]
+      summary: Принять анонимное retention-событие завершения урока и следующего действия.
+      description: Событие содержит только allow-listed event, action и coarse delay bucket без user/session/lesson/content ID, IP, raw URL, query, referrer, cookie или raw User-Agent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRetentionEvent"
+      responses:
+        "202":
+          description: Retention-событие принято и сохранено.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          description: Внутренняя ошибка сохранения без раскрытия деталей инфраструктуры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /api/v1/auth/register:
     post:
       operationId: register
@@ -1138,6 +1170,35 @@ components:
             - in_app_navigation
         backtrack:
           type: boolean
+        deviceClass:
+          type: string
+          enum: [mobile, tablet, desktop]
+        browserFamily:
+          type: string
+          enum: [chromium, webkit, firefox, other]
+        displayMode:
+          type: string
+          enum: [browser, standalone, fullscreen, minimal-ui, unknown]
+    ProductRetentionEvent:
+      type: object
+      additionalProperties: false
+      description: Aggregate-only retention event. Event-specific action/delay combinations are validated by the API; identifiers and free-form navigation/content fields are intentionally absent.
+      required: [appVersion, event, action, delayBucket, deviceClass, browserFamily, displayMode]
+      properties:
+        appVersion:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '^[A-Za-z0-9._-]+$'
+        event:
+          type: string
+          enum: [lesson_completed, completion_to_next_action, return_to_next_session]
+        action:
+          type: string
+          enum: [none, review_due, continue_goal, next_lesson, home]
+        delayBucket:
+          type: string
+          enum: [none, under_1m, under_5m, under_30m, under_4h, under_24h, under_72h, later]
         deviceClass:
           type: string
           enum: [mobile, tablet, desktop]
