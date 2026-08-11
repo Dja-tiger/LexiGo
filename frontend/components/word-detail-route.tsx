@@ -10,14 +10,13 @@ import {
   type ResourceStatus,
 } from "../lib/account-resources";
 import type { LearningItem } from "../lib/learning";
-import type { WordDetailItem } from "../lib/word-detail";
-import { AsyncStatePanel } from "./async-state";
+import { isWordDetailItem, type WordDetailItem } from "../lib/word-detail";
 import { WordDetailPresentation } from "./word-detail-presentation";
 
 type WordDetailRouteProps = {
   authenticated: boolean;
   detailKey: string;
-  loadDetail: (wordID: number, signal: AbortSignal) => Promise<WordDetailItem>;
+  loadDetail: (wordID: number, signal: AbortSignal) => Promise<LearningItem>;
   loadRelatedPhrases: (item: WordDetailItem, signal: AbortSignal) => Promise<LearningItem[]>;
   onStartPractice: (item: WordDetailItem) => Promise<void>;
   onBack: () => void;
@@ -27,7 +26,7 @@ type WordDetailRouteProps = {
 
 type KeyedDetail = {
   key: string;
-  item: WordDetailItem;
+  item: LearningItem;
 };
 
 type KeyedStatus = {
@@ -66,7 +65,6 @@ export function WordDetailRoute({
   const [relatedRetry, setRelatedRetry] = useState(0);
 
   useEffect(() => {
-    if (!authenticated) return;
     const controller = new AbortController();
 
     async function run() {
@@ -96,7 +94,7 @@ export function WordDetailRoute({
 
     void run();
     return () => controller.abort();
-  }, [authenticated, detailKey, detailRetry, loadDetail]);
+  }, [detailKey, detailRetry, loadDetail]);
 
   const activeItem = detail?.key === detailKey ? detail.item : null;
   const activeDetailStatus = detailStatus.key === detailKey
@@ -104,7 +102,16 @@ export function WordDetailRoute({
     : idleResourceStatus();
 
   useEffect(() => {
-    if (!activeItem) return;
+    if (!authenticated || !activeItem || !isWordDetailItem(activeItem)) {
+      if (activeItem) {
+        setRelated({
+          key: `${detailKey}:${activeItem.prompt}`,
+          items: [],
+          status: readyResourceStatus(),
+        });
+      }
+      return;
+    }
     const relatedItem = activeItem;
     const controller = new AbortController();
     const relatedKey = `${detailKey}:${relatedItem.prompt}`;
@@ -129,14 +136,25 @@ export function WordDetailRoute({
 
     void run();
     return () => controller.abort();
-  }, [activeItem, detailKey, loadRelatedPhrases, relatedRetry]);
+  }, [activeItem, authenticated, detailKey, loadRelatedPhrases, relatedRetry]);
 
   const activeRelatedKey = activeItem ? `${detailKey}:${activeItem.prompt}` : "";
   const activeRelated = related.key === activeRelatedKey
     ? related
     : { key: activeRelatedKey, items: [], status: idleResourceStatus() };
 
-  const startPractice = useCallback(async (item: WordDetailItem) => {
+  const startPractice = useCallback(async (item: LearningItem) => {
+    if (!authenticated) {
+      onRequireAuthentication();
+      return;
+    }
+    if (!isWordDetailItem(item)) {
+      setPracticeStatus(failedResourceStatus(
+        new Error("Карточка слова не содержит персональные данные для практики"),
+        "практику слова",
+      ));
+      return;
+    }
     setPracticeStatus(loadingResourceStatus());
     try {
       await onStartPractice(item);
@@ -144,26 +162,11 @@ export function WordDetailRoute({
     } catch (error) {
       setPracticeStatus(failedResourceStatus(error, "практику слова"));
     }
-  }, [onStartPractice]);
-
-  if (!authenticated) {
-    return (
-      <section className="lx-word-detail" aria-label="Карточка слова">
-        <button className="lx-word-detail-back" type="button" onClick={onBack}>← Словарь</button>
-        <AsyncStatePanel
-          label="Карточка слова доступна после входа"
-          kind="empty"
-          title="Войдите, чтобы открыть слово"
-          message="Статус изучения, интервальное повторение и персональная практика привязаны к вашему аккаунту."
-          actionLabel="Войти"
-          onAction={onRequireAuthentication}
-        />
-      </section>
-    );
-  }
+  }, [authenticated, onRequireAuthentication, onStartPractice]);
 
   return (
     <WordDetailPresentation
+      authenticated={authenticated}
       item={activeItem}
       status={activeDetailStatus}
       relatedPhrases={activeRelated.items}
