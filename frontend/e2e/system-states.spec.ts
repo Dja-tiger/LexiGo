@@ -168,9 +168,13 @@ test("queues repeated calendar feedback, pauses it on focus and advances exactly
   });
   await page.goto("/progress");
 
-  const calendarCard = page.locator(".lx-calendar-reminder-card");
-  await expect(calendarCard).toBeVisible();
-  await calendarCard.getByRole("button", { name: "Настроить календарь", exact: true }).click();
+  const reminderEntry = page.locator(".lx-route-reminder-entry");
+  const reminderTrigger = reminderEntry.locator(":scope > summary");
+  await expect(reminderTrigger).toBeVisible();
+  await reminderTrigger.click();
+  const reminderPreview = reminderEntry.getByRole("region", { name: "Текущее напоминание о занятии" });
+  await expect(reminderPreview).toBeVisible();
+  await reminderPreview.getByRole("button", { name: "Настроить календарь", exact: true }).click();
 
   const dialog = page.getByRole("dialog", { name: "Напоминание об английском" });
   await expect(dialog).toBeVisible();
