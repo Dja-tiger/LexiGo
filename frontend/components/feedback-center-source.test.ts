@@ -25,14 +25,14 @@ describe("shared feedback ownership", () => {
       .toBeLessThan(layoutSource.indexOf('import "./feedback.css";'));
   });
 
-  it("keeps the center as the only live-region owner for migrated transient failures", () => {
+  it("keeps the center as the only live announcement owner for migrated transient failures", () => {
     expect(centerSource).toContain("role={item.role}");
     expect(centerSource).toContain("aria-live={item.live}");
     expect(centerSource).toContain('aria-atomic="true"');
     expect(speechSource).toContain('role={state === "error" ? undefined : "status"}');
     expect(speechSource).toContain('aria-live={state === "error" ? "off" : "polite"}');
-    expect(calendarSource).not.toContain('className="lx-calendar-status"');
-    expect(calendarSource).not.toContain('setStatus(');
+    expect(calendarSource).toContain('className="lx-calendar-status" role="status" aria-live="off"');
+    expect(calendarSource).not.toContain('className="lx-calendar-status" role="status">');
   });
 
   it("routes only confirmed account outcomes through shared success feedback", () => {
