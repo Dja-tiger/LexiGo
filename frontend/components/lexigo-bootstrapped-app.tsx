@@ -24,6 +24,7 @@ import { AccountDataPanel } from "./account-data-panel";
 import { AccountEmailPanel } from "./account-email-panel";
 import { AccountSecurityPanel } from "./account-security-panel";
 import { EmailChangeConfirmation } from "./email-change-confirmation";
+import { useFeedback } from "./feedback-center";
 import { ReviewOutboxRuntime } from "./review-outbox-runtime";
 
 const AUTO_RESTORE_DELAYS_MS = [2000, 5000, 15_000] as const;
@@ -37,11 +38,6 @@ type RouteGraph = "dictionary" | "home" | "learn" | "product";
 type RouteGraphRequest = {
   routeGraph: RouteGraph;
   pathname: string;
-};
-
-type AccountNotice = {
-  title: string;
-  message: string;
 };
 
 type LexigoBootstrappedAppProps = {
@@ -229,9 +225,9 @@ function mergedNavigationHistoryState(
 }
 
 export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootstrappedAppProps) {
+  const { publish: publishFeedback } = useFeedback();
   const [initialSession, setInitialSession] = useState<Session | null | undefined>(undefined);
   const [notice, setNotice] = useState<RequestProblem | null>(null);
-  const [accountNotice, setAccountNotice] = useState<AccountNotice | null>(null);
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreRecoverable, setRestoreRecoverable] = useState(false);
   const [sessionRestoreSuppressed, setSessionRestoreSuppressed] = useState(false);
@@ -252,7 +248,6 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     setSessionRestoreSuppressed(false);
     setInitialSession(undefined);
     setNotice(null);
-    setAccountNotice(null);
     setRestoreRecoverable(false);
     setRestoreAttempt((current) => current + 1);
   }, []);
@@ -263,11 +258,12 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     setNotice(null);
     setRestoreRecoverable(false);
     setLogoutPending(false);
-    setAccountNotice({
+    publishFeedback({
+      category: "success",
       title: "Вы вышли из аккаунта",
       message: "Текущая сессия завершена. Локальная настройка оформления сохранена.",
     });
-  }, []);
+  }, [publishFeedback]);
 
   const handleLoggedOut = useCallback(() => {
     setSessionRestoreSuppressed(true);
@@ -281,12 +277,13 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
-    setAccountNotice({
+    publishFeedback({
+      category: "success",
       title: "Аккаунт удалён",
       message: "Аккаунт и связанные учебные данные удалены.",
     });
     window.history.replaceState(profileHistoryState(), "", "/profile?account=deleted");
-  }, []);
+  }, [publishFeedback]);
 
   const handleEmailChanged = useCallback(() => {
     invalidateBootstrappedSession();
@@ -294,12 +291,13 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     setInitialSession(null);
     setNotice(null);
     setRestoreRecoverable(false);
-    setAccountNotice({
+    publishFeedback({
+      category: "success",
       title: "Email изменён",
       message: "Все активные сессии завершены. Войдите с новым адресом.",
     });
     window.history.replaceState(profileHistoryState(), "", "/profile?account=email-changed");
-  }, []);
+  }, [publishFeedback]);
 
   useEffect(() => subscribeAppearanceRuntime(), []);
 
@@ -498,14 +496,6 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
             <span>{notice.message}</span>
           </div>
           {notice.retryable ? <button type="button" onClick={retryRestore}>Повторить</button> : null}
-        </div>
-      ) : null}
-      {accountNotice ? (
-        <div className="lx-session-notice success" role="status">
-          <div>
-            <strong>{accountNotice.title}</strong>
-            <span>{accountNotice.message}</span>
-          </div>
         </div>
       ) : null}
       <EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />
