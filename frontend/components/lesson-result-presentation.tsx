@@ -1,9 +1,14 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { consumeLearnHandoffFallbackNotice } from "../lib/lesson-composition-handoff";
-import type { LessonResultContinuation, LessonResultSnapshot } from "../lib/lesson-result";
+import { reportLessonCompletion, reportLessonNextAction } from "../lib/lesson-retention";
+import {
+  lessonResultPrimaryAction,
+  type LessonResultContinuation,
+  type LessonResultSnapshot,
+} from "../lib/lesson-result";
 
 const LESSON_RESULT_NOTICE_EVENT = "lexigo:lesson-result-handoff-notice";
 
@@ -37,11 +42,51 @@ type ResultCopy = {
   secondaryAction: "home" | "progress" | "stay";
 };
 
+function formatNextDueAt(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(timestamp);
+}
+
+function persistedEvidenceCopy(snapshot: LessonResultSnapshot): { title: string; body: string } {
+  const reviewed = Math.max(0, snapshot.evidence.activity.reviewed);
+  const total = Math.max(0, snapshot.evidence.activity.total);
+  if (snapshot.syncPending) {
+    return {
+      title: `${reviewed} ответов сохранены на устройстве`,
+      body: "До серверной синхронизации они не используются для новых утверждений о прогрессе.",
+    };
+  }
+  if (reviewed === 0) {
+    return {
+      title: "Нет сохранённых ответов для оценки",
+      body: "LexiGo не считает этот экран подтверждением освоения материала.",
+    };
+  }
+  if (reviewed < total) {
+    return {
+      title: `Сохранено ${reviewed} из ${total} ответов`,
+      body: "Непройденные и пропущенные элементы не считаются освоенными.",
+    };
+  }
+  return {
+    title: `Сохранены все ${reviewed} ответов`,
+    body: "Объективная проверка и самооценка показаны отдельно и не подменяют друг друга.",
+  };
+}
+
 function resultCopy(
   snapshot: LessonResultSnapshot,
   continuation: LessonResultContinuation,
   sourceLabel: string,
 ): ResultCopy {
+  const nextDueLabel = formatNextDueAt(snapshot.nextDueAt);
   if (continuation.kind === "sync-pending") {
     return {
       state: "sync-pending",
@@ -71,8 +116,10 @@ function resultCopy(
       actionEyebrow: "СЕГОДНЯ",
       actionTitle: `${snapshot.reviewsAfter ?? snapshot.evidence.activity.reviewed} объективных ответов`,
       actionBody: "Серия и время занятия остаются дополнительным контекстом.",
-      detailTitle: "Результат зафиксирован",
-      detailBody: "Статичный знак успеха сохраняет смысл при Reduce Motion.",
+      detailTitle: nextDueLabel ? `Следующее повторение — ${nextDueLabel}` : "Результат зафиксирован",
+      detailBody: nextDueLabel
+        ? "Дата взята из серверного расписания повторений, без клиентского прогноза."
+        : "Статичный знак успеха сохраняет смысл при Reduce Motion.",
       primaryLabel: "На главную",
       secondaryLabel: "Посмотреть прогресс",
       primaryAction: "home",
@@ -81,18 +128,26 @@ function resultCopy(
   }
 
   if (continuation.kind === "next") {
+    const remainingGoal = snapshot.reviewsAfter === null
+      ? null
+      : Math.max(0, snapshot.dailyGoal - snapshot.reviewsAfter);
+    const continueGoal = !snapshot.dailyGoalReached && remainingGoal !== null && remainingGoal > 0;
     return {
       state: "next",
       symbol: "→",
       eyebrow: "УРОК ЗАВЕРШЁН",
-      title: "Готов следующий блок",
-      body: "Текущий блок завершён и не будет открыт повторно через действие продолжения.",
-      actionEyebrow: "СЛЕДУЮЩИЙ БЛОК",
+      title: continueGoal ? "Можно продолжить цель дня" : "Готов следующий блок",
+      body: continueGoal
+        ? `До дневной цели осталось ${remainingGoal} сохранённых ответов.`
+        : "Текущий блок завершён и не будет открыт повторно через действие продолжения.",
+      actionEyebrow: continueGoal ? "ПРОДОЛЖИТЬ ЦЕЛЬ ДНЯ" : "СЛЕДУЮЩИЙ БЛОК",
       actionTitle: continuation.title || sourceLabel,
       actionBody: `${continuation.itemCount} элементов · около ${continuation.estimatedMinutes} минут`,
-      detailTitle: "Новый идентификатор блока",
-      detailBody: "Действие создаст следующий доступный блок, а не переоткроет завершённый.",
-      primaryLabel: "Следующий урок",
+      detailTitle: nextDueLabel ? `Следующее повторение — ${nextDueLabel}` : "Новый идентификатор блока",
+      detailBody: nextDueLabel
+        ? "Расписание повторений остаётся видимым, даже когда сейчас полезнее продолжить дневную цель."
+        : "Действие создаст следующий доступный блок, а не переоткроет завершённый.",
+      primaryLabel: continueGoal ? "Продолжить цель дня" : "Следующий урок",
       secondaryLabel: "На главную",
       primaryAction: "next",
       secondaryAction: "home",
@@ -104,13 +159,15 @@ function resultCopy(
       state: "due",
       symbol: "↻",
       eyebrow: "УРОК ЗАВЕРШЁН",
-      title: "Новых блоков пока нет",
+      title: "Сначала закрепим слабые элементы",
       body: "Результат сохранён. Следующее полезное действие — проверить элементы, срок которых наступил.",
       actionEyebrow: "ГОТОВО К ПОВТОРЕНИЮ",
       actionTitle: `${continuation.dueCount} элементов требуют проверки`,
-      actionBody: "Очередь основана на сроке и предыдущих объективных ответах.",
-      detailTitle: "Без лишнего нового материала",
-      detailBody: "Сначала закрепляем слабые формулировки, затем рекомендуем новый блок.",
+      actionBody: "Очередь основана на сроке и сохранённой самооценке, а не на новом случайном материале.",
+      detailTitle: nextDueLabel ? `Следующее повторение — ${nextDueLabel}` : "Без лишнего нового материала",
+      detailBody: nextDueLabel
+        ? "Время взято из серверного расписания повторений."
+        : "Сначала закрепляем слабые формулировки, затем рекомендуем новый блок.",
       primaryLabel: `Повторить ${continuation.dueCount} элементов`,
       secondaryLabel: "На главную",
       primaryAction: "due",
@@ -128,8 +185,10 @@ function resultCopy(
       actionEyebrow: "СЛЕДУЮЩИЙ ШАГ",
       actionTitle: "Проверяем учебную очередь",
       actionBody: "Новый блок, повторение или возвращение к плану будут выбраны по серверным данным.",
-      detailTitle: "Результат уже зафиксирован",
-      detailBody: "Проверка следующего шага не отправляет ответы повторно.",
+      detailTitle: nextDueLabel ? `Следующее повторение — ${nextDueLabel}` : "Результат уже зафиксирован",
+      detailBody: nextDueLabel
+        ? "Серверный срок уже известен; рекомендация следующего действия ещё проверяется."
+        : "Проверка следующего шага не отправляет ответы повторно.",
       primaryLabel: "Подбираем следующий шаг…",
       secondaryLabel: "Посмотреть прогресс",
       primaryAction: "none",
@@ -146,8 +205,12 @@ function resultCopy(
     actionEyebrow: "ДАЛЬШЕ",
     actionTitle: "Вернуться к плану",
     actionBody: "Следующая рекомендация появится на главной с учётом этого результата.",
-    detailTitle: `${Math.max(0, snapshot.confidence.almost + snapshot.confidence.again)} элемента требуют внимания`,
-    detailBody: "Повторение проверит, сохранились ли формулировки в памяти.",
+    detailTitle: nextDueLabel
+      ? `Следующее повторение — ${nextDueLabel}`
+      : `${Math.max(0, snapshot.confidence.almost + snapshot.confidence.again)} элемента требуют внимания`,
+    detailBody: nextDueLabel
+      ? "Время взято из серверного расписания повторений."
+      : "Повторение проверит, сохранились ли формулировки в памяти.",
     primaryLabel: "На главную",
     secondaryLabel: "Посмотреть прогресс",
     primaryAction: "home",
@@ -172,20 +235,37 @@ export function LessonResultPresentation({
   onStay,
 }: LessonResultPresentationProps) {
   const [handoffNotice] = useState(() => consumeLearnHandoffFallbackNotice(snapshot.source));
+  const completionReportedFor = useRef<string | null>(null);
   const copy = resultCopy(snapshot, continuation, sourceLabel);
-  const primaryAction = copy.primaryAction === "next"
+  const retentionAction = lessonResultPrimaryAction(snapshot, continuation);
+  const rawPrimaryAction = copy.primaryAction === "next"
     ? onNextLesson
     : copy.primaryAction === "due"
       ? onDueReview
       : copy.primaryAction === "home"
         ? onHome
         : undefined;
+  const primaryAction = rawPrimaryAction && retentionAction
+    ? () => {
+        reportLessonNextAction(retentionAction);
+        rawPrimaryAction();
+      }
+    : rawPrimaryAction;
   const secondaryAction = copy.secondaryAction === "home"
     ? onHome
     : copy.secondaryAction === "stay"
       ? onStay
       : onProgress;
   const statusLabel = snapshot.syncPending ? "На устройстве" : "Сохранено";
+  const evidenceCopy = persistedEvidenceCopy(snapshot);
+
+  useEffect(() => {
+    if (!retentionAction || snapshot.syncPending) return;
+    const reportKey = `${snapshot.lessonId}:${retentionAction}`;
+    if (completionReportedFor.current === reportKey) return;
+    completionReportedFor.current = reportKey;
+    reportLessonCompletion(retentionAction, Date.parse(snapshot.completedAt));
+  }, [retentionAction, snapshot.completedAt, snapshot.lessonId, snapshot.syncPending]);
 
   useLayoutEffect(() => {
     let cancelled = false;
@@ -243,8 +323,9 @@ export function LessonResultPresentation({
               </article>
             </div>
             <div className="lx-lesson-result__evidence-note">
-              <strong>Объективные ответы, узнавание и активность не смешиваются.</strong>
-              <span>Пропущено: {snapshot.skipped}. Уверенность: {snapshot.confidence.known} знал · {snapshot.confidence.almost} почти · {snapshot.confidence.again} не знал.</span>
+              <strong>{evidenceCopy.title}</strong>
+              <span>{evidenceCopy.body}</span>
+              <span>Пропущено: {snapshot.skipped}. Самооценка: {snapshot.confidence.known} знал · {snapshot.confidence.almost} почти · {snapshot.confidence.again} не знал.</span>
             </div>
           </section>
         </article>
