@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { ApplicationErrorBoundary } from "@/components/application-error-boundary";
+import { FeedbackCenter } from "@/components/feedback-center";
 import { LegalFooter } from "@/components/legal-footer";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
@@ -127,11 +128,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <ApplicationErrorBoundary>
-          <WebVitalsReporter />
-          <ServiceWorkerRegistration />
-          <RoutedLexigoApp />
-          {children}
-          <LegalFooter />
+          <FeedbackCenter>
+            <WebVitalsReporter />
+            <ServiceWorkerRegistration />
+            <RoutedLexigoApp />
+            {children}
+            <LegalFooter />
+          </FeedbackCenter>
         </ApplicationErrorBoundary>
       </body>
     </html>
