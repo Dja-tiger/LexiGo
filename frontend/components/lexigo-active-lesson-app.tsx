@@ -495,7 +495,6 @@ export function LexigoActiveLessonApp({
       restored = null;
     }
     if (!restored) return;
-
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled || !restored) return;
@@ -690,6 +689,7 @@ export function LexigoActiveLessonApp({
           ratings: nextRatings,
           skipped: result.data.lessonSkippedItems,
           dueNow: completionProgress?.dueNow ?? 0,
+          nextDueAt: syncPending ? null : (completionProgress?.nextDueAt ?? null),
           dailyGoal: completionProgress?.dailyGoal ?? 0,
           reviewsBefore: lessonProgressBeforeRef.current,
           reviewsAfter: completionProgress?.reviewsToday ?? null,
