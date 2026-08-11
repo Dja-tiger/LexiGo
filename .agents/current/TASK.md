@@ -2,32 +2,115 @@
 
 ## Identity
 
-- Issue:
-- Branch:
-- Base SHA:
-- Head SHA: resolve from live branch ref
-- PR:
+- Issue: #71 — [Medium][UX] Стандартизировать feedback, toast и status messages
+- Branch: `feat/issue-71-feedback-taxonomy`
+- Base SHA: `b1e238000803936e694b032564be0ed6fc97d1b7`
+- Head SHA: resolve from live branch ref after each write
+- PR: pending
 
 ## Objective
 
+Introduce one typed feedback taxonomy and one persistent global feedback owner so cross-route session, speech and calendar feedback has deterministic queueing, dismiss, timing and live-region semantics without creating another parallel toast system.
+
 ## Scope
+
+- Add a pure typed feedback model with explicit presentation and accessibility policy.
+- Add one persistent feedback center above route islands in the App Router shell.
+- Queue transient messages instead of overwriting them.
+- Make transient feedback dismissible and pause auto-dismiss while hovered/focused.
+- Keep critical/blocking errors persistent until their owning state resolves; never auto-dismiss them.
+- Migrate account/session success notices, non-blocking speech error/unsupported feedback and calendar operation confirmation/error into the shared owner where the event is genuinely global/user-action feedback.
+- Preserve contextual operational speech state (`loading`, `playing`, `stopped`) at the speech control.
+- Add source/unit/browser regression protection for taxonomy, queueing, dismiss/live-region semantics and compact safe-area placement.
 
 ## Non-goals
 
+- No backend, API, database or auth contract changes.
+- No route ownership or navigation-history changes.
+- No redesign, Figma changes or visual baseline updates.
+- No dependency changes.
+- Do not centralize route announcements, AsyncStatePanel content states, review-outbox connectivity state, form validation or focused-lesson exit guidance; those are separate semantic owners, not transient feedback.
+- Do not change whether Google/Apple Calendar actually creates an external event; success copy must remain truthful about the confirmed client-side result only.
+
 ## Allowed paths
+
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/lib/feedback.ts`
+- `frontend/lib/feedback.test.ts`
+- `frontend/components/feedback-center.tsx`
+- `frontend/components/feedback-center-source.test.ts`
+- `frontend/components/routed-lexigo-app.tsx`
+- `frontend/components/lexigo-bootstrapped-app.tsx`
+- `frontend/components/speech-player-button.tsx`
+- `frontend/components/calendar-reminder-integration.tsx`
+- `frontend/app/system-states.css`
+- `frontend/e2e/feedback.spec.ts`
+- `frontend/playwright.config.ts` only if authoritative collection is proven to require an explicit allow-list update.
 
 ## Prohibited paths
 
+- `backend/**`
+- `api/**`
+- `deploy/**`
+- `.github/workflows/**`
+- dependency lockfiles/manifests unless an existing required command proves a dependency defect
+- visual snapshot PNGs
+- unrelated route components/styles/tests
+
 ## Runtime owners
+
+- Persistent shell: `frontend/components/routed-lexigo-app.tsx`.
+- Session/account runtime: `frontend/components/lexigo-bootstrapped-app.tsx`.
+- Speech action owner: `frontend/components/speech-player-button.tsx`.
+- Calendar action owner: `frontend/components/calendar-reminder-integration.tsx`.
+- Shared feedback state/presentation: new `frontend/lib/feedback.ts` and `frontend/components/feedback-center.tsx`.
 
 ## Documentation owners
 
+- `.agents/current/**` for task-local evidence only.
+- No public architecture ownership change is planned.
+
 ## Invariants
+
+- Route focus announcements remain a dedicated polite live region and are not duplicated by the feedback center.
+- Critical/session restore errors remain persistent and retryable according to their existing owner.
+- Success is emitted only after the corresponding operation has actually completed to the level the client can verify.
+- At most one transient toast is announced/rendered as active; later transient messages remain queued in FIFO order.
+- Dismissing/expiring one transient message advances exactly one queued message.
+- Transient auto-dismiss pauses during pointer hover or keyboard focus.
+- Global feedback does not overlap persistent bottom navigation, virtual keyboard safe areas or device safe-area insets.
+- No product test is weakened through `.first()`, browser skips, timeout inflation or hidden-control interaction.
 
 ## Acceptance criteria
 
+- Event classes have explicit typed presentation/accessibility policy.
+- Critical errors do not auto-disappear.
+- Toasts are dismissible, have text-aware bounded duration and pause on hover/focus.
+- Repeated transient messages are FIFO queued rather than overwritten.
+- Confirmed success is not emitted before the underlying operation result.
+- Shared feedback has one announcement owner and avoids duplicate screen-reader announcements from migrated producers.
+- Compact/mobile feedback remains actionable and clear of bottom navigation/safe areas.
+- Existing session, speech and calendar functional behavior remains intact.
+
 ## Required checks
+
+- Source ownership/search contract.
+- Frontend lint/typecheck/unit/production build.
+- Targeted feedback browser tests in Chromium and WebKit, then Android Chromium and iOS WebKit.
+- Existing auth/session, speech and calendar browser regression coverage.
+- Keyboard and accessibility/axe collection.
+- Reduced-motion, PWA/service-worker, visual regression without baseline updates, performance/bundle gates.
+- Full immutable-head CI before Ready/merge.
 
 ## Risks
 
+- Double announcements if a migrated producer keeps its old live region.
+- Toast timer races when a message is dismissed/replaced or route changes.
+- Fixed feedback positioning could overlap bottom navigation/keyboard on compact PWA.
+- Over-centralization could turn contextual content/loading state into inappropriate global feedback.
+
 ## Rollback
+
+Remove the shared feedback center and producer publishing calls, restoring the previous local session/speech/calendar presentation. No server data or persistent schema migration is involved.
