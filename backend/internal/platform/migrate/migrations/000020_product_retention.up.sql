@@ -1,5 +1,5 @@
 create table product_retention_events (
-    id bigserial primary key,
+    id bigint generated always as identity primary key,
     received_at timestamptz not null default now(),
     app_version text not null,
     event_name text not null,
@@ -69,3 +69,25 @@ create index product_retention_events_event_received_idx
 
 comment on table product_retention_events is
     'Anonymous aggregate-only lesson retention events. Do not add learner, session, lesson, content, URL, query, referrer, authentication, or free-form copy fields.';
+
+create view product_retention_daily as
+select
+    received_at::date as event_date,
+    app_version,
+    event_name,
+    action,
+    delay_bucket,
+    device_class,
+    browser_family,
+    display_mode,
+    count(*)::bigint as event_count
+from product_retention_events
+group by
+    received_at::date,
+    app_version,
+    event_name,
+    action,
+    delay_bucket,
+    device_class,
+    browser_family,
+    display_mode;
