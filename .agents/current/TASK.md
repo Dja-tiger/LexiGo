@@ -6,7 +6,7 @@
 - Branch: `feat/issue-72-guest-catalog-parity`
 - Base SHA: `e6b2d74891fb4e52f23152758812551361717857`
 - Head SHA: resolve from live branch ref
-- PR: Draft PR after implementation slice is coherent
+- PR: #476 `feat(catalog): unify guest words and phrases access`
 
 ## Objective
 
@@ -35,6 +35,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 
 - `.agents/current/**`
 - `api/openapi.yaml`
+- `backend/go.mod` and `backend/go.sum` only when required by the focused full-document OpenAPI parser contract
 - `backend/internal/server/**`
 - `backend/internal/words/**`
 - `backend/integration/**` only for Issue #72 public/auth boundary coverage
@@ -97,7 +98,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 ## Required checks
 
 - Go format/unit/race/integration/security checks selected by CI for backend/public-route changes.
-- OpenAPI structure/contract checks for new public endpoints.
+- OpenAPI structure/contract checks for new public endpoints, including a full YAML-document parse.
 - Frontend lint, typecheck, unit/source-contract and production build.
 - Blocking Chromium/WebKit browser matrix for changed guest/auth navigation behavior.
 - Accessibility/visual/performance/PWA/container gates selected by the repository scope router.
