@@ -8,6 +8,7 @@ const componentDirectory = path.join(process.cwd(), "components");
 const libraryDirectory = path.join(process.cwd(), "lib");
 const layoutSource = readFileSync(path.join(appDirectory, "layout.tsx"), "utf8");
 const styleSource = readFileSync(path.join(appDirectory, "lesson-result.css"), "utf8");
+const activeLessonSource = readFileSync(path.join(componentDirectory, "lexigo-active-lesson-app.tsx"), "utf8");
 const presentationSource = readFileSync(path.join(componentDirectory, "lesson-result-presentation.tsx"), "utf8");
 const premiumAppSource = readFileSync(path.join(componentDirectory, "lexigo-premium-app.tsx"), "utf8");
 const modelSource = readFileSync(path.join(libraryDirectory, "lesson-result.ts"), "utf8");
@@ -64,6 +65,17 @@ describe("canonical Lesson Result production slice", () => {
     expect(presentationSource).toContain("С выбором");
     expect(presentationSource).toContain("Просмотрено");
     expect(presentationSource).toContain("не смешиваются");
+  });
+
+  it("persists authoritative next-review timing only after successful progress sync", () => {
+    const progressRefresh = "completionProgress = await loadProgress(result.activeSession);";
+    const persistedNextDueAt = "nextDueAt: syncPending ? null : (completionProgress?.nextDueAt ?? null),";
+
+    expect(activeLessonSource).toContain(progressRefresh);
+    expect(activeLessonSource).toContain(persistedNextDueAt);
+    expect(activeLessonSource.indexOf(progressRefresh)).toBeLessThan(
+      activeLessonSource.indexOf(persistedNextDueAt),
+    );
   });
 
   it("exposes one primary action hierarchy and reduced-motion behavior", () => {
