@@ -10,11 +10,11 @@
 
 ## Skills used
 
-### GitHub repository operations
+### GitHub repository and CI operations
 
 Purpose:
 
-Reconstruct live repository state, isolate Issue #71, inspect semantic owners, perform branch-only writes, inspect immutable-head CI and apply a narrow CI repair with read-back verification.
+Reconstruct live repository state, isolate Issue #71, inspect semantic owners, perform branch-only writes, diagnose immutable-head CI from browser artifacts and apply a narrow accessibility repair without weakening modal semantics or test gates.
 
 Instruction source:
 
@@ -36,9 +36,11 @@ Inputs:
 
 - Issue #71 acceptance criteria and reminder comment.
 - Draft PR #473 and its exact branch/base refs.
-- CI #3198 / workflow run `31506824359`.
-- Failed job `93830998812`: `Frontend E2E (UI tests (shard 1/2))`.
-- Playwright artifact `frontend-playwright-report-ui-1` (artifact id `9107680890`).
+- CI #3198 / workflow run `31506824359`, failed job `93830998812`.
+- CI #3202 / workflow run `31510010687`, failed job `93841806441`.
+- Playwright artifacts:
+  - run #3198 `frontend-playwright-report-ui-1`, artifact id `9107680890`;
+  - run #3202 `frontend-playwright-report-ui-1`, artifact id `9108974014`.
 
 Files inspected:
 
@@ -52,52 +54,62 @@ Files inspected:
 - `frontend/components/speech-player-button.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
 - `frontend/components/feedback-center.tsx`
-- `frontend/e2e/system-states.spec.ts` via Playwright failure context
-- repository-wide `aria-live`, `role=status`, session/speech/calendar owners
-- CI job metadata, check annotation and Playwright report artifact
+- `frontend/components/accessible-dialog.tsx`
+- `frontend/components/feedback-center-source.test.ts`
+- `frontend/e2e/system-states.spec.ts` through Playwright failure context
+- CI job metadata, check annotations and Playwright artifacts
 
 Actions performed:
 
 - Verified Issue #71 remains the correct independently automatable product slice and PR #473 is its only active implementation.
 - Re-verified the taxonomy boundary: cross-route action feedback is centralized; route/content/connectivity/form-validation states remain with their semantic owners.
-- Confirmed PR #473 is mergeable but Draft and requires immutable-head CI before Ready/merge.
-- Diagnosed CI #3198 beyond the generic GitHub exit-code annotation by downloading the Playwright artifact.
-- Identified one deterministic failure across Chromium and WebKit: focusing the toast dismiss action did not set `data-feedback-paused="true"`.
-- Confirmed FIFO itself worked from artifact state transitions (`queued=1` on first toast, then `queued=0` on the second after unintended expiry).
-- Replaced section `onFocusCapture` / `onBlurCapture` with bubbling `onFocus` / `onBlur`, preserving the containment guard when focus moves between controls inside the same toast.
-- Wrote the product fix as commit `63bf6e3e55ae2bdf721cfe7475a03ad6044bd039` and performed an exact branch read-back.
-- Observed CI #3199 start for the repaired product head; later task-local evidence commits supersede that SHA for the final immutable-head gate.
+- Diagnosed CI #3198 beyond GitHub's generic exit-code annotation by downloading and inspecting the Playwright artifact.
+- Confirmed FIFO queue behavior was correct but `dismiss.focus()` did not pause the active toast on Chromium or WebKit.
+- Applied a first narrow repair changing toast focus handlers from capture phase to bubbling `onFocus` / `onBlur`; CI #3202 later proved this was insufficient.
+- Inspected the second immutable-head Playwright artifact after #3202 failed the exact same assertion.
+- Traced the actual DOM/focus ownership conflict to `AccessibleDialog`: while the calendar dialog is open it marks every other body child `inert` and `aria-hidden="true"`, and its document `focusin` containment redirects focus outside the dialog back to the modal.
+- Identified the accessibility consequence beyond the test: root feedback was also hidden from assistive technology while calendar-local status intentionally had `aria-live="off"`, so modal feedback could become unannounced.
+- Expanded task scope before touching `AccessibleDialog`, explicitly preserving modal isolation as an invariant.
+- Implemented a modal-local host protocol in the single root `FeedbackCenter`. The provider retains one reducer/FIFO queue; only its rendered feedback layer portals into the most recently registered dialog host.
+- Added `FeedbackDialogHost` inside the `AccessibleDialog` section so toast actions are included naturally in the modal focusable set and live-region content remains inside the active accessibility tree.
+- Preserved nested-dialog behavior: host registration is ordered, and unmounting the top dialog restores presentation to the previous host or root without losing queue state.
+- Added source-contract coverage that requires the dialog-host integration and preserves the existing modal `aria-modal` / focus-containment implementation.
+- Did not modify the failing browser assertion, timeout, browser coverage, modal focus trap, inert isolation or queue acceptance criteria.
 
 Commands or procedures:
 
-GitHub connector exact ref/file reads and writes; GitHub Actions job/check/run API inspection; workflow artifact download; local archive extraction and Playwright `error-context.md` inspection; branch read-back verification after write.
+GitHub connector exact ref/file reads and branch-scoped content writes; GitHub Actions job/check/run API inspection; workflow artifact download; local archive extraction and Playwright failure-context inspection; source-owner tracing; read-back/commit evidence after writes.
 
 Artifacts produced:
 
-- Issue #71 feedback taxonomy/provider/presentation implementation already present in PR #473.
-- Focus-pause CI repair in `frontend/components/feedback-center.tsx`.
-- Updated `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` with failure evidence and repair rationale.
+- Issue #71 typed feedback taxonomy/provider/presentation and producer migrations already present in PR #473.
+- First focus-event repair: commit `63bf6e3e55ae2bdf721cfe7475a03ad6044bd039` (superseded as complete root-cause fix).
+- Modal feedback host in `frontend/components/feedback-center.tsx`: commit `35e3caef1e6dd5bcb55bee5c55d829d108b4f56a`.
+- Accessible dialog host placement: commit `9db5bbdb8df6e146293d77097d0cd1cbfe58df6b`.
+- Modal ownership source contract: commit `9f04a6699545bc3658d43652dc6416e2b6e88d37`.
+- Updated `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and this execution record.
 
 Result:
 
-The only known product defect exposed by CI #3198 has a narrow repair. PR #473 must remain Draft until full CI passes on the final immutable head after all task-local evidence writes.
+The deterministic failure from CI #3198/#3202 now has a root-cause-level repair: shared feedback remains globally owned but is rendered inside the current modal accessibility boundary. The browser regression remains unchanged and must prove the solution on the final immutable head before Ready/merge.
 
 Failures:
 
-CI #3198 failed in `system-states.spec.ts` test `queues repeated calendar feedback, pauses it on focus and advances exactly one item on dismiss` at the focus-pause assertion. GitHub's check annotation only reported exit code 1; the Playwright artifact provided the actionable failure state.
+- CI #3198: `system-states.spec.ts` test `queues repeated calendar feedback, pauses it on focus and advances exactly one item on dismiss` failed at the focus-pause assertion in Chromium and WebKit.
+- CI #3202: same assertion failed again after the focus-event-only change, disproving the initial event-phase hypothesis.
 
 Root cause:
 
-The new toast used capture-phase React focus handlers at the card boundary for the pause contract. The tested focus path into the dismiss action did not update `pausedToastID`, leaving the auto-dismiss timer active. This was not a queue reducer defect: the queue advanced exactly as designed after the first toast expired.
+The feedback queue owner and the modal accessibility owner were correct independently but had incompatible DOM placement. `FeedbackCenter` rendered feedback in the application root while `AccessibleDialog` deliberately made that root inert/hidden and constrained focus to the modal. Therefore an active modal made shared feedback non-focusable and non-announced. The durable solution is a modal-local render host under the same root feedback state owner, not a weaker focus trap or special timeout.
 
 Fallback:
 
-If the bubbling focus handler still fails on final CI, inspect the new Playwright trace before changing timing or weakening assertions. Do not inflate timeout, use `.first()`, skip browsers or remove the pause acceptance criterion. A next fallback would be explicit focus/blur handlers on actionable descendants while retaining one toast owner.
+If final CI still fails, inspect the new Playwright artifact before any further code change. First verify whether `.lx-feedback-center` is physically nested under `[role="dialog"]` in the failure snapshot and whether `data-feedback-dialog-host` registered before the producer publishes. If registration timing is the issue, prefer a synchronous ref-callback host registration design. Do not inflate timeouts, skip browsers, use `.first()`, bypass `inert`, or remove modal focus containment.
 
 Limitations:
 
-No authenticated local `gh` CLI is available in the execution container; repository mutation and CI evidence use the connected GitHub API. The Playwright artifact was downloaded through the connector and inspected locally.
+No authenticated local `gh` CLI is available in the execution container; repository mutation and CI evidence use the connected GitHub API. Playwright artifacts were downloaded through the connector and inspected locally.
 
 Reusable lesson:
 
-For a composite dismissible toast, pause semantics should follow focus-within behavior visible to keyboard users, not depend on a capture-phase implementation detail. CI artifacts are the authoritative source when GitHub check annotations collapse browser failures to a generic exit code.
+A global notification system needs global state ownership, not necessarily root-level DOM placement. When `aria-modal` isolation is implemented correctly, transient feedback triggered from inside the modal must render inside that same accessibility/focus boundary while preserving a single queue and announcement owner.
