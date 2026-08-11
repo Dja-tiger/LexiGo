@@ -45,11 +45,11 @@ function isOptionalStringArray(value: unknown): boolean {
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
-  return Number.isInteger(value) && typeof value === "number" && value >= 0;
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
 function isPositiveInteger(value: unknown): value is number {
-  return Number.isInteger(value) && typeof value === "number" && value > 0;
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
 
 export function isPublicWordPayload(value: unknown): value is PublicWordAPIItem {
