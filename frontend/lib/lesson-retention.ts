@@ -44,6 +44,7 @@ type PrivacyAwareWindow = Window & {
 const REPORT_ENDPOINT = "/api/v1/product/retention";
 const COMPLETION_KEY = "lexigo:lesson-retention-completion:v1";
 const COMPLETION_SESSION_KEY = "lexigo:lesson-retention-session:v1";
+const LAST_REPORTED_COMPLETION_KEY = "lexigo:lesson-retention-last-completion:v1";
 const MARKER_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1_000;
 
 export function retentionDelayBucket(elapsedMs: number): LessonRetentionDelayBucket {
@@ -57,25 +58,33 @@ export function retentionDelayBucket(elapsedMs: number): LessonRetentionDelayBuc
   return "later";
 }
 
-export function reportLessonCompletion(action: LessonRetentionAction, now = Date.now()): void {
+export function reportLessonCompletion(action: LessonRetentionAction, completedAt = Date.now()): void {
   if (!isRetentionCollectionEnabled()) {
-    clearCompletionMarker();
+    clearRetentionState();
+    return;
+  }
+  if (!Number.isFinite(completedAt) || completedAt <= 0) return;
+
+  const lastReported = readLastReportedCompletion();
+  if (lastReported === completedAt) {
+    writeCompletionSession(completedAt);
     return;
   }
 
   const marker: CompletionMarker = {
-    completedAt: now,
+    completedAt,
     recommendedAction: action,
     actionReported: false,
   };
   writeCompletionMarker(marker);
-  writeCompletionSession(now);
+  writeCompletionSession(completedAt);
+  writeLastReportedCompletion(completedAt);
   sendRetentionEvent("lesson_completed", action, "none");
 }
 
 export function reportLessonNextAction(action: LessonRetentionAction, now = Date.now()): void {
   if (!isRetentionCollectionEnabled()) {
-    clearCompletionMarker();
+    clearRetentionState();
     return;
   }
 
@@ -87,7 +96,7 @@ export function reportLessonNextAction(action: LessonRetentionAction, now = Date
 
 export function reportPendingLessonReturn(now = Date.now()): void {
   if (!isRetentionCollectionEnabled()) {
-    clearCompletionMarker();
+    clearRetentionState();
     return;
   }
 
@@ -190,6 +199,36 @@ function readCompletionSession(): number | null {
     return Number.isFinite(value) && value > 0 ? value : null;
   } catch {
     return null;
+  }
+}
+
+function writeLastReportedCompletion(completedAt: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LAST_REPORTED_COMPLETION_KEY, String(completedAt));
+  } catch {
+    // Deduplication is best-effort when storage is unavailable.
+  }
+}
+
+function readLastReportedCompletion(): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = Number(window.localStorage.getItem(LAST_REPORTED_COMPLETION_KEY));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearRetentionState(): void {
+  if (typeof window === "undefined") return;
+  clearCompletionMarker();
+  try {
+    window.localStorage.removeItem(LAST_REPORTED_COMPLETION_KEY);
+    window.sessionStorage.removeItem(COMPLETION_SESSION_KEY);
+  } catch {
+    // Privacy opt-out cleanup is best-effort when storage is unavailable.
   }
 }
 
