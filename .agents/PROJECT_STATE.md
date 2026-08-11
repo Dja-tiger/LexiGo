@@ -4,16 +4,17 @@
 
 - Last verified: 2026-08-11 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Product `main` before this Agent-Docs reconciliation: `81bae6306209437c77c783ee84364072c45a11e5`.
-- Latest deployed product SHA: `81bae6306209437c77c783ee84364072c45a11e5`.
-- Issue #460 / PR #465 final developer-authored head: `c6a4a661daaba7627f71182151dc9ea4c781e82f`.
-- PR #465 immutable-head CI #3181 / run `31444017998`: full required product matrix `success`.
-- PR #465 squash product SHA: `81bae6306209437c77c783ee84364072c45a11e5`.
-- Exact-SHA `main` CI #3182 / run `31444737036`: full required product matrix `success`, including backend, frontend/browser/accessibility/PWA/performance gates and immutable API/Web container publication.
-- Deploy Stage #3025 / run `31445367956`: `success` for exact image SHA `81bae6306209437c77c783ee84364072c45a11e5` after exact CI-scope validation.
-- Stage deploy, public frontend/API smoke and public browser smoke are all `success`; 12/12 public desktop Chromium and iOS WebKit tests passed.
-- Deployment Issue #12 records image SHA `81bae6306209437c77c783ee84364072c45a11e5` with deploy/public-smoke/public-browser states all `success`.
-- Issue #468 / PR #469 delivered the independent shared route-reminder WebKit containment blocker before #465 and was squash-merged as `362fe3efe1f03dc595c123db7e73b7d862b9c12f` after full immutable-head CI #3170 success.
+- Product `main` before this Agent-Docs reconciliation: `28c1a220a3a162e64248bbf31acd561ce20ed092`.
+- Latest deployed product SHA: `28c1a220a3a162e64248bbf31acd561ce20ed092`.
+- Issue #66 / PR #471 final developer-authored head: `96cb586d4eba3086a3f7ab2e11a4ccd920e5f354`.
+- PR #471 immutable-head CI #3193 / run `31494981308`: full required product matrix `success`.
+- PR #471 squash product SHA: `28c1a220a3a162e64248bbf31acd561ce20ed092`.
+- Exact-SHA `main` CI #3194 / run `31496008341`: `success`, including backend unit/race/integration/security, frontend core, both blocking UI shards, accessibility, visual, PWA/service-worker, performance and immutable API/Web container publication.
+- Deploy Stage #3037 / run `31497001837`: `success` for exact image SHA `28c1a220a3a162e64248bbf31acd561ce20ed092` after exact CI-scope artifact validation.
+- Stage deploy and public frontend/API smoke are `success`; public browser validation is `success` with 12/12 tests across desktop Chromium and iOS WebKit.
+- Deployment Issue #12 records image SHA `28c1a220a3a162e64248bbf31acd561ce20ed092`, run `31497001837`, deploy/public-smoke/public-browser states all `success`, and healthy exact-SHA API/Web containers.
+- Issue #460 / PR #465 remains delivered as squash SHA `81bae6306209437c77c783ee84364072c45a11e5`; its immutable-head CI, exact-SHA `main` CI and prior Stage evidence remain historical acceptance evidence.
+- Issue #468 / PR #469 delivered the independent shared route-reminder WebKit containment blocker as squash SHA `362fe3efe1f03dc595c123db7e73b7d862b9c12f` after full immutable-head CI success.
 - Issue #18 Phase 1: PR #462, squash product SHA `edcfd3dbee62a4dba253df07d984fa326350c984`.
 - Issue #18 Phase 2: PR #463, squash product SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
 - Issue #74 is completed/closed. Its detailed historical delivery evidence remains available in Git history and dedicated `.agents/AGENTS.issue-74-*` lessons.
@@ -38,6 +39,17 @@
 - Issue #75 is completed/closed; authenticated PostgreSQL phrase search and URL/filter/history/scroll ownership remain fail-closed.
 - Profile painted presentation remains owned by `profile.css`; Issue #460 adds an interaction-only effective-target owner plus compact account text containment without changing Profile business semantics or approved painted geometry.
 - Shared route-reminder closed-state WebKit containment remains owned independently by the Issue #468 / PR #469 implementation and must not be copied into Profile-specific code.
+- `frontend/lib/interface-copy.ts` is the canonical owner for shared user-facing learning terminology, lesson-source labels, generic system-state eyebrows and repeated generic recovery/navigation actions introduced or consolidated by Issue #66.
+
+## Issue #66 delivered interface-copy contract
+
+- Issue #66 is completed/closed through PR #471.
+- Dynamic Home active-lesson source presentation resolves through the shared `lessonSourceLabel` contract; known Learn, Active Lesson and compatibility labels are guarded against drift.
+- Generic loading/empty/error/success state labels and repeated retry/home/continue actions resolve through the shared interface-copy owner where the same user intent is rendered.
+- 404 and root recovery use the same `На главную` action for the same destination; stale `Открыть главную` regression consumers were updated rather than reintroducing duplicate runtime copy.
+- Course-content English remains content and was not translated by the UI-copy cleanup; intentional learning collection names such as `Academic Technical English` remain allowed when accompanied by explanatory UI copy.
+- Browser acceptance explicitly normalizes active-lesson/progressive composer state before asserting controls. Desktop may expose composer controls immediately, while compact/mobile presentation may require the explicit `Настроить урок` action; tests support both without weakening selectors, increasing timeouts or changing production UX.
+- Source-contract and browser coverage fail closed on recreating route-local Home lesson-source ownership, known source-label divergence and generic interface-copy regressions.
 
 ## Issue #18 delivered foundation
 
@@ -79,26 +91,27 @@
 
 ## Current state
 
-- Product runtime and Stage are validated on exact image SHA `81bae6306209437c77c783ee84364072c45a11e5`.
-- PR #465 is merged and Issue #460 is delivered/closed with immutable-head, `main`, Stage, public HTTP and public browser evidence.
-- Live Issue #66 remains open. Earlier PRs #157/#159 delivered centralized interface-copy/topic mapping and cross-screen terminology; its explicitly remaining acceptance is the final copy review of untouched empty/error/success states and CTA consistency.
-- No open PR currently owns Issue #66.
+- Product runtime and Stage are validated on exact image SHA `28c1a220a3a162e64248bbf31acd561ce20ed092`.
+- PR #471 is merged and Issue #66 is delivered/closed with immutable-head PR CI, exact-SHA `main` CI, Stage deployment, public HTTP smoke and 12/12 public browser evidence.
 - Issue #18 remains open intentionally because #201 still gates the visual First Use implementation.
-- This reconciliation uses branch `docs/issue-460-post-merge-reconcile` and is Agent-Docs-only; its eventual merge may advance repository `main` but must not replace the latest deployed product SHA above.
+- This reconciliation uses branch `docs/issue-66-post-merge-reconcile` and is Agent-Docs-only; its eventual merge may advance repository `main` but must not replace the latest deployed product SHA above.
 - `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset to canonical templates by this reconciliation before another product task starts.
+- No next product issue is pre-owned by the Agent Harness after this reset; selection must use current GitHub state and respect dependency/design/manual-device gates.
 
 ## Remaining roadmap
 
-- #66: complete the remaining system copy review and CTA consistency audit using the existing centralized interface-copy contract; preserve course-content English separately from UI chrome.
 - #201: supply all missing canonical Figma node IDs before any First Use/onboarding UI implementation.
 - #18: after #201 is unblocked, implement and validate the approved first-use UI and close only when the remaining acceptance criteria are evidenced.
-- Any product work selected while #201 is blocked must come from live GitHub state, be independently unblocked, and be decomposed into an atomic slice; do not invent design ownership or bypass source-of-truth requirements.
+- While #201 is blocked, the next product slice must be selected from live open GitHub issues, be independently unblocked and remain atomic; do not invent design ownership or bypass source-of-truth requirements.
+- Physical-device-only acceptance (including remaining real-device checks owned by issues such as #65/#461) must remain explicitly manual and must not be represented as autonomous browser evidence.
 - Production-only/manual deployment gates remain manual where repository policy explicitly requires an authorized workflow dispatch; no synthetic trigger or repository workaround is permitted.
 
 ## Reconciliation evidence
 
-- PR #465 final developer head `c6a4a661daaba7627f71182151dc9ea4c781e82f` passed immutable-head CI #3181 / run `31444017998` completely.
-- PR #465 was squash-merged to `81bae6306209437c77c783ee84364072c45a11e5` after the final clean merge gate.
-- Exact-SHA `main` CI #3182 / run `31444737036` completed `success` and published immutable API/Web images for the same SHA.
-- Deploy Stage #3025 / run `31445367956` completed `success` for the same exact SHA; Deployment Issue #12 records deploy/public-smoke/public-browser `success` and 12/12 public browser tests passed.
-- This docs-only reconciliation records the completed Issue #460 delivery state and resets stale current task memory. Its merge is documentation-only and must not be treated as a newly deployed product SHA.
+- PR #471 final developer head `96cb586d4eba3086a3f7ab2e11a4ccd920e5f354` passed immutable-head CI #3193 / run `31494981308` completely after deterministic browser-contract repairs.
+- PR #471 was marked Ready only after clean review/thread/diff gates and squash-merged with expected-head protection to product SHA `28c1a220a3a162e64248bbf31acd561ce20ed092`.
+- Issue #66 auto-closed as completed through `Closes #66`.
+- Exact-SHA `main` CI #3194 / run `31496008341` completed `success` and published immutable API/Web images for the same SHA.
+- Deploy Stage #3037 / run `31497001837` completed `success` for the same exact SHA after exact CI-scope validation.
+- Deployment Issue #12 records deploy/public-smoke/public-browser `success`; Stage ran healthy exact-SHA API/Web containers and 12/12 public browser tests passed.
+- This docs-only reconciliation records the completed Issue #66 delivery state and resets stale current-task memory. Its merge is documentation-only and must not be treated as a newly deployed product SHA.
