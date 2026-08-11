@@ -14,7 +14,7 @@ import {
 import { normalizeProgressValue } from "../lib/accessibility-semantics";
 import { authorizedJSON } from "../lib/authorized-json";
 import type { Session } from "../lib/auth-session";
-import { learningTermCopy } from "../lib/interface-copy";
+import { interfaceActionLabel, learningTermCopy, lessonSourceLabel } from "../lib/interface-copy";
 import { russianPlural } from "../lib/lesson-composition";
 import { lessonResumeURL } from "../lib/lesson-resume-intent";
 import { navigationURL, viewTitle, type NavigationTarget } from "../lib/navigation";
@@ -76,6 +76,8 @@ type HomeNextAction = {
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
 const DUE_COPY = learningTermCopy("due");
 const RETAINED_COPY = learningTermCopy("retained");
+const RETRY_ACTION_LABEL = interfaceActionLabel("retry");
+const CONTINUE_LESSON_ACTION_LABEL = interfaceActionLabel("continueLesson");
 const WORD_PREVIEW = {
   prompt: "incident",
   phonetic: "/ˈɪnsɪdənt/",
@@ -101,19 +103,6 @@ function HomeIcon({ name, size = 19 }: { name: HomeIconName; size?: number }) {
   if (name === "chart") return <svg {...common}><path d="M5 20V10M12 20V4M19 20v-7" /><path d="M3 20h18" /></svg>;
   if (name === "flame") return <svg {...common}><path d="M12 22c4 0 7-2.9 7-7 0-3.2-1.8-5.8-4.5-8.4.1 2.4-.8 3.8-2 4.7.1-3.7-1.7-6.7-4.4-9.3.1 4.4-3.1 6.5-3.1 10.8C5 18 8 22 12 22Z" /></svg>;
   return <svg {...common}><path d="m3 7 9-4 9 4-9 4-9-4Z" /><path d="M7 9.5V15c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5" /><path d="M21 7v6" /></svg>;
-}
-
-function sourceLabel(source: LessonSource): string {
-  if (source === "phrases") return "Фразы";
-  if (source === "noun") return "Существительные";
-  if (source === "verb") return "Глаголы";
-  if (source === "adjective") return "Прилагательные";
-  if (source === "daily-life") return "Бытовой английский";
-  if (source === "travel") return "Путешествия";
-  if (source === "data-engineering") return "Инженерия данных";
-  if (source === "backend") return "Backend-разработка";
-  if (source === "academic-technical-english") return "Academic Technical English";
-  return "Смешанная практика";
 }
 
 function requestProductGraph(targetURL: string): void {
@@ -263,8 +252,8 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     ? {
         eyebrow: "НЕЗАВЕРШЁННЫЙ УРОК",
         title: "Продолжите с сохранённой позиции",
-        description: `${sourceLabel(activeLesson.source)} · карточка ${activeLesson.currentIndex + 1} из ${activeLesson.items.length}.`,
-        label: "Продолжить урок",
+        description: `${lessonSourceLabel(activeLesson.source)} · карточка ${activeLesson.currentIndex + 1} из ${activeLesson.items.length}.`,
+        label: CONTINUE_LESSON_ACTION_LABEL,
         icon: "play",
         action: openLesson,
       }
@@ -427,7 +416,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
                     title={!session ? "Войдите, чтобы видеть учебную очередь" : progressStatus.problem?.title ?? "Прогресс недоступен"}
                     message={!session ? "Материал к повторению, дневная цель и серия синхронизируются с аккаунтом." : progressStatus.problem?.message ?? "Получаем материал к повторению и дневную цель."}
                     reference={progressStatus.problem?.correlationId}
-                    actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? "Повторить" : undefined}
+                    actionLabel={!session ? "Войти" : progressStatus.problem?.retryable ? RETRY_ACTION_LABEL : undefined}
                     onAction={!session ? () => navigate({ view: "profile" }, "authentication") : progressStatus.problem?.retryable ? () => void loadProgress(session) : undefined}
                     compact
                     focusResult={false}
