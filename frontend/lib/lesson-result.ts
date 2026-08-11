@@ -44,6 +44,7 @@ export type LessonResultSnapshot = {
   confidence: LessonResultConfidence;
   skipped: number;
   dueNow: number;
+  nextDueAt: string | null;
   dailyGoal: number;
   reviewsBefore: number | null;
   reviewsAfter: number | null;
@@ -59,6 +60,8 @@ export type LessonResultContinuation =
   | { kind: "due"; dueCount: number }
   | { kind: "home" }
   | { kind: "sync-pending" };
+
+export type LessonResultPrimaryAction = "review_due" | "continue_goal" | "next_lesson" | "home";
 
 export type LessonResultCandidate = {
   id: string;
@@ -80,6 +83,7 @@ type BuildLessonResultSnapshotInput = {
   ratings: Record<string, ReviewRating>;
   skipped: number;
   dueNow: number;
+  nextDueAt?: string | null;
   dailyGoal: number;
   reviewsBefore: number | null;
   reviewsAfter: number | null;
@@ -103,6 +107,12 @@ function isFiniteNonNegative(value: unknown): value is number {
 
 function isAnswerMode(value: unknown): value is AnswerMode {
   return value === "study" || value === "recall" || value === "choice";
+}
+
+function normalizeOptionalTimestamp(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string") return null;
+  return Number.isFinite(Date.parse(value)) ? value : null;
 }
 
 function lessonResultStorageKey(userId: string): string {
@@ -174,6 +184,7 @@ export function buildLessonResultSnapshot(
     },
     skipped: Math.max(0, input.skipped),
     dueNow: Math.max(0, input.dueNow),
+    nextDueAt: normalizeOptionalTimestamp(input.nextDueAt),
     dailyGoal,
     reviewsBefore,
     reviewsAfter,
@@ -189,6 +200,11 @@ export function resolveLessonResultContinuation(
   if (input.snapshot.syncPending) return { kind: "sync-pending" };
   if (input.snapshot.dailyGoalJustReached) return { kind: "daily-goal" };
   if (input.previewTotal === null) return { kind: "checking" };
+
+  const weakSavedRatings = input.snapshot.confidence.almost + input.snapshot.confidence.again;
+  if (input.snapshot.dueNow > 0 && weakSavedRatings > 0) {
+    return { kind: "due", dueCount: input.snapshot.dueNow };
+  }
   if (input.previewTotal > 0) {
     return {
       kind: "next",
@@ -199,6 +215,24 @@ export function resolveLessonResultContinuation(
   }
   if (input.snapshot.dueNow > 0) return { kind: "due", dueCount: input.snapshot.dueNow };
   return { kind: "home" };
+}
+
+export function lessonResultPrimaryAction(
+  snapshot: LessonResultSnapshot,
+  continuation: LessonResultContinuation,
+): LessonResultPrimaryAction | null {
+  switch (continuation.kind) {
+    case "due":
+      return "review_due";
+    case "next":
+      return snapshot.dailyGoalReached ? "next_lesson" : "continue_goal";
+    case "daily-goal":
+    case "home":
+      return "home";
+    case "checking":
+    case "sync-pending":
+      return null;
+  }
 }
 
 export function isDistinctLessonResultCandidate(
@@ -232,6 +266,7 @@ export function readLessonResultSnapshot(
     if (!isRecord(parsed)) throw new Error("invalid snapshot");
     const evidence = parsed.evidence;
     const confidence = parsed.confidence;
+    const nextDueAt = normalizeOptionalTimestamp(parsed.nextDueAt);
     if (
       parsed.version !== LESSON_RESULT_VERSION
       || parsed.userId !== userId
@@ -260,6 +295,7 @@ export function readLessonResultSnapshot(
       || !isFiniteNonNegative(confidence.again)
       || !isFiniteNonNegative(parsed.skipped)
       || !isFiniteNonNegative(parsed.dueNow)
+      || !(parsed.nextDueAt === undefined || parsed.nextDueAt === null || nextDueAt !== null)
       || !isFiniteNonNegative(parsed.dailyGoal)
       || !(parsed.reviewsBefore === null || isFiniteNonNegative(parsed.reviewsBefore))
       || !(parsed.reviewsAfter === null || isFiniteNonNegative(parsed.reviewsAfter))
@@ -275,7 +311,10 @@ export function readLessonResultSnapshot(
       throw new Error("stale snapshot");
     }
 
-    return parsed as LessonResultSnapshot;
+    return {
+      ...(parsed as Omit<LessonResultSnapshot, "nextDueAt">),
+      nextDueAt,
+    };
   } catch {
     storage.removeItem(lessonResultStorageKey(userId));
     return null;
