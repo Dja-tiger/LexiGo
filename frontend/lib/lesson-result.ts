@@ -44,7 +44,7 @@ export type LessonResultSnapshot = {
   confidence: LessonResultConfidence;
   skipped: number;
   dueNow: number;
-  nextDueAt: string | null;
+  nextDueAt?: string | null;
   dailyGoal: number;
   reviewsBefore: number | null;
   reviewsAfter: number | null;
@@ -312,7 +312,7 @@ export function readLessonResultSnapshot(
     }
 
     return {
-      ...(parsed as Omit<LessonResultSnapshot, "nextDueAt">),
+      ...(parsed as LessonResultSnapshot),
       nextDueAt,
     };
   } catch {
