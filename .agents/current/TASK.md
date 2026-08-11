@@ -39,6 +39,7 @@ Unify guest catalog behavior so words and phrases both support a clear read-only
 - `backend/internal/server/**`
 - `backend/internal/words/**`
 - `backend/integration/**` only for Issue #72 public/auth boundary coverage
+- `frontend/app/information-architecture.css` only for the shared Dictionary/Phrases catalog-kind navigation contrast owner
 - `frontend/components/dictionary-catalog.tsx`
 - `frontend/components/lexigo-dictionary-app.tsx`
 - `frontend/components/lexigo-phrases-app.tsx`
