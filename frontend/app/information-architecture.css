@@ -85,15 +85,16 @@
   padding: 12px 14px 12px 18px;
   border: 1px solid var(--lx-border, rgba(255, 255, 255, 0.12));
   border-radius: 18px;
-  background: var(--lx-surface, rgba(12, 19, 35, 0.78));
+  color: var(--lx-text, #f7f8ff);
+  background: var(--lx-panel, rgba(12, 21, 38, 0.82));
 }
 
 .lx-catalog-kind-navigation > span {
+  color: var(--lx-muted, #8f9bb1);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.72;
 }
 
 .lx-catalog-kind-navigation > div {
@@ -101,15 +102,15 @@
   gap: 8px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(127, 139, 255, 0.08);
+  background: var(--lx-bg-soft, #091120);
 }
 
 .lx-catalog-kind-navigation button {
   min-height: 44px;
   padding: 9px 15px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 11px;
-  color: inherit;
+  color: var(--lx-text, #f7f8ff);
   background: transparent;
   font: inherit;
   font-weight: 750;
@@ -117,7 +118,8 @@
 }
 
 .lx-catalog-kind-navigation button.active {
-  background: var(--lx-surface-raised, rgba(255, 255, 255, 0.11));
+  border-color: var(--lx-border, rgba(255, 255, 255, 0.12));
+  background: var(--lx-panel-strong, rgba(14, 24, 43, 0.96));
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.16);
 }
 

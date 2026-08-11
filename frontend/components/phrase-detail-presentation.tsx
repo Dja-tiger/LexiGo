@@ -157,7 +157,7 @@ export function PhraseDetailPresentation({
             ) : null}
             <div className="lx-phrase-detail-actions">
               <button className="lx-phrase-detail-primary" type="button" onClick={onConfigureLesson}>
-                {authenticated ? "Настроить урок" : "Войти для практики"}
+                {authenticated ? "Настроить урок" : "Войти и сохранить прогресс"}
               </button>
               <button className="lx-phrase-detail-secondary" type="button" onClick={onBack}>К другим фразам</button>
             </div>

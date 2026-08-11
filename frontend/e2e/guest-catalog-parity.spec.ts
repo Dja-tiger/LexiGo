@@ -106,6 +106,15 @@ async function fulfillJSON(route: Route, status: number, body: unknown): Promise
   });
 }
 
+async function installAuthenticatedSessionMarker(context: BrowserContext): Promise<void> {
+  await context.addCookies([{
+    name: "lexigo_csrf",
+    value: "guest-catalog-csrf",
+    url: "http://127.0.0.1:3000",
+    sameSite: "Lax",
+  }]);
+}
+
 async function installCatalogAPI(context: BrowserContext): Promise<{
   authenticatedRequests: string[];
   publicRequests: string[];
@@ -120,10 +129,12 @@ async function installCatalogAPI(context: BrowserContext): Promise<{
   });
   await context.route("**/api/v1/auth/login", async (route) => {
     authenticated = true;
+    await installAuthenticatedSessionMarker(context);
     return fulfillJSON(route, 200, SESSION);
   });
   await context.route("**/api/v1/auth/register", async (route) => {
     authenticated = true;
+    await installAuthenticatedSessionMarker(context);
     return fulfillJSON(route, 201, SESSION);
   });
   await context.route("**/api/v1/catalog/metadata", (route) => fulfillJSON(route, 200, METADATA));

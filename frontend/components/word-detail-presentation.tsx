@@ -138,7 +138,7 @@ export function WordDetailPresentation({
   const schedule = personalizedItem ? wordDetailSchedule(personalizedItem) : null;
   const practiceProblem = practiceStatus.problem;
   const practicePending = practiceStatus.phase === "loading";
-  const practiceLabel = learningStatus?.action ?? "Войти для практики";
+  const practiceLabel = learningStatus?.action ?? "Войти и сохранить прогресс";
 
   return (
     <section className="lx-word-detail" aria-labelledby="word-detail-title">
