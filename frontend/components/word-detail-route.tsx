@@ -102,16 +102,7 @@ export function WordDetailRoute({
     : idleResourceStatus();
 
   useEffect(() => {
-    if (!authenticated || !activeItem || !isWordDetailItem(activeItem)) {
-      if (activeItem) {
-        setRelated({
-          key: `${detailKey}:${activeItem.prompt}`,
-          items: [],
-          status: readyResourceStatus(),
-        });
-      }
-      return;
-    }
+    if (!authenticated || !activeItem || !isWordDetailItem(activeItem)) return;
     const relatedItem = activeItem;
     const controller = new AbortController();
     const relatedKey = `${detailKey}:${relatedItem.prompt}`;
@@ -139,9 +130,9 @@ export function WordDetailRoute({
   }, [activeItem, authenticated, detailKey, loadRelatedPhrases, relatedRetry]);
 
   const activeRelatedKey = activeItem ? `${detailKey}:${activeItem.prompt}` : "";
-  const activeRelated = related.key === activeRelatedKey
+  const activeRelated = authenticated && related.key === activeRelatedKey
     ? related
-    : { key: activeRelatedKey, items: [], status: idleResourceStatus() };
+    : { key: activeRelatedKey, items: [], status: readyResourceStatus() };
 
   const startPractice = useCallback(async (item: LearningItem) => {
     if (!authenticated) {
