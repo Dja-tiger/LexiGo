@@ -16,6 +16,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 
 - Add a pure typed feedback model with explicit presentation and accessibility policy.
 - Mount one persistent client feedback center in RootLayout above `RoutedLexigoApp` and route children, leaving route/navigation ownership unchanged.
+- Add a narrow `feedback.css` leaf layer consuming canonical system-state tokens; do not expand session/PWA CSS into a generic feedback owner.
 - Queue transient messages instead of overwriting them.
 - Make transient feedback dismissible and pause auto-dismiss while hovered/focused.
 - Keep critical/blocking errors persistent until their owning state resolves; never auto-dismiss them.
@@ -42,10 +43,10 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - `frontend/components/feedback-center.tsx`
 - `frontend/components/feedback-center-source.test.ts`
 - `frontend/app/layout.tsx`
+- `frontend/app/feedback.css`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
 - `frontend/components/speech-player-button.tsx`
 - `frontend/components/calendar-reminder-integration.tsx`
-- `frontend/app/system-states.css`
 - `frontend/e2e/system-states.spec.ts`
 
 ## Prohibited paths
@@ -57,6 +58,7 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - dependency lockfiles/manifests
 - visual snapshot PNGs
 - route/navigation implementation files, including `frontend/components/routed-lexigo-app.tsx`
+- `frontend/app/mobile-pwa-fixes.css`
 - unrelated route components/styles/tests
 
 ## Runtime owners
@@ -66,12 +68,13 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 - Session/account runtime: `frontend/components/lexigo-bootstrapped-app.tsx`.
 - Speech action owner: `frontend/components/speech-player-button.tsx`.
 - Calendar action owner: `frontend/components/calendar-reminder-integration.tsx`.
-- Shared feedback state/presentation: new `frontend/lib/feedback.ts` and `frontend/components/feedback-center.tsx`.
+- Shared feedback state: new `frontend/lib/feedback.ts` and `frontend/components/feedback-center.tsx`.
+- Feedback presentation: new leaf `frontend/app/feedback.css`, consuming `--lx-state-*` tokens from canonical `system-states.css`.
 
 ## Documentation owners
 
 - `.agents/current/**` for task-local evidence only.
-- No public architecture ownership change is planned because RootLayout already owns composition of persistent client runtime shells.
+- No public architecture ownership change is planned; the feedback stylesheet is a feature leaf and does not redefine shared tokens or route ownership.
 
 ## Invariants
 
@@ -114,4 +117,4 @@ Introduce one typed feedback taxonomy and one persistent global feedback owner s
 
 ## Rollback
 
-Remove the RootLayout feedback provider and producer publishing calls, restoring the previous local session/speech/calendar presentation. No server data or persistent schema migration is involved.
+Remove the RootLayout feedback provider, `feedback.css` import and producer publishing calls, restoring the previous local session/speech/calendar presentation. No server data or persistent schema migration is involved.
