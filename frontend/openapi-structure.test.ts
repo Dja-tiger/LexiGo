@@ -32,6 +32,17 @@ describe("OpenAPI structural contract", () => {
     const contract = yaml.load(contractSource) as OpenAPIContract;
     const schema = contract.components?.schemas?.ProductRetentionEvent;
     const properties = Object.keys(schema?.properties ?? {});
+    const forbiddenProperties = [
+      "userId",
+      "sessionId",
+      "lessonId",
+      "contentId",
+      "url",
+      "query",
+      "referrer",
+      "cookie",
+      "userAgent",
+    ];
 
     expect(schema?.additionalProperties).toBe(false);
     expect(schema?.required).toEqual([
@@ -52,16 +63,8 @@ describe("OpenAPI structural contract", () => {
       "browserFamily",
       "displayMode",
     ]);
-    expect(properties).not.toEqual(expect.arrayContaining([
-      "userId",
-      "sessionId",
-      "lessonId",
-      "contentId",
-      "url",
-      "query",
-      "referrer",
-      "cookie",
-      "userAgent",
-    ]));
+    for (const property of forbiddenProperties) {
+      expect(properties).not.toContain(property);
+    }
   });
 });
