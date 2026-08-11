@@ -3,16 +3,24 @@ import { expect, type Page, type Route } from "@playwright/test";
 export type LessonResultFixtureOptions = {
   previewTotal?: number;
   dueNow?: number;
+  nextDueAt?: string | null;
   reviewsBefore?: number;
   reviewsAfter?: number;
   dailyGoal?: number;
   repeatCompletedBlock?: boolean;
 };
 
+export type LessonRetentionFixtureEvent = Record<string, unknown> & {
+  event?: string;
+  action?: string;
+  delayBucket?: string;
+};
+
 export type LessonResultFixture = {
   reviewRequests: () => number;
   lessonCreateRequests: () => number;
   previewRequests: () => number;
+  retentionEvents: () => LessonRetentionFixtureEvent[];
 };
 
 type LessonRequest = {
@@ -94,12 +102,14 @@ export async function installLessonResultFixture(
 ): Promise<LessonResultFixture> {
   const previewTotal = options.previewTotal ?? 1;
   const dueNow = options.dueNow ?? 0;
+  const nextDueAt = options.nextDueAt ?? null;
   const reviewsBefore = options.reviewsBefore ?? 2;
   const reviewsAfter = options.reviewsAfter ?? reviewsBefore + 1;
   const dailyGoal = options.dailyGoal ?? 15;
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
+  const retentionEvents: LessonRetentionFixtureEvent[] = [];
   let activeLesson: Record<string, unknown> | null = null;
   let activeLessonHydrationResolved = false;
   let resolveActiveLessonHydration!: () => void;
@@ -121,6 +131,14 @@ export async function installLessonResultFixture(
     const path = url.pathname;
 
     if (path === "/api/v1/auth/refresh") return fulfillJSON(route, 200, SESSION);
+    if (path === "/api/v1/product/retention" && request.method() === "POST") {
+      retentionEvents.push(request.postDataJSON() as LessonRetentionFixtureEvent);
+      await route.fulfill({
+        status: 202,
+        headers: { "Cache-Control": "no-store" },
+      });
+      return;
+    }
     if (path === "/api/v1/catalog/metadata") {
       return fulfillJSON(route, 200, {
         catalogVersion: "sha256:lesson-result",
@@ -172,6 +190,7 @@ export async function installLessonResultFixture(
           choice: EMPTY_MODE,
           legacy: EMPTY_MODE,
         },
+        nextDueAt,
       });
     }
     if (path === "/api/v1/lessons/active") {
@@ -276,6 +295,7 @@ export async function installLessonResultFixture(
     reviewRequests: () => reviewCount,
     lessonCreateRequests: () => lessonCreateCount,
     previewRequests: () => previewCount,
+    retentionEvents: () => retentionEvents.map((event) => ({ ...event })),
   };
 }
 
