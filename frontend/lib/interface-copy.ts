@@ -1,4 +1,17 @@
 export type LearningTerm = "recall" | "due" | "retained" | "cloze" | "chunk";
+export type LessonSourceLabelKey =
+  | "mixed"
+  | "noun"
+  | "verb"
+  | "adjective"
+  | "phrases"
+  | "daily-life"
+  | "travel"
+  | "data-engineering"
+  | "backend"
+  | "academic-technical-english";
+export type SystemStateKind = "loading" | "empty" | "error" | "success";
+export type InterfaceAction = "retry" | "home" | "continueLesson";
 
 export type LearningTermCopy = {
   label: string;
@@ -26,6 +39,32 @@ const LEARNING_TERMS: Record<LearningTerm, LearningTermCopy> = {
     label: "Готовая фраза",
     explanation: "Устойчивый фрагмент речи, который полезно запоминать целиком.",
   },
+};
+
+const LESSON_SOURCE_LABELS: Record<LessonSourceLabelKey, string> = {
+  mixed: "Смешанная практика",
+  noun: "Существительные",
+  verb: "Глаголы",
+  adjective: "Прилагательные",
+  phrases: "Технические фразы",
+  "daily-life": "Бытовой английский",
+  travel: "Для путешествий",
+  "data-engineering": "Инженерия данных",
+  backend: "Backend-разработка",
+  "academic-technical-english": "Academic Technical English",
+};
+
+const SYSTEM_STATE_EYEBROWS: Record<SystemStateKind, string> = {
+  loading: "ЗАГРУЗКА",
+  empty: "НИЧЕГО НЕ НАЙДЕНО",
+  error: "НЕ УДАЛОСЬ ЗАГРУЗИТЬ",
+  success: "ГОТОВО",
+};
+
+const INTERFACE_ACTION_LABELS: Record<InterfaceAction, string> = {
+  retry: "Повторить",
+  home: "На главную",
+  continueLesson: "Продолжить урок",
 };
 
 const TOPIC_LABELS: Record<string, string> = {
@@ -82,6 +121,20 @@ function normalizedKey(value: string): string {
 
 export function learningTermCopy(term: LearningTerm): LearningTermCopy {
   return LEARNING_TERMS[term];
+}
+
+export function lessonSourceLabel(source: string): string {
+  const trimmed = source.trim();
+  if (!trimmed) return "Раздел не указан";
+  return LESSON_SOURCE_LABELS[normalizedKey(trimmed) as LessonSourceLabelKey] ?? trimmed;
+}
+
+export function systemStateEyebrow(kind: SystemStateKind): string {
+  return SYSTEM_STATE_EYEBROWS[kind];
+}
+
+export function interfaceActionLabel(action: InterfaceAction): string {
+  return INTERFACE_ACTION_LABELS[action];
 }
 
 export function topicLabel(topic: string): string {
