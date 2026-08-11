@@ -19,7 +19,7 @@
 
 ### Root cause
 
-The original interface-copy contract centralized glossary/topic/catalog terms but did not own lesson-source names or generic system-state/action labels. Later route-island extraction left local copy literals that could drift independently.
+The original interface-copy contract centralized glossary/topic/catalog terms but did not own lesson-source names or generic state/action labels. Later route-island extraction left local copy literals that could drift independently.
 
 ### Changed files
 
@@ -35,6 +35,7 @@ The original interface-copy contract centralized glossary/topic/catalog terms bu
 - `frontend/app/global-error.tsx`
 - `frontend/app/not-found.tsx`
 - `frontend/e2e/interface-copy.spec.ts`
+- `frontend/e2e/app-router-routes.spec.ts`
 
 ### Implementation
 
@@ -47,21 +48,46 @@ The original interface-copy contract centralized glossary/topic/catalog terms bu
 - Added fail-closed source ownership tests for state labels, Home source ownership and known Learn/Active/fallback label consistency.
 - Added blocking Playwright coverage for a real `travel` active lesson, Learn source labels and 404 home CTA.
 
+## 2026-08-11 — immutable-head CI diagnosis and repair
+
+### CI evidence
+
+- Draft PR #471 first immutable product head: `bc2b05c1a958aeac8e9fd53b4678c5ede33f1d66`.
+- Actions run: `31469006656`.
+- Core/unit/build/security gates passed; only the two blocking Playwright UI shards failed.
+- Downloaded and inspected `frontend-playwright-report-ui-1` and `frontend-playwright-report-ui-2` artifacts rather than treating the failures as flaky retries.
+
+### Exact failures
+
+1. `e2e/app-router-routes.spec.ts` still expected the superseded 404 link name `Открыть главную`. The rendered not-found boundary correctly exposed `На главную`, so the regression consumer was stale after the intentional CTA contract change.
+2. `e2e/interface-copy.spec.ts` installed a page-level `/api/v1/lessons/active` response for the Home source-label assertion and leaked that active lesson into the later `/learn` step. Learn therefore correctly rendered the unfinished-lesson recovery UI instead of composer radios. The test violated the project rule that adaptive/progressive state and mocks must be normalized before interacting with hidden composer controls.
+
+### Repair
+
+- Expanded task scope only for the directly affected existing route regression consumer `frontend/e2e/app-router-routes.spec.ts`; no unrelated runtime path was added.
+- Updated the route not-found assertion to the intentional `На главную` contract.
+- Scoped the page-level active-lesson fixture to the Home assertion and calls `page.unroute("**/api/v1/lessons/active")` before `/learn`, restoring the shared quality-gate API canonical 404/no-active state for composer assertions.
+- No timeout increase, `.first()` masking, browser skip, production UX change, workflow change or snapshot update was used.
+- Each written path was read back from `feat/issue-66-system-copy-review`; `main` remained `c675cde343c582349b78c74cb86dc2bd07237fc0` before the repair writes.
+
 ### Checks passed
 
 - Agent Harness pre-flight completed.
 - Product base branch created from exact verified `main` SHA.
-- Branch compare before final harness update was `behind_by=0` and contained only task-scoped paths.
-- All repository writes were read back or branch-ref verified; `main` remained unchanged during implementation.
+- First immutable-head CI proved lint/type/unit/build/security scope healthy.
+- Failure artifacts reproduced deterministic stale-test/mock causes across desktop/mobile Chromium/WebKit projects.
+- Repair paths were read back after each write.
 
-### Checks failed
+### Checks pending
 
-- None yet. Authoritative frontend/product checks have not run on the final head yet.
+- New immutable-head full CI after the CI repair commits.
+- Final review/thread audit on the exact green head.
+- Ready/merge gate and exact-SHA post-merge delivery validation.
 
 ### Current branch head
 
-Resolve from live `feat/issue-66-system-copy-review` branch ref after this write.
+Resolve from live `feat/issue-66-system-copy-review` after the final task-local harness write.
 
 ### Next action
 
-Publish Draft PR for Issue #66 and run immutable-head CI. Diagnose any exact failing job without weakening the copy/behavior contracts; merge only after the full required matrix and review/thread gate are clean.
+Verify the new immutable-head CI for PR #471. If the full required matrix is green, audit reviews/threads and diff, mark Ready, then merge only if all repository gates permit it; otherwise diagnose the exact new failing artifact without weakening the product contract.
