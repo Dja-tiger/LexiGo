@@ -6,7 +6,7 @@
 - Branch: `feat/issue-66-system-copy-review`
 - Base SHA: `c675cde343c582349b78c74cb86dc2bd07237fc0`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #471
 
 ## Objective
 
@@ -19,6 +19,7 @@
 - Перевести `AsyncStatePanel`/route boundaries на canonical state/action labels без изменения поведения.
 - Согласовать 404 CTA с существующим `На главную` contract.
 - Добавить unit/source/browser regression evidence, подтверждающий ownership и пользовательский copy contract.
+- Синхронизировать существующие route/browser assertions, которые непосредственно потребляют намеренно изменённый 404 CTA contract.
 - Обновлять только task-local Agent Harness state вместе с product slice.
 
 ## Non-goals
@@ -45,6 +46,7 @@
 - `frontend/app/global-error.tsx`
 - `frontend/app/not-found.tsx`
 - `frontend/e2e/interface-copy.spec.ts`
+- `frontend/e2e/app-router-routes.spec.ts`
 - one focused source-contract test under `frontend/components/` if needed.
 
 ## Prohibited paths
@@ -79,6 +81,7 @@
 - Existing async-state semantic roles, focus, retry behavior, correlation IDs and resume intent remain unchanged.
 - Existing route/navigation behavior remains unchanged; only labels are centralized/normalized.
 - No broad DOM text walker or runtime translation layer is introduced.
+- Browser tests normalize mocked active-lesson/progressive state before asserting lesson-composer controls; production UX is not changed to satisfy stale fixtures.
 
 ## Acceptance criteria
 
@@ -96,7 +99,7 @@
 - frontend typecheck
 - frontend unit/source-contract tests
 - production frontend build
-- blocking UI Playwright collection including `interface-copy.spec.ts` and `async-states.spec.ts`
+- blocking UI Playwright collection including `interface-copy.spec.ts`, `async-states.spec.ts` and route not-found coverage
 - accessibility/browser matrix selected by CI
 - visual/performance/container gates selected by product scope classifier
 - clean review/thread audit on exact final head
@@ -107,6 +110,7 @@
 - Compatibility fallback may contain duplicate source definitions not currently reached by primary route islands; consistency guard must detect drift without changing its identifiers or behavior.
 - String-based resume intent currently recognizes `Продолжить урок`; both producer and consumer must use the same canonical constant.
 - Copy changes can invalidate semantic Playwright locators; tests should be updated only when the user-facing contract intentionally changes.
+- A page-level active-lesson fixture used for Home can leak into the later Learn assertion unless it is explicitly removed before composer checks.
 
 ## Rollback
 
