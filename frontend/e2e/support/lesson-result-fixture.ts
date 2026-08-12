@@ -3,16 +3,24 @@ import { expect, type Page, type Route } from "@playwright/test";
 export type LessonResultFixtureOptions = {
   previewTotal?: number;
   dueNow?: number;
+  nextDueAt?: string | null;
   reviewsBefore?: number;
   reviewsAfter?: number;
   dailyGoal?: number;
   repeatCompletedBlock?: boolean;
+  resumeWithReviewedItem?: boolean;
+};
+
+export type LessonResultActionRequest = {
+  recommendedAction: string;
+  selectedAction: string;
 };
 
 export type LessonResultFixture = {
   reviewRequests: () => number;
   lessonCreateRequests: () => number;
   previewRequests: () => number;
+  resultActionRequests: () => LessonResultActionRequest[];
 };
 
 type LessonRequest = {
@@ -94,13 +102,36 @@ export async function installLessonResultFixture(
 ): Promise<LessonResultFixture> {
   const previewTotal = options.previewTotal ?? 1;
   const dueNow = options.dueNow ?? 0;
+  const nextDueAt = options.nextDueAt === undefined ? "2026-07-25T08:30:00Z" : options.nextDueAt;
   const reviewsBefore = options.reviewsBefore ?? 2;
   const reviewsAfter = options.reviewsAfter ?? reviewsBefore + 1;
   const dailyGoal = options.dailyGoal ?? 15;
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
-  let activeLesson: Record<string, unknown> | null = null;
+  const resultActions: LessonResultActionRequest[] = [];
+  let activeLesson: Record<string, unknown> | null = options.resumeWithReviewedItem ? {
+    id: "00000000-0000-0000-0000-000000000194",
+    source: "mixed",
+    studyMode: "recall",
+    lessonSize: "30",
+    currentIndex: 1,
+    version: 2,
+    status: "active",
+    items: [
+      {
+        ...COMPLETED_ITEM,
+        rating: "known",
+        reviewedAt: "2026-07-24T00:00:30Z",
+      },
+      {
+        ...NEXT_ITEM,
+        position: 1,
+      },
+    ],
+    createdAt: "2026-07-24T00:00:00Z",
+    updatedAt: "2026-07-24T00:00:30Z",
+  } : null;
   let activeLessonHydrationResolved = false;
   let resolveActiveLessonHydration!: () => void;
   const activeLessonHydration = new Promise<void>((resolve) => {
@@ -165,6 +196,7 @@ export async function installLessonResultFixture(
         retainedItemsWeek: 6,
         retainedWordsWeek: 0,
         retainedPhrasesWeek: 6,
+        nextDueAt,
         eventSchemaVersion: 2,
         modes: {
           study: EMPTY_MODE,
@@ -230,28 +262,39 @@ export async function installLessonResultFixture(
       };
       return fulfillJSON(route, 201, activeLesson);
     }
+    if (path.endsWith("/result-action") && request.method() === "POST") {
+      resultActions.push(request.postDataJSON() as LessonResultActionRequest);
+      await route.fulfill({ status: 204 });
+      return;
+    }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
-      activeLesson = null;
+      const completedLesson = activeLesson;
       const payload = request.postDataJSON() as Record<string, unknown>;
+      const reviewedWordId = path.includes(`/${NEXT_ITEM.id}/`) ? NEXT_ITEM.id : COMPLETED_ITEM.id;
+      const lessonID = typeof completedLesson?.id === "string"
+        ? completedLesson.id
+        : "00000000-0000-0000-0000-000000000194";
+      const lessonTotalItems = Array.isArray(completedLesson?.items) ? completedLesson.items.length : 1;
+      activeLesson = null;
       return fulfillJSON(route, 200, {
-        wordId: COMPLETED_ITEM.id,
+        wordId: reviewedWordId,
         requestedRating: payload.rating,
         effectiveRating: payload.rating,
         correct: true,
         judgementSource: "server",
         judgementReason: "accepted_exact",
-        matchedAnswer: "backlog",
-        reviewEventId: 194,
+        matchedAnswer: reviewedWordId === NEXT_ITEM.id ? "checkpoint" : "backlog",
+        reviewEventId: 194 + reviewCount,
         suggestionAvailable: false,
-        lessonId: "00000000-0000-0000-0000-000000000194",
-        lessonCurrentIndex: 1,
-        lessonVersion: 2,
+        lessonId: lessonID,
+        lessonCurrentIndex: lessonTotalItems,
+        lessonVersion: 3,
         lastReviewedAt: "2026-07-24T00:01:00Z",
         lessonCompleted: true,
-        lessonReviewedItems: 1,
+        lessonReviewedItems: lessonTotalItems,
         lessonSkippedItems: 0,
-        lessonTotalItems: 1,
+        lessonTotalItems,
       });
     }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
@@ -276,6 +319,7 @@ export async function installLessonResultFixture(
     reviewRequests: () => reviewCount,
     lessonCreateRequests: () => lessonCreateCount,
     previewRequests: () => previewCount,
+    resultActionRequests: () => [...resultActions],
   };
 }
 
@@ -308,10 +352,14 @@ export async function completeRecallLesson(page: Page): Promise<void> {
 
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
+  await completeVisibleRecallCard(page, "backlog");
+}
+
+async function completeVisibleRecallCard(page: Page, answerValue: string): Promise<void> {
   const answer = page.getByRole("textbox", { name: "Введите ответ" });
   await answer.focus();
-  await answer.fill("backlog");
-  await expect(answer).toHaveValue("backlog");
+  await answer.fill(answerValue);
+  await expect(answer).toHaveValue(answerValue);
   const submit = page.getByRole("button", { name: "Сверить ответ", exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();

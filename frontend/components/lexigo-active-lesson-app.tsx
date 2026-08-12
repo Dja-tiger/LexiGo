@@ -19,11 +19,13 @@ import {
   claimDailyGoalCelebration,
   clearLessonResultSnapshot,
   isDistinctLessonResultCandidate,
+  lessonResultRecommendedAction,
   readLessonResultSnapshot,
   resolveLessonResultContinuation,
   writeLessonResultSnapshot,
   type LessonResultContinuation,
   type LessonResultJudgement,
+  type LessonResultSelectedAction,
   type LessonResultSnapshot,
 } from "../lib/lesson-result";
 import {
@@ -690,9 +692,13 @@ export function LexigoActiveLessonApp({
           ratings: nextRatings,
           skipped: result.data.lessonSkippedItems,
           dueNow: completionProgress?.dueNow ?? 0,
+          nextDueAt: completionProgress?.nextDueAt ?? null,
           dailyGoal: completionProgress?.dailyGoal ?? 0,
           reviewsBefore: lessonProgressBeforeRef.current,
           reviewsAfter: completionProgress?.reviewsToday ?? null,
+          objectiveReviewsToday: completionProgress?.objectiveReviewsToday ?? null,
+          objectiveSuccessfulToday: completionProgress?.objectiveSuccessfulToday ?? null,
+          currentStreak: completionProgress?.currentStreak ?? null,
           syncPending,
         });
         let celebrate = false;
@@ -803,6 +809,25 @@ export function LexigoActiveLessonApp({
     }
   }, [adoptSession, applyLesson, session]);
 
+  function recordLessonResultAction(selectedAction: LessonResultSelectedAction) {
+    if (!lessonResult) return;
+    const completed = lessonResult;
+    void authorizedJSON<void>(
+      session,
+      `/api/v1/lessons/${completed.lessonId}/result-action`,
+      {
+        method: "POST",
+        keepalive: true,
+        body: JSON.stringify({
+          recommendedAction: lessonResultRecommendedAction(lessonResultContinuation),
+          selectedAction,
+        }),
+      },
+    ).then((result) => adoptSession(result.activeSession)).catch(() => {
+      // Retention telemetry must never block the learner's selected continuation.
+    });
+  }
+
   function leaveLesson(target: NavigationTarget, intent: ProductJourneyIntent) {
     clearLessonState();
     navigate(target, intent, intent === "lesson_exit");
@@ -810,6 +835,7 @@ export function LexigoActiveLessonApp({
 
   function startNextLessonFromResult() {
     if (!lessonResult) return;
+    recordLessonResultAction("next_lesson");
     const nextSource = SOURCE_LABELS[lessonResult.source as LessonSource]
       ? lessonResult.source as LessonSource
       : "mixed";
@@ -824,6 +850,7 @@ export function LexigoActiveLessonApp({
 
   function startDueReviewFromResult() {
     if (!lessonResult) return;
+    recordLessonResultAction("due_review");
     void startLesson("mixed", 30, "recall", "", lessonResult);
   }
 
@@ -882,11 +909,20 @@ export function LexigoActiveLessonApp({
           sourceLabel={sourceLabel(lessonResult.source)}
           busy={busy}
           celebrate={lessonResultCelebrate}
-          onHome={() => leaveLesson({ view: "home" }, "in_app_navigation")}
-          onProgress={() => leaveLesson({ view: "progress" }, "in_app_navigation")}
+          onHome={() => {
+            recordLessonResultAction("home");
+            leaveLesson({ view: "home" }, "in_app_navigation");
+          }}
+          onProgress={() => {
+            recordLessonResultAction("progress");
+            leaveLesson({ view: "progress" }, "in_app_navigation");
+          }}
           onNextLesson={startNextLessonFromResult}
           onDueReview={startDueReviewFromResult}
-          onStay={() => setLessonQueueNotice("Результат сохранён и останется доступен на этом экране.")}
+          onStay={() => {
+            recordLessonResultAction("stay");
+            setLessonQueueNotice("Результат сохранён и останется доступен на этом экране.");
+          }}
         />
       );
     }

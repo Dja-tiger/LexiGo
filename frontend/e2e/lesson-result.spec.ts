@@ -7,16 +7,20 @@ import {
 } from "./support/lesson-result-fixture";
 
 test.describe("canonical Lesson Result", () => {
-  test("shows separated evidence and creates one distinct next lesson", async ({ page }) => {
+  test("shows separated persisted evidence, nearest review timing, and creates one distinct next lesson", async ({ page }) => {
     const fixture = await installLessonResultFixture(page, { previewTotal: 1 });
     await completeRecallLesson(page);
 
-    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
+    const result = page.locator(".lx-lesson-result");
+    await expect(result).toHaveAttribute("data-lesson-result-state", "next");
+    await expect(result).toHaveAttribute("data-lesson-result-evidence-state", "complete");
     await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
     await expect(page.getByText("1 / 1", { exact: true })).toBeVisible();
     await expect(page.getByText("Самостоятельно", { exact: true })).toBeVisible();
     await expect(page.getByText("С выбором", { exact: true })).toBeVisible();
     await expect(page.getByText("Просмотрено", { exact: true })).toBeVisible();
+    await expect(page.getByText("Объективная проверка и самооценка не смешиваются.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Ближайшее повторение назначено", { exact: true })).toBeVisible();
 
     const next = page.getByRole("button", { name: "Следующий урок", exact: true });
     await next.evaluate((element) => {
@@ -31,8 +35,36 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();
     await expect(page.getByText("Verify the checkpoint.", { exact: true })).toHaveCount(0);
     await expect(page.getByText("The pipeline is delayed by a backlog.", { exact: true })).toHaveCount(0);
+    await expect.poll(() => fixture.resultActionRequests().length).toBeGreaterThan(0);
+    expect(fixture.resultActionRequests()[0]).toEqual({
+      recommendedAction: "next_lesson",
+      selectedAction: "next_lesson",
+    });
     expect(fixture.reviewRequests()).toBe(1);
     expect(fixture.lessonCreateRequests()).toBe(2);
+  });
+
+  test("marks restored reviews with unavailable correctness as partial instead of lowering objective accuracy", async ({ page }) => {
+    const fixture = await installLessonResultFixture(page, {
+      previewTotal: 1,
+      resumeWithReviewedItem: true,
+    });
+
+    await page.goto("/lesson/active?resume=1", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible({ timeout: 15_000 });
+    const answer = page.getByRole("textbox", { name: "Введите ответ" });
+    await answer.fill("checkpoint");
+    await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
+    await page.getByRole("button", { name: "К результатам", exact: true }).click();
+
+    const result = page.locator(".lx-lesson-result");
+    await expect(result).toHaveAttribute("data-lesson-result-state", "next");
+    await expect(result).toHaveAttribute("data-lesson-result-evidence-state", "partial");
+    await expect(page.getByText("1 / 1", { exact: true })).toBeVisible();
+    await expect(page.getByText(/1 без сохранённой проверки/)).toBeVisible();
+    await expect(page.getByText(/ещё 1 восстановлены без сохранённого результата проверки/)).toBeVisible();
+    expect(fixture.reviewRequests()).toBe(1);
   });
 
   test("restores the completed result after reload and browser history without duplicate review", async ({ page }) => {
@@ -42,6 +74,7 @@ test.describe("canonical Lesson Result", () => {
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
+    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-evidence-state", "complete");
     expect(fixture.reviewRequests()).toBe(1);
 
     await page.getByRole("button", { name: "На главную", exact: true }).click();
@@ -62,7 +95,10 @@ test.describe("canonical Lesson Result", () => {
 
     const result = page.locator(".lx-lesson-result");
     await expect(result).toHaveAttribute("data-lesson-result-state", "daily-goal");
+    await expect(result).toHaveAttribute("data-lesson-result-evidence-state", "complete");
     await expect(page.getByRole("heading", { name: "Цель дня достигнута" })).toBeVisible();
+    await expect(page.getByText("15 объективных проверок сегодня", { exact: true })).toBeVisible();
+    await expect(page.getByText("Текущая серия: 4. Значение получено из server progress.", { exact: true })).toBeVisible();
     await expect(result).toHaveClass(/lx-lesson-result--celebrate/);
     await expect(page.getByRole("button", { name: "На главную", exact: true })).toHaveCount(1);
 
@@ -71,16 +107,26 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.locator(".lx-lesson-result")).not.toHaveClass(/lx-lesson-result--celebrate/);
   });
 
-  test("routes to due review when no new block exists", async ({ page }) => {
-    await installLessonResultFixture(page, {
-      previewTotal: 0,
+  test("prioritizes already-due review even when a new block is available", async ({ page }) => {
+    const fixture = await installLessonResultFixture(page, {
+      previewTotal: 1,
       dueNow: 6,
     });
     await completeRecallLesson(page);
 
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");
-    await expect(page.getByRole("heading", { name: "Новых блоков пока нет" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Повторить 6 элементов", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();
+    await expect(page.getByText("6 элементов готовы сейчас", { exact: true })).toBeVisible();
+    const dueReview = page.getByRole("button", { name: "Повторить 6 элементов", exact: true });
+    await expect(dueReview).toBeVisible();
+    await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toHaveCount(0);
+
+    await dueReview.click();
+    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);
+    expect(fixture.resultActionRequests()[0]).toEqual({
+      recommendedAction: "due_review",
+      selectedAction: "due_review",
+    });
   });
 
   test("rejects a server response that repeats the completed lesson", async ({ page }) => {

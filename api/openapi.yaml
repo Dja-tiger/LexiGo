@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.13.0
+  version: 0.14.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -1038,6 +1038,39 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/lessons/{lessonID}/result-action:
+    post:
+      operationId: recordLessonResultAction
+      tags: [learning, analytics]
+      summary: Сохранить первое действие пользователя с результата завершённого урока.
+      description: Authenticated idempotent retention evidence. Повторные отправки для того же user/lesson не переписывают первый выбор и не изменяют learning state.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/LessonID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonResultActionRequest"
+      responses:
+        "204":
+          description: Первое действие сохранено или ранее уже было сохранено для этого пользователя и урока.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Завершённый урок не найден у текущего пользователя.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/progress:
     get:
       operationId: getProgress
@@ -1976,6 +2009,19 @@ components:
             lessonReviewedItems: { type: integer, minimum: 0 }
             lessonSkippedItems: { type: integer, minimum: 0 }
             lessonTotalItems: { type: integer, minimum: 1 }
+    LessonResultActionRequest:
+      type: object
+      additionalProperties: false
+      required: [recommendedAction, selectedAction]
+      properties:
+        recommendedAction:
+          type: string
+          enum: [next_lesson, due_review, home, none]
+          description: Primary action the Result surface recommended when the user chose an action.
+        selectedAction:
+          type: string
+          enum: [next_lesson, due_review, home, progress, stay]
+          description: First action actually selected from the completed Lesson Result.
     GoalRequest:
       type: object
       required: [dailyGoal]

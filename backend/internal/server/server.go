@@ -154,6 +154,7 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/lessons/active", authenticated(http.HandlerFunc(learningHandler.ActiveLesson)))
 	mux.Handle("DELETE /api/v1/lessons/{lessonID}", authenticated(http.HandlerFunc(learningHandler.DiscardLesson)))
 	mux.Handle("POST /api/v1/lessons/{lessonID}/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewLessonWord)))
+	mux.Handle("POST /api/v1/lessons/{lessonID}/result-action", authenticated(http.HandlerFunc(learningHandler.RecordLessonResultAction)))
 	mux.Handle("GET /api/v1/onboarding", authenticated(http.HandlerFunc(learningHandler.OnboardingStatus)))
 	mux.Handle("POST /api/v1/onboarding/start", authenticated(http.HandlerFunc(learningHandler.StartOnboarding)))
 	mux.Handle("POST /api/v1/onboarding/items/{wordID}/mark", authenticated(http.HandlerFunc(learningHandler.MarkOnboardingItem)))
