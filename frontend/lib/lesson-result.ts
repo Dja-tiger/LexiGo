@@ -66,6 +66,9 @@ export type LessonResultContinuation =
   | { kind: "home" }
   | { kind: "sync-pending" };
 
+export type LessonResultRecommendedAction = "next_lesson" | "due_review" | "home" | "none";
+export type LessonResultSelectedAction = "next_lesson" | "due_review" | "home" | "progress" | "stay";
+
 export type LessonResultCandidate = {
   id: string;
   itemIds: number[];
@@ -251,6 +254,15 @@ export function resolveLessonResultContinuation(
     };
   }
   return { kind: "home" };
+}
+
+export function lessonResultRecommendedAction(
+  continuation: LessonResultContinuation,
+): LessonResultRecommendedAction {
+  if (continuation.kind === "next") return "next_lesson";
+  if (continuation.kind === "due") return "due_review";
+  if (continuation.kind === "checking") return "none";
+  return "home";
 }
 
 export function isDistinctLessonResultCandidate(
