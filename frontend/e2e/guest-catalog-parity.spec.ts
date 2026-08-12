@@ -231,7 +231,10 @@ test.describe("Issue #72 guest catalog parity", () => {
     expect(requests.publicRequests.some((url) => new URL(url).pathname === "/api/v1/catalog/words/102")).toBe(true);
     expect(requests.authenticatedRequests).toEqual([]);
 
-    await page.getByRole("button", { name: "Войти и сохранить прогресс", exact: true }).click();
+    await page
+      .getByRole("article")
+      .getByRole("button", { name: "Войти и сохранить прогресс", exact: true })
+      .click();
     await expect(page).toHaveURL((url) => url.pathname === "/profile");
     expect(returnTarget(page)).toBe(target);
 
@@ -260,7 +263,10 @@ test.describe("Issue #72 guest catalog parity", () => {
     const detailTarget = `${new URL(page.url()).pathname}${new URL(page.url()).search}`;
     await expect(page.getByRole("note")).toContainText("прогресс и история повторений не сохраняются");
 
-    await page.getByRole("button", { name: "Войти и сохранить прогресс", exact: true }).click();
+    await page
+      .getByRole("article")
+      .getByRole("button", { name: "Войти и сохранить прогресс", exact: true })
+      .click();
     await expect(page).toHaveURL((url) => url.pathname === "/profile");
     expect(returnTarget(page)).toBe(detailTarget);
 
