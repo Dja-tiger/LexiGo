@@ -13,13 +13,14 @@ const (
 type AnswerMode string
 
 const (
-	AnswerModeStudy  AnswerMode = "study"
-	AnswerModeRecall AnswerMode = "recall"
-	AnswerModeChoice AnswerMode = "choice"
+	AnswerModeStudy     AnswerMode = "study"
+	AnswerModeRecall    AnswerMode = "recall"
+	AnswerModeChoice    AnswerMode = "choice"
+	AnswerModeListening AnswerMode = "listening"
 )
 
 func (mode AnswerMode) Objective() bool {
-	return mode == AnswerModeRecall || mode == AnswerModeChoice
+	return mode == AnswerModeRecall || mode == AnswerModeChoice || mode == AnswerModeListening
 }
 
 type ReviewRequest struct {
@@ -58,10 +59,11 @@ type ModeProgress struct {
 }
 
 type ProgressModes struct {
-	Study  ModeProgress `json:"study"`
-	Recall ModeProgress `json:"recall"`
-	Choice ModeProgress `json:"choice"`
-	Legacy ModeProgress `json:"legacy"`
+	Study     ModeProgress `json:"study"`
+	Recall    ModeProgress `json:"recall"`
+	Choice    ModeProgress `json:"choice"`
+	Listening ModeProgress `json:"listening"`
+	Legacy    ModeProgress `json:"legacy"`
 }
 
 type DailyRecallEvidence struct {
