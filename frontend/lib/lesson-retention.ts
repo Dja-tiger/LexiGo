@@ -65,6 +65,12 @@ export function reportLessonCompletion(action: LessonRetentionAction, completedA
   }
   if (!Number.isFinite(completedAt) || completedAt <= 0) return;
 
+  // The result screen is lesson-owned and may be restored in a later browser
+  // session. Resolve any pending return before re-establishing the session
+  // marker for this persisted completion; this keeps retention code out of the
+  // global route bundle while preserving the cross-session signal.
+  reportPendingLessonReturn();
+
   const lastReported = readLastReportedCompletion();
   if (lastReported === completedAt) {
     writeCompletionSession(completedAt);
