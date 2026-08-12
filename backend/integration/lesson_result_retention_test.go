@@ -20,15 +20,15 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if err := migrate.Run(ctx, dbURL); err != nil {
-		t.Fatalf("migrate: %v", err)
-	}
 
 	db, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		t.Fatalf("connect postgres: %v", err)
 	}
 	defer db.Close()
+	if err := migrate.Up(ctx, db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
 	if _, err := db.Exec(ctx, `
 		truncate table
 			lesson_result_actions,
