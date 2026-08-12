@@ -183,6 +183,19 @@ export const QUALITY_WORDS = [
   },
 ] as const;
 
+const QUALITY_PUBLIC_WORDS = QUALITY_WORDS.map((item) => ({
+  id: item.id,
+  kind: item.kind,
+  lemma: item.lemma,
+  translation: item.translation,
+  aliases: item.aliases,
+  phonetic: item.phonetic,
+  partOfSpeech: item.partOfSpeech,
+  topic: item.topic,
+  examples: item.examples,
+  note: item.note,
+}));
+
 export const QUALITY_PHRASES = [
   {
     id: 201,
@@ -310,6 +323,15 @@ export async function installQualityGateAPI(
       return fulfillJSON(route, 401, { error: { code: "unauthorized", message: "guest" } });
     }
     if (path === "/api/v1/catalog/metadata") return fulfillJSON(route, 200, QUALITY_METADATA);
+    if (path === "/api/v1/catalog/words" && request.method() === "GET") {
+      return fulfillJSON(route, 200, paginated(QUALITY_PUBLIC_WORDS));
+    }
+    if (path.startsWith("/api/v1/catalog/words/") && request.method() === "GET") {
+      const wordID = Number(path.slice("/api/v1/catalog/words/".length));
+      const word = QUALITY_PUBLIC_WORDS.find((item) => item.id === wordID);
+      if (word) return fulfillJSON(route, 200, word);
+      return fulfillJSON(route, 404, { error: { code: "word_not_found", message: String(wordID) } });
+    }
     if (path === "/api/v1/progress") return fulfillJSON(route, 200, progress);
     if (path === "/api/v1/scenarios" && request.method() === "GET") {
       return fulfillJSON(route, 200, { items: QUALITY_SCENARIOS, count: QUALITY_SCENARIOS.length });
