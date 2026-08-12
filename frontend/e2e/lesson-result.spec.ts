@@ -35,6 +35,11 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();
     await expect(page.getByText("Verify the checkpoint.", { exact: true })).toHaveCount(0);
     await expect(page.getByText("The pipeline is delayed by a backlog.", { exact: true })).toHaveCount(0);
+    await expect.poll(() => fixture.resultActionRequests().length).toBeGreaterThan(0);
+    expect(fixture.resultActionRequests()[0]).toEqual({
+      recommendedAction: "next_lesson",
+      selectedAction: "next_lesson",
+    });
     expect(fixture.reviewRequests()).toBe(1);
     expect(fixture.lessonCreateRequests()).toBe(2);
   });
@@ -103,7 +108,7 @@ test.describe("canonical Lesson Result", () => {
   });
 
   test("prioritizes already-due review even when a new block is available", async ({ page }) => {
-    await installLessonResultFixture(page, {
+    const fixture = await installLessonResultFixture(page, {
       previewTotal: 1,
       dueNow: 6,
     });
@@ -112,8 +117,16 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");
     await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();
     await expect(page.getByText("6 элементов готовы сейчас", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Повторить 6 элементов", exact: true })).toBeVisible();
+    const dueReview = page.getByRole("button", { name: "Повторить 6 элементов", exact: true });
+    await expect(dueReview).toBeVisible();
     await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toHaveCount(0);
+
+    await dueReview.click();
+    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);
+    expect(fixture.resultActionRequests()[0]).toEqual({
+      recommendedAction: "due_review",
+      selectedAction: "due_review",
+    });
   });
 
   test("rejects a server response that repeats the completed lesson", async ({ page }) => {
