@@ -9,6 +9,7 @@ export type ProgressModes = {
   study: ModeProgress;
   recall: ModeProgress;
   choice: ModeProgress;
+  listening: ModeProgress;
   legacy: ModeProgress;
 };
 
@@ -110,7 +111,7 @@ export type ProgressSummary = {
 };
 
 export type ReviewRating = "again" | "almost" | "known";
-export type AnswerMode = "study" | "recall" | "choice";
+export type AnswerMode = "study" | "recall" | "choice" | "listening";
 
 export type ReviewResult = {
   wordId: number;
@@ -143,6 +144,7 @@ export function normalizedProgressModes(progress: ProgressSummary | null): Progr
     study: { ...EMPTY_MODE },
     recall: { ...EMPTY_MODE },
     choice: { ...EMPTY_MODE },
+    listening: { ...EMPTY_MODE },
     legacy: { ...EMPTY_MODE },
   };
 }
