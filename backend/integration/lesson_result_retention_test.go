@@ -1,64 +1,96 @@
+//go:build integration
+
 package integration
 
 import (
 	"context"
+	"database/sql"
+	"io"
+	"log/slog"
 	"net/http"
-	"os"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/Dja-tiger/LexiGo/backend/internal/config"
 	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
+	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
+	redisplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/redis"
 	"github.com/Dja-tiger/LexiGo/backend/internal/server"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestLessonResultRetentionMetrics(t *testing.T) {
-	dbURL := os.Getenv("TEST_DATABASE_URL")
-	if dbURL == "" {
-		t.Skip("TEST_DATABASE_URL is not set")
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, dbURL)
+	pgDSN := requiredEnv(t, "TEST_POSTGRES_DSN")
+	pg, err := postgresplatform.Open(ctx, pgDSN)
 	if err != nil {
-		t.Fatalf("connect postgres: %v", err)
+		t.Fatalf("open postgres: %v", err)
 	}
-	defer db.Close()
-	if err := migrate.Up(ctx, db); err != nil {
-		t.Fatalf("migrate: %v", err)
+	defer pg.Close()
+	if err := migrate.Up(ctx, pg); err != nil {
+		t.Fatalf("migrate.Up() error = %v", err)
 	}
-	if _, err := db.Exec(ctx, `
+	if _, err := pg.Exec(ctx, `
 		truncate table
 			lesson_result_actions,
 			lesson_session_items,
 			lesson_sessions,
+			user_learning_preferences,
+			review_events,
 			user_words,
 			refresh_tokens,
 			users
 		restart identity cascade
 	`); err != nil {
-		t.Fatalf("truncate: %v", err)
+		t.Fatalf("truncate test data: %v", err)
 	}
 
-	cfg := testConfig()
-	srv, err := server.New(cfg, newTestLogger(), db, nil)
+	redisAddr := requiredEnv(t, "TEST_REDIS_ADDR")
+	rdb, err := redisplatform.Open(ctx, config.Redis{Addr: redisAddr})
 	if err != nil {
-		t.Fatalf("create server: %v", err)
+		t.Fatalf("open redis: %v", err)
 	}
-	api := srv.Handler()
+	defer rdb.Close()
+	if err := rdb.FlushDB(ctx).Err(); err != nil {
+		t.Fatalf("flush redis: %v", err)
+	}
 
-	owner := registerUser(t, api, "result-owner@example.com", "Result Owner")
-	intruder := registerUser(t, api, "result-intruder@example.com", "Result Intruder")
+	cfg := config.Config{
+		AppEnv:            "test",
+		HTTPAddr:          ":0",
+		LogLevel:          "error",
+		CORSAllowedOrigin: "http://test.local",
+		PostgresDSN:       pgDSN,
+		Redis:             config.Redis{Addr: redisAddr},
+		JWTSecret:         "integration-test-secret-with-at-least-32-bytes",
+		AccessTokenTTL:    15 * time.Minute,
+		RefreshTokenTTL:   24 * time.Hour,
+	}
+	app, err := server.New(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pg, rdb)
+	if err != nil {
+		t.Fatalf("server.New() error = %v", err)
+	}
+	testServer := httptest.NewServer(app.Handler())
+	defer testServer.Close()
+
+	ownerEmail := "result-owner@example.com"
+	intruderEmail := "result-intruder@example.com"
+	owner := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
+		"email": ownerEmail, "password": "strong-password", "displayName": "Result Owner",
+	}, http.StatusCreated)
+	intruder := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
+		"email": intruderEmail, "password": "strong-password", "displayName": "Result Intruder",
+	}, http.StatusCreated)
 
 	var ownerID string
-	if err := db.QueryRow(ctx, `select id::text from users where email = $1`, "result-owner@example.com").Scan(&ownerID); err != nil {
+	if err := pg.QueryRow(ctx, `select id::text from users where email = $1`, ownerEmail).Scan(&ownerID); err != nil {
 		t.Fatalf("query owner id: %v", err)
 	}
 
 	var completedLessonID string
-	if err := db.QueryRow(ctx, `
+	if err := pg.QueryRow(ctx, `
 		insert into lesson_sessions (
 			user_id,
 			source,
@@ -88,73 +120,61 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 		t.Fatalf("insert completed lesson: %v", err)
 	}
 
-	invalid := postAuthenticatedJSON(
+	postAuthenticatedJSON(
 		t,
-		api,
-		http.MethodPost,
-		"/api/v1/lessons/"+completedLessonID+"/result-action",
-		owner.AccessToken,
+		testServer.URL+"/api/v1/lessons/"+completedLessonID+"/result-action",
+		owner.Tokens.AccessToken,
 		map[string]any{
 			"recommendedAction": "due_review",
 			"selectedAction":    "unknown",
 		},
+		http.StatusUnprocessableEntity,
+		nil,
 	)
-	if invalid.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("invalid action status = %d body=%s", invalid.Code, invalid.Body.String())
-	}
 
-	intruderResponse := postAuthenticatedJSON(
+	postAuthenticatedJSON(
 		t,
-		api,
-		http.MethodPost,
-		"/api/v1/lessons/"+completedLessonID+"/result-action",
-		intruder.AccessToken,
+		testServer.URL+"/api/v1/lessons/"+completedLessonID+"/result-action",
+		intruder.Tokens.AccessToken,
 		map[string]any{
 			"recommendedAction": "due_review",
 			"selectedAction":    "progress",
 		},
+		http.StatusNotFound,
+		nil,
 	)
-	if intruderResponse.Code != http.StatusNotFound {
-		t.Fatalf("intruder action status = %d body=%s", intruderResponse.Code, intruderResponse.Body.String())
-	}
 
-	first := postAuthenticatedJSON(
+	postAuthenticatedJSON(
 		t,
-		api,
-		http.MethodPost,
-		"/api/v1/lessons/"+completedLessonID+"/result-action",
-		owner.AccessToken,
+		testServer.URL+"/api/v1/lessons/"+completedLessonID+"/result-action",
+		owner.Tokens.AccessToken,
 		map[string]any{
 			"recommendedAction": "due_review",
 			"selectedAction":    "progress",
 		},
+		http.StatusNoContent,
+		nil,
 	)
-	if first.Code != http.StatusNoContent {
-		t.Fatalf("first action status = %d body=%s", first.Code, first.Body.String())
-	}
 
 	// Reload/double-click must not rewrite the first choice used by the
 	// completion-to-next-action metric.
-	duplicate := postAuthenticatedJSON(
+	postAuthenticatedJSON(
 		t,
-		api,
-		http.MethodPost,
-		"/api/v1/lessons/"+completedLessonID+"/result-action",
-		owner.AccessToken,
+		testServer.URL+"/api/v1/lessons/"+completedLessonID+"/result-action",
+		owner.Tokens.AccessToken,
 		map[string]any{
 			"recommendedAction": "home",
 			"selectedAction":    "home",
 		},
+		http.StatusNoContent,
+		nil,
 	)
-	if duplicate.Code != http.StatusNoContent {
-		t.Fatalf("duplicate action status = %d body=%s", duplicate.Code, duplicate.Body.String())
-	}
 
 	var actionCount int
 	var recommendedAction string
 	var selectedAction string
-	if err := db.QueryRow(ctx, `
-		select count(*), min(recommended_action), min(selected_action)
+	if err := pg.QueryRow(ctx, `
+		select count(*)::int, min(recommended_action), min(selected_action)
 		from lesson_result_actions
 		where user_id = $1::uuid
 		  and lesson_id = $2::uuid
@@ -171,7 +191,7 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 	}
 
 	var nextLessonID string
-	if err := db.QueryRow(ctx, `
+	if err := pg.QueryRow(ctx, `
 		insert into lesson_sessions (
 			user_id,
 			source,
@@ -189,11 +209,11 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 
 	var metricRecommended string
 	var metricSelected string
-	var completionToActionSeconds *int64
-	var metricNextLessonID *string
-	var returnToNextSessionSeconds *int64
-	var selectedRecommended *bool
-	if err := db.QueryRow(ctx, `
+	var completionToActionSeconds sql.NullInt64
+	var metricNextLessonID sql.NullString
+	var returnToNextSessionSeconds sql.NullInt64
+	var selectedRecommended sql.NullBool
+	if err := pg.QueryRow(ctx, `
 		select
 			recommended_action,
 			selected_action,
@@ -218,16 +238,16 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 	if metricRecommended != "due_review" || metricSelected != "progress" {
 		t.Fatalf("unexpected metric actions: recommended=%q selected=%q", metricRecommended, metricSelected)
 	}
-	if completionToActionSeconds == nil || *completionToActionSeconds < 0 {
-		t.Fatalf("completion_to_action_seconds = %v", completionToActionSeconds)
+	if !completionToActionSeconds.Valid || completionToActionSeconds.Int64 < 0 {
+		t.Fatalf("completion_to_action_seconds = %+v", completionToActionSeconds)
 	}
-	if metricNextLessonID == nil || *metricNextLessonID != nextLessonID {
-		t.Fatalf("next_lesson_id = %v want %s", metricNextLessonID, nextLessonID)
+	if !metricNextLessonID.Valid || metricNextLessonID.String != nextLessonID {
+		t.Fatalf("next_lesson_id = %+v want %s", metricNextLessonID, nextLessonID)
 	}
-	if returnToNextSessionSeconds == nil || *returnToNextSessionSeconds < 0 {
-		t.Fatalf("return_to_next_session_seconds = %v", returnToNextSessionSeconds)
+	if !returnToNextSessionSeconds.Valid || returnToNextSessionSeconds.Int64 < 0 {
+		t.Fatalf("return_to_next_session_seconds = %+v", returnToNextSessionSeconds)
 	}
-	if selectedRecommended == nil || *selectedRecommended {
-		t.Fatalf("selected_recommended_action = %v want false", selectedRecommended)
+	if !selectedRecommended.Valid || selectedRecommended.Bool {
+		t.Fatalf("selected_recommended_action = %+v want false", selectedRecommended)
 	}
 }
