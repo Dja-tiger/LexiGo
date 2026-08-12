@@ -51,7 +51,7 @@ func (h *Handler) ReviewWord(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ErrInvalidRating):
 			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_rating", "rating must be again, almost or known")
 		case errors.Is(err, ErrInvalidAnswerMode):
-			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "answerMode must be study, recall or choice")
+			httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_answer_mode", "answerMode must be study, recall, choice or listening")
 		default:
 			httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 		}
@@ -116,7 +116,7 @@ func normalizeAndValidateReviewRequest(request *ReviewRequest) (code, message st
 		request.AnswerMode = AnswerModeRecall
 	}
 	if !validAnswerMode(request.AnswerMode) {
-		return "invalid_answer_mode", "answerMode must be study, recall or choice"
+		return "invalid_answer_mode", "answerMode must be study, recall, choice or listening"
 	}
 	if request.SubmittedAnswer != nil {
 		trimmed := strings.TrimSpace(*request.SubmittedAnswer)
@@ -141,7 +141,7 @@ func normalizeAndValidateReviewRequest(request *ReviewRequest) (code, message st
 }
 
 func validAnswerMode(mode AnswerMode) bool {
-	return mode == AnswerModeStudy || mode == AnswerModeRecall || mode == AnswerModeChoice
+	return mode == AnswerModeStudy || mode == AnswerModeRecall || mode == AnswerModeChoice || mode == AnswerModeListening
 }
 
 func validRating(rating Rating) bool {
