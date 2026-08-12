@@ -4,88 +4,55 @@
 
 ### Identity
 
-- Issue: #72 `[Medium][UX] Унифицировать гостевой доступ к словам и фразам`.
-- PR: #476 `feat(catalog): unify guest words and phrases access`.
-- Branch: `feat/issue-72-guest-catalog-parity`.
-- Immutable base/main used for the product slice: `e6b2d74891fb4e52f23152758812551361717857`.
-- Last product/test head before this Agent-Docs reconciliation: `e49097dd4ceacfd4c1ec44737a6718565511f472`.
+- Issue: #73 `[Medium][Retention] Улучшить завершение урока и рекомендовать следующий шаг`.
+- Branch: `feat/issue-73-outcome-summary`.
+- Base/main at branch creation: `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`.
+- PR: not created yet.
 
-### Delivered product contract
+### Previous delivery reconciled from live GitHub
 
-- Added public content-only Words list/detail projection at `/api/v1/catalog/words` and `/api/v1/catalog/words/{wordID}` without joining or exposing personalized `user_words` scheduler state.
-- Public word payloads do not expose `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` or `lastReviewedAt`; public status filtering is rejected rather than fabricated.
-- Guest Dictionary supports canonical list/search/filter/sort/pagination and Word Detail browsing; authenticated Dictionary continues to use personalized `/api/v1/words*` ownership.
-- Guest Phrases remains read-only/demo with the same explicit non-persistence boundary.
-- Practice, lesson/review mutations, due state and durable learning progress remain authenticated-only and are gated before lesson creation.
-- Word/Phrase guest detail presents content without fake scheduler state and offers authentication only for persistent practice.
-- Authentication handoff preserves a validated internal canonical `return_to`, including Dictionary/Phrases search/filter/page/detail context; external or malformed targets are rejected.
-- Successful login/registration consumes the validated target and returns to the exact originating product context without retaining the auth screen as an extra Back-history entry.
-- OpenAPI documents closed public list/detail schemas; backend contract tests parse the complete YAML document and reject public auth/SRS leakage.
-- `docs/architecture.md` now documents the durable guest/public/authenticated capability boundary and exact auth-return semantics.
+- PR #476 for Issue #72 was squash-merged to `main` as `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`.
+- Exact-SHA `main` CI #3312 / run `31579070614` completed `success` across backend, frontend, browser, accessibility, visual, performance, PWA, security and container-build gates.
+- Deploy Stage #3155 / run `31579844206` completed `success` for the same exact image SHA, including public frontend/API smoke and public desktop Chromium/iOS WebKit browser validation.
+- Issue #72 acceptance criteria were marked complete and the Issue was closed as `completed` with the exact delivery evidence.
+- `.agents/PROJECT_STATE.md` is therefore stale relative to live GitHub; live GitHub remains the higher-priority source of truth. A verified Project State reconciliation is allowed in this branch but must not claim Issue #73 delivered before its own merge/deploy evidence.
 
-### Reliability and acceptance fixes completed during validation
+### Issue #73 discovery
 
-- CI #3297 / run `31545380436` exposed a strict-mode browser locator ambiguity after two valid same-name guest auth CTAs existed. Acceptance now scopes the exact accessible-name control to the canonical semantic `article`; runtime controls were not removed and no `.first()`, positional selector, skip or timeout weakening was introduced.
-- The same visual run showed intentional loaded Dictionary/Phrases catalog composition drift plus byte-instability in a Figma-backed Dictionary empty state. Baselines were not promoted from that failed run.
-- Dictionary shared catalog-kind navigation was restricted so approved Figma-owned empty/error composition remains unchanged while the loaded catalog retains the common Words/Phrases owner.
-- CI #3303 / run `31549532156` on `5932c6b4e21e4d8c1999af861d0737c5a1419c35` confirmed old Figma-owned system-state baselines and stable loaded-catalog actuals. Only the eight deterministic content-addressed loaded Dictionary/Phrases baselines were promoted with exact run/head provenance.
-- CI #3303 also exposed Dictionary CLS `0.13230558877253204` above the permanent `0.1` budget because loaded catalog navigation entered flow after data arrived. The runtime now keeps that owner present during loading and hides it only for terminal empty/error states; the performance budget was not raised.
-- CI #3306 / run `31550211401` on `fff05cd611b6905a94f050b635f9cc4f74459d94` confirmed visual and performance gates green, then exposed two independent UI-shard defects:
-  - shared guest quality fixtures still modeled only authenticated `/api/v1/words*` and did not serve the new public Words projection;
-  - WebKit could submit a search immediately after input while React state lagged behind the live control value.
-- Shared quality fixtures now expose content-only public Words list/detail responses without personalized status fields.
-- Dictionary search submit now reads the live named form control through `FormData`, synchronizes local presentation state and writes that exact query to canonical URL state. This removes the WebKit/concurrent-render race instead of adding waits to tests.
+- Issue #73 is open and asks for an outcome-oriented lesson completion summary: persisted-review evidence, objective correctness separate from self-rating, what repeats/when, one personalized primary CTA, truthful goal/streak, honest empty/partial/skipped states and retention measurement.
+- Related weekly progress/retention evidence Issue #19 is already closed; #73 must consume that existing progress contract rather than recreate weekly analytics.
+- Canonical Lesson Result owner from Issue #194 already exists. Figma nodes are `217:5`–`217:14`; node `217:5` was rechecked during this pre-flight and confirms the existing composition: saved status, objective evidence rows, activity separated from knowledge, a repetition card, one primary CTA and one secondary navigation action.
+- Additional Figma calls are currently blocked by the account MCP Starter-plan call limit. No inferred redesign or unreviewed visual baseline update is allowed as a workaround.
 
-### Visual provenance
+### Current runtime findings
 
-The following loaded catalog baselines are content-addressed and intentionally owned by CI #3303 / run `31549532156`, source head `5932c6b4e21e4d8c1999af861d0737c5a1419c35`:
+- `frontend/lib/lesson-result.ts` owns a 24-hour versioned sessionStorage snapshot, objective recall/recognition evidence, self-rating confidence, daily-goal crossing, due count and continuation selection.
+- Snapshot creation happens only after the lesson review POST succeeds and the server reports lesson completion; this is the correct persisted-review boundary.
+- `LexigoActiveLessonApp` refreshes `/api/v1/progress` before building the completed snapshot. `ProgressSummary` already exposes server-owned `nextDueAt`, `objectiveReviewsToday`, `objectiveSuccessfulToday`, `dailyGoal`, `reviewsToday` and `currentStreak`.
+- No new progress API field is required to show the nearest scheduler time or server-backed goal/streak context.
+- A correctness gap exists after active-lesson recovery: restored reviewed items reconstruct `correct: null` because the lesson session stores rating/reviewedAt but not historical objective correctness. Current `buildLessonResultEvidence` counts those `null` entries as objective attempts, which can overstate the denominator. Issue #73 must instead treat them as persisted activity with unavailable objective evidence.
+- Existing `product_navigation_events` analytics are anonymous route transitions and reject same-route events. They can measure navigation patterns but cannot by themselves prove a cross-session per-user return-to-next-session metric. Reusing them for that criterion without a durable identity contract would be misleading.
 
-- Phrases compact Light: `390x1628`, `63e0a1fd86e78eb75bb22cc3377727d75adace7baa4b39da9e04042714e0a73a`.
-- Phrases compact Dark: `390x1628`, `64cd10dc0eaec2e0543c3d2580456d0754e4950312b9ab89c70925546a124ae4`.
-- Phrases desktop Light: `1440x1185`, `f681cdbbd6b810d4f501ef4240ecef639d5572eb725976eb5a3f01bd0d59b67a`.
-- Phrases desktop Dark: `1440x1185`, `9546035ad41865ad77439356e7e8c825c43277298ebc1fffb82b8173888f20dc`.
-- Dictionary compact Light: `390x1197`, `57c8aa5684cc56165392d55988e369da0bf0a5379fed75194bd6d38eb95a09f8`.
-- Dictionary compact Dark: `390x1197`, `4424182e3a4c0356ba57687dd6bca1339c9a671d186083225061b2a7816b90c0`.
-- Dictionary medium Light: `768x1760`, `9b19904153f2e5ad3d7ab076cbc6e812286445f088ec5a81030b74e4741d288a`.
-- Dictionary desktop Light: `1440x1720`, `723359f44c06746bb95674edf0c74e651af48d2d21578dd9f64afa9a7e5f4dc8`.
+### Pre-flight rules applied
 
-Figma-owned shared loading/empty/error/offline baseline hashes were not changed. They pass unchanged after the lifecycle/ownership correction.
+- Live `main`, Issue, related Issue/PR, exact post-merge CI/Stage, Agent Harness and canonical runtime owners were read before production writes.
+- Mandatory project rules reviewed include production-safe delivery, route-island/recovery ownership, progressive disclosure, downstream API consumers, calendar boundaries, request-scoped failure fixtures, tool-selection safety, CSS computed-cascade ownership, OpenAPI structure, PostgreSQL array semantics, controlled-input synchronization and authoritative browser-zoom/geometry collection.
+- Calendar evidence rule applies directly: `nextDueAt` will be treated as an absolute server timestamp and formatted in the browser timezone. No fixed-duration approximation will be used for a scheduler/calendar assertion.
+- Visual rule applies directly: existing content-addressed Linux baselines cannot be advanced without exact artifact provenance and manual comparison to canonical Figma.
 
-### Product-head validation
+### Planned minimal product slice
 
-CI #3308 / run `31551224446` on exact product/test head `e49097dd4ceacfd4c1ec44737a6718565511f472` completed successfully across the full required product matrix:
+1. Version the Lesson Result snapshot and add the existing server-owned completion evidence required by #73 (`nextDueAt`, objective daily counters, streak and persisted completion counts where useful).
+2. Change objective evidence aggregation so `correct=null` is explicitly unavailable rather than counted as an objective attempt.
+3. Derive honest complete/partial/study/skipped result copy and nearest-review text without changing scheduler data.
+4. Refine continuation selection to one useful primary action from sync/goal/due/preview state while preserving distinct-next protection and one-time celebration.
+5. Extend focused unit and canonical browser fixtures/tests, including reload/history and timezone-safe next-due formatting.
+6. Design retention measurement only after proving the existing analytics boundary can satisfy the required identity/session semantics; otherwise add a focused durable backend contract in the same slice rather than relabeling anonymous navigation data.
+7. Run full immutable-head CI, inspect authoritative browser/visual artifacts, then create/update the Draft PR and leave merge gated on exact-head evidence.
 
-- scope routing and Agent Docs routing contract;
-- backend formatting, static analysis, race-enabled unit tests, coverage and vulnerability scan;
-- backend integration with race detector;
-- frontend lint, typecheck, unit/source contracts, production build and dependency audit;
-- UI tests shard 1/2 and shard 2/2;
-- Lesson completion;
-- iOS PWA Dictionary;
-- visual regression;
-- performance budgets;
-- accessibility audit;
-- controlled Service Worker;
-- content security;
-- Dictionary navigation smoke;
-- frontend quality aggregator;
-- API and Web container builds.
+### Current write-safety state
 
-The two exact failures discovered in CI #3306 are therefore closed by blocking browser evidence on #3308, not by local-only assumptions.
-
-### Review and delivery state
-
-- PR #476 remained open, Draft and mergeable on exact product/test head `e49097dd4ceacfd4c1ec44737a6718565511f472` before this Agent-Docs reconciliation.
-- The pre-reconciliation review audit had no reviews, inline review threads or PR conversation comments.
-- `.agents/PROJECT_STATE.md` remains intentionally unchanged because Issue #72 is not delivered until expected-head merge, exact-SHA `main` CI and exact-image Stage/public validation all succeed.
-- PR body uses `Refs #72` rather than an automatic close keyword so Issue #72 remains open through deployment/public acceptance.
-
-### Next gate
-
-1. Advance the feature branch once with the atomic final Agent-Docs reconciliation containing this file and `EXECUTION.md`.
-2. Require a full immutable-head CI on that exact final branch SHA.
-3. Repeat review/thread/comment audit and verify base/head/mergeability immediately before merge.
-4. Mark PR #476 Ready and perform expected-head squash merge only if `main` is still the verified base or has been safely reconciled.
-5. Require exact-SHA `main` CI success and immutable API/Web image publication.
-6. Deploy that exact image SHA to Stage and require Stage/public HTTP smoke plus blocking public desktop Chromium/iOS WebKit validation.
-7. Only after those gates succeed, close Issue #72 and reconcile `.agents/PROJECT_STATE.md` in the normal Agent-Docs delivery flow.
+- Branch `feat/issue-73-outcome-summary` was created from verified `main` SHA `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`.
+- The first branch write updated only `.agents/current/TASK.md`; it was read back as blob `01cb424bbff282987f0ea3db4ee6f3cad30a2669`.
+- `main` was re-read immediately afterward and remained exactly `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`.
+- This file is the second branch-local pre-flight write. Production runtime has not yet been modified.
