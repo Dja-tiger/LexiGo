@@ -6,7 +6,7 @@
 - Branch: `feat/issue-73-outcome-summary`
 - Base SHA: `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`
 - Head SHA: resolve from live branch ref after each write
-- PR: not created yet
+- PR: #477 (Draft)
 
 ## Objective
 
@@ -40,7 +40,8 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - `.agents/PROJECT_STATE.md` only for verified Issue #72 post-delivery reconciliation and later Issue #73 delivered evidence
 - `docs/architecture.md` only if the durable Lesson Result/retention measurement boundary changes
 - `api/openapi.yaml` only if a new server analytics contract is required
-- `backend/internal/performance/**` and focused server wiring/tests only if required for Issue #73 retention measurement
+- `backend/internal/learning/lesson_result_retention.go` and its focused tests for the authenticated first-result-action contract
+- `backend/internal/server/server.go` only for the Issue #73 authenticated route registration
 - `backend/internal/platform/migrate/migrations/**` only if a durable analytics schema is objectively required
 - `backend/integration/**` only for Issue #73 analytics/persistence evidence if required
 - `frontend/lib/lesson-result.ts`
@@ -65,7 +66,8 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - `frontend/lib/lesson-result.ts`: versioned completion evidence, validation, persistence and continuation policy.
 - `LessonResultPresentation`: Figma-backed outcome copy, evidence separation, nearest-review context and primary CTA presentation.
 - `learning.Repository.Progress`: authoritative `nextDueAt`, daily-goal/streak and objective aggregate evidence; frontend must consume rather than recompute it.
-- Existing product/performance analytics owners: reuse only after validating they can measure the Issue #73 events without fabricating cross-session identity.
+- `learning.RecordLessonResultAction`: authenticated, idempotent persistence of the first action selected from a completed Lesson Result; it does not mutate lesson/progress state.
+- `lesson_result_retention` SQL view: analytics boundary derived from completed `lesson_sessions`, first result action and the next later lesson session for the same authenticated user.
 
 ## Contract matrix
 
@@ -79,6 +81,8 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - Due timing: `nextDueAt` is consumed as an absolute server timestamp and formatted in the browser locale/timezone; no `now()-N` bucket approximation.
 - Daily goal/streak: values come from refreshed progress. Client code may detect a before/after goal crossing but cannot increment counters or streak.
 - Continuation: sync safety and one-time goal milestone remain higher priority; otherwise immediately due review can become the useful next action, then a distinct next block while additional work is appropriate, then return/home.
+- Retention action: only a completed lesson owned by the authenticated user can accept a result-action event; the first selected action wins and repeated submissions are idempotent.
+- Retention metrics: completion-to-action is measured from `lesson_sessions.completed_at` to first result action; return-to-next-session is measured to the next later `lesson_sessions.created_at` for the same user. No anonymous route event is used as user retention identity.
 - Browsers/layout: desktop Chromium/WebKit and compact Android/iOS preserve one primary plus one secondary action, 200% reflow, keyboard semantics, axe and reduced-motion contract.
 - Visual: canonical nodes are Issue #194 Figma `217:5`–`217:14`; node `217:5` was rechecked in this pre-flight. Existing authoritative Linux baselines are not changed blindly.
 
@@ -90,7 +94,7 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - One primary CTA: continuation policy selects the single best action from due/goal/preview state; secondary action stays informational/navigation.
 - Goal/streak integrity: only server progress values are presented; celebration is still one-time and crossing-based.
 - Honest states: unit/E2E cover full objective evidence, unknown restored evidence, study/no-objective evidence, skipped/sync cases as applicable.
-- Retention analytics: completion-to-next-action and return-to-next-session receive durable measurable contracts or remain explicitly pending if live architecture cannot satisfy cross-session identity without a separate scoped backend change.
+- Retention analytics: an authenticated first-result-action row plus existing lesson-session timestamps provide durable completion-to-next-action and return-to-next-session metrics without inventing cross-session identity.
 
 ## Required checks
 
@@ -99,7 +103,7 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - Canonical Lesson Result browser E2E in configured Chromium/WebKit/mobile projects.
 - Blocking accessibility, reduced-motion, 200% reflow/history/reload and visual regression without baseline update.
 - Performance/bundle, service-worker, content-security and production build gates selected by CI.
-- Backend unit/race/integration/OpenAPI/migration gates only if analytics backend/schema changes are required.
+- Backend unit/race/integration/OpenAPI/migration gates for the retention contract.
 - Immutable-head full PR CI, review/thread audit and clean branch-vs-main compare before Ready.
 
 ## Risks
@@ -109,8 +113,9 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - Allowing a generic next-block CTA to hide immediately due weak material or goal-completion state.
 - Changing Figma-owned copy/layout enough to invalidate content-addressed visual baselines without reviewed Linux evidence.
 - Reusing anonymous product-navigation analytics for a cross-session retention metric that requires stable identity.
+- Recording more than the first Result action and thereby changing completion-to-next-action semantics after reload/double-click.
 - Storing long-lived learning state in browser storage instead of a short-lived result snapshot.
 
 ## Rollback
 
-Revert the atomic Issue #73 product PR. No scheduler migration or review-event rewrite is planned for the frontend evidence slice, so rollback restores the previous Lesson Result snapshot/presentation/continuation behavior without modifying persisted learning history.
+Revert the atomic Issue #73 product PR. The retention schema is additive and does not mutate scheduler/review history; rollback of runtime code stops new event production, while the additive table/view can be dropped independently if a database rollback is required.
