@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Dja-tiger/LexiGo/backend/internal/config"
 	"github.com/Dja-tiger/LexiGo/backend/internal/platform/migrate"
 	"github.com/Dja-tiger/LexiGo/backend/internal/server"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -231,6 +230,4 @@ func TestLessonResultRetentionMetrics(t *testing.T) {
 	if selectedRecommended == nil || *selectedRecommended {
 		t.Fatalf("selected_recommended_action = %v want false", selectedRecommended)
 	}
-
-	_ = config.Config{} // Keep config import ownership explicit if testConfig changes shape.
 }
