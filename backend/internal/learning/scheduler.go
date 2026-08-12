@@ -33,7 +33,7 @@ func ScheduleAttempt(state ReviewState, rating Rating, mode AnswerMode) (Schedul
 	switch mode {
 	case AnswerModeStudy:
 		return scheduleStudy(state, rating)
-	case AnswerModeRecall, AnswerModeChoice:
+	case AnswerModeRecall, AnswerModeChoice, AnswerModeListening:
 		return ScheduleReview(state, rating)
 	default:
 		return Schedule{}, ErrInvalidAnswerMode
