@@ -76,7 +76,7 @@ func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode
 		return false
 	}
 	if !validAnswerMode(studyMode) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be study, recall or choice")
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_study_mode", "studyMode must be study, recall, choice or listening")
 		return false
 	}
 	if !validLessonSize(lessonSize) {
