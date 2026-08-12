@@ -18,6 +18,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - Add `listening` to backend and frontend `AnswerMode` contracts.
 - Treat `listening` as objective for request validation and correctness semantics.
 - Route `listening` through the existing objective scheduler path without changing easiness, interval, grade or due formulas.
+- Keep listening lesson composition on the existing objective/due-only path used by recall/choice; do not alter candidate ranking or weighting.
 - Allow `listening` in `lesson_sessions.study_mode` and `review_events.answer_mode` through an additive migration; do not rewrite historical events.
 - Persist `answer_mode='listening'` exactly for direct and lesson review writes.
 - Expose a separate `modes.listening` progress bucket.
@@ -42,6 +43,8 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - `backend/internal/learning/http.go`
 - `backend/internal/learning/lesson_http.go`
 - `backend/internal/learning/scheduler.go`
+- `backend/internal/learning/lesson_composer.go`
+- `backend/internal/learning/lesson_composer_test.go`
 - existing focused `backend/internal/learning/*_test.go`
 - a focused progress extension owner under `backend/internal/learning/**` if it avoids unsafe broad edits while preserving current Progress semantics
 - `backend/internal/platform/migrate/migrations/000021_listening_answer_mode.up.sql`
@@ -57,7 +60,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - frontend presentation/components/CSS/routes for a listening UI
 - `frontend/components/speech-player-button.tsx`, `frontend/lib/speech-player.ts` and speech-player styling/runtime
 - microphone/media APIs, permissions UI or storage
-- scheduler formulas, interval/easiness constants or ranking/composer algorithms
+- scheduler formulas, interval/easiness constants or lesson candidate ranking/weighting algorithms
 - unrelated catalog/profile/scenario/PWA/CSP runtime
 - deployment workflows, secrets or production configuration
 - broad compatibility/refactor work unrelated to #481
@@ -67,6 +70,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - `learning.AnswerMode`: canonical persisted exercise-mode vocabulary.
 - `normalizeAndValidateReviewRequest` / lesson configuration validation: API boundary for allowed modes and objective/study semantics.
 - `ScheduleAttempt`: mode-to-existing-scheduling-policy dispatch only; objective formulas stay in `ScheduleReview` unchanged.
+- `queryLessonCandidates`: existing objective/due-only lesson composition boundary; listening joins recall/choice without changing ranking.
 - `review_events.answer_mode`: immutable historical exercise-mode evidence.
 - `lesson_sessions.study_mode`: active lesson mode contract and review-mode matching owner.
 - `ProgressSummary.Modes`: per-mode aggregate evidence; `Listening` is added as a separate bucket.
@@ -84,6 +88,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - `study` remains the only non-objective mode and still requires revealed-answer semantics with no objective answer.
 - `listening` is objective and must follow the same correctness assessment rules as existing objective modes.
 - Listening uses the exact existing `ScheduleReview` path; no copied or divergent scheduler implementation.
+- Listening composition is due-only like recall/choice and reuses the same candidate ranking unchanged.
 - Historical `recall` rows remain `recall`; migration changes constraints only.
 - `reviewsToday` / `reviewsTotal` remain counts of all persisted events; listening must not be double-counted when objective aggregates are extended.
 - Weekly recall/retained-learning metrics remain typed-recall semantics in this phase unless a separate approved Issue changes that product definition.
@@ -94,7 +99,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - `answerMode=listening` is accepted and persisted exactly as `listening`.
 - Typed recall continues to persist as `recall`; no migration rewrites history.
 - Listening schedules identically to the existing objective path for the same review state/rating.
-- Lesson creation/preview may use `studyMode=listening`; lesson review still enforces exact session mode matching.
+- Lesson creation/preview may use `studyMode=listening`; lesson review still enforces exact session mode matching and composer remains due-only.
 - Progress exposes `modes.listening`, and aggregate objective-today attempts/successes include listening.
 - OpenAPI documents `listening` consistently at every relevant request/response enum.
 - Focused migration/unit/integration tests prove constraints, validation, persistence and aggregation.
@@ -102,7 +107,7 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 ## Required checks
 
 - Agent Harness validation after active-memory writes.
-- Backend format/vet/unit/race and focused scheduler/HTTP tests.
+- Backend format/vet/unit/race and focused scheduler/HTTP/composer tests.
 - Migration validation and backend integration with exact persisted `answer_mode` evidence.
 - Full OpenAPI YAML parse plus existing OpenAPI contract tests, including column-zero `$ref` protection.
 - Frontend lint/typecheck/unit for the shared progress contract.
