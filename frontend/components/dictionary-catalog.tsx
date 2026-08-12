@@ -324,13 +324,16 @@ export function DictionaryCatalog({
   const catalogTotal = metadataStatus === "ready" && metadata ? metadata.totals.words : pageInfo.total;
   const catalogCount = catalogTotal > 0 ? wordCountLabel(catalogTotal) : "Каталог слов";
   const reviewQuickFilterActive = filters.status === "review";
+  const showCatalogKindNavigation = items.length > 0;
 
   return (
     <>
-      <CatalogKindNavigation
-        active="words"
-        onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")}
-      />
+      {showCatalogKindNavigation ? (
+        <CatalogKindNavigation
+          active="words"
+          onSelect={() => onNavigate({ view: "phrases" }, false, undefined, "catalog_switch")}
+        />
+      ) : null}
       <section className="lx-dictionary-catalog" aria-labelledby="dictionary-catalog-title">
         <header className="lx-dictionary-heading">
           <h1 id="dictionary-catalog-title">Словарь</h1>
