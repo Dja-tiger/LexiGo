@@ -138,14 +138,22 @@ func TestListeningReviewModePersistsAndAggregatesSeparately(t *testing.T) {
 		t.Fatalf("listening leaked into typed weekly evidence: modes=%+v weekly=%+v", progress.Modes, progress.Weekly)
 	}
 
-	// Make exactly one requested word immediately due and leave the other one new.
-	// Listening must use the same due-only composition boundary as recall/choice.
+	// Explicitly isolate one due candidate and one non-due candidate. The words
+	// came from /words/due, so both must be normalized before asserting the
+	// listening composer uses the same due-only boundary as recall/choice.
 	if _, err := pg.Exec(ctx, `
 		update user_words
 		set status = 'review', due_at = now() - interval '1 minute'
 		where user_id = $1::uuid and word_id = $2
 	`, registered.User.ID, due.Items[1].ID); err != nil {
 		t.Fatalf("make listening candidate due: %v", err)
+	}
+	if _, err := pg.Exec(ctx, `
+		update user_words
+		set status = 'new', due_at = now() + interval '1 day'
+		where user_id = $1::uuid and word_id = $2
+	`, registered.User.ID, due.Items[2].ID); err != nil {
+		t.Fatalf("make listening control candidate non-due: %v", err)
 	}
 
 	var lesson struct {
