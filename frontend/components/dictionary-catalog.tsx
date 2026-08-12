@@ -324,7 +324,7 @@ export function DictionaryCatalog({
   const catalogTotal = metadataStatus === "ready" && metadata ? metadata.totals.words : pageInfo.total;
   const catalogCount = catalogTotal > 0 ? wordCountLabel(catalogTotal) : "Каталог слов";
   const reviewQuickFilterActive = filters.status === "review";
-  const showCatalogKindNavigation = items.length > 0;
+  const showCatalogKindNavigation = pending || items.length > 0;
 
   return (
     <>
