@@ -1,0 +1,105 @@
+name: Apply Issue 481 contract patch
+
+on:
+  push:
+    branches:
+      - feat/issue-481-listening-event-mode
+    paths:
+      - .github/workflows/apply-issue-481-contract.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-481-listening-event-mode
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply fail-closed exact replacements
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_exact(path: str, old: str, new: str, expected: int = 1) -> None:
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{path}: expected {expected} matches, found {count}: {old!r}")
+              file.write_text(text.replace(old, new))
+
+          replace_exact(
+              "backend/internal/learning/lesson_composer.go",
+              "dueOnly := studyMode == AnswerModeRecall || studyMode == AnswerModeChoice",
+              "dueOnly := studyMode.Objective()",
+          )
+          replace_exact(
+              "backend/internal/learning/lesson_http.go",
+              "studyMode must be study, recall or choice",
+              "studyMode must be study, recall, choice or listening",
+          )
+
+          openapi = Path("api/openapi.yaml")
+          text = openapi.read_text()
+
+          replacements = [
+              ("version: 0.14.0", "version: 0.15.0", 1),
+              ("enum: [study, recall, choice]", "enum: [study, recall, choice, listening]", 5),
+              ("required: [study, recall, choice, legacy]", "required: [study, recall, choice, listening, legacy]", 1),
+              (
+                  "        choice:\n          $ref: '#/components/schemas/ModeProgress'\n        legacy:",
+                  "        choice:\n          $ref: '#/components/schemas/ModeProgress'\n        listening:\n          $ref: '#/components/schemas/ModeProgress'\n        legacy:",
+                  1,
+              ),
+              (
+                  "          enum: [recall, choice]\n          description: Objective answer mode used by the originating review event.",
+                  "          enum: [recall, choice, listening]\n          description: Objective answer mode used by the originating review event.",
+                  1,
+              ),
+              (
+                  "Verified schema-v2 recall and choice attempts in the user's local day.",
+                  "Verified schema-v2 recall, choice and listening attempts in the user's local day.",
+                  1,
+              ),
+              (
+                  "Verified successful schema-v2 recall and choice attempts in the user's local day.",
+                  "Verified successful schema-v2 recall, choice and listening attempts in the user's local day.",
+                  1,
+              ),
+              (
+                  "Server-derived objective result for recall/choice attempts.",
+                  "Server-derived objective result for recall/choice/listening attempts.",
+                  1,
+              ),
+          ]
+          for old, new, expected in replacements:
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"api/openapi.yaml: expected {expected} matches, found {count}: {old!r}")
+              text = text.replace(old, new)
+          openapi.write_text(text)
+
+      - name: Verify OpenAPI parses as full YAML
+        run: ruby -e 'require "yaml"; YAML.load_file("api/openapi.yaml")'
+
+      - name: Verify only intended large files changed
+        run: |
+          changed=$(git diff --name-only | sort)
+          expected=$(printf '%s\n' \
+            api/openapi.yaml \
+            backend/internal/learning/lesson_composer.go \
+            backend/internal/learning/lesson_http.go | sort)
+          test "$changed" = "$expected"
+
+      - name: Commit controlled contract patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/openapi.yaml backend/internal/learning/lesson_composer.go backend/internal/learning/lesson_http.go
+          git commit -m "feat(api): expose listening answer mode contract"
+          git push origin HEAD:feat/issue-481-listening-event-mode
