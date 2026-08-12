@@ -52,28 +52,38 @@ jobs:
               ("enum: [study, recall, choice]", "enum: [study, recall, choice, listening]", 5),
               ("required: [study, recall, choice, legacy]", "required: [study, recall, choice, listening, legacy]", 1),
               (
-                  "        choice:\n          $ref: '#/components/schemas/ModeProgress'\n        legacy:",
-                  "        choice:\n          $ref: '#/components/schemas/ModeProgress'\n        listening:\n          $ref: '#/components/schemas/ModeProgress'\n        legacy:",
+                  "        choice:\n          $ref: \"#/components/schemas/ModeProgress\"\n        legacy:",
+                  "        choice:\n          $ref: \"#/components/schemas/ModeProgress\"\n        listening:\n          $ref: \"#/components/schemas/ModeProgress\"\n        legacy:",
                   1,
               ),
               (
-                  "          enum: [recall, choice]\n          description: Objective answer mode used by the originating review event.",
-                  "          enum: [recall, choice, listening]\n          description: Objective answer mode used by the originating review event.",
+                  "answerMode: { type: string, enum: [recall, choice] }",
+                  "answerMode: { type: string, enum: [recall, choice, listening] }",
                   1,
               ),
               (
-                  "Verified schema-v2 recall and choice attempts in the user's local day.",
-                  "Verified schema-v2 recall, choice and listening attempts in the user's local day.",
+                  "description: Raw recall or choice answer judged by the server. Forbidden for study.",
+                  "description: Raw recall, choice or listening answer judged by the server. Forbidden for study.",
                   1,
               ),
               (
-                  "Verified successful schema-v2 recall and choice attempts in the user's local day.",
-                  "Verified successful schema-v2 recall, choice and listening attempts in the user's local day.",
+                  "description: Server objective result for recall/choice; omitted for passive study.",
+                  "description: Server objective result for recall/choice/listening; omitted for passive study.",
                   1,
               ),
               (
-                  "Server-derived objective result for recall/choice attempts.",
-                  "Server-derived objective result for recall/choice/listening attempts.",
+                  "description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate recall analytics.",
+                  "description: Rolling-deployment compatibility aggregate; use objectiveSuccessfulToday for accurate objective analytics.",
+                  1,
+              ),
+              (
+                  "description: Verified schema-v2 recall and choice attempts; study and legacy events are excluded.",
+                  "description: Verified schema-v2 recall, choice and listening attempts; study and legacy events are excluded.",
+                  1,
+              ),
+              (
+                  "        objectiveSuccessfulToday:\n          type: integer\n        reviewsTotal:",
+                  "        objectiveSuccessfulToday:\n          type: integer\n          description: Verified successful schema-v2 recall, choice and listening attempts in the user's local day.\n        reviewsTotal:",
                   1,
               ),
           ]
