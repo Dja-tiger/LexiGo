@@ -8,6 +8,7 @@ import {
   clearLessonResultSnapshot,
   isDistinctLessonResultCandidate,
   lessonResultOutcomeState,
+  lessonResultRecommendedAction,
   readLessonResultSnapshot,
   resolveLessonResultContinuation,
   writeLessonResultSnapshot,
@@ -195,6 +196,15 @@ describe("lesson result continuation", () => {
       snapshot: snapshot({ dailyGoalJustReached: false, dailyGoalReached: false }),
       previewTotal: 15,
     })).toEqual({ kind: "due", dueCount: 4 });
+  });
+
+  it("maps every continuation to the stable recommendation analytics vocabulary", () => {
+    expect(lessonResultRecommendedAction({ kind: "next", title: "Next", itemCount: 15, estimatedMinutes: 8 })).toBe("next_lesson");
+    expect(lessonResultRecommendedAction({ kind: "due", dueCount: 4 })).toBe("due_review");
+    expect(lessonResultRecommendedAction({ kind: "checking" })).toBe("none");
+    expect(lessonResultRecommendedAction({ kind: "daily-goal" })).toBe("home");
+    expect(lessonResultRecommendedAction({ kind: "home" })).toBe("home");
+    expect(lessonResultRecommendedAction({ kind: "sync-pending" })).toBe("home");
   });
 
   it("routes to the next distinct block or home when nothing is currently due", () => {
