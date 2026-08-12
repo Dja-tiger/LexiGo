@@ -51,6 +51,7 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - `frontend/components/lesson-result-presentation.tsx`
 - `frontend/app/lesson-result.css` only if the existing Figma composition needs a minimal state-safe style correction; no redesign
 - focused `frontend/**/*.test.*`, `frontend/e2e/lesson-result.spec.ts`, `frontend/e2e/support/lesson-result-fixture.ts` and authoritative collection/source-contract files required by changed behavior
+- `.github/workflows/update-visual-snapshots.yml` only as temporary controlled baseline-regeneration plumbing after exact Linux artifact inspection; it must be restored byte-for-byte to `main` before final immutable-head CI
 
 ## Prohibited paths
 
@@ -104,6 +105,7 @@ Turn the existing canonical Lesson Result into an outcome-oriented retention sur
 - Blocking accessibility, reduced-motion, 200% reflow/history/reload and visual regression without baseline update.
 - Performance/bundle, service-worker, content-security and production build gates selected by CI.
 - Backend unit/race/integration/OpenAPI/migration gates for the retention contract.
+- Controlled visual regeneration may update only the three inspected Lesson Result Linux PNGs from exact CI artifact #3342; normal `test:e2e:visual` must pass afterward, and the temporary helper workflow must have zero final diff versus `main`.
 - Immutable-head full PR CI, review/thread audit and clean branch-vs-main compare before Ready.
 
 ## Risks
