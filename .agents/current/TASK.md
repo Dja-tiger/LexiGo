@@ -3,38 +3,25 @@
 ## Identity
 
 - Issue: #481 `[Medium][Learning][#25 Phase 1] Persist listening as a distinct objective review mode`
-- Parent: #25 `[Medium][Feature] Добавить pronunciation/listening и пользовательскую терминологию`
+- Parent: #25
 - Branch: `feat/issue-481-listening-event-mode`
 - Base SHA: `2b91949f42db36899a79bf2329b104f368127b14`
-- Head SHA: resolve from live branch ref after each write
-- PR: create as Draft after the first coherent implementation slice
+- PR: #482 (Draft)
+- Head SHA: resolve from live branch ref after every write
 
 ## Objective
 
-Introduce `listening` as a first-class persisted objective answer mode so future listening-first exercises cannot be misclassified as typed `recall`. Preserve the existing objective scheduler behavior and expose listening evidence separately through the API/progress contract.
+Persist `listening` as a first-class objective answer mode without changing scheduler formulas, lesson ranking, existing typed-recall semantics or UI. The slice is the backend/API/progress foundation for later listening UX.
 
 ## Scope
 
-- Add `listening` to backend and frontend `AnswerMode` contracts.
-- Treat `listening` as objective for request validation and correctness semantics.
-- Route `listening` through the existing objective scheduler path without changing easiness, interval, grade or due formulas.
-- Keep listening lesson composition on the existing objective/due-only path used by recall/choice; do not alter candidate ranking or weighting.
-- Allow `listening` in `lesson_sessions.study_mode` and `review_events.answer_mode` through an additive migration; do not rewrite historical events.
-- Persist `answer_mode='listening'` exactly for direct and lesson review writes.
-- Expose a separate `modes.listening` progress bucket.
-- Include listening attempts/successes in aggregate objective-today counters while keeping typed recall-specific weekly/retained evidence semantics unchanged in this slice.
-- Update strict OpenAPI enums/contracts everywhere `AnswerMode` / `studyMode` is accepted or returned.
-- Add focused unit, migration/contract and integration coverage for validation, scheduler equivalence, persistence and progress aggregation.
-
-## Non-goals
-
-- No listening-first or pronunciation UI.
-- No microphone, recording, pronunciation scoring, media upload or audio-storage decision.
-- No rewrite of the speech player delivered by Issue #51 and no audio-provider change.
-- No custom glossary CRUD/import/export from the remaining parent #25 scope.
-- No scheduler algorithm or parameter changes.
-- No conversion/reinterpretation of historical `recall` events as `listening`.
-- No change to weekly typed-recall evidence, retained-learning evidence or recommendation ranking in this phase.
+- Add `listening` to backend/frontend AnswerMode contracts and strict OpenAPI enums.
+- Treat listening as objective for correctness and route it through the existing `ScheduleReview` path unchanged.
+- Keep listening lesson composition due-only like recall/choice, with the same candidate ranking.
+- Allow listening in `review_events.answer_mode` and `lesson_sessions.study_mode` through additive constraints only; never rewrite historical recall rows.
+- Persist listening exactly and expose `modes.listening` plus listening contributions to objective/successful-today counters without double-counting all-event totals.
+- Keep weekly recall/retained-learning semantics unchanged.
+- Add focused scheduler, validation, migration, persistence and progress tests.
 
 ## Allowed paths
 
@@ -43,86 +30,61 @@ Introduce `listening` as a first-class persisted objective answer mode so future
 - `backend/internal/learning/http.go`
 - `backend/internal/learning/lesson_http.go`
 - `backend/internal/learning/scheduler.go`
+- `backend/internal/learning/scheduler_test.go`
 - `backend/internal/learning/lesson_composer.go`
 - `backend/internal/learning/lesson_composer_test.go`
-- existing focused `backend/internal/learning/*_test.go`
-- a focused progress extension owner under `backend/internal/learning/**` if it avoids unsafe broad edits while preserving current Progress semantics
+- focused `backend/internal/learning/*_test.go`
+- focused new progress owner under `backend/internal/learning/**`
 - `backend/internal/platform/migrate/migrations/000021_listening_answer_mode.up.sql`
-- matching migration/contract tests required by repository conventions
-- focused `backend/integration/**` tests for exact persistence/progress evidence
+- focused migration/integration tests required by repository conventions
 - `frontend/lib/progress.ts`
-- focused `frontend/lib/progress.test.ts`
+- `frontend/lib/progress.test.ts`
 - `api/openapi.yaml`
-- existing OpenAPI contract tests only when required to keep the strict contract synchronized
+- existing focused OpenAPI contract tests if required
+- `.github/workflows/apply-issue-481-contract.yml` **temporarily only** as controlled exact-rewrite plumbing for large files; it must have zero final PR diff before immutable-head CI
 
 ## Prohibited paths
 
-- frontend presentation/components/CSS/routes for a listening UI
-- `frontend/components/speech-player-button.tsx`, `frontend/lib/speech-player.ts` and speech-player styling/runtime
-- microphone/media APIs, permissions UI or storage
-- scheduler formulas, interval/easiness constants or lesson candidate ranking/weighting algorithms
-- unrelated catalog/profile/scenario/PWA/CSP runtime
-- deployment workflows, secrets or production configuration
-- broad compatibility/refactor work unrelated to #481
-
-## Runtime owners
-
-- `learning.AnswerMode`: canonical persisted exercise-mode vocabulary.
-- `normalizeAndValidateReviewRequest` / lesson configuration validation: API boundary for allowed modes and objective/study semantics.
-- `ScheduleAttempt`: mode-to-existing-scheduling-policy dispatch only; objective formulas stay in `ScheduleReview` unchanged.
-- `queryLessonCandidates`: existing objective/due-only lesson composition boundary; listening joins recall/choice without changing ranking.
-- `review_events.answer_mode`: immutable historical exercise-mode evidence.
-- `lesson_sessions.study_mode`: active lesson mode contract and review-mode matching owner.
-- `ProgressSummary.Modes`: per-mode aggregate evidence; `Listening` is added as a separate bucket.
-- Existing speech player remains playback-only and does not become the persistence owner in this slice.
-
-## Documentation owners
-
-- `api/openapi.yaml`: public API source of truth for AnswerMode enums.
-- `.agents/current/**`: active slice memory only.
-- Parent Issue #25 remains the source for later UI/microphone/custom-terminology phases.
+- listening/pronunciation UI, routes, components or CSS
+- speech-player runtime/provider changes
+- microphone, recording, scoring or media storage
+- custom glossary work
+- scheduler formulas/parameters or lesson ranking/weighting
+- unrelated runtime, deployment configuration or secrets
+- any persistent CI/workflow change; the temporary helper above must be deleted before final acceptance
 
 ## Invariants
 
-- Omitted legacy `answerMode` continues to normalize to typed `recall`; compatibility behavior is unchanged.
-- `study` remains the only non-objective mode and still requires revealed-answer semantics with no objective answer.
-- `listening` is objective and must follow the same correctness assessment rules as existing objective modes.
-- Listening uses the exact existing `ScheduleReview` path; no copied or divergent scheduler implementation.
-- Listening composition is due-only like recall/choice and reuses the same candidate ranking unchanged.
-- Historical `recall` rows remain `recall`; migration changes constraints only.
-- `reviewsToday` / `reviewsTotal` remain counts of all persisted events; listening must not be double-counted when objective aggregates are extended.
-- Weekly recall/retained-learning metrics remain typed-recall semantics in this phase unless a separate approved Issue changes that product definition.
-- OpenAPI must remain structurally valid as a whole; fragment-presence checks alone are insufficient.
+- omitted legacy `answerMode` still normalizes to typed `recall`;
+- `study` remains the only non-objective mode;
+- listening uses exactly the existing objective scheduler implementation;
+- listening composer behavior is due-only without ranking changes;
+- historical recall stays recall;
+- `reviewsToday`/`reviewsTotal` already count all events and must not be incremented again by the listening extension;
+- weekly recall/retained evidence remains typed-recall semantics;
+- OpenAPI must parse as a complete YAML document and preserve column-zero `$ref` structure;
+- temporary rewrite helper must assert exact source-match counts and disappear from the final diff.
 
 ## Acceptance criteria
 
 - `answerMode=listening` is accepted and persisted exactly as `listening`.
-- Typed recall continues to persist as `recall`; no migration rewrites history.
-- Listening schedules identically to the existing objective path for the same review state/rating.
-- Lesson creation/preview may use `studyMode=listening`; lesson review still enforces exact session mode matching and composer remains due-only.
-- Progress exposes `modes.listening`, and aggregate objective-today attempts/successes include listening.
-- OpenAPI documents `listening` consistently at every relevant request/response enum.
-- Focused migration/unit/integration tests prove constraints, validation, persistence and aggregation.
+- Typed recall remains `recall`; migration rewrites no history.
+- Listening schedules identically to the existing objective path.
+- Lesson preview/create accept `studyMode=listening`; review enforces exact lesson mode and composer is due-only.
+- Progress exposes `modes.listening`; objective/successful-today counters include listening without double counting.
+- OpenAPI documents listening consistently, including moderation review context if listening suggestions are returned.
+- Focused migration/unit/integration tests prove the contract.
 
 ## Required checks
 
-- Agent Harness validation after active-memory writes.
-- Backend format/vet/unit/race and focused scheduler/HTTP/composer tests.
-- Migration validation and backend integration with exact persisted `answer_mode` evidence.
-- Full OpenAPI YAML parse plus existing OpenAPI contract tests, including column-zero `$ref` protection.
-- Frontend lint/typecheck/unit for the shared progress contract.
-- Immutable-head full PR CI after all writes are frozen.
-- Review/thread audit and branch-vs-main compare before Ready.
-- Expected-head squash merge, exact-SHA `main` CI, then exact-image Stage/public smoke/browser acceptance before closing #481.
-
-## Risks
-
-- Accidentally treating listening as study and losing objective correctness.
-- Accidentally widening weekly retained-learning semantics merely because listening is objective.
-- Double-counting listening in total review counters when augmenting objective progress evidence.
-- Allowing DB/API enum drift where one layer accepts `listening` and another rejects it.
-- Broad-edit collateral changes in large repository/OpenAPI files.
+- read-back and `main` verification after writes;
+- backend format/vet/unit/race + integration/migrations;
+- frontend lint/typecheck/unit;
+- whole-file OpenAPI YAML parse and existing structural contract checks;
+- immutable-head full PR CI after helper deletion and write freeze;
+- review/thread audit + clean compare;
+- Ready → expected-head squash merge → exact-main CI → exact-image Stage/public acceptance before closing #481.
 
 ## Rollback
 
-Revert the atomic #481 PR. The migration is constraint-only and does not rewrite historical review events; rollback can restore the previous allowed-mode constraints as long as no listening events have been produced after deployment. If listening data exists, application rollback must preserve the broadened DB constraint until those rows are intentionally handled.
+Revert the atomic #481 product PR. Because the migration is constraint-only, historical data is unchanged. If listening rows exist after deployment, preserve the broadened DB constraint until those rows are intentionally handled even if application code is rolled back.
