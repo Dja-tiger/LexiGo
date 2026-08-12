@@ -55,8 +55,8 @@ LexiGo должен одновременно быть рабочим инстр�
 - переход Learn → `/lesson/active` сохраняет source/topic URL state, записывает канонический product-graph history target и передаёт backend-owned active session отдельному `LexigoActiveLessonApp`;
 - переход Home → `/lesson/active?resume=1` использует одноразовый intent: Active Lesson island удаляет `resume=1` из URL до вызова существующего resume action, поэтому backend-owned session position не дублируется;
 - Active Lesson island владеет active-session restore, review/resync/suggestion, completion/result continuation, focused-route announcement и safe exit, но оставляет session bootstrap, review outbox, Service Worker и immutable-event-state Browser Back guard persistent owners;
-- `LexigoPhrasesApp` загружает authenticated catalog через `/api/v1/words?kind=phrase&source=phrases` без client reordering, хранит `topic`, `query`, `sort` и `page` в URL и загружает `/api/v1/phrases/{slug}` независимо от catalog warm-up;
-- Phrases direct entry, reload, new tab и Back/Forward не зависят от ранее открытой catalog page; lesson configuration передаётся существующему `/learn?source=phrases` flow;
+- `LexigoPhrasesApp` использует существующий content-only demo catalog для гостя; после аутентификации catalog загружается через `/api/v1/words?kind=phrase&source=phrases` без client reordering. `topic`, `query`, `sort` и `page` хранятся в URL, а authenticated detail загружается через `/api/v1/phrases/{slug}` независимо от catalog warm-up;
+- Phrases direct entry, reload, new tab и Back/Forward не зависят от ранее открытой catalog page; persistent lesson configuration остаётся authenticated flow и передаётся существующему `/learn?source=phrases` только после входа;
 - при переходе между route graphs текущий island остаётся смонтированным до фактического изменения pathname, после чего bootstrap канонизирует history state и только затем подключает целевой graph;
 - `/profile` после восстановления сессии загружает отдельный authenticated `LexigoProfileApp`; guest login, registration, password reset и email-change confirmation остаются в compatibility boundary;
 - Profile island владеет только сводкой профиля и пользовательскими preferences; password, session revocation, email change, export и account deletion остаются в независимых подтверждаемых account-компонентах;
@@ -67,12 +67,21 @@ LexiGo должен одновременно быть рабочим инстр�
 - устаревшие ссылки вида `/?view=...` принимаются только как migration input и заменяются каноническим URL;
 - произвольный идентификатор lesson session не публикуется: маршрут `/lesson/active` разрешает backend определить активную сессию по аутентифицированному пользователю;
 - гостевой вход в активный урок перенаправляется на `/profile` с причиной и `return_to`;
-- `/dictionary` доступен как канонический shell без сессии, но персональный список, learning status и due queue не отдаются до успешной аутентификации; guest smoke проверяет явный authentication gate, а не приватные данные;
-- `/phrases/[slug]` разрешается адресным user-scoped API lookup по каноническому lowercase kebab-case slug; lookup использует unique functional PostgreSQL index и не перебирает страницы каталога;
+- `/dictionary` и `/words/[id]` доступны гостю через content-only `/api/v1/catalog/words` и `/api/v1/catalog/words/{wordID}`; authenticated Dictionary продолжает использовать `/api/v1/words*`, а learning status, due queue, status-фильтры и scheduler values для гостя не отдаются и не фабрикуются;
+- `/phrases/[slug]` для authenticated user разрешается адресным user-scoped API lookup по каноническому lowercase kebab-case slug; guest detail использует content-only demo source и не получает персональный learning status;
 - detail route фразы имеет независимые loading/error states, поэтому cold start, reload и новая вкладка не зависят от ранее загруженной catalog page;
 - одноразовые reset/email-change credentials передаются во fragment `/profile#...`, поэтому не попадают в HTTP access logs, query analytics и `Referer`;
 - App Router предоставляет route-level loading, error и not-found boundaries;
 - Service Worker кэширует HTML shell канонических маршрутов и использует `/` как fallback для динамических detail routes при offline navigation.
+
+## Guest catalog access policy
+
+- Гость может просматривать, искать, фильтровать, сортировать и листать каталог слов, открывать Word Detail, а также просматривать каталог и карточки фраз. Этот режим является read-only/demo и не создаёт долговременную параллельную систему прогресса.
+- Public Words API является отдельной content-only projection: `/api/v1/catalog/words` и `/api/v1/catalog/words/{wordID}` читают данные каталога без персонального `user_words` состояния. Поля `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` и `lastReviewedAt` остаются authenticated-only.
+- Персональные статусы, due queue, интервалы, review history, lesson/review mutations и сохранение результатов требуют реальной аутентифицированной сессии. Guest UI заранее сообщает, что demo progress не сохраняется, и не показывает вымышленные scheduler values.
+- Действие, требующее persistent practice, сначала переводит гостя на `/profile`; lesson не создаётся до успешной аутентификации.
+- Перед auth переходом текущий канонический Dictionary/Phrases target — включая filters/search/page/detail — сериализуется только как проверенный внутренний `return_to`. Внешние и malformed targets отклоняются, поэтому auth return не является open redirect.
+- После успешного login или registration auth owner потребляет валидированный target и заменяет `/profile` точным исходным catalog/detail URL. Это сохраняет пользовательский контекст и не оставляет промежуточный auth screen как дополнительную Back-entry.
 
 Route-specific initial JavaScript и request ceilings хранятся в `frontend/bundle-budgets.json`, защищаются `frontend/lib/bundle-budgets.test.ts` и browser performance gate. Методика и измеренные baselines описаны в [`frontend-bundle-budgets.md`](./frontend-bundle-budgets.md). Изменение ownership route entry не считается завершённым без direct-entry/history evidence и permanent route budget.
 
