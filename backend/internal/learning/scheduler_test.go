@@ -75,6 +75,23 @@ func TestScheduleStudyIntroducesNewItemWithoutMastering(t *testing.T) {
 	}
 }
 
+func TestScheduleListeningUsesObjectiveReviewPath(t *testing.T) {
+	state := ReviewState{Status: "review", Easiness: 2.4, IntervalDays: 6, Repetitions: 2}
+
+	listening, err := ScheduleAttempt(state, RatingAlmost, AnswerModeListening)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recall, err := ScheduleAttempt(state, RatingAlmost, AnswerModeRecall)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if listening != recall {
+		t.Fatalf("listening schedule = %+v, want objective recall schedule %+v", listening, recall)
+	}
+}
+
 func TestScheduleAttemptRejectsUnknownMode(t *testing.T) {
 	if _, err := ScheduleAttempt(ReviewState{}, RatingKnown, AnswerMode("video")); err != ErrInvalidAnswerMode {
 		t.Fatalf("error = %v, want ErrInvalidAnswerMode", err)
