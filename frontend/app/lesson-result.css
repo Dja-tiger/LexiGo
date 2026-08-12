@@ -440,9 +440,27 @@
 
   .lx-lesson-result__action-card > .lx-lesson-result__action-eyebrow,
   .lx-lesson-result__action-card > h2,
-  .lx-lesson-result__action-card > p,
-  .lx-lesson-result__action-detail {
+  .lx-lesson-result__action-card > p {
     display: none;
+  }
+
+  .lx-lesson-result__action-detail {
+    display: block;
+    padding: 0 0 2px;
+    border-radius: 0;
+  }
+
+  .lx-lesson-result__action-detail span {
+    display: none;
+  }
+
+  .lx-lesson-result--next .lx-lesson-result__action-detail,
+  .lx-lesson-result--sync-pending .lx-lesson-result__action-detail,
+  .lx-lesson-result--checking .lx-lesson-result__action-detail,
+  .lx-lesson-result--due .lx-lesson-result__action-detail,
+  .lx-lesson-result--daily-goal .lx-lesson-result__action-detail,
+  .lx-lesson-result--complete .lx-lesson-result__action-detail {
+    background: transparent;
   }
 
   .lx-lesson-result__restore-note {
