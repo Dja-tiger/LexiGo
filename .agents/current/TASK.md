@@ -2,102 +2,125 @@
 
 ## Identity
 
-- Issue: #73 — [Medium][Retention] Улучшить завершение урока и рекомендовать следующий шаг
-- Branch: `feat/issue-73-lesson-result-retention`
+- Issue: #72 `[Medium][UX] Унифицировать гостевой доступ к словам и фразам`
+- Branch: `feat/issue-72-guest-catalog-parity`
 - Base SHA: `e6b2d74891fb4e52f23152758812551361717857`
 - Head SHA: resolve from live branch ref
-- PR: #475 (Draft)
+- PR: #476 `feat(catalog): unify guest words and phrases access`
 
 ## Objective
 
-Make Lesson Result a truthful retention surface: summarize only persisted review evidence, keep objective correctness separate from self-rating, show the authoritative next review timing, expose exactly one personalized next action, and measure completion-to-next-action plus return-to-next-session without collecting identity/content data.
+Unify guest catalog behavior so words and phrases both support a clear read-only/demo browse path, while account-owned progress, scheduler state and practice remain authenticated. Preserve the exact catalog/detail context through login/registration and make the persistence boundary explicit before the learner invests in practice setup.
 
 ## Scope
 
-- Lesson Result snapshot/continuation policy and presentation.
-- Active Lesson completion/continuation wiring.
-- Authoritative `ProgressSummary.nextDueAt` propagation.
-- Privacy-preserving retention analytics in the existing `performance` bounded context.
-- API/OpenAPI + migration + unit/integration/browser/source tests required by the new retention event contract.
+- Add a public, content-only word catalog projection that never exposes `user_words` scheduler/progress fields.
+- Allow guest Dictionary list/search/filter/sort/pagination and Word Detail content browsing from the canonical route island.
+- Keep personalized status filters, scheduler panels and practice persistence authenticated-only.
+- Gate practice/auth-required actions before lesson creation or long configuration work.
+- Explain consistently that guest browsing/demo activity does not persist learning progress.
+- Preserve current Dictionary/Phrases route, filters and detail selection through authentication and return to that canonical context after successful login/registration.
+- Document the delivered guest catalog capability, public/authenticated data boundary and exact validated authentication return semantics in `docs/architecture.md`.
+- Add focused backend/frontend/browser/source-contract coverage for the guest/public boundary and return path.
 
 ## Non-goals
 
-- No speculative Figma redesign; preserve the canonical Lesson Result matrix from `frontend/docs/lesson-result-figma.md`, Figma nodes `217:5` through `217:14`.
-- No change to scheduler ranking, review grading semantics or onboarding.
-- No user/session/lesson/word IDs, free-form content, raw URL/query/referrer or authentication data in retention telemetry.
-- No production deployment dispatch or physical-device-only acceptance.
+- No changes to spaced-repetition algorithms, `user_words` ownership or review persistence semantics.
+- No public exposure of authenticated `/api/v1/words`, `/api/v1/words/due`, progress, lessons or scheduler fields.
+- No First Use/onboarding implementation blocked by Issue #201 Figma ownership.
+- No CSP production-enforcement work from Issue #78.
+- No broad compatibility-graph deletion or route-island ownership rewrite.
+- No physical-device-only acceptance substitution.
 
 ## Allowed paths
 
-- `frontend/lib/lesson-result*`
-- `frontend/components/lesson-result-presentation*`
-- `frontend/components/lexigo-active-lesson-app.tsx`
-- `frontend/components/lesson-retention-reporter.tsx`
-- `frontend/app/layout.tsx` only to mount the global return-to-next-session reporter
-- new focused frontend retention telemetry helper/tests
-- existing Lesson Result E2E/source tests
-- `backend/internal/performance/*`
-- `backend/internal/server/server.go` only for the focused anonymous retention endpoint registration
-- next migration pair under `backend/internal/platform/migrate/migrations/*`
-- `backend/integration/*` focused retention analytics tests
+- `.agents/current/**`
+- `docs/architecture.md` only for the Issue #72 guest catalog access/data-boundary/auth-return policy
 - `api/openapi.yaml`
-- focused docs/Agent Harness evidence
+- `backend/go.mod` and `backend/go.sum` only when required by the focused full-document OpenAPI parser contract
+- `backend/internal/server/**`
+- `backend/internal/words/**`
+- `backend/integration/**` only for Issue #72 public/auth boundary coverage
+- `frontend/app/information-architecture.css` only for the shared Dictionary/Phrases catalog-kind navigation contrast owner
+- `frontend/components/dictionary-catalog.tsx`
+- `frontend/components/lexigo-dictionary-app.tsx`
+- `frontend/components/lexigo-phrases-app.tsx`
+- `frontend/components/lexigo-premium-app.tsx` only for canonical auth return-context consumption
+- `frontend/components/word-detail-route.tsx`
+- `frontend/components/word-detail-presentation.tsx`
+- `frontend/lib/navigation.ts` and focused navigation/auth-return helpers/tests if required
+- `frontend/lib/word-detail.ts`
+- `frontend/lib/interface-copy.ts` only for shared guest-access copy
+- `frontend/scripts/dictionary-navigation-smoke.sh` only for canonical guest/auth Dictionary navigation smoke ownership
+- focused `frontend/**/*.test.*`, `frontend/e2e/**`, accessibility/visual/performance ownership files required by the changed behavior
 
 ## Prohibited paths
 
-- unrelated route islands, auth, scheduler ranking, dictionary/phrases/profile code
-- canonical Figma layout changes without approved design evidence
-- production workflow changes
+- scheduler/review algorithm implementation outside the public projection boundary
+- onboarding/First Use production UI
+- deployment secrets, environment credentials or production-only CSP enforcement
+- unrelated design-system/layout refactors
+- broad `LexigoPremiumApp` compatibility cleanup unrelated to auth return context
 
 ## Runtime owners
 
-- `frontend/lib/lesson-result.ts`: persisted completion snapshot and continuation policy.
-- `frontend/components/lesson-result-presentation.tsx`: Lesson Result evidence and primary CTA presentation.
-- `frontend/components/lexigo-active-lesson-app.tsx`: completion boundary and action execution.
-- focused retention telemetry helper + `lesson-retention-reporter.tsx`: anonymous completion/action/return instrumentation; `layout.tsx` only mounts the reporter.
-- `backend/internal/performance`: anonymous bounded operational/product telemetry owner.
+- `LexigoDictionaryApp` / `DictionaryCatalog`: canonical Dictionary guest/auth browse behavior.
+- `WordDetailRoute` / `WordDetailPresentation`: canonical word detail content vs personalized scheduler presentation.
+- `LexigoPhrasesApp`: existing guest phrase browse baseline and matching auth/persistence copy.
+- `LexigoPremiumApp`: existing guest authentication form and post-auth navigation handoff.
+- `backend/internal/words`: authenticated catalog plus new public content-only projection.
+- `backend/internal/server`: route-level public/auth boundary.
 
 ## Documentation owners
 
-- `.agents/current/*` during execution.
-- `.agents/PROJECT_STATE.md` only after delivery in a separate reconciliation PR.
+- `docs/architecture.md` for the durable guest catalog capability/data-boundary/auth-return contract.
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `.agents/PROJECT_STATE.md` only after delivered product evidence is complete.
 
 ## Invariants
 
-- Result evidence derives from actually saved review ratings; unsynced completion is not persisted as authoritative.
-- Objective correctness and confidence/self-rating remain separate concepts.
-- Daily goal/streak claims come only from authoritative progress responses.
-- Exactly one primary CTA is rendered.
-- Empty/partial/skipped states remain explicit and honest.
-- Retention telemetry is bounded enums/timing buckets only and cannot identify learner/content.
-- Existing product-journey navigation semantics remain unchanged.
+- Public catalog responses must contain content fields only; no `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` or `lastReviewedAt` derived from `user_words`.
+- Authenticated catalog behavior and scheduler values remain unchanged.
+- Guest UI must never fabricate a learning status or due date.
+- Practice/review/lesson persistence requires a real authenticated session.
+- Canonical Dictionary/Phrases URL state remains the source of truth for filters/detail and browser Back/Forward.
+- Authentication return targets must be validated as internal canonical product routes; no open redirect.
+- Existing `AccessibleDialog`, route shell and session bootstrap ownership remain unchanged.
 
 ## Acceptance criteria
 
-- Persisted Lesson Result exposes objective outcomes and self-rating separately.
-- Result tells the learner what to do next and, when available, the authoritative next review time.
-- Primary CTA is selected from weak/due review, continuing the daily goal, starting the next available material, or returning later/home based on authoritative state.
-- Daily goal/streak is never inferred from client-only counters.
-- Empty/partial/skipped completion does not overstate learning success.
-- Anonymous analytics can measure `completion-to-next-action` and `return-to-next-session` using fixed event/action values and delay buckets without identifiers.
-- Existing route/history/back-forward and Lesson Result persistence contracts remain green.
+- Guest can browse/search/filter/sort/paginate words and open a word detail without authentication.
+- Guest can continue browsing phrases under the existing read-only/demo path with matching persistence guidance.
+- Guest word detail shows content but not personalized scheduler/status data.
+- Attempting practice/auth-required actions presents the login gate before creating a lesson; copy states that guest progress is not saved.
+- Successful login or registration returns to the exact originating catalog/detail context, including canonical filters/search/page where applicable.
+- Malformed/external `return_to` values are ignored rather than navigated.
+- `docs/architecture.md` documents guest Words/Phrases browse, the content-only public Words projection, authenticated-only personalized/persistence state and validated exact `return_to` behavior.
+- Authenticated words/phrases, scheduler state, lesson creation and progress behavior remain green.
+- Browser E2E covers guest browse -> detail -> auth gate -> login/register return path and Back/Forward URL-state behavior.
 
 ## Required checks
 
-- backend format/vet/unit/race/integration/security and migration round-trip
-- frontend lint/typecheck/unit/build/dependency audit
-- Lesson Result source/unit/E2E in Chromium/WebKit
-- blocking UI shards, accessibility, visual and performance gates selected by CI
-- immutable-head CI before Ready/merge
-- exact-SHA main CI and exact-image Stage/public validation after merge
+- Go format/unit/race/integration/security checks selected by CI for backend/public-route changes.
+- OpenAPI structure/contract checks for new public endpoints, including a full YAML-document parse.
+- Frontend lint, typecheck, unit/source-contract and production build.
+- Blocking Chromium/WebKit browser matrix for changed guest/auth navigation behavior.
+- Accessibility/visual/performance/PWA/container gates selected by the repository scope router.
+- Architecture/documentation ownership checks selected by the full repository CI after the durable guest-policy update.
+- Immutable-head PR CI, review/thread audit, expected-head squash merge.
+- Exact-SHA `main` CI and exact-image Stage/public smoke/browser validation after product merge.
 
 ## Risks
 
-- analytics accidentally becoming identifying/correlatable;
-- mixing scheduler due timing with client clock/inferred timing;
-- changing CTA priority in a way that contradicts the actual queue API;
-- breaking persisted v1 Lesson Result snapshots during schema evolution.
+- Accidentally exposing per-user scheduler state through a public response.
+- Divergent guest vs authenticated filter semantics.
+- Auth return path becoming an open redirect or losing canonical URL state.
+- Word Detail accidentally fabricating scheduler values for guest content.
+- Compatibility graph auth handoff diverging from route-island navigation.
+- Public architecture documentation describing the historical auth-gated Dictionary after runtime guest access has changed.
 
 ## Rollback
 
-Squash revert the atomic Issue #73 product commit. Migration down must remove only the new anonymous retention analytics objects; existing product navigation/performance data remains untouched.
+Revert the atomic Issue #72 product commit/PR. The authenticated `/api/v1/words` contract remains untouched, so rollback removes only the public projection and guest UI/return-path behavior without data migration or scheduler-state repair.
