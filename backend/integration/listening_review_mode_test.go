@@ -186,7 +186,7 @@ func TestListeningReviewModePersistsAndAggregatesSeparately(t *testing.T) {
 		"answerMode":            "recall",
 		"correct":               true,
 		"timezoneOffsetMinutes": 0,
-	}, http.StatusUnprocessableEntity, nil)
+	}, http.StatusConflict, nil)
 
 	postAuthenticatedJSON(t, endpoint, registered.Tokens.AccessToken, map[string]any{
 		"lessonVersion":         lesson.Version,
