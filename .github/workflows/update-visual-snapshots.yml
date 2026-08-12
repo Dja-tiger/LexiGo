@@ -3,7 +3,7 @@ name: Update visual snapshots
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - feat/issue-73-outcome-summary
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+    name: Regenerate Issue 73 Lesson Result visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -21,13 +21,13 @@ jobs:
     env:
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
       FRONTEND_CI_VOLUME: lexigo-frontend-visual-${{ github.run_id }}-${{ github.run_attempt }}
-      FRONTEND_CI_SLOT: core
+      FRONTEND_CI_SLOT: visual
       APP_BUILD_ID: ${{ github.sha }}
       NEXT_PUBLIC_RUM_SAMPLE_RATE: "0"
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: feat/issue-73-outcome-summary
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare isolated frontend workspace
@@ -52,17 +52,17 @@ jobs:
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
 
-      - name: Commit Issue 162 baselines
+      - name: Commit Issue 73 Lesson Result baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
+            e2e/visual-regression.spec.ts-snapshots/lesson-result-next-compact-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-result-due-desktop-visual-desktop-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/lesson-result-daily-goal-dark-desktop-visual-desktop-linux.png
           if git diff --cached --quiet; then
-            echo "Composer baselines already match."
+            echo "Lesson Result baselines already match."
           else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
+            git commit -m "test(visual): update Lesson Result baselines"
+            git push origin HEAD:feat/issue-73-outcome-summary
           fi
