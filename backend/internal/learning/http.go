@@ -70,6 +70,9 @@ func (h *Handler) Progress(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("timezoneOffsetMinutes"))
 	result, err := h.repository.Progress(r.Context(), userID, offset)
 	if err == nil {
+		err = h.repository.populateListeningProgress(r.Context(), userID, offset, &result)
+	}
+	if err == nil {
 		err = h.repository.populateProgressExtensions(r.Context(), userID, offset, &result)
 	}
 	if err != nil {
@@ -100,6 +103,9 @@ func (h *Handler) SetDailyGoal(w http.ResponseWriter, r *http.Request) {
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("timezoneOffsetMinutes"))
 	result, err := h.repository.Progress(r.Context(), userID, offset)
+	if err == nil {
+		err = h.repository.populateListeningProgress(r.Context(), userID, offset, &result)
+	}
 	if err == nil {
 		err = h.repository.populateProgressExtensions(r.Context(), userID, offset, &result)
 	}
