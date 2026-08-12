@@ -690,9 +690,13 @@ export function LexigoActiveLessonApp({
           ratings: nextRatings,
           skipped: result.data.lessonSkippedItems,
           dueNow: completionProgress?.dueNow ?? 0,
+          nextDueAt: completionProgress?.nextDueAt ?? null,
           dailyGoal: completionProgress?.dailyGoal ?? 0,
           reviewsBefore: lessonProgressBeforeRef.current,
           reviewsAfter: completionProgress?.reviewsToday ?? null,
+          objectiveReviewsToday: completionProgress?.objectiveReviewsToday ?? null,
+          objectiveSuccessfulToday: completionProgress?.objectiveSuccessfulToday ?? null,
+          currentStreak: completionProgress?.currentStreak ?? null,
           syncPending,
         });
         let celebrate = false;
