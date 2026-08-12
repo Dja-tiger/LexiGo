@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { ApplicationErrorBoundary } from "@/components/application-error-boundary";
 import { FeedbackCenter } from "@/components/feedback-center";
 import { LegalFooter } from "@/components/legal-footer";
-import { LessonRetentionReporter } from "@/components/lesson-retention-reporter";
 import { RoutedLexigoApp } from "@/components/routed-lexigo-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
@@ -132,7 +131,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ApplicationErrorBoundary>
           <FeedbackCenter>
             <WebVitalsReporter />
-            <LessonRetentionReporter />
             <ServiceWorkerRegistration />
             <RoutedLexigoApp />
             {children}
