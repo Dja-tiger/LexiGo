@@ -11,10 +11,16 @@ export type LessonResultFixtureOptions = {
   resumeWithReviewedItem?: boolean;
 };
 
+export type LessonResultActionRequest = {
+  recommendedAction: string;
+  selectedAction: string;
+};
+
 export type LessonResultFixture = {
   reviewRequests: () => number;
   lessonCreateRequests: () => number;
   previewRequests: () => number;
+  resultActionRequests: () => LessonResultActionRequest[];
 };
 
 type LessonRequest = {
@@ -103,6 +109,7 @@ export async function installLessonResultFixture(
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
+  const resultActions: LessonResultActionRequest[] = [];
   let activeLesson: Record<string, unknown> | null = options.resumeWithReviewedItem ? {
     id: "00000000-0000-0000-0000-000000000194",
     source: "mixed",
@@ -255,6 +262,11 @@ export async function installLessonResultFixture(
       };
       return fulfillJSON(route, 201, activeLesson);
     }
+    if (path.endsWith("/result-action") && request.method() === "POST") {
+      resultActions.push(request.postDataJSON() as LessonResultActionRequest);
+      await route.fulfill({ status: 204 });
+      return;
+    }
     if (path.endsWith("/review") && request.method() === "POST") {
       reviewCount += 1;
       const completedLesson = activeLesson;
@@ -307,6 +319,7 @@ export async function installLessonResultFixture(
     reviewRequests: () => reviewCount,
     lessonCreateRequests: () => lessonCreateCount,
     previewRequests: () => previewCount,
+    resultActionRequests: () => [...resultActions],
   };
 }
 
@@ -340,15 +353,6 @@ export async function completeRecallLesson(page: Page): Promise<void> {
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await completeVisibleRecallCard(page, "backlog");
-}
-
-export async function completeRestoredRecallLesson(page: Page): Promise<void> {
-  await page.goto("/lesson/active", { waitUntil: "domcontentloaded" });
-  const savedLesson = page.getByRole("region", { name: "Сохранённый активный урок" });
-  await expect(savedLesson).toBeVisible({ timeout: 15_000 });
-  await savedLesson.getByRole("button", { name: "Продолжить урок", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();
-  await completeVisibleRecallCard(page, "checkpoint");
 }
 
 async function completeVisibleRecallCard(page: Page, answerValue: string): Promise<void> {
