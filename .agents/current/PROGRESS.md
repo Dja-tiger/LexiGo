@@ -1,87 +1,91 @@
 # Current Task Progress
 
-## 2026-08-12 03:18 Europe/Moscow
+## 2026-08-12 Europe/Moscow
 
-### Verified
+### Identity
 
-- Issue #72 is implemented on `feat/issue-72-guest-catalog-parity` through Draft PR #476 against immutable base `e6b2d74891fb4e52f23152758812551361717857`.
-- Live `main` remained `e6b2d74891fb4e52f23152758812551361717857` through every write-safety check in this continuation.
-- Public backend ownership is separate from authenticated learning ownership: `/api/v1/catalog/words` and `/api/v1/catalog/words/{wordID}` are public; authenticated `/api/v1/words`, `/api/v1/words/{wordID}`, progress and lessons remain protected.
-- Public word repository reads content catalog data without joining `user_words`; list count/page run in the same read-only repeatable-read transaction.
-- Public responses do not expose `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` or `lastReviewedAt`; public `status` filtering is rejected instead of fabricated.
-- Dictionary guest list/detail uses the public content projection; authenticated list/detail continues to use personalized endpoints.
-- Word Detail keeps scheduler/status presentation authenticated-only and shows explicit non-persistence guidance for guests.
-- Phrases guest browsing remains read-only/demo, while persistent lesson/practice behavior requires authentication before lesson creation.
-- `authenticationURL` serializes a validated internal canonical `return_to`; successful login/register consumes it in the canonical auth owner and uses `window.location.replace(navigationURL(returnTarget))`, preserving exact Dictionary/Phrases query/detail context without leaving the auth screen in Back history.
-- `LexigoPhrasesApp` catalog filters are memoized so catalog loading does not loop on a fresh filter-object identity after state updates.
-- Shared `CatalogKindNavigation` is the canonical Words/Phrases navigation owner for both guest and authenticated catalog surfaces.
-- OpenAPI documents public content-only list/detail paths and closed `PublicCatalogPage` / `PublicCatalogWord` schemas.
-- Backend OpenAPI contract parses the complete YAML document and fails closed if public paths gain auth/status semantics or public word schemas gain personalized SRS fields.
-- Blocking Playwright acceptance covers guest Word Detail -> login -> exact return and guest Phrases -> registration -> exact return on desktop Chromium and iOS WebKit.
-- `docs/architecture.md` now documents the durable guest catalog policy: guest Words/Phrases read-only browse, content-only public Words API, authenticated-only personalized/persistence state, pre-practice auth gate and validated exact `return_to` consumption.
+- Issue: #72 `[Medium][UX] Унифицировать гостевой доступ к словам и фразам`.
+- PR: #476 `feat(catalog): unify guest words and phrases access`.
+- Branch: `feat/issue-72-guest-catalog-parity`.
+- Immutable base/main used for the product slice: `e6b2d74891fb4e52f23152758812551361717857`.
+- Last product/test head before this Agent-Docs reconciliation: `e49097dd4ceacfd4c1ec44737a6718565511f472`.
 
-### CI #3297 classification
+### Delivered product contract
 
-- CI #3297 / run `31545380436` ran on exact head `b2e92778a75a7ce3efb91bc926f8e49b1c3bbf43` and failed only the primary `Visual regression` and `UI tests (shard 1/2)` jobs; `Frontend quality` failed downstream from those jobs.
-- Backend unit/security/integration, frontend core, UI shard 2/2, accessibility, performance, content security, controlled Service Worker, lesson completion, Dictionary smoke and iOS PWA Dictionary were green.
-- UI shard 1 produced two deterministic strict-mode failures in `guest-catalog-parity.spec.ts`: the global `Войти и сохранить прогресс` locator matched both the primary detail-card CTA and the separate demo/practice aside CTA on Word Detail and Phrase Detail.
-- Runtime ownership is intentional: both controls are valid product actions. The acceptance test is corrected by scoping the exact accessible-name locator to the main semantic `article`; `.first()`, positional selectors, skips and timeout changes are not used.
+- Added public content-only Words list/detail projection at `/api/v1/catalog/words` and `/api/v1/catalog/words/{wordID}` without joining or exposing personalized `user_words` scheduler state.
+- Public word payloads do not expose `status`, `easiness`, `intervalDays`, `repetitions`, `dueAt` or `lastReviewedAt`; public status filtering is rejected rather than fabricated.
+- Guest Dictionary supports canonical list/search/filter/sort/pagination and Word Detail browsing; authenticated Dictionary continues to use personalized `/api/v1/words*` ownership.
+- Guest Phrases remains read-only/demo with the same explicit non-persistence boundary.
+- Practice, lesson/review mutations, due state and durable learning progress remain authenticated-only and are gated before lesson creation.
+- Word/Phrase guest detail presents content without fake scheduler state and offers authentication only for persistent practice.
+- Authentication handoff preserves a validated internal canonical `return_to`, including Dictionary/Phrases search/filter/page/detail context; external or malformed targets are rejected.
+- Successful login/registration consumes the validated target and returns to the exact originating product context without retaining the auth screen as an extra Back-history entry.
+- OpenAPI documents closed public list/detail schemas; backend contract tests parse the complete YAML document and reject public auth/SRS leakage.
+- `docs/architecture.md` now documents the durable guest/public/authenticated capability boundary and exact auth-return semantics.
 
-### Visual evidence from CI #3297
+### Reliability and acceptance fixes completed during validation
 
-- Phrases content-addressed actuals were stable across retry and retained their dimensions:
-  - compact Light: `390x1628`, SHA-256 `63e0a1fd86e78eb75bb22cc3377727d75adace7baa4b39da9e04042714e0a73a`;
-  - compact Dark: `390x1628`, SHA-256 `64cd10dc0eaec2e0543c3d2580456d0754e4950312b9ab89c70925546a124ae4`;
-  - desktop Light: `1440x1185`, SHA-256 `f681cdbbd6b810d4f501ef4240ecef639d5572eb725976eb5a3f01bd0d59b67a`;
-  - desktop Dark: `1440x1185`, SHA-256 `9546035ad41865ad77439356e7e8c825c43277298ebc1fffb82b8173888f20dc`.
-- Dictionary content-addressed actuals were stable across retry and changed geometry exactly where the shared Words/Phrases navigation was restored to the common authenticated/guest owner:
-  - compact Light: `390x1197`, SHA-256 `57c8aa5684cc56165392d55988e369da0bf0a5379fed75194bd6d38eb95a09f8`;
-  - compact Dark: `390x1197`, SHA-256 `4424182e3a4c0356ba57687dd6bca1339c9a671d186083225061b2a7816b90c0`;
-  - medium Light: `768x1760`, SHA-256 `9b19904153f2e5ad3d7ab076cbc6e812286445f088ec5a81030b74e4741d288a`;
-  - desktop Light: `1440x1720`, SHA-256 `723359f44c06746bb95674edf0c74e651af48d2d21578dd9f64afa9a7e5f4dc8`.
-- Source diff explains both deterministic catalog drifts: `DictionaryCatalog` now renders the shared `CatalogKindNavigation` for the common authenticated/guest catalog path, and `information-architecture.css` moves that owner to semantic application colors/elevation. No unrelated system-state CSS owner changed.
-- Figma-backed `compact-error-dark` was deterministic across retry at `390x844`, SHA-256 `bd528972f73d9baf80c35c90cdb0e67f490bb5294a44bfc4ee3e858d25c64b15`; its surrounding Dictionary composition gained the same shared catalog navigation while the system-state presentation owner remained unchanged.
-- Figma-backed `compact-empty-light` stayed `390x844`, but first/retry hashes differed: `6ee475aa54781c55f6219d4d286d768613eb1dfecb7baed42a757f524e85c587` vs `084c80276767f02fb13d1ad51fd1eee1d5cfc1cdc280268eb2a215cffcc4e4cb`.
-- Pixel comparison of those two empty-state retry actuals found only three one-level RGB differences in the top chrome/calendar shadow area; state content and geometry were identical. This is classified as rasterization instability, not approval evidence.
-- No visual baseline was promoted from CI #3297. Repository policy requires a new stable Linux run and, for Figma-backed system states, exact design review before promotion.
-- Figma MCP returned node `79:93` metadata/dimensions but its signed image could not be rendered in the current sandbox; the next node request hit the Starter-plan MCP call limit. No claim of exact Figma visual review is made from that attempt.
+- CI #3297 / run `31545380436` exposed a strict-mode browser locator ambiguity after two valid same-name guest auth CTAs existed. Acceptance now scopes the exact accessible-name control to the canonical semantic `article`; runtime controls were not removed and no `.first()`, positional selector, skip or timeout weakening was introduced.
+- The same visual run showed intentional loaded Dictionary/Phrases catalog composition drift plus byte-instability in a Figma-backed Dictionary empty state. Baselines were not promoted from that failed run.
+- Dictionary shared catalog-kind navigation was restricted so approved Figma-owned empty/error composition remains unchanged while the loaded catalog retains the common Words/Phrases owner.
+- CI #3303 / run `31549532156` on `5932c6b4e21e4d8c1999af861d0737c5a1419c35` confirmed old Figma-owned system-state baselines and stable loaded-catalog actuals. Only the eight deterministic content-addressed loaded Dictionary/Phrases baselines were promoted with exact run/head provenance.
+- CI #3303 also exposed Dictionary CLS `0.13230558877253204` above the permanent `0.1` budget because loaded catalog navigation entered flow after data arrived. The runtime now keeps that owner present during loading and hides it only for terminal empty/error states; the performance budget was not raised.
+- CI #3306 / run `31550211401` on `fff05cd611b6905a94f050b635f9cc4f74459d94` confirmed visual and performance gates green, then exposed two independent UI-shard defects:
+  - shared guest quality fixtures still modeled only authenticated `/api/v1/words*` and did not serve the new public Words projection;
+  - WebKit could submit a search immediately after input while React state lagged behind the live control value.
+- Shared quality fixtures now expose content-only public Words list/detail responses without personalized status fields.
+- Dictionary search submit now reads the live named form control through `FormData`, synchronizes local presentation state and writes that exact query to canonical URL state. This removes the WebKit/concurrent-render race instead of adding waits to tests.
 
-### Documentation completion finding
+### Visual provenance
 
-- Issue #72 acceptance requires guest capabilities to be documented.
-- `docs/architecture.md` still described the historical unauthenticated Dictionary authentication gate even though PR #476 intentionally replaced that model with guest content-only browsing.
-- `.agents/current/TASK.md` was first expanded narrowly to allow `docs/architecture.md` as the Issue #72 durable guest-policy owner.
-- `docs/architecture.md` now states the public/authenticated API split, guest non-persistence boundary, hidden personalized scheduler state, pre-practice auth gate and safe exact return semantics.
+The following loaded catalog baselines are content-addressed and intentionally owned by CI #3303 / run `31549532156`, source head `5932c6b4e21e4d8c1999af861d0737c5a1419c35`:
 
-### Checks/fixes completed in this continuation
+- Phrases compact Light: `390x1628`, `63e0a1fd86e78eb75bb22cc3377727d75adace7baa4b39da9e04042714e0a73a`.
+- Phrases compact Dark: `390x1628`, `64cd10dc0eaec2e0543c3d2580456d0754e4950312b9ab89c70925546a124ae4`.
+- Phrases desktop Light: `1440x1185`, `f681cdbbd6b810d4f501ef4240ecef639d5572eb725976eb5a3f01bd0d59b67a`.
+- Phrases desktop Dark: `1440x1185`, `9546035ad41865ad77439356e7e8c825c43277298ebc1fffb82b8173888f20dc`.
+- Dictionary compact Light: `390x1197`, `57c8aa5684cc56165392d55988e369da0bf0a5379fed75194bd6d38eb95a09f8`.
+- Dictionary compact Dark: `390x1197`, `4424182e3a4c0356ba57687dd6bca1339c9a671d186083225061b2a7816b90c0`.
+- Dictionary medium Light: `768x1760`, `9b19904153f2e5ad3d7ab076cbc6e812286445f088ec5a81030b74e4741d288a`.
+- Dictionary desktop Light: `1440x1720`, `723359f44c06746bb95674edf0c74e651af48d2d21578dd9f64afa9a7e5f4dc8`.
 
-- Agent Harness mandatory source and specialized rules reviewed before writes.
-- CI #3297 jobs, annotations and Playwright artifacts inspected; failures were classified from exact evidence rather than re-running blindly.
-- Both guest auth CTA locators are now scoped to the canonical main `article` semantic owner.
-- Architecture guest policy is reconciled with current runtime and Issue #72 acceptance.
-- Write-safety read-back completed after `.agents/current/TASK.md`, `docs/architecture.md` and `frontend/e2e/guest-catalog-parity.spec.ts`; `main` remained unchanged after each write.
-- Visual actual dimensions and SHA-256 values were independently recomputed from the downloaded CI artifact bytes.
+Figma-owned shared loading/empty/error/offline baseline hashes were not changed. They pass unchanged after the lifecycle/ownership correction.
 
-### Historical blockers already resolved
+### Product-head validation
 
-- CI #3255 frontend source-contract failures: restored real shared navigation ownership and corrected stale/format-fragile assertions.
-- Phrases effect dependency loop: memoized derived filters.
-- Missing auth-success `return_to` consumption: added validated exact target handoff.
-- Missing public OpenAPI contract: added public paths/closed schemas/full-document YAML validation.
-- CI #3286 dependency-file failure: committed exact pinned-toolchain `go mod tidy` graph.
-- CI #3290 Dictionary smoke failure: replaced historical auth-gate assertion with semantic guest Dictionary smoke without weakening runtime acceptance.
+CI #3308 / run `31551224446` on exact product/test head `e49097dd4ceacfd4c1ec44737a6718565511f472` completed successfully across the full required product matrix:
 
-### Current branch state
+- scope routing and Agent Docs routing contract;
+- backend formatting, static analysis, race-enabled unit tests, coverage and vulnerability scan;
+- backend integration with race detector;
+- frontend lint, typecheck, unit/source contracts, production build and dependency audit;
+- UI tests shard 1/2 and shard 2/2;
+- Lesson completion;
+- iOS PWA Dictionary;
+- visual regression;
+- performance budgets;
+- accessibility audit;
+- controlled Service Worker;
+- content security;
+- Dictionary navigation smoke;
+- frontend quality aggregator;
+- API and Web container builds.
 
-- Last product/test write before this Progress reconciliation: `37d3ac6cd7c68d803324dce6ab6aa6f59420ce4c`.
-- This Progress write advances the branch; `.agents/current/EXECUTION.md` is the final planned evidence write before the next immutable-head CI observation.
-- `.agents/PROJECT_STATE.md` remains intentionally unchanged until product merge plus exact-SHA Stage/public evidence is complete.
+The two exact failures discovered in CI #3306 are therefore closed by blocking browser evidence on #3308, not by local-only assumptions.
 
-### Next action
+### Review and delivery state
 
-- Reconcile `.agents/current/EXECUTION.md` with CI #3297, architecture completion and the semantic locator fix.
-- Resolve the resulting immutable branch head and observe a fresh full CI run.
-- If visual regression is the only remaining failure, inspect the new exact Linux artifacts and retry stability before any baseline write.
-- Promote content-addressed Dictionary/Phrases baselines only from a reviewed stable final-head run with exact source run/head provenance.
-- Do not promote Figma-backed system-state hashes unless the new run is stable and the exact Figma composition can be reviewed under repository policy.
-- Once the final developer-authored head has a fully green required matrix, re-audit reviews/threads, mark PR Ready, perform expected-head squash merge, verify exact-SHA `main` CI, then deploy the exact image to Stage and require public smoke/browser success before closing Issue #72.
+- PR #476 remained open, Draft and mergeable on exact product/test head `e49097dd4ceacfd4c1ec44737a6718565511f472` before this Agent-Docs reconciliation.
+- The pre-reconciliation review audit had no reviews, inline review threads or PR conversation comments.
+- `.agents/PROJECT_STATE.md` remains intentionally unchanged because Issue #72 is not delivered until expected-head merge, exact-SHA `main` CI and exact-image Stage/public validation all succeed.
+- PR body uses `Refs #72` rather than an automatic close keyword so Issue #72 remains open through deployment/public acceptance.
+
+### Next gate
+
+1. Advance the feature branch once with the atomic final Agent-Docs reconciliation containing this file and `EXECUTION.md`.
+2. Require a full immutable-head CI on that exact final branch SHA.
+3. Repeat review/thread/comment audit and verify base/head/mergeability immediately before merge.
+4. Mark PR #476 Ready and perform expected-head squash merge only if `main` is still the verified base or has been safely reconciled.
+5. Require exact-SHA `main` CI success and immutable API/Web image publication.
+6. Deploy that exact image SHA to Stage and require Stage/public HTTP smoke plus blocking public desktop Chromium/iOS WebKit validation.
+7. Only after those gates succeed, close Issue #72 and reconcile `.agents/PROJECT_STATE.md` in the normal Agent-Docs delivery flow.
