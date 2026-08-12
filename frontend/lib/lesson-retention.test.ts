@@ -142,6 +142,23 @@ describe("lesson retention reporting", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("reports a pending return when the persisted result remounts in a new browser session", () => {
+    const { sessionStorage, fetchMock } = installBrowser();
+    const completedAt = Date.UTC(2026, 7, 11, 18, 0, 0);
+    vi.spyOn(Date, "now").mockReturnValue(completedAt + 90_000);
+
+    reportLessonCompletion("continue_goal", completedAt);
+    sessionStorage.removeItem(COMPLETION_SESSION_KEY);
+    reportLessonCompletion("continue_goal", completedAt);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(requestBody(fetchMock, 1)).toMatchObject({
+      event: "return_to_next_session",
+      action: "none",
+      delayBucket: "under_5m",
+    });
+  });
+
   it("reports one return and does not reclassify a restored result as a new completion", () => {
     const { localStorage, sessionStorage, fetchMock } = installBrowser();
     const completedAt = Date.UTC(2026, 7, 11, 18, 0, 0);
