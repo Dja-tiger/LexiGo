@@ -24,7 +24,7 @@
 - Canonical Lesson Result owner from Issue #194 already exists. Figma nodes are `217:5`–`217:14`; node `217:5` was rechecked during pre-flight and confirms the existing composition: saved status, separated evidence, repetition context, one primary CTA and one secondary navigation action.
 - Additional Figma calls are blocked by the account MCP Starter-plan call limit. No inferred redesign or blind visual-baseline update is allowed as a workaround.
 - Mandatory project rules applied include production-safe delivery, route-island/recovery ownership, downstream API consumers, absolute calendar boundaries, request-scoped browser fixtures, tool/write safety, OpenAPI structure and authoritative browser visual/geometry collection.
-- Every branch write was followed by file read-back and a `main` re-read. `main` remained exactly `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa` through the final product/API write.
+- Every branch write was followed by file read-back and a `main` re-read. `main` remained exactly `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa` through the product/API and visual-baseline work.
 
 ### Implemented frontend outcome contract
 
@@ -35,6 +35,7 @@
 - Continuation priority is `sync-pending -> daily-goal -> due -> checking -> next -> home`. Already-due work therefore wins over creation of new material; daily-goal celebration remains one-time and crossing-based.
 - Result presentation reuses the existing Figma-backed composition and CSS owners. It shows server-confirmed outcome evidence, nearest-review timing, server goal/streak context and exactly one primary continuation.
 - `LexigoActiveLessonApp` builds the snapshot only after the final lesson review POST succeeds and refreshes `/api/v1/progress`; no review is resubmitted on Result reload/history restoration.
+- Mobile Result CSS was corrected after immutable-head diagnostics showed server-owned objective evidence, timing and goal/streak context were present in the DOM but hidden by the compact media query. The correction preserves the single-primary-CTA composition while keeping required evidence visible.
 
 ### Implemented retention measurement contract
 
@@ -68,18 +69,23 @@
 - Honest empty/partial/skipped/study/sync states: modeled and unit/browser-covered where reachable from canonical runtime fixtures.
 - Retention measurement: satisfied by authenticated first-action persistence plus existing lesson-session timestamps and the `lesson_result_retention` view.
 
-### CI / delivery state
+### CI / visual evidence
 
-- Earlier intermediate frontend-only head passed Frontend core quality (lint, typecheck, unit tests, production build and dependency audit).
-- The post-OpenAPI intermediate run #3334 successfully passed change-scope/Agent Docs classification and queued backend/frontend gates before this final Harness write advanced the branch again.
-- No intermediate run is accepted as final evidence.
-- Next step is immutable-head CI for the exact branch SHA created by this write. Required evidence includes backend unit/race/security, backend integration/migrations/OpenAPI, frontend core, canonical browser shards, accessibility, visual regression, performance budgets, iOS PWA, Service Worker/content security and immutable container builds as selected by CI.
-- Existing visual baselines will not be updated blindly. Any Result screenshot diff must be inspected against the canonical Issue #194 composition before acceptance.
-- PR #477 remains Draft and Issue #73 remains open until exact-head CI and later exact-merge Stage/public delivery gates are proven.
+- Exact product head `acb7644a28af4d8c91e500631f56aecb5184adc8` ran full PR CI #3342 / run `31645610383`.
+- Backend unit/security, backend integration, frontend core, both UI shards, Lesson completion, accessibility, performance, iOS PWA dictionary, content security, controlled Service Worker and dictionary smoke all completed `success` on that exact product head.
+- The prior WebKit/compact functional failures did not reproduce after the mobile evidence-visibility correction; `Lesson completion` and both UI shards were green.
+- CI #3342 failed only the Visual Regression group and its aggregate Frontend quality gate. Exactly three Lesson Result screenshots differed: compact Next Block, desktop Due Review and dark desktop Daily Goal. The Linux diagnostics artifact was inspected; retry captures were byte-identical for each state.
+- The diffs represented the intentional Issue #73 outcome contract: server-confirmed objective evidence, nearest-review timing, server goal/streak context and due-first recommendation. No pixel threshold or visual assertion was weakened.
+- Controlled regeneration used the repository-native pinned Playwright `v1.61.1-noble` production workflow. Update run `31646585362` completed `success` and github-actions bot commit `47218cbef6b12b6c0430e8bb5ed58a6d72552a23` changed exactly the three inspected Lesson Result PNG baselines.
+- The temporary helper workflow was restored to the exact `main` blob SHA `fb1d4aefa3e98652769990fd86805950fd88df45`; it has zero net PR diff. The temporary TASK scope exception was also removed before this final progress write.
+- Superseded parallel implementation PR #475 was closed after its older immutable-head CI #3320 failed; #477 is the only authoritative Issue #73 delivery line.
+- No intermediate run is accepted as final evidence. The exact branch SHA created by this progress write must pass the complete immutable-head CI matrix, including normal non-update Visual Regression, before Ready/merge.
+- After exact-head green: perform review/thread audit and clean branch-vs-main compare, mark PR #477 Ready, squash-merge with expected head SHA, then require exact-merge `main` CI plus Stage/public browser acceptance before closing Issue #73.
 
 ### Write-safety state
 
 - Branch was created from verified `main` SHA `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`.
-- All production/API/schema changes were written only to `feat/issue-73-outcome-summary`.
+- All production/API/schema/snapshot changes were written only to `feat/issue-73-outcome-summary`.
 - `main` was never modified by this task.
+- Net PR diff contains no visual-helper workflow change; the three PNG baselines are the only visual files added to the product diff.
 - After this progress reconciliation, freeze writes unless immutable-head CI exposes a concrete defect that requires a focused correction.
