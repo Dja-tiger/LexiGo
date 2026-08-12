@@ -83,17 +83,19 @@
   gap: 16px;
   margin-bottom: 18px;
   padding: 12px 14px 12px 18px;
-  border: 1px solid var(--lx-border, rgba(255, 255, 255, 0.12));
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 18px;
-  background: var(--lx-surface, rgba(12, 19, 35, 0.78));
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
 }
 
 .lx-catalog-kind-navigation > span {
+  color: var(--ak-color-text-muted);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.72;
 }
 
 .lx-catalog-kind-navigation > div {
@@ -101,7 +103,7 @@
   gap: 8px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(127, 139, 255, 0.08);
+  background: var(--ak-color-subtle);
 }
 
 .lx-catalog-kind-navigation button {
@@ -109,7 +111,7 @@
   padding: 9px 15px;
   border: 0;
   border-radius: 11px;
-  color: inherit;
+  color: var(--ak-color-text-main);
   background: transparent;
   font: inherit;
   font-weight: 750;
@@ -117,8 +119,8 @@
 }
 
 .lx-catalog-kind-navigation button.active {
-  background: var(--lx-surface-raised, rgba(255, 255, 255, 0.11));
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.16);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
 }
 
 .lx-composer-context {

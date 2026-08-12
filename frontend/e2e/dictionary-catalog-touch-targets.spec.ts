@@ -314,7 +314,7 @@ test.describe("Issue #74 Dictionary catalog touch targets", () => {
     for (const width of widths) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("heading", { level: 1, name: "Каталог слов и терминов", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
 
       const expectedMinimum = await page.evaluate(() => (
         window.matchMedia("(pointer: coarse)").matches ? 48 : 44

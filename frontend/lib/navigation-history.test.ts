@@ -119,6 +119,50 @@ describe("navigation history accessibility state", () => {
     expect(navigationScrollFromHistory(null)).toEqual({ x: 0, y: 0 });
   });
 
+  it("ignores a stale cross-route entry once the browser has moved to the canonical Profile path", () => {
+    vi.stubGlobal("window", {
+      location: { pathname: "/profile" },
+      history: { state: null },
+    });
+    const staleWordDetail = {
+      lexigo: true,
+      version: 1,
+      target: {
+        view: "library",
+        source: "backend",
+        query: "throughput",
+        sort: "az",
+        page: 2,
+        detail: "102",
+      },
+      scroll: { x: 0, y: 480 },
+    };
+
+    expect(navigationTargetFromHistory(
+      staleWordDetail,
+      "?return_to=%2Fwords%2F102%3Fsource%3Dbackend%26query%3Dthroughput%26sort%3Daz%26page%3D2",
+    )).toEqual({ view: "profile" });
+  });
+
+  it("keeps same-route history state when its canonical pathname still matches", () => {
+    vi.stubGlobal("window", {
+      location: { pathname: "/dictionary" },
+      history: { state: null },
+    });
+    const current = {
+      lexigo: true,
+      version: 1,
+      target: { view: "library", status: "review", page: 2 },
+      scroll: { x: 0, y: 310 },
+    };
+
+    expect(navigationTargetFromHistory(current, "?status=review&page=2")).toEqual({
+      view: "library",
+      status: "review",
+      page: 2,
+    });
+  });
+
   it("uses the canonical pathname URL as the navigation identity", () => {
     expect(navigationIdentity({ view: "home" })).toBe("/");
     expect(navigationIdentity({ view: "library", source: "data-engineering", status: "mastered", page: 3 }))

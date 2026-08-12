@@ -12,6 +12,7 @@ import {
   readyResourceStatus,
   type ResourceStatus,
 } from "../lib/account-resources";
+import { authenticationURL } from "../lib/auth-return";
 import { authorizedJSON, requestJSON } from "../lib/authorized-json";
 import type { Session } from "../lib/auth-session";
 import {
@@ -44,6 +45,13 @@ import {
 } from "../lib/navigation-scroll-restoration";
 import { reportProductJourney, type ProductJourneyIntent } from "../lib/product-journey";
 import type { ProgressSummary } from "../lib/progress";
+import {
+  isPublicWordPagePayload,
+  isPublicWordPayload,
+  publicWordToLearningItem,
+  type PublicWordAPIItem,
+  type PublicWordPage,
+} from "../lib/public-word-catalog";
 import {
   isWordDetailPayload,
   wordDetailStatus,
@@ -249,7 +257,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
       window.removeEventListener("pagehide", flushScrollSnapshot);
       document.removeEventListener("visibilitychange", flushScrollSnapshotWhenHidden);
     };
-  }, []);
+  }, [navigation]);
 
   useLayoutEffect(() => {
     navigationRef.current = navigation;
@@ -353,9 +361,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     filters: DictionaryFilters,
     signal: AbortSignal,
   ): Promise<DictionaryPageResult> => {
-    if (!session) throw new Error("Войдите, чтобы открыть словарь");
     const parameters = new URLSearchParams({
-      kind: "word",
       page: String(filters.page),
       limit: String(CATALOG_PAGE_SIZE),
       sort: filters.sort,
@@ -363,8 +369,22 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     if (filters.source) parameters.set("source", filters.source);
     if (filters.topic) parameters.set("topic", filters.topic);
     if (filters.query) parameters.set("query", filters.query);
-    if (filters.status) parameters.set("status", filters.status);
 
+    if (!session) {
+      const result = await requestJSON<PublicWordPage>(
+        `/api/v1/catalog/words?${parameters.toString()}`,
+        { signal },
+        undefined,
+        isPublicWordPagePayload,
+      );
+      return {
+        items: result.items.map(publicWordToLearningItem),
+        info: catalogPageInfo(result),
+      };
+    }
+
+    parameters.set("kind", "word");
+    if (filters.status) parameters.set("status", filters.status);
     const result = await authorizedJSON<ItemsResponse>(
       session,
       `/api/v1/words?${parameters.toString()}`,
@@ -378,8 +398,16 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     };
   }, [adoptSession, session]);
 
-  const loadDetail = useCallback(async (wordID: number, signal: AbortSignal): Promise<WordDetailItem> => {
-    if (!session) throw new Error("Войдите, чтобы открыть карточку слова");
+  const loadDetail = useCallback(async (wordID: number, signal: AbortSignal): Promise<LearningItem> => {
+    if (!session) {
+      const result = await requestJSON<PublicWordAPIItem>(
+        `/api/v1/catalog/words/${wordID}`,
+        { signal },
+        undefined,
+        isPublicWordPayload,
+      );
+      return publicWordToLearningItem(result);
+    }
     const result = await authorizedJSON<WordDetailAPIItem>(
       session,
       `/api/v1/words/${wordID}`,
@@ -447,6 +475,25 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
     setPendingNavigation({ identity: navigationIdentity(target), scroll });
     setNavigation(target);
     writePersistedNavigation(window.localStorage, target);
+  }, [router]);
+
+  const requireAuthentication = useCallback(() => {
+    const current = navigationRef.current;
+    const target: NavigationTarget = { view: "profile" };
+    const currentScroll = { x: window.scrollX, y: window.scrollY };
+    reportProductJourney(current, target, "authentication");
+    window.history.replaceState(
+      createNavigationHistoryState(current, currentScroll),
+      "",
+      window.location.href,
+    );
+    writeNavigationScrollSnapshot(
+      window.sessionStorage,
+      navigationIdentity(current),
+      currentScroll,
+    );
+    window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
+    router.push(authenticationURL(current), { scroll: false });
   }, [router]);
 
   const startSingleWordPractice = useCallback(async (item: WordDetailItem): Promise<void> => {
@@ -526,7 +573,7 @@ export function LexigoDictionaryApp({ initialSession, onSessionUpdated }: Dictio
               onStartPractice={startSingleWordPractice}
               onNavigate={navigate}
               onBackToResults={() => navigate(navigationWithoutDetail(navigation), true)}
-              onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
+              onRequireAuthentication={requireAuthentication}
             />
           </div>
         </main>

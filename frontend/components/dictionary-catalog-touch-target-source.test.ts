@@ -24,8 +24,9 @@ describe("Issue #74 Dictionary catalog touch-target ownership", () => {
   });
 
   it("targets only live Dictionary catalog controls that remain below the modality contract", () => {
+    expect(runtime).toMatch(/<CatalogKindNavigation\s+active="words"/);
+
     for (const runtimeOwner of [
-      '<CatalogKindNavigation active="words"',
       'className="lx-dictionary-quick-filters"',
       'className="lx-dictionary-filter-panel"',
       'className="lx-dictionary-reset"',

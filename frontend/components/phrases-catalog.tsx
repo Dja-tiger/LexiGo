@@ -150,7 +150,7 @@ function ResultsSurface({
               </span>
               <span className="lx-phrases-result-meta">
                 <i>{phraseTopicLabel(item.topic)}</i>
-                <i data-phrase-status={item.status}>{phraseStatusLabel(item.status)}</i>
+                {authenticated ? <i data-phrase-status={item.status}>{phraseStatusLabel(item.status)}</i> : null}
                 <ArrowIcon />
               </span>
             </a>
@@ -215,7 +215,7 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
         </div>
         {!authenticated ? (
           <button className="lx-phrases-sign-in" type="button" onClick={onRequireAuthentication}>
-            Войти для синхронизации
+            Войти и сохранять прогресс
           </button>
         ) : duePhrases !== null ? (
           <div className="lx-phrases-due-badge" role="status">
@@ -224,6 +224,12 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
           </div>
         ) : null}
       </header>
+
+      {!authenticated ? (
+        <div className="lx-word-detail-inline-status" role="note">
+          Демо-режим: фразы и карточки доступны для просмотра. Статусы, повторения и прогресс не сохраняются без аккаунта.
+        </div>
+      ) : null}
 
       <form className="lx-phrases-search" role="search" aria-label="Поиск по фразам" onSubmit={(event) => submitSearch(event, onSearchSubmit)}>
         <label>
@@ -303,7 +309,9 @@ export function PhrasesCatalog(props: PhrasesCatalogProps) {
               <h2 id="phrases-results-heading">Готовые формулировки</h2>
               <p aria-live="polite">{status.phase === "loading" ? "Обновляем результаты…" : `${info.total.toLocaleString("ru-RU")} результатов`}</p>
             </div>
-            <button className="lx-phrases-lesson-action" type="button" onClick={onConfigureLesson}>Урок по теме</button>
+            <button className="lx-phrases-lesson-action" type="button" onClick={onConfigureLesson}>
+              {authenticated ? "Урок по теме" : "Войти для урока"}
+            </button>
           </div>
           <ResultsSurface
             authenticated={authenticated}

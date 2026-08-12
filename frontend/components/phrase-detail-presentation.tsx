@@ -45,7 +45,7 @@ function BookIcon() {
   );
 }
 
-function PhraseContent({ phrase }: { phrase: PhraseItem }) {
+function PhraseContent({ phrase, authenticated }: { phrase: PhraseItem; authenticated: boolean }) {
   const examples = phrase.examples.filter((example) => example.trim()).slice(0, 3);
   const clozeCopy = learningTermCopy("cloze");
   return (
@@ -53,7 +53,7 @@ function PhraseContent({ phrase }: { phrase: PhraseItem }) {
       <header className="lx-phrase-detail-hero">
         <div className="lx-phrase-detail-kicker">
           <span>{phraseTopicLabel(phrase.topic)}</span>
-          <span data-phrase-status={phrase.status}>{phraseStatusLabel(phrase.status)}</span>
+          {authenticated ? <span data-phrase-status={phrase.status}>{phraseStatusLabel(phrase.status)}</span> : null}
         </div>
         <div className="lx-phrase-detail-title-row">
           <div>
@@ -149,17 +149,28 @@ export function PhraseDetailPresentation({
       {status.phase === "ready" && phrase ? (
         <div className="lx-detail-card lx-phrase-detail-layout">
           <article className="lx-phrase-detail-main">
-            <PhraseContent phrase={phrase} />
+            <PhraseContent phrase={phrase} authenticated={authenticated} />
+            {!authenticated ? (
+              <p className="lx-word-detail-inline-status" role="note">
+                Демо-режим: карточку можно просматривать без аккаунта, но прогресс и история повторений не сохраняются.
+              </p>
+            ) : null}
             <div className="lx-phrase-detail-actions">
-              <button className="lx-phrase-detail-primary" type="button" onClick={onConfigureLesson}>Настроить урок</button>
+              <button className="lx-phrase-detail-primary" type="button" onClick={onConfigureLesson}>
+                {authenticated ? "Настроить урок" : "Войти и сохранить прогресс"}
+              </button>
               <button className="lx-phrase-detail-secondary" type="button" onClick={onBack}>К другим фразам</button>
             </div>
           </article>
           <aside className="lx-phrase-detail-side" aria-label="Практика фразы">
             <span>{phraseTopicLabel(phrase.topic)}</span>
             <strong lang="en">{phrase.prompt}</strong>
-            <p>{phraseStatusLabel(phrase.status)}. Добавьте тему в сфокусированный урок, чтобы закрепить формулировку.</p>
-            <button type="button" onClick={onConfigureLesson}>Начать практику</button>
+            <p>{authenticated
+              ? `${phraseStatusLabel(phrase.status)}. Добавьте тему в сфокусированный урок, чтобы закрепить формулировку.`
+              : "Содержание доступно в демо. Войдите, чтобы создать урок и сохранять результаты повторений."}</p>
+            <button type="button" onClick={onConfigureLesson}>
+              {authenticated ? "Начать практику" : "Войти и сохранить прогресс"}
+            </button>
           </aside>
         </div>
       ) : null}

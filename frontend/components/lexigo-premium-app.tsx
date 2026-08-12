@@ -25,6 +25,7 @@ import {
   type AuthFieldErrors,
   type AuthMode,
 } from "../lib/auth-form";
+import { catalogAuthenticationReturn } from "../lib/auth-return";
 import { csrfTokenFromCookie, isSessionPayload, refreshSession, type Session } from "../lib/auth-session";
 import { sortCatalogEntries, type CatalogSortMode } from "../lib/catalog-sort";
 import {
@@ -1678,6 +1679,11 @@ export function LexigoPremiumApp({ initialSession }: { initialSession: Session |
       setPassword("");
       setPasswordConfirmation("");
       setHydratedUserID("");
+      const returnTarget = catalogAuthenticationReturn(window.location.search);
+      if (returnTarget) {
+        window.location.replace(navigationURL(returnTarget));
+        return;
+      }
       navigate({ view: returnView === "profile" ? "home" : returnView });
     } catch (requestError) {
       const presentation = presentAuthFailure(requestError);

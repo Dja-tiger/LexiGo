@@ -1,6 +1,7 @@
 import {
   navigationURL,
   parseNavigation,
+  routePath,
   type NavigationTarget,
 } from "./navigation";
 
@@ -80,6 +81,18 @@ function baseNavigationHistoryState(
   };
 }
 
+function currentLocationTarget(search: string): NavigationTarget | null {
+  if (typeof window === "undefined") return null;
+  return parseNavigation(search, window.location.pathname);
+}
+
+function matchesCurrentCanonicalRoute(
+  target: NavigationTarget,
+  canonical: NavigationTarget | null,
+): boolean {
+  return canonical === null || routePath(target) === routePath(canonical);
+}
+
 export function createNavigationHistoryState(
   target: NavigationTarget,
   scroll: NavigationScrollPosition,
@@ -112,16 +125,20 @@ export function readNavigationHistoryState(value: unknown): NavigationHistorySta
 }
 
 export function navigationTargetFromHistory(value: unknown, search: string): NavigationTarget {
+  const canonical = currentLocationTarget(search);
   const current = readNavigationHistoryState(value);
-  if (current) return current.target;
+  if (current && matchesCurrentCanonicalRoute(current.target, canonical)) return current.target;
 
-  // Compatibility with pre-v1 entries created before Issue #46.
+  // Compatibility with pre-v1 entries created before Issue #46. Legacy state is
+  // accepted only while it still belongs to the browser's canonical pathname;
+  // Next.js may otherwise expose the previous route's state for one render
+  // during a cross-route transition.
   if (isRecord(value) && value.lexigo === true) {
     const legacy = normalizeUnknownTarget(value);
-    if (legacy) return legacy;
+    if (legacy && matchesCurrentCanonicalRoute(legacy, canonical)) return legacy;
   }
 
-  return parseNavigation(search);
+  return canonical ?? parseNavigation(search);
 }
 
 export function navigationScrollFromHistory(value: unknown): NavigationScrollPosition {
