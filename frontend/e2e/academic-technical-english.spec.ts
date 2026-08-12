@@ -79,7 +79,7 @@ test("Academic Technical English is selectable and preserved for the next block"
   await expect(page.getByText("abstract", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Знал", exact: true }).click();
   await page.getByRole("button", { name: "К результатам", exact: true }).click();
-  await page.getByRole("button", { name: "Следующий урок", exact: true }).click();
+  await page.getByRole("button", { name: "Продолжить цель дня", exact: true }).click();
   await expect(page.getByText("accurate", { exact: true })).toBeVisible();
   expect(createSources).toEqual(["academic-technical-english", "academic-technical-english"]);
   expect(previewSources).toContain("academic-technical-english");
