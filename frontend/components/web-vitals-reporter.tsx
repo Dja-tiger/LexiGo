@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { useReportWebVitals } from "next/web-vitals";
 import { useCallback, useEffect, useRef } from "react";
 
-import { reportPendingLessonReturn } from "@/lib/lesson-retention";
 import {
   flushPerformanceQueue,
   installActionTimingObserver,
@@ -35,10 +34,6 @@ export function WebVitalsReporter() {
   useEffect(() => startLongTaskMonitoring(pathname), [pathname]);
 
   useEffect(() => installActionTimingObserver(), []);
-
-  useEffect(() => {
-    reportPendingLessonReturn();
-  }, []);
 
   useEffect(() => {
     const flushWhenHidden = () => {
