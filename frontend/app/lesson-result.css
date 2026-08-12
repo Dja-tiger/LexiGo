@@ -422,7 +422,7 @@
   }
 
   .lx-lesson-result__metrics small {
-    display: none;
+    grid-column: 1 / -1;
   }
 
   .lx-lesson-result__evidence-note {
@@ -438,11 +438,12 @@
     background: transparent;
   }
 
-  .lx-lesson-result__action-card > .lx-lesson-result__action-eyebrow,
-  .lx-lesson-result__action-card > h2,
-  .lx-lesson-result__action-card > p,
-  .lx-lesson-result__action-detail {
+  .lx-lesson-result__action-card > .lx-lesson-result__action-eyebrow {
     display: none;
+  }
+
+  .lx-lesson-result__action-detail {
+    padding: 12px 14px;
   }
 
   .lx-lesson-result__restore-note {
