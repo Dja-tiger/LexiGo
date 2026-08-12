@@ -252,7 +252,10 @@ export function DictionaryCatalog({
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    updateFilters({ query: searchInput.trim(), page: 1 });
+    const formData = new FormData(event.currentTarget);
+    const query = String(formData.get("query") ?? searchInput).trim();
+    setSearchInput(query);
+    updateFilters({ query, page: 1 });
   }
 
   function retryPage() {
@@ -354,6 +357,7 @@ export function DictionaryCatalog({
             <label>
               <span className="lx-visually-hidden">Поиск по словарю</span>
               <input
+                name="query"
                 type="search"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
