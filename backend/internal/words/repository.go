@@ -12,12 +12,53 @@ import (
 
 var ErrCatalogItemNotFound = errors.New("catalog item not found")
 
+const publicCatalogSelectFields = `
+		w.id, w.kind, coalesce(w.slug, ''), w.lemma, w.translation, w.phonetic,
+		w.part_of_speech, w.topic, coalesce(w.aliases, '{}'::text[]),
+		coalesce(w.accepted_answers, '{}'::text[]), w.examples, w.note,
+		w.cloze, w.cloze_answer
+`
+
 const catalogSelectFields = `
 		w.id, w.kind, coalesce(w.slug, ''), w.lemma, w.translation, w.phonetic,
 		w.part_of_speech, w.topic, coalesce(w.aliases, '{}'::text[]),
 		coalesce(w.accepted_answers, '{}'::text[]), w.examples, w.note,
 		w.cloze, w.cloze_answer, uw.status, uw.easiness::float8, uw.interval_days,
 		uw.repetitions, uw.due_at, uw.last_reviewed_at
+`
+
+const publicCatalogListFilter = `
+		from words w
+		where w.kind = 'word'
+		  and (
+		      $1 = ''
+		      or $1 = 'mixed'
+		      or ($1 = 'noun' and lower(w.part_of_speech) = 'noun')
+		      or ($1 = 'verb' and lower(w.part_of_speech) = 'verb')
+		      or ($1 = 'adjective' and lower(w.part_of_speech) = 'adjective')
+		      or ($1 = 'daily-life' and w.topic = 'Daily Life')
+		      or ($1 = 'travel' and w.topic = 'Travel')
+		      or ($1 = 'data-engineering' and w.topic = 'Data Engineering')
+		      or ($1 = 'backend' and w.topic = 'Backend Development')
+		      or ($1 = 'academic-technical-english' and w.topic = 'academic-technical-english')
+		  )
+		  and ($2 = '' or w.topic = $2)
+		  and (
+		      $3 = ''
+		      or lower(w.lemma) like ('%' || lower($3) || '%')
+		      or lower(w.translation) like ('%' || lower($3) || '%')
+		      or lower(w.topic) like ('%' || lower($3) || '%')
+		      or exists (
+		          select 1
+		          from unnest(w.aliases) as alias
+		          where lower(alias) like ('%' || lower($3) || '%')
+		      )
+		      or exists (
+		          select 1
+		          from jsonb_array_elements_text(coalesce(w.examples, '[]'::jsonb)) as example_text
+		          where lower(example_text) like ('%' || lower($3) || '%')
+		      )
+		  )
 `
 
 const catalogListFilter = `
@@ -37,6 +78,7 @@ const catalogListFilter = `
 		      or ($4 = 'travel' and w.kind = 'word' and w.topic = 'Travel')
 		      or ($4 = 'data-engineering' and w.kind = 'word' and w.topic = 'Data Engineering')
 		      or ($4 = 'backend' and w.kind = 'word' and w.topic = 'Backend Development')
+		      or ($4 = 'academic-technical-english' and w.kind = 'word' and w.topic = 'academic-technical-english')
 		  )
 		  and ($5 = '' or w.topic = $5)
 		  and (
@@ -73,6 +115,17 @@ type ListOptions struct {
 	Sort   string
 }
 
+type PublicPage struct {
+	Items       []Word `json:"items"`
+	Count       int    `json:"count"`
+	Total       int    `json:"total"`
+	Page        int    `json:"page"`
+	PageSize    int    `json:"pageSize"`
+	TotalPages  int    `json:"totalPages"`
+	HasPrevious bool   `json:"hasPrevious"`
+	HasNext     bool   `json:"hasNext"`
+}
+
 type Page struct {
 	Items       []UserWord `json:"items"`
 	Count       int        `json:"count"`
@@ -88,6 +141,22 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+func scanWord(row rowScanner) (Word, error) {
+	var item Word
+	var examples []byte
+	if err := row.Scan(
+		&item.ID, &item.Kind, &item.Slug, &item.Lemma, &item.Translation, &item.Phonetic,
+		&item.PartOfSpeech, &item.Topic, &item.Aliases, &item.AcceptedAnswers, &examples, &item.Note,
+		&item.Cloze, &item.ClozeAnswer,
+	); err != nil {
+		return Word{}, err
+	}
+	if err := json.Unmarshal(examples, &item.Examples); err != nil {
+		return Word{}, fmt.Errorf("decode examples: %w", err)
+	}
+	return item, nil
+}
+
 func scanUserWord(row rowScanner) (UserWord, error) {
 	var item UserWord
 	var examples []byte
@@ -101,6 +170,21 @@ func scanUserWord(row rowScanner) (UserWord, error) {
 	}
 	if err := json.Unmarshal(examples, &item.Examples); err != nil {
 		return UserWord{}, fmt.Errorf("decode examples: %w", err)
+	}
+	return item, nil
+}
+
+func (r *Repository) GetPublic(ctx context.Context, wordID int64) (Word, error) {
+	item, err := scanWord(r.pool.QueryRow(ctx, `
+		select `+publicCatalogSelectFields+`
+		from words w
+		where w.id = $1 and w.kind = 'word'
+	`, wordID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Word{}, ErrCatalogItemNotFound
+	}
+	if err != nil {
+		return Word{}, fmt.Errorf("query public catalog item: %w", err)
 	}
 	return item, nil
 }
@@ -137,6 +221,84 @@ func (r *Repository) GetPhraseBySlug(ctx context.Context, userID, slug string) (
 		return UserWord{}, fmt.Errorf("query phrase by slug: %w", err)
 	}
 	return item, nil
+}
+
+func (r *Repository) ListPublicPage(ctx context.Context, options ListOptions) (PublicPage, error) {
+	if options.Page <= 0 {
+		options.Page = 1
+	}
+	if options.Limit <= 0 {
+		options.Limit = 30
+	}
+	if options.Limit > 100 {
+		options.Limit = 100
+	}
+	if options.Sort == "" {
+		options.Sort = "default"
+	}
+
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return PublicPage{}, fmt.Errorf("begin public catalog page snapshot: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	args := []any{options.Source, options.Topic, options.Query}
+	var total int
+	if err := tx.QueryRow(ctx, "select count(*)::int "+publicCatalogListFilter, args...).Scan(&total); err != nil {
+		return PublicPage{}, fmt.Errorf("count public catalog items: %w", err)
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = (total + options.Limit - 1) / options.Limit
+		if options.Page > totalPages {
+			options.Page = totalPages
+		}
+	} else {
+		options.Page = 1
+	}
+	offset := (options.Page - 1) * options.Limit
+
+	rows, err := tx.Query(ctx, `
+		select `+publicCatalogSelectFields+publicCatalogListFilter+`
+		order by
+		  case when $4 = 'az' then lower(w.lemma) end asc,
+		  case when $4 = 'za' then lower(w.lemma) end desc,
+		  case when $4 = 'default' then w.topic end asc,
+		  w.id asc
+		limit $5 offset $6
+	`, options.Source, options.Topic, options.Query, options.Sort, options.Limit, offset)
+	if err != nil {
+		return PublicPage{}, fmt.Errorf("query public catalog items page: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]Word, 0, options.Limit)
+	for rows.Next() {
+		item, err := scanWord(rows)
+		if err != nil {
+			return PublicPage{}, fmt.Errorf("scan public catalog item: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return PublicPage{}, fmt.Errorf("iterate public catalog items: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return PublicPage{}, fmt.Errorf("commit public catalog page snapshot: %w", err)
+	}
+
+	return PublicPage{
+		Items:       items,
+		Count:       len(items),
+		Total:       total,
+		Page:        options.Page,
+		PageSize:    options.Limit,
+		TotalPages:  totalPages,
+		HasPrevious: options.Page > 1,
+		HasNext:     totalPages > 0 && options.Page < totalPages,
+	}, nil
 }
 
 func (r *Repository) ListPage(ctx context.Context, userID string, options ListOptions) (Page, error) {

@@ -51,6 +51,70 @@ paths:
                 $ref: "#/components/schemas/CatalogMetadata"
         "304":
           description: Версия каталога не изменилась.
+  /api/v1/catalog/words:
+    get:
+      operationId: listPublicCatalogWords
+      tags: [catalog]
+      summary: Paginated public content-only word catalog.
+      description: Публичная проекция слов без user_words, learning status, scheduler state и истории повторений. Query-параметр status намеренно не поддерживается и возвращает 422.
+      parameters:
+        - { name: source, in: query, schema: { type: string, enum: [mixed, noun, verb, adjective, daily-life, travel, data-engineering, backend, academic-technical-english] } }
+        - { name: topic, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: query, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: q, in: query, deprecated: true, description: Compatibility alias for query., schema: { type: string, maxLength: 120 } }
+        - { name: sort, in: query, schema: { type: string, enum: [default, az, za], default: default } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
+      responses:
+        "200":
+          description: One bounded public catalog page with content-only items.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCatalogPage"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          description: Внутренняя ошибка чтения публичного каталога.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/catalog/words/{wordID}:
+    get:
+      operationId: getPublicCatalogWord
+      tags: [catalog]
+      summary: Public content-only word card.
+      description: Возвращает только общие данные каталога и никогда не включает персональный status или SRS-поля.
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Public word card without personalized learning state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCatalogWord"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          description: Catalog word does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка чтения публичной карточки.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /api/v1/performance/rum:
     post:
       operationId: reportPerformanceRUM
@@ -1437,6 +1501,66 @@ components:
         createdAt:
           type: string
           format: date-time
+    PublicCatalogPage:
+      type: object
+      additionalProperties: false
+      required: [items, count, total, page, pageSize, totalPages, hasPrevious, hasNext]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/PublicCatalogWord"
+        count: { type: integer, minimum: 0, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalPages: { type: integer, minimum: 0 }
+        hasPrevious: { type: boolean }
+        hasNext: { type: boolean }
+    PublicCatalogWord:
+      type: object
+      additionalProperties: false
+      required: [id, kind, lemma, translation, phonetic, partOfSpeech, topic, acceptedAnswers, examples, note]
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        kind:
+          type: string
+          const: word
+        slug:
+          type: string
+        lemma:
+          type: string
+        translation:
+          type: string
+        phonetic:
+          type: string
+        partOfSpeech:
+          type: string
+        topic:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        acceptedAnswers:
+          type: array
+          description: Curated content-level accepted answers; not learner-specific state.
+          items:
+            type: string
+        examples:
+          type: array
+          items:
+            type: string
+        note:
+          type: string
+        cloze:
+          type: string
+        clozeAnswer:
+          type: string
     CatalogPage:
       type: object
       required: [items, count, total, page, pageSize, totalPages, hasPrevious, hasNext]

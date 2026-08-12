@@ -115,7 +115,9 @@ describe("Word Detail production ownership", () => {
 
     expect(dictionaryApp).toContain("const detailActive = Boolean(navigation.detail)");
     expect(dictionaryApp.match(/if \(detailActive\) return;/g)).toHaveLength(2);
-    expect(catalog).toContain("if (!authenticated || navigation.detail) return;");
+    expect(catalog.match(/if \(navigation\.detail\) return;/g)).toHaveLength(1);
+    expect(catalog).not.toContain("if (!authenticated || navigation.detail) return;");
+    expect(dictionaryApp).toContain("`/api/v1/catalog/words/${wordID}`");
     expect(dictionaryApp).toContain("`/api/v1/words/${wordID}`");
   });
 

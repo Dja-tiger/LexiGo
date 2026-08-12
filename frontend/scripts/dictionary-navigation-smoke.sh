@@ -57,14 +57,26 @@ for entry in "${routes[@]}"; do
       }
       ;;
     dictionary)
-      # The personalized dictionary is intentionally protected. In this
-      # unauthenticated shell smoke test the correct production state is the
-      # canonical route plus its explicit authentication gate, not a private
-      # catalog list populated without a session.
-      grep -Fq 'aria-label="Словарь доступен после входа"' <<<"$html" || {
-        echo "Dictionary authentication gate did not render for ${url}" >&2
+      # Issue #72 makes the canonical Dictionary a public read-only/demo
+      # destination. This shell smoke intentionally runs without an API
+      # session, so it must prove that the guest Dictionary island and its
+      # persistence boundary render instead of the historical auth gate.
+      grep -Fq 'data-route-client-island="dictionary"' <<<"$html" || {
+        echo "Guest Dictionary route island did not render for ${url}" >&2
         exit 1
       }
+      grep -Fq 'id="dictionary-catalog-title">Словарь</h1>' <<<"$html" || {
+        echo "Guest Dictionary catalog heading did not render for ${url}" >&2
+        exit 1
+      }
+      grep -Fq 'Демо-режим: слова и карточки доступны для просмотра.' <<<"$html" || {
+        echo "Guest Dictionary persistence guidance did not render for ${url}" >&2
+        exit 1
+      }
+      if grep -Fq 'aria-label="Словарь доступен после входа"' <<<"$html"; then
+        echo "Historical Dictionary authentication gate rendered for ${url}" >&2
+        exit 1
+      fi
       ;;
     *)
       grep -Fq 'class="lx-setup-card"' <<<"$html" || {

@@ -10,6 +10,7 @@ import {
   readyResourceStatus,
   type ResourceStatus,
 } from "../lib/account-resources";
+import { authenticationURL } from "../lib/auth-return";
 import { authorizedJSON, requestJSON } from "../lib/authorized-json";
 import type { Session } from "../lib/auth-session";
 import { isCatalogMetadataPayload, type CatalogMetadata } from "../lib/catalog-metadata";
@@ -169,7 +170,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
   const navigationRef = useRef(navigation);
   const searchInputRef = useRef(searchInput);
   const committedQueryRef = useRef(initialFilters.query);
-  const filters = phraseCatalogFilters(navigation);
+  const filters = useMemo(() => phraseCatalogFilters(navigation), [navigation]);
   const detailSlug = navigation.detail?.trim() || "";
 
   const adoptSession = useCallback((next: Session) => {
@@ -232,7 +233,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
       window.removeEventListener("pagehide", scrollSnapshots.flush);
       document.removeEventListener("visibilitychange", flushWhenHidden);
     };
-  }, []);
+  }, [navigation]);
 
   useLayoutEffect(() => {
     navigationRef.current = navigation;
@@ -284,6 +285,21 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
     setPendingNavigation({ identity: navigationIdentity(target), scroll });
     setNavigation(target);
     writePersistedNavigation(window.localStorage, target);
+  }, [router]);
+
+  const requireAuthentication = useCallback(() => {
+    const current = navigationRef.current;
+    const target: NavigationTarget = { view: "profile" };
+    const currentScroll = { x: window.scrollX, y: window.scrollY };
+    reportProductJourney(current, target, "authentication");
+    window.history.replaceState(
+      createNavigationHistoryState(current, currentScroll),
+      "",
+      window.location.href,
+    );
+    writeNavigationScrollSnapshot(window.sessionStorage, navigationIdentity(current), currentScroll);
+    window.dispatchEvent(new Event(PRODUCT_ROUTE_GRAPH_EVENT));
+    router.push(authenticationURL(current), { scroll: false });
   }, [router]);
 
   const loadMetadata = useCallback(async (signal?: AbortSignal) => {
@@ -380,7 +396,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [detailSlug, filters.page, filters.query, filters.sort, filters.topic, loadCatalog]);
+  }, [detailSlug, filters, loadCatalog]);
 
   const loadDetail = useCallback(async (slug: string, signal?: AbortSignal) => {
     setDetailStatus(loadingResourceStatus());
@@ -388,7 +404,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
     try {
       if (!session) {
         const item = GUEST_PHRASES.find((candidate) => candidate.slug === slug || candidate.id === slug);
-        if (!item) throw new Error("Войдите, чтобы открыть эту карточку фразы");
+        if (!item) throw new Error("Фраза недоступна в демо-каталоге");
         if (signal?.aborted) return;
         setDetail(item);
         setDetailStatus(readyResourceStatus());
@@ -427,9 +443,13 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
   }, [navigate]);
 
   const configureLesson = useCallback(() => {
+    if (!session) {
+      requireAuthentication();
+      return;
+    }
     const topic = detail?.topic || (filters.topic !== "all" ? filters.topic : "");
     navigate({ view: "learn", source: "phrases", ...(topic ? { topic } : {}) }, false, { x: 0, y: 0 }, "lesson_start");
-  }, [detail?.topic, filters.topic, navigate]);
+  }, [detail?.topic, filters.topic, navigate, requireAuthentication, session]);
 
   const topics = useMemo(
     () => phraseTopics(metadata, catalogItems, filters.topic),
@@ -455,7 +475,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
                 onBack={() => navigate(navigationWithoutDetail(navigationRef.current), true)}
                 onRetry={() => void loadDetail(detailSlug)}
                 onConfigureLesson={configureLesson}
-                onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
+                onRequireAuthentication={requireAuthentication}
               />
             ) : (
               <PhrasesCatalog
@@ -488,7 +508,7 @@ export function LexigoPhrasesApp({ initialSession, onSessionUpdated }: LexigoPhr
                 }}
                 onConfigureLesson={configureLesson}
                 onSwitchToWords={() => navigate({ view: "library" })}
-                onRequireAuthentication={() => navigate({ view: "profile" }, false, { x: 0, y: 0 }, "authentication")}
+                onRequireAuthentication={requireAuthentication}
               />
             )}
           </div>
