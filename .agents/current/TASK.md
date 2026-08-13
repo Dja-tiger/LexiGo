@@ -20,6 +20,7 @@ Add the backend/API foundation for private custom words without creating a secon
 - authenticated create/delete custom-word endpoints;
 - atomic create + scheduler enrollment;
 - public/authenticated/lesson ownership guards;
+- shared catalog seed compatibility with the new partial uniqueness boundary;
 - OpenAPI and PostgreSQL integration coverage;
 - architecture documentation only where backend ownership changes.
 
@@ -39,11 +40,14 @@ Add the backend/API foundation for private custom words without creating a secon
 - `.agents/current/EXECUTION.md`
 - `backend/internal/platform/migrate/migrations/000022_custom_words.up.sql`
 - `backend/internal/words/**`
+- `backend/internal/catalog/catalog.go`
 - `backend/internal/learning/lesson_composer.go`
 - `backend/internal/server/server.go`
 - `backend/integration/custom_words_test.go`
 - `api/openapi.yaml`
 - `docs/architecture.md`
+
+`backend/internal/catalog/catalog.go` was added after the verified partial-index downstream-consumer finding recorded in `PROGRESS.md`; its allowed change is limited to conflict-target compatibility for shared catalog seeding.
 
 Additional paths require a verified downstream-consumer finding recorded in `PROGRESS.md` before modification.
 
@@ -58,6 +62,7 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 ## Runtime owners
 
 - `backend/internal/words`: custom-word validation, persistence, authenticated/public catalog boundaries.
+- `backend/internal/catalog/catalog.go`: shared catalog seed upsert; may only target the shared partial unique index introduced by this slice.
 - `backend/internal/learning/lesson_composer.go`: existing lesson candidate selection; only ownership filtering may change.
 - `backend/internal/server/server.go`: authenticated HTTP route registration.
 - PostgreSQL `words` + `user_words`: catalog identity and scheduler state.
@@ -77,6 +82,7 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 - Existing `user_words`, lesson and review scheduler semantics are reused unchanged.
 - Delete cannot remove a shared catalog word or another user's custom word.
 - Different users may independently own the same normalized custom lemma/translation.
+- Shared catalog seeding must continue to upsert only shared rows after uniqueness becomes partial.
 - No historical shared catalog row is rewritten as private content.
 
 ## Acceptance criteria
@@ -97,6 +103,7 @@ See Issue #485. Required evidence covers create/enrollment, scheduler participat
 - Existing global `words` uniqueness index can accidentally prevent the same custom term across different accounts.
 - Public catalog SQL currently has no owner predicate because all rows were historically shared.
 - Broad catalog-enrollment jobs/triggers must never enroll owner rows for other users.
+- Partial unique indexes require the shared catalog seed upsert to declare the matching `owner_user_id is null` predicate.
 - Cascading word deletion may touch review/lesson rows; tests must prove scope and transaction safety.
 - Existing queries that join `user_words` to `words` may need an explicit defense-in-depth owner predicate.
 
