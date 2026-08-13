@@ -28,8 +28,28 @@ func (r *Repository) CreateCustomWord(
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	item, err := insertCustomWordTx(ctx, tx, userID, request)
+	if err != nil {
+		return UserWord{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return UserWord{}, fmt.Errorf("commit custom word transaction: %w", err)
+	}
+	return item, nil
+}
+
+// insertCustomWordTx is the single persistence primitive for both one-at-a-time
+// creation and bounded glossary import. Callers own the surrounding transaction
+// so a batch can roll every preceding item back when any later item conflicts.
+func insertCustomWordTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	request CreateCustomWordRequest,
+) (UserWord, error) {
 	var wordID int64
-	err = tx.QueryRow(ctx, `
+	err := tx.QueryRow(ctx, `
 		insert into words (
 			lemma,
 			translation,
@@ -79,10 +99,6 @@ func (r *Repository) CreateCustomWord(
 	if err != nil {
 		return UserWord{}, fmt.Errorf("read created custom word: %w", err)
 	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return UserWord{}, fmt.Errorf("commit custom word transaction: %w", err)
-	}
 	return item, nil
 }
 
@@ -98,9 +114,6 @@ func (r *Repository) DeleteCustomWord(ctx context.Context, userID string, wordID
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	// Lock and discard only an active lesson that actually references this word.
-	// The update serializes with normal lesson review/discard operations, which
-	// also update the lesson_sessions row before mutating progress.
 	if _, err := tx.Exec(ctx, `
 		update lesson_sessions as lesson
 		set status = 'discarded',
