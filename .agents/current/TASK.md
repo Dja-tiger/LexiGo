@@ -6,7 +6,7 @@
 - Branch: `feat/issue-497-local-pronunciation-recorder`
 - Base SHA: `98773d95a65c864b66084eae731eb643786bc7a7`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #498
 
 ## Objective
 
@@ -22,7 +22,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - stop/cancel/dispose track cleanup;
 - object-URL ownership/revocation;
 - unit and source-contract tests;
-- focused architecture/privacy documentation if required.
+- focused privacy documentation.
 
 ## Non-goals
 
@@ -41,7 +41,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - `frontend/lib/pronunciation-recorder.ts`
 - `frontend/lib/pronunciation-recorder.test.ts`
 - `frontend/lib/pronunciation-recorder-source.test.ts`
-- `docs/architecture.md` only if the ownership/privacy contract requires a durable note
+- `docs/pronunciation-recording-privacy.md`
 
 ## Prohibited paths
 
@@ -53,6 +53,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - service worker/cache owners
 - analytics/performance owners
 - deployment workflows/configuration
+- unrelated architecture documentation
 
 ## Runtime owners
 
@@ -62,7 +63,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 ## Documentation owners
 
 - `.agents/current/**`
-- `docs/architecture.md` only for the durable privacy boundary.
+- `docs/pronunciation-recording-privacy.md` for the durable local-only privacy boundary.
 
 ## Invariants
 
@@ -98,6 +99,10 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - stale object URLs retaining audio longer than intended;
 - browser differences in MIME support and permission errors;
 - accidental introduction of network or persistent-storage behavior.
+
+## Verified downstream finding
+
+`docs/architecture.md` is a broad shared owner whose full replacement is unnecessary for this atomic platform slice. A dedicated privacy contract is lower-risk and more auditable, so `docs/pronunciation-recording-privacy.md` is the only product documentation addition.
 
 ## Rollback
 
