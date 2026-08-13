@@ -7,7 +7,7 @@
 - Branch: `feat/issue-493-custom-glossary-import-export`
 - Base SHA: `981c3d78b1907480d763fbad23d9f1608b9353e9`
 - Head SHA: resolve from live branch ref after each write; immutable-head validation must use the final exact SHA.
-- PR: pending
+- PR: #495 — `feat(words): add verifiable custom glossary import export`
 
 ## Objective
 
