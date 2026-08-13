@@ -138,22 +138,22 @@ func TestListeningReviewModePersistsAndAggregatesSeparately(t *testing.T) {
 		t.Fatalf("listening leaked into typed weekly evidence: modes=%+v weekly=%+v", progress.Modes, progress.Weekly)
 	}
 
-	// Explicitly isolate one due candidate and one non-due candidate. The words
-	// came from /words/due, so both must be normalized before asserting the
-	// listening composer uses the same due-only boundary as recall/choice.
+	// Exercise the server-owned composer rather than the explicit wordIds/manual
+	// path. Make the entire learner catalog non-due, then expose exactly one due
+	// candidate. An objective listening lesson must contain only that item.
+	if _, err := pg.Exec(ctx, `
+		update user_words
+		set status = 'new', due_at = now() + interval '1 day'
+		where user_id = $1::uuid
+	`, registered.User.ID); err != nil {
+		t.Fatalf("make listening catalog non-due: %v", err)
+	}
 	if _, err := pg.Exec(ctx, `
 		update user_words
 		set status = 'review', due_at = now() - interval '1 minute'
 		where user_id = $1::uuid and word_id = $2
 	`, registered.User.ID, due.Items[1].ID); err != nil {
 		t.Fatalf("make listening candidate due: %v", err)
-	}
-	if _, err := pg.Exec(ctx, `
-		update user_words
-		set status = 'new', due_at = now() + interval '1 day'
-		where user_id = $1::uuid and word_id = $2
-	`, registered.User.ID, due.Items[2].ID); err != nil {
-		t.Fatalf("make listening control candidate non-due: %v", err)
 	}
 
 	var lesson struct {
@@ -165,7 +165,6 @@ func TestListeningReviewModePersistsAndAggregatesSeparately(t *testing.T) {
 		"source":     "mixed",
 		"studyMode":  "listening",
 		"lessonSize": "15",
-		"wordIds":    []int64{due.Items[1].ID, due.Items[2].ID},
 	}, http.StatusCreated, &lesson)
 	if lesson.StudyMode != "listening" || lesson.Version <= 0 {
 		t.Fatalf("listening lesson = %+v", lesson)
