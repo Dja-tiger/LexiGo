@@ -32,8 +32,6 @@ const RECORDING_MIME_TYPES = [
   "audio/ogg;codecs=opus",
 ] as const;
 
-type RecorderErrorEvent = Event & { error?: DOMException };
-
 type RecorderDependencies = {
   getUserMedia: ((constraints: MediaStreamConstraints) => Promise<MediaStream>) | null;
   createRecorder: ((stream: MediaStream, mimeType: string) => MediaRecorder) | null;
@@ -89,7 +87,7 @@ function stopMediaStream(stream: MediaStream | null): void {
 }
 
 function isPermissionDenied(error: unknown): boolean {
-  if (!(error instanceof DOMException)) return false;
+  if (typeof DOMException === "undefined" || !(error instanceof DOMException)) return false;
   return error.name === "NotAllowedError" || error.name === "SecurityError";
 }
 
@@ -130,7 +128,10 @@ export class PronunciationRecorder {
     this.dependencies = { ...defaults, ...options.dependencies };
     this.maxDurationMs = Math.max(
       1_000,
-      Math.min(PRONUNCIATION_RECORDER_MAX_DURATION_MS, options.maxDurationMs ?? PRONUNCIATION_RECORDER_MAX_DURATION_MS),
+      Math.min(
+        PRONUNCIATION_RECORDER_MAX_DURATION_MS,
+        options.maxDurationMs ?? PRONUNCIATION_RECORDER_MAX_DURATION_MS,
+      ),
     );
 
     const supported = Boolean(
@@ -157,7 +158,7 @@ export class PronunciationRecorder {
   }
 
   async startRecording(): Promise<PronunciationRecorderSnapshot> {
-    if (this.disposed) return this.publishError("recording-failed");
+    if (this.disposed) return this.publishError();
     if (this.snapshot.state === "unsupported") return this.snapshot;
     if (this.permissionRequestPending || this.recorder) return this.snapshot;
 
@@ -177,9 +178,13 @@ export class PronunciationRecorder {
       this.permissionRequestPending = false;
       if (token !== this.lifecycle || this.disposed) return this.snapshot;
       if (isPermissionDenied(error)) {
-        return this.publish({ state: "denied", recording: this.snapshot.recording, errorCode: "permission-denied" });
+        return this.publish({
+          state: "denied",
+          recording: this.snapshot.recording,
+          errorCode: "permission-denied",
+        });
       }
-      return this.publishError("recording-failed");
+      return this.publishError();
     }
     this.permissionRequestPending = false;
 
@@ -193,10 +198,10 @@ export class PronunciationRecorder {
       recorder = this.dependencies.createRecorder!(stream, mimeType);
     } catch {
       stopMediaStream(stream);
-      return this.publishError("recording-failed");
+      return this.publishError();
     }
 
-    this.clearRecording();
+    this.revokeRecordingURL();
     this.stream = stream;
     this.recorder = recorder;
     this.chunks = [];
@@ -206,7 +211,7 @@ export class PronunciationRecorder {
       if (token !== this.lifecycle || this.recorder !== recorder || event.data.size === 0) return;
       this.chunks.push(event.data);
     };
-    recorder.onerror = (_event: RecorderErrorEvent) => {
+    recorder.onerror = () => {
       if (token !== this.lifecycle || this.recorder !== recorder) return;
       this.failActiveRecording();
     };
@@ -236,16 +241,17 @@ export class PronunciationRecorder {
     if (this.stopPromise) return this.stopPromise;
 
     this.publish({ state: "stopping", recording: null, errorCode: null });
-    this.stopPromise = new Promise((resolve) => {
+    const promise = new Promise<PronunciationRecorderSnapshot>((resolve) => {
       this.resolveStop = resolve;
     });
+    this.stopPromise = promise;
 
     try {
       this.recorder.stop();
     } catch {
       this.failActiveRecording();
     }
-    return this.stopPromise;
+    return promise;
   }
 
   cancel(): PronunciationRecorderSnapshot {
@@ -261,20 +267,14 @@ export class PronunciationRecorder {
     stopMediaStream(this.stream);
     this.stream = null;
     this.chunks = [];
-    this.resolvePendingStop({ state: "idle", recording: null, errorCode: null });
-    this.clearRecording();
-    return this.publish({ state: "idle", recording: null, errorCode: null });
+    const idle: PronunciationRecorderSnapshot = { state: "idle", recording: null, errorCode: null };
+    this.resolvePendingStop(idle);
+    this.revokeRecordingURL();
+    return this.publish(idle);
   }
 
   clearRecording(): PronunciationRecorderSnapshot {
-    if (this.recordingURL) {
-      try {
-        this.dependencies.revokeObjectURL?.(this.recordingURL);
-      } catch {
-        // Revocation failures must not retain application ownership of the URL.
-      }
-      this.recordingURL = null;
-    }
+    this.revokeRecordingURL();
     if (this.snapshot.recording) {
       return this.publish({ state: "idle", recording: null, errorCode: null });
     }
@@ -289,7 +289,10 @@ export class PronunciationRecorder {
   }
 
   private finishRecording(mimeType: string): void {
-    const durationMs = Math.max(0, Math.min(this.maxDurationMs, this.dependencies.now() - this.startedAt));
+    const durationMs = Math.max(
+      0,
+      Math.min(this.maxDurationMs, this.dependencies.now() - this.startedAt),
+    );
     const chunks = this.chunks;
     this.cancelTimeout();
     stopMediaStream(this.stream);
@@ -299,7 +302,7 @@ export class PronunciationRecorder {
 
     const blob = new Blob(chunks, { type: mimeType });
     if (blob.size === 0) {
-      this.resolvePendingStop(this.publishError("recording-failed"));
+      this.resolvePendingStop(this.publishError());
       return;
     }
 
@@ -307,7 +310,7 @@ export class PronunciationRecorder {
     try {
       url = this.dependencies.createObjectURL!(blob);
     } catch {
-      this.resolvePendingStop(this.publishError("recording-failed"));
+      this.resolvePendingStop(this.publishError());
       return;
     }
     this.recordingURL = url;
@@ -332,7 +335,7 @@ export class PronunciationRecorder {
     stopMediaStream(this.stream);
     this.stream = null;
     this.chunks = [];
-    const snapshot = this.publishError("recording-failed");
+    const snapshot = this.publishError();
     this.resolvePendingStop(snapshot);
     return snapshot;
   }
@@ -351,6 +354,17 @@ export class PronunciationRecorder {
     this.timeout = null;
   }
 
+  private revokeRecordingURL(): void {
+    if (!this.recordingURL) return;
+    const url = this.recordingURL;
+    this.recordingURL = null;
+    try {
+      this.dependencies.revokeObjectURL?.(url);
+    } catch {
+      // Application ownership is released even if browser revocation reports an error.
+    }
+  }
+
   private resolvePendingStop(snapshot: PronunciationRecorderSnapshot): void {
     const resolve = this.resolveStop;
     this.resolveStop = null;
@@ -358,8 +372,12 @@ export class PronunciationRecorder {
     resolve?.(snapshot);
   }
 
-  private publishError(errorCode: "recording-failed"): PronunciationRecorderSnapshot {
-    return this.publish({ state: "error", recording: this.snapshot.recording, errorCode });
+  private publishError(): PronunciationRecorderSnapshot {
+    return this.publish({
+      state: "error",
+      recording: this.snapshot.recording,
+      errorCode: "recording-failed",
+    });
   }
 
   private publish(snapshot: PronunciationRecorderSnapshot): PronunciationRecorderSnapshot {
@@ -369,6 +387,8 @@ export class PronunciationRecorder {
   }
 }
 
-export function createPronunciationRecorder(options: PronunciationRecorderOptions = {}): PronunciationRecorder {
+export function createPronunciationRecorder(
+  options: PronunciationRecorderOptions = {},
+): PronunciationRecorder {
   return new PronunciationRecorder(options);
 }
