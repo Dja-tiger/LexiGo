@@ -1,6 +1,6 @@
 # Adaptive Knowledge Coach — design and implementation handoff
 
-This document records the source-of-truth contract for the first production slice of the approved Adaptive Knowledge Coach direction.
+This document records the source-of-truth contract for the approved Adaptive Knowledge Coach production direction.
 
 ## Figma source
 
@@ -17,6 +17,8 @@ A full plugin-level inventory confirms that the live file already contains:
 - 92 local variables and 92 components/component sets.
 
 The file also contains broader concept matrices and parallel versions of several routes. Production implementation must therefore reference explicit page and node IDs instead of treating every screen in the file as equally canonical.
+
+The repository also preserves provenance for the 2026-08-13 offline `LexiGo Design System.fig` snapshot in `docs/figma/`. The native snapshot is supplementary evidence only: exact cloud node IDs remain authoritative for production implementation and visual parity.
 
 Selected nodes for PR #184:
 
@@ -52,6 +54,36 @@ The catalog contract keeps query and topic state visible and URL-backed while th
 
 Research and concept pages `01–08` currently act primarily as section shells in the live file. The approved direction and engineering contract are represented by the populated foundations, patterns, product-screen matrices, screen map and prototype. Do not infer missing production behavior from empty concept pages.
 
+## Canonical production route map
+
+This mapping is the repository-side handoff required by Issue #203. A route is production-ready only when the mapping points to explicit canonical nodes. Theme counterparts described as token-derived must preserve the same hierarchy and geometry and require separate visual verification; they are not permission to select another concept frame.
+
+| Route / state | Canonical mobile source | Canonical desktop source | Theme/state coverage | Delivery source |
+| --- | --- | --- | --- | --- |
+| `/` Home | `196:223` — Mobile / Home / Dark | `194:249` — Desktop / Home / Light | opposite appearance is semantic-token derived | PR #184 / Home production slice |
+| `/learn` Lesson Composer | `202:6` recommended/collapsed; `203:5` manual settings | `204:2` full composer | Light/Dark use the same composer ownership | Issue #162 |
+| `/lesson/active` Active Lesson | `75:6` Recall/Default; `75:30` Recall/Correct; `75:89` Choice/Incorrect; `75:57` Recall/Offline | `75:120` Study/Light; `75:150` Recall/Correct | canonical state matrix on page `75:2` | Issue #193; offline presentation #202 |
+| `/lesson/active` Lesson Result | `217:5–217:9` | `217:10–217:14` | normal, daily-goal, next-block, due-review and sync-pending/offline | Issue #194; matrix `217:2` |
+| `/lesson/active?scenario` | `76:100` Light; `76:127` Dark | `76:219` Dark | scenario variants share the Active Lesson runtime owner | Issue #196 |
+| `/progress` | `76:6` Light; `76:53` Dark | `76:154` Light | desktop Dark is semantic-token derived | Issue #195 |
+| `/dictionary` | `78:54` Light | `78:193` Light | Dark is semantic-token derived | Issue #197 |
+| `/words/[id]` | `78:99` Dark | `78:274` Dark | Light is semantic-token derived | Issue #198 |
+| `/phrases` | `255:10` Light/default; `257:2` Dark/search + Travel | `255:81` Light/default; `257:74` Dark/empty search | loading/empty/error hooks `257:212` | Issue #199; handoff `261:2` |
+| `/phrases/[slug]` | `255:55` Dark/daily; `257:47` Light/travel | `255:162` Dark/technical; `257:159` Light/daily | content variants do not change route ownership | Issue #199 |
+| `/profile` | `79:6` Light | `79:129` Light | Dark is semantic-token derived | Issue #200 |
+| shared system states | `79:69` Home Loading/Dark; `79:93` Dictionary Empty/Light; `79:117` Error/Dark | `79:194` Offline/Dark | lesson-specific offline source is `75:57` | Issue #202 |
+| `/onboarding` | `79:46` Mobile / Onboarding / Light | **not yet canonical** | Guest Home, desktop onboarding, diagnostics, skip/continue, recovery and complete Light/Dark coverage still require exact node-level audit | Issue #201 |
+
+### Route-selection rules
+
+- `82:3` remains the canonical Product Screen Map & Handoff entry point.
+- Production code and visual reviews must use the node IDs in this document or a later reviewed superseding mapping.
+- Concept/exploration matrices are reference-only unless explicitly promoted into this map.
+- A token-derived appearance means the same production composition rendered through semantic variables; it does not authorize a parallel layout.
+- Historical frames must not be deleted until prototype links, component references and useful state coverage have been checked.
+- `/onboarding` is intentionally marked **not ready for a production implementation PR** until Issue #201 has both a canonical mobile and desktop source plus the required diagnostic/recovery states.
+- When Figma MCP access is available, Screen Map status must be synchronized with this repository mapping and any superseded production candidates must be marked reference-only rather than silently removed.
+
 ## Production ownership
 
 The implementation must not introduce a second product graph.
@@ -59,7 +91,7 @@ The implementation must not introduce a second product graph.
 - `RouteChrome` remains the only owner of primary route navigation.
 - `LexigoBootstrappedApp` remains the sole session restoration, account runtime and dynamic route-entry owner.
 - `LexigoHomeApp` owns Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
-- `LexigoPremiumApp` retains only Phrases compatibility orchestration until the approved Issue #199 catalog/detail slice is extracted.
+- `LexigoPremiumApp` retains only Phrases compatibility orchestration until the approved Issue #199 catalog/detail slice is fully extracted into its route island.
 - `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners and are not imported by Home.
 - The backend remains authoritative for lesson position, completion and review persistence.
 - The active lesson remains higher priority than the due queue, new study and manual configuration.
@@ -88,21 +120,24 @@ The desktop and mobile production frames preserve this order and keep the primar
 
 Direct `/` entry and return navigation must use the dedicated Home island without repeating session restoration. Home-created or resumed lessons must reach the existing Active Lesson UI immediately, without exposing a second confirmation click.
 
-## Next implementation slice
+## Current Figma delivery status
 
-Issue #199 is the next product-screen slice. Implement the approved Phrases catalog/detail nodes without creating another session, API, review-outbox, appearance or PWA owner.
+The previously planned Phrases design-gap slice (#199) is complete and its canonical production nodes are recorded above. System states (#202), Profile (#200), Dictionary (#197), Word Detail (#198), Progress (#195), Scenario Lessons (#196), Active Lesson (#193) and Lesson Result design gate (#194) also have explicit production sources.
 
-The catalog must preserve URL-backed search, topic, sort and pagination state across reload and browser Back/Forward. Direct `/phrases/[slug]` entry keeps independent loading/error handling and must not depend on a previously loaded catalog page. The design changes presentation and route-entry ownership only; the existing typed phrase API and authenticated session lifecycle remain authoritative.
+The remaining design-side blocker in the primary route set is Issue #201. The 2026-08-13 offline source audit proves that First Use / Onboarding material already exists, including `Mobile / Onboarding / Light` (`79:46`), so the task is a narrow remaining-gap audit rather than a redesign from zero. Before implementation, resolve exact canonical nodes for Guest Home mobile/desktop, desktop onboarding, diagnostic question states, skip/continue, loading/error/recovery and complete Light/Dark coverage.
+
+Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation. Issue #205 remains the final route-by-route visual parity audit after the mappings and remaining First Use design gap are complete.
 
 ## Figma source-of-truth maintenance
 
-The following cleanup remains necessary but must not block PR #184:
+The following cleanup remains necessary and is tracked by Issue #203:
 
 - identify concept-only and production-ready variants through explicit naming/status metadata;
 - remove page-number collisions when new production slices are added;
 - avoid duplicating route ownership across prototype, matrix and production frames;
 - update the Screen Map when a production slice supersedes an exploratory composition;
-- preserve old variants until their state coverage has been transferred or explicitly archived.
+- preserve old variants until their state coverage has been transferred or explicitly archived;
+- keep this route map synchronized after each promoted or superseded production source.
 
 ## Verification gates
 
