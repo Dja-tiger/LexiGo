@@ -266,7 +266,7 @@ class WorkflowContractTest(unittest.TestCase):
 
         scope_job = _job_block(self.deploy, "scope")
         self.assertNotIn("concurrency:", scope_job)
-        self.assertIn("actions/download-artifact@v7", scope_job)
+        self.assertIn("actions/download-artifact@v8", scope_job)
         self.assertIn("name: ci-scope-${{ github.event.workflow_run.head_sha }}", scope_job)
         self.assertIn("run-id: ${{ github.event.workflow_run.id }}", scope_job)
         self.assertIn("github-token: ${{ secrets.GITHUB_TOKEN }}", scope_job)
