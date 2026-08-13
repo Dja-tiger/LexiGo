@@ -1,0 +1,16 @@
+{
+  "file_name": "LexiGo Design System.fig",
+  "figma_file_name": "LexiGo Design System",
+  "figma_file_key": "3xXmBWnf38jbvLjtziwber",
+  "exported_at": "2026-08-13T13:08:25.240Z",
+  "size_bytes": 1191055,
+  "sha256": "cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423",
+  "archive_format": "zip",
+  "canvas": {
+    "prelude": "fig-kiwi",
+    "version": 106,
+    "size_bytes": 1178789
+  },
+  "binary_committed": false,
+  "binary_commit_blocker": "Current connected GitHub write action accepts UTF-8 text only; native .fig requires Git LFS or another binary-safe upload path."
+}
