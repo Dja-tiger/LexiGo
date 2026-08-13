@@ -2,39 +2,39 @@
 
 ## Task
 
-- Branch:
-- Base SHA:
+- Branch: `feat/issue-68-pwa-manifest-icons`
+- Base SHA: `9bf6f26899fbdf937f5612c08da7bab64e38af69`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #504
 
 ## Skills used
 
-### Skill name
+### GitHub repository harness
 
-Purpose:
+Purpose: deliver Issue #68 as one atomic PWA slice.
 
-Instruction source:
+Instruction source: `AGENTS.md`, `.agents/*`, `docs/agent-harness.md`.
 
-Version or verification date:
+Version or verification date: 2026-08-14.
 
-Inputs:
+Inputs: Issue #68, PWA assets, appearance tokens and Figma handoff.
 
-Files inspected:
+Files inspected: manifest, appearance tests, icons, offline shell, service worker and CI.
 
-Actions performed:
+Actions performed: implemented and tested the PWA contract; isolated the Go security blocker into #505; rebased #504 onto secure main after #505 merged.
 
-Commands or procedures:
+Commands or procedures: GitHub connector and Actions; primary manifest/icon specifications.
 
-Artifacts produced:
+Artifacts produced: PR #504.
 
-Result:
+Result: original frontend matrix passed; fresh CI is pending after secure rebase.
 
-Failures:
+Failures: offline HTML metadata write blocked externally; original CI found outdated Go 1.26.5 vulnerabilities.
 
-Root cause:
+Root cause: connector safety layer for the HTML write; outdated Go patch level for CI security.
 
-Fallback:
+Fallback: keep HTML metadata as explicit residual; fix Go separately and retain atomic PWA scope.
 
-Limitations:
+Limitations: live Figma MCP is rate-limited; real-device install validation is manual.
 
-Reusable lesson:
+Reusable lesson: isolate unrelated security prerequisites instead of weakening product CI.
