@@ -4,61 +4,110 @@
 
 - Issue: #481 delivery remediation
 - Parent: #25
+- PR: #483
 - Branch: `fix/issue-481-stage-webkit-sw-cancellation`
-- Base SHA: `b62470b0051ca60e2bea177ab08945887107822c`
-- Trigger: Stage #3208 public iOS WebKit acceptance failure after product PR #482 merge.
+- Base / deployed product SHA: `b62470b0051ca60e2bea177ab08945887107822c`
+- Remediation code/test head before final reconciliation: `9b8b356cdf2d6101d89fc9c3388605e480c168f8`
+- Final head: resolve from the branch after this atomic reconciliation; no further branch writes are allowed before merge.
 
-## Verified provenance
+## Delivery provenance
 
-- PR #482 final head `b7eb33fd0e7da8b877217b1ec8f2af93b491f8e9` passed CI #3366 fully and squash-merged as `b62470b0051ca60e2bea177ab08945887107822c`.
-- Exact-main CI #3367 / run `31675946620` passed fully and published exact-SHA images.
-- Stage #3208 / run `31676641895` checked out exact `b62470b0...`, validated the exact CI-scope artifact, deployed the exact images and passed public frontend/API smoke.
-- Public browser failed only in iOS WebKit stale-build recovery. 11/12 tests passed.
-- The failed test retried once and reproduced the same pageerror, so no blind rerun is accepted as root-cause remediation.
+1. Product PR #482 passed immutable-head CI #3366 and squash-merged as `b62470b0051ca60e2bea177ab08945887107822c`.
+2. Exact-main CI #3367 passed fully and published immutable images for that SHA.
+3. Stage #3208 deployed those exact images and passed public frontend/API endpoint smoke.
+4. Public Playwright failed only iOS WebKit stale-build recovery because the expected guard service-worker cancellation was serialized with a single slash after `https:`.
+5. The Playwright retry reproduced the same single-slash diagnostic; no blind deploy rerun was accepted as remediation.
 
-## Failure diagnosis
+## Root-cause evidence
 
-Public test `frontend/e2e/public-runtime-smoke.spec.ts` computes the exact expected current-build service-worker URL and temporarily sets it as `guardServiceWorkerURL`. Fatal page errors are ignored only when `isExpectedWebKitGuardServiceWorkerCancellation()` identifies the exact known WebKit cancellation.
+`frontend/e2e/public-runtime-smoke.spec.ts` registers the exact current-build service-worker URL as a temporary guard during stale-build recovery. `isExpectedWebKitGuardServiceWorkerCancellation()` already requires:
 
-Observed normalized capture:
+- browser name `webkit`;
+- a non-null guard service-worker URL;
+- exact equality between the normalized full diagnostic and `Cannot load <exact guard URL> due to access control checks.`
 
-`Cannot load https: /<stage-host>/sw.js?build=b62470b0... due to access control checks.`
+The only incompatibility was formatting normalization. Existing code canonicalized:
 
-Current helper:
+`Cannot load https: //host/...`
 
-- strips a leading `Error:`;
-- canonicalizes only `Cannot load https: //host/...` to `Cannot load https://host/...`;
-- then requires exact equality to the guard URL.
+to:
 
-The Stage WebKit diagnostic used a single slash after the scheme separator. Because that formatting variant is not normalized, the exact equality check is never reached successfully.
+`Cannot load https://host/...`
 
-## Remediation design
+but Stage WebKit 1.61.1 emitted:
 
-Change only the protocol-fragment normalization so either one or two slash characters after the split `http:`/`https:` are canonicalized to `://`. Keep every classifier guard unchanged:
+`Cannot load https: /host/...`
 
-- browser must be `webkit`;
-- guardServiceWorkerURL must be non-null;
-- normalized full diagnostic must equal `Cannot load <exact guard URL> due to access control checks.` exactly.
+so the existing exact guard equality never matched.
 
-Add focused unit coverage for the single-slash Stage form and retain all existing negatives for Chromium, null guard, wrong build, wrong path and wrong host.
+## Code remediation
 
-## Safety
+Changed only `frontend/lib/public-runtime-errors.ts`:
 
-- No service-worker registration/update behavior changes.
-- No build-version guard logic changes.
-- No Playwright retry/tolerance increase.
-- No deployment/CI workflow changes.
-- No listening/backend/API changes.
-- If the exact URL differs, the failure remains fatal.
+- protocol split normalization now accepts `\/{1,2}` instead of exactly `//`;
+- no classifier condition, expected URL, browser guard or failure wording changed.
 
-## Delivery procedure
+Changed only `frontend/lib/public-runtime-errors.test.ts` for focused coverage:
 
-1. Commit Agent Docs pre-flight for remediation.
-2. Apply the two-file normalizer + unit regression patch.
-3. Read back diff and open Draft PR against live `main`.
-4. Run full immutable-head CI and review/compare audit.
-5. Ready and expected-head squash merge without further head mutation.
-6. Require exact-main CI and exact-image Stage.
-7. Require public endpoint smoke and public Chromium+iOS WebKit acceptance.
-8. Only then mark all #481 AC delivered and close #481.
-9. Perform separate post-merge Agent Docs reconciliation/reset before choosing the next #25 phase.
+- one-slash and two-slash diagnostics both normalize to the same canonical URL;
+- exact one-slash WebKit current-build cancellation is accepted;
+- Chromium, null guard, wrong build, API path and other-host cases remain rejected.
+
+## PR / scope audit
+
+Draft PR #483 was opened against exact base `b62470b0...`.
+
+Changed files before final reconciliation are exactly:
+
+- `.agents/current/EXECUTION.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/TASK.md`
+- `frontend/lib/public-runtime-errors.test.ts`
+- `frontend/lib/public-runtime-errors.ts`
+
+No workflow, service-worker runtime, build-version guard, deployment, listening/backend/API, CSS/UI or baseline file is changed.
+
+## CI #3368 evidence
+
+Run `31677368540`, head `9b8b356cdf2d6101d89fc9c3388605e480c168f8`.
+
+- Frontend core: success; focused regression passed.
+- Backend unit/security: success.
+- Backend integration: success.
+- UI shard 1/2: success.
+- UI shard 2/2: success.
+- Lesson completion: success.
+- Content security: success.
+- iOS PWA dictionary: success.
+- Controlled service worker: success.
+- Performance budgets: success.
+- Accessibility audit: success.
+- Dictionary smoke: success.
+- Frontend quality: success.
+- Container build api/web: success.
+
+Visual Regression attempt 1 failed only unchanged `compact Dictionary empty light`. Artifact inspection tied the hash difference to the existing programmatic focus plus `:focus-visible` ring. Because the remediation touched no rendering path, the visual job was rerun alone on the exact same commit SHA. Attempt 2 passed fully with no code, baseline or tolerance changes. The overall CI run concluded `success` on attempt 2.
+
+## Safety decisions
+
+- Did not update any snapshot because no intended visual change exists.
+- Did not change or suppress public Playwright assertions.
+- Did not increase retry count/tolerance.
+- Did not change service-worker behavior.
+- Kept #481 open after product merge because final Stage public browser gate was not yet accepted.
+
+## Final delivery procedure
+
+1. Atomically commit TASK/PROGRESS/EXECUTION evidence reconciliation.
+2. Read back final files, verify exact branch head and live main.
+3. Freeze branch and run one fresh full immutable-head CI.
+4. Verify compare scope, reviews and review threads.
+5. Ready PR #483 without head mutation and squash-merge with expected-head protection.
+6. Require exact-merge main CI success and immutable image publication.
+7. Require exact-SHA Stage deploy, public frontend/API smoke and public Chromium+iOS WebKit acceptance.
+8. Update all #481 AC/evidence and close #481 only after those gates pass.
+9. Perform separate Agent Docs post-merge reconciliation/reset before any next #25 slice.
+
+## Rollback
+
+Revert PR #483 only. No persisted data, listening contract, service-worker runtime or deploy configuration depends on this diagnostic-normalization hotfix.
