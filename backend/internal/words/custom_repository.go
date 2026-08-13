@@ -86,6 +86,135 @@ func (r *Repository) CreateCustomWord(
 	return item, nil
 }
 
+// ExportCustomGlossary returns only content owned by the authenticated user.
+// The stable content sort makes two exports of unchanged private vocabulary
+// byte-order deterministic after normal JSON serialization by a client.
+func (r *Repository) ExportCustomGlossary(
+	ctx context.Context,
+	userID string,
+) (CustomGlossaryDocument, error) {
+	rows, err := r.pool.Query(ctx, `
+		select
+			w.lemma,
+			w.translation,
+			coalesce(w.phonetic, ''),
+			coalesce(w.part_of_speech, ''),
+			coalesce(w.topic, ''),
+			coalesce(w.note, '')
+		from words w
+		where w.owner_user_id = $1::uuid
+		  and w.kind = 'word'
+		  and w.source = $2
+		order by lower(w.lemma), lower(w.translation), w.id
+	`, userID, customWordSource)
+	if err != nil {
+		return CustomGlossaryDocument{}, fmt.Errorf("query custom glossary export: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]CreateCustomWordRequest, 0)
+	for rows.Next() {
+		var item CreateCustomWordRequest
+		if err := rows.Scan(
+			&item.Lemma,
+			&item.Translation,
+			&item.Phonetic,
+			&item.PartOfSpeech,
+			&item.Topic,
+			&item.Note,
+		); err != nil {
+			return CustomGlossaryDocument{}, fmt.Errorf("scan custom glossary export: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return CustomGlossaryDocument{}, fmt.Errorf("iterate custom glossary export: %w", err)
+	}
+
+	return CustomGlossaryDocument{
+		SchemaVersion: customGlossarySchemaVersion,
+		Items:         items,
+	}, nil
+}
+
+// ImportCustomGlossary validates the complete document before beginning its
+// transaction, then merges owner-scoped content in one transaction. Expected
+// uniqueness conflicts are counted as skipped; every unexpected persistence
+// failure rolls the whole batch back so a glossary is never half-imported.
+func (r *Repository) ImportCustomGlossary(
+	ctx context.Context,
+	userID string,
+	document CustomGlossaryDocument,
+) (CustomGlossaryImportResult, error) {
+	normalized, payloadSkipped, err := NormalizeCustomGlossaryDocument(document)
+	if err != nil {
+		return CustomGlossaryImportResult{}, err
+	}
+
+	result := CustomGlossaryImportResult{
+		SchemaVersion: customGlossarySchemaVersion,
+		Skipped:       payloadSkipped,
+		Items:         normalized.Items,
+	}
+	if len(normalized.Items) == 0 {
+		return result, nil
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return CustomGlossaryImportResult{}, fmt.Errorf("begin custom glossary import: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	for _, request := range normalized.Items {
+		var wordID int64
+		err := tx.QueryRow(ctx, `
+			insert into words (
+				lemma,
+				translation,
+				phonetic,
+				part_of_speech,
+				topic,
+				source,
+				note,
+				kind,
+				owner_user_id
+			) values ($1, $2, $3, $4, $5, $6, $7, 'word', $8::uuid)
+			on conflict do nothing
+			returning id
+		`,
+			request.Lemma,
+			request.Translation,
+			request.Phonetic,
+			request.PartOfSpeech,
+			request.Topic,
+			customWordSource,
+			request.Note,
+			userID,
+		).Scan(&wordID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			result.Skipped++
+			continue
+		}
+		if err != nil {
+			return CustomGlossaryImportResult{}, fmt.Errorf("insert custom glossary word: %w", err)
+		}
+
+		if _, err := tx.Exec(ctx, `
+			insert into user_words (user_id, word_id)
+			values ($1::uuid, $2)
+		`, userID, wordID); err != nil {
+			return CustomGlossaryImportResult{}, fmt.Errorf("enroll custom glossary word: %w", err)
+		}
+		result.Created++
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return CustomGlossaryImportResult{}, fmt.Errorf("commit custom glossary import: %w", err)
+	}
+	return result, nil
+}
+
 // DeleteCustomWord deletes only private content owned by the authenticated
 // account. If the word is currently part of an active lesson, that session is
 // discarded first in the same transaction so the lesson cannot remain active
