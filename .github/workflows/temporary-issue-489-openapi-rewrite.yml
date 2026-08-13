@@ -1,0 +1,185 @@
+name: Temporary Issue 489 OpenAPI Rewrite
+
+on:
+  push:
+    branches: [feat/issue-489-custom-glossary-import-export-v2]
+    paths:
+      - .github/workflows/temporary-issue-489-openapi-rewrite.yml
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-489-custom-glossary-import-export-v2
+          fetch-depth: 0
+      - name: Apply exact guarded OpenAPI replacements
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('api/openapi.yaml')
+          text = path.read_text()
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once('  version: 0.16.0\n', '  version: 0.17.0\n', 'api version')
+
+          custom_paths = '''  /api/v1/words/custom/export:
+    get:
+      operationId: exportCustomGlossary
+      tags: [learning]
+      summary: Export private custom words as a portable versioned glossary.
+      description: Returns only content owned by the current account. Database IDs, owner identity, scheduler state, due timestamps and review history are intentionally excluded. The response is deterministic and non-cacheable.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Versioned content-only glossary for the current account. An account with no private custom words receives items=[].
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomGlossaryExport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/custom/import:
+    post:
+      operationId: importCustomGlossary
+      tags: [learning]
+      summary: Atomically import a bounded private custom-word glossary.
+      description: Version 1 accepts 1-100 content items in at most 256 KiB of JSON. The complete payload is normalized and validated before persistence. The batch is committed in one PostgreSQL transaction; any current-owner duplicate or storage failure leaves zero partial word or scheduler rows. IDs, owner identity, scheduler state, due timestamps and review history are not accepted as import data.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomGlossaryImportRequest"
+      responses:
+        "201":
+          description: Every glossary item was created for the current account and enrolled exactly once into the existing user_words scheduler with fresh defaults.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomGlossaryImportResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: The payload contains an equivalent duplicate, or at least one equivalent custom word already exists for the current account. No items are imported.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+'''
+          replace_once('  /api/v1/words/custom:\n', custom_paths + '  /api/v1/words/custom:\n', 'custom word path')
+
+          glossary_schemas = '''    CustomGlossaryExport:
+      type: object
+      additionalProperties: false
+      required: [version, items]
+      description: Portable owner-only custom-word content. Scheduler/account internals are deliberately absent.
+      properties:
+        version:
+          type: integer
+          const: 1
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateCustomWordRequest"
+    CustomGlossaryImportRequest:
+      type: object
+      additionalProperties: false
+      required: [version, items]
+      properties:
+        version:
+          type: integer
+          const: 1
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/CreateCustomWordRequest"
+    CustomGlossaryImportResult:
+      type: object
+      additionalProperties: false
+      required: [version, imported]
+      properties:
+        version:
+          type: integer
+          const: 1
+        imported:
+          type: integer
+          minimum: 1
+          maximum: 100
+'''
+          replace_once('    UserWord:\n', glossary_schemas + '    UserWord:\n', 'UserWord schema')
+
+          replace_once(
+              '              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note]\n',
+              '              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, version, items]\n',
+              'error field enum',
+          )
+
+          path.write_text(text)
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('api/openapi.yaml').read_text()
+          required = [
+              'version: 0.17.0',
+              '/api/v1/words/custom/export:',
+              '/api/v1/words/custom/import:',
+              'CustomGlossaryExport:',
+              'CustomGlossaryImportRequest:',
+              'CustomGlossaryImportResult:',
+              'maxItems: 100',
+              'note, version, items]',
+          ]
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit(f'missing expected OpenAPI contracts: {missing}')
+          PY
+      - name: Remove one-shot workflow and commit exact rewrite
+        run: |
+          set -Eeuo pipefail
+          workflow='.github/workflows/temporary-issue-489-openapi-rewrite.yml'
+          rm "$workflow"
+          git add api/openapi.yaml "$workflow"
+          changed="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n%s' "$workflow" 'api/openapi.yaml')"
+          if [ "$changed" != "$expected" ]; then
+            printf 'unexpected staged paths:\n%s\n' "$changed" >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs(api): document custom glossary portability contract'
+          git push origin HEAD:feat/issue-489-custom-glossary-import-export-v2
