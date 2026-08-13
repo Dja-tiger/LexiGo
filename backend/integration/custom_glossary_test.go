@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -281,4 +282,30 @@ func TestCustomGlossaryImportExportIsOwnerScopedAtomicAndPortable(t *testing.T) 
 		oversizedItems = append(oversizedItems, customGlossaryItemPayload{Lemma: fmt.Sprintf("bounded item %03d", index), Translation: "bounded"})
 	}
 	postAuthenticatedJSON(t, testServer.URL+"/api/v1/words/custom/import", owner.Tokens.AccessToken, customGlossaryEnvelopePayload{Version: 1, Items: oversizedItems}, http.StatusUnprocessableEntity, nil)
+
+	// Keep the JSON object itself valid and within all field/item limits, then
+	// exceed the HTTP body ceiling only with legal JSON whitespace. DecodeJSONLimit
+	// must consume the trailing input while proving that there is exactly one JSON
+	// value, so http.MaxBytesReader rejects the request before persistence.
+	bodyLimitedJSON := `{"version":1,"items":[{"lemma":"body ceiling","translation":"bounded"}]}` + strings.Repeat(" ", (256<<10)+1)
+	request, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/words/custom/import",
+		strings.NewReader(bodyLimitedJSON),
+	)
+	if err != nil {
+		t.Fatalf("build oversized glossary request: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+owner.Tokens.AccessToken)
+	request.Header.Set("Content-Type", "application/json")
+	doJSONRequest(t, request, http.StatusBadRequest, nil)
+
+	var afterBodyLimit int
+	if err := pg.QueryRow(ctx, `select count(*)::int from words where owner_user_id = $1::uuid and source = 'user-custom-v1'`, owner.User.ID).Scan(&afterBodyLimit); err != nil {
+		t.Fatalf("count after oversized body: %v", err)
+	}
+	if afterBodyLimit != afterRejected {
+		t.Fatalf("oversized body changed owner glossary count: before=%d after=%d", afterRejected, afterBodyLimit)
+	}
 }
