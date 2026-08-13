@@ -87,12 +87,38 @@ func (r *Repository) CreateCustomWord(
 }
 
 // DeleteCustomWord deletes only private content owned by the authenticated
-// account. Foreign keys from user_words, review_events, lesson_session_items,
-// idempotency, onboarding and answer suggestions use on-delete cascade, so the
-// word and its dependent learning footprint are removed atomically by
-// PostgreSQL while shared catalog rows remain unreachable from this mutation.
+// account. If the word is currently part of an active lesson, that session is
+// discarded first in the same transaction so the lesson cannot remain active
+// with a cascaded-away item. PostgreSQL then removes the word's dependent
+// scheduler/review/lesson rows through the existing on-delete cascade graph.
 func (r *Repository) DeleteCustomWord(ctx context.Context, userID string, wordID int64) error {
-	result, err := r.pool.Exec(ctx, `
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin custom word delete transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Lock and discard only an active lesson that actually references this word.
+	// The update serializes with normal lesson review/discard operations, which
+	// also update the lesson_sessions row before mutating progress.
+	if _, err := tx.Exec(ctx, `
+		update lesson_sessions as lesson
+		set status = 'discarded',
+		    version = version + 1,
+		    updated_at = now()
+		where lesson.user_id = $1::uuid
+		  and lesson.status = 'active'
+		  and exists (
+		      select 1
+		      from lesson_session_items as item
+		      where item.session_id = lesson.id
+		        and item.word_id = $2
+		  )
+	`, userID, wordID); err != nil {
+		return fmt.Errorf("discard active lesson for custom word: %w", err)
+	}
+
+	result, err := tx.Exec(ctx, `
 		delete from words
 		where id = $1
 		  and owner_user_id = $2::uuid
@@ -104,6 +130,10 @@ func (r *Repository) DeleteCustomWord(ctx context.Context, userID string, wordID
 	}
 	if result.RowsAffected() == 0 {
 		return ErrCustomWordNotFound
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit custom word delete transaction: %w", err)
 	}
 	return nil
 }
