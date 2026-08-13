@@ -46,7 +46,7 @@ func TestNormalizeCustomGlossaryDocumentValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("indexed field", func(t *testing.T) {
+	t.Run("indexed item message with stable field", func(t *testing.T) {
 		_, _, err := NormalizeCustomGlossaryDocument(CustomGlossaryDocument{
 			SchemaVersion: customGlossarySchemaVersion,
 			Items: []CreateCustomWordRequest{
@@ -55,8 +55,11 @@ func TestNormalizeCustomGlossaryDocumentValidation(t *testing.T) {
 			},
 		})
 		var validationError *CustomGlossaryValidationError
-		if !errors.As(err, &validationError) || validationError.Field != "items[1].lemma" {
+		if !errors.As(err, &validationError) {
 			t.Fatalf("error = %v", err)
+		}
+		if validationError.Field != "items" || !strings.Contains(validationError.Message, "items[1].lemma") {
+			t.Fatalf("validation error = %+v", validationError)
 		}
 	})
 }
