@@ -1,49 +1,50 @@
 # Current Task Progress
 
-## 2026-08-13 — Issue #489 execution
+## 2026-08-13 — Issue #489 final implementation state
 
 ### Verified
 
-- Live base `main`: `981c3d78b1907480d763fbad23d9f1608b9353e9`.
-- Current working branch: `feat/issue-489-custom-glossary-import-export-v2`; Draft PR #492.
-- #485 / PR #486 Phase 2 is fully delivered on product SHA `53e16a00e2bbe70921c1c5220923faee1f63bc37`; immutable-head CI #3382, exact-main CI #3383 and Stage #3225 are green.
-- Post-merge harness reconciliation was squash-merged as `981c3d78b1907480d763fbad23d9f1608b9353e9`; exact-main Agent Docs CI #3387 / run `31705902635` is green.
-- Phase 2 owns normalization, owner-scoped private uniqueness, one-word transactional scheduler enrollment and owner-only deletion.
-- Phase 3 runtime now adds version-1 glossary envelopes, 1..100 import bound, 256 KiB JSON-body bound, pre-persistence field/intra-payload validation, owner-only deterministic export, one-transaction import and shared scheduler enrollment.
-- Authenticated routes are registered before the dynamic custom-word delete route.
-- Portable export is `Cache-Control: no-store` and carries only content fields.
-- Real PostgreSQL integration covers empty export, owner isolation, deterministic export, content-only projection, two-item scheduler enrollment, export-delete-import with fresh IDs/state, cross-account equivalent content, intra-payload duplicates, existing-owner conflict rollback, version bound and 101-item rejection.
+- Base `main`: `981c3d78b1907480d763fbad23d9f1608b9353e9`.
+- Working branch: `feat/issue-489-custom-glossary-import-export-v2`; Draft PR #492.
+- Phase 3 implements version-1 private custom-word glossary portability without a new migration or scheduler path.
+- Export is authenticated, deterministic, owner-only, content-only and `Cache-Control: no-store`.
+- Import accepts 1–100 items in at most 256 KiB JSON, reuses `NormalizeCustomWordRequest`, rejects normalized intra-payload duplicates before persistence and writes the complete batch in one PostgreSQL transaction through the Phase 2 private-word/scheduler helper.
+- Any existing current-owner duplicate rolls back the complete batch. Equivalent content remains legal for another owner.
+- Export → delete → import preserves portable content but intentionally creates fresh database IDs and fresh `user_words` scheduler defaults.
+- OpenAPI is version `0.17.0` and documents the two authenticated portability endpoints plus closed glossary schemas. The complete YAML is parsed by a blocking source contract.
+- `docs/architecture.md` records the Phase 3 ownership, privacy, atomicity and fresh-scheduler semantics.
+- Final PR diff contains no `.github/workflows/**` path.
 
-### Finding
+### Evidence already passed
 
-The product behavior does not require a migration or scheduler change. The only remaining large contract owner is `api/openapi.yaml` plus architecture/harness reconciliation. The GitHub Contents connector has no server-side patch operation and returns the large OpenAPI file only through chunked resources; a manual full-file reconstruction would create unacceptable deletion/drift risk.
+Diagnostic CI #3389 / run `31707145244` on head `d541f20a24a051e0f8bf61d30a44714485dabf61` passed:
 
-The repository harness explicitly permits an objectively necessary one-shot, path-guarded write workflow if it is deleted before final CI and the bot-authored head is not treated as final. That fallback is necessary here to perform exact string replacements inside the existing large OpenAPI source without reconstructing unrelated content.
+- change-scope classification and dependency verification;
+- `gofmt`, static analysis, backend unit/race/coverage and vulnerability scan;
+- real PostgreSQL/Redis integration with race detector;
+- frontend lint/typecheck/unit/build/dependency audit;
+- the selected browser/security/PWA/performance gates observed during that run.
 
-### Root cause
+CI #3394 / run `31709294294` on later developer head `82fed087ae6eaedd9be2e03d8572989cc2e40728` has already passed change-scope classification, backend unit/security (including complete OpenAPI YAML parse/structural glossary contract), frontend core quality and Dictionary smoke while the remaining integration/browser matrix continues.
 
-Parent #25 lacked a portable glossary backup/restore contract. Connector limitations additionally make large-file exact replacement unsafe through the normal Contents API, requiring a temporary in-repository exact-rewrite helper for OpenAPI only.
+### Temporary exact-rewrite evidence
 
-### Changed files
+- Large `api/openapi.yaml` could not be safely server-patched by the connected Contents API.
+- The repository-authorized one-shot helper `.github/workflows/temporary-issue-489-openapi-rewrite.yml` was therefore used as a path-guarded large-file rewrite mechanism.
+- First helper run `31708416538` failed before jobs because the initial workflow YAML heredoc indentation was invalid; no product/OpenAPI write occurred.
+- Corrected helper run `31708701593` passed. Exact anchor checks succeeded and bot commit `35b45e88642435d5a4eb63c97d7d1fa5aa80d120` changed only `api/openapi.yaml`.
+- The OpenAPI unified patch was manually audited: only `0.16.0 → 0.17.0`, two paths, three glossary schemas and `version/items` error-field enum entries changed.
+- Developer commit `82fed087ae6eaedd9be2e03d8572989cc2e40728` removed the temporary workflow, added the structural OpenAPI test and updated only the existing `Custom vocabulary ownership` architecture section.
+- Architecture unified patch was separately audited and contained no unrelated drift.
 
-Current product/harness diff includes `.agents/current/**`, `backend/internal/words/**`, `backend/internal/server/server.go` and `backend/integration/custom_glossary_test.go`.
+### Operational connector recovery
 
-Temporary allowed path to be added and later removed: `.github/workflows/temporary-issue-489-openapi-rewrite.yml`.
-
-### Checks passed
-
-Diagnostic CI #3389 / run `31707145244` on pre-privacy head `d541f20a24a051e0f8bf61d30a44714485dabf61` has already proved change-scope classification, dependency verification, `gofmt`, static analysis, backend unit/race/coverage/vulnerability gates, real PostgreSQL/Redis integration, frontend core, controlled service worker, performance budgets, content security, iOS PWA dictionary and Dictionary smoke.
-
-This diagnostic run is not final acceptance because later privacy/OpenAPI/docs commits advance the branch.
-
-### Checks failed
-
-No product-contract failure has been observed. Operationally, the GitHub safety proxy repeatedly blocked first-attempt ref/commit mutations; every retry followed ref readback. After two blocked fast-forwards on the original feature branch, a new `-v2` branch was created from the already-created immutable commit rather than retrying the same write again.
+The GitHub safety proxy intermittently blocked first mutation attempts. Every retry followed live ref/head readback. After two blocked fast-forwards on the original feature branch, work continued on `feat/issue-489-custom-glossary-import-export-v2` created directly from the already-created immutable commit rather than repeating the same rejected mutation.
 
 ### Current branch head
 
-Latest applied head before this harness update: `ca0ac58397acdebd7a5fe458b8dc0fca98da92af`.
+Resolve after this harness-only commit and the following `EXECUTION.md` commit.
 
 ### Next action
 
-Commit this harness update, add the temporary exact-rewrite workflow, let its push-triggered job patch only `api/openapi.yaml` and remove itself, audit the resulting OpenAPI unified diff, create a developer-authored follow-up head, add structural OpenAPI/source and architecture coverage, then run the full immutable-head CI.
+After `EXECUTION.md` is updated, freeze that resulting developer-authored head. Run the complete immutable-head CI with zero workflow diff, then perform review/thread/diff audit, guarded squash merge, exact-main CI and exact-SHA Stage/public validation. No further runtime/API/design changes are planned for #489 unless final CI exposes a real defect.
