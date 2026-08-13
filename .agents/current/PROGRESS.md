@@ -4,46 +4,63 @@
 
 ### Verified
 
-- Parent Issue #25 remains open and large/XL; reliable base speech playback was already delivered by closed Issue #51, so duplicating playback work is out of scope.
-- Created child Issue #481 for the first atomic #25 phase: persist `listening` as a distinct objective review mode.
-- Current repository `main` is `2b91949f42db36899a79bf2329b104f368127b14` after the Agent-Docs reconciliation merge.
-- Latest deployed product image remains `1f5b152d6f904ff57f56f434c917a44f1923c6f1`; docs-only `main` advancement did not deploy because the Stage deploy job was correctly skipped after scope validation.
-- Created branch `feat/issue-481-listening-event-mode` from exact repository `main` SHA `2b91949f42db36899a79bf2329b104f368127b14`.
-- Parallel open PRs are Dependabot maintenance and do not overlap the learning/OpenAPI/migration paths selected for #481.
-- Current backend `AnswerMode` is `study|recall|choice`; `study` is non-objective, while `recall` and `choice` share the existing `ScheduleReview` objective path.
-- Current DB constraints permit only `study|recall|choice` for v2 `review_events.answer_mode` and `lesson_sessions.study_mode`.
-- Current progress aggregates objective-today evidence from `recall|choice` and expose per-mode `study`, `recall`, `choice`, `legacy` buckets.
-- Existing OpenAPI-structure rule requires validating the complete YAML document after every OpenAPI write.
+- Parent Issue #25 remains open; base speech playback was already delivered by closed Issue #51, so #481 does not duplicate playback work.
+- Child Issue #481 and Draft PR #482 define the first atomic #25 phase: persist `listening` as a distinct objective review mode before any listening UI or microphone work.
+- Branch `feat/issue-481-listening-event-mode` was created from exact repository `main` SHA `2b91949f42db36899a79bf2329b104f368127b14`.
+- Live `main` is still `2b91949f42db36899a79bf2329b104f368127b14`; parallel open PRs are Dependabot maintenance and do not overlap this learning/OpenAPI/migration scope.
+- Backend now has first-class `AnswerModeListening`; `AnswerMode.Objective()` returns true for recall, choice and listening while study remains non-objective.
+- `ScheduleAttempt` routes listening through the existing `ScheduleReview` implementation with no formula or parameter changes.
+- `AssessReview` already gates correctness through `AnswerMode.Objective()`, so listening receives the same server-side objective judgement contract without a separate hardcode.
+- HTTP validation accepts listening while an omitted legacy `answerMode` still defaults to typed `recall`.
+- Lesson configuration accepts `studyMode=listening`; server-owned candidate selection uses `studyMode.Objective()` and is therefore due-only for listening with unchanged ranking.
+- Explicit `wordIds` remain the existing manual lesson-selection contract and intentionally bypass composer filtering.
+- Migration `000021_listening_answer_mode.up.sql` broadens only the named `review_events` and `lesson_sessions` check constraints; it does not update historical rows.
+- Progress exposes a dedicated listening mode bucket. The base progress query already counts all events in `reviewsToday/reviewsTotal`; the listening extension adds only listening objective/success counters, avoiding double-counting.
+- Weekly recall trend and retained-learning queries remain explicitly typed `recall` and are intentionally unchanged.
+- OpenAPI is bumped to 0.15.0 and includes listening in review, moderation-context and lesson study-mode enums plus ProgressModes.
+- Frontend wire `ProgressModes.listening` is optional for rolling-deploy compatibility, while `normalizedProgressModes()` always returns a concrete zero/default listening bucket.
+- Temporary large-file exact-rewrite workflow plumbing was removed; `.github/workflows/**` is absent from the net PR file list.
+- PR #482 has no submitted reviews and no review threads as of the pre-freeze audit.
 
-### Finding
+### Implementation
 
-A future listening-first exercise cannot currently be persisted honestly: using `recall` would mix audio comprehension with typed recall, while inventing an unpersisted UI-only mode would break API/DB mode matching. The safe foundation is a first-class `listening` mode across the existing review contract before any listening UI is introduced.
+- `backend/internal/learning/model.go`: listening mode and progress bucket.
+- `backend/internal/learning/http.go`: review validation plus listening progress extension in both Progress and SetDailyGoal responses.
+- `backend/internal/learning/lesson_http.go`: listening lesson-mode validation.
+- `backend/internal/learning/lesson_composer.go`: objective modes share the same due-only boundary.
+- `backend/internal/learning/scheduler.go`: listening reuses `ScheduleReview` unchanged.
+- `backend/internal/learning/listening_progress.go`: isolated timezone-aware listening aggregation.
+- `backend/internal/platform/migrate/migrations/000021_listening_answer_mode.up.sql`: additive allowed-value constraint expansion.
+- `api/openapi.yaml`: strict API contract expansion.
+- `frontend/lib/progress.ts`: listening AnswerMode plus rolling-compatible progress normalization.
+- Focused unit/frontend/integration tests cover validation, scheduler equivalence, progress normalization and real persistence/composer behavior.
 
-### Root cause
+### CI evidence before final freeze
 
-The learning event schema was intentionally created before listening exercises and its allowed-mode vocabulary is closed over three modes. Playback was fixed later by #51, but event semantics were not extended because no listening exercise existed yet.
+- CI #3364 on `45f088cfe3545da30ca2b07105563a5037f5479a`: frontend core, backend unit/security and the complete browser matrix were green; backend integration failed only because the test supplied explicit `wordIds` and incorrectly expected the composer to filter that manual-selection path.
+- Root cause from `lesson_repository.go`: `CreateLesson` invokes `queryLessonCandidates` only when `WordIDs == nil`; explicit IDs are validated as assigned and persisted directly by design.
+- The integration fixture was corrected without runtime changes: all learner items are moved non-due, exactly one item is made due, and the listening lesson is created without `wordIds` so the server-owned composer is exercised.
+- CI #3365 on pre-freeze product/test head `1079aeb28360866b0f3e2e6260daef3ad6efb630`: `Frontend core quality` success; `Backend unit and security` success; `Backend integration` race-test step success on real Postgres/Redis/migrations. Browser gates observed green include Dictionary smoke, Accessibility audit, Controlled service worker, Visual regression, iOS PWA dictionary, Content security and Performance budgets; remaining browser leaf jobs are not used as final evidence because the final Agent Docs commit will trigger a fresh immutable-head run.
 
-### Changed files
+### Integration contract proven by #3365
 
-- `.agents/current/TASK.md` — active #481 contract.
-- `.agents/current/PROGRESS.md` — this verified pre-flight state.
-- `.agents/current/EXECUTION.md` — execution provenance for the active slice.
+- `answerMode=listening` persists exactly with schema version 2 and objective correctness.
+- Progress returns one listening attempt/success in `modes.listening` and includes it in objective-today counters without leaking it into typed weekly recall/choice evidence.
+- With the full learner catalog made non-due except one item, a server-owned `studyMode=listening` lesson contains only that one due item.
+- A mismatched `answerMode=recall` review against the listening lesson returns conflict; a matching listening review succeeds and persists as listening.
 
-### Checks passed
+### Failures and resolutions
 
-- Live Issue/PR/main/deployment state verified before branch creation.
-- #51 playback ownership and release checklist inspected; no duplicate playback implementation required.
-- `learning.AnswerMode`, HTTP normalization/validation, lesson mode validation, scheduler dispatch, DB constraints and progress aggregation owners inspected.
-- OpenAPI whole-document validation lesson re-read.
+- First integration fixture failure: both selected IDs came from `/words/due`, so both were due. Fixing only one control row was insufficient because the test still used manual `wordIds`.
+- Second integration fixture failure: explicit `wordIds` bypass the composer by repository contract. Resolution: exercise the automatic composer path with no `wordIds` and isolate due state across the entire learner catalog.
+- Both failures were test-assumption errors; no product runtime rollback or scheduler change was required.
 
-### Checks failed
+### Current branch state
 
-- None yet. No product code has been written on #481 before this task-memory initialization.
-
-### Current branch head
-
-Resolve after the atomic `.agents/current/**` initialization commit.
+- Pre-freeze product/test head: `1079aeb28360866b0f3e2e6260daef3ad6efb630`.
+- This Agent Docs reconciliation is the last allowed branch write.
+- After its atomic commit, resolve the new head, read back the three memory files, verify compare/reviews/main, and freeze the branch.
 
 ### Next action
 
-Commit the three current task-memory files atomically, read them back, then inspect focused tests/OpenAPI enum locations and implement the minimal listening-mode persistence contract without UI or scheduler-formula changes.
+Run one full immutable-head PR CI on the final reconciled SHA. If every required gate is green, mark PR #482 Ready without changing the head, squash-merge with expected-head protection, then require exact-merge main CI and exact-image Stage/public acceptance before closing #481. Parent #25 remains open for later listening UI, microphone/privacy and custom terminology phases.

@@ -6,81 +6,121 @@
 - Parent: #25
 - Branch: `feat/issue-481-listening-event-mode`
 - Base SHA: `2b91949f42db36899a79bf2329b104f368127b14`
-- Head SHA: resolve from live branch ref after each write
-- PR: not created yet
+- PR: #482
+- Pre-freeze product/test head: `1079aeb28360866b0f3e2e6260daef3ad6efb630`
+- Final head: resolve from the live branch after this atomic Agent Docs reconciliation; no further writes are allowed before merge.
 
-## Skills used
-
-### GitHub repository workflow
+## GitHub repository workflow
 
 Purpose:
 
-Inspect live repository state, create the atomic child Issue/branch, read source contracts and perform protected Git writes without direct `main` mutation.
+Deliver a bounded backend/API foundation for listening exercises, preserve repository invariants, diagnose CI failures from evidence, and produce immutable merge/deploy provenance.
 
 Instruction source:
 
-Installed GitHub skill plus repository `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md` and `docs/agent-harness.md`.
+Installed GitHub skill plus repository `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md`, task-specific Agent instructions and `docs/agent-harness.md`.
 
-Version or verification date:
+Verification date:
 
-Verified against repository `main` on 2026-08-13 Europe/Moscow.
+2026-08-13, repository convention Europe/Moscow.
 
-Inputs:
+### Pre-flight
 
-Issue #25, closed playback Issue #51, current open roadmap, live `main`, existing learning event model and prior delivered project state.
+- Verified live roadmap and selected parent #25 because other major product directions were blocked by Figma/manual device/production gates.
+- Verified closed Issue #51 already owns reliable speech playback.
+- Created child Issue #481 instead of duplicating playback or attempting the entire XL parent scope.
+- Created branch from exact `main` SHA `2b91949f42db36899a79bf2329b104f368127b14`.
+- Inspected AnswerMode, HTTP validation, scheduler, lesson repository/composer, progress SQL, migrations, OpenAPI and frontend progress owners before product writes.
 
-Files inspected:
+### Product/API implementation
 
-- `docs/speech-playback-release-checklist.md`
-- `backend/internal/learning/model.go`
-- `backend/internal/learning/http.go`
-- `backend/internal/learning/lesson.go`
-- `backend/internal/learning/lesson_http.go`
-- `backend/internal/learning/lesson_repository.go`
-- `backend/internal/learning/scheduler.go`
-- `backend/internal/learning/repository.go`
-- `backend/internal/platform/migrate/migrations/000007_learning_event_modes.up.sql`
-- `frontend/lib/progress.ts`
-- `.agents/AGENTS.issue-132-openapi-structure.md`
+- Added `AnswerModeListening` and made it objective through the shared `Objective()` contract.
+- Routed listening through the existing `ScheduleReview` path without changing scheduler math.
+- Extended review/lesson validation and exact error messages.
+- Changed server-owned lesson due-only selection from a hardcoded recall/choice check to `studyMode.Objective()`, preserving candidate ranking.
+- Added migration `000021` to broaden only existing check constraints; historical rows are untouched.
+- Added isolated `populateListeningProgress` rather than rewriting the large legacy progress query. It fills only the listening bucket and objective/success counters that need extension.
+- Kept weekly recall/retained-learning semantics explicitly typed recall.
+- Expanded OpenAPI to 0.15.0 for review, moderation context, lesson modes and progress.
+- Added frontend listening type with optional wire bucket and mandatory normalized bucket for rolling deployment compatibility.
 
-Actions performed:
+### Controlled large-file rewrite
 
-- Verified that base speech playback is already owned/delivered by #51.
-- Chose a narrower persisted-event foundation instead of duplicating UI/playback work.
-- Created child Issue #481 with explicit scope/non-goals/AC.
-- Created `feat/issue-481-listening-event-mode` from exact `main`.
-- Initialized the active task contract before product code writes.
+Purpose:
 
-Commands or procedures:
+Apply exact, narrow replacements to large owners (`lesson_composer.go`, `lesson_http.go`, `api/openapi.yaml`) without replacing files from truncated connector output.
 
-GitHub connector read/search/fetch and protected Git Data branch/blob/tree/commit workflow. No direct `main` writes.
+Procedure:
 
-Artifacts produced:
-
-- Issue #481.
-- Feature branch `feat/issue-481-listening-event-mode`.
-- Active `.agents/current/**` task memory.
+- Temporarily introduced `.github/workflows/apply-issue-481-contract.yml` only after documenting the exception in TASK.
+- Used fail-closed exact source-match assertions.
+- First helper run stopped before product commit because the ProgressModes OpenAPI snippet did not match the exact source shape. This was the intended safety behavior.
+- Corrected assertions against the actual OpenAPI blob and reran.
+- Verified the bot commit touched only the three intended large files and OpenAPI parsing succeeded.
+- Deleted the helper workflow immediately afterward.
+- Verified `.github/workflows/**` is absent from the final PR changed-file list.
 
 Result:
 
-Pre-flight is complete and the slice is bounded to persistence/API/progress semantics with no UI, microphone or scheduler-formula changes.
+No persistent CI/workflow change remains in #482.
 
-Failures:
+### Test coverage
 
-None in this phase.
+- Added listening objective/validation tests and preserved omitted-mode => recall compatibility.
+- Added scheduler equivalence coverage proving listening matches the existing objective scheduler path.
+- Added frontend normalization coverage including old payloads without a listening bucket.
+- Added `backend/integration/listening_review_mode_test.go` using real migrations, Postgres, Redis and HTTP server.
+
+### Integration diagnostics
+
+Failure 1:
+
+The initial integration test expected one candidate to be non-due even though both IDs came from `/words/due`.
+
+Resolution:
+
+Normalized candidate state explicitly. This exposed a second, more precise contract misunderstanding rather than a runtime defect.
+
+Failure 2:
+
+CI #3364/#3365 predecessor integration evidence showed two lesson items even after one control item was moved to a future due date.
 
 Root cause:
 
-Not applicable.
+`Repository.CreateLesson` intentionally treats non-nil `wordIds` as manual selection. The automatic `queryLessonCandidates`/composer path is entered only when `WordIDs == nil`, so the test was bypassing the exact behavior it claimed to verify.
 
-Fallback:
+Resolution:
 
-If a required contract cannot be changed atomically without unsafe broad-file replacement, prefer a focused new owner/helper and existing extension boundary rather than rewriting a large file from incomplete connector output.
+Changed only the integration fixture: make the entire learner catalog non-due, make exactly one item due, and POST the listening lesson without `wordIds`. This exercises the server-owned composer contract directly.
 
-Limitations:
+Verification:
 
-Figma is not required for this backend/API foundation. A future listening UI remains a separate phase and must establish its design source before implementation if the repository roadmap requires Figma ownership.
+CI #3365 on `1079aeb28360866b0f3e2e6260daef3ad6efb630` completed the `Integration tests with race detector` step successfully. Frontend core and backend unit/security were also green. Previous #3364 evidence had already shown the complete browser matrix green; the final reconciled SHA will rerun the full matrix and is the only merge evidence.
 
-Reusable lesson:
+### Read-only audits
 
-Do not equate a working playback control with listening-learning semantics. Persist the exercise mode as first-class evidence before building analytics or UI on top of it.
+- Verified `AssessReview` uses `request.AnswerMode.Objective()` and therefore needs no listening-specific correctness branch.
+- Verified base Progress counts all events in `reviewsToday/reviewsTotal`, so the listening extension does not double-count those values.
+- Verified retained and weekly recall evidence remain explicitly `answer_mode = 'recall'`.
+- Verified migration 000007 constraint names and v2 semantics are compatible with new listening values.
+- Verified `main` remained `2b91949f42db36899a79bf2329b104f368127b14` before final reconciliation.
+- Verified parallel open PRs are Dependabot maintenance with no selected-path overlap.
+- Verified PR #482 has no reviews or review threads at the pre-freeze audit.
+
+### Safety / rollback
+
+- No direct writes to `main` were made.
+- No listening UI, microphone, speech provider, custom glossary or scheduler-formula changes are included.
+- Rollback is the product PR revert; if deployed listening rows already exist, preserve broadened DB constraints until those rows are handled intentionally.
+
+### Final procedure
+
+1. Atomically commit TASK/PROGRESS/EXECUTION reconciliation.
+2. Read back files and resolve exact final head.
+3. Freeze branch; no further content writes.
+4. Require full immutable-head PR CI and clean review/compare audit.
+5. Ready PR #482 without head mutation and squash-merge with expected-head protection.
+6. Require exact-merge main CI.
+7. Require exact-image Stage deploy + public endpoint smoke + public browser acceptance.
+8. Close child Issue #481 only after all delivery gates pass; keep parent #25 open.
+9. Perform separate Agent Docs post-merge reconciliation/reset before starting the next product slice.
