@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.16.0
+  version: 0.17.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -703,6 +703,72 @@ paths:
                       field: lemma
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/custom/export:
+    get:
+      operationId: exportCustomGlossary
+      tags: [learning]
+      summary: Export all private custom words owned by the current account.
+      description: Returns content only in deterministic order. Scheduler status, due dates, review history and internal ownership/storage fields are intentionally excluded.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Versioned owner-only custom glossary snapshot.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomGlossaryDocument"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          description: Internal custom glossary export failure.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/custom/import:
+    post:
+      operationId: importCustomGlossary
+      tags: [learning]
+      summary: Merge one bounded private custom glossary into the current account.
+      description: Validates the complete versioned document before persistence, normalizes entries with the single custom-word contract, skips equivalent owner duplicates deterministically and initializes fresh scheduler state through user_words defaults.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomGlossaryImportRequest"
+      responses:
+        "200":
+          description: Import merge result. Historical scheduler state is never transported or restored.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomGlossaryImportResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          description: Internal custom glossary import failure; the transaction is rolled back.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/custom/{wordID}:
@@ -1710,6 +1776,54 @@ components:
         note:
           type: string
           maxLength: 1000
+    CustomGlossaryDocument:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, items]
+      description: Portable content-only owner glossary. Export intentionally carries no scheduler or review history.
+      properties:
+        schemaVersion:
+          type: string
+          const: lexigo-custom-glossary-v1
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateCustomWordRequest"
+    CustomGlossaryImportRequest:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, items]
+      properties:
+        schemaVersion:
+          type: string
+          const: lexigo-custom-glossary-v1
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/CreateCustomWordRequest"
+    CustomGlossaryImportResult:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, created, skipped, items]
+      properties:
+        schemaVersion:
+          type: string
+          const: lexigo-custom-glossary-v1
+        created:
+          type: integer
+          minimum: 0
+          maximum: 100
+        skipped:
+          type: integer
+          minimum: 0
+          maximum: 100
+        items:
+          type: array
+          maxItems: 100
+          description: Canonical normalized payload entries after in-document de-duplication; existing owner duplicates remain represented here and are counted in skipped.
+          items:
+            $ref: "#/components/schemas/CreateCustomWordRequest"
     UserWord:
       type: object
       required: [id, lemma, translation, acceptedAnswers, status, dueAt]
@@ -2231,4 +2345,4 @@ components:
             field:
               type: string
               description: Опциональное стабильное имя поля формы, связанное с ошибкой.
-              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note]
+              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, schemaVersion, items]
