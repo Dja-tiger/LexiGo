@@ -117,8 +117,13 @@ Route-specific initial JavaScript и request ceilings хранятся в `front
 ## Custom vocabulary ownership
 
 - общие catalog rows остаются в `words` с `owner_user_id is null`; private custom words используют тот же доменный объект `words`, но имеют `owner_user_id` текущего аккаунта и source `user-custom-v1`;
-- Phase 2 Issue #25 разрешает private ownership только для `kind = 'word'`; custom phrases, bulk import/export и frontend creation UI остаются отдельными будущими slice;
-- создание private word и запись `user_words` выполняются одной PostgreSQL-транзакцией, поэтому custom vocabulary сразу использует существующие due queue, lesson composition, review events и SRS state без второй scheduler-системы;
+- Phase 2 Issue #25 разрешает private ownership только для `kind = 'word'`; custom phrases и frontend creation UI остаются отдельными будущими slice;
+- создание одного private word и запись `user_words` выполняются одной PostgreSQL-транзакцией, поэтому custom vocabulary сразу использует существующие due queue, lesson composition, review events и SRS state без второй scheduler-системы;
+- Phase 3 portability использует authenticated `GET /api/v1/words/custom/export` и `POST /api/v1/words/custom/import`; export возвращает только deterministic owner-owned content (`lemma`, `translation`, `phonetic`, `partOfSpeech`, `topic`, `note`) и намеренно исключает database IDs, owner identity, scheduler state, due timestamps и review history;
+- export помечается `Cache-Control: no-store`; пустой owner glossary остаётся валидным version-1 документом с `items: []`;
+- import version 1 принимает 1–100 items и не более 256 KiB JSON, нормализует каждый item существующим `NormalizeCustomWordRequest`, отвергает intra-payload normalized duplicates до persistence и создаёт всю пачку в одной PostgreSQL-транзакции через тот же private-word insert/scheduler helper;
+- конфликт хотя бы одного import item с existing current-owner term приводит к rollback всей пачки; overwrite/merge существующего слова не выполняется, а одинаковый normalized term может независимо принадлежать другому аккаунту;
+- export → delete → import переносит только content identity: новые `words`/`user_words` rows получают fresh scheduler defaults; исторический SRS state, due dates и review events не импортируются;
 - shared catalog сохраняет отдельную partial uniqueness по `lower(lemma), lower(translation)`, а private rows — owner-scoped uniqueness, поэтому одинаковый пользовательский термин может независимо существовать у разных аккаунтов;
 - public `/api/v1/catalog/words*` и `/api/v1/catalog/metadata` читают только `owner_user_id is null`; authenticated reads допускают shared rows или private row текущего владельца и не раскрывают ownership другого аккаунта;
 - owner-only delete сначала в той же транзакции переводит активный lesson, содержащий удаляемое слово, в `discarded`, затем удаляет private `words` row; существующий `on delete cascade` очищает `user_words`, review/lesson/idempotency/onboarding/suggestion references, не затрагивая shared catalog или private rows другого пользователя.
