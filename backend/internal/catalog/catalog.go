@@ -159,7 +159,7 @@ func Seed(ctx context.Context, pool *pgxpool.Pool) (int, error) {
 				source
 			)
 			values ($1, $2, $3, $4, '[]'::jsonb, $5, $6)
-			on conflict (lower(lemma), lower(translation))
+			on conflict (lower(lemma), lower(translation)) where owner_user_id is null
 			do update set
 				part_of_speech = excluded.part_of_speech,
 				topic = excluded.topic,
