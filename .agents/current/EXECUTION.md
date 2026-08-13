@@ -14,8 +14,8 @@
 
 Purpose:
 
-- continue LexiGo production delivery under the repository Agent Harness;
-- inspect Phase 2 ownership boundaries, implement Phase 3 custom glossary portability, validate with real CI and preserve exact source/delivery evidence.
+- deliver Phase 3 custom glossary portability under the LexiGo production-safe Agent Harness;
+- inspect live owners, implement one atomic backend/API slice, prove it in real CI and preserve reproducible delivery evidence.
 
 Instruction source:
 
@@ -30,71 +30,71 @@ Inputs:
 
 - parent Issue #25;
 - child Issue #489;
-- delivered Phase 1 listening contract (#481) and Phase 2 private custom-word contract (#485 / #486);
+- delivered Phase 1 listening contract (#481) and Phase 2 private custom-word ownership contract (#485 / #486);
 - current `words`, `user_words`, server, OpenAPI and integration-test owners.
 
 Files inspected:
 
-- repository Agent Harness and live `main`/PR/CI state;
-- `backend/internal/words/custom_word.go`, `custom_repository.go`, `custom_http.go`, `model.go`, `repository.go`, OpenAPI contract tests;
+- repository Agent Harness and live GitHub `main`/PR/CI state;
+- `backend/internal/words/custom_word.go`, `custom_repository.go`, `custom_http.go`, `model.go`, `repository.go` and existing OpenAPI contract tests;
 - `backend/internal/server/server.go`;
-- Phase 2 migration `000022_custom_words.up.sql`;
-- `backend/integration/custom_words_test.go` and shared integration helpers;
-- complete `api/openapi.yaml` through chunked GitHub reads/resource inspection;
-- complete `docs/architecture.md` through GitHub response-resource reads.
+- migration `000022_custom_words.up.sql`;
+- `backend/integration/custom_words_test.go`, shared request helpers and `httpx.DecodeJSONLimit`;
+- complete `api/openapi.yaml` and `docs/architecture.md` through GitHub reads/resource inspection.
 
 Actions performed:
 
-- created Issue #489 with explicit version/bounds/atomicity/privacy/round-trip contract;
+- created Issue #489 with explicit version, item/body bounds, ownership, atomic rollback and round-trip acceptance;
 - reconciled stale Phase 2 Agent Harness state before product ownership;
-- created isolated Phase 3 branch from exact `main`;
-- added `CustomGlossaryEnvelope`, import result, version/body/item bounds and complete-payload normalization;
-- refactored single custom-word persistence through shared `insertCustomWordTx` without changing existing single-create/delete semantics;
+- added version-1 glossary envelope/result contracts and complete-payload normalization;
+- refactored single custom-word persistence through shared `insertCustomWordTx` without changing existing CRUD semantics;
 - added deterministic owner-only portable export and one-transaction all-or-nothing import;
-- added authenticated `/api/v1/words/custom/export` and `/api/v1/words/custom/import` routes;
-- added `Cache-Control: no-store` and stable validation/conflict HTTP error ownership;
-- added focused domain tests and real PostgreSQL/Redis integration covering scheduler enrollment, ownership, rollback, bounds and export-delete-import fresh-state behavior;
-- updated OpenAPI to 0.17.0 with two portability endpoints and three closed glossary schemas;
-- added a complete-YAML structural OpenAPI regression test;
-- updated only the existing `Custom vocabulary ownership` architecture section with Phase 3 semantics;
-- audited final changed-path inventory and confirmed zero `.github/workflows/**` diff.
+- registered authenticated `/api/v1/words/custom/export` and `/api/v1/words/custom/import` routes;
+- added `Cache-Control: no-store` plus stable validation/conflict HTTP errors;
+- added unit tests and real PostgreSQL/Redis integration covering owner isolation, deterministic content-only export, exact scheduler enrollment, cross-account equivalent content, intra-payload duplicates, existing-owner rollback, export-delete-import fresh scheduler state, version bound, 100-item ceiling and the 256 KiB HTTP body ceiling;
+- updated OpenAPI to 0.17.0 with two portability endpoints and three closed schemas and added a complete-YAML structural contract test;
+- updated only the existing `Custom vocabulary ownership` architecture section;
+- confirmed final changed-path inventory has zero `.github/workflows/**` diff.
 
 Commands or procedures:
 
 - GitHub connector reads/writes and Git Data blob/tree/commit/ref operations;
-- GitHub Actions is the authoritative executable environment because the local runtime cannot resolve github.com for a usable checkout;
-- diagnostic CI #3389 / run `31707145244` proved formatting/static/unit/race/security/integration plus selected frontend/browser gates before final contracts were added;
-- immutable-head CI #3394 / run `31709294294` was started on developer head `82fed087ae6eaedd9be2e03d8572989cc2e40728`; backend unit/security, frontend core and Dictionary smoke were already green when the final harness-only commits were prepared.
+- GitHub Actions is authoritative because the local runtime cannot resolve github.com for a usable repository checkout;
+- diagnostic CI #3389 / run `31707145244` proved formatting/static/unit/race/security/integration and selected frontend/browser gates on the implementation foundation;
+- CI #3394 / run `31709294294` proved the later OpenAPI structural contract and core product gates on developer head `82fed087ae6eaedd9be2e03d8572989cc2e40728`;
+- CI #3398 / run `31710244884` is the first diagnostic run containing the explicit 256 KiB HTTP body regression;
+- the head produced by this file update is the intended final developer-authored candidate and must pass a fresh complete immutable-head CI before merge.
 
 Temporary exact-rewrite procedure:
 
-- `api/openapi.yaml` is large and the connected Contents API exposes no server-side patch operation; manual model reconstruction of unrelated lines was rejected as unsafe.
-- After recording explicit permission in `.agents/current/**`, a one-shot path-guarded workflow was used solely as a large-file exact-rewrite helper.
-- First workflow run `31708416538` failed before job execution because the initial heredoc produced invalid workflow YAML indentation; it wrote no OpenAPI change.
-- Corrected run `31708701593` succeeded, exact anchors matched and bot commit `35b45e88642435d5a4eb63c97d7d1fa5aa80d120` changed only `api/openapi.yaml`.
-- The resulting unified OpenAPI patch was manually audited before acceptance.
-- Developer commit `82fed087ae6eaedd9be2e03d8572989cc2e40728` removed the temporary workflow and added architecture/structural-contract changes. Final PR inventory has no workflow change.
+- `api/openapi.yaml` is large and the connected Contents API has no safe server-side patch operation;
+- after explicit harness authorization, one path-guarded temporary workflow performed exact anchored OpenAPI replacements;
+- first helper run `31708416538` failed before job execution because the workflow heredoc indentation was invalid and wrote nothing;
+- corrected run `31708701593` succeeded; bot commit `35b45e88642435d5a4eb63c97d7d1fa5aa80d120` changed only `api/openapi.yaml`;
+- the unified OpenAPI patch was manually audited before acceptance;
+- developer commit `82fed087ae6eaedd9be2e03d8572989cc2e40728` removed the helper and added architecture/structural-contract changes; final PR inventory has no workflow change.
 
 Artifacts produced:
 
-- Issue #489;
-- Draft PR #492;
+- Issue #489 and Draft PR #492;
 - versioned custom glossary domain/repository/HTTP implementation;
-- real PostgreSQL integration regression;
+- real PostgreSQL/Redis integration regression including body-size and item-count bounds;
 - OpenAPI 0.17.0 glossary contract and structural parser test;
 - updated architecture ownership contract;
 - current Agent Harness evidence.
 
 Result:
 
-- Phase 3 implementation is feature-complete and has no planned runtime/API/documentation changes after this final harness commit unless immutable-head CI identifies a real defect.
-- Product delivery is not yet complete until final immutable-head CI, review/thread audit, guarded squash merge, exact-main CI and exact-SHA Stage/public acceptance are green.
+- Phase 3 implementation and acceptance coverage are feature-complete.
+- No further runtime/API/test/design changes are planned unless final immutable-head CI exposes a real defect.
+- Delivery remains incomplete until final CI, review/thread/diff audit, guarded squash merge, exact-main CI and exact-SHA Stage/public validation pass.
 
-Failures:
+Failures and recovery:
 
-- GitHub safety proxy intermittently rejected first mutation attempts; every retry was preceded by branch/ref readback.
-- Two repeated fast-forward rejections on the original feature branch caused a deliberate switch to `feat/issue-489-custom-glossary-import-export-v2` from the already-created immutable commit.
-- Temporary workflow run #1 failed due invalid YAML indentation; root cause was the workflow file itself, not product/OpenAPI behavior. Corrected run #2 succeeded.
+- GitHub safety proxy intermittently rejected first mutation attempts; every retry followed live ref/head readback.
+- After two blocked fast-forwards on the original feature branch, work continued on `feat/issue-489-custom-glossary-import-export-v2` created from the already-created immutable commit rather than repeating the same rejected write.
+- Temporary workflow run #1 failed because of workflow YAML indentation; the corrected run succeeded.
+- The first body-limit regression draft used escaped quotes in a Go raw string. This was caught during self-review before final acceptance; the test now normalizes that raw literal to a valid JSON document before adding whitespace, so the observed 400 can prove only the HTTP body bound and it verifies zero persistence side effect.
 
 Root cause:
 
@@ -103,17 +103,18 @@ Root cause:
 
 Fallback:
 
-- Git Data blob/tree/commit/ref operations were used when Contents API or safety proxy blocked safe normal writes.
-- For `docs/architecture.md`, a full 180-line GitHub response-resource read enabled a direct developer-authored replacement, avoiding a second temporary workflow.
+- Git Data blob/tree/commit/ref operations were used when normal writes were rejected safely.
+- The 180-line architecture source was read completely and updated directly, avoiding a second temporary workflow.
 
 Limitations:
 
 - no custom phrases;
 - no frontend/Figma glossary UI;
 - no microphone/pronunciation/listening-first UI;
-- no scheduler algorithm or schema migration changes in this slice.
+- no scheduler algorithm or schema migration changes.
 
 Reusable lesson:
 
-- portable user content must separate content identity from persistence/scheduler identity: export content only, then re-import through the canonical owner-scoped enrollment path to create fresh scheduler state.
-- when a connector cannot patch a large authoritative file, an exact anchor-guarded one-shot rewrite may be acceptable only if its output diff is reviewed, the helper is removed and the final candidate head is developer-authored with zero workflow diff.
+- portable user content must separate content identity from persistence/scheduler identity: export content only and re-import through the canonical owner-scoped enrollment path to create fresh scheduler state.
+- documented resource ceilings are not fully accepted until both semantic-count and raw-body limits have executable tests.
+- temporary large-file rewrite automation is acceptable only when exact-anchor guarded, output diff reviewed, helper removed and the final candidate head is developer-authored with zero workflow diff.
