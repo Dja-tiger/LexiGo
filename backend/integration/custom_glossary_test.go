@@ -288,6 +288,7 @@ func TestCustomGlossaryImportExportIsOwnerScopedAtomicAndPortable(t *testing.T) 
 	// must consume the trailing input while proving that there is exactly one JSON
 	// value, so http.MaxBytesReader rejects the request before persistence.
 	bodyLimitedJSON := `{"version":1,"items":[{"lemma":"body ceiling","translation":"bounded"}]}` + strings.Repeat(" ", (256<<10)+1)
+	bodyLimitedJSON = strings.ReplaceAll(bodyLimitedJSON, `\"`, `"`)
 	request, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
