@@ -52,7 +52,7 @@ func NormalizeCustomGlossaryDocument(document CustomGlossaryDocument) (CustomGlo
 		if err != nil {
 			if validationError, ok := err.(*CustomWordValidationError); ok {
 				return CustomGlossaryDocument{}, 0, &CustomGlossaryValidationError{
-					Field: "items",
+					Field:   "items",
 					Message: fmt.Sprintf("items[%d].%s: %s", index, validationError.Field, validationError.Message),
 				}
 			}
