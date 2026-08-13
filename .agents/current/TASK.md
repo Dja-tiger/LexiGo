@@ -6,7 +6,7 @@
 - Branch: `feat/issue-68-pwa-manifest-icons`
 - Base SHA: `9bf6f26899fbdf937f5612c08da7bab64e38af69`
 - Head SHA: resolve from live branch ref
-- PR: #504
+- PR: #506
 
 ## Objective
 
