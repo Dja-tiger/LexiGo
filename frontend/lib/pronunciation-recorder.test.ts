@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   PRONUNCIATION_RECORDER_MAX_DURATION_MS,
   PronunciationRecorder,
-  type PronunciationRecorderOptions,
 } from "./pronunciation-recorder";
 
 type FakeTrack = { stop: ReturnType<typeof vi.fn> };
+type GetUserMedia = (constraints: MediaStreamConstraints) => Promise<MediaStream>;
 
 type FakeStreamBundle = {
   stream: MediaStream;
@@ -49,9 +49,7 @@ function fakeStream(): FakeStreamBundle {
 }
 
 function recorderHarness(options: {
-  getUserMedia?: PronunciationRecorderOptions["dependencies"] extends infer D
-    ? D extends { getUserMedia?: infer G } ? G : never
-    : never;
+  getUserMedia?: GetUserMedia;
   supportedTypes?: string[];
   maxDurationMs?: number;
 } = {}) {
@@ -65,8 +63,10 @@ function recorderHarness(options: {
   const recorder = new PronunciationRecorder({
     maxDurationMs: options.maxDurationMs,
     dependencies: {
-      getUserMedia: getUserMedia as (constraints: MediaStreamConstraints) => Promise<MediaStream>,
-      isMimeTypeSupported: (mimeType) => (options.supportedTypes ?? ["audio/webm;codecs=opus"]).includes(mimeType),
+      getUserMedia,
+      isMimeTypeSupported: (mimeType) => (
+        options.supportedTypes ?? ["audio/webm;codecs=opus"]
+      ).includes(mimeType),
       createRecorder: (_stream, mimeType) => {
         const value = new FakeMediaRecorder(mimeType);
         recorders.push(value);
@@ -117,7 +117,11 @@ describe("PronunciationRecorder", () => {
       },
     });
 
-    expect(recorder.getSnapshot()).toEqual({ state: "unsupported", recording: null, errorCode: "unsupported" });
+    expect(recorder.getSnapshot()).toEqual({
+      state: "unsupported",
+      recording: null,
+      errorCode: "unsupported",
+    });
     await expect(recorder.startRecording()).resolves.toEqual(recorder.getSnapshot());
     expect(getUserMedia).not.toHaveBeenCalled();
   });
@@ -129,7 +133,6 @@ describe("PronunciationRecorder", () => {
     expect(harness.getUserMedia).toHaveBeenCalledTimes(1);
     expect(harness.getUserMedia).toHaveBeenCalledWith({ audio: true, video: false });
     expect(harness.recorder.getSnapshot().state).toBe("recording");
-    expect(harness.recorders).toHaveLength(1);
     expect(harness.recorders[0]?.mimeType).toBe("audio/webm;codecs=opus");
 
     harness.advanceTime(1_250);
@@ -164,7 +167,11 @@ describe("PronunciationRecorder", () => {
     const harness = recorderHarness({ getUserMedia });
 
     const snapshot = await harness.recorder.startRecording();
-    expect(snapshot).toEqual({ state: "denied", recording: null, errorCode: "permission-denied" });
+    expect(snapshot).toEqual({
+      state: "denied",
+      recording: null,
+      errorCode: "permission-denied",
+    });
     expect(harness.recorders).toHaveLength(0);
   });
 
@@ -206,8 +213,7 @@ describe("PronunciationRecorder", () => {
     const harness = recorderHarness();
     await harness.recorder.startRecording();
 
-    const snapshot = harness.recorder.cancel();
-    expect(snapshot.state).toBe("idle");
+    expect(harness.recorder.cancel().state).toBe("idle");
     expect(harness.track.stop).toHaveBeenCalledTimes(1);
     expect(harness.createdURLs).toEqual([]);
   });
@@ -236,13 +242,24 @@ describe("PronunciationRecorder", () => {
     expect(harness.createdURLs).toEqual([]);
   });
 
-  it("caps configured duration at the product maximum", () => {
+  it("auto-stops at the product maximum duration", async () => {
     vi.useFakeTimers();
-    const harness = recorderHarness({ maxDurationMs: PRONUNCIATION_RECORDER_MAX_DURATION_MS * 10 });
-    void harness.recorder.startRecording().then(() => {
-      vi.advanceTimersByTime(PRONUNCIATION_RECORDER_MAX_DURATION_MS);
-    });
-    vi.useRealTimers();
-    expect(harness.recorder.getSnapshot().state).not.toBe("unsupported");
+    try {
+      const harness = recorderHarness({
+        maxDurationMs: PRONUNCIATION_RECORDER_MAX_DURATION_MS * 10,
+      });
+      await harness.recorder.startRecording();
+      harness.advanceTime(PRONUNCIATION_RECORDER_MAX_DURATION_MS + 5_000);
+
+      await vi.advanceTimersByTimeAsync(PRONUNCIATION_RECORDER_MAX_DURATION_MS);
+
+      expect(harness.recorder.getSnapshot().state).toBe("recorded");
+      expect(harness.recorder.getSnapshot().recording?.durationMs).toBe(
+        PRONUNCIATION_RECORDER_MAX_DURATION_MS,
+      );
+      expect(harness.track.stop).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
