@@ -114,6 +114,15 @@ Route-specific initial JavaScript и request ceilings хранятся в `front
 - `platform` — PostgreSQL, Redis, migrations с PostgreSQL advisory lock.
 - `moderation` — fail-closed content-admin allowlist, bounded answer-suggestion queue, atomic terminal decisions, immutable audit, operational metrics и bounded raw-answer retention; не владеет review history или scheduler.
 
+## Custom vocabulary ownership
+
+- общие catalog rows остаются в `words` с `owner_user_id is null`; private custom words используют тот же доменный объект `words`, но имеют `owner_user_id` текущего аккаунта и source `user-custom-v1`;
+- Phase 2 Issue #25 разрешает private ownership только для `kind = 'word'`; custom phrases, bulk import/export и frontend creation UI остаются отдельными будущими slice;
+- создание private word и запись `user_words` выполняются одной PostgreSQL-транзакцией, поэтому custom vocabulary сразу использует существующие due queue, lesson composition, review events и SRS state без второй scheduler-системы;
+- shared catalog сохраняет отдельную partial uniqueness по `lower(lemma), lower(translation)`, а private rows — owner-scoped uniqueness, поэтому одинаковый пользовательский термин может независимо существовать у разных аккаунтов;
+- public `/api/v1/catalog/words*` и `/api/v1/catalog/metadata` читают только `owner_user_id is null`; authenticated reads допускают shared rows или private row текущего владельца и не раскрывают ownership другого аккаунта;
+- owner-only delete сначала в той же транзакции переводит активный lesson, содержащий удаляемое слово, в `discarded`, затем удаляет private `words` row; существующий `on delete cascade` очищает `user_words`, review/lesson/idempotency/onboarding/suggestion references, не затрагивая shared catalog или private rows другого пользователя.
+
 ## Moderation ownership
 
 - `learning` создаёт pending suggestion только из реального server-rejected review текущего пользователя и никогда автоматически не меняет curated answers;
