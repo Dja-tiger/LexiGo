@@ -4,10 +4,10 @@
 
 - Issue: #489 — `[Medium][Learning][#25 Phase 3] Add bounded custom glossary import/export`
 - Parent: #25
-- Branch: `feat/issue-489-custom-glossary-import-export`
+- Branch: `feat/issue-489-custom-glossary-import-export-v2`
 - Base SHA: `981c3d78b1907480d763fbad23d9f1608b9353e9`
 - Head SHA: resolve from live branch ref after each write
-- PR: not opened yet
+- PR: #492
 
 ## Objective
 
@@ -44,6 +44,7 @@ Add authenticated versioned JSON import/export for a bounded private custom-word
 - `backend/integration/custom_glossary_test.go`
 - `api/openapi.yaml`
 - `docs/architecture.md`
+- `.github/workflows/temporary-issue-489-openapi-rewrite.yml` **only as a one-shot path-guarded rewrite helper; it must be deleted from the branch before the final developer-authored head and immutable-head CI**.
 
 Additional paths require a verified downstream-consumer finding recorded in `PROGRESS.md` before modification.
 
@@ -51,7 +52,7 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 
 - `frontend/**`
 - Figma/design files
-- deployment/CI workflows
+- persistent deployment/CI workflow changes; the temporary exact-rewrite helper above is the sole exception and must have zero final PR diff
 - migrations unless a schema change is proven necessary
 - scheduler formulas/ranking
 - unrelated dependencies/maintenance.
@@ -59,8 +60,10 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 ## Runtime owners
 
 - `backend/internal/words/custom_word.go`: shared custom-word normalization and field bounds.
-- `backend/internal/words/custom_repository.go`: owner-scoped custom-word persistence and scheduler enrollment.
-- `backend/internal/words/custom_http.go`: authenticated custom-word HTTP boundary.
+- `backend/internal/words/custom_repository.go`: owner-scoped private-word persistence and scheduler enrollment.
+- `backend/internal/words/custom_glossary.go`: version/bounds/complete-request normalization and intra-payload identity.
+- `backend/internal/words/custom_glossary_repository.go`: owner-only export and all-or-nothing import.
+- `backend/internal/words/custom_glossary_http.go`: authenticated portability HTTP boundary and no-store response policy.
 - `backend/internal/server/server.go`: route registration.
 - PostgreSQL `words.owner_user_id` + private partial unique index from migration `000022_custom_words`.
 
@@ -78,7 +81,8 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 - import uses existing field normalization/limits and creates no parallel scheduler;
 - one failing item rolls back the complete import;
 - no existing custom word is overwritten;
-- round-trip preserves portable content but intentionally resets scheduler state by creating new rows.
+- round-trip preserves portable content but intentionally resets scheduler state by creating new rows;
+- temporary rewrite automation may touch only `api/openapi.yaml` and its own workflow file and must disappear before final CI.
 
 ## Acceptance criteria
 
@@ -89,7 +93,8 @@ Use all ten acceptance criteria from Issue #489 without weakening bounds, owners
 - focused Go unit/source-contract tests;
 - OpenAPI structural parse/contract checks;
 - PostgreSQL integration coverage for ownership, empty export, bounds, intra-payload duplicate, existing-owner conflict rollback, different-owner independence, scheduler enrollment and export-delete-import round-trip;
-- full immutable-head repository CI;
+- verify one-shot rewrite diff before removing its workflow;
+- full immutable-head repository CI on a developer-authored head with zero `.github/workflows/**` diff;
 - review/thread/diff audit;
 - guarded squash merge;
 - exact-main CI and exact-SHA Stage/public validation.
@@ -100,7 +105,8 @@ Use all ten acceptance criteria from Issue #489 without weakening bounds, owners
 - leaking scheduler/account internals in export;
 - route ambiguity with `/api/v1/words/custom/{wordID}`;
 - inconsistent normalization between single create and batch import;
-- excessive request/item counts causing avoidable DB/resource pressure.
+- excessive request/item counts causing avoidable DB/resource pressure;
+- broad accidental OpenAPI rewrite from connector limitations; mitigated by exact string guards plus post-write unified-diff audit.
 
 ## Rollback
 
