@@ -30,6 +30,7 @@ const catalogSelectFields = `
 const publicCatalogListFilter = `
 		from words w
 		where w.kind = 'word'
+		  and w.owner_user_id is null
 		  and (
 		      $1 = ''
 		      or $1 = 'mixed'
@@ -65,6 +66,7 @@ const catalogListFilter = `
 		from user_words uw
 		join words w on w.id = uw.word_id
 		where uw.user_id = $1::uuid
+		  and (w.owner_user_id is null or w.owner_user_id = uw.user_id)
 		  and ($2 = '' or w.kind = $2)
 		  and (not $3 or uw.due_at <= now())
 		  and (
@@ -178,7 +180,9 @@ func (r *Repository) GetPublic(ctx context.Context, wordID int64) (Word, error) 
 	item, err := scanWord(r.pool.QueryRow(ctx, `
 		select `+publicCatalogSelectFields+`
 		from words w
-		where w.id = $1 and w.kind = 'word'
+		where w.id = $1
+		  and w.kind = 'word'
+		  and w.owner_user_id is null
 	`, wordID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Word{}, ErrCatalogItemNotFound
@@ -194,7 +198,9 @@ func (r *Repository) Get(ctx context.Context, userID string, wordID int64) (User
 		select `+catalogSelectFields+`
 		from user_words uw
 		join words w on w.id = uw.word_id
-		where uw.user_id = $1::uuid and w.id = $2
+		where uw.user_id = $1::uuid
+		  and w.id = $2
+		  and (w.owner_user_id is null or w.owner_user_id = uw.user_id)
 	`, userID, wordID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return UserWord{}, ErrCatalogItemNotFound
@@ -211,6 +217,7 @@ func (r *Repository) GetPhraseBySlug(ctx context.Context, userID, slug string) (
 		from user_words uw
 		join words w on w.id = uw.word_id
 		where uw.user_id = $1::uuid
+		  and (w.owner_user_id is null or w.owner_user_id = uw.user_id)
 		  and w.kind = 'phrase'
 		  and lower(w.slug) = $2
 	`, userID, slug))

@@ -67,6 +67,7 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 		       count(*) filter (where kind = 'word' and source = $1)::int,
 		       coalesce(max(updated_at), to_timestamp(0))
 		from words
+		where owner_user_id is null
 	`, catalog.Source).Scan(
 		&metadata.Totals.Items,
 		&metadata.Totals.Words,
@@ -92,6 +93,7 @@ func (r *Repository) Metadata(ctx context.Context) (CatalogMetadata, error) {
 		       count(*) filter (where kind = 'word')::int,
 		       count(*) filter (where kind = 'phrase')::int
 		from words
+		where owner_user_id is null
 		group by topic
 		order by topic
 	`)
