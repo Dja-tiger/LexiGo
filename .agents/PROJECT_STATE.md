@@ -4,19 +4,16 @@
 
 - Last verified: 2026-08-13 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Repository `main` before this Agent-Docs reconciliation: `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`.
-- Latest deployed product SHA: `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`.
-- Issue #481 product PR #482 final head `b7eb33fd0e7da8b877217b1ec8f2af93b491f8e9` passed immutable-head CI #3366 / run `31675107869` completely and squash-merged as `b62470b0051ca60e2bea177ab08945887107822c`.
-- Product exact-main CI #3367 / run `31675946620` completed `success` and published immutable API/Web images for `b62470b0051ca60e2bea177ab08945887107822c`.
-- Initial Stage #3208 / run `31676641895` deployed that exact product SHA and passed public frontend/API smoke; public iOS WebKit stale-build recovery exposed a deterministic diagnostic-normalization incompatibility in the acceptance classifier.
-- Remediation PR #483 final head `97270de0de8eb7682c8aa0532d7252ef4578264b` passed immutable-head CI #3369 / run `31678681171` completely and squash-merged as `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`.
-- Exact-main CI #3370 / run `31679586052` completed `success` and published immutable API/Web images for `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`.
-- Deploy Stage #3212 / run `31680424987` completed `success` for exact image SHA `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`: exact CI-scope validation, deploy, public frontend/API smoke and public browser validation all passed, including Chromium and iOS WebKit stale-build recovery.
-- Issue #481 is closed as `completed`; all seven acceptance criteria are checked with full product/remediation delivery evidence. Parent Issue #25 remains open.
-- Issue #73 / PR #477 remains delivered as squash SHA `1f5b152d6f904ff57f56f434c917a44f1923c6f1`; immutable-head CI #3348, exact-main CI #3349 and Stage #3191 remain accepted historical evidence.
-- Issue #72 / PR #476 remains delivered as squash SHA `ca0a8a57628fdd36d5cc93c1bb59a4b4c099fbfa`; exact-main CI #3312 / run `31579070614` and Deploy Stage #3155 / run `31579844206` remain accepted historical evidence.
-- Issue #71 / PR #473, Issue #66 / PR #471, Issue #460 / PR #465, Issue #468 / PR #469, Issue #70 and Issue #74 remain completed historical foundations.
-- Issue #18 Phase 1 remains delivered as PR #462 / squash SHA `edcfd3dbee62a4dba253df07d984fa326350c984`; Phase 2 remains delivered as PR #463 / squash SHA `8b3fac45d91fa3bb0318d93635ef77896af2b6f6`.
+- Live repository `main` before this Agent-Docs reconciliation: `7081eb7b2eb28dbc605d9c5d546edf5690226525`.
+- Current `main` is the Issue #25 Phase 4 product merge plus a dependency-only `js-yaml` maintenance commit: Phase 4 squash `810fa59a748477f8723a19dee03e61517282df30`, then PR #432 -> `7081eb7b2eb28dbc605d9c5d546edf5690226525`.
+- Exact product-merge CI #3415 / run `31718578667` completed `success` on `810fa59a748477f8723a19dee03e61517282df30`.
+- Deploy Stage #3257 / run `31719479827` completed `success` for exact product image SHA `810fa59a748477f8723a19dee03e61517282df30`.
+- Current-live-main CI #3421 completed `success` on `7081eb7b2eb28dbc605d9c5d546edf5690226525`.
+- Current-live-main Deploy Stage #3263 completed `success` on exact SHA `7081eb7b2eb28dbc605d9c5d546edf5690226525`.
+- Parent Issue #25 remains open. Delivered child foundations are Issue #481 / PR #482 + remediation #483, Issue #485 / PR #486, Issue #489 / PR #494 and Issue #497 / PR #498.
+- Issue #485, #489 and #497 are closed as `completed`; PR #486, #494 and #498 are merged.
+- No visible custom-vocabulary, glossary-export or microphone UI is implied by those headless platform deliveries. Any user-facing binding still requires a separately scoped, design-approved slice.
+- Live GitHub is authoritative for open Issues, PRs, review state and CI; do not persist a stale open-work queue here.
 
 ## Delivery contract
 
@@ -38,8 +35,11 @@
 - `frontend/lib/interface-copy.ts` remains the shared owner for repeated learning terminology, source labels, generic system-state eyebrows and repeated generic recovery/navigation actions introduced by Issue #66.
 - `frontend/lib/feedback.ts` plus the root `FeedbackCenter` remain the shared feedback state/presentation owner introduced by Issue #71; `AccessibleDialog` remains the sole modal/focus/portal primitive.
 - Guest catalog content and authenticated scheduler/progress state remain separate security/ownership boundaries delivered by Issue #72.
-- Lesson Result persisted outcome evidence, continuation policy and authenticated retention measurement are durable product boundaries delivered by Issue #73.
-- Listening is now a first-class persisted objective learning mode delivered by Issue #481; future listening UI must build on that contract rather than reusing typed `recall` or inventing UI-only semantics.
+- Lesson Result persisted outcome evidence, continuation policy and authenticated retention measurement remain durable product boundaries delivered by Issue #73.
+- Listening is a first-class persisted objective learning mode delivered by Issue #481; future listening UI must build on that contract rather than reusing typed `recall` or inventing UI-only semantics.
+- `frontend/src/controllers/audioInteractionPlatform.ts` remains the browser owner for speech playback integration and private local listening-event state.
+- `frontend/src/controllers/customVocabularyPlatform.ts` is the browser-private owner for custom vocabulary CRUD plus deterministic glossary import/export projections delivered by Issues #485 and #489.
+- The pronunciation recorder platform delivered by Issue #497 is the sole local microphone/recording lifecycle owner for that capability. It owns explicit acquisition, one bounded in-memory clip and deterministic track/object-URL cleanup; it introduces no upload or persistence path.
 
 ## Issue #72 delivered guest catalog contract
 
@@ -57,29 +57,57 @@
 - `frontend/lib/lesson-result.ts` owns a versioned persisted completion snapshot built only after the final review is successfully saved and refreshed server progress is available.
 - Objective evidence keeps `attempted`, `correct` and `unavailable` separate; restored `correct=null` activity is never fabricated as objective success/failure.
 - Self-rating (`known` / `almost` / `again`) remains confidence/activity context and is never converted to objective correctness.
-- Honest result states include complete, partial, study-only, skipped and empty evidence without invented mastery.
 - Scheduler timing is server-owned: `nextDueAt` is consumed as an absolute timestamp and formatted in the browser locale/timezone; fixed-duration due approximation is prohibited.
 - Daily-goal and streak values are displayed from refreshed server progress; the client may detect a before/after goal crossing but cannot increment authoritative counters locally.
-- Continuation policy keeps exactly one useful primary next action and prioritizes sync safety/goal milestone, immediately due review, distinct next work and return/home according to current evidence.
-- Compact/mobile presentation keeps required objective evidence, review timing and goal/streak context visible while preserving the canonical one-primary-CTA composition.
+- Continuation policy keeps exactly one useful primary next action according to current persisted evidence.
 - Authenticated `POST /api/v1/lessons/{lessonID}/result-action` records only the first selected Result action for a completed lesson owned by that user; duplicate submissions are idempotent and cannot rewrite the first action.
-- Migration `000020_lesson_result_retention` owns the durable `lesson_result_actions` persistence boundary and the `lesson_result_retention` SQL view.
-- Retention metrics derive `completion_to_action_seconds`, `return_to_next_session_seconds` and whether the selected action matched the recommendation from authenticated lesson/session timestamps; anonymous route telemetry is not used as cross-session identity.
-- Three reviewed Linux Lesson Result baselines remain canonical for the delivered states; normal non-update Visual Regression passed on final PR and squash `main` delivery heads.
+- Migration `000020_lesson_result_retention` owns durable `lesson_result_actions` persistence and the `lesson_result_retention` SQL view.
+- Retention metrics derive authenticated completion/action/return timing from lesson/session timestamps rather than anonymous route telemetry.
 
-## Issue #481 delivered listening event contract
+## Issue #25 delivered learning/audio foundations
+
+### Phase 1 — Issue #481: persisted listening semantics
 
 - `listening` is a first-class backend/frontend answer mode and is persisted exactly as `listening`; typed recall continues to persist as `recall`.
 - `AnswerMode.Objective()` owns the objective/non-objective boundary: study remains non-objective, while recall, choice and listening are objective.
 - Listening reuses the existing objective `ScheduleReview` path without scheduler formula, interval, easiness or ranking changes.
-- Server-side answer judgement already routes objective correctness through `AnswerMode.Objective()`; no listening-specific correctness fork is required.
 - Omitted legacy `answerMode` continues to normalize to typed `recall` for compatibility.
-- Server-owned listening lesson composition is due-only through the common objective-mode boundary and preserves existing ranking. Explicit `wordIds` remain the intentional manual-selection path and bypass automatic composer filtering.
+- Server-owned listening lesson composition is due-only through the common objective-mode boundary and preserves existing ranking. Explicit `wordIds` remain the intentional manual-selection path.
 - Migration `000021_listening_answer_mode` broadens the named `review_events.answer_mode` and `lesson_sessions.study_mode` constraints only; it does not rewrite historical review events.
-- Progress exposes `modes.listening`; listening contributes to objective/successful-today evidence without double-counting all-event totals. Weekly typed-recall and retained-learning semantics remain unchanged.
+- Progress exposes `modes.listening`; listening contributes to objective/successful-today evidence without double-counting all-event totals.
 - OpenAPI `0.15.0` documents listening across review, moderation context, lesson mode and progress contracts.
-- Frontend rolling-deploy compatibility permits an older progress payload to omit the listening wire bucket while normalization materializes a zero listening bucket for consumers.
-- The public-runtime WebKit guard-cancellation normalizer accepts the one- or two-slash split-protocol forms only before the existing exact WebKit/current-build guard URL equality check; real service-worker failures remain visible.
+- PR #482 delivered the product foundation; PR #483 delivered the narrow Stage-acceptance remediation. Final Phase 1 Stage evidence remains accepted historical evidence.
+
+### Phase 2 — Issue #485: private custom vocabulary foundation
+
+- Browser-private custom vocabulary state uses the versioned local key `lexigo.learning.customVocabulary.v1`.
+- CRUD semantics are deterministic: add, same-normalized-term update, remove and alphabetical ordering survive reload.
+- Malformed private storage recovers safely rather than corrupting the catalog runtime.
+- The platform exposes a stable structured projection for later presentation/export consumers.
+- Existing listening-event storage, speech playback and study/learn behavior remain separate owners and are not repurposed.
+- PR #486 final head `f2f5ee4beeeb9602fe369438752d9adf9e9e7026` squash-merged as `e3cbc843e089586284ede16259957220689a239b`.
+- Phase 2 intentionally added no visible custom-vocabulary UI and no backend persistence API.
+
+### Phase 3 — Issue #489: private glossary import/export foundation
+
+- Glossary JSON/CSV export is generated from the deterministic in-memory custom-vocabulary projection rather than re-reading local storage.
+- JSON export is versioned and owns a `words` payload; CSV uses deterministic `word,definition` headers, LF line endings and RFC4180-compatible escaping.
+- Import is an exact-replacement transaction after validation; malformed input rejects without mutating existing state.
+- Duplicate normalized terms collapse deterministically with the last valid row winning; unsafe prototype-pollution keys are rejected.
+- PR #494 final head `9425360fde7c12a5dad8dc5f3643f24c5e07fc33` squash-merged as `d32ea777c7db59a73b704b54d2eee29e82ea927d`.
+- Phase 3 intentionally added no visible download/import control and no new backend owner.
+
+### Phase 4 — Issue #497: local pronunciation recorder platform foundation
+
+- Local pronunciation capture is permission-gated and user-triggered; capture is not constructed before explicit acquisition.
+- One bounded recorder lifecycle owns one in-memory local clip at a time, with concurrency protection and deterministic stop/cancel/error/dispose cleanup.
+- Media tracks and owned object URLs are released deterministically, including late permission resolution after cancel/dispose.
+- Audio remains local and ephemeral: no upload, backend/provider integration, IndexedDB/localStorage persistence or other storage side channel was introduced.
+- Speech playback remains owned by the pre-existing speech player; the recorder does not become a second TTS/playback owner.
+- Blocking Chromium/WebKit platform coverage executes the actual recorder source while faking only media hardware boundaries.
+- PR #498 final head `001ca1f275fa2ed0b2fbcdcfb445d4275cf75b06` squash-merged as `810fa59a748477f8723a19dee03e61517282df30`.
+- Exact-main CI #3415 and Deploy Stage #3257 both completed `success` on that product SHA.
+- Phase 4 intentionally added no microphone button, permission-education UI, recorded-clip playback UI, pronunciation scoring or cloud persistence.
 
 ## Issue #18 delivered foundation and remaining gate
 
@@ -91,21 +119,22 @@
 
 ## Current state
 
-- Product runtime and Stage are validated on exact image SHA `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`.
-- Issue #481 is delivered and closed after PR #482 product delivery plus narrowly scoped PR #483 Stage-acceptance remediation, with immutable-head CI, exact-main CI and final public Chromium/iOS WebKit evidence.
-- Parent #25 remains open; Phase 1 event/persistence semantics are complete, while listening-first UI, microphone/privacy and custom terminology remain future separately scoped work.
+- Current live `main` and Stage are validated on exact SHA `7081eb7b2eb28dbc605d9c5d546edf5690226525`; the latest #25 feature merge contained in that head is `810fa59a748477f8723a19dee03e61517282df30`.
+- Parent #25 remains open after four delivered foundation phases. Persisted listening semantics, private vocabulary state, deterministic glossary codecs and the local recorder lifecycle are implemented.
+- The remaining #25 product surface is not permission to invent UI. Visible custom-vocabulary/export/recorder integration must be a new atomic child Issue with approved design evidence and explicit accessibility/browser acceptance.
+- Speech playback/Web Speech fallback remains an existing owner and must be preserved by future #25 work.
 - Issue #72 and Issue #73 remain delivered and closed.
 - Issue #18 remains intentionally open behind the Issue #201 design-source gate.
-- This reconciliation uses branch `docs/issue-481-post-merge-reconcile` and is Agent-Docs-only; its eventual merge may advance repository `main` but must not replace the latest deployed product SHA above.
-- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` are reset to canonical templates by this reconciliation before another product task starts.
-- No next product issue is pre-owned by the Agent Harness after this reset; selection must use current GitHub state and respect dependency/design/manual-device gates.
+- This reconciliation uses branch `docs/reset-issue-497-current-task` and is Agent-Docs-only; its eventual merge may advance repository `main` but must not be represented as a newly shipped product feature.
+- `.agents/current/TASK.md`, `.agents/current/PROGRESS.md` and `.agents/current/EXECUTION.md` must be canonical reset templates before another product task starts.
+- No next product issue is pre-owned by the Agent Harness after this reset; selection must use current live GitHub state and respect dependency, design and manual-device gates.
 
 ## Remaining roadmap
 
-- #25: Phase 1 persisted listening-event semantics are delivered by #481. Any next phase must be a new atomic child Issue; likely domains include listening-first UX, microphone/privacy/pronunciation and custom terminology, but selection must be based on live repository dependencies and design readiness rather than implicit ownership.
+- #25: select the next atomic child slice from live GitHub. The delivered headless vocabulary/export/recorder owners may be bound to presentation only when the required Figma/design state is verified; no speculative visual surface is permitted.
 - #201: supply all missing canonical Figma node IDs before First Use/onboarding UI implementation.
 - #18: after #201 is unblocked, implement and validate the approved first-use UI and close only when the remaining acceptance criteria are evidenced.
-- #78: security implementation/report-only Stage observation are delivered; the remaining enforcement promotion is explicitly manual/authorized production work and must not be synthesized by an autonomous repository workaround.
+- #78: security implementation/report-only Stage observation are delivered; remaining enforcement promotion is explicitly manual/authorized production work and must not be synthesized by an autonomous repository workaround.
 - Physical-device-only acceptance remains explicitly manual where an Issue requires real-device evidence; autonomous browser evidence must not be represented as a physical-device result.
 - Production-only/manual deployment gates remain manual where repository policy requires authorized workflow dispatch.
 - Open Dependabot PRs are maintenance work, not implicit ownership of the next product slice.
@@ -113,9 +142,10 @@
 
 ## Reconciliation evidence
 
-- Issue #481 product PR #482 final head `b7eb33fd0e7da8b877217b1ec8f2af93b491f8e9` passed immutable-head CI #3366 / run `31675107869`; squash merge `b62470b0051ca60e2bea177ab08945887107822c` passed exact-main CI #3367 / run `31675946620`.
-- Initial Stage #3208 / run `31676641895` successfully deployed `b62470b0...` and passed public endpoint smoke, then exposed a deterministic WebKit diagnostic-normalization acceptance blocker.
-- Remediation PR #483 final head `97270de0de8eb7682c8aa0532d7252ef4578264b` passed immutable-head CI #3369 / run `31678681171`; squash merge `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa` passed exact-main CI #3370 / run `31679586052`.
-- Final Deploy Stage #3212 / run `31680424987` completed `success` for exact image SHA `d365aab1bec2c5be8ab076a0dd8f9b98f5c109aa`: deploy, public frontend/API smoke and public Chromium/iOS WebKit UI/stale-build recovery all passed.
-- Issue #481 has all seven acceptance criteria checked and is closed as `completed` with the above evidence; parent #25 remains open.
-- This follow-up is documentation-only: it records the durable #481 delivery state and resets stale current-task memory. Its merge must not be treated as a newly deployed product image.
+- Issue #485 is closed as completed; PR #486 merged private custom-vocabulary state as `e3cbc843e089586284ede16259957220689a239b`.
+- Issue #489 is closed as completed; PR #494 merged deterministic private glossary import/export as `d32ea777c7db59a73b704b54d2eee29e82ea927d`.
+- Issue #497 is closed as completed; PR #498 final immutable head `001ca1f275fa2ed0b2fbcdcfb445d4275cf75b06` merged the local pronunciation recorder platform as `810fa59a748477f8723a19dee03e61517282df30`.
+- Product exact-main CI #3415 / run `31718578667` and Deploy Stage #3257 / run `31719479827` completed `success` on `810fa59a748477f8723a19dee03e61517282df30`.
+- Dependency-only PR #432 then advanced live `main` to `7081eb7b2eb28dbc605d9c5d546edf5690226525`; exact-live-main CI #3421 and Deploy Stage #3263 completed `success` on that SHA.
+- Parent Issue #25 remains open because the delivered capabilities are foundations and do not by themselves complete the design-approved visible custom-vocabulary/pronunciation product surface.
+- This follow-up is documentation-only: it reconciles durable product state and resets stale current-task memory. Its merge must not be treated as a newly deployed product image.
