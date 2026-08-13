@@ -145,6 +145,8 @@ func NewWithOptions(
 	mux.Handle("GET /api/v1/me", authenticated(http.HandlerFunc(authHandler.Me)))
 	mux.Handle("GET /api/v1/words", authenticated(http.HandlerFunc(wordsHandler.All)))
 	mux.Handle("GET /api/v1/words/due", authenticated(http.HandlerFunc(wordsHandler.Due)))
+	mux.Handle("GET /api/v1/words/custom/export", authenticated(http.HandlerFunc(wordsHandler.ExportCustomGlossary)))
+	mux.Handle("POST /api/v1/words/custom/import", authenticated(http.HandlerFunc(wordsHandler.ImportCustomGlossary)))
 	mux.Handle("POST /api/v1/words/custom", authenticated(http.HandlerFunc(wordsHandler.CreateCustom)))
 	mux.Handle("DELETE /api/v1/words/custom/{wordID}", authenticated(http.HandlerFunc(wordsHandler.DeleteCustom)))
 	mux.Handle("GET /api/v1/words/{wordID}", authenticated(http.HandlerFunc(wordsHandler.Detail)))
