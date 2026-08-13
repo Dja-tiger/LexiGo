@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.15.0
+  version: 0.16.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -661,6 +661,79 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/custom:
+    post:
+      operationId: createCustomWord
+      tags: [learning]
+      summary: Create one private custom word and enroll it in the existing scheduler.
+      description: Whitespace is normalized, unknown fields are rejected, and duplicate lemma/translation pairs are detected case-insensitively within the current account. Internal ownership/storage fields are never exposed.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomWordRequest"
+      responses:
+        "201":
+          description: Custom word persisted and enrolled for the current user with normal user_words scheduler defaults.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: An equivalent custom word already exists for the current account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                duplicate:
+                  value:
+                    error:
+                      code: custom_word_duplicate
+                      message: an equivalent custom word already exists for the current account
+                      field: lemma
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/custom/{wordID}:
+    delete:
+      operationId: deleteCustomWord
+      tags: [learning]
+      summary: Delete one custom word owned by the current account.
+      description: Missing, shared, and another account's private word intentionally return the same 404. If the word belongs to an active lesson, that lesson is discarded before dependent learning rows are cascade-deleted.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "204":
+          description: Owner-scoped custom word and dependent scheduler, review, and lesson references were deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Custom word is absent, shared, or belongs to another account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}:
@@ -1610,6 +1683,33 @@ components:
         totalPages: { type: integer, minimum: 0 }
         hasPrevious: { type: boolean }
         hasNext: { type: boolean }
+    CreateCustomWordRequest:
+      type: object
+      additionalProperties: false
+      required: [lemma, translation]
+      description: Private custom-word content. The server collapses whitespace before validation; required values must remain non-empty after normalization.
+      properties:
+        lemma:
+          type: string
+          minLength: 1
+          maxLength: 160
+        translation:
+          type: string
+          minLength: 1
+          maxLength: 500
+        phonetic:
+          type: string
+          maxLength: 120
+        partOfSpeech:
+          type: string
+          maxLength: 80
+        topic:
+          type: string
+          maxLength: 120
+          description: Defaults to Personal when omitted or whitespace-only.
+        note:
+          type: string
+          maxLength: 1000
     UserWord:
       type: object
       required: [id, lemma, translation, acceptedAnswers, status, dueAt]
@@ -2131,4 +2231,4 @@ components:
             field:
               type: string
               description: Опциональное стабильное имя поля формы, связанное с ошибкой.
-              enum: [email, password, displayName, passwordConfirmation, token]
+              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note]
