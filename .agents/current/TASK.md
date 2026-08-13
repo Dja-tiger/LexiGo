@@ -22,6 +22,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - stop/cancel/dispose track cleanup;
 - object-URL ownership/revocation;
 - unit and source-contract tests;
+- browser execution contract using the actual transpiled module with deterministic media-hardware fakes and no production test route;
 - focused privacy documentation.
 
 ## Non-goals
@@ -41,18 +42,18 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - `frontend/lib/pronunciation-recorder.ts`
 - `frontend/lib/pronunciation-recorder.test.ts`
 - `frontend/lib/pronunciation-recorder-source.test.ts`
+- `frontend/e2e/pronunciation-recorder-platform.spec.ts`
+- `frontend/package.json` only to add the platform spec to the existing blocking `test:e2e:ui` command
 - `docs/pronunciation-recording-privacy.md`
 
 ## Prohibited paths
 
-- `frontend/components/**`
-- `frontend/app/**`
-- `frontend/e2e/**` in this non-visual foundation slice
+- other `frontend/components/**`, `frontend/app/**` or `frontend/e2e/**` paths
 - backend/API/database paths
 - Figma/design artifacts
 - service worker/cache owners
 - analytics/performance owners
-- deployment workflows/configuration
+- deployment/CI workflow configuration
 - unrelated architecture documentation
 
 ## Runtime owners
@@ -74,6 +75,7 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - Raw audio never enters fetch/XHR, storage, analytics or service-worker caches.
 - Recordings exist only as one owned Blob/object URL in memory; replaced/disposed URLs are revoked.
 - A denied/unsupported recorder cannot block text or existing speech playback learning paths.
+- Browser acceptance must execute the actual source module, not a duplicate implementation, and must not add a production-only test route.
 
 ## Acceptance criteria
 
@@ -82,13 +84,14 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - explicit start can produce one bounded local recording;
 - deterministic stop/auto-stop/cancel/dispose cleanup;
 - allowlisted MIME feature detection;
-- unit/source contracts prove lifecycle and no side channel;
+- unit/source/browser contracts prove lifecycle and no side channel;
 - existing frontend core/build and speech-player tests remain green.
 
 ## Required checks
 
 - frontend lint/typecheck/unit/build;
 - focused recorder unit/source contracts;
+- blocking Chromium/WebKit platform spec through `test:e2e:ui`;
 - full immutable-head CI before merge;
 - clean PR diff and review-thread audit.
 
@@ -100,10 +103,11 @@ Add one non-visual browser platform owner for optional pronunciation self-record
 - browser differences in MIME support and permission errors;
 - accidental introduction of network or persistent-storage behavior.
 
-## Verified downstream finding
+## Verified downstream findings
 
-`docs/architecture.md` is a broad shared owner whose full replacement is unnecessary for this atomic platform slice. A dedicated privacy contract is lower-risk and more auditable, so `docs/pronunciation-recording-privacy.md` is the only product documentation addition.
+- `docs/architecture.md` is a broad shared owner whose full replacement is unnecessary for this atomic platform slice. A dedicated privacy contract is lower-risk and more auditable.
+- CI browser jobs execute the explicit `test:e2e:ui` file list; a new recorder platform spec would not be blocking unless that script is updated. `package.json` is therefore allowed only for this test-routing addition.
 
 ## Rollback
 
-Revert the standalone library/tests/docs slice. No persistence/schema/API migration exists and no current UI imports the new owner yet.
+Revert the standalone library/tests/docs slice and the single test-list entry. No persistence/schema/API migration exists and no current UI imports the new owner yet.
