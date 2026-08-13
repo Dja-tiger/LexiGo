@@ -13,11 +13,19 @@ describe("public runtime error classification", () => {
     errorMessage: "//lexigo.example/sw.js?build=build-1 due to access control checks.",
     guardServiceWorkerURL: scriptURL,
   };
+  const singleSlashWebKitDiagnostic = {
+    ...splitWebKitDiagnostic,
+    errorMessage: "/lexigo.example/sw.js?build=build-1 due to access control checks.",
+  };
 
-  it("normalizes WebKit's split protocol diagnostic", () => {
+  it("normalizes WebKit split protocol diagnostics with one or two slashes", () => {
     expect(normalizeRuntimePageError(
       splitWebKitDiagnostic.errorName,
       splitWebKitDiagnostic.errorMessage,
+    )).toBe(`Cannot load ${scriptURL} due to access control checks.`);
+    expect(normalizeRuntimePageError(
+      singleSlashWebKitDiagnostic.errorName,
+      singleSlashWebKitDiagnostic.errorMessage,
     )).toBe(`Cannot load ${scriptURL} due to access control checks.`);
     expect(normalizeRuntimePageError(
       "Error",
@@ -27,6 +35,7 @@ describe("public runtime error classification", () => {
 
   it("accepts only the exact WebKit current-build cancellation during guard recovery", () => {
     expect(isExpectedWebKitGuardServiceWorkerCancellation(splitWebKitDiagnostic)).toBe(true);
+    expect(isExpectedWebKitGuardServiceWorkerCancellation(singleSlashWebKitDiagnostic)).toBe(true);
     expect(isExpectedWebKitGuardServiceWorkerCancellation({
       ...splitWebKitDiagnostic,
       browserName: "chromium",

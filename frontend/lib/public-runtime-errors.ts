@@ -9,7 +9,7 @@ export function normalizeRuntimePageError(name: string, message: string): string
   const diagnostic = [name.trim(), message.trim()].filter(Boolean).join(": ");
   return diagnostic
     .replace(/^Error:\s*/i, "")
-    .replace(/^Cannot load (https?):\s*\/\//i, "Cannot load $1://");
+    .replace(/^Cannot load (https?):\s*\/{1,2}/i, "Cannot load $1://");
 }
 
 export function isExpectedWebKitGuardServiceWorkerCancellation(

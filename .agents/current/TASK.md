@@ -4,95 +4,76 @@
 
 - Issue: #481 `[Medium][Learning][#25 Phase 1] Persist listening as a distinct objective review mode`
 - Parent: #25
-- Branch: `feat/issue-481-listening-event-mode`
-- Base SHA: `2b91949f42db36899a79bf2329b104f368127b14`
-- PR: #482 (Draft until immutable-head acceptance is green)
-- Pre-freeze product/test head: `1079aeb28360866b0f3e2e6260daef3ad6efb630`
-- Final head: the atomic Agent Docs reconciliation commit that contains this file; resolve from the live branch ref and do not write after it.
+- Delivery remediation PR: #483 `fix(pwa): normalize WebKit guard cancellation URL`
+- Branch: `fix/issue-481-stage-webkit-sw-cancellation`
+- Base / currently deployed product SHA: `b62470b0051ca60e2bea177ab08945887107822c`
+- Remediation code/test head before final reconciliation: `9b8b356cdf2d6101d89fc9c3388605e480c168f8`
+- Final head: the atomic Agent Docs reconciliation commit containing this file; resolve from live branch and do not write after it.
 
 ## Objective
 
-Persist `listening` as a first-class objective answer mode without changing scheduler formulas, lesson ranking, existing typed-recall semantics or UI. This slice is the backend/API/progress foundation for later listening UX.
+Unblock the final #481 Stage/public acceptance by recognizing the WebKit 1.61.1 single-slash serialization of the already-known benign guard service-worker cancellation, without weakening the exact failure classifier or changing service-worker/runtime behavior.
 
-## Scope
+## Root cause
 
-- Add `listening` to backend/frontend AnswerMode contracts and strict OpenAPI enums.
-- Treat listening as objective for correctness and route it through the existing `ScheduleReview` path unchanged.
-- Keep server-owned listening lesson composition due-only like recall/choice, with the same candidate ranking.
-- Allow listening in `review_events.answer_mode` and `lesson_sessions.study_mode` through additive constraints only; never rewrite historical recall rows.
-- Persist listening exactly and expose `modes.listening` plus listening contributions to objective/successful-today counters without double-counting all-event totals.
-- Keep weekly typed-recall and retained-learning semantics unchanged.
-- Preserve rolling-deploy compatibility: an older API response may omit `modes.listening`, while frontend normalization materializes a zero bucket.
-- Add focused validation, scheduler, persistence, progress and integration coverage.
+Stage #3208 on exact product SHA `b62470b0...` deployed successfully and public frontend/API smoke passed. Public iOS WebKit stale-build recovery emitted:
 
-## Allowed paths
+`Cannot load https: /<stage-host>/sw.js?build=b62470b0051ca60e2bea177ab08945887107822c due to access control checks.`
+
+The normalizer accepted only the existing `https: //host/...` split-protocol form. Because the single-slash form was not canonicalized, the exact current-build guard URL comparison never matched and a benign cancellation was classified as fatal. Playwright retry reproduced the same diagnostic, so this was not treated as transient deployment failure.
+
+## Implemented remediation
+
+- `normalizeRuntimePageError()` canonicalizes one **or** two slashes after split `http:`/`https:` diagnostics using `\/{1,2}`.
+- Unit coverage reproduces the exact single-slash WebKit shape.
+- Existing classifier guards remain unchanged: WebKit only, non-null guard service-worker URL, and exact equality of the fully normalized diagnostic to the exact current-build service-worker URL.
+- Existing negative tests still cover Chromium, missing guard URL, wrong build, wrong path and wrong host.
+
+## Allowed final diff
 
 - `.agents/current/**`
-- `api/openapi.yaml`
-- `backend/integration/listening_review_mode_test.go`
-- `backend/internal/learning/model.go`
-- `backend/internal/learning/http.go`
-- `backend/internal/learning/lesson_http.go`
-- `backend/internal/learning/lesson_composer.go`
-- `backend/internal/learning/scheduler.go`
-- `backend/internal/learning/scheduler_test.go`
-- `backend/internal/learning/listening_mode_test.go`
-- `backend/internal/learning/listening_progress.go`
-- `backend/internal/platform/migrate/migrations/000021_listening_answer_mode.up.sql`
-- `frontend/lib/progress.ts`
-- `frontend/lib/progress.test.ts`
+- `frontend/lib/public-runtime-errors.ts`
+- `frontend/lib/public-runtime-errors.test.ts`
 
-## Prohibited paths
+## Prohibited scope
 
-- listening/pronunciation UI, routes, components or CSS
-- speech-player runtime/provider changes
-- microphone, recording, scoring or media storage
-- custom glossary work
-- scheduler formulas/parameters or lesson ranking/weighting
-- unrelated runtime, deployment configuration or secrets
-- any CI/workflow change in the final PR diff
+- listening/backend/API product contract delivered by #482
+- service-worker registration/update runtime
+- build-version guard runtime
+- Playwright retry/tolerance or public-smoke assertions
+- deployment/CI workflows, secrets, CSP
+- visual baselines or system-state UI
+- unrelated UI/backend code
 
 ## Invariants
 
-- omitted legacy `answerMode` still normalizes to typed `recall`;
-- `study` remains the only non-objective mode;
-- listening uses exactly the existing objective scheduler implementation;
-- server-owned listening composer behavior is due-only without ranking changes;
-- explicit `wordIds` remain the existing manual-selection path and intentionally bypass composer filtering;
-- historical recall stays recall;
-- `reviewsToday`/`reviewsTotal` already count all events and must not be incremented again by the listening extension;
-- weekly recall/retained evidence remains typed-recall semantics;
-- OpenAPI must parse as a complete YAML document and preserve repository structural contracts;
-- frontend accepts old progress payloads without `modes.listening` during rolling deployment;
-- the temporary exact-rewrite workflow used during implementation has been deleted and has zero net PR diff;
-- after the final Agent Docs reconciliation commit, the branch is frozen until merge.
+- Real service-worker load failures remain visible.
+- Chromium diagnostics are never suppressed by this WebKit exception.
+- Different build SHA/path/host/API URL or missing guard URL remains fatal.
+- The classifier remains exact after normalization.
+- No visual baseline is changed for the unrelated runner-dependent focus-visible visual flake observed in CI #3368 attempt 1.
+- Issue #481 remains open until a later exact-SHA Stage run passes deploy, public endpoint and public Chromium+iOS WebKit acceptance.
+- After this final Agent Docs reconciliation commit, the remediation branch is frozen until merge.
 
-## Acceptance criteria
+## Pre-freeze verification
 
-- `answerMode=listening` is accepted and persisted exactly as `listening`.
-- Typed recall remains `recall`; migration rewrites no history.
-- Listening schedules identically to the existing objective path.
-- Lesson preview/create accept `studyMode=listening`; review enforces exact lesson mode and server-owned composer is due-only.
-- Progress exposes `modes.listening`; objective/successful-today counters include listening without double counting.
-- OpenAPI documents listening consistently, including moderation review context.
-- Focused migration/unit/integration tests prove the contract.
+- PR #483 changed exactly 5 files: three current Agent Docs plus the normalizer and its unit test.
+- CI #3368 / run `31677368540` on code/test head `9b8b356c...` finished `success` on attempt 2.
+- Frontend core, backend unit/security/integration, all browser groups, Frontend quality and both container builds are green.
+- The focused new single-slash regression passed in frontend unit tests.
+- Visual Regression attempt 1 failed only `compact Dictionary empty light` because a programmatically focused pre-existing empty panel rendered with its `:focus-visible` ring on that runner. The hotfix did not touch UI/CSS/visual fixtures; the same Visual Regression job was rerun on the identical SHA and passed without code or baseline changes. No baseline was promoted.
 
-## Required checks
+## Remaining delivery gates
 
-- read-back and live `main` verification after the final write;
-- final immutable-head full PR CI: backend format/static/unit/race/security/integration, frontend lint/typecheck/unit/build/audit, browser shards, Lesson completion, a11y, visual, performance, PWA/security/SW and container build gates;
-- review/thread audit and clean compare against live `main`;
-- Ready transition with unchanged head;
-- expected-head squash merge;
-- exact-merge `main` CI;
-- exact-image Stage deploy, public endpoint smoke and public browser acceptance before closing #481.
-
-## Pre-freeze evidence
-
-- CI #3364 proved frontend core and the complete browser matrix green but exposed an invalid integration fixture: explicit `wordIds` are manual selection and therefore bypass composer filtering by design.
-- CI #3365 on `1079aeb28360866b0f3e2e6260daef3ad6efb630` proved frontend core, backend unit/security and the corrected Postgres/Redis integration path green. The corrected integration test creates the listening lesson without `wordIds`, after making exactly one catalog item due.
-- Live `main` remained `2b91949f42db36899a79bf2329b104f368127b14` and open parallel work is Dependabot-only with no selected-path overlap.
+1. Run one fresh full immutable-head PR CI on the final reconciliation SHA.
+2. Verify live `main`, compare scope and review threads/reviews.
+3. Mark PR #483 Ready without changing head.
+4. Squash merge with expected-head protection.
+5. Require exact-merge `main` CI success and immutable image publication.
+6. Require exact-SHA Stage deploy, public frontend/API smoke and public Chromium+iOS WebKit acceptance.
+7. Only then update/close #481 as completed; parent #25 remains open.
+8. Perform separate Agent Docs post-merge reconciliation/reset before starting the next product slice.
 
 ## Rollback
 
-Revert the atomic #481 product PR. Because migration `000021` is constraint-only, historical rows are unchanged. If listening rows have already been persisted after deployment, keep the broadened DB constraints until those rows are intentionally handled even if application code is rolled back.
+Revert only PR #483. It changes diagnostic normalization/classification only and has no persisted-data, listening, service-worker-runtime or deployment side effects.

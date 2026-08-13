@@ -2,125 +2,112 @@
 
 ## Task
 
-- Issue: #481
+- Issue: #481 delivery remediation
 - Parent: #25
-- Branch: `feat/issue-481-listening-event-mode`
-- Base SHA: `2b91949f42db36899a79bf2329b104f368127b14`
-- PR: #482
-- Pre-freeze product/test head: `1079aeb28360866b0f3e2e6260daef3ad6efb630`
-- Final head: resolve from the live branch after this atomic Agent Docs reconciliation; no further writes are allowed before merge.
+- PR: #483
+- Branch: `fix/issue-481-stage-webkit-sw-cancellation`
+- Base / deployed product SHA: `b62470b0051ca60e2bea177ab08945887107822c`
+- Remediation code/test head before final reconciliation: `9b8b356cdf2d6101d89fc9c3388605e480c168f8`
+- Final head: resolve from the branch after this atomic reconciliation; no further branch writes are allowed before merge.
 
-## GitHub repository workflow
+## Delivery provenance
 
-Purpose:
+1. Product PR #482 passed immutable-head CI #3366 and squash-merged as `b62470b0051ca60e2bea177ab08945887107822c`.
+2. Exact-main CI #3367 passed fully and published immutable images for that SHA.
+3. Stage #3208 deployed those exact images and passed public frontend/API endpoint smoke.
+4. Public Playwright failed only iOS WebKit stale-build recovery because the expected guard service-worker cancellation was serialized with a single slash after `https:`.
+5. The Playwright retry reproduced the same single-slash diagnostic; no blind deploy rerun was accepted as remediation.
 
-Deliver a bounded backend/API foundation for listening exercises, preserve repository invariants, diagnose CI failures from evidence, and produce immutable merge/deploy provenance.
+## Root-cause evidence
 
-Instruction source:
+`frontend/e2e/public-runtime-smoke.spec.ts` registers the exact current-build service-worker URL as a temporary guard during stale-build recovery. `isExpectedWebKitGuardServiceWorkerCancellation()` already requires:
 
-Installed GitHub skill plus repository `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md`, task-specific Agent instructions and `docs/agent-harness.md`.
+- browser name `webkit`;
+- a non-null guard service-worker URL;
+- exact equality between the normalized full diagnostic and `Cannot load <exact guard URL> due to access control checks.`
 
-Verification date:
+The only incompatibility was formatting normalization. Existing code canonicalized:
 
-2026-08-13, repository convention Europe/Moscow.
+`Cannot load https: //host/...`
 
-### Pre-flight
+to:
 
-- Verified live roadmap and selected parent #25 because other major product directions were blocked by Figma/manual device/production gates.
-- Verified closed Issue #51 already owns reliable speech playback.
-- Created child Issue #481 instead of duplicating playback or attempting the entire XL parent scope.
-- Created branch from exact `main` SHA `2b91949f42db36899a79bf2329b104f368127b14`.
-- Inspected AnswerMode, HTTP validation, scheduler, lesson repository/composer, progress SQL, migrations, OpenAPI and frontend progress owners before product writes.
+`Cannot load https://host/...`
 
-### Product/API implementation
+but Stage WebKit 1.61.1 emitted:
 
-- Added `AnswerModeListening` and made it objective through the shared `Objective()` contract.
-- Routed listening through the existing `ScheduleReview` path without changing scheduler math.
-- Extended review/lesson validation and exact error messages.
-- Changed server-owned lesson due-only selection from a hardcoded recall/choice check to `studyMode.Objective()`, preserving candidate ranking.
-- Added migration `000021` to broaden only existing check constraints; historical rows are untouched.
-- Added isolated `populateListeningProgress` rather than rewriting the large legacy progress query. It fills only the listening bucket and objective/success counters that need extension.
-- Kept weekly recall/retained-learning semantics explicitly typed recall.
-- Expanded OpenAPI to 0.15.0 for review, moderation context, lesson modes and progress.
-- Added frontend listening type with optional wire bucket and mandatory normalized bucket for rolling deployment compatibility.
+`Cannot load https: /host/...`
 
-### Controlled large-file rewrite
+so the existing exact guard equality never matched.
 
-Purpose:
+## Code remediation
 
-Apply exact, narrow replacements to large owners (`lesson_composer.go`, `lesson_http.go`, `api/openapi.yaml`) without replacing files from truncated connector output.
+Changed only `frontend/lib/public-runtime-errors.ts`:
 
-Procedure:
+- protocol split normalization now accepts `\/{1,2}` instead of exactly `//`;
+- no classifier condition, expected URL, browser guard or failure wording changed.
 
-- Temporarily introduced `.github/workflows/apply-issue-481-contract.yml` only after documenting the exception in TASK.
-- Used fail-closed exact source-match assertions.
-- First helper run stopped before product commit because the ProgressModes OpenAPI snippet did not match the exact source shape. This was the intended safety behavior.
-- Corrected assertions against the actual OpenAPI blob and reran.
-- Verified the bot commit touched only the three intended large files and OpenAPI parsing succeeded.
-- Deleted the helper workflow immediately afterward.
-- Verified `.github/workflows/**` is absent from the final PR changed-file list.
+Changed only `frontend/lib/public-runtime-errors.test.ts` for focused coverage:
 
-Result:
+- one-slash and two-slash diagnostics both normalize to the same canonical URL;
+- exact one-slash WebKit current-build cancellation is accepted;
+- Chromium, null guard, wrong build, API path and other-host cases remain rejected.
 
-No persistent CI/workflow change remains in #482.
+## PR / scope audit
 
-### Test coverage
+Draft PR #483 was opened against exact base `b62470b0...`.
 
-- Added listening objective/validation tests and preserved omitted-mode => recall compatibility.
-- Added scheduler equivalence coverage proving listening matches the existing objective scheduler path.
-- Added frontend normalization coverage including old payloads without a listening bucket.
-- Added `backend/integration/listening_review_mode_test.go` using real migrations, Postgres, Redis and HTTP server.
+Changed files before final reconciliation are exactly:
 
-### Integration diagnostics
+- `.agents/current/EXECUTION.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/TASK.md`
+- `frontend/lib/public-runtime-errors.test.ts`
+- `frontend/lib/public-runtime-errors.ts`
 
-Failure 1:
+No workflow, service-worker runtime, build-version guard, deployment, listening/backend/API, CSS/UI or baseline file is changed.
 
-The initial integration test expected one candidate to be non-due even though both IDs came from `/words/due`.
+## CI #3368 evidence
 
-Resolution:
+Run `31677368540`, head `9b8b356cdf2d6101d89fc9c3388605e480c168f8`.
 
-Normalized candidate state explicitly. This exposed a second, more precise contract misunderstanding rather than a runtime defect.
+- Frontend core: success; focused regression passed.
+- Backend unit/security: success.
+- Backend integration: success.
+- UI shard 1/2: success.
+- UI shard 2/2: success.
+- Lesson completion: success.
+- Content security: success.
+- iOS PWA dictionary: success.
+- Controlled service worker: success.
+- Performance budgets: success.
+- Accessibility audit: success.
+- Dictionary smoke: success.
+- Frontend quality: success.
+- Container build api/web: success.
 
-Failure 2:
+Visual Regression attempt 1 failed only unchanged `compact Dictionary empty light`. Artifact inspection tied the hash difference to the existing programmatic focus plus `:focus-visible` ring. Because the remediation touched no rendering path, the visual job was rerun alone on the exact same commit SHA. Attempt 2 passed fully with no code, baseline or tolerance changes. The overall CI run concluded `success` on attempt 2.
 
-CI #3364/#3365 predecessor integration evidence showed two lesson items even after one control item was moved to a future due date.
+## Safety decisions
 
-Root cause:
+- Did not update any snapshot because no intended visual change exists.
+- Did not change or suppress public Playwright assertions.
+- Did not increase retry count/tolerance.
+- Did not change service-worker behavior.
+- Kept #481 open after product merge because final Stage public browser gate was not yet accepted.
 
-`Repository.CreateLesson` intentionally treats non-nil `wordIds` as manual selection. The automatic `queryLessonCandidates`/composer path is entered only when `WordIDs == nil`, so the test was bypassing the exact behavior it claimed to verify.
+## Final delivery procedure
 
-Resolution:
+1. Atomically commit TASK/PROGRESS/EXECUTION evidence reconciliation.
+2. Read back final files, verify exact branch head and live main.
+3. Freeze branch and run one fresh full immutable-head CI.
+4. Verify compare scope, reviews and review threads.
+5. Ready PR #483 without head mutation and squash-merge with expected-head protection.
+6. Require exact-merge main CI success and immutable image publication.
+7. Require exact-SHA Stage deploy, public frontend/API smoke and public Chromium+iOS WebKit acceptance.
+8. Update all #481 AC/evidence and close #481 only after those gates pass.
+9. Perform separate Agent Docs post-merge reconciliation/reset before any next #25 slice.
 
-Changed only the integration fixture: make the entire learner catalog non-due, make exactly one item due, and POST the listening lesson without `wordIds`. This exercises the server-owned composer contract directly.
+## Rollback
 
-Verification:
-
-CI #3365 on `1079aeb28360866b0f3e2e6260daef3ad6efb630` completed the `Integration tests with race detector` step successfully. Frontend core and backend unit/security were also green. Previous #3364 evidence had already shown the complete browser matrix green; the final reconciled SHA will rerun the full matrix and is the only merge evidence.
-
-### Read-only audits
-
-- Verified `AssessReview` uses `request.AnswerMode.Objective()` and therefore needs no listening-specific correctness branch.
-- Verified base Progress counts all events in `reviewsToday/reviewsTotal`, so the listening extension does not double-count those values.
-- Verified retained and weekly recall evidence remain explicitly `answer_mode = 'recall'`.
-- Verified migration 000007 constraint names and v2 semantics are compatible with new listening values.
-- Verified `main` remained `2b91949f42db36899a79bf2329b104f368127b14` before final reconciliation.
-- Verified parallel open PRs are Dependabot maintenance with no selected-path overlap.
-- Verified PR #482 has no reviews or review threads at the pre-freeze audit.
-
-### Safety / rollback
-
-- No direct writes to `main` were made.
-- No listening UI, microphone, speech provider, custom glossary or scheduler-formula changes are included.
-- Rollback is the product PR revert; if deployed listening rows already exist, preserve broadened DB constraints until those rows are handled intentionally.
-
-### Final procedure
-
-1. Atomically commit TASK/PROGRESS/EXECUTION reconciliation.
-2. Read back files and resolve exact final head.
-3. Freeze branch; no further content writes.
-4. Require full immutable-head PR CI and clean review/compare audit.
-5. Ready PR #482 without head mutation and squash-merge with expected-head protection.
-6. Require exact-merge main CI.
-7. Require exact-image Stage deploy + public endpoint smoke + public browser acceptance.
-8. Close child Issue #481 only after all delivery gates pass; keep parent #25 open.
-9. Perform separate Agent Docs post-merge reconciliation/reset before starting the next product slice.
+Revert PR #483 only. No persisted data, listening contract, service-worker runtime or deploy configuration depends on this diagnostic-normalization hotfix.
