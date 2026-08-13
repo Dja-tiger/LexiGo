@@ -13,6 +13,7 @@ func (h *Handler) ExportCustomGlossary(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
 		return
 	}
+	w.Header().Set("Cache-Control", "no-store")
 
 	items, err := h.repository.ExportCustomGlossary(r.Context(), userID)
 	if err != nil {
@@ -28,6 +29,7 @@ func (h *Handler) ImportCustomGlossary(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthorized", "authorization context is missing")
 		return
 	}
+	w.Header().Set("Cache-Control", "no-store")
 
 	var request CustomGlossaryEnvelope
 	if err := httpx.DecodeJSONLimit(w, r, &request, maxCustomGlossaryRequestBytes); err != nil {
@@ -39,12 +41,16 @@ func (h *Handler) ImportCustomGlossary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var validationError *CustomWordValidationError
 		if errors.As(err, &validationError) {
+			field := validationError.Field
+			if field != "version" && field != "items" {
+				field = "items"
+			}
 			httpx.WriteFieldError(
 				w,
 				http.StatusUnprocessableEntity,
 				"invalid_custom_glossary",
 				validationError.Message,
-				validationError.Field,
+				field,
 			)
 			return
 		}
@@ -55,7 +61,7 @@ func (h *Handler) ImportCustomGlossary(w http.ResponseWriter, r *http.Request) {
 				http.StatusConflict,
 				"custom_glossary_duplicate",
 				"the import contains an equivalent duplicate custom word",
-				duplicateError.Field,
+				"items",
 			)
 			return
 		}
