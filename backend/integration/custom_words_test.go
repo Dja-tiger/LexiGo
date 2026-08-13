@@ -33,6 +33,15 @@ type customWordPayload struct {
 	IntervalDays int       `json:"intervalDays"`
 }
 
+type publicCatalogMetadataSnapshot struct {
+	CatalogVersion string `json:"catalogVersion"`
+	Totals         struct {
+		Items   int `json:"items"`
+		Words   int `json:"words"`
+		Phrases int `json:"phrases"`
+	} `json:"totals"`
+}
+
 func TestCustomWordsAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -78,6 +87,9 @@ func TestCustomWordsAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 	}
 	testServer := httptest.NewServer(app.Handler())
 	defer testServer.Close()
+
+	var metadataBefore publicCatalogMetadataSnapshot
+	getPublicJSON(t, testServer.URL+"/api/v1/catalog/metadata", http.StatusOK, &metadataBefore)
 
 	owner := postJSON[integrationAuthResponse](t, testServer.URL+"/api/v1/auth/register", map[string]string{
 		"email":       fmt.Sprintf("custom-owner-%d@example.com", time.Now().UnixNano()),
@@ -148,6 +160,12 @@ func TestCustomWordsAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 	}
 	if enrollmentCount != 1 {
 		t.Fatalf("custom word count after catalog seed = %d, want 1", enrollmentCount)
+	}
+
+	var metadataAfter publicCatalogMetadataSnapshot
+	getPublicJSON(t, testServer.URL+"/api/v1/catalog/metadata", http.StatusOK, &metadataAfter)
+	if metadataAfter != metadataBefore {
+		t.Fatalf("private custom word changed public catalog metadata: before=%+v after=%+v", metadataBefore, metadataAfter)
 	}
 
 	// Whitespace is normalized in the API and case is normalized by the owner
@@ -255,11 +273,11 @@ func TestCustomWordsAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 		fmt.Sprintf("%s/api/v1/lessons/%s/words/%d/review", testServer.URL, lesson.ID, created.ID),
 		owner.Tokens.AccessToken,
 		map[string]any{
-			"lessonVersion": 1,
-			"rating":        "known",
-			"responseMs":    650,
-			"answerMode":    "recall",
-			"correct":       true,
+			"lessonVersion":         1,
+			"rating":                "known",
+			"responseMs":            650,
+			"answerMode":            "recall",
+			"correct":               true,
 			"timezoneOffsetMinutes": 0,
 		},
 		http.StatusOK,
@@ -286,6 +304,51 @@ func TestCustomWordsAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 	}
 	if lessonItemCount != 1 {
 		t.Fatalf("custom lesson item count = %d, want 1", lessonItemCount)
+	}
+
+	// Deleting a custom word that is still in an active lesson must discard that
+	// session first; otherwise the cascade would leave an active lesson whose
+	// lesson_size/current_index no longer match its surviving item rows.
+	var activeDeleteWord customWordPayload
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/words/custom", owner.Tokens.AccessToken, map[string]string{
+		"lemma":       fmt.Sprintf("active deletion checkpoint %d", checkpoint),
+		"translation": fmt.Sprintf("активное удаление %d", checkpoint),
+	}, http.StatusCreated, &activeDeleteWord)
+
+	var activeDeleteLesson struct {
+		ID      string `json:"id"`
+		Version int64  `json:"version"`
+	}
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", owner.Tokens.AccessToken, map[string]any{
+		"source":     "mixed",
+		"studyMode":  "recall",
+		"lessonSize": "15",
+		"wordIds":    []int64{activeDeleteWord.ID},
+	}, http.StatusCreated, &activeDeleteLesson)
+	deleteAuthenticated(
+		t,
+		fmt.Sprintf("%s/api/v1/words/custom/%d", testServer.URL, activeDeleteWord.ID),
+		owner.Tokens.AccessToken,
+		http.StatusNoContent,
+	)
+	getAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/active", owner.Tokens.AccessToken, http.StatusNotFound, nil)
+
+	var activeDeleteStatus string
+	var activeDeleteVersion int64
+	if err := pg.QueryRow(ctx, `
+		select status, version
+		from lesson_sessions
+		where id = $1::uuid
+	`, activeDeleteLesson.ID).Scan(&activeDeleteStatus, &activeDeleteVersion); err != nil {
+		t.Fatalf("query lesson discarded by custom delete: %v", err)
+	}
+	if activeDeleteStatus != "discarded" || activeDeleteVersion != activeDeleteLesson.Version+1 {
+		t.Fatalf(
+			"active lesson after custom delete status=%q version=%d, want discarded/%d",
+			activeDeleteStatus,
+			activeDeleteVersion,
+			activeDeleteLesson.Version+1,
+		)
 	}
 
 	deleteAuthenticated(t, fmt.Sprintf("%s/api/v1/words/custom/%d", testServer.URL, created.ID), owner.Tokens.AccessToken, http.StatusNoContent)
