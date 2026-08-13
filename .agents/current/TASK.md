@@ -6,8 +6,8 @@
 - Parent: #25
 - Branch: `feat/issue-25-custom-vocabulary-foundation`
 - Base SHA: `03b50fe78fb0f2280e8fe630931b6136df7d2717`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from the live branch ref after harness finalization; immutable-head validation must use that exact SHA.
+- PR: #486 — `feat(words): add private custom vocabulary foundation`
 
 ## Objective
 
@@ -21,6 +21,8 @@ Add the backend/API foundation for private custom words without creating a secon
 - atomic create + scheduler enrollment;
 - public/authenticated/lesson ownership guards;
 - shared catalog seed compatibility with the new partial uniqueness boundary;
+- public metadata isolation from private vocabulary;
+- active-lesson consistency when an owner deletes a private word;
 - OpenAPI and PostgreSQL integration coverage;
 - architecture documentation only where backend ownership changes.
 
@@ -61,9 +63,9 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 
 ## Runtime owners
 
-- `backend/internal/words`: custom-word validation, persistence, authenticated/public catalog boundaries.
+- `backend/internal/words`: custom-word validation, persistence, authenticated/public catalog boundaries and public metadata projection.
 - `backend/internal/catalog/catalog.go`: shared catalog seed upsert; may only target the shared partial unique index introduced by this slice.
-- `backend/internal/learning/lesson_composer.go`: existing lesson candidate selection; only ownership filtering may change.
+- `backend/internal/learning`: existing lesson/review scheduler; no algorithm change is required because private words enter through `user_words`.
 - `backend/internal/server/server.go`: authenticated HTTP route registration.
 - PostgreSQL `words` + `user_words`: catalog identity and scheduler state.
 
@@ -76,24 +78,25 @@ Additional paths require a verified downstream-consumer finding recorded in `PRO
 ## Invariants
 
 - Shared catalog rows have no owner and retain current enrollment/uniqueness behavior.
-- Owner-scoped rows are never returned by public catalog endpoints.
+- Owner-scoped rows are never returned by public catalog list/detail/metadata endpoints.
 - A custom word is enrolled only for its owner; another account cannot read/delete it.
 - Create is transactional: `words` and `user_words` cannot be left half-written.
 - Existing `user_words`, lesson and review scheduler semantics are reused unchanged.
 - Delete cannot remove a shared catalog word or another user's custom word.
+- Deleting a private word referenced by the owner's active lesson must discard that lesson before cascade removal of its item row.
 - Different users may independently own the same normalized custom lemma/translation.
 - Shared catalog seeding must continue to upsert only shared rows after uniqueness becomes partial.
 - No historical shared catalog row is rewritten as private content.
 
 ## Acceptance criteria
 
-See Issue #485. Required evidence covers create/enrollment, scheduler participation, public/other-user isolation, validation/duplicates, safe delete and shared-catalog regression protection.
+See Issue #485. Required evidence covers create/enrollment, scheduler participation, public/other-user isolation, validation/duplicates, safe delete, active-lesson consistency, public metadata isolation and shared-catalog regression protection.
 
 ## Required checks
 
 - Go formatting/static/unit/race gates selected by CI.
-- PostgreSQL migration/integration tests including clean-schema and upgraded-schema behavior.
-- OpenAPI structural/source contracts.
+- PostgreSQL migration/integration tests including clean-schema behavior, seed compatibility, ownership isolation and cascade behavior.
+- OpenAPI YAML structural/source contracts.
 - Full immutable-head required CI.
 - Review/thread audit before Ready.
 - Post-merge exact-main CI and exact-SHA Stage/public validation.
@@ -101,11 +104,11 @@ See Issue #485. Required evidence covers create/enrollment, scheduler participat
 ## Risks
 
 - Existing global `words` uniqueness index can accidentally prevent the same custom term across different accounts.
-- Public catalog SQL currently has no owner predicate because all rows were historically shared.
+- Public catalog SQL/metadata historically assumed every `words` row was shared.
 - Broad catalog-enrollment jobs/triggers must never enroll owner rows for other users.
 - Partial unique indexes require the shared catalog seed upsert to declare the matching `owner_user_id is null` predicate.
-- Cascading word deletion may touch review/lesson rows; tests must prove scope and transaction safety.
-- Existing queries that join `user_words` to `words` may need an explicit defense-in-depth owner predicate.
+- Cascading word deletion may invalidate an active lesson unless session state is resolved before the delete.
+- Existing queries that join `user_words` to `words` require defense-in-depth owner predicates at catalog read boundaries.
 
 ## Rollback
 
