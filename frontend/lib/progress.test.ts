@@ -4,6 +4,7 @@ import {
   dueReviewLessonCount,
   goalPercent,
   normalizedProgressModes,
+  normalizedWeeklyEvidence,
   objectiveSuccessRate,
   ratingLabel,
   type ProgressSummary,
@@ -59,7 +60,26 @@ describe("progress helpers", () => {
 
   it("falls back to v1 progress fields during rolling deployments", () => {
     expect(objectiveSuccessRate({ ...progress(4, 30), successfulToday: 3 })).toBe(75);
-    expect(normalizedProgressModes(progress(1, 30)).study.attemptsToday).toBe(0);
+    const modes = normalizedProgressModes(progress(1, 30));
+    expect(modes.study.attemptsToday).toBe(0);
+    expect(modes.listening.attemptsToday).toBe(0);
+  });
+
+  it("keeps listening separate from typed weekly recall evidence", () => {
+    const payload: ProgressSummary = {
+      ...progress(3, 30),
+      modes: {
+        study: { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 },
+        recall: { attemptsToday: 1, successfulToday: 1, attemptsTotal: 1, successfulTotal: 1 },
+        choice: { attemptsToday: 1, successfulToday: 1, attemptsTotal: 1, successfulTotal: 1 },
+        listening: { attemptsToday: 1, successfulToday: 1, attemptsTotal: 1, successfulTotal: 1 },
+        legacy: { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 },
+      },
+    };
+
+    const weekly = normalizedWeeklyEvidence(payload);
+    expect(weekly.recallAttempts).toBe(1);
+    expect(weekly.choiceAttempts).toBe(1);
   });
 
   it("uses user-facing rating labels", () => {

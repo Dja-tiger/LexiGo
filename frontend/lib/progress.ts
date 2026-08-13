@@ -9,6 +9,15 @@ export type ProgressModes = {
   study: ModeProgress;
   recall: ModeProgress;
   choice: ModeProgress;
+  listening?: ModeProgress;
+  legacy: ModeProgress;
+};
+
+export type NormalizedProgressModes = {
+  study: ModeProgress;
+  recall: ModeProgress;
+  choice: ModeProgress;
+  listening: ModeProgress;
   legacy: ModeProgress;
 };
 
@@ -110,7 +119,7 @@ export type ProgressSummary = {
 };
 
 export type ReviewRating = "again" | "almost" | "known";
-export type AnswerMode = "study" | "recall" | "choice";
+export type AnswerMode = "study" | "recall" | "choice" | "listening";
 
 export type ReviewResult = {
   wordId: number;
@@ -138,12 +147,14 @@ const EMPTY_TREND: DailyRecallEvidence[] = Array.from({ length: 7 }, () => ({
   rate: 0,
 }));
 
-export function normalizedProgressModes(progress: ProgressSummary | null): ProgressModes {
-  return progress?.modes ?? {
-    study: { ...EMPTY_MODE },
-    recall: { ...EMPTY_MODE },
-    choice: { ...EMPTY_MODE },
-    legacy: { ...EMPTY_MODE },
+export function normalizedProgressModes(progress: ProgressSummary | null): NormalizedProgressModes {
+  const modes = progress?.modes;
+  return {
+    study: modes?.study ?? { ...EMPTY_MODE },
+    recall: modes?.recall ?? { ...EMPTY_MODE },
+    choice: modes?.choice ?? { ...EMPTY_MODE },
+    listening: modes?.listening ?? { ...EMPTY_MODE },
+    legacy: modes?.legacy ?? { ...EMPTY_MODE },
   };
 }
 

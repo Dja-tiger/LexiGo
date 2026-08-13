@@ -73,7 +73,7 @@ func queryLessonCandidates(
 	if err != nil {
 		return nil, err
 	}
-	dueOnly := studyMode == AnswerModeRecall || studyMode == AnswerModeChoice
+	dueOnly := studyMode.Objective()
 	rows, err := tx.Query(ctx, `
 		with latest_review as (
 			select distinct on (review_event.word_id)
