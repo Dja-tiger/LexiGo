@@ -47,6 +47,12 @@ export default defineConfig({
         deviceScaleFactor: 1,
         hasTouch: true,
         isMobile: true,
+        launchOptions: {
+          // Force Skia's baseline CPU code path for content-addressed compact Figma captures.
+          // Chromium documents this switch as disabling runtime-detected high-end CPU
+          // optimizations specifically to provide a stable baseline path for web/layout tests.
+          args: ["--disable-skia-runtime-opts"],
+        },
       },
     },
     {
