@@ -2,37 +2,22 @@
 
 ## Verification
 
-- Last verified: 2026-08-14 Europe/Moscow.
+- Last verified: 2026-08-15 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `f423d824c2d580e458128a54af3b53514b224bbb` after PR #517.
-- Latest deployed runtime/Stage SHA: `f423d824c2d580e458128a54af3b53514b224bbb`.
-- Issue #515 is closed as completed by PR #517. The delivered slice locks executable Progress parity at canonical `390×844` and `1440×1024`, explicit Light/Dark appearance, route-shell ownership, horizontal geometry, reload and real Browser Back/Forward without changing production UI or approved visual baselines.
-- PR #517 immutable developer head was `d71e922001c2105b977dace956f4c89293d63227`; PR CI #3485 (`31809988954`) completed successfully across frontend core, full Chromium/WebKit/Android/iOS browser matrix, Linux visual regression, accessibility, content security, PWA/service-worker, performance, backend unit/security and PostgreSQL/Redis race integration, plus API/web container builds.
-- PR #517 squash merge SHA is `f423d824c2d580e458128a54af3b53514b224bbb`; its Git tree is `383830b19d30b9293d44e9a3c042996772326df7`.
-- Exact-main CI #3486 (`31810930838`) ultimately completed successfully on run attempt 2 for `f423d824c2d580e458128a54af3b53514b224bbb`, with full frontend/backend/browser gates and API/web container publication green.
-- Exact-main CI #3486 first attempt exposed an independent pre-existing Figma visual nondeterminism in `System state → Dictionary empty Light` / Figma `79:93`: approved raw PNG SHA `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf` intermittently rendered as `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`. No approved hash or UI source was changed.
-- PR synthetic merge commit `6104c283eef98f118ff45018f6f14c69ab5ace45` and exact squash merge `f423d824c2d580e458128a54af3b53514b224bbb` have the same Git tree `383830b19d30b9293d44e9a3c042996772326df7`, excluding source-tree drift as the cause of the `79:93` mismatch.
-- Controlled visual retry on the same exact SHA, same Playwright `v1.62.1-noble` image digest `sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`, and no repository writes reproduced `dd2d...` on the first capture but passed the approved `e140...` hash on the internal Playwright retry; the job completed `success` with `1 flaky`. Issue #518 now owns deterministic remediation and explicitly prohibits baseline promotion to `dd2d...`.
-- Stage run #3330 (`31812191384`) completed successfully for exact SHA `f423d824c2d580e458128a54af3b53514b224bbb`; deployment, public endpoint smoke, public browser dependency installation and public Stage UI verification passed. Earlier Stage #3329 was correctly skipped because it followed the failed first CI attempt.
-- PR #514 upgraded the production Next.js runtime from `16.2.11` to `16.3.0` on a fresh-main delivery branch while preserving React/React DOM `19.2.8`, Playwright `1.62.1`, `eslint-config-next 16.3.0` and `js-yaml 4.3.1`.
-- PR #514 immutable-head CI #3478 (`31806554374`) completed successfully on frozen head `5651712851f0b8bdde7f65328dca1b49ad357689`; frontend core, complete Playwright browser matrix, visual/a11y/performance/security/PWA/service-worker gates, backend unit/security and PostgreSQL/Redis race integration, and API/web container builds passed.
-- PR #514 squash merge SHA is `30e95b736d7c93f3db43e78462609cbaafd65341`.
-- Exact-main CI #3479 (`31807395219`) completed successfully for `30e95b736d7c93f3db43e78462609cbaafd65341`; the full frontend/backend/browser matrix passed and API/web container images were published.
-- Stage run #3322 (`31808229555`) completed successfully for that exact SHA; deployment, public endpoint smoke, public-browser dependency installation and public Stage UI verification passed.
-- Original Dependabot PR #479 was used only as a three-way integration input into the isolated fresh-main branch; current-main delivery and validation are represented by PR #514.
-- PR #512 refreshed the frontend development toolchain: `@playwright/test` to `1.62.1`, `@types/react` to `19.2.18`, `@types/react-dom` to `19.2.4`, and `eslint-config-next` to `16.3.0`; all repository Playwright image pins are aligned to `mcr.microsoft.com/playwright:v1.62.1-noble`.
-- PR #512 immutable-head CI #3470 (`31801507218`) completed successfully on frozen head `5acd08ab61579722fc831de84d9ec8f465269ef0`; frontend core, complete Playwright browser matrix, visual/a11y/performance/security/PWA/service-worker gates, backend gates and API/web container builds passed. Deployment scripts check #189 (`31801507298`) also completed successfully on that exact head.
-- PR #512 squash merge SHA is `04d19c7340be98f9849338f5cee6a8ba766347fe`.
-- Exact-main CI #3471 (`31802214378`) completed successfully for `04d19c7340be98f9849338f5cee6a8ba766347fe`; backend unit/security and PostgreSQL/Redis race integration, frontend core/full browser matrix, frontend aggregate, and API/web container publication passed.
-- Exact-main Deployment scripts check #190 (`31802214503`) completed successfully.
-- Stage run #3314 (`31802974825`) completed successfully for that exact SHA; deployment, public endpoint smoke, Playwright public-browser dependency installation and public Stage UI verification passed.
-- Original Dependabot PR #403 was used only as a three-way integration input into the fresh-main delivery branch; current-main delivery and validation are represented by PR #512.
-- PR #510 upgraded `github.com/redis/go-redis/v9` from `v9.21.0` to `v9.22.0`; squash merge SHA is `e397562996f7ee0c70160c9fb6fef8d8f69b110f`.
-- PR #510 immutable-head CI #3463 (`31798738075`) and exact-main CI #3464 (`31799536933`) completed successfully; Stage #3307 (`31800348093`) passed deploy, public endpoint smoke and public UI verification.
-- Stale Dependabot PR #478 was closed as superseded after the fresh-main PR #510 was merged and validated.
-- Issue #68 automated PWA appearance work is complete: PR #506 merged as `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`, and the offline metadata follow-up PR #507 merged as `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
-- Issue #68 is closed. Physical installed-app icon/splash/cold-start acceptance remains separately tracked by #508 and is not claimed from CI.
-- Latest Issue #25 product merge contained in the deployed runtime remains Phase 4 squash `810fa59a748477f8723a19dee03e61517282df30`.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `ec46b319d903b71708bc7f0d10aaa56a78ff14d6` after PR #520.
+- Latest deployed runtime/Stage SHA: `ec46b319d903b71708bc7f0d10aaa56a78ff14d6`.
+- PR #520 final head was `c951013984631b81723166f60603d5b30f80d6b4`; immutable-head CI #3514 (`31839910919`) completed successfully.
+- PR #520 squash merge SHA is `ec46b319d903b71708bc7f0d10aaa56a78ff14d6`.
+- Exact-main CI #3515 (`31841367634`) completed successfully for that exact merge SHA across the selected frontend/backend/browser/visual/accessibility/performance/security/PWA gates.
+- Stage run #3361 (`31842102052`) completed successfully for the same exact SHA; deployment, public endpoint verification, public browser dependency installation and public Stage UI verification passed.
+- Issue #518 is closed as completed. The Dictionary Empty Light visual gate remains anchored to Figma node `79:93` and approved raw PNG SHA `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`; rejected alternate `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` was not promoted.
+- #518 root cause was a capture race with deferred `CalendarReminderRouteEntry` settings hydration. The accepted test-owned fix waits for the reminder summary semantic `aria-label` sentinel before the existing layout/paint stabilization and exact SHA checks; product React/CSS, visual config, retries/tolerances and approved hashes were not changed.
+- Verified code SHA for the #518 fix was `f3a3b551d718f7cadbdbf473afffb707da9bbfc6`; CI #3513 visual runs `94891172103` and `94893140048` both passed Dictionary `79:93` on the first attempt with zero flaky classification.
+- Issue #515 is closed after PR #517 delivered executable Progress parity. PR #517 squash merge SHA is `f423d824c2d580e458128a54af3b53514b224bbb`; exact-main CI #3486 attempt 2 and Stage #3330 passed.
+- PR #514 delivered Next.js `16.3.0`; exact-main CI #3479 and Stage #3322 passed.
+- PR #512 delivered the frontend toolchain/Playwright `1.62.1` alignment; exact-main CI #3471 and Stage #3314 passed.
+- PR #510 delivered `github.com/redis/go-redis/v9` `v9.22.0`; exact-main CI #3464 and Stage #3307 passed.
+- Issue #68 automated PWA appearance work is complete through PR #506 and PR #507; physical-device acceptance remains #508.
 - Figma provenance PR #488 merged as `3e8fdafb08f7789ca5a0b53e2e73a79bc7805b35`.
 - Figma route handoff PR #501 merged as `83bfd5ddfbee3d2ee858e1d0f00e79ba47791ea9`.
 - Figma Git LFS transport PR #502 merged as `c4b3f0145cee93be6e53de3775f8406bf6ed3e6e`.
@@ -45,7 +30,7 @@
 - Product delivery requires immutable-head PR CI, clean review audit, expected-head squash merge, exact-main validation and Stage/public validation when runtime changed.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy Stage.
 - Physical-device or production-only acceptance remains manual when required by the Issue.
-- A controlled CI retry may prove infrastructure/render nondeterminism only when the exact commit/tree and source/baseline state remain unchanged; such a retry must be recorded and followed by a dedicated defect rather than normalizing the flake.
+- A controlled CI retry may prove infrastructure/render nondeterminism only when the exact commit/tree and source/baseline state remain unchanged; retries must not normalize a flaky product or baseline.
 
 ## Production ownership foundations
 
@@ -56,14 +41,7 @@
 - Guest catalog content and authenticated scheduler/progress state remain separate security boundaries.
 - Existing frontend speech playback remains the browser speech owner.
 
-## Backend dependency status
-
-- Production Redis client construction remains owned by `backend/internal/platform/redis/redis.go`.
-- go-redis `v9.22.0` is deployed on Stage after exact-main integration validation.
-- Existing explicit Redis `DialTimeout=5s`, `ReadTimeout=2s`, `WriteTimeout=2s`, `PoolSize=20` and `MinIdleConns=2` remain unchanged.
-- LexiGo does not use `WaitAOF` and did not opt into the new experimental client-side caching or automatic pipelining features introduced around this dependency update.
-
-## Frontend dependency/tooling status
+## Frontend/runtime status
 
 - Production Next.js runtime is `16.3.0`; React/React DOM remain `19.2.8`.
 - Playwright package/runtime is aligned at `1.62.1` across npm, CI, Stage validation, visual snapshots and frontend container testing.
@@ -71,29 +49,31 @@
 - `eslint-config-next` is `16.3.0`.
 - Frontend container runtime Node `22.22.2` satisfies Playwright 1.62.1's Node >=20 requirement.
 - `js-yaml 4.3.1` remains preserved in the current lockfile.
-- PR #512, exact-main CI #3471 and Stage #3314 provide the delivery evidence for the development-toolchain state; PR #514, exact-main CI #3479 and Stage #3322 provide the delivery evidence for Next.js `16.3.0` runtime state.
+- Production Redis client remains `go-redis/v9 v9.22.0` with existing explicit timeout/pool configuration unchanged.
 
 ## PWA appearance status
 
 - Canonical semantic appearance colors are Light `#f4f7f5` and Dark `#10211d`.
 - Manifest/runtime/offline metadata and offline presentation use the canonical appearance contract.
-- Install metadata uses dedicated `any`, `maskable` and `monochrome` icon assets rather than declaring one raster asset as both `any` and `maskable`.
+- Install metadata uses dedicated `any`, `maskable` and `monochrome` icon assets.
 - Manifest orientation lock is removed; service-worker precache includes the install assets delivered by #506.
-- Exact PWA appearance delivery SHA `07503e6fdd619a924b72c9f48f80f482bf36e28d` passed its Stage/public automated validation.
 - Native iOS/iPadOS, Android and desktop install surfaces remain manual acceptance under #508.
 
 ## Figma source-of-truth status
 
 - Canonical cloud file: `LexiGo Design System`, file key `3xXmBWnf38jbvLjtziwber`.
+- Screen Map & Handoff canonical node: `82:3`.
 - PR #488 preserves the audited 2026-08-13 offline source provenance in `docs/figma/`.
 - Native source identity: 1,191,055 bytes; SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`.
 - PR #501 makes `frontend/docs/adaptive-knowledge-coach.md` the repository-side canonical route → Figma node → Issue handoff.
 - PR #502 adds Git LFS routing for `design/figma/*.fig`; expected destination is `design/figma/LexiGo Design System.fig`.
-- The native `.fig` binary is **not yet stored in GitHub**. Issue #487 remains open until the exact binary is uploaded through a binary-safe path and its SHA-256 is verified.
+- The native `.fig` binary is not yet stored in GitHub. Issue #487 remains open until the exact binary is uploaded through a binary-safe path and its SHA-256 is verified.
 - Live Figma inspection/editing is currently constrained by the connected Figma MCP Starter-plan tool-call limit; do not claim Screen Map or canvas synchronization without live evidence.
-- Issue #203 remains open for live Screen Map/archive reconciliation. Issue #205 remains the final route-by-route parity audit.
-- Issue #515 is closed after PR #517 delivered canonical Progress executable parity for mobile Light `76:6`, mobile Dark `76:53`, and desktop geometry `76:154`, with explicit semantic Dark tokens for desktop Dark. No new Figma frame or screenshot baseline approval is claimed.
-- Existing Figma System State node `79:93` / Dictionary Empty Light has a confirmed CI capture nondeterminism tracked in #518. Approved SHA remains `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`; `dd2d0c...` is evidence of the flake, not an approved alternate baseline.
+- Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access is available.
+- Issue #205 is the active umbrella for final route-by-route parity audit.
+- Home canonical source is mobile Dark `196:223` and desktop Light `194:249`; opposite appearances are token-derived under the documented handoff.
+- Progress executable parity is already delivered by #515/PR #517: mobile Light `76:6`, mobile Dark `76:53`, desktop geometry `76:154` plus explicit semantic Dark tokens.
+- Dictionary Empty Light `79:93` visual determinism is resolved by #518/PR #520. Approved SHA remains `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
 
 ## Delivered learning/platform foundations
 
@@ -117,22 +97,20 @@
 - Parent #25 remains open after four delivered phases.
 - Issue #68 is completed and closed after exact-main Stage/public validation.
 - Issue #508 is the residual physical-device PWA acceptance gate and contains no implementation scope unless testing discovers a reproducible defect.
-- go-redis `v9.22.0` maintenance is complete through PR #510, exact-main CI #3464 and Stage #3307.
-- Frontend development toolchain maintenance is complete through PR #512, exact-main CI #3471 and Stage #3314.
-- Next.js `16.3.0` runtime maintenance is complete through PR #514, immutable-head CI #3478, exact-main CI #3479 and Stage #3322.
-- Progress Figma parity Issue #515 is complete through PR #517, immutable-head CI #3485, exact-main CI #3486 attempt 2 and Stage #3330.
+- Issue #515 Progress parity is complete through PR #517, exact-main CI #3486 attempt 2 and Stage #3330.
+- Issue #518 Dictionary Empty visual determinism is complete through PR #520, immutable-head CI #3514, exact-main CI #3515 and Stage #3361.
 - `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product/QA slice.
-- Issue #518 is the next executable Figma/CI slice: remove `79:93` render nondeterminism without changing the approved design hash, tolerances or product UI unless a concrete product defect is proven.
-- Issue #78 remains the independent security hardening workstream for CSP enforcement promotion; production enforcement is authorization-sensitive and must preserve the staged rollout contract.
+- The next executable Figma-related product/QA work is an atomic Home child slice under #205, using canonical Home nodes `196:223` and `194:249` and existing `home-route-island.spec.ts` route/session/history ownership.
+- Issue #203 remains temporarily blocked on live Figma MCP access; repository-side handoff is already present from PR #501.
+- Issue #78 remains the independent security hardening workstream for CSP enforcement promotion.
 - User priority remains Figma-related product/parity work.
 
 ## Remaining roadmap
 
-- #518: make Figma System State Dictionary Empty Light `79:93` deterministic while preserving approved SHA `e1405517...`; require clean no-flake immutable-head and exact-main visual evidence.
-- #205: continue route-by-route Figma parity after #518; Home is a strong next child slice because canonical Home nodes `196:223` mobile Dark and `194:249` desktop Light already exist and `home-route-island.spec.ts` owns route/session/history semantics.
+- #205: continue route-by-route Figma parity. Start with an atomic Home child slice: canonical mobile Dark `196:223`, desktop Light `194:249`, token-derived opposite appearances, route-shell ownership, no horizontal overflow, reload and real Browser Back/Forward. Do not turn audit work into a hidden redesign.
+- #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
-- #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #201/#18: complete canonical First Use design states, then implement the approved flow.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
 - #78: complete the remaining CSP/security-header enforcement promotion through an authorized staged rollout.
