@@ -4,9 +4,13 @@
 
 - Last verified: 2026-08-14 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live repository `main`: `07503e6fdd619a924b72c9f48f80f482bf36e28d` after PR #507.
-- Latest deployed runtime/Stage SHA: `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
-- Stage run `31778699446` completed successfully for that exact SHA; deploy, public smoke and public browser validation passed, including 12/12 public Chromium/iOS WebKit checks.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `e397562996f7ee0c70160c9fb6fef8d8f69b110f` after PR #510.
+- Latest deployed runtime/Stage SHA: `e397562996f7ee0c70160c9fb6fef8d8f69b110f`.
+- PR #510 upgraded `github.com/redis/go-redis/v9` from `v9.21.0` to `v9.22.0`; squash merge SHA is `e397562996f7ee0c70160c9fb6fef8d8f69b110f`.
+- PR #510 immutable-head CI #3463 (`31798738075`) completed successfully on frozen head `50a82bdbbb4c20d4dfc7184e277c46557cb545be`; backend unit/security, PostgreSQL/Redis integration under the race detector, frontend/browser matrices and required quality gates passed.
+- Exact-main CI #3464 (`31799536933`) completed successfully for `e397562996f7ee0c70160c9fb6fef8d8f69b110f`; both API and web container images built and published successfully.
+- Stage run #3307 (`31800348093`) completed successfully for that exact SHA; deploy, public endpoint smoke and public UI verification passed.
+- Stale Dependabot PR #478 was closed as superseded after the fresh-main PR #510 was merged and validated.
 - Issue #68 automated PWA appearance work is complete: PR #506 merged as `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`, and the offline metadata follow-up PR #507 merged as `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
 - Issue #68 is closed. Physical installed-app icon/splash/cold-start acceptance remains separately tracked by #508 and is not claimed from CI.
 - Latest Issue #25 product merge contained in the deployed runtime remains Phase 4 squash `810fa59a748477f8723a19dee03e61517282df30`.
@@ -32,13 +36,20 @@
 - Guest catalog content and authenticated scheduler/progress state remain separate security boundaries.
 - Existing frontend speech playback remains the browser speech owner.
 
+## Backend dependency status
+
+- Production Redis client construction remains owned by `backend/internal/platform/redis/redis.go`.
+- go-redis `v9.22.0` is deployed on Stage after exact-main integration validation.
+- Existing explicit Redis `DialTimeout=5s`, `ReadTimeout=2s`, `WriteTimeout=2s`, `PoolSize=20` and `MinIdleConns=2` remain unchanged.
+- LexiGo does not use `WaitAOF` and did not opt into the new experimental client-side caching or automatic pipelining features introduced around this dependency update.
+
 ## PWA appearance status
 
 - Canonical semantic appearance colors are Light `#f4f7f5` and Dark `#10211d`.
 - Manifest/runtime/offline metadata and offline presentation use the canonical appearance contract.
 - Install metadata uses dedicated `any`, `maskable` and `monochrome` icon assets rather than declaring one raster asset as both `any` and `maskable`.
 - Manifest orientation lock is removed; service-worker precache includes the install assets delivered by #506.
-- Exact deployed SHA `07503e6fdd619a924b72c9f48f80f482bf36e28d` passed Stage/public automated validation.
+- Exact PWA appearance delivery SHA `07503e6fdd619a924b72c9f48f80f482bf36e28d` passed its Stage/public automated validation.
 - Native iOS/iPadOS, Android and desktop install surfaces remain manual acceptance under #508.
 
 ## Figma source-of-truth status
@@ -74,9 +85,10 @@
 - Parent #25 remains open after four delivered phases.
 - Issue #68 is completed and closed after exact-main Stage/public validation.
 - Issue #508 is the residual physical-device PWA acceptance gate and contains no implementation scope unless testing discovers a reproducible defect.
-- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product slice.
+- go-redis `v9.22.0` maintenance is complete through PR #510, exact-main CI #3464 and Stage #3307.
+- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product or maintenance slice.
 - Issue #78 remains the independent security hardening workstream for CSP enforcement promotion; production enforcement is authorization-sensitive and must preserve the staged rollout contract.
-- No active product PR was present at this verification point; open PRs were dependency-maintenance branches.
+- Remaining open dependency-maintenance PRs must be re-audited against the live base rather than merged from stale immutable-head evidence.
 
 ## Remaining roadmap
 
