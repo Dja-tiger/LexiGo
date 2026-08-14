@@ -5,7 +5,7 @@
 - Branch: `chore/next-16-3-fresh-main`
 - Base SHA: `c3ba8a8756170171b8a40d10ac807a1886749eed`
 - Head SHA: resolve from live branch ref
-- PR: pending fresh-main delivery PR; original dependency input PR #479 has been integrated only into this isolated branch
+- PR: #514 (fresh-main delivery); original dependency input PR #479 was integrated only into this isolated branch
 
 ## Skills used
 
@@ -49,6 +49,7 @@ Files inspected:
 - `frontend/package.json`
 - `frontend/package-lock.json`
 - PR #479 metadata and per-file patches
+- fresh delivery PR #514 metadata
 
 Actions performed:
 
@@ -58,17 +59,20 @@ Actions performed:
 - Retargeted original #479 from `main` to the isolated fresh branch only after verifying its two-file scope.
 - Merged #479 into the isolated branch with expected bot head SHA to let GitHub perform the three-way composition of the generated lockfile.
 - Read branch files back and compared the result to current `main`.
+- Opened Draft delivery PR #514 from the fresh branch to `main` after confirming an exact five-file scope and `0 behind` status.
 
 Commands or procedures:
 
 - GitHub connector branch/read/update/compare/PR operations with explicit refs.
 - Expected-head protection for the integration input.
 - Read-back after every developer-authored branch write and `main` immutability checks.
+- Final delivery requires one frozen developer-authored head before CI evidence is accepted.
 
 Artifacts produced:
 
 - Fresh branch `chore/next-16-3-fresh-main`.
 - Integration merge commit `22f01b885017f1503837348574cb2ac883aa7cbe`.
+- Draft delivery PR #514.
 - Updated current-task harness records.
 
 Result:
@@ -77,7 +81,8 @@ Result:
 - React/React DOM remain `19.2.8`.
 - Playwright remains `1.62.1`; `eslint-config-next` remains `16.3.0`.
 - `js-yaml 4.3.1` is preserved because it is absent from the branch-vs-main diff.
-- Branch is `0 behind` current `main` and dependency changes are limited to `frontend/package.json` and `frontend/package-lock.json`.
+- Branch is `0 behind` current `main` and runtime dependency changes are limited to `frontend/package.json` and `frontend/package-lock.json`.
+- PR #514 is the sole current-main delivery owner; #479 is only its historical integration input.
 
 Failures:
 
@@ -134,7 +139,7 @@ Locked install -> lint/typecheck -> unit -> production build -> full Chromium/We
 
 Artifacts produced:
 
-Pending CI and Stage evidence.
+Pending PR #514 CI and post-merge Stage evidence.
 
 Result:
 
