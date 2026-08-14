@@ -4,40 +4,39 @@
 
 ### Verified
 
-- Base `9bf6f26899fbdf937f5612c08da7bab64e38af69`; Issue #68; delivery PR #506.
-- Historical PR #504 supplied the original frontend evidence before the secure rebase.
-- Original audit found legacy manifest colors `#080b12` / `#111827`, raster icons reused as `any maskable`, and offline recovery `#050914`.
-- Runtime/Figma semantic canvas remains `#f4f7f5` Light / `#10211d` Dark.
-- Historical #504 frontend core and complete browser/PWA matrix passed on head `92eef63c136100c7510e401fca39be7827796894`.
-- That CI exposed a pre-existing Go 1.26.5 standard-library vulnerability gate; prerequisite PR #505 upgraded Go to 1.26.6, passed `govulncheck` plus full CI, and merged as `9bf6f26899fbdf937f5612c08da7bab64e38af69`.
+- Base `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`; Issue #68; PR #507.
+- PR #506 merged the main PWA/Figma parity slice and established canonical Light/Dark semantic colors `#f4f7f5` / `#10211d`, dedicated maskable/monochrome icons, offline CSS parity and service-worker precache.
+- `frontend/public/offline.html` remained the one automated metadata mismatch: `<meta name="theme-color" content="#050914" />`.
+- `frontend/lib/appearance-preference.ts` remains the runtime appearance owner and defines Dark as `#10211d`.
 
 ### Finding
 
-PWA install/launch metadata is stale relative to the semantic appearance owner; icon purposes need dedicated assets.
+Static offline recovery metadata could still flash the legacy `#050914` before any runtime appearance code is available.
 
 ### Root cause
 
-PWA metadata predates the Adaptive Knowledge Coach appearance/token migration.
+The isolated `offline.html` write was blocked during the previous #506 delivery, so it was intentionally left as a documented residual instead of weakening that PR.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `frontend/public/manifest.webmanifest`
-- `frontend/public/icons/icon-maskable.svg`
-- `frontend/public/icons/icon-monochrome.svg`
-- `frontend/public/offline.css`
-- `frontend/public/sw.js`
+- `frontend/public/offline.html`
 - `frontend/lib/appearance-preference.test.ts`
+
+### Implemented
+
+- Replaced the legacy offline document theme-color with canonical Dark `#10211d`.
+- Extended the existing appearance/PWA unit contract to assert the exact `offline.html` meta tag against `APPEARANCE_THEME_COLORS.dark`.
 
 ### Checks passed
 
-Historical #504 frontend lint/typecheck/unit/build, iOS PWA, controlled SW, UI shards, visual, accessibility, performance, content-security, lesson and smoke gates. Security prerequisite #505 passed Go 1.26.6 `govulncheck`, backend integration and both container builds.
+Pending immutable-head CI for PR #507.
 
-### Checks failed
+### Residual manual gate
 
-Historical #504 backend security failed only on the now-fixed Go 1.26.5 standard library. `offline.html` meta theme-color remains unchanged because the connector blocked that isolated write twice before GitHub.
+Native installed icon/splash/cold-start behavior on iOS, Android and desktop still requires physical-device/browser validation; Playwright cannot prove native install chrome.
 
 ### Current branch head
 
@@ -45,4 +44,4 @@ Resolve from live branch ref after harness finalization.
 
 ### Next action
 
-Run fresh immutable-head CI on PR #506 and merge only after the complete matrix and review audit are green.
+Run PR #507 CI, audit reviews/threads, then squash-merge only on an unchanged green head.

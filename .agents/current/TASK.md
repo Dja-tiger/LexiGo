@@ -3,55 +3,51 @@
 ## Identity
 
 - Issue: #68
-- Branch: `feat/issue-68-pwa-manifest-icons`
-- Base SHA: `9bf6f26899fbdf937f5612c08da7bab64e38af69`
+- Branch: `fix/issue-68-offline-theme-color`
+- Base SHA: `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`
 - Head SHA: resolve from live branch ref
-- PR: #506
+- PR: #507
 
 ## Objective
 
-Align PWA manifest, launch colors and icon-purpose semantics with the repository-owned Figma/appearance palette.
+Close the remaining automated PWA appearance mismatch after PR #506 by aligning the static offline document theme-color metadata with the canonical appearance owner.
 
 ## Scope
 
-Manifest colors; dedicated maskable/monochrome icons; offline recovery CSS; service-worker precache; appearance-owner contract tests.
+Update `frontend/public/offline.html` theme-color from the legacy launch color to canonical Dark `#10211d`; extend the existing appearance/PWA contract test so the mismatch cannot regress; record execution evidence.
 
 ## Non-goals
 
-No Figma canvas edits, route redesign, broad CSS cleanup, backend changes, orientation lock or device-signoff claim. The `offline.html` theme-color metadata is not claimed because connector safety blocked that isolated write twice.
+No route redesign, no Figma canvas edits, no manifest/icon/service-worker changes, no runtime appearance logic changes, no native-device install sign-off claim.
 
 ## Allowed paths
 
-`.agents/current/*`, `frontend/public/manifest.webmanifest`, `frontend/public/icons/icon-maskable.svg`, `frontend/public/icons/icon-monochrome.svg`, `frontend/public/sw.js`, `frontend/public/offline.css`, `frontend/lib/appearance-preference.test.ts`.
+`.agents/current/*`, `frontend/public/offline.html`, `frontend/lib/appearance-preference.test.ts`.
 
 ## Prohibited paths
 
-`backend/**`, `frontend/app/globals.css`, `frontend/app/layout.tsx`, route UI/CSS, visual baselines, migrations/OpenAPI, `.github/workflows/**`, Figma canvas.
+`backend/**`, `.github/workflows/**`, `frontend/app/**`, other `frontend/public/**`, visual baselines, migrations/OpenAPI, Figma canvas.
 
 ## Runtime owners
 
-Manifest owns install metadata; `appearance-preference.ts` remains runtime theme-color owner; `sw.js` owns offline precache; `offline.css` owns recovery presentation.
-
-## Documentation owners
-
-Issue #68 and `.agents/current/*`.
+`appearance-preference.ts` owns Light/Dark semantic theme colors; `offline.html` owns the static recovery document metadata before runtime application code is available.
 
 ## Invariants
 
-Keep Apple 180px and raster 192/512 `any` fallbacks; no orientation lock; maskable mark stays inside the 40% safe zone; runtime appearance bootstrap unchanged.
+Canonical Light/Dark remain `#f4f7f5` / `#10211d`; no orientation lock; no change to offline recovery copy or actions.
 
 ## Acceptance criteria
 
-Canonical Dark canvas `#10211d` replaces legacy manifest and visible offline recovery colors; icon purposes use distinct assets; specialized assets are precached; unit/build/PWA CI passes; device install/cold-start remains manual.
+`offline.html` metadata equals `APPEARANCE_THEME_COLORS.dark`; existing manifest/icon/offline CSS contracts remain green; frontend unit/build and repository CI pass.
 
 ## Required checks
 
-Frontend lint/typecheck/unit/build plus CI-selected PWA/SW/browser/a11y/visual/performance gates and clean review audit.
+Frontend lint/typecheck/unit/build plus repository-selected CI and clean review audit.
 
-## Risks
+## Residual manual gate
 
-Specialized icon support varies, so raster fallbacks remain. Playwright cannot prove native installed splash behavior. Offline document meta theme-color remains a known residual mismatch until the blocked write can be performed safely.
+Native iOS/Android/desktop install and cold-start appearance still require real-device validation.
 
 ## Rollback
 
-Revert the Issue #68 squash merge.
+Revert the Issue #68 follow-up squash merge.

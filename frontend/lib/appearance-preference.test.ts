@@ -103,6 +103,9 @@ describe("appearance preference", () => {
     ]));
     expect(readPublicFile("icons/icon-maskable.svg")).toContain('fill="#10211d"');
     expect(readPublicFile("offline.css")).toContain(`background: ${APPEARANCE_THEME_COLORS.dark}`);
+    expect(readPublicFile("offline.html")).toContain(
+      `<meta name="theme-color" content="${APPEARANCE_THEME_COLORS.dark}" />`,
+    );
   });
 
   it("builds a synchronous no-flash bootstrap without interpolating user data", () => {
