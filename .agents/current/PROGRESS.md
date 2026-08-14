@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-14 15:00 Europe/Moscow
+## 2026-08-14 15:03 Europe/Moscow
 
 ### Verified
 
@@ -9,6 +9,7 @@
 - PR #478 changes only `backend/go.mod` and `backend/go.sum`.
 - Repository search found no `WaitAOF` usage.
 - Production Redis client construction explicitly sets DialTimeout 5s, ReadTimeout 2s, WriteTimeout 2s, PoolSize 20 and MinIdleConns 2.
+- Fresh replacement PR is #510.
 
 ### Finding
 
@@ -22,23 +23,25 @@ Dependabot branch was created from `810fa59a748477f8723a19dee03e61517282df30`; r
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `backend/go.mod`
 - `backend/go.sum`
 
 ### Checks passed
 
 - Source audit: no `WaitAOF` consumer.
-- Dependency diff matches Dependabot #478: go-redis 9.21.0 -> 9.22.0, `golang.org/x/sys v0.47.0` becomes an explicit indirect requirement, matching checksums applied.
+- Dependency diff matches Dependabot #478: go-redis 9.21.0 -> 9.22.0, `golang.org/x/sys v0.47.0` becomes an explicit indirect requirement, and only the two Redis checksum lines change in `go.sum`.
 - Read-back confirms `go.mod` and `go.sum` content on the fresh branch.
+- Compare against task base is 0 behind and contains exactly the five allowed paths.
 
 ### Checks failed
 
-None yet. Final repository CI has not run on the fresh branch head.
+No product check has failed. During manual diff audit, the first full-file `go.sum` transfer accidentally altered the unrelated `gopkg.in/yaml.v3 v3.0.1` checksum by one substring. The error was detected before PR validation, restored byte-for-byte from `main`, read back, and the final compare now shows only the expected two Redis checksum changes.
 
 ### Current branch head
 
-Resolve from live branch ref after Agent Harness finalization.
+Resolve from live branch ref after final `EXECUTION.md` write. That SHA is the only acceptable immutable-head CI target.
 
 ### Next action
 
-Record execution context, open a Draft PR, run full backend dependency CI on the immutable head, then audit reviews/threads before expected-head squash merge.
+Finalize execution evidence, freeze the branch, require full CI on that exact head, audit reviews/threads, mark PR #510 Ready, and squash merge with expected head SHA if all gates pass.
