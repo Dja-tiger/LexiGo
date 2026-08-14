@@ -2,52 +2,56 @@
 
 ## Identity
 
-- Issue: #68
-- Branch: `fix/issue-68-offline-theme-color`
-- Base SHA: `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`
+- Issue: repository state reconciliation after #505/#506/#507
+- Branch: `docs/reconcile-figma-delivery-state`
+- Base SHA: `07503e6fdd619a924b72c9f48f80f482bf36e28d`
 - Head SHA: resolve from live branch ref
-- PR: #507
+- PR: TBD
 
 ## Objective
 
-Close the remaining automated PWA appearance mismatch after PR #506 by aligning the static offline document theme-color metadata with the canonical appearance owner.
+Reconcile repository-owned Agent Harness state with the verified Figma/PWA delivery sequence and reset `.agents/current` after the completed product slice.
 
 ## Scope
 
-Update `frontend/public/offline.html` theme-color from the legacy launch color to canonical Dark `#10211d`; extend the existing appearance/PWA contract test so the mismatch cannot regress; record execution evidence.
+Update `.agents/PROJECT_STATE.md` with exact merged/runtime/Figma evidence from #505/#506/#507 and the remaining #68/#201/#203/#205/#487 gates; restore `.agents/current/*` to the canonical clean templates before merge.
 
 ## Non-goals
 
-No route redesign, no Figma canvas edits, no manifest/icon/service-worker changes, no runtime appearance logic changes, no native-device install sign-off claim.
+No runtime code, CI workflow, Figma canvas, issue acceptance semantics, deployment configuration, design asset, or native `.fig` mutation.
 
 ## Allowed paths
 
-`.agents/current/*`, `frontend/public/offline.html`, `frontend/lib/appearance-preference.test.ts`.
+`.agents/PROJECT_STATE.md`, `.agents/current/TASK.md`, `.agents/current/PROGRESS.md`, `.agents/current/EXECUTION.md`.
 
 ## Prohibited paths
 
-`backend/**`, `.github/workflows/**`, `frontend/app/**`, other `frontend/public/**`, visual baselines, migrations/OpenAPI, Figma canvas.
+Everything else.
 
 ## Runtime owners
 
-`appearance-preference.ts` owns Light/Dark semantic theme colors; `offline.html` owns the static recovery document metadata before runtime application code is available.
+None; this is repository-state documentation only.
+
+## Documentation owners
+
+`.agents/PROJECT_STATE.md` is the operational project-state source; `.agents/current/*` must end as clean task templates.
 
 ## Invariants
 
-Canonical Light/Dark remain `#f4f7f5` / `#10211d`; no orientation lock; no change to offline recovery copy or actions.
+Do not claim #507 Stage until exact merge SHA validation is green. Do not claim native `.fig` storage or Figma Screen Map synchronization. Keep physical-device #68 acceptance manual.
 
 ## Acceptance criteria
 
-`offline.html` metadata equals `APPEARANCE_THEME_COLORS.dark`; existing manifest/icon/offline CSS contracts remain green; frontend unit/build and repository CI pass.
+Project state names current main and latest verified Stage SHA, records #201 node-level audit and active Figma limitations, records #505/#506/#507 delivery, and leaves `.agents/current/*` clean for the next task.
 
 ## Required checks
 
-Frontend lint/typecheck/unit/build plus repository-selected CI and clean review audit.
+Agent Docs classifier/harness validation only; runtime jobs must remain skipped.
 
-## Residual manual gate
+## Risks
 
-Native iOS/Android/desktop install and cold-start appearance still require real-device validation.
+Stale delivery claims if final Stage evidence is copied before completion.
 
 ## Rollback
 
-Revert the Issue #68 follow-up squash merge.
+Revert the docs-only reconciliation squash merge.
