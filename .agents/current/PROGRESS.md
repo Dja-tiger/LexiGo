@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-14 23:25 Europe/Moscow
+## 2026-08-14 23:27 Europe/Moscow
 
 ### Verified
 
@@ -13,7 +13,8 @@
 - Candidate `23843e3bb3180b6390654623a37741cf587506c8` removed only screenshot-time `animations: "disabled"`. CI #3504 attempt 1 was clean, but the mandatory identical-head Visual rerun (job `94886550359`) rejected it: first compact Dictionary lifecycle produced `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`, retry produced approved `e140...`, final summary was `1 flaky`, `56 passed`, `84 skipped`.
 - Pairwise raw-capture equality still did not fail, so each lifecycle remains internally stable; the hash switch occurs between browser/test lifecycles rather than adjacent screenshots.
 - `installDeterministicRuntime()` already injects `animation: none`, `transition: none`, `scroll-behavior: auto` and transparent caret before page load.
-- Current commit `50d100e715ed57ba3c598820a7c5c7f61f504391` removes only screenshot-time `caret: "hide"`; commit diff is exactly one deletion in `captureSystemState()`.
+- Code commit `50d100e715ed57ba3c598820a7c5c7f61f504391` removes only screenshot-time `caret: "hide"`; its commit diff is exactly one deletion in `captureSystemState()`.
+- Agent Harness reconciliation is now on top of that code change; current branch head is `c3c1e62d192a536cf19d401117a134d71118a192`.
 
 ### Finding
 
@@ -35,7 +36,7 @@ Still under test. Current evidence rules out focus normalization, global Skia/ra
 - `frontend/playwright.visual.config.ts` remains byte-identical to `main` and absent from the PR diff;
 - hashes/snapshots/product source remain unchanged;
 - CI #3504 attempt 1 proved `23843e3b...` can produce a clean first-attempt approved capture, but that single run was not accepted without the required rerun;
-- current `50d100e7...` diff readback confirms only `caret: "hide"` was removed.
+- code commit `50d100e7...` readback confirms only `caret: "hide"` was removed.
 
 ### Checks failed
 
@@ -44,8 +45,8 @@ Still under test. Current evidence rules out focus normalization, global Skia/ra
 
 ### Current branch head
 
-`50d100e715ed57ba3c598820a7c5c7f61f504391`
+`c3c1e62d192a536cf19d401117a134d71118a192`
 
 ### Next action
 
-Run authoritative Linux CI for `50d100e7...`. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate. If the first Visual run is clean, rerun the critical Visual job on the same immutable head before acceptance.
+Run authoritative Linux CI for `c3c1e62d...`. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate. If the first Visual run is clean, rerun the critical Visual job on the same immutable head before acceptance.
