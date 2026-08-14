@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-14 23:27 Europe/Moscow
+## 2026-08-14 23:28 Europe/Moscow
 
 ### Verified
 
@@ -14,7 +14,7 @@
 - Pairwise raw-capture equality still did not fail, so each lifecycle remains internally stable; the hash switch occurs between browser/test lifecycles rather than adjacent screenshots.
 - `installDeterministicRuntime()` already injects `animation: none`, `transition: none`, `scroll-behavior: auto` and transparent caret before page load.
 - Code commit `50d100e715ed57ba3c598820a7c5c7f61f504391` removes only screenshot-time `caret: "hide"`; its commit diff is exactly one deletion in `captureSystemState()`.
-- Agent Harness reconciliation is now on top of that code change; current branch head is `c3c1e62d192a536cf19d401117a134d71118a192`.
+- Agent Harness reconciliation is on top of that code change. Resolve the immutable candidate head from the live branch ref before evaluating CI.
 
 ### Finding
 
@@ -45,8 +45,8 @@ Still under test. Current evidence rules out focus normalization, global Skia/ra
 
 ### Current branch head
 
-`c3c1e62d192a536cf19d401117a134d71118a192`
+Resolve from live branch ref; do not move it again until current candidate CI and mandatory same-head Visual rerun are evaluated.
 
 ### Next action
 
-Run authoritative Linux CI for `c3c1e62d...`. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate. If the first Visual run is clean, rerun the critical Visual job on the same immutable head before acceptance.
+Run authoritative Linux CI for the frozen live head. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate. If the first Visual run is clean, rerun the critical Visual job on the same immutable head before acceptance.
