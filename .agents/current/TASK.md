@@ -6,7 +6,7 @@
 - Branch: `chore/frontend-dev-deps-fresh-main`
 - Base SHA: `180e64624900c74ea64c5a99f9d185cf2ff0c5a9`
 - Head SHA: resolve from live branch ref after final harness write; immutable-head CI must match that exact SHA.
-- PR: create after dependency integration and read-back audit.
+- PR: #512 — `build(deps-dev): refresh frontend development toolchain`.
 
 ## Objective
 
