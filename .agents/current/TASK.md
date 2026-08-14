@@ -6,7 +6,7 @@
 - Branch: `test/issue-518-dictionary-empty-visual-determinism`
 - Base SHA: `22c84c630a76384a02e1a785c44bc24b064895ff`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #520 — `test(figma): stabilize Dictionary Empty baseline 79:93`
 
 ## Objective
 
