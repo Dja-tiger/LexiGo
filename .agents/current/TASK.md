@@ -5,8 +5,8 @@
 - Issue: dependency maintenance; supersedes stale Dependabot PR #478 on fresh `main`.
 - Branch: `chore/go-redis-9-22-fresh-main`
 - Base SHA: `e034fa155b18f1053f43ac492417ac4955169cf7`
-- Head SHA: resolve from live branch ref
-- PR: create after implementation read-back.
+- Head SHA: resolve from live branch ref after final harness write; immutable-head CI must match that exact SHA.
+- PR: #510 — `build(deps): bump go-redis to 9.22.0 on current main`.
 
 ## Objective
 
