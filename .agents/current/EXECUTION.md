@@ -12,43 +12,45 @@
 ### GitHub / CI root-cause analysis
 
 Purpose:
-Make Figma `79:93` capture deterministic without changing approved design evidence.
+Make Figma `79:93` raw-PNG capture deterministic without changing approved design evidence.
 
 Instruction source:
-Repository Agent Harness, GitHub/CI skills, Chromium primary switch source.
+Repository Agent Harness, GitHub/CI skills and Chromium primary switch sources.
 
 Version or verification date:
 2026-08-14.
 
 Inputs:
-Issue #518; exact-main #3486; PR #520 CI #3491; failed capture artifacts; approved SHA `e1405517...`.
+Issue #518; exact-main #3486; PR #520 CI #3491/#3496; failed visual artifacts; approved SHA `e1405517...`.
 
 Files inspected:
-System State visual test; Dictionary async owners; `AsyncStatePanel`; System State CSS; calendar-reminder component/CSS; Playwright visual config; CI logs/traces/PNGs.
+System State/Phrases visual owners, Dictionary async owners, AsyncStatePanel, reminder CSS, Playwright visual config, CI logs/traces/PNGs, Chromium compositor/raster switch sources.
 
 Actions performed:
-Proved async data completes before capture; tested and rejected focus-only normalization; compared same-run PNGs pixel-by-pixel; localized remaining variance to three 1-LSB pixels on the calendar reminder blur shadow; restored System State test exactly to `main`; added `--disable-skia-runtime-opts` only to the compact visual Chromium project.
+Rejected focus-state normalization; proved pixel-level raster noise; rejected `--disable-skia-runtime-opts` because it changed approved Phrases compact hashes and did not remove `79:93` flakiness; restored normal raster algorithm; narrowed the next experiment to `--num-raster-threads=1` on `visual-compact` only.
 
 Commands or procedures:
-Connector exact source/log/artifact reads, local pixel-diff analysis, Chromium primary-source verification, branch-only writes with read-back.
+Exact GitHub source/log/artifact reads; pixel-diff analysis; primary-source switch verification; fail-closed branch writes.
 
 Artifacts produced:
-Draft PR #520 now contains only the compact Skia baseline launch flag plus Agent Harness records. Approved hashes, snapshots and product source are unchanged.
+Draft PR #520 now contains only a single-raster-worker launch flag for compact Chromium plus Agent Harness records. All product source, System State test source, hashes and snapshots equal `main`.
 
 Result:
-Second root-cause candidate is ready for immutable-head CI. It is accepted only if all existing compact baselines remain unchanged and `79:93` passes first attempt with no flaky classification.
+Third candidate ready for immutable-head CI. Passing requires all approved compact output unchanged and `79:93` clean on the first Playwright attempt.
 
 Failures:
-First #520 candidate failed authoritative visual job `94811360746`: focus normalization produced `31cc...` then `4f06...`, rejecting that hypothesis. Live Figma MCP remains quota-blocked.
+- CI #3491 rejected focus-only capture normalization.
+- CI #3496 rejected Skia baseline algorithm mode: Phrases detail compact Light/Dark hashes changed and Dictionary Empty remained flaky.
+- live Figma MCP remains quota-blocked.
 
 Root cause:
-Current boundary is raster-level Skia blur variation. CPU runtime-dispatch is the active hypothesis, not yet proven.
+Still under test; raster worker scheduling is the current narrow hypothesis.
 
 Fallback:
-If baseline Skia mode changes approved renders or still flakes, reject it and continue raster/process diagnosis; never add sleeps/tolerances/alternate hashes or promote an unreviewed baseline.
+If one raster worker still flakes or changes approved output, revert it and continue compositor/raster diagnosis without tolerances, sleeps, retries or baseline promotion.
 
 Limitations:
-No new Figma render can be pulled while quota is exhausted. Historical PR #239 approval remains authoritative.
+Historical Figma/PR #239 approval remains authoritative until live Figma access returns.
 
 Reusable lesson:
-For raw content-addressed screenshots, a handful of 1-LSB blur pixels can fail SHA equality even when DOM/layout/data are identical; renderer determinism must be tested at the rasterizer boundary rather than hidden with retries.
+A deterministic visual fix must preserve all approved content-addressed output; renderer switches that alter legitimate baselines are evidence, not acceptable fixes.
