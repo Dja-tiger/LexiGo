@@ -17,15 +17,21 @@ Eliminate nondeterministic raw-PNG capture for approved Figma `79:93` while pres
 - focus-only capture normalization was rejected by CI #3491;
 - `--disable-skia-runtime-opts` was rejected by CI #3496 because it changed approved Phrases compact hashes and `79:93` still flaked;
 - `--num-raster-threads=1` was rejected by CI #3501 because both Dictionary captures remained `dd2d...` and an unrelated approved `scenario-lessons-compact-light` baseline regressed;
-- same-run pixel evidence localizes the `e140...` / `dd2d...` variance to a few 1-LSB raster pixels around the fixed route reminder shadow, outside Dictionary content/data/layout;
+- double-rAF/layout stabilization was rejected by CI #3503 as a complete fix: first Dictionary attempt produced stable `dd2d...`, retry produced approved `e140...`, and Playwright reported `1 flaky`;
+- because the pairwise assertion did not fail on either attempt, the raw PNG is deterministic inside one browser/test lifecycle and the `dd2d...` / `e140...` switch happens between lifecycles;
+- same-run pixel evidence localizes the variance to a few 1-LSB raster pixels around the fixed route reminder shadow, outside Dictionary content/data/layout;
 - `calendar-reminder-entry.css` owns that fixed summary and uses an unchanged translucent background plus `box-shadow`; no production CSS defect has been proven.
+
+## Current hypothesis
+
+The content-addressed helper still asks `page.screenshot()` to disable animations even though `installDeterministicRuntime()` already injects `animation: none`, `transition: none`, `scroll-behavior: auto` and a transparent caret before page load. Playwright documents screenshot `animations: "disabled"` as an active state mutation: finite animations are fast-forwarded and infinite animations are canceled/replayed. The next candidate removes only that screenshot-time mutation and leaves deterministic runtime ownership intact.
 
 ## Scope
 
-- restore `visual-compact` Chromium launch configuration exactly to `main`;
-- replace the fixed `100 ms` screenshot delay with explicit font/scroll/layout/paint readiness in `system-states-visual.spec.ts`;
-- use two animation-frame paint barriers and verify layout geometry is unchanged across consecutive frames;
-- for content-addressed System State captures, require two consecutive raw PNG captures of the same steady state to be byte-identical before comparing their SHA to the approved Figma hash;
+- keep `visual-compact` Chromium launch configuration exactly equal to `main`;
+- keep explicit font/scroll/layout/paint readiness and consecutive double-rAF geometry proof;
+- keep two consecutive raw PNG captures and require them to be byte-identical before approved-SHA comparison;
+- remove only `animations: "disabled"` from the raw content-addressed `page.screenshot()` call, allowing its default non-mutating animation mode while deterministic runtime CSS remains authoritative;
 - keep every approved hash and every snapshot file unchanged;
 - accept only a clean first Playwright test attempt with no flaky classification.
 
@@ -57,7 +63,8 @@ Eliminate nondeterministic raw-PNG capture for approved Figma `79:93` while pres
 ## Runtime / test owners
 
 - content-addressed visual owner: `frontend/e2e/system-states-visual.spec.ts`
-- compact Chromium project owner: `visual-compact` in `frontend/playwright.visual.config.ts`
+- deterministic motion owner: `installDeterministicRuntime()` in `frontend/e2e/support/quality-gates.ts` (inspected, unchanged)
+- compact Chromium project owner: `visual-compact` in `frontend/playwright.visual.config.ts` (equal to `main`)
 - fixed reminder presentation owner inspected only for diagnosis: `frontend/app/calendar-reminder-entry.css`
 
 ## Documentation owners
@@ -91,7 +98,7 @@ Eliminate nondeterministic raw-PNG capture for approved Figma `79:93` while pres
 
 ## Risks
 
-- a double-rAF/layout barrier may prove that `dd2d...` is already a stable compositor output rather than eliminate it; that result rejects the candidate and preserves the existing baseline;
+- removing screenshot-time animation mutation may leave `dd2d...` stable, proving that screenshot animation handling is not the lifecycle switch;
 - a consecutive-capture assertion can expose additional unstable System State captures; any such failure is evidence to classify, not a reason to weaken the gate.
 
 ## Rollback
