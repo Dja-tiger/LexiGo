@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route, type TestInfo } from "@playwright/test";
 
 import {
   QUALITY_WORDS,
@@ -78,17 +78,47 @@ async function installAppearance(page: Page, appearance: ExplicitAppearance): Pr
   }, appearance);
 }
 
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  }));
+  expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+}
+
 async function stabilize(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await document.fonts.ready;
     window.scrollTo({ top: 0, behavior: "auto" });
   });
   await page.waitForTimeout(100);
-  const dimensions = await page.evaluate(() => ({
-    viewportWidth: document.documentElement.clientWidth,
-    contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  await expectNoHorizontalOverflow(page);
+}
+
+async function stabilizeStaticFigmaState(page: Page, transientFocusOwner: Locator): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  });
+
+  // AsyncStatePanel intentionally focuses empty/error results for accessibility. Figma 79:93
+  // represents the steady static Empty surface rather than a keyboard-focus treatment, so the
+  // visual capture explicitly waits for that focus effect and then removes only the transient
+  // capture focus. Production focus behavior is not changed.
+  await expect(transientFocusOwner).toBeFocused();
+  await transientFocusOwner.evaluate((node) => (node as HTMLElement).blur());
+  await expect(transientFocusOwner).not.toBeFocused();
+  expect(await transientFocusOwner.evaluate((node) => node.matches(":focus-visible"))).toBe(false);
+
+  // Two paint frames replace the arbitrary post-font sleep for this static Figma state and make
+  // the capture occur after blur/style/layout invalidation has reached a stable rendered frame.
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
   }));
-  expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+
+  await expectNoHorizontalOverflow(page);
 }
 
 async function expectApprovedSystemStateBaseline(
@@ -165,9 +195,15 @@ test.describe("System state Figma visual baselines", () => {
     });
 
     await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("status", { name: "Слова не найдены" })).toBeVisible();
+    const emptyState = page.getByRole("status", { name: "Слова не найдены" });
+    await expect(page.locator('[data-route-client-island="dictionary"]')).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "light");
+    await expect(page.getByRole("heading", { name: "Словарь", exact: true })).toBeVisible();
+    await expect(page.getByText("3 слова", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Серия: 7 дней")).toHaveCount(1);
+    await expect(emptyState).toBeVisible();
     await expect(page.getByRole("button", { name: "Добавить термин", exact: true })).toHaveCount(0);
-    await stabilize(page);
+    await stabilizeStaticFigmaState(page, emptyState);
     await expectApprovedSystemStateBaseline(page, testInfo, "compact-empty-light");
     expect(runtimeErrors).toEqual([]);
   });
