@@ -4,13 +4,15 @@
 
 - Last verified: 2026-08-14 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Live repository `main`: `c4b3f0145cee93be6e53de3775f8406bf6ed3e6e` after PR #502.
-- Latest deployed runtime/Stage SHA: `7081eb7b2eb28dbc605d9c5d546edf5690226525`.
-- Latest Issue #25 product merge contained in that runtime: Phase 4 squash `810fa59a748477f8723a19dee03e61517282df30`.
+- Live repository `main`: `07503e6fdd619a924b72c9f48f80f482bf36e28d` after PR #507.
+- Latest deployed runtime/Stage SHA: `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
+- Stage run `31778699446` completed successfully for that exact SHA; deploy, public smoke and public browser validation passed, including 12/12 public Chromium/iOS WebKit checks.
+- Issue #68 automated PWA appearance work is complete: PR #506 merged as `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`, and the offline metadata follow-up PR #507 merged as `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
+- Issue #68 is closed. Physical installed-app icon/splash/cold-start acceptance remains separately tracked by #508 and is not claimed from CI.
+- Latest Issue #25 product merge contained in the deployed runtime remains Phase 4 squash `810fa59a748477f8723a19dee03e61517282df30`.
 - Figma provenance PR #488 merged as `3e8fdafb08f7789ca5a0b53e2e73a79bc7805b35`.
-- Figma route handoff PR #501 passed full CI #3434 and merged as `83bfd5ddfbee3d2ee858e1d0f00e79ba47791ea9`.
-- Figma Git LFS transport PR #502 passed full CI #3435 and merged as `c4b3f0145cee93be6e53de3775f8406bf6ed3e6e`.
-- Deploy Stage for repository-only Figma/LFS changes was skipped by scope; no runtime deployment is claimed for #488/#501/#502.
+- Figma route handoff PR #501 merged as `83bfd5ddfbee3d2ee858e1d0f00e79ba47791ea9`.
+- Figma Git LFS transport PR #502 merged as `c4b3f0145cee93be6e53de3775f8406bf6ed3e6e`.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
@@ -30,6 +32,15 @@
 - Guest catalog content and authenticated scheduler/progress state remain separate security boundaries.
 - Existing frontend speech playback remains the browser speech owner.
 
+## PWA appearance status
+
+- Canonical semantic appearance colors are Light `#f4f7f5` and Dark `#10211d`.
+- Manifest/runtime/offline metadata and offline presentation use the canonical appearance contract.
+- Install metadata uses dedicated `any`, `maskable` and `monochrome` icon assets rather than declaring one raster asset as both `any` and `maskable`.
+- Manifest orientation lock is removed; service-worker precache includes the install assets delivered by #506.
+- Exact deployed SHA `07503e6fdd619a924b72c9f48f80f482bf36e28d` passed Stage/public automated validation.
+- Native iOS/iPadOS, Android and desktop install surfaces remain manual acceptance under #508.
+
 ## Figma source-of-truth status
 
 - Canonical cloud file: `LexiGo Design System`, file key `3xXmBWnf38jbvLjtziwber`.
@@ -38,7 +49,7 @@
 - PR #501 makes `frontend/docs/adaptive-knowledge-coach.md` the repository-side canonical route → Figma node → Issue handoff.
 - PR #502 adds Git LFS routing for `design/figma/*.fig`; expected destination is `design/figma/LexiGo Design System.fig`.
 - The native `.fig` binary is **not yet stored in GitHub**. Issue #487 remains open until the exact binary is uploaded through a binary-safe path and its SHA-256 is verified.
-- Live Figma inspection/editing is blocked by the connected Figma MCP Starter-plan tool-call limit. Do not claim Screen Map or canvas synchronization while this external limit is active.
+- Live Figma inspection/editing remains constrained by the connected Figma MCP Starter-plan tool-call limit; do not claim Screen Map or canvas synchronization without live evidence.
 - Issue #203 remains open for live Screen Map/archive reconciliation. Issue #205 remains the final route-by-route parity audit.
 
 ## Delivered learning/platform foundations
@@ -61,20 +72,23 @@
 ## Current state
 
 - Parent #25 remains open after four delivered phases.
-- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are clean reset templates before the next product slice.
-- Issue #68 is the next verified independent product slice: align PWA manifest/theme/icon semantics.
-- Real-device iOS/Android install and cold-start acceptance for #68 remains manual and must not be claimed from CI.
+- Issue #68 is completed and closed after exact-main Stage/public validation.
+- Issue #508 is the residual physical-device PWA acceptance gate and contains no implementation scope unless testing discovers a reproducible defect.
+- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product slice.
+- Issue #78 remains the independent security hardening workstream for CSP enforcement promotion; production enforcement is authorization-sensitive and must preserve the staged rollout contract.
+- No active product PR was present at this verification point; open PRs were dependency-maintenance branches.
 
 ## Remaining roadmap
 
-- #68: atomic PWA manifest/theme/icon parity slice.
+- #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
 - #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #201/#18: complete canonical First Use design states, then implement the approved flow.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
-- #78: remaining CSP enforcement promotion is manual/authorized production work.
-- #65/#461: automated implementation evidence and physical-device sign-off remain separate.
+- #78: complete the remaining CSP/security-header enforcement promotion through an authorized staged rollout.
+- #65/#461: automated reduced-motion implementation evidence and physical-device accessibility sign-off remain separate.
 - #205: final route-by-route visual parity after #201/#203.
+- #133: moderated usability validation after the core routes and final visual parity are ready.
 
 ## Evidence correction
 
