@@ -10,27 +10,28 @@
 
 ## Objective
 
-Eliminate nondeterministic raw-PNG capture for the approved Figma `Mobile / Dictionary Empty / Light` state (`79:93`) while preserving approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`, product UI and all other System State baselines.
+Eliminate nondeterministic raw-PNG capture for the approved Figma `Mobile / Dictionary Empty / Light` state (`79:93`) while preserving approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`, product UI and all other approved visual baselines.
 
 ## Scope
 
-- change only the authoritative System State visual test lifecycle;
-- make Dictionary Empty capture wait for its semantic final state;
-- normalize the static Figma capture away from transient programmatic `:focus-visible` presentation without changing production focus behavior;
-- replace the fixed post-font sleep for this state with explicit render-frame stabilization;
-- keep raw SHA equality strict.
+- restore the authoritative System State test lifecycle to `main` after CI rejected the focus-only hypothesis;
+- make the compact Chromium visual project use Skia's baseline CPU code path via Chromium `--disable-skia-runtime-opts`;
+- keep every existing raw PNG/SHA baseline strict and unchanged;
+- use the full authoritative visual suite as the compatibility test: if any approved compact baseline changes, reject this rasterizer hypothesis rather than promoting hashes.
 
 ## Non-goals
 
-- no baseline/hash promotion to `dd2d0c...`;
+- no baseline/hash promotion to `dd2d0c...`, `31cc...` or `4f06...`;
 - no pixel tolerance or retry policy weakening;
 - no production React/CSS/Figma changes;
-- no arbitrary longer sleep;
-- no unrelated visual baseline changes.
+- no arbitrary sleep;
+- no focus normalization in the final candidate;
+- no unrelated Playwright project behavior changes.
 
 ## Allowed paths
 
-- `frontend/e2e/system-states-visual.spec.ts`
+- `frontend/playwright.visual.config.ts`
+- `frontend/e2e/system-states-visual.spec.ts` only to restore it exactly to `main`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -47,44 +48,47 @@ Eliminate nondeterministic raw-PNG capture for the approved Figma `Mobile / Dict
 
 - Dictionary route island: `LexigoDictionaryApp`
 - empty state: `DictionaryCatalog` / `AsyncStatePanel`
-- visual owner: `frontend/e2e/system-states-visual.spec.ts`
+- content-addressed visual owner: `frontend/e2e/system-states-visual.spec.ts`
+- Chromium raster baseline owner for this experiment: `visual-compact` in `frontend/playwright.visual.config.ts`
 
 ## Documentation owners
 
 - Figma node `79:93`
 - historical approval: PR #239
 - follow-up evidence: Issue #518
+- Chromium primary-source switch contract: `--disable-skia-runtime-opts` disables runtime-detected high-end CPU optimizations in Skia to force a baseline path useful for web/layout tests
 
 ## Invariants
 
 - approved `79:93` SHA remains `e1405517...`;
-- all other System State hashes remain byte-for-byte unchanged;
+- all other approved hashes/snapshots remain unchanged;
 - production accessibility auto-focus remains unchanged;
-- visual capture represents the static Figma frame, not a transient keyboard-focus treatment;
-- no hidden product defect is masked by retry/sleep/tolerance.
+- visual config remains Chromium-only and changes only the compact visual project;
+- no hidden product defect is masked by retry/sleep/tolerance;
+- passing requires a clean first Playwright attempt, not a flaky success.
 
 ## Acceptance criteria
 
-- `compact Dictionary empty light` passes approved SHA on the first Playwright attempt;
+- all compact content-addressed/System State baselines keep their existing approved hashes;
+- `compact Dictionary empty light` produces approved `e1405517...` on the first Playwright attempt;
 - authoritative visual job reports no flaky classification for this test;
-- all System State hashes remain unchanged;
 - immutable-head full CI passes;
 - exact-main CI passes without controlled rerun;
 - Stage/public validation passes.
 
 ## Required checks
 
-- diff/source audit;
-- authoritative Linux visual job;
+- diff/source audit proving the failed focus experiment is fully removed;
+- authoritative Linux visual job with unchanged raw hashes/snapshots;
 - full CI on frozen head;
 - review/thread audit;
 - exact-main CI and Stage after merge.
 
 ## Risks
 
-- `dd2d...` may be caused by rasterization rather than focus state; CI result must classify this before further changes;
-- over-normalizing focus could hide accessibility behavior, so the change is test-capture-only and the production focus contract remains covered elsewhere.
+- forcing Skia baseline code paths may intentionally alter other compact raster output; if any existing hash/snapshot changes, this candidate is rejected rather than updating design evidence;
+- raster nondeterminism may live outside Skia CPU runtime dispatch; in that case continue diagnosis without weakening the gate.
 
 ## Rollback
 
-Revert the test-only change; do not update Figma design or approved hashes.
+Revert the visual-project launch flag. Do not update Figma design or approved hashes.
