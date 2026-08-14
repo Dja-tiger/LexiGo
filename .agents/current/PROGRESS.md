@@ -6,41 +6,49 @@
 
 - Issue #525 is the atomic `/learn` Lesson Composer child of umbrella #205.
 - Fresh base `main` is `b29344917805581cdf209730da2cd56570db41b4` after docs-only PR #524 reconciliation.
-- No open PR or conflicting `issue-525` branch existed before branch creation.
-- Branch `test/issue-525-learn-figma-parity` was created from the exact base SHA.
+- Branch `test/issue-525-learn-figma-parity` and PR #526 were created from that exact base.
 - Repository handoff identifies mobile collapsed `202:6`, mobile manual `203:5`, desktop full composer `204:2`; Light/Dark share ownership/geometry with semantic tokens.
-- Existing composer E2E already owns progressive-disclosure interaction/payload and desktop behavior; `learn-browser-zoom.spec.ts` owns true 200% zoom; reduced-motion and touch targets have separate owners.
+- `frontend/e2e/learn-route-island.spec.ts` contains six canonical cases and explicit Playwright `figma` annotations.
+- Initial candidate `168cc4c411bffccdd77ae95c819117a557faed31` completed full CI #3524 successfully, including both UI shards.
+- Audit of the actual `frontend/package.json` `test:e2e:ui` command proved that the new `learn-route-island.spec.ts` was not registered in the authoritative UI collection, so CI #3524 did not validate the new parity contract despite being green.
+- `frontend/playwright.config.ts` uses `testDir: "./e2e"`, but repository CI does not run an unqualified Playwright collection for UI shards; `.github/workflows/ci.yml` invokes `npm run test:e2e:ui -- --shard=1/2` and `--shard=2/2`, therefore explicit script registration is required.
+- Task scope was expanded only to permit this collection registration; no CI workflow, Playwright config, production React/CSS, backend or dependency changes are needed.
+- `frontend/package.json` now includes `e2e/learn-route-island.spec.ts` in `test:e2e:ui`.
+- `main` remained unchanged at `b29344917805581cdf209730da2cd56570db41b4` through the corrective branch writes.
 - Live Figma MCP remains Starter-plan tool-call limited; no new canvas state is claimed.
 
 ### Finding
 
-The missing #205 evidence is a narrow executable `/learn` parity matrix tying the approved node IDs, semantic appearance, route/shell ownership, horizontal geometry and reload semantics together without duplicating existing behavior tests.
+The parity test itself was correct, but the first green PR CI was insufficient evidence because the repository uses an explicit allow-list for the UI Playwright suite.
 
 ### Root cause
 
-Current Learn coverage proves behavior and accessibility slices independently but does not provide one canonical route-level Figma parity contract across collapsed/manual/desktop states and Light/Dark appearance.
+`test:e2e:ui` enumerates spec paths explicitly. Adding a new spec under `frontend/e2e/` does not automatically make it authoritative CI coverage.
 
 ### Changed files
 
-- `.agents/current/TASK.md` — Issue #525 execution contract.
-- `.agents/current/PROGRESS.md` — current evidence and plan.
+- `frontend/e2e/learn-route-island.spec.ts` — six-case Learn Composer parity contract.
+- `frontend/package.json` — register the new spec in the existing `test:e2e:ui` collection.
+- `.agents/current/TASK.md` — Issue #525 execution contract, including collection registration scope.
+- `.agents/current/PROGRESS.md` — current evidence and CI collection finding.
+- `.agents/current/EXECUTION.md` — tool/procedure provenance and corrective evidence.
 
 ### Checks passed
 
-- exact fresh-main SHA verified;
-- open PR and branch-conflict audit clean;
-- task branch created from exact base;
-- TASK read-back verified;
-- `main` remained unchanged after the first task write.
+- initial full CI #3524 green on `168cc4c411bffccdd77ae95c819117a557faed31`;
+- review-thread audit clean before the corrective change;
+- authoritative collection audit identified the missing registration before merge;
+- package read-back confirms `e2e/learn-route-island.spec.ts` is now in `test:e2e:ui`;
+- `main` SHA remained unchanged after task/package writes.
 
 ### Checks failed
 
-- none.
+- initial immutable candidate cannot be used as merge evidence because CI #3524 did not execute the newly added parity spec.
 
 ### Current branch head
 
-Resolve from live branch ref after this progress write. Previous head after TASK write: `260508c0eaff1f789d289cd1b6fb5c1c8e53980f`.
+Resolve from live PR after this progress write. Previous head after the collection fix: `83ec94fccf1d25e0e12803904a594535b0e31a07`.
 
 ### Next action
 
-Record execution provenance, inspect deterministic fixture signatures and fresh Learn ownership selectors, then add the minimal test-only canonical parity spec.
+Update execution provenance, then treat the resulting head as a new immutable candidate and require a fresh full CI. Merge is allowed only after the new UI shards execute the registered Learn parity spec successfully and review/head guards remain clean.
