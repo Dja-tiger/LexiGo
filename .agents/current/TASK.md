@@ -6,7 +6,7 @@
 - Branch: `test/issue-522-home-figma-parity`
 - Base SHA: `7837f01bb969ab0551d06ab8f3288d570734c33f`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #523 — `test(figma): add canonical Home parity contract`
 
 ## Objective
 
