@@ -17,6 +17,21 @@ type SystemStateVisualBaseline =
   | "desktop-offline-dark"
   | "compact-recall-offline-dark";
 
+type StableLayoutSample = {
+  viewportWidth: number;
+  viewportHeight: number;
+  contentWidth: number;
+  contentHeight: number;
+  scrollX: number;
+  scrollY: number;
+  reminderSummary: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+};
+
 const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, {
   figmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
   sha256: string;
@@ -78,17 +93,56 @@ async function installAppearance(page: Page, appearance: ExplicitAppearance): Pr
   }, appearance);
 }
 
+async function sampleLayoutAfterPaintBarrier(page: Page): Promise<StableLayoutSample> {
+  return page.evaluate(() => new Promise<StableLayoutSample>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const reminderSummary = document.querySelector<HTMLElement>(".lx-route-reminder-entry > summary");
+        const reminderRect = reminderSummary?.getBoundingClientRect();
+        resolve({
+          viewportWidth: document.documentElement.clientWidth,
+          viewportHeight: document.documentElement.clientHeight,
+          contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+          contentHeight: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          reminderSummary: reminderRect ? {
+            x: reminderRect.x,
+            y: reminderRect.y,
+            width: reminderRect.width,
+            height: reminderRect.height,
+          } : null,
+        });
+      });
+    });
+  }));
+}
+
 async function stabilize(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await document.fonts.ready;
-    window.scrollTo({ top: 0, behavior: "auto" });
+    window.scrollTo({ left: 0, top: 0, behavior: "auto" });
   });
-  await page.waitForTimeout(100);
-  const dimensions = await page.evaluate(() => ({
-    viewportWidth: document.documentElement.clientWidth,
-    contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-  }));
-  expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+
+  const firstLayout = await sampleLayoutAfterPaintBarrier(page);
+  const secondLayout = await sampleLayoutAfterPaintBarrier(page);
+
+  expect(
+    secondLayout,
+    "System-state visual layout must stay unchanged across consecutive paint barriers before raw capture",
+  ).toEqual(firstLayout);
+  expect(secondLayout.contentWidth).toBeLessThanOrEqual(secondLayout.viewportWidth + 1);
+  expect(secondLayout.scrollX).toBe(0);
+  expect(secondLayout.scrollY).toBe(0);
+}
+
+async function captureSystemState(page: Page): Promise<Buffer> {
+  return page.screenshot({
+    animations: "disabled",
+    caret: "hide",
+    fullPage: false,
+    scale: "css",
+  });
 }
 
 async function expectApprovedSystemStateBaseline(
@@ -97,19 +151,28 @@ async function expectApprovedSystemStateBaseline(
   baselineName: SystemStateVisualBaseline,
 ): Promise<void> {
   const baseline = SYSTEM_STATE_VISUAL_BASELINES[baselineName];
-  const screenshot = await page.screenshot({
-    animations: "disabled",
-    caret: "hide",
-    fullPage: false,
-    scale: "css",
-  });
-  await testInfo.attach(`system-state-${baselineName}.png`, {
-    body: screenshot,
+  const firstCapture = await captureSystemState(page);
+  await testInfo.attach(`system-state-${baselineName}-capture-1.png`, {
+    body: firstCapture,
     contentType: "image/png",
   });
-  const actualSha256 = createHash("sha256").update(screenshot).digest("hex");
+
+  await sampleLayoutAfterPaintBarrier(page);
+
+  const secondCapture = await captureSystemState(page);
+  await testInfo.attach(`system-state-${baselineName}-capture-2.png`, {
+    body: secondCapture,
+    contentType: "image/png",
+  });
+
+  const firstSha256 = createHash("sha256").update(firstCapture).digest("hex");
+  const secondSha256 = createHash("sha256").update(secondCapture).digest("hex");
   expect(
-    actualSha256,
+    secondSha256,
+    `System state ${baselineName} must produce two consecutive identical steady-state captures; first=${firstSha256}, second=${secondSha256}`,
+  ).toBe(firstSha256);
+  expect(
+    firstSha256,
     `System state ${baselineName} must be manually reviewed against Figma ${baseline.figmaNode} before baseline promotion`,
   ).toBe(baseline.sha256);
 }
