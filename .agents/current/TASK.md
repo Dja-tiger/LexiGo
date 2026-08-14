@@ -6,7 +6,7 @@
 - Branch: `test/issue-525-learn-figma-parity`
 - Base SHA: `b29344917805581cdf209730da2cd56570db41b4`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #526 — `test(figma): add canonical Learn Composer parity contract`
 
 ## Objective
 
