@@ -12,43 +12,43 @@
 ### GitHub / CI root-cause analysis
 
 Purpose:
-Diagnose the Figma `79:93` visual flake without changing approved design evidence.
+Make Figma `79:93` capture deterministic without changing approved design evidence.
 
 Instruction source:
-Repository Agent Harness, GitHub skill and `gh-fix-ci` skill.
+Repository Agent Harness, GitHub/CI skills, Chromium primary switch source.
 
 Version or verification date:
 2026-08-14.
 
 Inputs:
-Issue #518; exact-main CI #3486; visual jobs `94801586389` and `94803997693`; approved/alternate PNG hashes.
+Issue #518; exact-main #3486; PR #520 CI #3491; failed capture artifacts; approved SHA `e1405517...`.
 
 Files inspected:
-`frontend/e2e/system-states-visual.spec.ts`, `frontend/components/dictionary-catalog.tsx`, `frontend/components/lexigo-dictionary-app.tsx`, `frontend/components/async-state.tsx`, `frontend/app/system-states.css`, Figma offline findings and CI trace/artifacts.
+System State visual test; Dictionary async owners; `AsyncStatePanel`; System State CSS; calendar-reminder component/CSS; Playwright visual config; CI logs/traces/PNGs.
 
 Actions performed:
-Proved source-tree/container equivalence, parsed failing trace timing, verified async requests complete before capture, inspected failed PNG/video frames, identified programmatic Empty-state focus plus `:focus-visible` rendering as the narrow capture-state variable, implemented a test-only static-capture normalization, and opened Draft PR #520.
+Proved async data completes before capture; tested and rejected focus-only normalization; compared same-run PNGs pixel-by-pixel; localized remaining variance to three 1-LSB pixels on the calendar reminder blur shadow; restored System State test exactly to `main`; added `--disable-skia-runtime-opts` only to the compact visual Chromium project.
 
 Commands or procedures:
-GitHub exact-source/log/artifact reads plus private trace/image inspection; no baseline or product writes.
+Connector exact source/log/artifact reads, local pixel-diff analysis, Chromium primary-source verification, branch-only writes with read-back.
 
 Artifacts produced:
-PR #520 changes only `system-states-visual.spec.ts` plus Agent Harness records. It waits final route/metadata/progress owners, waits the production auto-focus effect, blurs only the static screenshot owner, settles two animation frames and keeps strict raw SHA equality.
+Draft PR #520 now contains only the compact Skia baseline launch flag plus Agent Harness records. Approved hashes, snapshots and product source are unchanged.
 
 Result:
-Developer source implementation complete. The branch is to be frozen after this metadata write; authoritative Linux visual CI is the deciding root-cause test.
+Second root-cause candidate is ready for immutable-head CI. It is accepted only if all existing compact baselines remain unchanged and `79:93` passes first attempt with no flaky classification.
 
 Failures:
-Live Figma MCP remains blocked by Starter-plan quota.
+First #520 candidate failed authoritative visual job `94811360746`: focus normalization produced `31cc...` then `4f06...`, rejecting that hypothesis. Live Figma MCP remains quota-blocked.
 
 Root cause:
-Pending immutable-head CI confirmation; current evidence points to transient `:focus-visible` capture rather than data/network readiness.
+Current boundary is raster-level Skia blur variation. CPU runtime-dispatch is the active hypothesis, not yet proven.
 
 Fallback:
-If the first authoritative visual attempt still receives `dd2d...`, keep the baseline unchanged, classify the result as hypothesis rejection, and continue raster/process-level diagnosis; do not add sleeps, tolerances or alternate hashes.
+If baseline Skia mode changes approved renders or still flakes, reject it and continue raster/process diagnosis; never add sleeps/tolerances/alternate hashes or promote an unreviewed baseline.
 
 Limitations:
-No new Figma render can be pulled while quota is exhausted; existing node provenance and historical PR #239 approval remain authoritative.
+No new Figma render can be pulled while quota is exhausted. Historical PR #239 approval remains authoritative.
 
 Reusable lesson:
-For content-addressed Figma states, accessibility focus and static design capture are separate contracts; capture normalization must be test-only and explicit rather than altering production focus behavior.
+For raw content-addressed screenshots, a handful of 1-LSB blur pixels can fail SHA equality even when DOM/layout/data are identical; renderer determinism must be tested at the rasterizer boundary rather than hidden with retries.
