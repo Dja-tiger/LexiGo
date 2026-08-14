@@ -6,7 +6,7 @@
 - Branch: `chore/next-16-3-fresh-main`
 - Base SHA: `c3ba8a8756170171b8a40d10ac807a1886749eed`
 - Head SHA: resolve from live branch ref
-- PR: pending fresh-main delivery PR; original Dependabot input is #479
+- PR: #514 (fresh-main delivery); original Dependabot integration input was #479
 
 ## Objective
 
