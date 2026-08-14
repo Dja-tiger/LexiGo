@@ -70,6 +70,58 @@ const METADATA = {
   topics: [{ topic: "Frontend Architecture", count: 1, words: 1, phrases: 0 }],
 };
 
+type ExplicitAppearance = "light" | "dark";
+type CanonicalNavigation = "mobile" | "rail";
+
+type CanonicalHomeCase = {
+  name: string;
+  width: number;
+  height: number;
+  appearance: ExplicitAppearance;
+  navigation: CanonicalNavigation;
+  canvas: string;
+  designContract: string;
+};
+
+const CANONICAL_HOME_CASES: readonly CanonicalHomeCase[] = [
+  {
+    name: "mobile Dark",
+    width: 390,
+    height: 844,
+    appearance: "dark",
+    navigation: "mobile",
+    canvas: "#10211d",
+    designContract: "Figma 196:223",
+  },
+  {
+    name: "mobile Light",
+    width: 390,
+    height: 844,
+    appearance: "light",
+    navigation: "mobile",
+    canvas: "#f4f7f5",
+    designContract: "Figma 196:223 geometry + explicit Light tokens",
+  },
+  {
+    name: "desktop Light",
+    width: 1440,
+    height: 1024,
+    appearance: "light",
+    navigation: "rail",
+    canvas: "#f4f7f5",
+    designContract: "Figma 194:249",
+  },
+  {
+    name: "desktop Dark",
+    width: 1440,
+    height: 1024,
+    appearance: "dark",
+    navigation: "rail",
+    canvas: "#10211d",
+    designContract: "Figma 194:249 geometry + explicit Dark tokens",
+  },
+] as const;
+
 function lesson() {
   return {
     id: "00000000-0000-0000-0000-000000000251",
@@ -171,6 +223,105 @@ function visibleRouteLink(page: Page, view: "home" | "learn" | "library" | "prog
   return page.locator(`.lx-route-nav:visible [data-navigation-view="${view}"]`);
 }
 
+async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+  await page.addInitScript((value) => {
+    window.localStorage.setItem("lexigo.appearance.v1", value);
+  }, appearance);
+}
+
+async function expectHomeRouteOwner(page: Page, appearance?: ExplicitAppearance): Promise<void> {
+  await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
+  const island = page.locator('[data-route-client-island="home"]');
+  await expect(island).toBeVisible();
+  await expect(island).toHaveAttribute("data-figma-home-mobile", "196:223");
+  await expect(island).toHaveAttribute("data-figma-home-desktop", "194:249");
+  await expect(page.locator("#lexigo-main-content")).toHaveAttribute("aria-label", "Главная");
+  await expect(page.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
+
+  if (appearance) {
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
+  }
+}
+
+async function expectCanonicalHomeGeometry(
+  page: Page,
+  expected: CanonicalHomeCase,
+): Promise<void> {
+  const geometry = await page.evaluate(() => {
+    const root = document.documentElement;
+    const main = document.querySelector<HTMLElement>("#lexigo-main-content");
+    const island = document.querySelector<HTMLElement>('[data-route-client-island="home"]');
+
+    if (!main || !island) {
+      throw new Error("Home route geometry owner is not mounted");
+    }
+
+    const rect = (node: HTMLElement) => {
+      const value = node.getBoundingClientRect();
+      return {
+        left: value.left,
+        right: value.right,
+        top: value.top,
+        bottom: value.bottom,
+        width: value.width,
+        height: value.height,
+      };
+    };
+
+    const visibleNavigation = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-route-navigation]"),
+    )
+      .map((node) => {
+        const style = window.getComputedStyle(node);
+        return {
+          variant: node.dataset.routeNavigation ?? "",
+          display: style.display,
+          visibility: style.visibility,
+          box: rect(node),
+        };
+      })
+      .filter((item) => (
+        item.display !== "none"
+        && item.visibility !== "hidden"
+        && item.box.width > 0
+        && item.box.height > 0
+      ));
+
+    return {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      clientWidth: root.clientWidth,
+      scrollWidth: root.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth ?? 0,
+      canvas: window.getComputedStyle(root).getPropertyValue("--ak-color-canvas").trim(),
+      main: rect(main),
+      island: rect(island),
+      visibleNavigation,
+    };
+  });
+
+  expect(geometry.innerWidth).toBe(expected.width);
+  expect(geometry.innerHeight).toBe(expected.height);
+  expect(geometry.canvas).toBe(expected.canvas);
+  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(geometry.bodyScrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+
+  for (const owner of [geometry.main, geometry.island]) {
+    expect(owner.width).toBeGreaterThan(0);
+    expect(owner.left).toBeGreaterThanOrEqual(-1);
+    expect(owner.right).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  }
+
+  expect(geometry.visibleNavigation).toHaveLength(1);
+  const navigation = geometry.visibleNavigation[0];
+  expect(navigation.variant).toBe(expected.navigation);
+  expect(navigation.box.left).toBeGreaterThanOrEqual(-1);
+  expect(navigation.box.right).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(navigation.box.top).toBeGreaterThanOrEqual(-1);
+  expect(navigation.box.bottom).toBeLessThanOrEqual(geometry.innerHeight + 1);
+}
+
 test.describe.configure({ timeout: 90_000 });
 
 test("Home starts the due lesson and consumes resume=1 without an intermediate gate", async ({ context, page }, testInfo) => {
@@ -227,4 +378,30 @@ test("Home remains a dedicated entry across Home to product graph navigation and
   await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
   await expect(page.locator('[data-route-client-island="home"]')).toBeVisible();
   expect(state.refreshes).toBe(1);
+});
+
+test.describe("canonical Home Figma parity contract", () => {
+  for (const canonicalCase of CANONICAL_HOME_CASES) {
+    test(`${canonicalCase.name} uses canonical geometry and route chrome (${canonicalCase.designContract})`, async ({
+      context,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "desktop-chromium",
+        "Canonical Figma geometry is measured once in Chromium; the existing Home route/history and browser-owned zoom contracts remain independently covered.",
+      );
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installAppearance(page, canonicalCase.appearance);
+      await installAPI(context);
+
+      await page.goto("/");
+      await expectHomeRouteOwner(page, canonicalCase.appearance);
+      await expectCanonicalHomeGeometry(page, canonicalCase);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expectHomeRouteOwner(page, canonicalCase.appearance);
+      await expectCanonicalHomeGeometry(page, canonicalCase);
+    });
+  }
 });
