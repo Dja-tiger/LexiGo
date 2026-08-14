@@ -12,73 +12,88 @@
 
 Eliminate nondeterministic raw-PNG capture for approved Figma `79:93` while preserving approved SHA `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`, product UI and every other approved visual baseline.
 
+## Verified failure boundary
+
+- focus-only capture normalization was rejected by CI #3491;
+- `--disable-skia-runtime-opts` was rejected by CI #3496 because it changed approved Phrases compact hashes and `79:93` still flaked;
+- `--num-raster-threads=1` was rejected by CI #3501 because both Dictionary captures remained `dd2d...` and an unrelated approved `scenario-lessons-compact-light` baseline regressed;
+- same-run pixel evidence localizes the `e140...` / `dd2d...` variance to a few 1-LSB raster pixels around the fixed route reminder shadow, outside Dictionary content/data/layout;
+- `calendar-reminder-entry.css` owns that fixed summary and uses an unchanged translucent background plus `box-shadow`; no production CSS defect has been proven.
+
 ## Scope
 
-- keep `system-states-visual.spec.ts` exactly equal to `main`;
-- serialize compact Chromium raster tasks with `--num-raster-threads=1`;
-- keep Chromium's normal raster algorithm, all raw hashes and all snapshot files unchanged;
-- accept only a clean first-attempt authoritative visual run.
+- restore `visual-compact` Chromium launch configuration exactly to `main`;
+- replace the fixed `100 ms` screenshot delay with explicit font/scroll/layout/paint readiness in `system-states-visual.spec.ts`;
+- use two animation-frame paint barriers and verify layout geometry is unchanged across consecutive frames;
+- for content-addressed System State captures, require two consecutive raw PNG captures of the same steady state to be byte-identical before comparing their SHA to the approved Figma hash;
+- keep every approved hash and every snapshot file unchanged;
+- accept only a clean first Playwright test attempt with no flaky classification.
 
 ## Non-goals
 
 - no alternate hash/baseline promotion;
-- no tolerance/retry weakening or longer sleeps;
-- no focus normalization;
+- no tolerance or Playwright retry weakening;
+- no arbitrary sleeps or timeout inflation;
 - no production React/CSS/Figma changes;
-- no Skia runtime-optimization switch (rejected by CI #3496).
+- no global Chromium raster/Skia switches;
+- no snapshot updates.
 
 ## Allowed paths
 
 - `frontend/playwright.visual.config.ts`
+- `frontend/e2e/system-states-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ## Prohibited paths
 
-- `frontend/e2e/system-states-visual.spec.ts`
 - product CSS/components
 - workflows
 - hashes/snapshots
 - backend/deploy/dependencies
+- unrelated visual tests
 
-## Runtime owners
+## Runtime / test owners
 
 - content-addressed visual owner: `frontend/e2e/system-states-visual.spec.ts`
-- compact Chromium process owner: `visual-compact` in `frontend/playwright.visual.config.ts`
+- compact Chromium project owner: `visual-compact` in `frontend/playwright.visual.config.ts`
+- fixed reminder presentation owner inspected only for diagnosis: `frontend/app/calendar-reminder-entry.css`
 
 ## Documentation owners
 
 - Figma node `79:93`; historical approval PR #239; Issue #518.
-- Chromium primary source: `num-raster-threads` controls the number of raster-task worker threads.
+- Live Figma MCP is currently Starter-plan quota blocked, so no new design approval or canvas mutation is claimed.
 
 ## Invariants
 
 - approved `79:93` SHA remains `e1405517...`;
-- all other hashes/snapshots remain unchanged;
-- only `visual-compact` launch behavior changes;
+- all other content-addressed hashes/snapshots remain unchanged;
+- production UI/CSS remains byte-for-byte unchanged;
+- consecutive-capture proof fails closed when the two raw PNG buffers differ; it never selects a capture by matching the approved hash;
 - no flaky success is accepted.
 
 ## Acceptance criteria
 
-- every existing compact content-addressed baseline keeps its approved hash;
-- `79:93` produces `e1405517...` on the first attempt;
+- every existing System State/Figma content-addressed baseline keeps its approved hash;
+- `79:93` produces two consecutive identical `e1405517...` captures on the first Playwright test attempt;
 - Visual regression has no flaky classification;
 - full immutable-head CI passes;
-- exact-main CI passes without rerun;
+- exact-main CI passes without controlled rerun;
 - Stage/public validation passes.
 
 ## Required checks
 
 - exact diff/source audit;
-- authoritative Linux visual suite;
-- full CI, review/thread audit;
-- exact-main CI and Stage.
+- authoritative Linux visual suite, repeated on one immutable developer-authored head if the first run is clean;
+- full CI and review/thread audit;
+- exact-main CI and Stage/public validation after merge.
 
 ## Risks
 
-- single-thread rasterization may still produce the alternate raster or alter unrelated compact output; either result rejects this candidate.
+- a double-rAF/layout barrier may prove that `dd2d...` is already a stable compositor output rather than eliminate it; that result rejects the candidate and preserves the existing baseline;
+- a consecutive-capture assertion can expose additional unstable System State captures; any such failure is evidence to classify, not a reason to weaken the gate.
 
 ## Rollback
 
-Remove the compact Chromium launch flag; never change approved design evidence.
+Restore `system-states-visual.spec.ts` to `main` and keep `playwright.visual.config.ts` at its canonical main configuration; never change approved design evidence.
