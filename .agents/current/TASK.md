@@ -6,7 +6,7 @@
 - Branch: `fix/issue-68-offline-theme-color`
 - Base SHA: `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`
 - Head SHA: resolve from live branch ref
-- PR: TBD
+- PR: #507
 
 ## Objective
 
