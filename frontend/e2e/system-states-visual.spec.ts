@@ -138,6 +138,7 @@ async function stabilize(page: Page): Promise<void> {
 
 async function captureSystemState(page: Page): Promise<Buffer> {
   return page.screenshot({
+    caret: "initial",
     fullPage: false,
     scale: "css",
   });
