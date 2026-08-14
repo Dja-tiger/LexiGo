@@ -2,35 +2,39 @@
 
 ## Task
 
-- Branch: `fix/issue-68-offline-theme-color`
-- Base SHA: `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`
+- Branch:
+- Base SHA:
 - Head SHA: resolve from live branch ref
-- PR: #507
+- PR:
 
 ## Skills used
 
-### GitHub repository harness
+### Skill name
 
-Purpose: close the remaining automated metadata mismatch from Issue #68 after PR #506.
+Purpose:
 
-Instruction source: `AGENTS.md`, `.agents/*`, `docs/agent-harness.md`.
+Instruction source:
 
-Verification date: 2026-08-14.
+Version or verification date:
 
-Inputs: merged PR #506, `appearance-preference.ts`, `offline.html`, existing appearance/PWA unit contract.
+Inputs:
 
-Files inspected: `frontend/public/offline.html`, `frontend/lib/appearance-preference.ts`, `frontend/lib/appearance-preference.test.ts`.
+Files inspected:
 
-Actions performed: created a follow-up branch from exact #506 merge SHA; changed only the static offline theme-color metadata; extended the existing contract test; opened PR #507.
+Actions performed:
 
-Artifacts produced: PR #507.
+Commands or procedures:
 
-Result: code change complete; immutable-head CI and review audit pending.
+Artifacts produced:
 
-Failures: live Figma `get_design_context` and `use_figma` remain blocked by the Starter-plan MCP call limit. Figma `get_metadata` read access did work and confirmed the existing onboarding/system-state structure.
+Result:
 
-Fallback: no canvas mutations were claimed; continued with the independent PWA metadata residual that is already backed by the canonical Figma/appearance palette.
+Failures:
 
-Limitations: real-device install/cold-start validation remains manual.
+Root cause:
 
-Reusable lesson: keep static launch/recovery metadata under the same semantic color contract as runtime appearance owners, and assert that relationship from one existing test owner.
+Fallback:
+
+Limitations:
+
+Reusable lesson:
