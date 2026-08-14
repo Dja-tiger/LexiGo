@@ -6,7 +6,7 @@
 - Branch: `test/issue-515-progress-figma-parity`
 - Base SHA: `c13cf3bae514c03d1d54a237add7dacedf4573e5`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #517 — `test(figma): lock canonical Progress parity contract`
 
 ## Objective
 
