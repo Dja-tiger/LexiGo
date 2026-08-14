@@ -4,8 +4,8 @@
 
 - Branch: `chore/go-redis-9-22-fresh-main`
 - Base SHA: `e034fa155b18f1053f43ac492417ac4955169cf7`
-- Head SHA: resolve from live branch ref
-- PR: create after this execution write.
+- Head SHA: resolve from live branch ref after this write; use that exact SHA for final CI.
+- PR: #510.
 
 ## Skills used
 
@@ -13,11 +13,11 @@
 
 Purpose:
 
-Deliver a fresh-main replacement for stale Dependabot PR #478 while preserving repository harness, dependency scope and immutable-head validation.
+Upgrade go-redis on current `main` while preserving narrow dependency scope and repository validation rules.
 
 Instruction source:
 
-`AGENTS.md`, `.agents/*`, `docs/agent-harness.md`, installed GitHub plugin skill.
+`AGENTS.md`, `.agents/*`, `docs/agent-harness.md`, installed GitHub skill.
 
 Version or verification date:
 
@@ -25,49 +25,51 @@ Version or verification date:
 
 Inputs:
 
-Live `main`, Dependabot PR #478 diff/release notes/CI evidence, production Redis client configuration, repository searches for affected APIs.
+Current `main`, Dependabot PR #478, Redis client construction, dependency files.
 
 Files inspected:
 
-`backend/go.mod`, `backend/go.sum`, `backend/internal/platform/redis/redis.go`, PR #478 patches and current Agent Harness files.
+`backend/go.mod`, `backend/go.sum`, `backend/internal/platform/redis/redis.go`, PR #478 patches, Agent Harness files.
 
 Actions performed:
 
-- audited PR #478 and confirmed its CI passed on a base 12 commits behind current `main`;
-- searched for `WaitAOF` and found no repository consumer;
-- audited production Redis construction and confirmed explicit dial/read/write timeouts;
-- created a fresh branch from exact live `main`;
-- applied the exact Dependabot 9.22.0 dependency graph to current `go.mod`/`go.sum`;
-- read back each runtime dependency file and verified `main` remained unchanged.
+- confirmed #478 is 12 commits behind current `main` despite green historical CI;
+- confirmed the repository does not call `WaitAOF`;
+- confirmed production Redis explicitly sets dial/read/write timeouts;
+- created a branch from exact current `main`;
+- reproduced the Dependabot 9.22.0 dependency graph;
+- audited the final diff and restored one unrelated yaml checksum that was accidentally altered during the first full-file transfer;
+- verified final `go.sum` changes only the two Redis checksum lines;
+- opened Draft PR #510.
 
 Commands or procedures:
 
-GitHub connector branch/file/search/compare/Actions operations; no local dependency synthesis was used.
+GitHub connector search, compare, branch, file and pull-request operations.
 
 Artifacts produced:
 
-Fresh dependency branch and Agent Harness task evidence; Draft PR follows.
+PR #510 and task evidence.
 
 Result:
 
-Implementation delta is complete and ready for immutable-head CI.
+Implementation and scope audit are complete; final CI is next.
 
 Failures:
 
-None in implementation. Historical Dependabot CI is intentionally not reused as final evidence because its base is stale.
+No runtime test failure. One unrelated checksum transcription error was found during diff audit and corrected before final validation.
 
 Root cause:
 
-PR #478 was generated from `810fa59a748477f8723a19dee03e61517282df30` before later repository merges.
+The checksum drift came from manual full-file transfer through the connector, not from the dependency update.
 
 Fallback:
 
-Reproduce the exact machine-generated dependency patch on current `main` and validate it independently.
+Restored the checksum from current `main` and repeated compare/read-back validation.
 
 Limitations:
 
-Upstream retry/backoff and keep-alive defaults changed in go-redis 9.22.0 and LexiGo does not explicitly override all of them; compatibility therefore depends on full repository integration validation rather than source inspection alone.
+go-redis 9.22 changes some retry/backoff and keep-alive defaults that LexiGo does not explicitly override, so integration CI remains required.
 
 Reusable lesson:
 
-For dependency PRs with behavioral default changes, green CI on an obsolete base is insufficient; carry the exact dependency graph onto the current base and rerun the complete owning subsystem gates before merge.
+Re-run dependency validation on the current base and diff-audit full-file checksum transfers before accepting CI evidence.
