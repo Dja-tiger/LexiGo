@@ -15,6 +15,7 @@ Convert the approved `/learn` Lesson Composer → Figma handoff into an executab
 ## Scope
 
 - add `frontend/e2e/learn-route-island.spec.ts`;
+- register that spec in the existing `frontend/package.json` `test:e2e:ui` authoritative collection;
 - mobile recommended/collapsed uses Figma `202:6`;
 - mobile manual settings uses Figma `203:5`;
 - desktop full composer uses Figma `204:2`;
@@ -34,6 +35,7 @@ Convert the approved `/learn` Lesson Composer → Figma handoff into an executab
 ## Allowed paths
 
 - `frontend/e2e/learn-route-island.spec.ts`;
+- `frontend/package.json` only for adding `e2e/learn-route-island.spec.ts` to the existing `test:e2e:ui` script;
 - `.agents/current/TASK.md`;
 - `.agents/current/PROGRESS.md`;
 - `.agents/current/EXECUTION.md`.
@@ -94,8 +96,9 @@ Convert the approved `/learn` Lesson Composer → Figma handoff into an executab
 - over-constraining implementation details rather than observable owners;
 - treating manual-expanded state as persisted;
 - asserting the wrong navigation owner or viewport coordinate frame;
+- adding a spec without registering it in the authoritative UI collection;
 - inventing token-derived Figma frames.
 
 ## Rollback
 
-Revert only the Issue #525 Learn route-island parity test and task evidence. Do not change production UI or canonical Figma evidence merely to satisfy the audit.
+Revert only the Issue #525 Learn route-island parity test, its `test:e2e:ui` collection registration and task evidence. Do not change production UI or canonical Figma evidence merely to satisfy the audit.
