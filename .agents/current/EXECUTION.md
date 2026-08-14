@@ -5,14 +5,14 @@
 - Branch: `test/issue-515-progress-figma-parity`
 - Base SHA: `c13cf3bae514c03d1d54a237add7dacedf4573e5`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #517 — `test(figma): lock canonical Progress parity contract`
 
 ## Skills used
 
 ### GitHub repository operations
 
 Purpose:
-Safely reconstruct live repository state, create an isolated branch, maintain Agent Harness records and prepare an immutable-head PR.
+Safely reconstruct live repository state, create an isolated branch, maintain Agent Harness records, publish Draft PR #517 and prepare immutable-head delivery.
 
 Instruction source:
 `AGENTS.md`, `.agents/AGENTS*.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`, GitHub plugin skill.
@@ -21,37 +21,37 @@ Version or verification date:
 2026-08-14 live repository state.
 
 Inputs:
-Issue #515, `main` SHA `c13cf3bae514c03d1d54a237add7dacedf4573e5`, Progress route tests and CI configuration.
+Issue #515, base `main` SHA `c13cf3bae514c03d1d54a237add7dacedf4573e5`, Progress route tests and CI configuration.
 
 Files inspected:
-`AGENTS.md`; mandatory `.agents/AGENTS*.md`; `.agents/SKILLS.md`; `.agents/PROJECT_STATE.md`; `.agents/current/*`; `docs/agent-harness.md`; `README.md`; `docs/architecture.md`; `frontend/playwright.config.ts`; `frontend/playwright.visual.config.ts`; `frontend/e2e/progress-evidence.spec.ts`; `frontend/e2e/progress-route-island.spec.ts`; appearance and navigation ownership sources.
+Root/index AGENTS files and every mandatory specialized AGENTS document; `.agents/SKILLS.md`; `.agents/PROJECT_STATE.md`; `.agents/current/*`; `docs/agent-harness.md`; `README.md`; `docs/architecture.md`; `frontend/playwright.config.ts`; `frontend/playwright.visual.config.ts`; Progress route/evidence tests; appearance/navigation owners.
 
 Actions performed:
-Verified live main and #514/#516 delivery state, created #515 branch from exact main, read branch ref back, narrowed the implementation owner to the existing route-island suite, and recorded allowed/prohibited paths.
+Verified live main and #514/#516 delivery state; created the #515 branch from exact main; narrowed the owner to the existing route-island suite; wrote/read back harness records; implemented one test-only parity slice; audited the diff; opened Draft PR #517.
 
 Commands or procedures:
-GitHub connector exact ref/file reads, Issue fetch, repository search and explicit branch/file writes with read-back after each mutation.
+GitHub connector exact ref/file reads, Issue fetch, repository search, explicit branch/file writes, compare_commits and Draft PR creation.
 
 Artifacts produced:
-Issue #515 branch plus current TASK/PROGRESS records.
+Branch `test/issue-515-progress-figma-parity`, updated `current/*`, test-only Progress parity contract and Draft PR #517.
 
 Result:
-Pre-flight complete; no production/runtime changes made.
+Implementation published with no production/CSS/snapshot/workflow/dependency changes. Full immutable-head CI is the next gate.
 
 Failures:
-None in GitHub operations.
+One read-only GitHub code-search query containing a CSS custom-property token was rejected by the GitHub search parser; no repository mutation occurred.
 
 Root cause:
-N/A.
+Search-query parser syntax, not repository content.
 
 Fallback:
-Connector-first repository operations because local clone/network execution is not relied on.
+Read the exact source owner `frontend/app/appearance.css` directly; do not infer token values from indexed search.
 
 Limitations:
-Full test execution is delegated to repository GitHub Actions after the developer-authored branch is frozen.
+Local clone/network execution is not relied on; test execution is delegated to repository GitHub Actions on the frozen developer-authored head.
 
 Reusable lesson:
-For route-shell parity, prefer an already authoritative route-island owner over duplicating the full Progress data-evidence fixture.
+When indexed search syntax is ambiguous, use exact source reads for design/runtime ownership and keep write scope unchanged.
 
 ### Figma inspection / handoff
 
@@ -77,10 +77,10 @@ Commands or procedures:
 Figma MCP `use_figma` / screenshot requests after loading mandatory Figma skills.
 
 Artifacts produced:
-No new Figma artifacts; no canvas writes.
+No new Figma artifacts; no canvas writes and no screenshot baseline updates.
 
 Result:
-Known node provenance retained; live canvas verification unavailable.
+Known node provenance retained; #515 is limited to executable geometry/theme/history evidence already backed by repository provenance.
 
 Failures:
 Connected Figma MCP reported Starter-plan tool-call quota exhaustion.
@@ -89,18 +89,18 @@ Root cause:
 External connected-plan quota, not repository or product behavior.
 
 Fallback:
-Proceed only with executable contracts already supported by repository-stored node provenance; prohibit screenshot baseline changes and any claim of new Figma approval.
+Proceed only with existing node provenance and semantic appearance tokens; prohibit any claim of new Figma approval until live access returns.
 
 Limitations:
-Cannot create missing #201 frames, synchronize Screen Map, or manually approve new Progress screenshots until live Figma access returns.
+Cannot create missing #201 frames, synchronize Screen Map, or approve new Progress PNG baselines while the quota is exhausted.
 
 Reusable lesson:
-A design-tool quota must narrow the slice to already-proven design contracts; it is not permission to infer missing screens.
+A Figma quota narrows the task to already-proven contracts; it is not permission to infer missing screens or approve visual artifacts blindly.
 
-### Frontend / visual validation design
+### Frontend / visual validation
 
 Purpose:
-Create a deterministic geometry/appearance/history acceptance contract without causing blind visual churn.
+Create deterministic canonical Progress geometry/appearance/history acceptance without visual-baseline churn.
 
 Instruction source:
 `.agents/AGENTS.base.md`, `.agents/AGENTS.progress-pr214.md`, `.agents/AGENTS.issue-74-browser-zoom-collection.md`, `.agents/AGENTS.issue-74-scroll-normalized-geometry.md`.
@@ -109,34 +109,34 @@ Version or verification date:
 2026-08-14.
 
 Inputs:
-Canonical viewports `390×844` and `1440×1024`; explicit Light/Dark appearance; Progress route-island and route-navigation selectors.
+Canonical `390×844` and `1440×1024`; Light/Dark; mobile nodes `76:6`/`76:53`; desktop geometry node `76:154`; route-island/navigation selectors and explicit appearance contract.
 
 Files inspected:
-`frontend/playwright.config.ts`, `frontend/e2e/progress-route-island.spec.ts`, `frontend/e2e/progress-evidence.spec.ts`, root appearance bootstrap, route-navigation CSS/markup contracts.
+`frontend/playwright.config.ts`, `frontend/e2e/progress-route-island.spec.ts`, `frontend/e2e/progress-evidence.spec.ts`, `frontend/e2e/support/quality-gates.ts`, `frontend/app/appearance.css`, `frontend/app/route-navigation.css`, `frontend/components/route-primary-navigation.tsx`.
 
 Actions performed:
-Verified normal Playwright auto-collection, existing mobile/desktop navigation breakpoints, route-island semantic owner and explicit appearance attribute contract. Selected one-browser-evaluation geometry sampling to avoid stale scroll coordinate frames.
+Kept the cross-browser route/session test authoritative and added real Back/Forward. Added four canonical geometry/theme cases that execute once in desktop Chromium with explicit viewport sizes. Geometry samples root/main/island/visible route navigation in one browser evaluation, verifies no horizontal overflow/clipping, exact semantic canvas tokens, expected mobile/header owner, direct entry and reload.
 
 Commands or procedures:
-Repository source inspection and contract matrix construction before test write.
+Source-contract design followed by a single test-owner write; no snapshot update mode and no runtime/CSS modification.
 
 Artifacts produced:
-Planned test-only canonical matrix; implementation not yet written at this execution checkpoint.
+Updated `frontend/e2e/progress-route-island.spec.ts` in PR #517.
 
 Result:
-Ready for minimal test implementation.
+Source implementation complete; pending immutable-head CI evidence.
 
 Failures:
-None.
+None yet from product/test execution because CI has not completed on the final metadata-bound head.
 
 Root cause:
 N/A.
 
 Fallback:
-If the new test proves a product defect, classify it first and expand scope only to the exact runtime/CSS owner; do not weaken assertions or update snapshots.
+If CI proves a real product defect, classify from logs/traces and expand scope only to the exact owner. If the assertion is stale, repair the acceptance contract without weakening the Issue criterion. Never change PNG baselines without Figma/Linux evidence.
 
 Limitations:
-Desktop Dark uses desktop node `76:154` for geometry plus existing semantic Dark tokens; no separate approved desktop-Dark Figma node is claimed.
+Canonical geometry matrix is intentionally measured once in Chromium to avoid 4× duplication; the existing route/history/session test still runs in all four normal browser projects. Desktop Dark uses `76:154` only as geometry provenance plus established Dark semantic tokens; no separate desktop-Dark frame is claimed.
 
 Reusable lesson:
-Canonical geometry and screenshot parity can be separated: geometry/history/theme can be executable now while PNG approval remains blocked on live Figma review.
+Separate canonical geometry/theme evidence from screenshot approval: route-shell parity can be executable immediately while visual baseline approval remains gated on live Figma comparison.
