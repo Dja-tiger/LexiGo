@@ -284,7 +284,7 @@ jobs:
       run:
         working-directory: frontend
     env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.62.1-noble
       FRONTEND_CI_VOLUME: lexigo-frontend-core-${{ github.run_id }}-${{ github.run_attempt }}
       FRONTEND_CI_SLOT: core
       APP_BUILD_ID: ${{ github.sha }}
@@ -384,7 +384,7 @@ jobs:
             name: "Dictionary smoke"
             cmd: smoke
     env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.62.1-noble
       FRONTEND_CI_VOLUME: lexigo-frontend-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
       FRONTEND_CI_SLOT: ${{ matrix.id }}
       APP_BUILD_ID: ${{ github.sha }}

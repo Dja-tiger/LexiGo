@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 40
     environment: stage
     env:
-      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.61.1-noble
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.62.1-noble
       FRONTEND_CI_VOLUME: lexigo-stage-browser-${{ github.run_id }}-${{ github.run_attempt }}
       APP_BUILD_ID: ${{ inputs.image_tag || github.event.workflow_run.head_sha || github.sha }}
     steps:
