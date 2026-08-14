@@ -64,6 +64,15 @@ const VISUAL_WORD = {
   id: 575,
   position: 0,
 };
+const CALENDAR_REMINDER_STORAGE_KEY = "lexigo.calendar.reminder.v1";
+const VISUAL_REMINDER_HYDRATED_LABEL = "Напоминание о занятии. Каждый день в 19:37";
+const VISUAL_REMINDER_HYDRATION_SENTINEL = {
+  time: "19:37",
+  durationMinutes: 20,
+  reminderMinutes: 10,
+  recurrence: "daily",
+  weekdays: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
+};
 
 function catalogPage(items: readonly unknown[]) {
   return {
@@ -91,6 +100,22 @@ async function installAppearance(page: Page, appearance: ExplicitAppearance): Pr
   await page.addInitScript((value) => {
     localStorage.setItem("lexigo.appearance.v1", value);
   }, appearance);
+}
+
+async function installReminderHydrationSentinel(page: Page): Promise<void> {
+  await page.addInitScript(({ key, settings }) => {
+    localStorage.setItem(key, JSON.stringify(settings));
+  }, {
+    key: CALENDAR_REMINDER_STORAGE_KEY,
+    settings: VISUAL_REMINDER_HYDRATION_SENTINEL,
+  });
+}
+
+async function waitForReminderHydration(page: Page): Promise<void> {
+  await expect(page.locator(".lx-route-reminder-entry > summary")).toHaveAttribute(
+    "aria-label",
+    VISUAL_REMINDER_HYDRATED_LABEL,
+  );
 }
 
 async function sampleLayoutAfterPaintBarrier(page: Page): Promise<StableLayoutSample> {
@@ -138,7 +163,8 @@ async function stabilize(page: Page): Promise<void> {
 
 async function captureSystemState(page: Page): Promise<Buffer> {
   return page.screenshot({
-    caret: "initial",
+    animations: "disabled",
+    caret: "hide",
     fullPage: false,
     scale: "css",
   });
@@ -220,6 +246,7 @@ test.describe("System state Figma visual baselines", () => {
     test.skip(testInfo.project.name !== "visual-compact", "390×844 compact Dictionary empty baseline only");
     const runtimeErrors = captureRuntimeErrors(page);
     await installAppearance(page, "light");
+    await installReminderHydrationSentinel(page);
     await installQualityGateAPI(context);
     await context.route("**/api/v1/words**", async (route) => {
       if (new URL(route.request().url()).pathname !== "/api/v1/words") return route.fallback();
@@ -229,6 +256,7 @@ test.describe("System state Figma visual baselines", () => {
     await page.goto("/dictionary", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("status", { name: "Слова не найдены" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Добавить термин", exact: true })).toHaveCount(0);
+    await waitForReminderHydration(page);
     await stabilize(page);
     await expectApprovedSystemStateBaseline(page, testInfo, "compact-empty-light");
     expect(runtimeErrors).toEqual([]);
