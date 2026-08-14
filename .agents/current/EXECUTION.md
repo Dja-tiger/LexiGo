@@ -2,39 +2,35 @@
 
 ## Task
 
-- Branch: `feat/issue-68-pwa-manifest-icons`
-- Base SHA: `9bf6f26899fbdf937f5612c08da7bab64e38af69`
+- Branch: `fix/issue-68-offline-theme-color`
+- Base SHA: `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`
 - Head SHA: resolve from live branch ref
-- PR: #506
+- PR: #507
 
 ## Skills used
 
 ### GitHub repository harness
 
-Purpose: deliver Issue #68 as one atomic PWA slice.
+Purpose: close the remaining automated metadata mismatch from Issue #68 after PR #506.
 
 Instruction source: `AGENTS.md`, `.agents/*`, `docs/agent-harness.md`.
 
-Version or verification date: 2026-08-14.
+Verification date: 2026-08-14.
 
-Inputs: Issue #68, PWA assets, appearance tokens and Figma handoff.
+Inputs: merged PR #506, `appearance-preference.ts`, `offline.html`, existing appearance/PWA unit contract.
 
-Files inspected: manifest, appearance tests, icons, offline shell, service worker and CI.
+Files inspected: `frontend/public/offline.html`, `frontend/lib/appearance-preference.ts`, `frontend/lib/appearance-preference.test.ts`.
 
-Actions performed: implemented and tested the PWA contract; isolated the Go security blocker into #505; rebased the slice onto secure main; opened #506 as the final delivery PR after GitHub auto-closed historical #504 during the temporary zero-diff rebase state.
+Actions performed: created a follow-up branch from exact #506 merge SHA; changed only the static offline theme-color metadata; extended the existing contract test; opened PR #507.
 
-Commands or procedures: GitHub connector and Actions; primary manifest/icon specifications.
+Artifacts produced: PR #507.
 
-Artifacts produced: PR #506; historical evidence PR #504.
+Result: code change complete; immutable-head CI and review audit pending.
 
-Result: historical frontend matrix passed; fresh immutable-head CI is required on #506.
+Failures: live Figma `get_design_context` and `use_figma` remain blocked by the Starter-plan MCP call limit. Figma `get_metadata` read access did work and confirmed the existing onboarding/system-state structure.
 
-Failures: offline HTML metadata write blocked externally; historical CI found outdated Go 1.26.5 vulnerabilities.
+Fallback: no canvas mutations were claimed; continued with the independent PWA metadata residual that is already backed by the canonical Figma/appearance palette.
 
-Root cause: connector safety layer for the HTML write; outdated Go patch level for CI security.
+Limitations: real-device install/cold-start validation remains manual.
 
-Fallback: keep HTML metadata as explicit residual; fix Go separately and retain atomic PWA scope.
-
-Limitations: live Figma MCP is rate-limited; real-device install validation is manual.
-
-Reusable lesson: isolate unrelated security prerequisites instead of weakening product CI.
+Reusable lesson: keep static launch/recovery metadata under the same semantic color contract as runtime appearance owners, and assert that relationship from one existing test owner.
