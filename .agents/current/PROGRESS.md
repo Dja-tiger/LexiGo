@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-14 21:18 Europe/Moscow
+## 2026-08-14 23:25 Europe/Moscow
 
 ### Verified
 
@@ -9,17 +9,19 @@
 - Focus-only candidate was rejected by CI #3491.
 - `--disable-skia-runtime-opts` candidate was rejected by CI #3496 because approved Phrases compact hashes changed and `79:93` still flaked.
 - `--num-raster-threads=1` candidate was rejected by CI #3501 because Dictionary remained `dd2d...` and approved Lessons compact output regressed.
-- CI #3503 proves the double-rAF/layout candidate is not sufficient: first Dictionary attempt produced `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`, retry produced approved `e1405517...`, and Playwright summary reported `1 flaky`.
-- Pairwise raw-capture equality did not fail, so each lifecycle is internally stable; the hash switch occurs between browser/test lifecycles rather than between adjacent screenshots.
+- CI #3503 rejected double-rAF/layout stabilization alone: first Dictionary attempt produced stable `dd2d...`, retry produced approved `e140...`, final summary reported `1 flaky`.
+- Candidate `23843e3bb3180b6390654623a37741cf587506c8` removed only screenshot-time `animations: "disabled"`. CI #3504 attempt 1 was clean, but the mandatory identical-head Visual rerun (job `94886550359`) rejected it: first compact Dictionary lifecycle produced `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`, retry produced approved `e140...`, final summary was `1 flaky`, `56 passed`, `84 skipped`.
+- Pairwise raw-capture equality still did not fail, so each lifecycle remains internally stable; the hash switch occurs between browser/test lifecycles rather than adjacent screenshots.
 - `installDeterministicRuntime()` already injects `animation: none`, `transition: none`, `scroll-behavior: auto` and transparent caret before page load.
+- Current commit `50d100e715ed57ba3c598820a7c5c7f61f504391` removes only screenshot-time `caret: "hide"`; commit diff is exactly one deletion in `captureSystemState()`.
 
 ### Finding
 
-The remaining local screenshot helper also passes `animations: "disabled"`. Playwright documents that option as an active animation-state mutation. The next narrow candidate removes only this screenshot-time mutation while retaining deterministic runtime CSS, font/scroll/layout paint barriers and pairwise SHA proof.
+Removing screenshot-time animation mutation was insufficient across independent browser lifecycles. The remaining screenshot-time state mutation is caret hiding, while the deterministic init CSS already owns caret visibility with `caret-color: transparent !important`. The current candidate lets that pre-load deterministic owner remain authoritative and removes only the redundant screenshot-time caret mutation.
 
 ### Root cause
 
-Still under test. Renderer output is stable within a lifecycle but can select one of two 1-LSB shadow rasters across lifecycles. Screenshot-time animation state mutation is the active hypothesis.
+Still under test. Current evidence rules out focus normalization, global Skia/raster switches, paint/layout readiness alone, and screenshot-time animation mutation as complete fixes. The unstable output remains a cross-lifecycle 1-LSB raster selection around the unchanged fixed reminder shadow. Screenshot-time caret mutation is the next local lifecycle variable under test.
 
 ### Changed files
 
@@ -30,20 +32,20 @@ Still under test. Renderer output is stable within a lifecycle but can select on
 
 ### Checks passed
 
-- `frontend/playwright.visual.config.ts` is byte-identical to `main` and absent from the PR diff;
+- `frontend/playwright.visual.config.ts` remains byte-identical to `main` and absent from the PR diff;
 - hashes/snapshots/product source remain unchanged;
-- CI #3503 visual job ran all 141 scheduled entries and all non-Dictionary visual evidence passed;
-- pairwise capture proof classified the first Dictionary attempt as stable `dd2d...`, not an intra-attempt race.
+- CI #3504 attempt 1 proved `23843e3b...` can produce a clean first-attempt approved capture, but that single run was not accepted without the required rerun;
+- current `50d100e7...` diff readback confirms only `caret: "hide"` was removed.
 
 ### Checks failed
 
-- CI #3503 is unacceptable despite job conclusion `success`: Playwright retried `compact Dictionary empty light`, first attempt was `dd2d...`, final summary was `1 flaky`.
+- CI #3504 attempt 2 / Visual job `94886550359` rejected `23843e3b...`: Dictionary first attempt `dd2d...`, retry approved `e140...`, `1 flaky`.
 - live Figma MCP remains quota-blocked.
 
 ### Current branch head
 
-Resolve from live branch ref after the next atomic candidate commit.
+`50d100e715ed57ba3c598820a7c5c7f61f504391`
 
 ### Next action
 
-Remove only `animations: "disabled"` from the content-addressed raw screenshot helper, freeze the new head, and run authoritative Linux visual CI. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate.
+Run authoritative Linux CI for `50d100e7...`. Any first-attempt non-approved SHA, pairwise mismatch or flaky classification rejects the candidate. If the first Visual run is clean, rerun the critical Visual job on the same immutable head before acceptance.
