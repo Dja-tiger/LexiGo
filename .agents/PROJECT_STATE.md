@@ -4,8 +4,16 @@
 
 - Last verified: 2026-08-14 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `30e95b736d7c93f3db43e78462609cbaafd65341` after PR #514.
-- Latest deployed runtime/Stage SHA: `30e95b736d7c93f3db43e78462609cbaafd65341`.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `f423d824c2d580e458128a54af3b53514b224bbb` after PR #517.
+- Latest deployed runtime/Stage SHA: `f423d824c2d580e458128a54af3b53514b224bbb`.
+- Issue #515 is closed as completed by PR #517. The delivered slice locks executable Progress parity at canonical `390×844` and `1440×1024`, explicit Light/Dark appearance, route-shell ownership, horizontal geometry, reload and real Browser Back/Forward without changing production UI or approved visual baselines.
+- PR #517 immutable developer head was `d71e922001c2105b977dace956f4c89293d63227`; PR CI #3485 (`31809988954`) completed successfully across frontend core, full Chromium/WebKit/Android/iOS browser matrix, Linux visual regression, accessibility, content security, PWA/service-worker, performance, backend unit/security and PostgreSQL/Redis race integration, plus API/web container builds.
+- PR #517 squash merge SHA is `f423d824c2d580e458128a54af3b53514b224bbb`; its Git tree is `383830b19d30b9293d44e9a3c042996772326df7`.
+- Exact-main CI #3486 (`31810930838`) ultimately completed successfully on run attempt 2 for `f423d824c2d580e458128a54af3b53514b224bbb`, with full frontend/backend/browser gates and API/web container publication green.
+- Exact-main CI #3486 first attempt exposed an independent pre-existing Figma visual nondeterminism in `System state → Dictionary empty Light` / Figma `79:93`: approved raw PNG SHA `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf` intermittently rendered as `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`. No approved hash or UI source was changed.
+- PR synthetic merge commit `6104c283eef98f118ff45018f6f14c69ab5ace45` and exact squash merge `f423d824c2d580e458128a54af3b53514b224bbb` have the same Git tree `383830b19d30b9293d44e9a3c042996772326df7`, excluding source-tree drift as the cause of the `79:93` mismatch.
+- Controlled visual retry on the same exact SHA, same Playwright `v1.62.1-noble` image digest `sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`, and no repository writes reproduced `dd2d...` on the first capture but passed the approved `e140...` hash on the internal Playwright retry; the job completed `success` with `1 flaky`. Issue #518 now owns deterministic remediation and explicitly prohibits baseline promotion to `dd2d...`.
+- Stage run #3330 (`31812191384`) completed successfully for exact SHA `f423d824c2d580e458128a54af3b53514b224bbb`; deployment, public endpoint smoke, public browser dependency installation and public Stage UI verification passed. Earlier Stage #3329 was correctly skipped because it followed the failed first CI attempt.
 - PR #514 upgraded the production Next.js runtime from `16.2.11` to `16.3.0` on a fresh-main delivery branch while preserving React/React DOM `19.2.8`, Playwright `1.62.1`, `eslint-config-next 16.3.0` and `js-yaml 4.3.1`.
 - PR #514 immutable-head CI #3478 (`31806554374`) completed successfully on frozen head `5651712851f0b8bdde7f65328dca1b49ad357689`; frontend core, complete Playwright browser matrix, visual/a11y/performance/security/PWA/service-worker gates, backend unit/security and PostgreSQL/Redis race integration, and API/web container builds passed.
 - PR #514 squash merge SHA is `30e95b736d7c93f3db43e78462609cbaafd65341`.
@@ -37,6 +45,7 @@
 - Product delivery requires immutable-head PR CI, clean review audit, expected-head squash merge, exact-main validation and Stage/public validation when runtime changed.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy Stage.
 - Physical-device or production-only acceptance remains manual when required by the Issue.
+- A controlled CI retry may prove infrastructure/render nondeterminism only when the exact commit/tree and source/baseline state remain unchanged; such a retry must be recorded and followed by a dedicated defect rather than normalizing the flake.
 
 ## Production ownership foundations
 
@@ -83,7 +92,8 @@
 - The native `.fig` binary is **not yet stored in GitHub**. Issue #487 remains open until the exact binary is uploaded through a binary-safe path and its SHA-256 is verified.
 - Live Figma inspection/editing is currently constrained by the connected Figma MCP Starter-plan tool-call limit; do not claim Screen Map or canvas synchronization without live evidence.
 - Issue #203 remains open for live Screen Map/archive reconciliation. Issue #205 remains the final route-by-route parity audit.
-- Issue #515 is the first executable Figma-parity QA slice that does not require inventing missing canvas data: it will lock Progress geometry/reflow and explicit Light/Dark route-shell behavior at canonical `390×844` and `1440×1024` viewports against known Progress nodes `76:6`, `76:53` and `76:154`, without changing PNG baselines until live Figma comparison is available.
+- Issue #515 is closed after PR #517 delivered canonical Progress executable parity for mobile Light `76:6`, mobile Dark `76:53`, and desktop geometry `76:154`, with explicit semantic Dark tokens for desktop Dark. No new Figma frame or screenshot baseline approval is claimed.
+- Existing Figma System State node `79:93` / Dictionary Empty Light has a confirmed CI capture nondeterminism tracked in #518. Approved SHA remains `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`; `dd2d0c...` is evidence of the flake, not an approved alternate baseline.
 
 ## Delivered learning/platform foundations
 
@@ -110,13 +120,16 @@
 - go-redis `v9.22.0` maintenance is complete through PR #510, exact-main CI #3464 and Stage #3307.
 - Frontend development toolchain maintenance is complete through PR #512, exact-main CI #3471 and Stage #3314.
 - Next.js `16.3.0` runtime maintenance is complete through PR #514, immutable-head CI #3478, exact-main CI #3479 and Stage #3322.
-- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product or maintenance slice.
+- Progress Figma parity Issue #515 is complete through PR #517, immutable-head CI #3485, exact-main CI #3486 attempt 2 and Stage #3330.
+- `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product/QA slice.
+- Issue #518 is the next executable Figma/CI slice: remove `79:93` render nondeterminism without changing the approved design hash, tolerances or product UI unless a concrete product defect is proven.
 - Issue #78 remains the independent security hardening workstream for CSP enforcement promotion; production enforcement is authorization-sensitive and must preserve the staged rollout contract.
-- User priority is now Figma-related product/parity work; #515 is the next executable slice while live Figma MCP calls are quota-blocked.
+- User priority remains Figma-related product/parity work.
 
 ## Remaining roadmap
 
-- #515: lock canonical Progress `390×844` / `1440×1024` Light/Dark geometry, reflow and route-shell parity without blind screenshot updates; reconcile live screenshots to `76:6`, `76:53`, `76:154` when Figma access returns.
+- #518: make Figma System State Dictionary Empty Light `79:93` deterministic while preserving approved SHA `e1405517...`; require clean no-flake immutable-head and exact-main visual evidence.
+- #205: continue route-by-route Figma parity after #518; Home is a strong next child slice because canonical Home nodes `196:223` mobile Dark and `194:249` desktop Light already exist and `home-route-island.spec.ts` owns route/session/history semantics.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
 - #203: synchronize live Figma Screen Map/archive status when MCP access is available.
@@ -124,7 +137,6 @@
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
 - #78: complete the remaining CSP/security-header enforcement promotion through an authorized staged rollout.
 - #65/#461: automated reduced-motion implementation evidence and physical-device accessibility sign-off remain separate.
-- #205: final route-by-route visual parity after #201/#203, with independently executable parity defects/slices such as #515 closed as evidence becomes available.
 - #133: moderated usability validation after the core routes and final visual parity are ready.
 
 ## Evidence correction
