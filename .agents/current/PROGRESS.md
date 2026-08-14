@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-14 17:22 Europe/Moscow
+## 2026-08-14 17:31 Europe/Moscow
 
 ### Verified
 
@@ -9,38 +9,42 @@
 - Canonical known Figma Progress nodes: `76:6` mobile Light, `76:53` mobile Dark, `76:154` desktop; Screen Map `82:3`.
 - Live Figma MCP calls are currently blocked by the connected Starter-plan tool-call quota, so no new canvas/screenshot approval is claimed.
 - `frontend/playwright.config.ts` has no explicit `testMatch`; normal `*.spec.ts` owners are collected across desktop Chromium/WebKit and Android/iOS projects.
-- `frontend/e2e/progress-route-island.spec.ts` already owns direct Progress entry, dedicated route-island semantics, persistent session bootstrap and primary-navigation transitions.
-- Existing `progress-evidence.spec.ts` already covers server evidence plus some compact Dark/reflow behavior; duplicating its fixture is unnecessary for #515.
-- Existing approved Progress Linux PNGs remain under `visual-regression.spec.ts`; they must not be updated without manual Linux-actual/Figma review.
+- `frontend/e2e/progress-route-island.spec.ts` is the authoritative owner for direct Progress entry, route-island semantics, session-bootstrap and primary-navigation history.
+- Existing approved Progress Linux PNGs remain untouched.
 
 ### Finding
 
-The smallest authoritative owner for #515 is `progress-route-island.spec.ts`, not a new standalone test and not the large Progress data-evidence suite. The missing contract is a symmetric canonical viewport/appearance geometry + route-shell matrix and explicit Browser Back/Forward/reload evidence.
+The smallest #515 implementation is test-only. Canonical geometry is measured in four explicit cases in desktop Chromium: mobile Light/Dark `390×844`, desktop Light/Dark `1440×1024`. The existing route-island journey remains cross-browser and now additionally proves real Browser Back/Forward without a second auth refresh.
 
 ### Root cause
 
-Progress acceptance is currently distributed across visual screenshots, evidence/reflow tests and route-island navigation. No single executable route-shell contract binds both canonical viewports to explicit Light/Dark appearance while also protecting history/reload and horizontal geometry.
+Progress acceptance was split across visual screenshots, data/reflow evidence and route navigation. There was no executable contract binding canonical viewport + appearance + shell ownership + horizontal geometry + reload/history in one route-owner suite.
 
 ### Changed files
 
-- `.agents/current/TASK.md` — pre-flight and narrowed test owner only.
+- `frontend/e2e/progress-route-island.spec.ts` — four canonical viewport/appearance cases, common-frame geometry assertions, explicit semantic canvas token validation, reload validation and Back/Forward coverage.
+- `.agents/current/TASK.md` — pre-flight, scope and PR binding.
+- `.agents/current/PROGRESS.md` — factual task state.
+- `.agents/current/EXECUTION.md` — applied skills and limitations.
 
 ### Checks passed
 
 - Mandatory AGENTS/SKILLS/harness pre-flight completed.
-- Branch `test/issue-515-progress-figma-parity` created from exact `main` and read back.
-- After each harness write, branch head was read back and `main` remained unchanged.
-- Normal Playwright collection boundary verified.
-- Existing geometry/visual rules from PR #214 and Issue #74 re-verified.
+- Branch created from exact `main`; every changed path read back after write.
+- `main` remained unchanged after branch writes.
+- Normal Playwright collection boundary verified; no standalone uncollected owner introduced.
+- Geometry is sampled in one `page.evaluate` without intervening scroll.
+- Branch compare before PR: `0 behind`, exactly four allowed files; no CSS, visual config, PNG, workflow, backend or dependency changes.
+- Draft PR #517 opened against `main`.
 
 ### Checks failed
 
-- Live Figma `use_figma` / screenshot inspection cannot run because the connected Starter-plan tool-call quota is exhausted. This is an external design-tool limitation, not a product/CI failure.
+- Live Figma inspection/screenshot calls are unavailable because the connected Starter-plan MCP quota is exhausted. This is an external design-tool limitation and explicitly blocks snapshot approval, not executable geometry/history testing.
 
 ### Current branch head
 
-Resolve from live branch ref; latest verified branch head before this progress write was `95adaf9ad7a32d556835a5f38315b75f2003ff0b`.
+Resolve from live branch ref after final harness metadata writes. Implementation head before PR metadata binding was `74df09423f896bff948c9586f6aeb163ffc760ba`.
 
 ### Next action
 
-Implement the test-only canonical Progress parity matrix and real Back/Forward journey in `frontend/e2e/progress-route-island.spec.ts`, then run immutable-head full CI without changing production CSS or PNG baselines unless a reproducible product defect is proven.
+Freeze the final developer-authored head after PR metadata binding, run full immutable-head CI for PR #517, classify any failure before changing source, then Ready/expected-head squash merge followed by exact-main CI and Stage/public validation.
