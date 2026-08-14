@@ -4,12 +4,18 @@
 
 - Last verified: 2026-08-14 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `e397562996f7ee0c70160c9fb6fef8d8f69b110f` after PR #510.
-- Latest deployed runtime/Stage SHA: `e397562996f7ee0c70160c9fb6fef8d8f69b110f`.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `04d19c7340be98f9849338f5cee6a8ba766347fe` after PR #512.
+- Latest deployed runtime/Stage SHA: `04d19c7340be98f9849338f5cee6a8ba766347fe`.
+- PR #512 refreshed the frontend development toolchain: `@playwright/test` to `1.62.1`, `@types/react` to `19.2.18`, `@types/react-dom` to `19.2.4`, and `eslint-config-next` to `16.3.0`; all repository Playwright image pins are aligned to `mcr.microsoft.com/playwright:v1.62.1-noble`.
+- PR #512 immutable-head CI #3470 (`31801507218`) completed successfully on frozen head `5acd08ab61579722fc831de84d9ec8f465269ef0`; frontend core, complete Playwright browser matrix, visual/a11y/performance/security/PWA/service-worker gates, backend gates and API/web container builds passed. Deployment scripts check #189 (`31801507298`) also completed successfully on that exact head.
+- PR #512 squash merge SHA is `04d19c7340be98f9849338f5cee6a8ba766347fe`.
+- Exact-main CI #3471 (`31802214378`) completed successfully for `04d19c7340be98f9849338f5cee6a8ba766347fe`; backend unit/security and PostgreSQL/Redis race integration, frontend core/full browser matrix, frontend aggregate, and API/web container publication passed.
+- Exact-main Deployment scripts check #190 (`31802214503`) completed successfully.
+- Stage run #3314 (`31802974825`) completed successfully for that exact SHA; deployment, public endpoint smoke, Playwright public-browser dependency installation and public Stage UI verification passed.
+- Original Dependabot PR #403 was used only as a three-way integration input into the fresh-main delivery branch; current-main delivery and validation are represented by PR #512.
+- Frontend runtime Next.js remains `16.2.11`; React/React DOM runtime remain `19.2.8`; current-main `js-yaml 4.3.1` was preserved through the dependency composition.
 - PR #510 upgraded `github.com/redis/go-redis/v9` from `v9.21.0` to `v9.22.0`; squash merge SHA is `e397562996f7ee0c70160c9fb6fef8d8f69b110f`.
-- PR #510 immutable-head CI #3463 (`31798738075`) completed successfully on frozen head `50a82bdbbb4c20d4dfc7184e277c46557cb545be`; backend unit/security, PostgreSQL/Redis integration under the race detector, frontend/browser matrices and required quality gates passed.
-- Exact-main CI #3464 (`31799536933`) completed successfully for `e397562996f7ee0c70160c9fb6fef8d8f69b110f`; both API and web container images built and published successfully.
-- Stage run #3307 (`31800348093`) completed successfully for that exact SHA; deploy, public endpoint smoke and public UI verification passed.
+- PR #510 immutable-head CI #3463 (`31798738075`) and exact-main CI #3464 (`31799536933`) completed successfully; Stage #3307 (`31800348093`) passed deploy, public endpoint smoke and public UI verification.
 - Stale Dependabot PR #478 was closed as superseded after the fresh-main PR #510 was merged and validated.
 - Issue #68 automated PWA appearance work is complete: PR #506 merged as `1fae52ab9dda9bc807d60a20cdb8cee594172e0d`, and the offline metadata follow-up PR #507 merged as `07503e6fdd619a924b72c9f48f80f482bf36e28d`.
 - Issue #68 is closed. Physical installed-app icon/splash/cold-start acceptance remains separately tracked by #508 and is not claimed from CI.
@@ -42,6 +48,15 @@
 - go-redis `v9.22.0` is deployed on Stage after exact-main integration validation.
 - Existing explicit Redis `DialTimeout=5s`, `ReadTimeout=2s`, `WriteTimeout=2s`, `PoolSize=20` and `MinIdleConns=2` remain unchanged.
 - LexiGo does not use `WaitAOF` and did not opt into the new experimental client-side caching or automatic pipelining features introduced around this dependency update.
+
+## Frontend dependency/tooling status
+
+- Playwright package/runtime is aligned at `1.62.1` across npm, CI, Stage validation, visual snapshots and frontend container testing.
+- Frontend type tooling uses `@types/react 19.2.18` and `@types/react-dom 19.2.4`.
+- `eslint-config-next` is `16.3.0` while the production Next.js runtime deliberately remains `16.2.11`; runtime Next.js upgrade remains a separate maintenance slice.
+- Frontend container runtime Node `22.22.2` satisfies Playwright 1.62.1's Node >=20 requirement.
+- `js-yaml 4.3.1` remains preserved in the current lockfile.
+- PR #512, exact-main CI #3471 and Stage #3314 provide the delivery evidence for this toolchain state.
 
 ## PWA appearance status
 
@@ -86,9 +101,10 @@
 - Issue #68 is completed and closed after exact-main Stage/public validation.
 - Issue #508 is the residual physical-device PWA acceptance gate and contains no implementation scope unless testing discovers a reproducible defect.
 - go-redis `v9.22.0` maintenance is complete through PR #510, exact-main CI #3464 and Stage #3307.
+- Frontend development toolchain maintenance is complete through PR #512, exact-main CI #3471 and Stage #3314.
 - `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product or maintenance slice.
 - Issue #78 remains the independent security hardening workstream for CSP enforcement promotion; production enforcement is authorization-sensitive and must preserve the staged rollout contract.
-- Remaining open dependency-maintenance PRs must be re-audited against the live base rather than merged from stale immutable-head evidence.
+- Remaining open dependency-maintenance PRs must be re-audited against the live base rather than merged from stale immutable-head evidence; Next.js runtime upgrade #479 remains independent from the completed dev-tooling slice.
 
 ## Remaining roadmap
 
@@ -101,6 +117,7 @@
 - #65/#461: automated reduced-motion implementation evidence and physical-device accessibility sign-off remain separate.
 - #205: final route-by-route visual parity after #201/#203.
 - #133: moderated usability validation after the core routes and final visual parity are ready.
+- #479: audit and deliver the Next.js runtime upgrade as a separate fresh-main slice if current dependency/release evidence remains valid.
 
 ## Evidence correction
 
