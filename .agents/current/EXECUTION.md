@@ -5,7 +5,7 @@
 - Branch: `chore/frontend-dev-deps-fresh-main`
 - Base SHA: `180e64624900c74ea64c5a99f9d185cf2ff0c5a9`
 - Head SHA: resolve from live branch ref after final harness write; freeze that exact SHA for CI.
-- PR: delivery PR to `main` will be created after this evidence is read back.
+- PR: #512 — `build(deps-dev): refresh frontend development toolchain`.
 
 ## Skills used
 
@@ -41,7 +41,8 @@ Actions performed:
 - used GitHub's server-side three-way merge to compose Dependabot's stale six-file change with current branch state instead of manually rewriting the 365 KB lockfile;
 - verified the merge completed cleanly as `ce259f8806d0222bd336fbd05d4fec06ab10dddc`;
 - audited the resulting diff and confirmed current-main workflow edits and `js-yaml 4.3.1` are preserved;
-- verified package and Playwright image pins are aligned at 1.62.1 and production Next.js remains 16.2.11.
+- verified package and Playwright image pins are aligned at 1.62.1 and production Next.js remains 16.2.11;
+- opened fresh delivery PR #512 to `main`.
 
 Commands or procedures:
 
@@ -49,11 +50,11 @@ GitHub connector branch, PR retarget/merge, compare, file read-back and reposito
 
 Artifacts produced:
 
-Fresh-main dependency branch with a conflict-free GitHub-generated merge composition and Agent Harness evidence.
+PR #512 on a fresh-main dependency branch with a conflict-free GitHub-generated merge composition and Agent Harness evidence.
 
 Result:
 
-Implementation composition is complete and ready for a dedicated fresh delivery PR and immutable-head CI.
+Implementation composition is complete; PR #512 is ready to freeze on the final harness head and enter full immutable-head CI.
 
 Failures:
 
