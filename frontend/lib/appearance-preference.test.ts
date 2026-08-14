@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,6 +13,10 @@ import {
   readAppearancePreference,
   resolveAppearance,
 } from "./appearance-preference";
+
+function readPublicFile(path: string): string {
+  return readFileSync(join(process.cwd(), "public", path), "utf8");
+}
 
 describe("appearance preference", () => {
   it("normalizes untrusted storage values to Auto", () => {
@@ -75,6 +82,27 @@ describe("appearance preference", () => {
     expect(style.colorScheme).toBe("dark");
     expect(metas.every((meta) => meta.content === APPEARANCE_THEME_COLORS.dark)).toBe(true);
     expect(metas.every((meta) => meta.dataset.lexigoResolvedAppearance === "dark")).toBe(true);
+  });
+
+  it("keeps installed PWA metadata aligned with the appearance owner", () => {
+    const manifest = JSON.parse(readPublicFile("manifest.webmanifest")) as {
+      background_color: string;
+      theme_color: string;
+      orientation?: string;
+      icons: Array<{ src: string; purpose?: string }>;
+    };
+
+    expect(manifest.background_color).toBe(APPEARANCE_THEME_COLORS.dark);
+    expect(manifest.theme_color).toBe(APPEARANCE_THEME_COLORS.dark);
+    expect(manifest.orientation).toBeUndefined();
+    expect(manifest.icons).toEqual(expect.arrayContaining([
+      expect.objectContaining({ src: "/icons/icon-192.png", purpose: "any" }),
+      expect.objectContaining({ src: "/icons/icon-512.png", purpose: "any" }),
+      expect.objectContaining({ src: "/icons/icon-maskable.svg", purpose: "maskable" }),
+      expect.objectContaining({ src: "/icons/icon-monochrome.svg", purpose: "monochrome" }),
+    ]));
+    expect(readPublicFile("icons/icon-maskable.svg")).toContain('fill="#10211d"');
+    expect(readPublicFile("offline.css")).toContain(`background: ${APPEARANCE_THEME_COLORS.dark}`);
   });
 
   it("builds a synchronous no-flash bootstrap without interpolating user data", () => {

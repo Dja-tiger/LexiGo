@@ -8,6 +8,8 @@ const OFFLINE_ASSETS = [
   "/icon.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/icon-maskable.svg",
+  "/icons/icon-monochrome.svg",
 ];
 const SKIP_WAITING_MESSAGE = "LEXIGO_SKIP_WAITING";
 const ACTIVATED_MESSAGE = "LEXIGO_SW_ACTIVATED";
