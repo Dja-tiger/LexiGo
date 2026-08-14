@@ -47,6 +47,11 @@ export default defineConfig({
         deviceScaleFactor: 1,
         hasTouch: true,
         isMobile: true,
+        launchOptions: {
+          // Keep Chromium's existing raster algorithm but serialize raster tasks so the
+          // content-addressed compact Figma captures do not depend on worker scheduling.
+          args: ["--num-raster-threads=1"],
+        },
       },
     },
     {
