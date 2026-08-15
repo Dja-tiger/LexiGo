@@ -16,7 +16,7 @@
 
 ### Finding
 
-The missing #205 evidence is a canonical direct-route parity matrix with exact Figma node provenance, exact mobile/desktop viewport ownership, Light/Dark semantic appearance, route-navigation ownership, horizontal containment and reload stability. Existing behavior owners do not encode that final parity matrix.
+The missing #205 evidence was a canonical direct-route parity matrix with exact Figma node provenance, exact mobile/desktop viewport ownership, Light/Dark semantic appearance, route-navigation ownership, horizontal containment and reload stability. That evidence is now implemented inside the existing Dictionary route-island owner.
 
 ### Root cause
 
@@ -24,8 +24,10 @@ The Dictionary route-island test predates the final #205 route-by-route visual p
 
 ### Changed files
 
+- `frontend/e2e/dictionary-route-island.spec.ts` — adds the canonical Dictionary parity matrix while preserving the existing session/bootstrap/history test.
 - `.agents/current/TASK.md` — Issue #531 execution contract.
-- `.agents/current/PROGRESS.md` — preflight evidence.
+- `.agents/current/PROGRESS.md` — preflight and implementation evidence.
+- `.agents/current/EXECUTION.md` — execution provenance.
 
 ### Checks passed
 
@@ -34,17 +36,20 @@ The Dictionary route-island test predates the final #205 route-by-route visual p
 - Stage #3387 correctly skipped deployment for docs-only merge;
 - no open PRs before starting Issue #531;
 - branch created from exact fresh main;
-- task write read back successfully and `main` remained unchanged;
-- authoritative owner/route-navigation/collection audit complete.
+- all guarded writes read back successfully and `main` remained unchanged at `e3cf4054068867012e01f6ccba528dc04498686f`;
+- implementation read-back confirms four canonical cases: `78:54` and `78:193` × Light/Dark;
+- existing session/bootstrap/history test remains present with its original behavior/assertions;
+- canonical matrix uses exact `390x844` / `1440x1024` viewports, `mobile` / `header` navigation ownership, semantic canvas tokens, horizontal containment, no x-overflow, reload stability and exact `figma` annotations;
+- authoritative collection audit confirms the existing spec is already selected by `test:e2e:ui` and navigation suites; no package/workflow mutation is needed.
 
 ### Checks failed
 
-None. Live Figma canvas access remains externally quota-blocked and is treated as a documented evidence limitation, not a product failure.
+No repository/application check has failed yet. Full PR CI is the next executable proof gate. Live Figma canvas access remains externally quota-blocked.
 
 ### Current branch head
 
-Resolve from live branch ref after this progress write.
+Resolve from live branch ref after this progress write. Previous implementation head before execution/progress evidence: `f8e5f90513ad61eb994782533b15c7a76bf9ab91`.
 
 ### Next action
 
-Extend only `frontend/e2e/dictionary-route-island.spec.ts` with the four canonical Dictionary cases, read back the mutation, verify the branch diff stays within allowed paths, then open the immutable-head PR and run full CI.
+Compare the task branch against exact base `main`, require the diff to remain limited to the Dictionary spec plus the three current Agent Docs files, open PR with `Closes #531` and parent #205 linkage, then treat the final resulting head as immutable for full CI/review/merge gates.
