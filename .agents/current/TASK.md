@@ -6,7 +6,7 @@
 - Branch: `test/issue-536-phrases-catalog-figma-parity`
 - Base SHA: `a16a9dc598d61aa35ff7d10317a7a60b75e390e7`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #538
 
 ## Objective
 
