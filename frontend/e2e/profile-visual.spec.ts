@@ -215,10 +215,22 @@ test.describe("Profile canonical Figma parity", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Интерфейс и устройство", exact: true })).toBeVisible();
     await expect(page.getByRole("radiogroup", { name: "Оформление приложения", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Безопасность и конфиденциальность", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Пароль и активные устройства/ })).toBeEnabled();
-    await expect(page.getByRole("button", { name: /Email аккаунта/ })).toBeEnabled();
-    await expect(page.getByRole("button", { name: "Скачать мои данные", exact: true })).toBeEnabled();
-    await expect(page.getByRole("button", { name: /Удалить аккаунт/ })).toBeEnabled();
+    await expect(page.getByRole("button", {
+      name: "Пароль и активные устройства Сессии, смена пароля и журнал безопасности",
+      exact: true,
+    })).toBeEnabled();
+    await expect(page.getByRole("button", {
+      name: "Email аккаунта Подтверждаемая смена адреса для входа",
+      exact: true,
+    })).toBeEnabled();
+    await expect(page.getByRole("button", {
+      name: "Скачать мои данные Машиночитаемый JSON после повторного подтверждения",
+      exact: true,
+    })).toBeEnabled();
+    await expect(page.getByRole("button", {
+      name: "Удалить аккаунт Необратимое действие с подтверждением паролем и email",
+      exact: true,
+    })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Выйти", exact: true })).toBeEnabled();
 
     const appearanceRadioName = canonicalCase.appearance === "light"
