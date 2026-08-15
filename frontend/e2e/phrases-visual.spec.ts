@@ -950,7 +950,11 @@ test.describe("Phrase Detail canonical Figma parity", () => {
     await expect(detail).toBeVisible();
     await expect(layout).toBeVisible();
     await expect(detailMain).toBeVisible();
-    await expect(detailSide).toBeVisible();
+    if (canonicalCase.expectedNavigation === "mobile") {
+      await expect(detailSide).toBeHidden();
+    } else {
+      await expect(detailSide).toBeVisible();
+    }
     await expect(back).toBeEnabled();
 
     await expect(page.getByRole("heading", {
@@ -971,8 +975,14 @@ test.describe("Phrase Detail canonical Figma parity", () => {
     const expectedPrimaryAction = canonicalCase.authenticated ? "Настроить урок" : "Войти и сохранить прогресс";
     const expectedPracticeAction = canonicalCase.authenticated ? "Начать практику" : "Войти и сохранить прогресс";
     await expect(primaryAction).toHaveText(expectedPrimaryAction);
+    await expect(primaryAction).toBeVisible();
     await expect(primaryAction).toBeEnabled();
-    await expect(detailSide.getByRole("button", { name: expectedPracticeAction, exact: true })).toBeEnabled();
+    const practiceAction = detailSide.getByRole("button", { name: expectedPracticeAction, exact: true });
+    if (canonicalCase.expectedNavigation === "mobile") {
+      await expect(practiceAction).toBeHidden();
+    } else {
+      await expect(practiceAction).toBeEnabled();
+    }
     if (canonicalCase.authenticated) {
       await expect(page.getByText(/Демо-режим:/)).toHaveCount(0);
     } else {
@@ -994,7 +1004,9 @@ test.describe("Phrase Detail canonical Figma parity", () => {
     await expectHorizontallyContained(detail, canonicalCase.width, "Phrase Detail surface");
     await expectHorizontallyContained(layout, canonicalCase.width, "Phrase Detail layout");
     await expectHorizontallyContained(detailMain, canonicalCase.width, "Phrase Detail content");
-    await expectHorizontallyContained(detailSide, canonicalCase.width, "Phrase Detail practice panel");
+    if (canonicalCase.expectedNavigation !== "mobile") {
+      await expectHorizontallyContained(detailSide, canonicalCase.width, "Phrase Detail practice panel");
+    }
     await expectHorizontallyContained(back, canonicalCase.width, "Phrase Detail back action");
     await expectHorizontallyContained(primaryAction, canonicalCase.width, "Phrase Detail lesson action");
 
