@@ -6,7 +6,7 @@
 - Branch: `test/issue-531-dictionary-figma-parity`
 - Base SHA: `e3cf4054068867012e01f6ccba528dc04498686f`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #532 — `test(figma): add canonical Dictionary parity contract`
 
 ## Objective
 
