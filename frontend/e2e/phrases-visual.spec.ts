@@ -752,3 +752,342 @@ test.describe("Phrases canonical Figma parity", () => {
     });
   }
 });
+
+test.describe("Phrase Detail canonical Figma parity", () => {
+  type ExplicitAppearance = "light" | "dark";
+  type KnownRouteNavigation = "mobile" | "rail" | "header";
+  type CanonicalPhraseDetailContent = {
+    slug: string;
+    prompt: string;
+    translation: string;
+    topic: string;
+    example: string;
+    note: string;
+    cloze: string;
+    clozeAnswer: string;
+  };
+  type CanonicalPhraseDetailCase = {
+    name: string;
+    width: number;
+    height: number;
+    appearance: ExplicitAppearance;
+    canvas: string;
+    figmaNode: "255:55" | "257:47" | "255:162" | "257:159";
+    designContract: string;
+    project: "visual-compact" | "visual-desktop";
+    expectedNavigation: "mobile" | "rail";
+    authenticated: boolean;
+    variant: "daily" | "travel" | "technical";
+    apiId?: number;
+    content: CanonicalPhraseDetailContent;
+  };
+
+  const dailyContent: CanonicalPhraseDetailContent = {
+    slug: "could-you-help-me-with-this",
+    prompt: "Could you help me with this?",
+    translation: "Не могли бы вы помочь мне с этим?",
+    topic: "Daily Life",
+    example: "Could you help me with this form?",
+    note: "Вежливая универсальная просьба о помощи.",
+    cloze: "Could you _____ me with this?",
+    clozeAnswer: "help",
+  };
+  const travelContent: CanonicalPhraseDetailContent = {
+    slug: "could-you-take-a-photo-of-me",
+    prompt: "Could you take a photo of me?",
+    translation: "Не могли бы вы меня сфотографировать?",
+    topic: "Travel",
+    example: "Could you take a photo of me with the building behind me?",
+    note: "take a photo — сфотографировать.",
+    cloze: "Could you take a _____ of me?",
+    clozeAnswer: "photo",
+  };
+  const technicalContent: CanonicalPhraseDetailContent = {
+    slug: "root-cause",
+    prompt: "We need to identify the root cause.",
+    translation: "Нам нужно определить первопричину.",
+    topic: "Incidents",
+    example: "Before applying another workaround, we need to identify the root cause.",
+    note: "root cause — первопричина, а не просто наблюдаемый симптом",
+    cloze: "We need to identify the _____ cause.",
+    clozeAnswer: "root",
+  };
+
+  const canonicalCases: readonly CanonicalPhraseDetailCase[] = [
+    {
+      name: "mobile Dark daily",
+      width: 390,
+      height: 844,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "255:55",
+      designContract: "Figma 255:55 — mobile Phrase Detail Dark/daily",
+      project: "visual-compact",
+      expectedNavigation: "mobile",
+      authenticated: false,
+      variant: "daily",
+      content: dailyContent,
+    },
+    {
+      name: "mobile Light travel",
+      width: 390,
+      height: 844,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "257:47",
+      designContract: "Figma 257:47 — mobile Phrase Detail Light/travel",
+      project: "visual-compact",
+      expectedNavigation: "mobile",
+      authenticated: false,
+      variant: "travel",
+      content: travelContent,
+    },
+    {
+      name: "desktop Dark technical",
+      width: 1440,
+      height: 1024,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "255:162",
+      designContract: "Figma 255:162 — desktop Phrase Detail Dark/technical",
+      project: "visual-desktop",
+      expectedNavigation: "rail",
+      authenticated: true,
+      variant: "technical",
+      apiId: 9201,
+      content: technicalContent,
+    },
+    {
+      name: "desktop Light daily",
+      width: 1440,
+      height: 1024,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "257:159",
+      designContract: "Figma 257:159 — desktop Phrase Detail Light/daily",
+      project: "visual-desktop",
+      expectedNavigation: "rail",
+      authenticated: true,
+      variant: "daily",
+      apiId: 9202,
+      content: dailyContent,
+    },
+  ] as const;
+
+  async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+    await page.addInitScript((value) => {
+      window.localStorage.setItem("lexigo.appearance.v1", value);
+    }, appearance);
+  }
+
+  async function installExactDetailFixture(
+    page: Page,
+    canonicalCase: CanonicalPhraseDetailCase,
+    requests: string[],
+  ): Promise<void> {
+    if (!canonicalCase.authenticated) return;
+    const expectedPath = `/api/v1/phrases/${encodeURIComponent(canonicalCase.content.slug)}`;
+    await page.route(`**${expectedPath}`, async (route) => {
+      const request = route.request();
+      const requestURL = new URL(request.url());
+      requests.push(`${request.method()} ${requestURL.pathname}${requestURL.search}`);
+      expect(request.method()).toBe("GET");
+      expect(requestURL.pathname).toBe(expectedPath);
+      expect(requestURL.search).toBe("");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: canonicalCase.apiId,
+          kind: "phrase",
+          slug: canonicalCase.content.slug,
+          lemma: canonicalCase.content.prompt,
+          translation: canonicalCase.content.translation,
+          phonetic: "",
+          partOfSpeech: "phrase",
+          topic: canonicalCase.content.topic,
+          examples: [canonicalCase.content.example],
+          note: canonicalCase.content.note,
+          status: "review",
+          cloze: canonicalCase.content.cloze,
+          clozeAnswer: canonicalCase.content.clozeAnswer,
+        }),
+      });
+    });
+  }
+
+  async function openCanonicalDetail(page: Page, canonicalCase: CanonicalPhraseDetailCase): Promise<void> {
+    await page.goto(`/phrases/${canonicalCase.content.slug}`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", {
+      level: 1,
+      name: canonicalCase.content.prompt,
+      exact: true,
+    })).toBeVisible();
+    await expect(page.locator('[data-route-client-island="phrases"]')).toBeVisible();
+  }
+
+  async function expectCanonicalDetail(
+    page: Page,
+    canonicalCase: CanonicalPhraseDetailCase,
+  ): Promise<KnownRouteNavigation> {
+    const url = new URL(page.url());
+    expect(url.pathname).toBe(`/phrases/${canonicalCase.content.slug}`);
+    expect(url.search).toBe("");
+
+    const island = page.locator('[data-route-client-island="phrases"]');
+    const main = page.locator('#lexigo-main-content[aria-label="Карточка фразы"]');
+    const detail = page.locator(".lx-phrase-detail");
+    const layout = page.locator(".lx-detail-card.lx-phrase-detail-layout");
+    const detailMain = page.locator(".lx-phrase-detail-main");
+    const detailSide = page.locator('.lx-phrase-detail-side[aria-label="Практика фразы"]');
+    const back = page.getByRole("button", { name: "К списку фраз", exact: true });
+    const primaryAction = page.locator(".lx-phrase-detail-primary");
+    const visibleNavigation = page.locator("[data-route-navigation]:visible");
+
+    await expect(island).toHaveCount(1);
+    await expect(island).toBeVisible();
+    await expect(main).toBeVisible();
+    await expect(detail).toBeVisible();
+    await expect(layout).toBeVisible();
+    await expect(detailMain).toBeVisible();
+    if (canonicalCase.expectedNavigation === "mobile") {
+      await expect(detailSide).toBeHidden();
+    } else {
+      await expect(detailSide).toBeVisible();
+    }
+    await expect(back).toBeEnabled();
+
+    await expect(page.getByRole("heading", {
+      level: 1,
+      name: canonicalCase.content.prompt,
+      exact: true,
+    })).toBeVisible();
+    await expect(page.getByText(canonicalCase.content.translation, { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Смысл и употребление", exact: true })).toBeVisible();
+    await expect(page.getByText(canonicalCase.content.note, { exact: true })).toBeVisible();
+    await expect(page.locator(".lx-phrase-cloze")).toBeVisible();
+    await expect(page.getByText(canonicalCase.content.cloze, { exact: true })).toBeVisible();
+    await expect(page.getByText(canonicalCase.content.clozeAnswer, { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Примеры в контексте", exact: true })).toBeVisible();
+    await expect(page.getByRole("listitem").filter({ hasText: canonicalCase.content.example })).toBeVisible();
+    await expect(page.locator('aside[aria-label="Подсказка по использованию"]')).toBeVisible();
+
+    const expectedPrimaryAction = canonicalCase.authenticated ? "Настроить урок" : "Войти и сохранить прогресс";
+    const expectedPracticeAction = canonicalCase.authenticated ? "Начать практику" : "Войти и сохранить прогресс";
+    await expect(primaryAction).toHaveText(expectedPrimaryAction);
+    await expect(primaryAction).toBeVisible();
+    await expect(primaryAction).toBeEnabled();
+    const practiceAction = detailSide.getByRole("button", { name: expectedPracticeAction, exact: true });
+    if (canonicalCase.expectedNavigation === "mobile") {
+      await expect(practiceAction).toBeHidden();
+    } else {
+      await expect(practiceAction).toBeEnabled();
+    }
+    if (canonicalCase.authenticated) {
+      await expect(page.getByText(/Демо-режим:/)).toHaveCount(0);
+    } else {
+      await expect(page.getByText(/Демо-режим: карточку можно просматривать без аккаунта/)).toBeVisible();
+    }
+
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", canonicalCase.appearance);
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-lexigo-resolved-appearance",
+      canonicalCase.appearance,
+    );
+    const canvas = await page.locator("html").evaluate((element) => (
+      window.getComputedStyle(element).getPropertyValue("--ak-color-canvas").trim()
+    ));
+    expect(canvas).toBe(canonicalCase.canvas);
+
+    await expectNoHorizontalOverflow(page);
+    await expectHorizontallyContained(main, canonicalCase.width, "Phrase Detail semantic main");
+    await expectHorizontallyContained(detail, canonicalCase.width, "Phrase Detail surface");
+    await expectHorizontallyContained(layout, canonicalCase.width, "Phrase Detail layout");
+    await expectHorizontallyContained(detailMain, canonicalCase.width, "Phrase Detail content");
+    if (canonicalCase.expectedNavigation !== "mobile") {
+      await expectHorizontallyContained(detailSide, canonicalCase.width, "Phrase Detail practice panel");
+    }
+    await expectHorizontallyContained(back, canonicalCase.width, "Phrase Detail back action");
+    await expectHorizontallyContained(primaryAction, canonicalCase.width, "Phrase Detail lesson action");
+
+    await expect(visibleNavigation).toHaveCount(1);
+    await expectHorizontallyContained(
+      visibleNavigation,
+      canonicalCase.width,
+      "Phrase Detail visible RouteChrome owner",
+    );
+    const navigation = await visibleNavigation.getAttribute("data-route-navigation");
+    expect(["mobile", "rail", "header"]).toContain(navigation);
+    expect(navigation).toBe(canonicalCase.expectedNavigation);
+
+    return navigation as KnownRouteNavigation;
+  }
+
+  test.describe.configure({ timeout: 90_000 });
+
+  for (const canonicalCase of canonicalCases) {
+    test(`${canonicalCase.name} uses canonical Phrase Detail ownership (${canonicalCase.designContract})`, async ({
+      context,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== canonicalCase.project,
+        `Canonical ${canonicalCase.name} Phrase Detail Figma parity runs only in ${canonicalCase.project}.`,
+      );
+
+      testInfo.annotations.push({
+        type: "figma",
+        description: `${canonicalCase.figmaNode}: ${canonicalCase.designContract}`,
+      });
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installDeterministicRuntime(page);
+      await installQualityGateAPI(context, { authenticated: canonicalCase.authenticated });
+      await installAppearance(page, canonicalCase.appearance);
+      const detailRequests: string[] = [];
+      await installExactDetailFixture(page, canonicalCase, detailRequests);
+      const observedDetailRequests: string[] = [];
+      page.on("request", (request) => {
+        const requestURL = new URL(request.url());
+        if (requestURL.pathname.startsWith("/api/v1/phrases/")) {
+          observedDetailRequests.push(`${request.method()} ${requestURL.pathname}${requestURL.search}`);
+        }
+      });
+      const runtimeErrors = captureRuntimeErrors(page);
+
+      await openCanonicalDetail(page, canonicalCase);
+      const initialNavigation = await expectCanonicalDetail(page, canonicalCase);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedNavigation = await expectCanonicalDetail(page, canonicalCase);
+      expect(reloadedNavigation).toBe(initialNavigation);
+
+      const expectedDetailRequest = `GET /api/v1/phrases/${encodeURIComponent(canonicalCase.content.slug)}`;
+      if (canonicalCase.authenticated) {
+        expect(detailRequests).toEqual([expectedDetailRequest, expectedDetailRequest]);
+        expect(observedDetailRequests).toEqual([expectedDetailRequest, expectedDetailRequest]);
+      } else {
+        expect(detailRequests).toEqual([]);
+        expect(observedDetailRequests).toEqual([]);
+      }
+      expect(runtimeErrors).toEqual([]);
+
+      await testInfo.attach("phrase-detail-canonical-runtime.json", {
+        body: Buffer.from(JSON.stringify({
+          figmaNode: canonicalCase.figmaNode,
+          designContract: canonicalCase.designContract,
+          viewport: { width: canonicalCase.width, height: canonicalCase.height },
+          appearance: canonicalCase.appearance,
+          canvas: canonicalCase.canvas,
+          variant: canonicalCase.variant,
+          authenticated: canonicalCase.authenticated,
+          path: `/phrases/${canonicalCase.content.slug}`,
+          navigation: initialNavigation,
+          exactDetailFixture: canonicalCase.authenticated ? expectedDetailRequest : null,
+          detailRequests,
+        }, null, 2)),
+        contentType: "application/json",
+      });
+    });
+  }
+});
