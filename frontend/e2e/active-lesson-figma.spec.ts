@@ -6,6 +6,138 @@ import {
   type ActiveLessonMode,
 } from "./support/active-lesson-fixture";
 
+type ExplicitAppearance = "light" | "dark";
+type CanonicalActiveLessonState =
+  | "recall-default"
+  | "recall-correct"
+  | "choice-incorrect"
+  | "study";
+
+type CanonicalActiveLessonCase = {
+  name: string;
+  width: number;
+  height: number;
+  appearance: ExplicitAppearance;
+  mode: ActiveLessonMode;
+  state: CanonicalActiveLessonState;
+  canvas: string;
+  figmaNode: string;
+  designContract: string;
+};
+
+const CANONICAL_ACTIVE_LESSON_CASES: readonly CanonicalActiveLessonCase[] = [
+  {
+    name: "mobile Recall default Light",
+    width: 390,
+    height: 844,
+    appearance: "light",
+    mode: "recall",
+    state: "recall-default",
+    canvas: "#f4f7f5",
+    figmaNode: "75:6",
+    designContract: "Figma 75:6 — Mobile / Recall / Default",
+  },
+  {
+    name: "mobile Recall default Dark",
+    width: 390,
+    height: 844,
+    appearance: "dark",
+    mode: "recall",
+    state: "recall-default",
+    canvas: "#10211d",
+    figmaNode: "75:6",
+    designContract: "Figma 75:6 geometry + explicit Dark tokens",
+  },
+  {
+    name: "mobile Recall correct Light",
+    width: 390,
+    height: 844,
+    appearance: "light",
+    mode: "recall",
+    state: "recall-correct",
+    canvas: "#f4f7f5",
+    figmaNode: "75:30",
+    designContract: "Figma 75:30 — Mobile / Recall / Correct",
+  },
+  {
+    name: "mobile Recall correct Dark",
+    width: 390,
+    height: 844,
+    appearance: "dark",
+    mode: "recall",
+    state: "recall-correct",
+    canvas: "#10211d",
+    figmaNode: "75:30",
+    designContract: "Figma 75:30 geometry + explicit Dark tokens",
+  },
+  {
+    name: "mobile Choice incorrect Light",
+    width: 390,
+    height: 844,
+    appearance: "light",
+    mode: "choice",
+    state: "choice-incorrect",
+    canvas: "#f4f7f5",
+    figmaNode: "75:89",
+    designContract: "Figma 75:89 — Mobile / Choice / Incorrect",
+  },
+  {
+    name: "mobile Choice incorrect Dark",
+    width: 390,
+    height: 844,
+    appearance: "dark",
+    mode: "choice",
+    state: "choice-incorrect",
+    canvas: "#10211d",
+    figmaNode: "75:89",
+    designContract: "Figma 75:89 geometry + explicit Dark tokens",
+  },
+  {
+    name: "desktop Study Light",
+    width: 1440,
+    height: 1024,
+    appearance: "light",
+    mode: "study",
+    state: "study",
+    canvas: "#f4f7f5",
+    figmaNode: "75:120",
+    designContract: "Figma 75:120 — Desktop / Study / Light",
+  },
+  {
+    name: "desktop Study Dark",
+    width: 1440,
+    height: 1024,
+    appearance: "dark",
+    mode: "study",
+    state: "study",
+    canvas: "#10211d",
+    figmaNode: "75:120",
+    designContract: "Figma 75:120 geometry + explicit Dark tokens",
+  },
+  {
+    name: "desktop Recall correct Light",
+    width: 1440,
+    height: 1024,
+    appearance: "light",
+    mode: "recall",
+    state: "recall-correct",
+    canvas: "#f4f7f5",
+    figmaNode: "75:150",
+    designContract: "Figma 75:150 — Desktop / Recall / Correct",
+  },
+  {
+    name: "desktop Recall correct Dark",
+    width: 1440,
+    height: 1024,
+    appearance: "dark",
+    mode: "recall",
+    state: "recall-correct",
+    canvas: "#10211d",
+    figmaNode: "75:150",
+    designContract: "Figma 75:150 geometry + explicit Dark tokens",
+  },
+] as const;
+
 function isMobile(page: Page): boolean {
   return (page.viewportSize()?.width ?? 1440) < 768;
 }
@@ -21,11 +153,137 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   ).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
+async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+  await page.addInitScript((value) => {
+    window.localStorage.setItem("lexigo.appearance.v1", value);
+  }, appearance);
+}
+
 async function openMode(page: Page, mode: ActiveLessonMode) {
   const fixture = await installActiveLessonFixture(page, mode);
   await openActiveLesson(page);
   await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-mode", mode);
   return fixture;
+}
+
+async function reachCanonicalActiveLessonState(
+  page: Page,
+  canonicalCase: CanonicalActiveLessonCase,
+): Promise<void> {
+  await openMode(page, canonicalCase.mode);
+
+  if (canonicalCase.state === "recall-correct") {
+    const answer = page.getByRole("textbox", { name: "Введите ответ" });
+    await answer.fill("backlog");
+    await answer.press("Enter");
+    await expect(page.getByRole("button", { name: "Знал", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
+  } else if (canonicalCase.state === "choice-incorrect") {
+    await page.getByRole("button", { name: "checkpoint", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Не знал" })).toBeEnabled();
+    await page.getByRole("button", { name: "Не знал" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Ответ не принят" })).toBeVisible();
+  }
+}
+
+async function expectCanonicalActiveLessonState(
+  page: Page,
+  canonicalCase: CanonicalActiveLessonCase,
+): Promise<void> {
+  if (canonicalCase.state === "recall-default") {
+    await expect(page.getByRole("textbox", { name: "Введите ответ" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Сверить ответ" })).toBeDisabled();
+  } else if (canonicalCase.state === "recall-correct") {
+    await expect(page.getByRole("status").filter({ hasText: "Ответ принят" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Дальше" })).toBeVisible();
+  } else if (canonicalCase.state === "choice-incorrect") {
+    await expect(page.getByRole("status").filter({ hasText: "Ответ не принят" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "checkpoint: выбран неверно" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "backlog: верный вариант" })).toBeVisible();
+  } else {
+    await expect(page.getByText("Изучение", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "The pipeline is delayed by a backlog in the ingestion stage.",
+      }),
+    ).toBeVisible();
+  }
+}
+
+async function expectCanonicalActiveLessonGeometry(
+  page: Page,
+  canonicalCase: CanonicalActiveLessonCase,
+): Promise<void> {
+  const geometry = await page.evaluate(() => {
+    const root = document.documentElement;
+    const main = document.querySelector<HTMLElement>("#lexigo-main-content");
+    const island = document.querySelector<HTMLElement>('[data-route-client-island="active-lesson"]');
+    const focusMode = document.querySelector<HTMLElement>(".lx-app.lx-lesson-focus-mode");
+    const lesson = document.querySelector<HTMLElement>(".lx-active-lesson");
+
+    if (!main || !island || !focusMode || !lesson) {
+      throw new Error("Active Lesson canonical geometry owner is not mounted");
+    }
+
+    const rect = (node: HTMLElement) => {
+      const value = node.getBoundingClientRect();
+      return {
+        left: value.left,
+        right: value.right,
+        top: value.top,
+        bottom: value.bottom,
+        width: value.width,
+        height: value.height,
+      };
+    };
+
+    const visibleNavigation = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-route-navigation]"),
+    )
+      .map((node) => {
+        const style = window.getComputedStyle(node);
+        return {
+          display: style.display,
+          visibility: style.visibility,
+          box: rect(node),
+        };
+      })
+      .filter(
+        (item) =>
+          item.display !== "none" &&
+          item.visibility !== "hidden" &&
+          item.box.width > 0 &&
+          item.box.height > 0,
+      );
+
+    return {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      clientWidth: root.clientWidth,
+      scrollWidth: root.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth ?? 0,
+      canvas: window.getComputedStyle(root).getPropertyValue("--ak-color-canvas").trim(),
+      main: rect(main),
+      island: rect(island),
+      focusMode: rect(focusMode),
+      lesson: rect(lesson),
+      visibleNavigation,
+    };
+  });
+
+  expect(geometry.innerWidth).toBe(canonicalCase.width);
+  expect(geometry.innerHeight).toBe(canonicalCase.height);
+  expect(geometry.canvas).toBe(canonicalCase.canvas);
+  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(geometry.bodyScrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(geometry.visibleNavigation).toHaveLength(0);
+
+  for (const owner of [geometry.main, geometry.island, geometry.focusMode, geometry.lesson]) {
+    expect(owner.width).toBeGreaterThan(0);
+    expect(owner.left).toBeGreaterThanOrEqual(-1);
+    expect(owner.right).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  }
 }
 
 test.describe("Issue #193 canonical Active Lesson", () => {
@@ -213,4 +471,45 @@ test.describe("Issue #193 canonical Active Lesson", () => {
     expect(styles.canvas).toBe("rgb(16, 33, 29)");
     expect(Number.parseFloat(styles.transitionDuration)).toBeLessThanOrEqual(0.00001);
   });
+});
+
+test.describe("Issue #528 canonical Active Lesson Figma parity contract", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  for (const canonicalCase of CANONICAL_ACTIVE_LESSON_CASES) {
+    test(`${canonicalCase.name} uses canonical focus-mode ownership (${canonicalCase.designContract})`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "desktop-chromium",
+        "Canonical Active Lesson Figma parity is measured once in Chromium; existing behavior, browser-owned zoom, reduced-motion, touch and accessibility gates remain independent.",
+      );
+
+      testInfo.annotations.push({
+        type: "figma",
+        description: `${canonicalCase.figmaNode}: ${canonicalCase.designContract}`,
+      });
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installAppearance(page, canonicalCase.appearance);
+      await reachCanonicalActiveLessonState(page, canonicalCase);
+
+      await expect(page).toHaveURL((url) => url.pathname === "/lesson/active" && url.search === "");
+      await expect(page.locator('[data-route-client-island="active-lesson"]')).toBeVisible();
+      await expect(page.locator(".lx-app.lx-lesson-focus-mode")).toBeVisible();
+      await expect(page.locator("#lexigo-main-content")).toBeVisible();
+      await expect(page.locator(".lx-active-lesson")).toHaveAttribute(
+        "data-active-lesson-mode",
+        canonicalCase.mode,
+      );
+      await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", canonicalCase.appearance);
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-lexigo-resolved-appearance",
+        canonicalCase.appearance,
+      );
+
+      await expectCanonicalActiveLessonState(page, canonicalCase);
+      await expectCanonicalActiveLessonGeometry(page, canonicalCase);
+    });
+  }
 });
