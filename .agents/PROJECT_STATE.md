@@ -2,15 +2,14 @@
 
 ## Verification
 
-- Last verified: 2026-08-15 Europe/Moscow.
+- Last verified: 2026-08-16 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `0c2e6f3010ad486fc2bf76441a311532e9761b4f` after PR #538.
-- Latest deployed runtime/Stage SHA: `0c2e6f3010ad486fc2bf76441a311532e9761b4f`.
-- PR #538 final developer-authored head was `4396040cf6680c7a2cbf1586a224216006509eaa`.
-- Immutable-head PR CI #3562 (`31891029777`) completed successfully on that exact final head.
-- PR #538 squash merge SHA is `0c2e6f3010ad486fc2bf76441a311532e9761b4f` and Issue #536 is closed.
-- Exact-main CI #3563 (`31891585765`) completed successfully for the exact merge SHA.
-- Stage run #3412 (`31892094808`) completed successfully for the same exact SHA, including public Stage validation.
+- Runtime-bearing `main`: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` after PR #543.
+- Latest deployed runtime/Stage SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
+- PR #543 final developer-authored head: `d5a0357611b4c99cd9f274780d2a4df9cd6b2024`.
+- PR #543 squash merge SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`; Issue #542 is closed.
+- Exact-main CI #3578 (`31911245893`) completed successfully for the exact merge SHA.
+- Stage run `31911802944` completed successfully for the same SHA, including public smoke and 12/12 public desktop Chromium/iOS WebKit checks.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
@@ -19,7 +18,7 @@
 - Product changes require the repository-owned frontend/backend/browser/accessibility/performance/container gates selected by scope.
 - Product delivery requires immutable-head PR CI, clean review audit, expected-head squash merge, exact-main validation and Stage/public validation when runtime changed.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy Stage runtime.
-- A controlled same-head CI retry may prove infrastructure/render nondeterminism only after the failure is classified; it must not normalize a flaky product or baseline.
+- A controlled same-head CI retry may help classify infrastructure/render nondeterminism, but a retry-success result must not be reported as deterministic when Playwright still records a flaky test.
 - A failed executable parity assertion is not a baseline-refresh signal: inspect authoritative browser evidence and actual runtime/CSS ownership first.
 
 ## Production ownership foundations
@@ -47,60 +46,58 @@
 
 ## Completed executable #205 route parity
 
-- Home: Issue #522 / PR #523 / exact-main CI #3520 / Stage #3367.
-- Learn Composer: Issue #525 / PR #526 / exact-main CI #3529 / Stage #3376.
-- Active Lesson: Issue #528 / PR #529 / exact-main CI #3536 / Stage #3385.
-- Progress: Issue #515 / PR #517 / Stage #3330.
-- Dictionary: Issue #531 / PR #532 / exact-main CI #3544 / Stage #3393.
-- Word Detail: Issue #533 / PR #535 / immutable-head CI #3550 / exact-main CI #3551 / Stage #3400.
-- Phrases catalog: Issue #536 / PR #538 / immutable-head CI #3562 / exact-main CI #3563 / Stage #3412.
+- Home: Issue #522 / PR #523.
+- Learn Composer: Issue #525 / PR #526.
+- Active Lesson: Issue #528 / PR #529.
+- Progress: Issue #515 / PR #517.
+- Dictionary: Issue #531 / PR #532.
+- Word Detail: Issue #533 / PR #535.
+- Phrases catalog: Issue #536 / PR #538.
+- Phrase Detail: Issue #540 / PR #541 / merge `11ad10835ad968b41f5f53b01e97d22dab08a1e9`.
+- Profile: Issue #542 / PR #543 / merge `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` / exact-main CI #3578 / Stage `31911802944`.
 
-### Phrases catalog parity delivered by #536
+### Phrase Detail parity delivered by #540
 
-- mobile Light/default: Figma `255:10`, viewport `390x844`;
-- mobile Dark/search + Travel filter: Figma `257:2`, viewport `390x844`;
-- desktop Light/default: Figma `255:81`, viewport `1440x1024`;
-- desktop Dark/empty search: Figma `257:74`, viewport `1440x1024`;
-- implementation extended the existing authoritative `frontend/e2e/phrases-visual.spec.ts` owner;
-- executable browser evidence establishes `mobile` RouteChrome at 390px and persistent `rail` RouteChrome at 1440px;
-- URL-backed query/topic state, route-island/main/catalog ownership, semantic Light/Dark canvas, containment and reload stability are executable contracts;
-- all eight existing content-addressed Phrases visual hashes and the existing browser-owned 200% zoom/reflow owner remained unchanged;
-- no production React/CSS, backend, package/lockfile, Playwright config, workflow or visual-baseline change was required.
+- mobile Dark/daily: Figma `255:55`, viewport `390x844`;
+- mobile Light/travel: Figma `257:47`, viewport `390x844`;
+- desktop Dark/technical: Figma `255:162`, viewport `1440x1024`;
+- desktop Light/daily: Figma `257:159`, viewport `1440x1024`;
+- implementation extends the existing authoritative `frontend/e2e/phrases-visual.spec.ts` owner;
+- production React/CSS, backend contracts and existing content-addressed Phrases baselines remained unchanged.
 
-## Next executable Figma route: `/phrases/[slug]` Phrase Detail
+### Profile parity delivered by #542
 
-Repository-approved handoff in `frontend/docs/adaptive-knowledge-coach.md` already contains exact canonical Phrase Detail nodes:
-
-- mobile Dark/daily: Figma `255:55` at `390x844`;
-- mobile Light/travel: Figma `257:47` at `390x844`;
-- desktop Dark/technical: Figma `255:162` at `1440x1024`;
-- desktop Light/daily: Figma `257:159` at `1440x1024`;
-- production wrapper/page remains `253:3` / `253:2` and Screen Map handoff `261:2` inside `82:3`.
-
-Execution boundary for the next atomic child under #205:
-
-- reuse the existing Phrases/Phrase Detail authoritative owners rather than creating a competing route graph or visual owner;
-- preserve independent direct-entry loading/error behavior and exact `/api/v1/phrases/{slug}` fixture scoping;
-- verify semantic main/route-island ownership, canonical content hierarchy, appearance/canvas, actual RouteChrome owner, horizontal containment and reload/direct-entry stability;
-- preserve existing Phrases catalog parity, content-addressed visual hashes, browser zoom/reflow, accessibility, touch, focus/history and performance owners;
-- change production React/CSS or visual baselines only if executable evidence proves a concrete product defect;
-- use repository-approved exact node mapping while live Figma MCP remains quota-blocked and do not claim fresh cloud-canvas synchronization.
+- mobile Light: Figma `79:6`, viewport `390x844`;
+- mobile Dark: token-derived from canonical `79:6`, viewport `390x844`;
+- desktop Light: Figma `79:129`, viewport `1440x1024`;
+- desktop Dark: token-derived from canonical `79:129`, viewport `1440x1024`;
+- executable ownership covers direct entry, route island/main hierarchy, authenticated control surfaces, explicit appearance/canvas, visible RouteChrome owner, horizontal containment and reload stability;
+- production React/CSS, backend contracts and existing Profile content-addressed baselines remained unchanged.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
+## Known Figma visual-gate follow-up
+
+- Canonical Dictionary Empty Light remains Figma node `79:93` at `390x844` with approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
+- Issue #518 / PR #520 added hydration and consecutive-capture stabilization, but the alternate hosted-runner raster `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` recurred during Profile CI.
+- The same-head Visual rerun was job-successful only through Playwright retry and still reported one flaky Dictionary Empty case; it therefore does not prove determinism.
+- Artifact comparison establishes identical `390x844` geometry and only three RGB pixels differing by at most one LSB, all on the antialiased edge of the calendar-reminder control rather than Dictionary content.
+- Do not refresh the canonical Figma baseline, change production UI or introduce broad pixel tolerance. The next CI slice must encode only independently proven renderer-equivalent fingerprints and reject any unreviewed third raster.
+
 ## Current state
 
-- Phrases catalog #536 is fully delivered through PR #538, immutable-head CI #3562, exact-main CI #3563 and Stage #3412.
-- This reconciliation resets `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` byte-for-byte to canonical templates before the next product branch.
-- `/phrases/[slug]` is the next repository-approved executable Figma route under umbrella #205 because exact canonical nodes already exist.
-- Issue #201 remains design-gated; do not invent missing First Use desktop/diagnostic/recovery states from adjacent frames.
+- Phrase Detail #540 and Profile #542 are fully delivered through their merged PRs; exact-main CI and Stage/public validation are green on `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
+- This reconciliation resets `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` byte-for-byte to canonical templates before the next branch.
+- Direct Figma canvas work remains blocked by the connected Starter-plan MCP quota; no missing node ID is inferred.
+- Issue #201 remains design-gated: mobile onboarding node `79:46` alone is insufficient for Guest Home, desktop onboarding and diagnostic/recovery state implementation.
 - Issue #203 remains temporarily blocked on live Figma MCP access.
 - Issue #487 remains open for exact native `.fig` binary upload through a binary-safe path.
-- Issue #78 remains an independent CSP/security-hardening workstream.
+- The recurrent Dictionary Empty `79:93` renderer split is the next executable Figma-linked CI follow-up because it can fail otherwise unrelated route-parity PRs.
 
 ## Remaining roadmap
 
-- #205: deliver canonical `/phrases/[slug]` Phrase Detail parity next, then continue with `/profile` and `/onboarding` subject to exact approved node evidence and design gates.
+- #205: continue final parity only from exact approved mappings; onboarding remains blocked until missing canonical nodes/states exist.
+- Figma/CI: remove the recurrent Dictionary Empty `79:93` hosted-runner raster flake without weakening canonical visual ownership.
 - #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
