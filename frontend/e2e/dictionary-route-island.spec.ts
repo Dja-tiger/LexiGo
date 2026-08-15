@@ -6,7 +6,7 @@ import {
 } from "./support/quality-gates";
 
 type ExplicitAppearance = "light" | "dark";
-type CanonicalNavigation = "mobile" | "header";
+type CanonicalNavigation = "mobile" | "rail";
 
 type CanonicalDictionaryCase = {
   name: string;
@@ -45,7 +45,7 @@ const CANONICAL_DICTIONARY_CASES: readonly CanonicalDictionaryCase[] = [
     width: 1440,
     height: 1024,
     appearance: "light",
-    navigation: "header",
+    navigation: "rail",
     canvas: "#f4f7f5",
     figmaNode: "78:193",
     designContract: "Figma 78:193 — desktop Dictionary Light",
@@ -55,7 +55,7 @@ const CANONICAL_DICTIONARY_CASES: readonly CanonicalDictionaryCase[] = [
     width: 1440,
     height: 1024,
     appearance: "dark",
-    navigation: "header",
+    navigation: "rail",
     canvas: "#10211d",
     figmaNode: "78:193",
     designContract: "Figma 78:193 geometry + explicit Dark tokens",
