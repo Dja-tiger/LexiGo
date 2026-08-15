@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-15 15:27 Europe/Moscow
+## 2026-08-15 15:36 Europe/Moscow
 
 ### Verified
 
@@ -10,6 +10,9 @@
 - Live Figma MCP remains unavailable due Starter-plan tool-call quota, so no fresh canvas/screenshot approval is claimed.
 - Existing authoritative owner is `frontend/e2e/word-detail-visual.spec.ts`; it is collected by Visual regression and already owns deterministic Light/Dark baselines, 200% text reflow, forced-colors and browser-owned zoom.
 - Standalone `/words/[id]` remains detail state inside `data-route-client-island="dictionary"`; semantic main is `Карточка слова`.
+- Mandatory read-back confirmed the existing browser-owned zoom section remains intact and all four content-addressed baseline SHA-256 values are unchanged.
+- Branch compare against exact base is ahead-only with exactly four changed files: the existing Word Detail visual owner plus `.agents/current/{TASK,PROGRESS,EXECUTION}.md`.
+- Draft PR #535 is open against `main`.
 
 ### Finding
 
@@ -30,23 +33,26 @@ No product defect has been established. This slice addresses missing executable 
 - `frontend/e2e/word-detail-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
-- `.agents/current/EXECUTION.md` pending this task record update
+- `.agents/current/EXECUTION.md`
 
 ### Checks passed
 
 - preflight ownership audit;
 - repository-approved Figma node mapping audit;
 - source owner/collection audit;
-- baseline non-mutation review at implementation time.
+- baseline non-mutation review;
+- complete source read-back including the existing browser-owned zoom tail;
+- ahead-only branch compare with exactly four allowed changed files;
+- Draft PR #535 creation from exact base `e2f4a754cb5dab65d55af248d4e7e6359083c710`.
 
 ### Checks failed
 
-- none yet; immutable-head CI has not started.
+- none yet; immutable-head CI is pending on the final provenance-updated head.
 
 ### Current branch head
 
-Resolve from live branch ref after Agent Docs updates. Product test commit before Agent Docs: `f571a85e44b942739b2320877933def9597cf431`.
+Resolve from live branch ref after this final Agent Docs provenance commit. Product test commit: `f571a85e44b942739b2320877933def9597cf431`. PR #535 was initially opened at `02d8cc5f81daa9278969b79e8c89545b70bd559d` before PR-number provenance updates.
 
 ### Next action
 
-Complete execution record, read back the four allowed files, compare branch to `main`, open a Draft PR and run immutable-head CI. If browser evidence exposes a specific desktop RouteChrome variant, encode only that observed owner without changing production CSS or visual baselines.
+Freeze the branch after this commit, resolve the final head SHA and use only CI/review reads until browser evidence proves a required correction. Inspect authoritative Visual regression artifacts for the observed desktop RouteChrome owner. If a concrete owner is established, encode only that observed expectation and rerun the new immutable head; do not change production CSS or visual baselines.
