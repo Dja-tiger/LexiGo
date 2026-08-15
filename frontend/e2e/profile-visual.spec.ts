@@ -116,3 +116,176 @@ test.describe("Profile Figma visual baselines", () => {
     });
   }
 });
+
+test.describe("Profile canonical Figma parity", () => {
+  type CanonicalProfileCase = {
+    name: string;
+    width: number;
+    height: number;
+    appearance: ExplicitAppearance;
+    canvas: "#f4f7f5" | "#10211d";
+    figmaNode: "79:6" | "79:129";
+    designContract: string;
+    project: "visual-compact" | "visual-desktop";
+    expectedNavigation: "mobile" | "rail";
+  };
+
+  const canonicalCases: readonly CanonicalProfileCase[] = [
+    {
+      name: "mobile Light",
+      width: 390,
+      height: 844,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "79:6",
+      designContract: "Figma 79:6 — mobile Profile Light",
+      project: "visual-compact",
+      expectedNavigation: "mobile",
+    },
+    {
+      name: "mobile Dark",
+      width: 390,
+      height: 844,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "79:6",
+      designContract: "Figma 79:6 — mobile Profile Dark token-derived state",
+      project: "visual-compact",
+      expectedNavigation: "mobile",
+    },
+    {
+      name: "desktop Light",
+      width: 1440,
+      height: 1024,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "79:129",
+      designContract: "Figma 79:129 — desktop Profile Light",
+      project: "visual-desktop",
+      expectedNavigation: "rail",
+    },
+    {
+      name: "desktop Dark",
+      width: 1440,
+      height: 1024,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "79:129",
+      designContract: "Figma 79:129 — desktop Profile Dark token-derived state",
+      project: "visual-desktop",
+      expectedNavigation: "rail",
+    },
+  ] as const;
+
+  async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+    const dimensions = await page.evaluate(() => ({
+      viewportWidth: document.documentElement.clientWidth,
+      contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+    }));
+    expect(
+      dimensions.contentWidth,
+      `Profile must not overflow horizontally: viewport=${dimensions.viewportWidth}px, content=${dimensions.contentWidth}px`,
+    ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+  }
+
+  async function expectCanonicalProfile(
+    page: Page,
+    canonicalCase: CanonicalProfileCase,
+  ): Promise<string> {
+    const url = new URL(page.url());
+    expect(url.pathname).toBe("/profile");
+    expect(url.search).toBe("");
+
+    const island = page.locator('[data-route-client-island="profile"]');
+    const main = page.locator('#lexigo-main-content[aria-label="Профиль"]');
+    const visibleNavigation = page.locator("[data-route-navigation]:visible");
+
+    await expect(island).toHaveCount(1);
+    await expect(island).toBeVisible();
+    await expect(main).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Профиль", exact: true })).toBeVisible();
+
+    await expect(page.getByRole("heading", { level: 2, name: "Quality Gates", exact: true })).toBeVisible();
+    await expect(page.getByText("quality-gates@example.com", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Параметры практики", exact: true })).toBeVisible();
+    await expect(page.getByText("12 из 30 ответов сегодня", { exact: true })).toBeVisible();
+    await expect(page.getByRole("radiogroup", { name: "Дневная цель", exact: true })).toBeVisible();
+    await expect(page.getByText("Напоминания", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Настроить", exact: true })).toBeEnabled();
+    await expect(page.getByRole("heading", { level: 2, name: "Интерфейс и устройство", exact: true })).toBeVisible();
+    await expect(page.getByRole("radiogroup", { name: "Оформление приложения", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Безопасность и конфиденциальность", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Пароль и активные устройства/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Email аккаунта/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Скачать мои данные/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Удалить аккаунт/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Выйти", exact: true })).toBeEnabled();
+
+    const appearanceRadioName = canonicalCase.appearance === "light"
+      ? "Светлая: Всегда светлая"
+      : "Тёмная: Всегда тёмная";
+    await expect(page.getByRole("radio", { name: appearanceRadioName, exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", canonicalCase.appearance);
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-lexigo-resolved-appearance",
+      canonicalCase.appearance,
+    );
+    const canvas = await page.locator("html").evaluate((element) => (
+      window.getComputedStyle(element).getPropertyValue("--ak-color-canvas").trim()
+    ));
+    expect(canvas).toBe(canonicalCase.canvas);
+
+    await expect(visibleNavigation).toHaveCount(1);
+    const navigation = await visibleNavigation.getAttribute("data-route-navigation");
+    expect(navigation).toBe(canonicalCase.expectedNavigation);
+    await expectNoHorizontalOverflow(page);
+
+    return navigation ?? "";
+  }
+
+  test.describe.configure({ timeout: 90_000 });
+
+  for (const canonicalCase of canonicalCases) {
+    test(`${canonicalCase.name} uses canonical Profile ownership (${canonicalCase.designContract})`, async ({
+      context,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== canonicalCase.project,
+        `Canonical ${canonicalCase.name} Profile Figma parity runs only in ${canonicalCase.project}.`,
+      );
+
+      testInfo.annotations.push({
+        type: "figma",
+        description: `${canonicalCase.figmaNode}: ${canonicalCase.designContract}`,
+      });
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installDeterministicRuntime(page);
+      await installQualityGateAPI(context);
+      await installAppearance(page, canonicalCase.appearance);
+      const runtimeErrors = captureRuntimeErrors(page);
+
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      const initialNavigation = await expectCanonicalProfile(page, canonicalCase);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedNavigation = await expectCanonicalProfile(page, canonicalCase);
+      expect(reloadedNavigation).toBe(initialNavigation);
+      expect(runtimeErrors).toEqual([]);
+
+      await testInfo.attach("profile-canonical-runtime.json", {
+        body: Buffer.from(JSON.stringify({
+          figmaNode: canonicalCase.figmaNode,
+          designContract: canonicalCase.designContract,
+          viewport: { width: canonicalCase.width, height: canonicalCase.height },
+          appearance: canonicalCase.appearance,
+          canvas: canonicalCase.canvas,
+          path: "/profile",
+          navigation: initialNavigation,
+        }, null, 2)),
+        contentType: "application/json",
+      });
+    });
+  }
+});
