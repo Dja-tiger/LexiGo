@@ -5,7 +5,7 @@
 - Branch: `test/issue-536-phrases-catalog-figma-parity`
 - Base SHA: `a16a9dc598d61aa35ff7d10317a7a60b75e390e7`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #538
 
 ## Skills used
 
@@ -45,26 +45,32 @@ Files inspected:
 - `frontend/lib/phrase-navigation.ts`
 - `frontend/lib/navigation.ts`
 - `frontend/lib/expanded-phrases-travel.ts`
+- `frontend/playwright.visual.config.ts`
 
 Actions performed:
 
 - Verified Word Detail delivery and completed the required post-merge Agent Docs reconciliation through PR #537 before starting product work.
 - Created the #536 branch from exact clean `main`.
-- Identified the existing Phrases visual owner and the canonical route/state assertions to add without touching baselines or production runtime.
+- Identified the existing Phrases visual owner and canonical route/state assertions without touching baselines or production runtime.
 - Classified guest catalog filtering as the deterministic fixture path for Travel-search and empty-search parity.
+- Added four canonical Figma parity cases for `255:10`, `257:2`, `255:81`, `257:74` inside `frontend/e2e/phrases-visual.spec.ts`.
+- Added explicit appearance/canvas, URL query/topic, route-island/main/catalog, visible RouteChrome, containment/no-overflow and reload-stability assertions.
+- Opened draft PR #538.
 
 Commands or procedures:
 
-GitHub connector reads/writes only for repository mutation; exact branch/main refs verified after each write. Playwright structure follows the already delivered Word Detail canonical parity pattern.
+GitHub connector reads/writes only for repository mutation; exact branch/main refs verified after each write. Playwright structure follows the already delivered Word Detail canonical parity pattern. Pre-PR compare confirms `frontend/e2e/phrases-visual.spec.ts` is additions-only (`+215/-0`) and authoritative visual config already collects the file in compact/desktop projects.
 
 Artifacts produced:
 
-- Current task/preflight Agent Harness context for Issue #536.
-- Pending: canonical Phrases catalog parity additions in `frontend/e2e/phrases-visual.spec.ts`.
+- PR #538 `test(figma): add canonical Phrases catalog parity contract`.
+- Four executable canonical Phrases catalog cases with exact `figma` annotations.
+- `phrases-canonical-runtime.json` attachment per executed canonical case.
+- Current task/preflight/progress Agent Harness context for Issue #536.
 
 Result:
 
-Preflight complete; implementation scope is test-only unless executable evidence proves a product defect.
+Implementation is test-only and branch scope remains exactly four allowed files. Branch head will be frozen after this final Agent Docs write and evaluated through full immutable-head CI.
 
 Failures:
 
@@ -80,7 +86,7 @@ Use the already reviewed repository route map in `frontend/docs/adaptive-knowled
 
 Limitations:
 
-No live cloud-canvas mutation or screenshot comparison is asserted in this slice while MCP access is blocked. Executable parity is against the approved repository handoff and observable runtime invariants.
+No live cloud-canvas mutation or screenshot comparison is asserted in this slice while MCP access is blocked. Executable parity is against the approved repository handoff and observable runtime invariants. Full CI/browser execution is still required before merge.
 
 Reusable lesson:
 
