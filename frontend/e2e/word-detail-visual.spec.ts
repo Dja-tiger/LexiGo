@@ -69,6 +69,66 @@ type Rect = {
   height: number;
 };
 
+type ExplicitAppearance = "light" | "dark";
+type KnownRouteNavigation = "mobile" | "rail" | "header";
+
+type CanonicalWordDetailCase = {
+  name: string;
+  width: number;
+  height: number;
+  appearance: ExplicitAppearance;
+  canvas: string;
+  figmaNode: "78:99" | "78:274";
+  designContract: string;
+  project: "visual-compact" | "visual-desktop";
+  expectedNavigation?: "mobile";
+};
+
+const CANONICAL_WORD_DETAIL_CASES: readonly CanonicalWordDetailCase[] = [
+  {
+    name: "mobile Dark",
+    width: 390,
+    height: 844,
+    appearance: "dark",
+    canvas: "#10211d",
+    figmaNode: "78:99",
+    designContract: "Figma 78:99 — mobile Word Detail Dark",
+    project: "visual-compact",
+    expectedNavigation: "mobile",
+  },
+  {
+    name: "mobile Light",
+    width: 390,
+    height: 844,
+    appearance: "light",
+    canvas: "#f4f7f5",
+    figmaNode: "78:99",
+    designContract: "Figma 78:99 geometry + explicit Light semantic tokens",
+    project: "visual-compact",
+    expectedNavigation: "mobile",
+  },
+  {
+    name: "desktop Dark",
+    width: 1440,
+    height: 1024,
+    appearance: "dark",
+    canvas: "#10211d",
+    figmaNode: "78:274",
+    designContract: "Figma 78:274 — desktop Word Detail Dark",
+    project: "visual-desktop",
+  },
+  {
+    name: "desktop Light",
+    width: 1440,
+    height: 1024,
+    appearance: "light",
+    canvas: "#f4f7f5",
+    figmaNode: "78:274",
+    designContract: "Figma 78:274 geometry + explicit Light semantic tokens",
+    project: "visual-desktop",
+  },
+] as const;
+
 const WORD_DETAIL_VISUAL_BASELINES = {
   compactLight: {
     name: "word-detail-compact-light.png",
@@ -176,6 +236,12 @@ async function expectNoOverlap(left: Locator, right: Locator, label: string): Pr
   expect(rectanglesOverlap(leftBox, rightBox), `${label}: elements must not overlap`).toBe(false);
 }
 
+async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+  await page.addInitScript((value) => {
+    window.localStorage.setItem("lexigo.appearance.v1", value);
+  }, appearance);
+}
+
 async function openWordDetail(page: Page): Promise<void> {
   await page.goto("/words/101?source=backend&topic=Release&status=review&page=2", {
     waitUntil: "domcontentloaded",
@@ -183,6 +249,59 @@ async function openWordDetail(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
   await expect(page.getByText("Следующее повторение", { exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Связанные фразы" })).toBeVisible();
+}
+
+async function expectCanonicalWordDetailRoute(
+  page: Page,
+  canonicalCase: CanonicalWordDetailCase,
+): Promise<KnownRouteNavigation> {
+  await expect(page).toHaveURL((url) => url.pathname === "/words/101");
+  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(1);
+
+  const main = page.locator('#lexigo-main-content[aria-label="Карточка слова"]');
+  const detail = page.locator(".lx-word-detail");
+  const practice = page.locator(".lx-word-detail-practice");
+  const visibleNavigation = page.locator("[data-route-navigation]:visible");
+
+  await expect(main).toBeVisible();
+  await expect(detail).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma })).toBeVisible();
+  await expect(page.getByText(CANONICAL_WORD_DETAIL.translation, { exact: true })).toBeVisible();
+  await expect(practice).toHaveCount(1);
+  await expect(practice).toHaveAccessibleName("Повторить сейчас");
+  await expect(practice).toBeEnabled();
+  await expect(page.locator(".lx-header")).toBeHidden();
+
+  await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", canonicalCase.appearance);
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-lexigo-resolved-appearance",
+    canonicalCase.appearance,
+  );
+
+  const canvas = await page.locator("html").evaluate((element) => (
+    window.getComputedStyle(element).getPropertyValue("--ak-color-canvas").trim()
+  ));
+  expect(canvas).toBe(canonicalCase.canvas);
+
+  await expectNoHorizontalOverflow(page);
+  await expectHorizontallyContained(main, canonicalCase.width, "Word Detail semantic main");
+  await expectHorizontallyContained(detail, canonicalCase.width, "Word Detail surface");
+  await expectHorizontallyContained(practice, canonicalCase.width, "Word Detail practice action");
+
+  await expect(visibleNavigation).toHaveCount(1);
+  await expectHorizontallyContained(
+    visibleNavigation,
+    canonicalCase.width,
+    "Word Detail visible RouteChrome owner",
+  );
+
+  const navigation = await visibleNavigation.getAttribute("data-route-navigation");
+  expect(["mobile", "rail", "header"]).toContain(navigation);
+  if (canonicalCase.expectedNavigation) {
+    expect(navigation).toBe(canonicalCase.expectedNavigation);
+  }
+
+  return navigation as KnownRouteNavigation;
 }
 
 async function prepareStableWordDetail(page: Page): Promise<void> {
@@ -304,6 +423,48 @@ test.describe("Word Detail visual baselines", () => {
     await expectContentAddressedWordDetail(page, WORD_DETAIL_VISUAL_BASELINES.desktopDark);
     expect(runtimeErrors).toEqual([]);
   });
+
+  for (const canonicalCase of CANONICAL_WORD_DETAIL_CASES) {
+    test(`${canonicalCase.name} uses canonical Word Detail ownership (${canonicalCase.designContract})`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== canonicalCase.project,
+        `Canonical ${canonicalCase.name} Word Detail Figma parity runs only in ${canonicalCase.project}.`,
+      );
+
+      testInfo.annotations.push({
+        type: "figma",
+        description: `${canonicalCase.figmaNode}: ${canonicalCase.designContract}`,
+      });
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installAppearance(page, canonicalCase.appearance);
+      const runtimeErrors = captureRuntimeErrors(page);
+
+      await openWordDetail(page);
+      const initialNavigation = await expectCanonicalWordDetailRoute(page, canonicalCase);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedNavigation = await expectCanonicalWordDetailRoute(page, canonicalCase);
+      expect(reloadedNavigation).toBe(initialNavigation);
+      expect(runtimeErrors).toEqual([]);
+
+      await testInfo.attach("word-detail-canonical-runtime.json", {
+        body: Buffer.from(JSON.stringify({
+          figmaNode: canonicalCase.figmaNode,
+          designContract: canonicalCase.designContract,
+          viewport: {
+            width: canonicalCase.width,
+            height: canonicalCase.height,
+          },
+          appearance: canonicalCase.appearance,
+          navigation: initialNavigation,
+        }, null, 2)),
+        contentType: "application/json",
+      });
+    });
+  }
 
   test("compact 200% text reflow keeps reading, navigation and practice usable", async ({ page }) => {
     test.skip(page.viewportSize()?.width !== 390, "compact 200% Word Detail contract only");
