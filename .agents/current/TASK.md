@@ -6,7 +6,7 @@
 - Branch: `test/issue-528-active-lesson-figma-parity`
 - Base SHA: `336483615bf76e32100c52bb9317cb94ecc059b5`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #529 — `test(figma): add canonical Active Lesson parity contract`
 
 ## Objective
 
