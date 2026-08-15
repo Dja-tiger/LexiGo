@@ -13,6 +13,7 @@
 - Runtime ownership confirms `LexigoDictionaryApp` exposes `data-route-client-island="dictionary"`, semantic main `#lexigo-main-content[aria-label="Словарь"]`, and `.lx-dictionary-catalog`.
 - Shared route-navigation CSS exposes `mobile` at 390px, `header` at 1440px and `rail` only at 720–1099px.
 - Canonical semantic appearance colors remain Light `#f4f7f5` and Dark `#10211d`.
+- PR #532 is open from `test/issue-531-dictionary-figma-parity` to `main` with `Closes #531` and parent #205 linkage.
 
 ### Finding
 
@@ -25,9 +26,9 @@ The Dictionary route-island test predates the final #205 route-by-route visual p
 ### Changed files
 
 - `frontend/e2e/dictionary-route-island.spec.ts` — adds the canonical Dictionary parity matrix while preserving the existing session/bootstrap/history test.
-- `.agents/current/TASK.md` — Issue #531 execution contract.
-- `.agents/current/PROGRESS.md` — preflight and implementation evidence.
-- `.agents/current/EXECUTION.md` — execution provenance.
+- `.agents/current/TASK.md` — Issue #531 / PR #532 execution contract.
+- `.agents/current/PROGRESS.md` — preflight, implementation and PR evidence.
+- `.agents/current/EXECUTION.md` — execution provenance and PR linkage.
 
 ### Checks passed
 
@@ -40,16 +41,18 @@ The Dictionary route-island test predates the final #205 route-by-route visual p
 - implementation read-back confirms four canonical cases: `78:54` and `78:193` × Light/Dark;
 - existing session/bootstrap/history test remains present with its original behavior/assertions;
 - canonical matrix uses exact `390x844` / `1440x1024` viewports, `mobile` / `header` navigation ownership, semantic canvas tokens, horizontal containment, no x-overflow, reload stability and exact `figma` annotations;
-- authoritative collection audit confirms the existing spec is already selected by `test:e2e:ui` and navigation suites; no package/workflow mutation is needed.
+- authoritative collection audit confirms the existing spec is already selected by `test:e2e:ui` and navigation suites; no package/workflow mutation is needed;
+- pre-PR compare was ahead-only and limited to the Dictionary spec plus the three current Agent Docs files;
+- PR #532 opened with test-only scope and exact parent/closing linkage.
 
 ### Checks failed
 
-No repository/application check has failed yet. Full PR CI is the next executable proof gate. Live Figma canvas access remains externally quota-blocked.
+No repository/application check has failed yet. Full PR CI on the final immutable head is the next executable proof gate. Live Figma canvas access remains externally quota-blocked.
 
 ### Current branch head
 
-Resolve from live branch ref after this progress write. Previous implementation head before execution/progress evidence: `f8e5f90513ad61eb994782533b15c7a76bf9ab91`.
+Resolve from live PR after this progress write. Previous head after PR execution linkage: `64b2f1ccc44654ef9a3f242834073d1f8b7947bf`.
 
 ### Next action
 
-Compare the task branch against exact base `main`, require the diff to remain limited to the Dictionary spec plus the three current Agent Docs files, open PR with `Closes #531` and parent #205 linkage, then treat the final resulting head as immutable for full CI/review/merge gates.
+Treat the resulting head as the immutable PR candidate, require full CI, audit reviews/threads and merge only with an unchanged expected head after all required checks pass. Then require exact-main CI and Stage/public validation before Agent Docs reconciliation.
