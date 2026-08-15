@@ -217,7 +217,7 @@ test.describe("Profile canonical Figma parity", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Безопасность и конфиденциальность", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /Пароль и активные устройства/ })).toBeEnabled();
     await expect(page.getByRole("button", { name: /Email аккаунта/ })).toBeEnabled();
-    await expect(page.getByRole("button", { name: /Скачать мои данные/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Скачать мои данные", exact: true })).toBeEnabled();
     await expect(page.getByRole("button", { name: /Удалить аккаунт/ })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Выйти", exact: true })).toBeEnabled();
 
