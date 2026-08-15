@@ -4,13 +4,13 @@
 
 - Last verified: 2026-08-15 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `c98f81a3069b2b04d7c32f59f5ae859fc899d0b8` after PR #535.
-- Latest deployed runtime/Stage SHA: `c98f81a3069b2b04d7c32f59f5ae859fc899d0b8`.
-- PR #535 final developer-authored head was `d22e5a78c37a5d22cdee3bc407fcaa8e19cf270d`.
-- Immutable-head PR CI #3550 (`31884947783`) completed successfully on that exact final head.
-- PR #535 squash merge SHA is `c98f81a3069b2b04d7c32f59f5ae859fc899d0b8` and Issue #533 is closed.
-- Exact-main CI #3551 (`31885486503`) completed successfully for the exact merge SHA.
-- Stage run #3400 (`31886152903`) completed successfully for the same exact SHA, including public Stage validation.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `0c2e6f3010ad486fc2bf76441a311532e9761b4f` after PR #538.
+- Latest deployed runtime/Stage SHA: `0c2e6f3010ad486fc2bf76441a311532e9761b4f`.
+- PR #538 final developer-authored head was `4396040cf6680c7a2cbf1586a224216006509eaa`.
+- Immutable-head PR CI #3562 (`31891029777`) completed successfully on that exact final head.
+- PR #538 squash merge SHA is `0c2e6f3010ad486fc2bf76441a311532e9761b4f` and Issue #536 is closed.
+- Exact-main CI #3563 (`31891585765`) completed successfully for the exact merge SHA.
+- Stage run #3412 (`31892094808`) completed successfully for the same exact SHA, including public Stage validation.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
@@ -53,50 +53,46 @@
 - Progress: Issue #515 / PR #517 / Stage #3330.
 - Dictionary: Issue #531 / PR #532 / exact-main CI #3544 / Stage #3393.
 - Word Detail: Issue #533 / PR #535 / immutable-head CI #3550 / exact-main CI #3551 / Stage #3400.
+- Phrases catalog: Issue #536 / PR #538 / immutable-head CI #3562 / exact-main CI #3563 / Stage #3412.
 
-### Word Detail parity delivered by #533
+### Phrases catalog parity delivered by #536
 
-- mobile Dark source: Figma `78:99`, viewport `390x844`;
-- desktop Dark source: Figma `78:274`, viewport `1440x1024`;
-- Light coverage reuses the approved hierarchy/geometry through semantic Light tokens;
-- implementation extended the existing authoritative `frontend/e2e/word-detail-visual.spec.ts` owner;
-- direct `/words/[id]` ownership remains inside `data-route-client-island="dictionary"` with semantic main `Карточка слова`;
-- existing content-addressed visual baselines, 200% reflow, forced-colors and browser-owned zoom evidence remained unchanged;
-- no production React/CSS, package, Playwright config, workflow, backend or dependency change was required.
+- mobile Light/default: Figma `255:10`, viewport `390x844`;
+- mobile Dark/search + Travel filter: Figma `257:2`, viewport `390x844`;
+- desktop Light/default: Figma `255:81`, viewport `1440x1024`;
+- desktop Dark/empty search: Figma `257:74`, viewport `1440x1024`;
+- implementation extended the existing authoritative `frontend/e2e/phrases-visual.spec.ts` owner;
+- executable browser evidence establishes `mobile` RouteChrome at 390px and persistent `rail` RouteChrome at 1440px;
+- URL-backed query/topic state, route-island/main/catalog ownership, semantic Light/Dark canvas, containment and reload stability are executable contracts;
+- all eight existing content-addressed Phrases visual hashes and the existing browser-owned 200% zoom/reflow owner remained unchanged;
+- no production React/CSS, backend, package/lockfile, Playwright config, workflow or visual-baseline change was required.
 
-## Next executable Figma child: Issue #536 — Phrases catalog
+## Next executable Figma route: `/phrases/[slug]` Phrase Detail
 
-Issue #536 is open under umbrella #205 and is the next atomic route slice for `/phrases`.
+Repository-approved handoff in `frontend/docs/adaptive-knowledge-coach.md` already contains exact canonical Phrase Detail nodes:
 
-Repository-approved handoff:
+- mobile Dark/daily: Figma `255:55` at `390x844`;
+- mobile Light/travel: Figma `257:47` at `390x844`;
+- desktop Dark/technical: Figma `255:162` at `1440x1024`;
+- desktop Light/daily: Figma `257:159` at `1440x1024`;
+- production wrapper/page remains `253:3` / `253:2` and Screen Map handoff `261:2` inside `82:3`.
 
-- mobile Light/default: Figma `255:10` at `390x844`;
-- mobile Dark/search + Travel filter: Figma `257:2` at `390x844`;
-- desktop Light/default: Figma `255:81` at `1440x1024`;
-- desktop Dark/empty search: Figma `257:74` at `1440x1024`;
-- loading/empty/error hooks: `257:212`;
-- production wrapper/page: `253:3` / `253:2`;
-- Product Screen Map entry: `261:2` inside `82:3`.
+Execution boundary for the next atomic child under #205:
 
-Execution contract:
-
-- test-only first;
-- extend the existing authoritative `frontend/e2e/phrases-visual.spec.ts`; do not create a competing owner;
-- add exact Playwright `figma` annotations and canonical mobile/desktop Light/Dark state coverage;
-- preserve URL-backed `query`/`topic` state, route-island/main/catalog ownership and deterministic reload behavior;
-- verify the actually visible RouteChrome owner from runtime rather than inferring it from generic breakpoint CSS;
-- prove semantic appearance/canvas, horizontal containment and absence of document x-overflow;
-- preserve the existing Phrases content-addressed visual hashes, browser zoom/reflow, accessibility, touch and history owners;
-- do not change production React/CSS or baselines unless executable evidence proves a concrete product defect;
-- `/phrases/[slug]` Phrase Detail is explicitly outside this slice.
+- reuse the existing Phrases/Phrase Detail authoritative owners rather than creating a competing route graph or visual owner;
+- preserve independent direct-entry loading/error behavior and exact `/api/v1/phrases/{slug}` fixture scoping;
+- verify semantic main/route-island ownership, canonical content hierarchy, appearance/canvas, actual RouteChrome owner, horizontal containment and reload/direct-entry stability;
+- preserve existing Phrases catalog parity, content-addressed visual hashes, browser zoom/reflow, accessibility, touch, focus/history and performance owners;
+- change production React/CSS or visual baselines only if executable evidence proves a concrete product defect;
+- use repository-approved exact node mapping while live Figma MCP remains quota-blocked and do not claim fresh cloud-canvas synchronization.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Word Detail #533 is fully delivered through PR #535, immutable-head CI #3550, exact-main CI #3551 and Stage #3400.
+- Phrases catalog #536 is fully delivered through PR #538, immutable-head CI #3562, exact-main CI #3563 and Stage #3412.
 - This reconciliation resets `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` byte-for-byte to canonical templates before the next product branch.
-- Issue #536 is the next executable Figma-related atomic child under #205.
+- `/phrases/[slug]` is the next repository-approved executable Figma route under umbrella #205 because exact canonical nodes already exist.
 - Issue #201 remains design-gated; do not invent missing First Use desktop/diagnostic/recovery states from adjacent frames.
 - Issue #203 remains temporarily blocked on live Figma MCP access.
 - Issue #487 remains open for exact native `.fig` binary upload through a binary-safe path.
@@ -104,8 +100,7 @@ Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Remaining roadmap
 
-- #205 / #536: deliver canonical `/phrases` catalog parity in the existing Phrases visual owner.
-- Then continue the repository-approved route map with `/phrases/[slug]`, `/profile` and `/onboarding`, subject to exact approved node evidence and each route's existing owners/design gates.
+- #205: deliver canonical `/phrases/[slug]` Phrase Detail parity next, then continue with `/profile` and `/onboarding` subject to exact approved node evidence and design gates.
 - #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
