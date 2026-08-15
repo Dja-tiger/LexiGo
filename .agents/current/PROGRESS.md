@@ -1,57 +1,67 @@
 # Current Task Progress
 
-## 2026-08-15 23:00 Europe/Moscow
+## 2026-08-16 — Profile canonical parity source-green checkpoint
 
-### Verified
+### Verified repository state
 
-- Post-merge CI #3571 / run `31904874756` completed `success` on exact `main` merge SHA `11ad10835ad968b41f5f53b01e97d22dab08a1e9` for PR #541, including both UI shards, Visual regression, aggregate Frontend quality and both container builds.
-- Issue #542 `[Figma][#205] Add canonical Profile parity contract` was created as the next executable child after Phrase Detail.
-- Branch `feat/issue-542-profile-parity` was created from exact live `main` `11ad10835ad968b41f5f53b01e97d22dab08a1e9`; `main` remained unchanged through the executable write.
-- Approved Profile mapping is repository-reconciled: mobile `79:6` at `390×844`, desktop `79:129` at `1440×1024`; Dark is token-derived from the same approved geometry/semantics.
-- Fresh Figma cloud context remains unavailable because the connected Starter-plan MCP tool-call limit is exhausted; no fresh synchronization is claimed.
-- Existing authoritative visual owner is `frontend/e2e/profile-visual.spec.ts`.
-- Existing interaction owner is `frontend/e2e/profile.spec.ts`; touch-target/200% reflow owner is `frontend/e2e/profile-touch-targets.spec.ts`.
-- Runtime source confirms semantic main `#lexigo-main-content[aria-label="Профиль"]`, single route island `[data-route-client-island="profile"]` and canonical Profile hierarchy.
-- Existing `installQualityGateAPI` deterministic account/progress values are `Quality Gates`, `quality-gates@example.com`, `12 из 30 ответов сегодня`.
-- Live Profile visual baseline constants were read before modification and preserved byte-for-byte: compact/desktop Light/Dark hashes remain unchanged.
+- Issue #542 is implemented in Draft PR #543 on branch `feat/issue-542-profile-parity`.
+- Base remains exact `main` SHA `11ad10835ad968b41f5f53b01e97d22dab08a1e9`.
+- Source SHA validated before final handoff synchronization: `19ef7ab396fc53088aa464a6ab14ab6c16317077`.
+- Approved Profile mapping remains mobile `79:6` at `390×844` and desktop `79:129` at `1440×1024`; Dark is token-derived from the same approved geometry and semantics.
+- Fresh Figma cloud context remains unavailable because the connected Starter-plan MCP call limit is exhausted; no fresh synchronization is claimed.
+- Production React/CSS, backend/API contracts, packages, Playwright/workflow configuration and approved Profile baseline hashes remain unchanged.
 
-### Finding
+### Implemented contract
 
-The Profile route already has complete production interaction and reflow coverage. The missing #205 slice is therefore semantic/runtime parity rather than another screenshot or settings suite. A four-case matrix can reuse the authenticated quality-gate fixture and assert direct entry/reload, Profile hierarchy, explicit appearance/canvas, RouteChrome owner and horizontal containment without mutating any Profile setting.
+`frontend/e2e/profile-visual.spec.ts` now contains four canonical route-parity cases:
 
-The repository handoff mentions route-level parity separately from interaction ownership. To avoid duplicated test responsibility, the new matrix checks only presence/state of daily-goal, reminder, appearance and account controls; it does not click or change them.
+1. mobile Light — node `79:6`, `390×844`;
+2. mobile Dark — token-derived from `79:6`, `390×844`;
+3. desktop Light — node `79:129`, `1440×1024`;
+4. desktop Dark — token-derived from `79:129`, `1440×1024`.
 
-### Root cause
+The matrix proves exact `/profile` direct entry, no query state, one Profile route island, semantic main ownership, deterministic authenticated hierarchy, practice/reminder/appearance/account-action surfaces, explicit appearance state, canonical canvas token, actual RouteChrome ownership, horizontal containment, reload stability and empty runtime-error capture.
 
-No product defect is established. The delivery gap is missing executable canonical Profile route parity for the approved mobile/desktop Figma mapping.
+The final assertions identify the top-level Profile account action surfaces by exact accessible names and do not enter or mutate their independent flows.
 
-### Changed files
+### Failure classification
 
+- CI #3572 exposed an ambiguous accessible-name locator in the new test. This was classified as a test-contract defect, not a product defect.
+- CI #3573 exposed the same locator category for a second Profile action.
+- Source inspection confirmed that #542 only requires presence of the top-level action surfaces. Source head `19ef7ab396fc53088aa464a6ab14ab6c16317077` therefore uses exact full accessible names. No positional selector workaround, production change or baseline update was used.
+
+### Source CI evidence
+
+CI #3574 / run `31909934661` on source SHA `19ef7ab396fc53088aa464a6ab14ab6c16317077` proved:
+
+- all four new canonical Profile cases passed;
+- all four existing Profile visual baselines passed unchanged;
+- UI shards, accessibility, security, PWA, service-worker, performance, lesson, frontend core, backend and integration gates passed.
+
+The first Visual attempt had one unrelated failure in `frontend/e2e/system-states-visual.spec.ts` for the existing Dictionary empty Light state (`79:93`). That file is outside #542 scope and was not modified. A controlled same-head retry of only the Visual job was executed after the original run completed. Retry job `95074585326` passed the complete visual suite without source or baseline changes. Aggregate `Frontend quality` and both container builds then passed.
+
+Conclusion: Profile parity is source-green. The unrelated Dictionary mismatch remains outside #542 and must not be folded into this PR.
+
+### Review state
+
+- PR #543 has no conversation comments.
+- PR #543 has no submitted reviews.
+- PR #543 has no inline review threads.
+- PR remains Draft until handoff synchronization is complete and full CI passes on the final developer-authored head.
+
+### Atomic changed-file set
+
+- `frontend/e2e/profile-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
-- `frontend/e2e/profile-visual.spec.ts`
+- `.agents/current/EXECUTION.md`
 
-### Checks passed
+### Remaining actions
 
-- Exact post-merge CI for the previous Phrase Detail slice was completed before starting this issue.
-- Issue #542 was created and read back.
-- Branch/base/main refs were verified before writes.
-- Profile visual/runtime/quality-gate sources were read from the exact branch.
-- Semantic main value was verified from live source rather than guessed.
-- `frontend/e2e/profile-visual.spec.ts` readback confirms an append-only canonical parity describe; existing baseline constants and existing baseline tests are unchanged.
-- Compare against base `11ad10835ad968b41f5f53b01e97d22dab08a1e9` at executable head `42bcce3d6952a3b04bc3e6481116c14baee5c7ad` is ahead by two, behind by zero, with only `.agents/current/TASK.md` and `frontend/e2e/profile-visual.spec.ts` changed.
-
-### Checks pending
-
-- Browser/Visual regression execution on the new Profile parity matrix.
-- Full PR CI on immutable source head.
-- Final agent handoff synchronization and a second complete CI run on the resulting final developer-authored head.
-- Review/review-thread audit before Ready/merge.
-
-### External limitation
-
-Fresh Figma `get_design_context` is blocked by the Starter-plan MCP call quota. Repository-approved exact nodes remain the only authorized design evidence for this slice; adjacent frames or new cloud states must not be inferred.
-
-### Next action
-
-Synchronize `.agents/current/EXECUTION.md`, verify final pre-PR allow-list diff and refs, open a Draft PR for #542, then use repository CI as the executable browser evidence gate. Classify any failure before changing code; do not update baselines or production UI without an independently proven product defect.
+1. Finish TASK/PROGRESS/EXECUTION synchronization and read back each write.
+2. Run complete CI on the final handoff head.
+3. Re-audit PR discussion and review threads.
+4. Mark PR #543 Ready only after final CI is green.
+5. Squash-merge with expected-head protection.
+6. Verify CI on the exact new `main` SHA before the next Figma slice.
+7. Keep #201 implementation design-gated until its required Figma gaps are resolved.
