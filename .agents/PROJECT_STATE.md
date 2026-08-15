@@ -4,13 +4,14 @@
 
 - Last verified: 2026-08-15 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main` before this Agent Docs reconciliation: `f902389f9aa3ef15e0691fa6493e46ff24b123c1` after PR #523.
-- Latest deployed runtime/Stage SHA: `f902389f9aa3ef15e0691fa6493e46ff24b123c1`.
-- PR #523 final head was `8f7dd47de08fefcbc08b59aceb58ecd6b90a9704`; CI #3519 (`31842957833`) completed successfully on that immutable head after one controlled same-SHA rerun of an unrelated unchanged Lesson completion job. No source tree or baseline changed for the retry.
-- PR #523 squash merge SHA is `f902389f9aa3ef15e0691fa6493e46ff24b123c1`.
-- Exact-main CI #3520 (`31848941939`) completed successfully for that exact merge SHA across backend, frontend core, browser UI shards, visual, accessibility, performance, security, PWA and both container builds. Lesson completion passed on exact-main without retry.
-- Stage run #3367 (`31849545822`) completed successfully for the same exact SHA; deployment, public endpoint verification and public Stage UI verification passed.
-- Issue #522 is closed as completed. The executable Home parity contract is anchored to Figma mobile Dark `196:223` and desktop Light `194:249`; opposite appearances use the same geometry with semantic tokens.
+- Runtime-bearing `main` before this Agent Docs reconciliation: `f908955e7f7f6ec5650ef7d2df44230c63dd0eb9` after PR #526.
+- Latest deployed runtime/Stage SHA: `f908955e7f7f6ec5650ef7d2df44230c63dd0eb9`.
+- PR #526 final head was `7adff0c62718b38e38444c6bf5e7061c1bd115fe`; immutable-head CI #3528 (`31851403857`) completed successfully.
+- PR #526 squash merge SHA is `f908955e7f7f6ec5650ef7d2df44230c63dd0eb9`.
+- Exact-main CI #3529 (`31852418687`) completed successfully for that exact merge SHA across backend, frontend core, browser UI shards, Lesson completion, visual, accessibility, performance, security, PWA and both container builds.
+- Stage run #3376 (`31852943046`) completed successfully for the same exact SHA; deployment, public endpoint verification and public Stage UI verification passed.
+- Issue #525 is closed as completed. The executable Learn Composer parity contract is anchored to Figma nodes `202:6` recommended/collapsed mobile, `203:5` mobile manual settings and `204:2` desktop full composer, with Light/Dark semantic appearance coverage and authoritative UI-shard collection.
+- Issue #522 Home parity remains complete through PR #523, exact-main CI #3520 and Stage #3367.
 - Issue #518 Dictionary Empty visual determinism remains complete through PR #520, exact-main CI #3515 and Stage #3361; approved raw PNG SHA remains `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
 - Issue #515 Progress parity remains complete through PR #517, exact-main CI #3486 attempt 2 and Stage #3330.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
@@ -28,7 +29,8 @@
 
 - Home, Learn, Active Lesson, Phrases, Dictionary/Word Detail, Progress, authenticated Profile and Scenario routes use dedicated route islands.
 - `LexigoBootstrappedApp` owns session restoration, refresh coordination, account runtime and route entry.
-- `RouteChrome` remains the sole owner of primary route navigation.
+- `RouteChrome` remains the sole owner of primary route navigation outside Active Lesson focus mode.
+- Active Lesson owns a focused lesson surface after lesson start and intentionally hides primary route navigation while focus mode is active.
 - `ReviewOutboxRuntime` owns the durable review queue and global connectivity actions.
 - `LexigoPremiumApp` remains a narrow compatibility fallback; broad deletion requires route, bundle and browser evidence.
 - Guest catalog content and authenticated scheduler/progress state remain separate security boundaries.
@@ -62,18 +64,20 @@
 - Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access becomes available.
 - Issue #205 remains the active umbrella for final route-by-route parity audit.
 - Home parity is delivered by #522/PR #523: mobile Dark `196:223`, desktop Light `194:249`, semantic-token opposite appearances, route-shell/navigation ownership, no horizontal overflow and reload stability.
+- Learn Composer parity is delivered by #525/PR #526: mobile recommended/collapsed `202:6`, mobile manual settings `203:5`, desktop full composer `204:2`, semantic Light/Dark coverage, route-island/navigation ownership, no horizontal overflow and canonical reload semantics.
 - Progress executable parity is delivered by #515/PR #517: mobile Light `76:6`, mobile Dark `76:53`, desktop geometry `76:154` plus semantic Dark tokens.
 - Dictionary Empty Light `79:93` visual determinism is resolved by #518/PR #520.
-- The next executable #205 child is `/learn` Lesson Composer using canonical nodes `202:6` recommended/collapsed mobile, `203:5` mobile manual settings and `204:2` desktop full composer. Light/Dark share the same composer ownership and geometry.
+- The next executable #205 child is `/lesson/active` Active Lesson using repository-approved nodes `75:6` Mobile / Recall / Default, `75:30` Mobile / Recall / Correct, `75:89` Mobile / Choice / Incorrect, `75:120` Desktop / Study / Light and `75:150` Desktop / Recall / Correct.
+- Active Lesson offline node `75:57` remains owned by System States #202; Lesson Result nodes remain owned by #194; Scenario lesson nodes remain owned by #196. Do not fold those states into the Active Lesson parity child.
 
-## Learn parity preflight
+## Active Lesson parity preflight
 
-- Existing `adaptive-lesson-composer.spec.ts` already owns mobile progressive-disclosure interactions, selected lesson payload, desktop two-column composer behavior and reduced-motion behavior.
-- Existing `learn-browser-zoom.spec.ts` owns real 200% browser zoom/reflow evidence; touch-target coverage also has separate owners.
-- A new `/learn` parity child must therefore remain narrow: canonical node traceability, Light/Dark appearance, route-island/shell geometry, compact mobile navigation vs desktop rail, no horizontal overflow and deterministic reload behavior.
-- Mobile collapsed state maps to `202:6`; mobile expanded/manual state maps to `203:5`; desktop full composer maps to `204:2`.
-- Manual-expanded React state is not persisted across reload; do not invent persistence. If reload is tested after manual expansion, the expected canonical state is collapsed again.
-- Prefer test-only evidence first. Do not change production React/CSS unless the executable audit proves a concrete product defect.
+- Existing `active-lesson-figma.spec.ts` already owns Active Lesson behavior, review submission, safe exit, direct entry/reload, Browser Back semantics, compact reflow evidence and semantic Dark/reduced-motion checks.
+- Existing `active-lesson-browser-zoom.spec.ts` owns real 200% browser zoom/reflow evidence; touch/accessibility gates also have separate owners.
+- The next Active Lesson parity child must therefore extend the existing Figma owner narrowly: exact canonical viewport/state traceability, Light/Dark appearance, route-island/focus-mode geometry, intentional absence of primary route navigation after lesson start, no horizontal overflow and exact Figma annotations.
+- Canonical mobile parity viewport is `390x844`; canonical desktop parity viewport is `1440x1024`.
+- The executable parity matrix must reach Recall Default (`75:6`), Recall Correct (`75:30`), Choice Incorrect (`75:89`), desktop Study (`75:120`) and desktop Recall Correct (`75:150`) without duplicating server-payload/history/zoom assertions.
+- Prefer test-only evidence first. Do not change production React/CSS, visual hashes or Playwright global configuration unless the executable audit proves a concrete product defect.
 
 ## Issue #201 design gate
 
@@ -83,9 +87,9 @@
 
 ## Current state
 
-- Issue #522 Home parity is complete through PR #523, immutable-head CI #3519, exact-main CI #3520 and Stage #3367.
+- Issue #525 Learn Composer parity is complete through PR #526, immutable-head CI #3528, exact-main CI #3529 and Stage #3376.
 - `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` are reset to canonical templates before the next product/QA slice.
-- The next executable Figma-related product/QA work is an atomic `/learn` Lesson Composer parity child under #205 using nodes `202:6`, `203:5` and `204:2`.
+- The next executable Figma-related product/QA work is an atomic `/lesson/active` Active Lesson parity child under #205 using nodes `75:6`, `75:30`, `75:89`, `75:120` and `75:150`.
 - Issue #203 remains temporarily blocked on live Figma MCP access; repository-side handoff is already present from PR #501.
 - Issue #201 remains design-gated and must not be implemented from incomplete evidence.
 - Issue #78 remains the independent CSP/security-hardening workstream.
@@ -93,7 +97,7 @@
 
 ## Remaining roadmap
 
-- #205: continue route-by-route Figma parity. Next: `/learn` Lesson Composer canonical parity without duplicating existing zoom/reduced-motion/touch/interaction owners or turning QA into a hidden redesign.
+- #205: continue route-by-route Figma parity. Next: `/lesson/active` canonical state/viewport parity without duplicating existing behavior, review, history, real-zoom, reduced-motion, touch or accessibility owners and without turning QA into a hidden redesign.
 - #203: synchronize live Figma Screen Map/archive status when MCP access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
