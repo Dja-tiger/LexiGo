@@ -6,7 +6,7 @@
 - Branch: `test/issue-533-word-detail-figma-parity`
 - Base SHA: `e2f4a754cb5dab65d55af248d4e7e6359083c710`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #535
 
 ## Objective
 
