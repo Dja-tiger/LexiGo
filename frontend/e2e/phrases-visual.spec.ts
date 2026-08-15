@@ -537,3 +537,218 @@ test.describe("Phrases browser-owned zoom", () => {
     }
   });
 });
+
+test.describe("Phrases canonical Figma parity", () => {
+  type ExplicitAppearance = "light" | "dark";
+  type KnownRouteNavigation = "mobile" | "rail" | "header";
+  type CanonicalPhrasesState = "default" | "travel-search" | "empty-search";
+  type CanonicalPhrasesCase = {
+    name: string;
+    width: number;
+    height: number;
+    appearance: ExplicitAppearance;
+    canvas: string;
+    figmaNode: "255:10" | "257:2" | "255:81" | "257:74";
+    designContract: string;
+    project: "visual-compact" | "visual-desktop";
+    path: string;
+    expectedNavigation: "mobile" | "header";
+    state: CanonicalPhrasesState;
+    expectedQuery?: string;
+    expectedTopic?: string;
+  };
+
+  const canonicalCases: readonly CanonicalPhrasesCase[] = [
+    {
+      name: "mobile Light default",
+      width: 390,
+      height: 844,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "255:10",
+      designContract: "Figma 255:10 — mobile Phrases catalog Light/default",
+      project: "visual-compact",
+      path: "/phrases",
+      expectedNavigation: "mobile",
+      state: "default",
+    },
+    {
+      name: "mobile Dark Travel search",
+      width: 390,
+      height: 844,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "257:2",
+      designContract: "Figma 257:2 — mobile Phrases catalog Dark/search + Travel filter",
+      project: "visual-compact",
+      path: "/phrases?topic=Travel&query=photo",
+      expectedNavigation: "mobile",
+      state: "travel-search",
+      expectedQuery: "photo",
+      expectedTopic: "Travel",
+    },
+    {
+      name: "desktop Light default",
+      width: 1440,
+      height: 1024,
+      appearance: "light",
+      canvas: "#f4f7f5",
+      figmaNode: "255:81",
+      designContract: "Figma 255:81 — desktop Phrases catalog Light/default",
+      project: "visual-desktop",
+      path: "/phrases",
+      expectedNavigation: "header",
+      state: "default",
+    },
+    {
+      name: "desktop Dark empty search",
+      width: 1440,
+      height: 1024,
+      appearance: "dark",
+      canvas: "#10211d",
+      figmaNode: "257:74",
+      designContract: "Figma 257:74 — desktop Phrases catalog Dark/empty search",
+      project: "visual-desktop",
+      path: "/phrases?query=canonical-parity-no-match",
+      expectedNavigation: "header",
+      state: "empty-search",
+      expectedQuery: "canonical-parity-no-match",
+    },
+  ] as const;
+
+  async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
+    await page.addInitScript((value) => {
+      window.localStorage.setItem("lexigo.appearance.v1", value);
+    }, appearance);
+  }
+
+  async function openCanonicalCatalog(page: Page, canonicalCase: CanonicalPhrasesCase): Promise<void> {
+    await page.goto(canonicalCase.path, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", {
+      level: 1,
+      name: "Находите готовые формулировки",
+    })).toBeVisible();
+    await expect(page.locator('[data-route-client-island="phrases"]')).toBeVisible();
+  }
+
+  async function expectCanonicalCatalog(
+    page: Page,
+    canonicalCase: CanonicalPhrasesCase,
+  ): Promise<KnownRouteNavigation> {
+    const url = new URL(page.url());
+    expect(url.pathname).toBe("/phrases");
+    expect(url.searchParams.get("query")).toBe(canonicalCase.expectedQuery ?? null);
+    expect(url.searchParams.get("topic")).toBe(canonicalCase.expectedTopic ?? null);
+
+    const island = page.locator('[data-route-client-island="phrases"]');
+    const main = page.locator('#lexigo-main-content[aria-label="Технические фразы"]');
+    const catalog = page.locator(".lx-phrases-catalog");
+    const search = page.getByRole("search", { name: "Поиск по фразам", exact: true });
+    const searchInput = search.getByRole("searchbox");
+    const topics = page.getByRole("navigation", { name: "Быстрый выбор темы", exact: true });
+    const resultsPanel = page.locator(".lx-phrases-results-panel");
+    const visibleNavigation = page.locator("[data-route-navigation]:visible");
+
+    await expect(island).toHaveCount(1);
+    await expect(island).toBeVisible();
+    await expect(main).toBeVisible();
+    await expect(catalog).toBeVisible();
+    await expect(search).toBeVisible();
+    await expect(searchInput).toBeEnabled();
+    await expect(topics).toBeVisible();
+    await expect(resultsPanel).toBeVisible();
+
+    await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", canonicalCase.appearance);
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-lexigo-resolved-appearance",
+      canonicalCase.appearance,
+    );
+    const canvas = await page.locator("html").evaluate((element) => (
+      window.getComputedStyle(element).getPropertyValue("--ak-color-canvas").trim()
+    ));
+    expect(canvas).toBe(canonicalCase.canvas);
+
+    if (canonicalCase.state === "default") {
+      const results = page.getByRole("list", { name: "Результаты каталога фраз", exact: true });
+      await expect(results).toBeVisible();
+      expect(await results.getByRole("listitem").count()).toBeGreaterThan(0);
+      await expect(searchInput).toHaveValue("");
+    } else if (canonicalCase.state === "travel-search") {
+      const results = page.getByRole("list", { name: "Результаты каталога фраз", exact: true });
+      await expect(searchInput).toHaveValue(canonicalCase.expectedQuery ?? "");
+      await expect(page.locator('input[name="phrase-topic"][value="Travel"]')).toBeChecked();
+      await expect(results).toBeVisible();
+      await expect(page.getByText("Could you take a photo of me?", { exact: true })).toBeVisible();
+    } else {
+      await expect(searchInput).toHaveValue(canonicalCase.expectedQuery ?? "");
+      await expect(page.getByText("По заданным условиям фразы не найдены", { exact: true })).toBeVisible();
+      await expect(page.getByRole("list", { name: "Результаты каталога фраз", exact: true })).toHaveCount(0);
+    }
+
+    await expectNoHorizontalOverflow(page);
+    await expectHorizontallyContained(main, canonicalCase.width, "Phrases semantic main");
+    await expectHorizontallyContained(catalog, canonicalCase.width, "Phrases catalog surface");
+    await expectHorizontallyContained(search, canonicalCase.width, "Phrases search");
+    await expectHorizontallyContained(topics, canonicalCase.width, "Phrases topic navigation");
+    await expectHorizontallyContained(resultsPanel, canonicalCase.width, "Phrases results panel");
+
+    await expect(visibleNavigation).toHaveCount(1);
+    await expectHorizontallyContained(
+      visibleNavigation,
+      canonicalCase.width,
+      "Phrases visible RouteChrome owner",
+    );
+    const navigation = await visibleNavigation.getAttribute("data-route-navigation");
+    expect(["mobile", "rail", "header"]).toContain(navigation);
+    expect(navigation).toBe(canonicalCase.expectedNavigation);
+
+    return navigation as KnownRouteNavigation;
+  }
+
+  test.describe.configure({ timeout: 90_000 });
+
+  for (const canonicalCase of canonicalCases) {
+    test(`${canonicalCase.name} uses canonical Phrases catalog ownership (${canonicalCase.designContract})`, async ({
+      context,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== canonicalCase.project,
+        `Canonical ${canonicalCase.name} Phrases Figma parity runs only in ${canonicalCase.project}.`,
+      );
+
+      testInfo.annotations.push({
+        type: "figma",
+        description: `${canonicalCase.figmaNode}: ${canonicalCase.designContract}`,
+      });
+
+      await page.setViewportSize({ width: canonicalCase.width, height: canonicalCase.height });
+      await installDeterministicRuntime(page);
+      await installQualityGateAPI(context, { authenticated: false });
+      await installAppearance(page, canonicalCase.appearance);
+      const runtimeErrors = captureRuntimeErrors(page);
+
+      await openCanonicalCatalog(page, canonicalCase);
+      const initialNavigation = await expectCanonicalCatalog(page, canonicalCase);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedNavigation = await expectCanonicalCatalog(page, canonicalCase);
+      expect(reloadedNavigation).toBe(initialNavigation);
+      expect(runtimeErrors).toEqual([]);
+
+      await testInfo.attach("phrases-canonical-runtime.json", {
+        body: Buffer.from(JSON.stringify({
+          figmaNode: canonicalCase.figmaNode,
+          designContract: canonicalCase.designContract,
+          viewport: { width: canonicalCase.width, height: canonicalCase.height },
+          appearance: canonicalCase.appearance,
+          canvas: canonicalCase.canvas,
+          state: canonicalCase.state,
+          path: canonicalCase.path,
+          navigation: initialNavigation,
+        }, null, 2)),
+        contentType: "application/json",
+      });
+    });
+  }
+});
