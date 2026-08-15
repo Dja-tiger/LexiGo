@@ -5,7 +5,7 @@
 - Branch: `test/issue-528-active-lesson-figma-parity`
 - Base SHA: `336483615bf76e32100c52bb9317cb94ecc059b5`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #529 — `test(figma): add canonical Active Lesson parity contract`
 
 ## Skills used
 
@@ -55,7 +55,8 @@ Actions performed:
 - added deterministic transitions to Recall Correct and Choice Incorrect using the existing request-scoped fixture;
 - asserted active route-island, focus-mode, main-content and lesson geometry, semantic canvas token, no horizontal overflow and intentional absence of primary route navigation while the lesson is started;
 - audited `frontend/package.json` and proved the existing spec is already part of authoritative `test:e2e:ui`, lesson and a11y collections, so no package/workflow mutation is needed;
-- read back the test mutation and verified `main` remained unchanged after each branch write.
+- read back the test mutation and verified `main` remained unchanged after each branch write;
+- opened PR #529 from the exact task branch with `Closes #528` and parent #205 linkage.
 
 Commands or procedures:
 
@@ -63,7 +64,7 @@ GitHub connector-first workflow. Every contents write uses the current blob SHA 
 
 Artifacts produced:
 
-Issue #528, task branch, extended `frontend/e2e/active-lesson-figma.spec.ts`, and current Agent Harness task/progress/execution evidence.
+Issue #528, PR #529, task branch, extended `frontend/e2e/active-lesson-figma.spec.ts`, and current Agent Harness task/progress/execution evidence.
 
 Result:
 
