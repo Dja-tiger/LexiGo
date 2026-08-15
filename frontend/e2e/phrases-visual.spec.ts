@@ -552,7 +552,7 @@ test.describe("Phrases canonical Figma parity", () => {
     designContract: string;
     project: "visual-compact" | "visual-desktop";
     path: string;
-    expectedNavigation: "mobile" | "header";
+    expectedNavigation: "mobile" | "rail";
     state: CanonicalPhrasesState;
     expectedQuery?: string;
     expectedTopic?: string;
@@ -597,7 +597,7 @@ test.describe("Phrases canonical Figma parity", () => {
       designContract: "Figma 255:81 — desktop Phrases catalog Light/default",
       project: "visual-desktop",
       path: "/phrases",
-      expectedNavigation: "header",
+      expectedNavigation: "rail",
       state: "default",
     },
     {
@@ -610,7 +610,7 @@ test.describe("Phrases canonical Figma parity", () => {
       designContract: "Figma 257:74 — desktop Phrases catalog Dark/empty search",
       project: "visual-desktop",
       path: "/phrases?query=canonical-parity-no-match",
-      expectedNavigation: "header",
+      expectedNavigation: "rail",
       state: "empty-search",
       expectedQuery: "canonical-parity-no-match",
     },
