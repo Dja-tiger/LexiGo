@@ -5,7 +5,7 @@
 - Branch: `test/issue-531-dictionary-figma-parity`
 - Base SHA: `e3cf4054068867012e01f6ccba528dc04498686f`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #532 — `test(figma): add canonical Dictionary parity contract`
 
 ## Skills used
 
@@ -56,7 +56,8 @@ Actions performed:
 - asserted shared primary-navigation ownership (`mobile` at 390px, `header` at 1440px);
 - asserted island/main/catalog horizontal containment and no document/body x-overflow;
 - limited canonical geometry measurement to Chromium while leaving existing cross-browser behavioral owner independent;
-- read back guarded writes and verified `main` remained unchanged.
+- read back guarded writes and verified `main` remained unchanged;
+- opened PR #532 with `Closes #531` and parent #205 linkage.
 
 Commands or procedures:
 
@@ -64,11 +65,11 @@ GitHub connector-first workflow. Every contents mutation uses the current blob S
 
 Artifacts produced:
 
-Issue #531, task branch, extended `frontend/e2e/dictionary-route-island.spec.ts`, and current Agent Harness task/progress/execution evidence.
+Issue #531, PR #532, task branch, extended `frontend/e2e/dictionary-route-island.spec.ts`, and current Agent Harness task/progress/execution evidence.
 
 Result:
 
-Implementation candidate is test-only and adds executable canonical Dictionary route provenance without production UI, visual baseline, package, Playwright config, workflow, backend or dependency changes.
+Implementation candidate is test-only and adds executable canonical Dictionary route provenance without production UI, visual baseline, package, Playwright config, workflow, backend or dependency changes. PR #532 is the delivery vehicle.
 
 Failures:
 
