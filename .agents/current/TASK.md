@@ -2,35 +2,34 @@
 
 ## Identity
 
-- Issue: #540 — [Figma][#205] Add canonical Phrase Detail parity contract
-- Branch: `feat/issue-540-phrase-detail-parity`
-- Base SHA: `b418b2ff0e326eb5cb1d9a017afd2205bdf43a2d`
-- Head SHA: resolve from live branch ref after handoff synchronization
-- PR: #541 (Draft)
+- Issue: #542 — [Figma][#205] Add canonical Profile parity contract
+- Branch: `feat/issue-542-profile-parity`
+- Base SHA: `11ad10835ad968b41f5f53b01e97d22dab08a1e9`
+- Head SHA: resolve from live branch ref
+- PR: pending
 
 ## Objective
 
-Add an executable four-case canonical Figma parity contract for `/phrases/[slug]` in the existing authoritative Phrases browser owner, without creating a competing route graph, changing production UI speculatively, or refreshing visual baselines blindly.
+Add an executable four-case canonical Figma parity contract for `/profile` inside the existing authoritative Profile visual owner, preserving approved content-addressed baselines and existing interaction/reflow ownership.
 
 ## Scope
 
-- Extend `frontend/e2e/phrases-visual.spec.ts` with the canonical Phrase Detail matrix.
-- Cover mobile Dark/daily `255:55`, mobile Light/travel `257:47`, desktop Dark/technical `255:162`, desktop Light/daily `257:159`.
-- Verify direct detail entry, exact content hierarchy, Light/Dark canvas, RouteChrome ownership, horizontal containment, reload stability, route-island ownership and authenticated exact-detail API scoping.
-- Use guest demo content for deterministic guest canonical variants and a test-local exact `/api/v1/phrases/{slug}` override where authenticated coverage is required.
-- Preserve the existing responsive Phrase Detail ownership: compact layouts below 768px intentionally hide the duplicate `.lx-phrase-detail-side` panel while keeping the main-card primary action visible; desktop keeps the side practice panel visible.
+- Extend `frontend/e2e/profile-visual.spec.ts` only for executable canonical route parity.
+- Cover mobile Light/Dark from canonical node `79:6` at `390×844` and desktop Light/Dark from canonical node `79:129` at `1440×1024`.
+- Verify direct entry, exact route/no query, single Profile route island, semantic main, deterministic authenticated Profile hierarchy, explicit appearance/canvas, RouteChrome owner, horizontal containment and reload stability.
+- Reuse `installDeterministicRuntime` and `installQualityGateAPI`; do not create a competing Profile fixture unless CI proves the existing quality-gate data is insufficient.
 
 ## Non-goals
 
-- No Phrases catalog parity rework.
-- No redesign, broad CSS cleanup or alternate Phrases route graph.
-- No blind snapshot refresh.
+- No Profile redesign or production React/CSS changes unless executable browser evidence proves an independent product defect.
+- No screenshot recapture, hash/dimension changes or snapshot update mode.
+- No duplication of day-goal mutation, reminder-dialog behavior, appearance interaction, keyboard navigation, logout behavior or touch-target/200% reflow coverage already owned elsewhere.
 - No backend/API contract, package/lockfile, Playwright config or workflow changes.
-- No Profile, Onboarding or Issue #201 work.
+- No `/onboarding` work; onboarding remains design-gated.
 
 ## Allowed paths
 
-- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/e2e/profile-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -40,7 +39,9 @@ Add an executable four-case canonical Figma parity contract for `/phrases/[slug]
 
 - `frontend/components/**`
 - `frontend/app/**/*.css`
-- existing Phrases PNG baselines
+- existing Profile PNG baselines
+- `frontend/e2e/profile.spec.ts`
+- `frontend/e2e/profile-touch-targets.spec.ts`
 - `backend/**`
 - package/lockfiles
 - Playwright config
@@ -50,56 +51,56 @@ Production/runtime paths may be admitted only by a separately proven product def
 
 ## Runtime owners
 
-- `LexigoPhrasesApp` owns `/phrases` and `/phrases/[slug]`.
-- `PhraseDetailPresentation` owns Phrase Detail presentation.
+- `LexigoProfileApp` owns `/profile`.
+- Semantic main is `#lexigo-main-content[aria-label="Профиль"]` via `viewTitle("profile")`.
+- Route island is `[data-route-client-island="profile"]`.
 - `RouteChrome` owns primary navigation.
-- Authenticated direct detail uses exact `/api/v1/phrases/{slug}`.
-- Guest direct detail uses `GUEST_PHRASES` derived from the repository phrase catalogs without fabricated scheduler/progress state.
-- Mobile `<768px` hides `.lx-phrase-detail-side` by the existing `phrases.css` responsive contract; the main detail-card actions remain the compact interaction owner.
+- `frontend/e2e/profile.spec.ts` owns Profile settings/action behavior.
+- `frontend/e2e/profile-touch-targets.spec.ts` owns touch targets and 200% reflow.
+- `frontend/e2e/profile-visual.spec.ts` owns approved Profile visual baselines and browser-owned Profile zoom evidence; this issue extends that same owner with route parity assertions.
 
 ## Documentation owners
 
 - Umbrella parity Issue #205.
-- Atomic Issue #540.
-- Repository handoff: `frontend/docs/adaptive-knowledge-coach.md`.
-- Screen Map source: Figma `82:3`; Phrase Detail handoff `261:2`; production wrapper/page `253:3` / `253:2`.
+- Atomic Issue #542.
+- Repository handoff: `frontend/docs/adaptive-knowledge-coach.md` and `.agents/PROJECT_STATE.md`.
+- Figma source file `3xXmBWnf38jbvLjtziwber`, Profile page `79:2`, canonical mobile `79:6`, canonical desktop `79:129`.
 
 ## Invariants
 
-- Preserve all eight existing content-addressed Phrases visual hashes and dimensions.
-- Preserve existing browser-owned 200% zoom/reflow coverage.
-- Preserve catalog parity delivered by #536 / PR #538.
-- Semantic Phrases route boundary remains a single route island; detail semantic main is the existing `Карточка фразы` owner.
-- Do not broaden authenticated direct-detail interception to catalog/metadata/progress endpoints.
-- Compact canonical cases must assert hidden duplicate side practice ownership plus visible/enabled primary action; desktop canonical cases must assert visible side practice ownership.
+- Preserve all four existing content-addressed Profile visual hashes/dimensions byte-for-byte.
+- Preserve existing browser-owned 200% zoom evidence byte-for-byte except for imports/helpers strictly required by the new matrix.
+- Preserve `profile.spec.ts` and `profile-touch-targets.spec.ts` as separate authoritative owners.
+- Dark Profile cases are token-derived from the same approved Light geometry/semantics; do not invent separate Figma nodes.
 - Live Figma MCP is quota-blocked; repository-approved exact node mapping is authoritative for this slice and no fresh cloud synchronization may be claimed.
 
 ## Acceptance criteria
 
-- Four canonical Phrase Detail node/state cases execute in `frontend/e2e/phrases-visual.spec.ts`.
-- Direct entry and reload are deterministic for selected daily/travel/technical content.
+- Four canonical Profile cases execute inside `frontend/e2e/profile-visual.spec.ts`.
+- Direct `/profile` entry resolves with no query state and survives reload.
+- Exactly one Profile route island and semantic main are visible.
+- Deterministic authenticated Profile hierarchy is present, including identity/account summary, practice parameters, daily goal, reminder controls, application appearance and account/security/device controls.
 - Mobile uses visible `data-route-navigation="mobile"`; desktop uses visible `data-route-navigation="rail"`.
-- Mobile hides `.lx-phrase-detail-side` while `.lx-phrase-detail-primary` remains visible/enabled; desktop shows the side practice panel and its action.
-- Light/Dark canvas and Phrase Detail hierarchy are asserted without horizontal overflow.
-- Authenticated direct-detail fixture is scoped to the exact slug request.
-- Existing Phrases catalog parity and content-addressed baselines remain unchanged unless an independent defect is proven.
+- Light/Dark attributes and canonical canvas tokens are asserted.
+- Canonical viewports have no horizontal overflow.
+- Runtime error capture remains empty.
+- Existing Profile baseline/hash and touch/reflow contracts remain unchanged.
 - Required immutable-head CI is green on final developer-authored head; no unresolved review threads remain before merge.
 
 ## Required checks
 
-- Source/readback review of the modified authoritative spec.
-- Targeted Phrases visual/browser collection on the canonical compact and desktop projects.
-- Existing Phrases visual baseline/hash tests without update mode.
-- Relevant UI/browser shards and full required immutable-head CI.
-- Review-thread audit, expected-head squash merge, exact-main CI and Stage/public validation if runtime-bearing behavior changes; otherwise follow repository classifier for test-only delivery.
+- Readback of all changed allow-listed files and branch/main refs after each write.
+- Existing Profile visual baseline/hash tests without update mode.
+- Canonical compact/desktop Profile parity cases on visual projects.
+- Relevant browser/UI shards and full required immutable-head CI.
+- Review/review-thread audit, Ready gate, expected-head squash merge and exact-main CI.
 
 ## Risks
 
-- Guest dataset slugs/topics may be selected incorrectly from expanded catalogs.
-- A broad route mock could hide unintended catalog/metadata/progress requests.
-- Detail semantic main differs intentionally from catalog semantic main; assertions must follow actual route boundary instead of copying catalog expectations.
-- Responsive ownership differs intentionally between compact and desktop; a parity test must not require the desktop-only side panel to be visible on mobile.
-- Existing deterministic runtime forces animation/transition behavior; appearance must still be asserted through LexiGo appearance attributes and canvas token.
+- Existing quality-gate fixture text/values may differ from historical `profile.spec.ts`; assertions must follow the actual deterministic fixture, not hard-code guessed account/progress values.
+- Existing Profile visual setup opens/closes the reminder dialog to stabilize screenshots; canonical parity should avoid mutating state unless necessary to reach a deterministic settled route.
+- RouteChrome ownership must be asserted from actual visible `data-route-navigation`, not viewport assumptions alone.
+- Dark appearance must be established through the app's explicit appearance storage contract, not only browser color-scheme emulation.
 
 ## Rollback
 
