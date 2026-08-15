@@ -5,16 +5,14 @@
 - Issue: #542 — [Figma][#205] Add canonical Profile parity contract
 - Branch: `feat/issue-542-profile-parity`
 - Base SHA: `11ad10835ad968b41f5f53b01e97d22dab08a1e9`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Validated source SHA before handoff sync: `19ef7ab396fc53088aa464a6ab14ab6c16317077`
+- PR: #543 — Draft
 
-## GitHub repository operations
+## Purpose
 
-Purpose:
+Deliver the next atomic #205 Figma parity slice after Phrase Detail, preserve existing Profile ownership boundaries and validate the new route contract through repository-owned browser CI without redesigning production UI or refreshing approved visual hashes.
 
-Create the next atomic #205 Figma parity slice after Phrase Detail, preserve existing Profile ownership boundaries and validate the new contract through repository-owned browser CI.
-
-Instruction sources:
+## Instruction and evidence sources
 
 - `AGENTS.md`
 - `.agents/AGENTS.md`
@@ -22,69 +20,83 @@ Instruction sources:
 - `.agents/AGENTS.tool-selection.md`
 - `.agents/SKILLS.md`
 - `.agents/PROJECT_STATE.md`
-- installed GitHub plugin skill `github`
+- `docs/agent-harness.md`
+- `frontend/docs/adaptive-knowledge-coach.md`
+- Issue #542 and umbrella #205
+- Figma repository mapping for Profile: mobile `79:6`, desktop `79:129`
 
-Verified date:
+Fresh Figma MCP `get_design_context` remains blocked by the connected Starter-plan call quota. No new cloud state or adjacent node has been inferred.
 
-2026-08-15 live repository state.
+## Runtime and test owners inspected
 
-Inputs and inspected owners:
+- `frontend/components/lexigo-profile-app.tsx`
+- `frontend/lib/navigation.ts`
+- `frontend/e2e/profile-visual.spec.ts`
+- `frontend/e2e/profile.spec.ts`
+- `frontend/e2e/profile-touch-targets.spec.ts`
+- `frontend/e2e/support/quality-gates.ts`
 
-- Umbrella Issue #205 and new atomic Issue #542.
-- Exact task-start `main`: `11ad10835ad968b41f5f53b01e97d22dab08a1e9`.
-- `frontend/docs/adaptive-knowledge-coach.md` and `.agents/PROJECT_STATE.md` for approved route order and Figma mapping.
-- `frontend/e2e/profile-visual.spec.ts` for manually approved Profile hashes.
-- `frontend/e2e/profile.spec.ts` for interaction/settings ownership.
-- `frontend/e2e/profile-touch-targets.spec.ts` for touch/reflow ownership.
-- `frontend/components/lexigo-profile-app.tsx` for semantic hierarchy.
-- `frontend/lib/navigation.ts` for `viewTitle("profile")`.
-- `frontend/e2e/support/quality-gates.ts` for deterministic account/progress data.
+## Actions performed
 
-Actions performed:
+- Verified previous exact-main CI before starting #542.
+- Created Issue #542 and branch `feat/issue-542-profile-parity` from exact `main` SHA `11ad10835ad968b41f5f53b01e97d22dab08a1e9`.
+- Added four canonical Profile parity cases to the existing authoritative visual owner:
+  - mobile Light / `79:6` / `390×844`;
+  - mobile Dark token-derived / `79:6` / `390×844`;
+  - desktop Light / `79:129` / `1440×1024`;
+  - desktop Dark token-derived / `79:129` / `1440×1024`.
+- Added executable assertions for direct `/profile` entry, no query state, route-island/main ownership, deterministic authenticated hierarchy, Profile control-surface presence, explicit appearance/canvas, visible RouteChrome owner, horizontal containment, reload stability and runtime-error absence.
+- Preserved all pre-existing Profile content-addressed visual baselines and interaction/reflow owners unchanged.
+- Opened Draft PR #543.
 
-- Waited for and verified post-merge CI #3571 `success` on exact previous merge SHA before starting the next slice.
-- Created Issue #542 with exact approved Profile mapping and non-goals.
-- Created branch `feat/issue-542-profile-parity` from exact `main`.
-- Wrote the new task pre-flight before executable changes.
-- Read the live Profile visual owner and preserved all existing baseline hashes/tests unchanged.
-- Added a four-case canonical parity matrix to `frontend/e2e/profile-visual.spec.ts`:
-  - mobile Light / node `79:6` / `390×844`;
-  - mobile Dark token-derived / node `79:6` / `390×844`;
-  - desktop Light / node `79:129` / `1440×1024`;
-  - desktop Dark token-derived / node `79:129` / `1440×1024`.
-- New assertions cover direct route/no query, single route island, semantic main, deterministic Profile hierarchy, appearance/canvas, RouteChrome ownership, horizontal containment, reload stability and runtime errors.
-- No Profile settings are mutated; interaction and touch/reflow owners remain untouched.
-- Read back the modified spec and compared branch against base; only task memory plus the authoritative visual spec changed at that checkpoint.
+## CI classification and fixes
 
-Artifacts produced:
+- CI #3572 exposed an ambiguous accessible-name locator in the new test matrix. No product defect was found.
+- CI #3573 exposed a second locator ambiguity of the same category.
+- Live Profile source confirmed that #542 requires presence of the top-level account action surfaces rather than nested flow submit controls.
+- The final source assertions use exact full accessible names for those top-level action surfaces. No `.first()`, positional masking, production change or baseline refresh was introduced.
+- Final source SHA before handoff synchronization: `19ef7ab396fc53088aa464a6ab14ab6c16317077`.
 
-- Issue #542.
-- Branch `feat/issue-542-profile-parity`.
-- Canonical runtime attachment contract `profile-canonical-runtime.json`.
-- Four executable Profile route parity cases in the existing visual owner.
+## Source validation
 
-Result so far:
+CI #3574 / run `31909934661` on source SHA `19ef7ab396fc53088aa464a6ab14ab6c16317077` proved the new Profile cases and existing Profile baselines.
 
-Source-level parity implementation is isolated and ready for Draft PR browser/Visual regression evidence. No product defect has been established and no production UI or approved visual baseline has changed.
+The original Visual attempt had one unrelated failure in the existing Dictionary empty Light system-state case. It was outside the PR diff and outside the #542 allow-list. After all original shards completed, a controlled same-head Visual retry was run without source or baseline changes.
 
-## Figma design evidence
+- Visual retry job: `95074585326` — success.
+- Aggregate Frontend quality — success.
+- UI shards 1/2 and 2/2 — success.
+- Accessibility, content security, iOS PWA, service worker, performance, lesson and Dictionary smoke groups — success.
+- Frontend core quality — success.
+- Backend unit/security and integration — success.
+- Container build `api` and `web` — success.
 
-Source:
+Conclusion: no Profile product defect exists in this slice; the executable parity contract is source-green and approved Profile visual content remains unchanged.
 
-- File `3xXmBWnf38jbvLjtziwber`.
-- Profile page `79:2`.
-- Mobile canonical `79:6`.
-- Desktop canonical `79:129`.
-- Dark states are repository-approved token-derived states from the same geometry/semantics.
+## Review audit at source-green checkpoint
 
-Fresh-cloud limitation:
+- Conversation comments: none.
+- Submitted reviews: none.
+- Inline review threads: none.
 
-The connected Figma MCP Starter-plan tool-call quota is exhausted. The previous `get_design_context` attempt was quota-blocked, so this task uses only the exact node mapping already reconciled in repository handoff. No adjacent frame or unrecorded state is inferred and no fresh synchronization claim is made.
+## Atomic file boundary
 
-## Validation plan
+Only these files belong in PR #543:
 
-- Open Draft PR only after final pre-PR allow-list/ref verification.
-- Use PR CI as the browser evidence gate because the connector environment has no local checkout/browser runner.
-- Classify any failing locator/layout/state from completed job logs before modifying source.
-- Never update approved visual hashes to make a failure pass.
-- After source CI is green, synchronize final TASK/PROGRESS/EXECUTION, run complete CI again on the resulting immutable developer-authored head, audit reviews/threads, mark Ready and squash-merge with expected-head protection.
+- `frontend/e2e/profile-visual.spec.ts`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+
+Production runtime, approved screenshots, backend, dependencies, Playwright configuration and workflows remain outside the slice.
+
+## Finalization plan
+
+1. Read back the synchronized task records and verify current PR head/base refs.
+2. Run complete required CI on the resulting final developer-authored handoff head.
+3. Re-audit PR comments, reviews and threads.
+4. Mark PR #543 Ready only after final CI is green.
+5. Squash-merge with expected-head SHA protection.
+6. Verify exact-main CI after merge.
+7. Perform repository-state/current-task reconciliation in a separate atomic docs slice if required by the harness.
+8. Select the next Figma-linked task only from an already approved canonical mapping; do not implement the unresolved #201 design gaps by inference.
