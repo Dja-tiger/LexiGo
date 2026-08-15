@@ -5,7 +5,7 @@
 - Branch: `test/issue-533-word-detail-figma-parity`
 - Base SHA: `e2f4a754cb5dab65d55af248d4e7e6359083c710`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #535
 
 ## Skills used
 
@@ -55,7 +55,8 @@ Actions performed:
 - added direct-entry ownership/content/action assertions;
 - added semantic canvas, containment, no-overflow and reload-stability assertions;
 - added runtime attachment that records the actually-visible RouteChrome owner;
-- required mobile owner `mobile`; intentionally deferred exact desktop owner until authoritative browser evidence.
+- required mobile owner `mobile`; intentionally deferred exact desktop owner until authoritative browser evidence;
+- opened Draft PR #535 for immutable-head CI and review evidence.
 
 Commands or procedures:
 
@@ -67,11 +68,12 @@ Artifacts produced:
 
 - updated `frontend/e2e/word-detail-visual.spec.ts`;
 - current task/progress/execution Agent Docs;
+- PR #535;
 - future Playwright attachment `word-detail-canonical-runtime.json` for each executed canonical case.
 
 Result:
 
-Implementation is written test-only. Immutable-head PR CI and browser evidence are pending.
+Implementation is written test-only and PR #535 is open as Draft. Final immutable head is established after PR provenance updates; CI/browser evidence remains pending.
 
 Failures:
 
