@@ -6,7 +6,7 @@
 - Branch: fix/first-use-desktop-parity
 - Base SHA: ad404b84cd26f063fa189abac3fd4a8ca10ab4e6
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #566
 
 ## Objective
 
