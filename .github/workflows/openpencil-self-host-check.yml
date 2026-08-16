@@ -111,7 +111,7 @@ jobs:
           base=$((43000 + (GITHUB_RUN_ID % 1000) * 2))
           export OPENPENCIL_WEB_LOOPBACK_PORT="$base"
           export OPENPENCIL_MCP_PORT="$((base + 1))"
-          bash deploy/openpencil/self-test.sh | tee .tmp/openpencil-self-host/runtime-smoke.txt
+          bash deploy/openpencil/self-test.sh 2>&1 | tee .tmp/openpencil-self-host/runtime-smoke.txt
 
       - name: Build standalone Caddy with Cloudflare DNS
         run: |
