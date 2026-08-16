@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type BrowserContext, type Route } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page, type Route } from "@playwright/test";
 
 const SESSION = {
   user: {
@@ -66,7 +66,7 @@ async function installAuthenticatedOnboarding(context: BrowserContext) {
   });
 }
 
-async function expectNoSeriousAccessibilityViolations(page: Parameters<typeof test>[0] extends never ? never : import("@playwright/test").Page) {
+async function expectNoSeriousAccessibilityViolations(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
