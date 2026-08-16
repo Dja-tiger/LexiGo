@@ -60,8 +60,18 @@ const LexigoPremiumApp = dynamic(
   { ssr: false, loading: ProductShellLoading },
 );
 
+const LexigoGuestHomeApp = dynamic(
+  () => import("./lexigo-guest-home-app").then((module) => module.LexigoGuestHomeApp),
+  { ssr: false, loading: ProductShellLoading },
+);
+
 const LexigoHomeApp = dynamic(
   () => import("./lexigo-home-app").then((module) => module.LexigoHomeApp),
+  { ssr: false, loading: ProductShellLoading },
+);
+
+const LexigoOnboardingApp = dynamic(
+  () => import("./lexigo-onboarding-app").then((module) => module.LexigoOnboardingApp),
   { ssr: false, loading: ProductShellLoading },
 );
 
@@ -113,8 +123,13 @@ function isScenarioDetailRoute(pathname: string): boolean {
   return pathname.startsWith("/scenarios/");
 }
 
+function isOnboardingRoute(pathname: string): boolean {
+  return normalizedPathname(pathname) === "/onboarding";
+}
+
 function isFocusedAuthenticatedRoute(pathname: string): boolean {
   return pathname.startsWith("/lesson/")
+    || isOnboardingRoute(pathname)
     || isScenarioCatalogRoute(pathname)
     || isScenarioDetailRoute(pathname);
 }
@@ -474,7 +489,9 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
     );
   }
 
-  const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);
+  const useGuestHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname) && initialSession === null;
+  const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname) && initialSession !== null;
+  const useOnboardingIsland = isOnboardingRoute(pathname) && initialSession !== null;
   const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname);
   const useActiveLessonIsland = (isActiveLessonRoute(pathname) || activeLessonOwnerRetained)
     && initialSession !== null;
@@ -512,9 +529,17 @@ export function LexigoBootstrappedApp({ pathname, onNavigateHome }: LexigoBootst
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}
         />
+      ) : useGuestHomeIsland ? (
+        <LexigoGuestHomeApp key="guest:first-use" />
       ) : useHomeIsland ? (
         <LexigoHomeApp
           key={routeKey}
+          initialSession={initialSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      ) : useOnboardingIsland ? (
+        <LexigoOnboardingApp
+          key={`${routeKey}:onboarding`}
           initialSession={initialSession}
           onSessionUpdated={handleSessionUpdated}
         />
