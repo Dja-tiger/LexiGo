@@ -17,6 +17,7 @@ import {
   activeLessonEyebrow,
   activeLessonFeedbackKind,
   activeLessonModeLabel,
+  activeLessonSelectionReasonText,
   type ActiveLessonFeedbackKind,
 } from "../lib/active-lesson-presentation";
 import {
@@ -169,6 +170,7 @@ export function ActiveLessonPresentation({
   const modeLabel = activeLessonModeLabel(mode);
   const feedbackKind = activeLessonFeedbackKind(mode, revealed, reviewFeedback?.correct);
   const confidenceAvailable = activeLessonConfidenceAvailable(mode, revealed);
+  const selectionReasonText = activeLessonSelectionReasonText(item.selectionReason);
   const phraseCloze = item.kind === "phrase" && Boolean(item.cloze);
   const answerLanguage = phraseCloze ? "en" : "ru";
   const answerSubmitted = typedAnswer.trim() || selectedAnswer.trim();
@@ -369,7 +371,10 @@ export function ActiveLessonPresentation({
         </div>
 
         <article className="lx-active-lesson__card" aria-labelledby="active-lesson-prompt">
-          <span className="lx-active-lesson__eyebrow">{activeLessonEyebrow(mode, item.kind)}</span>
+          <span className="lx-active-lesson__eyebrow">
+            {activeLessonEyebrow(mode, item.kind)}
+            {selectionReasonText ? ` · ${selectionReasonText}` : ""}
+          </span>
 
           {mode === "study" ? (
             <div className="lx-active-lesson__study">
