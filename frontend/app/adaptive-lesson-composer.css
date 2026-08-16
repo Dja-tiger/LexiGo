@@ -517,3 +517,22 @@
     transition: none !important;
   }
 }
+
+/* Issue #571: preserve desktop controls while adapting to the active tablet rail. */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .lx-main-content[aria-label="Обучение"] .lx-setup-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-block,
+  .lx-main-content[aria-label="Обучение"] .lx-setup-footer fieldset,
+  .lx-main-content[aria-label="Обучение"] .lx-setup-actions {
+    grid-column: 1;
+  }
+
+  .lx-main-content[aria-label="Обучение"] .lx-setup-actions {
+    grid-row: auto;
+    min-height: 0;
+  }
+}
