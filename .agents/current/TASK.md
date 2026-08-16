@@ -6,7 +6,7 @@
 - Branch: `agent/issue-554-openpencil-self-host`
 - Base SHA: `31f44c973de79d34b13cb68c8ef2f58a3be3be7d`
 - Head SHA: resolve from live branch ref after each write
-- PR: not opened yet
+- PR: #555 (Draft)
 
 ## Objective
 
@@ -19,32 +19,51 @@ Self-host the promoted ZSeven OpenPencil design source as a standalone, authenti
 - Active token provenance: `design/openpencil/LexiGo Design Tokens.json`.
 - Accepted token SHA-256: `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
 - Primary editor/toolchain: `ZSeven-W/openpencil` v0.8.2.
-- v0.8.2 web image: `ghcr.io/zseven-w/openpencil-web:v0.8.2`; immutable registry digest must be resolved and pinned before Ready.
+- Immutable web image: `ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775`.
+- linux/amd64 child manifest observed during registry inspection: `sha256:6553c22078f198852a1fc778af7a886e5d941bb5c83f6c1865febf52cb9c7403`.
 - Upstream `--mcp-http` binds only `127.0.0.1:<port>`.
 - Exact-main CI #3620 and Stage run #3470 are green on base SHA.
+- OpenPencil self-host workflow #7 / run `31926560509` is green on branch head `af4cb70d97ab3f3f7ba23477434b47e71f376949`.
+- Run #7 artifact: ID `9258022406`, digest `sha256:026004b1af33684f93117b33a88ac2b8fd8ae8ad3c7e5df3f27650b203e757b2`.
 
-## Target architecture
+## Accepted repository architecture
 
-- Dedicated controlled Git worktree owns the editable `.op`/token pair; never edit canonical `main` checkout in place.
-- Human mode: OpenPencil Web opens the worktree `.op`; raw web port is bound to host loopback only and browser access goes through standalone Caddy TLS + Basic Auth.
+- Dedicated controlled Git worktree owns the editable `.op`/token pair; canonical `main` checkout is never edited in place.
+- Human mode: OpenPencil Web opens the worktree `.op`; raw web port binds host loopback only and browser access goes through standalone Caddy TLS + Basic Auth.
 - Agent mode: the same pinned image runs `op-host-web-server --mcp-http` with `network_mode: host`, preserving upstream loopback-only MCP binding.
-- Human and agent write modes are mutually exclusive through a repository-owned session lock/launcher.
-- Every write session creates a bounded backup before service start.
+- Human and agent write modes are mutually exclusive through both operator preflight and atomic shared `/state/write.lock`.
+- Every writer session creates a bounded, checksummed backup before service start.
 - Resulting design changes leave the service only through a normal Git branch/PR review path.
-- Standalone design deployment is not referenced by LexiGo Stage/prod compose or normal product CD.
+- Standalone design deployment is absent from LexiGo Stage/prod compose, product Caddy and normal product CD.
 
-## Scope
+## Implemented scope
 
-1. Add standalone `deploy/openpencil/**` Compose, Caddy, env-example and operator scripts.
-2. Pin v0.8.2 image by immutable digest after a registry-backed CI probe resolves it.
-3. Bind raw Web only to `127.0.0.1`; expose browser UI only through authenticated HTTPS Caddy.
-4. Set exact `OPENPENCIL_WEB_ALLOWED_ORIGINS`; keep server credential persistence disabled.
-5. Run MCP as a separate profile/process against a controlled worktree, loopback-only on the host.
-6. Add single-writer lock, backup/rotation, start/stop/status/recovery workflow.
-7. Add health/security smoke that proves public raw Web/MCP exposure is absent and a disposable-copy MCP mutation is reversible.
-8. Add a path-scoped GitHub Actions workflow for Compose/source/security/runtime smoke.
-9. Document Codex connection and safe design-write lifecycle.
-10. Update repository state after immutable-head validation/merge; Stage deployment is not required for this tooling-only service.
+1. `deploy/openpencil/compose.yml`: standalone human/agent profiles with immutable v0.8.2 image pin.
+2. `deploy/openpencil/Caddyfile`: browser-only TLS + Basic Auth proxy; no MCP route.
+3. `deploy/openpencil/openpencil.env.example`: non-secret host configuration contract.
+4. `deploy/openpencil/container-entrypoint.sh`: atomic writer lock + pre-start backup/rotation.
+5. `deploy/openpencil/session.sh`: host preflight/start/stop/status/stale-lock recovery.
+6. `deploy/openpencil/self-test.sh`: isolated Linux Web/MCP/security/write/backup smoke.
+7. `.github/workflows/openpencil-self-host-check.yml`: registry identity + runtime + Caddy + pin validation.
+8. `docs/figma/openpencil-self-host.md`: operator/Codex/SSH-tunnel/recovery workflow.
+
+## Authoritative runtime evidence
+
+Self-host workflow #7 proves on Linux with the immutable image:
+
+- source/security and Compose contracts pass;
+- raw Web starts on host `127.0.0.1` only;
+- a direct-Compose second writer is rejected by the shared lock;
+- MCP starts on host `127.0.0.1` only and is absent from Caddy;
+- `get_node(fig_2287)` resolves `Home / Mobile / Dark`;
+- `list_variables` reports exactly 92 variables;
+- `list_pages` reports 23 pages;
+- the write probe switches to `figma-page-21`, resolves `fig_6879`, changes `ОБУЧЕНИЕ` to `ОБУЧЕНИЕ · MCP SMOKE`, verifies it, and restores `ОБУЧЕНИЕ` on the disposable copy;
+- canonical source SHA checks remain unchanged;
+- backup rotation and explicit stale-lock recovery pass;
+- repository Caddy image builds with Cloudflare DNS support;
+- authenticated Caddy configuration provisions successfully with a format-only fake token under `--network none`;
+- checked-in immutable image pin matches the registry-resolved OCI index digest.
 
 ## Allowed paths
 
@@ -70,34 +89,18 @@ Self-host the promoted ZSeven OpenPencil design source as a standalone, authenti
 - `design/openpencil/**`
 - existing OpenPencil import/visual acceptance scripts or workflows except read-only use as validation dependencies
 
-## Security invariants
+## Remaining gates before repository merge
 
-- No API/provider credentials, plaintext passwords, tokens or signed URLs in Git.
-- Raw Web port must bind host loopback only.
-- MCP HTTP must remain host loopback only; no reverse-proxy route to MCP.
-- Browser origin must be an exact HTTPS origin; wildcard origin is prohibited.
-- `OPENPENCIL_PERSIST_WEB_CREDENTIALS_SERVER=false` by default.
-- Caddy authentication must occur before proxying the editor.
-- Worktree and backup directories are host paths owned by the operator/service account and not world-writable.
-- Human and agent write sessions cannot overlap.
-- Archived `.fig` and promoted canonical sources in `main` remain untouched.
+- Final developer-authored task-state update must be the last write.
+- OpenPencil self-host workflow must be green again on that immutable final head.
+- Full repository CI must be green on that same final head.
+- Changed-path/review/thread audit must remain clean.
+- PR #555 must move Draft -> Ready only after the gates above.
+- Squash merge must use an expected-head guard.
 
-## Required checks
+## External deployment boundary
 
-- Compose config parses with required env inputs and contains no Stage/prod services.
-- Image tag/digest/version contract is pinned and registry-resolvable.
-- Human Web stack starts from a clean controlled worktree and is healthy through loopback/Caddy smoke.
-- Unauthenticated browser request is rejected; authenticated request reaches OpenPencil.
-- Host raw Web listener is loopback-only.
-- MCP service binds `127.0.0.1` and is not routed by Caddy.
-- MCP `initialize` / `tools/list` can read the promoted file on a disposable worktree copy.
-- Known Home node `fig_2287` is readable and runtime variables report 92.
-- One disposable text mutation persists through MCP and source checksum of the canonical input remains unchanged.
-- Session lock rejects concurrent human/agent starts.
-- Backup rotation and stale-lock recovery are tested.
-- Existing OpenPencil visual/token acceptance remains green.
-- Full immutable-head repository CI is green before merge.
-- No product Stage/prod deployment is required solely for this tooling slice.
+Repository implementation and Linux runtime acceptance do not prove a live Internet deployment. Issue #554 must remain open after repository merge until a real design host is provisioned and there is host evidence for DNS, trusted TLS, Basic Auth browser access from outside the host, and Codex access through the approved SSH-tunneled loopback MCP endpoint.
 
 ## Rollback
 
