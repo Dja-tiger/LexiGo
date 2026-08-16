@@ -2,106 +2,77 @@
 
 ## Identity
 
-- Issue: #554
-- Branch: `agent/issue-554-openpencil-self-host`
-- Base SHA: `31f44c973de79d34b13cb68c8ef2f58a3be3be7d`
-- Head SHA: resolve from live branch ref after each write
-- PR: #555 (Draft)
+- Issue: #201 — First Use: Guest Home, onboarding and diagnostics.
+- Branch: `design/issue-201-first-use-openpencil`.
+- Base SHA: `14558e726cb64c59b21437832bef3c6277c978b6`.
+- PR: not opened yet.
+- Primary design runtime: pinned ZSeven OpenPencil v0.8.2 on GitHub Actions Linux runners.
 
 ## Objective
 
-Self-host the promoted ZSeven OpenPencil design source as a standalone, authenticated design service and establish a private file-backed `op`/MCP control plane for Codex without coupling it to normal LexiGo Stage/prod runtime deployment.
+Close the production design gap that blocks #201 implementation by extending the promoted OpenPencil source with canonical First Use states derived from the delivered #18 backend contract, then register stable OpenPencil node IDs and review deterministic Linux renders before any frontend implementation.
 
 ## Proven inputs
 
-- Active editor source: `design/openpencil/LexiGo Design System.op`.
-- Accepted `.op` SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`.
-- Active token provenance: `design/openpencil/LexiGo Design Tokens.json`.
-- Accepted token SHA-256: `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
-- Primary editor/toolchain: `ZSeven-W/openpencil` v0.8.2.
-- Immutable web image: `ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775`.
-- linux/amd64 child manifest observed during registry inspection: `sha256:6553c22078f198852a1fc778af7a886e5d941bb5c83f6c1865febf52cb9c7403`.
-- Upstream `--mcp-http` binds only `127.0.0.1:<port>`.
-- Exact-main CI #3620 and Stage run #3470 are green on base SHA.
-- OpenPencil self-host workflow #7 / run `31926560509` is green on branch head `af4cb70d97ab3f3f7ba23477434b47e71f376949`.
-- Run #7 artifact: ID `9258022406`, digest `sha256:026004b1af33684f93117b33a88ac2b8fd8ae8ad3c7e5df3f27650b203e757b2`.
+- Active editable source: `design/openpencil/LexiGo Design System.op`.
+- Token provenance: `design/openpencil/LexiGo Design Tokens.json`.
+- Figma `.fig` is immutable migration/archive input, not the day-to-day editor source.
+- Existing canonical onboarding source: Figma `79:46` / OpenPencil imported counterpart to be resolved from the live `.op` before writes.
+- Existing First Use backend states from #18: `not_started`, `in_progress`, `completed`, `skipped`.
+- Diagnostic item self-mark contract: `known`, `unsure`, `new` before translation reveal; up to 12 items; skip must not mutate scheduler state.
+- OpenPencil v0.8.2 MCP supports semantic reads/writes including page selection, node reads, copy/update/batch operations and screenshots.
 
-## Accepted repository architecture
+## Required production matrix
 
-- Dedicated controlled Git worktree owns the editable `.op`/token pair; canonical `main` checkout is never edited in place.
-- Human mode: OpenPencil Web opens the worktree `.op`; raw web port binds host loopback only and browser access goes through standalone Caddy TLS + Basic Auth.
-- Agent mode: the same pinned image runs `op-host-web-server --mcp-http` with `network_mode: host`, preserving upstream loopback-only MCP binding.
-- Human and agent write modes are mutually exclusive through both operator preflight and atomic shared `/state/write.lock`.
-- Every writer session creates a bounded, checksummed backup before service start.
-- Resulting design changes leave the service only through a normal Git branch/PR review path.
-- Standalone design deployment is absent from LexiGo Stage/prod compose, product Caddy and normal product CD.
+1. Guest Home — mobile + desktop, one dominant First Use CTA, no fake progress.
+2. Onboarding role/context — retain/promote existing mobile composition; add desktop coverage.
+3. Diagnostic pre-reveal — exactly `Знаю / Не уверен / Новое`; answer remains hidden.
+4. Diagnostic post-mark/reveal — selected mark remains visible; translation/context revealed; one Continue action.
+5. Diagnostic in-progress/resume — communicates position without future answers.
+6. Skip confirmation/result — maps to `skipped`, non-blocking, no scheduler mutation claim.
+7. Completion/result — maps to `completed`, personal queue prepared, one dominant Home/Learn handoff.
+8. Loading/error/retry/recovery — preserve current selection where applicable.
+9. Light/Dark and mobile/desktop coverage, using semantic tokens rather than ad-hoc literals.
 
-## Implemented scope
+## Execution strategy
 
-1. `deploy/openpencil/compose.yml`: standalone human/agent profiles with immutable v0.8.2 image pin.
-2. `deploy/openpencil/Caddyfile`: browser-only TLS + Basic Auth proxy; no MCP route.
-3. `deploy/openpencil/openpencil.env.example`: non-secret host configuration contract.
-4. `deploy/openpencil/container-entrypoint.sh`: atomic writer lock + pre-start backup/rotation.
-5. `deploy/openpencil/session.sh`: host preflight/start/stop/status/stale-lock recovery.
-6. `deploy/openpencil/self-test.sh`: isolated Linux Web/MCP/security/write/backup smoke.
-7. `.github/workflows/openpencil-self-host-check.yml`: registry identity + runtime + Caddy + pin validation.
-8. `docs/figma/openpencil-self-host.md`: operator/Codex/SSH-tunnel/recovery workflow.
-
-## Authoritative runtime evidence
-
-Self-host workflow #7 proves on Linux with the immutable image:
-
-- source/security and Compose contracts pass;
-- raw Web starts on host `127.0.0.1` only;
-- a direct-Compose second writer is rejected by the shared lock;
-- MCP starts on host `127.0.0.1` only and is absent from Caddy;
-- `get_node(fig_2287)` resolves `Home / Mobile / Dark`;
-- `list_variables` reports exactly 92 variables;
-- `list_pages` reports 23 pages;
-- the write probe switches to `figma-page-21`, resolves `fig_6879`, changes `ОБУЧЕНИЕ` to `ОБУЧЕНИЕ · MCP SMOKE`, verifies it, and restores `ОБУЧЕНИЕ` on the disposable copy;
-- canonical source SHA checks remain unchanged;
-- backup rotation and explicit stale-lock recovery pass;
-- repository Caddy image builds with Cloudflare DNS support;
-- authenticated Caddy configuration provisions successfully with a format-only fake token under `--network none`;
-- checked-in immutable image pin matches the registry-resolved OCI index digest.
+- Do not deploy OpenPencil to a VPS for this slice.
+- Use temporary branch-only GitHub Actions jobs to run the immutable OpenPencil v0.8.2 image against the branch `.op`.
+- First perform inspection-only semantic reads and render evidence; do not guess node structure.
+- Apply edits through OpenPencil semantic MCP/CLI operations, not direct raw JSON surgery.
+- Temporary write/inspection workflows must be minimal, branch-guarded and removed before final CI.
+- Final design source changes leave only through this branch and a reviewed PR.
 
 ## Allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `.agents/PROJECT_STATE.md`
-- `deploy/openpencil/**`
-- `.github/workflows/openpencil-self-host-check.yml`
-- `docs/figma/openpencil-self-host.md`
-- `docs/figma/openpencil-ai-workflow.md` only if a minimal cross-link is required
+- `design/openpencil/LexiGo Design System.op`
+- `docs/figma/openpencil-screen-map.json`
+- `docs/figma/openpencil-ai-workflow.md` only for a minimal durable contract update if required
+- Issue/PR metadata and comments
+- temporary `.github/workflows/openpencil-issue-201-*.yml` only during the branch execution phase; none may remain in final diff
+- temporary `.tmp/**` is artifact-only and must not be committed
 
 ## Prohibited paths
 
+- `design/figma/**`
 - `frontend/**`
 - `backend/**`
 - `api/**`
-- `deploy/compose/docker-compose.stage.yml`
-- `deploy/compose/docker-compose.prod.yml`
-- `deploy/Caddyfile`
-- normal product deploy workflows (`deploy-stage.yml`, `deploy-prod.yml`)
-- `design/figma/**`
-- `design/openpencil/**`
-- existing OpenPencil import/visual acceptance scripts or workflows except read-only use as validation dependencies
+- Stage/prod Compose, product Caddy or product deploy workflows
+- token sidecar semantics unless the design change explicitly requires a separately reviewed token migration
 
-## Remaining gates before repository merge
+## Stop conditions
 
-- Final developer-authored task-state update must be the last write.
-- OpenPencil self-host workflow must be green again on that immutable final head.
-- Full repository CI must be green on that same final head.
-- Changed-path/review/thread audit must remain clean.
-- PR #555 must move Draft -> Ready only after the gates above.
-- Squash merge must use an expected-head guard.
+Stop writes and reconstruct context if `main` moves unexpectedly, the branch loses its verified base, the exact existing onboarding node cannot be resolved, semantic OpenPencil read/write evidence is ambiguous, a required state conflicts with #18, visual evidence cannot be reviewed, or the diff leaves allowed paths.
 
-## External deployment boundary
+## Acceptance gates
 
-Repository implementation and Linux runtime acceptance do not prove a live Internet deployment. Issue #554 must remain open after repository merge until a real design host is provisioned and there is host evidence for DNS, trusted TLS, Basic Auth browser access from outside the host, and Codex access through the approved SSH-tunneled loopback MCP endpoint.
-
-## Rollback
-
-Stop the standalone OpenPencil services, remove the standalone reverse-proxy route, restore the controlled design worktree from Git or the latest bounded backup, and continue using the promoted `.op`/token pair from repository history. LexiGo product services remain unaffected.
+- Stable OpenPencil node IDs exist for the new canonical states and are registered in Screen Map.
+- Deterministic Linux screenshots are produced and reviewed for the production matrix.
+- Existing source/visual/token acceptance remains fail-closed.
+- No temporary workflow remains in the final diff.
+- Full required repository CI is green on the final developer-authored head.
+- Draft PR review/thread/path audit is clean before Ready and squash merge.
