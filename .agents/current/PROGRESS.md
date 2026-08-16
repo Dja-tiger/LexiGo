@@ -1,38 +1,50 @@
 # Current Task Progress
 
-## 2026-08-16 21:09 Europe/Berlin
+## 2026-08-16 21:22 Europe/Berlin
 
 ### Verified
 
-- Live main is `126d059f0ae980e7a50425a23a378c29a1e8b641`; no open PR existed when the branch was created.
-- Issue #203 live Figma Screen Map sync is externally blocked by the connected Starter/View seat MCP limit; no fake close was attempted.
-- Issue #18 backend already persists and returns selection reasons `recent_failure`, `due`, `weak_topic`, `new`, `scheduled`, `manual`.
-- Diagnostic onboarding and adaptive queue backend slices are already merged; First Use `/onboarding` UI is already delivered by #201/#558.
-- Current Learn composer still POSTs selected `source`, `studyMode`, `lessonSize` and optional topic for preview and lesson creation.
-- OpenPencil is the active production design source. Active Lesson is the focused route owner; Learn design includes a visible “Почему предложено” rationale pattern.
+- Base/main SHA: `126d059f0ae980e7a50425a23a378c29a1e8b641`.
+- Draft PR: #561.
+- Backend already returns the six selection reasons required by Issue #18.
+- Learn composer still sends the chosen source, study mode, lesson size and optional topic.
+- OpenPencil remains the production design source; the existing recommendation pattern uses “Почему предложено”.
 
 ### Finding
 
-The remaining executable Issue #18 gap is item-level transparency: the backend sends `reason` on active lesson items, but the current frontend type/mapping/presentation drops it, so the learner cannot see why the current item was selected.
+The remaining Issue #18 gap was frontend transparency: Active Lesson dropped the server-owned item `reason` before presentation.
 
 ### Root cause
 
-`isLearningItemPayload` does not validate `reason`; `APIItem`/`LearningItem` do not preserve it; `toLearningItem()` does not map it; Active Lesson presentation has no visible selection-reason metadata.
+The active-lesson validator, local API item type, learning item model and presentation did not carry the selection reason end-to-end.
 
 ### Changed files
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/lib/learning.ts`
+- `frontend/lib/account-resources.ts`
+- `frontend/lib/account-resources.test.ts`
+- `frontend/lib/interface-copy.ts`
+- `frontend/lib/interface-copy.test.ts`
+- `frontend/lib/active-lesson-presentation.ts`
+- `frontend/lib/active-lesson-presentation.test.ts`
+- `frontend/components/lexigo-active-lesson-app.tsx`
+- `frontend/components/active-lesson-presentation.tsx`
+- `frontend/components/active-lesson-selection-reason-source.test.ts`
 
 ### Checks passed
 
-- Repository/harness preflight and live GitHub reconciliation.
-- Design-source audit against `design/openpencil/LexiGo Design System.op` and `docs/figma/openpencil-screen-map.json`.
-- Source audit of backend lesson reason contract and current Learn manual POST contract.
+- Harness preflight and live GitHub reconciliation.
+- OpenPencil design-source audit.
+- Backend and manual-composer source audit.
+- Post-write compare confirmed only intended small diffs in the two large TSX owners.
+- Read-back confirmed API reason preservation and conditional visible reason wiring.
 
 ### Checks failed
 
-- Live Figma MCP call for #203: external Starter-plan call limit; not a product failure.
+- Native Figma MCP for Issue #203 remains externally blocked by the Starter/View plan call limit; this is unrelated to Issue #18.
 
 ### Current branch head
 
@@ -40,4 +52,4 @@ Resolve from live branch ref after this write.
 
 ### Next action
 
-Implement the narrow frontend selection-reason contract, copy, mapping, visible metadata and regression tests without touching backend or composer behavior.
+Run and inspect full PR CI on the resulting immutable branch head, then perform diff/review gates before merge.
