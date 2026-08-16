@@ -29,6 +29,14 @@ const LESSON_SOURCES = new Set([
   "academic-technical-english",
 ]);
 const STUDY_MODES = new Set(["study", "recall", "choice"]);
+const LESSON_SELECTION_REASONS = new Set([
+  "recent_failure",
+  "due",
+  "weak_topic",
+  "new",
+  "scheduled",
+  "manual",
+]);
 const SCENARIO_TYPES = new Set([
   "incident",
   "troubleshooting",
@@ -123,7 +131,10 @@ export function isActiveLessonPayload(value: unknown): boolean {
     && isNonNegativeNumber(value.version)
     && value.status === "active"
     && Array.isArray(value.items)
-    && value.items.every((item) => isLearningItemPayload(item) && isRecord(item) && isNonNegativeNumber(item.position))
+    && value.items.every((item) => isLearningItemPayload(item)
+      && isRecord(item)
+      && isNonNegativeNumber(item.position)
+      && (item.reason === undefined || LESSON_SELECTION_REASONS.has(item.reason as string)))
     && isTimestamp(value.createdAt)
     && isTimestamp(value.updatedAt);
 }
