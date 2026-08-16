@@ -343,12 +343,36 @@ try:
     variables_value = json.loads(variables_raw)
 except json.JSONDecodeError:
     variables_value = None
+
 def variable_count(value):
-    if isinstance(value, list): return len(value)
-    if isinstance(value, dict):
-        for key in ("variables", "items"):
-            if isinstance(value.get(key), list): return len(value[key])
+    if isinstance(value, list):
+        return len(value)
+    if not isinstance(value, dict):
+        return 0
+    direct_count = value.get("variable_count")
+    if isinstance(direct_count, int):
+        return direct_count
+    if isinstance(direct_count, str) and direct_count.isdigit():
+        return int(direct_count)
+    variables = value.get("variables")
+    if isinstance(variables, list):
+        return len(variables)
+    if isinstance(variables, dict):
+        return len(variables)
+    if isinstance(variables, str):
+        try:
+            parsed = json.loads(variables)
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, dict):
+            return len(parsed)
+        if isinstance(parsed, list):
+            return len(parsed)
+    items = value.get("items")
+    if isinstance(items, list):
+        return len(items)
     return 0
+
 summary = {
     "candidateIdentityValid": True,
     "pageCount": structural["candidate"]["pageCount"],
