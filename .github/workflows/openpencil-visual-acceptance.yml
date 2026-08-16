@@ -37,7 +37,7 @@ jobs:
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 25
     env:
-      VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright:v1.62.1-noble
+      VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v7
@@ -92,6 +92,7 @@ jobs:
           extractor_dir="$RUNNER_TEMP/open-pencil-variable-extractor"
           rm -rf "$extractor_dir"
           mkdir -p "$extractor_dir"
+          cp scripts/figma/extract-figma-variables.mjs "$extractor_dir/extract-figma-variables.mjs"
           cat > "$extractor_dir/package.json" <<'JSON'
           {
             "name": "lexigo-open-pencil-variable-extractor",
@@ -116,7 +117,7 @@ jobs:
               EXPECTED_FIG_SHA256="cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423" \
               EXPECTED_FIG_VARIABLE_COUNT="92" \
               OPEN_PENCIL_EXTRACTOR_VERSION="0.13.2" \
-                node /workspace/scripts/figma/extract-figma-variables.mjs \
+                node /extractor/extract-figma-variables.mjs \
                   "/workspace/design/figma/LexiGo Design System.fig" \
                   /extractor/figma-variables.json \
                   | tee extractor-summary.json
