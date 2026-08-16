@@ -1,12 +1,12 @@
 # Current Task Progress
 
-## 2026-08-16 03:00 Europe/Moscow
+## 2026-08-16 03:10 Europe/Moscow
 
 ### Verified
 
 - Exact base `main`: `01fad069e74f1675f7ea6bddda6b0b9cbd9fe4d9` after docs reconciliation PR #544.
-- No open PR existed before starting this slice.
 - Atomic Issue #545 exists under Figma parity umbrella #205.
+- Draft PR #546 is open from `test/issue-545-dictionary-empty-renderer-equivalence` and is mergeable.
 - Canonical Dictionary Empty source remains Figma node `79:93`, viewport `390x844`.
 - Primary approved SHA-256 remains `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
 - Independently reviewed hosted-renderer SHA-256 is `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6`.
@@ -38,13 +38,14 @@ Hosted renderer antialias rasterization can produce one of two independently obs
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 - `frontend/e2e/system-states-visual.spec.ts`
 
-`EXECUTION.md` is the next task-memory write before PR creation.
+No production React/CSS/runtime, PNG baseline, workflow, package, lockfile or Playwright configuration file is changed.
 
 ### Implementation
 
-`SYSTEM_STATE_VISUAL_BASELINES` now distinguishes the primary Figma-approved SHA from optional exact renderer-equivalent SHA values.
+`SYSTEM_STATE_VISUAL_BASELINES` distinguishes the primary Figma-approved SHA from optional exact renderer-equivalent SHA values.
 
 Only `compact-empty-light` registers `dd2d...` as renderer-equivalent. All other states keep only their original primary SHA.
 
@@ -58,18 +59,36 @@ No numerical pixel tolerance, threshold, screenshot update mode, retry weakening
 
 ### Checks passed
 
-- Branch/read-back inspection confirms the primary `e140...` value remains present and unchanged.
-- Branch/read-back inspection confirms only `compact-empty-light` has `rendererEquivalentSha256`.
-- Branch/read-back inspection confirms consecutive-capture exact equality still executes before accepted-fingerprint lookup.
+- Changed-file audit: exactly four allowed files.
+- Primary `e140...` value remains unchanged.
+- Only `compact-empty-light` has `rendererEquivalentSha256`.
+- Consecutive-capture exact equality still executes before accepted-fingerprint lookup.
+- Initial PR CI #3581 / run `31916209356` on developer head `49c6bb6c098a17539f29fce03ced4064ebfa28b4`:
+  - classify change scope: success;
+  - frontend core quality: success;
+  - backend unit/security: success;
+  - backend integration: success;
+  - lesson completion, content security, iOS PWA dictionary, accessibility, performance budgets, controlled service worker, Dictionary smoke: success;
+  - authoritative Visual job `95088422936`: success on GitHub-hosted worker in Azure `centralus`, Ubuntu 24.04.4, runner image `20260810.271.1`, Playwright digest `sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`;
+  - Visual summary: `73 passed`, `116 skipped`, zero Playwright `flaky` classification and no test retry;
+  - Dictionary Empty `79:93` executed successfully in all three visual projects.
+
+### Checks pending
+
+- Initial CI #3581 still had UI shards 1/2 and 2/2 running at this checkpoint; all other jobs were green.
+- This evidence synchronization changes the branch head, therefore a new full immutable-head CI is required and will be treated as authoritative final-head validation.
+- After final-head CI, perform a second same-head Visual execution on another hosted worker if the GitHub Actions API permits rerunning a successful Visual job; otherwise record the API limitation and use an independent final-head workflow execution only if a repository-owned trigger exists.
+- Final review/comments/thread audit.
+- Expected-head squash merge and exact-main CI.
 
 ### Checks failed
 
-- None yet. Repository-owned PR CI has not run because the Draft PR has not been opened yet.
+- None attributable to the implementation.
 
 ### Current branch head
 
-Resolve from live branch after `EXECUTION.md` synchronization.
+Resolve from the live branch after the paired `EXECUTION.md` evidence update.
 
 ### Next action
 
-Synchronize `EXECUTION.md`, audit the branch diff against the allowed-path boundary, open Draft PR #545 scope, then run authoritative PR CI and inspect the Visual job for zero Playwright flaky classification.
+Finish task-memory evidence synchronization, then validate the new final head with the complete repository CI. Inspect the final-head Visual log itself for zero `flaky`, not merely job-level success; then obtain the second independent same-head renderer proof before Ready/merge.
