@@ -41,12 +41,12 @@ jobs:
   visual-acceptance:
     name: Render and probe ZSeven OpenPencil v0.8.2 candidate
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 35
+    timeout-minutes: 45
     env:
       VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
       OPEN_PENCIL_CORE_INTEGRITY: sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow==
-      ACCEPTED_TOKENIZED_OP_SHA256: 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
-      ACCEPTED_TOKENIZED_OP_BYTES: "6446726"
+      ACCEPTED_MIGRATION_TOKENIZED_OP_SHA256: 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
+      ACCEPTED_MIGRATION_TOKENIZED_OP_BYTES: "6446726"
       ACCEPTED_TOKEN_SIDECAR_SHA256: e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c
       ACCEPTED_TOKEN_SIDECAR_BYTES: "82487"
       MANUAL_VISUAL_REVIEW_ARTIFACT_ID: "9257099175"
@@ -75,7 +75,7 @@ jobs:
           test ! -e .github/workflows/openpencil-source-promotion.yml
           test ! -e docs/figma/openpencil-source-promotion.request
 
-      - name: Reproduce deterministic candidate
+      - name: Reproduce deterministic migration candidate
         run: bash scripts/figma/openpencil-ai-import.sh
 
       - name: Prepare pinned OpenPencil desktop runtime
@@ -100,7 +100,7 @@ jobs:
           echo "OPENPENCIL_DESKTOP_BIN=$desktop_bin" >> "$GITHUB_ENV"
           echo "OPENPENCIL_DESKTOP_ASSET_SHA256=$actual_sha" >> "$GITHUB_ENV"
 
-      - name: Render original canonical candidate and probe editability
+      - name: Render original migration candidate and probe editability
         run: bash scripts/figma/openpencil-visual-acceptance.sh
 
       - name: Extract native Figma variables read-only
@@ -162,7 +162,7 @@ jobs:
       - name: Apply token layer through official OpenPencil APIs
         run: bash scripts/figma/openpencil-token-migration.sh
 
-      - name: Render tokenized candidate and prove visual invariance
+      - name: Render tokenized migration candidate and prove visual invariance
         run: |
           set -Eeuo pipefail
           tokenized=".tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op"
@@ -185,7 +185,7 @@ jobs:
           orig = {item['key']: item for item in original['renders']}
           tok = {item['key']: item for item in tokenized['renders']}
           if orig.keys() != tok.keys():
-              raise SystemExit('Tokenized render inventory differs from original')
+              raise SystemExit('Tokenized render inventory differs from original migration candidate')
           mismatches = []
           for key in sorted(orig):
               for field in ('width', 'height', 'sha256'):
@@ -206,32 +206,34 @@ jobs:
               encoding='utf-8',
           )
           if mismatches:
-              raise SystemExit(f'Token layer changed {len(mismatches)} accepted render fields')
+              raise SystemExit(f'Token layer changed {len(mismatches)} accepted migration render fields')
           PY
 
-      - name: Verify committed AI-native source pair equals regenerated outputs
+      - name: Verify immutable migration baseline and token provenance
         run: |
           set -Eeuo pipefail
-          committed_op='design/openpencil/LexiGo Design System.op'
           committed_tokens='design/openpencil/LexiGo Design Tokens.json'
           regenerated_op='.tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op'
           regenerated_tokens='.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json'
 
-          test -f "$committed_op"
           test -f "$committed_tokens"
-          test "$(sha256sum "$committed_op" | awk '{print $1}')" = "$ACCEPTED_TOKENIZED_OP_SHA256"
-          test "$(wc -c < "$committed_op" | tr -d '[:space:]')" = "$ACCEPTED_TOKENIZED_OP_BYTES"
+          test "$(sha256sum "$regenerated_op" | awk '{print $1}')" = "$ACCEPTED_MIGRATION_TOKENIZED_OP_SHA256"
+          test "$(wc -c < "$regenerated_op" | tr -d '[:space:]')" = "$ACCEPTED_MIGRATION_TOKENIZED_OP_BYTES"
           test "$(sha256sum "$committed_tokens" | awk '{print $1}')" = "$ACCEPTED_TOKEN_SIDECAR_SHA256"
           test "$(wc -c < "$committed_tokens" | tr -d '[:space:]')" = "$ACCEPTED_TOKEN_SIDECAR_BYTES"
-          test "$(sha256sum "$regenerated_op" | awk '{print $1}')" = "$ACCEPTED_TOKENIZED_OP_SHA256"
           test "$(sha256sum "$regenerated_tokens" | awk '{print $1}')" = "$ACCEPTED_TOKEN_SIDECAR_SHA256"
-          cmp --silent "$committed_op" "$regenerated_op"
           cmp --silent "$committed_tokens" "$regenerated_tokens"
 
           python3 - <<'PY'
           import json
           from pathlib import Path
 
+          screen_map = json.loads(Path('docs/figma/openpencil-screen-map.json').read_text(encoding='utf-8'))
+          source = screen_map['source']
+          if source['migrationTokenizedOpSha256'] != '5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664':
+              raise SystemExit('Migration tokenized SHA metadata drifted')
+          if source['migrationTokenizedOpSize'] != 6446726:
+              raise SystemExit('Migration tokenized size metadata drifted')
           tokens = json.loads(Path('design/openpencil/LexiGo Design Tokens.json').read_text(encoding='utf-8'))
           if tokens['summary']['variableCount'] != 92:
               raise SystemExit('Committed token sidecar variable count drifted')
@@ -240,6 +242,54 @@ jobs:
           if tokens['summary']['themeAxisCount'] != 2:
               raise SystemExit('Committed token sidecar theme-axis count drifted')
           PY
+
+      - name: Build active-source screen map
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          source_path = Path('docs/figma/openpencil-screen-map.json')
+          value = json.loads(source_path.read_text(encoding='utf-8'))
+          baseline = value.get('screens', [])
+          active = value.get('activeScreens', [])
+          if not active:
+              raise SystemExit('activeScreens must contain the promoted OpenPencil-native production states')
+          keys = [item['key'] for item in baseline + active]
+          if len(keys) != len(set(keys)):
+              raise SystemExit('Screen Map keys collide across migration and active inventories')
+          merged = dict(value)
+          merged['screens'] = baseline + active
+          out = Path('.tmp/openpencil-visual-acceptance/active-screen-map.json')
+          out.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print(json.dumps({'baselineScreens': len(baseline), 'activeScreens': len(active), 'mergedScreens': len(keys)}, indent=2))
+          PY
+
+      - name: Render and probe committed active OpenPencil source
+        run: |
+          set -Eeuo pipefail
+          readarray -t active_identity < <(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source = json.loads(Path('docs/figma/openpencil-screen-map.json').read_text(encoding='utf-8'))['source']
+          print(source['activeOpSha256'])
+          print(source['activeOpSize'])
+          PY
+          )
+          active_sha="${active_identity[0]}"
+          active_size="${active_identity[1]}"
+          committed='design/openpencil/LexiGo Design System.op'
+          test "$(sha256sum "$committed" | awk '{print $1}')" = "$active_sha"
+          test "$(wc -c < "$committed" | tr -d '[:space:]')" = "$active_size"
+
+          OPENPENCIL_CANDIDATE_FILE="$committed" \
+          OPENPENCIL_CANDIDATE_SHA256="$active_sha" \
+          OPENPENCIL_CANDIDATE_SIZE="$active_size" \
+          OPENPENCIL_SCREEN_MAP=".tmp/openpencil-visual-acceptance/active-screen-map.json" \
+          OPENPENCIL_VISUAL_EVIDENCE_DIR=".tmp/openpencil-visual-acceptance/active" \
+          OPENPENCIL_PORT="39115" \
+            bash scripts/figma/openpencil-visual-acceptance.sh
 
       - name: Correlate final acceptance evidence
         run: |
@@ -256,6 +306,8 @@ jobs:
           migration = json.loads((root / 'token-migration-summary.json').read_text(encoding='utf-8'))
           tokenized = json.loads((root / 'tokenized/acceptance-summary.json').read_text(encoding='utf-8'))
           equivalence = json.loads((root / 'tokenized-render-equivalence.json').read_text(encoding='utf-8'))
+          active = json.loads((root / 'active/acceptance-summary.json').read_text(encoding='utf-8'))
+          active_map = json.loads((root / 'active-screen-map.json').read_text(encoding='utf-8'))
 
           if native['summary']['variableCount'] != 92:
               raise SystemExit('Native Figma variable count drifted')
@@ -264,9 +316,13 @@ jobs:
           if migration['variableCount'] != 92 or migration['themeAxisCount'] != 2:
               raise SystemExit('Token migration readback contract failed')
           if tokenized['openPencilVariableCount'] != 92:
-              raise SystemExit('Tokenized candidate does not expose 92 OpenPencil variables')
+              raise SystemExit('Tokenized migration candidate does not expose 92 OpenPencil variables')
+          if active['openPencilVariableCount'] != 92:
+              raise SystemExit('Committed active source does not expose 92 OpenPencil variables')
           if not equivalence['hashesMatch']:
-              raise SystemExit('Tokenized render hashes differ from original')
+              raise SystemExit('Tokenized migration render hashes differ from original')
+          if active['candidate']['sha256'] != active_map['source']['activeOpSha256']:
+              raise SystemExit('Active acceptance evidence SHA does not match Screen Map source identity')
 
           summary.update({
               'nativeFigmaVariableCount': 92,
@@ -278,16 +334,24 @@ jobs:
               'compiledOpenPencilVariableCount': compiler['variableCount'],
               'compiledOpenPencilThemeAxisCount': compiler['themeAxisCount'],
               'compiledAliasProvenanceCount': compiler['aliasCount'],
-              'tokenizedOpSha256': migration['tokenizedSha256'],
-              'tokenizedOpBytes': migration['tokenizedBytes'],
-              'tokenizedPageTreeUnchanged': migration['pageTreeUnchanged'],
-              'tokenizedPageTreeSemanticallyUnchanged': migration['pageTreeSemanticallyUnchanged'],
-              'tokenizedNumericNormalizationCount': migration['numericNormalizationCount'],
-              'tokenizedMaxNumericDrift': migration['maxNumericDrift'],
-              'tokenizedOpenPencilVariableCount': tokenized['openPencilVariableCount'],
-              'tokenizedOpenPencilThemeAxisCount': 2,
-              'tokenizedRenderHashesMatch': equivalence['hashesMatch'],
-              'committedSourcePairMatchesRegeneration': True,
+              'migrationTokenizedOpSha256': migration['tokenizedSha256'],
+              'migrationTokenizedOpBytes': migration['tokenizedBytes'],
+              'migrationPageTreeUnchanged': migration['pageTreeUnchanged'],
+              'migrationPageTreeSemanticallyUnchanged': migration['pageTreeSemanticallyUnchanged'],
+              'migrationNumericNormalizationCount': migration['numericNormalizationCount'],
+              'migrationMaxNumericDrift': migration['maxNumericDrift'],
+              'migrationOpenPencilVariableCount': tokenized['openPencilVariableCount'],
+              'migrationOpenPencilThemeAxisCount': 2,
+              'migrationRenderHashesMatch': equivalence['hashesMatch'],
+              'migrationBaselineReproduced': True,
+              'activeSourceSha256': active['candidate']['sha256'],
+              'activeSourceBytes': active['candidate']['size'],
+              'activeValidatedScreenCount': active['validatedScreenCount'],
+              'activeRenderScreenCount': active['renderScreenCount'],
+              'activeOpenPencilVariableCount': active['openPencilVariableCount'],
+              'activeSourceStructurallyAccepted': True,
+              'activeSourceEditabilityProbePassed': active['editabilityProbePassed'],
+              'tokenSidecarMatchesMigrationRegeneration': True,
               'figmaAliasGraphPreservedInSidecar': True,
               'nativeNodeVariableBindingsPreservedByZSevenImporter': False,
               'manualVisualReviewRequired': False,
@@ -297,6 +361,7 @@ jobs:
               'promotionReady': True,
           })
           summary['semanticWarnings'] = [
+              'The Figma-derived tokenized document is the immutable migration baseline; the committed .op is the reviewed active source and may contain post-promotion OpenPencil-native design work.',
               'ZSeven OpenPencil v0.8.2 cannot represent Figma variable-to-variable aliases; the lossless alias graph is preserved in LexiGo Design Tokens.json and runtime values are deterministically resolved.',
               'ZSeven OpenPencil v0.8.2 does not preserve imported node-to-variable bindings; existing imported nodes retain concrete values while the recovered token layer is available for AI/new edits.',
           ]
@@ -312,7 +377,8 @@ jobs:
             .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json \
             .tmp/openpencil-visual-acceptance/token-compiler-summary.json \
             .tmp/openpencil-visual-acceptance/token-migration-summary.json \
-            .tmp/openpencil-visual-acceptance/tokenized-render-equivalence.json; do
+            .tmp/openpencil-visual-acceptance/tokenized-render-equivalence.json \
+            .tmp/openpencil-visual-acceptance/active/acceptance-summary.json; do
             if [ -f "$file" ]; then
               echo "--- $file"
               cat "$file"
