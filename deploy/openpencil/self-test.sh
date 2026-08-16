@@ -84,9 +84,7 @@ wait_mcp() {
   local payload
   payload='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"lexigo-self-test","version":"1"}}}'
   for _ in $(seq 1 60); do
-    if curl --fail --silent --show-error --max-time 2 \
-      -H 'Content-Type: application/json' \
-      --data "$payload" "http://127.0.0.1:${OPENPENCIL_MCP_PORT}/mcp" | grep -q '"result"'; then
+    if curl --fail --silent --show-error --max-time 2 -H 'Content-Type: application/json' --data "$payload" "http://127.0.0.1:${OPENPENCIL_MCP_PORT}/mcp" | grep -q '"result"'; then
       return 0
     fi
     sleep 1
@@ -109,10 +107,7 @@ fi
 grep -Fq 'OPENPENCIL_PERSIST_WEB_CREDENTIALS_SERVER: "false"' "$COMPOSE_FILE"
 grep -Fq 'basic_auth {' "$DEPLOY_DIR/Caddyfile"
 ! grep -Eq '(/mcp|reverse_proxy[[:space:]]+mcp)' "$DEPLOY_DIR/Caddyfile"
-! grep -R -n -E 'openpencil|OpenPencil' \
-  "$ROOT_DIR/deploy/compose/docker-compose.stage.yml" \
-  "$ROOT_DIR/deploy/compose/docker-compose.prod.yml" \
-  "$ROOT_DIR/deploy/Caddyfile"
+! grep -R -n -E 'openpencil|OpenPencil' "$ROOT_DIR/deploy/compose/docker-compose.stage.yml" "$ROOT_DIR/deploy/compose/docker-compose.prod.yml" "$ROOT_DIR/deploy/Caddyfile"
 
 phase compose-config
 compose --profile human --profile agent config > "$EVIDENCE_DIR/compose-config.yml"
@@ -170,10 +165,13 @@ def rpc(method, params):
 
 def tool(name, arguments=None):
     payload = rpc("tools/call", {"name": name, "arguments": arguments or {}})
-    content = payload.get("result", {}).get("content", [])
+    result = payload.get("result", {})
+    content = result.get("content", [])
     if not content:
         raise AssertionError(f"{name}: missing MCP content: {payload}")
     text = content[0].get("text", "")
+    if result.get("isError"):
+        raise AssertionError(f"{name}: {text}")
     try:
         decoded = json.loads(text)
     except Exception:
@@ -213,6 +211,17 @@ variables_text, variables_value = tool("list_variables")
 count = variable_count(variables_value)
 assert count == 92, f"expected 92 variables, got {count}: {variables_text[:2000]}"
 
+pages_text, pages_value = tool("list_pages")
+assert isinstance(pages_value, dict), pages_text
+pages = pages_value.get("pages")
+assert isinstance(pages, list) and len(pages) == 23, pages_text
+probe_index = next((index for index, page in enumerate(pages) if page.get("id") == "figma-page-21"), None)
+assert probe_index is not None, pages_text
+tool("set_active_page", {"index": probe_index})
+
+probe_text, _ = tool("find_node_by_name", {"name": "Mobile Route Label"})
+assert "fig_6879" in probe_text, probe_text
+
 before_text, _ = tool("read_nodes", {"nodeIds": ["fig_6879"], "depth": 0})
 assert "ОБУЧЕНИЕ" in before_text, before_text
 
@@ -224,7 +233,7 @@ tool("set_node_text", {"node_id": "fig_6879", "text": "ОБУЧЕНИЕ"})
 restored_text, _ = tool("read_nodes", {"nodeIds": ["fig_6879"], "depth": 0})
 assert "ОБУЧЕНИЕ" in restored_text and "MCP SMOKE" not in restored_text, restored_text
 
-print(json.dumps({"homeNode": "fig_2287", "variables": count, "writeProbe": "restored"}, ensure_ascii=False))
+print(json.dumps({"homeNode": "fig_2287", "variables": count, "pageCount": len(pages), "probePage": "figma-page-21", "probeNode": "fig_6879", "writeProbe": "restored"}, ensure_ascii=False))
 PY
 
 compose stop mcp >/dev/null
