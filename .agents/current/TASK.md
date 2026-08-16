@@ -2,125 +2,106 @@
 
 ## Identity
 
-- Issue: #552
-- Branch: `agent/issue-552-openpencil-visual-acceptance`
-- Base SHA: `e7d992ad6089aa6445017ea6ffff6280787b05d8`
+- Issue: #554
+- Branch: `agent/issue-554-openpencil-self-host`
+- Base SHA: `31f44c973de79d34b13cb68c8ef2f58a3be3be7d`
 - Head SHA: resolve from live branch ref after each write
-- PR: #553 (Draft)
+- PR: #555 (Draft)
 
 ## Objective
 
-Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.2 conversion of the repository-owned Figma archive and promote the reviewed AI-native design sources only if the acceptance evidence passes.
+Self-host the promoted ZSeven OpenPencil design source as a standalone, authenticated design service and establish a private file-backed `op`/MCP control plane for Codex without coupling it to normal LexiGo Stage/prod runtime deployment.
 
-## Scope
+## Proven inputs
 
-- Reproduce the exact #550 candidate `.op` and require SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c` before review.
-- Establish an explicit canonical Figma-node -> OpenPencil `fig_*` mapping for production-relevant screens.
-- Start the pinned OpenPencil file-backed headless server and export representative canonical nodes to Linux PNG evidence.
-- Validate exported PNG dimensions, hashes and semantic node metadata.
-- Verify practical editability on an isolated copy; never mutate the archived `.fig` or the review candidate while probing.
-- Recover the native Figma variable collections, modes, aliases and complete `valuesByMode` through a read-only parser because ZSeven v0.8.2 intentionally imports `themes: None` / `variables: None`.
-- Require exactly 92 native variables, matching the repository handoff.
-- Compile those native definitions into 92 namespaced ZSeven runtime variables plus the required multi-mode theme axes.
-- Preserve the lossless Figma collection/mode/alias graph in a Git-tracked token sidecar because ZSeven v0.8.2 does not support variable-to-variable aliases.
-- Apply the compiled token layer to a disposable `.op` through the official `op themes:set` / `op vars:set` APIs, reopen it, require 92 variables, and prove its page tree and rendered canonical screens are unchanged.
-- Upload machine-readable acceptance, token migration and native-variable evidence from CI.
-- Manually inspect the specific Linux artifact before any source-of-truth promotion.
-- If acceptance passes, promote the exact reviewed pair:
-  - `design/openpencil/LexiGo Design System.op` — active visual/editor source;
-  - `design/openpencil/LexiGo Design Tokens.json` — active lossless token graph/provenance source.
-- Because the reviewed `.op` is 6.45 MB, a temporary owner-only branch workflow may be used to reproduce and commit the exact accepted artifacts. It must be removed before merge and must never land on `main`.
-- Update design source hierarchy and add fail-closed drift contracts.
-- Record factual progress in `.agents/current/**`.
+- Active editor source: `design/openpencil/LexiGo Design System.op`.
+- Accepted `.op` SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`.
+- Active token provenance: `design/openpencil/LexiGo Design Tokens.json`.
+- Accepted token SHA-256: `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
+- Primary editor/toolchain: `ZSeven-W/openpencil` v0.8.2.
+- Immutable web image: `ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775`.
+- linux/amd64 child manifest observed during registry inspection: `sha256:6553c22078f198852a1fc778af7a886e5d941bb5c83f6c1865febf52cb9c7403`.
+- Upstream `--mcp-http` binds only `127.0.0.1:<port>`.
+- Exact-main CI #3620 and Stage run #3470 are green on base SHA.
+- OpenPencil self-host workflow #7 / run `31926560509` is green on branch head `af4cb70d97ab3f3f7ba23477434b47e71f376949`.
+- Run #7 artifact: ID `9258022406`, digest `sha256:026004b1af33684f93117b33a88ac2b8fd8ae8ad3c7e5df3f27650b203e757b2`.
 
-## Non-goals
+## Accepted repository architecture
 
-- No LexiGo production React/CSS/backend/runtime change.
-- No Stage/prod deployment.
-- No public OpenPencil deployment or MCP exposure yet.
-- No mutation of `design/figma/LexiGo Design System.fig`.
-- No blind snapshot/baseline refresh.
-- No ZSeven OpenPencil version upgrade in this slice; v0.8.2 remains the validated editor/migration toolchain.
-- `open-pencil/open-pencil` is permitted only as a read-only native `.fig` variable extractor; it does not replace ZSeven as the selected AI-first editor.
-- No claim that ZSeven v0.8.2 natively preserves Figma variable aliases or imported node→variable bindings; unsupported relationships must remain explicit in the token sidecar/workflow rather than be silently flattened.
-- No completion claim for Onboarding/First Use, whose canonical design coverage is still incomplete.
+- Dedicated controlled Git worktree owns the editable `.op`/token pair; canonical `main` checkout is never edited in place.
+- Human mode: OpenPencil Web opens the worktree `.op`; raw web port binds host loopback only and browser access goes through standalone Caddy TLS + Basic Auth.
+- Agent mode: the same pinned image runs `op-host-web-server --mcp-http` with `network_mode: host`, preserving upstream loopback-only MCP binding.
+- Human and agent write modes are mutually exclusive through both operator preflight and atomic shared `/state/write.lock`.
+- Every writer session creates a bounded, checksummed backup before service start.
+- Resulting design changes leave the service only through a normal Git branch/PR review path.
+- Standalone design deployment is absent from LexiGo Stage/prod compose, product Caddy and normal product CD.
+
+## Implemented scope
+
+1. `deploy/openpencil/compose.yml`: standalone human/agent profiles with immutable v0.8.2 image pin.
+2. `deploy/openpencil/Caddyfile`: browser-only TLS + Basic Auth proxy; no MCP route.
+3. `deploy/openpencil/openpencil.env.example`: non-secret host configuration contract.
+4. `deploy/openpencil/container-entrypoint.sh`: atomic writer lock + pre-start backup/rotation.
+5. `deploy/openpencil/session.sh`: host preflight/start/stop/status/stale-lock recovery.
+6. `deploy/openpencil/self-test.sh`: isolated Linux Web/MCP/security/write/backup smoke.
+7. `.github/workflows/openpencil-self-host-check.yml`: registry identity + runtime + Caddy + pin validation.
+8. `docs/figma/openpencil-self-host.md`: operator/Codex/SSH-tunnel/recovery workflow.
+
+## Authoritative runtime evidence
+
+Self-host workflow #7 proves on Linux with the immutable image:
+
+- source/security and Compose contracts pass;
+- raw Web starts on host `127.0.0.1` only;
+- a direct-Compose second writer is rejected by the shared lock;
+- MCP starts on host `127.0.0.1` only and is absent from Caddy;
+- `get_node(fig_2287)` resolves `Home / Mobile / Dark`;
+- `list_variables` reports exactly 92 variables;
+- `list_pages` reports 23 pages;
+- the write probe switches to `figma-page-21`, resolves `fig_6879`, changes `ОБУЧЕНИЕ` to `ОБУЧЕНИЕ · MCP SMOKE`, verifies it, and restores `ОБУЧЕНИЕ` on the disposable copy;
+- canonical source SHA checks remain unchanged;
+- backup rotation and explicit stale-lock recovery pass;
+- repository Caddy image builds with Cloudflare DNS support;
+- authenticated Caddy configuration provisions successfully with a format-only fake token under `--network none`;
+- checked-in immutable image pin matches the registry-resolved OCI index digest.
 
 ## Allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `.agents/PROJECT_STATE.md` only after promotion evidence is complete
-- `scripts/figma/openpencil-visual-acceptance.sh`
-- `scripts/figma/extract-figma-variables.mjs`
-- `scripts/figma/compile-openpencil-tokens.py`
-- `scripts/figma/openpencil-token-migration.sh`
-- `.github/workflows/openpencil-visual-acceptance.yml`
-- `.github/workflows/openpencil-source-promotion.yml` TEMPORARY only; must be deleted before merge
-- `docs/figma/openpencil-source-promotion.request` TEMPORARY only; must be deleted before merge
-- `docs/figma/openpencil-ai-workflow.md`
-- `docs/figma/openpencil-screen-map.json`
-- `design/openpencil/LexiGo Design System.op` only after manual acceptance
-- `design/openpencil/LexiGo Design Tokens.json` only after token acceptance
+- `.agents/PROJECT_STATE.md`
+- `deploy/openpencil/**`
+- `.github/workflows/openpencil-self-host-check.yml`
+- `docs/figma/openpencil-self-host.md`
+- `docs/figma/openpencil-ai-workflow.md` only if a minimal cross-link is required
 
 ## Prohibited paths
 
-- `design/figma/LexiGo Design System.fig`
 - `frontend/**`
 - `backend/**`
-- `deploy/**`
-- existing visual baselines/snapshots
+- `api/**`
+- `deploy/compose/docker-compose.stage.yml`
+- `deploy/compose/docker-compose.prod.yml`
+- `deploy/Caddyfile`
+- normal product deploy workflows (`deploy-stage.yml`, `deploy-prod.yml`)
+- `design/figma/**`
+- `design/openpencil/**`
+- existing OpenPencil import/visual acceptance scripts or workflows except read-only use as validation dependencies
 
-## Canonical acceptance inventory
+## Remaining gates before repository merge
 
-- Home: mobile Dark Figma `196:223` -> OpenPencil `fig_2287`; desktop Light `194:249` -> `fig_2338`.
-- Learn Composer production slice: mobile recommended `202:6` -> `fig_6826`; mobile manual `203:5` -> `fig_6749`; desktop full `204:2` -> `fig_6621`.
-- Active Lesson: mobile Recall/Default `75:6` -> `fig_3247`; Recall/Correct `75:30` -> `fig_3220`; Recall/Offline `75:57` -> `fig_3193`; Choice/Incorrect `75:89` -> `fig_3162`; desktop Study/Light `75:120` -> `fig_3132`; Recall/Correct `75:150` -> `fig_3104`.
-- Progress: mobile Light `76:6` -> `fig_3730`; mobile Dark `76:53` -> `fig_3683`; desktop Light `76:154` -> `fig_3564`.
-- Dictionary: mobile Light `78:54` -> `fig_4008`; desktop Light `78:193` -> `fig_3833`.
-- Word Detail: mobile Dark `78:99` -> `fig_3982`; desktop Dark `78:274` -> `fig_3780`.
-- Phrases: `255:10` -> `fig_7281`; `257:2` -> `fig_7210`; `255:81` -> `fig_7099`; `257:74` -> `fig_6985`.
-- Phrase Detail: `255:55` -> `fig_7255`; `257:47` -> `fig_7184`; `255:162` -> `fig_7046`; `257:159` -> `fig_6932`.
-- Profile: mobile Light `79:6` -> `fig_4305`; desktop Light `79:129` -> `fig_4157`.
-- System states: Home Loading `79:69` -> `fig_4258`; Dictionary Empty `79:93` -> `fig_4234`; Error `79:117` -> `fig_4222`; desktop Offline `79:194` -> `fig_4104`.
-- Foundations wrapper `fig_858`; Components wrapper `fig_1083`; Interaction Components wrapper `fig_1175`.
+- Final developer-authored task-state update must be the last write.
+- OpenPencil self-host workflow must be green again on that immutable final head.
+- Full repository CI must be green on that same final head.
+- Changed-path/review/thread audit must remain clean.
+- PR #555 must move Draft -> Ready only after the gates above.
+- Squash merge must use an expected-head guard.
 
-The mapping is based on the repository canonical page/node handoff plus exact imported page, frame name, dimensions and matrix ordering. Legacy Figma IDs are provenance only; `fig_*` becomes the OpenPencil-side address after promotion.
+## External deployment boundary
 
-## Invariants
-
-- Archived `.fig` remains SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1,191,055`.
-- Original deterministic candidate `.op` remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`.
-- Accepted tokenized `.op` is SHA-256 `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`, size `6,446,726`.
-- Accepted lossless token sidecar is SHA-256 `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`, size `82,487`.
-- ZSeven OpenPencil is pinned to v0.8.2 and the verified Linux CLI/desktop assets used by the successful acceptance run.
-- Native Figma variable extraction is read-only and pinned to published `@open-pencil/core@0.13.2`; npm dist integrity is `sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow==`.
-- Native token inventory is exactly 6 collections / 92 variables: 43 COLOR, 48 FLOAT, 1 STRING; 40 alias references; 0 unresolved aliases; 0 incomplete mode values.
-- ZSeven runtime variables use globally unique collection-namespaced keys; Figma alias relationships remain losslessly recorded in `LexiGo Design Tokens.json` and compile to resolved ZSeven scalar/themed values.
-- Token-layer application may normalize floating-point serialization only within `1e-7`; accepted run #14 observed 186 numeric normalizations with maximum drift `2.8610229518832853e-08` and no non-numeric semantic difference.
-- Token-layer application must preserve the accepted 20 render hashes exactly.
-- Linux-rendered evidence must come from a specific artifact and be manually reviewed before promotion. Run #14 / artifact `9257099175` was manually reviewed and accepted.
-- Temporary promotion workflow/marker must be absent from the final PR head.
-- Any material visual/semantic drift blocks promotion rather than being normalized by changing evidence.
-
-## Required checks
-
-- Candidate identity and 23-page structural validation.
-- OpenPencil headless server readiness.
-- Canonical `fig_*` node inventory/name/type/dimensions.
-- Linux PNG exports for representative mobile and desktop canonical states.
-- PNG magic, IHDR dimensions and SHA-256 evidence manifest.
-- Isolated-copy editability probe with source candidate unchanged.
-- Native `.fig` variable extraction: 6 collections, 92 variables, complete modes/values, 40 resolved alias links.
-- Deterministic token compiler with cycle/collision/ambiguous-mode rejection.
-- Official ZSeven `themes:set` / `vars:set` application and reopen validation: 92 variables, expected axes.
-- Tokenized `.op` semantic page-tree equality against the original candidate (`1e-7` numeric tolerance only).
-- Tokenized vs original 20-screen render-hash equality.
-- Committed `.op` and token sidecar must byte-match deterministic regenerated outputs in permanent CI.
-- Dedicated path-scoped CI artifact.
-- Full immutable-head repository CI before merge.
-- Review/thread audit and expected-head merge guard.
+Repository implementation and Linux runtime acceptance do not prove a live Internet deployment. Issue #554 must remain open after repository merge until a real design host is provisioned and there is host evidence for DNS, trusted TLS, Basic Auth browser access from outside the host, and Codex access through the approved SSH-tunneled loopback MCP endpoint.
 
 ## Rollback
 
-If promotion or final immutable-head validation fails, remove the promoted `.op`/sidecar from the branch, preserve the immutable `.fig`, #550 import gate and factual failure evidence, and keep PR #553 Draft until the blocking discrepancy is resolved.
+Stop the standalone OpenPencil services, remove the standalone reverse-proxy route, restore the controlled design worktree from Git or the latest bounded backup, and continue using the promoted `.op`/token pair from repository history. LexiGo product services remain unaffected.
