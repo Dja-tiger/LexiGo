@@ -206,6 +206,7 @@ summary = {
     'sourceBytes': len(source_raw),
     'tokenizedSha256': hashlib.sha256(output_raw).hexdigest(),
     'tokenizedBytes': len(output_raw),
+    'pageTreeUnchanged': True,
     'pageTreeSemanticallyUnchanged': True,
     'numericNormalizationTolerance': float_tolerance,
     'numericNormalizationCount': stats['numericNormalizationCount'],
