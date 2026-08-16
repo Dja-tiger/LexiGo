@@ -57,14 +57,14 @@ const FIRST_USE_VISUAL_BASELINES: Record<FirstUseVisualBaseline, FirstUseVisualC
     viewport: { width: 390, height: 844 },
   },
   "guest-desktop-light": {
-    sha256: "ab1783b69df8221469dae7fa72015b9383c03b1305efe1f883b44f6a9a126b7d",
+    sha256: "1675a56bf2a31716b6ce7c8dc52bffed9f42190e9743ae88a7c411b59046da79",
     screenMapKey: "firstuse.guest.desktop.light",
     openPencilNode: "n321",
     route: "/",
     viewport: { width: 1440, height: 900 },
   },
   "guest-desktop-dark": {
-    sha256: "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
+    sha256: "a60bd586f61bf9ecc71bc9f28e8e549593361d2ae3badb8b60faa73c37050063",
     screenMapKey: "firstuse.guest.desktop.dark",
     openPencilNode: "n493",
     route: "/",
@@ -85,14 +85,14 @@ const FIRST_USE_VISUAL_BASELINES: Record<FirstUseVisualBaseline, FirstUseVisualC
     viewport: { width: 390, height: 844 },
   },
   "resume-desktop-light": {
-    sha256: "320524d4c4fe03f5bd086bac871957854f31f08f3b4e7a00d05071a1a627e466",
+    sha256: "4da3f3589f396a164a05677dfe545167c1647521afde6b206048d7cd4142eae2",
     screenMapKey: "firstuse.diagnostic.resume.desktop.light",
     openPencilNode: "n378",
     route: "/onboarding",
     viewport: { width: 1440, height: 900 },
   },
   "resume-desktop-dark": {
-    sha256: "6827f78bb2f4beb3304b0b939ebaa5a19d4577c9f68fd406525ba4b67525b545",
+    sha256: "abe2f9c7c180accf73bb6e7771845a85610a89cdee42e170d12787acc4c62e80",
     screenMapKey: "firstuse.diagnostic.resume.desktop.dark",
     openPencilNode: "n550",
     route: "/onboarding",
