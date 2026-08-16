@@ -307,6 +307,7 @@ jobs:
           tokenized = json.loads((root / 'tokenized/acceptance-summary.json').read_text(encoding='utf-8'))
           equivalence = json.loads((root / 'tokenized-render-equivalence.json').read_text(encoding='utf-8'))
           active = json.loads((root / 'active/acceptance-summary.json').read_text(encoding='utf-8'))
+          active_structural = json.loads((root / 'active/structural-acceptance.json').read_text(encoding='utf-8'))
           active_map = json.loads((root / 'active-screen-map.json').read_text(encoding='utf-8'))
 
           if native['summary']['variableCount'] != 92:
@@ -321,8 +322,10 @@ jobs:
               raise SystemExit('Committed active source does not expose 92 OpenPencil variables')
           if not equivalence['hashesMatch']:
               raise SystemExit('Tokenized migration render hashes differ from original')
-          if active['candidate']['sha256'] != active_map['source']['activeOpSha256']:
+          if active_structural['candidate']['sha256'] != active_map['source']['activeOpSha256']:
               raise SystemExit('Active acceptance evidence SHA does not match Screen Map source identity')
+          if active_structural['candidate']['size'] != active_map['source']['activeOpSize']:
+              raise SystemExit('Active acceptance evidence size does not match Screen Map source identity')
 
           summary.update({
               'nativeFigmaVariableCount': 92,
@@ -344,10 +347,10 @@ jobs:
               'migrationOpenPencilThemeAxisCount': 2,
               'migrationRenderHashesMatch': equivalence['hashesMatch'],
               'migrationBaselineReproduced': True,
-              'activeSourceSha256': active['candidate']['sha256'],
-              'activeSourceBytes': active['candidate']['size'],
+              'activeSourceSha256': active_structural['candidate']['sha256'],
+              'activeSourceBytes': active_structural['candidate']['size'],
               'activeValidatedScreenCount': active['validatedScreenCount'],
-              'activeRenderScreenCount': active['renderScreenCount'],
+              'activeRenderScreenCount': active['renderedScreenCount'],
               'activeOpenPencilVariableCount': active['openPencilVariableCount'],
               'activeSourceStructurallyAccepted': True,
               'activeSourceEditabilityProbePassed': active['editabilityProbePassed'],
