@@ -16,7 +16,7 @@ LexiGo — персональный тренажёр английской лек
 
 Единственная production-цепочка приложения:
 
-`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route-specific client entry (`LexigoHomeApp`, `LexigoLearnApp`, `LexigoActiveLessonApp`, `LexigoDictionaryApp`, `LexigoPhrasesApp`, `LexigoProgressApp`, `LexigoProfileApp`, `LexigoScenarioCatalogApp`, `LexigoScenarioApp`) либо узкий compatibility fallback `LexigoPremiumApp`.
+`frontend/app/layout.tsx` → `RoutedLexigoApp` → `LexigoBootstrappedApp` → route/session-specific client entry (`LexigoGuestHomeApp`, `LexigoHomeApp`, `LexigoOnboardingApp`, `LexigoLearnApp`, `LexigoActiveLessonApp`, `LexigoDictionaryApp`, `LexigoPhrasesApp`, `LexigoProgressApp`, `LexigoProfileApp`, `LexigoScenarioCatalogApp`, `LexigoScenarioApp`) либо узкий compatibility fallback `LexigoPremiumApp`.
 
 Ownership компонентов разделён следующим образом:
 
@@ -24,11 +24,13 @@ Ownership компонентов разделён следующим образ�
 - `frontend/components/routed-lexigo-app.tsx` владеет канонической route shell, skip-link и persistent navigation chrome;
 - `frontend/components/lexigo-bootstrapped-app.tsx` владеет восстановлением сессии, refresh coordination, account runtime и единственной динамической загрузкой route entries;
 - route-specific islands владеют только API reads/mutations, state и presentation своего маршрута, но не восстанавливают сессию и не создают вторые outbox, Service Worker, appearance или PWA owners;
-- `LexigoHomeApp` владеет `/`, `LexigoLearnApp` — `/learn`, а созданная или восстановленная backend-owned lesson session передаётся отдельному `LexigoActiveLessonApp` на `/lesson/active`;
+- guest `/` после session bootstrap принадлежит `LexigoGuestHomeApp` и не загружает/не синтезирует authenticated progress или scheduler state; authenticated `/` принадлежит `LexigoHomeApp` и владеет progress/active-session reads, next-best action и созданием урока;
+- authenticated `/onboarding` принадлежит `LexigoOnboardingApp`; канонический `frontend/app/onboarding/page.tsx` создаёт App Router route owner, а island использует существующий server-side onboarding contract без отдельного session/storage source of truth;
+- `LexigoLearnApp` владеет `/learn`, а созданная или восстановленная backend-owned lesson session передаётся отдельному `LexigoActiveLessonApp` на `/lesson/active`;
 - `LexigoDictionaryApp` владеет `/dictionary` и `/words/[id]`, а `LexigoPhrasesApp` — `/phrases` и `/phrases/[slug]`, включая direct entry, URL-backed catalog state и handoff в существующий Learn flow;
 - `LexigoProgressApp` владеет `/progress`, а authenticated `LexigoProfileApp` — сводкой и preferences на `/profile`;
 - `LexigoScenarioCatalogApp` и `LexigoScenarioApp` владеют соответственно `/scenarios` и `/scenarios/[slug]`;
-- `LexigoPremiumApp` остаётся только узким compatibility fallback для guest/auth и оставшихся legacy states, которые ещё не имеют отдельного canonical route owner. Он не является владельцем извлечённых Phrases или Active Lesson; удаление доказанно мёртвого compatibility-кода выполняется отдельно в Issue #70;
+- `LexigoPremiumApp` остаётся только узким compatibility fallback для guest/auth и оставшихся legacy states, которые ещё не имеют отдельного canonical route owner. Он не является владельцем извлечённых Guest Home, Onboarding, Phrases или Active Lesson; удаление доказанно мёртвого compatibility-кода выполняется отдельно в Issue #70;
 - feature-компоненты расширяют owning route graph, но не создают альтернативные application roots.
 
 Глобальные CSS-файлы подключаются только из `frontend/app/layout.tsx`. Feature styles не должны добавлять скрытые root-level imports или зависеть от альтернативной точки входа. Консолидация существующих глобальных CSS выполняется отдельными небольшими PR с visual regression gate, без смешивания с redesign.
