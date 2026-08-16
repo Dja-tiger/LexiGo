@@ -159,7 +159,7 @@ async function installOnboardingAPI(
 
 test.describe.configure({ timeout: 90_000 });
 
-test("guest Home is truthful and routes First Use through authentication", async ({ context, page }) => {
+test("guest Home is truthful, preserves Browser Back, and routes First Use through authentication", async ({ context, page }) => {
   const requested = await installGuestAPI(context);
 
   await page.goto("/");
@@ -180,6 +180,23 @@ test("guest Home is truthful and routes First Use through authentication", async
     url.pathname === "/profile"
     && url.searchParams.get("return_to") === "/onboarding"
   ));
+
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
+  await expect(guest).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Учебный статус" })).toHaveCount(0);
+});
+
+test("guest direct onboarding entry is guarded and preserves the exact return target", async ({ context, page }) => {
+  await installGuestAPI(context);
+
+  await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL((url) => (
+    url.pathname === "/profile"
+    && url.searchParams.get("session") === "required"
+    && url.searchParams.get("return_to") === "/onboarding"
+  ));
+  await expect(page.locator('[data-route-client-island="onboarding"]')).toHaveCount(0);
 });
 
 test("diagnostic never reveals an answer before a successful mark and completes on server state", async ({ context, page }, testInfo) => {
