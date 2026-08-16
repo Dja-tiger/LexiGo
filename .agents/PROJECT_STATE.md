@@ -4,12 +4,12 @@
 
 - Last verified: 2026-08-16 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Runtime-bearing `main`: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` after PR #543.
+- Current `main`: `d23f7a8267edb67f3762128987b52ae2445559f2` after PR #547.
+- Latest runtime-bearing `main`: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` after PR #543.
 - Latest deployed runtime/Stage SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
-- PR #543 final developer-authored head: `d5a0357611b4c99cd9f274780d2a4df9cd6b2024`.
-- PR #543 squash merge SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`; Issue #542 is closed.
-- Exact-main CI #3578 (`31911245893`) completed successfully for the exact merge SHA.
-- Stage run `31911802944` completed successfully for the same SHA, including public smoke and 12/12 public desktop Chromium/iOS WebKit checks.
+- PR #546 (test-only, Issue #545): squash merge `bf0036c1`; Dictionary Empty renderer-equivalent hash scoped.
+- PR #547 (asset-only, Issue #487): squash merge `d23f7a82`; native `.fig` uploaded via Git LFS.
+- Neither #546 nor #547 changed production runtime; Stage redeploy was not required.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
@@ -39,10 +39,11 @@
 - `frontend/docs/adaptive-knowledge-coach.md` is the repository-side canonical route → Figma node → Issue handoff delivered by PR #501.
 - PR #488 preserves the audited 2026-08-13 offline source provenance in `docs/figma/`.
 - Native source identity: 1,191,055 bytes; SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`.
-- The exact native `.fig` binary is still not stored in GitHub; Issue #487 remains open for binary-safe upload and SHA-256 verification.
+- The exact native `.fig` binary is stored in GitHub at `design/figma/LexiGo Design System.fig` via Git LFS. Issue #487 is closed; SHA-256 verified on upload (PR #547).
 - Live Figma inspection/editing remains blocked by the connected Figma MCP Starter-plan tool-call limit. Do not claim fresh Screen Map/canvas synchronization without live evidence.
-- Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access becomes available.
+- Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access becomes available; repository-side delivery status reconciliation is in progress.
 - Issue #205 remains the active umbrella for final route-by-route parity audit.
+- All nine canonical route parity contracts (Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases catalog, Phrase Detail, Profile) are delivered. System state visual gate (Dictionary Empty renderer-equivalent) is resolved by PR #546.
 
 ## Completed executable #205 route parity
 
@@ -55,6 +56,8 @@
 - Phrases catalog: Issue #536 / PR #538.
 - Phrase Detail: Issue #540 / PR #541 / merge `11ad10835ad968b41f5f53b01e97d22dab08a1e9`.
 - Profile: Issue #542 / PR #543 / merge `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` / exact-main CI #3578 / Stage `31911802944`.
+- System States (Dictionary Empty renderer-equivalent): Issue #545 / PR #546 / merge `bf0036c1`.
+- Native Figma binary: Issue #487 / PR #547 / merge `d23f7a82` / Git LFS verified.
 
 ### Phrase Detail parity delivered by #540
 
@@ -78,29 +81,27 @@ Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Known Figma visual-gate follow-up
 
-- Canonical Dictionary Empty Light remains Figma node `79:93` at `390x844` with approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
-- Issue #518 / PR #520 added hydration and consecutive-capture stabilization, but the alternate hosted-runner raster `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` recurred during Profile CI.
-- The same-head Visual rerun was job-successful only through Playwright retry and still reported one flaky Dictionary Empty case; it therefore does not prove determinism.
-- Artifact comparison establishes identical `390x844` geometry and only three RGB pixels differing by at most one LSB, all on the antialiased edge of the calendar-reminder control rather than Dictionary content.
-- Do not refresh the canonical Figma baseline, change production UI or introduce broad pixel tolerance. The next CI slice must encode only independently proven renderer-equivalent fingerprints and reject any unreviewed third raster.
+- Canonical Dictionary Empty Light remains Figma node `79:93` at `390x844` with primary approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
+- Issue #545 / PR #546 scoped the renderer-equivalent SHA-256 `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` as an accepted alternate fingerprint for `compact-empty-light` only.
+- Both fingerprints differ by exactly three RGB pixels (max 1 LSB delta) on the antialiased edge of the calendar-reminder control, not Dictionary content.
+- Two consecutive captures within one test attempt must still produce identical raw SHA; any unreviewed third raster continues to fail the visual gate.
+- The canonical Figma baseline, production UI and broad pixel tolerance remain unchanged.
 
 ## Current state
 
-- Phrase Detail #540 and Profile #542 are fully delivered through their merged PRs; exact-main CI and Stage/public validation are green on `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
-- This reconciliation resets `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` byte-for-byte to canonical templates before the next branch.
+- All nine canonical route parity contracts are delivered and merged into `main`.
+- Dictionary Empty `79:93` renderer-equivalent hash is resolved by Issue #545 / PR #546.
+- Native `.fig` binary is stored in GitHub via Git LFS by Issue #487 / PR #547.
+- Current `main` is `d23f7a8267edb67f3762128987b52ae2445559f2`; latest runtime-bearing SHA remains `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
 - Direct Figma canvas work remains blocked by the connected Starter-plan MCP quota; no missing node ID is inferred.
 - Issue #201 remains design-gated: mobile onboarding node `79:46` alone is insufficient for Guest Home, desktop onboarding and diagnostic/recovery state implementation.
-- Issue #203 remains temporarily blocked on live Figma MCP access.
-- Issue #487 remains open for exact native `.fig` binary upload through a binary-safe path.
-- The recurrent Dictionary Empty `79:93` renderer split is the next executable Figma-linked CI follow-up because it can fail otherwise unrelated route-parity PRs.
+- Issue #203 repository-side delivery reconciliation is in progress; live Screen Map update remains blocked on Figma MCP access.
 
 ## Remaining roadmap
 
 - #205: continue final parity only from exact approved mappings; onboarding remains blocked until missing canonical nodes/states exist.
-- Figma/CI: remove the recurrent Dictionary Empty `79:93` hosted-runner raster flake without weakening canonical visual ownership.
-- #203: synchronize live Figma Screen Map/archive status when MCP access is available.
+- #203: live Figma Screen Map/archive synchronization when MCP access is available; repository-side reconciliation in progress.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
-- #487: upload the exact native `.fig` through a binary-safe GitHub path and verify SHA-256.
 - #201/#18: complete canonical First Use design states, then implement the approved flow.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
 - #78: complete remaining CSP/security-header enforcement through authorized staged rollout.
