@@ -5,7 +5,7 @@
 - Issue: #201 — First Use: Guest Home, onboarding and diagnostics.
 - Branch: `design/issue-201-first-use-openpencil`.
 - Base SHA: `14558e726cb64c59b21437832bef3c6277c978b6`.
-- PR: not opened yet.
+- PR: #556 (Draft until final immutable-head gates complete).
 - Primary design runtime: pinned ZSeven OpenPencil v0.8.2 on GitHub Actions Linux runners.
 
 ## Objective
@@ -56,6 +56,7 @@ Completed in the active `.op` as a 40-state matrix:
 - `docs/figma/openpencil-screen-map.json`
 - `docs/figma/openpencil-ai-workflow.md`
 - `.github/workflows/openpencil-visual-acceptance.yml`
+- `deploy/openpencil/self-test.sh` only to replace the obsolete initial-promotion SHA pin with the reviewed `source.activeOpSha256` / `source.activeOpSize` contract consumed by the optional self-host smoke
 - Issue/PR metadata and comments
 
 Temporary `.github/workflows/openpencil-issue-201-*.yml` files were execution-only and must not remain in the final diff.
@@ -75,6 +76,7 @@ Temporary `.github/workflows/openpencil-issue-201-*.yml` files were execution-on
 - `activeScreens` owns reviewed post-promotion OpenPencil-native mappings.
 - CI must reproduce the old migration/token baseline exactly.
 - CI must independently validate the committed active `.op` against `source.activeOpSha256`, `source.activeOpSize`, merged structural mappings, Linux renders, all 92 variables and an isolated editability probe.
+- The optional self-host smoke reads the same active SHA/size from Screen Map instead of pinning the historical migration SHA.
 - Active post-promotion design is intentionally not byte-equal to the historical Figma migration baseline.
 
 ## Stop conditions
@@ -87,5 +89,5 @@ Stop writes if `main` moves incompatibly, the branch loses its verified base, ac
 - Deterministic Linux screenshots were produced and reviewed; discovered layout defects were repaired before promotion.
 - Migration provenance remains fail-closed and independent from active-source acceptance.
 - No temporary workflow remains in final diff.
-- Permanent OpenPencil acceptance and full required repository CI are green on the final developer-authored head.
+- Permanent OpenPencil acceptance, optional self-host smoke and full required repository CI are green on the final developer-authored head.
 - Draft PR review/thread/path audit is clean before Ready and squash merge.
