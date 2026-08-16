@@ -16,6 +16,7 @@ Implement the approved First Use production flow against the already-delivered s
 
 - Guest Home value proposition and CTA without fake progress or inaccessible actions.
 - Dedicated authenticated `/onboarding` route owner.
+- Canonical App Router `/onboarding` page so the client route owner never mounts over a server 404/not-found document.
 - Server-backed onboarding state: `not_started`, `in_progress`, `completed`, `skipped`.
 - Diagnostic self-mark `known / unsure / new` before reveal.
 - Reveal only after successful mark request.
@@ -40,6 +41,7 @@ Implement the approved First Use production flow against the already-delivered s
 - `frontend/components/lexigo-guest-home-app.tsx`
 - `frontend/components/lexigo-onboarding-app.tsx`
 - `frontend/lib/**` only for narrowly scoped First Use route/API validators/navigation/auth-return helpers when necessary
+- `frontend/app/onboarding/page.tsx` as the canonical App Router route shell required to prevent `/onboarding` from rendering a Next not-found subtree
 - `frontend/app/**` only the existing CSS/root import owner actually required by the implementation
 - `frontend/e2e/**` First Use/browser/accessibility/visual coverage and reviewed Linux evidence
 - `frontend/components/**/*test.ts*` narrowly scoped source/unit contracts
@@ -65,7 +67,7 @@ Implement the approved First Use production flow against the already-delivered s
 - Session/route entry: `LexigoBootstrappedApp`.
 - Authenticated Home route: existing `LexigoHomeApp`, unchanged.
 - Guest `/`: dedicated `LexigoGuestHomeApp`; it does not load account progress or scheduler state.
-- First Use `/onboarding`: dedicated `LexigoOnboardingApp`.
+- First Use `/onboarding`: dedicated `LexigoOnboardingApp` plus a null-rendering App Router page that establishes the canonical route without a competing not-found DOM subtree.
 - Route chrome suppression for Guest Home and First Use: scoped CSS `:has([data-route-client-island=...])`; no navigation-owner refactor.
 - Server state: existing `GET /api/v1/onboarding`, `POST /api/v1/onboarding/start`, `POST /api/v1/onboarding/items/{wordID}/mark`, `POST /api/v1/onboarding/complete`, `POST /api/v1/onboarding/skip` from backend #18.
 - Appearance: existing application appearance runtime and CSS tokens.
@@ -86,6 +88,7 @@ Implement the approved First Use production flow against the already-delivered s
 - Session bootstrap/refresh remains single-owned by `LexigoBootstrappedApp`.
 - Role selection is transient presentation state only; no backend/local-storage persistence is invented because #18 has no role field.
 - No new localStorage/sessionStorage source of truth for onboarding.
+- `/onboarding` has one canonical application `main` and no Next not-found content in the live DOM.
 - Existing authenticated Home/Learn/Active Lesson route/history contracts remain intact.
 - Light/Dark appearance tokens and horizontal containment remain intact.
 
@@ -97,6 +100,7 @@ Implement the approved First Use production flow against the already-delivered s
 - `in_progress` resumes after reload and direct entry.
 - Loading, API error and retry are accessible and deterministic.
 - Completed/skipped flow returns safely to Learn.
+- `/onboarding` resolves as a real App Router route and exposes only the First Use main landmark rather than a hidden/visible Next 404 subtree.
 - Keyboard and screen reader semantics pass.
 - Mobile/desktop Light/Dark visual evidence matches the reviewed OpenPencil production states.
 - Full required PR CI passes on one immutable developer-authored head.
@@ -105,7 +109,7 @@ Implement the approved First Use production flow against the already-delivered s
 ## Required checks
 
 1. Repository-wide source/consumer search and route/API contract verification.
-2. Targeted source/unit tests for routing, validators and reveal sequencing.
+2. Targeted source/unit tests for routing, validators, route-page existence and reveal sequencing.
 3. Frontend lint/typecheck/build.
 4. Targeted Chromium/WebKit browser tests including reload/resume, skip, error/retry and Back/Forward.
 5. Android Chromium + iOS WebKit coverage where the repository matrix selects it.
@@ -117,7 +121,7 @@ Implement the approved First Use production flow against the already-delivered s
 
 ## Risks
 
-- Existing frontend did not route `/onboarding` to a dedicated owner before this slice.
+- The first implementation head routed `/onboarding` only inside the persistent client bootstrap but did not create `frontend/app/onboarding/page.tsx`; exact-head accessibility evidence therefore rendered the onboarding island over the App Router not-found subtree. The route page is now an explicit required owner.
 - Auth return historically permitted only catalog/phrases destinations; onboarding must stay on the same strict canonical-route allowlist.
 - Diagnostic reveal sequencing can regress if optimistic UI reveals before mutation success.
 - `onboarding_no_candidates` must remain truthful and recoverable rather than fabricating diagnostic content.
