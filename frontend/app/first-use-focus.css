@@ -1,0 +1,16 @@
+/* First Use focus mode must not depend on relational :has() matching.
+ * The onboarding path is available synchronously on the route shell; Guest Home
+ * marks the same shell after session bootstrap resolves the anonymous owner. */
+.lx-routed-app[data-first-use-focus="guest"] > .lx-route-brand,
+.lx-routed-app[data-first-use-focus="guest"] > [data-route-navigation],
+.lx-routed-app[data-first-use-focus="guest"] > .lx-route-reminder-entry,
+.lx-routed-app[data-route-path="/onboarding"] > .lx-route-brand,
+.lx-routed-app[data-route-path="/onboarding"] > [data-route-navigation],
+.lx-routed-app[data-route-path="/onboarding"] > .lx-route-reminder-entry,
+.lx-routed-app[data-route-path="/onboarding"] .lx-account-security,
+.lx-routed-app[data-route-path="/onboarding"] .lx-account-email,
+.lx-routed-app[data-route-path="/onboarding"] .lx-account-data,
+.lx-routed-app[data-first-use-focus="guest"] ~ .lx-legal-footer,
+.lx-routed-app[data-route-path="/onboarding"] ~ .lx-legal-footer {
+  display: none !important;
+}
