@@ -1,0 +1,82 @@
+name: OpenPencil visual acceptance
+
+on:
+  pull_request:
+    paths:
+      - "design/figma/LexiGo Design System.fig"
+      - "design/openpencil/LexiGo Design System.op"
+      - "scripts/figma/openpencil-ai-import.sh"
+      - "scripts/figma/openpencil-visual-acceptance.sh"
+      - "docs/figma/openpencil-screen-map.json"
+      - "docs/figma/openpencil-ai-workflow.md"
+      - ".github/workflows/openpencil-visual-acceptance.yml"
+  push:
+    branches: [main]
+    paths:
+      - "design/figma/LexiGo Design System.fig"
+      - "design/openpencil/LexiGo Design System.op"
+      - "scripts/figma/openpencil-ai-import.sh"
+      - "scripts/figma/openpencil-visual-acceptance.sh"
+      - "docs/figma/openpencil-screen-map.json"
+      - "docs/figma/openpencil-ai-workflow.md"
+      - ".github/workflows/openpencil-visual-acceptance.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: openpencil-visual-acceptance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  visual-acceptance:
+    name: Render and probe ZSeven OpenPencil v0.8.2 candidate
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository with Git LFS
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          lfs: true
+
+      - name: Resolve native Figma payload
+        run: |
+          set -Eeuo pipefail
+          git lfs version
+          git lfs pull --include="design/figma/LexiGo Design System.fig" --exclude=""
+
+      - name: Validate acceptance sources
+        run: |
+          set -Eeuo pipefail
+          bash -n scripts/figma/openpencil-ai-import.sh
+          bash -n scripts/figma/openpencil-visual-acceptance.sh
+          python3 -m json.tool docs/figma/openpencil-screen-map.json >/dev/null
+
+      - name: Reproduce deterministic candidate
+        run: bash scripts/figma/openpencil-ai-import.sh
+
+      - name: Render canonical screens and probe editability
+        run: bash scripts/figma/openpencil-visual-acceptance.sh
+
+      - name: Publish acceptance summary
+        if: always()
+        run: |
+          set -Eeuo pipefail
+          if [ -f .tmp/openpencil-visual-acceptance/acceptance-summary.json ]; then
+            cat .tmp/openpencil-visual-acceptance/acceptance-summary.json
+          fi
+          if [ -f .tmp/openpencil-visual-acceptance/render-manifest.json ]; then
+            cat .tmp/openpencil-visual-acceptance/render-manifest.json
+          fi
+
+      - name: Upload OpenPencil visual acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: openpencil-visual-acceptance-${{ github.sha }}
+          path: .tmp/openpencil-visual-acceptance/
+          if-no-files-found: error
+          retention-days: 3
