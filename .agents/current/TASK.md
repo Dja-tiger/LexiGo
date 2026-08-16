@@ -6,7 +6,7 @@
 - Branch: `feat/issue-201-first-use-runtime`
 - Base SHA: `c29e4aa4ef4f299be36a3fd82800bb05cc723581`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #558 (Draft until functional, accessibility, visual and immutable-head gates complete)
 
 ## Objective
 
@@ -41,8 +41,10 @@ Implement the approved First Use production flow against the already-delivered s
 - `frontend/components/lexigo-onboarding-app.tsx`
 - `frontend/lib/**` only for narrowly scoped First Use route/API validators/navigation/auth-return helpers when necessary
 - `frontend/app/**` only the existing CSS/root import owner actually required by the implementation
-- `frontend/e2e/**` First Use/browser/visual coverage and reviewed Linux baselines
+- `frontend/e2e/**` First Use/browser/accessibility/visual coverage and reviewed Linux evidence
 - `frontend/components/**/*test.ts*` narrowly scoped source/unit contracts
+- `frontend/package.json` only to route First Use tests into existing UI/axe CI commands; dependency versions are out of scope
+- `frontend/playwright.visual.config.ts` only to register the First Use visual owner in the existing visual gate
 - `frontend/docs/adaptive-knowledge-coach.md` only if route ownership documentation must be synchronized
 
 ## Prohibited paths
@@ -55,6 +57,7 @@ Implement the approved First Use production flow against the already-delivered s
 - `frontend/components/lexigo-home-app.tsx` (authenticated Home remains unchanged)
 - `frontend/components/routed-lexigo-app.tsx`
 - `frontend/components/route-primary-navigation.tsx`
+- dependency/version changes
 - unrelated frontend routes/components/tests/snapshots
 
 ## Runtime owners
@@ -66,6 +69,7 @@ Implement the approved First Use production flow against the already-delivered s
 - Route chrome suppression for Guest Home and First Use: scoped CSS `:has([data-route-client-island=...])`; no navigation-owner refactor.
 - Server state: existing `GET /api/v1/onboarding`, `POST /api/v1/onboarding/start`, `POST /api/v1/onboarding/items/{wordID}/mark`, `POST /api/v1/onboarding/complete`, `POST /api/v1/onboarding/skip` from backend #18.
 - Appearance: existing application appearance runtime and CSS tokens.
+- CI routing: existing UI, axe and visual jobs; First Use is added to those owners rather than creating another workflow.
 
 ## Documentation owners
 
@@ -106,18 +110,18 @@ Implement the approved First Use production flow against the already-delivered s
 4. Targeted Chromium/WebKit browser tests including reload/resume, skip, error/retry and Back/Forward.
 5. Android Chromium + iOS WebKit coverage where the repository matrix selects it.
 6. Keyboard/axe and reduced-motion compatibility.
-7. Linux visual regression for canonical First Use states; inspect actual before accepting baselines.
+7. Linux visual regression for canonical First Use states; inspect actual PNG evidence before recording approved hashes.
 8. Bundle/performance budgets.
 9. Full repository CI on final developer-authored head.
 10. Clean changed-path/review/thread audit, expected-head squash merge, exact-main CI and Stage/public validation.
 
 ## Risks
 
-- Existing frontend does not route `/onboarding` to a dedicated owner yet.
-- Auth return currently permits only catalog/phrases destinations; it must be extended without creating an open redirect.
+- Existing frontend did not route `/onboarding` to a dedicated owner before this slice.
+- Auth return historically permitted only catalog/phrases destinations; onboarding must stay on the same strict canonical-route allowlist.
 - Diagnostic reveal sequencing can regress if optimistic UI reveals before mutation success.
 - `onboarding_no_candidates` must remain truthful and recoverable rather than fabricating diagnostic content.
-- Visual matrix is large; executable baselines should remain scoped to canonical states rather than duplicating every intermediate state.
+- Visual matrix is large; executable baselines must remain scoped to canonical states rather than duplicating every intermediate state.
 
 ## Rollback
 
