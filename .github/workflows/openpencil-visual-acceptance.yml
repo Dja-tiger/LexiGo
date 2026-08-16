@@ -45,6 +45,12 @@ jobs:
     env:
       VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
       OPEN_PENCIL_CORE_INTEGRITY: sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow==
+      ACCEPTED_TOKENIZED_OP_SHA256: 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
+      ACCEPTED_TOKENIZED_OP_BYTES: "6446726"
+      ACCEPTED_TOKEN_SIDECAR_SHA256: e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c
+      ACCEPTED_TOKEN_SIDECAR_BYTES: "82487"
+      MANUAL_VISUAL_REVIEW_ARTIFACT_ID: "9257099175"
+      MANUAL_VISUAL_REVIEW_ARTIFACT_DIGEST: sha256:8b3b4b60b05382327e5346a1c896f8e5d47c3f0a2081986c156abc2776187692
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v7
@@ -66,6 +72,8 @@ jobs:
           bash -n scripts/figma/openpencil-token-migration.sh
           python3 -m py_compile scripts/figma/compile-openpencil-tokens.py
           python3 -m json.tool docs/figma/openpencil-screen-map.json >/dev/null
+          test ! -e .github/workflows/openpencil-source-promotion.yml
+          test ! -e docs/figma/openpencil-source-promotion.request
 
       - name: Reproduce deterministic candidate
         run: bash scripts/figma/openpencil-ai-import.sh
@@ -201,6 +209,38 @@ jobs:
               raise SystemExit(f'Token layer changed {len(mismatches)} accepted render fields')
           PY
 
+      - name: Verify committed AI-native source pair equals regenerated outputs
+        run: |
+          set -Eeuo pipefail
+          committed_op='design/openpencil/LexiGo Design System.op'
+          committed_tokens='design/openpencil/LexiGo Design Tokens.json'
+          regenerated_op='.tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op'
+          regenerated_tokens='.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json'
+
+          test -f "$committed_op"
+          test -f "$committed_tokens"
+          test "$(sha256sum "$committed_op" | awk '{print $1}')" = "$ACCEPTED_TOKENIZED_OP_SHA256"
+          test "$(wc -c < "$committed_op" | tr -d '[:space:]')" = "$ACCEPTED_TOKENIZED_OP_BYTES"
+          test "$(sha256sum "$committed_tokens" | awk '{print $1}')" = "$ACCEPTED_TOKEN_SIDECAR_SHA256"
+          test "$(wc -c < "$committed_tokens" | tr -d '[:space:]')" = "$ACCEPTED_TOKEN_SIDECAR_BYTES"
+          test "$(sha256sum "$regenerated_op" | awk '{print $1}')" = "$ACCEPTED_TOKENIZED_OP_SHA256"
+          test "$(sha256sum "$regenerated_tokens" | awk '{print $1}')" = "$ACCEPTED_TOKEN_SIDECAR_SHA256"
+          cmp --silent "$committed_op" "$regenerated_op"
+          cmp --silent "$committed_tokens" "$regenerated_tokens"
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          tokens = json.loads(Path('design/openpencil/LexiGo Design Tokens.json').read_text(encoding='utf-8'))
+          if tokens['summary']['variableCount'] != 92:
+              raise SystemExit('Committed token sidecar variable count drifted')
+          if tokens['summary']['aliasCount'] != 40:
+              raise SystemExit('Committed token sidecar alias count drifted')
+          if tokens['summary']['themeAxisCount'] != 2:
+              raise SystemExit('Committed token sidecar theme-axis count drifted')
+          PY
+
       - name: Correlate final acceptance evidence
         run: |
           set -Eeuo pipefail
@@ -241,13 +281,20 @@ jobs:
               'tokenizedOpSha256': migration['tokenizedSha256'],
               'tokenizedOpBytes': migration['tokenizedBytes'],
               'tokenizedPageTreeUnchanged': migration['pageTreeUnchanged'],
+              'tokenizedPageTreeSemanticallyUnchanged': migration['pageTreeSemanticallyUnchanged'],
+              'tokenizedNumericNormalizationCount': migration['numericNormalizationCount'],
+              'tokenizedMaxNumericDrift': migration['maxNumericDrift'],
               'tokenizedOpenPencilVariableCount': tokenized['openPencilVariableCount'],
               'tokenizedOpenPencilThemeAxisCount': 2,
               'tokenizedRenderHashesMatch': equivalence['hashesMatch'],
+              'committedSourcePairMatchesRegeneration': True,
               'figmaAliasGraphPreservedInSidecar': True,
               'nativeNodeVariableBindingsPreservedByZSevenImporter': False,
-              'manualVisualReviewRequired': True,
-              'promotionReady': False,
+              'manualVisualReviewRequired': False,
+              'manualVisualReviewCompleted': True,
+              'manualVisualReviewArtifactId': int('${{ env.MANUAL_VISUAL_REVIEW_ARTIFACT_ID }}'),
+              'manualVisualReviewArtifactDigest': '${{ env.MANUAL_VISUAL_REVIEW_ARTIFACT_DIGEST }}',
+              'promotionReady': True,
           })
           summary['semanticWarnings'] = [
               'ZSeven OpenPencil v0.8.2 cannot represent Figma variable-to-variable aliases; the lossless alias graph is preserved in LexiGo Design Tokens.json and runtime values are deterministically resolved.',
