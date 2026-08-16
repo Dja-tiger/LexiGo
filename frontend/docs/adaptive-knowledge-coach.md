@@ -18,7 +18,7 @@ A full plugin-level inventory confirms that the live file already contains:
 
 The file also contains broader concept matrices and parallel versions of several routes. Production implementation must therefore reference explicit page and node IDs instead of treating every screen in the file as equally canonical.
 
-The repository also preserves provenance for the 2026-08-13 offline `LexiGo Design System.fig` snapshot in `docs/figma/`. The native snapshot is supplementary evidence only: exact cloud node IDs remain authoritative for production implementation and visual parity.
+The repository also preserves provenance for the 2026-08-13 offline `LexiGo Design System.fig` snapshot in `docs/figma/`. The native snapshot is supplementary evidence only. OpenPencil is the active AI-native design owner; `docs/figma/openpencil-screen-map.json` records the reviewed imported mappings plus the stable OpenPencil-native First Use `activeScreens` keys delivered by PR #556.
 
 Selected nodes for PR #184:
 
@@ -56,7 +56,7 @@ Research and concept pages `01–08` currently act primarily as section shells i
 
 ## Canonical production route map
 
-This mapping is the repository-side handoff required by Issue #203. A route is production-ready only when the mapping points to explicit canonical nodes. Theme counterparts described as token-derived must preserve the same hierarchy and geometry and require separate visual verification; they are not permission to select another concept frame.
+This mapping is the repository-side handoff required by Issue #203. A route is production-ready only when the mapping points to explicit canonical nodes or to reviewed stable OpenPencil-native screen keys. Theme counterparts described as token-derived must preserve the same hierarchy and geometry and require separate visual verification; they are not permission to select another concept frame.
 
 | Route / state | Canonical mobile source | Canonical desktop source | Theme/state coverage | Delivery source |
 | --- | --- | --- | --- | --- |
@@ -72,28 +72,32 @@ This mapping is the repository-side handoff required by Issue #203. A route is p
 | `/phrases/[slug]` | `255:55` Dark/daily; `257:47` Light/travel | `255:162` Dark/technical; `257:159` Light/daily | content variants do not change route ownership | Issue #199 |
 | `/profile` | `79:6` Light | `79:129` Light | Dark is semantic-token derived | Issue #200 |
 | shared system states | `79:69` Home Loading/Dark; `79:93` Dictionary Empty/Light; `79:117` Error/Dark | `79:194` Offline/Dark | lesson-specific offline source is `75:57` | Issue #202 |
-| `/onboarding` | `79:46` Mobile / Onboarding / Light | **not yet canonical** | Guest Home, desktop onboarding, diagnostics, skip/continue, recovery and complete Light/Dark coverage still require exact node-level audit | Issue #201 |
+| `/` Guest Home / `/onboarding` First Use | `docs/figma/openpencil-screen-map.json` `activeScreens` keys under `firstuse.*` | same reviewed `firstuse.*` matrix, including desktop Guest Home and diagnostics | PR #556 reviewed Guest Home, role, diagnostic pre/reveal/resume, skip/skipped, complete, loading/error/recovery in Light/Dark across mobile/desktop | Issue #201 / PR #556 |
 
 ### Route-selection rules
 
-- `82:3` remains the canonical Product Screen Map & Handoff entry point.
-- Production code and visual reviews must use the node IDs in this document or a later reviewed superseding mapping.
+- `82:3` remains the historical Figma Product Screen Map & Handoff entry point.
+- Production code and visual reviews use the node IDs in this document or the reviewed stable keys in `docs/figma/openpencil-screen-map.json`; a later reviewed mapping may supersede either source.
 - Concept/exploration matrices are reference-only unless explicitly promoted into this map.
 - A token-derived appearance means the same production composition rendered through semantic variables; it does not authorize a parallel layout.
 - Historical frames must not be deleted until prototype links, component references and useful state coverage have been checked.
-- `/onboarding` is intentionally marked **not ready for a production implementation PR** until Issue #201 has both a canonical mobile and desktop source plus the required diagnostic/recovery states.
-- When Figma MCP access is available, Screen Map status must be synchronized with this repository mapping and any superseded production candidates must be marked reference-only rather than silently removed.
+- First Use implementation uses the PR #556-reviewed `activeScreens` matrix. It must not reopen design scope or silently substitute legacy concept frames.
+- Figma Cloud remains provenance/reference for retained historical mappings; normal AI-native First Use design maintenance is owned by OpenPencil and its repository screen map.
 
 ## Production ownership
 
 The implementation must not introduce a second product graph.
 
-- `RouteChrome` remains the only owner of primary route navigation.
+- `RouteChrome` remains the only owner of primary route navigation outside focused First Use and Active Lesson surfaces.
 - `LexigoBootstrappedApp` remains the sole session restoration, account runtime and dynamic route-entry owner.
-- `LexigoHomeApp` owns Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
+- `LexigoGuestHomeApp` owns unauthenticated `/` and does not load account progress, scheduler state or fake authenticated status.
+- `LexigoHomeApp` owns authenticated Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
+- `LexigoOnboardingApp` owns authenticated First Use state and the existing server onboarding contract; `frontend/app/onboarding/page.tsx` is the canonical App Router page that prevents the client owner from mounting over a server not-found subtree.
+- Guest Home and `/onboarding` suppress ordinary route chrome through scoped First Use CSS without introducing a second navigation owner.
 - `LexigoPremiumApp` retains only Phrases compatibility orchestration until the approved Issue #199 catalog/detail slice is fully extracted into its route island.
 - `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners and are not imported by Home.
-- The backend remains authoritative for lesson position, completion and review persistence.
+- The backend remains authoritative for lesson position, completion, review persistence and onboarding `status/start/mark/complete/skip` state.
+- Diagnostic translation/reveal is presented only after a successful server mark mutation; reload/direct entry resumes authoritative server state.
 - The active lesson remains higher priority than the due queue, new study and manual configuration.
 - The Dictionary route island remains isolated and must not regress.
 
@@ -105,9 +109,11 @@ Desktop from 1024 CSS pixels uses a persistent navigation rail. Compact mobile u
 
 Light and Dark appearances use the same information hierarchy. Optional transitions are disabled under `prefers-reduced-motion: reduce`.
 
+First Use is an intentional focused-route exception: Guest Home and onboarding remove ordinary route chrome from layout and the accessibility tree while their dedicated route island is active; the global navigation owner itself is not duplicated or refactored.
+
 ## Home contract
 
-Home owns one next-best action and a compact evidence surface. It does not duplicate Learn, Dictionary and Progress as secondary feature cards.
+Authenticated Home owns one next-best action and a compact evidence surface. It does not duplicate Learn, Dictionary and Progress as secondary feature cards.
 
 The next action resolves in this order:
 
@@ -120,9 +126,11 @@ The desktop and mobile production frames preserve this order and keep the primar
 
 Direct `/` entry and return navigation must use the dedicated Home island without repeating session restoration. Home-created or resumed lessons must reach the existing Active Lesson UI immediately, without exposing a second confirmation click.
 
-## Current Figma delivery status
+Unauthenticated `/` is a separate truthful Guest Home surface: it explains the product and routes into authentication/onboarding or the existing guest-compatible demo path without synthesizing progress or account scheduler data.
 
-All nine canonical route parity contracts under Issue #205 are delivered:
+## Current design delivery status
+
+All nine previously canonical route parity contracts under Issue #205 are delivered:
 
 | Route | Parity Issue | Merge PR | Status |
 | --- | --- | --- | --- |
@@ -136,24 +144,24 @@ All nine canonical route parity contracts under Issue #205 are delivered:
 | Phrase Detail | #540 | #541 | ✅ merged |
 | Profile | #542 | #543 | ✅ merged |
 
-Additional Figma-linked deliveries:
+Additional design-linked deliveries:
 
 - System States (Dictionary Empty renderer-equivalent): Issue #545 / PR #546 — scoped exact alternate fingerprint for hosted-runner rendering nondeterminism.
 - Native Figma binary preservation: Issue #487 / PR #547 — `design/figma/LexiGo Design System.fig` stored via Git LFS, SHA-256 verified.
+- First Use design gate: Issue #201 / PR #556 — reviewed OpenPencil 40-state First Use matrix, stable `activeScreens` mappings and design acceptance are merged.
 
-The remaining design-side blocker in the primary route set is Issue #201. The 2026-08-13 offline source audit proves that First Use / Onboarding material already exists, including `Mobile / Onboarding / Light` (`79:46`), so the task is a narrow remaining-gap audit rather than a redesign from zero. Before implementation, resolve exact canonical nodes for Guest Home mobile/desktop, desktop onboarding, diagnostic question states, skip/continue, loading/error/recovery and complete Light/Dark coverage.
+Issue #201 runtime now consumes that reviewed First Use matrix rather than reopening the design gate. Repository visual tests own deterministic Linux Guest Home/onboarding evidence and require manual PNG review before any new baseline hash can be accepted.
 
-Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation; the live Figma Screen Map update is blocked on MCP access, but repository-side delivery status reconciliation is complete. Issue #205 remains the final route-by-route visual parity audit after the remaining First Use design gap is resolved.
+Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation. Issue #205 remains the final route-by-route visual parity audit; neither changes the runtime ownership described above.
 
-
-## Figma source-of-truth maintenance
+## Figma/OpenPencil source-of-truth maintenance
 
 The following cleanup remains necessary and is tracked by Issue #203:
 
 - identify concept-only and production-ready variants through explicit naming/status metadata;
 - remove page-number collisions when new production slices are added;
 - avoid duplicating route ownership across prototype, matrix and production frames;
-- update the Screen Map when a production slice supersedes an exploratory composition;
+- update the screen map when a production slice supersedes an exploratory composition;
 - preserve old variants until their state coverage has been transferred or explicitly archived;
 - keep this route map synchronized after each promoted or superseded production source.
 
@@ -168,4 +176,5 @@ The implementation is not complete until all of the following pass:
 - keyboard navigation and blocking accessibility audit;
 - reduced-motion computed styles;
 - route bundle and low-end mobile performance budgets;
-- visual review on the deployed stage build.
+- deterministic Linux visual baselines after manual PNG review;
+- visual review on the deployed Stage build for runtime-changing delivery.
