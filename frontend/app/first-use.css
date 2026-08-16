@@ -288,7 +288,9 @@ body:has(.lx-first-use) > .lx-legal-footer {
 }
 
 .lx-first-use-copy-mobile,
-.lx-first-use-kicker--mobile {
+.lx-first-use-kicker--mobile,
+.lx-first-use-diagnostic-intro,
+.lx-first-use-diagnostic-context-desktop {
   display: none;
 }
 
@@ -484,6 +486,114 @@ body:has(.lx-first-use) > .lx-legal-footer {
 .lx-first-use-skeletons span:nth-child(2) { width: 84%; }
 .lx-first-use-skeletons span:nth-child(3) { width: 94%; }
 .lx-first-use-skeletons span:nth-child(4) { width: 72%; }
+
+@media (min-width: 720px) {
+  .lx-first-use-diagnostic-intro {
+    display: block;
+    width: min(720px, 100%);
+    min-height: 152px;
+    margin: 0 auto 30px;
+  }
+
+  .lx-first-use-diagnostic-intro h1 {
+    margin: 14px 0 0;
+    color: var(--fu-text);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+  }
+
+  .lx-first-use-diagnostic-intro p {
+    min-height: 52px;
+    margin: 10px 0 0;
+    color: var(--fu-muted);
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-diagnostic {
+    display: flex;
+    min-height: 540px;
+    flex-direction: column;
+    padding: 28px 32px 32px;
+  }
+
+  .lx-first-use-diagnostic > .lx-first-use-progress {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .lx-first-use-diagnostic-position {
+    order: 1;
+  }
+
+  .lx-first-use-diagnostic-compact-title,
+  .lx-first-use-diagnostic-compact-copy,
+  .lx-first-use-diagnostic-phonetic,
+  .lx-first-use-diagnostic-context-compact {
+    display: none;
+  }
+
+  .lx-first-use-diagnostic-card {
+    order: 2;
+    gap: 12px;
+    margin-top: 18px;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .lx-first-use-diagnostic-card > strong {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-diagnostic-context-desktop {
+    display: block;
+    font-size: 15px;
+    line-height: 1.2 !important;
+  }
+
+  .lx-first-use-diagnostic .lx-first-use-mark-group {
+    order: 3;
+    gap: 22px;
+    margin-top: 54px;
+  }
+
+  .lx-first-use-diagnostic .lx-first-use-mark-group button {
+    text-align: left;
+  }
+
+  .lx-first-use-diagnostic-resume-note {
+    order: 4;
+    min-height: 74px;
+    margin-top: 24px;
+    padding: 20px 18px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-diagnostic > .lx-first-use-button {
+    order: 5;
+    margin-top: 26px;
+  }
+
+  .lx-first-use-diagnostic > .lx-first-use-hint,
+  .lx-first-use-diagnostic > .lx-first-use-text-action {
+    order: 6;
+  }
+}
 
 @media (max-width: 719px) {
   .lx-first-use-header {
