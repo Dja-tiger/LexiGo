@@ -5,7 +5,7 @@
 - Branch: fix/issue-571-tablet-layout
 - Base SHA: 157c645731604fb39488068397472994b2ea67d1
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #572
 
 ## Skills used
 
@@ -52,25 +52,29 @@ Actions performed:
 - Confirmed Learn and Phrases share a breakpoint gap at the existing RouteChrome tablet interval.
 - Confirmed Profile removes the RouteChrome tablet content offset through a later route-specific margin reset.
 - Created Issue #571 and isolated branch `fix/issue-571-tablet-layout` from exact main.
-- Selected existing computed-cascade suites as the regression owners so no new workflow/package collection is necessary.
+- Implemented a 768–1099 Learn outer-grid bridge without broadening compact/mobile disclosure behavior.
+- Added route-scoped Phrases/Profile tablet companion styles and imported them immediately after their base owners.
+- Extended the already-collected adaptive layout cascade suite with Learn/Phrases/Profile tablet contracts.
+- Opened Draft PR #572.
 
 Commands or procedures:
 
-Connector-first live GitHub inspection; exact Linux visual artifact review; route CSS/cascade inspection; isolated issue/branch and Agent Harness pre-flight.
+Connector-first live GitHub inspection; exact Linux visual artifact review; route CSS/cascade inspection; isolated issue/branch and Agent Harness pre-flight; route-scoped responsive implementation.
 
 Artifacts produced:
 
 - Issue #571.
 - Branch `fix/issue-571-tablet-layout`.
+- Draft PR #572.
 - Current task context in `.agents/current/**`.
 
 Result:
 
-The production fix is isolated from audit PR #570. The intended code change is presentation-only within three route CSS owners plus existing cascade regression tests.
+The production fix is isolated from audit PR #570. Product state, APIs, components, design source and RouteChrome topology remain unchanged; only responsive presentation ownership and its regression contract changed.
 
 Failures:
 
-No runtime-fix CI has run yet. Audit #570 remains intentionally fail-closed and its broken Learn/Phrases/Profile fingerprints remain unapproved.
+No runtime-fix CI has run on the final PR-bound head yet. Audit #570 remains intentionally fail-closed and its broken Learn/Phrases/Profile fingerprints remain unapproved.
 
 Root cause:
 
