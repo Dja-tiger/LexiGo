@@ -30,7 +30,7 @@ describe("First Use public architecture ownership", () => {
 
     expect(readme).toContain("`LexigoGuestHomeApp`");
     expect(readme).toContain("`LexigoOnboardingApp`");
-    expect(readme).toContain("guest `/` after session bootstrap");
+    expect(readme).toContain("guest `/` после session bootstrap");
     expect(readme).toContain("authenticated `/onboarding`");
     expect(readme).not.toContain("- `LexigoHomeApp` владеет `/`, `LexigoLearnApp`");
 
