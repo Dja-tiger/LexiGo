@@ -180,6 +180,7 @@ test("guest Home is truthful, preserves Browser Back, and routes First Use throu
     url.pathname === "/profile"
     && url.searchParams.get("return_to") === "/onboarding"
   ));
+  await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();
 
   await page.goBack({ waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL((url) => url.pathname === "/" && url.search === "");
