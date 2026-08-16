@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect } from "react";
 
 import { authenticationURL } from "../lib/auth-return";
 import { navigationURL, viewTitle } from "../lib/navigation";
@@ -23,6 +23,15 @@ const GUEST_VALUES = [
 
 export function LexigoGuestHomeApp() {
   const router = useRouter();
+
+  useLayoutEffect(() => {
+    const shell = document.querySelector<HTMLElement>('[data-app-router-shell="true"]');
+    if (!shell) return;
+    shell.dataset.firstUseFocus = "guest";
+    return () => {
+      if (shell.dataset.firstUseFocus === "guest") delete shell.dataset.firstUseFocus;
+    };
+  }, []);
 
   const startFirstUse = useCallback(() => {
     router.push(authenticationURL({ view: "onboarding" }), { scroll: false });
