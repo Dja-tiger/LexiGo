@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { expect, test, type BrowserContext, type Page, type Route, type TestInfo } from "@playwright/test";
 
@@ -13,16 +15,119 @@ type FirstUseVisualBaseline =
   | "resume-desktop-light"
   | "resume-desktop-dark";
 
-const APPROVED_SHA256: Record<FirstUseVisualBaseline, string> = {
-  "guest-compact-light": "dcf5fcb11f5b10b195723de84134d4ce54e1e775027d5ecfb1ace6eddbe2dac2",
-  "guest-compact-dark": "27c87ab46f9f71a9710d0c788b87266d3c2465eedf5fef74edfd2357d66c3cca",
-  "guest-desktop-light": "ab1783b69df8221469dae7fa72015b9383c03b1305efe1f883b44f6a9a126b7d",
-  "guest-desktop-dark": "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
-  "role-compact-light": "d6281d763d7a50a001b9e11d9bfc63bc000db5ea81490cc6e0a7e1a3ba4379da",
-  "role-compact-dark": "b8a542c17b923f2ee8dfcc833966b87cc34006936393d14e3989fff8e0a8ca9a",
-  "resume-desktop-light": "320524d4c4fe03f5bd086bac871957854f31f08f3b4e7a00d05071a1a627e466",
-  "resume-desktop-dark": "6827f78bb2f4beb3304b0b939ebaa5a19d4577c9f68fd406525ba4b67525b545",
+type FirstUseRoute = "/" | "/onboarding";
+type CanonicalViewport = Readonly<{ width: 390 | 1440; height: 844 | 900 }>;
+type FirstUseVisualContract = Readonly<{
+  sha256: string;
+  screenMapKey: string;
+  openPencilNode: string;
+  route: FirstUseRoute;
+  viewport: CanonicalViewport;
+}>;
+type OpenPencilScreenMapEntry = Readonly<{
+  key: string;
+  route: string;
+  openPencilNode: string;
+  width: number;
+  height: number;
+}>;
+
+/**
+ * These hashes are approval records for exact Linux PNGs, not generic snapshot
+ * fixtures. A hash may change only after the corresponding artifact is manually
+ * reviewed against the active OpenPencil node recorded alongside it.
+ *
+ * Desktop First Use intentionally uses the canonical 1440×900 OpenPencil frame.
+ * Broader 1440×1024 desktop behavior remains part of the umbrella #205 runtime
+ * audit, but it is not claimed to be a pixel-parity design viewport here.
+ */
+const FIRST_USE_VISUAL_BASELINES: Record<FirstUseVisualBaseline, FirstUseVisualContract> = {
+  "guest-compact-light": {
+    sha256: "dcf5fcb11f5b10b195723de84134d4ce54e1e775027d5ecfb1ace6eddbe2dac2",
+    screenMapKey: "firstuse.guest.mobile.light",
+    openPencilNode: "n2",
+    route: "/",
+    viewport: { width: 390, height: 844 },
+  },
+  "guest-compact-dark": {
+    sha256: "27c87ab46f9f71a9710d0c788b87266d3c2465eedf5fef74edfd2357d66c3cca",
+    screenMapKey: "firstuse.guest.mobile.dark",
+    openPencilNode: "n162",
+    route: "/",
+    viewport: { width: 390, height: 844 },
+  },
+  "guest-desktop-light": {
+    sha256: "ab1783b69df8221469dae7fa72015b9383c03b1305efe1f883b44f6a9a126b7d",
+    screenMapKey: "firstuse.guest.desktop.light",
+    openPencilNode: "n321",
+    route: "/",
+    viewport: { width: 1440, height: 900 },
+  },
+  "guest-desktop-dark": {
+    sha256: "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
+    screenMapKey: "firstuse.guest.desktop.dark",
+    openPencilNode: "n493",
+    route: "/",
+    viewport: { width: 1440, height: 900 },
+  },
+  "role-compact-light": {
+    sha256: "d6281d763d7a50a001b9e11d9bfc63bc000db5ea81490cc6e0a7e1a3ba4379da",
+    screenMapKey: "firstuse.onboarding.mobile.light",
+    openPencilNode: "fig_4282",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "role-compact-dark": {
+    sha256: "b8a542c17b923f2ee8dfcc833966b87cc34006936393d14e3989fff8e0a8ca9a",
+    screenMapKey: "firstuse.onboarding.mobile.dark",
+    openPencilNode: "n139",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "resume-desktop-light": {
+    sha256: "320524d4c4fe03f5bd086bac871957854f31f08f3b4e7a00d05071a1a627e466",
+    screenMapKey: "firstuse.diagnostic.resume.desktop.light",
+    openPencilNode: "n378",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
+  "resume-desktop-dark": {
+    sha256: "6827f78bb2f4beb3304b0b939ebaa5a19d4577c9f68fd406525ba4b67525b545",
+    screenMapKey: "firstuse.diagnostic.resume.desktop.dark",
+    openPencilNode: "n550",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
 };
+
+function loadActiveOpenPencilScreens(): readonly OpenPencilScreenMapEntry[] {
+  const relativePath = "docs/figma/openpencil-screen-map.json";
+  const candidates = [
+    process.env.GITHUB_WORKSPACE
+      ? resolve(process.env.GITHUB_WORKSPACE, relativePath)
+      : undefined,
+    resolve("/repository", relativePath),
+    resolve(process.cwd(), "..", relativePath),
+    resolve(process.cwd(), relativePath),
+  ].filter((candidate): candidate is string => typeof candidate === "string");
+  const screenMapPath = candidates.find((candidate) => existsSync(candidate));
+
+  if (!screenMapPath) {
+    throw new Error(
+      `First Use visual parity requires ${relativePath}; checked: ${candidates.join(", ")}`,
+    );
+  }
+
+  const parsed = JSON.parse(readFileSync(screenMapPath, "utf8")) as {
+    activeScreens?: OpenPencilScreenMapEntry[];
+  };
+  if (!Array.isArray(parsed.activeScreens)) {
+    throw new Error(`${screenMapPath} does not expose an activeScreens array`);
+  }
+  return parsed.activeScreens;
+}
+
+const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens();
 
 const SESSION = {
   user: {
@@ -100,6 +205,38 @@ async function installOnboardingAPI(context: BrowserContext, mode: "role" | "res
   });
 }
 
+function annotateOpenPencil(testInfo: TestInfo, baselineName: FirstUseVisualBaseline) {
+  const baseline = FIRST_USE_VISUAL_BASELINES[baselineName];
+  const { width, height } = baseline.viewport;
+  testInfo.annotations.push({
+    type: "openpencil",
+    description: `${baseline.screenMapKey} | node=${baseline.openPencilNode} | route=${baseline.route} | viewport=${width}×${height}`,
+  });
+}
+
+function expectActiveOpenPencilContract(baselineName: FirstUseVisualBaseline) {
+  const baseline = FIRST_USE_VISUAL_BASELINES[baselineName];
+  const screen = ACTIVE_OPENPENCIL_SCREENS.find((entry) => entry.key === baseline.screenMapKey);
+
+  expect(
+    screen,
+    `${baselineName} must resolve to an active OpenPencil screen-map entry: ${baseline.screenMapKey}`,
+  ).toBeDefined();
+  expect(screen?.openPencilNode).toBe(baseline.openPencilNode);
+  expect(screen?.route).toBe(baseline.route);
+  expect({ width: screen?.width, height: screen?.height }).toEqual(baseline.viewport);
+}
+
+async function prepareCanonicalViewport(page: Page, baselineName: FirstUseVisualBaseline) {
+  const baseline = FIRST_USE_VISUAL_BASELINES[baselineName];
+  expectActiveOpenPencilContract(baselineName);
+  await page.setViewportSize(baseline.viewport);
+  expect(
+    page.viewportSize(),
+    `${baselineName} must capture the canonical OpenPencil ${baseline.viewport.width}×${baseline.viewport.height} frame`,
+  ).toEqual(baseline.viewport);
+}
+
 async function settle(page: Page, appearance: ExplicitAppearance) {
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
@@ -120,6 +257,9 @@ async function captureForReview(
   testInfo: TestInfo,
   baselineName: FirstUseVisualBaseline,
 ) {
+  const baseline = FIRST_USE_VISUAL_BASELINES[baselineName];
+  expect(page.viewportSize()).toEqual(baseline.viewport);
+
   const screenshot = await page.screenshot({
     animations: "disabled",
     caret: "hide",
@@ -132,13 +272,21 @@ async function captureForReview(
   });
   const actualSha256 = createHash("sha256").update(screenshot).digest("hex");
   await testInfo.attach(`${baselineName}.json`, {
-    body: Buffer.from(JSON.stringify({ baselineName, actualSha256 }, null, 2)),
+    body: Buffer.from(JSON.stringify({
+      baselineName,
+      actualSha256,
+      approvedSha256: baseline.sha256,
+      screenMapKey: baseline.screenMapKey,
+      openPencilNode: baseline.openPencilNode,
+      route: baseline.route,
+      canonicalViewport: baseline.viewport,
+    }, null, 2)),
     contentType: "application/json",
   });
   expect(
     actualSha256,
-    `${baselineName} requires manual Linux PNG review before its hash is approved`,
-  ).toBe(APPROVED_SHA256[baselineName]);
+    `${baselineName} changed from active OpenPencil ${baseline.screenMapKey} (${baseline.openPencilNode}) at ${baseline.viewport.width}×${baseline.viewport.height}; manually review the exact Linux PNG before approving a new hash`,
+  ).toBe(baseline.sha256);
 }
 
 test.describe("First Use reviewed OpenPencil visual baselines", () => {
@@ -146,49 +294,58 @@ test.describe("First Use reviewed OpenPencil visual baselines", () => {
 
   for (const appearance of ["light", "dark"] as const) {
     test(`Guest Home compact ${appearance}`, async ({ context, page }, testInfo) => {
-      test.skip(testInfo.project.name !== "visual-compact", "390×844 Guest Home evidence only");
-      testInfo.annotations.push({ type: "openpencil", description: `Guest Home / Mobile / ${appearance}` });
+      const baselineName = `guest-compact-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 canonical Guest Home evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
       await installAppearance(page, appearance);
       await installGuestAPI(context);
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await expect(page.locator('[data-route-client-island="guest-home"]')).toBeVisible();
       await settle(page, appearance);
-      await captureForReview(page, testInfo, `guest-compact-${appearance}`);
+      await captureForReview(page, testInfo, baselineName);
     });
 
     test(`Guest Home desktop ${appearance}`, async ({ context, page }, testInfo) => {
-      test.skip(testInfo.project.name !== "visual-desktop", "1440×1024 Guest Home evidence only");
-      testInfo.annotations.push({ type: "openpencil", description: `Guest Home / Desktop / ${appearance}` });
-      await page.setViewportSize({ width: 1440, height: 1024 });
+      const baselineName = `guest-desktop-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×900 canonical Guest Home evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
       await installAppearance(page, appearance);
       await installGuestAPI(context);
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await expect(page.locator('[data-route-client-island="guest-home"]')).toBeVisible();
       await settle(page, appearance);
-      await captureForReview(page, testInfo, `guest-desktop-${appearance}`);
+      await captureForReview(page, testInfo, baselineName);
     });
 
     test(`Onboarding role compact ${appearance}`, async ({ context, page }, testInfo) => {
-      test.skip(testInfo.project.name !== "visual-compact", "390×844 role-step evidence only");
-      testInfo.annotations.push({ type: "openpencil", description: `Onboarding / Role / Mobile / ${appearance}` });
+      const baselineName = `role-compact-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 canonical role-step evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
       await installAppearance(page, appearance);
       await installOnboardingAPI(context, "role");
       await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: "Настроим полезный первый урок" })).toBeVisible();
       await settle(page, appearance);
-      await captureForReview(page, testInfo, `role-compact-${appearance}`);
+      await captureForReview(page, testInfo, baselineName);
     });
 
     test(`Diagnostic resume desktop ${appearance}`, async ({ context, page }, testInfo) => {
-      test.skip(testInfo.project.name !== "visual-desktop", "1440×1024 resume evidence only");
-      testInfo.annotations.push({ type: "openpencil", description: `Diagnostic Resume / Desktop / ${appearance}` });
-      await page.setViewportSize({ width: 1440, height: 1024 });
+      const baselineName = `resume-desktop-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×900 canonical resume evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
       await installAppearance(page, appearance);
       await installOnboardingAPI(context, "resume");
       await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: "Продолжим диагностику" })).toBeVisible();
+      const unsureMark = page.getByRole("radio", { name: "Не уверен" });
+      await unsureMark.click();
+      await expect(unsureMark).toHaveAttribute("aria-checked", "true");
       await settle(page, appearance);
-      await captureForReview(page, testInfo, `resume-desktop-${appearance}`);
+      await captureForReview(page, testInfo, baselineName);
     });
   }
 });
