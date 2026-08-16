@@ -1,4 +1,4 @@
-name: lexigo-openpencil
+name: ${OPENPENCIL_COMPOSE_PROJECT:-lexigo-openpencil}
 
 x-openpencil-common: &openpencil-common
   image: ${OPENPENCIL_IMAGE:-ghcr.io/zseven-w/openpencil-web:v0.8.2}
