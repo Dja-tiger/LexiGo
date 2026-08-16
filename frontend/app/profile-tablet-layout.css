@@ -1,0 +1,14 @@
+/*
+ * Issue #571: Profile compatibility with RouteChrome tablet rail.
+ *
+ * profile.css centers its route-local main content. During the shared tablet
+ * rail interval that route-local margin must preserve the same inline-start
+ * reservation as RouteChrome instead of resetting it back to auto.
+ */
+@media (min-width: 720px) and (max-width: 1099px) {
+  .lx-routed-app[data-route-path="/profile"] .lx-profile-app .lx-main-content {
+    width: auto;
+    margin-right: 0;
+    margin-left: calc(var(--lx-navigation-rail-width) + 20px);
+  }
+}
