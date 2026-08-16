@@ -384,10 +384,22 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
       );
     }
 
+    const diagnosticTitle = resume
+      ? "Продолжим диагностику"
+      : reveal
+        ? "Перевод открыт после отметки"
+        : "Что уже знакомо?";
+
     return (
       <div className="lx-first-use lx-first-use--onboarding" data-route-client-island="onboarding">
         <FirstUseHeader step="2 из 3" />
         <main id="lexigo-main-content" className="lx-first-use-main" tabIndex={-1} aria-label={viewTitle("onboarding")}>
+          <div className="lx-first-use-diagnostic-intro">
+            <span className="lx-first-use-kicker">ШАГ 2 ИЗ 3</span>
+            <h1>{diagnosticTitle}</h1>
+            <p>До выбора ответ скрыт. Диагностика не оценивает вас как экзамен.</p>
+          </div>
+
           <section className="lx-first-use-panel lx-first-use-diagnostic" aria-busy={busy}>
             <div
               className="lx-first-use-progress"
@@ -400,14 +412,19 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
             >
               <span style={{ width: `${progress}%` }} />
             </div>
-            <span className="lx-first-use-kicker">{position} из {snapshot.total}</span>
-            <h1>{resume ? "Продолжим диагностику" : reveal ? "Перевод открыт после отметки" : "Что уже знакомо?"}</h1>
-            <p>Сначала отметьте знакомство. Перевод появится только после выбора.</p>
+            <span className="lx-first-use-kicker lx-first-use-diagnostic-position">{position} из {snapshot.total}</span>
+            <h1 className="lx-first-use-diagnostic-compact-title">{diagnosticTitle}</h1>
+            <p className="lx-first-use-diagnostic-compact-copy">Сначала отметьте знакомство. Перевод появится только после выбора.</p>
 
             <article className="lx-first-use-diagnostic-card">
               <strong>{current.lemma}</strong>
-              {current.phonetic ? <span>{current.phonetic}</span> : null}
-              <p>{current.topic ? `Контекст: ${current.topic}` : "Термин из вашей учебной очереди"}</p>
+              {current.phonetic ? <span className="lx-first-use-diagnostic-phonetic">{current.phonetic}</span> : null}
+              <p className="lx-first-use-diagnostic-context-compact">
+                {current.topic ? `Контекст: ${current.topic}` : "Термин из вашей учебной очереди"}
+              </p>
+              <p className="lx-first-use-diagnostic-context-desktop">
+                {current.topic ? `Тема: ${current.topic}` : "Термин из вашей учебной очереди"}
+              </p>
               {reveal ? (
                 <div className="lx-first-use-reveal" aria-live="polite">
                   <strong>{reveal.result.reveal.translation}</strong>
@@ -417,7 +434,7 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
             </article>
 
             {resume && !reveal ? (
-              <div className="lx-first-use-note">Прогресс сохранён: {snapshot.marked} ответов. Этот термин — следующий.</div>
+              <div className="lx-first-use-note lx-first-use-diagnostic-resume-note">Прогресс сохранён: {snapshot.marked} ответов. Этот термин — следующий.</div>
             ) : null}
 
             <div className="lx-first-use-mark-group" role="radiogroup" aria-label="Насколько знаком термин">
