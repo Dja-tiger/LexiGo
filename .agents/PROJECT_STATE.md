@@ -4,19 +4,19 @@
 
 - Last verified: 2026-08-16 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Current `main`: `e7d992ad6089aa6445017ea6ffff6280787b05d8` after PR #551.
+- Current `main`: `13d51e97514b1b521d641028169c2a7b49f68890` after PR #556.
 - Latest runtime-bearing `main`: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` after PR #543.
 - Latest deployed runtime/Stage SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
-- PR #546 (test-only, Issue #545): squash merge `bf0036c1`; Dictionary Empty renderer-equivalent hash scoped.
-- PR #547 (asset-only, Issue #487): squash merge `d23f7a82`; native `.fig` uploaded via Git LFS.
-- PR #551 (design-tooling, Issue #550): merge `e7d992ad`; deterministic ZSeven OpenPencil v0.8.2 native `.fig -> .op` import gate delivered.
-- #546, #547 and #551 did not change production runtime; Stage redeploy was not required.
+- PR #553 promoted the reviewed OpenPencil source/token pair and established OpenPencil as the active AI-native design owner.
+- PR #555 delivered optional standalone OpenPencil Web/MCP self-host tooling; persistent VPS deployment is not required for AI design work.
+- PR #556 / Issue #201 design gate: squash merge `13d51e97`; exact-main OpenPencil AI import, visual acceptance, self-host fallback check and full CI are green on that SHA.
+- #553, #555 and #556 did not change production application runtime; Stage redeploy was not required.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
 
 - One PR contains one atomic slice.
-- Product changes require the repository-owned frontend/backend/browser/accessibility/performance/container gates selected by scope.
+- Product changes require repository-owned frontend/backend/browser/accessibility/performance/container gates selected by scope.
 - Product delivery requires immutable-head PR CI, clean review audit, expected-head squash merge, exact-main validation and Stage/public validation when runtime changed.
 - Pure Agent Docs changes use the fail-closed lightweight classifier and do not deploy Stage runtime.
 - Design-source/tooling changes require deterministic source identities, immutable-head design acceptance, clean review audit and exact-main design validation; Stage is not required when application runtime is unchanged.
@@ -27,6 +27,7 @@
 
 - Home, Learn, Active Lesson, Phrases, Dictionary/Word Detail, Progress, authenticated Profile and Scenario routes use dedicated route ownership boundaries.
 - `LexigoBootstrappedApp` owns session restoration, refresh coordination, account runtime and route entry.
+- `LexigoHomeApp` owns `/` and currently renders both authenticated Home and the legacy guest Home state.
 - `LexigoDictionaryApp` owns `/dictionary` and `/words/[id]`; Word Detail is detail state inside that island rather than a second application island.
 - `LexigoPhrasesApp` owns `/phrases` and `/phrases/[slug]`, including direct entry, URL-backed catalog state and Learn handoff.
 - `RouteChrome` remains the sole owner of primary route navigation outside Active Lesson focus mode.
@@ -36,16 +37,16 @@
 
 ## AI-native design source-of-truth status
 
-Issue #552 / PR #553 promotes ZSeven OpenPencil as the day-to-day AI-first design editor while preserving native Figma provenance.
+ZSeven OpenPencil v0.8.2 is the day-to-day AI-first design editor while native Figma remains archived provenance/reference.
 
 ### Active visual/editor source
 
 - Path: `design/openpencil/LexiGo Design System.op`.
-- Accepted SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`.
-- Accepted size: `6,446,726` bytes.
-- 23 pages / 7,341 recursive design nodes / 83 reusable nodes.
-- 92 ZSeven runtime variables / 2 theme axes.
-- Canonical production OpenPencil `fig_*` mapping: `docs/figma/openpencil-screen-map.json`.
+- Reviewed active SHA-256: `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`.
+- Reviewed active size: `6,937,300` bytes.
+- 23 pages / 7,983 recursive design nodes / 92 runtime variables.
+- Canonical imported and OpenPencil-native production mapping: `docs/figma/openpencil-screen-map.json`.
+- `activeScreens` records the stable OpenPencil-native First Use roots added by Issue #201.
 
 ### Active lossless token/provenance source
 
@@ -64,28 +65,60 @@ Issue #552 / PR #553 promotes ZSeven OpenPencil as the day-to-day AI-first desig
 - Native source identity: 1,191,055 bytes; SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`.
 - `frontend/docs/adaptive-knowledge-coach.md` remains repository-side route -> historical Figma node -> Issue provenance.
 - `docs/figma/openpencil-ai-workflow.md` owns the promoted OpenPencil workflow/source hierarchy.
-- Live Figma inspection/editing remains blocked by the connected Figma MCP Starter-plan tool-call limit. Do not claim fresh Screen Map/canvas synchronization without live evidence.
 - Figma Cloud remains historical/reference input while retained, not the day-to-day editable owner after OpenPencil promotion.
 
 ### OpenPencil acceptance contract
 
 - Primary editor/toolchain: `ZSeven-W/openpencil` v0.8.2.
-- Base deterministic import candidate: SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, 2,309,061 bytes.
-- Native Figma variable extraction uses published `@open-pencil/core@0.13.2` read-only because ZSeven v0.8.2/v0.8.4 importer does not import Figma themes/variables.
-- Acceptance run #14 / GitHub run `31923451381` rendered 20 canonical Linux screens and completed real OpenPencil edit/readback/persistence checks.
-- Reviewed artifact: id `9257099175`, digest `sha256:8b3b4b60b05382327e5346a1c896f8e5d47c3f0a2081986c156abc2776187692`.
-- Tokenized and original accepted renders match exactly by width/height/SHA-256 for all 20 screens.
-- OpenPencil persistence normalized 186 floating-point values only; max absolute drift `2.8610229518832853e-08`, below semantic tolerance `1e-7`; no non-numeric semantic tree drift was accepted.
-- Permanent workflow `.github/workflows/openpencil-visual-acceptance.yml` regenerates the source pair and requires committed `.op`/sidecar byte equality with deterministic outputs.
+- Immutable Figma/tokenized migration baseline SHA-256 remains `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`.
+- Permanent `.github/workflows/openpencil-visual-acceptance.yml` now validates two independent invariants:
+  1. archived `.fig` still regenerates the historical tokenized migration baseline and token sidecar deterministically;
+  2. committed active `.op` matches the reviewed active SHA/size, mapped nodes, selected Linux renders, all 92 runtime variables and isolated editability.
+- This separation preserves migration provenance without making normal OpenPencil-native design edits impossible.
 - ZSeven v0.8.2 does not preserve imported node->variable bindings. Existing imported nodes keep concrete visual values; recovered tokens are available for AI/new/intentionally updated elements. Do not claim full Figma binding parity.
+
+### CI-native operation
+
+- GitHub Actions Linux runners are the default OpenPencil runtime for AI inspection, semantic mutation, rendering and acceptance.
+- Persistent OpenPencil Web on a VPS is optional, not a prerequisite for design work.
+- `deploy/openpencil/**` and `.github/workflows/openpencil-self-host-check.yml` remain an isolated fallback for authenticated Web + loopback-only MCP operation; normal LexiGo Stage/prod compose and product Caddy are unaffected.
+
+## First Use / Issue #201 design contract delivered by PR #556
+
+- Existing imported mobile onboarding Light remains `fig_4282` on `figma-page-17`.
+- Forty canonical First Use states were added and registered under `activeScreens`, covering Guest Home, onboarding, diagnostic pre-reveal/reveal/resume, skip confirmation, completion, loading and error across mobile/desktop Light/Dark.
+- Representative stable roots:
+  - Guest Home Mobile Light `n2`;
+  - Diagnostic pre-reveal Mobile Light `n21`;
+  - Diagnostic reveal Mobile Light `n42`;
+  - Diagnostic resume Mobile Light `n62`;
+  - Skip confirm Mobile Light `n85`;
+  - Complete Mobile Light `n105`;
+  - Onboarding Desktop Light `n299`;
+  - Guest Home Desktop Light `n321`;
+  - Diagnostic resume Desktop Light `n378`;
+  - Complete Desktop Dark `n599`;
+  - Loading Desktop Dark `n614`.
+- Diagnostic interaction semantics follow delivered backend #18: states `not_started / in_progress / completed / skipped`, self-mark `known / unsure / new` before reveal, maximum 12 items, resumable in-progress flow, skip does not claim scheduler mutation.
+- Preview visual review found actual overlap defects before promotion; repaired preview was reviewed and only the repaired exact `.op` was promoted.
+- PR #556 final head `6e67b01210feefb97ed8ddbb65e5efdcc8fdc7ea` passed OpenPencil AI import, visual acceptance, optional self-host smoke and full repository CI.
+- Exact-main after squash merge `13d51e97514b1b521d641028169c2a7b49f68890` passed OpenPencil AI import, visual acceptance #30, self-host check #15 and CI #3635.
+
+## Backend First Use foundation already delivered by #18
+
+- `backend/internal/learning/onboarding.go` owns server-side onboarding state and diagnostic selection.
+- `backend/internal/learning/onboarding_http.go` exposes authenticated status/start/mark/complete/skip operations.
+- Diagnostic item limit is 12.
+- Marking accepts only `known`, `unsure`, `new` and returns reveal data after the mark request succeeds.
+- `OnboardingStatus` returns the current unanswered prompt for `in_progress` state, enabling reload/resume.
+- Completion and skip are distinct server states.
 
 ## Figma/OpenPencil follow-up ownership
 
-- Issue #203 remains the historical live-Figma Screen Map/archive reconciliation item if Figma MCP access becomes available; repository/OpenPencil delivery does not depend on it.
-- Issue #205 remains the historical executable route-parity umbrella; all nine canonical route parity contracts are delivered.
+- Issue #203 remains optional historical live-Figma Screen Map/archive reconciliation if Figma access becomes available; repository/OpenPencil delivery does not depend on it.
+- Issue #205 historical executable route-parity umbrella is delivered.
 - System state visual gate (Dictionary Empty renderer-equivalent) is resolved by PR #546.
-- Issue #552 / PR #553 owns OpenPencil visual/token acceptance and active AI-native source promotion.
-- Self-host OpenPencil Web + external `op`/MCP/Codex control plane is the next design-tooling follow-up after #552 completes.
+- Issue #554 persistent self-host deployment was closed `not planned` by owner decision; merged fallback tooling remains available.
 
 ## Completed executable #205 route parity
 
@@ -101,53 +134,32 @@ Issue #552 / PR #553 promotes ZSeven OpenPencil as the day-to-day AI-first desig
 - System States (Dictionary Empty renderer-equivalent): Issue #545 / PR #546 / merge `bf0036c1`.
 - Native Figma binary: Issue #487 / PR #547 / merge `d23f7a82` / Git LFS verified.
 - Deterministic ZSeven import: Issue #550 / PR #551 / merge `e7d992ad6089aa6445017ea6ffff6280787b05d8`.
-
-### Phrase Detail parity delivered by #540
-
-- mobile Dark/daily: Figma `255:55`, viewport `390x844`;
-- mobile Light/travel: Figma `257:47`, viewport `390x844`;
-- desktop Dark/technical: Figma `255:162`, viewport `1440x1024`;
-- desktop Light/daily: Figma `257:159`, viewport `1440x1024`;
-- implementation extends the existing authoritative `frontend/e2e/phrases-visual.spec.ts` owner;
-- production React/CSS, backend contracts and existing content-addressed Phrases baselines remained unchanged.
-
-### Profile parity delivered by #542
-
-- mobile Light: Figma `79:6`, viewport `390x844`;
-- mobile Dark: token-derived from canonical `79:6`, viewport `390x844`;
-- desktop Light: Figma `79:129`, viewport `1440x1024`;
-- desktop Dark: token-derived from canonical `79:129`, viewport `1440x1024`;
-- executable ownership covers direct entry, route island/main hierarchy, authenticated control surfaces, explicit appearance/canvas, visible RouteChrome owner, horizontal containment and reload stability;
-- production React/CSS, backend contracts and existing Profile content-addressed baselines remained unchanged.
+- OpenPencil active source promotion: Issue #552 / PR #553.
+- Optional standalone OpenPencil fallback: Issue #554 / PR #555.
+- First Use design gate: Issue #201 / PR #556 / merge `13d51e97514b1b521d641028169c2a7b49f68890`.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Known Figma visual-gate follow-up
 
 - Canonical Dictionary Empty Light remains historical Figma node `79:93` at `390x844` with primary approved SHA-256 `e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf`.
-- Issue #545 / PR #546 scoped the renderer-equivalent SHA-256 `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` as an accepted alternate fingerprint for `compact-empty-light` only.
+- Issue #545 / PR #546 scoped renderer-equivalent SHA-256 `dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6` as an accepted alternate fingerprint for `compact-empty-light` only.
 - Both fingerprints differ by exactly three RGB pixels (max 1 LSB delta) on the antialiased edge of the calendar-reminder control, not Dictionary content.
 - Two consecutive captures within one test attempt must still produce identical raw SHA; any unreviewed third raster continues to fail the visual gate.
-- The historical canonical Figma baseline, production UI and broad pixel tolerance remain unchanged.
 
 ## Current state
 
-- All nine canonical route parity contracts are delivered.
-- Dictionary Empty renderer-equivalent hash is resolved by Issue #545 / PR #546.
-- Native `.fig` archive is stored in GitHub via Git LFS.
-- Deterministic ZSeven native import is merged in `main` by #550/#551.
-- Issue #552 / PR #553 has completed pre-promotion visual/editability/token evidence and committed the exact accepted OpenPencil `.op` + lossless token sidecar to its branch; final immutable-head PR validation is pending before merge.
-- Current `main` is `e7d992ad6089aa6445017ea6ffff6280787b05d8`; latest runtime-bearing SHA remains `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
-- Direct Figma canvas work remains blocked by connected Starter-plan MCP quota; OpenPencil work no longer depends on that quota.
-- Issue #201 remains design-gated: mobile onboarding node `79:46` alone is insufficient for Guest Home, desktop onboarding and diagnostic/recovery state implementation.
+- Current `main` is `13d51e97514b1b521d641028169c2a7b49f68890`.
+- Latest application runtime-bearing SHA and latest Stage deployment remain `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`; design/tooling merges after it did not require Stage.
+- OpenPencil is the active AI-native visual source and operates successfully in GitHub Actions without a persistent VPS.
+- Issue #201 design gate is complete; Issue #201 itself remains open because its implementation acceptance criteria are not yet delivered.
+- The next atomic product slice is Issue #201 runtime implementation: Guest Home, onboarding/diagnostic UI, server-state resume/recovery, skip/complete transitions, accessibility and mobile/desktop Light/Dark visual regression.
 
 ## Remaining roadmap
 
-- #552: finish immutable-head OpenPencil acceptance/full CI, review audit, merge and exact-main validation.
-- Self-host follow-up: deploy authenticated OpenPencil Web and connect external `op`/MCP/Codex control plane with TLS, backups and single-writer/locking policy.
-- #203: optional historical live-Figma Screen Map/archive synchronization when MCP access is available; repository/OpenPencil delivery does not depend on it.
+- #201: implement the approved First Use runtime against the existing #18 server contract, then run full product delivery including Stage/public validation because runtime will change.
+- #203: optional historical live-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
-- #201/#18: complete canonical First Use design states, then implement the approved flow.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
 - #78: complete remaining CSP/security-header enforcement through authorized staged rollout.
 - #65/#461: reduced-motion and physical-device accessibility sign-off remain separate.
