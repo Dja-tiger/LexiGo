@@ -1,0 +1,18 @@
+/*
+ * Issue #571: Phrases catalog compatibility with RouteChrome tablet rail.
+ *
+ * The catalog keeps its desktop controls and filters, but the fixed rail reduces
+ * available inline space between 768px and 1099px. Stack the existing filter and
+ * result owners instead of hiding controls or changing catalog state semantics.
+ */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-filters,
+  .lx-routed-app[data-route-path="/phrases"] .lx-phrases-results-panel {
+    width: 100%;
+    min-width: 0;
+  }
+}
