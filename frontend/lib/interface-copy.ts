@@ -1,3 +1,5 @@
+import type { LessonSelectionReason } from "./learning";
+
 export type LearningTerm = "recall" | "due" | "retained" | "cloze" | "chunk";
 export type LessonSourceLabelKey =
   | "mixed"
@@ -52,6 +54,15 @@ const LESSON_SOURCE_LABELS: Record<LessonSourceLabelKey, string> = {
   "data-engineering": "Инженерия данных",
   backend: "Backend-разработка",
   "academic-technical-english": "Academic Technical English",
+};
+
+const LESSON_SELECTION_REASON_LABELS: Record<LessonSelectionReason, string> = {
+  recent_failure: "Недавняя ошибка",
+  due: "Готово к повторению",
+  weak_topic: "Слабая тема",
+  new: "Новый материал",
+  scheduled: "По расписанию",
+  manual: "Выбрано вручную",
 };
 
 const SYSTEM_STATE_EYEBROWS: Record<SystemStateKind, string> = {
@@ -127,6 +138,10 @@ export function lessonSourceLabel(source: string): string {
   const trimmed = source.trim();
   if (!trimmed) return "Раздел не указан";
   return LESSON_SOURCE_LABELS[normalizedKey(trimmed) as LessonSourceLabelKey] ?? trimmed;
+}
+
+export function lessonSelectionReasonLabel(reason: LessonSelectionReason): string {
+  return LESSON_SELECTION_REASON_LABELS[reason];
 }
 
 export function systemStateEyebrow(kind: SystemStateKind): string {
