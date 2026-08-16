@@ -125,9 +125,12 @@ jobs:
         run: |
           set -Eeuo pipefail
           hash="$(docker run --rm "$CADDY_IMAGE" caddy hash-password --plaintext 'ci-only-openpencil-password')"
+          # Format-only fake token: v0.2.4 accepts cfut_ + >=32 token chars.
+          # The container has --network none, so this value can never reach Cloudflare.
+          cloudflare_ci_token='cfut_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
           docker run --rm --network none \
             -e ACME_EMAIL=ci@example.test \
-            -e CLOUDFLARE_API_TOKEN=ci-placeholder \
+            -e CLOUDFLARE_API_TOKEN="$cloudflare_ci_token" \
             -e HSTS_MAX_AGE=86400 \
             -e OPENPENCIL_SITE_ADDRESS=design.example.test \
             -e OPENPENCIL_BASIC_AUTH_USER=lexigo-ci \
