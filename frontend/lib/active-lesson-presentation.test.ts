@@ -6,6 +6,7 @@ import {
   activeLessonEyebrow,
   activeLessonFeedbackKind,
   activeLessonModeLabel,
+  activeLessonSelectionReasonText,
 } from "./active-lesson-presentation";
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase("ru-RU");
@@ -22,6 +23,16 @@ describe("active lesson presentation model", () => {
     expect(activeLessonEyebrow("study", "phrase")).toBe("НОВАЯ ФРАЗА");
     expect(activeLessonEyebrow("recall", "word")).toBe("ВВЕДИТЕ ОТВЕТ");
     expect(activeLessonEyebrow("choice", "phrase")).toBe("ВЫБЕРИТЕ ПЕРЕВОД");
+  });
+
+  it("shows a server-owned selection reason without inventing one", () => {
+    expect(activeLessonSelectionReasonText("recent_failure")).toBe("Почему предложено: Недавняя ошибка");
+    expect(activeLessonSelectionReasonText("due")).toBe("Почему предложено: Готово к повторению");
+    expect(activeLessonSelectionReasonText("weak_topic")).toBe("Почему предложено: Слабая тема");
+    expect(activeLessonSelectionReasonText("new")).toBe("Почему предложено: Новый материал");
+    expect(activeLessonSelectionReasonText("scheduled")).toBe("Почему предложено: По расписанию");
+    expect(activeLessonSelectionReasonText("manual")).toBe("Почему предложено: Выбрано вручную");
+    expect(activeLessonSelectionReasonText(undefined)).toBe("");
   });
 
   it("does not expose confidence before an objective recall or choice attempt", () => {

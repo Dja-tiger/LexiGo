@@ -87,11 +87,13 @@ describe("account resource contracts", () => {
       currentIndex: 0,
       version: 1,
       status: "active",
-      items: [{ ...ITEM, position: 0 }],
+      items: [{ ...ITEM, position: 0, reason: "recent_failure" }],
       createdAt: "2026-07-18T00:00:00Z",
       updatedAt: "2026-07-18T00:00:00Z",
     };
     expect(isActiveLessonPayload(activeLesson)).toBe(true);
+    expect(isActiveLessonPayload({ ...activeLesson, items: [{ ...ITEM, position: 0 }] })).toBe(true);
+    expect(isActiveLessonPayload({ ...activeLesson, items: [{ ...ITEM, position: 0, reason: "unknown_reason" }] })).toBe(false);
     expect(isActiveLessonPayload({ ...activeLesson, source: "unknown" })).toBe(false);
     expect(isActiveLessonPayload({ ...activeLesson, createdAt: "invalid" })).toBe(false);
     expect(isActiveLessonPayload({ id: "lesson-1", items: [] })).toBe(false);

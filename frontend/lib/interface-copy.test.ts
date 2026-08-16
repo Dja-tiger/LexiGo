@@ -4,6 +4,7 @@ import {
   catalogStatusLabel,
   interfaceActionLabel,
   learningTermCopy,
+  lessonSelectionReasonLabel,
   lessonSourceLabel,
   partOfSpeechLabel,
   systemStateEyebrow,
@@ -73,6 +74,15 @@ describe("interface copy", () => {
     expect(lessonSourceLabel("academic-technical-english")).toBe("Academic Technical English");
     expect(lessonSourceLabel(" future-source ")).toBe("future-source");
     expect(lessonSourceLabel(" ")).toBe("Раздел не указан");
+  });
+
+  it("keeps lesson selection reasons concise and truthful", () => {
+    expect(lessonSelectionReasonLabel("recent_failure")).toBe("Недавняя ошибка");
+    expect(lessonSelectionReasonLabel("due")).toBe("Готово к повторению");
+    expect(lessonSelectionReasonLabel("weak_topic")).toBe("Слабая тема");
+    expect(lessonSelectionReasonLabel("new")).toBe("Новый материал");
+    expect(lessonSelectionReasonLabel("scheduled")).toBe("По расписанию");
+    expect(lessonSelectionReasonLabel("manual")).toBe("Выбрано вручную");
   });
 
   it("keeps generic async-state and recovery actions stable", () => {

@@ -1,4 +1,6 @@
+import { lessonSelectionReasonLabel } from "./interface-copy";
 import { trackLearnHandoffItem } from "./lesson-composition-handoff";
+import type { LessonSelectionReason } from "./learning";
 import type { AnswerMode } from "./progress";
 
 export type ActiveLessonFeedbackKind = "idle" | "pending" | "correct" | "incorrect" | "study";
@@ -15,6 +17,10 @@ export function activeLessonEyebrow(mode: AnswerMode, kind: "word" | "phrase"): 
   if (mode === "study") return kind === "phrase" ? "НОВАЯ ФРАЗА" : "НОВОЕ СЛОВО";
   if (mode === "choice") return "ВЫБЕРИТЕ ПЕРЕВОД";
   return "ВВЕДИТЕ ОТВЕТ";
+}
+
+export function activeLessonSelectionReasonText(reason?: LessonSelectionReason): string {
+  return reason ? `Почему предложено: ${lessonSelectionReasonLabel(reason)}` : "";
 }
 
 export function activeLessonConfidenceAvailable(mode: AnswerMode, revealed: boolean): boolean {
