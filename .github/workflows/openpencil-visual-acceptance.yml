@@ -7,6 +7,7 @@ on:
       - "design/openpencil/LexiGo Design System.op"
       - "scripts/figma/openpencil-ai-import.sh"
       - "scripts/figma/openpencil-visual-acceptance.sh"
+      - "scripts/figma/extract-figma-variables.mjs"
       - "docs/figma/openpencil-screen-map.json"
       - "docs/figma/openpencil-ai-workflow.md"
       - ".github/workflows/openpencil-visual-acceptance.yml"
@@ -17,6 +18,7 @@ on:
       - "design/openpencil/LexiGo Design System.op"
       - "scripts/figma/openpencil-ai-import.sh"
       - "scripts/figma/openpencil-visual-acceptance.sh"
+      - "scripts/figma/extract-figma-variables.mjs"
       - "docs/figma/openpencil-screen-map.json"
       - "docs/figma/openpencil-ai-workflow.md"
       - ".github/workflows/openpencil-visual-acceptance.yml"
@@ -33,7 +35,9 @@ jobs:
   visual-acceptance:
     name: Render and probe ZSeven OpenPencil v0.8.2 candidate
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 20
+    timeout-minutes: 25
+    env:
+      VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright:v1.62.1-noble
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v7
@@ -82,12 +86,85 @@ jobs:
       - name: Render canonical screens and probe editability
         run: bash scripts/figma/openpencil-visual-acceptance.sh
 
+      - name: Extract native Figma variables read-only
+        run: |
+          set -Eeuo pipefail
+          extractor_dir="$RUNNER_TEMP/open-pencil-variable-extractor"
+          rm -rf "$extractor_dir"
+          mkdir -p "$extractor_dir"
+          cat > "$extractor_dir/package.json" <<'JSON'
+          {
+            "name": "lexigo-open-pencil-variable-extractor",
+            "private": true,
+            "type": "module",
+            "dependencies": {
+              "@open-pencil/core": "0.13.2"
+            }
+          }
+          JSON
+
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --volume "$extractor_dir:/extractor" \
+            --workdir /extractor \
+            "$VARIABLE_EXTRACTOR_IMAGE" \
+            bash -lc '
+              set -Eeuo pipefail
+              npm install --ignore-scripts --no-audit --no-fund
+              npm ls @open-pencil/core --json > installed-packages.json
+              npm view @open-pencil/core@0.13.2 dist.integrity > npm-dist-integrity.txt
+              EXPECTED_FIG_SHA256="cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423" \
+              EXPECTED_FIG_VARIABLE_COUNT="92" \
+              OPEN_PENCIL_EXTRACTOR_VERSION="0.13.2" \
+                node /workspace/scripts/figma/extract-figma-variables.mjs \
+                  "/workspace/design/figma/LexiGo Design System.fig" \
+                  /extractor/figma-variables.json \
+                  | tee extractor-summary.json
+            '
+
+          cp "$extractor_dir/figma-variables.json" .tmp/openpencil-visual-acceptance/native-figma-variables.json
+          cp "$extractor_dir/extractor-summary.json" .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json
+          cp "$extractor_dir/npm-dist-integrity.txt" .tmp/openpencil-visual-acceptance/native-variable-extractor-integrity.txt
+          cp "$extractor_dir/installed-packages.json" .tmp/openpencil-visual-acceptance/native-variable-extractor-packages.json
+          cp "$extractor_dir/package-lock.json" .tmp/openpencil-visual-acceptance/native-variable-extractor-package-lock.json
+
+      - name: Correlate token acceptance evidence
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = Path('.tmp/openpencil-visual-acceptance')
+          summary_path = evidence / 'acceptance-summary.json'
+          native_path = evidence / 'native-figma-variables.json'
+          summary = json.loads(summary_path.read_text(encoding='utf-8'))
+          native = json.loads(native_path.read_text(encoding='utf-8'))
+
+          native_count = native['summary']['variableCount']
+          if native_count != 92:
+              raise SystemExit(f'Expected 92 native Figma variables, got {native_count}')
+
+          summary['nativeFigmaVariableCount'] = native_count
+          summary['nativeFigmaCollectionCount'] = native['summary']['collectionCount']
+          summary['nativeFigmaAliasCount'] = native['summary']['aliasCount']
+          summary['nativeFigmaUnresolvedAliasCount'] = native['summary']['unresolvedAliasCount']
+          summary['nativeFigmaIncompleteModeValueCount'] = native['summary']['incompleteModeValueCount']
+          summary['nativeVariableRecoveryEvidenceAvailable'] = True
+          summary['tokenMigrationRequired'] = summary.get('openPencilVariableCount', 0) != native_count
+          summary['promotionReady'] = False
+          summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
       - name: Publish acceptance summary
         if: always()
         run: |
           set -Eeuo pipefail
           if [ -f .tmp/openpencil-visual-acceptance/acceptance-summary.json ]; then
             cat .tmp/openpencil-visual-acceptance/acceptance-summary.json
+          fi
+          if [ -f .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json ]; then
+            cat .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json
           fi
           if [ -f .tmp/openpencil-visual-acceptance/render-manifest.json ]; then
             cat .tmp/openpencil-visual-acceptance/render-manifest.json
