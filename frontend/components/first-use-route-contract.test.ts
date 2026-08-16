@@ -33,7 +33,7 @@ function rootLightVariables(css: string): Record<string, string> {
   const block = css.match(/^:root\s*\{([\s\S]*?)\n\}/)?.[1];
   if (!block) throw new Error("First Use root token block is missing");
   return Object.fromEntries(
-    [...block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6});/gi)].map((match) => [match[1], match[2].toLowerCase()]),
+    [...block.matchAll(/--fu-([a-z0-9-]+):\s*(#[0-9a-f]{6});/gi)].map((match) => [match[1], match[2].toLowerCase()]),
   );
 }
 
