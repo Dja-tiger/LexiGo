@@ -1,101 +1,45 @@
 # Current Task Progress
 
-## 2026-08-16 Europe/Moscow
+## 2026-08-16
 
-### Identity
+### Started #201 design slice
 
-- Issue: #554.
-- Branch: `agent/issue-554-openpencil-self-host`.
-- Base SHA: `31f44c973de79d34b13cb68c8ef2f58a3be3be7d`.
-- PR: #555 (Draft).
-- Product runtime is out of scope.
+- Verified `main` at `14558e726cb64c59b21437832bef3c6277c978b6` with no open PRs.
+- Created `design/issue-201-first-use-openpencil` from exact `main`.
+- Owner decision: continue operating OpenPencil v0.8.2 in GitHub Actions; persistent VPS deployment is not required for design work.
+- Closed infrastructure Issue #554 as `not planned`; merged self-host tooling remains an optional fallback.
 
-### Verified baseline
+### Contract reconstructed
 
-- PR #553 merged OpenPencil source promotion into `main` at `31f44c973de79d34b13cb68c8ef2f58a3be3be7d`.
-- Exact-main CI #3620 is success.
-- Deploy Stage run #3470 is success on the same SHA.
-- Active `.op` SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`.
-- Active token sidecar SHA-256: `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
+Backend #18 fixes the First Use interaction semantics: `not_started / in_progress / completed / skipped`, up to 12 diagnostic items, and `known / unsure / new` self-mark before reveal. Existing mobile Light onboarding is `fig_4282` / Figma `79:46`.
 
-### Upstream self-host contract verified
+### OpenPencil inspection and design generation complete
 
-Pinned product version remains `ZSeven-W/openpencil` v0.8.2.
+- Inspection run `31942263196` passed and resolved exact existing node/page structure without mutating source.
+- Preview run `31942476320` generated 40 First Use states on a disposable source using semantic OpenPencil operations.
+- Visual review identified real overlap defects in mobile resume, desktop Guest Home and desktop onboarding.
+- Repair run `31942692887` fixed those defects through semantic `update_node`; repaired screenshots were reviewed.
+- Exact reviewed repair artifact `9262446242` has SHA `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`.
 
-Verified from upstream v0.8.2 source/release contract:
+### Reviewed source promoted
 
-- tagged release publishes `ghcr.io/zseven-w/openpencil-web:v0.8.2`;
-- image contains Rust web host + wasm/CanvasKit assets, not Codex/Claude/OpenCode CLI binaries;
-- Web host uses port `3100` and requires an external TLS/auth boundary for an Internet-reachable deployment;
-- exact browser origins are configured with `OPENPENCIL_WEB_ALLOWED_ORIGINS`;
-- server-side persistence of browser-entered provider credentials is optional and is disabled in the LexiGo stack;
-- `op-host-web-server --mcp-http <port> <path>` runs a file-backed MCP service;
-- v0.8.2 `run_http` explicitly binds `127.0.0.1:<port>`;
-- `read_nodes` is active-page-scoped, so the disposable write probe must select `figma-page-21` before reading/writing `fig_6879`.
+- Commit workflow run `31942908405` passed.
+- Bot commit `4cedeb541686e81d9c4a401378c4eaa8f0038b21` changed only `design/openpencil/LexiGo Design System.op`.
+- Active source is now 6,937,300 bytes, 23 pages, 7,983 recursive nodes and 92 OpenPencil variables.
+- Token sidecar remains unchanged.
+- All 40 canonical First Use roots are registered under `activeScreens` in Screen Map; representative roots include `n2`, `n21`, `n42`, `n62`, `n299`, `n321`, `n378`, `n599`, plus existing `fig_4282`.
 
-### Immutable image identity
+### Permanent CI contract corrected
 
-Authoritative GHCR inspection resolved:
+The old acceptance required active `.op` byte equality with the initial Figma-derived tokenized migration forever. That contradicted the promoted OpenPencil day-to-day model.
 
-- OCI index: `sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775`;
-- linux/amd64 manifest: `sha256:6553c22078f198852a1fc778af7a886e5d941bb5c83f6c1865febf52cb9c7403`.
+The permanent workflow now separates:
 
-Both `deploy/openpencil/compose.yml` and `deploy/openpencil/openpencil.env.example` now pin the OCI index as:
+- immutable migration/token provenance — still reproduced exactly from `.fig` at historical tokenized SHA `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`;
+- current active-source acceptance — exact active SHA/size, combined Screen Map structure, selected Linux renders, 92 variables and isolated editability.
 
-`ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775`
+`docs/figma/openpencil-ai-workflow.md` now explicitly states GitHub Actions Linux runners are the default AI design runtime and self-hosting is optional.
 
-### Repository implementation completed
+### Remaining gate
 
-- Standalone `deploy/openpencil/**`; existing Stage/prod Compose and product Caddy are unchanged.
-- Human Web raw port is host-loopback only; public browser path exists only through standalone Caddy TLS + Basic Auth.
-- Agent MCP uses host networking solely to preserve upstream host-loopback binding; no Docker port or Caddy MCP route exists.
-- Shared atomic writer lock blocks concurrent human/agent sessions even if an operator bypasses the wrapper and calls Compose directly.
-- Every writer session creates a checksummed backup before OpenPencil starts; rotation is bounded and keep count must be >=1.
-- Operator wrapper requires a non-main Git worktree, immutable image pin and explicit stale-lock recovery.
-- Documentation defines SSH tunnel MCP access and the normal branch/PR review lifecycle.
-
-### Authoritative acceptance
-
-OpenPencil self-host workflow #7, run `31926560509`, is fully green on branch head `af4cb70d97ab3f3f7ba23477434b47e71f376949`.
-
-It proves:
-
-- shell/source security checks pass;
-- Compose parses and product deployment remains isolated;
-- Web starts through raw host loopback only;
-- concurrent second writer is rejected;
-- MCP binds host `127.0.0.1` only;
-- Home node `fig_2287` is readable;
-- exactly 92 runtime variables are visible;
-- 23 pages are visible;
-- active page switches to `figma-page-21`;
-- `fig_6879` can be changed to `ОБУЧЕНИЕ · MCP SMOKE`, verified and restored on a disposable worktree copy;
-- canonical source hashes remain unchanged;
-- backup rotation and stale-lock recovery pass;
-- Cloudflare-enabled Caddy image builds successfully;
-- the real Caddy configuration provisions successfully with Basic Auth and a valid-shaped format-only Cloudflare token under `--network none`;
-- checked-in image pin equals the registry-resolved immutable digest.
-
-Run #7 evidence artifact:
-
-- artifact ID: `9258022406`;
-- artifact digest: `sha256:026004b1af33684f93117b33a88ac2b8fd8ae8ad3c7e5df3f27650b203e757b2`.
-
-### Remaining repository gates
-
-1. Finish factual `.agents/current/**` update and stop writes.
-2. Require OpenPencil self-host workflow green again on the final developer-authored head.
-3. Require full repository CI green on the same final head.
-4. Re-run changed-path/review/thread audit.
-5. Mark PR #555 Ready and squash merge with expected-head guard.
-6. Verify exact-main self-host workflow + repository CI.
-
-### External host boundary
-
-A real host has not been provisioned through the available tools. Do not claim live deployment yet. After repository merge, Issue #554 remains open for environment evidence:
-
-- dedicated design host/worktree provisioned;
-- DNS + Cloudflare token configured out-of-repo;
-- trusted TLS issued;
-- Basic Auth verified from outside the host;
-- Codex reaches MCP only through the approved SSH tunnel to host loopback.
+Delete all temporary `openpencil-issue-201-*` execution workflows, verify final path diff, open Draft PR, run permanent OpenPencil acceptance plus full repository CI on a developer-authored head, inspect the active evidence artifact, then perform review/path/thread audit and merge if green.

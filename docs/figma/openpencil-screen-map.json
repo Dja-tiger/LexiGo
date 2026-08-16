@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "figmaFile": "LexiGo Design System",
     "figmaFileKey": "3xXmBWnf38jbvLjtziwber",
@@ -7,7 +7,11 @@
     "figSha256": "cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423",
     "openPencilVersion": "v0.8.2",
     "candidateOpSha256": "ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c",
-    "candidateOpSize": 2309061
+    "candidateOpSize": 2309061,
+    "migrationTokenizedOpSha256": "5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664",
+    "migrationTokenizedOpSize": 6446726,
+    "activeOpSha256": "6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e",
+    "activeOpSize": 6937300
   },
   "pages": {
     "foundations": {"pageId": "figma-page-9", "pageName": "09 — Foundations", "rootId": "fig_858"},
@@ -54,6 +58,51 @@
     {"key":"state.dictionary.empty.light","route":"/dictionary","legacyFigmaNode":"79:93","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4234","name":"Mobile / Dictionary Empty / Light","width":390,"height":844,"render":true},
     {"key":"state.error.dark","route":"shared","legacyFigmaNode":"79:117","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4222","name":"Mobile / Error / Dark","width":390,"height":844,"render":false},
     {"key":"state.offline.desktop.dark","route":"shared","legacyFigmaNode":"79:194","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4104","name":"Desktop / Offline / Dark","width":1440,"height":1024,"render":true}
+  ],
+  "activeScreens": [
+    {"key":"firstuse.onboarding.mobile.light","route":"/onboarding","legacyFigmaNode":"79:46","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4282","name":"Mobile / Onboarding / Light","width":390,"height":844,"render":true},
+    {"key":"firstuse.guest.mobile.light","route":"/","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n2","name":"First Use / Guest Home / Mobile / Light","width":390,"height":844,"render":true},
+    {"key":"firstuse.diagnostic.pre.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n21","name":"First Use / Diagnostic Pre-reveal / Mobile / Light","width":390,"height":844,"render":true},
+    {"key":"firstuse.diagnostic.reveal.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n42","name":"First Use / Diagnostic Reveal / Mobile / Light","width":390,"height":844,"render":false},
+    {"key":"firstuse.diagnostic.resume.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n62","name":"First Use / Diagnostic Resume / Mobile / Light","width":390,"height":844,"render":true},
+    {"key":"firstuse.skip.confirm.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n85","name":"First Use / Skip Confirm / Mobile / Light","width":390,"height":844,"render":false},
+    {"key":"firstuse.skipped.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n96","name":"First Use / Skipped / Mobile / Light","width":390,"height":844,"render":false},
+    {"key":"firstuse.complete.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n105","name":"First Use / Complete / Mobile / Light","width":390,"height":844,"render":true},
+    {"key":"firstuse.loading.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n117","name":"First Use / Loading / Mobile / Light","width":390,"height":844,"render":false},
+    {"key":"firstuse.error.mobile.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n128","name":"First Use / Error / Mobile / Light","width":390,"height":844,"render":true},
+
+    {"key":"firstuse.onboarding.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n139","name":"First Use / Onboarding Role / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.guest.mobile.dark","route":"/","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n162","name":"First Use / Guest Home / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.diagnostic.pre.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n181","name":"First Use / Diagnostic Pre-reveal / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.diagnostic.reveal.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n202","name":"First Use / Diagnostic Reveal / Mobile / Dark","width":390,"height":844,"render":true},
+    {"key":"firstuse.diagnostic.resume.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n222","name":"First Use / Diagnostic Resume / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.skip.confirm.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n245","name":"First Use / Skip Confirm / Mobile / Dark","width":390,"height":844,"render":true},
+    {"key":"firstuse.skipped.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n256","name":"First Use / Skipped / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.complete.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n265","name":"First Use / Complete / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.loading.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n277","name":"First Use / Loading / Mobile / Dark","width":390,"height":844,"render":false},
+    {"key":"firstuse.error.mobile.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n288","name":"First Use / Error / Mobile / Dark","width":390,"height":844,"render":false},
+
+    {"key":"firstuse.onboarding.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n299","name":"First Use / Onboarding Role / Desktop / Light","width":1440,"height":900,"render":true},
+    {"key":"firstuse.guest.desktop.light","route":"/","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n321","name":"First Use / Guest Home / Desktop / Light","width":1440,"height":900,"render":true},
+    {"key":"firstuse.diagnostic.pre.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n342","name":"First Use / Diagnostic Pre-reveal / Desktop / Light","width":1440,"height":900,"render":false},
+    {"key":"firstuse.diagnostic.reveal.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n361","name":"First Use / Diagnostic Reveal / Desktop / Light","width":1440,"height":900,"render":false},
+    {"key":"firstuse.diagnostic.resume.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n378","name":"First Use / Diagnostic Resume / Desktop / Light","width":1440,"height":900,"render":true},
+    {"key":"firstuse.skip.confirm.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n399","name":"First Use / Skip Confirm / Desktop / Light","width":1440,"height":900,"render":false},
+    {"key":"firstuse.skipped.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n414","name":"First Use / Skipped / Desktop / Light","width":1440,"height":900,"render":true},
+    {"key":"firstuse.complete.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n427","name":"First Use / Complete / Desktop / Light","width":1440,"height":900,"render":false},
+    {"key":"firstuse.loading.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n442","name":"First Use / Loading / Desktop / Light","width":1440,"height":900,"render":false},
+    {"key":"firstuse.error.desktop.light","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n456","name":"First Use / Error / Desktop / Light","width":1440,"height":900,"render":false},
+
+    {"key":"firstuse.onboarding.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n471","name":"First Use / Onboarding Role / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.guest.desktop.dark","route":"/","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n493","name":"First Use / Guest Home / Desktop / Dark","width":1440,"height":900,"render":true},
+    {"key":"firstuse.diagnostic.pre.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n514","name":"First Use / Diagnostic Pre-reveal / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.diagnostic.reveal.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n533","name":"First Use / Diagnostic Reveal / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.diagnostic.resume.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n550","name":"First Use / Diagnostic Resume / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.skip.confirm.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n571","name":"First Use / Skip Confirm / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.skipped.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n586","name":"First Use / Skipped / Desktop / Dark","width":1440,"height":900,"render":false},
+    {"key":"firstuse.complete.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n599","name":"First Use / Complete / Desktop / Dark","width":1440,"height":900,"render":true},
+    {"key":"firstuse.loading.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n614","name":"First Use / Loading / Desktop / Dark","width":1440,"height":900,"render":true},
+    {"key":"firstuse.error.desktop.dark","route":"/onboarding","legacyFigmaNode":"openpencil-native:#201","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"n628","name":"First Use / Error / Desktop / Dark","width":1440,"height":900,"render":false}
   ],
   "editabilityProbe": {
     "pageId": "figma-page-21",

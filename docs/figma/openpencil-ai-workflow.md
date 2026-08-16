@@ -1,6 +1,6 @@
 # LexiGo AI design workflow with ZSeven OpenPencil
 
-Status: promoted AI-native design workflow under Issue #552 / PR #553.
+Status: promoted AI-native design workflow under Issue #552 / PR #553; CI-native day-to-day editing confirmed by owner decision on 2026-08-16.
 
 ## Decision
 
@@ -8,7 +8,7 @@ LexiGo uses [`ZSeven-W/openpencil`](https://github.com/ZSeven-W/openpencil) as t
 
 The validated editor/import toolchain is pinned to OpenPencil `v0.8.2`. The similarly named `open-pencil/open-pencil` project is **not** the primary editor; its published `@open-pencil/core@0.13.2` parser is used only as a read-only native `.fig` variable extractor because ZSeven v0.8.2 does not import Figma variables.
 
-The primary operating requirement is agent-driven design work through `op`/MCP with Git review, not continued dependence on Figma Cloud or Figma MCP quota.
+The primary operating requirement is agent-driven design work through `op`/MCP with Git review, not continued dependence on Figma Cloud or Figma MCP quota. Persistent self-hosting is optional: the accepted default execution environment for AI design sessions is an ephemeral GitHub Actions Linux runner using the pinned OpenPencil image/toolchain.
 
 ## Source-of-truth hierarchy
 
@@ -18,17 +18,17 @@ The primary operating requirement is agent-driven design work through `op`/MCP w
 design/openpencil/LexiGo Design System.op
 ```
 
-Accepted identity:
+Current reviewed identity after Issue #201 First Use design work:
 
-- SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`
-- Size: `6,446,726` bytes
+- SHA-256: `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`
+- Size: `6,937,300` bytes
 - 23 pages
-- 7,341 recursive design nodes
+- 7,983 recursive design nodes
 - 83 imported nodes marked reusable
 - 92 OpenPencil runtime variables
 - 2 OpenPencil theme axes
 
-This is the file that OpenPencil Web, `op` CLI and the future MCP/Codex control plane should edit.
+This is the file that OpenPencil Web, `op` CLI and MCP/Codex edit. Its accepted identity is tracked in `docs/figma/openpencil-screen-map.json` and must move only with reviewed active-source evidence.
 
 ### 2. Active token semantics/provenance source
 
@@ -50,7 +50,7 @@ This sidecar is intentionally separate from `.op`. ZSeven v0.8.2 can persist typ
 
 For token changes, the sidecar semantics and compiler contract are authoritative. Do not delete alias provenance merely because the current ZSeven runtime resolves the same value numerically.
 
-### 3. Immutable migration archive
+### 3. Immutable migration archive and baseline
 
 ```text
 design/figma/LexiGo Design System.fig
@@ -62,6 +62,13 @@ design/figma/LexiGo Design System.fig
 - Figma Cloud file key: `3xXmBWnf38jbvLjtziwber`
 
 The `.fig` is no longer the day-to-day editable owner after promotion. It remains the immutable migration/archive input used by fail-closed regeneration CI and as historical Figma provenance.
+
+The deterministic tokenized migration baseline remains:
+
+- SHA-256: `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664`
+- Size: `6,446,726` bytes
+
+That identity is deliberately separate from the active `.op`. Post-promotion OpenPencil-native design work must not be forced back to byte equality with the historical Figma migration baseline.
 
 ### 4. Figma Cloud
 
@@ -95,19 +102,22 @@ Issue #552 maps existing Figma provenance to stable imported OpenPencil `fig_*` 
 docs/figma/openpencil-screen-map.json
 ```
 
-The acceptance workflow validates exact page/name/type/geometry mapping and renders 20 representative Linux canonical screens covering Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Phrase Detail, Profile and shared states.
+`screen-map.json` now has two inventories:
 
-It also performs a real `op update` on a disposable document copy and requires readback plus persisted file modification while the reviewed source remains unchanged.
+- `screens`: Figma-derived migration-baseline mappings that must remain reproducible from the archive;
+- `activeScreens`: reviewed OpenPencil-native/post-promotion screens that exist only in the current active `.op`.
 
-The authoritative pre-promotion acceptance artifact was:
+The acceptance workflow validates exact page/name/type/geometry mapping and deterministic Linux renders. It also performs a real OpenPencil update on a disposable document copy and requires readback plus persisted file modification while the reviewed source remains unchanged.
+
+The authoritative pre-promotion migration artifact was:
 
 - workflow run: OpenPencil visual acceptance run #14
 - artifact id: `9257099175`
 - artifact digest: `sha256:8b3b4b60b05382327e5346a1c896f8e5d47c3f0a2081986c156abc2776187692`
-- rendered canonical screens: 20
+- rendered canonical migration screens: 20
 - manual review: completed
 
-Manual review applies to this exact Linux artifact. It is not a new live-Figma screenshot comparison and must not be described as such.
+Manual review applies to that exact Linux migration artifact. Later active-source design slices carry their own Linux render evidence and must not be described as a new live-Figma screenshot comparison.
 
 ### Phase 3 — native token recovery and ZSeven compilation
 
@@ -154,7 +164,7 @@ Token application is performed only through supported OpenPencil APIs:
 scripts/figma/openpencil-token-migration.sh
 ```
 
-It uses `op themes:set` / `op vars:set`, reopens the saved `.op` and requires 92 variables and 2 theme axes.
+It uses `op themes:set` / `op vars:set`, reopens the saved migration candidate and requires 92 variables and 2 theme axes.
 
 OpenPencil save normalizes some floating-point serialization. The accepted migration recorded 186 numeric normalizations with maximum absolute drift `2.8610229518832853e-08`. Semantic tree comparison allows numeric normalization only within `1e-7`; non-numeric identity/name/type/text/order changes fail.
 
@@ -166,22 +176,50 @@ Owner:
 .github/workflows/openpencil-visual-acceptance.yml
 ```
 
-The workflow:
+The workflow now validates two independent contracts.
+
+Migration contract:
 
 1. resolves and verifies the archived Git LFS `.fig`;
 2. reproduces the exact base ZSeven import;
-3. renders the original canonical screen set;
+3. renders the original migration screen set;
 4. extracts all 92 native Figma variables read-only;
 5. compiles the lossless token graph/runtime layer;
 6. applies tokens through official ZSeven APIs;
-7. reopens the tokenized document and requires 92 variables / 2 axes;
-8. re-renders the same 20 screens;
+7. reopens the tokenized migration document and requires 92 variables / 2 axes;
+8. re-renders the same migration screens;
 9. requires exact original/tokenized PNG width, height and SHA-256 equality;
-10. requires the committed `.op` to match the deterministic regenerated `.op` byte-for-byte;
-11. requires the committed token sidecar to match the deterministic regenerated sidecar byte-for-byte;
-12. rejects reintroduction of the temporary write-enabled promotion bootstrap.
+10. requires the regenerated tokenized migration document to retain the accepted historical SHA/size;
+11. requires the committed token sidecar to match deterministic regeneration byte-for-byte.
 
-This is deliberately stricter than checking only that the `.op` parses. Unexpected regeneration drift fails CI.
+Active-source contract:
+
+1. reads the reviewed active SHA/size from Screen Map;
+2. merges migration `screens` with `activeScreens` for structural validation only against the committed active `.op`;
+3. requires every mapped active node to exist on the expected page with exact name/type/geometry;
+4. renders the selected active Linux evidence set;
+5. requires all 92 OpenPencil runtime variables to remain visible;
+6. repeats the isolated editability probe on a disposable copy;
+7. requires the committed active source to remain byte-identical through the read/render probe.
+
+This separation is intentional. The migration baseline proves provenance; active-source acceptance proves that reviewed OpenPencil-native development remains structurally valid and editable. CI must never silently replace the active source with a newly regenerated Figma baseline.
+
+## Issue #201 First Use production slice
+
+The first post-promotion AI-native production design slice is Issue #201. It adds a 40-state First Use matrix under `activeScreens`:
+
+- Guest Home;
+- role/context onboarding;
+- diagnostic pre-reveal;
+- diagnostic mark + reveal;
+- diagnostic resume/in-progress;
+- skip confirmation and skipped result;
+- completion result;
+- loading;
+- error/retry;
+- mobile/desktop and Light/Dark variants.
+
+The existing imported `Mobile / Onboarding / Light` frame remains stable at `fig_4282`. New OpenPencil-native root IDs are stable `n*` IDs recorded in Screen Map. The diagnostic interaction follows the delivered #18 backend contract: `known / unsure / new` is selected before answer reveal, diagnostic progress can resume, and skip does not claim scheduler mutation.
 
 ## Important semantic limitation
 
@@ -196,72 +234,35 @@ Therefore:
 
 ## Day-to-day AI workflow
 
-After self-host/MCP deployment, the intended cycle is:
+The default cycle does not require a persistent design VPS:
 
 ```text
-Git branch/worktree
-       |
-       v
-LexiGo Design System.op + Design Tokens.json
-       |
-       +--> OpenPencil Web           human review/edit
-       |
-       +--> op CLI / MCP ----------> Codex / AI
-       |
-       v
-reviewed design changes
-       |
-       v
-OpenPencil CI acceptance + Git PR
+Git branch
+   |
+   v
+GitHub Actions Linux runner
+   |
+   v
+pinned OpenPencil v0.8.2
+   |
+   +--> op CLI / MCP semantic reads/writes
+   +--> deterministic Linux screenshots
+   |
+   v
+reviewed .op + Screen Map
+   |
+   v
+permanent OpenPencil acceptance + Git PR
 ```
+
+Use disposable/read-only runner sessions for discovery and preview. For a design mutation, generate the candidate on a disposable copy, review Linux render evidence, then promote exactly that reviewed artifact to the feature branch with explicit source SHA/path guards. Temporary writer workflows must be deleted before final PR acceptance.
 
 AI should operate through OpenPencil semantic tools where available rather than performing ad-hoc raw JSON edits.
 
-Any intentional change to the active `.op`/token pair must update the expected acceptance identities through a reviewed migration/acceptance change; simply replacing the committed artifacts until CI becomes green is not acceptable.
+Any intentional active `.op` change must update `source.activeOpSha256`, `source.activeOpSize`, stable mapped node IDs and reviewed visual evidence. Token-sidecar identities move only when token semantics actually change. The immutable Figma migration baseline remains separately reproducible.
 
-## Self-host architecture follow-up
+## Optional self-host architecture
 
-The human canvas and agent control plane remain separate services.
+The hardened self-host stack merged under #555 remains an optional fallback for a persistent human canvas or long-lived MCP session. It is not required for normal AI development after the owner decision to continue with CI-native OpenPencil execution.
 
-```text
-                         GitHub / Git
-                              |
-                active .op + token sidecar
-                              |
-              +---------------+---------------+
-              |                               |
-              v                               v
-     OpenPencil web host                op CLI / MCP
-     browser canvas/editor             AI control plane
-              |                               |
-              |                         Codex / other agent
-              +---------------+---------------+
-                              |
-                        reviewed Git PR
-```
-
-### Human-facing web host
-
-Validated deployment target remains the ZSeven OpenPencil web release line, initially pinned to the accepted version unless a deliberate upgrade passes the same compatibility gates.
-
-The web service should be deployed on a separate authenticated/private origin. It must not be merged into LexiGo application containers merely because both are web applications.
-
-### AI control plane
-
-The web image does not imply that Codex/Claude/OpenCode CLI is embedded in the container. Agent control remains an external host/service using approved `op`/MCP integration against the Git-tracked design source.
-
-## Security requirements for self-hosting
-
-Before exposure outside localhost/private networking, define and validate:
-
-- authenticated access to the canvas origin;
-- TLS termination;
-- exact allowed browser origins;
-- no provider credentials committed to Git or baked into images;
-- provider credentials separated from application configuration;
-- explicit network policy for custom/internal AI providers;
-- backup/versioning for `.op` and token sidecar;
-- a single-writer/locking policy to prevent concurrent browser/agent file corruption;
-- authenticated/non-public MCP write access.
-
-Self-host/MCP deployment is intentionally a separate follow-up after Issue #552 promotion is merged.
+If self-hosting is enabled later, preserve the same constraints: authenticated browser access, TLS, exact origins, no provider credentials in Git, backups, single-writer locking and non-public MCP access. Self-hosting must not replace Git/PR review or the permanent CI acceptance contracts.
