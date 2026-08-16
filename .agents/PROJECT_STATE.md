@@ -12,7 +12,7 @@
 - Exact-main CI #3668 on `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` passed.
 - Deploy Stage #3519 on the same exact runtime SHA passed.
 - PR #558 has no unresolved review threads; live PR review-thread inventory is empty.
-- Issue #201 implementation acceptance is delivered and runtime validation is complete; Issue closure is the remaining bookkeeping action after this reconciliation is accepted.
+- Issue #201 was closed as `completed` on 2026-08-16 after the runtime PR, exact-main CI and exact-SHA Stage gates passed.
 - Live GitHub and live source are authoritative for open work, ownership, review state and CI.
 
 ## Delivery contract
@@ -97,16 +97,16 @@
 - OpenPencil active source promotion: Issue #552 / PR #553.
 - Optional standalone OpenPencil fallback: Issue #554 / PR #555.
 - First Use design gate: Issue #201 / PR #556.
-- First Use runtime: Issue #201 / PR #558 / merge `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` / exact-main CI #3668 / Stage #3519.
+- First Use runtime: Issue #201 / PR #558 / merge `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` / exact-main CI #3668 / Stage #3519 / Issue closed completed 2026-08-16.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Issue #201 runtime is delivered and deployed to Stage on exact merge SHA `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
-- Post-merge reconciliation synchronizes README/architecture ownership, promotes the new frontend route lesson, records this verified state and resets `.agents/current/**` from templates.
+- Issue #201 is closed as completed; its runtime is deployed to Stage on exact merge SHA `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
+- Post-merge reconciliation synchronizes README/architecture ownership, promotes the new frontend route lesson, records this verified closed state and resets `.agents/current/**` from templates.
 - No runtime/backend/API/design/deploy change is part of the reconciliation slice.
-- After Issue #201 bookkeeping closes, the next product task must be selected from live GitHub rather than inferred from this file.
+- After this reconciliation is merged and exact-main documentation CI is verified, the next product task must be selected from live GitHub rather than inferred from this file.
 
 ## Remaining roadmap
 
