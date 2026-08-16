@@ -5,9 +5,12 @@ on:
     paths:
       - "design/figma/LexiGo Design System.fig"
       - "design/openpencil/LexiGo Design System.op"
+      - "design/openpencil/LexiGo Design Tokens.json"
       - "scripts/figma/openpencil-ai-import.sh"
       - "scripts/figma/openpencil-visual-acceptance.sh"
       - "scripts/figma/extract-figma-variables.mjs"
+      - "scripts/figma/compile-openpencil-tokens.py"
+      - "scripts/figma/openpencil-token-migration.sh"
       - "docs/figma/openpencil-screen-map.json"
       - "docs/figma/openpencil-ai-workflow.md"
       - ".github/workflows/openpencil-visual-acceptance.yml"
@@ -16,9 +19,12 @@ on:
     paths:
       - "design/figma/LexiGo Design System.fig"
       - "design/openpencil/LexiGo Design System.op"
+      - "design/openpencil/LexiGo Design Tokens.json"
       - "scripts/figma/openpencil-ai-import.sh"
       - "scripts/figma/openpencil-visual-acceptance.sh"
       - "scripts/figma/extract-figma-variables.mjs"
+      - "scripts/figma/compile-openpencil-tokens.py"
+      - "scripts/figma/openpencil-token-migration.sh"
       - "docs/figma/openpencil-screen-map.json"
       - "docs/figma/openpencil-ai-workflow.md"
       - ".github/workflows/openpencil-visual-acceptance.yml"
@@ -35,9 +41,10 @@ jobs:
   visual-acceptance:
     name: Render and probe ZSeven OpenPencil v0.8.2 candidate
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       VARIABLE_EXTRACTOR_IMAGE: mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+      OPEN_PENCIL_CORE_INTEGRITY: sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow==
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v7
@@ -56,6 +63,8 @@ jobs:
           set -Eeuo pipefail
           bash -n scripts/figma/openpencil-ai-import.sh
           bash -n scripts/figma/openpencil-visual-acceptance.sh
+          bash -n scripts/figma/openpencil-token-migration.sh
+          python3 -m py_compile scripts/figma/compile-openpencil-tokens.py
           python3 -m json.tool docs/figma/openpencil-screen-map.json >/dev/null
 
       - name: Reproduce deterministic candidate
@@ -83,7 +92,7 @@ jobs:
           echo "OPENPENCIL_DESKTOP_BIN=$desktop_bin" >> "$GITHUB_ENV"
           echo "OPENPENCIL_DESKTOP_ASSET_SHA256=$actual_sha" >> "$GITHUB_ENV"
 
-      - name: Render canonical screens and probe editability
+      - name: Render original canonical candidate and probe editability
         run: bash scripts/figma/openpencil-visual-acceptance.sh
 
       - name: Extract native Figma variables read-only
@@ -108,12 +117,15 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/workspace:ro" \
             --volume "$extractor_dir:/extractor" \
             --workdir /extractor \
+            --env "EXPECTED_DIST_INTEGRITY=$OPEN_PENCIL_CORE_INTEGRITY" \
             "$VARIABLE_EXTRACTOR_IMAGE" \
             bash -lc '
               set -Eeuo pipefail
               npm install --ignore-scripts --no-audit --no-fund
               npm ls @open-pencil/core --json > installed-packages.json
               npm view @open-pencil/core@0.13.2 dist.integrity > npm-dist-integrity.txt
+              actual_integrity="$(tr -d "\r\n" < npm-dist-integrity.txt)"
+              test "$actual_integrity" = "$EXPECTED_DIST_INTEGRITY"
               EXPECTED_FIG_SHA256="cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423" \
               EXPECTED_FIG_VARIABLE_COUNT="92" \
               OPEN_PENCIL_EXTRACTOR_VERSION="0.13.2" \
@@ -129,47 +141,136 @@ jobs:
           cp "$extractor_dir/installed-packages.json" .tmp/openpencil-visual-acceptance/native-variable-extractor-packages.json
           cp "$extractor_dir/package-lock.json" .tmp/openpencil-visual-acceptance/native-variable-extractor-package-lock.json
 
-      - name: Correlate token acceptance evidence
+      - name: Compile lossless native token graph for ZSeven
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/figma/compile-openpencil-tokens.py \
+            --native .tmp/openpencil-visual-acceptance/native-figma-variables.json \
+            --variables-out .tmp/openpencil-visual-acceptance/openpencil-variables.json \
+            --themes-out .tmp/openpencil-visual-acceptance/openpencil-themes.json \
+            --provenance-out .tmp/openpencil-visual-acceptance/LexiGo\ Design\ Tokens.json \
+            | tee .tmp/openpencil-visual-acceptance/token-compiler-summary.json
+
+      - name: Apply token layer through official OpenPencil APIs
+        run: bash scripts/figma/openpencil-token-migration.sh
+
+      - name: Render tokenized candidate and prove visual invariance
+        run: |
+          set -Eeuo pipefail
+          tokenized=".tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op"
+          tokenized_sha="$(sha256sum "$tokenized" | awk '{print $1}')"
+          tokenized_size="$(wc -c < "$tokenized" | tr -d '[:space:]')"
+          OPENPENCIL_CANDIDATE_FILE="$tokenized" \
+          OPENPENCIL_CANDIDATE_SHA256="$tokenized_sha" \
+          OPENPENCIL_CANDIDATE_SIZE="$tokenized_size" \
+          OPENPENCIL_VISUAL_EVIDENCE_DIR=".tmp/openpencil-visual-acceptance/tokenized" \
+          OPENPENCIL_PORT="39114" \
+            bash scripts/figma/openpencil-visual-acceptance.sh
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('.tmp/openpencil-visual-acceptance')
+          original = json.loads((root / 'render-manifest.json').read_text(encoding='utf-8'))
+          tokenized = json.loads((root / 'tokenized/render-manifest.json').read_text(encoding='utf-8'))
+          orig = {item['key']: item for item in original['renders']}
+          tok = {item['key']: item for item in tokenized['renders']}
+          if orig.keys() != tok.keys():
+              raise SystemExit('Tokenized render inventory differs from original')
+          mismatches = []
+          for key in sorted(orig):
+              for field in ('width', 'height', 'sha256'):
+                  if orig[key][field] != tok[key][field]:
+                      mismatches.append({
+                          'key': key,
+                          'field': field,
+                          'original': orig[key][field],
+                          'tokenized': tok[key][field],
+                      })
+          result = {
+              'renderCount': len(orig),
+              'hashesMatch': not mismatches,
+              'mismatches': mismatches,
+          }
+          (root / 'tokenized-render-equivalence.json').write_text(
+              json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          if mismatches:
+              raise SystemExit(f'Token layer changed {len(mismatches)} accepted render fields')
+          PY
+
+      - name: Correlate final acceptance evidence
         run: |
           set -Eeuo pipefail
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          evidence = Path('.tmp/openpencil-visual-acceptance')
-          summary_path = evidence / 'acceptance-summary.json'
-          native_path = evidence / 'native-figma-variables.json'
+          root = Path('.tmp/openpencil-visual-acceptance')
+          summary_path = root / 'acceptance-summary.json'
           summary = json.loads(summary_path.read_text(encoding='utf-8'))
-          native = json.loads(native_path.read_text(encoding='utf-8'))
+          native = json.loads((root / 'native-figma-variables.json').read_text(encoding='utf-8'))
+          compiler = json.loads((root / 'token-compiler-summary.json').read_text(encoding='utf-8'))
+          migration = json.loads((root / 'token-migration-summary.json').read_text(encoding='utf-8'))
+          tokenized = json.loads((root / 'tokenized/acceptance-summary.json').read_text(encoding='utf-8'))
+          equivalence = json.loads((root / 'tokenized-render-equivalence.json').read_text(encoding='utf-8'))
 
-          native_count = native['summary']['variableCount']
-          if native_count != 92:
-              raise SystemExit(f'Expected 92 native Figma variables, got {native_count}')
+          if native['summary']['variableCount'] != 92:
+              raise SystemExit('Native Figma variable count drifted')
+          if native['summary']['aliasCount'] != 40:
+              raise SystemExit('Native Figma alias count drifted')
+          if migration['variableCount'] != 92 or migration['themeAxisCount'] != 2:
+              raise SystemExit('Token migration readback contract failed')
+          if tokenized['openPencilVariableCount'] != 92:
+              raise SystemExit('Tokenized candidate does not expose 92 OpenPencil variables')
+          if not equivalence['hashesMatch']:
+              raise SystemExit('Tokenized render hashes differ from original')
 
-          summary['nativeFigmaVariableCount'] = native_count
-          summary['nativeFigmaCollectionCount'] = native['summary']['collectionCount']
-          summary['nativeFigmaAliasCount'] = native['summary']['aliasCount']
-          summary['nativeFigmaUnresolvedAliasCount'] = native['summary']['unresolvedAliasCount']
-          summary['nativeFigmaIncompleteModeValueCount'] = native['summary']['incompleteModeValueCount']
-          summary['nativeVariableRecoveryEvidenceAvailable'] = True
-          summary['tokenMigrationRequired'] = summary.get('openPencilVariableCount', 0) != native_count
-          summary['promotionReady'] = False
-          summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          summary.update({
+              'nativeFigmaVariableCount': 92,
+              'nativeFigmaCollectionCount': native['summary']['collectionCount'],
+              'nativeFigmaAliasCount': 40,
+              'nativeFigmaUnresolvedAliasCount': native['summary']['unresolvedAliasCount'],
+              'nativeFigmaIncompleteModeValueCount': native['summary']['incompleteModeValueCount'],
+              'nativeVariableRecoveryEvidenceAvailable': True,
+              'compiledOpenPencilVariableCount': compiler['variableCount'],
+              'compiledOpenPencilThemeAxisCount': compiler['themeAxisCount'],
+              'compiledAliasProvenanceCount': compiler['aliasCount'],
+              'tokenizedOpSha256': migration['tokenizedSha256'],
+              'tokenizedOpBytes': migration['tokenizedBytes'],
+              'tokenizedPageTreeUnchanged': migration['pageTreeUnchanged'],
+              'tokenizedOpenPencilVariableCount': tokenized['openPencilVariableCount'],
+              'tokenizedOpenPencilThemeAxisCount': 2,
+              'tokenizedRenderHashesMatch': equivalence['hashesMatch'],
+              'figmaAliasGraphPreservedInSidecar': True,
+              'nativeNodeVariableBindingsPreservedByZSevenImporter': False,
+              'manualVisualReviewRequired': True,
+              'promotionReady': False,
+          })
+          summary['semanticWarnings'] = [
+              'ZSeven OpenPencil v0.8.2 cannot represent Figma variable-to-variable aliases; the lossless alias graph is preserved in LexiGo Design Tokens.json and runtime values are deterministically resolved.',
+              'ZSeven OpenPencil v0.8.2 does not preserve imported node-to-variable bindings; existing imported nodes retain concrete values while the recovered token layer is available for AI/new edits.',
+          ]
+          summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False, sort_keys=True) + '\n', encoding='utf-8')
           PY
 
       - name: Publish acceptance summary
         if: always()
         run: |
           set -Eeuo pipefail
-          if [ -f .tmp/openpencil-visual-acceptance/acceptance-summary.json ]; then
-            cat .tmp/openpencil-visual-acceptance/acceptance-summary.json
-          fi
-          if [ -f .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json ]; then
-            cat .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json
-          fi
-          if [ -f .tmp/openpencil-visual-acceptance/render-manifest.json ]; then
-            cat .tmp/openpencil-visual-acceptance/render-manifest.json
-          fi
+          for file in \
+            .tmp/openpencil-visual-acceptance/acceptance-summary.json \
+            .tmp/openpencil-visual-acceptance/native-variable-extractor-summary.json \
+            .tmp/openpencil-visual-acceptance/token-compiler-summary.json \
+            .tmp/openpencil-visual-acceptance/token-migration-summary.json \
+            .tmp/openpencil-visual-acceptance/tokenized-render-equivalence.json; do
+            if [ -f "$file" ]; then
+              echo "--- $file"
+              cat "$file"
+            fi
+          done
 
       - name: Upload OpenPencil visual acceptance evidence
         if: always()
