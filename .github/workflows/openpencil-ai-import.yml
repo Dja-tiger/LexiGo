@@ -1,0 +1,65 @@
+name: OpenPencil AI import
+
+on:
+  pull_request:
+    paths:
+      - "design/figma/LexiGo Design System.fig"
+      - "scripts/figma/openpencil-ai-import.sh"
+      - ".github/workflows/openpencil-ai-import.yml"
+      - "docs/figma/openpencil-ai-workflow.md"
+  push:
+    branches: [main]
+    paths:
+      - "design/figma/LexiGo Design System.fig"
+      - "scripts/figma/openpencil-ai-import.sh"
+      - ".github/workflows/openpencil-ai-import.yml"
+      - "docs/figma/openpencil-ai-workflow.md"
+  workflow_dispatch:
+
+concurrency:
+  group: openpencil-ai-import-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  import-figma:
+    name: Import native .fig with ZSeven OpenPencil v0.8.2
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository with Git LFS
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          lfs: true
+
+      - name: Resolve native Figma payload
+        run: |
+          set -Eeuo pipefail
+          git lfs version
+          git lfs pull --include="design/figma/LexiGo Design System.fig" --exclude=""
+
+      - name: Validate compatibility script syntax
+        run: bash -n scripts/figma/openpencil-ai-import.sh
+
+      - name: Import Figma source into AI-native .op evidence
+        run: bash scripts/figma/openpencil-ai-import.sh
+
+      - name: Publish import summary
+        if: always()
+        run: |
+          set -Eeuo pipefail
+          if [ -f .tmp/openpencil-ai-import/document-summary.json ]; then
+            cat .tmp/openpencil-ai-import/document-summary.json
+          fi
+
+      - name: Upload OpenPencil import evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openpencil-ai-import-${{ github.sha }}
+          path: .tmp/openpencil-ai-import/
+          if-no-files-found: error
+          retention-days: 7
