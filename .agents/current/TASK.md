@@ -6,7 +6,7 @@
 - Branch: feat/issue-18-selection-reason
 - Base SHA: 126d059f0ae980e7a50425a23a378c29a1e8b641
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #561
 
 ## Objective
 
