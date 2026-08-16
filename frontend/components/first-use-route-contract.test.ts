@@ -57,6 +57,27 @@ describe("First Use canonical route and accessibility contracts", () => {
     expect(onboarding).toContain("aria-valuemax={snapshot.total}");
   });
 
+  it("keeps the desktop diagnostic hierarchy aligned without fabricating design fixture content", () => {
+    const onboarding = readSource("components", "lexigo-onboarding-app.tsx");
+    const css = readSource("app", "first-use.css");
+
+    expect(onboarding).toContain('className="lx-first-use-diagnostic-intro"');
+    expect(onboarding).toContain("До выбора ответ скрыт. Диагностика не оценивает вас как экзамен.");
+    expect(onboarding).toContain('className="lx-first-use-diagnostic-position"');
+    expect(onboarding).toContain('className="lx-first-use-diagnostic-context-desktop"');
+    expect(onboarding).toContain('`Тема: ${current.topic}`');
+    expect(onboarding).not.toContain("We need a safe schema evolution plan before the next release.");
+
+    const desktopBoundary = css.match(/@media \(min-width: 720px\) \{([\s\S]*?)\n\}\n\n@media \(max-width: 719px\)/)?.[1];
+    expect(desktopBoundary).toBeTruthy();
+    expect(desktopBoundary).toContain(".lx-first-use-diagnostic-intro");
+    expect(desktopBoundary).toContain("font-size: 40px;");
+    expect(desktopBoundary).toMatch(/\.lx-first-use-diagnostic-card \{[\s\S]*?border: 0;[\s\S]*?padding: 0;[\s\S]*?background: transparent;/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-diagnostic > \.lx-first-use-progress \{[\s\S]*?clip-path: inset\(50%\);/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-diagnostic \.lx-first-use-mark-group \{[\s\S]*?order: 3;/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-diagnostic-resume-note \{[\s\S]*?order: 4;/);
+  });
+
   it("keeps First Use Light foreground tokens WCAG AA against every surface they own", () => {
     const tokens = rootLightVariables(readSource("app", "first-use.css"));
     const threshold = 4.5;
