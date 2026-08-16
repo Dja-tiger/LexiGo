@@ -2,50 +2,38 @@
 
 ## 2026-08-16 Europe/Moscow
 
-### Verified
+### Verified baseline
 
-- Repository: `Dja-tiger/LexiGo`.
-- Issue: #550.
-- Branch: `agent/issue-550-openpencil-compat`.
-- Base SHA after reconciliation: `27f13b665af27a29d464cebba7e2cf3db54a8dd9` (PR #549 merged after the initial pre-flight).
-- Native `.fig`: `design/figma/LexiGo Design System.fig`, SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1191055`.
-- Selected upstream: `ZSeven-W/openpencil` v0.8.2.
-- Upstream Linux x86_64 CLI asset SHA-256: `aeffb1114857e7b810e66cd9ec927fa883dde0cb3ebf0a6ee26891e2888d20a2`.
-- Upstream v0.8.2 CLI source defines `op import:figma <file.fig> [--out output.op]` as a standalone conversion path and writes a JSON `.op` document.
+- Current Issue: #552.
+- Branch: `agent/issue-552-openpencil-visual-acceptance`.
+- Exact base/main SHA at task start: `e7d992ad6089aa6445017ea6ffff6280787b05d8`.
+- Issue #550 is closed completed after PR #551, exact-main OpenPencil import and exact-main full CI #3594 succeeded.
+- Native Figma archive identity remains SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1,191,055`.
+- Deterministic OpenPencil candidate remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`, with 23 pages and 7,341 recursive nodes.
+- Toolchain remains pinned to `ZSeven-W/openpencil` v0.8.2.
 
-### Finding
+### Implemented on branch
 
-The AI-first architecture is a better fit than native `.fig` round-trip as the primary requirement: keep the `.fig` immutable for migration/archive, validate conversion, then promote a reviewed Git-friendly `.op` in a later slice. Human web canvas and external Codex/MCP control are separate deployment concerns in the current Rust release line.
+- Replaced the stale current task contract with Issue #552 scope and fail-closed promotion rules.
+- Added `docs/figma/openpencil-screen-map.json` with explicit canonical Figma-node to OpenPencil `fig_*` mappings for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Phrase Detail, Profile and system states.
+- Added `scripts/figma/openpencil-visual-acceptance.sh` to verify candidate identity, mapped node/page/name/geometry, start the pinned headless server, render Linux PNG evidence, capture variables/pages/node reads and probe editing on a disposable copy.
+- Added `.github/workflows/openpencil-visual-acceptance.yml` to reproduce the candidate from the Git LFS `.fig`, execute the acceptance probe and upload the evidence for three days.
 
-### Root cause
+### Semantic finding
 
-The original #550 draft targeted the similarly named `open-pencil/open-pencil`. The user clarified that day-to-day design work will be AI-driven, so the project choice was intentionally changed to `ZSeven-W/openpencil` before a PR was opened.
+The imported candidate contains 83 nodes marked `reusable: true`, so component material is not reduced to one flat image. The JSON candidate does not expose a top-level variable/theme store. The workflow records `op vars` output so loss of Figma variable/token linkage is treated as an explicit semantic warning or blocker instead of being silently accepted.
 
-### Changed files
+### Process interruption and recovery
 
-- `.agents/current/TASK.md`
-- `.agents/current/PROGRESS.md`
-- `.agents/current/EXECUTION.md`
-- `scripts/figma/openpencil-ai-import.sh`
-- `.github/workflows/openpencil-ai-import.yml`
-- `docs/figma/openpencil-ai-workflow.md`
+One attempted update of this progress file was rejected by the connector safety layer before any repository change. Per `.agents/AGENTS.tool-selection.md`, writes were stopped; live `main` was re-read and remained `e7d992ad6089aa6445017ea6ffff6280787b05d8`; this branch copy of `PROGRESS.md` was re-read unchanged at blob `5eda3cd7c837b9739b03703bd4e57b4181ab5a76`; and the exact `update_file` schema was reloaded before this retry.
 
-### Checks passed
+### Validation pending
 
-- Exact upstream release/tag and CLI asset digest verified from the v0.8.2 GitHub release metadata.
-- Exact upstream `figma_cli.rs` contract inspected at tag v0.8.2.
-- New script is fail-closed on Git LFS pointer content, source identity drift and CLI archive digest drift.
-- New workflow explicitly enables Git LFS and uploads generated `.op` plus machine-readable evidence.
-- Repository writes are isolated to the task branch; the obsolete first-project probe commit was discarded when the branch was reset to the new live `main` after PR #549 merged.
-
-### Checks failed
-
-None yet. Authoritative import execution and full repository CI require the Draft PR workflow run.
-
-### Current branch head
-
-Resolve from live branch ref after this documentation write.
+- Dedicated OpenPencil visual workflow has not run yet because the Draft PR is not open yet.
+- No manual Linux render review has occurred yet.
+- `design/openpencil/LexiGo Design System.op` has not been committed or promoted.
+- No source-of-truth hierarchy has been switched yet.
 
 ### Next action
 
-Compare the branch against `main`, open Draft PR, inspect the dedicated OpenPencil import job and normal CI, then classify/fix any failures before Ready/merge.
+Update `EXECUTION.md`, compare the branch against live `main`, open a Draft PR, inspect the dedicated Linux evidence artifact and classify any render/editability/token failures before deciding whether the candidate can be promoted.
