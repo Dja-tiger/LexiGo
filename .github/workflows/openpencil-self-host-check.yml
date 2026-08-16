@@ -1,0 +1,167 @@
+name: OpenPencil self-host check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/openpencil-self-host-check.yml"
+      - "deploy/openpencil/**"
+      - "docs/figma/openpencil-self-host.md"
+      - "docs/figma/openpencil-ai-workflow.md"
+      - "design/openpencil/LexiGo Design System.op"
+      - "design/openpencil/LexiGo Design Tokens.json"
+      - "docs/figma/openpencil-screen-map.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/openpencil-self-host-check.yml"
+      - "deploy/openpencil/**"
+      - "docs/figma/openpencil-self-host.md"
+      - "docs/figma/openpencil-ai-workflow.md"
+      - "design/openpencil/LexiGo Design System.op"
+      - "design/openpencil/LexiGo Design Tokens.json"
+      - "docs/figma/openpencil-screen-map.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openpencil-self-host-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    env:
+      OPENPENCIL_TAG: ghcr.io/zseven-w/openpencil-web:v0.8.2
+      CI_LEASE_CONTAINER: lexigo-openpencil-self-host-lease-${{ github.run_id }}-${{ github.run_attempt }}
+      CADDY_IMAGE: lexigo-openpencil-caddy:${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Start bounded cleanup lease
+        run: |
+          set -Eeuo pipefail
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            1800 >/dev/null
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          cleanup: true
+
+      - name: Resolve immutable OpenPencil image digest
+        id: image
+        run: |
+          set -Eeuo pipefail
+          mkdir -p .tmp/openpencil-self-host
+          inspect="$(docker buildx imagetools inspect "$OPENPENCIL_TAG")"
+          printf '%s\n' "$inspect" > .tmp/openpencil-self-host/image-inspect.txt
+          digest="$(printf '%s\n' "$inspect" | awk '/^Digest:[[:space:]]+sha256:/{print $2; exit}')"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "could not resolve top-level manifest digest for $OPENPENCIL_TAG" >&2
+            exit 1
+          }
+          pinned="${OPENPENCIL_TAG}@${digest}"
+          printf '%s\n' "$pinned" > .tmp/openpencil-self-host/image-ref.txt
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "OPENPENCIL_IMAGE=$pinned" >> "$GITHUB_ENV"
+          echo "OPENPENCIL_IMAGE_DIGEST=$digest" >> "$GITHUB_ENV"
+          {
+            echo '### OpenPencil v0.8.2 registry identity'
+            echo
+            echo "- \`$pinned\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate shell and source security contract
+        run: |
+          set -Eeuo pipefail
+          bash -n deploy/openpencil/session.sh
+          bash -n deploy/openpencil/self-test.sh
+          sh -n deploy/openpencil/container-entrypoint.sh
+          grep -Fq 'basic_auth {' deploy/openpencil/Caddyfile
+          ! grep -Eq '(/mcp|reverse_proxy[[:space:]]+mcp)' deploy/openpencil/Caddyfile
+          ! grep -R -n -E 'OPENPENCIL_PERSIST_WEB_CREDENTIALS_SERVER:[[:space:]]*"?true|OPENPENCIL_WEB_ALLOWED_ORIGINS:.*\*' deploy/openpencil
+          ! grep -R -n -E 'openpencil|OpenPencil' \
+            deploy/compose/docker-compose.stage.yml \
+            deploy/compose/docker-compose.prod.yml \
+            deploy/Caddyfile
+
+      - name: Run isolated OpenPencil Web and MCP smoke
+        env:
+          OPENPENCIL_COMPOSE_PROJECT: lexigo-openpencil-ci-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -Eeuo pipefail
+          base=$((43000 + (GITHUB_RUN_ID % 1000) * 2))
+          export OPENPENCIL_WEB_LOOPBACK_PORT="$base"
+          export OPENPENCIL_MCP_PORT="$((base + 1))"
+          bash deploy/openpencil/self-test.sh | tee .tmp/openpencil-self-host/runtime-smoke.txt
+
+      - name: Build standalone Caddy with Cloudflare DNS
+        run: |
+          set -Eeuo pipefail
+          docker build \
+            --file deploy/caddy/Dockerfile \
+            --tag "$CADDY_IMAGE" \
+            deploy
+
+      - name: Validate authenticated Caddy configuration
+        run: |
+          set -Eeuo pipefail
+          hash="$(docker run --rm "$CADDY_IMAGE" caddy hash-password --plaintext 'ci-only-openpencil-password')"
+          docker run --rm --network none \
+            -e ACME_EMAIL=ci@example.test \
+            -e CLOUDFLARE_API_TOKEN=ci-placeholder \
+            -e HSTS_MAX_AGE=86400 \
+            -e OPENPENCIL_SITE_ADDRESS=design.example.test \
+            -e OPENPENCIL_BASIC_AUTH_USER=lexigo-ci \
+            -e OPENPENCIL_BASIC_AUTH_HASH="$hash" \
+            -v "$PWD/deploy/openpencil/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            "$CADDY_IMAGE" \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Upload registry and runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: openpencil-self-host-${{ github.sha }}
+          path: .tmp/openpencil-self-host/
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Require checked-in immutable image pin
+        run: |
+          set -Eeuo pipefail
+          expected="${OPENPENCIL_TAG}@${OPENPENCIL_IMAGE_DIGEST}"
+          grep -Fq "$expected" deploy/openpencil/compose.yml || {
+            echo "compose.yml is not pinned to the registry-resolved image: $expected" >&2
+            exit 1
+          }
+          grep -Fq "OPENPENCIL_IMAGE=$expected" deploy/openpencil/openpencil.env.example || {
+            echo "openpencil.env.example is not pinned to the registry-resolved image: $expected" >&2
+            exit 1
+          }
+
+      - name: Cleanup owned resources
+        if: always()
+        run: |
+          set +e
+          docker image rm --force "$CADDY_IMAGE" >/dev/null 2>&1
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1
