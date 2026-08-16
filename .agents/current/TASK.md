@@ -14,10 +14,11 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 
 ## Scope
 
-- `frontend/app/adaptive-lesson-composer.css`: add a tablet-rail presentation bridge for 720–1099px so the outer composer becomes one usable column without changing mobile disclosure semantics.
-- `frontend/app/phrases.css`: stack filters and results during the tablet-rail interval while keeping filters available.
-- `frontend/app/profile.css`: restore the tablet RouteChrome content offset that the route-specific profile margin currently overrides.
-- Extend existing computed-cascade regression suites for the exact 768px ownership conditions.
+- `frontend/app/adaptive-lesson-composer.css`: add a tablet-rail presentation bridge for 768–1099px so the outer composer becomes one usable column without changing compact/mobile disclosure semantics.
+- `frontend/app/phrases-tablet-layout.css`: route-scoped companion layout that stacks filters/results only during the RouteChrome tablet interval while keeping filters available.
+- `frontend/app/profile-tablet-layout.css`: route-scoped companion layout that restores the tablet RouteChrome content offset after Profile's centered-content rule.
+- `frontend/app/layout.tsx`: import each companion immediately after its route owner.
+- Extend `frontend/e2e/adaptive-layout-cascade.spec.ts` with fail-closed 768px computed-layout contracts for Learn, Phrases and Profile.
 - Manually inspect Linux 768×1024 Light/Dark actuals for the three repaired routes before approving any changed fingerprint.
 
 ## Non-goals
@@ -33,11 +34,10 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 ## Allowed paths
 
 - `frontend/app/adaptive-lesson-composer.css`
-- `frontend/app/phrases.css`
-- `frontend/app/profile.css`
+- `frontend/app/phrases-tablet-layout.css`
+- `frontend/app/profile-tablet-layout.css`
+- `frontend/app/layout.tsx`
 - `frontend/e2e/adaptive-layout-cascade.spec.ts`
-- `frontend/e2e/phrases-grid-cascade.spec.ts`
-- `frontend/e2e/account-security-width-cascade.spec.ts`
 - existing route-owned runtime visual test only if an affected reviewed fingerprint must change
 - `.agents/current/**`
 
@@ -45,6 +45,7 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 
 - backend and API owners
 - `frontend/components/**`
+- base `frontend/app/phrases.css` and `frontend/app/profile.css` after root-cause inspection; their tablet compatibility is intentionally isolated in scoped companion owners
 - `design/**`
 - `docs/figma/openpencil-screen-map.json`
 - route-navigation topology/CSS unless a new exact defect proves it necessary
@@ -58,7 +59,7 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 - Learn source/mode/size/session behavior is unchanged; only outer presentation changes.
 - Phrases filtering/search/catalog data ownership is unchanged and all filter controls remain reachable.
 - Profile preferences/account/security behavior is unchanged.
-- Compact <=719px and desktop >=1100px contracts remain stable.
+- Compact/mobile <=719px and desktop >=1100px contracts remain stable; the existing 720–767 feature-specific compact behavior is not broadened accidentally.
 - Light/Dark and reduced-motion semantics remain token-owned.
 - Runtime evidence must be manually reviewed before hash approval.
 
