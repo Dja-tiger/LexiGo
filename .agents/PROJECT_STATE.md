@@ -2,10 +2,15 @@
 
 ## Verification
 
-- Last verified: 2026-08-16 Europe/Moscow.
+- Last verified: 2026-08-16 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Latest runtime-bearing `main`: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` from runtime PR #558.
-- Latest deployed runtime/Stage SHA: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
+- Latest runtime-bearing `main`: `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` from runtime PR #561.
+- Latest deployed runtime/Stage SHA: `faa62cc2ea023d8e52aecc5d97c8cabe97748daf`.
+- PR #561 final developer-authored head `3e3141341a949272d5eec4754526dc0ab08ccfef` delivered the remaining frontend transparency slice for server-owned lesson selection reasons without backend/schema/design/deploy-topology changes.
+- PR #561 squash merge: `faa62cc2ea023d8e52aecc5d97c8cabe97748daf`.
+- Exact-main runtime CI #3678 / run `31967827204` on `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` passed.
+- Stage status Issue #12 reports the same exact SHA with deploy, public smoke and public browser all successful; the public browser gate passed 12/12 runtime smoke cases.
+- Parent Issue #18 remains open in live GitHub; PR #561 completes the selection-reason transparency criterion but is not treated as evidence that every remaining #18 criterion is closed.
 - PR #558 final developer-authored head `a2c841b7765a17f6e93eb0cf3f385db9223fd888` passed full CI #3667, including frontend core, Accessibility, UI shards 1/2 and 2/2, Visual regression, Controlled service worker, performance, backend and container builds.
 - PR #558 squash merge: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
 - Exact-main runtime CI #3668 on `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` passed.
@@ -100,19 +105,25 @@
 - First Use design gate: Issue #201 / PR #556.
 - First Use runtime: Issue #201 / PR #558 / merge `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` / exact-main CI #3668 / Stage #3519 / Issue closed completed 2026-08-16.
 - First Use post-merge reconciliation: PR #559 / merge `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab` / exact-main reconciliation CI #3671.
+- Issue #18 selection-reason transparency: PR #561 / merge `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` / exact-main CI #3678 / exact-SHA Stage and public browser success.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Issue #201 is closed as completed; its runtime is deployed to Stage on exact runtime merge SHA `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
-- Reconciliation PR #559 synchronized README/architecture ownership, promoted the new frontend route lesson, recorded the verified closed state and reset `.agents/current/**` from templates.
-- Exact-main reconciliation CI #3671 is green on reconciliation merge SHA `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab`.
-- No runtime/backend/API/design/deploy change was part of the reconciliation slice.
-- The next product task must be selected from live GitHub rather than inferred from this file.
+- Latest runtime delivery is PR #561 on merge SHA `faa62cc2ea023d8e52aecc5d97c8cabe97748daf`; exact-main CI #3678 is green and Stage/public validation is green on the same SHA.
+- Active Lesson now preserves the validated server-owned lesson selection reason through the frontend boundary and conditionally shows truthful learner-facing “Почему предложено” copy; missing reasons remain visually absent.
+- Parent Issue #18 remains open in live GitHub and requires a separate acceptance audit before any closure decision.
+- Core route-specific Figma/OpenPencil parity child slices are already delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases and Profile.
+- Live umbrella #205 remains open. First Use already has eight reviewed Linux visual baselines, but final `/onboarding` route-level provenance/parity closure still needs to be reconciled against the active OpenPencil First Use mapping before #205 can be honestly closed.
+- #203 remains optional historical live-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
+- No runtime/backend/API/design/deploy change is part of the current Agent Docs reconciliation slice.
+- After the reconciliation PR resets `.agents/current/**`, the next product/design task must be selected again from live GitHub.
 
 ## Remaining roadmap
 
+- #18: audit the remaining parent acceptance criteria after the delivered selection-reason transparency slice; do not infer completion from PR #561 alone.
+- #205: finish final route-by-route parity closure, with `/onboarding`/First Use provenance and canonical viewport/state evidence as the next design-focused gap to inspect.
 - #203: optional historical live-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
