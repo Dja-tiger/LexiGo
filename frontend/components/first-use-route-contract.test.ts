@@ -63,7 +63,7 @@ describe("First Use canonical route and accessibility contracts", () => {
 
     expect(onboarding).toContain('className="lx-first-use-diagnostic-intro"');
     expect(onboarding).toContain("До выбора ответ скрыт. Диагностика не оценивает вас как экзамен.");
-    expect(onboarding).toContain('className="lx-first-use-diagnostic-position"');
+    expect(onboarding).toContain('className="lx-first-use-kicker lx-first-use-diagnostic-position"');
     expect(onboarding).toContain('className="lx-first-use-diagnostic-context-desktop"');
     expect(onboarding).toContain('`Тема: ${current.topic}`');
     expect(onboarding).not.toContain("We need a safe schema evolution plan before the next release.");
