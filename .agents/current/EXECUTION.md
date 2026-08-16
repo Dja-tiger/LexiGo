@@ -2,8 +2,9 @@
 
 ## Task
 
-- Branch: `agent/issue-550-openpencil-compat`
-- Base SHA: `27f13b665af27a29d464cebba7e2cf3db54a8dd9`
+- Issue: #552
+- Branch: `agent/issue-552-openpencil-visual-acceptance`
+- Base SHA: `e7d992ad6089aa6445017ea6ffff6280787b05d8`
 - Head SHA: resolve from live branch ref
 - PR: pending
 
@@ -13,143 +14,90 @@
 
 Purpose:
 
-Safely isolate the tooling slice, keep branch state aligned with live `main`, update Issue #550, and prepare a Draft PR without mutating product runtime.
+Isolate Issue #552 from `main`, preserve exact candidate/source identities, publish only allowed design-tooling paths, and require immutable-head CI plus manual visual evidence before promotion.
 
 Instruction source:
 
 - `AGENTS.md`
 - `.agents/AGENTS.md`
-- `.agents/AGENTS.base.md`
-- `.agents/AGENTS.tool-selection.md`
+- all mandatory `.agents/AGENTS*.md` documents
 - `.agents/SKILLS.md`
 - `docs/agent-harness.md`
 
-Version or verification date:
+Verification date:
 
 2026-08-16.
 
 Inputs:
 
-- Live GitHub `main` and PR #549.
-- Issue #550.
-- Repository-owned `.fig` identity from Git LFS.
-
-Files inspected:
-
-- `AGENTS.md`
-- all mandatory `.agents/AGENTS*.md` documents indexed by `.agents/AGENTS.md`
-- `.agents/SKILLS.md`
-- `.agents/PROJECT_STATE.md`
-- `.agents/current/**`
-- `docs/agent-harness.md`
-- `docs/figma/README.md`
-- `.github/workflows/ci.yml`
-- `design/figma/LexiGo Design System.fig` LFS pointer metadata
+- Live `main` at `e7d992ad6089aa6445017ea6ffff6280787b05d8`.
+- Issue #552 acceptance contract.
+- PR #551 / Issue #550 deterministic import evidence.
+- Repository canonical route-to-Figma mapping in `frontend/docs/adaptive-knowledge-coach.md`.
+- Downloaded exact-main OpenPencil import artifact for offline structural inspection.
 
 Actions performed:
 
-- Created Issue #550 and retargeted it from the similarly named `open-pencil/open-pencil` project to `ZSeven-W/openpencil` after the user clarified the AI-first requirement.
-- Created branch `agent/issue-550-openpencil-compat`.
-- Detected PR #549 merging while the branch was in progress, stopped writes, verified the new live `main`, and force-reset the unpublished task branch to exact new `main` before continuing.
-- Added the pinned import script, permanent path-scoped Actions workflow and migration architecture documentation.
+- Confirmed exact-main CI #3594 succeeded for PR #551 merge and closed #550 completed.
+- Verified no open PRs before starting #552.
+- Created `agent/issue-552-openpencil-visual-acceptance` from exact live `main`.
+- Replaced `.agents/current/TASK.md` with the Issue #552 scope, allowed paths, invariants and canonical acceptance inventory.
+- Added a machine-readable OpenPencil screen map and a dedicated visual/editability acceptance script/workflow.
+- Read every changed path back from the task branch.
+- After one connector safety rejection on a progress-file write, stopped writes, re-verified `main` and target-file immutability, reloaded the exact `update_file` schema, then resumed.
 
-Commands or procedures:
+Result so far:
 
-- GitHub connector branch/ref/file/Issue operations with explicit branch targeting.
-- Read-back verification after each repository write.
-- Changed-path comparison before PR publication.
+The branch is prepared to produce authoritative Linux OpenPencil render/editability evidence without modifying LexiGo runtime or the archived `.fig`.
 
-Artifacts produced:
-
-- `scripts/figma/openpencil-ai-import.sh`
-- `.github/workflows/openpencil-ai-import.yml`
-- `docs/figma/openpencil-ai-workflow.md`
-
-Result:
-
-Implementation prepared for authoritative CI execution on a Draft PR.
-
-Failures:
-
-The first task branch was based on `3bf8707` and received one obsolete probe write before PR #549 advanced `main` to `27f13b6`.
-
-Root cause:
-
-Parallel repository activity advanced `main` during the task. Separately, the original OpenPencil implementation choice no longer matched the clarified AI-first requirement.
-
-Fallback:
-
-Stopped writes, inspected PR #549, reset the unpublished branch to the exact new `main`, discarded the obsolete probe commit, updated Issue #550, and restarted the slice from the verified base.
-
-Limitations:
-
-- The generated `.op` has not yet been produced by authoritative CI.
-- Import success will prove structural conversion, not pixel-perfect visual parity.
-- The future self-host web service and Codex/MCP control plane remain a separate deployment slice.
-
-Reusable lesson:
-
-When two upstream projects have the same product name, select by the dominant operating model before building automation. For AI-first design, verify the exact CLI/MCP source contract at a pinned tag and treat format conversion as a gated migration rather than silently replacing the design source.
-
-### Upstream OpenPencil verification
+### OpenPencil structural and mapping audit
 
 Purpose:
 
-Verify that the selected ZSeven release exposes a deterministic standalone Figma conversion path and identify the exact binary supply-chain inputs used by CI.
+Determine whether the deterministic `.op` contains identifiable, editable production design structure and establish OpenPencil-native addresses before rendering.
 
-Instruction source:
+Source contract:
 
-Primary upstream GitHub repository and release metadata for `ZSeven-W/openpencil`.
+- `ZSeven-W/openpencil` v0.8.2.
+- `op start --headless --file ...` file-backed server contract.
+- `op export --item ... --format png` export contract from upstream `crates/op-cli/src/export_cli.rs`.
+- Existing LexiGo Figma production map.
 
-Version or verification date:
+Observed candidate facts:
 
-`v0.8.2`, released 2026-07-25; verified 2026-08-16.
+- 23 imported pages.
+- 7,341 recursive design nodes.
+- Frame/text/path/rectangle/ellipse node structures remain present.
+- 83 nodes carry `reusable: true`, preserving reusable component material in the imported representation.
+- Canonical production frames are identifiable by imported page, exact frame name, dimensions and matrix ordering.
+- Stable imported node IDs such as `fig_2287`, `fig_6826`, `fig_4008`, `fig_7281` and `fig_4305` can serve as OpenPencil-side addresses after promotion.
+- No explicit top-level variable/theme store is present in the raw imported JSON; authoritative `op vars` evidence is still pending.
 
-Inputs:
+Artifacts produced on branch:
 
-- Release metadata for v0.8.2.
-- `crates/op-cli/src/figma_cli.rs` at tag v0.8.2.
+- `docs/figma/openpencil-screen-map.json`
+- `scripts/figma/openpencil-visual-acceptance.sh`
+- `.github/workflows/openpencil-visual-acceptance.yml`
 
-Files inspected:
+Acceptance design:
 
-- upstream `README.md` / release notes;
-- upstream `crates/op-cli/src/figma_cli.rs`;
-- v0.8.2 release asset metadata.
-
-Actions performed:
-
-- Verified the exact command syntax `op import:figma <file.fig> [--out output.op]`.
-- Verified that the command directly reads the `.fig`, converts through `op_figma`, serializes a JSON `.op`, and returns `ok`, `filePath`, `pageCount`, `nodeCount` and warnings.
-- Pinned Linux x86_64 release archive SHA-256 `aeffb1114857e7b810e66cd9ec927fa883dde0cb3ebf0a6ee26891e2888d20a2`.
-
-Commands or procedures:
-
-The repository script downloads only the pinned release URL, verifies SHA-256 before extraction, runs conversion in a temporary directory, validates JSON structure, and re-verifies the source `.fig` identity afterwards.
-
-Artifacts produced:
-
-Authoritative CI will produce `import-result.json`, `document-summary.json`, `source-identity.json`, toolchain metadata and the candidate `LexiGo Design System.op` artifact.
-
-Result:
-
-The implementation contract is grounded in exact upstream source rather than inferred README behavior.
-
-Failures:
-
-None during source-contract inspection.
-
-Root cause:
-
-N/A.
-
-Fallback:
-
-If the pinned binary cannot execute on the configured Linux runner, classify runner architecture/runtime compatibility before changing the product source or weakening the digest pin.
+1. require the exact deterministic candidate SHA/size;
+2. fail on any mapped node/page/name/geometry drift;
+3. start the pinned headless server;
+4. export an allow-listed representative set of mobile/desktop production nodes on Linux;
+5. validate PNG signatures, exact dimensions and SHA-256;
+6. capture variables/page/node evidence;
+7. mutate only a disposable `.op` copy through `op update`, require readback and persisted file change;
+8. prove the canonical candidate hash remains unchanged;
+9. upload the complete evidence artifact for manual review.
 
 Limitations:
 
-The first gate targets Linux x86_64. Other architectures can be added only with separately pinned upstream asset digests.
+- Structural validity is not visual parity.
+- Reusable frames do not by themselves prove original Figma instance relationships are fully preserved.
+- Missing imported variable linkage may require an explicit OpenPencil token reconstruction or may block promotion.
+- No source-of-truth promotion occurs until the Linux artifact is manually reviewed.
 
-Reusable lesson:
+## Next execution step
 
-For external design tooling in CI, pin both semantic version and artifact digest, then inspect the implementation of the exact command relied upon. README examples alone are insufficient supply-chain and behavior evidence.
+Compare the branch against live `main`, verify changed paths are allow-listed, open a Draft PR, inspect the dedicated OpenPencil workflow and artifact, then fix or document any render/editability/token failures before promotion.
