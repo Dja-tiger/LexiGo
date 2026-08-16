@@ -2,101 +2,87 @@
 
 ## Identity
 
-- Issue: #18
-- Branch: feat/issue-18-selection-reason
-- Base SHA: 126d059f0ae980e7a50425a23a378c29a1e8b641
+- Issue: repository-memory reconciliation after merged PR #561 / parent Issue #18
+- Branch: docs/reconcile-pr-561
+- Base SHA: faa62cc2ea023d8e52aecc5d97c8cabe97748daf
 - Head SHA: resolve from live branch ref
-- PR: #561
+- PR:
 
 ## Objective
 
-Close the remaining Issue #18 product gap by preserving the server-owned lesson selection reason through the frontend Active Lesson boundary and showing the learner a concise truthful reason for each selected item.
+Reconcile Agent Harness state after PR #561 merged and exact-main CI/Stage passed, then reset `.agents/current/**` from repository templates before starting the next product/design slice.
 
 ## Scope
 
-- Validate optional backend `reason` values on active lesson items.
-- Preserve the validated reason in the frontend learning item model.
-- Centralize visible reason copy.
-- Render a compact visible reason in the existing focused Active Lesson card.
-- Add regression coverage for contract, copy and source wiring.
-- Verify the existing manual lesson composer still sends source, mode and size unchanged.
+- Record the verified PR #561 merge, exact-main CI and exact-SHA Stage status in `.agents/PROJECT_STATE.md`.
+- Preserve the fact that parent Issue #18 remains open in live GitHub even though the selection-reason transparency slice is delivered.
+- Reset `.agents/current/TASK.md`, `PROGRESS.md` and `EXECUTION.md` byte-for-byte from repository templates after durable state is promoted.
 
 ## Non-goals
 
-- No scheduler or queue priority changes.
-- No backend API/schema changes.
-- No lesson composer redesign or new review-ratio controls.
-- No OpenPencil/Figma source mutation.
-- No deployment topology changes.
+- No product/runtime code changes.
+- No backend/API/scheduler changes.
+- No Figma/OpenPencil source changes.
+- No workflow or deployment changes.
+- No closure of Issue #18 without a separate acceptance audit.
+- No start of Issue #203/#205 implementation inside this reconciliation PR.
 
 ## Allowed paths
 
+- .agents/PROJECT_STATE.md
 - .agents/current/TASK.md
 - .agents/current/PROGRESS.md
 - .agents/current/EXECUTION.md
-- frontend/lib/account-resources.ts
-- frontend/lib/account-resources.test.ts
-- frontend/lib/interface-copy.ts
-- frontend/lib/interface-copy.test.ts
-- frontend/lib/learning.ts
-- frontend/lib/active-lesson-presentation.test.ts
-- frontend/components/lexigo-active-lesson-app.tsx
-- frontend/components/active-lesson-presentation.tsx
-- frontend/components/active-lesson-selection-reason-source.test.ts
-- frontend/app/active-lesson.css
 
 ## Prohibited paths
 
+- frontend/**
 - backend/**
-- design/openpencil/**
+- design/**
 - docs/figma/**
-- deployment/**
+- deploy/**
 - .github/workflows/**
+- all other repository paths
 
 ## Runtime owners
 
-- backend/internal/learning/lesson.go — server-owned selection reason contract, read only.
-- frontend/lib/account-resources.ts — active lesson runtime validation.
-- frontend/components/lexigo-active-lesson-app.tsx — API-to-presentation mapping.
-- frontend/components/active-lesson-presentation.tsx — focused lesson presentation.
-- frontend/app/active-lesson.css — focused lesson styling.
+Read-only evidence only; no runtime owner changes.
 
 ## Documentation owners
 
-- .agents/current/** for task execution evidence.
-- frontend/lib/interface-copy.ts for user-visible product terminology.
+- `.agents/PROJECT_STATE.md` for durable verified delivery state.
+- `.agents/current/**` for transient task state, reset from `.agents/templates/**` at completion.
 
 ## Invariants
 
-- Never fabricate a selection reason when the server omits it.
-- Accept only the six backend reason values: recent_failure, due, weak_topic, new, scheduled, manual.
-- Existing manual source/mode/size lesson creation remains unchanged.
-- Active Lesson stays a focused route without global navigation.
-- No axe rule, severity, security or CI relaxation.
+- Live GitHub remains authoritative over stale repository memory.
+- `main` remains unchanged by all writes in this branch.
+- Final diff contains only the four allowed Agent Harness paths.
+- Do not claim Issue #18 closed while live GitHub reports it open.
+- No Stage redeploy is required for a docs-only reconciliation.
 
 ## Acceptance criteria
 
-- Active lesson payload accepts valid optional selection reasons and rejects unknown reason values.
-- The current item visibly states a concise reason when one is present.
-- recent_failure, due, weak_topic and new have explicit learner-facing copy; scheduled and manual also remain truthful.
-- Missing reason produces no invented explanation.
-- Existing manual lesson composer source/mode/size POST contract remains intact.
-- Targeted unit/source tests and full immutable-head CI pass.
+- PR #561 merge SHA `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` is recorded.
+- Exact-main CI #3678 / run `31967827204` is recorded as successful.
+- Stage deployment status on exact SHA `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` is recorded as successful, including public smoke/browser success.
+- `.agents/current/**` matches the repository templates in the final branch state.
+- Agent Docs validation/CI passes on the final developer-authored head.
+- Final branch compare contains only allowed Agent Harness changes.
 
 ## Required checks
 
-- Frontend unit tests covering account resource validation and Active Lesson reason copy.
-- Source contract covering reason mapping into Active Lesson presentation.
-- Full PR CI on immutable head, including Accessibility, UI shards and Visual.
-- Review/thread/diff audit before Ready and merge.
-- Exact-main CI and Stage because runtime frontend changes.
+- Read-back after every branch write.
+- Verify branch head after every write and confirm `main` remains `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` until expected merge.
+- Agent Harness / docs-scope CI selected by repository classifier.
+- Clean PR diff and review/thread audit before merge.
 
 ## Risks
 
-- Visual layout shift on compact Active Lesson screens.
-- Stale clients receiving an unknown future backend reason.
-- Accidentally conflating item-selection reason with learning status or confidence.
+- Accidentally converting an open parent Issue into a false completed claim.
+- Losing durable historical evidence while replacing `PROJECT_STATE.md`.
+- Starting a new product task before current context is reset.
 
 ## Rollback
 
-Revert the frontend selection-reason slice; backend reason persistence and scheduler behavior are unchanged.
+Close/revert the reconciliation PR; product/runtime merge `faa62cc2...` and Stage deployment remain unaffected.
