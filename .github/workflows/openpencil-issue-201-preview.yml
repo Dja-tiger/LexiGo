@@ -1,0 +1,302 @@
+name: OpenPencil issue 201 preview
+
+on:
+  push:
+    branches:
+      - design/issue-201-first-use-openpencil
+    paths:
+      - .github/workflows/openpencil-issue-201-preview.yml
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/design/issue-201-first-use-openpencil'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    env:
+      OPENPENCIL_IMAGE: ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Guard branch and accepted source
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_REF" = refs/heads/design/issue-201-first-use-openpencil
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
+
+      - name: Start disposable OpenPencil v0.8.2 MCP
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/openpencil-201-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$root/worktree/design/openpencil" "$root/state" "$root/backups" .tmp/openpencil-issue-201-preview
+          cp 'design/openpencil/LexiGo Design System.op' "$root/worktree/design/openpencil/LexiGo Design System.op"
+          cp 'design/openpencil/LexiGo Design Tokens.json' "$root/worktree/design/openpencil/LexiGo Design Tokens.json"
+          export OPENPENCIL_WORKTREE="$root/worktree"
+          export OPENPENCIL_STATE_DIR="$root/state"
+          export OPENPENCIL_BACKUP_DIR="$root/backups"
+          export OPENPENCIL_UID="$(id -u)"
+          export OPENPENCIL_GID="$(id -g)"
+          export OPENPENCIL_BACKUP_KEEP=1
+          export OPENPENCIL_MCP_PORT="$((46000 + GITHUB_RUN_ID % 1000))"
+          export OPENPENCIL_COMPOSE_PROJECT="lexigo-op-201-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          {
+            echo "OPENPENCIL_WORKTREE=$OPENPENCIL_WORKTREE"
+            echo "OPENPENCIL_STATE_DIR=$OPENPENCIL_STATE_DIR"
+            echo "OPENPENCIL_BACKUP_DIR=$OPENPENCIL_BACKUP_DIR"
+            echo "OPENPENCIL_UID=$OPENPENCIL_UID"
+            echo "OPENPENCIL_GID=$OPENPENCIL_GID"
+            echo "OPENPENCIL_BACKUP_KEEP=$OPENPENCIL_BACKUP_KEEP"
+            echo "OPENPENCIL_MCP_PORT=$OPENPENCIL_MCP_PORT"
+            echo "OPENPENCIL_COMPOSE_PROJECT=$OPENPENCIL_COMPOSE_PROJECT"
+          } >> "$GITHUB_ENV"
+          docker pull "$OPENPENCIL_IMAGE"
+          docker compose -p "$OPENPENCIL_COMPOSE_PROJECT" -f deploy/openpencil/compose.yml --profile agent up -d mcp
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+          url=f"http://127.0.0.1:{os.environ['OPENPENCIL_MCP_PORT']}/mcp"
+          body=json.dumps({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"lexigo-issue-201-preview","version":"1"}}}).encode()
+          for _ in range(90):
+              try:
+                  req=urllib.request.Request(url,data=body,headers={"Content-Type":"application/json"},method="POST")
+                  with urllib.request.urlopen(req,timeout=2) as response:
+                      payload=json.loads(response.read().decode())
+                  if "result" in payload:
+                      break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit("OpenPencil MCP readiness timeout")
+          PY
+
+      - name: Generate First Use production matrix on disposable source
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, json, os, re, urllib.request
+          from pathlib import Path
+
+          OUT=Path('.tmp/openpencil-issue-201-preview')
+          PAGE='figma-page-17'
+          url=f"http://127.0.0.1:{os.environ['OPENPENCIL_MCP_PORT']}/mcp"
+          rid=100
+
+          LIGHT={'bg':'#f4f7f5','surface':'#ffffff','subtle':'#e6efeb','mint':'#ddf5eb','text':'#10211d','muted':'#354944','border':'#c9d7d2','primary':'#3d7bf2','primaryText':'#ffffff','selected':'#dde8ff','success':'#1f9d73','danger':'#f06a6a'}
+          DARK={'bg':'#10211d','surface':'#18302b','subtle':'#21423a','mint':'#21423a','text':'#ffffff','muted':'#a8b8b3','border':'#2e5c50','primary':'#6b93f6','primaryText':'#10211d','selected':'#21423a','success':'#72d6b1','danger':'#f06a6a'}
+
+          def rpc(method,params):
+              global rid
+              rid+=1
+              req=urllib.request.Request(url,data=json.dumps({'jsonrpc':'2.0','id':rid,'method':method,'params':params},ensure_ascii=False).encode(),headers={'Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  p=json.loads(r.read().decode())
+              if 'error' in p: raise RuntimeError(p['error'])
+              return p
+
+          def tool(name,args=None,allow=False):
+              p=rpc('tools/call',{'name':name,'arguments':args or {}})
+              r=p.get('result',{}); c=r.get('content',[])
+              text='\n'.join(i.get('text','') for i in c if 'text' in i)
+              if r.get('isError') and not allow: raise RuntimeError(f'{name}: {text}')
+              try: value=json.loads(text) if text else None
+              except Exception: value=text
+              return text,value,bool(r.get('isError'))
+
+          def fill(c): return [{'type':'solid','color':c,'opacity':1.0}]
+          def txt(name,content,x,y,w,h,size,weight,color,align='left'):
+              return {'type':'text','name':name,'x':x,'y':y,'width':w,'height':h,'content':content,'fontFamily':'Inter','fontSize':size,'fontWeight':weight,'lineHeight':1.2,'textAlign':align,'textAlignVertical':'top','textGrowth':'fixed-width','fill':fill(color)}
+          def rect(name,x,y,w,h,color,r=8):
+              return {'type':'rectangle','name':name,'x':x,'y':y,'width':w,'height':h,'cornerRadius':r,'fill':fill(color)}
+          def frm(name,x,y,w,h,color,children=None,r=16,stroke=None):
+              d={'type':'frame','name':name,'x':x,'y':y,'width':w,'height':h,'clipContent':True,'cornerRadius':r,'fill':fill(color),'children':children or []}
+              if stroke: d['stroke']={'thickness':1.0,'align':'inside','join':'miter','fill':fill(stroke)}
+              return d
+          def btn(label,x,y,w,p,primary=True):
+              bg=p['primary'] if primary else p['surface']; fg=p['primaryText'] if primary else p['text']
+              return frm('Action / '+label,x,y,w,50,bg,[txt('Label / '+label,label,12,15,w-24,20,14,600,fg,'center')],12,None if primary else p['border'])
+          def choice(label,x,y,w,p,selected=False):
+              bg=p['selected'] if selected else p['surface']; fg=p['primary'] if selected else p['text']
+              return frm('Choice / '+label,x,y,w,46,bg,[txt('Choice Label / '+label,label,16,14,w-32,18,14,600,fg)],12,p['border'])
+          def status(p): return txt('Status time','9:41',24,16,80,18,14,500,p['text'])
+          def brand(p,x=24,y=64): return txt('LexiGo','LexiGo',x,y,180,30,24,700,p['text'])
+          def progress(p,current,total,x,y,w):
+              return [rect('Progress track',x,y,w,6,p['subtle'],99),rect('Progress value',x,y,w*current/total,6,p['primary'],99)]
+          def mobile_root(name,p,children): return {'type':'frame','name':name,'x':0,'y':0,'width':390,'height':844,'clipContent':True,'cornerRadius':32,'fill':fill(p['bg']),'children':children}
+          def desktop_root(name,p,children): return {'type':'frame','name':name,'x':0,'y':0,'width':1440,'height':900,'clipContent':True,'fill':fill(p['bg']),'children':children}
+          def desktop_shell(p,title,kicker,body,inner):
+              c=[txt('LexiGo','LexiGo',64,34,180,32,24,700,p['text']),txt('Sign in','Войти',1240,40,120,20,14,600,p['primary'],'right'),txt('Kicker',kicker,360,104,720,18,12,700,p['success']),txt('Title',title,360,136,720,58,40,700,p['text']),txt('Body',body,360,204,720,52,16,400,p['muted'])]
+              c.append(frm('First Use Panel',360,286,720,540,p['surface'],inner,24,p['border']))
+              return c
+
+          def guest(form,p,theme):
+              name=f'First Use / Guest Home / {form} / {theme}'
+              if form=='Mobile':
+                  c=[status(p),brand(p),txt('Eyebrow','ТЕХНИЧЕСКИЙ АНГЛИЙСКИЙ',24,132,342,18,11,700,p['success']),txt('Hero','Английский, который помогает в работе',24,164,342,108,30,700,p['text']),txt('Description','Короткие практики под вашу роль. Диагностика сразу уберёт уже знакомый материал.',24,286,342,60,15,400,p['muted'])]
+                  bullets=[('Рабочий контекст','Data, backend, platform и management'),('10 минут','Небольшая практика без длинных курсов'),('Без fake progress','Сначала настройка — затем реальные результаты')]
+                  y=374
+                  for a,b in bullets:
+                      c.append(frm('Value / '+a,24,y,342,72,p['surface'],[txt('Value title',a,16,12,310,20,15,700,p['text']),txt('Value body',b,16,37,310,26,12,400,p['muted'])],14,p['border'])); y+=82
+                  c += [btn('Настроить первый урок',24,642,342,p,True),txt('Demo link','Посмотреть демо',24,710,342,20,14,600,p['primary'],'center'),txt('Guest note','Аккаунт можно создать после знакомства с форматом.',24,754,342,36,12,400,p['muted'],'center')]
+                  return mobile_root(name,p,c)
+              c=[txt('LexiGo','LexiGo',64,34,180,32,24,700,p['text']),txt('Sign in','Войти',1240,40,120,20,14,600,p['primary'],'right'),txt('Eyebrow','ТЕХНИЧЕСКИЙ АНГЛИЙСКИЙ ДЛЯ РАБОТЫ',160,160,560,18,12,700,p['success']),txt('Hero','Первый полезный урок — без длинной настройки',160,196,570,116,46,700,p['text']),txt('Description','Выберите рабочий контекст, быстро отметьте знакомые термины и получите персональную очередь.',160,332,540,78,18,400,p['muted']),btn('Настроить первый урок',160,446,300,p,True),txt('Demo link','Посмотреть демо',482,462,180,20,14,600,p['primary'])]
+              preview=[txt('Preview kicker','ПРЕВЬЮ ПЕРВОЙ ПРАКТИКИ',28,28,420,18,11,700,p['success']),txt('Preview title','schema evolution',28,70,420,40,30,700,p['text']),txt('Preview body','Контекст из типичной задачи Data Engineering.',28,122,420,44,14,400,p['muted']),choice('Знаю',28,190,420,p,False),choice('Не уверен',28,248,420,p,True),choice('Новое',28,306,420,p,False),txt('Preview note','Ответ показывается только после вашей отметки.',28,382,420,36,12,400,p['muted'])]
+              c.append(frm('Practice Preview',800,154,480,468,p['surface'],preview,24,p['border']))
+              c.append(txt('Guest note','Никаких пустых progress cards до первой реальной практики.',160,540,560,44,13,400,p['muted']))
+              return desktop_root(name,p,c)
+
+          def role(form,p,theme):
+              name=f'First Use / Onboarding Role / {form} / {theme}'
+              if form=='Mobile':
+                  c=[status(p),brand(p),txt('Step','1 из 3',306,68,60,16,12,500,p['muted'],'right'),*progress(p,1,3,24,106,342),txt('Title','Настроим полезный первый урок',24,146,342,72,30,700,p['text']),txt('Body','Три коротких шага. Настройки можно изменить позже.',24,228,342,40,15,400,p['muted']),txt('Label','Ваша рабочая роль',24,294,300,20,16,700,p['text'])]
+                  labels=['Data Engineer','Backend Engineer','SRE / Platform','Technical Manager']; y=330
+                  for i,l in enumerate(labels): c.append(choice(l,24,y,342,p,i==0)); y+=58
+                  c += [frm('Next note',24,580,342,92,p['mint'],[txt('Next label','ДАЛЬШЕ',16,14,310,16,12,700,p['success']),txt('Next body','Короткая диагностика уберёт уже знакомый материал.',16,38,310,40,14,400,p['muted'])],16),btn('Продолжить',24,704,342,p,True),txt('Skip','Пропустить настройку',24,772,342,18,13,600,p['muted'],'center')]
+                  return mobile_root(name,p,c)
+              inner=[txt('Panel label','Ваша рабочая роль',32,34,656,22,16,700,p['text'])]
+              labels=['Data Engineer','Backend Engineer','SRE / Platform','Technical Manager']; y=76
+              for i,l in enumerate(labels): inner.append(choice(l,32,y,656,p,i==0)); y+=60
+              inner += [frm('Next note',32,328,656,82,p['mint'],[txt('Next label','ДАЛЬШЕ',18,14,620,16,12,700,p['success']),txt('Next body','Диагностика уберёт знакомый материал и не изменит scheduler до вашей отметки.',18,38,620,32,13,400,p['muted'])],14),btn('Продолжить',32,434,656,p,True),txt('Skip','Пропустить настройку',32,500,656,18,13,600,p['muted'],'center')]
+              return desktop_root(name,p,desktop_shell(p,'Настроим полезный первый урок','ШАГ 1 ИЗ 3','Выберите контекст — позже его можно изменить в профиле.',inner))
+
+          def diagnostic(form,p,theme,reveal=False,resume=False):
+              state='Resume' if resume else ('Reveal' if reveal else 'Pre-reveal')
+              name=f'First Use / Diagnostic {state} / {form} / {theme}'
+              word='schema evolution'; context='We need a safe schema evolution plan before the next release.'
+              if form=='Mobile':
+                  c=[status(p),brand(p),txt('Step','2 из 3',306,68,60,16,12,500,p['muted'],'right'),*progress(p,2,3,24,106,342),txt('Diagnostic counter','5 из 12' if resume else '1 из 12',24,142,342,18,12,700,p['success']),txt('Title','Продолжим диагностику' if resume else 'Что уже знакомо?',24,174,342,44,28,700,p['text']),txt('Rule','Сначала отметьте знакомство. Перевод появится только после выбора.',24,228,342,52,14,400,p['muted'])]
+                  card_children=[txt('Term',word,18,20,306,34,24,700,p['text']),txt('Context',context,18,70,306,58,14,400,p['muted'])]
+                  if reveal:
+                      card_children += [rect('Reveal divider',18,142,306,1,p['border'],0),txt('Translation','эволюция схемы',18,160,306,26,18,700,p['text']),txt('Reveal note','Вы отметили: Не уверен',18,198,306,20,12,700,p['success'])]
+                  c.append(frm('Diagnostic card',24,304,342,242 if reveal else 150,p['surface'],card_children,18,p['border']))
+                  if not reveal:
+                      y=478
+                      for l in ['Знаю','Не уверен','Новое']: c.append(choice(l,24,y,342,p,resume and l=='Не уверен')); y+=58
+                      c += [txt('Skip','Пропустить диагностику',24,670,342,18,13,600,p['muted'],'center'),btn('Сохранить отметку',24,704,342,p,True)]
+                  else:
+                      c += [choice('Не уверен',24,574,342,p,True),btn('Продолжить',24,646,342,p,True),txt('Hint','Следующий термин откроется после продолжения.',24,714,342,36,12,400,p['muted'],'center')]
+                  if resume: c.append(frm('Resume note',24,586,342,64,p['mint'],[txt('Resume copy','Прогресс сохранён. Продолжите с текущего термина.',14,17,314,34,12,600,p['muted'])],14))
+                  return mobile_root(name,p,c)
+              inner=[txt('Counter','5 из 12' if resume else '1 из 12',32,28,656,18,12,700,p['success']),txt('Term',word,32,64,656,38,28,700,p['text']),txt('Context',context,32,114,656,46,15,400,p['muted'])]
+              if reveal:
+                  inner += [rect('Divider',32,178,656,1,p['border'],0),txt('Translation','эволюция схемы',32,202,656,30,20,700,p['text']),txt('Selected','Вы отметили: Не уверен',32,246,656,18,12,700,p['success']),choice('Не уверен',32,286,656,p,True),btn('Продолжить',32,356,656,p,True)]
+              else:
+                  inner += [choice('Знаю',32,190,204,p,False),choice('Не уверен',258,190,204,p,resume),choice('Новое',484,190,204,p,False)]
+                  if resume: inner.append(frm('Resume note',32,260,656,74,p['mint'],[txt('Resume copy','Прогресс сохранён: 4 ответа. Этот термин — следующий.',18,20,620,34,13,600,p['muted'])],14))
+                  inner += [btn('Сохранить отметку',32,360,656,p,True),txt('Skip','Пропустить диагностику',32,430,656,18,13,600,p['muted'],'center')]
+              title='Продолжим диагностику' if resume else ('Перевод открыт после отметки' if reveal else 'Что уже знакомо?')
+              return desktop_root(name,p,desktop_shell(p,title,'ШАГ 2 ИЗ 3','До выбора ответ скрыт. Диагностика не оценивает вас как экзамен.',inner))
+
+          def message_screen(form,p,theme,kind):
+              specs={
+                'Skip Confirm':('Пропустить диагностику?','Вы сможете начать обучение сразу. Пропуск не меняет scheduler и не блокирует дальнейшие уроки.','Продолжить без диагностики','Вернуться к диагностике'),
+                'Skipped':('Диагностика пропущена','Настройка сохранена. Первый урок будет собран без диагностических отметок.','Перейти к первому уроку',None),
+                'Complete':('Персональная очередь готова','Мы учли рабочий контекст и ваши отметки. Начните с короткой практики — настройки можно изменить позже.','Начать первый урок',None),
+                'Error':('Не удалось продолжить','Текущий выбор сохранён. Повторите запрос — диагностическая позиция не потеряется.','Повторить','Вернуться назад')}
+              title,body,primary,secondary=specs[kind]
+              name=f'First Use / {kind} / {form} / {theme}'
+              if form=='Mobile':
+                  icon='✓' if kind in ('Skipped','Complete') else ('!' if kind=='Error' else '→')
+                  c=[status(p),brand(p),frm('State icon',151,160,88,88,p['subtle'],[txt('Icon',icon,0,24,88,42,32,700,p['success'] if kind in ('Skipped','Complete') else p['danger'] if kind=='Error' else p['primary'],'center')],99),txt('Title',title,24,282,342,70,28,700,p['text'],'center'),txt('Body',body,36,366,318,82,14,400,p['muted'],'center')]
+                  if kind=='Complete': c.append(frm('Queue note',24,476,342,92,p['mint'],[txt('Queue label','ГОТОВО',16,14,310,16,12,700,p['success']),txt('Queue body','Стартовая очередь собрана без fake progress.',16,40,310,34,13,400,p['muted'])],16))
+                  c.append(btn(primary,24,610,342,p,True))
+                  if secondary: c.append(btn(secondary,24,674,342,p,False))
+                  return mobile_root(name,p,c)
+              inner=[frm('State icon',300,36,88,88,p['subtle'],[txt('Icon','✓' if kind in ('Skipped','Complete') else ('!' if kind=='Error' else '→'),0,24,88,42,32,700,p['success'] if kind in ('Skipped','Complete') else p['danger'] if kind=='Error' else p['primary'],'center')],99),txt('State title',title,60,148,600,44,28,700,p['text'],'center'),txt('State body',body,80,210,560,70,15,400,p['muted'],'center'),btn(primary,80,330,560,p,True)]
+              if secondary: inner.append(btn(secondary,80,394,560,p,False))
+              if kind=='Complete': inner.append(frm('Queue note',80,470,560,58,p['mint'],[txt('Queue copy','Очередь подготовлена; реальные progress cards появятся после практики.',16,17,528,30,12,600,p['muted'],'center')],14))
+              return desktop_root(name,p,desktop_shell(p,title,'FIRST USE','Состояние связано напрямую с серверным onboarding contract.',inner))
+
+          def loading(form,p,theme):
+              name=f'First Use / Loading / {form} / {theme}'
+              if form=='Mobile':
+                  c=[status(p),brand(p),txt('Title','Подготавливаем диагностику',24,146,342,70,28,700,p['text']),txt('Body','Загружаем текущую позицию и сохраняем безопасный resume.',24,228,342,52,14,400,p['muted'])]
+                  y=330
+                  for w in [342,286,318,250]: c.append(rect('Skeleton',24,y,w,18,p['subtle'],99)); y+=42
+                  c.append(frm('Loading note',24,542,342,90,p['mint'],[txt('Loading copy','Никакие ответы не раскрываются во время загрузки.',16,22,310,48,13,600,p['muted'])],16))
+                  return mobile_root(name,p,c)
+              inner=[]; y=64
+              for w in [620,540,656,470,590]: inner.append(rect('Skeleton',32,y,w,18,p['subtle'],99)); y+=50
+              inner.append(frm('Loading note',32,348,656,74,p['mint'],[txt('Loading copy','Восстанавливаем текущую позицию без раскрытия будущих ответов.',18,20,620,34,13,600,p['muted'])],14))
+              return desktop_root(name,p,desktop_shell(p,'Подготавливаем диагностику','ЗАГРУЗКА','Восстанавливаем first-use state и текущую диагностическую позицию.',inner))
+
+          # Page 17 is the production destination.
+          pages_text,pages,_=tool('list_pages'); plist=pages['pages']; idx=next(i for i,v in enumerate(plist) if v.get('id')==PAGE); tool('set_active_page',{'index':idx})
+
+          # Existing canonical Mobile/Light role frame remains the source; add explicit skip on the disposable copy.
+          existing='fig_4282'
+          tool('insert_node',{'parent':existing,'pageId':PAGE,'data':json.dumps(txt('Skip','Пропустить настройку',24,772,342,18,13,600,LIGHT['muted'],'center'),ensure_ascii=False)})
+
+          variants=[]
+          states=[('Guest Home',guest),('Diagnostic Pre-reveal',lambda f,p,t: diagnostic(f,p,t,False,False)),('Diagnostic Reveal',lambda f,p,t: diagnostic(f,p,t,True,False)),('Diagnostic Resume',lambda f,p,t: diagnostic(f,p,t,False,True)),('Skip Confirm',lambda f,p,t: message_screen(f,p,t,'Skip Confirm')),('Skipped',lambda f,p,t: message_screen(f,p,t,'Skipped')),('Complete',lambda f,p,t: message_screen(f,p,t,'Complete')),('Loading',loading),('Error',lambda f,p,t: message_screen(f,p,t,'Error'))]
+          for form in ('Mobile','Desktop'):
+              for theme,pal in (('Light',LIGHT),('Dark',DARK)):
+                  if not (form=='Mobile' and theme=='Light'):
+                      variants.append(role(form,pal,theme))
+                  for _,builder in states:
+                      variants.append(builder(form,pal,theme))
+
+          # Place roots on an explicit page grid without overlapping accepted source frames.
+          m=0; d=0
+          expected=[]
+          for tree in variants:
+              is_mobile=tree['width']==390
+              if is_mobile:
+                  tree['x']=48+(m%4)*430; tree['y']=2200+(m//4)*900; m+=1
+              else:
+                  tree['x']=48+(d%2)*1480; tree['y']=7200+(d//2)*960; d+=1
+              expected.append(tree['name'])
+              tool('insert_node',{'parent':'0','pageId':PAGE,'data':json.dumps(tree,ensure_ascii=False,separators=(',',':'))})
+
+          # Read back exact IDs and render every canonical state.
+          found={'First Use / Onboarding Role / Mobile / Light':{'nodeId':existing,'existing':True}}
+          names=['First Use / Onboarding Role / Mobile / Light']+expected
+          for name in names:
+              if name.endswith('Onboarding Role / Mobile / Light'):
+                  node_id=existing
+              else:
+                  text,_,err=tool('find_node_by_name',{'name':name},allow=True)
+                  if err: raise AssertionError(f'cannot resolve {name}: {text}')
+                  ids=re.findall(r'(?:fig_|node_|n)[A-Za-z0-9_-]+',text)
+                  if not ids: raise AssertionError(f'no id for {name}: {text}')
+                  node_id=ids[0]
+              _,shot,_=tool('get_screenshot',{'nodeId':node_id})
+              if not isinstance(shot,dict) or not shot.get('image_base64'): raise AssertionError(f'no screenshot for {name}')
+              png=base64.b64decode(shot['image_base64'])
+              slug=re.sub(r'[^a-z0-9]+','-',name.lower()).strip('-')
+              (OUT/f'{slug}.png').write_bytes(png)
+              tree_text,_,_=tool('read_nodes',{'nodeIds':[node_id],'depth':2})
+              (OUT/f'{slug}.txt').write_text(tree_text,encoding='utf-8')
+              found[name]={'nodeId':node_id,'sha256':hashlib.sha256(png).hexdigest(),'existing':node_id==existing}
+
+          generated=Path(os.environ['OPENPENCIL_WORKTREE'])/'design/openpencil/LexiGo Design System.op'
+          manifest={'pageId':PAGE,'sourceSha256':'5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664','generatedSha256':hashlib.sha256(generated.read_bytes()).hexdigest(),'canonicalCount':len(found),'nodes':found,'themeDecision':{'Light':LIGHT,'Dark':DARK}}
+          (OUT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          (OUT/'generated.op').write_bytes(generated.read_bytes())
+          print(json.dumps({'canonicalCount':len(found),'generatedSha256':manifest['generatedSha256']},indent=2))
+          if len(found)!=40: raise AssertionError(f'expected 40 canonical states, got {len(found)}')
+          PY
+
+      - name: Prove repository source stayed untouched
+        run: |
+          set -Eeuo pipefail
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
+          test -z "$(git status --porcelain -- 'design/openpencil/LexiGo Design System.op')"
+
+      - name: Upload preview evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openpencil-issue-201-preview-${{ github.sha }}
+          path: .tmp/openpencil-issue-201-preview/
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Cleanup disposable runtime
+        if: always()
+        run: |
+          set +e
+          docker compose -p "$OPENPENCIL_COMPOSE_PROJECT" -f deploy/openpencil/compose.yml --profile agent down --volumes --remove-orphans
+          rm -rf "$OPENPENCIL_WORKTREE" "$OPENPENCIL_STATE_DIR" "$OPENPENCIL_BACKUP_DIR"
