@@ -34,6 +34,7 @@ import {
   judgeLearningAnswer,
   normalizePartOfSpeech,
   type LearningItem,
+  type LessonSelectionReason,
   type LessonSize,
   type WordSection,
 } from "../lib/learning";
@@ -67,6 +68,7 @@ type APIItem = {
   cloze?: string;
   clozeAnswer?: string;
   status: string;
+  reason?: LessonSelectionReason;
 };
 
 type LessonItemResponse = APIItem & {
@@ -160,6 +162,7 @@ function toLearningItem(item: APIItem): LearningItem {
     examples: item.examples,
     note: item.note,
     status: item.status,
+    selectionReason: item.reason,
     cloze: item.cloze,
     clozeAnswer: item.clozeAnswer,
   };
