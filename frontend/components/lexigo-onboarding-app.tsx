@@ -389,7 +389,15 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
         <FirstUseHeader step="2 из 3" />
         <main id="lexigo-main-content" className="lx-first-use-main" tabIndex={-1} aria-label={viewTitle("onboarding")}>
           <section className="lx-first-use-panel lx-first-use-diagnostic" aria-busy={busy}>
-            <div className="lx-first-use-progress" aria-label={`Диагностика: ${snapshot.marked} из ${snapshot.total} ответов сохранено`}>
+            <div
+              className="lx-first-use-progress"
+              role="progressbar"
+              aria-label="Диагностический прогресс"
+              aria-valuemin={0}
+              aria-valuemax={snapshot.total}
+              aria-valuenow={snapshot.marked}
+              aria-valuetext={`${snapshot.marked} из ${snapshot.total} ответов сохранено`}
+            >
               <span style={{ width: `${progress}%` }} />
             </div>
             <span className="lx-first-use-kicker">{position} из {snapshot.total}</span>
@@ -459,7 +467,17 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
       <FirstUseHeader step="1 из 3" />
       <main id="lexigo-main-content" className="lx-first-use-main" tabIndex={-1} aria-label={viewTitle("onboarding")}>
         <section className="lx-first-use-panel lx-first-use-role" aria-busy={busy}>
-          <div className="lx-first-use-progress" aria-label="Шаг 1 из 3"><span style={{ width: "33.333%" }} /></div>
+          <div
+            className="lx-first-use-progress"
+            role="progressbar"
+            aria-label="Шаг настройки"
+            aria-valuemin={1}
+            aria-valuemax={3}
+            aria-valuenow={1}
+            aria-valuetext="Шаг 1 из 3"
+          >
+            <span style={{ width: "33.333%" }} />
+          </div>
           <span className="lx-first-use-kicker">ШАГ 1 ИЗ 3</span>
           <h1>Настроим полезный первый урок</h1>
           <p className="lx-first-use-copy-mobile">Три коротких шага. Настройки можно изменить позже.</p>
