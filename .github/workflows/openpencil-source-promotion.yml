@@ -1,0 +1,173 @@
+name: OpenPencil source promotion bootstrap
+
+on:
+  pull_request:
+    paths:
+      - "docs/figma/openpencil-source-promotion.request"
+
+concurrency:
+  group: openpencil-source-promotion-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    name: Commit reviewed OpenPencil source pair
+    if: >-
+      github.event.number == 553 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/issue-552-openpencil-visual-acceptance' &&
+      github.event.pull_request.user.login == 'Dja-tiger' &&
+      github.actor == 'Dja-tiger'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      EXPECTED_MARKER: "issue-552:promote:5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664:e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c"
+      EXPECTED_OP_SHA256: "5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664"
+      EXPECTED_OP_BYTES: "6446726"
+      EXPECTED_TOKENS_SHA256: "e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c"
+      EXPECTED_TOKENS_BYTES: "82487"
+      VARIABLE_EXTRACTOR_IMAGE: "mcr.microsoft.com/playwright@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e"
+      OPEN_PENCIL_CORE_INTEGRITY: "sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow=="
+    steps:
+      - name: Checkout exact PR head with LFS
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          lfs: true
+
+      - name: Validate one-shot authorization and executable identities
+        run: |
+          set -Eeuo pipefail
+          test "$(tr -d '\r\n' < docs/figma/openpencil-source-promotion.request)" = "$EXPECTED_MARKER"
+          test "$(git hash-object scripts/figma/openpencil-ai-import.sh)" = "5f4d10d17c034421bdf68cc4ae8167c8166e3788"
+          test "$(git hash-object scripts/figma/extract-figma-variables.mjs)" = "b2eca4569b30674e8b05850535539fafa86f7729"
+          test "$(git hash-object scripts/figma/compile-openpencil-tokens.py)" = "e1126367ea0b9a618bbb35f94497b666db38fbce"
+          test "$(git hash-object scripts/figma/openpencil-token-migration.sh)" = "74031faea6e13a70a23fbe9e1dfe28d38fb64307"
+          git lfs pull --include="design/figma/LexiGo Design System.fig" --exclude=""
+          test "$(sha256sum 'design/figma/LexiGo Design System.fig' | awk '{print $1}')" = "cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423"
+
+      - name: Exit cleanly if exact reviewed sources already exist
+        id: existing
+        run: |
+          set -Eeuo pipefail
+          op_path="design/openpencil/LexiGo Design System.op"
+          token_path="design/openpencil/LexiGo Design Tokens.json"
+          if [ -f "$op_path" ] || [ -f "$token_path" ]; then
+            test -f "$op_path"
+            test -f "$token_path"
+            test "$(sha256sum "$op_path" | awk '{print $1}')" = "$EXPECTED_OP_SHA256"
+            test "$(wc -c < "$op_path" | tr -d '[:space:]')" = "$EXPECTED_OP_BYTES"
+            test "$(sha256sum "$token_path" | awk '{print $1}')" = "$EXPECTED_TOKENS_SHA256"
+            test "$(wc -c < "$token_path" | tr -d '[:space:]')" = "$EXPECTED_TOKENS_BYTES"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reproduce deterministic Figma import candidate
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          bash scripts/figma/openpencil-ai-import.sh
+          candidate=".tmp/openpencil-ai-import/LexiGo Design System.op"
+          test "$(sha256sum "$candidate" | awk '{print $1}')" = "ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c"
+          test "$(wc -c < "$candidate" | tr -d '[:space:]')" = "2309061"
+
+      - name: Prepare pinned OpenPencil desktop runtime
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          asset="openpencil-desktop-linux-x86_64.tar.gz"
+          expected_sha="6edc33060611b9a2a432a4716f3d2e0e92537e7698a965e5d7a580f36b02c822"
+          runtime_dir="$RUNNER_TEMP/openpencil-desktop-v0.8.2"
+          archive="$RUNNER_TEMP/$asset"
+          rm -rf "$runtime_dir"
+          mkdir -p "$runtime_dir"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --retry-delay 2 \
+            --output "$archive" \
+            "https://github.com/ZSeven-W/openpencil/releases/download/v0.8.2/$asset"
+          test "$(sha256sum "$archive" | awk '{print $1}')" = "$expected_sha"
+          tar -xzf "$archive" -C "$runtime_dir"
+          desktop_bin="$(find "$runtime_dir" -type f -name openpencil-desktop -print -quit)"
+          test -n "$desktop_bin"
+          chmod +x "$desktop_bin"
+          echo "OPENPENCIL_DESKTOP_BIN=$desktop_bin" >> "$GITHUB_ENV"
+
+      - name: Recover native Figma variables read-only
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          extractor_dir="$RUNNER_TEMP/open-pencil-variable-extractor"
+          rm -rf "$extractor_dir"
+          mkdir -p "$extractor_dir"
+          cp scripts/figma/extract-figma-variables.mjs "$extractor_dir/extract-figma-variables.mjs"
+          cat > "$extractor_dir/package.json" <<'JSON'
+          {
+            "name": "lexigo-open-pencil-variable-extractor",
+            "private": true,
+            "type": "module",
+            "dependencies": {"@open-pencil/core": "0.13.2"}
+          }
+          JSON
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --volume "$extractor_dir:/extractor" \
+            --workdir /extractor \
+            --env "EXPECTED_DIST_INTEGRITY=$OPEN_PENCIL_CORE_INTEGRITY" \
+            "$VARIABLE_EXTRACTOR_IMAGE" \
+            bash -lc '
+              set -Eeuo pipefail
+              npm install --ignore-scripts --no-audit --no-fund
+              test "$(npm view @open-pencil/core@0.13.2 dist.integrity)" = "$EXPECTED_DIST_INTEGRITY"
+              EXPECTED_FIG_SHA256="cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423" \
+              EXPECTED_FIG_VARIABLE_COUNT="92" \
+              OPEN_PENCIL_EXTRACTOR_VERSION="0.13.2" \
+                node /extractor/extract-figma-variables.mjs \
+                  "/workspace/design/figma/LexiGo Design System.fig" \
+                  /extractor/figma-variables.json
+            '
+          mkdir -p .tmp/openpencil-visual-acceptance
+          cp "$extractor_dir/figma-variables.json" .tmp/openpencil-visual-acceptance/native-figma-variables.json
+
+      - name: Compile exact lossless token graph
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/figma/compile-openpencil-tokens.py \
+            --native .tmp/openpencil-visual-acceptance/native-figma-variables.json \
+            --variables-out .tmp/openpencil-visual-acceptance/openpencil-variables.json \
+            --themes-out .tmp/openpencil-visual-acceptance/openpencil-themes.json \
+            --provenance-out '.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json'
+          test "$(sha256sum .tmp/openpencil-visual-acceptance/openpencil-variables.json | awk '{print $1}')" = "eba703b954a816f5e31088f28b0a0084e728c49cd02761fd221b4bb4c6ac800a"
+          test "$(sha256sum .tmp/openpencil-visual-acceptance/openpencil-themes.json | awk '{print $1}')" = "a8bb73693413bd7d978cbc8935b6a8733bbbc8e58f5903e9fab2732492561726"
+          test "$(sha256sum '.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json' | awk '{print $1}')" = "$EXPECTED_TOKENS_SHA256"
+          test "$(wc -c < '.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json' | tr -d '[:space:]')" = "$EXPECTED_TOKENS_BYTES"
+
+      - name: Produce exact reviewed tokenized OpenPencil source
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          bash scripts/figma/openpencil-token-migration.sh
+          tokenized='.tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op'
+          test "$(sha256sum "$tokenized" | awk '{print $1}')" = "$EXPECTED_OP_SHA256"
+          test "$(wc -c < "$tokenized" | tr -d '[:space:]')" = "$EXPECTED_OP_BYTES"
+
+      - name: Commit exact reviewed AI-native source pair
+        if: steps.existing.outputs.skip != 'true'
+        run: |
+          set -Eeuo pipefail
+          mkdir -p design/openpencil
+          cp '.tmp/openpencil-visual-acceptance/LexiGo Design System.tokenized.op' 'design/openpencil/LexiGo Design System.op'
+          cp '.tmp/openpencil-visual-acceptance/LexiGo Design Tokens.json' 'design/openpencil/LexiGo Design Tokens.json'
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = "$EXPECTED_OP_SHA256"
+          test "$(sha256sum 'design/openpencil/LexiGo Design Tokens.json' | awk '{print $1}')" = "$EXPECTED_TOKENS_SHA256"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'design/openpencil/LexiGo Design System.op' 'design/openpencil/LexiGo Design Tokens.json'
+          git diff --cached --quiet && { echo "No source promotion changes to commit"; exit 0; }
+          git commit -m "design(openpencil): promote AI-native design source"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
