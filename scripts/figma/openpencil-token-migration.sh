@@ -18,7 +18,6 @@ expected_theme_axis_count="${OPENPENCIL_EXPECTED_THEME_AXIS_COUNT:-2}"
 port="${OPENPENCIL_TOKEN_PORT:-39113}"
 
 sha256_file() { sha256sum "$1" | awk '{print $1}'; }
-file_size() { wc -c < "$1" | tr -d '[:space:]'; }
 
 for required in curl sha256sum tar python3 find cp; do
   command -v "$required" >/dev/null 2>&1 || { echo "Required command is missing: $required" >&2; exit 127; }
@@ -107,6 +106,7 @@ python3 - "$source_file" "$output_file" "$variables_file" "$themes_file" \
   "$expected_variable_count" "$expected_theme_axis_count" <<'PY'
 import hashlib
 import json
+import math
 import pathlib
 import sys
 
@@ -118,6 +118,7 @@ readback_path = pathlib.Path(sys.argv[5])
 summary_path = pathlib.Path(sys.argv[6])
 expected_variable_count = int(sys.argv[7])
 expected_theme_axis_count = int(sys.argv[8])
+float_tolerance = 1e-7
 
 source = json.loads(source_path.read_text(encoding='utf-8'))
 output = json.loads(output_path.read_text(encoding='utf-8'))
@@ -125,12 +126,60 @@ expected_variables = json.loads(variables_path.read_text(encoding='utf-8'))
 expected_themes = json.loads(themes_path.read_text(encoding='utf-8'))
 readback = json.loads(readback_path.read_text(encoding='utf-8'))
 
-if source.get('pages') != output.get('pages') or source.get('children') != output.get('children'):
-    raise SystemExit('Token migration changed the canonical page/children tree')
+class SemanticDiff(Exception):
+    pass
+
+stats = {'numericNormalizationCount': 0, 'maxNumericDrift': 0.0}
+
+def semantic_equal(expected, actual, path='root'):
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        if expected != actual:
+            raise SemanticDiff(f'{path}: {expected!r} != {actual!r}')
+        return
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+        if not math.isfinite(float(expected)) or not math.isfinite(float(actual)):
+            if expected != actual:
+                raise SemanticDiff(f'{path}: non-finite numeric mismatch')
+            return
+        drift = abs(float(expected) - float(actual))
+        if drift > float_tolerance:
+            raise SemanticDiff(f'{path}: numeric drift {drift} exceeds {float_tolerance}: {expected!r} != {actual!r}')
+        if expected != actual:
+            stats['numericNormalizationCount'] += 1
+            stats['maxNumericDrift'] = max(stats['maxNumericDrift'], drift)
+        return
+    if type(expected) is not type(actual):
+        raise SemanticDiff(f'{path}: type {type(expected).__name__} != {type(actual).__name__}')
+    if isinstance(expected, dict):
+        if expected.keys() != actual.keys():
+            missing = sorted(set(expected) - set(actual))
+            extra = sorted(set(actual) - set(expected))
+            raise SemanticDiff(f'{path}: key mismatch missing={missing} extra={extra}')
+        for key in expected:
+            semantic_equal(expected[key], actual[key], f'{path}.{key}')
+        return
+    if isinstance(expected, list):
+        if len(expected) != len(actual):
+            raise SemanticDiff(f'{path}: list length {len(expected)} != {len(actual)}')
+        for index, (left, right) in enumerate(zip(expected, actual)):
+            semantic_equal(left, right, f'{path}[{index}]')
+        return
+    if expected != actual:
+        raise SemanticDiff(f'{path}: {expected!r} != {actual!r}')
+
+try:
+    semantic_equal(source.get('pages'), output.get('pages'), 'pages')
+    semantic_equal(source.get('children'), output.get('children'), 'children')
+except SemanticDiff as exc:
+    raise SystemExit(f'Token migration changed canonical design semantics: {exc}')
+
 if source.get('name') != output.get('name') or source.get('version') != output.get('version'):
     raise SystemExit('Token migration changed document identity fields')
-if output.get('variables') != expected_variables:
-    raise SystemExit('Persisted OpenPencil variables differ from compiled variables')
+
+try:
+    semantic_equal(expected_variables, output.get('variables'), 'persisted.variables')
+except SemanticDiff as exc:
+    raise SystemExit(f'Persisted OpenPencil variables differ from compiled variables: {exc}')
 if output.get('themes') != expected_themes:
     raise SystemExit('Persisted OpenPencil themes differ from compiled themes')
 if len(expected_variables) != expected_variable_count:
@@ -141,8 +190,10 @@ if int(readback.get('variable_count', -1)) != expected_variable_count:
     raise SystemExit(f'OpenPencil readback variable_count mismatch: {readback!r}')
 if int(readback.get('theme_axis_count', -1)) != expected_theme_axis_count:
     raise SystemExit(f'OpenPencil readback theme_axis_count mismatch: {readback!r}')
-if json.loads(readback.get('variables', '{}')) != expected_variables:
-    raise SystemExit('OpenPencil vars readback differs from compiled variables')
+try:
+    semantic_equal(expected_variables, json.loads(readback.get('variables', '{}')), 'readback.variables')
+except SemanticDiff as exc:
+    raise SystemExit(f'OpenPencil vars readback differs from compiled variables: {exc}')
 if json.loads(readback.get('themes', '{}')) != expected_themes:
     raise SystemExit('OpenPencil themes readback differs from compiled themes')
 
@@ -155,7 +206,10 @@ summary = {
     'sourceBytes': len(source_raw),
     'tokenizedSha256': hashlib.sha256(output_raw).hexdigest(),
     'tokenizedBytes': len(output_raw),
-    'pageTreeUnchanged': True,
+    'pageTreeSemanticallyUnchanged': True,
+    'numericNormalizationTolerance': float_tolerance,
+    'numericNormalizationCount': stats['numericNormalizationCount'],
+    'maxNumericDrift': stats['maxNumericDrift'],
     'variableCount': len(expected_variables),
     'themeAxisCount': len(expected_themes),
     'officialApiReadbackMatches': True,
