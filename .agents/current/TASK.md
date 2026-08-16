@@ -6,7 +6,7 @@
 - Branch: `agent/issue-552-openpencil-visual-acceptance`
 - Base SHA: `e7d992ad6089aa6445017ea6ffff6280787b05d8`
 - Head SHA: resolve from live branch ref after each write
-- PR: pending
+- PR: #553 (Draft)
 
 ## Objective
 
@@ -19,7 +19,9 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - Start the pinned OpenPencil file-backed headless server and export representative canonical nodes to Linux PNG evidence.
 - Validate exported PNG dimensions, hashes and semantic node metadata.
 - Verify practical editability on an isolated copy; never mutate the archived `.fig` or the review candidate while probing.
-- Upload a machine-readable acceptance manifest and rendered evidence from CI.
+- Recover the native Figma variable collections, modes, aliases and complete `valuesByMode` through a read-only parser because ZSeven v0.8.2 intentionally imports `themes: None` / `variables: None`.
+- Require exactly 92 native variables, matching the repository handoff, before designing any token migration into ZSeven.
+- Upload machine-readable acceptance and native-variable evidence from CI.
 - Manually inspect the specific Linux artifact before any source-of-truth promotion.
 - If acceptance passes, add `design/openpencil/LexiGo Design System.op`, update the design source hierarchy and add a fail-closed drift contract.
 - Record factual progress in `.agents/current/**`.
@@ -31,7 +33,8 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - No public OpenPencil deployment or MCP exposure yet.
 - No mutation of `design/figma/LexiGo Design System.fig`.
 - No blind snapshot/baseline refresh.
-- No OpenPencil version upgrade in this slice; v0.8.2 remains the validated migration toolchain.
+- No ZSeven OpenPencil version upgrade in this slice; v0.8.2 remains the validated editor/migration toolchain.
+- `open-pencil/open-pencil` is permitted only as a read-only native `.fig` variable extractor; it does not replace ZSeven as the selected AI-first editor.
 - No completion claim for Onboarding/First Use, whose canonical design coverage is still incomplete.
 
 ## Allowed paths
@@ -41,6 +44,7 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - `.agents/current/EXECUTION.md`
 - `.agents/PROJECT_STATE.md` only after promotion evidence is complete
 - `scripts/figma/openpencil-visual-acceptance.sh`
+- `scripts/figma/extract-figma-variables.mjs`
 - `.github/workflows/openpencil-visual-acceptance.yml`
 - `docs/figma/openpencil-ai-workflow.md`
 - `docs/figma/openpencil-screen-map.json`
@@ -74,7 +78,8 @@ The mapping is based on the repository canonical page/node handoff plus exact im
 
 - Archived `.fig` remains SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1,191,055`.
 - Candidate `.op` before any review/edit probe remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`.
-- OpenPencil is pinned to `ZSeven-W/openpencil` v0.8.2 and the Linux x86_64 CLI archive digest from #550.
+- ZSeven OpenPencil is pinned to v0.8.2 and the verified Linux CLI/desktop assets used by the successful acceptance run.
+- Native Figma variable extraction is read-only and pinned to published `@open-pencil/core@0.13.2`; the parser must report exactly 92 variables before a migration layer is attempted.
 - Linux-rendered evidence must come from a specific artifact and be manually reviewed before promotion.
 - Any material visual/semantic drift blocks promotion rather than being normalized by changing evidence.
 
@@ -86,10 +91,11 @@ The mapping is based on the repository canonical page/node handoff plus exact im
 - Linux PNG exports for representative mobile and desktop canonical states.
 - PNG magic, IHDR dimensions and SHA-256 evidence manifest.
 - Isolated-copy editability probe with source candidate unchanged.
+- Native `.fig` variable extraction: collection/mode inventory, complete `valuesByMode`, aliases and exact variable count 92.
 - Dedicated path-scoped CI artifact.
 - Full immutable-head repository CI before merge.
 - Review/thread audit and expected-head merge guard.
 
 ## Rollback
 
-If render/editability acceptance fails, do not commit or promote the `.op`. Preserve the immutable `.fig`, the #550 import gate and the factual failure evidence, then reassess OpenPencil/version/migration strategy in a separate slice.
+If render/editability/token acceptance fails, do not commit or promote the `.op`. Preserve the immutable `.fig`, the #550 import gate and the factual failure evidence, then reassess the migration layer in a separate slice if it cannot be completed safely here.
