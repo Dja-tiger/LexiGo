@@ -34,27 +34,32 @@ jobs:
           test "$(sha256sum 'design/openpencil/LexiGo Design Tokens.json' | awk '{print $1}')" = e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c
 
       - name: Start disposable file-backed OpenPencil MCP
-        id: runtime
         run: |
           set -Eeuo pipefail
           root="$RUNNER_TEMP/openpencil-201-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p "$root/worktree/design/openpencil" "$root/state" "$root/backups" .tmp/openpencil-issue-201
           cp 'design/openpencil/LexiGo Design System.op' "$root/worktree/design/openpencil/LexiGo Design System.op"
           cp 'design/openpencil/LexiGo Design Tokens.json' "$root/worktree/design/openpencil/LexiGo Design Tokens.json"
-          port=$((45000 + GITHUB_RUN_ID % 1000))
-          project="lexigo-op-201-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          export OPENPENCIL_WORKTREE="$root/worktree"
+          export OPENPENCIL_STATE_DIR="$root/state"
+          export OPENPENCIL_BACKUP_DIR="$root/backups"
+          export OPENPENCIL_UID="$(id -u)"
+          export OPENPENCIL_GID="$(id -g)"
+          export OPENPENCIL_BACKUP_KEEP=1
+          export OPENPENCIL_MCP_PORT="$((45000 + GITHUB_RUN_ID % 1000))"
+          export OPENPENCIL_COMPOSE_PROJECT="lexigo-op-201-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           {
-            echo "OPENPENCIL_WORKTREE=$root/worktree"
-            echo "OPENPENCIL_STATE_DIR=$root/state"
-            echo "OPENPENCIL_BACKUP_DIR=$root/backups"
-            echo "OPENPENCIL_UID=$(id -u)"
-            echo "OPENPENCIL_GID=$(id -g)"
-            echo "OPENPENCIL_BACKUP_KEEP=1"
-            echo "OPENPENCIL_MCP_PORT=$port"
-            echo "OPENPENCIL_COMPOSE_PROJECT=$project"
+            echo "OPENPENCIL_WORKTREE=$OPENPENCIL_WORKTREE"
+            echo "OPENPENCIL_STATE_DIR=$OPENPENCIL_STATE_DIR"
+            echo "OPENPENCIL_BACKUP_DIR=$OPENPENCIL_BACKUP_DIR"
+            echo "OPENPENCIL_UID=$OPENPENCIL_UID"
+            echo "OPENPENCIL_GID=$OPENPENCIL_GID"
+            echo "OPENPENCIL_BACKUP_KEEP=$OPENPENCIL_BACKUP_KEEP"
+            echo "OPENPENCIL_MCP_PORT=$OPENPENCIL_MCP_PORT"
+            echo "OPENPENCIL_COMPOSE_PROJECT=$OPENPENCIL_COMPOSE_PROJECT"
           } >> "$GITHUB_ENV"
           docker pull "$OPENPENCIL_IMAGE"
-          docker compose -p "$project" -f deploy/openpencil/compose.yml --profile agent up -d mcp
+          docker compose -p "$OPENPENCIL_COMPOSE_PROJECT" -f deploy/openpencil/compose.yml --profile agent up -d mcp
           python3 - <<'PY'
           import json, os, time, urllib.request
           url=f"http://127.0.0.1:{os.environ['OPENPENCIL_MCP_PORT']}/mcp"
@@ -104,7 +109,7 @@ jobs:
               payload=rpc("tools/call",{"name":name,"arguments":args or {}})
               result=payload.get("result",{})
               content=result.get("content",[])
-              text="\n".join(item.get("text","") for item in content if item.get("type","text")=="text" or "text" in item)
+              text="\n".join(item.get("text","") for item in content if "text" in item)
               if result.get("isError") and not allow_error:
                   raise RuntimeError(f"{name}: {text}")
               try:
@@ -136,19 +141,19 @@ jobs:
               for name in targets:
                   if name in found:
                       continue
-                  text,value,is_error=tool('find_node_by_name',{'name':name},allow_error=True)
+                  text,_,is_error=tool('find_node_by_name',{'name':name},allow_error=True)
                   if is_error or not text:
                       continue
                   ids=re.findall(r'fig_\d+',text)
                   if not ids:
                       continue
                   node_id=ids[0]
-                  node_text,node_value,_=tool('get_node',{'node_id':node_id})
-                  tree_text,tree_value,_=tool('read_nodes',{'nodeIds':[node_id],'depth':6})
+                  node_text,_,_=tool('get_node',{'node_id':node_id})
+                  tree_text,_,_=tool('read_nodes',{'nodeIds':[node_id],'depth':6})
                   key=re.sub(r'[^A-Za-z0-9]+','-',name).strip('-').lower()
                   (OUT/f'{key}-node.txt').write_text(node_text,encoding='utf-8')
                   (OUT/f'{key}-tree.txt').write_text(tree_text,encoding='utf-8')
-                  shot_text,shot_value,_=tool('get_screenshot',{'nodeId':node_id})
+                  _,shot_value,_=tool('get_screenshot',{'nodeId':node_id})
                   if isinstance(shot_value,dict) and shot_value.get('image_base64'):
                       png=base64.b64decode(shot_value['image_base64'])
                       (OUT/f'{key}.png').write_bytes(png)
