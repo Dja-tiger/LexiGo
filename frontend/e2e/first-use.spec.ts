@@ -204,7 +204,8 @@ test("diagnostic never reveals an answer before a successful mark and completes 
   const state = await installOnboardingAPI(context, { failFirstMark: true });
 
   await page.goto("/onboarding");
-  await expect(page.locator('[data-route-client-island="onboarding"]')).toBeVisible();
+  const onboarding = page.locator('[data-route-client-island="onboarding"]');
+  await expect(onboarding).toBeVisible();
   await expect(page.getByRole("heading", { name: "Настроим полезный первый урок" })).toBeVisible();
   await page.getByRole("button", { name: "Продолжить" }).click();
   await expect(page.getByText("schema evolution", { exact: true })).toBeVisible();
@@ -213,7 +214,7 @@ test("diagnostic never reveals an answer before a successful mark and completes 
   await page.getByRole("radio", { name: "Не уверен" }).click();
   await page.getByRole("button", { name: "Сохранить отметку" }).click();
   await expect(page.getByText("эволюция схемы", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("alert")).toContainText("temporary failure");
+  await expect(onboarding.getByRole("alert")).toContainText("temporary failure");
 
   await page.getByRole("button", { name: "Повторить" }).click();
   await expect(page.getByText("эволюция схемы", { exact: true })).toBeVisible();
