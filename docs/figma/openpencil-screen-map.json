@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "figmaFile": "LexiGo Design System",
+    "figmaFileKey": "3xXmBWnf38jbvLjtziwber",
+    "figArchive": "design/figma/LexiGo Design System.fig",
+    "figSha256": "cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423",
+    "openPencilVersion": "v0.8.2",
+    "candidateOpSha256": "ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c",
+    "candidateOpSize": 2309061
+  },
+  "pages": {
+    "foundations": {"pageId": "figma-page-9", "pageName": "09 — Foundations", "rootId": "fig_858"},
+    "components": {"pageId": "figma-page-10", "pageName": "10 — Components", "rootId": "fig_1083"},
+    "interactionComponents": {"pageId": "figma-page-11", "pageName": "11 — Interaction Components", "rootId": "fig_1175"}
+  },
+  "screens": [
+    {"key":"home.mobile.dark","route":"/","legacyFigmaNode":"196:223","pageId":"figma-page-13","pageName":"13 — Product Screens — Home","openPencilNode":"fig_2287","name":"Home / Mobile / Dark","width":390,"height":844,"render":true},
+    {"key":"home.desktop.light","route":"/","legacyFigmaNode":"194:249","pageId":"figma-page-13","pageName":"13 — Product Screens — Home","openPencilNode":"fig_2338","name":"Home / Desktop / Light","width":1440,"height":1024,"render":true},
+
+    {"key":"learn.mobile.recommended","route":"/learn","legacyFigmaNode":"202:6","pageId":"figma-page-21","pageName":"20 — Production Slice — Learn Composer","openPencilNode":"fig_6826","name":"Learn / Mobile / Recommended","width":390,"height":844,"render":true},
+    {"key":"learn.mobile.manual","route":"/learn","legacyFigmaNode":"203:5","pageId":"figma-page-21","pageName":"20 — Production Slice — Learn Composer","openPencilNode":"fig_6749","name":"Learn / Mobile / Manual Settings","width":390,"height":844,"render":false},
+    {"key":"learn.desktop.full","route":"/learn","legacyFigmaNode":"204:2","pageId":"figma-page-21","pageName":"20 — Production Slice — Learn Composer","openPencilNode":"fig_6621","name":"Learn / Desktop / Full Composer","width":1440,"height":1024,"render":true},
+
+    {"key":"lesson.mobile.recall.default","route":"/lesson/active","legacyFigmaNode":"75:6","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3247","name":"Mobile / Recall / Default","width":390,"height":844,"render":true},
+    {"key":"lesson.mobile.recall.correct","route":"/lesson/active","legacyFigmaNode":"75:30","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3220","name":"Mobile / Recall / Correct","width":390,"height":844,"render":false},
+    {"key":"lesson.mobile.recall.offline","route":"/lesson/active","legacyFigmaNode":"75:57","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3193","name":"Mobile / Recall / Offline","width":390,"height":844,"render":false},
+    {"key":"lesson.mobile.choice.incorrect","route":"/lesson/active","legacyFigmaNode":"75:89","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3162","name":"Mobile / Choice / Incorrect","width":390,"height":844,"render":false},
+    {"key":"lesson.desktop.study.light","route":"/lesson/active","legacyFigmaNode":"75:120","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3132","name":"Desktop / Study / Light","width":1440,"height":1024,"render":true},
+    {"key":"lesson.desktop.recall.correct","route":"/lesson/active","legacyFigmaNode":"75:150","pageId":"figma-page-14","pageName":"14 — Active Lesson Screens","openPencilNode":"fig_3104","name":"Desktop / Recall / Correct","width":1440,"height":1024,"render":false},
+
+    {"key":"progress.mobile.light","route":"/progress","legacyFigmaNode":"76:6","pageId":"figma-page-15","pageName":"15 — Progress & Scenario Screens","openPencilNode":"fig_3730","name":"Mobile / Progress / Light","width":390,"height":844,"render":true},
+    {"key":"progress.mobile.dark","route":"/progress","legacyFigmaNode":"76:53","pageId":"figma-page-15","pageName":"15 — Progress & Scenario Screens","openPencilNode":"fig_3683","name":"Mobile / Progress / Dark","width":390,"height":844,"render":false},
+    {"key":"progress.desktop.light","route":"/progress","legacyFigmaNode":"76:154","pageId":"figma-page-15","pageName":"15 — Progress & Scenario Screens","openPencilNode":"fig_3564","name":"Desktop / Progress / Light","width":1440,"height":1024,"render":true},
+
+    {"key":"dictionary.mobile.light","route":"/dictionary","legacyFigmaNode":"78:54","pageId":"figma-page-16","pageName":"16 — Learn & Dictionary Screens","openPencilNode":"fig_4008","name":"Mobile / Dictionary / Light","width":390,"height":844,"render":true},
+    {"key":"dictionary.desktop.light","route":"/dictionary","legacyFigmaNode":"78:193","pageId":"figma-page-16","pageName":"16 — Learn & Dictionary Screens","openPencilNode":"fig_3833","name":"Desktop / Dictionary / Light","width":1440,"height":1024,"render":true},
+    {"key":"word.mobile.dark","route":"/words/[id]","legacyFigmaNode":"78:99","pageId":"figma-page-16","pageName":"16 — Learn & Dictionary Screens","openPencilNode":"fig_3982","name":"Mobile / Word Detail / Dark","width":390,"height":844,"render":true},
+    {"key":"word.desktop.dark","route":"/words/[id]","legacyFigmaNode":"78:274","pageId":"figma-page-16","pageName":"16 — Learn & Dictionary Screens","openPencilNode":"fig_3780","name":"Desktop / Word Detail / Dark","width":1440,"height":1024,"render":true},
+
+    {"key":"phrases.mobile.catalog.light","route":"/phrases","legacyFigmaNode":"255:10","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7281","name":"Mobile / Phrases Catalog / Light — Default","width":390,"height":844,"render":true},
+    {"key":"phrases.mobile.catalog.dark","route":"/phrases","legacyFigmaNode":"257:2","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7210","name":"Mobile / Phrases Catalog / Dark — Search + Travel","width":390,"height":844,"render":false},
+    {"key":"phrases.desktop.catalog.light","route":"/phrases","legacyFigmaNode":"255:81","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7099","name":"Desktop / Phrases Catalog / Light — Default","width":1440,"height":1024,"render":true},
+    {"key":"phrases.desktop.catalog.dark.empty","route":"/phrases","legacyFigmaNode":"257:74","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_6985","name":"Desktop / Phrases Catalog / Dark — Empty Search","width":1440,"height":1024,"render":false},
+    {"key":"phrase.mobile.detail.dark.daily","route":"/phrases/[slug]","legacyFigmaNode":"255:55","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7255","name":"Mobile / Phrase Detail / Dark — Daily","width":390,"height":844,"render":true},
+    {"key":"phrase.mobile.detail.light.travel","route":"/phrases/[slug]","legacyFigmaNode":"257:47","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7184","name":"Mobile / Phrase Detail / Light — Travel","width":390,"height":844,"render":false},
+    {"key":"phrase.desktop.detail.dark.technical","route":"/phrases/[slug]","legacyFigmaNode":"255:162","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_7046","name":"Desktop / Phrase Detail / Dark — Technical","width":1440,"height":1024,"render":true},
+    {"key":"phrase.desktop.detail.light.daily","route":"/phrases/[slug]","legacyFigmaNode":"257:159","pageId":"figma-page-22","pageName":"21 — Production Slice — Phrases","openPencilNode":"fig_6932","name":"Desktop / Phrase Detail / Light — Daily","width":1440,"height":1024,"render":false},
+
+    {"key":"profile.mobile.light","route":"/profile","legacyFigmaNode":"79:6","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4305","name":"Mobile / Profile / Light","width":390,"height":844,"render":true},
+    {"key":"profile.desktop.light","route":"/profile","legacyFigmaNode":"79:129","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4157","name":"Desktop / Profile / Light","width":1440,"height":1024,"render":true},
+
+    {"key":"state.home.loading.dark","route":"/","legacyFigmaNode":"79:69","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4258","name":"Mobile / Home Loading / Dark","width":390,"height":844,"render":false},
+    {"key":"state.dictionary.empty.light","route":"/dictionary","legacyFigmaNode":"79:93","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4234","name":"Mobile / Dictionary Empty / Light","width":390,"height":844,"render":true},
+    {"key":"state.error.dark","route":"shared","legacyFigmaNode":"79:117","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4222","name":"Mobile / Error / Dark","width":390,"height":844,"render":false},
+    {"key":"state.offline.desktop.dark","route":"shared","legacyFigmaNode":"79:194","pageId":"figma-page-17","pageName":"17 — Profile & System States","openPencilNode":"fig_4104","name":"Desktop / Offline / Dark","width":1440,"height":1024,"render":true}
+  ],
+  "editabilityProbe": {
+    "pageId": "figma-page-21",
+    "screenNode": "fig_6826",
+    "textNode": "fig_6879",
+    "name": "Mobile Route Label",
+    "originalContent": "ОБУЧЕНИЕ",
+    "probeContent": "ОБУЧЕНИЕ · AI PROBE"
+  }
+}

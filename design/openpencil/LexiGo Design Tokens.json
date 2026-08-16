@@ -1,0 +1,2686 @@
+{
+  "collections": [
+    {
+      "defaultModeId": "51:5",
+      "figmaCollectionId": "51:72",
+      "figmaCollectionName": "Motion Duration",
+      "modes": [
+        {
+          "modeId": "51:5",
+          "name": "Standard"
+        },
+        {
+          "modeId": "51:6",
+          "name": "Reduced"
+        }
+      ],
+      "openPencilNamespace": "motion-duration",
+      "themeAxis": "Motion Duration",
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "deliberate",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:77",
+          "figmaVersion": "51:388",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "motion-duration/deliberate",
+          "valuesByMode": {
+            "51:5": {
+              "modeName": "Standard",
+              "resolvedOpenPencilValue": 320,
+              "source": {
+                "kind": "literal",
+                "value": 320
+              }
+            },
+            "51:6": {
+              "modeName": "Reduced",
+              "resolvedOpenPencilValue": 120,
+              "source": {
+                "kind": "literal",
+                "value": 120
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "emphasized",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:76",
+          "figmaVersion": "51:382",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "motion-duration/emphasized",
+          "valuesByMode": {
+            "51:5": {
+              "modeName": "Standard",
+              "resolvedOpenPencilValue": 220,
+              "source": {
+                "kind": "literal",
+                "value": 220
+              }
+            },
+            "51:6": {
+              "modeName": "Reduced",
+              "resolvedOpenPencilValue": 120,
+              "source": {
+                "kind": "literal",
+                "value": 120
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "feedback",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:74",
+          "figmaVersion": "51:370",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "motion-duration/feedback",
+          "valuesByMode": {
+            "51:5": {
+              "modeName": "Standard",
+              "resolvedOpenPencilValue": 120,
+              "source": {
+                "kind": "literal",
+                "value": 120
+              }
+            },
+            "51:6": {
+              "modeName": "Reduced",
+              "resolvedOpenPencilValue": 80,
+              "source": {
+                "kind": "literal",
+                "value": 80
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "instant",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:73",
+          "figmaVersion": "51:364",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "motion-duration/instant",
+          "valuesByMode": {
+            "51:5": {
+              "modeName": "Standard",
+              "resolvedOpenPencilValue": 0,
+              "source": {
+                "kind": "literal",
+                "value": 0
+              }
+            },
+            "51:6": {
+              "modeName": "Reduced",
+              "resolvedOpenPencilValue": 0,
+              "source": {
+                "kind": "literal",
+                "value": 0
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "transition",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:75",
+          "figmaVersion": "51:376",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "motion-duration/transition",
+          "valuesByMode": {
+            "51:5": {
+              "modeName": "Standard",
+              "resolvedOpenPencilValue": 160,
+              "source": {
+                "kind": "literal",
+                "value": 160
+              }
+            },
+            "51:6": {
+              "modeName": "Reduced",
+              "resolvedOpenPencilValue": 80,
+              "source": {
+                "kind": "literal",
+                "value": 80
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "defaultModeId": "51:0",
+      "figmaCollectionId": "51:4",
+      "figmaCollectionName": "Primitives",
+      "modes": [
+        {
+          "modeId": "51:0",
+          "name": "Value"
+        }
+      ],
+      "openPencilNamespace": "primitives",
+      "themeAxis": null,
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "blue/100",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:19",
+          "figmaVersion": "51:78",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/blue/100",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#DDE8FF",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 1,
+                  "g": 0.9098039269447327,
+                  "r": 0.8666666746139526
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "blue/400",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:18",
+          "figmaVersion": "51:73",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/blue/400",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#6B93F6",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9647058844566345,
+                  "g": 0.5764706134796143,
+                  "r": 0.41960784792900085
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "blue/600",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:17",
+          "figmaVersion": "51:68",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/blue/600",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#3D7BF2",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9490196108818054,
+                  "g": 0.48235294222831726,
+                  "r": 0.239215686917305
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "coral/100",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:24",
+          "figmaVersion": "51:103",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/coral/100",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#FDE7E7",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9058823585510254,
+                  "g": 0.9058823585510254,
+                  "r": 0.9921568632125854
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "coral/500",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:23",
+          "figmaVersion": "51:98",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/coral/500",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#F06A6A",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.4156862795352936,
+                  "g": 0.4156862795352936,
+                  "r": 0.9411764740943909
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "forest/700",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:13",
+          "figmaVersion": "51:48",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/forest/700",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#2E5C50",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.3137255012989044,
+                  "g": 0.3607843220233917,
+                  "r": 0.18039216101169586
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "forest/800",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:12",
+          "figmaVersion": "51:43",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/forest/800",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.22745098173618317,
+                  "g": 0.25882354378700256,
+                  "r": 0.12941177189350128
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "forest/900",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:11",
+          "figmaVersion": "51:38",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/forest/900",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#18302B",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.16862745583057404,
+                  "g": 0.1882352977991104,
+                  "r": 0.0941176488995552
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "gold/100",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:26",
+          "figmaVersion": "51:113",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/gold/100",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#F8EDCF",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.8117647171020508,
+                  "g": 0.929411768913269,
+                  "r": 0.9725490212440491
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "gold/500",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:25",
+          "figmaVersion": "51:108",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/gold/500",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#D6A63D",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.239215686917305,
+                  "g": 0.6509804129600525,
+                  "r": 0.8392156958580017
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "green/100",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:22",
+          "figmaVersion": "51:93",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/green/100",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#DDF5EB",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9215686321258545,
+                  "g": 0.9607843160629272,
+                  "r": 0.8666666746139526
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "green/400",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:21",
+          "figmaVersion": "51:88",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/green/400",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#4BC09A",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.6039215922355652,
+                  "g": 0.7529411911964417,
+                  "r": 0.29411765933036804
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "green/600",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:20",
+          "figmaVersion": "51:83",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/green/600",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#1F9D73",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.45098039507865906,
+                  "g": 0.615686297416687,
+                  "r": 0.12156862765550613
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "ink/500",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:16",
+          "figmaVersion": "51:63",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/ink/500",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#667773",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.45098039507865906,
+                  "g": 0.46666666865348816,
+                  "r": 0.4000000059604645
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "ink/700",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:15",
+          "figmaVersion": "51:58",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/ink/700",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#354944",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.2666666805744171,
+                  "g": 0.2862745225429535,
+                  "r": 0.2078431397676468
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "ink/900",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:14",
+          "figmaVersion": "51:53",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/ink/900",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#10211D",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.11372549086809158,
+                  "g": 0.12941177189350128,
+                  "r": 0.062745101749897
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "mist/100",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:8",
+          "figmaVersion": "51:23",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/mist/100",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#E6EFEB",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9215686321258545,
+                  "g": 0.9372549057006836,
+                  "r": 0.9019607901573181
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "mist/200",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:9",
+          "figmaVersion": "51:28",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/mist/200",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#C9D7D2",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.8235294222831726,
+                  "g": 0.843137264251709,
+                  "r": 0.7882353067398071
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "mist/400",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:10",
+          "figmaVersion": "51:33",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/mist/400",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#A8B8B3",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.7019608020782471,
+                  "g": 0.7215686440467834,
+                  "r": 0.658823549747467
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "mist/50",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:7",
+          "figmaVersion": "51:18",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/mist/50",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#F4F7F5",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0.9607843160629272,
+                  "g": 0.9686274528503418,
+                  "r": 0.95686274766922
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "neutral/black",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:6",
+          "figmaVersion": "51:13",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/neutral/black",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#000000",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 0,
+                  "g": 0,
+                  "r": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "neutral/white",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:5",
+          "figmaVersion": "51:8",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "primitives/neutral/white",
+          "valuesByMode": {
+            "51:0": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "#FFFFFF",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 1,
+                  "b": 1,
+                  "g": 1,
+                  "r": 1
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "defaultModeId": "51:4",
+      "figmaCollectionId": "51:63",
+      "figmaCollectionName": "Radius",
+      "modes": [
+        {
+          "modeId": "51:4",
+          "name": "Value"
+        }
+      ],
+      "openPencilNamespace": "radius",
+      "themeAxis": null,
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "2xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:70",
+          "figmaVersion": "51:350",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/2xl",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 24,
+              "source": {
+                "kind": "literal",
+                "value": 24
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "full",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:71",
+          "figmaVersion": "51:355",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/full",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 999,
+              "source": {
+                "kind": "literal",
+                "value": 999
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:68",
+          "figmaVersion": "51:340",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/lg",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 16,
+              "source": {
+                "kind": "literal",
+                "value": 16
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "md",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:67",
+          "figmaVersion": "51:335",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/md",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 12,
+              "source": {
+                "kind": "literal",
+                "value": 12
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "none",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:64",
+          "figmaVersion": "51:320",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/none",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 0,
+              "source": {
+                "kind": "literal",
+                "value": 0
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:66",
+          "figmaVersion": "51:330",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/sm",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 8,
+              "source": {
+                "kind": "literal",
+                "value": 8
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:69",
+          "figmaVersion": "51:345",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/xl",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 20,
+              "source": {
+                "kind": "literal",
+                "value": 20
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "xs",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:65",
+          "figmaVersion": "51:325",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "radius/xs",
+          "valuesByMode": {
+            "51:4": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 4,
+              "source": {
+                "kind": "literal",
+                "value": 4
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "defaultModeId": "51:1",
+      "figmaCollectionId": "51:27",
+      "figmaCollectionName": "Semantic Colors",
+      "modes": [
+        {
+          "modeId": "51:1",
+          "name": "Light"
+        },
+        {
+          "modeId": "51:2",
+          "name": "Dark"
+        }
+      ],
+      "openPencilNamespace": "semantic-colors",
+      "themeAxis": "Semantic Colors",
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "action/on-primary",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:39",
+          "figmaVersion": "51:189",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/action/on-primary",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#FFFFFF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:5"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/neutral/white"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:5",
+                "targetOpenPencilVariable": "primitives/neutral/white"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#10211D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:14"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:14",
+                "targetOpenPencilVariable": "primitives/ink/900"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "action/primary",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:38",
+          "figmaVersion": "51:183",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/action/primary",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#3D7BF2",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:17"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/blue/600"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:17",
+                "targetOpenPencilVariable": "primitives/blue/600"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#6B93F6",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:18"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/blue/400"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:18",
+                "targetOpenPencilVariable": "primitives/blue/400"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "action/subtle",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:40",
+          "figmaVersion": "51:195",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/action/subtle",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#DDE8FF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:19"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/blue/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:19",
+                "targetOpenPencilVariable": "primitives/blue/100"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:12"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/800"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:12",
+                "targetOpenPencilVariable": "primitives/forest/800"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "background/canvas",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:28",
+          "figmaVersion": "51:123",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/background/canvas",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#F4F7F5",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:7"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/50"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:7",
+                "targetOpenPencilVariable": "primitives/mist/50"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#10211D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:14"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:14",
+                "targetOpenPencilVariable": "primitives/ink/900"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "background/inverse",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:31",
+          "figmaVersion": "51:141",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/background/inverse",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#18302B",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:11"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:11",
+                "targetOpenPencilVariable": "primitives/forest/900"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#F4F7F5",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:7"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/50"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:7",
+                "targetOpenPencilVariable": "primitives/mist/50"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "background/subtle",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:30",
+          "figmaVersion": "51:135",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/background/subtle",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#E6EFEB",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:8"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:8",
+                "targetOpenPencilVariable": "primitives/mist/100"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:12"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/800"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:12",
+                "targetOpenPencilVariable": "primitives/forest/800"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "background/surface",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:29",
+          "figmaVersion": "51:129",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/background/surface",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#FFFFFF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:5"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/neutral/white"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:5",
+                "targetOpenPencilVariable": "primitives/neutral/white"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#18302B",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:11"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:11",
+                "targetOpenPencilVariable": "primitives/forest/900"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "border/default",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:36",
+          "figmaVersion": "51:171",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/border/default",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#C9D7D2",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:9"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/200"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:9",
+                "targetOpenPencilVariable": "primitives/mist/200"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#2E5C50",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:13"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/700"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:13",
+                "targetOpenPencilVariable": "primitives/forest/700"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "border/strong",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:37",
+          "figmaVersion": "51:177",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/border/strong",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#2E5C50",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:13"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/700"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:13",
+                "targetOpenPencilVariable": "primitives/forest/700"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#A8B8B3",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:10"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/400"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:10",
+                "targetOpenPencilVariable": "primitives/mist/400"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "focus/ring",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:47",
+          "figmaVersion": "51:238",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/focus/ring",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#3D7BF2",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:17"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/blue/600"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:17",
+                "targetOpenPencilVariable": "primitives/blue/600"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#6B93F6",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:18"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/blue/400"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:18",
+                "targetOpenPencilVariable": "primitives/blue/400"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "overlay/scrim",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:48",
+          "figmaVersion": "51:244",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/overlay/scrim",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#0000006B",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 0.41999998688697815,
+                  "b": 0,
+                  "g": 0,
+                  "r": 0
+                }
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#000000A3",
+              "source": {
+                "kind": "literal",
+                "value": {
+                  "a": 0.6399999856948853,
+                  "b": 0,
+                  "g": 0,
+                  "r": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/milestone",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:45",
+          "figmaVersion": "51:225",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/milestone",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#D6A63D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:25"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/gold/500"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:25",
+                "targetOpenPencilVariable": "primitives/gold/500"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#D6A63D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:25"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/gold/500"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:25",
+                "targetOpenPencilVariable": "primitives/gold/500"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/milestone-subtle",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:46",
+          "figmaVersion": "51:231",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/milestone-subtle",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#F8EDCF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:26"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/gold/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:26",
+                "targetOpenPencilVariable": "primitives/gold/100"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:12"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/800"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:12",
+                "targetOpenPencilVariable": "primitives/forest/800"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/retained",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:41",
+          "figmaVersion": "51:201",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/retained",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#1F9D73",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:20"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/green/600"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:20",
+                "targetOpenPencilVariable": "primitives/green/600"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#4BC09A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:21"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/green/400"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:21",
+                "targetOpenPencilVariable": "primitives/green/400"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/retained-subtle",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:42",
+          "figmaVersion": "51:207",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/retained-subtle",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#DDF5EB",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:22"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/green/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:22",
+                "targetOpenPencilVariable": "primitives/green/100"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:12"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/800"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:12",
+                "targetOpenPencilVariable": "primitives/forest/800"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/weak",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:43",
+          "figmaVersion": "51:213",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/weak",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#F06A6A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:23"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/coral/500"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:23",
+                "targetOpenPencilVariable": "primitives/coral/500"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#F06A6A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:23"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/coral/500"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:23",
+                "targetOpenPencilVariable": "primitives/coral/500"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "status/weak-subtle",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:44",
+          "figmaVersion": "51:219",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/status/weak-subtle",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#FDE7E7",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:24"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/coral/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:24",
+                "targetOpenPencilVariable": "primitives/coral/100"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#21423A",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:12"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/forest/800"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:12",
+                "targetOpenPencilVariable": "primitives/forest/800"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "text/inverse",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:35",
+          "figmaVersion": "51:165",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/text/inverse",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#FFFFFF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:5"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/neutral/white"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:5",
+                "targetOpenPencilVariable": "primitives/neutral/white"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#10211D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:14"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:14",
+                "targetOpenPencilVariable": "primitives/ink/900"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "text/primary",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:32",
+          "figmaVersion": "51:147",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/text/primary",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#10211D",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:14"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/900"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:14",
+                "targetOpenPencilVariable": "primitives/ink/900"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#FFFFFF",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:5"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/neutral/white"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:5",
+                "targetOpenPencilVariable": "primitives/neutral/white"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "text/secondary",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:33",
+          "figmaVersion": "51:153",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/text/secondary",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#354944",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:15"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/700"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:15",
+                "targetOpenPencilVariable": "primitives/ink/700"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#E6EFEB",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:8"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/100"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:8",
+                "targetOpenPencilVariable": "primitives/mist/100"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "text/tertiary",
+          "figmaType": "COLOR",
+          "figmaVariableId": "51:34",
+          "figmaVersion": "51:159",
+          "hiddenFromPublishing": false,
+          "openPencilType": "color",
+          "openPencilVariable": "semantic-colors/text/tertiary",
+          "valuesByMode": {
+            "51:1": {
+              "modeName": "Light",
+              "resolvedOpenPencilValue": "#667773",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:16"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/ink/500"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:16",
+                "targetOpenPencilVariable": "primitives/ink/500"
+              }
+            },
+            "51:2": {
+              "modeName": "Dark",
+              "resolvedOpenPencilValue": "#A8B8B3",
+              "source": {
+                "aliasChainFigmaVariableIds": [
+                  "51:10"
+                ],
+                "aliasChainOpenPencilVariables": [
+                  "primitives/mist/400"
+                ],
+                "kind": "alias",
+                "targetFigmaVariableId": "51:10",
+                "targetOpenPencilVariable": "primitives/mist/400"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "defaultModeId": "51:3",
+      "figmaCollectionId": "51:49",
+      "figmaCollectionName": "Spacing",
+      "modes": [
+        {
+          "modeId": "51:3",
+          "name": "Value"
+        }
+      ],
+      "openPencilNamespace": "spacing",
+      "themeAxis": null,
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "0",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:50",
+          "figmaVersion": "51:252",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/0",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 0,
+              "source": {
+                "kind": "literal",
+                "value": 0
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "2xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:57",
+          "figmaVersion": "51:287",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/2xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 24,
+              "source": {
+                "kind": "literal",
+                "value": 24
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "2xs",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:51",
+          "figmaVersion": "51:257",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/2xs",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 2,
+              "source": {
+                "kind": "literal",
+                "value": 2
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "3xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:58",
+          "figmaVersion": "51:292",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/3xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 32,
+              "source": {
+                "kind": "literal",
+                "value": 32
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "4xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:59",
+          "figmaVersion": "51:297",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/4xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 40,
+              "source": {
+                "kind": "literal",
+                "value": 40
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "5xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:60",
+          "figmaVersion": "51:302",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/5xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 48,
+              "source": {
+                "kind": "literal",
+                "value": 48
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "6xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:61",
+          "figmaVersion": "51:307",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/6xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 64,
+              "source": {
+                "kind": "literal",
+                "value": 64
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "7xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:62",
+          "figmaVersion": "51:312",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/7xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 80,
+              "source": {
+                "kind": "literal",
+                "value": 80
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:55",
+          "figmaVersion": "51:277",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/lg",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 16,
+              "source": {
+                "kind": "literal",
+                "value": 16
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "md",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:54",
+          "figmaVersion": "51:272",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/md",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 12,
+              "source": {
+                "kind": "literal",
+                "value": 12
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:53",
+          "figmaVersion": "51:267",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/sm",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 8,
+              "source": {
+                "kind": "literal",
+                "value": 8
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "xl",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:56",
+          "figmaVersion": "51:282",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/xl",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 20,
+              "source": {
+                "kind": "literal",
+                "value": 20
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "xs",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:52",
+          "figmaVersion": "51:262",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "spacing/xs",
+          "valuesByMode": {
+            "51:3": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 4,
+              "source": {
+                "kind": "literal",
+                "value": 4
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "defaultModeId": "51:7",
+      "figmaCollectionId": "51:78",
+      "figmaCollectionName": "Typography Primitives",
+      "modes": [
+        {
+          "modeId": "51:7",
+          "name": "Value"
+        }
+      ],
+      "openPencilNamespace": "typography-primitives",
+      "themeAxis": null,
+      "variables": [
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "family/sans",
+          "figmaType": "STRING",
+          "figmaVariableId": "51:79",
+          "figmaVersion": "51:397",
+          "hiddenFromPublishing": false,
+          "openPencilType": "string",
+          "openPencilVariable": "typography-primitives/family/sans",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": "Inter",
+              "source": {
+                "kind": "literal",
+                "value": "Inter"
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/body",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:91",
+          "figmaVersion": "51:457",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/body",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 24,
+              "source": {
+                "kind": "literal",
+                "value": 24
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/body-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:92",
+          "figmaVersion": "51:462",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/body-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 28,
+              "source": {
+                "kind": "literal",
+                "value": 28
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/caption",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:89",
+          "figmaVersion": "51:447",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/caption",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 16,
+              "source": {
+                "kind": "literal",
+                "value": 16
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/display-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:97",
+          "figmaVersion": "51:487",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/display-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 60,
+              "source": {
+                "kind": "literal",
+                "value": 60
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/display-sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:96",
+          "figmaVersion": "51:482",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/display-sm",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 48,
+              "source": {
+                "kind": "literal",
+                "value": 48
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/label",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:90",
+          "figmaVersion": "51:452",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/label",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 20,
+              "source": {
+                "kind": "literal",
+                "value": 20
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/title-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:95",
+          "figmaVersion": "51:477",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/title-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 40,
+              "source": {
+                "kind": "literal",
+                "value": 40
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/title-md",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:94",
+          "figmaVersion": "51:472",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/title-md",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 32,
+              "source": {
+                "kind": "literal",
+                "value": 32
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "line/title-sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:93",
+          "figmaVersion": "51:467",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/line/title-sm",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 28,
+              "source": {
+                "kind": "literal",
+                "value": 28
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/body",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:82",
+          "figmaVersion": "51:412",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/body",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 16,
+              "source": {
+                "kind": "literal",
+                "value": 16
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/body-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:83",
+          "figmaVersion": "51:417",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/body-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 18,
+              "source": {
+                "kind": "literal",
+                "value": 18
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/caption",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:80",
+          "figmaVersion": "51:402",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/caption",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 12,
+              "source": {
+                "kind": "literal",
+                "value": 12
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/display-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:88",
+          "figmaVersion": "51:442",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/display-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 52,
+              "source": {
+                "kind": "literal",
+                "value": 52
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/display-sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:87",
+          "figmaVersion": "51:437",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/display-sm",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 40,
+              "source": {
+                "kind": "literal",
+                "value": 40
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/label",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:81",
+          "figmaVersion": "51:407",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/label",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 14,
+              "source": {
+                "kind": "literal",
+                "value": 14
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/title-lg",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:86",
+          "figmaVersion": "51:432",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/title-lg",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 32,
+              "source": {
+                "kind": "literal",
+                "value": 32
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/title-md",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:85",
+          "figmaVersion": "51:427",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/title-md",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 24,
+              "source": {
+                "kind": "literal",
+                "value": 24
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "size/title-sm",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:84",
+          "figmaVersion": "51:422",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/size/title-sm",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 20,
+              "source": {
+                "kind": "literal",
+                "value": 20
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "weight/bold",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:101",
+          "figmaVersion": "51:506",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/weight/bold",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 700,
+              "source": {
+                "kind": "literal",
+                "value": 700
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "weight/medium",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:99",
+          "figmaVersion": "51:497",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/weight/medium",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 500,
+              "source": {
+                "kind": "literal",
+                "value": 500
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "weight/regular",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:98",
+          "figmaVersion": "51:492",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/weight/regular",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 400,
+              "source": {
+                "kind": "literal",
+                "value": 400
+              }
+            }
+          }
+        },
+        {
+          "description": "",
+          "figmaKey": null,
+          "figmaName": "weight/semibold",
+          "figmaType": "FLOAT",
+          "figmaVariableId": "51:100",
+          "figmaVersion": "51:502",
+          "hiddenFromPublishing": false,
+          "openPencilType": "number",
+          "openPencilVariable": "typography-primitives/weight/semibold",
+          "valuesByMode": {
+            "51:7": {
+              "modeName": "Value",
+              "resolvedOpenPencilValue": 600,
+              "source": {
+                "kind": "literal",
+                "value": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "extractor": {
+      "mode": "read-only parseFigFile",
+      "package": "@open-pencil/core",
+      "version": "0.13.2"
+    },
+    "figFileBytes": 1191055,
+    "figFileSha256": "cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423",
+    "nativeEvidenceSha256": "438f494f892dfe8df0606e31557e30b5936b988b1a7a4f8ae4a0ea9d97308a2a"
+  },
+  "summary": {
+    "aliasCount": 40,
+    "collectionCount": 6,
+    "runtimeThemesSha256": "a8bb73693413bd7d978cbc8935b6a8733bbbc8e58f5903e9fab2732492561726",
+    "runtimeVariablesSha256": "eba703b954a816f5e31088f28b0a0084e728c49cd02761fd221b4bb4c6ac800a",
+    "themeAxisCount": 2,
+    "typeCounts": {
+      "COLOR": 43,
+      "FLOAT": 48,
+      "STRING": 1
+    },
+    "variableCount": 92
+  },
+  "target": {
+    "aliasStrategy": "lossless provenance graph + resolved runtime scalar/themed values",
+    "editor": "ZSeven-W/openpencil",
+    "globalVariableNaming": "<collection-slug>/<figma-variable-name>",
+    "limitations": [
+      "ZSeven OpenPencil v0.8.2 has no variable-to-variable alias value; alias relationships are preserved in this graph and compiled to resolved runtime values.",
+      "The v0.8.2 Figma importer does not preserve imported node-to-variable bindings; existing imported nodes retain concrete visual values."
+    ],
+    "version": "v0.8.2"
+  },
+  "themeAxes": {
+    "Motion Duration": [
+      "Standard",
+      "Reduced"
+    ],
+    "Semantic Colors": [
+      "Light",
+      "Dark"
+    ]
+  }
+}
