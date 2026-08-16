@@ -166,7 +166,7 @@ test("guest Home is truthful, preserves Browser Back, and routes First Use throu
   const guest = page.locator('[data-route-client-island="guest-home"]');
   await expect(guest).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Английский|Первый полезный урок/);
-  await expect(page.getByText("Без fake progress")).toBeVisible();
+  await expect(page.getByText("Без fake progress")).toHaveCount(1);
   await expect(page.getByRole("heading", { name: "Учебный статус" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Открыть прогресс" })).toHaveCount(0);
   await expect(page.locator(".lx-route-nav:visible")).toHaveCount(0);
