@@ -122,11 +122,29 @@ Direct `/` entry and return navigation must use the dedicated Home island withou
 
 ## Current Figma delivery status
 
-The previously planned Phrases design-gap slice (#199) is complete and its canonical production nodes are recorded above. System states (#202), Profile (#200), Dictionary (#197), Word Detail (#198), Progress (#195), Scenario Lessons (#196), Active Lesson (#193) and Lesson Result design gate (#194) also have explicit production sources.
+All nine canonical route parity contracts under Issue #205 are delivered:
+
+| Route | Parity Issue | Merge PR | Status |
+| --- | --- | --- | --- |
+| Home | #522 | #523 | ✅ merged |
+| Learn Composer | #525 | #526 | ✅ merged |
+| Active Lesson | #528 | #529 | ✅ merged |
+| Progress | #515 | #517 | ✅ merged |
+| Dictionary | #531 | #532 | ✅ merged |
+| Word Detail | #533 | #535 | ✅ merged |
+| Phrases catalog | #536 | #538 | ✅ merged |
+| Phrase Detail | #540 | #541 | ✅ merged |
+| Profile | #542 | #543 | ✅ merged |
+
+Additional Figma-linked deliveries:
+
+- System States (Dictionary Empty renderer-equivalent): Issue #545 / PR #546 — scoped exact alternate fingerprint for hosted-runner rendering nondeterminism.
+- Native Figma binary preservation: Issue #487 / PR #547 — `design/figma/LexiGo Design System.fig` stored via Git LFS, SHA-256 verified.
 
 The remaining design-side blocker in the primary route set is Issue #201. The 2026-08-13 offline source audit proves that First Use / Onboarding material already exists, including `Mobile / Onboarding / Light` (`79:46`), so the task is a narrow remaining-gap audit rather than a redesign from zero. Before implementation, resolve exact canonical nodes for Guest Home mobile/desktop, desktop onboarding, diagnostic question states, skip/continue, loading/error/recovery and complete Light/Dark coverage.
 
-Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation. Issue #205 remains the final route-by-route visual parity audit after the mappings and remaining First Use design gap are complete.
+Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation; the live Figma Screen Map update is blocked on MCP access, but repository-side delivery status reconciliation is complete. Issue #205 remains the final route-by-route visual parity audit after the remaining First Use design gap is resolved.
+
 
 ## Figma source-of-truth maintenance
 
