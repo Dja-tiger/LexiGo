@@ -14,14 +14,14 @@ type FirstUseVisualBaseline =
   | "resume-desktop-dark";
 
 const APPROVED_SHA256: Record<FirstUseVisualBaseline, string> = {
-  "guest-compact-light": "PENDING_MANUAL_REVIEW",
-  "guest-compact-dark": "PENDING_MANUAL_REVIEW",
-  "guest-desktop-light": "PENDING_MANUAL_REVIEW",
-  "guest-desktop-dark": "PENDING_MANUAL_REVIEW",
-  "role-compact-light": "PENDING_MANUAL_REVIEW",
-  "role-compact-dark": "PENDING_MANUAL_REVIEW",
-  "resume-desktop-light": "PENDING_MANUAL_REVIEW",
-  "resume-desktop-dark": "PENDING_MANUAL_REVIEW",
+  "guest-compact-light": "dcf5fcb11f5b10b195723de84134d4ce54e1e775027d5ecfb1ace6eddbe2dac2",
+  "guest-compact-dark": "27c87ab46f9f71a9710d0c788b87266d3c2465eedf5fef74edfd2357d66c3cca",
+  "guest-desktop-light": "ab1783b69df8221469dae7fa72015b9383c03b1305efe1f883b44f6a9a126b7d",
+  "guest-desktop-dark": "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
+  "role-compact-light": "d6281d763d7a50a001b9e11d9bfc63bc000db5ea81490cc6e0a7e1a3ba4379da",
+  "role-compact-dark": "b8a542c17b923f2ee8dfcc833966b87cc34006936393d14e3989fff8e0a8ca9a",
+  "resume-desktop-light": "b5560d91cde9a61c34f49541f983e6bfdd71b7be3ee0565ac9c2ac9c1540a9e3",
+  "resume-desktop-dark": "44c6dc46ccef07ac9b2a4fe3fd77efc000a81e42312776fd38aba8a1de5f2fe4",
 };
 
 const SESSION = {
