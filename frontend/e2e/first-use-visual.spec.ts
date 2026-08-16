@@ -1,0 +1,194 @@
+import { createHash } from "node:crypto";
+
+import { expect, test, type BrowserContext, type Page, type Route, type TestInfo } from "@playwright/test";
+
+type ExplicitAppearance = "light" | "dark";
+type FirstUseVisualBaseline =
+  | "guest-compact-light"
+  | "guest-compact-dark"
+  | "guest-desktop-light"
+  | "guest-desktop-dark"
+  | "role-compact-light"
+  | "role-compact-dark"
+  | "resume-desktop-light"
+  | "resume-desktop-dark";
+
+const APPROVED_SHA256: Record<FirstUseVisualBaseline, string> = {
+  "guest-compact-light": "dcf5fcb11f5b10b195723de84134d4ce54e1e775027d5ecfb1ace6eddbe2dac2",
+  "guest-compact-dark": "27c87ab46f9f71a9710d0c788b87266d3c2465eedf5fef74edfd2357d66c3cca",
+  "guest-desktop-light": "ab1783b69df8221469dae7fa72015b9383c03b1305efe1f883b44f6a9a126b7d",
+  "guest-desktop-dark": "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
+  "role-compact-light": "d6281d763d7a50a001b9e11d9bfc63bc000db5ea81490cc6e0a7e1a3ba4379da",
+  "role-compact-dark": "b8a542c17b923f2ee8dfcc833966b87cc34006936393d14e3989fff8e0a8ca9a",
+  "resume-desktop-light": "b5560d91cde9a61c34f49541f983e6bfdd71b7be3ee0565ac9c2ac9c1540a9e3",
+  "resume-desktop-dark": "44c6dc46ccef07ac9b2a4fe3fd77efc000a81e42312776fd38aba8a1de5f2fe4",
+};
+
+const SESSION = {
+  user: {
+    id: "00000000-0000-0000-0000-000000000201",
+    email: "first-use-visual@example.com",
+    displayName: "First Use Visual",
+    createdAt: "2026-08-16T00:00:00Z",
+  },
+  tokens: {
+    accessToken: "first-use-visual-token",
+    tokenType: "Bearer",
+    expiresIn: 900,
+  },
+};
+
+const PROMPT = {
+  position: 4,
+  id: 20101,
+  kind: "word",
+  lemma: "schema evolution",
+  phonetic: "/ˈskiːmə/",
+  partOfSpeech: "noun",
+  topic: "Data Engineering",
+};
+
+async function json(route: Route, status: number, body: unknown) {
+  await route.fulfill({
+    status,
+    contentType: "application/json",
+    body: JSON.stringify(body),
+  });
+}
+
+async function installAppearance(page: Page, appearance: ExplicitAppearance) {
+  await page.addInitScript((value) => {
+    localStorage.setItem("lexigo.appearance.v1", value);
+  }, appearance);
+}
+
+async function installGuestAPI(context: BrowserContext) {
+  await context.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/v1/auth/refresh") {
+      return json(route, 401, { error: { code: "unauthorized", message: "guest" } });
+    }
+    return json(route, 404, { error: { code: "not_mocked", message: path } });
+  });
+}
+
+async function installOnboardingAPI(context: BrowserContext, mode: "role" | "resume") {
+  await context.addCookies([{
+    name: "lexigo_csrf",
+    value: "first-use-visual-csrf",
+    url: "http://127.0.0.1:3000",
+    sameSite: "Lax",
+  }]);
+
+  await context.route("**/api/v1/**", async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (path === "/api/v1/auth/refresh") return json(route, 200, SESSION);
+    if (path === "/api/v1/auth/sessions") return json(route, 200, { sessions: [] });
+    if (path === "/api/v1/onboarding" && request.method() === "GET") {
+      if (mode === "resume") {
+        return json(route, 200, {
+          state: "in_progress",
+          total: 12,
+          marked: 4,
+          current: PROMPT,
+        });
+      }
+      return json(route, 200, { state: "not_started", total: 0, marked: 0 });
+    }
+    return json(route, 404, { error: { code: "not_mocked", message: path } });
+  });
+}
+
+async function settle(page: Page, appearance: ExplicitAppearance) {
+  await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
+  await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  });
+  await page.waitForTimeout(100);
+  const dimensions = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  }));
+  expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+}
+
+async function captureForReview(
+  page: Page,
+  testInfo: TestInfo,
+  baselineName: FirstUseVisualBaseline,
+) {
+  const screenshot = await page.screenshot({
+    animations: "disabled",
+    caret: "hide",
+    fullPage: false,
+    scale: "css",
+  });
+  await testInfo.attach(`${baselineName}.png`, {
+    body: screenshot,
+    contentType: "image/png",
+  });
+  const actualSha256 = createHash("sha256").update(screenshot).digest("hex");
+  await testInfo.attach(`${baselineName}.json`, {
+    body: Buffer.from(JSON.stringify({ baselineName, actualSha256 }, null, 2)),
+    contentType: "application/json",
+  });
+  expect(
+    actualSha256,
+    `${baselineName} requires manual Linux PNG review before its hash is approved`,
+  ).toBe(APPROVED_SHA256[baselineName]);
+}
+
+test.describe("First Use reviewed OpenPencil visual baselines", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  for (const appearance of ["light", "dark"] as const) {
+    test(`Guest Home compact ${appearance}`, async ({ context, page }, testInfo) => {
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 Guest Home evidence only");
+      testInfo.annotations.push({ type: "openpencil", description: `Guest Home / Mobile / ${appearance}` });
+      await installAppearance(page, appearance);
+      await installGuestAPI(context);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-route-client-island="guest-home"]')).toBeVisible();
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, `guest-compact-${appearance}`);
+    });
+
+    test(`Guest Home desktop ${appearance}`, async ({ context, page }, testInfo) => {
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×1024 Guest Home evidence only");
+      testInfo.annotations.push({ type: "openpencil", description: `Guest Home / Desktop / ${appearance}` });
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await installAppearance(page, appearance);
+      await installGuestAPI(context);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-route-client-island="guest-home"]')).toBeVisible();
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, `guest-desktop-${appearance}`);
+    });
+
+    test(`Onboarding role compact ${appearance}`, async ({ context, page }, testInfo) => {
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 role-step evidence only");
+      testInfo.annotations.push({ type: "openpencil", description: `Onboarding / Role / Mobile / ${appearance}` });
+      await installAppearance(page, appearance);
+      await installOnboardingAPI(context, "role");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "Настроим полезный первый урок" })).toBeVisible();
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, `role-compact-${appearance}`);
+    });
+
+    test(`Diagnostic resume desktop ${appearance}`, async ({ context, page }, testInfo) => {
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×1024 resume evidence only");
+      testInfo.annotations.push({ type: "openpencil", description: `Diagnostic Resume / Desktop / ${appearance}` });
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await installAppearance(page, appearance);
+      await installOnboardingAPI(context, "resume");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "Продолжим диагностику" })).toBeVisible();
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, `resume-desktop-${appearance}`);
+    });
+  }
+});

@@ -129,7 +129,7 @@ async function installLogoutAPI(page: Page) {
   };
 }
 
-test("logout invalidates the browser session and returns to the guest account state", async ({ page }, testInfo) => {
+test("logout invalidates the browser session and returns to the truthful Guest Home", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "The logout mutation contract is verified once in the deterministic desktop profile.");
   const api = await installLogoutAPI(page);
   const runtimeErrors: string[] = [];
@@ -140,7 +140,10 @@ test("logout invalidates the browser session and returns to the guest account st
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
 
   await expect(page).toHaveURL((url) => url.pathname === "/");
-  await expect(page.getByRole("status", { name: "Персональный прогресс доступен после входа" })).toBeVisible();
+  const guest = page.locator('[data-route-client-island="guest-home"]');
+  await expect(guest).toBeVisible();
+  await expect(guest.getByRole("heading", { name: "Первый полезный урок — без длинной настройки" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Персональный прогресс доступен после входа" })).toHaveCount(0);
 
   await page.goto("/profile");
   await expect(page.getByRole("heading", { name: "Сохраняйте прогресс на всех устройствах" })).toBeVisible();

@@ -11,8 +11,10 @@ const productionAppFiles = [
   "lexigo-active-lesson-app.tsx",
   "lexigo-bootstrapped-app.tsx",
   "lexigo-dictionary-app.tsx",
+  "lexigo-guest-home-app.tsx",
   "lexigo-home-app.tsx",
   "lexigo-learn-app.tsx",
+  "lexigo-onboarding-app.tsx",
   "lexigo-phrases-app.tsx",
   "lexigo-premium-app.tsx",
   "lexigo-profile-app.tsx",
@@ -66,7 +68,9 @@ describe("production frontend application entry", () => {
 
     expect(bootstrappedApp).not.toContain('from "next/navigation"');
     expect(bootstrappedApp).toContain('import("./lexigo-premium-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-guest-home-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-home-app")');
+    expect(bootstrappedApp).toContain('import("./lexigo-onboarding-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-learn-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-active-lesson-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-dictionary-app")');
@@ -76,7 +80,9 @@ describe("production frontend application entry", () => {
     expect(bootstrappedApp).toContain('import("./lexigo-scenario-catalog-app")');
     expect(bootstrappedApp).toContain('import("./lexigo-scenario-app")');
     expect(bootstrappedApp.match(/<LexigoPremiumApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoGuestHomeApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoHomeApp\b/g)).toHaveLength(1);
+    expect(bootstrappedApp.match(/<LexigoOnboardingApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoLearnApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoActiveLessonApp\b/g)).toHaveLength(1);
     expect(bootstrappedApp.match(/<LexigoDictionaryApp\b/g)).toHaveLength(1);
@@ -106,8 +112,16 @@ describe("production frontend application entry", () => {
       .filter(({ source }) => source.includes("lexigo-premium-app"))
       .map(({ file }) => file)
       .sort();
+    const guestHomeGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-guest-home-app"))
+      .map(({ file }) => file)
+      .sort();
     const homeGraphConsumers = sources
       .filter(({ source }) => source.includes("lexigo-home-app"))
+      .map(({ file }) => file)
+      .sort();
+    const onboardingGraphConsumers = sources
+      .filter(({ source }) => source.includes("lexigo-onboarding-app"))
       .map(({ file }) => file)
       .sort();
     const learnGraphConsumers = sources
@@ -144,7 +158,9 @@ describe("production frontend application entry", () => {
       .sort();
 
     expect(productGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(guestHomeGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(homeGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
+    expect(onboardingGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(learnGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(activeLessonGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
     expect(dictionaryGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
@@ -155,7 +171,18 @@ describe("production frontend application entry", () => {
     expect(scenarioGraphConsumers).toEqual(["lexigo-bootstrapped-app.tsx"]);
   });
 
-  it("keeps Home progress, active lesson resolution and presentation inside its route island", () => {
+  it("keeps guest Home truthful and account-state free", () => {
+    const guestHomeApp = readSource(componentsDirectory, "lexigo-guest-home-app.tsx");
+
+    expect(guestHomeApp).toContain('data-route-client-island="guest-home"');
+    expect(guestHomeApp).toContain('authenticationURL({ view: "onboarding" })');
+    expect(guestHomeApp).toContain('navigationURL({ view: "learn" })');
+    expect(guestHomeApp).not.toContain("/api/v1/progress");
+    expect(guestHomeApp).not.toContain("/api/v1/lessons/active");
+    expect(guestHomeApp).not.toContain("authorizedJSON");
+  });
+
+  it("keeps Home progress, active lesson resolution and presentation inside its authenticated route island", () => {
     const homeApp = readSource(componentsDirectory, "lexigo-home-app.tsx");
 
     expect(homeApp).toContain('data-route-client-island="home"');
@@ -169,6 +196,20 @@ describe("production frontend application entry", () => {
     expect(homeApp).not.toContain("restoreSession");
     expect(homeApp).not.toContain("ReviewOutboxRuntime");
     expect(homeApp).not.toContain("ServiceWorkerRegistration");
+  });
+
+  it("keeps onboarding state, reveal sequencing and mutations inside its route island", () => {
+    const onboardingApp = readSource(componentsDirectory, "lexigo-onboarding-app.tsx");
+
+    expect(onboardingApp).toContain('data-route-client-island="onboarding"');
+    expect(onboardingApp).toContain('"/api/v1/onboarding"');
+    expect(onboardingApp).toContain('"/api/v1/onboarding/start"');
+    expect(onboardingApp).toContain('/api/v1/onboarding/items/${wordID}/mark');
+    expect(onboardingApp).toContain('"/api/v1/onboarding/complete"');
+    expect(onboardingApp).toContain('"/api/v1/onboarding/skip"');
+    expect(onboardingApp).not.toContain("localStorage");
+    expect(onboardingApp).not.toContain("sessionStorage");
+    expect(onboardingApp).not.toContain("lexigo-premium-app");
   });
 
   it("keeps Learn preview, composition and lesson mutations inside its route island", () => {

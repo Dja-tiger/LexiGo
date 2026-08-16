@@ -1,6 +1,6 @@
 import { isScenarioSlug } from "./scenarios";
 
-export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "profile" | "lesson" | "scenario";
+export type AppView = "home" | "learn" | "phrases" | "library" | "progress" | "profile" | "onboarding" | "lesson" | "scenario";
 
 export type CatalogStatus = "new" | "learning" | "review" | "mastered";
 export type CatalogSort = "default" | "az" | "za";
@@ -38,7 +38,7 @@ export const NAVIGATION_STORAGE_VERSION = 2 as const;
 export const NAVIGATION_STORAGE_KEY = "lexigo.navigation.v2";
 export const LEGACY_NAVIGATION_STORAGE_KEY = "lexigo.navigation.v1";
 
-const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "lesson", "scenario"]);
+const VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress", "profile", "onboarding", "lesson", "scenario"]);
 const RESTORABLE_VIEWS = new Set<AppView>(["home", "learn", "phrases", "library", "progress"]);
 const SOURCES = new Set<NavigationSource>([
   "mixed",
@@ -63,6 +63,7 @@ const PRIMARY_PATHS: Record<Exclude<AppView, "lesson" | "scenario">, string> = {
   library: "/dictionary",
   progress: "/progress",
   profile: "/profile",
+  onboarding: "/onboarding",
 };
 
 export const PRIMARY_NAVIGATION: Array<{ view: AppView; label: string; shortLabel: string }> = [
@@ -166,6 +167,7 @@ function pathnameTarget(pathname: string): NavigationTarget {
   if (normalized === "/dictionary") return { view: "library" };
   if (normalized === "/progress") return { view: "progress" };
   if (normalized === "/profile") return { view: "profile" };
+  if (normalized === "/onboarding") return { view: "onboarding" };
   if (normalized === "/scenarios") return { view: "scenario" };
 
   const phraseDetail = normalized.match(/^\/phrases\/([^/]+)$/);
@@ -346,6 +348,8 @@ export function viewTitle(view: AppView): string {
       return "Прогресс";
     case "profile":
       return "Профиль";
+    case "onboarding":
+      return "Первичная настройка";
     case "lesson":
       return "Урок";
     case "scenario":
