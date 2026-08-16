@@ -17,6 +17,12 @@ type SystemStateVisualBaseline =
   | "desktop-offline-dark"
   | "compact-recall-offline-dark";
 
+type SystemStateVisualBaselineContract = {
+  figmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
+  sha256: string;
+  rendererEquivalentSha256?: readonly string[];
+};
+
 type StableLayoutSample = {
   viewportWidth: number;
   viewportHeight: number;
@@ -32,10 +38,7 @@ type StableLayoutSample = {
   } | null;
 };
 
-const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, {
-  figmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
-  sha256: string;
-}> = {
+const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemStateVisualBaselineContract> = {
   "compact-loading-dark": {
     figmaNode: "79:69",
     sha256: "45956af4fd18983b56d9c6ae38714b1ba5ed984a930c8ffca7472dd65a699368",
@@ -43,6 +46,13 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, {
   "compact-empty-light": {
     figmaNode: "79:93",
     sha256: "e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf",
+    // Issue #545 independently compared authoritative Linux artifacts from the same 390×844 state.
+    // This hosted-renderer fingerprint differs from the primary Figma-approved raster at exactly
+    // three antialiased calendar-reminder edge pixels, with a maximum RGB delta of one LSB.
+    // Keep this as an exact scoped fingerprint: no numerical tolerance and no third raster is accepted.
+    rendererEquivalentSha256: [
+      "dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6",
+    ],
   },
   "compact-error-dark": {
     figmaNode: "79:117",
@@ -196,10 +206,12 @@ async function expectApprovedSystemStateBaseline(
     secondSha256,
     `System state ${baselineName} must produce two consecutive identical steady-state captures; first=${firstSha256}, second=${secondSha256}`,
   ).toBe(firstSha256);
+
+  const acceptedSha256 = [baseline.sha256, ...(baseline.rendererEquivalentSha256 ?? [])];
   expect(
-    firstSha256,
-    `System state ${baselineName} must be manually reviewed against Figma ${baseline.figmaNode} before baseline promotion`,
-  ).toBe(baseline.sha256);
+    acceptedSha256,
+    `System state ${baselineName} must match the primary Figma-approved SHA or an exact independently reviewed renderer-equivalent fingerprint for Figma ${baseline.figmaNode}; primary=${baseline.sha256}, received=${firstSha256}`,
+  ).toContain(firstSha256);
 }
 
 async function installRecallLesson(page: Page) {
