@@ -10,4 +10,6 @@ Normative source: [`../AGENTS.base.md`](../AGENTS.base.md) and [`../AGENTS.progr
 - Controlled Recall inputs must be validated in Chromium and WebKit with native input behavior.
 - Treat audited route-island enumerators as closed-world ownership contracts: add the new island and assert its single bootstrap/API/dialog owner instead of merely extending a filename list.
 - Next App Router client navigation may render the canonical not-found boundary with HTTP 200; browser contracts must assert semantic 404 UI and absence of the feature runtime rather than relying only on response status.
+- A persistent client route predicate does not create an App Router route. Every focused client island needs a canonical `app/**/page.tsx` owner; otherwise the island can mount over the server not-found subtree, producing duplicate landmarks and pointer interception even when client content is visible. Protect route-page existence with a source contract and verify one live application `main` in accessibility/browser gates.
+- Browser-history tests must wait for the destination semantic route owner, not only for the URL, before invoking Back/Forward; App Router can expose the new pathname while the previous transition is still committing.
 - Regression gates: lint, typecheck, unit, production build, Chromium, WebKit, Android, iOS, history/recovery and route-bundle checks.
