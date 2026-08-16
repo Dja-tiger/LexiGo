@@ -6,7 +6,7 @@
 - Branch: fix/issue-571-tablet-layout
 - Base SHA: 157c645731604fb39488068397472994b2ea67d1
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #572
 
 ## Objective
 
