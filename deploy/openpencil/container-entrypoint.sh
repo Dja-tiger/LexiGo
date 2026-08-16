@@ -20,10 +20,14 @@ esac
 
 case "$KEEP" in
   ''|*[!0-9]*)
-    echo "OPENPENCIL_BACKUP_KEEP must be a non-negative integer" >&2
+    echo "OPENPENCIL_BACKUP_KEEP must be a positive integer" >&2
     exit 64
     ;;
 esac
+if [ "$KEEP" -lt 1 ]; then
+  echo "OPENPENCIL_BACKUP_KEEP must be at least 1" >&2
+  exit 64
+fi
 
 case "$MCP_PORT" in
   ''|*[!0-9]*)
@@ -86,15 +90,11 @@ cp -p "$TOKENS" "$BACKUP_DIR/LexiGo Design Tokens.json"
   sha256sum "LexiGo Design System.op" "LexiGo Design Tokens.json" > SHA256SUMS
 )
 
-if [ "$KEEP" -eq 0 ]; then
-  find /backups -mindepth 1 -maxdepth 1 -type d -name 'session-*' -exec rm -rf {} +
-else
-  while [ "$(find /backups -mindepth 1 -maxdepth 1 -type d -name 'session-*' | wc -l)" -gt "$KEEP" ]; do
-    OLDEST="$(find /backups -mindepth 1 -maxdepth 1 -type d -name 'session-*' -printf '%T@ %p\n' | sort -n | head -n 1 | cut -d' ' -f2-)"
-    [ -n "$OLDEST" ] || break
-    rm -rf "$OLDEST"
-  done
-fi
+while [ "$(find /backups -mindepth 1 -maxdepth 1 -type d -name 'session-*' | wc -l)" -gt "$KEEP" ]; do
+  OLDEST="$(find /backups -mindepth 1 -maxdepth 1 -type d -name 'session-*' -printf '%T@ %p\n' | sort -n | head -n 1 | cut -d' ' -f2-)"
+  [ -n "$OLDEST" ] || break
+  rm -rf "$OLDEST"
+done
 
 case "$MODE" in
   human)
