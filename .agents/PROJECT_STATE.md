@@ -4,16 +4,17 @@
 
 - Last verified: 2026-08-16 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Current `main`: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` after runtime PR #558.
-- Latest runtime-bearing `main`: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
+- Latest runtime-bearing `main`: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` from runtime PR #558.
 - Latest deployed runtime/Stage SHA: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
 - PR #558 final developer-authored head `a2c841b7765a17f6e93eb0cf3f385db9223fd888` passed full CI #3667, including frontend core, Accessibility, UI shards 1/2 and 2/2, Visual regression, Controlled service worker, performance, backend and container builds.
 - PR #558 squash merge: `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
-- Exact-main CI #3668 on `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` passed.
+- Exact-main runtime CI #3668 on `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` passed.
 - Deploy Stage #3519 on the same exact runtime SHA passed.
 - PR #558 has no unresolved review threads; live PR review-thread inventory is empty.
 - Issue #201 was closed as `completed` on 2026-08-16 after the runtime PR, exact-main CI and exact-SHA Stage gates passed.
-- Live GitHub and live source are authoritative for open work, ownership, review state and CI.
+- Post-merge reconciliation PR #559 merged as `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab`.
+- Exact-main reconciliation CI #3671 on `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab` passed after a controlled same-head rerun classified the initial UI shard 1 failure as the known unrelated Chromium native middle-click/new-tab Playwright flake; no product code changed for that retry.
+- Live GitHub and live source are authoritative for the latest branch head, open work, ownership, review state and CI. This file intentionally records immutable delivery SHAs instead of a self-referential `current main` value.
 
 ## Delivery contract
 
@@ -98,15 +99,17 @@
 - Optional standalone OpenPencil fallback: Issue #554 / PR #555.
 - First Use design gate: Issue #201 / PR #556.
 - First Use runtime: Issue #201 / PR #558 / merge `50f7256c8ce6a11a772030c2d2d170e6edf82a2a` / exact-main CI #3668 / Stage #3519 / Issue closed completed 2026-08-16.
+- First Use post-merge reconciliation: PR #559 / merge `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab` / exact-main reconciliation CI #3671.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Issue #201 is closed as completed; its runtime is deployed to Stage on exact merge SHA `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
-- Post-merge reconciliation synchronizes README/architecture ownership, promotes the new frontend route lesson, records this verified closed state and resets `.agents/current/**` from templates.
-- No runtime/backend/API/design/deploy change is part of the reconciliation slice.
-- After this reconciliation is merged and exact-main documentation CI is verified, the next product task must be selected from live GitHub rather than inferred from this file.
+- Issue #201 is closed as completed; its runtime is deployed to Stage on exact runtime merge SHA `50f7256c8ce6a11a772030c2d2d170e6edf82a2a`.
+- Reconciliation PR #559 synchronized README/architecture ownership, promoted the new frontend route lesson, recorded the verified closed state and reset `.agents/current/**` from templates.
+- Exact-main reconciliation CI #3671 is green on reconciliation merge SHA `b33eb3697527276ad2a3aa4b3ac52d47f71b0bab`.
+- No runtime/backend/API/design/deploy change was part of the reconciliation slice.
+- The next product task must be selected from live GitHub rather than inferred from this file.
 
 ## Remaining roadmap
 
