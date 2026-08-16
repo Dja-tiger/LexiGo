@@ -37,10 +37,10 @@ Implement the approved First Use production flow against the already-delivered s
 
 - `.agents/current/**`
 - `frontend/components/lexigo-bootstrapped-app.tsx`
-- `frontend/components/lexigo-home-app.tsx`
-- `frontend/components/lexigo-onboarding-app.tsx` (new if retained by implementation)
-- `frontend/lib/**` only for narrowly scoped First Use route/API validators/navigation helpers when necessary
-- `frontend/app/**` only the existing CSS/route entry owner actually required by the implementation
+- `frontend/components/lexigo-guest-home-app.tsx`
+- `frontend/components/lexigo-onboarding-app.tsx`
+- `frontend/lib/**` only for narrowly scoped First Use route/API validators/navigation/auth-return helpers when necessary
+- `frontend/app/**` only the existing CSS/root import owner actually required by the implementation
 - `frontend/e2e/**` First Use/browser/visual coverage and reviewed Linux baselines
 - `frontend/components/**/*test.ts*` narrowly scoped source/unit contracts
 - `frontend/docs/adaptive-knowledge-coach.md` only if route ownership documentation must be synchronized
@@ -52,14 +52,19 @@ Implement the approved First Use production flow against the already-delivered s
 - `design/**`
 - `deploy/**`
 - production deploy workflows
+- `frontend/components/lexigo-home-app.tsx` (authenticated Home remains unchanged)
+- `frontend/components/routed-lexigo-app.tsx`
+- `frontend/components/route-primary-navigation.tsx`
 - unrelated frontend routes/components/tests/snapshots
 
 ## Runtime owners
 
 - Session/route entry: `LexigoBootstrappedApp`.
-- Home route: `LexigoHomeApp`.
-- New First Use route: dedicated `LexigoOnboardingApp` if source inspection confirms this is the narrowest ownership boundary.
-- Server state: existing `/api/v1/learning/onboarding/**` handlers from backend #18 (exact route names to verify from live server registration before client write).
+- Authenticated Home route: existing `LexigoHomeApp`, unchanged.
+- Guest `/`: dedicated `LexigoGuestHomeApp`; it does not load account progress or scheduler state.
+- First Use `/onboarding`: dedicated `LexigoOnboardingApp`.
+- Route chrome suppression for Guest Home and First Use: scoped CSS `:has([data-route-client-island=...])`; no navigation-owner refactor.
+- Server state: existing `GET /api/v1/onboarding`, `POST /api/v1/onboarding/start`, `POST /api/v1/onboarding/items/{wordID}/mark`, `POST /api/v1/onboarding/complete`, `POST /api/v1/onboarding/skip` from backend #18.
 - Appearance: existing application appearance runtime and CSS tokens.
 
 ## Documentation owners
@@ -75,17 +80,19 @@ Implement the approved First Use production flow against the already-delivered s
 - Reload/direct entry resumes authoritative server state rather than local synthetic progress.
 - Skip never blocks later learning and does not claim diagnostic scheduler initialization.
 - Session bootstrap/refresh remains single-owned by `LexigoBootstrappedApp`.
+- Role selection is transient presentation state only; no backend/local-storage persistence is invented because #18 has no role field.
 - No new localStorage/sessionStorage source of truth for onboarding.
-- Existing Home/Learn/Active Lesson route/history contracts remain intact.
+- Existing authenticated Home/Learn/Active Lesson route/history contracts remain intact.
 - Light/Dark appearance tokens and horizontal containment remain intact.
 
 ## Acceptance criteria
 
 - Guest sees approved First Use Home content without fake progress cards or unavailable controls.
+- `Настроить первый урок` sends the guest through authentication with a safe same-origin return to `/onboarding`; `Посмотреть демо` uses the existing guest-compatible Learn route.
 - Authenticated first-use user can enter `/onboarding`, start diagnostic, mark items, see answer only after mark, finish or skip.
 - `in_progress` resumes after reload and direct entry.
 - Loading, API error and retry are accessible and deterministic.
-- Completed/skipped flow returns safely to Home/Learn.
+- Completed/skipped flow returns safely to Learn.
 - Keyboard and screen reader semantics pass.
 - Mobile/desktop Light/Dark visual evidence matches the reviewed OpenPencil production states.
 - Full required PR CI passes on one immutable developer-authored head.
@@ -106,12 +113,12 @@ Implement the approved First Use production flow against the already-delivered s
 
 ## Risks
 
-- Existing frontend may not yet route `/onboarding` to a dedicated owner.
-- Current guest Home may share presentation with authenticated Home and accidentally expose authenticated concepts.
-- API response validators may not yet exist for onboarding.
+- Existing frontend does not route `/onboarding` to a dedicated owner yet.
+- Auth return currently permits only catalog/phrases destinations; it must be extended without creating an open redirect.
 - Diagnostic reveal sequencing can regress if optimistic UI reveals before mutation success.
-- Visual matrix is large; baseline collection must remain scoped to canonical states rather than duplicating every intermediate state.
+- `onboarding_no_candidates` must remain truthful and recoverable rather than fabricating diagnostic content.
+- Visual matrix is large; executable baselines should remain scoped to canonical states rather than duplicating every intermediate state.
 
 ## Rollback
 
-Revert the First Use runtime PR. Existing backend onboarding state remains compatible and the prior Home/session route owners continue operating; design sources and server schema are unchanged.
+Revert the First Use runtime PR. Existing backend onboarding state remains compatible and the prior authenticated Home/session route owners continue operating; design sources and server schema are unchanged.
