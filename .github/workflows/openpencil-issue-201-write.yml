@@ -1,0 +1,129 @@
+name: OpenPencil issue 201 write
+
+on:
+  push:
+    branches:
+      - design/issue-201-first-use-openpencil
+    paths:
+      - .github/workflows/openpencil-issue-201-write.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/design/issue-201-first-use-openpencil'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    env:
+      OPENPENCIL_IMAGE: ghcr.io/zseven-w/openpencil-web:v0.8.2@sha256:e13982f18ba3f87ef422c84738be261a337ceccd877aff6ea69a16354fce9775
+      REPAIR_ARTIFACT_ID: '9262446242'
+      REPAIRED_SHA: 6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e
+      OLD_SOURCE_SHA: 5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664
+      EXPECTED_PARENT: 3b34948464845539a67d72ed7f701fc6ae610c9e
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Fail closed on branch lineage and source identity
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_REF" = refs/heads/design/issue-201-first-use-openpencil
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = "$OLD_SOURCE_SHA"
+          test "$(sha256sum 'design/openpencil/LexiGo Design Tokens.json' | awk '{print $1}')" = e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c
+
+      - name: Download exact reviewed repair artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/op201-repair"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$REPAIR_ARTIFACT_ID/zip" \
+            -o "$RUNNER_TEMP/op201-repair.zip"
+          unzip -q "$RUNNER_TEMP/op201-repair.zip" -d "$RUNNER_TEMP/op201-repair"
+          test "$(sha256sum "$RUNNER_TEMP/op201-repair/repaired.op" | awk '{print $1}')" = "$REPAIRED_SHA"
+          cp "$RUNNER_TEMP/op201-repair/repaired.op" 'design/openpencil/LexiGo Design System.op'
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = "$REPAIRED_SHA"
+
+      - name: Reopen promoted source through pinned OpenPencil MCP
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/openpencil-201-write-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$root/state" "$root/backups"
+          export OPENPENCIL_WORKTREE="$GITHUB_WORKSPACE"
+          export OPENPENCIL_STATE_DIR="$root/state"
+          export OPENPENCIL_BACKUP_DIR="$root/backups"
+          export OPENPENCIL_UID="$(id -u)"
+          export OPENPENCIL_GID="$(id -g)"
+          export OPENPENCIL_BACKUP_KEEP=1
+          export OPENPENCIL_MCP_PORT="$((48000 + GITHUB_RUN_ID % 1000))"
+          export OPENPENCIL_COMPOSE_PROJECT="lexigo-op-201-write-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          {
+            echo "OPENPENCIL_STATE_DIR=$OPENPENCIL_STATE_DIR"
+            echo "OPENPENCIL_BACKUP_DIR=$OPENPENCIL_BACKUP_DIR"
+            echo "OPENPENCIL_UID=$OPENPENCIL_UID"
+            echo "OPENPENCIL_GID=$OPENPENCIL_GID"
+            echo "OPENPENCIL_MCP_PORT=$OPENPENCIL_MCP_PORT"
+            echo "OPENPENCIL_COMPOSE_PROJECT=$OPENPENCIL_COMPOSE_PROJECT"
+          } >> "$GITHUB_ENV"
+          docker pull "$OPENPENCIL_IMAGE"
+          docker compose -p "$OPENPENCIL_COMPOSE_PROJECT" -f deploy/openpencil/compose.yml --profile agent up -d mcp
+          python3 - <<'PY'
+          import json, os, re, time, urllib.request
+          url=f"http://127.0.0.1:{os.environ['OPENPENCIL_MCP_PORT']}/mcp"; rid=1
+          def rpc(method,params):
+              global rid; rid+=1
+              req=urllib.request.Request(url,data=json.dumps({'jsonrpc':'2.0','id':rid,'method':method,'params':params}).encode(),headers={'Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req,timeout=20) as r: p=json.loads(r.read().decode())
+              if 'error' in p: raise RuntimeError(p['error'])
+              return p
+          init={'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'lexigo-201-promote','version':'1'}}}
+          for _ in range(90):
+              try:
+                  req=urllib.request.Request(url,data=json.dumps(init).encode(),headers={'Content-Type':'application/json'},method='POST')
+                  with urllib.request.urlopen(req,timeout=2) as r: p=json.loads(r.read().decode())
+                  if 'result' in p: break
+              except Exception: time.sleep(1)
+          else: raise SystemExit('MCP readiness timeout')
+          def tool(name,args=None):
+              r=rpc('tools/call',{'name':name,'arguments':args or {}})['result']; text='\n'.join(i.get('text','') for i in r.get('content',[]) if 'text' in i)
+              if r.get('isError'): raise RuntimeError(f'{name}: {text}')
+              try: return json.loads(text)
+              except Exception: return text
+          pages=tool('list_pages')['pages']
+          assert len(pages)==23, len(pages)
+          idx=next(i for i,p in enumerate(pages) if p['id']=='figma-page-17'); tool('set_active_page',{'index':idx})
+          required=['First Use / Guest Home / Mobile / Light','First Use / Diagnostic Pre-reveal / Mobile / Light','First Use / Diagnostic Reveal / Mobile / Light','First Use / Diagnostic Resume / Mobile / Light','First Use / Complete / Desktop / Dark']
+          found={}
+          for name in required:
+              text=tool('find_node_by_name',{'name':name}); s=json.dumps(text,ensure_ascii=False) if not isinstance(text,str) else text
+              ids=re.findall(r'(?:fig_|node_|n)[A-Za-z0-9_-]+',s)
+              if not ids: raise AssertionError(f'node not found: {name}: {s}')
+              found[name]=ids[0]
+          print(json.dumps({'pageCount':len(pages),'found':found},ensure_ascii=False,indent=2))
+          PY
+
+      - name: Stop MCP before commit
+        if: always()
+        run: |
+          set +e
+          docker compose -p "$OPENPENCIL_COMPOSE_PROJECT" -f deploy/openpencil/compose.yml --profile agent down --volumes --remove-orphans
+
+      - name: Commit only canonical OpenPencil source
+        run: |
+          set -Eeuo pipefail
+          test "$(sha256sum 'design/openpencil/LexiGo Design System.op' | awk '{print $1}')" = "$REPAIRED_SHA"
+          changed="$(git status --porcelain --untracked-files=no | awk '{print $2}')"
+          test "$changed" = 'design/openpencil/LexiGo Design System.op'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'design/openpencil/LexiGo Design System.op'
+          git commit -m 'design(openpencil): add First Use production states'
+          git push origin HEAD:design/issue-201-first-use-openpencil
