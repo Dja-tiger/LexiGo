@@ -1,0 +1,86 @@
+name: lexigo-openpencil
+
+x-openpencil-common: &openpencil-common
+  image: ${OPENPENCIL_IMAGE:-ghcr.io/zseven-w/openpencil-web:v0.8.2}
+  user: "${OPENPENCIL_UID:-1000}:${OPENPENCIL_GID:-1000}"
+  restart: "no"
+  environment:
+    OPENPENCIL_BACKUP_KEEP: ${OPENPENCIL_BACKUP_KEEP:-20}
+    OPENPENCIL_MCP_PORT: ${OPENPENCIL_MCP_PORT:-33101}
+  volumes:
+    - type: bind
+      source: ${OPENPENCIL_WORKTREE:?set OPENPENCIL_WORKTREE}
+      target: /workspace
+    - type: bind
+      source: ${OPENPENCIL_STATE_DIR:?set OPENPENCIL_STATE_DIR}
+      target: /state
+    - type: bind
+      source: ${OPENPENCIL_BACKUP_DIR:?set OPENPENCIL_BACKUP_DIR}
+      target: /backups
+    - type: bind
+      source: ./container-entrypoint.sh
+      target: /opt/lexigo-openpencil/container-entrypoint.sh
+      read_only: true
+
+services:
+  web:
+    <<: *openpencil-common
+    profiles: [human]
+    entrypoint: ["/bin/sh", "/opt/lexigo-openpencil/container-entrypoint.sh"]
+    command: [human]
+    environment:
+      OPENPENCIL_BACKUP_KEEP: ${OPENPENCIL_BACKUP_KEEP:-20}
+      OPENPENCIL_MCP_PORT: ${OPENPENCIL_MCP_PORT:-33101}
+      OPENPENCIL_WEB_ALLOWED_ORIGINS: ${OPENPENCIL_WEB_ALLOWED_ORIGINS:?set OPENPENCIL_WEB_ALLOWED_ORIGINS}
+      OPENPENCIL_PERSIST_WEB_CREDENTIALS_SERVER: "false"
+    ports:
+      - "127.0.0.1:${OPENPENCIL_WEB_LOOPBACK_PORT:-33100}:3100"
+    networks: [design]
+
+  mcp:
+    <<: *openpencil-common
+    profiles: [agent]
+    entrypoint: ["/bin/sh", "/opt/lexigo-openpencil/container-entrypoint.sh"]
+    command: [agent]
+    # Upstream v0.8.2 --mcp-http binds 127.0.0.1 only. Host networking keeps
+    # that listener on the host loopback instead of exposing it on Docker bridge.
+    network_mode: host
+
+  caddy:
+    profiles: [human]
+    image: lexigo-openpencil-caddy:2.11.4-cloudflare
+    build:
+      context: ..
+      dockerfile: caddy/Dockerfile
+    restart: unless-stopped
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN}
+      HSTS_MAX_AGE: ${HSTS_MAX_AGE:-86400}
+      OPENPENCIL_SITE_ADDRESS: ${OPENPENCIL_SITE_ADDRESS:?set OPENPENCIL_SITE_ADDRESS}
+      OPENPENCIL_BASIC_AUTH_USER: ${OPENPENCIL_BASIC_AUTH_USER:?set OPENPENCIL_BASIC_AUTH_USER}
+      OPENPENCIL_BASIC_AUTH_HASH: ${OPENPENCIL_BASIC_AUTH_HASH:?set OPENPENCIL_BASIC_AUTH_HASH}
+    ports:
+      - "${OPENPENCIL_HTTP_PORT:-80}:80"
+      - "${OPENPENCIL_HTTPS_PORT:-443}:443"
+      - "${OPENPENCIL_HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - openpencil_caddy_data:/data
+      - openpencil_caddy_config:/config
+    depends_on:
+      - web
+    networks: [design]
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  design:
+    driver: bridge
+
+volumes:
+  openpencil_caddy_data:
+  openpencil_caddy_config:
