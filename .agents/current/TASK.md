@@ -10,50 +10,55 @@
 
 ## Objective
 
-Close the production design gap that blocks #201 implementation by extending the promoted OpenPencil source with canonical First Use states derived from the delivered #18 backend contract, then register stable OpenPencil node IDs and review deterministic Linux renders before any frontend implementation.
+Close the production design gap that blocks #201 implementation by extending the promoted OpenPencil source with canonical First Use states derived from the delivered #18 backend contract, registering stable OpenPencil node IDs, and keeping both migration provenance and active-source acceptance fail-closed.
 
-## Proven inputs
+## Proven inputs and promoted output
 
 - Active editable source: `design/openpencil/LexiGo Design System.op`.
-- Token provenance: `design/openpencil/LexiGo Design Tokens.json`.
+- Current reviewed active SHA-256: `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`.
+- Current active size: `6,937,300` bytes; 23 pages; 7,983 recursive nodes; 92 runtime variables.
+- Token provenance: `design/openpencil/LexiGo Design Tokens.json`, unchanged SHA `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
 - Figma `.fig` is immutable migration/archive input, not the day-to-day editor source.
-- Existing canonical onboarding source: Figma `79:46` / OpenPencil imported counterpart to be resolved from the live `.op` before writes.
+- Immutable tokenized migration baseline remains SHA `5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664` / 6,446,726 bytes.
+- Existing canonical onboarding source: Figma `79:46` / OpenPencil `fig_4282`.
 - Existing First Use backend states from #18: `not_started`, `in_progress`, `completed`, `skipped`.
 - Diagnostic item self-mark contract: `known`, `unsure`, `new` before translation reveal; up to 12 items; skip must not mutate scheduler state.
-- OpenPencil v0.8.2 MCP supports semantic reads/writes including page selection, node reads, copy/update/batch operations and screenshots.
 
 ## Required production matrix
 
-1. Guest Home — mobile + desktop, one dominant First Use CTA, no fake progress.
-2. Onboarding role/context — retain/promote existing mobile composition; add desktop coverage.
-3. Diagnostic pre-reveal — exactly `Знаю / Не уверен / Новое`; answer remains hidden.
-4. Diagnostic post-mark/reveal — selected mark remains visible; translation/context revealed; one Continue action.
-5. Diagnostic in-progress/resume — communicates position without future answers.
+Completed in the active `.op` as a 40-state matrix:
+
+1. Guest Home — mobile + desktop, dominant First Use CTA, no fake progress.
+2. Onboarding role/context — existing mobile Light retained, desktop and Dark variants added.
+3. Diagnostic pre-reveal — `Знаю / Не уверен / Новое`; answer hidden.
+4. Diagnostic post-mark/reveal — selected mark visible; translation/context revealed; one Continue action.
+5. Diagnostic in-progress/resume — position communicated without future answers.
 6. Skip confirmation/result — maps to `skipped`, non-blocking, no scheduler mutation claim.
-7. Completion/result — maps to `completed`, personal queue prepared, one dominant Home/Learn handoff.
-8. Loading/error/retry/recovery — preserve current selection where applicable.
-9. Light/Dark and mobile/desktop coverage, using semantic tokens rather than ad-hoc literals.
+7. Completion/result — maps to `completed`, personal queue prepared, dominant lesson handoff.
+8. Loading/error/retry/recovery — safe resume language.
+9. Light/Dark and mobile/desktop coverage.
 
 ## Execution strategy
 
 - Do not deploy OpenPencil to a VPS for this slice.
-- Use temporary branch-only GitHub Actions jobs to run the immutable OpenPencil v0.8.2 image against the branch `.op`.
-- First perform inspection-only semantic reads and render evidence; do not guess node structure.
-- Apply edits through OpenPencil semantic MCP/CLI operations, not direct raw JSON surgery.
-- Temporary write/inspection workflows must be minimal, branch-guarded and removed before final CI.
+- GitHub Actions Linux runners remain the default AI design runtime.
+- Discovery and preview happen on disposable copies through OpenPencil semantic MCP/CLI operations.
+- Promote only the exact reviewed artifact after SHA/readback verification.
+- Temporary write/inspection workflows must be removed before final CI.
 - Final design source changes leave only through this branch and a reviewed PR.
 
-## Allowed paths
+## Allowed final paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 - `design/openpencil/LexiGo Design System.op`
 - `docs/figma/openpencil-screen-map.json`
-- `docs/figma/openpencil-ai-workflow.md` only for a minimal durable contract update if required
+- `docs/figma/openpencil-ai-workflow.md`
+- `.github/workflows/openpencil-visual-acceptance.yml`
 - Issue/PR metadata and comments
-- temporary `.github/workflows/openpencil-issue-201-*.yml` only during the branch execution phase; none may remain in final diff
-- temporary `.tmp/**` is artifact-only and must not be committed
+
+Temporary `.github/workflows/openpencil-issue-201-*.yml` files were execution-only and must not remain in the final diff.
 
 ## Prohibited paths
 
@@ -62,17 +67,25 @@ Close the production design gap that blocks #201 implementation by extending the
 - `backend/**`
 - `api/**`
 - Stage/prod Compose, product Caddy or product deploy workflows
-- token sidecar semantics unless the design change explicitly requires a separately reviewed token migration
+- token sidecar semantics unless a separately reviewed token migration is required
+
+## Permanent acceptance architecture
+
+- `screens` in Screen Map owns immutable Figma-derived migration mappings.
+- `activeScreens` owns reviewed post-promotion OpenPencil-native mappings.
+- CI must reproduce the old migration/token baseline exactly.
+- CI must independently validate the committed active `.op` against `source.activeOpSha256`, `source.activeOpSize`, merged structural mappings, Linux renders, all 92 variables and an isolated editability probe.
+- Active post-promotion design is intentionally not byte-equal to the historical Figma migration baseline.
 
 ## Stop conditions
 
-Stop writes and reconstruct context if `main` moves unexpectedly, the branch loses its verified base, the exact existing onboarding node cannot be resolved, semantic OpenPencil read/write evidence is ambiguous, a required state conflicts with #18, visual evidence cannot be reviewed, or the diff leaves allowed paths.
+Stop writes if `main` moves incompatibly, the branch loses its verified base, active source SHA/map identity diverges, semantic OpenPencil evidence is ambiguous, #18 interaction semantics are contradicted, visual evidence fails review, or the final diff leaves allowed paths.
 
 ## Acceptance gates
 
-- Stable OpenPencil node IDs exist for the new canonical states and are registered in Screen Map.
-- Deterministic Linux screenshots are produced and reviewed for the production matrix.
-- Existing source/visual/token acceptance remains fail-closed.
-- No temporary workflow remains in the final diff.
-- Full required repository CI is green on the final developer-authored head.
+- Stable OpenPencil node IDs for all 40 First Use states are registered in `activeScreens`.
+- Deterministic Linux screenshots were produced and reviewed; discovered layout defects were repaired before promotion.
+- Migration provenance remains fail-closed and independent from active-source acceptance.
+- No temporary workflow remains in final diff.
+- Permanent OpenPencil acceptance and full required repository CI are green on the final developer-authored head.
 - Draft PR review/thread/path audit is clean before Ready and squash merge.
