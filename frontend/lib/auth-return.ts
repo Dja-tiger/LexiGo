@@ -7,7 +7,11 @@ import {
 
 const RETURN_PARAMETER = "return_to";
 const RETURN_BASE = "https://lexigo.invalid";
-const CATALOG_RETURN_VIEWS = new Set<NavigationTarget["view"]>(["library", "phrases"]);
+const AUTHENTICATION_RETURN_VIEWS = new Set<NavigationTarget["view"]>([
+  "library",
+  "phrases",
+  "onboarding",
+]);
 
 export function authenticationURL(returnTarget: NavigationTarget): string {
   const parameters = new URLSearchParams({
@@ -30,6 +34,6 @@ export function catalogAuthenticationReturn(search: string): NavigationTarget | 
   if (parsedURL.origin !== RETURN_BASE || !isCanonicalRoutePath(parsedURL.pathname)) return null;
 
   const target = parseNavigation(parsedURL.search, parsedURL.pathname);
-  if (!CATALOG_RETURN_VIEWS.has(target.view)) return null;
+  if (!AUTHENTICATION_RETURN_VIEWS.has(target.view)) return null;
   return target;
 }
