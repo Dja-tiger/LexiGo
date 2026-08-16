@@ -4,7 +4,7 @@
 
 - Last verified: 2026-08-16 Europe/Moscow.
 - Repository: `Dja-tiger/LexiGo`.
-- Current `main`: `d23f7a8267edb67f3762128987b52ae2445559f2` after PR #547.
+- Current `main`: `3bf8707131c68bb8ab50a820b813de16f342cdaa` after PR #548.
 - Latest runtime-bearing `main`: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f` after PR #543.
 - Latest deployed runtime/Stage SHA: `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
 - PR #546 (test-only, Issue #545): squash merge `bf0036c1`; Dictionary Empty renderer-equivalent hash scoped.
@@ -41,7 +41,7 @@
 - Native source identity: 1,191,055 bytes; SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`.
 - The exact native `.fig` binary is stored in GitHub at `design/figma/LexiGo Design System.fig` via Git LFS. Issue #487 is closed; SHA-256 verified on upload (PR #547).
 - Live Figma inspection/editing remains blocked by the connected Figma MCP Starter-plan tool-call limit. Do not claim fresh Screen Map/canvas synchronization without live evidence.
-- Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access becomes available; repository-side delivery status reconciliation is in progress.
+- Issue #203 remains open for live Screen Map/archive reconciliation when Figma MCP access becomes available; repository-side delivery status reconciliation is complete after PR #548.
 - Issue #205 remains the active umbrella for final route-by-route parity audit.
 - All nine canonical route parity contracts (Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases catalog, Phrase Detail, Profile) are delivered. System state visual gate (Dictionary Empty renderer-equivalent) is resolved by PR #546.
 
@@ -92,15 +92,15 @@ Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 - All nine canonical route parity contracts are delivered and merged into `main`.
 - Dictionary Empty `79:93` renderer-equivalent hash is resolved by Issue #545 / PR #546.
 - Native `.fig` binary is stored in GitHub via Git LFS by Issue #487 / PR #547.
-- Current `main` is `d23f7a8267edb67f3762128987b52ae2445559f2`; latest runtime-bearing SHA remains `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
+- Current `main` is `3bf8707131c68bb8ab50a820b813de16f342cdaa`; latest runtime-bearing SHA remains `8a9f1fd7df68ff7cff538067b9d5f1c2e924af0f`.
 - Direct Figma canvas work remains blocked by the connected Starter-plan MCP quota; no missing node ID is inferred.
 - Issue #201 remains design-gated: mobile onboarding node `79:46` alone is insufficient for Guest Home, desktop onboarding and diagnostic/recovery state implementation.
-- Issue #203 repository-side delivery reconciliation is in progress; live Screen Map update remains blocked on Figma MCP access.
+- Issue #203 repository-side delivery reconciliation is complete after PR #548; live Screen Map update remains blocked on Figma MCP access.
 
 ## Remaining roadmap
 
 - #205: continue final parity only from exact approved mappings; onboarding remains blocked until missing canonical nodes/states exist.
-- #203: live Figma Screen Map/archive synchronization when MCP access is available; repository-side reconciliation in progress.
+- #203: live Figma Screen Map/archive synchronization when MCP access is available; repository-side reconciliation is complete.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
 - #201/#18: complete canonical First Use design states, then implement the approved flow.
 - #25: continue user-facing pronunciation/custom-vocabulary presentation only from verified design evidence.
