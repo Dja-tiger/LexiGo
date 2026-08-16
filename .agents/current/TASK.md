@@ -10,7 +10,7 @@
 
 ## Objective
 
-Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.2 conversion of the repository-owned Figma archive and promote the reviewed `.op` as the active AI-native design source only if the acceptance evidence passes.
+Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.2 conversion of the repository-owned Figma archive and promote the reviewed AI-native design sources only if the acceptance evidence passes.
 
 ## Scope
 
@@ -20,10 +20,16 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - Validate exported PNG dimensions, hashes and semantic node metadata.
 - Verify practical editability on an isolated copy; never mutate the archived `.fig` or the review candidate while probing.
 - Recover the native Figma variable collections, modes, aliases and complete `valuesByMode` through a read-only parser because ZSeven v0.8.2 intentionally imports `themes: None` / `variables: None`.
-- Require exactly 92 native variables, matching the repository handoff, before designing any token migration into ZSeven.
-- Upload machine-readable acceptance and native-variable evidence from CI.
+- Require exactly 92 native variables, matching the repository handoff.
+- Compile those native definitions into 92 namespaced ZSeven runtime variables plus the required multi-mode theme axes.
+- Preserve the lossless Figma collection/mode/alias graph in a Git-tracked token sidecar because ZSeven v0.8.2 does not support variable-to-variable aliases.
+- Apply the compiled token layer to a disposable `.op` through the official `op themes:set` / `op vars:set` APIs, reopen it, require 92 variables, and prove its page tree and rendered canonical screens are unchanged.
+- Upload machine-readable acceptance, token migration and native-variable evidence from CI.
 - Manually inspect the specific Linux artifact before any source-of-truth promotion.
-- If acceptance passes, add `design/openpencil/LexiGo Design System.op`, update the design source hierarchy and add a fail-closed drift contract.
+- If acceptance passes, promote the exact reviewed pair:
+  - `design/openpencil/LexiGo Design System.op` — active visual/editor source;
+  - `design/openpencil/LexiGo Design Tokens.json` — active lossless token graph/provenance source.
+- Update design source hierarchy and add fail-closed drift contracts.
 - Record factual progress in `.agents/current/**`.
 
 ## Non-goals
@@ -35,6 +41,7 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - No blind snapshot/baseline refresh.
 - No ZSeven OpenPencil version upgrade in this slice; v0.8.2 remains the validated editor/migration toolchain.
 - `open-pencil/open-pencil` is permitted only as a read-only native `.fig` variable extractor; it does not replace ZSeven as the selected AI-first editor.
+- No claim that ZSeven v0.8.2 natively preserves Figma variable aliases or imported node→variable bindings; unsupported relationships must remain explicit in the token sidecar/workflow rather than be silently flattened.
 - No completion claim for Onboarding/First Use, whose canonical design coverage is still incomplete.
 
 ## Allowed paths
@@ -45,10 +52,13 @@ Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.
 - `.agents/PROJECT_STATE.md` only after promotion evidence is complete
 - `scripts/figma/openpencil-visual-acceptance.sh`
 - `scripts/figma/extract-figma-variables.mjs`
+- `scripts/figma/compile-openpencil-tokens.py`
+- `scripts/figma/openpencil-token-migration.sh`
 - `.github/workflows/openpencil-visual-acceptance.yml`
 - `docs/figma/openpencil-ai-workflow.md`
 - `docs/figma/openpencil-screen-map.json`
 - `design/openpencil/LexiGo Design System.op` only after manual acceptance
+- `design/openpencil/LexiGo Design Tokens.json` only after token acceptance
 
 ## Prohibited paths
 
@@ -77,9 +87,12 @@ The mapping is based on the repository canonical page/node handoff plus exact im
 ## Invariants
 
 - Archived `.fig` remains SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1,191,055`.
-- Candidate `.op` before any review/edit probe remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`.
+- Original deterministic candidate `.op` remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`.
 - ZSeven OpenPencil is pinned to v0.8.2 and the verified Linux CLI/desktop assets used by the successful acceptance run.
-- Native Figma variable extraction is read-only and pinned to published `@open-pencil/core@0.13.2`; the parser must report exactly 92 variables before a migration layer is attempted.
+- Native Figma variable extraction is read-only and pinned to published `@open-pencil/core@0.13.2`; npm dist integrity is `sha512-/EIOMDUlpWtTneuwMj7DQfz39i6pOnPlQB5UIOIiEZZ2TLZIiRkKQQVeAsMjs3aFbyA/oYmc1pRhC8PEAl6Kow==`.
+- Native token inventory is exactly 6 collections / 92 variables: 43 COLOR, 48 FLOAT, 1 STRING; 40 alias references; 0 unresolved aliases; 0 incomplete mode values.
+- ZSeven runtime variables use globally unique collection-namespaced keys; Figma alias relationships remain losslessly recorded in `LexiGo Design Tokens.json` and compile to resolved ZSeven scalar/themed values.
+- Token-layer application must not change the canonical page tree or any of the 20 accepted Linux render hashes.
 - Linux-rendered evidence must come from a specific artifact and be manually reviewed before promotion.
 - Any material visual/semantic drift blocks promotion rather than being normalized by changing evidence.
 
@@ -91,11 +104,15 @@ The mapping is based on the repository canonical page/node handoff plus exact im
 - Linux PNG exports for representative mobile and desktop canonical states.
 - PNG magic, IHDR dimensions and SHA-256 evidence manifest.
 - Isolated-copy editability probe with source candidate unchanged.
-- Native `.fig` variable extraction: collection/mode inventory, complete `valuesByMode`, aliases and exact variable count 92.
+- Native `.fig` variable extraction: 6 collections, 92 variables, complete modes/values, 40 resolved alias links.
+- Deterministic token compiler with cycle/collision/ambiguous-mode rejection.
+- Official ZSeven `themes:set` / `vars:set` application and reopen validation: 92 variables, expected axes.
+- Tokenized `.op` page-tree deep equality against the original candidate.
+- Tokenized vs original 20-screen render-hash equality.
 - Dedicated path-scoped CI artifact.
 - Full immutable-head repository CI before merge.
 - Review/thread audit and expected-head merge guard.
 
 ## Rollback
 
-If render/editability/token acceptance fails, do not commit or promote the `.op`. Preserve the immutable `.fig`, the #550 import gate and the factual failure evidence, then reassess the migration layer in a separate slice if it cannot be completed safely here.
+If render/editability/token acceptance fails, do not promote the `.op` or token sidecar. Preserve the immutable `.fig`, the #550 import gate and factual failure evidence, then reassess the migration layer in a separate slice if it cannot be completed safely here.
