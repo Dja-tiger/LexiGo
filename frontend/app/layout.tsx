@@ -47,6 +47,7 @@ import "./calendar-reminder-entry.css";
 import "./calendar-reminder-touch-targets.css";
 import "./adaptive-knowledge-coach-home.css";
 import "./first-use.css";
+import "./first-use-focus.css";
 import "./adaptive-knowledge-coach-accessibility.css";
 import "./home-progress-touch-targets.css";
 import "./adaptive-lesson-composer.css";
