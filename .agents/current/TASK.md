@@ -2,44 +2,49 @@
 
 ## Identity
 
-- Issue: #550
-- Branch: `agent/issue-550-openpencil-compat`
-- Base SHA: `27f13b665af27a29d464cebba7e2cf3db54a8dd9`
-- Head SHA: resolve from live branch ref
+- Issue: #552
+- Branch: `agent/issue-552-openpencil-visual-acceptance`
+- Base SHA: `e7d992ad6089aa6445017ea6ffff6280787b05d8`
+- Head SHA: resolve from live branch ref after each write
 - PR: pending
 
 ## Objective
 
-Validate `ZSeven-W/openpencil` v0.8.2 as the AI-first design environment for LexiGo by reproducibly importing the repository-owned native Figma source into a Git-friendly `.op` document without mutating the canonical `.fig`.
+Visually and semantically validate the deterministic `ZSeven-W/openpencil` v0.8.2 conversion of the repository-owned Figma archive and promote the reviewed `.op` as the active AI-native design source only if the acceptance evidence passes.
 
 ## Scope
 
-- Add a deterministic compatibility/import script for Linux CI.
-- Download the pinned OpenPencil v0.8.2 standalone `op` CLI asset and verify its upstream SHA-256 before execution.
-- Resolve the real Git LFS `.fig` payload and verify the recorded source identity before and after import.
-- Run `op import:figma <file.fig> --out <file.op>` in an isolated temporary workspace.
-- Validate the CLI result and generated `.op` JSON structure.
-- Add a path-scoped GitHub Actions workflow that uploads the generated `.op` and machine-readable evidence.
-- Document the AI-first migration model and known validation gaps.
-- Record task progress/execution in `.agents/current/**`.
+- Reproduce the exact #550 candidate `.op` and require SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c` before review.
+- Establish an explicit canonical Figma-node -> OpenPencil `fig_*` mapping for production-relevant screens.
+- Start the pinned OpenPencil file-backed headless server and export representative canonical nodes to Linux PNG evidence.
+- Validate exported PNG dimensions, hashes and semantic node metadata.
+- Verify practical editability on an isolated copy; never mutate the archived `.fig` or the review candidate while probing.
+- Upload a machine-readable acceptance manifest and rendered evidence from CI.
+- Manually inspect the specific Linux artifact before any source-of-truth promotion.
+- If acceptance passes, add `design/openpencil/LexiGo Design System.op`, update the design source hierarchy and add a fail-closed drift contract.
+- Record factual progress in `.agents/current/**`.
 
 ## Non-goals
 
-- Do not modify the canonical `.fig`.
-- Do not commit/promote the generated `.op` as production design source in this slice.
-- Do not change production React/CSS/backend/runtime.
-- Do not mutate Figma Cloud or Screen Map nodes.
-- Do not deploy the OpenPencil web host yet.
-- Do not deploy LexiGo Stage/production.
+- No LexiGo production React/CSS/backend/runtime change.
+- No Stage/prod deployment.
+- No public OpenPencil deployment or MCP exposure yet.
+- No mutation of `design/figma/LexiGo Design System.fig`.
+- No blind snapshot/baseline refresh.
+- No OpenPencil version upgrade in this slice; v0.8.2 remains the validated migration toolchain.
+- No completion claim for Onboarding/First Use, whose canonical design coverage is still incomplete.
 
 ## Allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `scripts/figma/openpencil-ai-import.sh`
-- `.github/workflows/openpencil-ai-import.yml`
+- `.agents/PROJECT_STATE.md` only after promotion evidence is complete
+- `scripts/figma/openpencil-visual-acceptance.sh`
+- `.github/workflows/openpencil-visual-acceptance.yml`
 - `docs/figma/openpencil-ai-workflow.md`
+- `docs/figma/openpencil-screen-map.json`
+- `design/openpencil/LexiGo Design System.op` only after manual acceptance
 
 ## Prohibited paths
 
@@ -47,49 +52,44 @@ Validate `ZSeven-W/openpencil` v0.8.2 as the AI-first design environment for Lex
 - `frontend/**`
 - `backend/**`
 - `deploy/**`
-- existing visual baselines and snapshots
+- existing visual baselines/snapshots
 
-## Runtime owners
+## Canonical acceptance inventory
 
-None changed. This is design tooling/CI only.
+- Home: mobile Dark Figma `196:223` -> OpenPencil `fig_2287`; desktop Light `194:249` -> `fig_2338`.
+- Learn Composer production slice: mobile recommended `202:6` -> `fig_6826`; mobile manual `203:5` -> `fig_6749`; desktop full `204:2` -> `fig_6621`.
+- Active Lesson: mobile Recall/Default `75:6` -> `fig_3247`; Recall/Correct `75:30` -> `fig_3220`; Recall/Offline `75:57` -> `fig_3193`; Choice/Incorrect `75:89` -> `fig_3162`; desktop Study/Light `75:120` -> `fig_3132`; Recall/Correct `75:150` -> `fig_3104`.
+- Progress: mobile Light `76:6` -> `fig_3730`; mobile Dark `76:53` -> `fig_3683`; desktop Light `76:154` -> `fig_3564`.
+- Dictionary: mobile Light `78:54` -> `fig_4008`; desktop Light `78:193` -> `fig_3833`.
+- Word Detail: mobile Dark `78:99` -> `fig_3982`; desktop Dark `78:274` -> `fig_3780`.
+- Phrases: `255:10` -> `fig_7281`; `257:2` -> `fig_7210`; `255:81` -> `fig_7099`; `257:74` -> `fig_6985`.
+- Phrase Detail: `255:55` -> `fig_7255`; `257:47` -> `fig_7184`; `255:162` -> `fig_7046`; `257:159` -> `fig_6932`.
+- Profile: mobile Light `79:6` -> `fig_4305`; desktop Light `79:129` -> `fig_4157`.
+- System states: Home Loading `79:69` -> `fig_4258`; Dictionary Empty `79:93` -> `fig_4234`; Error `79:117` -> `fig_4222`; desktop Offline `79:194` -> `fig_4104`.
+- Foundations wrapper `fig_858`; Components wrapper `fig_1083`; Interaction Components wrapper `fig_1175`.
 
-## Documentation owners
-
-- `docs/figma/openpencil-ai-workflow.md` — migration, AI/MCP and source-of-truth contract.
-- `.agents/current/**` — factual task state.
+The mapping is based on the repository canonical page/node handoff plus exact imported page, frame name, dimensions and matrix ordering. Legacy Figma IDs are provenance only; `fig_*` becomes the OpenPencil-side address after promotion.
 
 ## Invariants
 
-- Native Figma source remains byte-for-byte SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1191055`.
-- OpenPencil implementation is `ZSeven-W/openpencil`, pinned to v0.8.2 for this probe.
-- Linux x86_64 CLI archive SHA-256 is `aeffb1114857e7b810e66cd9ec927fa883dde0cb3ebf0a6ee26891e2888d20a2`.
-- A generated `.op` is evidence only until structural and visual review explicitly promotes it.
-- No Figma SaaS/MCP access is required by the compatibility gate.
-
-## Acceptance criteria
-
-- Git LFS checkout contains the native file, not a pointer.
-- Source SHA-256 and size match before and after import.
-- Pinned CLI archive is cryptographically verified before extraction/execution.
-- `op import:figma` reports success with non-zero page/node evidence and produces a non-empty `.op`.
-- Generated `.op` parses as JSON and exposes non-empty document/page/node structure.
-- Workflow uploads import result, validation summary and generated `.op`.
-- Documentation explicitly distinguishes archive `.fig`, candidate `.op`, and future self-host/MCP deployment.
-- Immutable-head required CI and dedicated OpenPencil workflow are green before merge.
+- Archived `.fig` remains SHA-256 `cb123c20cd341b0ada2caeff249c1fbba933c7b31affe365ea05ad3057b2c423`, size `1,191,055`.
+- Candidate `.op` before any review/edit probe remains SHA-256 `ca0f0492e235ebf3b159dd320cc3c4fb61f550f20e2a42f80140f1cfc30a639c`, size `2,309,061`.
+- OpenPencil is pinned to `ZSeven-W/openpencil` v0.8.2 and the Linux x86_64 CLI archive digest from #550.
+- Linux-rendered evidence must come from a specific artifact and be manually reviewed before promotion.
+- Any material visual/semantic drift blocks promotion rather than being normalized by changing evidence.
 
 ## Required checks
 
-- Shell syntax/static sanity for the new script.
-- Dedicated `OpenPencil AI import` workflow on Linux with Git LFS enabled.
-- Normal repository CI for the final developer-authored head.
-- Review/changed-path audit before Ready.
-
-## Risks
-
-- v0.8.2 is a prerelease and import fidelity is not equivalent to pixel-perfect Figma round-trip.
-- Imported Figma node IDs may not remain suitable as long-term `.op` identifiers; do not assume identity preservation without evidence.
-- Web-host Docker does not bundle Codex/Claude CLI agents in the current Rust release line; external MCP/native agent integration is a separate deployment concern.
+- Candidate identity and 23-page structural validation.
+- OpenPencil headless server readiness.
+- Canonical `fig_*` node inventory/name/type/dimensions.
+- Linux PNG exports for representative mobile and desktop canonical states.
+- PNG magic, IHDR dimensions and SHA-256 evidence manifest.
+- Isolated-copy editability probe with source candidate unchanged.
+- Dedicated path-scoped CI artifact.
+- Full immutable-head repository CI before merge.
+- Review/thread audit and expected-head merge guard.
 
 ## Rollback
 
-Remove the new workflow/script/docs and reset `.agents/current/**`. The canonical `.fig` and product runtime are unchanged.
+If render/editability acceptance fails, do not commit or promote the `.op`. Preserve the immutable `.fig`, the #550 import gate and the factual failure evidence, then reassess OpenPencil/version/migration strategy in a separate slice.
