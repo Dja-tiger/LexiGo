@@ -14,6 +14,10 @@ EXPECTED_TOKEN_SHA="e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796a
   echo "runtime smoke requires immutable v0.8.2 image" >&2
   exit 64
 }
+command -v ss >/dev/null 2>&1 || {
+  echo "ss is required to prove loopback-only MCP binding" >&2
+  exit 69
+}
 
 TMP_ROOT="$(mktemp -d)"
 export OPENPENCIL_COMPOSE_PROJECT="${OPENPENCIL_COMPOSE_PROJECT:-lexigo-openpencil-ci-$$}"
@@ -90,7 +94,10 @@ sh -n "$DEPLOY_DIR/container-entrypoint.sh"
 # Static isolation/security contract.
 grep -Fq '127.0.0.1:${OPENPENCIL_WEB_LOOPBACK_PORT:-33100}:3100' "$COMPOSE_FILE"
 grep -Fq 'network_mode: host' "$COMPOSE_FILE"
-! awk '/^[[:space:]]+mcp:/{mcp=1} mcp && /^[[:space:]]+ports:/{exit 1} mcp && /^[[:space:]]+[a-zA-Z0-9_-]+:/{if ($1 != "mcp:") mcp=0} END{exit 0}' "$COMPOSE_FILE"
+if sed -n '/^  mcp:/,/^  caddy:/p' "$COMPOSE_FILE" | grep -Eq '^[[:space:]]+ports:'; then
+  echo "MCP service must not publish Docker ports" >&2
+  exit 1
+fi
 grep -Fq 'OPENPENCIL_PERSIST_WEB_CREDENTIALS_SERVER: "false"' "$COMPOSE_FILE"
 grep -Fq 'basic_auth {' "$DEPLOY_DIR/Caddyfile"
 ! grep -Eq '(/mcp|reverse_proxy[[:space:]]+mcp)' "$DEPLOY_DIR/Caddyfile"
