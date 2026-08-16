@@ -5,7 +5,7 @@
 - Branch: feat/issue-18-selection-reason
 - Base SHA: 126d059f0ae980e7a50425a23a378c29a1e8b641
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #561
 
 ## Skills used
 
@@ -27,11 +27,11 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-16, live main `126d059f0ae980e7a50425a23a378c29a1e8b641`.
+2026-08-16, base/main `126d059f0ae980e7a50425a23a378c29a1e8b641`.
 
 Inputs:
 
-Issue #18, merged adaptive queue/onboarding work, current Active Lesson frontend, backend lesson reason contract, live CI/Stage history.
+Issue #18, merged adaptive queue/onboarding work, current Active Lesson frontend, backend lesson reason contract, OpenPencil design source, live CI/Stage history.
 
 Files inspected:
 
@@ -44,30 +44,35 @@ Files inspected:
 - frontend/components/lexigo-learn-app.tsx
 - frontend/components/lexigo-active-lesson-app.tsx
 - frontend/components/active-lesson-presentation.tsx
-- frontend/app/active-lesson.css
+- design/openpencil/LexiGo Design System.op
+- docs/figma/openpencil-screen-map.json
 
 Actions performed:
 
-- Reconciled Issue #18 acceptance criteria against live code instead of stale handoff comments.
-- Verified manual composer source/mode/size request ownership remains intact.
-- Identified that server `reason` is lost at the frontend Active Lesson boundary.
-- Created the task branch from exact live main.
+- Reconciled Issue #18 acceptance criteria against live code.
+- Verified manual composer source/mode/size ownership remains intact.
+- Identified and fixed loss of the server-owned item selection reason at the frontend boundary.
+- Added strict reason validation, learning-item propagation, centralized copy, conditional Active Lesson presentation and regression coverage.
+- Verified the two full-file TSX updates reduced to only the intended small diff by GitHub compare/read-back.
+- Created Draft PR #561.
 
 Commands or procedures:
 
-Connector-first GitHub reads/writes. Local git clone was not used because the container could not resolve github.com; connected GitHub access remained functional.
+Connector-first GitHub reads/writes. Local git clone was unavailable because the container could not resolve github.com; connected GitHub access remained functional.
 
 Artifacts produced:
 
-Task branch and `.agents/current/**` execution state.
+- Branch `feat/issue-18-selection-reason`.
+- Draft PR #561.
+- Unit/source contracts for the selection-reason path.
 
 Result:
 
-Implementation in progress.
+Implementation complete; immutable-head CI and merge gates remain.
 
 Failures:
 
-Live native Figma MCP inspection for Issue #203 hit the connected Starter-plan call limit.
+Native Figma MCP inspection for Issue #203 hit the connected Starter/View plan call limit.
 
 Root cause:
 
@@ -75,12 +80,12 @@ External Figma account/tool quota, not repository code.
 
 Fallback:
 
-Used the repository-owned OpenPencil production source-of-truth for exact design semantics and screen ownership.
+Used the repository-owned OpenPencil production source-of-truth for design semantics and screen ownership.
 
 Limitations:
 
-No OpenPencil editor connector is installed; this slice therefore reuses existing semantic patterns/tokens and does not mutate design source.
+No OpenPencil editor connector is installed; this slice reuses existing semantics/tokens and does not mutate design source.
 
 Reusable lesson:
 
-When a backend field already fulfills a product contract, verify every downstream validator/type/mapper/presentation boundary before assuming the acceptance criterion is complete.
+A backend field can satisfy persistence and queue contracts yet still fail product acceptance if a client validator/type/mapper silently drops it; downstream consumer audit must include the final presentation owner.
