@@ -6,6 +6,7 @@ DEPLOY_DIR="$ROOT_DIR/deploy/openpencil"
 COMPOSE_FILE="$DEPLOY_DIR/compose.yml"
 SOURCE_OP="$ROOT_DIR/design/openpencil/LexiGo Design System.op"
 SOURCE_TOKENS="$ROOT_DIR/design/openpencil/LexiGo Design Tokens.json"
+EVIDENCE_DIR="$ROOT_DIR/.tmp/openpencil-self-host"
 EXPECTED_OP_SHA="5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664"
 EXPECTED_TOKEN_SHA="e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c"
 
@@ -19,6 +20,7 @@ command -v ss >/dev/null 2>&1 || {
   exit 69
 }
 
+mkdir -p "$EVIDENCE_DIR"
 TMP_ROOT="$(mktemp -d)"
 export OPENPENCIL_COMPOSE_PROJECT="${OPENPENCIL_COMPOSE_PROJECT:-lexigo-openpencil-ci-$$}"
 export OPENPENCIL_WORKTREE="$TMP_ROOT/worktree"
@@ -41,10 +43,16 @@ compose() {
 }
 
 cleanup() {
+  compose --profile human --profile agent ps -a > "$EVIDENCE_DIR/compose-ps.txt" 2>&1 || true
+  compose --profile human --profile agent logs --no-color > "$EVIDENCE_DIR/compose.log" 2>&1 || true
   compose --profile human --profile agent down --volumes --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$TMP_ROOT"
 }
 trap cleanup EXIT
+
+phase() {
+  printf 'phase=%s\n' "$1"
+}
 
 assert_source_identity() {
   local op_sha token_sha
@@ -87,11 +95,11 @@ wait_mcp() {
   return 1
 }
 
+phase static
 assert_source_identity
 bash -n "$DEPLOY_DIR/session.sh"
 sh -n "$DEPLOY_DIR/container-entrypoint.sh"
 
-# Static isolation/security contract.
 grep -Fq '127.0.0.1:${OPENPENCIL_WEB_LOOPBACK_PORT:-33100}:3100' "$COMPOSE_FILE"
 grep -Fq 'network_mode: host' "$COMPOSE_FILE"
 if sed -n '/^  mcp:/,/^  caddy:/p' "$COMPOSE_FILE" | grep -Eq '^[[:space:]]+ports:'; then
@@ -106,9 +114,10 @@ grep -Fq 'basic_auth {' "$DEPLOY_DIR/Caddyfile"
   "$ROOT_DIR/deploy/compose/docker-compose.prod.yml" \
   "$ROOT_DIR/deploy/Caddyfile"
 
-compose --profile human --profile agent config >/dev/null
+phase compose-config
+compose --profile human --profile agent config > "$EVIDENCE_DIR/compose-config.yml"
 
-# Human editor: raw listener is loopback-only and lock/backup are mandatory.
+phase human-start
 compose --profile human up -d web
 wait_url "http://127.0.0.1:${OPENPENCIL_WEB_LOOPBACK_PORT}/"
 [[ "$(cat "$OPENPENCIL_STATE_DIR/write.lock/mode")" == human ]]
@@ -116,7 +125,7 @@ compose port web 3100 | grep -Eq "^127\\.0\\.0\\.1:${OPENPENCIL_WEB_LOOPBACK_POR
 [[ "$(find "$OPENPENCIL_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -name 'session-*' | wc -l)" -eq 1 ]]
 find "$OPENPENCIL_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type f -name SHA256SUMS -exec sh -c 'cd "$(dirname "$1")" && sha256sum -c SHA256SUMS' _ {} \;
 
-# A direct Compose bypass still cannot start the second writer.
+phase lock-conflict
 compose --profile agent up -d mcp
 sleep 2
 if compose --profile human --profile agent ps --services --status running | grep -qx mcp; then
@@ -129,13 +138,14 @@ compose stop web >/dev/null
 compose rm -sf web >/dev/null
 [[ ! -d "$OPENPENCIL_STATE_DIR/write.lock" ]]
 
-# Agent writer: prove upstream listener stays host-loopback-only and exercise MCP.
+phase agent-start
 compose --profile agent up -d mcp
 wait_mcp
 [[ "$(cat "$OPENPENCIL_STATE_DIR/write.lock/mode")" == agent ]]
 ss -H -ltn | grep -Eq "127\\.0\\.0\\.1:${OPENPENCIL_MCP_PORT}[[:space:]]"
 ! ss -H -ltn | grep -Eq "(0\\.0\\.0\\.0|\\[::\\]|\\*):${OPENPENCIL_MCP_PORT}[[:space:]]"
 
+phase mcp-contract
 OPENPENCIL_MCP_PORT="$OPENPENCIL_MCP_PORT" python3 - <<'PY'
 import json
 import os
@@ -221,14 +231,14 @@ compose stop mcp >/dev/null
 compose rm -sf mcp >/dev/null
 [[ ! -d "$OPENPENCIL_STATE_DIR/write.lock" ]]
 
-# A third session proves bounded backup rotation: keep=2 remains exactly two.
+phase backup-rotation
 compose --profile human up -d web
 wait_url "http://127.0.0.1:${OPENPENCIL_WEB_LOOPBACK_PORT}/"
 compose stop web >/dev/null
 compose rm -sf web >/dev/null
 [[ "$(find "$OPENPENCIL_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -name 'session-*' | wc -l)" -eq 2 ]]
 
-# Stale lock recovery is explicit and refuses to touch live writers.
+phase stale-lock-recovery
 mkdir "$OPENPENCIL_STATE_DIR/write.lock"
 printf 'stale-test\n' > "$OPENPENCIL_STATE_DIR/write.lock/owner"
 ENV_FILE="$TMP_ROOT/openpencil.env"
@@ -246,5 +256,6 @@ EOF
 OPENPENCIL_ENV_FILE="$ENV_FILE" bash "$DEPLOY_DIR/session.sh" recover-lock
 [[ ! -d "$OPENPENCIL_STATE_DIR/write.lock" ]]
 
+phase final-source-identity
 assert_source_identity
 printf 'OpenPencil self-host smoke passed: web loopback, MCP loopback/read/write, lock, backup, recovery.\n'
