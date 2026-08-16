@@ -6,8 +6,19 @@ DEPLOY_DIR="$ROOT_DIR/deploy/openpencil"
 COMPOSE_FILE="$DEPLOY_DIR/compose.yml"
 SOURCE_OP="$ROOT_DIR/design/openpencil/LexiGo Design System.op"
 SOURCE_TOKENS="$ROOT_DIR/design/openpencil/LexiGo Design Tokens.json"
+SCREEN_MAP="$ROOT_DIR/docs/figma/openpencil-screen-map.json"
 EVIDENCE_DIR="$ROOT_DIR/.tmp/openpencil-self-host"
-EXPECTED_OP_SHA="5380a0468d4e369d91ac190b829e01f60ff43493f6a76c9300c6b58d0b34d664"
+readarray -t ACTIVE_IDENTITY < <(python3 - "$SCREEN_MAP" <<'PY'
+import json
+import pathlib
+import sys
+source = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["source"]
+print(source["activeOpSha256"])
+print(source["activeOpSize"])
+PY
+)
+EXPECTED_OP_SHA="${ACTIVE_IDENTITY[0]}"
+EXPECTED_OP_SIZE="${ACTIVE_IDENTITY[1]}"
 EXPECTED_TOKEN_SHA="e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c"
 
 : "${OPENPENCIL_IMAGE:?set OPENPENCIL_IMAGE to the resolved immutable v0.8.2 image}"
@@ -55,11 +66,16 @@ phase() {
 }
 
 assert_source_identity() {
-  local op_sha token_sha
+  local op_sha op_size token_sha
   op_sha="$(sha256sum "$SOURCE_OP" | awk '{print $1}')"
+  op_size="$(wc -c < "$SOURCE_OP" | tr -d '[:space:]')"
   token_sha="$(sha256sum "$SOURCE_TOKENS" | awk '{print $1}')"
   [[ "$op_sha" == "$EXPECTED_OP_SHA" ]] || {
     echo "canonical .op SHA drift: $op_sha" >&2
+    exit 1
+  }
+  [[ "$op_size" == "$EXPECTED_OP_SIZE" ]] || {
+    echo "canonical .op size drift: $op_size" >&2
     exit 1
   }
   [[ "$token_sha" == "$EXPECTED_TOKEN_SHA" ]] || {
