@@ -19,7 +19,9 @@ describe("final compatibility fallback inventory", () => {
     for (const owner of [
       "<LexigoScenarioCatalogApp",
       "<LexigoScenarioApp",
+      "<LexigoGuestHomeApp",
       "<LexigoHomeApp",
+      "<LexigoOnboardingApp",
       "<LexigoLearnApp",
       "<LexigoActiveLessonApp",
       "<LexigoDictionaryApp",
@@ -37,7 +39,9 @@ describe("final compatibility fallback inventory", () => {
     const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
 
     for (const predicate of [
-      'const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname);',
+      'const useGuestHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname) && initialSession === null;',
+      'const useHomeIsland = effectiveRouteGraph === "home" && isHomeRoute(pathname) && initialSession !== null;',
+      "const useOnboardingIsland = isOnboardingRoute(pathname) && initialSession !== null;",
       'const useLearnIsland = effectiveRouteGraph === "learn" && isLearnRoute(pathname);',
       "const useActiveLessonIsland = (isActiveLessonRoute(pathname) || activeLessonOwnerRetained)",
       'const useDictionaryIsland = effectiveRouteGraph === "dictionary" && isDictionaryRoute(pathname);',
@@ -85,6 +89,23 @@ describe("final compatibility fallback inventory", () => {
     expect(bootstrap).toContain("const useProfileIsland = isProfileRoute(pathname) && initialSession !== null;");
     expect(bootstrap).toContain('return "product";');
     expect(bootstrap).toContain("<LexigoPremiumApp key={routeKey} initialSession={initialSession} />");
+  });
+
+  it("keeps First Use outside the final premium fallback", () => {
+    const bootstrap = readComponent("lexigo-bootstrapped-app.tsx");
+    const guest = readComponent("lexigo-guest-home-app.tsx");
+    const onboarding = readComponent("lexigo-onboarding-app.tsx");
+
+    expect(guest).toContain('data-route-client-island="guest-home"');
+    expect(guest).not.toContain("/api/v1/progress");
+    expect(guest).not.toContain("/api/v1/lessons/active");
+    expect(onboarding).toContain('data-route-client-island="onboarding"');
+    expect(onboarding).toContain('"/api/v1/onboarding"');
+    expect(onboarding).toContain('"/api/v1/onboarding/start"');
+    expect(onboarding).toContain('"/api/v1/onboarding/complete"');
+    expect(onboarding).toContain('"/api/v1/onboarding/skip"');
+    expect(bootstrap).toContain("<LexigoGuestHomeApp key=\"guest:first-use\" />");
+    expect(bootstrap).toContain("<LexigoOnboardingApp");
   });
 
   it("keeps shared account and session runtime outside route-island selection", () => {
