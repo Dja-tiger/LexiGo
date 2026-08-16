@@ -20,8 +20,8 @@ const APPROVED_SHA256: Record<FirstUseVisualBaseline, string> = {
   "guest-desktop-dark": "7a3827b277e8c32309cb930c9862c957f236ef25a6d1df447ec9cea30537d775",
   "role-compact-light": "d6281d763d7a50a001b9e11d9bfc63bc000db5ea81490cc6e0a7e1a3ba4379da",
   "role-compact-dark": "b8a542c17b923f2ee8dfcc833966b87cc34006936393d14e3989fff8e0a8ca9a",
-  "resume-desktop-light": "b5560d91cde9a61c34f49541f983e6bfdd71b7be3ee0565ac9c2ac9c1540a9e3",
-  "resume-desktop-dark": "44c6dc46ccef07ac9b2a4fe3fd77efc000a81e42312776fd38aba8a1de5f2fe4",
+  "resume-desktop-light": "320524d4c4fe03f5bd086bac871957854f31f08f3b4e7a00d05071a1a627e466",
+  "resume-desktop-dark": "6827f78bb2f4beb3304b0b939ebaa5a19d4577c9f68fd406525ba4b67525b545",
 };
 
 const SESSION = {
