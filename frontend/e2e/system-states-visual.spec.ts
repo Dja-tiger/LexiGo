@@ -53,9 +53,13 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
     // three antialiased calendar-reminder edge pixels, with a maximum RGB delta of one LSB.
     // Keep every renderer-equivalent as an exact scoped fingerprint: no numerical tolerance is accepted.
     // Issue #577 adds the independently reviewed semantic-Reminder renderer from CI 32048818693.
+    // Issue #584: exact-main CI 32067797979 / artifact #9300795503 rendered 63d3af... on
+    // both attempts. Against accepted bc8a3d... at the same 390×844 state it differs at only
+    // four antialiased edge pixels out of 329160, with maximum RGB delta of one LSB.
     rendererEquivalentSha256: [
       "dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6",
       "bc8a3d915e7a800dd9beeb9bc4f95bcde79cdcfab438ab7d329377d78c005578",
+      "63d3af378194f420b97c95a6c25829801aa27052cfc174516c102a0a986c731c",
     ],
   },
   "compact-error-dark": {
