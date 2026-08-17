@@ -1,54 +1,41 @@
 # Current Task Progress
 
-## 2026-08-17 22:43 Europe/Berlin
+## 2026-08-17 Europe/Berlin
 
 ### Verified
 
-- Live task is Issue #581 / Draft PR #582 on branch `test/issue-581-desktop-route-parity` from base `d073fcf21707deb73fda6b54b969fcb937673f9f`.
-- Diagnostic head `244a71b6202b3f22e51e46c9fccc7cc385cf92ad` ran full CI #3746 / run `32065112367`.
-- Frontend lint, typecheck, unit, production build and dependency audit passed before Visual.
-- Visual artifact `frontend-playwright-report-visual` ID `9299858153`, digest `sha256:ce2451443302b3de5e1a6ed7aeee3a94b9124e2985b4ace32fb3a8e881499e87`, belongs exactly to diagnostic head `244a71b6202b3f22e51e46c9fccc7cc385cf92ad`.
-- Artifact ZIP SHA-256 was independently recalculated and matches the GitHub artifact digest exactly.
-- Playwright report stats: 372 total, 113 expected, 20 unexpected, 1 flaky, 238 skipped. All 20 unexpected tests are exactly the #581 desktop Light/Dark states.
-- Every #581 state produced two attempts and both attempts referenced identical content-addressed PNG bytes; all 20 retry pairs are byte-stable.
-- Every one of the 40 #581 result errors (20 states × initial/retry) is only the deliberate `REVIEW_REQUIRED exact Linux 1440×1024 evidence` error. No route-owner, RouteChrome, reduced-motion, overflow, focus clipping or runtime-error assertion failed before the gate.
-- The one unrelated flaky is pre-existing `system-states-visual.spec.ts` / `compact Dictionary empty light`: attempt 1 rendered unapproved SHA `63d3af378194f420b97c95a6c25829801aa27052cfc174516c102a0a986c731c`; retry rendered already accepted SHA `bc8a3d915e7a800dd9beeb9bc4f95bcde79cdcfab438ab7d329377d78c005578` and passed. It is outside the changed #581 spec and was not approved or modified.
-- All 20 exact Linux desktop PNGs were manually reviewed from the artifact in Light/Dark pairs. No clipping, shell/content overlap, stale legacy frame or route-level composition defect was found.
-- Reviewed fingerprints were committed from the exact artifact. Existing 20 tablet fingerprints are unchanged; onboarding fixture value was restored to the pre-task `tablet-parity-csrf`; legacy `product` owner enforcement is scoped only to the new desktop matrix.
+- Issue #584 owns the isolated post-merge CI stabilization slice.
+- Base is exact `main@cadcdf434ed80628e326507c8ee849b55a427020`; branch is `test/issue-584-system-state-renderer-fingerprint`.
+- No open PRs existed when the slice started.
+- Exact-main CI #3751 / run `32067797979` failed only in `Frontend E2E (Visual regression)`; all other frontend groups plus backend unit/security/integration passed.
+- Failing test: `frontend/e2e/system-states-visual.spec.ts` / `compact Dictionary empty light` / Figma node `79:93`.
+- Both exact-main attempts rendered SHA `63d3af378194f420b97c95a6c25829801aa27052cfc174516c102a0a986c731c`.
+- Exact-main artifact `9300795503` has digest `sha256:aaf16e28f77404017f8d804c7cd8accb4afb1db67fdba7a205c2e18463c359a2` and exact source head `cadcdf434ed80628e326507c8ee849b55a427020`.
+- PR #582 diagnostic artifact `9299858153` already contained the same `63d3af...` renderer output and a retry with accepted `bc8a3d915e7a800dd9beeb9bc4f95bcde79cdcfab438ab7d329377d78c005578`.
+- Both compared captures are `390×844`.
+- Pixel comparison `63d3af...` vs `bc8a3d...`: 4 changed pixels out of 329160 (≈0.0012%); maximum per-channel RGB delta is 1 LSB. The four differences are antialiased edge pixels only.
+- No runtime, geometry, content or state difference was reproduced.
+- The new SHA was added only to `compact-empty-light.rendererEquivalentSha256`; exact-hash matching remains fail-closed and no tolerance was introduced.
 
-### Finding
+### Classification
 
-The previously unowned #205 desktop `1440×1024` acceptance can be represented by one stable 20-state exact matrix without runtime/CSS/backend/design changes. The diagnostic failures were intentionally fail-closed evidence gates, not product defects.
-
-### Root cause
-
-The parent #205 desktop requirement had remained a checklist item after route-specific parity, tablet #568 and compact transition #577 work; there was no consolidated desktop evidence owner.
+Renderer-specific antialias variation in an authoritative Linux hosted runner, not a product/runtime regression and not an Issue #581 desktop-matrix defect.
 
 ### Changed files
 
-- `frontend/e2e/route-tablet-parity.spec.ts`
+- `frontend/e2e/system-states-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
-### Checks passed
+### Checks completed
 
-- Diagnostic frontend core gates in CI #3746.
-- 20/20 desktop structural contracts before the deliberate review gate.
-- Exact artifact digest verification.
-- 20/20 manual Linux PNG review.
-- Initial/retry byte stability for all 20 states.
-- Existing tablet fingerprints preserved.
-
-### Checks failed
-
-- Diagnostic Visual is intentionally red because all 20 new hashes were `REVIEW_REQUIRED`.
-- One unrelated pre-existing System State renderer variant failed first attempt and passed retry; no #581 code change is justified from that flake.
-
-### Current branch head
-
-Resolve from live branch ref after Agent Harness evidence writes.
+- Exact artifact provenance and digest verified.
+- Main first/retry byte stability verified.
+- Cross-artifact dimensions verified.
+- Exact pixel diff classified before any baseline write.
+- New fingerprint is scoped to one existing System State contract.
 
 ### Next action
 
-Run full immutable-head CI with the reviewed desktop fingerprints. If green, audit reviews/threads/comments and `main` drift, mark PR #582 Ready and squash merge with `expected_head_sha`, then require exact-main CI. Because #581 is test/evidence-only, Stage deployment must skip runtime deploy. Reconcile Agent Harness separately afterward.
+Finish task-local harness records, compare the branch against live main, create a Draft PR, and require authoritative Visual plus full immutable-head CI. Do not use a blind retry as evidence.
