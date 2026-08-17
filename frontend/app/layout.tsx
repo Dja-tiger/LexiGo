@@ -47,6 +47,7 @@ import "./information-architecture.css";
 import "./calendar-reminder-entry.css";
 import "./calendar-reminder-touch-targets.css";
 import "./adaptive-knowledge-coach-home.css";
+import "./home-tablet-progress-spacing.css";
 import "./first-use.css";
 import "./first-use-focus.css";
 import "./adaptive-knowledge-coach-accessibility.css";
