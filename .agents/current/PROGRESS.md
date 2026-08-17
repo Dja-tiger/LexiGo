@@ -2,36 +2,18 @@
 
 ## 2026-08-17 Europe/Berlin
 
-### Verified
+### Runtime repair verified
 
-- Reconciliation PR #578 is merged; exact base/main for #577 is `e25cee1b2ef991aff9ea5a27f63d170e1bc8d1b7`; exact-main lightweight CI #3737 / run `32045106793` is green.
-- Issue #577 is open under umbrella #205 and uses repo-owned OpenPencil/Linux evidence rather than Figma Cloud editing.
-- OpenPencil provenance: Dictionary `fig_4008`, Phrases `fig_7281`, Learn recommended `fig_6826`, canonical compact viewport 390×844.
-- Dictionary root cause was proven: primary Library navigation emitted graph `product`, causing compatibility `LexigoPremiumApp` ownership after SPA navigation.
-- Materials root cause was compact text geometry ownership; Reminder root cause was hardcoded legacy presentation tokens.
-- CI #3739 / run `32046365625` at head `43e80f5b1b0d6c778f53147ba6a115fefc94df0b` proved the runtime/browser changes across the normal matrix, including WebKit/iOS. No additional bootstrap canonicalization was required.
+- Reconciled base/main before this slice: `e25cee1b2ef991aff9ea5a27f63d170e1bc8d1b7`.
+- Dictionary root cause: primary Library navigation emitted compatibility graph `product`; #579 now emits canonical `dictionary`.
+- Compact Materials root cause: missing one-line/equal-target geometry; #579 owns 48px minimum targets and overflow-safe nowrap behavior.
+- Reminder root cause: one correct component owner rendered legacy hardcoded dark/blue presentation; #579 keeps the owner and switches presentation to semantic `--ak-*` tokens.
+- Home → Learn/history/reload browser evidence stayed canonical; no speculative bootstrap canonicalization was added.
+- Functional CI #3739 / run `32046365625` passed the normal browser matrix including WebKit/iOS.
 
-### Changed files
+### Transition visual evidence already approved
 
-- `frontend/components/route-primary-navigation.tsx`: Library navigation now emits `dictionary` ownership.
-- `frontend/app/information-architecture.css`: compact Materials has equal 48px targets, nowrap and overflow-safe geometry.
-- `frontend/app/calendar-reminder-entry.css`: Reminder uses semantic surface/text/primary/elevation tokens.
-- `frontend/e2e/dictionary-route-island.spec.ts`: canonical owner, Dictionary↔Phrases and Back/Forward regression contract.
-- `frontend/e2e/learn-route-island.spec.ts`: Home→Learn, history/reload ownership contract.
-- `frontend/e2e/route-transition-runtime-visual.spec.ts`: six content-addressed compact transition states.
-- `frontend/playwright.visual.config.ts`: includes transition visual spec.
-- `.agents/current/**`: active evidence and delivery state.
-
-### Checks passed
-
-- Initial CI #3738 correctly exposed only a brittle source-order unit contract; commit `43e80f5b…` restored source order without changing runtime pixels.
-- Exact-head CI #3739 functional/browser gates are green: frontend core, both UI shards, WebKit/iOS, backend/security/integration, CSP, service worker, Dictionary smoke, iOS PWA, accessibility, performance and other selected gates.
-- Visual #3739 classified cleanly as `30 passed`, `62 skipped`, `6 failed`, with exactly six intentional `REVIEW_REQUIRED` states and no additional structural/runtime/token/geometry failure.
-- Exact Visual artifact `9293292461`, digest `sha256:fedbe32158ef6199005c1f11b834a2974f5bbef4291d4738f4b7069d1e1e2483`, was downloaded.
-- Log values and PNG bytes were matched exactly for all six states and were stable on retry.
-- All six exact Linux PNGs were manually inspected and accepted.
-
-### Approved fingerprints
+Exact Linux artifact `9293292461` from CI #3739, source head `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`, digest `sha256:fedbe32158ef6199005c1f11b834a2974f5bbef4291d4738f4b7069d1e1e2483`:
 
 - Dictionary Light `390×1197` — `4487459cea3e1347768e381ce393aeeecfb3f1e22b47e01554810cb6508b556d`.
 - Dictionary Dark `390×1197` — `9104709d0b7f742ae22f18bacfe605a7658eb0db0b539e93b597ff8779cd855c`.
@@ -40,18 +22,29 @@
 - Learn Light `390×1212` — `95e13c8164fea6ff0ba9ab0ae6032e4d01d4e9108d6fde79c3edef89fdff3169`.
 - Learn Dark `390×1212` — `012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5`.
 
-### Manual review result
+All six were manually inspected before approval at commit `be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25`.
 
-- Dictionary Light/Dark: canonical Dictionary shell after real Home client navigation; Materials one line/equal height; no horizontal overflow or stale legacy owner.
-- Phrases Light/Dark: canonical Phrases shell; Materials remains one line/equal height through Dictionary→Phrases switch; no x-overflow/clipping relevant to the #577 scope.
-- Learn Light/Dark: canonical Learn shell; opened Reminder uses semantic appearance-specific surface/text/primary styling; legacy fixed dark palette does not leak into Light.
-- Magenta profile rectangle is the intentional Playwright mask defined by the evidence spec.
+### CI #3740 classification
 
-### Current branch head
+Run `32048818693` on immutable head `be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25` failed only in:
 
-- Reviewed source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`.
-- Evidence-approval commit is being created atomically; resolve final branch head from live ref after write.
+- `Frontend E2E (UI tests (shard 1/2))`: longstanding new-tab navigation flake in `app-router-routes.spec.ts`; the new tab existed but URL assertion observed an empty URL while `/learn` navigation was pending. This test/file is not changed by #579.
+- `Frontend E2E (Visual regression)`: dependent pre-existing visual contracts still encoded the legacy shared Reminder pixels; the six new #577 transition baselines themselves passed.
+
+Visual source artifact: `9294131591`, digest `sha256:df25e2d160218fb355a3a5b86a0e1d4883dd3a2bdda5bf335e64cdbb876179b7`.
+UI diagnostics artifact: `9294130463`, digest `sha256:a17d8d85ddc961996524a420e224ebe74a0862a4fc19116e6f9ca82d881efde1`.
+
+### Manual review and differential proof
+
+- Exact Light/Dark #3740 route/system/phrases/profile screenshots were manually inspected: canonical shells remain intact, Materials labels are one line, semantic Reminder is appearance-correct, no relevant clipping/overflow was observed.
+- Previous approved tablet artifact: `9291962719`, CI `32040684330`, head `3578718bdcba1a24873ce23999ef7672a22193c5`, digest `sha256:aefffe94dc106084f4c18eb5d54d9e1e2ad87a1d8ccf670ac1c818bd5b480033`.
+- Old vs #3740 pixel diff for every affected 768px tablet state is confined to exactly `x=541..646, y=0..102`; below that shared Reminder region the images are pixel-identical.
+- Three fuzzy states were retry-stable and are migrated to exact content-addressed #3740 captures: Home compact, Progress compact, Progress desktop. Their old binary snapshots remain untouched and are no longer the assertion path at those affected widths.
+
+### Evidence reconciliation being committed
+
+Only reviewed dependent visual contracts are changing. No runtime/CSS/navigation source changes are part of this evidence commit. Strict contracts retain original Figma-approved hashes where applicable and add exact renderer-equivalent #577 fingerprints rather than replacing design provenance.
 
 ### Next action
 
-Commit only the reviewed fingerprints plus Agent Harness evidence, read back/compare, then require a fully green immutable-head CI. If green, audit reviews/threads/comments and main drift, mark PR #579 Ready, squash merge with expected head, then require exact-main CI and exact-SHA Stage/public validation before reconciliation.
+Create one atomic evidence compatibility commit, read back/compare the branch, then require a new full immutable-head CI. If only the same unrelated new-tab flake recurs, rerun that job on the same head. Merge is blocked until full green.

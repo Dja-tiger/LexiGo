@@ -15,23 +15,32 @@ const PROFILE_VISUAL_BASELINES: Record<ProfileVisualBaseline, {
   figmaNode: "79:6" | "79:129";
   sha256: string;
   alternateSha256?: string;
+  rendererEquivalentSha256?: readonly string[];
 }> = {
   "compact-light": {
     figmaNode: "79:6",
     sha256: "9c215d2ae5c190bbd368e86a0170a08d5f8f303bbd45ba147cde84b42b99f8e0",
     alternateSha256: "3f6d23a5dc52a46214b7e0e493af54e76020d66d126de5224f3cb69048abf448",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["821083de2f8a57488671ef2e4014384b8ad5dd531a5f9d96c52e5409cbf1b8e9"],
   },
   "compact-dark": {
     figmaNode: "79:6",
     sha256: "6ed95c3be8e78700a8b6980eb613a93a58b4a4e6846accc5d4bc6ef50eb71744",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["46ab29009ba02c452bfdefcd13153432e0974b3cd9cb61eb58094dd06be284b6"],
   },
   "desktop-light": {
     figmaNode: "79:129",
     sha256: "3da62f1cd51197f7b10ab5ec6cf51fc3c6f6d9503f2ea8d40fdc5ff1518816b1",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["7055246ae14d044a6fd53e2657912875cd52031debac4aa676bd9d816ca325d1"],
   },
   "desktop-dark": {
     figmaNode: "79:129",
     sha256: "f5670eaaa3ca527f081698c7629bd0c96de9117553fe9b16ff97739c191010ae",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["38731dbfcb22161b3142c22d1741301fa12968703d62303e8f034c6b403d96ff"],
   },
 };
 
@@ -80,9 +89,11 @@ async function expectApprovedProfileBaseline(
   });
 
   const actualSha256 = createHash("sha256").update(screenshot).digest("hex");
-  const approvedSha256 = baseline.alternateSha256
-    ? [baseline.sha256, baseline.alternateSha256]
-    : [baseline.sha256];
+  const approvedSha256 = [
+    baseline.sha256,
+    ...(baseline.alternateSha256 ? [baseline.alternateSha256] : []),
+    ...(baseline.rendererEquivalentSha256 ?? []),
+  ];
   expect(
     approvedSha256,
     `Profile ${baselineName} changed from the manually reviewed Figma ${baseline.figmaNode} Linux baseline`,

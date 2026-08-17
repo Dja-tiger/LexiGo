@@ -3,79 +3,58 @@
 ## Task
 
 - Issue: #577
+- Parent: #205
 - Branch: `fix/issue-577-route-runtime`
 - Base SHA: `e25cee1b2ef991aff9ea5a27f63d170e1bc8d1b7`
-- Reviewed-source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`
+- Runtime reviewed-source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`
+- First evidence-approval head: `be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25`
 - PR: #579 Draft
 
 ## Skills used
 
-### GitHub repository workflow
+GitHub repository workflow instruction was read live from `skills://plugins/github/github/skill.md` on 2026-08-17. The delivery uses exact GitHub refs, immutable Actions evidence, manual Linux visual review, fail-closed fingerprints, expected-head merge, exact-main CI and exact-SHA Stage/public validation.
 
-Instruction source: `skills://plugins/github/github/skill.md`, read live 2026-08-17.
+## Runtime implementation
 
-Purpose: inspect live repository state, prove runtime ownership/root causes, create immutable evidence, and deliver #577 through CI, review audit, expected-head merge, exact-main and exact-SHA Stage/public validation.
+- Primary Library route graph now writes `dictionary` rather than compatibility `product`.
+- Compact Materials owns equal 48px minimum targets, nowrap labels and overflow-safe geometry.
+- Shared `CalendarReminderRouteEntry` keeps one component/geometry owner and uses semantic `--ak-*` appearance tokens instead of legacy hardcoded dark/blue values.
+- Dictionary/Phrases transition/history and Learn Home-transition/history/reload browser contracts were added/strengthened.
+- Six transition-derived Light/Dark content-addressed states at 390×844 were added.
 
-## Actions performed
+## Evidence history
 
-- Reconciled completed tablet audit through #578 before starting this runtime slice.
-- Created `fix/issue-577-route-runtime` from exact reconciled main.
-- Proved Library navigation emitted `product` for `/dictionary` and that existing Dictionary E2E encoded the compatibility fallback.
-- Proved compact Materials and shared Reminder presentation owners from current source.
-- Verified Dictionary/Learn UI specs already run in the normal Playwright matrix including `ios-webkit`.
-- Verified OpenPencil compact provenance: Dictionary `fig_4008`, Phrases `fig_7281`, Learn `fig_6826`.
-- Changed Library graph hint to `dictionary`.
-- Added compact Materials no-wrap/equal-target geometry.
-- Replaced Reminder hardcoded legacy dark/blue colors with semantic tokens.
-- Rewrote Dictionary transition/history contract and added Learn Home-transition/history/reload contract.
-- Added six fail-closed transition-derived Light/Dark visual states at 390×844.
-- Opened Draft PR #579.
+- CI #3738 found a brittle source-order contract only; fixed without runtime pixel change.
+- CI #3739 / run `32046365625` passed functional/browser coverage including WebKit/iOS and failed Visual only at six deliberate `REVIEW_REQUIRED` transition states.
+- Artifact `9293292461` was downloaded and all six exact PNGs manually reviewed; hashes were approved in commit `be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25`.
+- Final CI attempt #3740 / run `32048818693` on that head exposed two independent gates: one unrelated new-tab UI flake and stale dependent visual evidence caused by the intended shared Reminder presentation change.
 
-## CI history
+## #3740 visual classification
 
-- CI #3738 / run `32046134501` stopped on an existing source-order unit contract after `min-width` was placed before the required literal `min-height: 48px`; this was not a runtime pixel defect.
-- Commit `43e80f5b1b0d6c778f53147ba6a115fefc94df0b` restored the source-contract order without changing runtime behavior.
-- CI #3739 / run `32046365625` then passed the functional/browser matrix, including both UI shards and WebKit/iOS.
-- Visual job `95435654939` failed exactly at the six intentional `REVIEW_REQUIRED` gates: `30 passed`, `62 skipped`, `6 failed`; no additional structural/runtime/token/geometry defect was present.
+Exact Visual artifact `9294131591`, digest `sha256:df25e2d160218fb355a3a5b86a0e1d4883dd3a2bdda5bf335e64cdbb876179b7`, was downloaded. The six new transition contracts passed. Failing pre-existing suites were route/tablet/home/phrases/profile/system contracts that include the shared Reminder.
 
-## Exact visual evidence
+Manual review confirmed the expected semantic Reminder and no route-shell regression. To rule out hidden tablet drift, exact current 768px captures were pixel-diffed against approved artifact `9291962719` from CI `32040684330`. For all 14 affected states the bounding box of every changed pixel is exactly `x=541..646, y=0..102`; all pixels below the shared Reminder region are identical.
 
-- Run: `32046365625` (CI #3739).
-- Source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`.
-- Artifact: `9293292461`, `frontend-playwright-report-visual`.
-- Artifact digest: `sha256:fedbe32158ef6199005c1f11b834a2974f5bbef4291d4738f4b7069d1e1e2483`.
-- Dictionary Light: `390×1197`, `4487459cea3e1347768e381ce393aeeecfb3f1e22b47e01554810cb6508b556d`.
-- Dictionary Dark: `390×1197`, `9104709d0b7f742ae22f18bacfe605a7658eb0db0b539e93b597ff8779cd855c`.
-- Phrases Light: `390×1616`, `91cc3fabe4cc7369e1c67992a28d4199b0a68028e354098fe17a78f5ddf93318`.
-- Phrases Dark: `390×1616`, `066a3ba05e676501a6025214567bdbdd901c8b820e8cb632003e5fc44a00b6b9`.
-- Learn Light: `390×1212`, `95e13c8164fea6ff0ba9ab0ae6032e4d01d4e9108d6fde79c3edef89fdff3169`.
-- Learn Dark: `390×1212`, `012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5`.
+The dependent evidence update therefore:
 
-## Manual artifact review
+- re-fingerprints only affected strict route/tablet/phrases/home contracts from #3740;
+- preserves Figma-primary fingerprints for Profile/System states and adds reviewed exact renderer-equivalent #577 hashes;
+- migrates only the three failing fuzzy states (Home compact, Progress compact and Progress desktop) to exact content-addressed #3740 checks, leaving binary snapshot files untouched;
+- changes no runtime/CSS/navigation file.
 
-The exact job log was matched against exact artifact bytes. Each PNG's dimensions and SHA-256 matched the `REVIEW_REQUIRED` diagnostic and retry. All six PNGs were opened and inspected manually.
+## #3740 UI classification
 
-- Dictionary Light/Dark: canonical Dictionary shell after SPA navigation; stable one-line Materials; no relevant clipping/x-overflow or legacy fallback.
-- Phrases Light/Dark: canonical Phrases shell after Dictionary→Phrases transition; stable one-line Materials; no relevant clipping/x-overflow.
-- Learn Light/Dark: canonical Learn shell; Reminder disclosure open; semantic appearance-specific surface/text/primary tokens; no legacy dark presentation in Light.
-- The magenta rectangle is an intentional Playwright mask over the profile button, explicitly configured by the evidence spec.
+Artifact `9294130463`, digest `sha256:a17d8d85ddc961996524a420e224ebe74a0862a4fc19116e6f9ca82d881efde1`, shows `app-router-routes.spec.ts` new-tab navigation timing out while `/learn` navigation was still pending. This file is unchanged by #579 and matches the repository's known same-head new-tab flake class. A same-head failed-job rerun is permitted only after the visual evidence commit if it recurs.
 
-Result: all six exact Linux fingerprints are approved for content-addressed enforcement.
+## Delivery procedure
 
-## Root cause conclusion
+1. Commit reviewed dependent evidence atomically and verify exact branch diff.
+2. Require a fully green immutable-head CI; classify any new failure before writing code.
+3. Audit PR reviews, review threads, comments and main drift.
+4. Mark #579 Ready only on clean evidence and squash merge with `expected_head_sha`.
+5. Require full exact-main CI and exact-SHA Stage/public validation.
+6. Create a separate Agent Docs-only reconciliation PR, record final developer head/squash/CI/Stage evidence, reset `.agents/current/**` from live templates, merge it, then continue the next live open #205 slice.
 
-The proven route lifecycle defect was the wrong graph identity emitted by primary Library navigation. After that fix, executable Home→Learn and history evidence remained green, so broader bootstrap canonicalization was not justified and was intentionally omitted. Materials and Reminder were separate scoped presentation defects.
+## Design provenance
 
-## Next procedure
-
-- Create one atomic evidence-approval commit containing only `frontend/e2e/route-transition-runtime-visual.spec.ts` and `.agents/current/**`.
-- Read back changed blobs and compare branch diff; require no runtime/snapshot mutation in the approval commit.
-- Run full immutable-head CI and classify any failure before changing code.
-- Audit PR reviews, review threads and comments plus main drift; Ready only on clean evidence.
-- Squash merge with `expected_head_sha`.
-- Require exact-main full CI and Stage/public validation that deploys exactly the squash SHA.
-- Create a separate Agent Docs-only reconciliation PR, reset `.agents/current/**` to live templates, then continue the next live open #205 parity task.
-
-## Limitations
-
-Figma Cloud is intentionally excluded by #577; repo-owned OpenPencil plus Linux runtime evidence is authoritative for this slice. Physical-device sign-off is outside automated CI, but `ios-webkit` transition coverage is mandatory and passed on #3739.
+No Figma Cloud editing is used for #577. Repo-owned OpenPencil and Linux GitHub container evidence are authoritative for this runtime defect; existing Figma-approved visual hashes are retained where contracts explicitly model design provenance.

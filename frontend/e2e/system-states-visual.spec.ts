@@ -42,6 +42,8 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
   "compact-loading-dark": {
     figmaNode: "79:69",
     sha256: "45956af4fd18983b56d9c6ae38714b1ba5ed984a930c8ffca7472dd65a699368",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["2fd2755322269c6621884043efcac30741523671a8ab15588bfbdf37ebb7fc86"],
   },
   "compact-empty-light": {
     figmaNode: "79:93",
@@ -49,18 +51,24 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
     // Issue #545 independently compared authoritative Linux artifacts from the same 390×844 state.
     // This hosted-renderer fingerprint differs from the primary Figma-approved raster at exactly
     // three antialiased calendar-reminder edge pixels, with a maximum RGB delta of one LSB.
-    // Keep this as an exact scoped fingerprint: no numerical tolerance and no third raster is accepted.
+    // Keep every renderer-equivalent as an exact scoped fingerprint: no numerical tolerance is accepted.
+    // Issue #577 adds the independently reviewed semantic-Reminder renderer from CI 32048818693.
     rendererEquivalentSha256: [
       "dd2d0c587d648a01c1fc2d851fcea21f881716acf743268779f6132d15322ff6",
+      "bc8a3d915e7a800dd9beeb9bc4f95bcde79cdcfab438ab7d329377d78c005578",
     ],
   },
   "compact-error-dark": {
     figmaNode: "79:117",
     sha256: "84576205fe0619b9e1707f5c2e8ccf4a6ce7e6c285c5a261170709efa1549b11",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["1eecf487083b33e975be9ddf665b97a493b0d8988a5abf2866f67a26b38ede67"],
   },
   "desktop-offline-dark": {
     figmaNode: "79:194",
     sha256: "8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a",
+    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
+    rendererEquivalentSha256: ["715215d255e3ab727ec3920c4164f43c82100d64e7f2d9d79d0b5b05c325ec0c"],
   },
   "compact-recall-offline-dark": {
     figmaNode: "75:57",
