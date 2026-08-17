@@ -6,11 +6,11 @@
 - Branch: `test/issue-581-desktop-route-parity`
 - Base SHA: `d073fcf21707deb73fda6b54b969fcb937673f9f`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #582
 
 ## Objective
 
-Deliver one consolidated, fail-closed `1440×1024` desktop route-parity evidence matrix for the ten canonical routes owned by parent #205, with explicit Light/Dark coverage and exact Linux fingerprints reviewed before approval.
+Deliver one consolidated `1440×1024` desktop route-parity evidence matrix for the ten canonical routes owned by parent #205, with explicit Light/Dark coverage and exact Linux fingerprints reviewed before approval.
 
 ## Scope
 
@@ -18,8 +18,9 @@ Deliver one consolidated, fail-closed `1440×1024` desktop route-parity evidence
 - Cover `/`, `/learn`, `/lesson/active`, `/progress`, `/dictionary`, `/words/[id]`, `/phrases`, `/phrases/[slug]`, `/profile`, `/onboarding`.
 - Run desktop evidence at an actual `1440×1024` viewport under the existing Linux `visual-desktop` project.
 - Assert canonical route owner, RouteChrome/focused ownership, reduced-motion invariant, no runtime errors, no horizontal document overflow, no partially clipped rendered focusable controls and valid main/owner geometry.
+- Require no visible legacy `product` compatibility owner for the desktop matrix only; existing tablet #568 acceptance remains unchanged.
 - Attach exact full-page PNG + JSON evidence for every route/theme state.
-- Keep new fingerprints at `REVIEW_REQUIRED` until exact Linux CI artifacts are manually inspected.
+- Match only manually reviewed exact Linux fingerprints from diagnostic CI #3746 / run `32065112367`.
 
 ## Non-goals
 
@@ -31,7 +32,7 @@ Deliver one consolidated, fail-closed `1440×1024` desktop route-parity evidence
 
 ## Allowed paths
 
-- `frontend/e2e/route-tablet-parity.spec.ts` or a narrowly justified consolidated route-parity replacement.
+- `frontend/e2e/route-tablet-parity.spec.ts`.
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -56,11 +57,11 @@ Deliver one consolidated, fail-closed `1440×1024` desktop route-parity evidence
 
 ## Invariants
 
-- Auth/session/API fixture semantics remain unchanged.
+- Auth/session/API fixture semantics remain unchanged; the existing onboarding CSRF fixture value is retained.
 - Existing tablet 768×1024 reviewed fingerprints remain byte-for-byte unchanged.
 - Desktop tests set an actual viewport of `1440×1024`; canonical OpenPencil/Figma frame sizes are not relabeled.
-- New exact hashes fail closed until manual Linux artifact review.
-- Product defects discovered by the matrix are split into separate Issues/PRs instead of hidden by baseline approval.
+- Exact hashes were fail-closed until manual Linux artifact review.
+- Product defects discovered by the matrix must be split into separate Issues/PRs instead of hidden by baseline approval.
 
 ## Acceptance criteria
 
@@ -74,16 +75,16 @@ Deliver one consolidated, fail-closed `1440×1024` desktop route-parity evidence
 ## Required checks
 
 - Repository frontend lint/type/unit/build gates selected by CI.
-- Linux Visual regression job with the new matrix.
+- Linux Visual regression job with the reviewed matrix.
 - Full immutable-head CI after reviewed fingerprints are committed.
 - Exact-main CI after squash merge.
 
 ## Risks
 
-- A real desktop runtime defect can surface; baseline approval must stop and a child runtime Issue must be created.
-- Full-page dimensions can differ by route; width and content SHA must remain exact while reviewed height is recorded per state.
+- Full-page dimensions differ by route; width, reviewed height and content SHA remain exact per state.
+- A pre-existing System State visual can render an unapproved antialias variant; it must be classified separately and must not be absorbed into #581.
 - Shared Reminder/profile masking must remain deterministic across existing route evidence.
 
 ## Rollback
 
-Revert the isolated test/evidence commits. No runtime rollback is required unless a separate runtime repair is introduced through its own Issue/PR.
+Revert the isolated test/evidence commits. No runtime rollback is required because #581 changes no runtime product code.
