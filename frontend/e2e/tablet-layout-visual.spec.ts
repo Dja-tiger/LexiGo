@@ -20,19 +20,35 @@ type ReviewedBaseline = Readonly<{
   sourceHeadSha: string;
 }>;
 
-const REVIEW_REQUIRED: ReviewedBaseline = {
-  width: 768,
-  height: 0,
-  sha256: "REVIEW_REQUIRED",
-  sourceRun: 0,
-  sourceHeadSha: "REVIEW_REQUIRED",
-};
-
 const BASELINES: Record<`${RouteKey}.${Appearance}`, ReviewedBaseline> = {
-  "phrases.light": REVIEW_REQUIRED,
-  "phrases.dark": REVIEW_REQUIRED,
-  "profile.light": REVIEW_REQUIRED,
-  "profile.dark": REVIEW_REQUIRED,
+  "phrases.light": {
+    width: 768,
+    height: 1593,
+    sha256: "16c8efb17d7c599d425266d9c4e5457d9ac2b02756a677e0246c8aaf6fe8643a",
+    sourceRun: 31980866589,
+    sourceHeadSha: "f9f7bace7835d53d71a5ec971b163cfd3eec0fd0",
+  },
+  "phrases.dark": {
+    width: 768,
+    height: 1593,
+    sha256: "c1a0ee9a5e970743b1d7ce149ffe44cfdef13f9cec481a34ddbcf2cc1b345663",
+    sourceRun: 31980866589,
+    sourceHeadSha: "f9f7bace7835d53d71a5ec971b163cfd3eec0fd0",
+  },
+  "profile.light": {
+    width: 768,
+    height: 4229,
+    sha256: "b73fa564476dc1458c5096e02aac76667271df87e5fba8ce58e0f0fa7f111042",
+    sourceRun: 31980866589,
+    sourceHeadSha: "f9f7bace7835d53d71a5ec971b163cfd3eec0fd0",
+  },
+  "profile.dark": {
+    width: 768,
+    height: 4229,
+    sha256: "d3975453cc920c779d363ffe7fd791f1e4fb10e306cf7cead870c8baefc8be6e",
+    sourceRun: 31980866589,
+    sourceHeadSha: "f9f7bace7835d53d71a5ec971b163cfd3eec0fd0",
+  },
 };
 
 async function installAppearance(page: Page, appearance: Appearance): Promise<void> {
@@ -187,7 +203,7 @@ async function captureReviewedEvidence(
 
   expect(
     actual,
-    `${baselineKey}: manually review exact Linux 768×1024 evidence before replacing REVIEW_REQUIRED`,
+    `${baselineKey}: Linux baseline from CI ${baseline.sourceRun} at ${baseline.sourceHeadSha}`,
   ).toEqual({
     width: baseline.width,
     height: baseline.height,
