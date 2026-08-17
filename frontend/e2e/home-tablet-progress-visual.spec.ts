@@ -64,7 +64,7 @@ function progressRowsMarkup(): string {
       </head>
       <body>
         <main class="lx-routed-app">
-          <section class="lx-main-content" aria-label="Главная">
+          <section class="lx-main-content lx-home-next-action" aria-label="Главная">
             <div class="lx-progress-list">
               <div><span>Готово к повторению</span><strong>4</strong></div>
               <div><span>Закреплено за неделю</span><strong>16</strong></div>
@@ -262,7 +262,14 @@ test.describe("Issue #574 Home tablet progress spacing", () => {
       expect(snapshot.documentWidth).toBeLessThanOrEqual(snapshot.clientWidth + 1);
       expect(snapshot.rows).toHaveLength(3);
 
-      if (width <= 760 || (width >= 761 && width <= 1023)) {
+      if (width === 760) {
+        expect(snapshot.rows[0].display, "760px compact visible row display").toBe("flex");
+        expect(snapshot.rows[0].separation, "760px compact label/value separation").toBeGreaterThanOrEqual(8);
+        expect(
+          snapshot.rows.slice(1).map((row) => row.display),
+          "760px compact Home intentionally hides retained/streak rows",
+        ).toEqual(["none", "none"]);
+      } else if (width >= 761 && width <= 1023) {
         for (const row of snapshot.rows) {
           expect(row.display, `${width}px row display`).toBe("flex");
           expect(row.separation, `${width}px label/value separation`).toBeGreaterThanOrEqual(8);
