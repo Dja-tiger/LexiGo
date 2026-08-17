@@ -77,6 +77,7 @@ function destinationFor(target: NavigationTarget) {
 function routeGraphHint(target: NavigationTarget): RouteGraphHint {
   if (target.view === "home") return "home";
   if (target.view === "learn") return "learn";
+  if (target.view === "library") return "dictionary";
   return "product";
 }
 
