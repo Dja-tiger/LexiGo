@@ -21,8 +21,13 @@ const PROFILE_VISUAL_BASELINES: Record<ProfileVisualBaseline, {
     figmaNode: "79:6",
     sha256: "9c215d2ae5c190bbd368e86a0170a08d5f8f303bbd45ba147cde84b42b99f8e0",
     alternateSha256: "3f6d23a5dc52a46214b7e0e493af54e76020d66d126de5224f3cb69048abf448",
-    // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
-    rendererEquivalentSha256: ["821083de2f8a57488671ef2e4014384b8ad5dd531a5f9d96c52e5409cbf1b8e9"],
+    // Issue #577: exact Linux artifacts #9294131591 / #9295711128 were manually reviewed.
+    // The two exact fingerprints differ at only four antialiased Reminder-edge pixels,
+    // all by one RGB LSB, so both remain fail-closed renderer-equivalent captures.
+    rendererEquivalentSha256: [
+      "821083de2f8a57488671ef2e4014384b8ad5dd531a5f9d96c52e5409cbf1b8e9",
+      "b2fc018f0c1a86e484d33405c334b7f70a9b658bee5f235c532cebfefee551b0",
+    ],
   },
   "compact-dark": {
     figmaNode: "79:6",
