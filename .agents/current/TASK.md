@@ -6,7 +6,7 @@
 - Branch: fix/issue-574-home-progress-spacing
 - Base SHA: 580300373bfad88eed5bbaf7b024d004837058fa
 - Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- PR: #575
 
 ## Objective
 
@@ -17,7 +17,8 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 - Fill the responsive presentation gap between compact Home (`<=760px`) and desktop Home (`>=1024px`) for `.lx-progress-list` rows.
 - Keep the existing Home markup and data semantics unchanged.
 - Add a narrow computed/browser regression proving deterministic label/value separation through the tablet interval.
-- Add or reuse exact Linux `768×1024` Light/Dark visual evidence for Home; hashes remain fail-closed until manual artifact review.
+- Add exact Linux `768×1024` Light/Dark visual evidence for Home; hashes remain fail-closed until manual artifact review.
+- Use a route-scoped companion stylesheet imported immediately after the adaptive Home owner to avoid rewriting unrelated Home presentation.
 
 ## Non-goals
 
@@ -29,10 +30,11 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 
 ## Allowed paths
 
-- `frontend/app/adaptive-knowledge-coach-home.css`
-- `frontend/e2e/adaptive-layout-cascade.spec.ts`
-- a narrowly scoped Home tablet visual spec under `frontend/e2e/**` if required for explicit Light/Dark evidence
-- `frontend/playwright.visual.config.ts` only to collect that narrow visual spec if created
+- `frontend/app/home-tablet-progress-spacing.css`
+- `frontend/app/layout.tsx` only to import the companion stylesheet next to its Home owner
+- `frontend/e2e/home-tablet-progress-visual.spec.ts`
+- `frontend/playwright.visual.config.ts` only to collect the narrow #574 visual spec
+- `frontend/e2e/visual-regression.spec.ts-snapshots/home-visual-medium-linux.png` only after exact Linux review proves the existing medium snapshot is the expected changed artifact
 - `.agents/current/**`
 
 ## Prohibited paths
@@ -51,7 +53,8 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 ## Runtime owners
 
 - `LexigoHomeApp` remains the semantic owner of authenticated Home and its progress values.
-- `adaptive-knowledge-coach-home.css` owns the adaptive Home presentation.
+- `adaptive-knowledge-coach-home.css` remains the base adaptive Home presentation owner.
+- `home-tablet-progress-spacing.css` owns only the missing `761px–1023px` progress-row layout interval.
 - Compact Home remains owned by `compact-home.css` through `max-width:760px`.
 - Desktop shell/Home behavior remains owned by existing `min-width:1024px` rules.
 
@@ -69,7 +72,7 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 - Tablet fill interval is `761px–1023px`; `768px` must have complete, readable label/value separation.
 - No horizontal overflow or partially clipped focusable controls.
 - Light/Dark and reduced-motion runtime remain truthful.
-- No visual fingerprint changes before manual review of the exact Linux artifact.
+- No visual fingerprint or binary snapshot changes before manual review of the exact Linux artifact.
 - Any unexpected unrelated visual change blocks approval rather than being normalized into a new hash.
 
 ## Acceptance criteria
@@ -78,7 +81,7 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 - Computed regression proves the tablet row layout at representative interval boundaries and preserves compact/desktop ownership.
 - Existing compact/mobile visual behavior remains unchanged.
 - Existing desktop visual behavior remains unchanged.
-- Exact Linux Home tablet Light/Dark actuals are manually inspected before any fingerprint write.
+- Exact Linux Home tablet Light/Dark actuals are manually inspected before any fingerprint or medium snapshot write.
 - Full immutable-head CI is green after reviewed evidence is committed.
 - Review/thread audit is clean and expected-head squash merge succeeds.
 - Exact-main CI is green.
@@ -87,8 +90,9 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 ## Required checks
 
 - Frontend lint/typecheck/unit/build/dependency audit.
-- Browser cascade/responsive contract at `760/761/768/1023/1024` boundaries as appropriate.
+- Browser cascade/responsive contract at `760/761/768/1023/1024` boundaries.
 - Fail-closed Linux Home tablet Light/Dark visual evidence.
+- Existing `home.png` medium snapshot mismatch classified and manually reviewed if changed.
 - Full repository immutable-head CI after evidence approval.
 - Clean reviews/threads and unchanged `main` before merge.
 - Exact-main CI and exact-SHA Stage/public validation after merge.
@@ -101,4 +105,4 @@ Repair the authenticated Home progress label/value spacing defect reproduced by 
 
 ## Rollback
 
-Revert the Home-scoped tablet CSS and its regression evidence. Do not revert the independently delivered #572 runtime repair or modify #570 fingerprints as part of rollback.
+Revert the Home-scoped tablet companion CSS/import and its regression evidence. Do not revert the independently delivered #572 runtime repair or modify #570 fingerprints as part of rollback.
