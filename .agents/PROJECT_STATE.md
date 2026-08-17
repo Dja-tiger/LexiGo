@@ -16,8 +16,9 @@
 - Exact-main evidence CI #3698 / run `31978069651` passed completely on `399a9b1df9104318d64106346ab797a6d3e437e0`, including both UI shards, Visual regression, accessibility, performance, CSP/service-worker, backend and container builds.
 - Issue #563 is closed completed. PR #564 is test/evidence-only, so it did not require a Stage redeploy after merge.
 - Parent Issue #18 remains open in live GitHub and requires a separate acceptance audit; completion is not inferred from previously delivered child slices.
-- Issue #568 remains open. Draft PR #570 is the authoritative evidence-bearing 768×1024 Light/Dark audit path and must be reconstructed again on delivered runtime `e9314e08cfb517388b8427dcc5ba74df69c861f7` before any consolidated fingerprints can be approved.
-- Draft PR #569 remains a parallel structural-only tablet matrix. Reconcile/close the duplicate path only after confirming it contributes no unique acceptance coverage; do not merge competing tablet evidence owners.
+- Issue #568 is closed completed by PR #570. The authoritative 768×1024 Light/Dark matrix was reconstructed after the #575 runtime repair, all 20 exact Linux states were manually reviewed, and the approved content-addressed fingerprints reproduced in full immutable-head CI #3734 / run `32041690264`.
+- PR #570 squash merge is `67d8368502389f83ebb2ba5754f4997ed868dcef`. Exact-main CI #3735 / run `32044133961` passed on that exact SHA after an initial GitHub codeload `429/503/429` setup failure in Backend integration was classified as infrastructure-only and the same-SHA job rerun passed without code changes.
+- Duplicate structural PR #569 is closed without merge after its only unique reduced-motion assertion was absorbed into #570.
 - Live GitHub and live source are authoritative for current branch heads, open work, ownership, review state and CI. This file records immutable delivery SHAs rather than a self-referential `current main` value.
 
 ## Delivery contract
@@ -127,7 +128,20 @@
 - Final developer head `37c209d5ceadeb153db17f0cc4a815536a5b6605` passed full immutable CI #3729 / run `32024776340` after a controlled same-head retry classified an unrelated pre-existing new-tab test flake.
 - PR #575 squash merge `e9314e08cfb517388b8427dcc5ba74df69c861f7`; exact-main CI #3730 / run `32026831779` passed.
 - Exact-SHA Stage #3583 / run `32027587186` deployed web/API images tagged `e9314e08cfb517388b8427dcc5ba74df69c861f7`, public smoke passed and public Chromium/iOS WebKit verification passed 12/12.
-- Issue #568 remains open. PR #570 must now be reconstructed on `e9314e08…`, recapture all 20 Light/Dark states and receive direct Linux PNG review before any consolidated hash approval.
+- Issue #568 remained open after this repair until the consolidated audit was reconstructed and delivered by PR #570.
+
+## Tablet 768×1024 consolidated parity / Issue #568
+
+- PR #570 was reconstructed on exact post-#575 reconciliation base `f614c1646f113e1303286ca3cc759a87e6dd74d5` with one authoritative fail-closed matrix covering ten canonical routes × explicit Light/Dark at `768×1024`.
+- Fresh evidence head `3578718bdcba1a24873ce23999ef7672a22193c5` ran CI #3733 / run `32040684330` and failed Visual only at the twenty intentional `REVIEW_REQUIRED` gates after route owner, RouteChrome, reduced-motion, geometry/overflow and runtime-error checks passed.
+- Exact Linux Visual artifact `9291962719`, digest `sha256:aefffe94dc106084f4c18eb5d54d9e1e2ad87a1d8ccf670ac1c818bd5b480033`, was downloaded and all 20 route/theme PNGs were manually inspected before approval.
+- Manual review confirmed the delivered #575 Home spacing repair, no recurrence of the earlier Learn/Phrases/Profile tablet defects, correct focused ownership for Active Lesson/Onboarding and no new clipping, overflow or composition defects.
+- Artifact-level stability was verified: each logical route/theme state retained repeated records with identical full-page height/SHA-256, and approved hashes were matched back to exact PNG bytes/dimensions.
+- Reviewed-evidence head `241c3fa4bde9baaa0e76ebae9d29247a897dd94a` passed full immutable-head CI #3734 / run `32041690264` without snapshot update mode.
+- Structural duplicate PR #569 was closed without merge after its explicit reduced-motion assertion was incorporated into #570.
+- PR #570 squash merge is `67d8368502389f83ebb2ba5754f4997ed868dcef`; Issue #568 is closed completed.
+- Exact-main CI #3735 / run `32044133961` passed on that SHA. Attempt 1 had one infrastructure-only Backend integration setup failure while downloading `actions/setup-go@v7` from GitHub codeload (`429`, `503`, `429`) before checkout/tests; a same-SHA job rerun completed setup, integration race tests and all downstream container gates successfully without code changes.
+- #570 is strictly test/evidence-only, so no Stage redeploy was required; the latest deployed runtime remains #575 / `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
 
 ## AI-native design source-of-truth status
 
@@ -162,28 +176,27 @@
 - First Use canonical route-level parity/provenance: Issue #563 / PR #564 / merge `399a9b1df9104318d64106346ab797a6d3e437e0` / PR CI #3697 / exact-main CI #3698.
 - Tablet Learn/Phrases/Profile runtime repair: Issue #571 / PR #572 / merge `7ae4e2607e1434023be12c793875756f383b446f` / PR CI #3714 / exact-main CI #3715 / Stage #3567.
 - Tablet Home progress spacing repair: Issue #574 / PR #575 / merge `e9314e08cfb517388b8427dcc5ba74df69c861f7` / PR CI #3729 / exact-main CI #3730 / Stage #3583.
+- Consolidated tablet 768×1024 parity: Issue #568 / PR #570 / merge `67d8368502389f83ebb2ba5754f4997ed868dcef` / reviewed Linux artifact `9291962719` / PR CI #3734 / exact-main CI #3735.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
 - Latest deployed runtime is PR #575 on merge SHA `e9314e08cfb517388b8427dcc5ba74df69c861f7`; exact-main CI #3730 and exact-SHA Stage/public validation #3583 are green on that exact SHA.
-- The latest completed evidence-only route parity merge remains PR #564 on `399a9b1df9104318d64106346ab797a6d3e437e0`; its canonical First Use evidence remains valid because #575 changed only authenticated Home medium progress-row CSS/test ownership.
-- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use.
+- Latest completed evidence-only route parity merge is PR #570 on `67d8368502389f83ebb2ba5754f4997ed868dcef`; exact-main CI #3735 is green on that exact SHA.
+- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use, and the consolidated 768×1024 Light/Dark matrix is closed completed.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. The active automated gap is Issue #568: reconstruct the consolidated medium/tablet 768×1024 Light/Dark matrix on corrected runtime `e9314e08…` and approve all 20 states only after exact Linux review.
-- Draft PR #570 carries the authoritative fail-closed visual audit path but its current head `7f6efef0d3832e095900b571708f7788760d76e5` predates #575 and must be reconstructed rather than merged with stale fingerprints.
-- Draft PR #569 remains a parallel structural-only matrix; resolve duplication before any merge so #205 has one authoritative consolidated tablet evidence path.
-- Remaining #205 acceptance after tablet includes minimum supported mobile width, desktop runtime 1440×1024, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
+- Live umbrella #205 remains open. The next high-priority runtime/design gap is Issue #577: remove transition-dependent stale legacy owners for Home → Dictionary/Learn, repair compact Materials tabs and align the shared Reminder presentation using repo-owned OpenPencil/Linux evidence.
+- Remaining #205 acceptance includes minimum supported mobile width, desktop runtime 1440×1024, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
-- No runtime/backend/API/design/deploy change is part of the current Agent Docs reconciliation slice.
-- After this reconciliation resets `.agents/current/**`, the next atomic design-focused task is Issue #568 / Draft PR #570 reconstruction on `e9314e08…`; do not claim umbrella #205 completion prematurely.
+- No runtime/backend/API/design/deploy change is part of this Agent Docs reconciliation slice.
+- After this reconciliation resets `.agents/current/**`, the next atomic runtime/design task is Issue #577 under umbrella #205; do not claim umbrella #205 completion prematurely.
 
 ## Remaining roadmap
 
-- #568/#570 under #205: reconstruct the 10-route 768×1024 Light/Dark audit on `e9314e08…`, rerun exact Linux visual evidence, manually review all 20 states, approve only reviewed fingerprints, full immutable-head CI, merge and exact-main CI. Reconcile/close duplicate structural PR #569 only after confirming it contributes no unique acceptance coverage.
-- #205 after tablet: continue the final consolidated matrix with minimum mobile, 1440×1024 runtime, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence.
+- #577 under #205: remove transition-dependent legacy shell ownership for Home → Dictionary/Learn, keep Materials tabs compact/stable, align the shared Reminder owner, and prove direct/reload/client transition/Back-Forward in Chromium and iOS/WebKit with transition-derived visual evidence.
+- #205 after #577: continue the final consolidated matrix with minimum mobile, 1440×1024 runtime, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
