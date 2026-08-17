@@ -2,89 +2,70 @@
 
 ## Identity
 
-- Issue: #581
-- Branch: `test/issue-581-desktop-route-parity`
-- Base SHA: `d073fcf21707deb73fda6b54b969fcb937673f9f`
+- Issue: #584
+- Branch: `test/issue-584-system-state-renderer-fingerprint`
+- Base SHA: `cadcdf434ed80628e326507c8ee849b55a427020`
 - Head SHA: resolve from live branch ref
-- PR: #582
+- PR: pending
 
 ## Objective
 
-Deliver one consolidated `1440×1024` desktop route-parity evidence matrix for the ten canonical routes owned by parent #205, with explicit Light/Dark coverage and exact Linux fingerprints reviewed before approval.
+Restore exact-main CI after the independently reproduced compact Dictionary empty Light Linux renderer variant by adding one reviewed exact renderer-equivalent SHA-256 to the existing fail-closed System State visual allow-list.
 
 ## Scope
 
-- Extend the existing consolidated route parity owner rather than create a parallel fixture stack.
-- Cover `/`, `/learn`, `/lesson/active`, `/progress`, `/dictionary`, `/words/[id]`, `/phrases`, `/phrases/[slug]`, `/profile`, `/onboarding`.
-- Run desktop evidence at an actual `1440×1024` viewport under the existing Linux `visual-desktop` project.
-- Assert canonical route owner, RouteChrome/focused ownership, reduced-motion invariant, no runtime errors, no horizontal document overflow, no partially clipped rendered focusable controls and valid main/owner geometry.
-- Require no visible legacy `product` compatibility owner for the desktop matrix only; existing tablet #568 acceptance remains unchanged.
-- Attach exact full-page PNG + JSON evidence for every route/theme state.
-- Match only manually reviewed exact Linux fingerprints from diagnostic CI #3746 / run `32065112367`.
+- Update only `compact-empty-light` / Figma node `79:93` in `frontend/e2e/system-states-visual.spec.ts`.
+- Preserve the primary Figma-approved fingerprint and all previously accepted exact renderer-equivalent fingerprints.
+- Add exact-main run/artifact provenance and pixel-diff evidence for SHA `63d3af378194f420b97c95a6c25829801aa27052cfc174516c102a0a986c731c`.
+- Validate the authoritative Linux Visual regression job and full immutable-head CI.
 
 ## Non-goals
 
-- No Figma Cloud editing.
-- No OpenPencil source mutation.
-- No runtime/CSS/backend/API redesign in this audit PR.
-- No 200% zoom, minimum-mobile or system-state matrix in this slice.
-- No broad snapshot regeneration or tolerance increase.
+- No runtime, CSS, API or Figma changes.
+- No pixel/numerical tolerance.
+- No other visual baseline updates.
+- No workflow/deployment changes.
+- No Agent Harness reconciliation for completed PR #582 inside this slice.
 
 ## Allowed paths
 
-- `frontend/e2e/route-tablet-parity.spec.ts`.
+- `frontend/e2e/system-states-visual.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ## Prohibited paths
 
-- Runtime application/CSS/backend files unless a separate defect Issue is created first.
-- `design/openpencil/**`
-- archived Figma sources.
-- CI/workflow/deploy topology.
-- visual baselines unrelated to the 20 new desktop states.
+- Frontend runtime/CSS/application files.
+- Backend/API/migrations.
+- `design/**` and archived Figma sources.
+- `.github/workflows/**` and deploy topology.
+- Any unrelated visual baseline.
 
-## Runtime owners
+## Evidence
 
-- Existing route islands and `RouteChrome`; this task observes ownership but does not change it.
-- Focused routes: Active Lesson and Onboarding suppress ordinary RouteChrome.
-
-## Documentation owners
-
-- #581 is the atomic task owner under umbrella #205.
-- `.agents/current/**` records execution state until delivery/reconciliation.
+- Failing exact-main CI: #3751 / run `32067797979` on `cadcdf434ed80628e326507c8ee849b55a427020`.
+- Exact-main Visual artifact: `9300795503`, digest `sha256:aaf16e28f77404017f8d804c7cd8accb4afb1db67fdba7a205c2e18463c359a2`.
+- The same new SHA appeared in PR #582 diagnostic artifact `9299858153`.
+- Main first/retry captures are byte-identical at `63d3af...`.
+- New and previously accepted `bc8a3d...` captures are both `390×844` and differ at 4 of 329160 pixels, maximum RGB delta 1 LSB.
 
 ## Invariants
 
-- Auth/session/API fixture semantics remain unchanged; the existing onboarding CSRF fixture value is retained.
-- Existing tablet 768×1024 reviewed fingerprints remain byte-for-byte unchanged.
-- Desktop tests set an actual viewport of `1440×1024`; canonical OpenPencil/Figma frame sizes are not relabeled.
-- Exact hashes were fail-closed until manual Linux artifact review.
-- Product defects discovered by the matrix must be split into separate Issues/PRs instead of hidden by baseline approval.
+- Exact SHA allow-list remains the acceptance mechanism; no tolerance is introduced.
+- Primary Figma-approved SHA remains unchanged.
+- Existing runtime, layout and state semantics remain unchanged.
+- Any different future renderer output remains fail-closed until independently reviewed.
 
 ## Acceptance criteria
 
-- 10 routes × Light/Dark execute at `1440×1024`.
-- Structural ownership and geometry assertions pass before the review gate.
-- 20 exact Linux PNG states are attached and manually reviewed.
-- Reviewed fingerprints reproduce in immutable-head CI without snapshot update mode.
-- Review audit/main-drift gate is clean before expected-head squash merge.
-- Exact-main post-merge CI passes; Stage is not claimed unless runtime files actually change.
-
-## Required checks
-
-- Repository frontend lint/type/unit/build gates selected by CI.
-- Linux Visual regression job with the reviewed matrix.
-- Full immutable-head CI after reviewed fingerprints are committed.
-- Exact-main CI after squash merge.
-
-## Risks
-
-- Full-page dimensions differ by route; width, reviewed height and content SHA remain exact per state.
-- A pre-existing System State visual can render an unapproved antialias variant; it must be classified separately and must not be absorbed into #581.
-- Shared Reminder/profile masking must remain deterministic across existing route evidence.
+- `63d3af...` is accepted only for `compact-empty-light`.
+- Authoritative Linux Visual regression passes on the final developer-authored head.
+- Full required immutable-head CI passes.
+- Review/thread/main-drift audit is clean before expected-head squash merge.
+- Exact-main post-merge CI passes.
+- Stage runtime deploy is skipped because this slice is test/evidence-only.
 
 ## Rollback
 
-Revert the isolated test/evidence commits. No runtime rollback is required because #581 changes no runtime product code.
+Revert the isolated exact renderer-equivalent fingerprint and task-local Agent Harness records. No runtime rollback is required.
