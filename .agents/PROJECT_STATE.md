@@ -4,20 +4,20 @@
 
 - Last verified: 2026-08-17 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Latest runtime-bearing `main`: `7ae4e2607e1434023be12c793875756f383b446f` from runtime PR #572.
-- Latest deployed runtime/Stage SHA: `7ae4e2607e1434023be12c793875756f383b446f`.
-- PR #572 final developer-authored head `5d16da5bcc282442540f6f4c04c3c697ba63a285` passed full immutable-head CI #3714 / run `31981364030`.
-- PR #572 squash merge: `7ae4e2607e1434023be12c793875756f383b446f`.
-- Exact-main runtime CI #3715 / run `31981958042` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
-- Deploy Stage #3567 / run `31982483549` passed on the same exact SHA, including deploy, public endpoint smoke and public browser UI verification.
-- Issue #571 is closed completed. The runtime repair is presentation-only for the existing 720–1099px tablet rail interval and does not change backend/API/state/design ownership.
+- Latest runtime-bearing `main`: `e9314e08cfb517388b8427dcc5ba74df69c861f7` from runtime PR #575.
+- Latest deployed runtime/Stage SHA: `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
+- PR #575 final developer-authored head `37c209d5ceadeb153db17f0cc4a815536a5b6605` passed full immutable-head CI #3729 / run `32024776340`; one unrelated pre-existing new-tab UI flake was classified from diagnostics and passed a controlled same-head job retry without code changes.
+- PR #575 squash merge: `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
+- Exact-main runtime CI #3730 / run `32026831779` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
+- Deploy Stage #3583 / run `32027587186` passed on the same exact SHA. Deployment used image tag `e9314e08cfb517388b8427dcc5ba74df69c861f7`; public frontend/API smoke returned HTTP 200 and public Chromium/iOS WebKit verification passed 12/12.
+- Issue #574 is closed completed. The runtime repair is presentation-only for authenticated Home progress label/value separation in the `761px–1023px` interval and does not change progress semantics, API/state/session/history/navigation or design-source ownership.
 - First Use canonical parity/provenance PR #564 final developer-authored head `cc4818365de1c170a5c72ac99c274e8cad10dc77` passed full immutable-head CI #3697 / run `31977516977`.
 - PR #564 squash merge: `399a9b1df9104318d64106346ab797a6d3e437e0`.
 - Exact-main evidence CI #3698 / run `31978069651` passed completely on `399a9b1df9104318d64106346ab797a6d3e437e0`, including both UI shards, Visual regression, accessibility, performance, CSP/service-worker, backend and container builds.
 - Issue #563 is closed completed. PR #564 is test/evidence-only, so it did not require a Stage redeploy after merge.
 - Parent Issue #18 remains open in live GitHub and requires a separate acceptance audit; completion is not inferred from previously delivered child slices.
-- Issue #568 remains open. Draft PR #570 is the evidence-bearing 768×1024 Light/Dark audit that reproduced the tablet defects repaired by #571/#572 and must be reconstructed on the corrected runtime base before its fingerprints can be approved.
-- Draft PR #569 is a parallel structural-only tablet matrix and remains separate; do not merge duplicate evidence paths without reconciling ownership with #568/#570.
+- Issue #568 remains open. Draft PR #570 is the authoritative evidence-bearing 768×1024 Light/Dark audit path and must be reconstructed again on delivered runtime `e9314e08cfb517388b8427dcc5ba74df69c861f7` before any consolidated fingerprints can be approved.
+- Draft PR #569 remains a parallel structural-only tablet matrix. Reconcile/close the duplicate path only after confirming it contributes no unique acceptance coverage; do not merge competing tablet evidence owners.
 - Live GitHub and live source are authoritative for current branch heads, open work, ownership, review state and CI. This file records immutable delivery SHAs rather than a self-referential `current main` value.
 
 ## Delivery contract
@@ -110,7 +110,24 @@
   - Profile Dark `768×4229`: `d3975453cc920c779d363ffe7fd791f1e4fb10e306cf7cead870c8baefc8be6e`.
 - Final immutable-head CI #3714 / run `31981364030` passed on head `5d16da5bcc282442540f6f4c04c3c697ba63a285` with all reviewed fingerprints.
 - PR #572 squash merge `7ae4e2607e1434023be12c793875756f383b446f`; exact-main CI #3715 / run `31981958042` and exact-SHA Stage #3567 / run `31982483549` both passed.
-- The full #568 acceptance is not yet closed by this runtime repair. PR #570 must be reconstructed on `7ae4e260…`, rerun all 20 Light/Dark states, manually review the corrected Linux actuals and only then approve the consolidated audit fingerprints.
+- The full #568 acceptance was not closed by this repair; the next reconstruction subsequently exposed the independent Home spacing defect delivered by #574/#575.
+
+## Tablet Home progress spacing repair / Issue #574
+
+- Reconstructed #568 / Draft PR #570 on post-#572 reconciliation base `580300373bfad88eed5bbaf7b024d004837058fa` exposed a real authenticated Home defect at `768×1024`: progress label/value siblings visually concatenated because compact row flex ownership ended at 760px.
+- Issue #574 / PR #575 added only Home-scoped `761px–1023px` row layout ownership plus a strict content-addressed Home medium regression; Home markup, progress data/API/state, compact behavior, desktop behavior and design source were unchanged.
+- First immutable CI #3727 / run `32006161343` found one stale synthetic 760px fixture that omitted compact selector `.lx-home-next-action`; commit `495c7681a8c2e85ee6b5c454e40b84006faadeb0` repaired only that fixture and did not alter runtime CSS.
+- CI #3728 / run `32006920077` on exact head `495c7681a8c2e85ee6b5c454e40b84006faadeb0` passed the boundary contract and failed Visual only at the deliberate `REVIEW_REQUIRED` hashes.
+- Exact manually reviewed Linux Visual artifact: `9280469563`, digest `sha256:abac6b119734b77795ec3d0838afb092405dc9f12568ac892e213288df233847`.
+- Reviewed Home strict fingerprints:
+  - Light `768×1105`: `08d213c5fa280702abadc675476e8f4197c100ffd9011eb0d5a7f5772bab9d8e`.
+  - Dark `768×1105`: `d2ca7909b3a0f3480f28af24f9d734f0c641cc5f1ebc174108a408cbefb40bbc`.
+- Retry captures reproduced the same dimensions and hashes; manual review confirmed visible label/value separation and no horizontal clipping/overflow or unrelated Home visual regression.
+- The legacy fuzzy `home-visual-medium-linux.png` still contains the old localized defect and was intentionally not replaced because its broad pixel-diff tolerance did not emit an exact replacement actual. The new strict content-addressed contract is the #574 approval owner.
+- Final developer head `37c209d5ceadeb153db17f0cc4a815536a5b6605` passed full immutable CI #3729 / run `32024776340` after a controlled same-head retry classified an unrelated pre-existing new-tab test flake.
+- PR #575 squash merge `e9314e08cfb517388b8427dcc5ba74df69c861f7`; exact-main CI #3730 / run `32026831779` passed.
+- Exact-SHA Stage #3583 / run `32027587186` deployed web/API images tagged `e9314e08cfb517388b8427dcc5ba74df69c861f7`, public smoke passed and public Chromium/iOS WebKit verification passed 12/12.
+- Issue #568 remains open. PR #570 must now be reconstructed on `e9314e08…`, recapture all 20 Light/Dark states and receive direct Linux PNG review before any consolidated hash approval.
 
 ## AI-native design source-of-truth status
 
@@ -120,7 +137,7 @@
 - Active token/provenance path: `design/openpencil/LexiGo Design Tokens.json`, SHA-256 `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
 - Canonical imported/OpenPencil-native production mapping: `docs/figma/openpencil-screen-map.json`.
 - PR #556 delivered the approved 40-state First Use design matrix before runtime implementation.
-- Runtime PRs #558/#566/#572 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
+- Runtime PRs #558/#566/#572/#575 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
 
 ## Completed executable route/design milestones
 
@@ -144,27 +161,28 @@
 - First Use desktop parity repair: Issue #565 / PR #566 / merge `263fe7457d741d184885810a779ee7d3b79593ab` / PR CI #3692 / exact-main CI #3693 / Stage #3545.
 - First Use canonical route-level parity/provenance: Issue #563 / PR #564 / merge `399a9b1df9104318d64106346ab797a6d3e437e0` / PR CI #3697 / exact-main CI #3698.
 - Tablet Learn/Phrases/Profile runtime repair: Issue #571 / PR #572 / merge `7ae4e2607e1434023be12c793875756f383b446f` / PR CI #3714 / exact-main CI #3715 / Stage #3567.
+- Tablet Home progress spacing repair: Issue #574 / PR #575 / merge `e9314e08cfb517388b8427dcc5ba74df69c861f7` / PR CI #3729 / exact-main CI #3730 / Stage #3583.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Latest deployed runtime is PR #572 on merge SHA `7ae4e2607e1434023be12c793875756f383b446f`; exact-main CI #3715 and Stage/public validation #3567 are green on that exact SHA.
-- The latest completed evidence-only route parity merge remains PR #564 on `399a9b1df9104318d64106346ab797a6d3e437e0`; its canonical First Use evidence remains valid because #572 did not alter First Use routes or design source.
+- Latest deployed runtime is PR #575 on merge SHA `e9314e08cfb517388b8427dcc5ba74df69c861f7`; exact-main CI #3730 and exact-SHA Stage/public validation #3583 are green on that exact SHA.
+- The latest completed evidence-only route parity merge remains PR #564 on `399a9b1df9104318d64106346ab797a6d3e437e0`; its canonical First Use evidence remains valid because #575 changed only authenticated Home medium progress-row CSS/test ownership.
 - Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. The active automated gap is Issue #568: reconstruct the consolidated medium/tablet 768×1024 Light/Dark matrix on corrected runtime `7ae4e260…` and approve all 20 states only after exact Linux review.
-- Draft PR #570 carries the strongest existing visual audit evidence but is based on pre-fix `157c6457…` and must be reconstructed rather than merged with stale hashes.
-- Draft PR #569 is a parallel structural-only matrix; resolve duplication before any merge so #205 has one authoritative consolidated tablet evidence path.
+- Live umbrella #205 remains open. The active automated gap is Issue #568: reconstruct the consolidated medium/tablet 768×1024 Light/Dark matrix on corrected runtime `e9314e08…` and approve all 20 states only after exact Linux review.
+- Draft PR #570 carries the authoritative fail-closed visual audit path but its current head `7f6efef0d3832e095900b571708f7788760d76e5` predates #575 and must be reconstructed rather than merged with stale fingerprints.
+- Draft PR #569 remains a parallel structural-only matrix; resolve duplication before any merge so #205 has one authoritative consolidated tablet evidence path.
 - Remaining #205 acceptance after tablet includes minimum supported mobile width, desktop runtime 1440×1024, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
 - No runtime/backend/API/design/deploy change is part of the current Agent Docs reconciliation slice.
-- After this reconciliation resets `.agents/current/**`, the next atomic design-focused task is Issue #568 / Draft PR #570 reconstruction on the corrected runtime base; do not claim umbrella #205 completion prematurely.
+- After this reconciliation resets `.agents/current/**`, the next atomic design-focused task is Issue #568 / Draft PR #570 reconstruction on `e9314e08…`; do not claim umbrella #205 completion prematurely.
 
 ## Remaining roadmap
 
-- #568/#570 under #205: reconstruct the 10-route 768×1024 Light/Dark audit on `7ae4e260…`, rerun exact Linux visual evidence, manually review all 20 states, approve only corrected fingerprints, full immutable-head CI, merge and exact-main CI. Reconcile/close duplicate structural PR #569 only after confirming it contributes no unique acceptance coverage.
+- #568/#570 under #205: reconstruct the 10-route 768×1024 Light/Dark audit on `e9314e08…`, rerun exact Linux visual evidence, manually review all 20 states, approve only reviewed fingerprints, full immutable-head CI, merge and exact-main CI. Reconcile/close duplicate structural PR #569 only after confirming it contributes no unique acceptance coverage.
 - #205 after tablet: continue the final consolidated matrix with minimum mobile, 1440×1024 runtime, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
