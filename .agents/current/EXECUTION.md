@@ -2,103 +2,80 @@
 
 ## Task
 
+- Issue: #577
 - Branch: `fix/issue-577-route-runtime`
 - Base SHA: `e25cee1b2ef991aff9ea5a27f63d170e1bc8d1b7`
-- Head SHA: resolve from live branch ref
-- PR: pending Draft PR
+- Reviewed-source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`
+- PR: #579 Draft
 
 ## Skills used
 
 ### GitHub repository workflow
 
-Purpose:
+Instruction source: `skills://plugins/github/github/skill.md`, read live 2026-08-17.
 
-Inspect live repository state, prove runtime ownership/root causes, write the atomic #577 branch through GitHub, open a Draft PR, and use immutable Actions evidence for delivery.
+Purpose: inspect live repository state, prove runtime ownership/root causes, create immutable evidence, and deliver #577 through CI, review audit, expected-head merge, exact-main and exact-SHA Stage/public validation.
 
-Instruction source:
+## Actions performed
 
-`skills://plugins/github/github/skill.md`
-
-Version or verification date:
-
-Read live on 2026-08-17.
-
-Inputs:
-
-Issue #577, umbrella #205, reconciled main `e25cee1b2ef991aff9ea5a27f63d170e1bc8d1b7`, current route runtime source, OpenPencil screen map and existing browser/visual contracts.
-
-Files inspected:
-
-- `frontend/components/route-primary-navigation.tsx`
-- `frontend/components/lexigo-bootstrapped-app.tsx`
-- `frontend/components/routed-lexigo-app.tsx`
-- `frontend/components/calendar-reminder-route-entry.tsx`
-- `frontend/app/information-architecture.css`
-- `frontend/app/calendar-reminder-entry.css`
-- `frontend/app/design-tokens.css`
-- `frontend/app/appearance.css`
-- `frontend/app/layout.tsx`
-- `frontend/e2e/dictionary-route-island.spec.ts`
-- `frontend/e2e/learn-route-island.spec.ts`
-- `frontend/e2e/calendar-reminder-entry.spec.ts`
-- `frontend/e2e/information-architecture.spec.ts`
-- `frontend/e2e/home-tablet-progress-visual.spec.ts`
-- `frontend/e2e/route-tablet-parity.spec.ts`
-- `frontend/playwright.config.ts`
-- `frontend/playwright.visual.config.ts`
-- `frontend/package.json`
-- `.github/workflows/ci.yml`
-- `docs/figma/openpencil-screen-map.json`
-
-Actions performed:
-
-- Verified #570 exact-main CI #3735 completion and reconciled it through docs-only PR #578 before starting new runtime work.
+- Reconciled completed tablet audit through #578 before starting this runtime slice.
 - Created `fix/issue-577-route-runtime` from exact reconciled main.
-- Proved that Library navigation wrote `product` rather than `dictionary` graph ownership.
-- Proved that existing Dictionary E2E encoded the legacy fallback as expected behavior.
-- Proved Materials compact owner and Reminder shared presentation owner from live source.
-- Verified existing UI CI already executes Dictionary/Learn specs in `ios-webkit`; no workflow/package topology expansion is required.
-- Verified active OpenPencil provenance for Dictionary/Learn/Phrases compact screens.
-- Changed primary Library graph hint to `dictionary`.
-- Added compact Materials no-wrap/equal-target ownership.
-- Replaced Reminder legacy hardcoded dark/blue colors with existing semantic design tokens.
-- Rewrote Dictionary transition regression contract to require canonical ownership through Home, Dictionary↔Phrases and Back/Forward.
-- Added Learn Home-transition, history and reload contract.
-- Added six fail-closed transition-derived visual states at canonical 390×844.
+- Proved Library navigation emitted `product` for `/dictionary` and that existing Dictionary E2E encoded the compatibility fallback.
+- Proved compact Materials and shared Reminder presentation owners from current source.
+- Verified Dictionary/Learn UI specs already run in the normal Playwright matrix including `ios-webkit`.
+- Verified OpenPencil compact provenance: Dictionary `fig_4008`, Phrases `fig_7281`, Learn `fig_6826`.
+- Changed Library graph hint to `dictionary`.
+- Added compact Materials no-wrap/equal-target geometry.
+- Replaced Reminder hardcoded legacy dark/blue colors with semantic tokens.
+- Rewrote Dictionary transition/history contract and added Learn Home-transition/history/reload contract.
+- Added six fail-closed transition-derived Light/Dark visual states at 390×844.
+- Opened Draft PR #579.
 
-Commands or procedures:
+## CI history
 
-- GitHub connector reads/searches for live source, issues and workflows.
-- GitHub contents API writes on the dedicated branch with exact source blob SHAs.
-- CI will be triggered through a Draft PR after read-back/compare.
-- Exact Linux visual artifact will be downloaded and manually reviewed before any fingerprint approval.
+- CI #3738 / run `32046134501` stopped on an existing source-order unit contract after `min-width` was placed before the required literal `min-height: 48px`; this was not a runtime pixel defect.
+- Commit `43e80f5b1b0d6c778f53147ba6a115fefc94df0b` restored the source-contract order without changing runtime behavior.
+- CI #3739 / run `32046365625` then passed the functional/browser matrix, including both UI shards and WebKit/iOS.
+- Visual job `95435654939` failed exactly at the six intentional `REVIEW_REQUIRED` gates: `30 passed`, `62 skipped`, `6 failed`; no additional structural/runtime/token/geometry defect was present.
 
-Artifacts produced:
+## Exact visual evidence
 
-- New `frontend/e2e/route-transition-runtime-visual.spec.ts` with `REVIEW_REQUIRED` baselines.
-- Updated transition/history browser contracts and runtime presentation owners.
-- Updated `.agents/current/**` task state.
+- Run: `32046365625` (CI #3739).
+- Source head: `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`.
+- Artifact: `9293292461`, `frontend-playwright-report-visual`.
+- Artifact digest: `sha256:fedbe32158ef6199005c1f11b834a2974f5bbef4291d4738f4b7069d1e1e2483`.
+- Dictionary Light: `390×1197`, `4487459cea3e1347768e381ce393aeeecfb3f1e22b47e01554810cb6508b556d`.
+- Dictionary Dark: `390×1197`, `9104709d0b7f742ae22f18bacfe605a7658eb0db0b539e93b597ff8779cd855c`.
+- Phrases Light: `390×1616`, `91cc3fabe4cc7369e1c67992a28d4199b0a68028e354098fe17a78f5ddf93318`.
+- Phrases Dark: `390×1616`, `066a3ba05e676501a6025214567bdbdd901c8b820e8cb632003e5fc44a00b6b9`.
+- Learn Light: `390×1212`, `95e13c8164fea6ff0ba9ab0ae6032e4d01d4e9108d6fde79c3edef89fdff3169`.
+- Learn Dark: `390×1212`, `012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5`.
 
-Result:
+## Manual artifact review
 
-Implementation skeleton is on the #577 branch. No visual fingerprint has been approved and no runtime delivery claim has been made before CI/artifact review.
+The exact job log was matched against exact artifact bytes. Each PNG's dimensions and SHA-256 matched the `REVIEW_REQUIRED` diagnostic and retry. All six PNGs were opened and inspected manually.
 
-Failures:
+- Dictionary Light/Dark: canonical Dictionary shell after SPA navigation; stable one-line Materials; no relevant clipping/x-overflow or legacy fallback.
+- Phrases Light/Dark: canonical Phrases shell after Dictionary→Phrases transition; stable one-line Materials; no relevant clipping/x-overflow.
+- Learn Light/Dark: canonical Learn shell; Reminder disclosure open; semantic appearance-specific surface/text/primary tokens; no legacy dark presentation in Light.
+- The magenta rectangle is an intentional Playwright mask over the profile button, explicitly configured by the evidence spec.
 
-None classified yet on the #577 branch; immutable CI has not started.
+Result: all six exact Linux fingerprints are approved for content-addressed enforcement.
 
-Root cause:
+## Root cause conclusion
 
-Dictionary root cause is a wrong route-graph identity emitted for Library client navigation. Materials and Reminder have independent scoped presentation ownership defects. Learn requires executable confirmation to determine whether stale history acceptance in bootstrap also needs a runtime code change.
+The proven route lifecycle defect was the wrong graph identity emitted by primary Library navigation. After that fix, executable Home→Learn and history evidence remained green, so broader bootstrap canonicalization was not justified and was intentionally omitted. Materials and Reminder were separate scoped presentation defects.
 
-Fallback:
+## Next procedure
 
-If Home → Learn or history traversal still enters compatibility `product` ownership after the navigation fix, canonicalize stable `/learn` and `/dictionary|/words/*` graph requests/history in `LexigoBootstrappedApp` while preserving `/lesson/*` product handoff. Do not add timing/remount workarounds.
+- Create one atomic evidence-approval commit containing only `frontend/e2e/route-transition-runtime-visual.spec.ts` and `.agents/current/**`.
+- Read back changed blobs and compare branch diff; require no runtime/snapshot mutation in the approval commit.
+- Run full immutable-head CI and classify any failure before changing code.
+- Audit PR reviews, review threads and comments plus main drift; Ready only on clean evidence.
+- Squash merge with `expected_head_sha`.
+- Require exact-main full CI and Stage/public validation that deploys exactly the squash SHA.
+- Create a separate Agent Docs-only reconciliation PR, reset `.agents/current/**` to live templates, then continue the next live open #205 parity task.
 
-Limitations:
+## Limitations
 
-Figma Cloud is intentionally excluded by Issue #577. Current design evidence comes from the repo-owned OpenPencil screen map and Linux runtime artifacts. Physical-device sign-off remains outside automated CI, but `ios-webkit` is required and available in the existing project matrix.
-
-Reusable lesson:
-
-A client route can have correct direct-entry visuals while still using the wrong semantic owner after SPA navigation if route graph/history metadata names the compatibility graph. Transition tests must assert the semantic island and history identity, not just final pathname or heading text.
+Figma Cloud is intentionally excluded by #577; repo-owned OpenPencil plus Linux runtime evidence is authoritative for this slice. Physical-device sign-off is outside automated CI, but `ios-webkit` transition coverage is mandatory and passed on #3739.

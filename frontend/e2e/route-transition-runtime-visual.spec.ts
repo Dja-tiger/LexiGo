@@ -20,12 +20,48 @@ type ReviewedTransitionBaseline = Readonly<{
 }>;
 
 const BASELINES: Record<`${TransitionRoute}.${Appearance}`, ReviewedTransitionBaseline> = {
-  "dictionary.light": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "dictionary.dark": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "phrases.light": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "phrases.dark": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "learn.light": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "learn.dark": { width: 390, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
+  "dictionary.light": {
+    width: 390,
+    height: 1197,
+    sha256: "4487459cea3e1347768e381ce393aeeecfb3f1e22b47e01554810cb6508b556d",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
+  "dictionary.dark": {
+    width: 390,
+    height: 1197,
+    sha256: "9104709d0b7f742ae22f18bacfe605a7658eb0db0b539e93b597ff8779cd855c",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
+  "phrases.light": {
+    width: 390,
+    height: 1616,
+    sha256: "91cc3fabe4cc7369e1c67992a28d4199b0a68028e354098fe17a78f5ddf93318",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
+  "phrases.dark": {
+    width: 390,
+    height: 1616,
+    sha256: "066a3ba05e676501a6025214567bdbdd901c8b820e8cb632003e5fc44a00b6b9",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
+  "learn.light": {
+    width: 390,
+    height: 1212,
+    sha256: "95e13c8164fea6ff0ba9ab0ae6032e4d01d4e9108d6fde79c3edef89fdff3169",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
+  "learn.dark": {
+    width: 390,
+    height: 1212,
+    sha256: "012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5",
+    sourceRun: 32046365625,
+    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+  },
 };
 
 async function installAppearance(page: Page, appearance: Appearance): Promise<void> {
