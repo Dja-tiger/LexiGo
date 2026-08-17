@@ -26,7 +26,7 @@ import {
 } from "./support/word-detail-fixture";
 
 type ExplicitAppearance = "light" | "dark";
-type TabletRouteKey =
+type RouteParityKey =
   | "home"
   | "learn"
   | "active-lesson"
@@ -38,22 +38,40 @@ type TabletRouteKey =
   | "profile"
   | "onboarding";
 
-type TabletRouteContract = Readonly<{
-  key: TabletRouteKey;
+type RouteParityContract = Readonly<{
+  key: RouteParityKey;
   path: string;
   ownerSelector: string;
   focused: boolean;
 }>;
 
-type TabletVisualBaseline = Readonly<{
-  width: 768;
+type RouteVisualBaseline = Readonly<{
+  width: number;
   height: number;
   sha256: string;
   sourceRun: number;
   sourceHeadSha: string;
 }>;
 
-const TABLET_ROUTES: readonly TabletRouteContract[] = [
+type RouteViewport = Readonly<{
+  width: number;
+  height: number;
+  label: string;
+}>;
+
+const TABLET_VIEWPORT: RouteViewport = {
+  width: 768,
+  height: 1024,
+  label: "768×1024",
+};
+
+const DESKTOP_VIEWPORT: RouteViewport = {
+  width: 1440,
+  height: 1024,
+  label: "1440×1024",
+};
+
+const ROUTE_PARITY_ROUTES: readonly RouteParityContract[] = [
   { key: "home", path: "/", ownerSelector: '[data-route-client-island="home"]', focused: false },
   { key: "learn", path: "/learn", ownerSelector: '[data-route-client-island="learn"]', focused: false },
   { key: "active-lesson", path: "/lesson/active", ownerSelector: '[data-route-client-island="active-lesson"]', focused: true },
@@ -76,8 +94,8 @@ const TABLET_ROUTES: readonly TabletRouteContract[] = [
  * byte-stable for every changed state.
  */
 const TABLET_VISUAL_BASELINES: Record<
-  `${TabletRouteKey}.${ExplicitAppearance}`,
-  TabletVisualBaseline
+  `${RouteParityKey}.${ExplicitAppearance}`,
+  RouteVisualBaseline
 > = {
   "home.light": { width: 768, height: 1105, sha256: "3ac66826a4315523e3b125f911460dfc05e7543d849e9912cbce2e06ff4bb5c3", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
   "home.dark": { width: 768, height: 1105, sha256: "fdf0cc1d239be231b2128915fe4d4811b479dc6907c8712a5551bc6f2ffd698f", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
@@ -99,6 +117,45 @@ const TABLET_VISUAL_BASELINES: Record<
   "profile.dark": { width: 768, height: 4229, sha256: "e8c4a7a37df7d1227212915ab083611097bbb63a65933462a267d02c752ab1af", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
   "onboarding.light": { width: 768, height: 1024, sha256: "b63d5ec40e59cf210db08a2edb5134a529adb62653b8dd751da91472d01f010a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
   "onboarding.dark": { width: 768, height: 1024, sha256: "483efada706044601cd599aea9e7c76c0e71da176578a610740c666bfd620aad", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+};
+
+const REVIEW_REQUIRED_DESKTOP_BASELINE: RouteVisualBaseline = {
+  width: 1440,
+  height: 0,
+  sha256: "REVIEW_REQUIRED",
+  sourceRun: 0,
+  sourceHeadSha: "REVIEW_REQUIRED",
+};
+
+/**
+ * Issue #581 deliberately starts with fail-closed desktop fingerprints. CI must
+ * produce exact Linux PNG/JSON evidence for all 20 states, then a human reviews
+ * those bytes before any entry below is replaced with an approved fingerprint.
+ */
+const DESKTOP_VISUAL_BASELINES: Record<
+  `${RouteParityKey}.${ExplicitAppearance}`,
+  RouteVisualBaseline
+> = {
+  "home.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "home.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "learn.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "learn.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "active-lesson.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "active-lesson.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "progress.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "progress.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "dictionary.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "dictionary.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "word-detail.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "word-detail.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "phrases.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "phrases.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "phrase-detail.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "phrase-detail.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "profile.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "profile.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "onboarding.light": REVIEW_REQUIRED_DESKTOP_BASELINE,
+  "onboarding.dark": REVIEW_REQUIRED_DESKTOP_BASELINE,
 };
 
 const ONBOARDING_PROMPT = {
@@ -136,7 +193,7 @@ async function installOnboardingResumeAPI(context: BrowserContext): Promise<void
   await context.unroute("**/api/v1/**");
   await context.addCookies([{
     name: "lexigo_csrf",
-    value: "tablet-parity-csrf",
+    value: "route-parity-csrf",
     url: "http://127.0.0.1:3000",
     sameSite: "Lax",
   }]);
@@ -162,8 +219,8 @@ async function installOnboardingResumeAPI(context: BrowserContext): Promise<void
   });
 }
 
-async function openTabletRoute(
-  contract: TabletRouteContract,
+async function openParityRoute(
+  contract: RouteParityContract,
   page: Page,
   context: BrowserContext,
 ): Promise<void> {
@@ -230,7 +287,7 @@ async function openTabletRoute(
   }
 }
 
-async function settleTabletRoute(page: Page, appearance: ExplicitAppearance): Promise<void> {
+async function settleParityRoute(page: Page, appearance: ExplicitAppearance): Promise<void> {
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
   await page.evaluate(async () => {
@@ -240,23 +297,24 @@ async function settleTabletRoute(page: Page, appearance: ExplicitAppearance): Pr
   await page.waitForTimeout(100);
 }
 
-async function expectTabletOwnership(
+async function expectParityOwnership(
   page: Page,
-  contract: TabletRouteContract,
+  contract: RouteParityContract,
+  viewport: RouteViewport,
 ): Promise<void> {
   await expect(page).toHaveURL((url) => url.pathname === contract.path);
   await expect(page.locator(contract.ownerSelector)).toBeVisible();
   await expect(page.locator("#lexigo-main-content")).toBeVisible();
   expect(
     await page.evaluate(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches),
-    `${contract.key} must run with reduced motion at 768px`,
+    `${contract.key} must run with reduced motion at ${viewport.label}`,
   ).toBe(true);
 
   const geometry = await page.evaluate((input) => {
     const root = document.documentElement;
     const main = document.querySelector<HTMLElement>("#lexigo-main-content");
     const owner = document.querySelector<HTMLElement>(input.ownerSelector);
-    if (!main || !owner) throw new Error(`Tablet route owner is not mounted: ${input.ownerSelector}`);
+    if (!main || !owner) throw new Error(`Route parity owner is not mounted: ${input.ownerSelector}`);
 
     const rect = (node: HTMLElement) => {
       const box = node.getBoundingClientRect();
@@ -268,6 +326,17 @@ async function expectTabletOwnership(
         width: box.width,
         height: box.height,
       };
+    };
+
+    const isRendered = (node: HTMLElement) => {
+      const style = window.getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return style.display !== "none"
+        && style.visibility !== "hidden"
+        && style.visibility !== "collapse"
+        && Number.parseFloat(style.opacity || "1") > 0
+        && box.width > 0
+        && box.height > 0;
     };
 
     const visibleNavigation = Array.from(
@@ -288,6 +357,12 @@ async function expectTabletOwnership(
         && item.box.width > 0
         && item.box.height > 0
       ));
+
+    const legacyCompatibilityOwners = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-route-client-island="product"]'),
+    )
+      .filter(isRendered)
+      .map((node) => rect(node));
 
     const focusableSelector = [
       "a[href]",
@@ -339,15 +414,16 @@ async function expectTabletOwnership(
       main: rect(main),
       owner: rect(owner),
       visibleNavigation,
+      legacyCompatibilityOwners,
       focusableOffenders,
     };
   }, { ownerSelector: contract.ownerSelector });
 
-  expect(geometry.innerWidth).toBe(768);
-  expect(geometry.innerHeight).toBe(1024);
+  expect(geometry.innerWidth).toBe(viewport.width);
+  expect(geometry.innerHeight).toBe(viewport.height);
   expect(
     geometry.documentWidth,
-    `${contract.key} must not overflow horizontally at 768px`,
+    `${contract.key} must not overflow horizontally at ${viewport.label}`,
   ).toBeLessThanOrEqual(geometry.clientWidth + 1);
 
   for (const [label, owner] of [["main", geometry.main], ["route owner", geometry.owner]] as const) {
@@ -357,8 +433,12 @@ async function expectTabletOwnership(
   }
 
   expect(
+    geometry.legacyCompatibilityOwners,
+    `${contract.key} must not expose the legacy compatibility route owner at ${viewport.label}`,
+  ).toEqual([]);
+  expect(
     geometry.focusableOffenders,
-    `${contract.key} must not partially clip rendered focusable controls at 768px`,
+    `${contract.key} must not partially clip rendered focusable controls at ${viewport.label}`,
   ).toEqual([]);
 
   if (contract.focused) {
@@ -381,7 +461,7 @@ async function expectTabletOwnership(
 async function captureTabletEvidence(
   page: Page,
   testInfo: TestInfo,
-  contract: TabletRouteContract,
+  contract: RouteParityContract,
   appearance: ExplicitAppearance,
 ): Promise<void> {
   const baselineKey = `${contract.key}.${appearance}` as const;
@@ -428,6 +508,62 @@ async function captureTabletEvidence(
   });
 }
 
+async function captureDesktopEvidence(
+  page: Page,
+  testInfo: TestInfo,
+  contract: RouteParityContract,
+  appearance: ExplicitAppearance,
+): Promise<void> {
+  const baselineKey = `${contract.key}.${appearance}` as const;
+  const baseline = DESKTOP_VISUAL_BASELINES[baselineKey];
+  const profileButton = page.getByRole("button", { name: "Открыть профиль" });
+  const screenshot = await page.screenshot({
+    animations: "disabled",
+    caret: "hide",
+    fullPage: true,
+    mask: await profileButton.count() > 0 ? [profileButton] : [],
+    scale: "css",
+  });
+
+  const actual = {
+    width: screenshot.readUInt32BE(16),
+    height: screenshot.readUInt32BE(20),
+    sha256: createHash("sha256").update(screenshot).digest("hex"),
+  };
+
+  await testInfo.attach(`desktop-1440x1024-${contract.key}-${appearance}.png`, {
+    body: screenshot,
+    contentType: "image/png",
+  });
+  await testInfo.attach(`desktop-1440x1024-${contract.key}-${appearance}.json`, {
+    body: Buffer.from(JSON.stringify({
+      route: contract.path,
+      routeKey: contract.key,
+      appearance,
+      responsiveViewport: { width: 1440, height: 1024 },
+      sourceSemantics: "desktop runtime acceptance for #205 using repository-owned OpenPencil route mapping; archived Figma identities are provenance/reference only",
+      actual,
+      approved: baseline,
+    }, null, 2)),
+    contentType: "application/json",
+  });
+
+  if (baseline.sha256 === "REVIEW_REQUIRED") {
+    throw new Error(
+      `${baselineKey}: REVIEW_REQUIRED exact Linux 1440×1024 evidence ${JSON.stringify(actual)}`,
+    );
+  }
+
+  expect(
+    actual,
+    `${baselineKey}: exact Linux 1440×1024 fingerprint must match the manually reviewed evidence`,
+  ).toEqual({
+    width: baseline.width,
+    height: baseline.height,
+    sha256: baseline.sha256,
+  });
+}
+
 test.describe("Issue #568 medium/tablet route parity matrix", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -436,7 +572,7 @@ test.describe("Issue #568 medium/tablet route parity matrix", () => {
     await installQualityGateAPI(context);
   });
 
-  for (const contract of TABLET_ROUTES) {
+  for (const contract of ROUTE_PARITY_ROUTES) {
     for (const appearance of ["light", "dark"] as const) {
       test(`${contract.key} 768×1024 ${appearance}`, async ({ context, page }, testInfo) => {
         test.skip(
@@ -452,11 +588,46 @@ test.describe("Issue #568 medium/tablet route parity matrix", () => {
 
         await installAppearance(page, appearance);
         const runtimeErrors = captureRuntimeErrors(page);
-        await openTabletRoute(contract, page, context);
-        await settleTabletRoute(page, appearance);
-        await expectTabletOwnership(page, contract);
+        await openParityRoute(contract, page, context);
+        await settleParityRoute(page, appearance);
+        await expectParityOwnership(page, contract, TABLET_VIEWPORT);
         expect(runtimeErrors).toEqual([]);
         await captureTabletEvidence(page, testInfo, contract, appearance);
+      });
+    }
+  }
+});
+
+test.describe("Issue #581 desktop 1440×1024 route parity matrix", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  test.beforeEach(async ({ context, page }) => {
+    await installDeterministicRuntime(page);
+    await installQualityGateAPI(context);
+  });
+
+  for (const contract of ROUTE_PARITY_ROUTES) {
+    for (const appearance of ["light", "dark"] as const) {
+      test(`${contract.key} 1440×1024 ${appearance}`, async ({ context, page }, testInfo) => {
+        test.skip(
+          testInfo.project.name !== "visual-desktop",
+          "Issue #581 is the dedicated 1440×1024 desktop runtime evidence matrix.",
+        );
+
+        await page.setViewportSize({ width: 1440, height: 1024 });
+        expect(page.viewportSize()).toEqual({ width: 1440, height: 1024 });
+        testInfo.annotations.push({
+          type: "responsive-source",
+          description: `${contract.path} | 1440×1024 | ${appearance} | #205 desktop runtime acceptance`,
+        });
+
+        await installAppearance(page, appearance);
+        const runtimeErrors = captureRuntimeErrors(page);
+        await openParityRoute(contract, page, context);
+        await settleParityRoute(page, appearance);
+        await expectParityOwnership(page, contract, DESKTOP_VIEWPORT);
+        expect(runtimeErrors).toEqual([]);
+        await captureDesktopEvidence(page, testInfo, contract, appearance);
       });
     }
   }
