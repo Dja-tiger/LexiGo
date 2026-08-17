@@ -27,6 +27,7 @@ export default defineConfig({
     "first-use-visual.spec.ts",
     "tablet-layout-visual.spec.ts",
     "route-tablet-parity.spec.ts",
+    "route-transition-runtime-visual.spec.ts",
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),

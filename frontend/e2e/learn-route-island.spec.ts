@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { installQualityGateAPI } from "./support/quality-gates";
+import {
+  captureRuntimeErrors,
+  installQualityGateAPI,
+} from "./support/quality-gates";
 
 type ExplicitAppearance = "light" | "dark";
 type CanonicalNavigation = "mobile" | "rail";
@@ -229,6 +232,37 @@ async function expectCanonicalLearnGeometry(
 }
 
 test.describe.configure({ timeout: 90_000 });
+
+test("Learn owns Home client navigation and real Back/Forward without a product fallback", async ({ context, page }) => {
+  const mobileCase = CANONICAL_LEARN_CASES[0];
+  await page.setViewportSize({ width: mobileCase.width, height: mobileCase.height });
+  await installAppearance(page, mobileCase.appearance);
+  await installQualityGateAPI(context);
+  const runtimeErrors = captureRuntimeErrors(page);
+
+  await page.goto("/");
+  await expect(page.locator('[data-route-client-island="home"]')).toBeVisible();
+  await page.locator('[data-navigation-view="learn"]:visible').click();
+  await expectLearnRouteOwner(page, mobileCase.appearance);
+  await expectCollapsedComposer(page);
+  await expectCanonicalLearnGeometry(page, mobileCase);
+  expect(await page.evaluate(() => window.history.state?.lexigoRouteGraph)).toBe("learn");
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('[data-route-client-island="home"]')).toBeVisible();
+  await page.goForward();
+  await expectLearnRouteOwner(page, mobileCase.appearance);
+  await expectCollapsedComposer(page);
+  await expectCanonicalLearnGeometry(page, mobileCase);
+  expect(await page.evaluate(() => window.history.state?.lexigoRouteGraph)).toBe("learn");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectLearnRouteOwner(page, mobileCase.appearance);
+  await expectCollapsedComposer(page);
+  await expectCanonicalLearnGeometry(page, mobileCase);
+  expect(runtimeErrors).toEqual([]);
+});
 
 test.describe("canonical Learn Composer Figma parity contract", () => {
   for (const canonicalCase of CANONICAL_LEARN_CASES) {

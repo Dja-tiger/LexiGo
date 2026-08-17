@@ -12,7 +12,7 @@
   z-index: 185;
   top: calc(17px + env(safe-area-inset-top));
   right: max(150px, calc((100vw - 1540px) / 2 + 150px));
-  color: var(--lx-text);
+  color: var(--ak-color-text-main);
 }
 
 .lx-route-reminder-entry > summary {
@@ -22,12 +22,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(145, 168, 211, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 14px;
   padding: 0 13px;
-  color: #cbd4e4;
-  background: rgba(8, 14, 27, 0.9);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-1);
   cursor: pointer;
   font-size: 13px;
   font-weight: 760;
@@ -42,20 +42,20 @@
 
 .lx-route-reminder-entry > summary:hover,
 .lx-route-reminder-entry[open] > summary {
-  border-color: rgba(139, 92, 246, 0.42);
-  color: #fff;
-  background: rgba(35, 31, 73, 0.96);
+  border-color: color-mix(in srgb, var(--ak-color-primary) 48%, var(--ak-color-text-muted));
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-primary-soft);
 }
 
 .lx-route-reminder-entry > summary:focus-visible {
-  outline: 3px solid #7dd3fc;
+  outline: 3px solid var(--ak-color-primary);
   outline-offset: 3px;
-  box-shadow: 0 0 0 5px rgba(37, 200, 232, 0.18);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--ak-color-primary) 18%, transparent);
 }
 
 .lx-route-reminder-entry > summary svg {
   flex: 0 0 auto;
-  color: #9f8cff;
+  color: var(--ak-color-primary);
 }
 
 .lx-route-reminder-preview {
@@ -65,11 +65,12 @@
   display: grid;
   width: min(340px, calc(100vw - 28px));
   gap: 10px;
-  border: 1px solid rgba(145, 168, 211, 0.22);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 18px;
   padding: 18px;
-  background: rgba(8, 15, 29, 0.98);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.46);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-3);
 }
 
 /*
@@ -84,21 +85,21 @@
 }
 
 .lx-route-reminder-preview > span {
-  color: #8aa0c3;
+  color: var(--ak-color-text-muted);
   font-size: 11px;
   font-weight: 850;
   letter-spacing: 0.12em;
 }
 
 .lx-route-reminder-preview > strong {
-  color: #fff;
+  color: var(--ak-color-text-main);
   font-size: 17px;
   line-height: 1.35;
 }
 
 .lx-route-reminder-preview > p {
   margin: 0;
-  color: #aab5c8;
+  color: var(--ak-color-text-muted);
   font-size: 13px;
   line-height: 1.55;
 }

@@ -54,25 +54,25 @@ const SCENARIO_CATALOG_VISUAL_BASELINES = {
     name: "scenario-catalog-compact-light.png",
     width: 390,
     height: 1876,
-    sha256: "1cf2f22fc2095d33d84c7f8766e9c5eb39ee095c83e548c07a11926c3a4633ec",
-    sourceRun: 31009993569,
-    sourceHeadSha: "6ba40fbdafccc4cd34ad3869a7004a6c0c4ea9c2",
+    sha256: "4fcb7dc343673b7f066f31bbc60aece09ce219a0ad7394ff61028d2e67bf21c4",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   compactDark: {
     name: "scenario-catalog-compact-dark.png",
     width: 390,
     height: 1876,
-    sha256: "6b53d1a2cb5fe2696888af441415de5755cce9dc5b0a75a51b9c27de4f9b1ac0",
-    sourceRun: 31009993569,
-    sourceHeadSha: "6ba40fbdafccc4cd34ad3869a7004a6c0c4ea9c2",
+    sha256: "1cbab3e6d5d1c6f8b1f6752970ab02ffa5b00ce20f9e5aeb3338b4ddb097b7f7",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   desktopLight: {
     name: "scenario-catalog-desktop-light.png",
     width: 1440,
     height: 981,
-    sha256: "350597de5f363c687c821223b88d86849a62bf51f17b2483c300455fb717ae8a",
-    sourceRun: 30181864359,
-    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+    sha256: "578c70b328c121a3b190f5b1eeb50b5c14404ad890a785b2e306e5d8b6393329",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
@@ -81,33 +81,33 @@ const DICTIONARY_VISUAL_BASELINES = {
     name: "dictionary-compact-light.png",
     width: 390,
     height: 1197,
-    sha256: "57c8aa5684cc56165392d55988e369da0bf0a5379fed75194bd6d38eb95a09f8",
-    sourceRun: 31549532156,
-    sourceHeadSha: "5932c6b4e21e4d8c1999af861d0737c5a1419c35",
+    sha256: "c33d444bf4ce7529513c13d716839aa6e8832749a03f444d6576cf454a973854",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   compactDark: {
     name: "dictionary-compact-dark.png",
     width: 390,
     height: 1197,
-    sha256: "4424182e3a4c0356ba57687dd6bca1339c9a671d186083225061b2a7816b90c0",
-    sourceRun: 31549532156,
-    sourceHeadSha: "5932c6b4e21e4d8c1999af861d0737c5a1419c35",
+    sha256: "d539d7ab6f41f529d71d884e1037712ec0a4acc19040cf1f2066233ecb7cc861",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   mediumLight: {
     name: "dictionary-medium-light.png",
     width: 768,
     height: 1760,
-    sha256: "9b19904153f2e5ad3d7ab076cbc6e812286445f088ec5a81030b74e4741d288a",
-    sourceRun: 31549532156,
-    sourceHeadSha: "5932c6b4e21e4d8c1999af861d0737c5a1419c35",
+    sha256: "eb956319500969de726e67946ca506260f4b46068839bf45f571e994aa06efbd",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   desktopLight: {
     name: "dictionary-desktop-light.png",
     width: 1440,
     height: 1720,
-    sha256: "723359f44c06746bb95674edf0c74e651af48d2d21578dd9f64afa9a7e5f4dc8",
-    sourceRun: 31549532156,
-    sourceHeadSha: "5932c6b4e21e4d8c1999af861d0737c5a1419c35",
+    sha256: "528a319403abc8455eb46fd49ad3862124cb68be1bd3d3cddac183b3325384f3",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
@@ -116,25 +116,25 @@ const LESSON_COMPOSER_VISUAL_BASELINES = {
     name: "lesson-composer-compact.png",
     width: 390,
     height: 1212,
-    sha256: "490ea80ab1363da856e8633cc56b3d194f866241e7058a6766de6e8a9bd18d9f",
-    sourceRun: 31009993569,
-    sourceHeadSha: "6ba40fbdafccc4cd34ad3869a7004a6c0c4ea9c2",
+    sha256: "e0f44f118b272b898cfaf635e81c7a808c274dd6834594c4a20245ff4f34a423",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   medium: {
     name: "lesson-composer-medium.png",
     width: 768,
     height: 1990,
-    sha256: "9fcb944e8be1cdd3ef56e52e28dc233e86acec3b6d9c383f4b1de723860b51b4",
-    sourceRun: 31980303255,
-    sourceHeadSha: "1cefd8f730848b11159e07a26c468ac3e96d76c2",
+    sha256: "c8b941afa995bd67b5a4068441a9982cb24c859c7c12f645a5433e97cd3e0bc3",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
   desktop: {
     name: "lesson-composer-desktop.png",
     width: 1440,
     height: 1656,
-    sha256: "3be9635dd17bf578adb48cfcbae812c46fe3714969574e5b9a6627b82b7d4088",
-    sourceRun: 30183186758,
-    sourceHeadSha: "623a143a5e4f988606a723efdac66fbd3e43953d",
+    sha256: "3ef5fd76776f84c7f20f3e2efc757c0111ca99ccfc9ba0df8d6f4959769c7d1f",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
   },
 } satisfies Record<string, ContentAddressedVisualBaseline>;
 
@@ -172,6 +172,33 @@ async function expectLearningSwitchClearOfRouteChrome(page: Page): Promise<void>
 
   expect(intersections, "Learning subsection switch must not overlap visible route chrome").toEqual([]);
 }
+
+const REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS = {
+  homeCompact: {
+    name: "home-reviewed-shared-reminder-compact.png",
+    width: 390,
+    height: 1038,
+    sha256: "0e3162e5b5ee20d46fbead6cee17879e31ed8a181f956f4b71ef22de17ef43aa",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+  },
+  progressCompact: {
+    name: "progress-reviewed-shared-reminder-compact.png",
+    width: 390,
+    height: 1900,
+    sha256: "dd55247d44c877b1ef264d91d8a86197c5091a11b0c19a1bdca0e5ab14897ece",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+  },
+  progressDesktop: {
+    name: "progress-reviewed-shared-reminder-desktop.png",
+    width: 1440,
+    height: 1010,
+    sha256: "21c9188056b9bee53f00a19d435585994d4b4bdad19bddbee481e491c81bcfd9",
+    sourceRun: 32048818693,
+    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
 
 async function prepareStableScreenshot(page: Page): Promise<void> {
   const dimensions = await page.evaluate(async () => {
@@ -290,7 +317,12 @@ test.describe("critical visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
-    await expectStableScreenshot(page, "home.png");
+    const width = page.viewportSize()?.width;
+    if (width === 390) {
+      await expectContentAddressedScreenshot(page, REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS.homeCompact);
+    } else {
+      await expectStableScreenshot(page, "home.png");
+    }
     expect(runtimeErrors).toEqual([]);
   });
 
@@ -341,7 +373,14 @@ test.describe("critical visual baselines", () => {
     const runtimeErrors = captureRuntimeErrors(page);
     await page.goto("/progress", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".lx-progress-evidence").getByRole("heading", { name: "Прогресс", exact: true })).toBeVisible();
-    await expectStableScreenshot(page, "progress.png");
+    const width = page.viewportSize()?.width;
+    if (width === 390) {
+      await expectContentAddressedScreenshot(page, REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS.progressCompact);
+    } else if (width === 1440) {
+      await expectContentAddressedScreenshot(page, REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS.progressDesktop);
+    } else {
+      await expectStableScreenshot(page, "progress.png");
+    }
     expect(runtimeErrors).toEqual([]);
   });
 
