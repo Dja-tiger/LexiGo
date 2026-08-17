@@ -123,10 +123,10 @@ const LESSON_COMPOSER_VISUAL_BASELINES = {
   medium: {
     name: "lesson-composer-medium.png",
     width: 768,
-    height: 6154,
-    sha256: "4acb9301f3837fb235670c6841c281eb732488701566a84db3b406eaac422812",
-    sourceRun: 30181864359,
-    sourceHeadSha: "e608d6f58135d689e06cd49735c6a05bec82c1a3",
+    height: 1990,
+    sha256: "9fcb944e8be1cdd3ef56e52e28dc233e86acec3b6d9c383f4b1de723860b51b4",
+    sourceRun: 31980303255,
+    sourceHeadSha: "1cefd8f730848b11159e07a26c468ac3e96d76c2",
   },
   desktop: {
     name: "lesson-composer-desktop.png",
