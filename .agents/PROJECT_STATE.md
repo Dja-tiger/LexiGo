@@ -5,7 +5,14 @@
 - Last verified: 2026-08-17 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
 - Latest runtime-bearing `main`: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` from runtime PR #579.
-- Latest deployed runtime/Stage SHA: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`.
+- Latest deployed runtime/Stage image SHA: `06d6b18d14a120418afaee316e0c68badc682f9f`; the runtime source behavior is unchanged from runtime PR #579, while the newer image includes test/evidence-only deliveries #582/#585.
+- PR #585 final developer-authored head `e207618e0b86f84912d95d147ca4c4a005ede400` passed full immutable-head CI #3752 / run `32070819942`; its authoritative Visual job passed `compact Dictionary empty light` without retry.
+- PR #585 squash merge: `06d6b18d14a120418afaee316e0c68badc682f9f`; Issue #584 is closed completed.
+- Exact-main CI #3753 / run `32071810135` passed completely on that merge SHA, including backend integration/unit/security, frontend core, both UI shards, Lesson completion, Visual regression, accessibility, performance, CSP/service-worker and both container builds. The target System State again passed without retry.
+- Deploy Stage #3608 / run `32072788811` passed on exact `06d6b18d14a120418afaee316e0c68badc682f9f`. Deployment used web/API image tag `06d6b18d14a120418afaee316e0c68badc682f9f`; public frontend/API smoke returned HTTP 200 on the first attempt and public Chromium/iOS WebKit verification passed 12/12.
+- PR #582 final developer-authored head `7d9afa4c7c9c1c0d643825d3514cefe969052c61` passed full immutable-head CI #3750 / run `32066734639` after all 20 reviewed desktop route/theme fingerprints were committed.
+- PR #582 squash merge: `cadcdf434ed80628e326507c8ee849b55a427020`; Issue #581 is closed completed.
+- Exact-main CI #3751 / run `32067797979` on `cadcdf434ed80628e326507c8ee849b55a427020` exposed one independent pre-existing Linux renderer fingerprint for `compact Dictionary empty light`; all #581 desktop states themselves were not the failure source. Issue #584/PR #585 classified and stabilized that exact renderer variant without numerical tolerance or runtime changes.
 - PR #579 final developer-authored head `bd4d3dc4c30d4343507fda1b68f3b14b29b8edb5` passed full immutable-head CI #3742 / run `32054788022`.
 - PR #579 squash merge: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; Issue #577 is closed completed.
 - Exact-main runtime CI #3743 / run `32062835926` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Lesson completion, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
@@ -167,6 +174,26 @@
 - Full immutable-head CI #3742 / run `32054788022` passed; PR #579 squash-merged as `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` and closed #577.
 - Exact-main CI #3743 / run `32062835926` passed completely, including both container builds. Exact-SHA Stage #3598 / run `32063824290` deployed web/API images tagged `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; public smoke passed and public Chromium/iOS WebKit verification passed 12/12.
 
+## Desktop 1440×1024 route parity / Issue #581
+
+- Issue #581 / PR #582 completed the missing consolidated desktop runtime matrix under umbrella #205: ten canonical routes × explicit Light/Dark at `1440×1024`.
+- The desktop contract reuses the authoritative route fixtures/owners from the delivered tablet matrix but executes only in `visual-desktop`, preserving all 20 previously reviewed tablet fingerprints unchanged.
+- Diagnostic CI run `32065112367` on head `244a71b6202b3f22e51e46c9fccc7cc385cf92ad` produced exact Linux Visual artifact `9299858153`, digest `sha256:ce2451443302b3de5e1a6ed7aeee3a94b9124e2985b4ace32fb3a8e881499e87`.
+- All 20 desktop states reached the intentional `REVIEW_REQUIRED` gate only after route ownership, reduced-motion, geometry/overflow, focusable-control clipping and runtime-error contracts passed. Every retry capture was byte-stable.
+- All 20 exact Linux desktop PNGs were manually inspected before approval; Light/Dark compositions for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Phrase Detail, Profile and Onboarding showed no clipping, shell/content overlap or recurrence of legacy `product` ownership.
+- Final developer-authored head `7d9afa4c7c9c1c0d643825d3514cefe969052c61` passed full immutable-head CI #3750 / run `32066734639`; PR #582 squash-merged as `cadcdf434ed80628e326507c8ee849b55a427020` and closed #581.
+- Exact-main CI #3751 did not invalidate the #581 desktop evidence: its only failure was the independent compact Dictionary Empty renderer fingerprint later isolated as #584.
+
+## System State exact renderer stabilization / Issue #584
+
+- Exact-main CI #3751 / run `32067797979` exposed SHA `63d3af378194f420b97c95a6c25829801aa27052cfc174516c102a0a986c731c` for `compact Dictionary empty light` / Figma node `79:93` on both attempts.
+- Exact-main artifact `9300795503`, digest `sha256:aaf16e28f77404017f8d804c7cd8accb4afb1db67fdba7a205c2e18463c359a2`, and prior #582 diagnostic artifact `9299858153` were compared before any baseline write.
+- New `63d3af...` and already accepted `bc8a3d915e7a800dd9beeb9bc4f95bcde79cdcfab438ab7d329377d78c005578` captures are both `390×844`; only 4 of 329160 pixels differ (≈0.0012%), with maximum per-channel RGB delta one LSB at antialiased edge pixels only.
+- Issue #584 / PR #585 added only that exact SHA to the scoped `compact-empty-light.rendererEquivalentSha256` allow-list. The primary Figma-approved SHA and exact fail-closed matching mechanism remain unchanged; no pixel tolerance, runtime, CSS, API, Figma or workflow change was introduced.
+- Final developer-authored head `e207618e0b86f84912d95d147ca4c4a005ede400` passed full immutable-head CI #3752 / run `32070819942`; the target Visual state passed without retry.
+- PR #585 squash-merged as `06d6b18d14a120418afaee316e0c68badc682f9f` and closed #584. Exact-main CI #3753 / run `32071810135` passed completely and again reproduced the target Visual state without retry.
+- Deploy Stage #3608 / run `32072788811` deployed web/API images tagged `06d6b18d14a120418afaee316e0c68badc682f9f`; frontend/API smoke returned HTTP 200 and public Chromium/iOS WebKit verification passed 12/12.
+
 ## AI-native design source-of-truth status
 
 - ZSeven OpenPencil v0.8.2 remains the day-to-day AI-first design editor; native Figma is retained as archived provenance/reference.
@@ -202,17 +229,19 @@
 - Tablet Home progress spacing repair: Issue #574 / PR #575 / merge `e9314e08cfb517388b8427dcc5ba74df69c861f7` / PR CI #3729 / exact-main CI #3730 / Stage #3583.
 - Consolidated tablet 768×1024 parity: Issue #568 / PR #570 / merge `67d8368502389f83ebb2ba5754f4997ed868dcef` / reviewed Linux artifact `9291962719` / PR CI #3734 / exact-main CI #3735.
 - Compact route-transition runtime repair: Issue #577 / PR #579 / merge `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` / PR CI #3742 / exact-main CI #3743 / Stage #3598.
+- Consolidated desktop 1440×1024 parity: Issue #581 / PR #582 / merge `cadcdf434ed80628e326507c8ee849b55a427020` / reviewed Linux artifact `9299858153` / PR CI #3750.
+- System State exact renderer stabilization: Issue #584 / PR #585 / merge `06d6b18d14a120418afaee316e0c68badc682f9f` / PR CI #3752 / exact-main CI #3753 / Stage #3608.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Latest deployed runtime is PR #579 on merge SHA `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; exact-main CI #3743 and exact-SHA Stage/public validation #3598 are green on that exact SHA.
-- Latest completed evidence-only route parity merge before #579 is PR #570 on `67d8368502389f83ebb2ba5754f4997ed868dcef`; exact-main CI #3735 is green on that exact SHA.
-- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use; the consolidated 768×1024 Light/Dark matrix and compact transition repair are closed completed.
+- Latest deployed Stage image is PR #585 merge SHA `06d6b18d14a120418afaee316e0c68badc682f9f`; exact-main CI #3753 and exact-SHA Stage/public validation #3608 are green on that exact SHA. The latest runtime-bearing source change remains PR #579 / `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`.
+- Latest completed consolidated route parity merge is PR #582 on `cadcdf434ed80628e326507c8ee849b55a427020`: ten canonical routes × Light/Dark at desktop `1440×1024`; its exact-main renderer-only follow-up is closed by #584/#585.
+- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use; consolidated tablet `768×1024`, desktop `1440×1024` and compact transition coverage are closed completed.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. The transition-dependent runtime gap #577 is closed; the next atomic design/runtime work must target genuinely unproven final acceptance instead of duplicating delivered route repairs.
-- Remaining #205 acceptance includes minimum supported mobile width, complete desktop runtime 1440×1024 coverage, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
+- Live umbrella #205 remains open. Delivered tablet/desktop/transition slices must not be duplicated; the next atomic design/runtime work must target genuinely unproven final acceptance.
+- Remaining #205 acceptance includes minimum supported mobile width, missing 200% text zoom/reflow coverage, reduced-motion and keyboard-only coverage, loading/empty/error/offline states where applicable, direct entry/reload/Back-Forward gaps, final Stage/browser and manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
 - No runtime/backend/API/design/deploy change is part of this Agent Docs reconciliation slice.
@@ -220,7 +249,7 @@ Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Remaining roadmap
 
-- #205: continue the final consolidated matrix with minimum mobile, complete 1440×1024 runtime coverage, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence; split new work into atomic child Issues rather than reopening delivered parity slices.
+- #205: continue the final consolidated acceptance with minimum mobile width, missing 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence; split new work into atomic child Issues rather than reopening delivered tablet/desktop/transition parity slices.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
