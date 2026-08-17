@@ -29,6 +29,15 @@
 }
 
 @media (max-width: 767px) {
+  /*
+   * The compact Learn hero is intentionally transparent. Keep its heading on
+   * the semantic canvas foreground instead of carrying the fixed light
+   * foreground that belongs to the dark desktop/tablet hero surface.
+   */
+  .lx-main-content[aria-label="Обучение"] .lx-page-heading h1 {
+    color: var(--ak-color-text-main);
+  }
+
   .lx-recommended-lesson__eyebrow,
   .lx-recommended-lesson-reason strong {
     color: var(--lx-composer-retained-foreground);
