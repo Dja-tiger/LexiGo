@@ -67,24 +67,36 @@ const TABLET_ROUTES: readonly TabletRouteContract[] = [
 ] as const;
 
 /**
- * Initial values are intentionally not approvals. The first exact Linux run must
- * attach all twenty 768×1024 actuals for manual review. Only reviewed dimensions
- * and SHA-256 values may replace these sentinels.
+ * These content-addressed fingerprints were approved only after direct manual
+ * review of exact Linux artifact #9291962719 from CI run 32040684330 on head
+ * 3578718bdcba1a24873ce23999ef7672a22193c5. The three retained Playwright
+ * failure records for every state reproduced the same height and SHA-256.
  */
-const REVIEW_REQUIRED: TabletVisualBaseline = {
-  width: 768,
-  height: 0,
-  sha256: "REVIEW_REQUIRED",
-  sourceRun: 0,
-  sourceHeadSha: "REVIEW_REQUIRED",
+const TABLET_VISUAL_BASELINES: Record<
+  `${TabletRouteKey}.${ExplicitAppearance}`,
+  TabletVisualBaseline
+> = {
+  "home.light": { width: 768, height: 1105, sha256: "08d213c5fa280702abadc675476e8f4197c100ffd9011eb0d5a7f5772bab9d8e", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "home.dark": { width: 768, height: 1105, sha256: "d2ca7909b3a0f3480f28af24f9d734f0c641cc5f1ebc174108a408cbefb40bbc", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "learn.light": { width: 768, height: 1990, sha256: "189c3b116e23acb636e1f756e79a15a016aea78cea71a8af6ce38d7832311f08", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "learn.dark": { width: 768, height: 1990, sha256: "18e6e8da66d811cea71fefdcbd34ed30e6e8a27584aeb54f66eb5c484e6c07c4", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "active-lesson.light": { width: 768, height: 1024, sha256: "39dbd304a26668f6a11acb774d7e790cab4ba51af2710b0fc42a00631b104998", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "active-lesson.dark": { width: 768, height: 1024, sha256: "4f02aaef1849bee10c6a3bc71a72dba26ee2cb3615e12030c6eead00281cf935", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "progress.light": { width: 768, height: 1689, sha256: "41ef29fa337e8d9687d00ff1d69ff8d5689923ff706e5a39d873c9ade6de33c5", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "progress.dark": { width: 768, height: 1689, sha256: "121d09086cff4b44693bf0351b243f176564010037c5494d8f642f6286675da9", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "dictionary.light": { width: 768, height: 1760, sha256: "17910a66337422d1765ef1eec28d754e80083f6f3d7f59ea6d60b459ab54d38e", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "dictionary.dark": { width: 768, height: 1760, sha256: "91bdb446377da58c834ab0a915952b7ad6d038e3e9d980590d75288d6b0cedee", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "word-detail.light": { width: 768, height: 1663, sha256: "e065b923b788c332735b40370c61734eb5fc4e59bdb98f5ee0a5ee1c7556deb8", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "word-detail.dark": { width: 768, height: 1663, sha256: "d625844b0762103dc08a910dd994db0d0001ca7466691d779539d32945bf796a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "phrases.light": { width: 768, height: 1593, sha256: "16c8efb17d7c599d425266d9c4e5457d9ac2b02756a677e0246c8aaf6fe8643a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "phrases.dark": { width: 768, height: 1593, sha256: "c1a0ee9a5e970743b1d7ce149ffe44cfdef13f9cec481a34ddbcf2cc1b345663", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "phrase-detail.light": { width: 768, height: 1496, sha256: "d1c805baea90c677a320a6a32d9b93eda1e6fa61524bc6410520fc465faa6e78", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "phrase-detail.dark": { width: 768, height: 1496, sha256: "cfaaaabf676496c04ce033f0bdd99888bcda2c9ed2e7511ab8cf9c6f9ab7703c", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "profile.light": { width: 768, height: 4229, sha256: "b73fa564476dc1458c5096e02aac76667271df87e5fba8ce58e0f0fa7f111042", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "profile.dark": { width: 768, height: 4229, sha256: "d3975453cc920c779d363ffe7fd791f1e4fb10e306cf7cead870c8baefc8be6e", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "onboarding.light": { width: 768, height: 1024, sha256: "b63d5ec40e59cf210db08a2edb5134a529adb62653b8dd751da91472d01f010a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
+  "onboarding.dark": { width: 768, height: 1024, sha256: "483efada706044601cd599aea9e7c76c0e71da176578a610740c666bfd620aad", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
 };
-
-const TABLET_VISUAL_BASELINES = Object.fromEntries(
-  TABLET_ROUTES.flatMap((route) => ([
-    [`${route.key}.light`, REVIEW_REQUIRED],
-    [`${route.key}.dark`, REVIEW_REQUIRED],
-  ])),
-) as Record<`${TabletRouteKey}.${ExplicitAppearance}`, TabletVisualBaseline>;
 
 const ONBOARDING_PROMPT = {
   position: 4,
@@ -232,6 +244,10 @@ async function expectTabletOwnership(
   await expect(page).toHaveURL((url) => url.pathname === contract.path);
   await expect(page.locator(contract.ownerSelector)).toBeVisible();
   await expect(page.locator("#lexigo-main-content")).toBeVisible();
+  expect(
+    await page.evaluate(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches),
+    `${contract.key} must run with reduced motion at 768px`,
+  ).toBe(true);
 
   const geometry = await page.evaluate((input) => {
     const root = document.documentElement;
@@ -401,7 +417,7 @@ async function captureTabletEvidence(
 
   expect(
     actual,
-    `${baselineKey}: manually review the exact Linux 768×1024 PNG before replacing REVIEW_REQUIRED`,
+    `${baselineKey}: exact Linux 768×1024 fingerprint must match the manually reviewed evidence`,
   ).toEqual({
     width: baseline.width,
     height: baseline.height,

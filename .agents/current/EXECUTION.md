@@ -2,9 +2,10 @@
 
 ## Task
 
+- Issue: #568
 - Branch: test/issue-568-tablet-parity
 - Base SHA: f614c1646f113e1303286ca3cc759a87e6dd74d5
-- Head SHA: resolve from live branch ref
+- Reconstructed evidence head: 3578718bdcba1a24873ce23999ef7672a22193c5
 - PR: #570
 
 ## Skills used
@@ -13,7 +14,7 @@
 
 Purpose:
 
-Reconstruct Issue #568 / Draft PR #570 on the current post-#575 runtime and obtain fresh 10-route × Light/Dark Linux evidence without inheriting stale fingerprints.
+Reconstruct Issue #568 / Draft PR #570 on the current post-#575 runtime, collect fresh 10-route × Light/Dark Linux evidence and approve only fingerprints that were directly reviewed from the exact artifact.
 
 Instruction source:
 
@@ -30,56 +31,64 @@ Version or verification date:
 
 Inputs:
 
-- current main `f614c1646f113e1303286ca3cc759a87e6dd74d5`
-- current runtime-bearing SHA `e9314e08cfb517388b8427dcc5ba74df69c861f7`
-- #575 final developer head `37c209d5ceadeb153db17f0cc4a815536a5b6605`
-- #575 CI #3729, exact-main #3730, Stage/public #3583
-- post-#575 reconciliation PR #576 and exact-main CI #3732
-- existing #570 head `7f6efef0d3832e095900b571708f7788760d76e5`
+- current reconstruction base `f614c1646f113e1303286ca3cc759a87e6dd74d5`
+- runtime-bearing SHA `e9314e08cfb517388b8427dcc5ba74df69c861f7`
+- reconstructed PR head `3578718bdcba1a24873ce23999ef7672a22193c5`
+- CI #3733 / run `32040684330`
+- exact Linux Visual artifact `9291962719`
+- artifact digest `sha256:aefffe94dc106084f4c18eb5d54d9e1e2ad87a1d8ccf670ac1c818bd5b480033`
 - existing route-owned deterministic fixtures
 
 Files inspected:
 
 - live Issues #568/#574 and PRs #569/#570/#575/#576
-- `frontend/e2e/route-tablet-parity.spec.ts` on old #570 head
-- `frontend/playwright.visual.config.ts` on current main
-- PR #569 structural matrix diff
+- `frontend/e2e/route-tablet-parity.spec.ts`
+- `frontend/playwright.visual.config.ts`
+- #3733 Visual job failure diagnostics
+- all 20 exact Linux route/theme PNGs from artifact #9291962719
+- artifact failure metadata and PNG bytes/dimensions
 - `.agents/PROJECT_STATE.md`, `.agents/current/**`, repository templates and `docs/agent-harness.md`
 
 Actions performed:
 
 - Verified exact-SHA #575 Stage/public delivery before leaving runtime task ownership.
 - Delivered separate docs-only reconciliation PR #576 and confirmed exact-main lightweight CI #3732.
-- Compared PR #569 and PR #570 coverage. #570 already owns stronger semantic owner, RouteChrome, geometry and exact PNG/SHA evidence; #569 remains a duplicate structural path pending final reconciliation.
-- Selected current `main` as a fresh reconstruction base rather than rebasing stale visual history.
-- Reused only the #570 fail-closed route evidence spec whose 20 baselines remain `REVIEW_REQUIRED`.
-- Rebuilt visual configuration from current main so the #575 Home strict visual contract is preserved alongside `route-tablet-parity.spec.ts`.
-- Rebound `.agents/current/**` to the current #568 reconstruction.
+- Compared PR #569 and PR #570 coverage and selected #570 as the sole authoritative combined structural + content-addressed visual evidence path.
+- Force-reconstructed #570 as one commit directly from exact post-reconciliation main rather than rebasing stale visual history.
+- Preserved the independently delivered #575 `home-tablet-progress-visual.spec.ts` in `playwright.visual.config.ts`.
+- Ran immutable CI #3733 on reconstructed head.
+- Confirmed exactly 20 logical Visual failures and no additional structural/product failure; each test reached the deliberate `REVIEW_REQUIRED` hash gate.
+- Downloaded exact Linux artifact #9291962719 and manually inspected all ten routes in both Light/Dark before writing any fingerprint.
+- Verified artifact stability by parsing all retained failure records: every logical route/theme state reproduced the same height and SHA-256 three times.
+- Verified every approved SHA against actual PNG bytes and decoded PNG dimensions.
+- Prepared explicit content-addressed baselines with source run/head provenance.
+- Added an explicit `prefers-reduced-motion: reduce` runtime assertion to subsume the only useful unique structural assertion from duplicate Draft PR #569.
 
 Commands or procedures:
 
-Connector-first live GitHub reads; exact main/run verification; PR diff comparison; content-addressed git blob/tree/commit reconstruction; force-update only after constructing a commit directly from exact current main; no snapshot update mode.
+Connector-first live GitHub reads; exact main/run verification; PR diff comparison; content-addressed git blob/tree/commit reconstruction; exact workflow artifact download; direct image inspection; SHA-256 and PNG-dimension verification; no snapshot update mode.
 
 Artifacts produced:
 
-- reconstruction blobs for current task state and visual configuration
-- reused fail-closed route spec blob `c1bc173f89608e43da5abd2228796945f3f4dd40`
+- exact reviewed Linux evidence artifact `9291962719`
+- route evidence blob containing all 20 reviewed fingerprints and reduced-motion assertion
+- updated Agent Harness progress/execution evidence
 
 Result:
 
-Ready to create a single reconstructed commit from exact `main` and replace the stale #570 branch head. No consolidated visual fingerprint is approved yet.
+All twenty post-#575 tablet states are manually approved and stable. No new runtime defect was found. The next commit may replace `REVIEW_REQUIRED` only with these exact reviewed values, then a fresh full immutable-head CI must prove reproducibility.
 
 Failures:
 
-No new audit CI has run yet. The next Visual failure is expected only from intentional `REVIEW_REQUIRED` sentinels if runtime/ownership/geometry checks pass.
+CI #3733 is intentionally red at the review sentinel. This is expected fail-closed behavior. No structural route/owner/geometry/runtime-error failure was observed.
 
 Root cause:
 
-The previous #570 reconstruction was invalidated when the audit exposed the independent Home progress spacing defect and #575 changed current runtime. Post-fix evidence therefore requires another clean recapture.
+Earlier #568 audit iterations correctly exposed independent responsive runtime defects, making old visual approvals stale. The latest post-#575 reconstruction produces a clean matrix and therefore can advance to reviewed content-addressed approval.
 
 Fallback:
 
-Reconstruct the branch again from the then-current main and restore only the evidence contract. Never copy old hashes forward or modify independently validated runtime to make an evidence test pass.
+If the approved-head Visual rerun changes any reviewed fingerprint or produces a new structural failure, do not update hashes again. Re-download the exact new artifact, classify the difference, and split a runtime defect if the product changed unexpectedly.
 
 Limitations:
 
@@ -87,4 +96,4 @@ This slice covers only the 768×1024 Light/Dark matrix. Other #205 dimensions re
 
 Reusable lesson:
 
-Every runtime repair triggered by a fail-closed visual audit invalidates prior responsive approval evidence for the affected consolidated matrix; reconstruct from delivered runtime and review new Linux actuals directly.
+A fail-closed visual audit is complete only when exact artifact provenance, direct human visual review, repeated deterministic fingerprints and a clean post-approval immutable rerun all agree. Hash replacement alone is never sufficient evidence.
