@@ -31,17 +31,21 @@ const tabletProgressStylesheet = readFileSync(
   "utf8",
 );
 
-const REVIEW_REQUIRED: ReviewedBaseline = {
-  width: 768,
-  height: 0,
-  sha256: "REVIEW_REQUIRED",
-  sourceRun: 0,
-  sourceHeadSha: "REVIEW_REQUIRED",
-};
-
 const BASELINES: Record<Appearance, ReviewedBaseline> = {
-  light: REVIEW_REQUIRED,
-  dark: REVIEW_REQUIRED,
+  light: {
+    width: 768,
+    height: 1105,
+    sha256: "08d213c5fa280702abadc675476e8f4197c100ffd9011eb0d5a7f5772bab9d8e",
+    sourceRun: 32006920077,
+    sourceHeadSha: "495c7681a8c2e85ee6b5c454e40b84006faadeb0",
+  },
+  dark: {
+    width: 768,
+    height: 1105,
+    sha256: "d2ca7909b3a0f3480f28af24f9d734f0c641cc5f1ebc174108a408cbefb40bbc",
+    sourceRun: 32006920077,
+    sourceHeadSha: "495c7681a8c2e85ee6b5c454e40b84006faadeb0",
+  },
 };
 
 function progressRowsMarkup(): string {
@@ -241,7 +245,7 @@ async function captureEvidence(
 
   expect(
     actual,
-    `home.${appearance}: manually review exact Linux evidence before replacing REVIEW_REQUIRED`,
+    `home.${appearance}: Linux baseline from CI ${baseline.sourceRun} at ${baseline.sourceHeadSha}`,
   ).toEqual({
     width: baseline.width,
     height: baseline.height,
