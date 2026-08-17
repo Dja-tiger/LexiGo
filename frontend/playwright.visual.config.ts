@@ -17,6 +17,7 @@ export default defineConfig({
   testMatch: [
     "visual-regression.spec.ts",
     "home-browser-zoom.spec.ts",
+    "home-tablet-progress-visual.spec.ts",
     "learn-browser-zoom.spec.ts",
     "active-lesson-browser-zoom.spec.ts",
     "word-detail-visual.spec.ts",

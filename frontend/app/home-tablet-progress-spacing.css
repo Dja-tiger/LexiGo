@@ -1,0 +1,27 @@
+/*
+ * Issue #574 — authenticated Home progress rows at the tablet breakpoint.
+ *
+ * Compact Home already owns this row geometry through 760px. Desktop keeps
+ * its existing presentation from 1024px. This companion fills only the gap
+ * between those owners so adjacent label/value siblings never collapse into
+ * one visual token at medium widths.
+ */
+@media (min-width: 761px) and (max-width: 1023px) {
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list > div {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list > div > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-list > div > strong {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
