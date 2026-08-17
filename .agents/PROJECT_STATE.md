@@ -4,18 +4,20 @@
 
 - Last verified: 2026-08-17 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Latest runtime-bearing `main`: `263fe7457d741d184885810a779ee7d3b79593ab` from runtime PR #566.
-- Latest deployed runtime/Stage SHA: `263fe7457d741d184885810a779ee7d3b79593ab`.
-- PR #566 final developer-authored head `dc542fce338eb4643607b494c5394e66f7ed7391` passed full immutable-head CI #3692 / run `31974170664`.
-- PR #566 squash merge: `263fe7457d741d184885810a779ee7d3b79593ab`.
-- Exact-main runtime CI #3693 / run `31976365610` passed on the same SHA.
-- Deploy Stage #3545 / run `31976845035` passed on the same exact SHA, including deploy, public endpoints and public browser validation; Issue #12 reports the same image SHA.
-- Issue #565 is closed completed. The runtime change is limited to desktop First Use diagnostic presentation; onboarding API/state semantics, compact/mobile behavior and active design source were not changed.
+- Latest runtime-bearing `main`: `7ae4e2607e1434023be12c793875756f383b446f` from runtime PR #572.
+- Latest deployed runtime/Stage SHA: `7ae4e2607e1434023be12c793875756f383b446f`.
+- PR #572 final developer-authored head `5d16da5bcc282442540f6f4c04c3c697ba63a285` passed full immutable-head CI #3714 / run `31981364030`.
+- PR #572 squash merge: `7ae4e2607e1434023be12c793875756f383b446f`.
+- Exact-main runtime CI #3715 / run `31981958042` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
+- Deploy Stage #3567 / run `31982483549` passed on the same exact SHA, including deploy, public endpoint smoke and public browser UI verification.
+- Issue #571 is closed completed. The runtime repair is presentation-only for the existing 720–1099px tablet rail interval and does not change backend/API/state/design ownership.
 - First Use canonical parity/provenance PR #564 final developer-authored head `cc4818365de1c170a5c72ac99c274e8cad10dc77` passed full immutable-head CI #3697 / run `31977516977`.
 - PR #564 squash merge: `399a9b1df9104318d64106346ab797a6d3e437e0`.
 - Exact-main evidence CI #3698 / run `31978069651` passed completely on `399a9b1df9104318d64106346ab797a6d3e437e0`, including both UI shards, Visual regression, accessibility, performance, CSP/service-worker, backend and container builds.
-- Issue #563 is closed completed. PR #564 is test/evidence-only, so it does not require a Stage redeploy after merge.
+- Issue #563 is closed completed. PR #564 is test/evidence-only, so it did not require a Stage redeploy after merge.
 - Parent Issue #18 remains open in live GitHub and requires a separate acceptance audit; completion is not inferred from previously delivered child slices.
+- Issue #568 remains open. Draft PR #570 is the evidence-bearing 768×1024 Light/Dark audit that reproduced the tablet defects repaired by #571/#572 and must be reconstructed on the corrected runtime base before its fingerprints can be approved.
+- Draft PR #569 is a parallel structural-only tablet matrix and remains separate; do not merge duplicate evidence paths without reconciling ownership with #568/#570.
 - Live GitHub and live source are authoritative for current branch heads, open work, ownership, review state and CI. This file records immutable delivery SHAs rather than a self-referential `current main` value.
 
 ## Delivery contract
@@ -91,6 +93,25 @@
 - Evidence-only parity work must not become hidden redesign: functional defects are split into separate runtime Issues/PRs, then evidence is reconstructed on the repaired base.
 - Canonical viewport changes require fresh deterministic Linux evidence even when an older runtime fingerprint was already reviewed.
 
+## Tablet 768×1024 runtime repair / Issue #571
+
+- Issue #568 / Draft PR #570 first ran the consolidated 10-route Light/Dark tablet audit on head `8b656e7c05fac830a343ec1bf88aea9be0bfe148`.
+- CI #3704 / run `31979268275` produced exact Linux visual artifact `9271989171`, digest `sha256:2e6dd3d9f51fcd7e787865b8f61e7b9f27373ad841e85fd327f663a51d6f0aae`.
+- All 20 audit states passed route owner/navigation/overflow/runtime-error contracts before the intentional review hash gate; manual review blocked `/learn`, `/phrases` and `/profile` in both themes as genuine runtime defects.
+- Learn root cause: desktop outer `1fr + 360px` composer survived at 768 while the fixed tablet rail reduced effective content width.
+- Phrases root cause: fixed `250px + 1fr` catalog workspace survived at 768 and squeezed result cards.
+- Profile root cause: route-specific centered `.lx-main-content` margin overrode the shared RouteChrome tablet rail offset.
+- Issue #571 / PR #572 repaired only those presentation ownership failures. Backend/API/state, route components, OpenPencil/Figma sources and RouteChrome breakpoint topology were not changed.
+- Reviewed Learn replacement evidence came from CI #3707 / run `31980303255`, artifact `9272219823`, digest `sha256:b734f7374bbde5ebc0f04d3a88b04930a575119228b0cbcade28e82969f65575`: `768×1990`, SHA-256 `9fcb944e8be1cdd3ef56e52e28dc233e86acec3b6d9c383f4b1de723860b51b4`.
+- Reviewed Phrases/Profile evidence came from CI #3711 / run `31980866589`, artifact `9272371938`, digest `sha256:a8b6a2b92af4048608084c9563e719c1334d3d6f64b103d23b8cf41901941897`:
+  - Phrases Light `768×1593`: `16c8efb17d7c599d425266d9c4e5457d9ac2b02756a677e0246c8aaf6fe8643`.
+  - Phrases Dark `768×1593`: `c1a0ee9a5e970743b1d7ce149ffe44cfdef13f9cec481a34ddbcf2cc1b345663`.
+  - Profile Light `768×4229`: `b73fa564476dc1458c5096e02aac76667271df87e5fba8ce58e0f0fa7f111042`.
+  - Profile Dark `768×4229`: `d3975453cc920c779d363ffe7fd791f1e4fb10e306cf7cead870c8baefc8be6e`.
+- Final immutable-head CI #3714 / run `31981364030` passed on head `5d16da5bcc282442540f6f4c04c3c697ba63a285` with all reviewed fingerprints.
+- PR #572 squash merge `7ae4e2607e1434023be12c793875756f383b446f`; exact-main CI #3715 / run `31981958042` and exact-SHA Stage #3567 / run `31982483549` both passed.
+- The full #568 acceptance is not yet closed by this runtime repair. PR #570 must be reconstructed on `7ae4e260…`, rerun all 20 Light/Dark states, manually review the corrected Linux actuals and only then approve the consolidated audit fingerprints.
+
 ## AI-native design source-of-truth status
 
 - ZSeven OpenPencil v0.8.2 remains the day-to-day AI-first design editor; native Figma is retained as archived provenance/reference.
@@ -99,7 +120,7 @@
 - Active token/provenance path: `design/openpencil/LexiGo Design Tokens.json`, SHA-256 `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
 - Canonical imported/OpenPencil-native production mapping: `docs/figma/openpencil-screen-map.json`.
 - PR #556 delivered the approved 40-state First Use design matrix before runtime implementation.
-- Runtime PRs #558/#566 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
+- Runtime PRs #558/#566/#572 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
 
 ## Completed executable route/design milestones
 
@@ -122,24 +143,29 @@
 - Issue #18 selection-reason transparency: PR #561 / merge `faa62cc2ea023d8e52aecc5d97c8cabe97748daf` / exact-main CI #3678 / exact-SHA Stage/public browser success.
 - First Use desktop parity repair: Issue #565 / PR #566 / merge `263fe7457d741d184885810a779ee7d3b79593ab` / PR CI #3692 / exact-main CI #3693 / Stage #3545.
 - First Use canonical route-level parity/provenance: Issue #563 / PR #564 / merge `399a9b1df9104318d64106346ab797a6d3e437e0` / PR CI #3697 / exact-main CI #3698.
+- Tablet Learn/Phrases/Profile runtime repair: Issue #571 / PR #572 / merge `7ae4e2607e1434023be12c793875756f383b446f` / PR CI #3714 / exact-main CI #3715 / Stage #3567.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Latest deployed runtime is PR #566 on merge SHA `263fe7457d741d184885810a779ee7d3b79593ab`; exact-main CI #3693 and Stage/public validation #3545 are green on that exact SHA.
-- Latest evidence-only `main` addition is PR #564 on merge SHA `399a9b1df9104318d64106346ab797a6d3e437e0`; exact-main CI #3698 is green.
+- Latest deployed runtime is PR #572 on merge SHA `7ae4e2607e1434023be12c793875756f383b446f`; exact-main CI #3715 and Stage/public validation #3567 are green on that exact SHA.
+- The latest completed evidence-only route parity merge remains PR #564 on `399a9b1df9104318d64106346ab797a6d3e437e0`; its canonical First Use evidence remains valid because #572 did not alter First Use routes or design source.
 - Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. Route-specific canonical parity is no longer the blocking gap; remaining acceptance is the consolidated cross-route matrix: minimum supported mobile width, medium/tablet, desktop runtime 1440×1024, Light/Dark, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
+- Live umbrella #205 remains open. The active automated gap is Issue #568: reconstruct the consolidated medium/tablet 768×1024 Light/Dark matrix on corrected runtime `7ae4e260…` and approve all 20 states only after exact Linux review.
+- Draft PR #570 carries the strongest existing visual audit evidence but is based on pre-fix `157c6457…` and must be reconstructed rather than merged with stale hashes.
+- Draft PR #569 is a parallel structural-only matrix; resolve duplication before any merge so #205 has one authoritative consolidated tablet evidence path.
+- Remaining #205 acceptance after tablet includes minimum supported mobile width, desktop runtime 1440×1024, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
 - No runtime/backend/API/design/deploy change is part of the current Agent Docs reconciliation slice.
-- After this reconciliation resets `.agents/current/**`, the next atomic design-focused task should be selected from live #205 acceptance without claiming umbrella completion prematurely.
+- After this reconciliation resets `.agents/current/**`, the next atomic design-focused task is Issue #568 / Draft PR #570 reconstruction on the corrected runtime base; do not claim umbrella #205 completion prematurely.
 
 ## Remaining roadmap
 
-- #205: continue the final consolidated route-by-route parity audit. The next automatable gap is a medium/tablet 768×1024 Light/Dark structural matrix across all ten canonical routes, reusing existing route-owned fixtures and separating any discovered runtime defect into its own Issue/PR.
+- #568/#570 under #205: reconstruct the 10-route 768×1024 Light/Dark audit on `7ae4e260…`, rerun exact Linux visual evidence, manually review all 20 states, approve only corrected fingerprints, full immutable-head CI, merge and exact-main CI. Reconcile/close duplicate structural PR #569 only after confirming it contributes no unique acceptance coverage.
+- #205 after tablet: continue the final consolidated matrix with minimum mobile, 1440×1024 runtime, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
