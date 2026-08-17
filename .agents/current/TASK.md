@@ -19,7 +19,10 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 - `frontend/app/profile-tablet-layout.css`: route-scoped companion layout that restores the tablet RouteChrome content offset after Profile's centered-content rule.
 - `frontend/app/layout.tsx`: import each companion immediately after its route owner.
 - Extend `frontend/e2e/adaptive-layout-cascade.spec.ts` with fail-closed 768px computed-layout contracts for Learn, Phrases and Profile.
-- Manually inspect Linux 768×1024 Light/Dark actuals for the three repaired routes before approving any changed fingerprint.
+- `frontend/e2e/visual-regression.spec.ts`: update only the manually reviewed existing Learn medium fingerprint produced by exact Linux CI #3707.
+- `frontend/e2e/tablet-layout-visual.spec.ts`: add fail-closed 768×1024 Light/Dark real-browser evidence for the two routes that had no existing medium visual baseline (`/phrases`, `/profile`).
+- `frontend/playwright.visual.config.ts`: collect the targeted tablet visual spec in the existing visual suite; viewport semantics remain unchanged.
+- Manually inspect exact Linux actuals for every changed/added fingerprint before approval.
 
 ## Non-goals
 
@@ -38,7 +41,9 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 - `frontend/app/profile-tablet-layout.css`
 - `frontend/app/layout.tsx`
 - `frontend/e2e/adaptive-layout-cascade.spec.ts`
-- existing route-owned runtime visual test only if an affected reviewed fingerprint must change
+- `frontend/e2e/visual-regression.spec.ts`
+- `frontend/e2e/tablet-layout-visual.spec.ts`
+- `frontend/playwright.visual.config.ts`
 - `.agents/current/**`
 
 ## Prohibited paths
@@ -62,6 +67,7 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 - Compact/mobile <=719px and desktop >=1100px contracts remain stable; the existing 720–767 feature-specific compact behavior is not broadened accidentally.
 - Light/Dark and reduced-motion semantics remain token-owned.
 - Runtime evidence must be manually reviewed before hash approval.
+- `--update-snapshots` is not an approval mechanism.
 
 ## Acceptance criteria
 
@@ -71,6 +77,7 @@ Repair the three genuine 768px production presentation defects reproduced by Iss
 - No horizontal overflow or clipped route/focus geometry for all three routes.
 - Existing compact/mobile and desktop presentation remains stable.
 - Computed-cascade tests fail closed on the exact breakpoint/offset regression.
+- Exact Linux visual evidence is manually reviewed before Learn/Phrases/Profile medium fingerprints are approved.
 - Full immutable-head CI passes.
 - After merge, exact-main CI and exact-SHA Stage/public validation pass.
 
