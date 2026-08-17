@@ -84,6 +84,45 @@ async function expectDictionaryRouteOwner(
   await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", appearance);
 }
 
+async function expectCompactMaterialsGeometry(page: Page): Promise<void> {
+  const geometry = await page.locator(".lx-catalog-kind-navigation").evaluate((navigation) => {
+    const root = document.documentElement;
+    const buttons = Array.from(navigation.querySelectorAll<HTMLButtonElement>("button"));
+    const boxes = buttons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      const style = window.getComputedStyle(button);
+      return {
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        whiteSpace: style.whiteSpace,
+        lineHeight: Number.parseFloat(style.lineHeight),
+        scrollHeight: button.scrollHeight,
+      };
+    });
+    return {
+      viewportWidth: window.innerWidth,
+      clientWidth: root.clientWidth,
+      documentWidth: Math.max(root.scrollWidth, document.body.scrollWidth),
+      boxes,
+    };
+  });
+
+  expect(geometry.viewportWidth).toBe(390);
+  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(geometry.boxes).toHaveLength(2);
+  for (const box of geometry.boxes) {
+    expect(box.width).toBeGreaterThan(0);
+    expect(box.height).toBeGreaterThanOrEqual(48);
+    expect(box.left).toBeGreaterThanOrEqual(-1);
+    expect(box.right).toBeLessThanOrEqual(geometry.clientWidth + 1);
+    expect(box.whiteSpace).toBe("nowrap");
+    expect(box.scrollHeight).toBeLessThanOrEqual(box.height + 1);
+  }
+  expect(Math.abs(geometry.boxes[0].height - geometry.boxes[1].height)).toBeLessThanOrEqual(1);
+}
+
 async function expectCanonicalDictionaryGeometry(
   page: Page,
   canonicalCase: CanonicalDictionaryCase,
@@ -166,7 +205,9 @@ async function expectCanonicalDictionaryGeometry(
 
 test.describe.configure({ timeout: 90_000 });
 
-test("cold dictionary island hands off without restarting the session bootstrap", async ({ context, page }) => {
+test("dictionary island stays canonical across Home, catalog-kind switches and Back/Forward", async ({ context, page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installAppearance(page, "light");
   await installQualityGateAPI(context);
   const runtimeErrors = captureRuntimeErrors(page);
   let refreshRequests = 0;
@@ -175,10 +216,8 @@ test("cold dictionary island hands off without restarting the session bootstrap"
   });
 
   await page.goto("/dictionary");
-
-  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "Результаты словаря" }).getByRole("listitem")).toHaveCount(3);
+  await expectDictionaryRouteOwner(page, "light");
+  await expectCompactMaterialsGeometry(page);
   await expect.poll(() => refreshRequests).toBe(1);
 
   const routeNavigation = page.locator(".lx-route-nav:visible");
@@ -191,15 +230,31 @@ test("cold dictionary island hands off without restarting the session bootstrap"
   })).toBeVisible();
 
   await routeNavigation.getByRole("link", { name: "Словарь", exact: true }).click();
-  await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
+  await expectDictionaryRouteOwner(page, "light");
+  await expectCompactMaterialsGeometry(page);
 
+  const materialNavigation = page.locator(".lx-catalog-kind-navigation");
+  await materialNavigation.getByRole("button", { name: "Рабочие фразы", exact: true }).click();
+  await expect(page).toHaveURL(/\/phrases$/);
+  await expect(page.locator('[data-route-client-island="phrases"]')).toHaveCount(1);
+  await expectCompactMaterialsGeometry(page);
+
+  await page.locator(".lx-catalog-kind-navigation").getByRole("button", { name: "Слова и термины", exact: true }).click();
+  await expectDictionaryRouteOwner(page, "light");
+  await expectCompactMaterialsGeometry(page);
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/phrases$/);
+  await expect(page.locator('[data-route-client-island="phrases"]')).toHaveCount(1);
+  await expectCompactMaterialsGeometry(page);
+  await page.goBack();
+  await expectDictionaryRouteOwner(page, "light");
+  await expectCompactMaterialsGeometry(page);
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
   await page.goForward();
-  await expect(page).toHaveURL(/\/dictionary$/);
-  await expect(page.locator('[data-route-client-island="dictionary"]')).toHaveCount(0);
+  await expectDictionaryRouteOwner(page, "light");
+  await expectCompactMaterialsGeometry(page);
 
   expect(refreshRequests).toBe(1);
   expect(runtimeErrors).toEqual([]);
