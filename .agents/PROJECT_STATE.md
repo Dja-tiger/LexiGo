@@ -4,8 +4,12 @@
 
 - Last verified: 2026-08-17 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Latest runtime-bearing `main`: `e9314e08cfb517388b8427dcc5ba74df69c861f7` from runtime PR #575.
-- Latest deployed runtime/Stage SHA: `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
+- Latest runtime-bearing `main`: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` from runtime PR #579.
+- Latest deployed runtime/Stage SHA: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`.
+- PR #579 final developer-authored head `bd4d3dc4c30d4343507fda1b68f3b14b29b8edb5` passed full immutable-head CI #3742 / run `32054788022`.
+- PR #579 squash merge: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; Issue #577 is closed completed.
+- Exact-main runtime CI #3743 / run `32062835926` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Lesson completion, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
+- Deploy Stage #3598 / run `32063824290` passed on the same exact SHA. Deployment used image tag `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; public frontend/API smoke returned HTTP 200 and public Chromium/iOS WebKit verification passed 12/12.
 - PR #575 final developer-authored head `37c209d5ceadeb153db17f0cc4a815536a5b6605` passed full immutable-head CI #3729 / run `32024776340`; one unrelated pre-existing new-tab UI flake was classified from diagnostics and passed a controlled same-head job retry without code changes.
 - PR #575 squash merge: `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
 - Exact-main runtime CI #3730 / run `32026831779` passed completely on the same SHA, including backend integration/unit/security, frontend core, both UI shards, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
@@ -141,7 +145,27 @@
 - Structural duplicate PR #569 was closed without merge after its explicit reduced-motion assertion was incorporated into #570.
 - PR #570 squash merge is `67d8368502389f83ebb2ba5754f4997ed868dcef`; Issue #568 is closed completed.
 - Exact-main CI #3735 / run `32044133961` passed on that SHA. Attempt 1 had one infrastructure-only Backend integration setup failure while downloading `actions/setup-go@v7` from GitHub codeload (`429`, `503`, `429`) before checkout/tests; a same-SHA job rerun completed setup, integration race tests and all downstream container gates successfully without code changes.
-- #570 is strictly test/evidence-only, so no Stage redeploy was required; the latest deployed runtime remains #575 / `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
+- #570 is strictly test/evidence-only, so no Stage redeploy was required; at that point the latest deployed runtime remained #575 / `e9314e08cfb517388b8427dcc5ba74df69c861f7`.
+
+## Compact route-transition runtime repair / Issue #577
+
+- Issue #577 / PR #579 removed transition-dependent stale legacy presentation ownership exposed after the consolidated tablet audit.
+- Primary Home → Dictionary navigation now emits canonical `dictionary` ownership instead of compatibility `product`; Dictionary ↔ Phrases and real Back/Forward retain canonical route owners.
+- Home → Learn, Back/Forward and reload were explicitly proven canonical, so no speculative bootstrap canonicalization was added.
+- Compact Materials at 390×844 uses equal minimum 48px targets, one-line labels and no document x-overflow.
+- Shared `CalendarReminderRouteEntry` remains one owner/geometry and uses semantic `--ak-*` appearance tokens instead of legacy dark/blue hardcodes.
+- Exact transition review artifact `9293292461` from CI #3739 / run `32046365625`, head `43e80f5b1b0d6c778f53147ba6a115fefc94df0b`, digest `sha256:fedbe32158ef6199005c1f11b834a2974f5bbef4291d4738f4b7069d1e1e2483`, was manually reviewed before approval.
+- Reviewed transition fingerprints:
+  - Dictionary Light `390×1197`: `4487459cea3e1347768e381ce393aeeecfb3f1e22b47e01554810cb6508b556d`.
+  - Dictionary Dark `390×1197`: `9104709d0b7f742ae22f18bacfe605a7658eb0db0b539e93b597ff8779cd855c`.
+  - Phrases Light `390×1616`: `91cc3fabe4cc7369e1c67992a28d4199b0a68028e354098fe17a78f5ddf93318`.
+  - Phrases Dark `390×1616`: `066a3ba05e676501a6025214567bdbdd901c8b820e8cb632003e5fc44a00b6b9`.
+  - Learn Light `390×1212`: `95e13c8164fea6ff0ba9ab0ae6032e4d01d4e9108d6fde79c3edef89fdff3169`.
+  - Learn Dark `390×1212`: `012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5`.
+- CI #3740 / run `32048818693` on approval head `be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25` exposed only stale dependent contracts for the intentionally changed shared Reminder region. Artifact `9294131591`, digest `sha256:df25e2d160218fb355a3a5b86a0e1d4883dd3a2bdda5bf335e64cdbb876179b7`, was manually reviewed; against prior tablet artifact `9291962719`, every changed pixel in all 14 affected 768px states was confined to `x=541..646, y=0..102`, with all pixels below identical.
+- Evidence-only head `d31419799272e5fbb697980eb6c976f7aa05b6b7` reconciled only reviewed dependent visual contracts. CI #3741 then exposed one retry-stable Profile compact-Light antialias variant; its four differing pixels were confined to `x=272..321, y=7..21` with maximum RGB delta 1 LSB, so final head `bd4d3dc4c30d4343507fda1b68f3b14b29b8edb5` retained both exact reviewed hashes without numerical tolerance or runtime changes.
+- Full immutable-head CI #3742 / run `32054788022` passed; PR #579 squash-merged as `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` and closed #577.
+- Exact-main CI #3743 / run `32062835926` passed completely, including both container builds. Exact-SHA Stage #3598 / run `32063824290` deployed web/API images tagged `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; public smoke passed and public Chromium/iOS WebKit verification passed 12/12.
 
 ## AI-native design source-of-truth status
 
@@ -151,7 +175,7 @@
 - Active token/provenance path: `design/openpencil/LexiGo Design Tokens.json`, SHA-256 `e603d86f3d4ef470c39fd72c31433e6a124bb9371da6f333567cd3aa796ae05c`.
 - Canonical imported/OpenPencil-native production mapping: `docs/figma/openpencil-screen-map.json`.
 - PR #556 delivered the approved 40-state First Use design matrix before runtime implementation.
-- Runtime PRs #558/#566/#572/#575 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
+- Runtime PRs #558/#566/#572/#575/#579 did not modify backend schema, OpenPencil/Figma sources or deploy topology.
 
 ## Completed executable route/design milestones
 
@@ -177,26 +201,26 @@
 - Tablet Learn/Phrases/Profile runtime repair: Issue #571 / PR #572 / merge `7ae4e2607e1434023be12c793875756f383b446f` / PR CI #3714 / exact-main CI #3715 / Stage #3567.
 - Tablet Home progress spacing repair: Issue #574 / PR #575 / merge `e9314e08cfb517388b8427dcc5ba74df69c861f7` / PR CI #3729 / exact-main CI #3730 / Stage #3583.
 - Consolidated tablet 768×1024 parity: Issue #568 / PR #570 / merge `67d8368502389f83ebb2ba5754f4997ed868dcef` / reviewed Linux artifact `9291962719` / PR CI #3734 / exact-main CI #3735.
+- Compact route-transition runtime repair: Issue #577 / PR #579 / merge `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` / PR CI #3742 / exact-main CI #3743 / Stage #3598.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
-- Latest deployed runtime is PR #575 on merge SHA `e9314e08cfb517388b8427dcc5ba74df69c861f7`; exact-main CI #3730 and exact-SHA Stage/public validation #3583 are green on that exact SHA.
-- Latest completed evidence-only route parity merge is PR #570 on `67d8368502389f83ebb2ba5754f4997ed868dcef`; exact-main CI #3735 is green on that exact SHA.
-- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use, and the consolidated 768×1024 Light/Dark matrix is closed completed.
+- Latest deployed runtime is PR #579 on merge SHA `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`; exact-main CI #3743 and exact-SHA Stage/public validation #3598 are green on that exact SHA.
+- Latest completed evidence-only route parity merge before #579 is PR #570 on `67d8368502389f83ebb2ba5754f4997ed868dcef`; exact-main CI #3735 is green on that exact SHA.
+- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use; the consolidated 768×1024 Light/Dark matrix and compact transition repair are closed completed.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. The next high-priority runtime/design gap is Issue #577: remove transition-dependent stale legacy owners for Home → Dictionary/Learn, repair compact Materials tabs and align the shared Reminder presentation using repo-owned OpenPencil/Linux evidence.
-- Remaining #205 acceptance includes minimum supported mobile width, desktop runtime 1440×1024, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
+- Live umbrella #205 remains open. The transition-dependent runtime gap #577 is closed; the next atomic design/runtime work must target genuinely unproven final acceptance instead of duplicating delivered route repairs.
+- Remaining #205 acceptance includes minimum supported mobile width, complete desktop runtime 1440×1024 coverage, 200% text zoom/reflow, reduced motion, keyboard-only, loading/empty/error/offline where applicable, direct entry/reload/Back-Forward, final Stage/browser and manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
 - No runtime/backend/API/design/deploy change is part of this Agent Docs reconciliation slice.
-- After this reconciliation resets `.agents/current/**`, the next atomic runtime/design task is Issue #577 under umbrella #205; do not claim umbrella #205 completion prematurely.
+- After this reconciliation resets `.agents/current/**`, select one atomic child slice under #205 from live coverage gaps; do not claim umbrella #205 completion prematurely.
 
 ## Remaining roadmap
 
-- #577 under #205: remove transition-dependent legacy shell ownership for Home → Dictionary/Learn, keep Materials tabs compact/stable, align the shared Reminder owner, and prove direct/reload/client transition/Back-Forward in Chromium and iOS/WebKit with transition-derived visual evidence.
-- #205 after #577: continue the final consolidated matrix with minimum mobile, 1440×1024 runtime, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence.
+- #205: continue the final consolidated matrix with minimum mobile, complete 1440×1024 runtime coverage, 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence; split new work into atomic child Issues rather than reopening delivered parity slices.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
