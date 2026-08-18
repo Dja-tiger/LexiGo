@@ -1,25 +1,38 @@
 /*
  * Issue #583 — compact route continuity.
  *
- * The compact shell already owns the safe-area-aware inline inset on `.lx-app`
- * through adaptive-navigation.css. Phrases previously added a second 24px
- * catalog inset while Dictionary consumed only the shared shell inset, so the
- * same Materials control changed width when switching routes. Keep one compact
- * outer owner and remove only the redundant Phrases catalog inset.
+ * The reviewed compact transition contract stops at exactly 390px. Phrases has
+ * a legacy route-owned mobile inset at <=767px: it clears the shared `.lx-app`
+ * padding and replaces it with 24px on `.lx-phrases-catalog`. Dictionary keeps
+ * the shared compact shell inset from adaptive-navigation.css instead. That
+ * difference becomes user-visible on the real 430px iPhone-class viewport.
  *
- * The routed Reminder also belongs to the full <=719px compact header. Its text
- * was visually hidden only at <=390px, which made the same control become a
- * wide legacy-looking pill at 391–719px. Preserve the accessible label while
- * keeping the painted compact trigger icon-only for the whole compact range.
+ * Preserve the immutable 390px contract, but from 391px through the compact
+ * header range restore the Phrases app to the same safe-area-aware shell inset
+ * as Dictionary and remove the redundant catalog inset. No detail-route geometry
+ * is touched.
+ *
+ * The routed Reminder belongs to the full <=719px compact header. Its text was
+ * visually hidden only at <=390px, which made the same control become a wide
+ * legacy-looking pill at 391–719px. Preserve the accessible label while keeping
+ * the painted compact trigger icon-only for the whole compact range.
  */
-@media (max-width: 719px) {
+@media (min-width: 391px) and (max-width: 719px) {
+  .lx-routed-app[data-route-path="/phrases"]
+    .lx-app[data-route-client-island="phrases"] {
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-left: max(14px, env(safe-area-inset-left));
+  }
+
   .lx-routed-app[data-route-path="/phrases"]
     .lx-app[data-route-client-island="phrases"]
     .lx-phrases-catalog {
     padding-right: 0;
     padding-left: 0;
   }
+}
 
+@media (max-width: 719px) {
   .lx-route-reminder-entry > summary > span {
     position: absolute;
     width: 1px;
