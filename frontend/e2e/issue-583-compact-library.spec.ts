@@ -66,12 +66,48 @@ type Reviewed430Baseline = Readonly<{
 }>;
 
 const BASELINES_430: Record<`${EvidenceRoute}.${Appearance}`, Reviewed430Baseline> = {
-  "dictionary.light": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "dictionary.dark": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "phrases.light": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "phrases.dark": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "learn.light": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
-  "learn.dark": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
+  "dictionary.light": {
+    width: 430,
+    height: 1200,
+    sha256: "f08cfb773a0b60f300ed2054f6b5605b84fee8174990c844f1eca4bb889e074f",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
+  "dictionary.dark": {
+    width: 430,
+    height: 1200,
+    sha256: "2bf51ccafbedac172ba22230c08f5e9fb2e50d21a921714c9c7aa9855038db6c",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
+  "phrases.light": {
+    width: 430,
+    height: 1505,
+    sha256: "d08d940276584f80f82ac1d3fc46fd5f707041ae8f752d0cfc6db2112f3e9334",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
+  "phrases.dark": {
+    width: 430,
+    height: 1505,
+    sha256: "ec34bfc76b33bd55e08a9e2af62eeece5c4899ee3b25358bee36bd16007404ed",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
+  "learn.light": {
+    width: 430,
+    height: 1575,
+    sha256: "84e41f0c3f35a564df1ef9a821aee3ab58b842b62b9438788cff15ef478f510a",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
+  "learn.dark": {
+    width: 430,
+    height: 1575,
+    sha256: "cfcedd118c241757efc64efdb8e3215f136cad749e99055a79b71f332846bd53",
+    sourceRun: 32158725407,
+    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+  },
 };
 
 function expectClose(actual: number, expected: number, tolerance = 1): void {
