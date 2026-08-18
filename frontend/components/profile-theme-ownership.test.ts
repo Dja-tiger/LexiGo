@@ -64,8 +64,9 @@ describe("Issue #593 Profile resolved-theme ownership", () => {
     expect(browserProof).toContain("width: 430");
     expect(browserProof).toContain("height: 932");
     expect(browserProof).toContain('localStorage.setItem("lexigo.appearance.v1", "auto")');
-    expect(browserProof).toContain('colorScheme: "light"');
-    expect(browserProof).toContain('colorScheme: "dark"');
+    expect(browserProof).toContain('page.emulateMedia({ colorScheme, reducedMotion: "reduce" })');
+    expect(browserProof).toContain('await setSystemAppearance(page, "light");');
+    expect(browserProof).toContain('await setSystemAppearance(page, "dark");');
     expect(browserProof).toContain("data-lexigo-resolved-appearance");
     expect(browserProof).toContain("backgroundImage");
     expect(browserProof).toContain("page.goBack()");
