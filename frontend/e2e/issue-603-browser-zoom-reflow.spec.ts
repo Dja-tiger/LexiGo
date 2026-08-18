@@ -308,7 +308,10 @@ async function captureEvidence(
     caret: "hide",
     fullPage: true,
     mask: await profileButton.count() > 0 ? [profileButton] : [],
-    scale: "css",
+    // Browser-owned zoom changes the CSS-to-device raster scale. Preserve device
+    // pixels for human evidence; `scale: "css"` collapses that raster and produced
+    // a half-width/cropped artifact even while CSS geometry was fully contained.
+    scale: "device",
   });
   const actual = {
     width: screenshot.readUInt32BE(16),
@@ -327,6 +330,7 @@ async function captureEvidence(
       sourceViewport: { width: 1440, height: 900 },
       browserZoomFactor: 2,
       effectiveWidth: 720,
+      evidenceScale: "device",
       actual,
       approved: baseline,
     }, null, 2)),
