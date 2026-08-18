@@ -1,0 +1,7 @@
+/* Issue #590: minimum-width Phrase Detail readable-width ownership. */
+
+@media (max-width: 359px) {
+  .lx-app[data-route-client-island="phrases"] .lx-phrase-detail-layout {
+    padding: 0;
+  }
+}

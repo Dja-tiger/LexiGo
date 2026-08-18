@@ -19,6 +19,7 @@ import "./phrases-tablet-layout.css";
 import "./phrases-search-clear-touch-targets.css";
 import "./phrases-catalog-touch-targets.css";
 import "./phrase-detail-touch-targets.css";
+import "./phrase-detail-min-width.css";
 import "./catalog-enhancements.css";
 import "./calendar-reminders.css";
 import "./error-boundary.css";

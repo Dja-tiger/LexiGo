@@ -6,6 +6,7 @@ const layoutUrl = new URL("../app/layout.tsx", import.meta.url);
 const sharedCatalogCssUrl = new URL("../app/catalog-enhancements.css", import.meta.url);
 const premiumCssUrl = new URL("../app/premium-ui.css", import.meta.url);
 const phrasesCssUrl = new URL("../app/phrases.css", import.meta.url);
+const phraseDetailMinWidthCssUrl = new URL("../app/phrase-detail-min-width.css", import.meta.url);
 const compatibilityCssUrl = new URL("../app/phrases-compat.css", import.meta.url);
 const overlapManifestUrl = new URL("../app/global-feature-style-overlap-manifest.json", import.meta.url);
 const phrasesCatalogUrl = new URL("./phrases-catalog.tsx", import.meta.url);
@@ -15,6 +16,7 @@ const layout = readFileSync(layoutUrl, "utf8");
 const sharedCatalogCss = readFileSync(sharedCatalogCssUrl, "utf8");
 const premiumCss = readFileSync(premiumCssUrl, "utf8");
 const phrasesCss = readFileSync(phrasesCssUrl, "utf8");
+const phraseDetailMinWidthCss = readFileSync(phraseDetailMinWidthCssUrl, "utf8");
 const phrasesCatalog = readFileSync(phrasesCatalogUrl, "utf8");
 const packageJson = JSON.parse(readFileSync(packageUrl, "utf8")) as {
   scripts: Record<string, string>;
@@ -163,6 +165,30 @@ describe("Phrases CSS ownership", () => {
     expect(selectorSpecificity('.lx-app[data-route-client-island="phrases"] .lx-catalog-sort select'))
       .toEqual([0, 3, 1]);
     expect(selectorSpecificity(".lx-catalog-sort select")).toEqual([0, 1, 1]);
+  });
+
+  it("isolates the minimum-width Phrase Detail inset repair from canonical 390px", () => {
+    const legacySelector = ".lx-detail-card";
+    const routeSelector = '.lx-app[data-route-client-island="phrases"] .lx-phrase-detail-layout';
+    const minWidthImport = 'import "./phrase-detail-min-width.css";';
+
+    expect(premiumCss).toContain(
+      ".lx-detail-card { border-radius: 28px; padding: 30px; }",
+    );
+    expect(layout).toContain(minWidthImport);
+    expect(occurrences(layout, minWidthImport)).toBe(1);
+    expect(layout.indexOf('import "./phrase-detail-touch-targets.css";'))
+      .toBeLessThan(layout.indexOf(minWidthImport));
+    expect(layout.indexOf(minWidthImport))
+      .toBeLessThan(layout.indexOf('import "./catalog-enhancements.css";'));
+    expect(phraseDetailMinWidthCss).toContain("@media (max-width: 359px)");
+    expect(phraseDetailMinWidthCss).not.toContain("@media (max-width: 767px)");
+    expect(occurrences(phraseDetailMinWidthCss, `${routeSelector} {`)).toBe(1);
+    expect(phraseDetailMinWidthCss).toContain(`${routeSelector} {\n    padding: 0;\n  }`);
+    expect(selectorSpecificity(legacySelector)).toEqual([0, 1, 0]);
+    expect(selectorSpecificity(routeSelector)).toEqual([0, 3, 0]);
+    expect(compareSpecificity(selectorSpecificity(routeSelector), selectorSpecificity(legacySelector)))
+      .toBeGreaterThan(0);
   });
 
   it("preserves exactly four reviewed Phrases grid fallback conflicts", () => {
