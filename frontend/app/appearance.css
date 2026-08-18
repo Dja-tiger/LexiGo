@@ -120,6 +120,14 @@ html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body
   background: var(--ak-color-canvas);
 }
 
+html[data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]) .lx-legal-footer {
+  color: var(--ak-color-text-muted);
+}
+
+html[data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]) .lx-legal-footer a:hover {
+  color: var(--ak-color-text-main);
+}
+
 html[data-lexigo-appearance="light"] input,
 html[data-lexigo-appearance="light"] select,
 html[data-lexigo-appearance="light"] textarea,
