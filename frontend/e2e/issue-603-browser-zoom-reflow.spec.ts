@@ -42,8 +42,15 @@ type BrowserZoomResult = Readonly<{
 }>;
 
 type BrowserLayoutMetrics = Readonly<{
-  cssLayoutViewport: { clientWidth: number; clientHeight: number };
+  cssLayoutViewport: { pageX: number; pageY: number; clientWidth: number; clientHeight: number };
   cssVisualViewport: { clientWidth: number; clientHeight: number; scale: number; zoom: number };
+  cssContentSize: { x: number; y: number; width: number; height: number };
+}>;
+
+type BrowserZoomEvidenceCapture = Readonly<{
+  screenshot: Buffer;
+  metrics: BrowserLayoutMetrics;
+  clip: { x: number; y: number; width: number; height: number; scale: number };
 }>;
 
 type ReviewedBaseline = Readonly<{
@@ -277,7 +284,7 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
       owner: box(owner),
       boxOffenders: boxOffenders.slice(0, 30),
       textOffenders: textOffenders.slice(0, 30),
-      navigation: Array.from(document.querySelectorAll<HTMLElement>("[data-route-navigation]"))
+      navigation: Array.from(document.querySelectorAll<HTMLElement>>("[data-route-navigation]"))
         .filter(rendered)
         .map((element) => element.dataset.routeNavigation ?? ""),
     };
@@ -294,30 +301,59 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
   expect(result.textOffenders, `${contract.key}: visible text ranges must not be clipped by route/container owners`).toEqual([]);
 }
 
+async function captureBrowserZoomEvidence(cdp: CDPSession): Promise<BrowserZoomEvidenceCapture> {
+  const metrics = await readLayoutMetrics(cdp);
+  const zoom = metrics.cssVisualViewport.zoom;
+  expect(zoom, "Issue #603 evidence must be captured while browser zoom is still 2x").toBeCloseTo(2, 4);
+
+  // CDP Page.Viewport clip coordinates are device-independent pixels (DIP), while
+  // cssLayoutViewport/cssContentSize are CSS pixels. Browser zoom reports the
+  // CSS→DIP ratio through cssVisualViewport.zoom. Convert the full CSS surface to
+  // DIP, then normalize the encoded raster back to one output pixel per CSS pixel.
+  // Without this conversion Chromium captures only 720 DIP = 360 CSS px at 2x zoom.
+  const clip = {
+    x: metrics.cssContentSize.x * zoom,
+    y: metrics.cssContentSize.y * zoom,
+    width: metrics.cssLayoutViewport.clientWidth * zoom,
+    height: metrics.cssContentSize.height * zoom,
+    scale: 1 / zoom,
+  };
+  const captured = await cdp.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: true,
+    clip,
+  }) as { data: string };
+
+  return {
+    screenshot: Buffer.from(captured.data, "base64"),
+    metrics,
+    clip,
+  };
+}
+
 async function captureEvidence(
-  page: Page,
+  cdp: CDPSession,
   testInfo: TestInfo,
   contract: RouteContract,
   appearance: ExplicitAppearance,
 ): Promise<string | null> {
   const key = `${contract.key}.${appearance}` as const;
   const baseline = BASELINES[key];
-  const profileButton = page.getByRole("button", { name: "Открыть профиль" });
-  const screenshot = await page.screenshot({
-    animations: "disabled",
-    caret: "hide",
-    fullPage: true,
-    mask: await profileButton.count() > 0 ? [profileButton] : [],
-    // Browser-owned zoom changes the CSS-to-device raster scale. Preserve device
-    // pixels for human evidence; `scale: "css"` collapses that raster and produced
-    // a half-width/cropped artifact even while CSS geometry was fully contained.
-    scale: "device",
-  });
+  const { screenshot, metrics, clip } = await captureBrowserZoomEvidence(cdp);
   const actual = {
     width: screenshot.readUInt32BE(16),
     height: screenshot.readUInt32BE(20),
     sha256: createHash("sha256").update(screenshot).digest("hex"),
   };
+
+  expect(actual.width, `${key}: normalized evidence width must equal the exact CSS layout viewport`).toBe(
+    metrics.cssLayoutViewport.clientWidth,
+  );
+  expect(actual.height, `${key}: normalized evidence height must equal the CSS content height`).toBeCloseTo(
+    metrics.cssContentSize.height,
+    0,
+  );
 
   await testInfo.attach(`issue-603-720-${contract.key}-${appearance}.png`, { body: screenshot, contentType: "image/png" });
   await testInfo.attach(`issue-603-720-${contract.key}-${appearance}.json`, {
@@ -328,9 +364,11 @@ async function captureEvidence(
       route: contract.path,
       appearance,
       sourceViewport: { width: 1440, height: 900 },
-      browserZoomFactor: 2,
-      effectiveWidth: 720,
-      evidenceScale: "device",
+      browserZoomFactor: metrics.cssVisualViewport.zoom,
+      effectiveWidth: metrics.cssLayoutViewport.clientWidth,
+      evidenceCapture: "cdp-normalized-dip",
+      evidenceClip: clip,
+      cssContentSize: metrics.cssContentSize,
       actual,
       approved: baseline,
     }, null, 2)),
@@ -399,7 +437,7 @@ async function runAppearance(appearance: ExplicitAppearance, testInfo: TestInfo)
 
       await expectNoInternalInlineClipping(page, contract);
       expect(runtimeErrors, `${contract.key}.${appearance}: runtime errors`).toEqual([]);
-      const review = await captureEvidence(page, testInfo, contract, appearance);
+      const review = await captureEvidence(cdp, testInfo, contract, appearance);
       if (review) reviewRequired.push(review);
 
       await setBrowserZoom(worker, targetURL, 1);
