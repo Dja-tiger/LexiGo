@@ -154,14 +154,15 @@ async function readLibraryGeometry(page: Page, route: "dictionary" | "phrases"):
       };
     };
 
-    const resolveColorToken = (name: string) => {
-      const probe = document.createElement("span");
-      probe.style.color = `var(${name})`;
-      document.body.appendChild(probe);
-      const color = getComputedStyle(probe).color;
-      probe.remove();
-      return color;
+    const colorContext = document.createElement("canvas").getContext("2d");
+    if (!colorContext) throw new Error("Canvas color normalization is unavailable");
+    const rootStyle = getComputedStyle(root);
+    const normalizeColor = (value: string) => {
+      colorContext.fillStyle = "#000000";
+      colorContext.fillStyle = value.trim();
+      return colorContext.fillStyle;
     };
+    const resolveColorToken = (name: string) => normalizeColor(rootStyle.getPropertyValue(name));
 
     const appStyle = getComputedStyle(app);
     const reminderStyle = getComputedStyle(reminder);
@@ -199,9 +200,9 @@ async function readLibraryGeometry(page: Page, route: "dictionary" | "phrases"):
         whiteSpace: labelStyle.whiteSpace,
       },
       reminderPaint: {
-        background: reminderStyle.backgroundColor,
-        color: reminderStyle.color,
-        iconColor: getComputedStyle(reminderIcon).color,
+        background: normalizeColor(reminderStyle.backgroundColor),
+        color: normalizeColor(reminderStyle.color),
+        iconColor: normalizeColor(getComputedStyle(reminderIcon).color),
         surface: resolveColorToken("--ak-color-surface"),
         text: resolveColorToken("--ak-color-text-main"),
         primary: resolveColorToken("--ak-color-primary"),
@@ -291,33 +292,31 @@ async function expectLearnUsesSemanticControls(page: Page): Promise<void> {
       throw new Error("Missing Learn semantic controls for Issue #583 proof");
     }
 
-    const resolve = (property: "color" | "backgroundColor" | "borderColor", token: string) => {
-      const probe = document.createElement("span");
-      if (property === "backgroundColor") probe.style.backgroundColor = `var(${token})`;
-      else if (property === "borderColor") probe.style.borderColor = `var(${token})`;
-      else probe.style.color = `var(${token})`;
-      probe.style.borderStyle = "solid";
-      document.body.appendChild(probe);
-      const value = getComputedStyle(probe)[property];
-      probe.remove();
-      return value;
+    const colorContext = document.createElement("canvas").getContext("2d");
+    if (!colorContext) throw new Error("Canvas color normalization is unavailable");
+    const rootStyle = getComputedStyle(document.documentElement);
+    const normalizeColor = (value: string) => {
+      colorContext.fillStyle = "#000000";
+      colorContext.fillStyle = value.trim();
+      return colorContext.fillStyle;
     };
+    const resolve = (token: string) => normalizeColor(rootStyle.getPropertyValue(token));
 
     const switchStyle = getComputedStyle(switchLink);
     const modeStyle = getComputedStyle(selectedMode);
     const sourceStyle = getComputedStyle(selectedSource);
     return {
-      primary: resolve("color", "--ak-color-primary"),
-      primarySoft: resolve("backgroundColor", "--ak-color-primary-soft"),
-      text: resolve("color", "--ak-color-text-main"),
-      switchColor: switchStyle.color,
-      switchBackground: switchStyle.backgroundColor,
-      modeColor: modeStyle.color,
-      modeBackground: modeStyle.backgroundColor,
-      modeBorder: modeStyle.borderColor,
-      sourceColor: sourceStyle.color,
-      sourceBackground: sourceStyle.backgroundColor,
-      sourceBorder: sourceStyle.borderColor,
+      primary: resolve("--ak-color-primary"),
+      primarySoft: resolve("--ak-color-primary-soft"),
+      text: resolve("--ak-color-text-main"),
+      switchColor: normalizeColor(switchStyle.color),
+      switchBackground: normalizeColor(switchStyle.backgroundColor),
+      modeColor: normalizeColor(modeStyle.color),
+      modeBackground: normalizeColor(modeStyle.backgroundColor),
+      modeBorder: normalizeColor(modeStyle.borderColor),
+      sourceColor: normalizeColor(sourceStyle.color),
+      sourceBackground: normalizeColor(sourceStyle.backgroundColor),
+      sourceBorder: normalizeColor(sourceStyle.borderColor),
     };
   });
 
@@ -351,6 +350,9 @@ async function expectReminderPreviewFitsCompactViewport(page: Page): Promise<voi
   expect(rect.left).toBeGreaterThanOrEqual(13);
   expect(rect.right).toBeLessThanOrEqual(417);
   expect(rect.width).toBeGreaterThan(0);
+
+  await reminder.locator(":scope > summary").click();
+  await expect(preview).toBeHidden();
 }
 
 async function captureRouteEvidence(
