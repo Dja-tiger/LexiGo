@@ -23,9 +23,11 @@ const STANDALONE_BROWSER_ZOOM_OWNERS = [
   "active-lesson-browser-zoom.spec.ts",
 ] as const;
 const PHRASES_VISUAL_OWNER = "phrases-visual.spec.ts";
+const CONSOLIDATED_ROUTE_ZOOM_OWNER = "route-browser-zoom-parity.spec.ts";
 const KEYBOARD_FOCUS_OWNERS = [
   ...STANDALONE_BROWSER_ZOOM_OWNERS,
   PHRASES_VISUAL_OWNER,
+  CONSOLIDATED_ROUTE_ZOOM_OWNER,
 ] as const;
 
 function readE2ESource(fileName: string): string {
@@ -40,6 +42,10 @@ describe("authoritative browser zoom collection", () => {
         `${owner} must stay in playwright.visual.config.ts testMatch`,
       ).toContain(`"${owner}"`);
     }
+  });
+
+  it("collects the consolidated route browser-zoom parity owner", () => {
+    expect(visualConfig).toContain(`"${CONSOLIDATED_ROUTE_ZOOM_OWNER}"`);
   });
 
   it("keeps the canonical visual command bound to the authoritative config", () => {
@@ -57,6 +63,48 @@ describe("authoritative browser zoom collection", () => {
       expect(source).toContain("cssVisualViewport.zoom");
       expect(source).toContain("rootFontSize");
     }
+  });
+
+  it("keeps the consolidated route matrix on true browser zoom with fail-closed evidence", () => {
+    const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
+    expect(source).toContain("browser-owned zoom");
+    expect(source).toContain("lexigoBrowserZoomController");
+    expect(source).toContain("setBrowserZoom(worker, targetURL, 2)");
+    expect(source).toContain("cssVisualViewport.zoom");
+    expect(source).toContain("rootFontSize");
+    expect(source).toContain('sha256: "REVIEW_REQUIRED"');
+    expect(source).toContain("REVIEW_REQUIRED exact Linux 200% browser-zoom evidence");
+    expect(source).not.toContain("font-size: 200%");
+    expect(source).not.toContain("--update-snapshots");
+  });
+
+  it("keeps all ten canonical route owners in the consolidated 200% matrix", () => {
+    const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
+    for (const pathName of [
+      'path: "/"',
+      'path: "/learn"',
+      'path: "/lesson/active"',
+      'path: "/progress"',
+      'path: "/dictionary"',
+      'path: "/words/101"',
+      'path: "/phrases"',
+      'path: `/phrases/${QUALITY_PHRASES[0].slug}`',
+      'path: "/profile"',
+      'path: "/onboarding"',
+    ]) {
+      expect(source).toContain(pathName);
+    }
+  });
+
+  it("requires global chrome, overflow and partial-focusable containment in the route matrix", () => {
+    const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
+    expect(source).toContain('".lx-route-brand"');
+    expect(source).toContain('".lx-route-reminder-entry > summary"');
+    expect(source).toContain('button[aria-label="Открыть профиль"]');
+    expect(source).toContain("fixedGlobalChrome");
+    expect(source).toContain("focusableOffenders");
+    expect(source).toContain("document must not overflow horizontally at 200% browser zoom");
+    expect(source).toContain("focused route must suppress ordinary RouteChrome at 200% zoom");
   });
 
   it("requires keyboard-originated focus evidence in every browser-zoom owner", () => {
