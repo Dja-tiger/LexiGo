@@ -59,6 +59,12 @@ type RouteViewport = Readonly<{
   label: string;
 }>;
 
+const MIN_MOBILE_VIEWPORT: RouteViewport = {
+  width: 320,
+  height: 700,
+  label: "320×700",
+};
+
 const TABLET_VIEWPORT: RouteViewport = {
   width: 768,
   height: 1024,
@@ -83,6 +89,48 @@ const ROUTE_PARITY_ROUTES: readonly RouteParityContract[] = [
   { key: "profile", path: "/profile", ownerSelector: '[data-route-client-island="profile"]', focused: false },
   { key: "onboarding", path: "/onboarding", ownerSelector: ".lx-first-use-panel", focused: true },
 ] as const;
+
+const REVIEW_REQUIRED_MIN_MOBILE_BASELINE: RouteVisualBaseline = {
+  width: 320,
+  height: 0,
+  sha256: "REVIEW_REQUIRED",
+  sourceRun: 0,
+  sourceHeadSha: "REVIEW_REQUIRED",
+};
+
+/**
+ * Issue #587 deliberately starts fail-closed because 320px is a responsive
+ * runtime audit dimension below the canonical 390×844 mobile design source,
+ * not a separate Figma/OpenPencil frame. Authoritative Linux CI must first
+ * prove route ownership, reduced motion, geometry/focus integrity and runtime
+ * errors for all 20 states, then exact PNGs are manually reviewed before any
+ * fingerprint below can be approved.
+ */
+const MIN_MOBILE_VISUAL_BASELINES: Record<
+  `${RouteParityKey}.${ExplicitAppearance}`,
+  RouteVisualBaseline
+> = {
+  "home.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "home.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "learn.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "learn.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "active-lesson.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "active-lesson.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "progress.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "progress.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "dictionary.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "dictionary.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "word-detail.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "word-detail.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "phrases.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "phrases.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "phrase-detail.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "phrase-detail.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "profile.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "profile.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "onboarding.light": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+  "onboarding.dark": REVIEW_REQUIRED_MIN_MOBILE_BASELINE,
+};
 
 /**
  * The original 20-state matrix was manually reviewed from exact Linux artifact
@@ -458,6 +506,63 @@ async function expectParityOwnership(
   }
 }
 
+async function captureMinimumMobileEvidence(
+  page: Page,
+  testInfo: TestInfo,
+  contract: RouteParityContract,
+  appearance: ExplicitAppearance,
+): Promise<void> {
+  const baselineKey = `${contract.key}.${appearance}` as const;
+  const baseline = MIN_MOBILE_VISUAL_BASELINES[baselineKey];
+  const profileButton = page.getByRole("button", { name: "Открыть профиль" });
+  const screenshot = await page.screenshot({
+    animations: "disabled",
+    caret: "hide",
+    fullPage: true,
+    mask: await profileButton.count() > 0 ? [profileButton] : [],
+    scale: "css",
+  });
+
+  const actual = {
+    width: screenshot.readUInt32BE(16),
+    height: screenshot.readUInt32BE(20),
+    sha256: createHash("sha256").update(screenshot).digest("hex"),
+  };
+
+  await testInfo.attach(`minimum-mobile-320x700-${contract.key}-${appearance}.png`, {
+    body: screenshot,
+    contentType: "image/png",
+  });
+  await testInfo.attach(`minimum-mobile-320x700-${contract.key}-${appearance}.json`, {
+    body: Buffer.from(JSON.stringify({
+      route: contract.path,
+      routeKey: contract.key,
+      appearance,
+      responsiveViewport: { width: 320, height: 700 },
+      canonicalMobileSourceViewport: { width: 390, height: 844 },
+      sourceSemantics: "minimum-supported responsive runtime audit below the canonical 390×844 mobile OpenPencil/Figma source; no separate 320px design node",
+      actual,
+      approved: baseline,
+    }, null, 2)),
+    contentType: "application/json",
+  });
+
+  if (baseline.sha256 === "REVIEW_REQUIRED") {
+    throw new Error(
+      `${baselineKey}: REVIEW_REQUIRED exact Linux 320×700 evidence ${JSON.stringify(actual)}`,
+    );
+  }
+
+  expect(
+    actual,
+    `${baselineKey}: exact Linux 320×700 fingerprint must match the manually reviewed evidence`,
+  ).toEqual({
+    width: baseline.width,
+    height: baseline.height,
+    sha256: baseline.sha256,
+  });
+}
+
 async function captureTabletEvidence(
   page: Page,
   testInfo: TestInfo,
@@ -563,6 +668,41 @@ async function captureDesktopEvidence(
     sha256: baseline.sha256,
   });
 }
+
+test.describe("Issue #587 minimum-supported 320×700 route parity matrix", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  test.beforeEach(async ({ context, page }) => {
+    await installDeterministicRuntime(page);
+    await installQualityGateAPI(context);
+  });
+
+  for (const contract of ROUTE_PARITY_ROUTES) {
+    for (const appearance of ["light", "dark"] as const) {
+      test(`${contract.key} 320×700 ${appearance}`, async ({ context, page }, testInfo) => {
+        test.skip(
+          testInfo.project.name !== "visual-compact",
+          "Issue #587 is the dedicated minimum-supported 320×700 responsive runtime evidence matrix.",
+        );
+
+        await page.setViewportSize({ width: 320, height: 700 });
+        expect(page.viewportSize()).toEqual({ width: 320, height: 700 });
+        testInfo.annotations.push({
+          type: "responsive-source",
+          description: `${contract.path} | 320×700 | ${appearance} | minimum supported runtime width below canonical 390×844 mobile source; no separate 320px design node`,
+        });
+
+        await installAppearance(page, appearance);
+        const runtimeErrors = captureRuntimeErrors(page);
+        await openParityRoute(contract, page, context);
+        await settleParityRoute(page, appearance);
+        await expectParityOwnership(page, contract, MIN_MOBILE_VIEWPORT, true);
+        expect(runtimeErrors).toEqual([]);
+        await captureMinimumMobileEvidence(page, testInfo, contract, appearance);
+      });
+    }
+  }
+});
 
 test.describe("Issue #568 medium/tablet route parity matrix", () => {
   test.describe.configure({ timeout: 90_000 });
