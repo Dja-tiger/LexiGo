@@ -1,44 +1,53 @@
 # Current Task Progress
 
-## 2026-08-18 13:18 +03:00
+## 2026-08-18 13:28 +03:00
 
 ### Verified
 
-- Live `main` is `f1cfa074ffe25db6e253b60b6b3c5970ba8dda03`; #587 delivery/reconciliation is complete and no open PR remains.
-- Issue #593 is open, High priority, parent #205, with no existing branch or PR.
-- `appearance-preference.ts` already resolves Auto from `prefers-color-scheme` and applies both `data-lexigo-appearance` and `data-lexigo-resolved-appearance` synchronously/bootstrap and at runtime.
-- `design-tokens.css` is Light-first and switches semantic `--ak-*` tokens under system Dark.
-- `appearance.css` currently applies semantic `html/body` canvas only for explicit `data-lexigo-appearance="light|dark"`, leaving Auto/system-Light exposed to the legacy dark `globals.css` body gradient.
-- `profile.css` uses semantic `--ak-*` tokens for current Profile surfaces but its legacy account/security Light compatibility selectors are explicit-Light-only.
-- Existing canonical Profile visual tests cover explicit Light/Dark at 390×844 and 1440×1024, not the real 430px Auto/system state.
+- Live base is `main@f1cfa074ffe25db6e253b60b6b3c5970ba8dda03`; no pre-existing #593 branch/PR existed.
+- `appearance-preference.ts` already resolves Auto correctly and updates `data-lexigo-resolved-appearance` at bootstrap and on media-query changes.
+- `appearance.css` now keeps explicit token overrides on `data-lexigo-appearance`, but applies document canvas/form presentation from `data-lexigo-resolved-appearance`.
+- The existing Profile account/security compatibility palette is mirrored in the existing `appearance.css` theme owner under resolved Light, without modifying `profile.css` or account APIs.
+- Profile dark-only avatar/primary-button compatibility selectors now follow resolved Dark.
+- New source ownership contract verifies preference-vs-resolved separation and blocking UI routing.
+- New `profile-auto-theme.spec.ts` runs only in `ios-webkit` at 430×932 and checks direct entry, reload, Home→Profile navigation, Back/Forward, live system Light↔Dark changes, computed `html/body` canvas, semantic tokens, account/security paint and horizontal overflow.
+- The new Light screenshot remains intentionally fail-closed as `REVIEW_REQUIRED` until exact Linux WebKit evidence is manually reviewed.
+- `test:e2e:ui` includes the new regression exactly once; no workflow edit is required.
+- Current diff is exactly seven allow-listed files and was `behind_by=0` before Draft PR creation.
+- Draft PR #597 is open.
 
 ### Finding
 
-The regression is an ownership mismatch, not a Profile component color bug: resolved semantic children can be Light while document and legacy compatibility owners still key off explicit preference.
+The implementation can stay inside the existing appearance theme owner: no component, `profile.css`, global legacy canvas, design-source or workflow changes are required.
 
 ### Root cause
 
-CSS presentation selectors use `data-lexigo-appearance` where the runtime truth for rendered palette is `data-lexigo-resolved-appearance`.
+Rendered presentation consumed the stored preference attribute on document/Profile compatibility owners even though Auto requires the resolved appearance attribute.
 
 ### Changed files
 
+- `frontend/app/appearance.css`
+- `frontend/components/profile-theme-ownership.test.ts`
+- `frontend/e2e/profile-auto-theme.spec.ts`
+- `frontend/package.json`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 
 ### Checks passed
 
-- Live main/open-PR/branch preflight.
-- Code-level ownership inspection for appearance runtime, document canvas, Profile CSS and existing visual contracts.
+- Live main/branch/PR preflight.
+- Source ownership/read-back inspection.
+- Scope compare: seven allow-listed files, no canonical Profile baseline edits, `behind_by=0` before PR.
 
 ### Checks failed
 
-None yet; implementation has not started.
+None classified yet. The first final-head diagnostic is expected to fail only at the deliberate 430×932 Light `REVIEW_REQUIRED` screenshot gate after all functional/computed-style assertions pass.
 
 ### Current branch head
 
-Resolve from live branch ref after harness initialization.
+Resolve from live PR after current-task documentation synchronization.
 
 ### Next action
 
-Implement the smallest resolved-appearance CSS ownership repair, add source/browser regression contracts, then run fail-closed 430px visual evidence before approving any new fingerprint.
+Freeze the synchronized Draft head, run full CI, classify any failure. If the only failure is the deliberate WebKit evidence gate, download the exact artifact, manually review it and approve only that content-addressed fingerprint before rerunning immutable-head CI.
