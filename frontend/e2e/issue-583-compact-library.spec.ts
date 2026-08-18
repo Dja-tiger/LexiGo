@@ -75,17 +75,6 @@ const BASELINES_430: Record<`${EvidenceRoute}.${Appearance}`, Reviewed430Baselin
   "learn.dark": { width: 0, height: 0, sha256: "REVIEW_REQUIRED", sourceRun: 0, sourceHeadSha: "REVIEW_REQUIRED" },
 };
 
-function rectSnapshot(rect: DOMRect): RectSnapshot {
-  return {
-    left: rect.left,
-    top: rect.top,
-    right: rect.right,
-    bottom: rect.bottom,
-    width: rect.width,
-    height: rect.height,
-  };
-}
-
 function expectClose(actual: number, expected: number, tolerance = 1): void {
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
 }
@@ -276,7 +265,14 @@ function expectLibraryRoutesMatch(dictionary: LibraryGeometry, phrases: LibraryG
 async function readReminderRect(page: Page): Promise<RectSnapshot> {
   return page.locator(".lx-route-reminder-entry > summary").evaluate((summary) => {
     const rect = summary.getBoundingClientRect();
-    return rectSnapshot(rect);
+    return {
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height,
+    };
   });
 }
 
@@ -343,7 +339,14 @@ async function expectReminderPreviewFitsCompactViewport(page: Page): Promise<voi
 
   const rect = await preview.evaluate((node) => {
     const bounds = node.getBoundingClientRect();
-    return rectSnapshot(bounds);
+    return {
+      left: bounds.left,
+      top: bounds.top,
+      right: bounds.right,
+      bottom: bounds.bottom,
+      width: bounds.width,
+      height: bounds.height,
+    };
   });
   expect(rect.left).toBeGreaterThanOrEqual(13);
   expect(rect.right).toBeLessThanOrEqual(417);
