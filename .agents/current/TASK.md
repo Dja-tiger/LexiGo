@@ -33,7 +33,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 - `frontend/app/appearance.css`
 - `frontend/app/profile.css`
 - `frontend/components/profile-theme-ownership.test.ts`
-- `frontend/e2e/profile-visual.spec.ts`
+- `frontend/e2e/profile-auto-theme.spec.ts`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -42,10 +42,11 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 
 - `frontend/app/globals.css`
 - `frontend/app/premium-ui.css`
+- `frontend/e2e/profile-visual.spec.ts`
 - backend/API/schema code
 - `.github/workflows/**`
 - `design/openpencil/**`
-- existing canonical 390/1440 Profile fingerprint values unless exact reviewed evidence demonstrates an intentional change
+- existing canonical 390/1440 Profile fingerprint values
 
 ## Runtime owners
 
@@ -62,7 +63,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 - Auto/system-Light must resolve to the same semantic visual palette as explicit Light.
 - Auto/system-Dark must resolve to the same semantic visual palette as explicit Dark.
 - Switching preference/system resolution must not require reload to repair the canvas.
-- Existing explicit Light/Dark canonical Profile baselines remain unchanged unless reviewed evidence proves otherwise.
+- Existing explicit Light/Dark canonical Profile baselines remain unchanged.
 - No hard-coded heading color or broad `!important` workaround.
 
 ## Acceptance criteria
@@ -72,7 +73,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 - Profile account/security compatibility surfaces follow resolved Light/Dark state.
 - Computed `html`, `body`, semantic tokens and Profile compatibility owners agree with resolved appearance.
 - Direct entry, reload, Home→Profile navigation and real Back/Forward preserve ownership.
-- 390×844 and 1440×1024 explicit Light/Dark Profile contracts stay green.
+- 390×844 and 1440×1024 explicit Light/Dark Profile contracts stay green without baseline edits.
 - Exact 430px Linux/WebKit screenshot evidence is manually reviewed before any new content-addressed fingerprint is approved.
 - Full immutable-head CI succeeds, followed by exact-main CI and exact-SHA Stage/public validation.
 
