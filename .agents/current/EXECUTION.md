@@ -6,7 +6,7 @@
 - Branch: `fix/issue-590-phrase-detail-min-width`
 - Base SHA: `7482d0ed52f9f5835b6a94fc4a7818ee1936d4aa`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #594
 
 ## Skills used
 
@@ -43,7 +43,7 @@ Files inspected:
 - `frontend/app/layout.tsx`;
 - `frontend/components/phrases-css-ownership.test.ts`;
 - `frontend/e2e/phrases-grid-cascade.spec.ts`;
-- Issue #590, PR #588 and live main/Stage state.
+- Issue #590, Draft PR #594, PR #588 and live main/Stage state.
 
 Actions performed:
 
@@ -56,19 +56,20 @@ Actions performed:
 7. extended the existing computed-cascade browser owner instead of creating a duplicate E2E spec;
 8. added the focused stylesheet to all three synthetic stylesheet orders, including an order where the legacy shared stylesheet loads last, so specificity rather than load order owns the repair;
 9. added 320px and 390px Phrase Detail geometry assertions: 320px keeps 16px route padding and removes the legacy inner inset; 390px keeps 24px route padding and the approved 30px detail-card inset; both require no horizontal overflow;
-10. read back the new focused CSS/import and compared the branch to exact main; the diff remains restricted to seven allow-listed files with no canonical visual baseline, backend, workflow or design-source change.
+10. read back the new focused CSS/import and compared the branch to exact main; the diff remains restricted to seven allow-listed files with no canonical visual baseline, backend, workflow or design-source change;
+11. opened Draft PR #594 with the exact same scope, explicit non-goals and fail-closed visual policy. PR-bound harness records are the final planned developer writes before immutable-head validation.
 
 Commands or procedures:
 
-GitHub connector exact file/Issue/PR/ref reads and branch-only writes; selector/source inspection; compare-commits after implementation. Targeted/full validation will run through GitHub Actions because this connector-only environment has no repository-native local package checkout/runner.
+GitHub connector exact file/Issue/PR/ref reads and branch-only writes; selector/source inspection; compare-commits after implementation. Targeted/full validation runs through GitHub Actions because this connector-only environment has no repository-native local package checkout/runner.
 
 Artifacts produced:
 
-Focused runtime/source/browser changes plus task-local Agent Harness records. No generated screenshots or binary artifacts are committed.
+Focused runtime/source/browser changes, Draft PR #594 and task-local Agent Harness records. No generated screenshots or binary artifacts are committed.
 
 Result:
 
-Implementation is ready for Draft PR CI. The expected ownership is deterministic: at 320px the Phrase Detail layout has no leaked 30px outer inset; at 390px the approved 30px inset remains unchanged.
+Developer implementation is frozen for immutable-head CI. The expected ownership is deterministic: at 320px the Phrase Detail layout has no leaked 30px outer inset; at 390px the approved 30px inset remains unchanged.
 
 Failures:
 
