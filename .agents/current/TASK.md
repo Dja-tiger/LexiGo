@@ -14,7 +14,8 @@ Restore Phrase Detail readable width at the minimum supported mobile width witho
 
 ## Scope
 
-- reset the unintended shared `.lx-detail-card` 30px inset only for Phrase Detail at `max-width: 359px`;
+- add a dedicated Phrase Detail minimum-width CSS owner, following the repository's existing focused-fix layer pattern;
+- reset the unintended shared `.lx-detail-card` 30px inset only at `max-width: 359px`;
 - make the route-specific minimum-width owner more specific than the legacy shared fallback so stylesheet order cannot reintroduce the defect;
 - extend existing Phrases source/cascade contracts to prove the 320px detail layout consumes the available route content width without horizontal overflow;
 - keep canonical 390px visual fingerprints unchanged.
@@ -26,11 +27,13 @@ Restore Phrase Detail readable width at the minimum supported mobile width witho
 - no Figma/OpenPencil writes;
 - no Learn or calendar/WebKit changes;
 - no visual baseline update unless exact Linux evidence proves an independent required correction;
-- no edits to Draft PR #588 until this runtime repair is delivered.
+- no edits to Draft PR #588 until this runtime repair is delivered;
+- no rewrite of the large canonical `phrases.css` when an isolated fix layer is sufficient.
 
 ## Allowed paths
 
-- `frontend/app/phrases.css`
+- `frontend/app/phrase-detail-min-width.css`
+- `frontend/app/layout.tsx`
 - `frontend/components/phrases-css-ownership.test.ts`
 - `frontend/e2e/phrases-grid-cascade.spec.ts`
 - `.agents/current/TASK.md`
@@ -42,6 +45,7 @@ Restore Phrase Detail readable width at the minimum supported mobile width witho
 - backend/API/migrations;
 - Figma/OpenPencil/design source;
 - route/session/history owners;
+- `frontend/app/phrases.css` and `frontend/app/premium-ui.css` runtime definitions;
 - `frontend/e2e/phrases-visual.spec.ts` unless exact Linux review proves canonical 390px drift;
 - workflows/dependencies;
 - unrelated feature CSS/tests.
@@ -49,7 +53,9 @@ Restore Phrase Detail readable width at the minimum supported mobile width witho
 ## Runtime owners
 
 - `frontend/app/premium-ui.css` owns the legacy `.lx-detail-card { ... padding: 30px; }` fallback and is read-only in this slice.
-- `frontend/app/phrases.css` owns Phrase Detail responsive layout and the minimum-width route-specific reset.
+- `frontend/app/phrases.css` owns canonical Phrase Detail responsive layout and existing 16px outer minimum-width route padding; it is read-only in this slice.
+- `frontend/app/phrase-detail-min-width.css` owns only the `<=359px` route-scoped neutralization of the leaked legacy inset.
+- `frontend/app/layout.tsx` registers that focused CSS owner after the existing Phrases/detail layers.
 - `LexigoPhrasesApp` remains the route owner for `/phrases/[slug]`.
 
 ## Documentation owners
@@ -60,18 +66,18 @@ Task-local `.agents/current/**` only. Post-merge delivery reconciliation remains
 
 - 320px outer route padding remains 16px per side, yielding a 288px Phrase Detail content box;
 - the Phrase Detail layout adds no extra legacy outer inset at `<=359px`;
-- 390px keeps the existing approved detail-card inset/composition and content-addressed fingerprints;
+- 390px keeps the existing approved shared 30px detail-card inset/composition and content-addressed fingerprints;
 - tablet/desktop grid and side-panel behavior remain unchanged;
 - no horizontal overflow or clipped interactive target is introduced;
 - CSS ownership remains deterministic across stylesheet load order.
 
 ## Acceptance criteria
 
-- at `320x700`, Phrase Detail layout padding computes to `0px` and uses the available route content width;
+- at `320x700`, Phrase Detail layout padding computes to `0px` and its main surface uses the available route content width;
 - at `390px`, the existing shared 30px detail-card padding remains unchanged;
 - three tested stylesheet orders produce identical 320px/390px detail geometry;
 - no document horizontal overflow occurs;
-- source contract proves the minimum-width route selector outranks `.lx-detail-card`;
+- source contract proves the minimum-width route selector outranks `.lx-detail-card` and is loaded exactly once;
 - canonical 390px Phrase Detail Light/Dark visual fingerprints reproduce unchanged;
 - full immutable-head CI passes, then clean review/main-drift audit, expected-head squash merge, exact-main CI and Stage/public validation pass.
 
@@ -88,8 +94,9 @@ Task-local `.agents/current/**` only. Post-merge delivery reconciliation remains
 
 - an under-scoped selector can lose to `.lx-detail-card` when CSS order changes;
 - an over-broad reset can alter the approved 390px/mobile composition;
-- changing inner card paddings instead of the legacy outer inset would redesign content density rather than fix ownership.
+- changing inner card paddings instead of the legacy outer inset would redesign content density rather than fix ownership;
+- a new focused layer must be registered once and remain narrow enough not to create another global CSS owner.
 
 ## Rollback
 
-Revert the `<=359px` Phrase Detail layout padding reset and its source/browser contracts. No backend/data rollback is involved.
+Remove `phrase-detail-min-width.css`, its `layout.tsx` import and matching source/browser contracts. No backend/data rollback is involved.
