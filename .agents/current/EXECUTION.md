@@ -4,7 +4,7 @@
 
 - Branch: `fix/issue-593-profile-auto-light-theme`
 - Base SHA: `f1cfa074ffe25db6e253b60b6b3c5970ba8dda03`
-- Head SHA: resolve from live branch ref after final evidence commit
+- Head SHA: resolve from live branch ref after final evidence synchronization
 - PR: #597
 
 ## Skills used
@@ -43,7 +43,8 @@ Files inspected:
 - `.agents/current/**`
 - GitHub Actions CI #3795 / run `32138979287`
 - GitHub Actions CI #3796 / run `32141138160`
-- exact UI2 Playwright artifacts from those runs
+- GitHub Actions CI #3800 / run `32142832044`
+- exact UI2 Playwright artifacts from the evidence runs
 
 Actions performed:
 - Verified live base, active Issue/PR and Agent Harness scope before repository writes.
@@ -61,10 +62,12 @@ Actions performed:
 - Verified the attached screenshot is exactly 430×932 with SHA-256 `2f0740a996c7198811e66dd77a8d5a845d4ca285d9a6f4350ae74e3635c98b35`.
 - Manually reviewed the exact Linux WebKit screenshot: coherent Light Profile canvas, semantic white/subtle surfaces, dark readable text, no legacy navy account/security leakage and no issue-specific horizontal clipping.
 - Approved that fingerprint only with exact provenance run `32141138160` / source head `03832a62e2bfe064cabce6dc81fe333e8af6dd80`; existing canonical visual fingerprints were not changed.
-- Recorded fingerprint and `.agents/current/**` evidence before freezing the final branch head for immutable CI.
+- CI #3800 / `32142832044` on the first approved-fingerprint head failed only in TypeScript with TS2367: once the sentinel was replaced by a literal SHA, a direct comparison against `REVIEW_REQUIRED` became statically impossible.
+- Made the reusable fail-closed sentinel check type-safe through an explicit `string` helper boundary. The reviewed SHA, provenance and runtime/product code are unchanged.
+- Synchronized this diagnostic in `.agents/current/**` before freezing the new final head.
 
 Commands or procedures:
-GitHub connector live reads/writes, source-contract review, GitHub Actions job classification, exact artifact download, SHA-256 verification, PNG visual inspection, fail-closed fingerprint approval and repository Contents API writes.
+GitHub connector live reads/writes, source-contract review, GitHub Actions job/log classification, exact artifact download, SHA-256 verification, PNG visual inspection, fail-closed fingerprint approval and repository Contents API writes.
 
 Artifacts produced:
 - `frontend/components/profile-theme-ownership.test.ts`.
@@ -73,20 +76,22 @@ Artifacts produced:
 - CI #3795 diagnostics isolating test serialization from runtime behavior.
 - CI #3796 exact Linux WebKit evidence artifact `9326247705`.
 - Approved screenshot fingerprint `2f0740a996c7198811e66dd77a8d5a845d4ca285d9a6f4350ae74e3635c98b35`.
+- CI #3800 diagnostics proving the post-approval red was only TypeScript literal narrowing.
 
 Result:
-The runtime fix is scoped to Profile, canonical visual/a11y regressions exposed by broader intermediate implementations were repaired, and authoritative Linux WebKit evidence has been manually reviewed. The fingerprint is pinned with exact provenance and must now pass on one immutable final head.
+The runtime fix is scoped to Profile, canonical visual/a11y regressions exposed by broader intermediate implementations were repaired, authoritative Linux WebKit evidence has been manually reviewed, and the approved fingerprint remains unchanged through the type-safe sentinel repair. One new immutable full CI is required on the synchronized final head.
 
 Failures:
 - Earlier diagnostic source-contract failure asserted incidental helper source shape; repaired without product changes.
 - Earlier UI locator matched three account-security regions; replaced with a semantic uniquely named region.
 - CI #3795 UI2 compared source-equivalent CSS token spellings; repaired test-only with hex canonicalization.
 - CI #3796 UI2 failed intentionally at `REVIEW_REQUIRED` after producing the exact evidence subsequently reviewed and approved.
+- CI #3800 typecheck failed with TS2367 after the approved SHA made the old direct sentinel comparison a no-overlap literal comparison; repaired without changing the fingerprint or runtime assertions.
 
 Root cause:
 Product: Profile/document compatibility presentation consumed stored preference semantics at a width where Auto needed resolved system appearance, allowing Light semantic content to coexist with legacy dark canvas/account paint.
 
-Test diagnostics: source/locator/token contracts initially relied on incidental implementation or serialization details instead of semantic ownership.
+Test diagnostics: source/locator/token/type contracts initially relied on incidental implementation, serialization or literal-narrowing details instead of semantic ownership.
 
 Fallback:
 If final immutable CI changes the approved screenshot fingerprint or exposes a product assertion failure, reject the approval and classify the exact new artifact before any baseline change. Do not widen tolerance or update unrelated canonical baselines.
@@ -95,4 +100,4 @@ Limitations:
 Full immutable final-head CI, pre-merge review/main-drift audit, exact-main CI, exact-SHA Stage/public validation and post-merge Agent Docs reconciliation remain mandatory before Issue #593 delivery is complete.
 
 Reusable lesson:
-For Auto appearance, stored preference and rendered palette are distinct ownership domains. Browser evidence should assert semantic/computed output and canonicalize representation-only differences; content-addressed visual approval must stay pinned to exact run, source head, dimensions and artifact provenance.
+For Auto appearance, stored preference and rendered palette are distinct ownership domains. Browser evidence should assert semantic/computed output and canonicalize representation-only differences; fail-closed sentinels should cross a widened string boundary once replaced by immutable content hashes; visual approval must stay pinned to exact run, source head, dimensions and artifact provenance.
