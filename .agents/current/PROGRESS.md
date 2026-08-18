@@ -5,7 +5,7 @@
 ### Verified
 
 - live base `main`: `7482d0ed52f9f5835b6a94fc4a7818ee1936d4aa`;
-- Issue #590 is open and had no pre-existing PR when the slice started;
+- Issue #590 is open and owned by Draft PR #594;
 - only competing open PR is Draft audit #588 on the older diagnostic base;
 - Stage remains healthy on runtime SHA `fb357e4c322bbae6b016b4be8a7c59cc39094170`;
 - Issue #589 runtime repair and post-merge reconciliation are complete;
@@ -52,16 +52,17 @@ The Phrase Detail layout element carries both `lx-detail-card` and `lx-phrase-de
 - `layout.tsx` read back with one focused import in the expected Phrases/detail import block;
 - live shared fallback was re-read and exact 30px property confirmed;
 - branch compare is `behind_by=0` and contains exactly seven allow-listed files;
-- `phrases.css`, `premium-ui.css`, `phrases-visual.spec.ts`, backend, workflows and design sources are unchanged.
+- `phrases.css`, `premium-ui.css`, `phrases-visual.spec.ts`, backend, workflows and design sources are unchanged;
+- Draft PR #594 created from the exact branch/base with the same seven-file scope.
 
 ### Checks failed
 
-None yet. Targeted source/browser checks will execute through PR CI because the connector-only environment has no repository-native local package runner/checkout.
+None yet. Targeted source/browser checks execute through PR CI because the connector-only environment has no repository-native local package runner/checkout.
 
 ### Current branch head
 
-Resolve from live branch ref after each harness write. Runtime/test implementation head before this progress update: `36676d3219558d40f5115680c818bc9405d6b939`.
+Resolve from live branch ref after every write. PR-bound harness writes are the final planned branch changes before immutable-head validation.
 
 ### Next action
 
-Update execution evidence, open a Draft PR, and use immutable-head CI as the targeted/full validation gate. Any canonical 390px Visual mismatch must be inspected from exact Linux evidence before considering a baseline change; the expected result is no 390px fingerprint change.
+Bind PR #594 in execution evidence, then freeze the developer-authored head and inspect full immutable-head CI. Any canonical 390px Visual mismatch must be reviewed from exact Linux evidence before considering a baseline change; the expected result is no 390px fingerprint change.
