@@ -2,9 +2,9 @@
  * User-selected appearance overrides.
  *
  * The inline bootstrap in RootLayout sets both data attributes before first
- * paint. Explicit Light/Dark owns token overrides, while rendered canvas and
- * compatibility presentation must follow the resolved appearance so Auto can
- * track the system palette without leaking the legacy document background.
+ * paint. Explicit Light/Dark owns token overrides and the established global
+ * document canvas. Auto keeps that global behavior except for the Profile
+ * compatibility gap, where the rendered canvas follows resolved appearance.
  */
 
 :root[data-lexigo-appearance="light"] {
@@ -105,23 +105,33 @@
   --lx-shadow: 0 24px 72px rgba(0, 0, 0, 0.34);
 }
 
-html[data-lexigo-resolved-appearance="light"],
-html[data-lexigo-resolved-appearance="dark"] {
+html[data-lexigo-appearance="light"],
+html[data-lexigo-appearance="dark"],
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]),
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"]:has(.lx-routed-app[data-route-path="/profile"]) {
   background: var(--ak-color-canvas);
 }
 
-html[data-lexigo-resolved-appearance="light"] body,
-html[data-lexigo-resolved-appearance="dark"] body {
+html[data-lexigo-appearance="light"] body,
+html[data-lexigo-appearance="dark"] body,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]),
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) {
   color: var(--ak-color-text-main);
   background: var(--ak-color-canvas);
 }
 
-html[data-lexigo-resolved-appearance="light"] input,
-html[data-lexigo-resolved-appearance="light"] select,
-html[data-lexigo-resolved-appearance="light"] textarea,
-html[data-lexigo-resolved-appearance="dark"] input,
-html[data-lexigo-resolved-appearance="dark"] select,
-html[data-lexigo-resolved-appearance="dark"] textarea {
+html[data-lexigo-appearance="light"] input,
+html[data-lexigo-appearance="light"] select,
+html[data-lexigo-appearance="light"] textarea,
+html[data-lexigo-appearance="dark"] input,
+html[data-lexigo-appearance="dark"] select,
+html[data-lexigo-appearance="dark"] textarea,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) input,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) select,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) textarea,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) input,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) select,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) textarea {
   color-scheme: inherit;
 }
 
