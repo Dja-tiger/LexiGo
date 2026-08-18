@@ -44,11 +44,15 @@ async function setSystemAppearance(page: Page, colorScheme: ResolvedAppearance):
   await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 }
 
+function accountSecurityRegion(page: Page) {
+  return page.getByRole("region", { name: "Пароль и активные устройства", exact: true });
+}
+
 async function openProfile(page: Page): Promise<void> {
   await page.goto("/profile", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-route-client-island="profile"]')).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "Профиль", exact: true })).toBeVisible();
-  await expect(page.locator(".lx-account-security")).toBeVisible();
+  await expect(accountSecurityRegion(page)).toBeVisible();
   await page.evaluate(async () => {
     await document.fonts.ready;
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -181,7 +185,7 @@ test.describe("Issue #593 Profile Auto resolved-theme ownership", () => {
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1, name: "Профиль", exact: true })).toBeVisible();
-    await expect(page.locator(".lx-account-security")).toBeVisible();
+    await expect(accountSecurityRegion(page)).toBeVisible();
     await expectResolvedTheme(page, "light");
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -189,7 +193,7 @@ test.describe("Issue #593 Profile Auto resolved-theme ownership", () => {
     await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "light");
     await page.getByRole("button", { name: "Открыть профиль" }).click();
     await expect(page).toHaveURL((url) => url.pathname === "/profile");
-    await expect(page.locator(".lx-account-security")).toBeVisible();
+    await expect(accountSecurityRegion(page)).toBeVisible();
     await expectResolvedTheme(page, "light");
 
     await page.goBack();
@@ -197,7 +201,7 @@ test.describe("Issue #593 Profile Auto resolved-theme ownership", () => {
     await expect(page.locator("html")).toHaveAttribute("data-lexigo-resolved-appearance", "light");
     await page.goForward();
     await expect(page).toHaveURL((url) => url.pathname === "/profile");
-    await expect(page.locator(".lx-account-security")).toBeVisible();
+    await expect(accountSecurityRegion(page)).toBeVisible();
     await expectResolvedTheme(page, "light");
 
     await page.evaluate(async () => {
