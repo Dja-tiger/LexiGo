@@ -30,11 +30,11 @@
 
 @media (max-width: 767px) {
   /*
-   * The compact Learn hero is intentionally transparent. Keep its heading on
-   * the semantic canvas foreground instead of carrying the fixed light
-   * foreground that belongs to the dark desktop/tablet hero surface.
+   * Explicit Light is the only compact state where the Learn heading sits on
+   * the semantic light canvas. Auto/default and explicit Dark retain the
+   * approved dark hero surface and therefore keep the fixed light foreground.
    */
-  .lx-main-content[aria-label="Обучение"] .lx-page-heading h1 {
+  html[data-lexigo-appearance="light"] .lx-main-content[aria-label="Обучение"] .lx-page-heading h1 {
     color: var(--ak-color-text-main);
   }
 
