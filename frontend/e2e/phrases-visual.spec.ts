@@ -59,13 +59,6 @@ type DOMZoomMetrics = {
   visualViewportScale: number;
 };
 
-type Rect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 const PHRASES_VISUAL_BASELINES = {
   catalogCompactLight: {
     name: "phrases-catalog-compact-light.png",
@@ -288,7 +281,7 @@ async function expectHorizontallyContained(
   }
 }
 
-function rectanglesOverlap(left: Rect, right: Rect): boolean {
+function rectanglesOverlap(left: { x: number; y: number; width: number; height: number }, right: { x: number; y: number; width: number; height: number }): boolean {
   return (
     left.x < right.x + right.width
     && left.x + left.width > right.x
@@ -481,6 +474,14 @@ test.describe("Phrases browser-owned zoom", () => {
         name: "Навигация по разделам",
         exact: true,
       });
+      const headerNavigation = page.getByRole("navigation", {
+        name: "Основная навигация",
+        exact: true,
+      });
+      const mobileNavigation = page.getByRole("navigation", {
+        name: "Мобильная навигация",
+        exact: true,
+      });
 
       await expect(main).toBeVisible();
       await expect(catalog).toBeVisible();
@@ -493,7 +494,10 @@ test.describe("Phrases browser-owned zoom", () => {
       await expect(resultsPanel).toBeVisible();
       await expect(firstResult).toBeEnabled();
       await expect(lessonAction).toBeEnabled();
-      await expect(railNavigation).toBeVisible();
+      await expect(railNavigation).toBeHidden();
+      await expect(headerNavigation).toBeHidden();
+      await expect(mobileNavigation).toBeVisible();
+      await expect(mobileNavigation.getByRole("link")).toHaveCount(4);
 
       await expectHorizontallyContained(main, afterDOM.clientWidth, "Phrases main");
       await expectHorizontallyContained(catalog, afterDOM.clientWidth, "Phrases catalog");
@@ -505,10 +509,9 @@ test.describe("Phrases browser-owned zoom", () => {
       await expectHorizontallyContained(resultsPanel, afterDOM.clientWidth, "Phrases results panel");
       await expectHorizontallyContained(firstResult, afterDOM.clientWidth, "Phrases first result");
       await expectHorizontallyContained(lessonAction, afterDOM.clientWidth, "Phrases lesson action");
-      await expectHorizontallyContained(railNavigation, afterDOM.clientWidth, "route navigation rail");
+      await expectHorizontallyContained(mobileNavigation, afterDOM.clientWidth, "route mobile navigation");
       await expectNoHorizontalOverflow(page);
 
-      await expectNoOverlap(railNavigation, main, "route navigation rail and Phrases main");
       await expectNoOverlap(search, topics, "Phrases search and topic navigation");
       await expectNoOverlap(topics, resultsPanel, "Phrases topic navigation and results panel");
 
@@ -518,6 +521,7 @@ test.describe("Phrases browser-owned zoom", () => {
       await expectVisibleFocus(sort);
       await expectVisibleFocus(firstResult);
       await expectVisibleFocus(lessonAction);
+      await expectVisibleFocus(mobileNavigation.getByRole("link", { name: "Словарь", exact: true }));
 
       expect(runtimeErrors).toEqual([]);
       await testInfo.attach("phrases-browser-zoom-metrics.json", {
