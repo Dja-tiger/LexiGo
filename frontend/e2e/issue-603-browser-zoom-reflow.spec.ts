@@ -257,7 +257,7 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
         if (rect.left < inlineLimitLeft - 1 || rect.right > inlineLimitRight + 1) {
           textOffenders.push({
             tag: parent.tagName.toLowerCase(),
-            text: node.textContent.trim().replace(/\s+/g, " ").slice(0, 120),
+            text: (node.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 120),
             left: rect.left,
             right: rect.right,
             ancestor: clippingAncestor.className || clippingAncestor.tagName.toLowerCase(),
