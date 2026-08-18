@@ -7,43 +7,105 @@
  * the old medium rail reservation removed enough inline space for route-owned
  * cards/text to clip internally without increasing document scrollWidth.
  *
- * Treat only the unreviewed 720–767px gap as compact continuation. The 768px
- * tablet contract and all >=768 medium/desktop ownership remain untouched.
+ * Treat only the unreviewed 720–767px gap as compact continuation for the
+ * routes proven defective by #601. Home remains on its existing, independently
+ * reviewed browser-zoom owner; focused Active Lesson/Onboarding are #604/#605.
  */
 @media (min-width: 720px) and (max-width: 767px) {
-  .lx-routed-app:not([data-route-path="/lesson/active"]):not([data-route-path="/onboarding"])
-    .lx-app {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-app {
     padding-right: max(14px, env(safe-area-inset-right));
     padding-bottom: calc(var(--lx-compact-navigation-height) + 28px + env(safe-area-inset-bottom));
     padding-left: max(14px, env(safe-area-inset-left));
   }
 
-  .lx-routed-app:not([data-route-path="/lesson/active"]):not([data-route-path="/onboarding"])
-    .lx-app-shell {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-app-shell {
     display: block;
   }
 
-  .lx-routed-app:not([data-route-path="/lesson/active"]):not([data-route-path="/onboarding"])
-    .lx-main-content {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-main-content {
     min-width: 0;
     margin-left: 0;
   }
 
-  .lx-route-brand {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-brand {
     top: calc(11px + env(safe-area-inset-top));
     left: max(14px, env(safe-area-inset-left));
   }
 
-  .lx-route-brand strong {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-brand strong {
     font-size: 21px;
   }
 
-  .lx-route-nav--header,
-  .lx-route-nav--rail {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--header,
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--rail {
     display: none;
   }
 
-  .lx-route-nav--mobile {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile {
     position: fixed;
     z-index: 170;
     right: max(10px, env(safe-area-inset-right));
@@ -61,7 +123,15 @@
     backdrop-filter: blur(22px);
   }
 
-  .lx-route-nav--mobile a {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile a {
     display: grid;
     min-width: 48px;
     min-height: 52px;
@@ -74,14 +144,30 @@
     line-height: 1.15;
   }
 
-  .lx-route-nav--mobile a > span {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile a > span {
     display: grid;
     max-width: 100%;
     place-items: center;
     gap: 3px;
   }
 
-  .lx-route-nav--mobile a > span > span {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile a > span > span {
     display: block;
     max-width: 100%;
     overflow: hidden;
@@ -89,18 +175,34 @@
     white-space: nowrap;
   }
 
-  .lx-route-nav--mobile a.active {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile a.active {
     color: #c1adff;
     background: rgba(104, 75, 220, 0.19);
   }
 
-  .lx-route-nav--mobile svg {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-nav--mobile svg {
     width: 20px;
     height: 20px;
   }
 
   /* Learn's subsection switch otherwise keeps the rail reservation at 720px. */
-  .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
+  html[data-lexigo-build] .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {
     width: calc(100% - 48px);
     margin-top: calc(76px + env(safe-area-inset-top));
     margin-right: auto;
@@ -108,7 +210,7 @@
   }
 
   /* Profile's tablet compatibility owner must stop reserving a rail here. */
-  .lx-routed-app[data-route-path="/profile"] .lx-profile-app .lx-main-content {
+  html[data-lexigo-build] .lx-routed-app[data-route-path="/profile"] .lx-profile-app .lx-main-content {
     width: min(1060px, 100%);
     margin-right: auto;
     margin-left: auto;
@@ -128,25 +230,57 @@
     padding-left: 0;
   }
 
-  /* Keep Reminder aligned with the compact header/mobile navigation owner. */
-  .lx-route-reminder-entry {
+  /* Keep Reminder aligned with the same scoped compact header owner. */
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-reminder-entry {
     top: calc(10px + env(safe-area-inset-top));
     right: max(68px, calc(env(safe-area-inset-right) + 68px));
     pointer-events: auto;
   }
 
-  .lx-route-reminder-entry > summary {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-reminder-entry > summary {
     min-width: 48px;
     min-height: 48px;
     padding: 0 10px;
     pointer-events: auto;
   }
 
-  .lx-route-reminder-entry > summary::before {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-reminder-entry > summary::before {
     content: none;
   }
 
-  .lx-route-reminder-entry > summary > span {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-reminder-entry > summary > span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -159,7 +293,15 @@
     white-space: nowrap;
   }
 
-  .lx-route-reminder-preview {
+  .lx-routed-app:is(
+    [data-route-path="/learn"],
+    [data-route-path="/progress"],
+    [data-route-path="/dictionary"],
+    [data-route-path^="/words/"],
+    [data-route-path="/phrases"],
+    [data-route-path^="/phrases/"],
+    [data-route-path="/profile"]
+  ) .lx-route-reminder-preview {
     position: fixed;
     top: calc(68px + env(safe-area-inset-top));
     right: max(14px, env(safe-area-inset-right));
