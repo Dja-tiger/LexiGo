@@ -1,49 +1,61 @@
 # Current Task Progress
 
-## 2026-08-18 23:34 +03:00
+## 2026-08-19 01:10 +03:00
 
 ### Verified
 
-- Live `main` is `b1444d5e5153da9b8fe275b7f1f175e9bd25286b`.
-- Issue #601 Draft PR #602 reached its intended fail-closed visual review gate in CI run `32180791470`; exact artifact `9340975602` was downloaded and manually reviewed.
-- The audit evidence is not approvable: ordinary routes show substantial internal right-edge clipping at true browser zoom `2.0` from `1440×900` (effective 720px boundary), despite document-level horizontal overflow assertions passing.
-- Separate runtime Issues were created per #601 delivery policy: #603 ordinary routed shell/content, #604 Active Lesson, #605 Onboarding.
-- Issue #603 branch was created from exact current main.
-- Existing reviewed tablet contract starts at 768×1024; compact RouteChrome currently ends at 719px and rail RouteChrome starts at 720px.
-- `route-navigation.css` explicitly reserves `margin-left: calc(var(--lx-navigation-rail-width) + 20px)` for routed main content during `720–1099px`.
-- `adaptive-navigation.css` uses the same `720–1099px` medium boundary and switches app-shell/mobile padding only at `max-width:719px`.
-- Learn subsection placement has an explicit rail reservation in `720–1099px`, while its compact centered width starts only at `max-width:719px`.
-- Profile has a dedicated RouteChrome tablet compatibility owner that reserves the rail during `720–1099px`.
-- Reminder positioning also changes at 720px, so a compact RouteChrome extension through 767px must keep the Reminder owner aligned rather than moving navigation alone.
+- Active delivery is Issue #603 / Draft PR #606 on `fix/issue-603-browser-zoom-720-ordinary-routes`.
+- Base `main` for this branch is `b1444d5e5153da9b8fe275b7f1f175e9bd25286b`; refresh live main before any future integration decision.
+- Runtime repair keeps the unreviewed `720–767px` gap on compact RouteChrome ownership while preserving 768px as the first reviewed tablet/rail anchor.
+- Scope remains limited to the seven ordinary route families: `/learn`, `/progress`, `/dictionary`, `/words/[id]`, `/phrases`, `/phrases/[slug]`, `/profile`.
+- Home, Active Lesson and Onboarding remain outside #603 scope; focused follow-ups are #604/#605 where applicable.
+- Standalone Learn and Phrases true-browser-zoom owners are aligned with the compact/mobile RouteChrome contract at exact 720px.
+- Structural true-browser-zoom proof verifies exact `window.innerWidth = 720`, no document horizontal overflow, route/main containment, no clipped interactive boxes, no clipped visible text ranges and exactly one visible `mobile` RouteChrome owner.
+- The initial Playwright `page.screenshot` evidence path was invalid under browser-owned zoom: it rendered only about half of the CSS viewport even while DOM geometry passed.
+- Evidence capture is now owned by CDP `Page.captureScreenshot` with CSS→DIP conversion from `cssVisualViewport.zoom`, then normalized back to one output pixel per CSS pixel.
+- Immutable CI #3836 / run `32190243698` on head `78239dce1ed0cbbf0f4bb7496481accdb07f6906` completed with every substantive gate green except the intentional Issue #603 `REVIEW_REQUIRED` Visual gate.
+- Visual CI #3836 executed 154 passing tests with only the two Light/Dark Issue #603 review-gate failures; standalone Learn and Phrases browser-zoom tests passed.
+- Exact Visual artifact `9344156521` was downloaded and all 14 authoritative Linux screenshots were manually reviewed: seven routes × Light/Dark.
+- Reviewed evidence is full-width 720px and shows all four mobile navigation items; no horizontal clipping or route-owner truncation was found.
+- The 14 reviewed Linux fingerprints from CI #3836 are pinned in `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` with source run/head provenance.
+- Follow-up evidence/test work did not change production CSS.
 
-### Finding
+### Current finding
 
-There is an unreviewed responsive gap from 720 through 767px: canonical compact/mobile ownership ends at 719px, but the first manually reviewed tablet anchor is 768px. True 200% browser zoom from the canonical 1440px desktop width lands exactly at 720px, activating rail/medium reservations before the route content has enough usable inline space. Internal `overflow`/fixed-width descendants can therefore clip without expanding document `scrollWidth`.
+The original runtime defect was a real 720–767px responsive ownership gap. After the route-scoped compact continuation was implemented, structural geometry became correct. A second, independent defect was then found in the visual-evidence capture path: Playwright screenshot coordinates under browser-owned zoom did not represent the full CSS viewport. CDP-normalized capture fixed the evidence coordinate system without requiring further production CSS changes.
 
-### Root cause
+### Changed files in the current follow-up
 
-The defect is not a single route typo. Multiple shared owners independently switch from compact to rail/medium at the same 720px boundary (`route-navigation.css`, `adaptive-navigation.css`, Learn subsection placement, Profile rail reservation, Reminder placement). The product has no reviewed design/evidence requirement for a rail below the 768px tablet anchor. The repair should therefore align the narrow medium gap with compact ownership while preserving 768px as the first rail/tablet state, then prove route-specific descendants actually reflow.
-
-### Changed files
-
-- `.agents/current/TASK.md`
+- `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`
+- `frontend/e2e/learn-browser-zoom.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/components/issue-603-browser-zoom-reflow-source.test.ts`
 - `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+
+Production runtime files from the earlier #603 repair remain unchanged during the evidence follow-up.
 
 ### Checks passed
 
-- Live main/open PR/Issue preflight.
-- Exact #601 artifact manual review.
-- 719/720/768 breakpoint ownership inspection.
-- Shared RouteChrome, adaptive shell, Learn switch, Profile rail and Reminder owner inspection.
+- Live GitHub PR/Issue/CI preflight.
+- Exact 719/720/768 ownership inspection.
+- Runtime structural containment at exact 720px true 2× browser zoom.
+- Standalone Learn/Phrases exact-720 ownership regressions.
+- Frontend lint, typecheck, unit tests, production build and dependency audit in CI #3836.
+- Backend unit/security and integration in CI #3836.
+- iOS PWA, lesson completion, accessibility, controlled service worker, dictionary smoke, content security, performance budgets and both UI shards in CI #3836.
+- Manual review of all 14 authoritative Linux Issue #603 screenshots from artifact `9344156521`.
 
-### Checks failed
+### Checks pending
 
-- #601 visual evidence intentionally remains unapproved because real runtime clipping was found.
+- Final immutable-head CI after reviewed fingerprints and current task documentation are committed.
+- Final PR #606 review-thread/status audit.
+- Ready/merge decision only after the final exact head is fully green and repository merge requirements are satisfied.
 
 ### Current branch head
 
-Resolve from live branch after current documentation synchronization.
+Resolve from the live branch after the final task-document synchronization. The reviewed evidence source head is `78239dce1ed0cbbf0f4bb7496481accdb07f6906`; the baseline-approval commit is `501db0ad5168b3ea568473dbd46448d4bc78420e`.
 
 ### Next action
 
-Record execution details, then implement the smallest shared boundary correction for 720–767px and add a true-browser-zoom regression that asserts internal content/text/control containment across the ordinary routes. Preserve exact 768 rail behavior.
+Finish current execution documentation, then require full CI on the resulting immutable head. If Visual fingerprints remain stable, audit review threads/status and complete PR #606 according to repository merge policy. After #606 is landed, return to parent Draft PR #602 and replace its inherited `page.screenshot({ scale: "css" })` browser-zoom evidence path with the validated CDP-normalized capture before approving any parent fingerprints.
