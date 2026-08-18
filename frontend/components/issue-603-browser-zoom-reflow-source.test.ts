@@ -11,6 +11,8 @@ const profileTablet = readFileSync(new URL("../app/profile-tablet-layout.css", i
 const reminder = readFileSync(new URL("../app/calendar-reminder-entry.css", import.meta.url), "utf8");
 const visualConfig = readFileSync(new URL("../playwright.visual.config.ts", import.meta.url), "utf8");
 const browserProof = readFileSync(new URL("../e2e/issue-603-browser-zoom-reflow.spec.ts", import.meta.url), "utf8");
+const learnBrowserZoom = readFileSync(new URL("../e2e/learn-browser-zoom.spec.ts", import.meta.url), "utf8");
+const phrasesVisual = readFileSync(new URL("../e2e/phrases-visual.spec.ts", import.meta.url), "utf8");
 
 describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
   it("loads one late compatibility owner after Issue #583 and before feedback", () => {
@@ -110,7 +112,19 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(browserProof).toContain("toBe(720)");
     expect(browserProof).toContain('toEqual(["mobile"])');
     expect(browserProof).toContain("textOffenders");
+    expect(browserProof).toContain('scale: "device"');
+    expect(browserProof).not.toContain('scale: "css"');
     expect(browserProof).toContain("REVIEW_REQUIRED");
     expect(browserProof).not.toContain("font-size: 200%");
+  });
+
+  it("keeps standalone Learn and Phrases zoom owners aligned with compact RouteChrome at exact 720px", () => {
+    for (const source of [learnBrowserZoom, phrasesVisual]) {
+      expect(source).toContain("await expect(railNavigation).toBeHidden();");
+      expect(source).toContain("await expect(headerNavigation).toBeHidden();");
+      expect(source).toContain("await expect(mobileNavigation).toBeVisible();");
+      expect(source).toContain('name: "Мобильная навигация"');
+      expect(source).not.toContain("await expect(railNavigation).toBeVisible();");
+    }
   });
 });
