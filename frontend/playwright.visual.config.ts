@@ -28,6 +28,7 @@ export default defineConfig({
     "tablet-layout-visual.spec.ts",
     "route-tablet-parity.spec.ts",
     "route-transition-runtime-visual.spec.ts",
+    "issue-603-browser-zoom-reflow.spec.ts",
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
