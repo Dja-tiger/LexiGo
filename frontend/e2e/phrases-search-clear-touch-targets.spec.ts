@@ -99,7 +99,12 @@ test.describe("Issue #74 Phrases search-clear touch target", () => {
     for (const width of widths) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/phrases", { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("main", { name: "Технические фразы", exact: true })).toBeVisible();
+      const main = page.getByRole("main", { name: "Технические фразы", exact: true });
+      await expect(main).toBeVisible();
+      // PhrasesCatalog focuses the shared main surface from its layout effect.
+      // Waiting for that client-owned side effect prevents a fast post-navigation
+      // fill from racing React hydration and being reset by the controlled input.
+      await expect(main).toBeFocused();
 
       const search = page.getByRole("searchbox", { name: "Поиск по фразам", exact: true });
       const emptyPaddingRight = await paddingRight(search);
