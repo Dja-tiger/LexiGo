@@ -15,7 +15,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 ## Scope
 
 - Make document canvas ownership follow `data-lexigo-resolved-appearance` for Auto, explicit Light and explicit Dark.
-- Make Profile legacy account/security compatibility palette follow the resolved appearance instead of explicit-Light-only state.
+- Add one focused Profile resolved-theme repair layer after `profile.css` for legacy account/security compatibility presentation.
 - Add source-level ownership regression coverage.
 - Add a dedicated 430px Auto/system-Light and Auto/system-Dark browser regression, including computed canvas/token ownership and exact screenshot evidence.
 - Preserve direct entry, reload, client navigation and Back/Forward theme ownership.
@@ -31,7 +31,8 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 ## Allowed paths
 
 - `frontend/app/appearance.css`
-- `frontend/app/profile.css`
+- `frontend/app/profile-resolved-theme.css`
+- `frontend/app/layout.tsx`
 - `frontend/components/profile-theme-ownership.test.ts`
 - `frontend/e2e/profile-auto-theme.spec.ts`
 - `.agents/current/TASK.md`
@@ -42,6 +43,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 
 - `frontend/app/globals.css`
 - `frontend/app/premium-ui.css`
+- `frontend/app/profile.css`
 - `frontend/e2e/profile-visual.spec.ts`
 - backend/API/schema code
 - `.github/workflows/**`
@@ -52,7 +54,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 
 - `frontend/lib/appearance-preference.ts` owns preference resolution and the `data-lexigo-resolved-appearance` runtime attribute; no behavior change is expected there.
 - `frontend/app/appearance.css` owns resolved document canvas application.
-- `frontend/app/profile.css` owns Profile-specific compatibility presentation.
+- `frontend/app/profile-resolved-theme.css` owns the narrow resolved-appearance compatibility bridge for legacy Profile account/security surfaces.
 
 ## Documentation owners
 
