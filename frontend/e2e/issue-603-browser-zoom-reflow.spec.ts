@@ -284,7 +284,7 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
       owner: box(owner),
       boxOffenders: boxOffenders.slice(0, 30),
       textOffenders: textOffenders.slice(0, 30),
-      navigation: Array.from(document.querySelectorAll<HTMLElement>>("[data-route-navigation]"))
+      navigation: Array.from(document.querySelectorAll<HTMLElement>("[data-route-navigation]"))
         .filter(rendered)
         .map((element) => element.dataset.routeNavigation ?? ""),
     };
