@@ -4,12 +4,12 @@
 
 - Branch:
 - Base SHA:
-- Head SHA:
+- Head SHA: resolve from live branch ref
 - PR:
 
 ## Skills used
 
-### <skill name>
+### Skill name
 
 Purpose:
 
