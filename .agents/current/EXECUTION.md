@@ -4,7 +4,7 @@
 
 - Branch: `test/issue-587-min-mobile-route-parity`
 - Base SHA: `f920fee4891426fce819c9cb2fb506599b3bc1fc`
-- Head SHA: resolve from live branch ref
+- Head SHA: resolve from live branch ref after documentation synchronization
 - PR: #588
 
 ## Skills used
@@ -21,41 +21,49 @@ Version or verification date:
 2026-08-18.
 
 Inputs:
-Issue #587, PR #588, corrected `main`, delivered child fixes #589/#590, existing audit owner blob, prior diagnostic evidence.
+Issue #587, PR #588, corrected `main`, delivered child fixes #589/#590, reconstructed audit owner, diagnostic CI/artifact evidence.
 
 Files inspected:
 - `AGENTS.md`
 - `.agents/**` harness owners
-- `frontend/e2e/route-tablet-parity.spec.ts` on current main and stale #588
+- `frontend/e2e/route-tablet-parity.spec.ts`
 - live PR/Issue/CI/Stage metadata
+- authoritative Linux Visual artifact #9318281585, including all 20 exact 320×700 Light/Dark PNGs
 
 Actions performed:
 - Verified #590 runtime delivery and post-merge reconciliation are complete.
-- Verified `main@f920fee4891426fce819c9cb2fb506599b3bc1fc`.
-- Verified current main audit owner blob `3395fa8e2cd57e3ac2712f8a3a66cc2064b9ee19`.
-- Verified existing #588 audit-enhanced blob `c15daf7220cdeb0de4b665edb9ca41fa08d708e1` is cleanly reusable because runtime fixes did not modify the owner.
-- Prepared fresh #587 current-task harness state for atomic branch reconstruction.
+- Reconstructed PR #588 atomically from `main@f920fee4891426fce819c9cb2fb506599b3bc1fc` without reviving stale harness history.
+- Verified reconstructed diff is exactly four allow-listed files and `behind_by=0`.
+- Ran diagnostic CI #3778 / run `32119608484` on head `092a578bcf04e3ab7d4bcb98038535797058b011`.
+- Confirmed all 20 minimum-mobile states reached the deliberate `REVIEW_REQUIRED` gate only after ownership, reduced-motion, overflow, clipping/focus and runtime-error assertions passed.
+- Downloaded authoritative Linux Visual artifact #9318281585 with digest `sha256:6066e9fc393afe1f1052cdf836d63a645df2e1f3b65d10972e9ab7da9094ac20`.
+- Manually reviewed every exact 320×700 PNG in Light and Dark after #589/#590 landed.
+- Confirmed initial/retry captures are byte-stable for all 20 states.
+- Confirmed existing 768×1024 and 1440×1024 visual fingerprints remain unchanged.
+- Replaced only the 20 `REVIEW_REQUIRED` minimum-mobile entries with exact reviewed width/height/SHA256/source-run/source-head values.
+- Verified the committed audit owner blob `6f005e069c1cfdcdf74c271f14611d64c55654dd` exactly matches the locally constructed reviewed source.
 
 Commands or procedures:
-GitHub connector live reads, blob/tree/commit reconstruction, then PR CI/artifact review.
+GitHub connector live reads/writes, content-addressed branch reconstruction, diagnostic CI inspection, authoritative artifact download, exact PNG review, exact fingerprint commit, then final immutable-head CI and merge gates.
 
 Artifacts produced:
-Fresh reconstructed #588 head plus authoritative Visual artifact after CI starts.
+- Diagnostic Visual artifact #9318281585.
+- Reviewed 20-state 320×700 baseline map in `frontend/e2e/route-tablet-parity.spec.ts`.
 
 Result:
-Pre-reconstruction ownership and scope checks passed.
+Manual review completed with no additional runtime defect. Reviewed minimum-mobile fingerprints are committed and ready for immutable-head reproduction.
 
 Failures:
-The old #588 branch is stale/diverged by design.
+Diagnostic Visual was intentionally red because all 20 minimum-mobile entries were fail-closed `REVIEW_REQUIRED` placeholders.
 
 Root cause:
-The audit was frozen while child runtime defects were fixed and reconciled, so its old harness history no longer matches main.
+Expected verification policy, not a product or infrastructure failure. The placeholders intentionally block approval until exact Linux evidence is manually reviewed.
 
 Fallback:
-Graft only the unchanged audit owner blob onto fresh main; do not merge/rebase the old active-task harness commits.
+If the later immutable-head run does not reproduce any reviewed fingerprint exactly, do not widen tolerance or update snapshots; classify the exact state and investigate runtime/environment drift.
 
 Limitations:
-No 320×700 fingerprint may be approved before exact new Linux PNG evidence is manually reviewed.
+PR #588 is not mergeable by policy until the new final immutable head completes full CI, reviews are clean, and main has not drifted.
 
 Reusable lesson:
-When a verification PR is intentionally frozen while child runtime fixes land, reconstruct it from fresh main using content-addressed unchanged test owners instead of reviving stale harness history.
+A fail-closed responsive audit can safely approve a non-canonical minimum width only when structural/runtime ownership checks pass first, exact authoritative PNGs are manually reviewed, retries are byte-stable, and the reviewed fingerprints are reproduced on a later immutable head.
