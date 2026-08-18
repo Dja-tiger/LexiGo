@@ -29,9 +29,9 @@ type ThemeSnapshot = {
 const AUTO_LIGHT_430_BASELINE = {
   width: 430,
   height: 932,
-  sha256: "REVIEW_REQUIRED",
-  sourceRun: 0,
-  sourceHeadSha: "REVIEW_REQUIRED",
+  sha256: "2f0740a996c7198811e66dd77a8d5a845d4ca285d9a6f4350ae74e3635c98b35",
+  sourceRun: 32141138160,
+  sourceHeadSha: "03832a62e2bfe064cabce6dc81fe333e8af6dd80",
 } as const;
 
 function normalizeHexColorToken(value: string): string {
