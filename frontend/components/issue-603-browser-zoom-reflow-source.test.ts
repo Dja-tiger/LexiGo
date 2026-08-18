@@ -85,7 +85,7 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(browserProof).toContain('viewport: { width: 1440, height: 900 }');
     expect(browserProof).toContain("setBrowserZoom(worker, targetURL, 2)");
     expect(browserProof).toContain("cssVisualViewport.zoom");
-    expect(browserProof).toContain("window.innerWidth")).toBeDefined();
+    expect(browserProof).toContain("window.innerWidth");
     expect(browserProof).toContain("toBe(720)");
     expect(browserProof).toContain('toEqual(["mobile"])');
     expect(browserProof).toContain("textOffenders");
