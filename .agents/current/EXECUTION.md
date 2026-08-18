@@ -36,6 +36,7 @@ Files inspected:
 - `frontend/playwright.config.ts`
 - `frontend/playwright.visual.config.ts`
 - `frontend/package.json`
+- diagnostic Frontend core logs from CI #3788 / run `32126854471`
 - live GitHub PR/branch/Issue/CI/Stage state
 
 Actions performed:
@@ -51,29 +52,35 @@ Actions performed:
 - Left the new Light screenshot content-addressed baseline fail-closed as `REVIEW_REQUIRED` pending authoritative Linux WebKit review.
 - Preserved existing canonical Profile visual owner and fingerprints unchanged.
 - Opened Draft PR #597.
+- Ran diagnostic CI #3788 on developer head `12167469ab50d834cfc88139d0bef255cbbacd74`.
+- Classified its only Frontend core failure: the new source test looked for direct `colorScheme: "light"|"dark"` literals while the WebKit test correctly calls `setSystemAppearance(page, "light"|"dark")`, whose helper passes the typed variable to `page.emulateMedia`.
+- Corrected only that source assertion to verify the helper calls and `emulateMedia` bridge. No product or baseline change was made for the CI repair.
 
 Commands or procedures:
-GitHub connector live reads/writes, repository source contracts, blocking Playwright UI shards and fail-closed exact screenshot evidence.
+GitHub connector live reads/writes, repository source contracts, blocking Playwright UI shards, decoded GitHub Actions job logs and fail-closed exact screenshot evidence.
 
 Artifacts produced:
 - New `frontend/components/profile-theme-ownership.test.ts`.
 - New `frontend/e2e/profile-auto-theme.spec.ts`.
 - Draft PR #597.
+- Diagnostic CI #3788 evidence showing lint/typecheck success and one classified source-test failure before browser jobs.
 
 Result:
-Implementation is scoped to the rendered-theme owner and regression coverage. It is ready for diagnostic CI; no baseline has been approved yet.
+Product implementation remains scoped to the rendered-theme owner. The malformed self-test has been repaired; a new full CI is required before WebKit evidence can be reviewed.
 
 Failures:
-None classified before CI. One deliberate diagnostic failure is expected at the Light `REVIEW_REQUIRED` gate.
+CI #3788 Frontend core unit step failed only because `profile-theme-ownership.test.ts` expected direct `colorScheme: "light"` source text that does not exist behind the helper abstraction.
 
 Root cause:
-CSS presentation consumed `data-lexigo-appearance` (stored preference identity) where Auto requires `data-lexigo-resolved-appearance` (rendered palette identity).
+Product: CSS presentation consumed `data-lexigo-appearance` where Auto requires `data-lexigo-resolved-appearance`.
+
+Diagnostic test: source contract asserted a brittle implementation literal instead of the actual helper invocation and media-query bridge.
 
 Fallback:
-If diagnostic CI exposes a non-evidence failure, classify the exact assertion first. Do not update canonical visual baselines or widen screenshot tolerance.
+If the next CI exposes a non-evidence browser failure, classify the exact assertion first. Do not update canonical visual baselines or widen screenshot tolerance.
 
 Limitations:
-The 430×932 WebKit fingerprint cannot be approved until exact Linux CI evidence is downloaded and manually reviewed.
+The 430×932 WebKit fingerprint cannot be approved until exact Linux CI evidence is produced, downloaded and manually reviewed. CI #3788 did not reach browser jobs.
 
 Reusable lesson:
-For Auto/system appearance, token override ownership and rendered palette ownership are distinct: explicit preferences may own override tokens, while canvas and compatibility paint must follow the resolved appearance state.
+Source contracts should verify ownership semantics across helper boundaries rather than requiring incidental inline literals; fail-closed visual evidence remains separate from source-shape validation.
