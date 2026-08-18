@@ -36,6 +36,8 @@ Remove the remaining compact legacy presentation on Learn/Dictionary/Phrases at 
 - frontend/app/dictionary-catalog.css
 - frontend/app/phrases.css
 - frontend/app/information-architecture.css only if shared Materials ownership requires it
+- frontend/app/issue-583-compact-library.css
+- frontend/app/layout.tsx
 - frontend/e2e/route-transition-runtime-visual.spec.ts
 - frontend/e2e/*issue-583* or compact-library geometry regression spec if a dedicated blocking proof is cleaner
 - frontend/components/*issue-583* source-contract test if needed
@@ -53,9 +55,10 @@ Remove the remaining compact legacy presentation on Learn/Dictionary/Phrases at 
 
 ## Runtime owners
 
-- `frontend/app/calendar-reminder-entry.css` — shared Reminder trigger/preview geometry.
-- `frontend/app/dictionary-catalog.css` — Dictionary compact catalog container.
-- `frontend/app/phrases.css` — Phrases compact catalog container.
+- `frontend/app/issue-583-compact-library.css` — late owner for the narrow, proven compact overrides only.
+- `frontend/app/calendar-reminder-entry.css` — shared Reminder trigger/preview geometry baseline.
+- `frontend/app/dictionary-catalog.css` — Dictionary compact catalog container baseline.
+- `frontend/app/phrases.css` — Phrases compact catalog container baseline.
 - `frontend/app/information-architecture.css` — shared Materials segmented control.
 - `frontend/components/calendar-reminder-route-entry.tsx` and `catalog-kind-navigation.tsx` remain semantic owners unless evidence proves markup changes are required.
 
@@ -66,11 +69,12 @@ Remove the remaining compact legacy presentation on Learn/Dictionary/Phrases at 
 
 ## Invariants
 
-- Existing 390×844 reviewed transition fingerprints remain valid unless an intentional reviewed visual change requires a new fingerprint.
+- Existing reviewed transition fingerprints are not updated before exact Linux evidence is manually reviewed.
 - Calendar settings/storage/export behavior is unchanged.
 - Materials switch stays one shared component and remains one-line/no-clipping.
 - Mobile navigation and safe-area behavior remain intact.
 - Existing route history semantics remain real browser history, not synthetic navigation.
+- Learn mode/source controls remain on their existing semantic current-design token owners; no speculative recoloring is allowed.
 
 ## Acceptance criteria
 
@@ -80,6 +84,7 @@ Remove the remaining compact legacy presentation on Learn/Dictionary/Phrases at 
 - 390px and 430px have no clipping, overlap or horizontal overflow.
 - Reminder uses one compact current-design geometry on Learn/Dictionary/Phrases and does not overlap Materials/header/content.
 - Reminder/calendar preview/dialog remain usable and accessible.
+- Learn compact mode/source controls resolve from semantic current-design tokens and do not regress to legacy blue/green literal paint.
 - Light/Dark do not mix legacy/current palette ownership.
 - Direct entry, client navigation, reload and Back/Forward preserve geometry.
 - Blocking WebKit/iOS 430px regression and exact Linux visual evidence exist and are reviewed before fingerprint approval.
@@ -99,7 +104,7 @@ Remove the remaining compact legacy presentation on Learn/Dictionary/Phrases at 
 ## Risks
 
 - Changing shared Reminder breakpoint can affect all routed mobile screens.
-- Moving padding ownership can alter existing 390 visual fingerprints if the wrong owner is changed.
+- Moving padding ownership intentionally changes compact Phrases geometry and therefore may require reviewed 390 visual fingerprint updates.
 - Fixed-position Reminder must keep safe-area and header/profile touch-target separation.
 
 ## Rollback
