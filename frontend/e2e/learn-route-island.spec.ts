@@ -17,6 +17,7 @@ type CanonicalLearnCase = {
   navigation: CanonicalNavigation;
   state: CanonicalLearnState;
   canvas: string;
+  headingForeground: string;
   figmaNode: string;
   designContract: string;
 };
@@ -30,6 +31,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "mobile",
     state: "collapsed",
     canvas: "#f4f7f5",
+    headingForeground: "rgb(16, 33, 29)",
     figmaNode: "202:6",
     designContract: "Figma 202:6 — mobile recommended/collapsed",
   },
@@ -41,6 +43,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "mobile",
     state: "collapsed",
     canvas: "#10211d",
+    headingForeground: "rgb(244, 247, 245)",
     figmaNode: "202:6",
     designContract: "Figma 202:6 geometry + explicit Dark tokens",
   },
@@ -52,6 +55,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "mobile",
     state: "manual",
     canvas: "#f4f7f5",
+    headingForeground: "rgb(16, 33, 29)",
     figmaNode: "203:5",
     designContract: "Figma 203:5 — mobile manual settings",
   },
@@ -63,6 +67,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "mobile",
     state: "manual",
     canvas: "#10211d",
+    headingForeground: "rgb(244, 247, 245)",
     figmaNode: "203:5",
     designContract: "Figma 203:5 geometry + explicit Dark tokens",
   },
@@ -74,6 +79,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "rail",
     state: "desktop",
     canvas: "#f4f7f5",
+    headingForeground: "rgb(244, 247, 245)",
     figmaNode: "204:2",
     designContract: "Figma 204:2 — desktop full composer",
   },
@@ -85,6 +91,7 @@ const CANONICAL_LEARN_CASES: readonly CanonicalLearnCase[] = [
     navigation: "rail",
     state: "desktop",
     canvas: "#10211d",
+    headingForeground: "rgb(244, 247, 245)",
     figmaNode: "204:2",
     designContract: "Figma 204:2 geometry + explicit Dark tokens",
   },
@@ -160,9 +167,10 @@ async function expectCanonicalLearnGeometry(
     const composer = document.querySelector<HTMLElement>(
       '.lx-progressive-lesson-composer[aria-label="Настройка следующего урока"]',
     );
+    const heading = main?.querySelector<HTMLElement>(".lx-page-heading h1") ?? null;
 
-    if (!main || !island || !composer) {
-      throw new Error("Learn route geometry owner is not mounted");
+    if (!main || !island || !composer || !heading) {
+      throw new Error("Learn route geometry owner or heading is not mounted");
     }
 
     const rect = (node: HTMLElement) => {
@@ -203,6 +211,7 @@ async function expectCanonicalLearnGeometry(
       scrollWidth: root.scrollWidth,
       bodyScrollWidth: document.body?.scrollWidth ?? 0,
       canvas: window.getComputedStyle(root).getPropertyValue("--ak-color-canvas").trim(),
+      headingForeground: window.getComputedStyle(heading).color,
       main: rect(main),
       island: rect(island),
       composer: rect(composer),
@@ -213,6 +222,7 @@ async function expectCanonicalLearnGeometry(
   expect(geometry.innerWidth).toBe(canonicalCase.width);
   expect(geometry.innerHeight).toBe(canonicalCase.height);
   expect(geometry.canvas).toBe(canonicalCase.canvas);
+  expect(geometry.headingForeground).toBe(canonicalCase.headingForeground);
   expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
   expect(geometry.bodyScrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
 
