@@ -17,7 +17,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 - Make document canvas ownership follow `data-lexigo-resolved-appearance` for Auto, explicit Light and explicit Dark.
 - Extend the existing Profile compatibility section in `appearance.css` so legacy account/security presentation follows resolved Light/Dark state.
 - Add source-level ownership regression coverage.
-- Add a dedicated 430px Auto/system-Light and Auto/system-Dark browser regression, including computed canvas/token ownership and exact screenshot evidence.
+- Add a dedicated blocking 430px Auto/system-Light and Auto/system-Dark `ios-webkit` regression, including computed canvas/token ownership and exact screenshot evidence.
 - Preserve direct entry, reload, client navigation and Back/Forward theme ownership.
 - Preserve canonical 390×844 and 1440×1024 explicit Light/Dark Profile contracts.
 
@@ -33,6 +33,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 - `frontend/app/appearance.css`
 - `frontend/components/profile-theme-ownership.test.ts`
 - `frontend/e2e/profile-auto-theme.spec.ts`
+- `frontend/package.json`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -53,6 +54,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 
 - `frontend/lib/appearance-preference.ts` owns preference resolution and the `data-lexigo-resolved-appearance` runtime attribute; no behavior change is expected there.
 - `frontend/app/appearance.css` owns resolved document canvas application and the narrow resolved-appearance compatibility bridge for legacy Profile account/security surfaces.
+- `frontend/package.json` routes the dedicated regression into the existing blocking UI shard command; no workflow change is required.
 
 ## Documentation owners
 
@@ -80,7 +82,7 @@ Restore one semantic Profile theme owner at the real 430px iOS/WebKit gap so Aut
 ## Required checks
 
 - Source ownership unit contract.
-- Dedicated 430px browser/computed-style contract for Auto Light/Dark.
+- Dedicated 430px `ios-webkit` browser/computed-style contract for Auto Light/Dark in blocking UI CI.
 - Existing Profile functional tests.
 - Existing Profile canonical visual baselines.
 - Full immutable-head CI and manual review of any new fail-closed visual evidence.
