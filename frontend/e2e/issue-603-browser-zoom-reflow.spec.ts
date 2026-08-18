@@ -71,29 +71,109 @@ const ROUTES: readonly RouteContract[] = [
   { key: "profile", path: "/profile", ownerSelector: '[data-route-client-island="profile"]' },
 ] as const;
 
-const REVIEW_REQUIRED: ReviewedBaseline = {
-  width: 0,
-  height: 0,
-  sha256: "REVIEW_REQUIRED",
-  sourceRun: 0,
-  sourceHeadSha: "REVIEW_REQUIRED",
-};
+const REVIEW_REQUIRED_SHA = "REVIEW_REQUIRED";
+const REVIEWED_SOURCE_RUN = 32190243698;
+const REVIEWED_SOURCE_HEAD_SHA = "78239dce1ed0cbbf0f4bb7496481accdb07f6906";
 
 const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> = {
-  "learn.light": REVIEW_REQUIRED,
-  "learn.dark": REVIEW_REQUIRED,
-  "progress.light": REVIEW_REQUIRED,
-  "progress.dark": REVIEW_REQUIRED,
-  "dictionary.light": REVIEW_REQUIRED,
-  "dictionary.dark": REVIEW_REQUIRED,
-  "word-detail.light": REVIEW_REQUIRED,
-  "word-detail.dark": REVIEW_REQUIRED,
-  "phrases.light": REVIEW_REQUIRED,
-  "phrases.dark": REVIEW_REQUIRED,
-  "phrase-detail.light": REVIEW_REQUIRED,
-  "phrase-detail.dark": REVIEW_REQUIRED,
-  "profile.light": REVIEW_REQUIRED,
-  "profile.dark": REVIEW_REQUIRED,
+  "learn.light": {
+    width: 720,
+    height: 995,
+    sha256: "7eb7f63ab91c45c2d8bfd6fcc1293866cfe0c848b162a1281be0f3b1a2298eff",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "learn.dark": {
+    width: 720,
+    height: 995,
+    sha256: "eff73e6f44fda966c8812c7ba85d81a0156aa63df1bd7b76a0b5921993ea1e40",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "progress.light": {
+    width: 720,
+    height: 1664,
+    sha256: "f87068433878cfb56908629bc06d2d82f09ce063868227cd93f53997775f43d2",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "progress.dark": {
+    width: 720,
+    height: 1664,
+    sha256: "71a2f7df9abf1aad0781b823f56ccb0647d9a29019ceedad5a52e1a5b3aefcb7",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "dictionary.light": {
+    width: 720,
+    height: 1058,
+    sha256: "c84193a3196fdaa201a12ce1528345db8b68ad4d63442672209f09780cf18659",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "dictionary.dark": {
+    width: 720,
+    height: 1058,
+    sha256: "9e7ceb4596f47432bff78ae1b1a4a7c7a4176f77f3edef530438507e8c7e14f4",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "word-detail.light": {
+    width: 720,
+    height: 1676,
+    sha256: "04631e35bcbf87f2935b979f79829a2b1631d9406881addf1eb3289f51951333",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "word-detail.dark": {
+    width: 720,
+    height: 1676,
+    sha256: "6975d4fd3f6e9299aa8c7b522a468d124ae5b13c2b28093b3d9b4112b40c7d65",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrases.light": {
+    width: 720,
+    height: 1363,
+    sha256: "01dfcfe7dcb97e7968d67f627fbd94cc7b5b918f3977c3927c16f8b3b31de023",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrases.dark": {
+    width: 720,
+    height: 1363,
+    sha256: "3c5b3c216a17bdfd85160de0d4d5ead238116575dc4145d9ab53dfa6230e56fd",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrase-detail.light": {
+    width: 720,
+    height: 1589,
+    sha256: "221b59a1afb3503e112c7fc4229db3f53363af88912300f501d8f33b0ad59f5c",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrase-detail.dark": {
+    width: 720,
+    height: 1589,
+    sha256: "d48ab40a94206aeedc6ba6ade9c9adfa56b307304c8a17575b1a057d1f22a652",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "profile.light": {
+    width: 720,
+    height: 4086,
+    sha256: "8f6a191f24439ff8448384447271775fd750aa122a4ceb90266e8489e33853bf",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "profile.dark": {
+    width: 720,
+    height: 4086,
+    sha256: "ab70ab6cf55fef9ff0c96f6e641d77c9c9917c937e525e678090d9967b167d88",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
 };
 
 async function setBrowserZoom(worker: Worker, targetURL: string, zoomFactor: number): Promise<BrowserZoomResult> {
@@ -375,7 +455,7 @@ async function captureEvidence(
     contentType: "application/json",
   });
 
-  if (baseline.sha256 === "REVIEW_REQUIRED") {
+  if (baseline.sha256 === REVIEW_REQUIRED_SHA) {
     return `${key}: REVIEW_REQUIRED ${actual.width}x${actual.height} sha256=${actual.sha256}`;
   }
   expect(actual, `${key}: exact Linux evidence must match manually reviewed CI ${baseline.sourceRun}`).toEqual({
