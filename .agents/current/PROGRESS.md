@@ -1,6 +1,6 @@
 # Current Task Progress
 
-## 2026-08-18 13:28 +03:00
+## 2026-08-18 13:33 +03:00
 
 ### Verified
 
@@ -15,14 +15,19 @@
 - `test:e2e:ui` includes the new regression exactly once; no workflow edit is required.
 - Current diff is exactly seven allow-listed files and was `behind_by=0` before Draft PR creation.
 - Draft PR #597 is open.
+- Diagnostic CI #3788 / run `32126854471` on head `12167469ab50d834cfc88139d0bef255cbbacd74` passed lint and typecheck, then failed one new source-contract assertion before browser jobs could run.
+- The failing source assertion expected literal `colorScheme: "light"|"dark"` text even though the E2E intentionally routes those values through `setSystemAppearance(page, "light"|"dark")` and the helper calls `page.emulateMedia({ colorScheme, reducedMotion: "reduce" })`.
+- The source contract was corrected to assert the helper invocations plus the `emulateMedia` bridge; no product CSS/runtime behavior changed for this CI repair.
 
 ### Finding
 
-The implementation can stay inside the existing appearance theme owner: no component, `profile.css`, global legacy canvas, design-source or workflow changes are required.
+The first diagnostic red was a self-test implementation error, not a theme regression. Product ownership remains isolated to the resolved-appearance CSS repair; authoritative WebKit evidence has not yet been produced because Frontend core correctly blocked downstream jobs.
 
 ### Root cause
 
-Rendered presentation consumed the stored preference attribute on document/Profile compatibility owners even though Auto requires the resolved appearance attribute.
+Product root cause: rendered presentation consumed the stored preference attribute on document/Profile compatibility owners even though Auto requires the resolved appearance attribute.
+
+Diagnostic-test root cause: the source contract asserted an implementation literal that does not exist when system appearance is routed through a typed helper.
 
 ### Changed files
 
@@ -39,15 +44,18 @@ Rendered presentation consumed the stored preference attribute on document/Profi
 - Live main/branch/PR preflight.
 - Source ownership/read-back inspection.
 - Scope compare: seven allow-listed files, no canonical Profile baseline edits, `behind_by=0` before PR.
+- CI #3788: scope classifier, lint and typecheck passed.
+- CI #3788: 128 existing/new unit test files passed; only the malformed helper-literal assertion failed.
 
 ### Checks failed
 
-None classified yet. The first final-head diagnostic is expected to fail only at the deliberate 430×932 Light `REVIEW_REQUIRED` screenshot gate after all functional/computed-style assertions pass.
+- CI #3788 Frontend core unit step: `profile-theme-ownership.test.ts` expected direct `colorScheme: "light"` text. Exact failure classified and repaired in source contract only.
+- No WebKit screenshot evidence exists from #3788 because downstream browser jobs did not start after core failure.
 
 ### Current branch head
 
-Resolve from live PR after current-task documentation synchronization.
+Resolve from live PR after the diagnostic-test repair and current-task documentation synchronization.
 
 ### Next action
 
-Freeze the synchronized Draft head, run full CI, classify any failure. If the only failure is the deliberate WebKit evidence gate, download the exact artifact, manually review it and approve only that content-addressed fingerprint before rerunning immutable-head CI.
+Freeze the resulting head and rerun full CI. Require Frontend core to pass before classifying the blocking `ios-webkit` result. If the only later failure is the deliberate 430×932 Light `REVIEW_REQUIRED` gate, download and manually review the exact Linux WebKit artifact before approving one content-addressed fingerprint.
