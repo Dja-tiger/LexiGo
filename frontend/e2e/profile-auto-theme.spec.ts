@@ -34,6 +34,13 @@ const AUTO_LIGHT_430_BASELINE = {
   sourceHeadSha: "REVIEW_REQUIRED",
 } as const;
 
+function normalizeHexColorToken(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  const shorthand = normalized.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
+  if (!shorthand) return normalized;
+  return `#${shorthand[1]}${shorthand[1]}${shorthand[2]}${shorthand[2]}${shorthand[3]}${shorthand[3]}`;
+}
+
 async function installAutoPreference(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.setItem("lexigo.appearance.v1", "auto");
@@ -104,17 +111,17 @@ async function expectResolvedTheme(page: Page, expected: ResolvedAppearance): Pr
   expect(snapshot.bodyBackgroundImage).toBe("none");
 
   if (expected === "light") {
-    expect(snapshot.canvasToken).toBe("#f4f7f5");
-    expect(snapshot.surfaceToken).toBe("#ffffff");
-    expect(snapshot.subtleToken).toBe("#e6efeb");
+    expect(normalizeHexColorToken(snapshot.canvasToken)).toBe("#f4f7f5");
+    expect(normalizeHexColorToken(snapshot.surfaceToken)).toBe("#ffffff");
+    expect(normalizeHexColorToken(snapshot.subtleToken)).toBe("#e6efeb");
     expect(snapshot.htmlBackground).toBe("rgb(244, 247, 245)");
     expect(snapshot.bodyBackground).toBe("rgb(244, 247, 245)");
     expect(snapshot.accountBackground).toBe("rgb(255, 255, 255)");
     expect(snapshot.accountCardBackground).toBe("rgb(230, 239, 235)");
     expect(snapshot.accountColor).toBe("rgb(16, 33, 29)");
   } else {
-    expect(snapshot.canvasToken).toBe("#10211d");
-    expect(snapshot.surfaceToken).toBe("#18302b");
+    expect(normalizeHexColorToken(snapshot.canvasToken)).toBe("#10211d");
+    expect(normalizeHexColorToken(snapshot.surfaceToken)).toBe("#18302b");
     expect(snapshot.htmlBackground).toBe("rgb(16, 33, 29)");
     expect(snapshot.bodyBackground).toBe("rgb(16, 33, 29)");
     expect(snapshot.accountBackground).not.toBe("rgb(255, 255, 255)");
