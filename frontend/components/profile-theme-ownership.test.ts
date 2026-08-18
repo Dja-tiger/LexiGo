@@ -11,14 +11,19 @@ const packageJSON = JSON.parse(readFileSync(new URL("../package.json", import.me
 };
 
 describe("Issue #593 Profile resolved-theme ownership", () => {
-  it("keeps preference token overrides explicit while rendered canvas follows resolved appearance", () => {
+  it("preserves explicit global canvas ownership while scoping resolved Auto canvas to Profile", () => {
     expect(appearance).toContain(':root[data-lexigo-appearance="light"] {');
     expect(appearance).toContain(':root[data-lexigo-appearance="dark"] {');
 
-    expect(appearance).toContain('html[data-lexigo-resolved-appearance="light"],\nhtml[data-lexigo-resolved-appearance="dark"] {\n  background: var(--ak-color-canvas);');
-    expect(appearance).toContain('html[data-lexigo-resolved-appearance="light"] body,\nhtml[data-lexigo-resolved-appearance="dark"] body {');
-    expect(appearance).not.toContain('html[data-lexigo-appearance="light"] body');
-    expect(appearance).not.toContain('html[data-lexigo-appearance="dark"] body');
+    expect(appearance).toContain('html[data-lexigo-appearance="light"],\nhtml[data-lexigo-appearance="dark"],');
+    expect(appearance).toContain('html[data-lexigo-appearance="light"] body,\nhtml[data-lexigo-appearance="dark"] body,');
+
+    const autoLightProfile = 'html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"])';
+    const autoDarkProfile = 'html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"]:has(.lx-routed-app[data-route-path="/profile"])';
+    expect(appearance).toContain(`${autoLightProfile},`);
+    expect(appearance).toContain(`${autoDarkProfile} {\n  background: var(--ak-color-canvas);`);
+    expect(appearance).toContain('body:has(.lx-routed-app[data-route-path="/profile"])');
+    expect(appearance).not.toContain('html[data-lexigo-resolved-appearance="light"],\nhtml[data-lexigo-resolved-appearance="dark"] {');
 
     expect(runtime).toContain("root.dataset.lexigoAppearance = preference;");
     expect(runtime).toContain("root.dataset.lexigoResolvedAppearance = resolved;");
@@ -72,5 +77,6 @@ describe("Issue #593 Profile resolved-theme ownership", () => {
     expect(browserProof).toContain("page.goBack()");
     expect(browserProof).toContain("page.goForward()");
     expect(browserProof).toContain("REVIEW_REQUIRED");
+    expect(browserProof).toContain('getByRole("region", { name: "Пароль и активные устройства", exact: true })');
   });
 });
