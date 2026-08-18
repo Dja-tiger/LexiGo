@@ -22,7 +22,8 @@ describe("Issue #593 Profile resolved-theme ownership", () => {
 
     expect(runtime).toContain("root.dataset.lexigoAppearance = preference;");
     expect(runtime).toContain("root.dataset.lexigoResolvedAppearance = resolved;");
-    expect(runtime).toContain('systemQuery = window.matchMedia("(prefers-color-scheme: dark)")');
+    expect(runtime).toContain("return window.matchMedia(APPEARANCE_DARK_QUERY);");
+    expect(runtime).toContain('const mediaQuery = mediaQueryOrNull();');
   });
 
   it("bridges legacy Profile account paint from resolved Light without mutating its base owner", () => {
