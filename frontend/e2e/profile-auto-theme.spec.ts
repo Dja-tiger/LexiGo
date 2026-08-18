@@ -41,6 +41,10 @@ function normalizeHexColorToken(value: string): string {
   return `#${shorthand[1]}${shorthand[1]}${shorthand[2]}${shorthand[2]}${shorthand[3]}${shorthand[3]}`;
 }
 
+function isReviewRequiredFingerprint(value: string): boolean {
+  return value === "REVIEW_REQUIRED";
+}
+
 async function installAutoPreference(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.setItem("lexigo.appearance.v1", "auto");
@@ -162,7 +166,7 @@ async function captureReviewedLightEvidence(page: Page, testInfo: TestInfo): Pro
     contentType: "application/json",
   });
 
-  if (AUTO_LIGHT_430_BASELINE.sha256 === "REVIEW_REQUIRED") {
+  if (isReviewRequiredFingerprint(AUTO_LIGHT_430_BASELINE.sha256)) {
     throw new Error(`Profile Auto/system-Light 430×932 REVIEW_REQUIRED exact Linux WebKit evidence ${JSON.stringify(actual)}`);
   }
 
