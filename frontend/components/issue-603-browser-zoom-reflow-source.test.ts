@@ -38,12 +38,30 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(focused).not.toContain("!important");
   });
 
-  it("continues the compact shell and RouteChrome instead of reserving the tablet rail", () => {
+  it("continues compact shell/RouteChrome only for the seven affected ordinary route families", () => {
+    for (const pathToken of [
+      '[data-route-path="/learn"]',
+      '[data-route-path="/progress"]',
+      '[data-route-path="/dictionary"]',
+      '[data-route-path^="/words/"]',
+      '[data-route-path="/phrases"]',
+      '[data-route-path^="/phrases/"]',
+      '[data-route-path="/profile"]',
+    ]) {
+      expect(focused).toContain(pathToken);
+    }
+
+    expect(focused).not.toContain('[data-route-path="/"]');
+    expect(focused).not.toContain('[data-route-path="/lesson/active"]');
+    expect(focused).not.toContain('[data-route-path="/onboarding"]');
     expect(focused).toContain("padding-bottom: calc(var(--lx-compact-navigation-height) + 28px + env(safe-area-inset-bottom));");
     expect(focused).toContain(".lx-app-shell {\n    display: block;");
     expect(focused).toContain(".lx-main-content {\n    min-width: 0;\n    margin-left: 0;");
-    expect(focused).toContain(".lx-route-nav--header,\n  .lx-route-nav--rail {\n    display: none;");
+    expect(focused).toContain(".lx-route-nav--header");
+    expect(focused).toContain(".lx-route-nav--rail");
+    expect(focused).toContain("display: none;");
     expect(focused).toContain(".lx-route-nav--mobile {");
+    expect(focused).toContain("display: grid;");
     expect(focused).toContain("grid-template-columns: repeat(4, minmax(48px, 1fr));");
   });
 
@@ -51,14 +69,14 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(learningSwitch).toContain("margin-left: calc(var(--lx-navigation-rail-width) + 48px);");
     expect(profileTablet).toContain("margin-left: calc(var(--lx-navigation-rail-width) + 20px);");
 
-    expect(focused).toContain('.lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {');
+    expect(focused).toContain('html[data-lexigo-build] .lx-routed-app[data-route-path="/learn"] .lx-learning-section-switch--learn {');
     expect(focused).toContain("width: calc(100% - 48px);");
     expect(focused).toContain("margin-right: auto;\n    margin-left: auto;");
-    expect(focused).toContain('.lx-routed-app[data-route-path="/profile"] .lx-profile-app .lx-main-content {');
+    expect(focused).toContain('html[data-lexigo-build] .lx-routed-app[data-route-path="/profile"] .lx-profile-app .lx-main-content {');
     expect(focused).toContain("width: min(1060px, 100%);");
   });
 
-  it("keeps Phrases and Reminder on the compact shared geometry", () => {
+  it("keeps Phrases and Reminder on the same route-scoped compact geometry", () => {
     expect(focused).toContain('.lx-routed-app[data-route-path="/phrases"]');
     expect(focused).toContain('.lx-app[data-route-client-island="phrases"]');
     expect(focused).toContain("padding-right: max(14px, env(safe-area-inset-right));");
@@ -66,14 +84,17 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(focused).toContain(".lx-phrases-catalog {\n    padding-right: 0;\n    padding-left: 0;");
 
     expect(reminder).toContain("@media (min-width: 720px) and (max-width: 1099px) {");
-    expect(focused).toContain(".lx-route-reminder-entry {\n    top: calc(10px + env(safe-area-inset-top));");
+    expect(focused).toContain(".lx-route-reminder-entry {");
+    expect(focused).toContain("top: calc(10px + env(safe-area-inset-top));");
     expect(focused).toContain("pointer-events: auto;");
-    expect(focused).toContain(".lx-route-reminder-entry > summary::before {\n    content: none;");
+    expect(focused).toContain(".lx-route-reminder-entry > summary::before {");
+    expect(focused).toContain("content: none;");
     expect(focused).toContain("clip-path: inset(50%);");
   });
 
-  it("does not absorb the focused-route repairs owned by Issues #604 and #605", () => {
-    expect(focused).toContain(':not([data-route-path="/lesson/active"]):not([data-route-path="/onboarding"])');
+  it("does not absorb the Home or focused-route repairs", () => {
+    expect(focused).toContain("Home remains on its existing, independently");
+    expect(focused).toContain("focused Active Lesson/Onboarding are #604/#605");
     expect(focused).not.toContain(".lx-active-lesson");
     expect(focused).not.toContain(".lx-first-use");
     expect(focused).not.toContain(".lx-onboarding");
