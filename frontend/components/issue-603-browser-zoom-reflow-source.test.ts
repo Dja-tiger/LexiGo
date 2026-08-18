@@ -112,8 +112,8 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(browserProof).toContain("toBe(720)");
     expect(browserProof).toContain('toEqual(["mobile"])');
     expect(browserProof).toContain("textOffenders");
-    expect(browserProof).toContain('scale: "device"');
-    expect(browserProof).not.toContain('scale: "css"');
+    expect(browserProof).toMatch(/page\.screenshot\(\{[\s\S]*?scale: "device",[\s\S]*?\}\);/);
+    expect(browserProof).toContain('evidenceScale: "device"');
     expect(browserProof).toContain("REVIEW_REQUIRED");
     expect(browserProof).not.toContain("font-size: 200%");
   });
