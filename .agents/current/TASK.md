@@ -17,7 +17,8 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - correct appearance-aware compact heading foreground ownership in the progressive Lesson Composer accessibility stylesheet;
 - add fail-closed source protection for the `≤767px + explicit Light` cascade;
 - strengthen the canonical Learn browser contract so 390×844 explicit Light/Dark verifies the computed heading foreground, not geometry alone;
-- preserve existing content-addressed Auto/default compact fingerprints and Dark fingerprints;
+- preserve existing content-addressed Auto/default compact and Dark fingerprints;
+- after manual review of exact Linux evidence, approve only the explicit-Light route-transition fingerprint that necessarily changes with the repaired foreground;
 - validate the corrected 320px explicit Light/Dark audit state before reconstructing #588.
 
 ## Non-goals
@@ -27,13 +28,14 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - no Phrase Detail repair (#590) in this PR;
 - no calendar/WebKit repair;
 - no unrelated CSS cleanup or redesign;
-- no content-addressed baseline replacement for the already-correct Auto/default compact hero.
+- no replacement of already-correct Auto/default or Dark visual baselines.
 
 ## Allowed paths
 
 - `frontend/app/adaptive-lesson-composer-accessibility.css`
 - `frontend/app/adaptive-lesson-composer-accessibility.test.ts`
 - `frontend/e2e/learn-route-island.spec.ts`
+- `frontend/e2e/route-transition-runtime-visual.spec.ts` — only reviewed `learn.light` fingerprint/provenance
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
@@ -45,7 +47,7 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - route/session/history runtime owners;
 - Phrases runtime/CSS;
 - workflows and dependencies;
-- existing visual fingerprint values.
+- existing visual fingerprint values other than the manually reviewed `learn.light` route-transition evidence required by this repair.
 
 ## Runtime owners
 
@@ -58,6 +60,7 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 
 - `frontend/app/adaptive-lesson-composer-accessibility.test.ts` protects CSS ownership/import order.
 - `frontend/e2e/learn-route-island.spec.ts` already owns canonical 390×844 explicit Light/Dark Figma route contracts; this slice adds computed foreground assertions there instead of creating a duplicate route test.
+- `frontend/e2e/route-transition-runtime-visual.spec.ts` owns the reviewed explicit-appearance Home→Learn transition evidence; only `learn.light` changes after exact Linux artifact review.
 
 ## Documentation owners
 
@@ -69,6 +72,7 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - explicit Light compact canvas remains `#f4f7f5` and the transparent heading uses semantic dark text;
 - explicit Dark compact canvas remains `#10211d` and the heading keeps the fixed light hero foreground;
 - Auto/default compact composition and its existing reviewed content-addressed hashes remain unchanged;
+- explicit Dark route-transition fingerprint remains unchanged;
 - desktop/tablet dark hero keeps `--lx-composer-hero-foreground: #f4f7f5` in every appearance;
 - no accessibility rule, browser project or visual gate is weakened.
 
@@ -78,6 +82,7 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - canonical 390×844 explicit Light route contract computes the semantic dark heading foreground and remains Figma `202:6` geometry-compatible;
 - canonical 390×844 explicit Dark computes the approved fixed light heading foreground;
 - existing Auto/default compact and explicit Dark visual fingerprints do not change;
+- reviewed explicit-Light Home→Learn transition remains `390×1212` and uses SHA-256 `14732c934d4b91a89415174ccd01a9c1a9c4134c9b07c21229401c48bb544425`, approved from CI #3763 / run `32093144691` at developer head `928b0186a688545aadcd9b82d84e5940f79f0ab6`;
 - medium/desktop foreground behavior remains unchanged;
 - source contract protects the appearance-aware compact cascade;
 - full immutable-head CI, clean review audit, exact-main CI and Stage/public validation pass;
@@ -88,21 +93,24 @@ Restore readable Learn intro heading contrast on compact **explicit Light** surf
 - source contract for accessibility stylesheet/import order and explicit-Light selector boundary;
 - canonical Learn explicit Light/Dark browser contract at 390×844;
 - frontend core lint/typecheck/unit/build through required CI;
-- authoritative Linux Visual collection proving existing reviewed Auto/default/Dark hashes remain stable;
+- authoritative Linux Visual collection proving existing reviewed Auto/default/Dark hashes remain stable and the reviewed explicit-Light transition fingerprint reproduces deterministically;
 - browser/accessibility/zoom/reduced-motion suites selected by full CI;
 - final review-thread and main-drift audit.
 
 ## Corrected diagnostic finding
 
-The first repair attempt used a broad `@media (max-width: 767px)` semantic heading override. CI #3757 proved that was too broad: it changed the already-correct Auto/default and Dark compact fingerprints. Manual inspection of the canonical content-addressed 390px baseline confirmed that its white heading is correctly placed on a dark navy surface.
+The first repair attempt used a broad `@media (max-width: 767px)` semantic heading override. CI #3758 / run `32078860455` proved that was too broad: it changed already-correct compact fingerprints. Manual inspection of the canonical content-addressed 390px baseline confirmed that its white heading is correctly placed on a dark navy surface.
 
 The actual missing boundary is **explicit user Light appearance**. `learn-route-island.spec.ts` already models explicit Light at 390×844 and confirms the Light canvas token, but historically asserted only geometry, so the white-on-light heading escaped detection.
+
+After the selector was corrected, CI #3763 / run `32093144691` passed the canonical Auto/default Lesson Composer baseline, explicit Dark transition and all other Visual cases, but changed exactly the explicit-Light Home→Learn transition from `95e13c…` to `14732c…`. Manual comparison of the exact old and new Linux screenshots confirmed that the old fingerprint encoded the defect (heading absent against the light hero), while the new fingerprint shows the intended readable dark heading with identical `390×1212` geometry. Only that reviewed fingerprint is therefore updated.
 
 ## Risks
 
 - using `data-lexigo-resolved-appearance="light"` instead of the explicit preference selector could unintentionally alter Auto/default rendering; the repair must key off `data-lexigo-appearance="light"` only;
-- a too-broad compact override could remove the fixed foreground from explicit Dark or desktop/tablet dark hero surfaces.
+- a too-broad compact override could remove the fixed foreground from explicit Dark or desktop/tablet dark hero surfaces;
+- approving any fingerprint beyond the manually reviewed explicit-Light transition would conceal unrelated visual drift and is prohibited.
 
 ## Rollback
 
-Revert the explicit-Light compact foreground exception and matching source/browser regression assertions. Existing reviewed visual fingerprints are intentionally not changed by this slice.
+Revert the explicit-Light compact foreground exception, matching source/browser assertions and the reviewed `learn.light` route-transition fingerprint/provenance. No other visual baseline, backend or data rollback is involved.
