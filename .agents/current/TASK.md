@@ -6,7 +6,7 @@
 - Branch: `fix/issue-593-profile-auto-light-theme`
 - Base SHA: `f1cfa074ffe25db6e253b60b6b3c5970ba8dda03`
 - Head SHA: resolve from live branch ref
-- PR:
+- PR: #597
 
 ## Objective
 
