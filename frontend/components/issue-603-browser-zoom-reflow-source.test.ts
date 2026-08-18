@@ -9,6 +9,8 @@ const adaptiveNavigation = readFileSync(new URL("../app/adaptive-navigation.css"
 const learningSwitch = readFileSync(new URL("../app/learning-section-switch.css", import.meta.url), "utf8");
 const profileTablet = readFileSync(new URL("../app/profile-tablet-layout.css", import.meta.url), "utf8");
 const reminder = readFileSync(new URL("../app/calendar-reminder-entry.css", import.meta.url), "utf8");
+const visualConfig = readFileSync(new URL("../playwright.visual.config.ts", import.meta.url), "utf8");
+const browserProof = readFileSync(new URL("../e2e/issue-603-browser-zoom-reflow.spec.ts", import.meta.url), "utf8");
 
 describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
   it("loads one late compatibility owner after Issue #583 and before feedback", () => {
@@ -75,5 +77,19 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(focused).not.toContain(".lx-active-lesson");
     expect(focused).not.toContain(".lx-first-use");
     expect(focused).not.toContain(".lx-onboarding");
+  });
+
+  it("routes the true browser-owned 720px proof through authoritative Visual CI and keeps it fail-closed", () => {
+    expect(visualConfig.match(/"issue-603-browser-zoom-reflow\.spec\.ts"/g)).toHaveLength(1);
+    expect(browserProof).toContain('testInfo.project.name !== "visual-desktop"');
+    expect(browserProof).toContain('viewport: { width: 1440, height: 900 }');
+    expect(browserProof).toContain("setBrowserZoom(worker, targetURL, 2)");
+    expect(browserProof).toContain("cssVisualViewport.zoom");
+    expect(browserProof).toContain("window.innerWidth")).toBeDefined();
+    expect(browserProof).toContain("toBe(720)");
+    expect(browserProof).toContain('toEqual(["mobile"])');
+    expect(browserProof).toContain("textOffenders");
+    expect(browserProof).toContain("REVIEW_REQUIRED");
+    expect(browserProof).not.toContain("font-size: 200%");
   });
 });
