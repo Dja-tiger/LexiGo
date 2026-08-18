@@ -6,7 +6,7 @@
 - Branch: `fix/issue-590-phrase-detail-min-width`
 - Base SHA: `7482d0ed52f9f5835b6a94fc4a7818ee1936d4aa`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #594
 
 ## Objective
 
