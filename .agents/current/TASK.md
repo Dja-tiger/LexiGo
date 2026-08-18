@@ -1,36 +1,33 @@
 # Current Task
 
-Issue:
-Branch:
-Base SHA:
-PR:
+## Identity
+
+- Issue:
+- Branch:
+- Base SHA:
+- Head SHA: resolve from live branch ref
+- PR:
 
 ## Objective
 
--
-
 ## Scope
 
-Allowed:
+## Non-goals
 
--
+## Allowed paths
 
-Prohibited:
+## Prohibited paths
 
--
+## Runtime owners
 
-## Acceptance Criteria
+## Documentation owners
 
-- [ ]
+## Invariants
 
-## Required Skills
+## Acceptance criteria
 
--
+## Required checks
 
-## Verification
+## Risks
 
-- [ ]
-
-## Handoff
-
--
+## Rollback
