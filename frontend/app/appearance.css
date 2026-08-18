@@ -2,8 +2,9 @@
  * User-selected appearance overrides.
  *
  * The inline bootstrap in RootLayout sets both data attributes before first
- * paint. Auto deliberately leaves the established media-query token owners in
- * control; only an explicit Light/Dark preference overrides them.
+ * paint. Explicit Light/Dark owns token overrides and the established global
+ * document canvas. Auto keeps that global behavior except for the Profile
+ * compatibility gap, where the rendered canvas follows resolved appearance.
  */
 
 :root[data-lexigo-appearance="light"] {
@@ -105,14 +106,26 @@
 }
 
 html[data-lexigo-appearance="light"],
-html[data-lexigo-appearance="dark"] {
+html[data-lexigo-appearance="dark"],
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]),
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"]:has(.lx-routed-app[data-route-path="/profile"]) {
   background: var(--ak-color-canvas);
 }
 
 html[data-lexigo-appearance="light"] body,
-html[data-lexigo-appearance="dark"] body {
+html[data-lexigo-appearance="dark"] body,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]),
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) {
   color: var(--ak-color-text-main);
   background: var(--ak-color-canvas);
+}
+
+html[data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]) .lx-legal-footer {
+  color: var(--ak-color-text-muted);
+}
+
+html[data-lexigo-resolved-appearance="light"]:has(.lx-routed-app[data-route-path="/profile"]) .lx-legal-footer a:hover {
+  color: var(--ak-color-text-main);
 }
 
 html[data-lexigo-appearance="light"] input,
@@ -120,7 +133,13 @@ html[data-lexigo-appearance="light"] select,
 html[data-lexigo-appearance="light"] textarea,
 html[data-lexigo-appearance="dark"] input,
 html[data-lexigo-appearance="dark"] select,
-html[data-lexigo-appearance="dark"] textarea {
+html[data-lexigo-appearance="dark"] textarea,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) input,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) select,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="light"] body:has(.lx-routed-app[data-route-path="/profile"]) textarea,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) input,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) select,
+html[data-lexigo-appearance="auto"][data-lexigo-resolved-appearance="dark"] body:has(.lx-routed-app[data-route-path="/profile"]) textarea {
   color-scheme: inherit;
 }
 
@@ -128,20 +147,100 @@ html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/p
   color: #b52f42;
 }
 
-html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-profile-initials,
-html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-avatar {
+/*
+ * Account/security still owns legacy hard-coded dark paint. Resolve that
+ * compatibility bridge from the rendered palette so Auto/system-Light and
+ * explicit Light share one semantic Profile canvas without touching forms or
+ * account APIs.
+ */
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security {
+  border-color: #c9d7d2;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: 0 18px 54px rgba(15, 33, 28, 0.12);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card {
+  border-color: #c9d7d2;
+  background: var(--ak-color-subtle);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list > div {
+  border-color: #c9d7d2;
+  background: var(--ak-color-surface);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security-heading > div > span,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card-heading > strong,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-schema {
+  color: var(--ak-color-primary);
+  background: var(--ak-color-primary-soft);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-security-heading p,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-card-heading p,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row span,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list span,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-list > p,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-audit-list > p,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form label > span,
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form > small:not([role="alert"]) {
+  color: var(--ak-color-text-muted);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-form input {
+  border-color: #9eb2ab;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row > span.current {
+  color: #0b5f44;
+  background: #d7f5e9;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-session-row > span.other {
+  color: var(--ak-color-text-muted);
+  background: #e6efeb;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.success {
+  border-color: #7fcdb1;
+  color: #0b5f44;
+  background: #d7f5e9;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.error {
+  border-color: #e6a5af;
+  color: #8f1f33;
+  background: #ffe2e6;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-danger-card {
+  border-color: #e6a5af;
+  background: #fff5f6;
+}
+
+html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-confirmation {
+  border-color: #e6a5af;
+  background: #ffe9ec;
+}
+
+html[data-lexigo-resolved-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-profile-initials,
+html[data-lexigo-resolved-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-avatar {
   border-color: #5179ce;
   color: #ffffff;
   background: #355fb3;
 }
 
-html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary {
+html[data-lexigo-resolved-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary {
   border-color: #5179ce;
   color: #ffffff;
   background: #355fb3;
 }
 
-html[data-lexigo-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary:hover:not(:disabled) {
+html[data-lexigo-resolved-appearance="dark"] .lx-routed-app[data-route-path="/profile"] .lx-account-security .lx-button.primary:hover:not(:disabled) {
   border-color: #6f91dd;
   background: #416fc5;
 }
