@@ -493,6 +493,14 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
 
     for (const contract of ROUTES) {
       runtimeErrors.length = 0;
+
+      // Active Lesson owns a page-level catch-all API fixture. The consolidated
+      // matrix intentionally reuses one page, so remove that route before the
+      // next canonical owner and fall back to the context-level quality API.
+      if (contract.key !== "active-lesson") {
+        await page.unroute("**/api/v1/**");
+      }
+
       if (page.url().startsWith("http://") || page.url().startsWith("https://")) {
         await setBrowserZoom(worker, page.url(), 1);
       }
