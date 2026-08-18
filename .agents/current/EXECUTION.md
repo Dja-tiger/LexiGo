@@ -3,89 +3,132 @@
 ## Task
 
 - Issue: #603
-- Parent: #205
+- Parent visual-parity umbrella: #205
+- Discovered by audit: #601 / Draft PR #602
 - Branch: `fix/issue-603-browser-zoom-720-ordinary-routes`
 - Base SHA: `b1444d5e5153da9b8fe275b7f1f175e9bd25286b`
-- Head SHA: resolve from live branch ref
-- PR:
+- PR: #606
+- Final head SHA: resolve from live branch after this documentation commit
+- Reviewed evidence source: CI run `32190243698` / head `78239dce1ed0cbbf0f4bb7496481accdb07f6906` / artifact `9344156521`
 
 ## Skills used
 
-### GitHub repository workflow
+### GitHub repository and CI workflow
 
 Purpose:
 
-Deliver an atomic runtime repair discovered by the fail-closed #601 accessibility/visual audit, preserving immutable evidence and separating runtime changes from the audit PR.
+Deliver the atomic ordinary-route 200% browser-zoom repair, preserve the reviewed 768px tablet contract, maintain fail-closed Linux visual evidence and avoid approving screenshots that do not represent the real CSS viewport.
 
-Instruction source:
+Instruction sources:
 
-Repository `AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, GitHub skill, parent #205, audit #601 and runtime Issue #603.
+Repository `AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, GitHub workflow skill, CI repair skill, parent #205, audit #601 and Issue #603.
 
-Version or verification date:
+Verification date:
 
-2026-08-18 live repository state.
+2026-08-18/19 live repository state.
 
-Inputs:
+## Inputs
 
-- current `main@b1444d5e5153da9b8fe275b7f1f175e9bd25286b`;
-- #601 CI run `32180791470` / Visual artifact `9340975602`;
-- manually reviewed Light/Dark true-browser-zoom screenshots;
-- existing 719px compact and 768×1024 tablet evidence contracts.
+- branch base `main@b1444d5e5153da9b8fe275b7f1f175e9bd25286b`;
+- #601 browser-zoom audit evidence;
+- existing exact 719px compact and 768×1024 tablet contracts;
+- #606 immutable CI runs #3828, #3832, #3833 and #3836;
+- authoritative Linux Visual artifacts, including final reviewed artifact `9344156521`;
+- Chrome DevTools Protocol layout metrics and screenshot coordinate contract.
 
-Files inspected:
+## Execution
 
-- `frontend/app/route-navigation.css`
-- `frontend/app/adaptive-navigation.css`
-- `frontend/app/adaptive-layout.css`
-- `frontend/app/learning-section-switch.css`
-- `frontend/app/profile.css`
-- `frontend/app/profile-tablet-layout.css`
-- `frontend/app/calendar-reminder-entry.css`
-- `frontend/app/layout.tsx`
-- #601 consolidated browser-zoom test/evidence from Draft PR #602
+1. Re-checked live open PRs and selected Draft PR #606 before parent audit PR #602 because #606 is the runtime/evidence dependency for the audit.
+2. Confirmed the shared responsive ownership defect: ordinary routed content switched to rail/medium ownership at 720px while the first reviewed tablet anchor is 768px.
+3. Preserved the atomic runtime repair that continues compact/mobile RouteChrome ownership through `720–767px` for only the seven ordinary route families.
+4. Preserved exclusions for Home, Active Lesson and Onboarding so #603 did not become an umbrella CSS patch.
+5. Added/maintained a true browser-owned zoom proof from `1440×900` at factor `2.0`, requiring exact `window.innerWidth = 720` and internal containment of route owners, interactive boxes and visible text ranges.
+6. CI #3828 exposed stale standalone Learn/Phrases expectations that still required rail navigation at exact 720px. Updated only those test owners: rail/header hidden, mobile navigation visible with four links; content, focus and overflow assertions remained active.
+7. Manual review of the first Issue #603 screenshots exposed an evidence contradiction: DOM geometry passed, but `page.screenshot` showed only about half of the CSS viewport.
+8. Rejected those fingerprints instead of modifying production CSS to match a bad screenshot.
+9. Tested Playwright device-scale capture; CI #3833 proved it remained byte-equivalent to the cropped evidence, so those fingerprints were rejected again.
+10. Reworked Issue #603 evidence to use raw CDP `Page.captureScreenshot` with `Page.getLayoutMetrics`:
+    - read `cssVisualViewport.zoom`;
+    - convert CSS content/layout dimensions to device-independent clip coordinates by multiplying by zoom;
+    - normalize output with `scale: 1 / zoom`;
+    - assert the encoded PNG width equals the exact CSS layout width.
+11. Added a source contract that requires the CDP-normalized evidence path and prevents regression back to `page.screenshot` for this true-browser-zoom proof.
+12. CI #3836 validated the implementation: all substantive gates passed and Visual failed only on the intentional Light/Dark `REVIEW_REQUIRED` gate.
+13. Downloaded Visual artifact `9344156521` from exact head `78239dce1ed0cbbf0f4bb7496481accdb07f6906`.
+14. Manually inspected all 14 Linux screenshots, seven routes in Light and Dark. Evidence is now full-width 720px, all four mobile navigation items are visible, and no horizontal clipping/truncation was found.
+15. Pinned all 14 reviewed dimensions/SHA-256 fingerprints in the Issue #603 proof with immutable `sourceRun` and `sourceHeadSha` provenance.
+16. Updated branch-local progress/execution records before the final immutable-head CI gate.
 
-Actions performed:
+## Files changed during the follow-up
 
-1. Stopped #601 baseline approval after exact artifact review exposed internal clipping on ordinary routes.
-2. Created #603 for the ordinary routed shell/content defect; created separate #604/#605 for focused Active Lesson/Onboarding defects so this runtime PR stays atomic.
-3. Created the Issue #603 branch from exact current main.
-4. Mapped the shared responsive ownership boundary:
-   - compact/mobile RouteChrome ends at 719px;
-   - rail/medium RouteChrome begins at 720px;
-   - reviewed tablet evidence begins only at 768px;
-   - Learn/Profile/Reminder owners independently align to the same 720px medium start.
-5. Established the initial repair direction: treat 720–767px as compact ownership rather than introducing a new design state, then prove every affected ordinary route no longer clips internally.
+- `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`
+- `frontend/e2e/learn-browser-zoom.spec.ts`
+- `frontend/e2e/phrases-visual.spec.ts`
+- `frontend/components/issue-603-browser-zoom-reflow-source.test.ts`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 
-Commands or procedures:
+The follow-up did not change production CSS; runtime layout was already structurally correct after the original #603 repair.
 
-GitHub connector live reads/writes; exact GitHub Actions artifact download; local image/hash/diff inspection of the authoritative Visual artifact; branch-scoped Contents API writes only.
+## Reviewed evidence
 
-Artifacts produced:
+CI #3836 / run `32190243698`, artifact `9344156521`, head `78239dce1ed0cbbf0f4bb7496481accdb07f6906`:
 
-- Issues #603, #604, #605.
-- #601/#602 blocking comments referencing exact runtime findings.
-- active Issue #603 task/progress/execution records.
+- Learn Light/Dark: `720×995`
+- Progress Light/Dark: `720×1664`
+- Dictionary Light/Dark: `720×1058`
+- Word Detail Light/Dark: `720×1676`
+- Phrases Light/Dark: `720×1363`
+- Phrase Detail Light/Dark: `720×1589`
+- Profile Light/Dark: `720×4086`
 
-Result:
+Exact SHA-256 values are stored beside those dimensions in `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`.
 
-Root cause is localized to an unreviewed shared responsive boundary rather than a single route's content. Runtime code is not changed yet; the next step is a minimal shared breakpoint repair plus executable 720px true-zoom containment proof.
+## CI result before baseline approval
 
-Failures:
+CI #3836:
 
-#601 cannot be merged/approved yet. Its structural assertions passed, but manual exact evidence showed internal clipping that document-level `scrollWidth` checks did not detect.
+- frontend core quality: passed;
+- backend unit/security: passed;
+- backend integration: passed;
+- iOS PWA dictionary: passed;
+- lesson completion: passed;
+- accessibility audit: passed;
+- UI shard 1/2: passed;
+- UI shard 2/2: passed;
+- controlled service worker: passed;
+- dictionary smoke: passed;
+- content security: passed;
+- performance budgets: passed;
+- Visual regression: only the two intentional Issue #603 `REVIEW_REQUIRED` failures;
+- aggregate frontend quality: failed only because Visual remained intentionally fail-closed before fingerprint approval.
 
-Root cause:
+## Failures and root causes
 
-Multiple ordinary-route owners transition to rail/medium geometry at 720px while the canonical tablet design/evidence starts at 768px. True 2× browser zoom from 1440px lands exactly in that gap and reduces usable content width enough for route descendants to be clipped by their own owners without document horizontal overflow.
+### Stale standalone navigation expectations
 
-Fallback:
+Learn/Phrases tests still encoded the old 720px rail owner after #603 intentionally moved that gap to compact ownership.
 
-If extending compact ownership through 767px does not remove all route-specific clipping, keep the shared boundary correction and split any remaining route-local width defect into another focused child Issue rather than broadening #603 selectors blindly.
+Resolution: update only owner/navigation assertions and retain all behavioral, focus and containment assertions.
 
-Limitations:
+### Invalid browser-zoom screenshot coordinate system
 
-No local authoritative Chromium extension execution is available through the connector. Runtime browser proof must run in the repository's Linux GitHub Actions environment; manual artifact review remains mandatory before visual fingerprint approval.
+Playwright full-page screenshot capture under browser-owned zoom did not represent the same CSS coordinate space as DOM geometry; at zoom 2 it captured approximately half of the effective CSS width.
 
-Reusable lesson:
+Resolution: use CDP layout metrics and normalize the screenshot clip from CSS pixels into DIP, then back to a one-pixel-per-CSS-pixel artifact. The result is a 720px-wide full route image consistent with the structural geometry checks.
 
-Document-level overflow is insufficient for reflow QA. A responsive boundary can clip descendants inside `overflow: clip/hidden` while the document remains exactly viewport-width; consolidated audits need internal text/control containment evidence and manual visual review.
+## Guardrails preserved
+
+- no writes to `main`;
+- exact 768px tablet/rail behavior remains outside the 720–767px compatibility repair;
+- no Home selectors added to #603;
+- no Active Lesson/Onboarding selectors added to #603;
+- no blind snapshot acceptance;
+- every Linux fingerprint is tied to an exact CI run/head and manual image review;
+- production CSS was not changed in response to a screenshot-tooling defect.
+
+## Remaining gate
+
+Run full required CI on the final developer-authored head after baseline approval and documentation synchronization. Then re-check PR #606 mergeability, unresolved review threads, reviews/comments and required checks. Only after those are satisfied may the PR be moved out of Draft/merged according to repository policy.
+
+After #606 is completed, return to Draft PR #602. Its parent browser-zoom audit still inherits `page.screenshot({ scale: "css" })`; replace that evidence path with the validated CDP-normalized capture before any #602 fingerprints are approved.
