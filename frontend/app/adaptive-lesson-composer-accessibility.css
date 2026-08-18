@@ -29,6 +29,15 @@
 }
 
 @media (max-width: 767px) {
+  /*
+   * Explicit Light is the only compact state where the Learn heading sits on
+   * the semantic light canvas. Auto/default and explicit Dark retain the
+   * approved dark hero surface and therefore keep the fixed light foreground.
+   */
+  html[data-lexigo-appearance="light"] .lx-main-content[aria-label="Обучение"] .lx-page-heading h1 {
+    color: var(--ak-color-text-main);
+  }
+
   .lx-recommended-lesson__eyebrow,
   .lx-recommended-lesson-reason strong {
     color: var(--lx-composer-retained-foreground);
