@@ -13,6 +13,10 @@ import {
   QUALITY_PHRASES,
   QUALITY_WORDS,
 } from "./support/quality-gates";
+import {
+  CANONICAL_WORD_DETAIL,
+  installCanonicalWordDetailFixture,
+} from "./support/word-detail-fixture";
 
 type Appearance = "light" | "dark";
 type RouteHistoryKey =
@@ -116,6 +120,12 @@ async function installRouteOverrides(page: Page, contract: RouteHistoryContract)
     });
   }
 
+  if (contract.key === "word-detail") {
+    // Word Detail validates scheduler/review fields strictly. Reuse the route's
+    // canonical fixture instead of the intentionally compact dictionary row.
+    await installCanonicalWordDetailFixture(page);
+  }
+
   if (contract.key === "onboarding") {
     await page.route("**/api/v1/onboarding", async (route) => {
       await fulfillJSON(route, 200, {
@@ -171,7 +181,9 @@ async function expectSemanticReady(page: Page, contract: RouteHistoryContract): 
       await expect(page.getByRole("heading", { level: 1, name: "Словарь", exact: true })).toBeVisible();
       return;
     case "word-detail":
-      await expect(page.getByRole("heading", { level: 1, name: QUALITY_WORDS[0].lemma, exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: CANONICAL_WORD_DETAIL.lemma, exact: true }),
+      ).toBeVisible();
       return;
     case "phrases":
       await expect(page.getByRole("heading", { level: 1, name: "Находите готовые формулировки", exact: true })).toBeVisible();
