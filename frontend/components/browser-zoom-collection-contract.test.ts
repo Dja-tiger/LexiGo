@@ -35,6 +35,14 @@ function readE2ESource(fileName: string): string {
   return readFileSync(path.join(e2eRoot, fileName), "utf8");
 }
 
+function readVisualProjectSource(projectName: string): string {
+  const marker = `name: "${projectName}"`;
+  const start = visualConfig.indexOf(marker);
+  expect(start, `${projectName} must exist in playwright.visual.config.ts`).toBeGreaterThanOrEqual(0);
+  const next = visualConfig.indexOf('name: "visual-', start + marker.length);
+  return visualConfig.slice(start, next === -1 ? undefined : next);
+}
+
 describe("authoritative browser zoom collection", () => {
   it("collects standalone, consolidated and delivered Issue #603 browser-zoom owners", () => {
     for (const owner of [
@@ -45,6 +53,14 @@ describe("authoritative browser zoom collection", () => {
     ]) {
       expect(visualConfig, `${owner} must stay in playwright.visual.config.ts testMatch`).toContain(`"${owner}"`);
     }
+  });
+
+  it("runs the consolidated route matrix only from the canonical desktop visual project", () => {
+    const desktopOnlyIgnore = 'testIgnore: ["**/route-browser-zoom-parity.spec.ts"]';
+    expect(readVisualProjectSource("visual-compact")).toContain(desktopOnlyIgnore);
+    expect(readVisualProjectSource("visual-medium")).toContain(desktopOnlyIgnore);
+    expect(readVisualProjectSource("visual-desktop")).not.toContain(desktopOnlyIgnore);
+    expect(readVisualProjectSource("visual-desktop")).toContain("viewport: { width: 1440, height: 900 }");
   });
 
   it("keeps the canonical visual command bound to the authoritative config", () => {
@@ -74,6 +90,7 @@ describe("authoritative browser zoom collection", () => {
     expect(source).toContain("cssVisualViewport.zoom");
     expect(source).toContain("cssContentSize.height * zoom");
     expect(source).toContain("scale: 1 / zoom");
+    expect(source).toContain('viewport: { width: 1440, height: 900 }');
     expect(source).toContain('sha256: "REVIEW_REQUIRED"');
     expect(source).toContain("REVIEW_REQUIRED exact Linux 200% browser-zoom evidence");
     expect(source).not.toMatch(/page\.screenshot\s*\(/);
