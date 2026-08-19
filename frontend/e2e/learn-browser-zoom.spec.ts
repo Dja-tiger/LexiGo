@@ -48,13 +48,6 @@ type DOMZoomMetrics = {
   visualViewportScale: number;
 };
 
-type Rect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 const SESSION = {
   user: {
     id: "00000000-0000-0000-0000-000000000421",
@@ -293,23 +286,6 @@ async function expectHorizontallyContained(
   }
 }
 
-function rectanglesOverlap(left: Rect, right: Rect): boolean {
-  return (
-    left.x < right.x + right.width
-    && left.x + left.width > right.x
-    && left.y < right.y + right.height
-    && left.y + left.height > right.y
-  );
-}
-
-async function expectNoOverlap(left: Locator, right: Locator, label: string): Promise<void> {
-  const [leftBox, rightBox] = await Promise.all([left.boundingBox(), right.boundingBox()]);
-  expect(leftBox, `${label}: left element must have geometry`).not.toBeNull();
-  expect(rightBox, `${label}: right element must have geometry`).not.toBeNull();
-  if (!leftBox || !rightBox) throw new Error(`${label}: missing layout geometry.`);
-  expect(rectanglesOverlap(leftBox, rightBox), `${label}: elements must not overlap`).toBe(false);
-}
-
 test.describe("Lesson Composer browser-owned zoom", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -425,10 +401,10 @@ test.describe("Lesson Composer browser-owned zoom", () => {
         name: "Мобильная навигация",
         exact: true,
       });
-      await expect(railNavigation).toBeVisible();
+      await expect(railNavigation).toBeHidden();
       await expect(headerNavigation).toBeHidden();
-      await expect(mobileNavigation).toBeHidden();
-      await expect(railNavigation.getByRole("link")).toHaveCount(4);
+      await expect(mobileNavigation).toBeVisible();
+      await expect(mobileNavigation.getByRole("link")).toHaveCount(4);
 
       await expect(recommendation).toBeVisible();
       await expect(manualComposer).toBeHidden();
@@ -446,13 +422,12 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       await expectHorizontallyContained(currentParameters, afterDOM.clientWidth, "current parameters");
       await expectHorizontallyContained(recommendedStart, afterDOM.clientWidth, "recommended start");
       await expectHorizontallyContained(configure, afterDOM.clientWidth, "configure action");
-      await expectHorizontallyContained(railNavigation, afterDOM.clientWidth, "route navigation rail");
-      await expectNoOverlap(railNavigation, main, "route navigation rail and Learn main");
+      await expectHorizontallyContained(mobileNavigation, afterDOM.clientWidth, "route mobile navigation");
       await expectNoHorizontalOverflow(page);
 
       await expectVisibleFocus(recommendedStart);
       await expectVisibleFocus(configure);
-      const dictionaryNavigation = railNavigation.getByRole("link", { name: "Словарь", exact: true });
+      const dictionaryNavigation = mobileNavigation.getByRole("link", { name: "Словарь", exact: true });
       await expectVisibleFocus(dictionaryNavigation);
 
       await configure.click();
@@ -495,7 +470,7 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       await expectHorizontallyContained(sourceGroup.getByRole("radio"), afterDOM.clientWidth, "source option");
       await expectHorizontallyContained(sizeGroup.getByRole("radio"), afterDOM.clientWidth, "size option");
       await expectHorizontallyContained(manualStart, afterDOM.clientWidth, "manual lesson start");
-      await expectNoOverlap(railNavigation, main, "route navigation rail and expanded Learn main");
+      await expectHorizontallyContained(mobileNavigation, afterDOM.clientWidth, "expanded route mobile navigation");
       await expectNoHorizontalOverflow(page);
 
       await expectVisibleFocus(manualSummary);
