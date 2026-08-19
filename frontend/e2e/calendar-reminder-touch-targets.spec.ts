@@ -228,7 +228,20 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
 
     await installQualityGateAPI(context);
     await page.setViewportSize({ width: 320, height: 720 });
+
+    const progressReady = page.waitForResponse((response) => (
+      new URL(response.url()).pathname === "/api/v1/progress" && response.status() === 200
+    ));
+    const activeLessonReady = page.waitForResponse((response) => (
+      new URL(response.url()).pathname === "/api/v1/lessons/active" && response.status() === 404
+    ));
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await Promise.all([progressReady, activeLessonReady]);
+    // With the deterministic fixture, this final CTA is reachable only after
+    // both Home resource results have committed; measuring before it appears
+    // can sample the transient loading layout instead of the calendar owner.
+    await expect(page.getByRole("button", { name: "Повторить сейчас", exact: true })).toBeVisible();
     await applyTextZoom(page);
 
     const routeEntry = page.locator(".lx-route-reminder-entry");
