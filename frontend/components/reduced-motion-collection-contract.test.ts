@@ -63,15 +63,16 @@ describe("Issue #614 consolidated reduced-motion collection", () => {
     expect(ownerSource).toContain("duration <= 0.01");
     expect(ownerSource).toContain("element.getAnimations()");
     expect(ownerSource).toContain('animation.playState === "running"');
-    expect(ownerSource).toContain('snapshot.activeAnimations');
-    expect(ownerSource).toContain('snapshot.violations');
+    expect(ownerSource).toContain("animation.pending");
+    expect(ownerSource).toContain("snapshot.activeAnimations");
+    expect(ownerSource).toContain("snapshot.violations");
   });
 
   it("preserves route ownership, instant scrolling and keyboard-visible feedback", () => {
     expect(ownerSource).toContain("RouteChrome ownership must match");
     expect(ownerSource).toContain('contract.focused ? [] : [viewport.navigation]');
-    expect(ownerSource).toContain('htmlScrollBehavior');
-    expect(ownerSource).toContain('ownerScrollBehavior');
+    expect(ownerSource).toContain("htmlScrollBehavior");
+    expect(ownerSource).toContain("ownerScrollBehavior");
     expect(ownerSource).toContain('matches(":focus-visible")');
     expect(ownerSource).toContain("keyboard target must retain painted feedback");
     expect(ownerSource).toContain("reduced-motion keyboard feedback must not use spatial transform");
