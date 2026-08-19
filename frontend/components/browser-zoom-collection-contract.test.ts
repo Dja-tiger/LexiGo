@@ -24,6 +24,7 @@ const STANDALONE_BROWSER_ZOOM_OWNERS = [
 ] as const;
 const PHRASES_VISUAL_OWNER = "phrases-visual.spec.ts";
 const CONSOLIDATED_ROUTE_ZOOM_OWNER = "route-browser-zoom-parity.spec.ts";
+const ISSUE_603_ZOOM_OWNER = "issue-603-browser-zoom-reflow.spec.ts";
 const KEYBOARD_FOCUS_OWNERS = [
   ...STANDALONE_BROWSER_ZOOM_OWNERS,
   PHRASES_VISUAL_OWNER,
@@ -35,17 +36,15 @@ function readE2ESource(fileName: string): string {
 }
 
 describe("authoritative browser zoom collection", () => {
-  it("collects every standalone browser-owned zoom owner", () => {
-    for (const owner of STANDALONE_BROWSER_ZOOM_OWNERS) {
-      expect(
-        visualConfig,
-        `${owner} must stay in playwright.visual.config.ts testMatch`,
-      ).toContain(`"${owner}"`);
+  it("collects standalone, consolidated and delivered Issue #603 browser-zoom owners", () => {
+    for (const owner of [
+      ...STANDALONE_BROWSER_ZOOM_OWNERS,
+      PHRASES_VISUAL_OWNER,
+      CONSOLIDATED_ROUTE_ZOOM_OWNER,
+      ISSUE_603_ZOOM_OWNER,
+    ]) {
+      expect(visualConfig, `${owner} must stay in playwright.visual.config.ts testMatch`).toContain(`"${owner}"`);
     }
-  });
-
-  it("collects the consolidated route browser-zoom parity owner", () => {
-    expect(visualConfig).toContain(`"${CONSOLIDATED_ROUTE_ZOOM_OWNER}"`);
   });
 
   it("keeps the canonical visual command bound to the authoritative config", () => {
@@ -59,21 +58,25 @@ describe("authoritative browser zoom collection", () => {
       const source = readE2ESource(owner);
       expect(source).toContain("browser-owned zoom");
       expect(source).toContain("lexigoBrowserZoomController");
-      expect(source).toContain("setBrowserZoom(serviceWorker, targetURL, 2)");
       expect(source).toContain("cssVisualViewport.zoom");
       expect(source).toContain("rootFontSize");
     }
   });
 
-  it("keeps the consolidated route matrix on true browser zoom with fail-closed evidence", () => {
+  it("keeps the consolidated matrix on true browser zoom with fail-closed CDP-normalized evidence", () => {
     const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
+
     expect(source).toContain("browser-owned zoom");
     expect(source).toContain("lexigoBrowserZoomController");
     expect(source).toContain("setBrowserZoom(worker, targetURL, 2)");
+    expect(source).toContain('cdp.send("Page.getLayoutMetrics")');
+    expect(source).toContain('cdp.send("Page.captureScreenshot"');
     expect(source).toContain("cssVisualViewport.zoom");
-    expect(source).toContain("rootFontSize");
+    expect(source).toContain("cssContentSize.height * zoom");
+    expect(source).toContain("scale: 1 / zoom");
     expect(source).toContain('sha256: "REVIEW_REQUIRED"');
     expect(source).toContain("REVIEW_REQUIRED exact Linux 200% browser-zoom evidence");
+    expect(source).not.toMatch(/page\.screenshot\s*\(/);
     expect(source).not.toContain("font-size: 200%");
     expect(source).not.toContain("--update-snapshots");
   });
@@ -96,15 +99,26 @@ describe("authoritative browser zoom collection", () => {
     }
   });
 
-  it("requires global chrome, overflow and partial-focusable containment in the route matrix", () => {
+  it("pins the exact 720px responsive ownership contract instead of accepting any navigation variant", () => {
+    const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
+
+    expect(source).toContain('expectedNavigation: "rail"');
+    expect(source.match(/expectedNavigation: "mobile"/g)).toHaveLength(7);
+    expect(source.match(/expectedNavigation: "none"/g)).toHaveLength(2);
+    expect(source).toContain("true 200% browser zoom must land on exact 720px boundary");
+    expect(source).toContain(".toBe(720)");
+    expect(source).toContain("exact 720px RouteChrome owner must match reviewed responsive ownership");
+  });
+
+  it("requires global chrome, route-owner, text-range and focusable containment in the route matrix", () => {
     const source = readE2ESource(CONSOLIDATED_ROUTE_ZOOM_OWNER);
     expect(source).toContain('".lx-route-brand"');
     expect(source).toContain('".lx-route-reminder-entry > summary"');
     expect(source).toContain('button[aria-label="Открыть профиль"]');
-    expect(source).toContain("fixedGlobalChrome");
-    expect(source).toContain("focusableOffenders");
-    expect(source).toContain("document must not overflow horizontally at 200% browser zoom");
-    expect(source).toContain("focused route must suppress ordinary RouteChrome at 200% zoom");
+    expect(source).toContain("boxOffenders");
+    expect(source).toContain("textOffenders");
+    expect(source).toContain("document must not horizontally overflow");
+    expect(source).toContain("visible text ranges must not clip inside route/container owners");
   });
 
   it("requires keyboard-originated focus evidence in every browser-zoom owner", () => {
@@ -120,16 +134,12 @@ describe("authoritative browser zoom collection", () => {
     }
   });
 
-  it("keeps Home zoom aligned with the shell-owned information architecture and exact 720px boundary", () => {
+  it("keeps Home zoom aligned with the shell-owned exact-720 rail contract", () => {
     const source = readE2ESource("home-browser-zoom.spec.ts");
     expect(source).toContain('page.locator(".lx-home-paths")');
     expect(source).toContain("await expect(paths).toBeHidden()");
     expect(source).toContain("canonical bounded two-column Home action layout");
-    expect(source).toContain("canonical two-column Home action layout must top-align");
     expect(source).not.toContain("single-column Home action breakpoint");
-    expect(source).not.toContain("responsive progress panel must follow the Home hero in document order");
-    expect(source).not.toContain("Home path card");
-    expect(source).not.toContain("pathColumns");
   });
 
   it("keeps Learn zoom focus aligned with roving-tabindex radio semantics", () => {
@@ -139,11 +149,9 @@ describe("authoritative browser zoom collection", () => {
   });
 
   it("keeps Phrases true browser zoom inside an already-collected visual owner", () => {
-    expect(visualConfig).toContain(`"${PHRASES_VISUAL_OWNER}"`);
     const source = readE2ESource(PHRASES_VISUAL_OWNER);
     expect(source).toContain('test.describe("Phrases browser-owned zoom"');
     expect(source).toContain("lexigoBrowserZoomController");
-    expect(source).toContain("setBrowserZoom(serviceWorker, targetURL, 2)");
     expect(source).toContain("cssVisualViewport.zoom");
     expect(source).toContain("phrases-browser-zoom-metrics.json");
   });

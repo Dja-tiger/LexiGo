@@ -30,6 +30,7 @@ import {
 } from "./support/word-detail-fixture";
 
 type ExplicitAppearance = "light" | "dark";
+type NavigationOwner = "rail" | "mobile" | "none";
 type RouteZoomKey =
   | "home"
   | "learn"
@@ -46,7 +47,7 @@ type RouteZoomContract = Readonly<{
   key: RouteZoomKey;
   path: string;
   ownerSelector: string;
-  focused: boolean;
+  expectedNavigation: NavigationOwner;
 }>;
 
 type BrowserZoomResult = Readonly<{
@@ -59,8 +60,9 @@ type BrowserZoomResult = Readonly<{
 }>;
 
 type BrowserLayoutMetrics = Readonly<{
-  cssLayoutViewport: { clientWidth: number; clientHeight: number };
+  cssLayoutViewport: { pageX: number; pageY: number; clientWidth: number; clientHeight: number };
   cssVisualViewport: { clientWidth: number; clientHeight: number; scale: number; zoom: number };
+  cssContentSize: { x: number; y: number; width: number; height: number };
 }>;
 
 type DOMZoomMetrics = Readonly<{
@@ -73,6 +75,12 @@ type DOMZoomMetrics = Readonly<{
   visualViewportScale: number;
 }>;
 
+type BrowserZoomEvidenceCapture = Readonly<{
+  screenshot: Buffer;
+  metrics: BrowserLayoutMetrics;
+  clip: { x: number; y: number; width: number; height: number; scale: number };
+}>;
+
 type ReviewedZoomBaseline = Readonly<{
   width: number;
   height: number;
@@ -82,17 +90,17 @@ type ReviewedZoomBaseline = Readonly<{
 }>;
 
 const ROUTES: readonly RouteZoomContract[] = [
-  { key: "home", path: "/", ownerSelector: '[data-route-client-island="home"]', focused: false },
-  { key: "learn", path: "/learn", ownerSelector: '[data-route-client-island="learn"]', focused: false },
-  { key: "active-lesson", path: "/lesson/active", ownerSelector: '[data-route-client-island="active-lesson"]', focused: true },
-  { key: "progress", path: "/progress", ownerSelector: '[data-route-client-island="progress"]', focused: false },
-  { key: "dictionary", path: "/dictionary", ownerSelector: '[data-route-client-island="dictionary"]', focused: false },
-  { key: "word-detail", path: "/words/101", ownerSelector: '[data-route-client-island="dictionary"]', focused: false },
-  { key: "phrases", path: "/phrases", ownerSelector: '[data-route-client-island="phrases"]', focused: false },
-  { key: "phrase-detail", path: `/phrases/${QUALITY_PHRASES[0].slug}`, ownerSelector: '[data-route-client-island="phrases"]', focused: false },
-  { key: "profile", path: "/profile", ownerSelector: '[data-route-client-island="profile"]', focused: false },
+  { key: "home", path: "/", ownerSelector: '[data-route-client-island="home"]', expectedNavigation: "rail" },
+  { key: "learn", path: "/learn", ownerSelector: '[data-route-client-island="learn"]', expectedNavigation: "mobile" },
+  { key: "active-lesson", path: "/lesson/active", ownerSelector: '[data-route-client-island="active-lesson"]', expectedNavigation: "none" },
+  { key: "progress", path: "/progress", ownerSelector: '[data-route-client-island="progress"]', expectedNavigation: "mobile" },
+  { key: "dictionary", path: "/dictionary", ownerSelector: '[data-route-client-island="dictionary"]', expectedNavigation: "mobile" },
+  { key: "word-detail", path: "/words/101", ownerSelector: '[data-route-client-island="dictionary"]', expectedNavigation: "mobile" },
+  { key: "phrases", path: "/phrases", ownerSelector: '[data-route-client-island="phrases"]', expectedNavigation: "mobile" },
+  { key: "phrase-detail", path: `/phrases/${QUALITY_PHRASES[0].slug}`, ownerSelector: '[data-route-client-island="phrases"]', expectedNavigation: "mobile" },
+  { key: "profile", path: "/profile", ownerSelector: '[data-route-client-island="profile"]', expectedNavigation: "mobile" },
   // Keep onboarding last: its deterministic API replaces the shared quality API.
-  { key: "onboarding", path: "/onboarding", ownerSelector: ".lx-first-use-panel", focused: true },
+  { key: "onboarding", path: "/onboarding", ownerSelector: ".lx-first-use-panel", expectedNavigation: "none" },
 ] as const;
 
 const REVIEW_REQUIRED: ReviewedZoomBaseline = {
@@ -165,11 +173,7 @@ async function installOnboardingResumeAPI(context: BrowserContext): Promise<void
   });
 }
 
-async function openRoute(
-  contract: RouteZoomContract,
-  page: Page,
-  context: BrowserContext,
-): Promise<void> {
+async function openRoute(contract: RouteZoomContract, page: Page, context: BrowserContext): Promise<void> {
   switch (contract.key) {
     case "home":
       await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -271,7 +275,7 @@ async function settleRoute(page: Page, appearance: ExplicitAppearance): Promise<
 }
 
 async function expectKeyboardFocusVisible(page: Page, contract: RouteZoomContract): Promise<void> {
-  const target = contract.focused
+  const target = contract.expectedNavigation === "none"
     ? page.locator(contract.ownerSelector).locator(
       "button:visible, input:visible, select:visible, textarea:visible, summary:visible, a[href]:visible, [tabindex]:not([tabindex='-1']):visible",
     ).first()
@@ -281,7 +285,7 @@ async function expectKeyboardFocusVisible(page: Page, contract: RouteZoomContrac
   await target.focus();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
-  await expect(target, `${contract.key}: keyboard navigation must return to the representative target`).toBeFocused();
+  await expect(target, `${contract.key}: keyboard navigation must return to representative target`).toBeFocused();
 
   const focus = await target.evaluate((element) => {
     const style = window.getComputedStyle(element);
@@ -302,8 +306,8 @@ async function expectKeyboardFocusVisible(page: Page, contract: RouteZoomContrac
 
   expect(focus.focusVisible, `${contract.key}: focus must be keyboard-visible`).toBe(true);
   expect(focus.outlineStyle !== "none" || focus.boxShadow !== "none", `${contract.key}: focus-visible must have a painted indicator`).toBe(true);
-  expect(focus.left - focus.extent, `${contract.key}: focus ring must not clip on the inline start`).toBeGreaterThanOrEqual(-1);
-  expect(focus.right + focus.extent, `${contract.key}: focus ring must not clip on the inline end`).toBeLessThanOrEqual(focus.viewportWidth + 1);
+  expect(focus.left - focus.extent, `${contract.key}: focus ring must not clip inline start`).toBeGreaterThanOrEqual(-1);
+  expect(focus.right + focus.extent, `${contract.key}: focus ring must not clip inline end`).toBeLessThanOrEqual(focus.viewportWidth + 1);
 }
 
 async function expectZoomedOwnership(page: Page, contract: RouteZoomContract): Promise<void> {
@@ -314,14 +318,11 @@ async function expectZoomedOwnership(page: Page, contract: RouteZoomContract): P
 
   const geometry = await page.evaluate((input) => {
     const root = document.documentElement;
+    const viewportWidth = root.clientWidth;
     const main = document.querySelector<HTMLElement>("#lexigo-main-content");
     const owner = document.querySelector<HTMLElement>(input.ownerSelector);
     if (!main || !owner) throw new Error(`Route zoom owner is not mounted: ${input.ownerSelector}`);
 
-    const rect = (node: HTMLElement) => {
-      const box = node.getBoundingClientRect();
-      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
-    };
     const rendered = (node: HTMLElement) => {
       const style = window.getComputedStyle(node);
       const box = node.getBoundingClientRect();
@@ -329,85 +330,169 @@ async function expectZoomedOwnership(page: Page, contract: RouteZoomContract): P
         && style.visibility !== "hidden"
         && style.visibility !== "collapse"
         && Number.parseFloat(style.opacity || "1") > 0
-        && box.width > 0
-        && box.height > 0;
+        && box.width > 2
+        && box.height > 2;
     };
+    const rect = (node: HTMLElement) => {
+      const box = node.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    const label = (node: HTMLElement) => (
+      node.getAttribute("aria-label")
+      ?? node.getAttribute("placeholder")
+      ?? node.textContent?.trim().replace(/\s+/g, " ").slice(0, 100)
+      ?? node.tagName.toLowerCase()
+    );
 
     const visibleNavigation = Array.from(document.querySelectorAll<HTMLElement>("[data-route-navigation]"))
       .filter(rendered)
-      .map((node) => ({ variant: node.dataset.routeNavigation ?? "", box: rect(node) }));
+      .map((node) => node.dataset.routeNavigation ?? "");
 
-    const fixedGlobalChrome = Array.from(document.querySelectorAll<HTMLElement>([
+    const boxOffenders: Array<{ kind: string; label: string; left: number; right: number; width: number }> = [];
+    for (const node of Array.from(document.querySelectorAll<HTMLElement>([
+      "#lexigo-main-content",
+      input.ownerSelector,
       ".lx-route-brand",
       ".lx-route-reminder-entry > summary",
       'button[aria-label="Открыть профиль"]',
       "[data-route-navigation]",
-    ].join(",")))
-      .filter(rendered)
-      .flatMap((node) => {
-        const box = node.getBoundingClientRect();
-        if (!(box.right > 0 && box.left < root.clientWidth)) return [];
-        return [{
-          label: node.getAttribute("aria-label") ?? node.textContent?.trim().replace(/\s+/g, " ").slice(0, 60) ?? "",
-          box: rect(node),
-        }];
-      });
-
-    const focusableSelector = [
-      "a[href]", "button", "input", "select", "textarea", "summary", "[tabindex]:not([tabindex='-1'])",
-    ].join(",");
-    const focusableOffenders = Array.from(document.querySelectorAll<HTMLElement>(focusableSelector)).flatMap((node) => {
-      if (!rendered(node)) return [];
+      "a[href]",
+      "button",
+      "input",
+      "select",
+      "textarea",
+      "summary",
+      "[role='tab']",
+      "[role='radio']",
+      "[role='button']",
+    ].join(",")))) {
+      if (!rendered(node)) continue;
       const box = node.getBoundingClientRect();
-      const intersectsViewport = box.right > 0 && box.left < root.clientWidth;
-      if (!intersectsViewport || (box.left >= -1 && box.right <= root.clientWidth + 1)) return [];
-      return [{
-        label: node.getAttribute("aria-label") ?? node.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
-        left: box.left,
-        right: box.right,
-        width: box.width,
-      }];
+      if (!(box.right > 0 && box.left < viewportWidth)) continue;
+      if (box.left < -1 || box.right > viewportWidth + 1) {
+        boxOffenders.push({ kind: node.tagName.toLowerCase(), label: label(node), left: box.left, right: box.right, width: box.width });
+      }
+    }
+
+    const textOffenders: Array<{
+      tag: string;
+      text: string;
+      left: number;
+      right: number;
+      ancestor: string;
+      ancestorLeft: number;
+      ancestorRight: number;
+      overflowX: string;
+    }> = [];
+    const walker = document.createTreeWalker(owner, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
+        const parent = node.parentElement as HTMLElement | null;
+        if (!parent || !rendered(parent)) return NodeFilter.FILTER_REJECT;
+        if (["SCRIPT", "STYLE", "NOSCRIPT", "SVG"].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
     });
+
+    let textNode = walker.nextNode();
+    while (textNode) {
+      const parent = textNode.parentElement as HTMLElement;
+      const range = document.createRange();
+      range.selectNodeContents(textNode);
+      const rects = Array.from(range.getClientRects());
+      range.detach();
+
+      let clippingAncestor: HTMLElement | null = parent;
+      while (clippingAncestor && clippingAncestor !== owner) {
+        const style = window.getComputedStyle(clippingAncestor);
+        if (["hidden", "clip", "scroll", "auto"].includes(style.overflowX)) break;
+        clippingAncestor = clippingAncestor.parentElement;
+      }
+      if (!clippingAncestor) clippingAncestor = owner;
+
+      const ancestorRect = clippingAncestor.getBoundingClientRect();
+      const overflowX = window.getComputedStyle(clippingAncestor).overflowX;
+      for (const box of rects) {
+        if (box.width <= 0 || box.height <= 0) continue;
+        const inlineLimitLeft = Math.max(0, ancestorRect.left);
+        const inlineLimitRight = Math.min(viewportWidth, ancestorRect.right);
+        if (!(box.right > inlineLimitLeft && box.left < inlineLimitRight)) continue;
+        if (box.left < inlineLimitLeft - 1 || box.right > inlineLimitRight + 1) {
+          textOffenders.push({
+            tag: parent.tagName.toLowerCase(),
+            text: (textNode.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 120),
+            left: box.left,
+            right: box.right,
+            ancestor: clippingAncestor.className || clippingAncestor.tagName.toLowerCase(),
+            ancestorLeft: ancestorRect.left,
+            ancestorRight: ancestorRect.right,
+            overflowX,
+          });
+        }
+      }
+      textNode = walker.nextNode();
+    }
 
     return {
       innerWidth: window.innerWidth,
-      clientWidth: root.clientWidth,
+      clientWidth: viewportWidth,
       documentWidth: Math.max(root.scrollWidth, document.body.scrollWidth),
       main: rect(main),
       owner: rect(owner),
       visibleNavigation,
-      fixedGlobalChrome,
-      focusableOffenders,
+      boxOffenders: boxOffenders.slice(0, 30),
+      textOffenders: textOffenders.slice(0, 30),
     };
   }, { ownerSelector: contract.ownerSelector });
 
-  expect(geometry.innerWidth, `${contract.key}: 200% browser zoom must reflow below the 1440px source viewport`).toBeLessThanOrEqual(760);
-  expect(geometry.documentWidth, `${contract.key}: document must not overflow horizontally at 200% browser zoom`).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  expect(geometry.innerWidth, `${contract.key}: true 200% browser zoom must land on exact 720px boundary`).toBe(720);
+  expect(geometry.clientWidth, `${contract.key}: root viewport must stay at exact 720px boundary`).toBe(720);
+  expect(geometry.documentWidth, `${contract.key}: document must not horizontally overflow`).toBeLessThanOrEqual(721);
+  expect(geometry.main.left, `${contract.key}: main starts inside viewport`).toBeGreaterThanOrEqual(-1);
+  expect(geometry.main.right, `${contract.key}: main ends inside viewport`).toBeLessThanOrEqual(721);
+  expect(geometry.owner.left, `${contract.key}: route owner starts inside viewport`).toBeGreaterThanOrEqual(-1);
+  expect(geometry.owner.right, `${contract.key}: route owner ends inside viewport`).toBeLessThanOrEqual(721);
+  expect(geometry.boxOffenders, `${contract.key}: visible interactive/global/owner boxes must not clip`).toEqual([]);
+  expect(geometry.textOffenders, `${contract.key}: visible text ranges must not clip inside route/container owners`).toEqual([]);
 
-  for (const [label, box] of [["main", geometry.main], ["route owner", geometry.owner]] as const) {
-    expect(box.width, `${contract.key}: ${label} must have positive width`).toBeGreaterThan(0);
-    expect(box.left, `${contract.key}: ${label} must not clip on inline start`).toBeGreaterThanOrEqual(-1);
-    expect(box.right, `${contract.key}: ${label} must not clip on inline end`).toBeLessThanOrEqual(geometry.clientWidth + 1);
-  }
-
-  expect(geometry.focusableOffenders, `${contract.key}: no partially visible focusable control may clip at 200% browser zoom`).toEqual([]);
-  for (const chrome of geometry.fixedGlobalChrome) {
-    expect(chrome.box.left, `${contract.key}: fixed/global chrome ${chrome.label} must not clip left`).toBeGreaterThanOrEqual(-1);
-    expect(chrome.box.right, `${contract.key}: fixed/global chrome ${chrome.label} must not clip right`).toBeLessThanOrEqual(geometry.clientWidth + 1);
-  }
-
-  if (contract.focused) {
-    expect(geometry.visibleNavigation, `${contract.key}: focused route must suppress ordinary RouteChrome at 200% zoom`).toHaveLength(0);
-  } else {
-    expect(geometry.visibleNavigation, `${contract.key}: ordinary route must expose exactly one RouteChrome owner at 200% zoom`).toHaveLength(1);
-    expect(["mobile", "rail", "header"]).toContain(geometry.visibleNavigation[0].variant);
-  }
+  const expectedNavigation = contract.expectedNavigation === "none" ? [] : [contract.expectedNavigation];
+  expect(geometry.visibleNavigation, `${contract.key}: exact 720px RouteChrome owner must match reviewed responsive ownership`).toEqual(expectedNavigation);
 
   await expectKeyboardFocusVisible(page, contract);
 }
 
+async function captureBrowserZoomEvidence(cdp: CDPSession): Promise<BrowserZoomEvidenceCapture> {
+  const metrics = await readBrowserLayoutMetrics(cdp);
+  const zoom = metrics.cssVisualViewport.zoom;
+  expect(zoom, "Issue #601 evidence must be captured while browser zoom remains 2x").toBeCloseTo(2, 4);
+
+  // CDP Page.Viewport clip coordinates are DIP while the layout/content metrics are
+  // CSS pixels. Convert the complete CSS surface into DIP and normalize the encoded
+  // raster back to one output pixel per CSS pixel. A plain Playwright full-page
+  // screenshot at browser zoom 2 captures only about half of the CSS viewport.
+  const clip = {
+    x: metrics.cssContentSize.x * zoom,
+    y: metrics.cssContentSize.y * zoom,
+    width: metrics.cssLayoutViewport.clientWidth * zoom,
+    height: metrics.cssContentSize.height * zoom,
+    scale: 1 / zoom,
+  };
+  const captured = await cdp.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: true,
+    clip,
+  }) as { data: string };
+
+  return {
+    screenshot: Buffer.from(captured.data, "base64"),
+    metrics,
+    clip,
+  };
+}
+
 async function captureZoomEvidence(
-  page: Page,
+  cdp: CDPSession,
   testInfo: TestInfo,
   contract: RouteZoomContract,
   appearance: ExplicitAppearance,
@@ -418,19 +503,15 @@ async function captureZoomEvidence(
 ): Promise<string | null> {
   const key = `${contract.key}.${appearance}` as const;
   const baseline = ZOOM_BASELINES[key];
-  const profileButton = page.getByRole("button", { name: "Открыть профиль" });
-  const screenshot = await page.screenshot({
-    animations: "disabled",
-    caret: "hide",
-    fullPage: true,
-    mask: await profileButton.count() > 0 ? [profileButton] : [],
-    scale: "css",
-  });
+  const { screenshot, metrics, clip } = await captureBrowserZoomEvidence(cdp);
   const actual = {
     width: screenshot.readUInt32BE(16),
     height: screenshot.readUInt32BE(20),
     sha256: createHash("sha256").update(screenshot).digest("hex"),
   };
+
+  expect(actual.width, `${key}: normalized evidence width must equal exact CSS layout viewport`).toBe(metrics.cssLayoutViewport.clientWidth);
+  expect(actual.width, `${key}: exact 200% audit evidence must be 720 CSS pixels wide`).toBe(720);
 
   await testInfo.attach(`browser-zoom-200-${contract.key}-${appearance}.png`, { body: screenshot, contentType: "image/png" });
   await testInfo.attach(`browser-zoom-200-${contract.key}-${appearance}.json`, {
@@ -446,6 +527,8 @@ async function captureZoomEvidence(
       afterDOM,
       beforeCDP,
       afterCDP,
+      captureMetrics: metrics,
+      captureClip: clip,
       actual,
       approved: baseline,
     }, null, 2)),
@@ -495,7 +578,7 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
       runtimeErrors.length = 0;
 
       // Active Lesson owns a page-level catch-all API fixture. The consolidated
-      // matrix intentionally reuses one page, so remove that route before the
+      // matrix intentionally reuses one page, so dispose that route before the
       // next canonical owner and fall back to the context-level quality API.
       if (contract.key !== "active-lesson") {
         await page.unroute("**/api/v1/**");
@@ -529,17 +612,18 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
       expect(applied.mode).toBe("automatic");
       expect(applied.scope).toBe("per-tab");
       await expect.poll(async () => (await readBrowserLayoutMetrics(cdp)).cssVisualViewport.zoom).toBeCloseTo(2, 4);
-      await expect.poll(async () => (await readDOMZoomMetrics(page)).innerWidth).toBeLessThanOrEqual(Math.ceil(beforeDOM.innerWidth / 1.9));
+      await expect.poll(async () => (await readDOMZoomMetrics(page)).innerWidth).toBe(720);
 
       const afterDOM = await readDOMZoomMetrics(page);
       const afterCDP = await readBrowserLayoutMetrics(cdp);
       expect(afterCDP.cssVisualViewport.zoom).toBeCloseTo(2, 4);
-      expect(afterDOM.innerWidth).toBeGreaterThanOrEqual(Math.floor(beforeDOM.innerWidth / 2.1));
+      expect(afterDOM.innerWidth).toBe(720);
+      expect(afterDOM.clientWidth).toBe(720);
       expect(afterDOM.rootFontSize).toBeCloseTo(beforeDOM.rootFontSize, 4);
 
       await expectZoomedOwnership(page, contract);
       expect(runtimeErrors, `${contract.key}.${appearance}: runtime errors at 200% browser zoom`).toEqual([]);
-      const reviewMessage = await captureZoomEvidence(page, testInfo, contract, appearance, beforeDOM, afterDOM, beforeCDP, afterCDP);
+      const reviewMessage = await captureZoomEvidence(cdp, testInfo, contract, appearance, beforeDOM, afterDOM, beforeCDP, afterCDP);
       if (reviewMessage) reviewRequired.push(reviewMessage);
 
       await setBrowserZoom(worker, targetURL, 1);
@@ -558,7 +642,6 @@ test.describe("Issue #601 consolidated route browser-owned zoom parity", () => {
 
   for (const appearance of ["light", "dark"] as const) {
     test(`all ten canonical routes at true 200% browser zoom — ${appearance}`, async ({}, testInfo) => {
-      test.skip(testInfo.project.name !== "visual-desktop", "Issue #601 true browser zoom runs once in authoritative desktop Chromium");
       await runAppearanceMatrix(appearance, testInfo);
     });
   }
