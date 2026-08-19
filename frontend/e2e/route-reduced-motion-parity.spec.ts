@@ -112,11 +112,7 @@ const ONBOARDING_PROMPT = {
 };
 
 async function fulfillJSON(route: Route, status: number, body: unknown): Promise<void> {
-  await route.fulfill({
-    status,
-    contentType: "application/json",
-    body: JSON.stringify(body),
-  });
+  await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
 async function installAppearance(page: Page, appearance: ExplicitAppearance): Promise<void> {
@@ -134,11 +130,9 @@ async function installOnboardingResumeAPI(context: BrowserContext): Promise<void
     url: "http://127.0.0.1:3000",
     sameSite: "Lax",
   }]);
-
   await context.route("**/api/v1/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
-
     if (path === "/api/v1/auth/refresh") return fulfillJSON(route, 200, QUALITY_SESSION);
     if (path === "/api/v1/auth/sessions") return fulfillJSON(route, 200, { sessions: [] });
     if (path === "/api/v1/onboarding" && request.method() === "GET") {
@@ -149,7 +143,6 @@ async function installOnboardingResumeAPI(context: BrowserContext): Promise<void
         current: ONBOARDING_PROMPT,
       });
     }
-
     return fulfillJSON(route, 404, { error: { code: "not_mocked", message: path } });
   });
 }
@@ -289,7 +282,7 @@ async function focusRepresentativeRouteControl(
         transform: style.transform,
         transitionDurationMilliseconds: toMilliseconds(style.transitionDuration),
         activeAnimations: active.getAnimations().filter((animation) => (
-          animation.playState === "running" || animation.playState === "pending"
+          animation.playState === "running" || animation.pending
         )).length,
         hasPaintedIndicator: visibleOutline || visibleShadow,
       };
@@ -307,7 +300,6 @@ async function focusRepresentativeRouteControl(
       return feedback;
     }
   }
-
   throw new Error(`${contract.key}: no representative route control reached within 80 keyboard Tab stops`);
 }
 
@@ -376,8 +368,11 @@ async function readMotionSnapshot(page: Page, ownerSelector: string): Promise<Mo
       inspectStyle(element, "::after", window.getComputedStyle(element, "::after"));
 
       for (const animation of element.getAnimations()) {
-        if (animation.playState !== "running" && animation.playState !== "pending") continue;
-        activeAnimations.push({ owner: ownerLabel(element), playState: animation.playState });
+        if (animation.playState !== "running" && !animation.pending) continue;
+        activeAnimations.push({
+          owner: ownerLabel(element),
+          playState: animation.pending ? "pending" : animation.playState,
+        });
       }
     }
 
