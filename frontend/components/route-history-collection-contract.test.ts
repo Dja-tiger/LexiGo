@@ -30,8 +30,11 @@ const ROUTE_MARKERS = [
 ] as const;
 
 describe("Issue #617 route history parity collection", () => {
-  it("keeps the owner in blocking navigation CI", () => {
+  it("keeps the owner in semantic navigation and the actually blocking UI CI collection", () => {
     expect(frontendPackage.scripts?.["test:e2e:navigation"]).toContain(
+      "e2e/route-history-parity.spec.ts",
+    );
+    expect(frontendPackage.scripts?.["test:e2e:ui"]).toContain(
       "e2e/route-history-parity.spec.ts",
     );
   });
