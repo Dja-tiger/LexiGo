@@ -5,95 +5,96 @@
 - Issue: #614
 - Branch: `test/issue-614-reduced-motion-parity`
 - Base SHA: `beee70ecdbc5d066677ee36a78d2d615902c01a2`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #615 — `test(a11y): audit reduced motion across canonical routes`
+- Implementation validation head: `1fd8781a9a91aa0d3bd0e6ffcd3eca3f8b3c8b91`
+- Final merge head: resolve after this evidence sync
 
 ## Skills used
 
 ### GitHub repository operations
 
 Purpose:
-Safely create the isolated evidence branch, inspect live Issue/CI/source state, make branch-scoped writes, publish and later merge only after immutable-head validation.
+Safely execute Issue #614 as an isolated test/evidence slice, preserve exact-head validation and merge only after clean CI/review/drift checks.
 
 Instruction source:
-`AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`.
+`AGENTS.md`, `.agents/AGENTS.base.md`, mandatory indexed Agent notes, `.agents/SKILLS.md`, `docs/agent-harness.md`.
 
 Version or verification date:
 Repository sources read from `main@beee70ecdbc5d066677ee36a78d2d615902c01a2` on 2026-08-19.
 
 Inputs:
-Issue #614, parent #205, current main, open PR search, existing #608/#65 test owners.
+Issue #614, parent #205, current main, existing #608 route topology, existing #65 reduced-motion owners and #461 physical-device boundary.
 
 Files inspected:
-Agent Harness mandatory documents, `frontend/playwright.config.ts`, `frontend/package.json`, `frontend/app/accessibility-navigation.css`, `frontend/e2e/route-keyboard-focus-parity.spec.ts`, `frontend/e2e/route-focus-management.spec.ts`, `frontend/components/keyboard-focus-collection-contract.test.ts`.
+Mandatory Agent Harness documents; `frontend/playwright.config.ts`; `frontend/package.json`; `frontend/app/accessibility-navigation.css`; `frontend/e2e/route-keyboard-focus-parity.spec.ts`; `frontend/e2e/route-focus-management.spec.ts`; existing collection contracts and deterministic route fixtures.
 
 Actions performed:
-Created Issue #614 and branch `test/issue-614-reduced-motion-parity`; verified base compare; defined allowed/prohibited paths.
+Created Issue #614 and branch, authored audit/source contract, updated blocking accessibility collection, opened Draft PR #615, diagnosed first CI type failure, repaired only the TypeScript representation, validated full corrected CI.
 
 Commands or procedures:
-Live GitHub connector reads, compare, explicit branch writes and readback.
+Live GitHub reads/compare/write/readback; GitHub Actions immutable-head validation. No local test claim.
 
 Artifacts produced:
-Task/pre-flight records in `.agents/current/**`.
+- `frontend/e2e/route-reduced-motion-parity.spec.ts`
+- `frontend/components/reduced-motion-collection-contract.test.ts`
+- `frontend/package.json` a11y collection update
+- `.agents/current/**` evidence
 
 Result:
-Pre-flight complete; no runtime file changed.
+Implementation validation is green. No product/runtime reduced-motion defect was discovered by the consolidated matrix.
 
 Failures:
-A read-only `GitHub.fetch` branch URL probe was rejected by connector URL validation; no repository state changed.
+CI #3863 / run `32248947266` failed frontend typecheck with TS2367 at two comparisons of `Animation.playState` against literal `"pending"`.
 
 Root cause:
-That generic fetch action does not accept the slash-containing branch endpoint form used in the probe.
+Current DOM TypeScript models pending separately as `Animation.pending`; it is not a `playState` enum value.
 
-Fallback:
-Used `search_branches` plus `compare_commits` to verify branch identity and exact base.
+Fallback/fix:
+Changed the active-animation predicate to `animation.playState === "running" || animation.pending` and the collection contract to guard the typed pending property. No audit tolerance, route scope or runtime behavior changed.
 
 Limitations:
-No local `gh`/GitHub network execution is available; GitHub Actions is authoritative for runtime validation.
+Playwright emulation does not replace #461 physical-device system-setting verification. This slice changes no runtime source, so Stage is not a delivery gate.
 
 Reusable lesson:
-Use branch/search/compare actions for ref verification rather than assuming generic fetch accepts branch REST URLs.
+For Web Animations reduced-motion acceptance, combine typed `playState === "running"` with boolean `pending`; do not invent a `"pending"` playState literal.
 
-### Frontend validation / reduced-motion acceptance
+### Frontend reduced-motion acceptance
 
 Purpose:
-Build a fail-closed route-parity acceptance owner around the already delivered #65 reduced-motion implementation.
+Provide one fail-closed executable #205 reduced-motion parity owner for all canonical routes while retaining the specialized #65 interaction suites.
 
 Instruction source:
-`.agents/AGENTS.progress-pr214.md`, `.agents/AGENTS.progress-pr214-ci1732.md`, `.agents/AGENTS.issue-74-browser-zoom-collection.md`, `.agents/SKILLS.md`.
-
-Version or verification date:
-Repository sources read 2026-08-19.
+`.agents/AGENTS.progress-pr214.md`, `.agents/AGENTS.progress-pr214-ci1732.md`, `.agents/AGENTS.issue-74-browser-zoom-collection.md`, existing #65/#608 tests.
 
 Inputs:
-Existing 10-route Issue #608 topology, #65 specialized route/progress/calendar reduced-motion journey, current CSS reduced-motion owner.
-
-Files inspected:
-`frontend/e2e/route-keyboard-focus-parity.spec.ts`, `frontend/e2e/route-focus-management.spec.ts`, `frontend/app/accessibility-navigation.css`, `frontend/package.json`.
+10 canonical route contracts; compact `390×844`; desktop `1440×1024`; Light/Dark; `prefers-reduced-motion: reduce`.
 
 Actions performed:
-Defined matrix: 10 routes × 2 viewports × 2 appearances, deterministic desktop-Chromium broad audit with specialized cross-browser suites preserved.
+- Audited 40 route/theme/viewport states.
+- Kept real production motion CSS active by explicitly avoiding `installDeterministicRuntime`.
+- Verified media-query ownership and canonical route/RouteChrome ownership.
+- Normalized computed durations to milliseconds and rejected positive motion above `0.01ms` where declarations are active.
+- Required zero running/pending Web Animations.
+- Required `scroll-behavior: auto` on document, route owner and rendered navigation.
+- Reached representative controls with actual keyboard Tab traversal and required painted `:focus-visible` feedback, no spatial transform and zero-equivalent transition duration.
+- Captured per-state JSON evidence and runtime errors.
+- Added fail-closed source contract and explicit blocking `test:e2e:a11y` collection entry.
 
-Commands or procedures:
-Normalize CSS durations to milliseconds; accept only `<= 0.01ms`; require zero active Web Animations; avoid arbitrary sleeps; retain runtime-error evidence.
+Validation:
+Corrected head `1fd8781a9a91aa0d3bd0e6ffcd3eca3f8b3c8b91` ran CI #3865 / `32249196644` to full `success`.
 
-Artifacts produced:
-Pending audit spec and source contract.
+Key jobs:
+- Frontend core quality: success.
+- Accessibility audit `96056740598`: success, including the 40-state #614 matrix.
+- UI shard 1/2 and 2/2: success.
+- Visual regression: success.
+- Lesson completion, PWA, SW, security, dictionary smoke, performance: success.
+- Backend unit/security and integration: success.
+- Frontend aggregate: success.
+- API/Web container builds: success.
 
-Result:
-Implementation plan is bounded to test/evidence only.
+Current merge policy:
+CI #3865 validates the implementation but predates the final harness evidence commits. A fresh full CI on the final evidence-sync head is mandatory before Ready/merge. Then perform main drift + review/thread audit and squash merge with expected-head protection.
 
-Failures:
-None.
-
-Root cause:
-N/A.
-
-Fallback:
-If the audit proves a runtime defect, open a separate runtime Issue/PR rather than weakening the audit.
-
-Limitations:
-Playwright emulation does not replace physical-device system setting verification tracked by #461.
-
-Reusable lesson:
-A broad parity audit should reuse existing canonical route fixture topology and validate the existing motion owner, not duplicate product state machines or redesign presentation.
+Design-source note:
+Active design/handoff source is repository-owned OpenPencil (`design/openpencil/LexiGo Design System.op` and `docs/figma/openpencil-screen-map.json`). Figma is historical provenance only and was not used as a prerequisite or blocker for Issue #614.
