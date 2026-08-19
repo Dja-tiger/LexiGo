@@ -2,8 +2,11 @@
 
 ## Verification
 
-- Last verified: 2026-08-17 Europe/Berlin.
+- Last verified: 2026-08-19 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
+- Issue #617 / PR #618 completed the consolidated direct-entry / reload / real Back-Forward acceptance matrix for all 10 canonical routes across desktop Chromium `1440×1024` and compact iOS WebKit `390×844` in explicit Light/Dark.
+- PR #618 final developer-authored head `46617254b9377e7fc062ea56758eb7d628c5b4c4` passed full immutable-head CI #3876 / run `32280708003`, including backend integration/unit/security, frontend core, both UI shards, Lesson completion, Visual regression, accessibility, performance, CSP/service-worker and both container builds.
+- PR #618 squash merge: `24fc90539d911256a9ab674280548cc9155016d8`; Issue #617 is closed completed. The merge was test/evidence-only, changed no runtime/backend/API/design/deploy owner and therefore required no Stage redeploy. Post-merge `main` was verified at the exact merge SHA; no separate exact-main Actions run was resolved by the available connector during this reconciliation, so none is claimed here.
 - Latest runtime-bearing `main`: `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` from runtime PR #579.
 - Latest deployed runtime/Stage image SHA: `06d6b18d14a120418afaee316e0c68badc682f9f`; the runtime source behavior is unchanged from runtime PR #579, while the newer image includes test/evidence-only deliveries #582/#585.
 - PR #585 final developer-authored head `e207618e0b86f84912d95d147ca4c4a005ede400` passed full immutable-head CI #3752 / run `32070819942`; its authoritative Visual job passed `compact Dictionary empty light` without retry.
@@ -231,17 +234,18 @@
 - Compact route-transition runtime repair: Issue #577 / PR #579 / merge `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c` / PR CI #3742 / exact-main CI #3743 / Stage #3598.
 - Consolidated desktop 1440×1024 parity: Issue #581 / PR #582 / merge `cadcdf434ed80628e326507c8ee849b55a427020` / reviewed Linux artifact `9299858153` / PR CI #3750.
 - System State exact renderer stabilization: Issue #584 / PR #585 / merge `06d6b18d14a120418afaee316e0c68badc682f9f` / PR CI #3752 / exact-main CI #3753 / Stage #3608.
+- Canonical route-history parity: Issue #617 / PR #618 / merge `24fc90539d911256a9ab674280548cc9155016d8` / immutable-head CI #3876.
 
 Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Current state
 
 - Latest deployed Stage image is PR #585 merge SHA `06d6b18d14a120418afaee316e0c68badc682f9f`; exact-main CI #3753 and exact-SHA Stage/public validation #3608 are green on that exact SHA. The latest runtime-bearing source change remains PR #579 / `0b965d3463e1b5ddb2a7d432c4f21d3c37d5fa2c`.
-- Latest completed consolidated route parity merge is PR #582 on `cadcdf434ed80628e326507c8ee849b55a427020`: ten canonical routes × Light/Dark at desktop `1440×1024`; its exact-main renderer-only follow-up is closed by #584/#585.
-- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use; consolidated tablet `768×1024`, desktop `1440×1024` and compact transition coverage are closed completed.
+- Latest completed consolidated navigation acceptance merge is PR #618 on `24fc90539d911256a9ab674280548cc9155016d8`: ten canonical routes × Light/Dark across desktop Chromium `1440×1024` and compact iOS WebKit `390×844` now have one fail-closed direct-entry/reload/real Back-Forward owner. This closes the previously listed history/direct-entry gap under #205.
+- Route-specific Figma/OpenPencil parity child slices are delivered for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use; consolidated tablet `768×1024`, desktop `1440×1024`, compact transition and canonical history coverage are closed completed.
 - Parent Issue #18 remains open and requires a separate acceptance audit before any closure decision.
-- Live umbrella #205 remains open. Delivered tablet/desktop/transition slices must not be duplicated; the next atomic design/runtime work must target genuinely unproven final acceptance.
-- Remaining #205 acceptance includes minimum supported mobile width, missing 200% text zoom/reflow coverage, reduced-motion and keyboard-only coverage, loading/empty/error/offline states where applicable, direct entry/reload/Back-Forward gaps, final Stage/browser and manual audit evidence.
+- Live umbrella #205 remains open. Delivered tablet/desktop/transition/history slices must not be duplicated; the next atomic design/runtime work must target genuinely unproven final acceptance.
+- Remaining #205 acceptance includes minimum supported mobile width, missing 200% text zoom/reflow coverage, reduced-motion and keyboard-only coverage, loading/empty/error/offline states where applicable, and final Stage/browser/manual audit evidence.
 - #203 remains optional historical/native-Figma synchronization because OpenPencil is the active production design source and native Figma is archival provenance.
 - #65/#461 physical-device reduced-motion/accessibility sign-off remains separate from automated design-parity work.
 - No runtime/backend/API/design/deploy change is part of this Agent Docs reconciliation slice.
@@ -249,7 +253,7 @@ Canonical appearance invariants remain Light `#f4f7f5` and Dark `#10211d`.
 
 ## Remaining roadmap
 
-- #205: continue the final consolidated acceptance with minimum mobile width, missing 200% zoom/reflow, keyboard, reduced motion, system states and history/direct-entry evidence; split new work into atomic child Issues rather than reopening delivered tablet/desktop/transition parity slices.
+- #205: continue the final consolidated acceptance with minimum mobile width, missing 200% zoom/reflow, keyboard, reduced motion, system states and final Stage/browser/manual evidence; split new work into atomic child Issues rather than reopening delivered tablet/desktop/transition/history parity slices.
 - #18: audit remaining parent acceptance criteria; do not infer completion from child slices.
 - #203: optional historical/native-Figma Screen Map/archive synchronization when access is available.
 - #508: physical iOS/iPadOS, Android and desktop PWA install/icon/splash/cold-start sign-off.
