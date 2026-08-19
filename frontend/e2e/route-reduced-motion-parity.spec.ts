@@ -2,7 +2,6 @@ import {
   expect,
   test,
   type BrowserContext,
-  type Locator,
   type Page,
   type Route,
   type TestInfo,
@@ -81,6 +80,7 @@ type FocusFeedback = Readonly<{
   transform: string;
   transitionDurationMilliseconds: number[];
   activeAnimations: number;
+  hasPaintedIndicator: boolean;
 }>;
 
 const ROUTES: readonly RouteMotionContract[] = [
@@ -304,8 +304,7 @@ async function focusRepresentativeRouteControl(
         `${contract.key}: keyboard feedback transition duration must be zero-equivalent`,
       ).toBe(true);
       expect(feedback.activeAnimations, `${contract.key}: focused control must have no active Web Animations`).toBe(0);
-      const { hasPaintedIndicator: _painted, ...evidence } = feedback;
-      return evidence;
+      return feedback;
     }
   }
 
@@ -334,6 +333,10 @@ async function readMotionSnapshot(page: Page, ownerSelector: string): Promise<Mo
         && rect.width > 0
         && rect.height > 0;
     };
+    const ownerLabel = (element: HTMLElement) => element.getAttribute("data-route-navigation")
+      ?? element.getAttribute("data-route-client-island")
+      ?? element.getAttribute("class")
+      ?? element.tagName.toLowerCase();
 
     const candidates = new Set<HTMLElement>([owner]);
     owner.querySelectorAll<HTMLElement>("*").forEach((element) => candidates.add(element));
@@ -356,10 +359,7 @@ async function readMotionSnapshot(page: Page, ownerSelector: string): Promise<Mo
       const transitionViolation = style.transitionProperty !== "none" && hasPositiveDuration(style.transitionDuration);
       if (!animationViolation && !transitionViolation) return;
       violations.push({
-        owner: element.getAttribute("data-route-navigation")
-          ?? element.getAttribute("data-route-client-island")
-          ?? element.className
-          ?? element.tagName.toLowerCase(),
+        owner: ownerLabel(element),
         pseudo,
         animationName: style.animationName,
         animationDuration: style.animationDuration,
@@ -377,13 +377,7 @@ async function readMotionSnapshot(page: Page, ownerSelector: string): Promise<Mo
 
       for (const animation of element.getAnimations()) {
         if (animation.playState !== "running" && animation.playState !== "pending") continue;
-        activeAnimations.push({
-          owner: element.getAttribute("data-route-navigation")
-            ?? element.getAttribute("data-route-client-island")
-            ?? element.className
-            ?? element.tagName.toLowerCase(),
-          playState: animation.playState,
-        });
+        activeAnimations.push({ owner: ownerLabel(element), playState: animation.playState });
       }
     }
 
