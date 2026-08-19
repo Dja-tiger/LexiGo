@@ -6,7 +6,7 @@
 - Branch: `test/issue-608-route-keyboard-focus-parity`
 - Base SHA: `2412dce6a0cbb71c9a781829c09416e531efc502`
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #609 (Draft)
 
 ## Objective
 

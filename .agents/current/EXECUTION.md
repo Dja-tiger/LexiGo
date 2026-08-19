@@ -4,8 +4,8 @@
 
 - Branch: `test/issue-608-route-keyboard-focus-parity`
 - Base SHA: `2412dce6a0cbb71c9a781829c09416e531efc502`
-- Head SHA: resolve from live branch ref after each write
-- PR: not opened yet
+- Head SHA: resolve from live branch ref
+- PR: #609 (Draft)
 
 ## Skills used
 
@@ -32,7 +32,8 @@ Inputs:
 - live `main@2412dce6a0cbb71c9a781829c09416e531efc502`;
 - umbrella #205 and comments;
 - Issue #45 closed baseline keyboard owner;
-- new Issue #608;
+- Issue #608;
+- Draft PR #609;
 - `docs/keyboard-accessibility-checklist.md`;
 - `docs/route-focus-accessibility-checklist.md`;
 - `frontend/e2e/accessibility-keyboard.spec.ts`;
@@ -43,16 +44,20 @@ Inputs:
 
 Files inspected:
 
-See Inputs above plus live open-PR and issue searches.
+See Inputs above plus live open-PR/issue searches and pre-PR compare.
 
 Actions performed:
 
-1. Verified no open PR and exact live main.
+1. Verified no pre-existing open PR and exact live main.
 2. Audited existing keyboard/focus implementation and release checklists.
 3. Confirmed no dedicated consolidated ten-route keyboard/focus child Issue under #205.
 4. Created Issue #608 with fail-closed delivery policy and explicit physical-device non-goal.
 5. Created branch exactly from live main.
 6. Initialized current-task harness memory before code changes.
+7. Added a 40-state route/theme/viewport keyboard audit using real sequential Tab navigation.
+8. Added source-level fail-closed collection/semantics protection.
+9. Registered the owner in blocking `test:e2e:a11y`.
+10. Verified the diff remains restricted to the six allowed paths and opened Draft PR #609.
 
 Commands or procedures:
 
@@ -62,23 +67,27 @@ Artifacts produced:
 
 - GitHub Issue #608;
 - branch `test/issue-608-route-keyboard-focus-parity`;
-- initialized `.agents/current/TASK.md`, `PROGRESS.md`, `EXECUTION.md`.
+- Draft PR #609;
+- `frontend/e2e/route-keyboard-focus-parity.spec.ts`;
+- `frontend/components/keyboard-focus-collection-contract.test.ts`;
+- updated accessibility collection command;
+- synchronized `.agents/current/**`.
 
 Result:
 
-Pre-flight proves a distinct automated #205 gap: existing keyboard coverage is strong but feature-oriented and lacks one uniform ten-route compact/desktop Light/Dark route matrix.
+The audit is ready for diagnostic Linux CI. The first CI result is intentionally treated as evidence: test/source defects are fixed inside #609; genuine product focus defects are split into separate runtime work while #609 stays fail-closed.
 
 Failures:
 
-None yet.
+None classified yet.
 
 Root cause:
 
-Not applicable yet; audit implementation has not run.
+Not applicable until diagnostic CI returns.
 
 Fallback:
 
-If the audit finds a genuine product defect, keep #608 fail-closed, create a separate atomic runtime Issue/PR, merge/deploy that repair, then reconstruct #608 on corrected `main`.
+If the audit finds a genuine product defect, keep #608/#609 fail-closed, create a separate atomic runtime Issue/PR, merge/deploy that repair, then reconstruct #609 on corrected `main`.
 
 Limitations:
 
