@@ -2,86 +2,67 @@
 
 ## Task
 
+- Issue: #601
+- Parent: #205
 - Branch: `test/issue-601-route-browser-zoom-parity`
-- Base SHA: `b1444d5e5153da9b8fe275b7f1f175e9bd25286b`
-- Verified diagnostic SHA: `36da468b980892f4a68a5828a3d4a1f4dcf5067d`
-- Fixture-isolation SHA: `133327e9290a758c5bbdd947ecd60dec908dd5ba`
 - PR: #602 (Draft)
+- Original base: `b1444d5e5153da9b8fe275b7f1f175e9bd25286b`
+- Reconstructed base: `cb51f7ae8ff4ce0b92c09719c3d7b1c2f5dc960c`
+- Branch synchronization merge commit: `a13df2263c10b53aec604781f1e7ec087bc8d38c`
+- Corrected audit-code commit: `cd1fb0c36e1f8958ba89f6588df324aa899f5372`
+- Head SHA: resolve from live branch after documentation synchronization
 
-## Skills used
+## Purpose
 
-### GitHub repository workflow
+Finish the evidence/test-only consolidated 200% browser-zoom audit after Issue #603 corrected both the ordinary-route responsive boundary and the browser-zoom screenshot coordinate contract.
 
-Purpose:
-Execute the next atomic #205 audit slice from current live repository state with immutable-head CI, fail-closed evidence review and expected-head merge policy.
+## Inputs verified
 
-Instruction source:
-`AGENTS.md`, `.agents/**`, `docs/agent-harness.md`, GitHub skill, Issue #205 and Issue #601.
-
-Version or verification date:
-2026-08-18.
-
-Inputs:
-Live `main`, completed #583/#600 lifecycle, #205 remaining matrix, existing route-parity owner, existing browser-zoom owners, Draft PR #602, CI #3821 and its exact Visual diagnostics.
-
-Files inspected or changed:
-- `.agents/lessons/accessibility.md`
-- `frontend/components/browser-zoom-collection-contract.test.ts`
-- `frontend/playwright.visual.config.ts`
-- `frontend/e2e/home-browser-zoom.spec.ts`
-- `frontend/e2e/phrases-visual.spec.ts`
-- `frontend/e2e/route-tablet-parity.spec.ts`
-- `frontend/e2e/route-browser-zoom-parity.spec.ts`
-- `frontend/e2e/support/active-lesson-fixture.ts` (read-only root-cause inspection)
-- `frontend/e2e/support/word-detail-fixture.ts` (read-only fixture-lifetime comparison)
-- `.agents/current/**`
+- Live `main@cb51f7ae8ff4ce0b92c09719c3d7b1c2f5dc960c` contains merged PR #606 / closed Issue #603.
+- Draft PR #602 was the only open PR at continuation start.
+- #602 old head `d5189851787105168f6ee8e08a89d528543da12b` conflicted with corrected main.
+- The old parent audit used `page.screenshot({ fullPage: true, scale: "css" })` under browser-owned 2× zoom.
+- #603 proved that path captured only about half of the effective CSS viewport even when DOM geometry was correct.
+- #603 established and manually validated the correct CDP evidence contract using `Page.getLayoutMetrics`, `Page.captureScreenshot`, CSS→DIP conversion by `cssVisualViewport.zoom` and `scale: 1 / zoom`.
 
 ## Actions performed
 
-1. Verified live main after Issue #583 reconciliation and continued the active Issue #601 branch/PR rather than starting a competing slice.
-2. Confirmed #602 implements one consolidated ten-route true-browser-zoom owner using persistent Chromium plus the existing extension/CDP mechanism.
-3. Inspected CI #3821 / run `32166685629`: all groups except Visual regression were green.
-4. Downloaded the exact failed Visual artifact and inspected screenshot, Playwright error context and trace rather than changing the missing heading locator blindly.
-5. The failed Phrase Detail frame showed an application error surface with `Код запроса: not_mocked`; trace recorded `GET /api/v1/phrases/identify-root-cause` being fulfilled 404 by `installActiveLessonFixture()`.
-6. Compared fixture ownership:
-   - shared quality API is context-scoped;
-   - Active Lesson installs a page-scoped catch-all `page.route("**/api/v1/**", ...)`;
-   - canonical Word Detail installs narrow page routes that fall back for unrelated requests;
-   - existing route-parity tests use fresh pages per route, so the Active Lesson catch-all never leaks there.
-7. Corrected only the consolidated #601 test owner: every non-Active-Lesson iteration removes the page-level catch-all with `page.unroute("**/api/v1/**")`, restoring the context-level quality API before the next canonical route.
-8. Read back the changed loop from GitHub to verify the correction landed on the explicit Issue #601 branch. No runtime CSS/React/backend/deploy source was changed.
+1. Re-read repository workflow and CI-repair instructions and checked live main/open PR state.
+2. Confirmed #602 was the only open PR, remained Draft, and was non-mergeable only because #606 had landed after its old base.
+3. Read branch-local `.agents/current/**`, the parent audit spec/source contract and current-main #603 visual owner.
+4. Confirmed the #602 visual config overlap could not be resolved by copying the old file because that would remove the delivered `issue-603-browser-zoom-reflow.spec.ts` collection owner.
+5. Built a semantic merge tree from corrected main, overlaid #602 audit files, and preserved both `route-browser-zoom-parity.spec.ts` and `issue-603-browser-zoom-reflow.spec.ts` in the authoritative Visual config.
+6. Created a real two-parent merge commit `a13df2263c10b53aec604781f1e7ec087bc8d38c` with old #602 head and corrected main as parents; updated the branch without force.
+7. Replaced the obsolete parent screenshot path with the validated CDP capture contract.
+8. Strengthened the parent structural contract from permissive responsive ownership to exact 720px ownership:
+   - Home `rail`;
+   - seven ordinary route families `mobile`;
+   - Active Lesson/Onboarding `none`.
+9. Added exact `window.innerWidth === 720` and root `clientWidth === 720` assertions.
+10. Added visible text-range clipping detection alongside document/main/route/global/interactive containment.
+11. Kept keyboard-originated focus-visible and runtime-error gates active.
+12. Preserved fixture lifetime cleanup: every non-Active-Lesson iteration removes the Active Lesson page-level `**/api/v1/**` catch-all before opening the next canonical route.
+13. Updated the source contract so regression to direct `page.screenshot(...)` fails and the consolidated owner must contain active CDP `Page.getLayoutMetrics`/`Page.captureScreenshot`, zoom-normalized clip math and exact-720 ownership evidence.
+14. Kept all 20 parent fingerprints at `REVIEW_REQUIRED`; no historical cropped fingerprint was approved.
 
-Commands or procedures:
-GitHub connector live reads/writes; GitHub Actions job/artifact inspection; exact artifact ZIP inspection; Playwright screenshot/error-context/trace analysis; branch-scoped Contents API writes.
+## Result so far
 
-Artifacts produced:
-- Issue #601 and Draft PR #602.
-- Initial fail-closed CI #3821 diagnostics.
-- Exact failed Visual artifact proving fixture leakage.
-- Fixture-isolation test commit `133327e9290a758c5bbdd947ecd60dec908dd5ba`.
-- Updated active `.agents/current/**` execution state.
+The parent audit is reconstructed on corrected main without runtime source changes. Its next authoritative Visual run will produce full-width 720px Linux evidence rather than the historical half-viewport captures. Old #601 images must not be used to justify runtime changes in Active Lesson or Onboarding.
 
-## Result
+## Known historical failures
 
-The first CI failure is resolved at the correct ownership boundary: it was a test-fixture lifetime defect created by reusing one page across the consolidated matrix, not a product Phrase Detail failure. The correction keeps the audit test-only and preserves the fail-closed visual acceptance gate.
+- Initial #601 Visual run exposed an Active Lesson page-fixture lifetime leak into later routes; that was corrected test-only by removing the page catch-all before non-Active-Lesson owners.
+- Historical parent screenshots suggested clipping in focused routes, but those images were produced by the now-invalid Playwright browser-zoom capture path. Their runtime conclusion is therefore untrusted until corrected CDP evidence is collected.
 
-## Failures
+## Guardrails
 
-- CI #3821 failed Visual regression before `REVIEW_REQUIRED` because the Active Lesson page-level catch-all intercepted later Phrase Detail API traffic and returned `not_mocked`.
-- No product overflow, clipping, focus containment or route-ownership failure has been established yet.
+- No production CSS/React/backend/deploy files changed in this continuation.
+- No force-push.
+- No direct write to main.
+- No blind snapshot/fingerprint acceptance.
+- #603 visual owner remains collected after resolving the config conflict.
+- Issues #604/#605 are not repaired from obsolete evidence; corrected parent audit must establish a real structural/runtime defect first.
 
-## Root cause
+## Next action
 
-A page-scoped catch-all fixture has a longer lifetime than the Active Lesson route when ten canonical routes are exercised sequentially in the same page. The older one-route-per-test matrices implicitly disposed that fixture by disposing the page; the new persistent browser-zoom matrix must do so explicitly.
-
-## Fallback
-
-If the corrected immutable-head run exposes a genuine 200% reflow/runtime defect before the evidence gate, stop fingerprint approval, create a route-specific runtime Issue/PR, repair and Stage-validate that defect, then reconstruct #601 from corrected main. Do not weaken geometry/focus assertions.
-
-## Limitations
-
-The GitHub connector does not execute local Playwright. Authoritative browser-owned zoom validation and exact Linux evidence are obtained from repository CI. The downloaded CI artifact is therefore the source of truth for browser diagnostics.
-
-## Reusable lesson
-
-When a consolidated browser audit deliberately reuses one page, deterministic route fixtures need explicit lifetime boundaries. A page-level catch-all route must be removed when its owning route ends; otherwise later routes can fail in ways that look like product/API regressions while actually being harness leakage.
+Run immutable-head CI on the documentation-synchronized head. If Frontend core fails, repair only the test/source contract. If Visual reaches only `REVIEW_REQUIRED`, download the exact Linux artifact and manually inspect all 20 full-width Light/Dark captures plus metrics. Approve fingerprints only from that immutable reviewed head. If corrected structural checks expose a genuine focused-route defect before review, split it into its own atomic runtime Issue/PR and keep #602 fail-closed.

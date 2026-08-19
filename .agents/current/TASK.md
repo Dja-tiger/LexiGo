@@ -3,103 +3,94 @@
 ## Identity
 
 - Issue: #601
-- Branch: test/issue-601-route-browser-zoom-parity
-- Base SHA: b1444d5e5153da9b8fe275b7f1f175e9bd25286b
+- Parent visual-parity umbrella: #205
+- Branch: `test/issue-601-route-browser-zoom-parity`
+- Reconstructed base: `main@cb51f7ae8ff4ce0b92c09719c3d7b1c2f5dc960c`
+- PR: #602 (Draft)
 - Head SHA: resolve from live branch ref
-- PR:
 
 ## Objective
 
-Close the consolidated true browser-owned 200% zoom/reflow dimension of umbrella #205 for all ten canonical routes in explicit Light and Dark without changing product runtime unless the audit proves a separate defect.
+Close the consolidated true browser-owned 200% zoom/reflow audit for all ten canonical routes in explicit Light and Dark without changing product runtime unless corrected structural evidence proves a separate defect.
+
+## Current context
+
+Issue #603 / PR #606 delivered the ordinary-route 720–767px runtime ownership repair and, independently, proved that Playwright `page.screenshot({ fullPage: true, scale: "css" })` does not capture the complete CSS viewport under browser-owned zoom. The authoritative evidence path is now CDP `Page.getLayoutMetrics` + `Page.captureScreenshot` with CSS→DIP conversion through `cssVisualViewport.zoom` and output normalization with `scale: 1 / zoom`.
+
+PR #602 was reconstructed on corrected `main` with a true merge commit so the delivered #603 visual owner remains collected. Historical #601 screenshots from the old Playwright capture path must not be approved or used as runtime-defect proof.
 
 ## Scope
 
-- Reuse deterministic route fixtures and canonical ownership semantics from the delivered consolidated route-parity matrix.
-- Run the ten canonical routes at real browser zoom factor 2 in explicit Light and Dark from the authoritative desktop Chromium environment.
-- Prove the zoom through the existing extension/controller and CDP `cssVisualViewport.zoom`, not synthetic root-font scaling.
-- Include route owner, RouteChrome/focused-route ownership, fixed/global chrome, document overflow, horizontal containment, partially visible focusable controls, keyboard-originated focus-visible evidence and runtime-error checks.
-- Emit exact Linux PNG/JSON evidence for all 20 states and keep every new fingerprint fail-closed until manual review.
-- Preserve existing standalone Home/Learn/Active Lesson/Phrases browser-zoom contracts unchanged.
+- Exercise the ten canonical routes from a `1440×900` Chromium source viewport at true browser zoom factor `2.0`.
+- Require exact effective `720 CSS px` layout width.
+- Prove browser-owned zoom through the extension/controller and CDP `cssVisualViewport.zoom`.
+- Require exact RouteChrome ownership at 720px:
+  - Home: `rail`;
+  - Learn, Progress, Dictionary, Word Detail, Phrases, Phrase Detail, Profile: `mobile`;
+  - Active Lesson and Onboarding: no ordinary RouteChrome.
+- Validate document/main/route containment, global chrome, interactive boxes, visible text ranges, keyboard-originated focus-visible behavior, reduced motion and runtime errors.
+- Capture full-width Linux PNG/JSON evidence through CDP for all 20 route/theme states.
+- Keep every parent-audit fingerprint `REVIEW_REQUIRED` until exact-head Linux artifacts are manually reviewed.
 
 ## Non-goals
 
-- Runtime CSS/React redesign in this audit PR.
+- Runtime CSS/React changes in this audit PR.
+- Treating the obsolete cropped #601 screenshots as proof for Issues #604/#605.
 - Backend/API/schema/session changes.
-- Figma Cloud edits or OpenPencil source mutation.
-- Replacing existing route-specific zoom owners.
-- Synthetic `font-size: 200%` as the sole zoom proof.
-- Blind snapshot/fingerprint approval or tolerance widening.
+- Figma/OpenPencil changes.
+- Replacing delivered standalone browser-zoom owners.
+- Synthetic root-font scaling.
+- Blind fingerprint approval or tolerance widening.
 
 ## Allowed paths
 
-- frontend/e2e/route-browser-zoom-parity.spec.ts
-- frontend/playwright.visual.config.ts
-- frontend/components/browser-zoom-collection-contract.test.ts
-- .agents/current/**
+- `frontend/e2e/route-browser-zoom-parity.spec.ts`
+- `frontend/playwright.visual.config.ts`
+- `frontend/components/browser-zoom-collection-contract.test.ts`
+- `.agents/current/**`
 
 ## Prohibited paths
 
-- frontend/app/** runtime CSS/React unless a separate defect Issue/PR is created first
-- backend/**
-- deploy/**
+- `frontend/app/**` runtime source unless a corrected audit proves a defect and a separate atomic Issue/PR is created first
+- `backend/**`
+- `deploy/**`
 - database/schema/migrations
-- design/**
-- .github/workflows/**
-- existing reviewed visual baseline owners unrelated to this matrix
-- direct writes to main
-
-## Runtime owners
-
-- Existing route runtime owners on `main`; this slice is evidence/test-only.
-- Existing browser zoom extension/controller under `frontend/e2e/support/browser-zoom-extension` remains the zoom mechanism.
-
-## Documentation owners
-
-- `.agents/current/**` for active execution memory.
-- Issue #601 for audit scope and child-defect policy.
+- design sources
+- `.github/workflows/**`
+- direct writes to `main`
 
 ## Invariants
 
-- True browser zoom must be proven by the extension controller plus CDP `cssVisualViewport.zoom` near 2.
-- Root font size must not be used as a fake replacement for browser zoom.
-- All 20 route/theme states must finish structural/runtime checks before any fingerprint can be approved.
-- Fixed/global RouteChrome is part of the reflow surface.
-- Focused routes keep ordinary RouteChrome suppressed; ordinary routes expose exactly one visible owner.
-- Existing 320×700, 768×1024 and 1440×1024 reviewed route-parity evidence remains unchanged.
-- Any genuine reflow defect becomes a separate atomic runtime Issue/PR before this audit proceeds.
+- `window.innerWidth` and root `clientWidth` must both be exactly 720 after 2× browser zoom.
+- `cssVisualViewport.zoom` must remain approximately 2 while structural checks and evidence capture execute.
+- Parent evidence must use `Page.captureScreenshot`; direct `page.screenshot(...)` is prohibited for this true-browser-zoom proof.
+- PNG width must equal the CDP CSS layout viewport width and therefore equal 720.
+- All 20 structural/runtime states must pass before fingerprints may be approved.
+- Existing reviewed 320×700, 768×1024, 1440×1024 and Issue #603 evidence stays unchanged.
+- Any genuine Active Lesson/Onboarding reflow defect is split into a separate runtime PR; audit assertions are not weakened.
 
 ## Acceptance criteria
 
-- Ten canonical routes × explicit Light/Dark execute at real browser zoom 2.
-- CDP and DOM metrics prove effective browser zoom/reflow.
-- Canonical route owner remains mounted in every state.
-- No document horizontal overflow or clipped main/route/global-chrome surface.
-- No partially clipped rendered focusable control.
-- Keyboard-originated focus-visible evidence exists per state.
+- Ten canonical routes × Light/Dark execute at true browser zoom 2.
+- Exact 720px responsive ownership is enforced, not a permissive `rail|mobile|header` union.
+- No document horizontal overflow or clipped main/route/global/interactive surface.
+- No visible text-range clipping inside route/container owners.
+- Keyboard-originated focus-visible evidence is contained.
 - Runtime error capture is clean.
-- Exact Linux PNG/JSON evidence for all 20 states is manually reviewed before fingerprints are approved.
-- Final immutable-head CI succeeds with clean review/drift gate.
-- Squash merge uses expected-head protection and exact-main CI succeeds.
-- Stage remains on the newest runtime SHA because this PR is test/docs-only.
+- Corrected CDP Linux PNG/JSON evidence exists for all 20 states.
+- Exact artifact is manually reviewed before any SHA-256 baseline is committed.
+- Final immutable-head CI and review-thread audit are green before Ready/merge.
 
 ## Required checks
 
 - Agent Harness validation.
-- Browser-zoom collection source contract/unit tests.
+- Browser-zoom collection/source contract tests.
 - Frontend lint/typecheck/unit/build/dependency audit.
-- Diagnostic authoritative Visual run reaching deliberate `REVIEW_REQUIRED` only after structural assertions.
-- Manual review of exact Linux Visual artifact for all 20 states.
-- Final immutable-head full CI.
+- Authoritative Visual run reaching deliberate `REVIEW_REQUIRED` only after structural/runtime assertions.
+- Manual review of all 20 corrected Linux captures.
+- Final immutable-head full CI after fingerprint approval.
 - Review threads/reviews/main drift audit.
-- Exact-main CI after merge; no Stage redeploy claim.
-
-## Risks
-
-- Browser zoom persists per tab across navigation, so each route must normalize to 1× before opening/capturing the next state.
-- Onboarding replaces shared API routing; keep it last in the route order or isolate the context.
-- Horizontal scrollers may contain fully off-screen controls; only partially visible controls should fail viewport containment.
-- A broad audit can expose unrelated runtime defects; do not weaken assertions or fold fixes into this evidence PR.
 
 ## Rollback
 
-Revert the audit-only squash merge. Runtime and deployed product SHA remain unchanged.
+Revert the test/docs-only squash merge. Runtime/deployed product code remains the #603-corrected `main` state.

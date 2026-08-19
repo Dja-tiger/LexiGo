@@ -1,31 +1,29 @@
 # Current Task Progress
 
-## 2026-08-18 23:10 +03:00
+## 2026-08-19 continuation
 
 ### Verified
 
-- Live `main` is `b1444d5e5153da9b8fe275b7f1f175e9bd25286b` after Issue #583 reconciliation PR #600.
-- Umbrella #205 remains open.
-- Issue #601 is the active evidence/test-only child and Draft PR #602 is its delivery vehicle.
-- Branch `test/issue-601-route-browser-zoom-parity` was created from exact `main@b1444d5e5153da9b8fe275b7f1f175e9bd25286b`.
-- Consolidated 320×700 (#587/#588), 768×1024 (#568/#570) and 1440×1024 (#581) route-parity dimensions are already delivered.
-- `browser-zoom-collection-contract.test.ts` recognizes the new consolidated owner and keeps the existing Home/Learn/Active Lesson/Phrases browser-owned zoom owners collected.
-- `route-browser-zoom-parity.spec.ts` exercises all ten canonical routes in one persistent Chromium context at real browser zoom 2.0, verifies CDP `cssVisualViewport.zoom`, route ownership, no horizontal overflow, fixed/global chrome containment, keyboard-visible focus and fail-closed content-addressed evidence.
-- Initial immutable-head CI #3821 / run `32166685629` on head `36da468b980892f4a68a5828a3d4a1f4dcf5067d` completed with only Visual regression failing; frontend core, backend suites and all other E2E groups were green.
-- The Visual failure occurred before the intended `REVIEW_REQUIRED` gate, so it was treated as a real test-harness defect rather than approving fingerprints.
-- Exact failed screenshot/trace proved Phrase Detail rendered `Код запроса: not_mocked` for `GET /api/v1/phrases/identify-root-cause`.
-- Trace ownership identifies `installActiveLessonFixture()` as the handler returning that 404: it installs a page-level `**/api/v1/**` catch-all, while the new consolidated matrix intentionally reuses one page. Existing route-parity suites do not expose this because every route runs in a fresh Playwright test/page.
-- The correction is test-only: before opening each non-Active-Lesson route, remove the page-level catch-all with `page.unroute("**/api/v1/**")`, allowing the context-level quality API to own subsequent canonical routes. Runtime source remains untouched.
+- Live `main` is `cb51f7ae8ff4ce0b92c09719c3d7b1c2f5dc960c`, the squash merge of PR #606.
+- Issue #603 is delivered/closed; its ordinary-route 720–767px repair and reviewed CDP-normalized evidence are now part of main.
+- Draft PR #602 / Issue #601 was the only open PR when this continuation started.
+- Old #602 head `d5189851787105168f6ee8e08a89d528543da12b` was based on `b1444d5e5153da9b8fe275b7f1f175e9bd25286b` and conflicted after #606.
+- Branch synchronization was completed without force through merge commit `a13df2263c10b53aec604781f1e7ec087bc8d38c`.
+- The merge tree is based on corrected main and preserves both consolidated parent owner `route-browser-zoom-parity.spec.ts` and delivered `issue-603-browser-zoom-reflow.spec.ts` in `playwright.visual.config.ts`.
+- Old #602 evidence capture used direct Playwright `page.screenshot({ fullPage: true, scale: "css" })`; #603 proved that coordinate system incomplete at real 2× browser zoom.
+- Corrected parent audit code is committed as `cd1fb0c36e1f8958ba89f6588df324aa899f5372` before this documentation synchronization.
+- Parent evidence now uses `Page.getLayoutMetrics` + `Page.captureScreenshot`, multiplies CSS clip dimensions by `cssVisualViewport.zoom` and normalizes output with `scale: 1 / zoom`.
+- Parent structural gate now requires exact `720px` effective viewport width.
+- RouteChrome ownership at exact 720px is explicit: Home=`rail`; Learn/Progress/Dictionary/Word Detail/Phrases/Phrase Detail/Profile=`mobile`; Active Lesson/Onboarding=`none`.
+- Parent audit now checks visible text-range clipping in addition to document/main/route/global/interactive containment.
+- All 20 parent Light/Dark fingerprints remain `REVIEW_REQUIRED`.
+- Runtime production source remains unchanged in #602.
 
-### Finding
+### Current finding
 
-The first CI failure is deterministic fixture leakage inside the newly consolidated test, not a product reflow defect. The Active Lesson page-scoped catch-all survives navigation and shadows the shared context-level fixture for later routes; Phrase Detail is the first later route that requires an endpoint absent from the Active Lesson fixture.
+Historical #601 focused-route screenshots cannot be trusted because they were captured through the same half-viewport Playwright path invalidated during #603. Issues #604/#605 must therefore be re-evaluated from corrected CDP evidence before any runtime CSS repair is attempted.
 
-### Root cause
-
-Historical route parity runs one route per Playwright test, so page-scoped deterministic API fixtures are naturally discarded with the page. Issue #601 deliberately consolidates ten routes into one persistent Chromium page to preserve browser-owned zoom state, exposing fixture lifetime as a new test-harness boundary.
-
-### Changed files
+### Changed files in #602
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -34,24 +32,31 @@ Historical route parity runs one route per Playwright test, so page-scoped deter
 - `frontend/playwright.visual.config.ts`
 - `frontend/components/browser-zoom-collection-contract.test.ts`
 
-### Checks passed
+### Checks completed
 
-- Live repo/main/PR preflight.
-- New consolidated browser-owned zoom collection/source contract in Frontend core.
-- Initial CI #3821: Backend unit/security, Backend integration, Frontend core, iOS PWA dictionary, both UI shards, Dictionary smoke, Content security, Accessibility audit, Performance budgets, Controlled service worker and Lesson completion.
-- Failed Visual artifact and trace were manually inspected; `not_mocked` was traced to `active-lesson-fixture.ts` rather than guessed from the missing heading assertion.
-- Existing Phrases visual owner independently proves the same Phrase Detail slug/heading works with the shared quality fixture, excluding a phrase-content/runtime regression.
-- Fixture-isolation correction committed as `133327e9290a758c5bbdd947ecd60dec908dd5ba` without runtime changes.
+- Live main/open-PR/mergeability preflight.
+- Branch-local harness/context inspection.
+- Semantic conflict resolution against #606 without losing its visual owner.
+- No-force two-parent branch synchronization.
+- Source inspection confirming obsolete direct Playwright browser-zoom capture.
+- Migration to the #603-proven CDP CSS↔DIP evidence contract.
+- Exact-720 ownership and text-range structural assertions added.
+- Source contract updated to reject regression to direct `page.screenshot(...)` in the parent audit.
 
-### Checks failed
+### Checks pending
 
-- CI #3821 Visual regression failed before evidence review because Active Lesson's page-level API fixture leaked into later routes.
-- No product geometry/reflow failure has been observed yet.
+- Immutable-head Frontend core validation after this documentation commit.
+- Full required CI matrix.
+- Authoritative corrected Visual run.
+- If Visual reaches only `REVIEW_REQUIRED`: download and manually inspect all 20 Linux PNG/JSON states before baseline approval.
+- If structural/runtime assertions fail first: classify the exact route/root cause and use a separate runtime Issue/PR rather than weakening #602.
+- Final exact-head CI after any reviewed fingerprint approval.
+- Review-thread/review/main-drift audit before Ready/merge.
 
 ### Current branch head
 
-`133327e9290a758c5bbdd947ecd60dec908dd5ba` before this documentation synchronization commit.
+Resolve from live branch after this documentation synchronization. Audit-code head before docs is `cd1fb0c36e1f8958ba89f6588df324aa899f5372`.
 
 ### Next action
 
-Run the new immutable-head CI through the corrected fixture lifecycle. If all structural/runtime assertions pass and Visual reaches only the deliberate `REVIEW_REQUIRED` gate, download the exact Linux artifact, inspect all 20 Light/Dark route captures and metrics, then approve fingerprints only from that reviewed immutable head.
+Commit the synchronized current-task documentation, verify PR #602 is mergeable on corrected main, then classify the new immutable-head CI. Historical cropped fingerprints remain rejected.
