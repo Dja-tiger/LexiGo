@@ -111,27 +111,150 @@ const REVIEW_REQUIRED: ReviewedZoomBaseline = {
   sourceHeadSha: "REVIEW_REQUIRED",
 };
 
+const REVIEWED_SOURCE_RUN = 32224361667;
+const REVIEWED_SOURCE_HEAD_SHA = "d04e2bacbb0d5f3ad2b7bc83dd1a251f481e8b20";
+
 const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZoomBaseline> = {
-  "home.light": REVIEW_REQUIRED,
-  "home.dark": REVIEW_REQUIRED,
-  "learn.light": REVIEW_REQUIRED,
-  "learn.dark": REVIEW_REQUIRED,
-  "active-lesson.light": REVIEW_REQUIRED,
-  "active-lesson.dark": REVIEW_REQUIRED,
-  "progress.light": REVIEW_REQUIRED,
-  "progress.dark": REVIEW_REQUIRED,
-  "dictionary.light": REVIEW_REQUIRED,
-  "dictionary.dark": REVIEW_REQUIRED,
-  "word-detail.light": REVIEW_REQUIRED,
-  "word-detail.dark": REVIEW_REQUIRED,
-  "phrases.light": REVIEW_REQUIRED,
-  "phrases.dark": REVIEW_REQUIRED,
-  "phrase-detail.light": REVIEW_REQUIRED,
-  "phrase-detail.dark": REVIEW_REQUIRED,
-  "profile.light": REVIEW_REQUIRED,
-  "profile.dark": REVIEW_REQUIRED,
-  "onboarding.light": REVIEW_REQUIRED,
-  "onboarding.dark": REVIEW_REQUIRED,
+  "home.light": {
+    width: 720,
+    height: 615,
+    sha256: "89ca202f311574c26355d2673cabacd47bb91780eee34011887d746732f9a568",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "home.dark": {
+    width: 720,
+    height: 615,
+    sha256: "fdc9899a6c90005db48fc2e88b8d46cdfb057faace0c728c2da5725116c76b40",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "learn.light": {
+    width: 720,
+    height: 995,
+    sha256: "c1b05d53ca5d3184a73c3dda372aa67d2eab5deed26c4d603568297367377d5f",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "learn.dark": {
+    width: 720,
+    height: 995,
+    sha256: "56a5c528fc096d798b36963227fab20791469d0e1a3300f1f8c2dea40a97434e",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "active-lesson.light": {
+    width: 720,
+    height: 766,
+    sha256: "14cf5dce9466ab03bb40eb106e2e99c985b6b046dfa959f36587d35a93558985",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "active-lesson.dark": {
+    width: 720,
+    height: 766,
+    sha256: "aa65b64f58055f76485e21db9a2058cbca9f2612086d00b65fc8480e86ec6416",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "progress.light": {
+    width: 720,
+    height: 1664,
+    sha256: "b1178cacef2f9fdc8bb747f1253fefc903da665df4eb4672c7845ffa0b3c18e9",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "progress.dark": {
+    width: 720,
+    height: 1664,
+    sha256: "f0832dafef9d02af60a970d1f252fea6ace675df58d609de8127a5ff74d87007",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "dictionary.light": {
+    width: 720,
+    height: 1058,
+    sha256: "71f121025b9dac9572ec746942267e2b9b05c72f957fb47a3092d681e35b0c25",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "dictionary.dark": {
+    width: 720,
+    height: 1058,
+    sha256: "fed59daf3407b2b93e56617e75ad8699af5167cea3796643c6dd62ca483b0b53",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "word-detail.light": {
+    width: 720,
+    height: 1676,
+    sha256: "9e110d2ce1ef79fe2547f9d6ed782210c8dd7f60ab3ace27c5cdc678322c6103",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "word-detail.dark": {
+    width: 720,
+    height: 1676,
+    sha256: "c332f97e59e1d56da16859718145ed0e2bf4c671bfcc0ee76f942cf26de54d9d",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrases.light": {
+    width: 720,
+    height: 1363,
+    sha256: "a600b1098395ad6cf9e170de0d59863dc0505bd63b80390de2a40f54aabdae65",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrases.dark": {
+    width: 720,
+    height: 1363,
+    sha256: "b36077210d12ac1eae8de4e4898965b1d3bd9b55dec5551b5e07c77bc5c70084",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrase-detail.light": {
+    width: 720,
+    height: 1589,
+    sha256: "64b6dfcc35d1aa327945e4fac47c95cc31bd7daa14c199d1f6d4d52f23981f75",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "phrase-detail.dark": {
+    width: 720,
+    height: 1589,
+    sha256: "788bee88dc42223eeff5d9e923ed89d71c9205e8369afa9beb6ff54353576167",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "profile.light": {
+    width: 720,
+    height: 4086,
+    sha256: "8dacc1f7f390229c9f4b3fed4a2b037731e00e0fd4b34d702c51027060b0237b",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "profile.dark": {
+    width: 720,
+    height: 4086,
+    sha256: "f6b7826b0a9b61e4092aa1696ead3ec7dd73a5c3af1aeafcdf1547c5af1105d5",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "onboarding.light": {
+    width: 720,
+    height: 914,
+    sha256: "a166f294d2d6b8a5714c5ad066fbb98f51d059fa6d931cbed3561fcda6913f89",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
+  "onboarding.dark": {
+    width: 720,
+    height: 914,
+    sha256: "b3cef0bddbb26e6f7b5e96c142a130642b4c47f8da57a1efe049330bc7018ebe",
+    sourceRun: REVIEWED_SOURCE_RUN,
+    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+  },
 };
 
 const ONBOARDING_PROMPT = {
@@ -535,7 +658,7 @@ async function captureZoomEvidence(
     contentType: "application/json",
   });
 
-  if (baseline.sha256 === "REVIEW_REQUIRED") {
+  if (baseline.sha256 === REVIEW_REQUIRED.sha256) {
     return `${key}: REVIEW_REQUIRED ${actual.width}x${actual.height} sha256=${actual.sha256}`;
   }
   expect(actual, `${key}: exact Linux 200% browser-zoom fingerprint must match manually reviewed evidence from CI ${baseline.sourceRun} at ${baseline.sourceHeadSha}`).toEqual({
