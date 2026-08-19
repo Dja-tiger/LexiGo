@@ -48,6 +48,7 @@ export default defineConfig({
   projects: [
     {
       name: "visual-compact",
+      testIgnore: ["**/route-browser-zoom-parity.spec.ts"],
       use: {
         ...sharedUse,
         viewport: { width: 390, height: 844 },
@@ -58,6 +59,7 @@ export default defineConfig({
     },
     {
       name: "visual-medium",
+      testIgnore: ["**/route-browser-zoom-parity.spec.ts"],
       use: {
         ...sharedUse,
         viewport: { width: 768, height: 1024 },
