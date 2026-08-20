@@ -172,7 +172,14 @@ jobs:
           grep -Fq "github.ref == 'refs/heads/main'" .github/workflows/ci.yml
           grep -Fq "needs.container-build.result == 'success'" .github/workflows/ci.yml
           grep -Fq 'file: deploy/caddy/Dockerfile' .github/workflows/ci.yml
-          grep -Fq 'tags: ${{ env.CADDY_IMAGE }}' .github/workflows/ci.yml
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/workflows/ci.yml').read_text(encoding='utf-8')
+          expected = 'tags: $' + '{{ env.CADDY_IMAGE }}'
+          if expected not in source:
+              raise SystemExit(f'missing pinned Caddy build tag source contract: {expected}')
+          PY
 
           grep -Fq 'SESSION_COOKIE_SECURE=true' scripts/remote-deploy.sh
           grep -Fq 'upsert_env "$APP_ENV_FILE" SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
