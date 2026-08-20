@@ -227,7 +227,15 @@ jobs:
           grep -Fq 'Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"' deploy/Caddyfile
           grep -Fq 'X-Frame-Options "DENY"' deploy/Caddyfile
 
-          if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
+          grep -Fxq 'CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST' deploy/openpencil/openpencil.env.example
+          unsafe_token_matches="$(
+            grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github \
+              --exclude='deploy-scripts-check.yml' \
+              | grep -Ev '^deploy/openpencil/openpencil\.env\.example:[0-9]+:CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST$' \
+              || true
+          )"
+          if [ -n "$unsafe_token_matches" ]; then
+            printf '%s\n' "$unsafe_token_matches" >&2
             echo 'A Cloudflare token-like value must never be committed.' >&2
             exit 1
           fi
