@@ -6,7 +6,7 @@
 - Branch: `test/issue-626-webkit-preview-cors-fixture`
 - Base SHA: `b40bbbfde951797ba712e63b9d940fbdb30d9694`
 - Head SHA: resolve from live branch ref after each write
-- PR: pending publication
+- PR: #627
 
 ## Skills used
 
@@ -52,26 +52,28 @@ Actions performed:
 7. Added request-derived exact-origin CORS response metadata and local `OPTIONS` handling only to the canonical lesson-preview fixture.
 8. Added a fail-closed source contract proving single response ownership, exact-origin metadata and wildcard-origin absence.
 9. Updated the existing request-scoped fixture rule with the confirmed interception/fulfillment ownership failure category.
+10. Published Draft PR #627 with the exact trace evidence, non-goals, required immutable-head checks and rollback contract.
 
 Commands or procedures:
 
-GitHub connector for live refs, issue/branch creation, exact file writes/reads and branch compare; GitHub Actions artifact download; local ZIP/trace inspection and Git blob hashing for source provenance.
+GitHub connector for live refs, issue/branch/PR creation, exact file writes/reads and branch compare; GitHub Actions artifact download; local ZIP/trace inspection and Git blob hashing for source provenance; local TypeScript transpilation for syntax validation.
 
 Artifacts produced:
 
 - Issue #626;
 - branch `test/issue-626-webkit-preview-cors-fixture`;
+- Draft PR #627;
 - canonical fixture transport fix;
 - source regression contract;
 - Agent Harness failure-prevention record.
 
 Result:
 
-Implementation is complete at source level. `installQualityGateAPI(context)` remains the only lesson-preview response owner for the route-history audit, and the response it actually fulfills now carries request-derived WebKit-compatible CORS metadata. Production runtime/backend/design owners are unchanged.
+Implementation and PR publication are complete at source level. `installQualityGateAPI(context)` remains the only lesson-preview response owner for the route-history audit, and the response it actually fulfills now carries request-derived WebKit-compatible CORS metadata. Production runtime/backend/design owners are unchanged. Final acceptance is pending immutable-head GitHub CI on the post-synchronization developer-authored head.
 
 Failures:
 
-The pre-fix post-merge run reproducibly failed both iOS WebKit Learn history cases on run and retry with access-control pageerrors. No post-fix CI result is claimed until the Draft PR immutable-head run completes.
+The pre-fix post-merge run reproducibly failed both iOS WebKit Learn history cases on run and retry with access-control pageerrors. No post-fix browser result is claimed until PR #627's final immutable-head CI completes.
 
 Root cause:
 
