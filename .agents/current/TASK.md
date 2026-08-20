@@ -6,7 +6,7 @@
 - Branch: `test/issue-626-webkit-preview-cors-fixture`
 - Base SHA: `b40bbbfde951797ba712e63b9d940fbdb30d9694`
 - Head SHA: resolve from live branch ref after each write
-- PR: pending
+- PR: #627
 
 ## Objective
 
