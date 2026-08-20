@@ -5,7 +5,7 @@
 - Branch: `test/issue-624-webkit-preview-interception`
 - Base SHA: `639e177ec7362544e42c7d0b77a5c7432bca8401`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #625
 
 ## Skills used
 
@@ -21,51 +21,52 @@ Instruction source:
 
 Version or verification date:
 
-2026-08-19.
+2026-08-20.
 
 Inputs:
 
-CI run `32285020880`, latest rerun artifacts and Playwright traces.
+Exact-main CI run `32285020880`, PR #625 runs including `32319950680` (`#3886`), and Playwright artifacts/traces.
 
 Files inspected:
 
 - `frontend/e2e/route-history-parity.spec.ts`
 - `frontend/components/route-history-collection-contract.test.ts`
+- `frontend/e2e/support/quality-gates.ts` via Playwright trace source snapshot
 - `frontend/e2e/system-states.spec.ts`
 - `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
 
 Actions performed:
 
-Re-ran failed exact-main jobs without changing SHA, separated transient shard-1 timeout from reproducible shard-2 CORS failure, and narrowed the fix to route-history preview interception.
+Re-ran failed exact-main jobs without changing SHA, separated transient shard-1 timeout from reproducible shard-2 CORS failure, tested header/fetch-mode normalization, then removed the duplicate page-level lesson-preview interception after exact-head trace evidence disproved those normalizations.
 
 Commands or procedures:
 
-Downloaded Playwright artifacts, inspected `error-context.md` and `trace.zip`, and verified request/response headers in the network trace.
+Downloaded `frontend-playwright-report-ui-2` artifact from run `32319950680`, inspected `error-context.md` and `trace.zip`, and verified the exact request/response snapshot for `POST /api/v1/lessons/preview`.
 
 Artifacts produced:
 
-GitHub Issue #624 and branch `test/issue-624-webkit-preview-interception`.
+GitHub Issue #624, Draft PR #625, branch `test/issue-624-webkit-preview-interception`, updated source contract, and exact-head Playwright evidence.
 
 Result:
 
-Page-level preview interception now removes only browser-generated `Origin` and calls `route.fallback({ headers })`, leaving the canonical context fixture as response owner. Source contract locks this behavior.
+The route-history audit no longer registers any page-level route or Fetch wrapper for `/api/v1/lessons/preview`. `installQualityGateAPI(context)` is the sole response owner. The source contract explicitly forbids reintroducing a preview page route, fallback chaining, Fetch-mode wrapper, or local CORS response shim.
 
 Failures:
 
-Pre-fix exact-main UI shard 2 reproduced WebKit access-control pageerrors.
+Run `32319950680` (`#3886`) proved that `mode: "same-origin"` plus `route.fallback({ headers without origin })` was insufficient: WebKit still sent an Origin header, received a synthetic HTTP 200 from the context fixture, and emitted the access-control pageerror.
 
 Root cause:
 
-WebKit CORS validation of a Playwright-fulfilled same-origin request crossing the page interception boundary.
+Duplicate page- and context-level interception of the same lesson-preview request leaves WebKit in an access-control validation path across Playwright interception chaining. The audit should have one canonical response owner only.
 
 Fallback:
 
-If exact-head CI proves fallback chaining incompatible, revert the test-only branch and use another canonical fixture transport; do not weaken runtime-error assertions.
+If canonical-context-only exact-head CI still fails, keep production code untouched and investigate a different test-harness transport while preserving strict runtime-error assertions and canonical fixture ownership.
 
 Limitations:
 
-No local repository/network execution; GitHub Actions is the authoritative validation environment.
+GitHub Actions remains the authoritative browser validation environment; the final canonical-context-only fix is not considered complete until exact-head iOS WebKit and aggregate CI are green.
 
 Reusable lesson:
 
-For same-origin browser audits, avoid duplicating response ownership across page- and context-level Playwright routes when WebKit transport semantics can affect the fulfilled response.
+For same-origin browser audits, do not layer page-level interception in front of an existing context fixture for the same request unless the test explicitly owns and validates the interception chain across all browser engines.
