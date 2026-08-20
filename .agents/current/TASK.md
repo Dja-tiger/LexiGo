@@ -6,11 +6,11 @@
 - Branch: `test/issue-624-webkit-preview-interception`
 - Base SHA: `639e177ec7362544e42c7d0b77a5c7432bca8401`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #625
 
 ## Objective
 
-Restore exact-main frontend UI CI by removing the WebKit CORS artifact caused by Playwright fulfillment of the same-origin lesson-preview request.
+Restore exact-main frontend UI CI by removing the WebKit CORS artifact caused by duplicate Playwright interception of the same-origin lesson-preview request.
 
 ## Scope
 
@@ -40,7 +40,8 @@ None.
 
 ## Invariants
 
-- `installQualityGateAPI(context)` remains the canonical preview response owner.
+- `installQualityGateAPI(context)` remains the sole canonical preview response owner in this audit.
+- Do not add a page-level route for `/api/v1/lessons/preview`.
 - Preserve Authorization, CSRF, request body, real reload/Back/Forward and strict runtime-error assertions.
 - Do not hide failures with retries, sleeps, or weakened assertions.
 
@@ -56,8 +57,8 @@ Frontend core/unit/source contract, generic UI shards, aggregate CI, container b
 
 ## Risks
 
-Playwright route chaining semantics must still reach the canonical context fixture after page-level normalization.
+The canonical context fixture still uses Playwright fulfillment; exact-head WebKit CI must prove that removing the duplicate page interception boundary is sufficient.
 
 ## Rollback
 
-Revert the test-only squash commit if fallback interception changes request ownership unexpectedly.
+Revert the test-only squash commit if the canonical-context-only route does not restore deterministic WebKit behavior.
