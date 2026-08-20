@@ -149,6 +149,38 @@ jobs:
           grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-stage.yml
           grep -Fq 'ACME_EMAIL: ${{ vars.ACME_EMAIL }}' .github/workflows/deploy-prod.yml
 
+          caddy_image='ghcr.io/dja-tiger/lexigo-caddy:2.11.4-cloudflare-v0.2.4'
+          grep -Fq 'ARG CADDY_VERSION=2.11.4' deploy/caddy/Dockerfile
+          grep -Fq -- '--with github.com/caddy-dns/cloudflare@v0.2.4' deploy/caddy/Dockerfile
+          for compose_file in deploy/compose/docker-compose.stage.yml deploy/compose/docker-compose.prod.yml; do
+            grep -Fq "image: $caddy_image" "$compose_file"
+            if grep -n -E '^[[:space:]]+build:' "$compose_file"; then
+              echo "Deployment Compose must not build images on the target host: $compose_file" >&2
+              exit 1
+            fi
+          done
+          grep -Fq "CADDY_IMAGE=\"$caddy_image\"" scripts/remote-deploy.sh
+          grep -Fq '"${COMPOSE[@]}" pull postgres redis api web caddy' scripts/remote-deploy.sh
+          grep -Fq 'docker run --rm --entrypoint caddy "$CADDY_IMAGE" list-modules' scripts/remote-deploy.sh
+          if grep -n -E 'build --pull caddy|xcaddy build' scripts/remote-deploy.sh; then
+            echo 'Remote deployment must pull prebuilt Caddy instead of compiling it.' >&2
+            exit 1
+          fi
+          grep -Fq 'name: Publish deployment Caddy' .github/workflows/ci.yml
+          grep -Fq "CADDY_IMAGE: $caddy_image" .github/workflows/ci.yml
+          grep -Fq "github.event_name == 'push'" .github/workflows/ci.yml
+          grep -Fq "github.ref == 'refs/heads/main'" .github/workflows/ci.yml
+          grep -Fq "needs.container-build.result == 'success'" .github/workflows/ci.yml
+          grep -Fq 'file: deploy/caddy/Dockerfile' .github/workflows/ci.yml
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/workflows/ci.yml').read_text(encoding='utf-8')
+          expected = 'tags: $' + '{{ env.CADDY_IMAGE }}'
+          if expected not in source:
+              raise SystemExit(f'missing pinned Caddy build tag source contract: {expected}')
+          PY
+
           grep -Fq 'SESSION_COOKIE_SECURE=true' scripts/remote-deploy.sh
           grep -Fq 'upsert_env "$APP_ENV_FILE" SESSION_COOKIE_SECURE "true"' scripts/remote-deploy.sh
           grep -Fq 'CONTENT_SECURITY_POLICY_MODE="report-only"' scripts/remote-deploy.sh
@@ -163,6 +195,7 @@ jobs:
           grep -Fq 'PREVIOUS_IMAGE_TAG=' scripts/remote-deploy.sh
           grep -Fq 'rollback_to_previous_image()' scripts/remote-deploy.sh
           grep -Fq 'upsert_env "$APP_ENV_FILE" IMAGE_TAG "$PREVIOUS_IMAGE_TAG"' scripts/remote-deploy.sh
+          grep -Fq '"${COMPOSE[@]}" pull api web' scripts/remote-deploy.sh
           grep -Fq 'if ! wait_for_readiness; then' scripts/remote-deploy.sh
           grep -Fq 'previous image $PREVIOUS_IMAGE_TAG was restored' scripts/remote-deploy.sh
 
@@ -194,7 +227,15 @@ jobs:
           grep -Fq 'Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"' deploy/Caddyfile
           grep -Fq 'X-Frame-Options "DENY"' deploy/Caddyfile
 
-          if grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github --exclude='deploy-scripts-check.yml'; then
+          grep -Fxq 'CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST' deploy/openpencil/openpencil.env.example
+          unsafe_token_matches="$(
+            grep -R --line-number -E 'CLOUDFLARE_API_TOKEN=[A-Za-z0-9_-]+' deploy scripts .github \
+              --exclude='deploy-scripts-check.yml' \
+              | grep -Ev '^deploy/openpencil/openpencil\.env\.example:[0-9]+:CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST$' \
+              || true
+          )"
+          if [ -n "$unsafe_token_matches" ]; then
+            printf '%s\n' "$unsafe_token_matches" >&2
             echo 'A Cloudflare token-like value must never be committed.' >&2
             exit 1
           fi

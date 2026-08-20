@@ -50,10 +50,7 @@ services:
       retries: 10
 
   caddy:
-    image: lexigo-caddy:2.11.4-cloudflare
-    build:
-      context: ..
-      dockerfile: caddy/Dockerfile
+    image: ghcr.io/dja-tiger/lexigo-caddy:2.11.4-cloudflare-v0.2.4
     env_file: ../env/stage.caddy.env
     ports:
       - "80:80"

@@ -56,10 +56,7 @@ services:
         limits: { cpus: "0.5", memory: 384M }
 
   caddy:
-    image: lexigo-caddy:2.11.4-cloudflare
-    build:
-      context: ..
-      dockerfile: caddy/Dockerfile
+    image: ghcr.io/dja-tiger/lexigo-caddy:2.11.4-cloudflare-v0.2.4
     env_file: ../env/prod.caddy.env
     ports:
       - "80:80"

@@ -569,3 +569,99 @@ jobs:
       - name: Stop bounded cleanup lease
         if: always()
         run: docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+
+  caddy-image:
+    name: Publish deployment Caddy
+    needs: [change-scope, container-build]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.change-scope.outputs.agent_docs_only != 'true' &&
+      needs.container-build.result == 'success'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    env:
+      CADDY_IMAGE: ghcr.io/dja-tiger/lexigo-caddy:2.11.4-cloudflare-v0.2.4
+      BUILDER_NAME: lexigo-buildx-${{ github.run_id }}-${{ github.run_attempt }}-caddy
+      CI_LEASE_CONTAINER: lexigo-buildx-lease-${{ github.run_id }}-${{ github.run_attempt }}-caddy
+      CADDY_MODULES_CONTAINER: lexigo-caddy-modules-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start bounded cleanup lease
+        run: |
+          set -Eeuo pipefail
+          docker rm --force "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker run --detach --rm \
+            --name "$CI_LEASE_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=lease" \
+            --entrypoint sleep \
+            alpine:3.22 \
+            2100 >/dev/null
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: caddy-registry
+        name: Resolve pinned Caddy image
+        run: |
+          set -Eeuo pipefail
+          if docker pull "$CADDY_IMAGE" >/dev/null 2>&1; then
+            echo 'build_required=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'build_required=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up owned Caddy builder
+        if: steps.caddy-registry.outputs.build_required == 'true'
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ${{ env.BUILDER_NAME }}
+          cleanup: true
+
+      - name: Build and publish pinned Caddy
+        if: steps.caddy-registry.outputs.build_required == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: deploy
+          file: deploy/caddy/Dockerfile
+          push: true
+          tags: ${{ env.CADDY_IMAGE }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Verify published Cloudflare DNS module
+        run: |
+          set -Eeuo pipefail
+          docker pull "$CADDY_IMAGE"
+          docker run --rm \
+            --name "$CADDY_MODULES_CONTAINER" \
+            --label "com.lexigo.ci=true" \
+            --label "com.lexigo.ci.repository=${GITHUB_REPOSITORY}" \
+            --label "com.lexigo.ci.run=${GITHUB_RUN_ID}" \
+            --label "com.lexigo.ci.attempt=${GITHUB_RUN_ATTEMPT}" \
+            --label "com.lexigo.ci.job=${GITHUB_JOB}" \
+            --label "com.lexigo.ci.kind=validation" \
+            --entrypoint caddy \
+            "$CADDY_IMAGE" list-modules \
+            | grep -Fxq 'dns.providers.cloudflare'
+
+      - name: Cleanup owned Caddy resources
+        if: always()
+        run: |
+          docker rm --force "$CADDY_MODULES_CONTAINER" "$CI_LEASE_CONTAINER" >/dev/null 2>&1 || true
+          docker image rm "$CADDY_IMAGE" >/dev/null 2>&1 || true
+          if docker buildx inspect "$BUILDER_NAME" >/dev/null 2>&1; then
+            docker buildx rm --force "$BUILDER_NAME" >/dev/null 2>&1 || true
+          fi
