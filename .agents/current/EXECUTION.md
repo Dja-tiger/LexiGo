@@ -29,9 +29,9 @@ Artifacts produced: registry-only Compose ownership, remote pull/module verifica
 
 Result: implementation authored; final immutable-head CI is pending.
 
-Failures: repeated Stage `no space left on device` during host-local `xcaddy build` in runs `32400258209` and `32404719471`; first PR deployment-check run `32415181203` exposed a source-assertion interpolation defect described below.
+Failures: repeated Stage `no space left on device` during host-local `xcaddy build` in runs `32400258209` and `32404719471`; first two PR deployment-check heads exposed validator defects described below.
 
-Root cause: compilation ownership was placed on the deployment host instead of CI; separately, a literal GitHub expression inside a grep assertion was pre-interpolated by Actions.
+Root cause: compilation ownership was placed on the deployment host instead of CI; separately, workflow source validation had one GitHub-expression interpolation defect and one pre-existing placeholder false positive.
 
 Fallback: preserve the existing application rollback path; do not introduce daemon-wide prune or weaken checks.
 
@@ -41,33 +41,39 @@ Reusable lesson: expensive immutable infrastructure binaries should be built in 
 
 ### CI debugging
 
-Purpose: distinguish application regression from repeatable deployment-host resource exhaustion and classify the first PR check failure without retry-as-acceptance.
+Purpose: distinguish application regression from repeatable deployment-host resource exhaustion and classify PR validation failures without retry-as-acceptance.
 
 Instruction source: `.agents/SKILLS.md` CI debugging procedure and `.agents/AGENTS.base.md` failure classification rules.
 
 Version or verification date: 2026-08-20.
 
-Inputs: Stage runs `32400258209` and `32404719471`; PR #634 Deployment scripts check run `32415181203`, job `96574592522`.
+Inputs: Stage runs `32400258209` and `32404719471`; PR #634 Deployment scripts check runs `32415181203` and `32415432178`.
 
-Files inspected: deployment workflow/job logs, Compose owners, Caddy Dockerfile, remote deployment script, deployment-check source.
+Files inspected: deployment workflow/job logs, Compose owners, Caddy Dockerfile, remote deployment script, deployment-check source, intentional OpenPencil environment placeholder.
 
-Actions performed: correlated both Stage failures with the same host-local build phase; verified application images were pulled before failure; inspected the first PR check log and identified that `grep -Fq 'tags: ${{ env.CADDY_IMAGE }}'` was rendered by Actions as the local test image tag before the shell ran.
+Actions performed: correlated both Stage failures with the same host-local build phase; verified application images were pulled before failure; inspected PR check logs and repaired only deterministic validator defects.
 
 Commands or procedures: workflow job/step/log inspection and exact source reads.
 
-Artifacts produced: factual root-cause record in Issue #633/current progress and a literal-safe source assertion.
+Artifacts produced: factual root-cause records in current progress and literal-safe/exact-placeholder source assertions.
 
-Result: Stage failure classified as repeatable infrastructure/ownership defect; PR check failure classified as deterministic test-source interpolation defect.
+Result: Stage failure classified as repeatable infrastructure/ownership defect; PR check failures classified as deterministic validator defects rather than deployment implementation failures.
 
-Failures: Deployment scripts check run `32415181203` stopped at `Validate deployment security and readiness invariants`; all preceding syntax/unit/ownership checks were green.
+Failures:
+- Run `32415181203`, job `96574592522`: GitHub Actions pre-interpolated the literal `${{ env.CADDY_IMAGE }}` source needle inside a grep assertion.
+- Run `32415432178`, job `96575385947`: after all new Caddy ownership assertions passed, the existing broad token-like scan matched the documented placeholder `deploy/openpencil/openpencil.env.example:<line>:CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST`.
 
-Root cause: GitHub expression evaluation happens before shell quoting, so embedding a literal `${{ ... }}` source needle directly inside `run:` does not preserve that source text.
+Root cause:
+- GitHub expression evaluation happens before shell quoting, so embedding a literal `${{ ... }}` source needle directly inside `run:` does not preserve that source text.
+- The historical secret-like scan did not distinguish the repository-owned replacement placeholder from an actual committed token-like value.
 
-Fallback: construct the source needle in Python as `'tags: $' + '{{ env.CADDY_IMAGE }}'`; keep the assertion exact rather than deleting or broadening it.
+Fallback:
+- Construct the Caddy source needle in Python as `'tags: $' + '{{ env.CADDY_IMAGE }}'`; keep the assertion exact.
+- Require the OpenPencil placeholder exactly and exempt only the exact `<file>:<line>:CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST` match; fail on every other token-like match.
 
-Limitations: final head must rerun the full check; the failed first head is diagnostic evidence only.
+Limitations: final head must rerun the full check; failed earlier heads are diagnostic evidence only.
 
-Reusable lesson: when a workflow validates another workflow's literal `${{ ... }}` source syntax, construct the needle without a contiguous GitHub-expression token in the validator workflow itself.
+Reusable lesson: workflow validators must account for Actions expression preprocessing, and secret scanners should use narrowly documented placeholder exceptions rather than broad file exclusions.
 
 ### Deployment ownership repair
 
@@ -89,7 +95,7 @@ Artifacts produced: deployment workflow/source changes on PR #634.
 
 Result: source implementation complete; final CI/Stage proof pending.
 
-Failures: first deployment-check head failed only because the validator interpolated the literal workflow expression it was trying to inspect; implementation ownership checks before that point passed.
+Failures: earlier deployment-check heads failed only in validator logic after prerequisite syntax/unit/ownership checks; the second run confirmed all new Caddy ownership assertions before the placeholder scan.
 
 Root cause: prior architecture coupled deployment and compilation boundaries.
 
