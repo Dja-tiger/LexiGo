@@ -81,7 +81,21 @@ describe("Issue #617 route history parity collection", () => {
     expect(ownerSource).not.toContain('mode: "same-origin"');
     expect(ownerSource).not.toContain("route.fallback");
     expect(ownerSource).not.toContain("browserCorsHeaders");
+    expect(ownerSource).not.toContain("corsResponseHeaders");
     expect(ownerSource).not.toContain('"access-control-allow-origin"');
+  });
+
+  it("waits for the responsive Learn preview state before starting a history transition", () => {
+    const semanticReadySource = ownerSource.slice(
+      ownerSource.indexOf("async function expectSemanticReady"),
+      ownerSource.indexOf("async function expectRouteReady"),
+    );
+    expect(semanticReadySource).toContain('case "learn"');
+    expect(semanticReadySource).toContain("page.viewportSize()?.width");
+    expect(semanticReadySource).toContain('"Начать рекомендуемый урок"');
+    expect(semanticReadySource).toContain('"Начать урок"');
+    expect(semanticReadySource).toContain("await expect(startLesson).toBeEnabled()");
+    expect(semanticReadySource).not.toContain("waitForTimeout");
   });
 
   it("fails closed on exact route identity and canonical owner restoration", () => {

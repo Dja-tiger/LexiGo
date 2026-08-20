@@ -169,9 +169,16 @@ async function expectSemanticReady(page: Page, contract: RouteHistoryContract): 
     case "home":
       await expect(page.locator(".lx-home-next-action h1")).toBeVisible();
       return;
-    case "learn":
+    case "learn": {
       await expect(page.getByRole("heading", { level: 1, name: "Соберите один сфокусированный урок" })).toBeVisible();
+      const isCompact = (page.viewportSize()?.width ?? 1000) < 768;
+      const startLesson = page.getByRole("button", {
+        name: isCompact ? "Начать рекомендуемый урок" : "Начать урок",
+        exact: true,
+      });
+      await expect(startLesson).toBeEnabled();
       return;
+    }
     case "active-lesson":
       await stabilizeActiveLesson(page);
       await expect(page.locator(".lx-active-lesson")).toHaveAttribute("data-active-lesson-state", "prompt");
