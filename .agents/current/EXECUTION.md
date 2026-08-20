@@ -2,10 +2,11 @@
 
 ## Task
 
-- Branch: `test/issue-624-webkit-preview-interception`
-- Base SHA: `639e177ec7362544e42c7d0b77a5c7432bca8401`
-- Head SHA: resolve from live branch ref
-- PR: #625
+- Issue: #626
+- Branch: `test/issue-626-webkit-preview-cors-fixture`
+- Base SHA: `b40bbbfde951797ba712e63b9d940fbdb30d9694`
+- Head SHA: resolve from live branch ref after each write
+- PR: pending publication
 
 ## Skills used
 
@@ -13,11 +14,11 @@
 
 Purpose:
 
-Diagnose and repair the exact-main CI blocker before continuing production dependency PR #621.
+Diagnose and repair the reproducible post-merge iOS WebKit route-history failure without changing production runtime.
 
 Instruction source:
 
-`skills://plugins/github/gh-fix-ci/skill.md` plus repository Agent Harness.
+`skills://plugins/github/github/skill.md`, repository `.agents/SKILLS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.issue-247-request-scoped-fixtures.md` and `docs/agent-harness.md`.
 
 Version or verification date:
 
@@ -25,48 +26,65 @@ Version or verification date:
 
 Inputs:
 
-Exact-main CI run `32285020880`, PR #625 runs including `32319950680` (`#3886`), and Playwright artifacts/traces.
+- exact-main CI #3892 / run `32324897382` on `b40bbbfde951797ba712e63b9d940fbdb30d9694`;
+- failing UI job `96294381319`;
+- Playwright artifact `9391193804` (`frontend-playwright-report-ui-2`);
+- exact failure traces for `learn` Light/Dark on `ios-webkit`;
+- PR #625 diff and exact current `quality-gates.ts` source.
 
 Files inspected:
 
 - `frontend/e2e/route-history-parity.spec.ts`
+- `frontend/e2e/support/quality-gates.ts`
 - `frontend/components/route-history-collection-contract.test.ts`
-- `frontend/e2e/support/quality-gates.ts` via Playwright trace source snapshot
-- `frontend/e2e/system-states.spec.ts`
 - `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
+- `.agents/current/**`
+- PR #625 diff and Actions evidence.
 
 Actions performed:
 
-Re-ran failed exact-main jobs without changing SHA, separated transient shard-1 timeout from reproducible shard-2 CORS failure, tested header/fetch-mode normalization, then removed the duplicate page-level lesson-preview interception after exact-head trace evidence disproved those normalizations.
+1. Downloaded and unpacked the failed post-merge Playwright report.
+2. Classified the report: two final unexpected `learn` iOS WebKit failures, one independent retry-passing Phrases flake.
+3. Extracted the exact `quality-gates.ts` source snapshot from the failing trace and verified its Git blob SHA `636db392a1abac26c4056b803827c6a37e778429` against live GitHub.
+4. Compared PR #625's previous page-route CORS experiment with the canonical context fixture and established that response metadata had been attached to a fallback observer rather than the route that fulfilled HTTP 200.
+5. Created Issue #626 and an isolated branch from exact `main`.
+6. Extended canonical JSON fulfillment with optional response headers.
+7. Added request-derived exact-origin CORS response metadata and local `OPTIONS` handling only to the canonical lesson-preview fixture.
+8. Added a fail-closed source contract proving single response ownership, exact-origin metadata and wildcard-origin absence.
+9. Updated the existing request-scoped fixture rule with the confirmed interception/fulfillment ownership failure category.
 
 Commands or procedures:
 
-Downloaded `frontend-playwright-report-ui-2` artifact from run `32319950680`, inspected `error-context.md` and `trace.zip`, and verified the exact request/response snapshot for `POST /api/v1/lessons/preview`.
+GitHub connector for live refs, issue/branch creation, exact file writes/reads and branch compare; GitHub Actions artifact download; local ZIP/trace inspection and Git blob hashing for source provenance.
 
 Artifacts produced:
 
-GitHub Issue #624, Draft PR #625, branch `test/issue-624-webkit-preview-interception`, updated source contract, and exact-head Playwright evidence.
+- Issue #626;
+- branch `test/issue-626-webkit-preview-cors-fixture`;
+- canonical fixture transport fix;
+- source regression contract;
+- Agent Harness failure-prevention record.
 
 Result:
 
-The route-history audit no longer registers any page-level route or Fetch wrapper for `/api/v1/lessons/preview`. `installQualityGateAPI(context)` is the sole response owner. The source contract explicitly forbids reintroducing a preview page route, fallback chaining, Fetch-mode wrapper, or local CORS response shim.
+Implementation is complete at source level. `installQualityGateAPI(context)` remains the only lesson-preview response owner for the route-history audit, and the response it actually fulfills now carries request-derived WebKit-compatible CORS metadata. Production runtime/backend/design owners are unchanged.
 
 Failures:
 
-Run `32319950680` (`#3886`) proved that `mode: "same-origin"` plus `route.fallback({ headers without origin })` was insufficient: WebKit still sent an Origin header, received a synthetic HTTP 200 from the context fixture, and emitted the access-control pageerror.
+The pre-fix post-merge run reproducibly failed both iOS WebKit Learn history cases on run and retry with access-control pageerrors. No post-fix CI result is claimed until the Draft PR immutable-head run completes.
 
 Root cause:
 
-Duplicate page- and context-level interception of the same lesson-preview request leaves WebKit in an access-control validation path across Playwright interception chaining. The audit should have one canonical response owner only.
+Interception ownership and response-metadata ownership had diverged. The duplicate page route removed by PR #625 was not the final response owner, while the remaining context fixture fulfilled the response without CORS metadata. WebKit validated the actual fulfilled response and rejected it.
 
 Fallback:
 
-If canonical-context-only exact-head CI still fails, keep production code untouched and investigate a different test-harness transport while preserving strict runtime-error assertions and canonical fixture ownership.
+If immutable-head iOS WebKit still reproduces the same access-control error, do not change production code or weaken runtime-error assertions. Inspect the new trace's request/response headers and transport mode, then test the next fixture-layer hypothesis in the same atomic Issue scope.
 
 Limitations:
 
-GitHub Actions remains the authoritative browser validation environment; the final canonical-context-only fix is not considered complete until exact-head iOS WebKit and aggregate CI are green.
+The local runtime does not contain a full repository checkout or installed frontend dependency graph. GitHub Actions remains authoritative for Vitest/TypeScript/Playwright and cross-browser validation.
 
 Reusable lesson:
 
-For same-origin browser audits, do not layer page-level interception in front of an existing context fixture for the same request unless the test explicitly owns and validates the interception chain across all browser engines.
+A Playwright route that calls `fallback` does not own response metadata. Cross-browser response headers must be emitted by the route that actually fulfills the intercepted request, with one canonical fulfillment owner per mocked request contract.
