@@ -6,7 +6,7 @@
 - Branch: `fix/stage-caddy-prebuilt-image`
 - Base SHA: `42e4a6ad82f5ae33e8e9c1c54e8fdb21ea266907`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #634 — `fix(deploy): stop rebuilding custom Caddy on deployment hosts`
 
 ## Objective
 
