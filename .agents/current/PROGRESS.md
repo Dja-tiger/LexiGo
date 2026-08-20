@@ -24,7 +24,7 @@ Custom Caddy compilation was coupled to every remote deploy instead of being a C
 - `deploy/compose/docker-compose.prod.yml`: same registry-only Caddy ownership.
 - `scripts/remote-deploy.sh`: canonical Caddy image tag, pull `caddy`, module verification against pulled image, no host-local build.
 - `.github/workflows/ci.yml`: main-only `Publish deployment Caddy` gate after app container builds; PRs do not publish.
-- `.github/workflows/deploy-scripts-check.yml`: fail-closed prebuilt-Caddy ownership/version/module/rollback source contracts; existing bounded PR Caddy build remains.
+- `.github/workflows/deploy-scripts-check.yml`: fail-closed prebuilt-Caddy ownership/version/module/rollback source contracts; existing bounded PR Caddy build remains; only the exact documented OpenPencil placeholder is exempted from the token-like source scan.
 - `.agents/current/**`: active slice evidence and procedure.
 
 ### Checks passed
@@ -33,13 +33,15 @@ Custom Caddy compilation was coupled to every remote deploy instead of being a C
 - Source read-back confirms remote deploy pulls Caddy and verifies `dns.providers.cloudflare` through `$CADDY_IMAGE`.
 - CI workflow compare showed the existing workflow preserved with only the new Caddy publication job added before Agent Docs updates.
 - Deployment check read-back confirms exact tag/version/plugin and no-host-build regression assertions.
-- PR #634 initial Deployment scripts check run `32415181203`: Bash syntax, public-smoke tests, frontend-container tests, HTTP-readiness tests, runner cleanup tests and runner ownership invariants all passed before the new source assertion failed.
+- PR #634 Deployment scripts check runs `32415181203` and `32415432178`: Bash syntax, public-smoke tests, frontend-container tests, HTTP-readiness tests, runner cleanup tests and runner ownership invariants passed before the deployment source-contract step diagnosed validator defects.
+- Run `32415432178` progressed through all new Caddy ownership assertions, including the literal-safe `tags: ${{ env.CADDY_IMAGE }}` source contract, before reaching the pre-existing broad Cloudflare token-like scan.
 
 ### Checks failed and repaired
 
 - Baseline Stage runs `32400258209` and `32404719471`: infrastructure failure `no space left on device` during remote `xcaddy build`.
-- PR #634 initial Deployment scripts check run `32415181203` failed only in `Validate deployment security and readiness invariants` because GitHub Actions interpolated the literal `${{ env.CADDY_IMAGE }}` inside a grep assertion to the check job's local image tag. This was a test-source quoting defect, not a deployment implementation failure.
-- Repair: construct the expected `tags: ${{ env.CADDY_IMAGE }}` source string inside Python from separate string fragments so Actions cannot pre-interpolate it. No ownership assertion was removed or weakened.
+- PR #634 Deployment scripts check run `32415181203` failed because GitHub Actions interpolated the literal `${{ env.CADDY_IMAGE }}` inside a grep assertion to the check job's local image tag. Repair: construct the exact source needle inside Python from separate string fragments; no assertion was removed or weakened.
+- PR #634 Deployment scripts check run `32415432178`, job `96575385947`, then exposed a separate pre-existing false positive: `deploy/openpencil/openpencil.env.example` intentionally contains `CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST`, and the broad token-like scan treated that placeholder as a secret.
+- Repair: require that exact placeholder with `grep -Fxq`, remove only matches conforming exactly to `deploy/openpencil/openpencil.env.example:<line>:CLOUDFLARE_API_TOKEN=REPLACE_ON_HOST`, and fail on every remaining token-like match. The OpenPencil example itself is unchanged and no real-secret protection is weakened.
 
 ### Current branch head
 
@@ -47,4 +49,4 @@ Resolve from live branch ref after the final `.agents/current/EXECUTION.md` writ
 
 ### Next action
 
-Run both full CI and Deployment scripts check on the final developer-authored head. If both are green, audit reviews/threads and fresh main, mark Ready, squash merge with expected head SHA, then require exact-main CI and exact-SHA Stage/public smoke/public browser success.
+Run both full CI and Deployment scripts check on the final developer-authored head. Deployment scripts check must pass source contracts, Compose rendering, bounded custom Caddy build, Cloudflare module verification, Caddyfile validation and systemd validation. If both workflows are green, audit reviews/threads and fresh main, mark Ready, squash merge with expected head SHA, then require exact-main CI and exact-SHA Stage/public smoke/public browser success.
