@@ -18,7 +18,7 @@ def require(condition: bool, message: str, violations: list[str]) -> None:
 def main() -> None:
     violations: list[str] = []
     ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
-    require(ci.count(HOSTED_RUNNER) == 8, "ci.yml: expected eight configurable runner jobs", violations)
+    require(ci.count(HOSTED_RUNNER) == 9, "ci.yml: expected nine configurable runner jobs", violations)
     require("  change-scope:\n" in ci, "ci.yml: change-scope job is required", violations)
     require("  agent-docs:\n" in ci, "ci.yml: Agent Docs validation job is required", violations)
     require("self-hosted" not in ci, "ci.yml: hard-coded self-hosted labels are forbidden", violations)
