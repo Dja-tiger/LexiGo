@@ -2,68 +2,54 @@
 
 ## Identity
 
-- Issue: #626
-- Branch: `test/issue-626-webkit-preview-cors-fixture`
-- Base SHA: `b40bbbfde951797ba712e63b9d940fbdb30d9694`
+- Issue: #628
+- Branch: `test/issue-628-phrase-new-tab-stability`
+- Base SHA: `b63b6a88b49faf6114870f39e6b7473a28ca1e9d`
 - Head SHA: resolve from live branch ref after each write
-- PR: #627
+- PR: pending
 
 ## Objective
 
-Restore deterministic exact-main frontend UI CI by making the Issue #617 route-history audit wait for Learn's debounced lesson preview to reach a stable semantic completion state before initiating another navigation.
+Restore deterministic exact-main UI CI by removing duplicate native middle-click/background-tab lifecycle dependence from the backend phrase independent-tab contract while preserving real native new-tab coverage elsewhere.
 
 ## Scope
 
-Test-harness-only lifecycle stabilization of Learn readiness in the route-history acceptance, plus fail-closed regression coverage and Agent Harness evidence.
+Test-only stabilization of the backend phrase new-tab acceptance in `frontend/e2e/app-router-routes.spec.ts`, plus current Agent Harness evidence.
 
 ## Non-goals
 
-No production runtime, backend/API semantics, CSS/design, OpenPencil/Figma, navigation implementation, dependency, visual-baseline, canonical API fixture, or deployment changes.
+No production runtime, routing implementation, backend/API semantics, CSS/design, dependencies, visual baselines, canonical API fixture ownership or deployment changes.
 
 ## Allowed paths
 
-- `frontend/e2e/route-history-parity.spec.ts`
-- `frontend/components/route-history-collection-contract.test.ts`
-- `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
+- `frontend/e2e/app-router-routes.spec.ts`
 - `.agents/current/**`
 
 ## Prohibited paths
 
-All production runtime/backend/CSS owners, canonical `frontend/e2e/support/quality-gates.ts`, dependencies, visual baselines and unrelated tests/fixtures.
-
-## Runtime owners
-
-None. This slice changes only Playwright acceptance lifecycle/readiness.
-
-## Documentation owners
-
-- `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
-- `.agents/current/**`
+All production runtime/backend/CSS owners, dependencies, visual baselines, canonical fixtures and unrelated tests.
 
 ## Invariants
 
-- `installQualityGateAPI(context)` remains the sole response owner for lesson preview in the route-history audit and stays byte-identical to `main`.
-- No page-level preview route, fallback chain, Fetch wrapper or CORS shim is introduced.
-- Authorization, CSRF, preview request body, real reload/Back/Forward and strict runtime-error assertions remain unchanged.
-- Learn readiness must use the existing responsive user-visible contract: `Начать урок` on desktop and `Начать рекомендуемый урок` on compact layouts, enabled only after the matching preview resolves.
-- Do not hide failures with retries, sleeps, timeout inflation, runtime-error filtering or weakened assertions.
+- The phrase result remains a semantic anchor with the exact filtered backend phrase `href`.
+- The phrase-specific test must prove the target route loads in an independent tab without target-tab catalog/progress/word-catalog warm-up.
+- `installAuthenticatedAPI(context)` remains the sole API response owner for this spec.
+- Existing `semantic route links support a real new tab and browser Back/Forward` native middle-click coverage stays unchanged.
+- Do not hide the failure with retries, sleeps or timeout inflation.
 
 ## Acceptance criteria
 
-- Learn is not considered semantically ready until its responsive start CTA is enabled.
-- Desktop Chromium and compact iOS WebKit use the correct layout-specific CTA.
-- iOS WebKit Learn/Profile route-history journeys no longer emit preview access-control pageerrors during reload/transit/Back-Forward.
+- The phrase-specific test no longer waits on native middle-click `context.page` creation or background-tab lifecycle.
+- An explicit independent context page navigates to the asserted semantic `href`, reaches the exact filtered URL and renders `Keep the route stable`.
+- Target-tab request evidence confirms no `/api/v1/catalog/metadata`, `/api/v1/progress` or `/api/v1/words?...` warm-up is required.
 - Full exact-head CI is green without retry-dependent acceptance.
-- Exact-main CI after merge is green before Dependabot PRs continue.
+- Review/thread audit and fresh-main check pass before squash merge.
+- Exact-main CI after merge is green before Dependabot PR #622 proceeds.
 
 ## Required checks
 
-Source/unit contract, frontend core quality, generic UI shard 2 with iOS WebKit route-history coverage, remaining required CI aggregate and container routing.
-
-## Risks
-
-Waiting for the wrong layout CTA would create a desktop/compact false timeout. The acceptance therefore resolves the CTA name from the actual viewport and waits on enabled state rather than elapsed time.
+Frontend core quality, both generic UI shards, remaining browser groups, backend gates, frontend aggregate and both container builds.
 
 ## Rollback
 
-Revert the test-only squash commit if exact-head trace evidence disproves semantic preview readiness as the cancellation boundary; keep production code and canonical fixture untouched.
+Revert the test-only squash commit if exact-head evidence shows explicit independent-tab navigation no longer represents the backend phrase deep-link contract; keep production code untouched.
