@@ -7,7 +7,7 @@
 - Exact-main CI for merged PR #622 is green on `main@42e4a6ad82f5ae33e8e9c1c54e8fdb21ea266907`, Report CI run `32403633294`.
 - Stage deployment failed twice with the same infrastructure signature: run `32400258209` on `eeffe2e65b5c855593b9c23a46465b3f17a62f6b` and run `32404719471` on current main `42e4a6ad82f5ae33e8e9c1c54e8fdb21ea266907`.
 - Both failures occur after postgres/redis/api/web pulls, during host-local custom Caddy `xcaddy build`, with `no space left on device` under Docker/Go temporary build storage.
-- Issue #633 and branch `fix/stage-caddy-prebuilt-image` exist; the branch started byte-identical to current main and remains 0 behind.
+- Issue #633 and Draft PR #634 use branch `fix/stage-caddy-prebuilt-image`, based on exact current main and 0 behind at PR creation.
 - Current Caddy contract is `2.11.4` + `caddy-dns/cloudflare@v0.2.4`.
 
 ### Finding
@@ -33,16 +33,18 @@ Custom Caddy compilation was coupled to every remote deploy instead of being a C
 - Source read-back confirms remote deploy pulls Caddy and verifies `dns.providers.cloudflare` through `$CADDY_IMAGE`.
 - CI workflow compare showed the existing workflow preserved with only the new Caddy publication job added before Agent Docs updates.
 - Deployment check read-back confirms exact tag/version/plugin and no-host-build regression assertions.
+- PR #634 initial Deployment scripts check run `32415181203`: Bash syntax, public-smoke tests, frontend-container tests, HTTP-readiness tests, runner cleanup tests and runner ownership invariants all passed before the new source assertion failed.
 
-### Checks failed
+### Checks failed and repaired
 
 - Baseline Stage runs `32400258209` and `32404719471`: infrastructure failure `no space left on device` during remote `xcaddy build`.
-- No branch CI result yet; PR not opened yet.
+- PR #634 initial Deployment scripts check run `32415181203` failed only in `Validate deployment security and readiness invariants` because GitHub Actions interpolated the literal `${{ env.CADDY_IMAGE }}` inside a grep assertion to the check job's local image tag. This was a test-source quoting defect, not a deployment implementation failure.
+- Repair: construct the expected `tags: ${{ env.CADDY_IMAGE }}` source string inside Python from separate string fragments so Actions cannot pre-interpolate it. No ownership assertion was removed or weakened.
 
 ### Current branch head
 
-Resolve from live branch ref after final current-context write.
+Resolve from live branch ref after the final `.agents/current/EXECUTION.md` write. That head is immutable for acceptance; any further implementation change requires a new full CI verdict.
 
 ### Next action
 
-Finish `.agents/current/EXECUTION.md`, verify branch diff/allowed paths and main freshness, open Draft PR, then require both full CI and Deployment scripts check on the immutable final head. Classify any workflow/source-contract failure before further code changes.
+Run both full CI and Deployment scripts check on the final developer-authored head. If both are green, audit reviews/threads and fresh main, mark Ready, squash merge with expected head SHA, then require exact-main CI and exact-SHA Stage/public smoke/public browser success.
