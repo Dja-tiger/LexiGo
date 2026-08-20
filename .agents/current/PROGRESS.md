@@ -1,21 +1,23 @@
 # Current Task Progress
 
-## 2026-08-19 21:45 Europe/Moscow
+## 2026-08-20 05:20 Europe/Moscow
 
 ### Verified
 
 - Exact-main SHA `639e177ec7362544e42c7d0b77a5c7432bca8401` CI run `32285020880` failed in generic UI shards.
 - Controlled rerun on the same SHA made shard 1 green; shard 2 reproduced the WebKit lesson-preview CORS pageerror.
-- Latest trace shows same-origin POST `/api/v1/lessons/preview`, a fulfilled 200 response and CORS headers already present.
-- The initial Dictionary system-state failure did not reproduce and is out of scope.
+- PR #625 exact-head run `32319950680` (`#3886`) on SHA `826dc12fcf11684b5e2a814c4a31952820da0032` passed Frontend core quality but failed `UI tests (2/2)` again.
+- The `#3886` Playwright trace proves the browser wrapper changed `Sec-Fetch-Mode` to `same-origin`, while WebKit still sent `Origin: http://127.0.0.1:3000`; the canonical context fixture fulfilled the request with HTTP 200, yet WebKit still emitted the access-control pageerror.
+- `main` remains `639e177ec7362544e42c7d0b77a5c7432bca8401`; no rebase is currently required.
+- PR #625 has no reviews or review threads.
 
 ### Finding
 
-The remaining blocker is deterministic Playwright/WebKit interception behavior in the route-history audit, not the merged Go dependency or LexiGo production runtime.
+Header normalization and Fetch-mode normalization are insufficient. The remaining distinguishing factor is the extra page-level interception boundary layered in front of the canonical context fixture.
 
 ### Root cause
 
-The page-level route fulfills a same-origin preview request that carries a browser-generated `Origin`; WebKit applies CORS validation to that intercepted response. The canonical context fixture should own the response instead.
+The Issue #617 audit duplicated interception ownership for `POST /api/v1/lessons/preview`: a page route intercepted/fell through while `installQualityGateAPI(context)` fulfilled the response. WebKit preserves access-control state across that interception chain and reports a CORS pageerror even though the URL is same-origin and the synthetic response is HTTP 200.
 
 ### Changed files
 
@@ -27,16 +29,18 @@ The page-level route fulfills a same-origin preview request that carries a brows
 
 ### Checks passed
 
-Pre-flight, trace/root-cause analysis, source-contract design.
+- Trace/root-cause analysis for exact-head run `#3886`.
+- Previous exact-head Frontend core quality on SHA `826dc12fcf11684b5e2a814c4a31952820da0032`.
+- Source-contract design now forbids page-level lesson-preview interception.
 
 ### Checks failed
 
-Exact-main CI `32285020880` remains red before this fix.
+- `UI tests (2/2)` in run `32319950680` (`#3886`) failed before the canonical-context-only fix.
 
 ### Current branch head
 
-Resolve from live branch ref.
+Resolve from live branch ref after Agent Harness documentation commits.
 
 ### Next action
 
-Open PR for #624 and run full exact-head CI; fix any deterministic failures before merge.
+Run full exact-head CI with the page-level lesson-preview route completely removed. If all required checks are green, mark PR #625 ready, squash merge, then verify exact-main CI before resuming production dependency PR #621.
