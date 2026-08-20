@@ -10,30 +10,30 @@
 
 ## Objective
 
-Restore deterministic exact-main frontend UI CI by keeping WebKit-compatible CORS response metadata on the canonical context-owned lesson-preview fixture.
+Restore deterministic exact-main frontend UI CI by making the Issue #617 route-history audit wait for Learn's debounced lesson preview to reach a stable semantic completion state before initiating another navigation.
 
 ## Scope
 
-Test-harness-only stabilization of `POST /api/v1/lessons/preview` in the canonical `installQualityGateAPI(context)` fixture, plus fail-closed regression coverage and Agent Harness evidence.
+Test-harness-only lifecycle stabilization of Learn readiness in the route-history acceptance, plus fail-closed regression coverage and Agent Harness evidence.
 
 ## Non-goals
 
-No production runtime, backend/API semantics, CSS/design, OpenPencil/Figma, navigation behavior, dependency, visual-baseline, or deployment changes.
+No production runtime, backend/API semantics, CSS/design, OpenPencil/Figma, navigation implementation, dependency, visual-baseline, canonical API fixture, or deployment changes.
 
 ## Allowed paths
 
-- `frontend/e2e/support/quality-gates.ts`
+- `frontend/e2e/route-history-parity.spec.ts`
 - `frontend/components/route-history-collection-contract.test.ts`
 - `.agents/AGENTS.issue-247-request-scoped-fixtures.md`
 - `.agents/current/**`
 
 ## Prohibited paths
 
-All production runtime/backend/CSS owners, route-history product behavior, dependencies, visual baselines and unrelated tests/fixtures.
+All production runtime/backend/CSS owners, canonical `frontend/e2e/support/quality-gates.ts`, dependencies, visual baselines and unrelated tests/fixtures.
 
 ## Runtime owners
 
-None. This slice changes only Playwright test-fixture response metadata.
+None. This slice changes only Playwright acceptance lifecycle/readiness.
 
 ## Documentation owners
 
@@ -42,17 +42,17 @@ None. This slice changes only Playwright test-fixture response metadata.
 
 ## Invariants
 
-- `installQualityGateAPI(context)` remains the sole response owner for lesson preview in the route-history audit.
-- `frontend/e2e/route-history-parity.spec.ts` must not reintroduce a page-level preview route, fallback chain, Fetch wrapper or CORS shim.
+- `installQualityGateAPI(context)` remains the sole response owner for lesson preview in the route-history audit and stays byte-identical to `main`.
+- No page-level preview route, fallback chain, Fetch wrapper or CORS shim is introduced.
 - Authorization, CSRF, preview request body, real reload/Back/Forward and strict runtime-error assertions remain unchanged.
-- CORS response metadata must be derived from the intercepted request origin and attached by the actual canonical fulfillment owner.
-- Do not hide failures with retries, sleeps, timeout inflation or weakened assertions.
+- Learn readiness must use the existing responsive user-visible contract: `Начать урок` on desktop and `Начать рекомендуемый урок` on compact layouts, enabled only after the matching preview resolves.
+- Do not hide failures with retries, sleeps, timeout inflation, runtime-error filtering or weakened assertions.
 
 ## Acceptance criteria
 
-- Canonical preview fulfillment includes browser-faithful `Access-Control-Allow-Origin` and credential metadata when WebKit sends an `Origin` header.
-- Existing preview payload semantics remain unchanged.
-- iOS WebKit `learn` Light/Dark route-history cases no longer emit the preview access-control pageerror.
+- Learn is not considered semantically ready until its responsive start CTA is enabled.
+- Desktop Chromium and compact iOS WebKit use the correct layout-specific CTA.
+- iOS WebKit Learn/Profile route-history journeys no longer emit preview access-control pageerrors during reload/transit/Back-Forward.
 - Full exact-head CI is green without retry-dependent acceptance.
 - Exact-main CI after merge is green before Dependabot PRs continue.
 
@@ -62,8 +62,8 @@ Source/unit contract, frontend core quality, generic UI shard 2 with iOS WebKit 
 
 ## Risks
 
-A broad CORS shim could hide unrelated fixture errors. The fix therefore applies only to canonical lesson-preview fulfillment and reflects the request origin rather than using a wildcard.
+Waiting for the wrong layout CTA would create a desktop/compact false timeout. The acceptance therefore resolves the CTA name from the actual viewport and waits on enabled state rather than elapsed time.
 
 ## Rollback
 
-Revert the test-only squash commit if exact-head WebKit evidence disproves canonical-response metadata as the root cause; keep production code untouched and return to the captured trace for the next transport-level hypothesis.
+Revert the test-only squash commit if exact-head trace evidence disproves semantic preview readiness as the cancellation boundary; keep production code and canonical fixture untouched.
