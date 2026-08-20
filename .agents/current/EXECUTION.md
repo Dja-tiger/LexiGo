@@ -4,8 +4,8 @@
 
 - Branch: `fix/stage-caddy-prebuilt-image`
 - Base SHA: `42e4a6ad82f5ae33e8e9c1c54e8fdb21ea266907`
-- Head SHA: resolve from live branch ref
-- PR: pending
+- Head SHA: resolve from live branch ref after this final context write
+- PR: #634
 
 ## Skills used
 
@@ -17,21 +17,21 @@ Instruction source: `AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-
 
 Version or verification date: repository rules read from exact base `42e4a6ad82f5ae33e8e9c1c54e8fdb21ea266907` on 2026-08-20.
 
-Inputs: live main, Issue #633, branch `fix/stage-caddy-prebuilt-image`, Stage status Issue #12, failed Stage jobs/logs.
+Inputs: live main, Issue #633, Draft PR #634, branch `fix/stage-caddy-prebuilt-image`, Stage status Issue #12, failed Stage jobs/logs.
 
 Files inspected: Agent Harness normative files; both deployment Compose files; `deploy/caddy/Dockerfile`; `scripts/remote-deploy.sh`; `scripts/ci/deploy-over-ssh.sh`; CI and deployment-check workflows; README/architecture.
 
-Actions performed: verified branch starts at exact main, classified Stage failures, changed only allow-listed deployment/tooling/current-context paths, and read changed owners back after writes.
+Actions performed: verified branch starts at exact main, classified Stage failures, changed only allow-listed deployment/tooling/current-context paths, opened Draft PR #634, and read changed owners back after writes.
 
-Commands or procedures: GitHub connector exact-ref reads, workflow job/log inspection, branch compare, explicit branch file updates.
+Commands or procedures: GitHub connector exact-ref reads, workflow job/log inspection, branch compare, explicit branch file updates, PR creation.
 
-Artifacts produced: registry-only Compose ownership, remote pull/module verification, main-CI Caddy publication gate, deployment source contracts, task records.
+Artifacts produced: registry-only Compose ownership, remote pull/module verification, main-CI Caddy publication gate, deployment source contracts, task records, Draft PR #634.
 
-Result: implementation authored; immutable PR CI pending.
+Result: implementation authored; final immutable-head CI is pending.
 
-Failures: repeated Stage `no space left on device` during host-local `xcaddy build` in runs `32400258209` and `32404719471`.
+Failures: repeated Stage `no space left on device` during host-local `xcaddy build` in runs `32400258209` and `32404719471`; first PR deployment-check run `32415181203` exposed a source-assertion interpolation defect described below.
 
-Root cause: compilation ownership was placed on the deployment host instead of CI.
+Root cause: compilation ownership was placed on the deployment host instead of CI; separately, a literal GitHub expression inside a grep assertion was pre-interpolated by Actions.
 
 Fallback: preserve the existing application rollback path; do not introduce daemon-wide prune or weaken checks.
 
@@ -41,33 +41,33 @@ Reusable lesson: expensive immutable infrastructure binaries should be built in 
 
 ### CI debugging
 
-Purpose: distinguish application regression from repeatable deployment-host resource exhaustion.
+Purpose: distinguish application regression from repeatable deployment-host resource exhaustion and classify the first PR check failure without retry-as-acceptance.
 
 Instruction source: `.agents/SKILLS.md` CI debugging procedure and `.agents/AGENTS.base.md` failure classification rules.
 
 Version or verification date: 2026-08-20.
 
-Inputs: Stage run `32400258209` and current-main Stage run `32404719471`.
+Inputs: Stage runs `32400258209` and `32404719471`; PR #634 Deployment scripts check run `32415181203`, job `96574592522`.
 
-Files inspected: deployment workflow/job logs, Compose owners, Caddy Dockerfile, remote deployment script.
+Files inspected: deployment workflow/job logs, Compose owners, Caddy Dockerfile, remote deployment script, deployment-check source.
 
-Actions performed: correlated both failures with the same build phase and verified application images were pulled before the failure.
+Actions performed: correlated both Stage failures with the same host-local build phase; verified application images were pulled before failure; inspected the first PR check log and identified that `grep -Fq 'tags: ${{ env.CADDY_IMAGE }}'` was rendered by Actions as the local test image tag before the shell ran.
 
-Commands or procedures: workflow job/log inspection and exact source reads.
+Commands or procedures: workflow job/step/log inspection and exact source reads.
 
-Artifacts produced: factual root-cause record in Issue #633/current progress.
+Artifacts produced: factual root-cause record in Issue #633/current progress and a literal-safe source assertion.
 
-Result: classified as repeatable infrastructure/ownership defect, not a transient failure and not an application defect.
+Result: Stage failure classified as repeatable infrastructure/ownership defect; PR check failure classified as deterministic test-source interpolation defect.
 
-Failures: none in the diagnostic procedure itself.
+Failures: Deployment scripts check run `32415181203` stopped at `Validate deployment security and readiness invariants`; all preceding syntax/unit/ownership checks were green.
 
-Root cause: remote `docker compose build --pull caddy` compiles the full xcaddy dependency graph and exhausts host storage.
+Root cause: GitHub expression evaluation happens before shell quoting, so embedding a literal `${{ ... }}` source needle directly inside `run:` does not preserve that source text.
 
-Fallback: move compilation to CI; no retry-as-acceptance.
+Fallback: construct the source needle in Python as `'tags: $' + '{{ env.CADDY_IMAGE }}'`; keep the assertion exact rather than deleting or broadening it.
 
-Limitations: Stage success can only be proven after the pinned image is published and the repair reaches main.
+Limitations: final head must rerun the full check; the failed first head is diagnostic evidence only.
 
-Reusable lesson: a repeated resource-exhaustion signature across different app SHAs is evidence to inspect deployment ownership before changing application code.
+Reusable lesson: when a workflow validates another workflow's literal `${{ ... }}` source syntax, construct the needle without a contiguous GitHub-expression token in the validator workflow itself.
 
 ### Deployment ownership repair
 
@@ -85,11 +85,11 @@ Actions performed: selected canonical image `ghcr.io/dja-tiger/lexigo-caddy:2.11
 
 Commands or procedures: source-owner audit, exact tag synchronization, bounded Buildx ownership, registry pull/module verification.
 
-Artifacts produced: deployment workflow/source changes on the Issue #633 branch.
+Artifacts produced: deployment workflow/source changes on PR #634.
 
-Result: source implementation complete; CI/Stage proof pending.
+Result: source implementation complete; final CI/Stage proof pending.
 
-Failures: none yet on the authored branch.
+Failures: first deployment-check head failed only because the validator interpolated the literal workflow expression it was trying to inspect; implementation ownership checks before that point passed.
 
 Root cause: prior architecture coupled deployment and compilation boundaries.
 
