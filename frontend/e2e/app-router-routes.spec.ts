@@ -271,19 +271,28 @@ test("Word Detail creates an exact single-word lesson", async ({ page }, testInf
   });
 });
 
-test("backend phrase links open in a new tab without a catalog warm-up", async ({ context, page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chromium", "Native middle-click tab creation is deterministic in Chromium.");
+test("backend phrase links load in an independent tab without a catalog warm-up", async ({ context, page }) => {
+  const href = "/phrases/backend-route-contract?topic=Frontend+Architecture&query=stable&sort=az&page=2";
   await page.goto("/phrases?topic=Frontend+Architecture&query=stable&sort=az&page=2");
   const link = page.getByRole("link", { name: /Keep the route stable/ });
-  await expect(link).toHaveAttribute("href", "/phrases/backend-route-contract?topic=Frontend+Architecture&query=stable&sort=az&page=2");
+  await expect(link).toHaveAttribute("href", href);
 
-  const tabPromise = context.waitForEvent("page");
-  await link.click({ button: "middle" });
-  const tab = await tabPromise;
-  await tab.waitForLoadState("domcontentloaded");
-  await expect(tab).toHaveURL(/\/phrases\/backend-route-contract\?topic=Frontend\+Architecture&query=stable&sort=az&page=2$/);
-  await expect(tab.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
-  await tab.close();
+  const tab = await context.newPage();
+  const targetRequests: string[] = [];
+  tab.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/v1/")) targetRequests.push(`${request.method()} ${url.pathname}${url.search}`);
+  });
+  try {
+    await tab.goto(href, { waitUntil: "domcontentloaded" });
+    await expect(tab).toHaveURL(/\/phrases\/backend-route-contract\?topic=Frontend\+Architecture&query=stable&sort=az&page=2$/);
+    await expect(tab.getByRole("heading", { name: "Keep the route stable" })).toBeVisible();
+    expect(targetRequests.some((entry) => entry.includes("/api/v1/catalog/metadata"))).toBe(false);
+    expect(targetRequests.some((entry) => entry.includes("/api/v1/progress"))).toBe(false);
+    expect(targetRequests.some((entry) => /\/api\/v1\/words\?/.test(entry))).toBe(false);
+  } finally {
+    await tab.close();
+  }
 });
 
 test("phrase Back restores catalog filters, page and scroll", async ({ page }) => {
