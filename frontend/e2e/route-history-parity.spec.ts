@@ -107,11 +107,28 @@ async function installAppearance(page: Page, appearance: Appearance): Promise<vo
 }
 
 async function installLessonPreviewInterception(page: Page): Promise<void> {
-  // The canonical quality-gate fixture owns the preview response. WebKit can
-  // apply CORS validation to a Playwright-fulfilled same-origin request when
-  // the browser-generated Origin header crosses the interception boundary.
-  // Normalize only that transport header, then fall through to the context
-  // fixture while preserving Authorization, CSRF, body and runtime semantics.
+  // Keep the browser request explicitly same-origin before Playwright routing.
+  // WebKit can otherwise retain Fetch CORS validation state even after the
+  // browser-generated Origin header is removed by a fallback interceptor.
+  // This changes transport metadata only: method, body, credentials, Auth,
+  // CSRF and response ownership remain application/canonical-fixture owned.
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch;
+    window.fetch = function (input, init) {
+      const requestURL = new URL(
+        input instanceof Request ? input.url : String(input),
+        window.location.href,
+      );
+      if (requestURL.pathname !== "/api/v1/lessons/preview") {
+        return nativeFetch.call(window, input, init);
+      }
+      return nativeFetch.call(window, input, { ...init, mode: "same-origin" });
+    };
+  });
+
+  // The canonical quality-gate fixture owns the preview response. Normalize
+  // only the browser-generated Origin header at the interception boundary,
+  // then fall through to the context fixture without fulfilling here.
   await page.route("**/api/v1/lessons/preview", async (route) => {
     const headers = { ...route.request().headers() };
     delete headers.origin;
