@@ -2,54 +2,39 @@
 
 ## Identity
 
-- Issue: #628
-- Branch: `test/issue-628-phrase-new-tab-stability`
-- Base SHA: `b63b6a88b49faf6114870f39e6b7473a28ca1e9d`
+- Issue: #630
+- Branch: `test/issue-630-semantic-route-independent-tab`
+- Base SHA: `651a35541061cd9d667e440a1a57fffa4cf5cb56`
 - Head SHA: resolve from live branch ref after each write
-- PR: pending
+- PR: pending publication
 
 ## Objective
 
-Restore deterministic exact-main UI CI by removing duplicate native middle-click/background-tab lifecycle dependence from the backend phrase independent-tab contract while preserving real native new-tab coverage elsewhere.
+Restore deterministic exact-main navigation CI by removing Chromium native middle-click/background-tab lifecycle from the semantic route acceptance while preserving LexiGo-owned contracts.
 
 ## Scope
 
-Test-only stabilization of the backend phrase new-tab acceptance in `frontend/e2e/app-router-routes.spec.ts`, plus current Agent Harness evidence.
+Test-contract-only stabilization of `frontend/e2e/app-router-routes.spec.ts` plus current Agent Harness evidence.
 
 ## Non-goals
 
-No production runtime, routing implementation, backend/API semantics, CSS/design, dependencies, visual baselines, canonical API fixture ownership or deployment changes.
+No production routing/UI/backend/API fixture/dependency/CSS/design/visual-baseline/runtime-error changes. No weakening of semantic href, independent route loadability, or browser Back/Forward assertions.
 
 ## Allowed paths
 
 - `frontend/e2e/app-router-routes.spec.ts`
 - `.agents/current/**`
 
-## Prohibited paths
-
-All production runtime/backend/CSS owners, dependencies, visual baselines, canonical fixtures and unrelated tests.
-
 ## Invariants
 
-- The phrase result remains a semantic anchor with the exact filtered backend phrase `href`.
-- The phrase-specific test must prove the target route loads in an independent tab without target-tab catalog/progress/word-catalog warm-up.
-- `installAuthenticatedAPI(context)` remains the sole API response owner for this spec.
-- Existing `semantic route links support a real new tab and browser Back/Forward` native middle-click coverage stays unchanged.
-- Do not hide the failure with retries, sleeps or timeout inflation.
+- `/learn` remains a real semantic anchor href.
+- An independent browser-context page must load the asserted `/learn` href and render the Learn heading.
+- Primary-page navigation plus real Back/Forward sequence remains unchanged.
+- No `button: "middle"` or `context.waitForEvent("page")` dependency remains in this acceptance.
+- Desktop Chromium continues to own this bounded semantic-route/history coverage.
 
 ## Acceptance criteria
 
-- The phrase-specific test no longer waits on native middle-click `context.page` creation or background-tab lifecycle.
-- An explicit independent context page navigates to the asserted semantic `href`, reaches the exact filtered URL and renders `Keep the route stable`.
-- Target-tab request evidence confirms no `/api/v1/catalog/metadata`, `/api/v1/progress` or `/api/v1/words?...` warm-up is required.
-- Full exact-head CI is green without retry-dependent acceptance.
-- Review/thread audit and fresh-main check pass before squash merge.
-- Exact-main CI after merge is green before Dependabot PR #622 proceeds.
-
-## Required checks
-
-Frontend core quality, both generic UI shards, remaining browser groups, backend gates, frontend aggregate and both container builds.
-
-## Rollback
-
-Revert the test-only squash commit if exact-head evidence shows explicit independent-tab navigation no longer represents the backend phrase deep-link contract; keep production code untouched.
+- Exact-head full CI is green, including generic UI shard 1 where the failure reproduced, shard 2 and both container builds.
+- Review/thread audit is clean and `main` is fresh before expected-head squash merge.
+- Exact-main CI after merge is green before Agent Docs reconciliation or Dependabot PR #622 proceeds.

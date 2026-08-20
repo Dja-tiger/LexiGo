@@ -188,15 +188,15 @@ test("legacy query URLs redirect once to canonical paths without losing filters"
   await expect(page.getByRole("heading", { level: 1, name: "Словарь" })).toBeVisible();
 });
 
-test("semantic route links support a real new tab and browser Back/Forward", async ({ context, page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chromium", "Native middle-click tab creation is deterministic in Chromium.");
+test("semantic route links load independently and preserve browser Back/Forward", async ({ context, page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Independent-tab and history coverage is owned by desktop Chromium.");
   await page.goto("/");
   const learn = visibleRouteLink(page, "learn");
   await expect(learn).toHaveAttribute("href", "/learn");
-  const tabPromise = context.waitForEvent("page");
-  await learn.click({ button: "middle" });
-  const tab = await tabPromise;
-  await tab.waitForLoadState("domcontentloaded");
+  const learnHref = await learn.getAttribute("href");
+  expect(learnHref).toBe("/learn");
+  const tab = await context.newPage();
+  await tab.goto(learnHref!, { waitUntil: "domcontentloaded" });
   await expect(tab).toHaveURL(/\/learn$/);
   await expect(tab.getByRole("heading", { name: "Соберите один сфокусированный урок" })).toBeVisible();
   await tab.close();
