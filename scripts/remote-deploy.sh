@@ -14,6 +14,7 @@ PUBLIC_URL="${3:?frontend public URL is required}"
 API_PUBLIC_URL="${4:?API public URL is required}"
 ACME_EMAIL="${5:?ACME email is required}"
 GHCR_USER="${6:?GHCR user is required}"
+CADDY_IMAGE="ghcr.io/dja-tiger/lexigo-caddy:2.11.4-cloudflare-v0.2.4"
 GHCR_TOKEN=""
 CLOUDFLARE_API_TOKEN=""
 DOCKER_CONFIG_DIR=""
@@ -171,9 +172,8 @@ unset GHCR_TOKEN
 
 export IMAGE_TAG
 COMPOSE=(docker compose --env-file "$APP_ENV_FILE" -f "$COMPOSE_FILE")
-"${COMPOSE[@]}" pull postgres redis api web
-"${COMPOSE[@]}" build --pull caddy
-docker run --rm --entrypoint caddy lexigo-caddy:2.11.4-cloudflare list-modules | grep -Fxq 'dns.providers.cloudflare'
+"${COMPOSE[@]}" pull postgres redis api web caddy
+docker run --rm --entrypoint caddy "$CADDY_IMAGE" list-modules | grep -Fxq 'dns.providers.cloudflare'
 
 if ! "${COMPOSE[@]}" up -d --remove-orphans; then
   DEPLOY_START_FAILED=1
