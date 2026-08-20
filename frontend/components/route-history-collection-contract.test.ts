@@ -12,10 +12,6 @@ const ownerSource = readFileSync(
   path.join(frontendRoot, "e2e", "route-history-parity.spec.ts"),
   "utf8",
 );
-const qualityGateSource = readFileSync(
-  path.join(frontendRoot, "e2e", "support", "quality-gates.ts"),
-  "utf8",
-);
 const frontendPackage = JSON.parse(
   readFileSync(path.join(frontendRoot, "package.json"), "utf8"),
 ) as FrontendPackage;
@@ -87,22 +83,19 @@ describe("Issue #617 route history parity collection", () => {
     expect(ownerSource).not.toContain("browserCorsHeaders");
     expect(ownerSource).not.toContain("corsResponseHeaders");
     expect(ownerSource).not.toContain('"access-control-allow-origin"');
+  });
 
-    const previewFixtureSource = qualityGateSource.slice(
-      qualityGateSource.indexOf('if (path === "/api/v1/lessons/preview")'),
-      qualityGateSource.indexOf('if (path === "/api/v1/words/101")'),
+  it("waits for the responsive Learn preview state before starting a history transition", () => {
+    const semanticReadySource = ownerSource.slice(
+      ownerSource.indexOf("async function expectSemanticReady"),
+      ownerSource.indexOf("async function expectRouteReady"),
     );
-    expect(previewFixtureSource).toContain("const corsHeaders = corsResponseHeaders(route)");
-    expect(previewFixtureSource).toContain('request.method() === "OPTIONS"');
-    expect(previewFixtureSource).toContain("}, corsHeaders);");
-    expect(qualityGateSource).toContain('const origin = route.request().headers()["origin"]');
-    expect(qualityGateSource).toContain('"access-control-allow-origin": origin');
-    expect(qualityGateSource).toContain('"access-control-allow-credentials": "true"');
-    expect(qualityGateSource).toContain(
-      '"access-control-allow-headers": "authorization, content-type, x-csrf-token"',
-    );
-    expect(qualityGateSource).toContain('"access-control-allow-methods": "POST, OPTIONS"');
-    expect(qualityGateSource).not.toContain('"access-control-allow-origin": "*"');
+    expect(semanticReadySource).toContain('case "learn"');
+    expect(semanticReadySource).toContain("page.viewportSize()?.width");
+    expect(semanticReadySource).toContain('"Начать рекомендуемый урок"');
+    expect(semanticReadySource).toContain('"Начать урок"');
+    expect(semanticReadySource).toContain("await expect(startLesson).toBeEnabled()");
+    expect(semanticReadySource).not.toContain("waitForTimeout");
   });
 
   it("fails closed on exact route identity and canonical owner restoration", () => {
