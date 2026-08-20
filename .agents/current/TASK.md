@@ -18,6 +18,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 - Make Stage/production Compose registry-only for Caddy.
 - Make remote deployment pull and verify Caddy instead of running `xcaddy`/Compose build.
 - Add fail-closed deployment source contracts.
+- Keep the configurable-runner regression contract accurate for the additional bounded Caddy CI job.
 - Preserve application image rollback semantics.
 
 ## Non-goals
@@ -32,6 +33,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 
 - `.github/workflows/ci.yml`
 - `.github/workflows/deploy-scripts-check.yml`
+- `scripts/ci/runner_policy_test.py`
 - `deploy/compose/docker-compose.stage.yml`
 - `deploy/compose/docker-compose.prod.yml`
 - `scripts/remote-deploy.sh`
@@ -41,7 +43,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 
 ## Prohibited paths
 
-- Application/backend/frontend runtime and tests unrelated to deployment.
+- Application/backend/frontend runtime and tests unrelated to deployment/CI ownership.
 - `deploy/Caddyfile` and `deploy/caddy/Dockerfile` content/version changes.
 - Secrets/environment credentials.
 - Host-wide Docker cleanup commands.
@@ -51,6 +53,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 - `.github/workflows/ci.yml` owns main CI image availability before the Stage workflow_run trigger.
 - `deploy/compose/docker-compose.stage.yml` and `docker-compose.prod.yml` own registry image selection.
 - `scripts/remote-deploy.sh` owns remote pull, module verification, Compose startup and app-image rollback.
+- `scripts/ci/runner_policy_test.py` owns the configurable-runner count regression contract for CI jobs.
 
 ## Documentation owners
 
@@ -63,6 +66,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 - App `IMAGE_TAG` stays immutable per deployment; rollback changes only app api/web tag.
 - Caddy registry tag is independent from historical app SHAs.
 - Existing Cloudflare/CSP/TLS/readiness behavior remains unchanged.
+- Every CI job continues to use the configurable hosted-runner contract; no hard-coded self-hosted label is introduced.
 - No destructive Docker cleanup is introduced.
 
 ## Acceptance criteria
@@ -72,6 +76,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 - Stage/prod Compose contain no local `build:` owner.
 - Remote deployment pulls `caddy` and contains no `build --pull caddy`/`xcaddy build`.
 - Deployment source contracts reject regression to host-local build ownership.
+- Runner-policy regression contract recognizes the new ninth configurable CI job without weakening existing hosted-runner rules.
 - Full immutable-head CI and deployment scripts check are green.
 - Review/thread audit is clean; squash merge uses expected head SHA.
 - Exact-main CI is green.
@@ -80,7 +85,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 ## Required checks
 
 - Deployment scripts check, including Compose render and custom Caddy module/Caddyfile validation.
-- Full repository CI on immutable PR head.
+- Full repository CI on immutable PR head, including runner policy.
 - Exact-main CI after merge.
 - Exact-main Stage/public smoke/public browser validation.
 
@@ -89,6 +94,7 @@ Move the custom Caddy build off Stage/production hosts. CI owns compilation and 
 - GHCR permissions/tag availability could block Stage before any remote service change.
 - A workflow dependency mistake could let Stage race the initial Caddy publication.
 - Compose/remote tag drift could make module verification inspect a different image than deployment.
+- CI runner-policy drift could reject the new bounded job if the regression count is not updated with the workflow topology.
 
 ## Rollback
 
