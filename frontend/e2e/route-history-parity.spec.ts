@@ -91,25 +91,12 @@ async function fulfillJSON(
   route: Route,
   status: number,
   body: unknown,
-  headers?: Record<string, string>,
 ): Promise<void> {
   await route.fulfill({
     status,
     contentType: "application/json",
-    headers,
     body: JSON.stringify(body),
   });
-}
-
-function browserCorsHeaders(route: Route): Record<string, string> {
-  const origin = route.request().headers()["origin"] ?? "http://127.0.0.1:3000";
-  return {
-    "access-control-allow-origin": origin,
-    "access-control-allow-credentials": "true",
-    "access-control-allow-headers": "authorization, content-type, x-csrf-token",
-    "access-control-allow-methods": "POST, OPTIONS",
-    vary: "Origin",
-  };
 }
 
 async function installAppearance(page: Page, appearance: Appearance): Promise<void> {
@@ -120,43 +107,6 @@ async function installAppearance(page: Page, appearance: Appearance): Promise<vo
 }
 
 async function installRouteOverrides(page: Page, contract: RouteHistoryContract): Promise<void> {
-  if (contract.key === "learn" || contract.key === "profile") {
-    // WebKit applies Fetch/CORS validation to Playwright-fulfilled responses when
-    // the request carries an Origin header, even for this same-origin audit URL.
-    // Keep the mock browser-faithful so runtime-error assertions measure LexiGo,
-    // not an interception artifact from the test harness.
-    await page.route("**/api/v1/lessons/preview", async (route) => {
-      const request = route.request();
-      const headers = browserCorsHeaders(route);
-
-      if (request.method() === "OPTIONS") {
-        await route.fulfill({ status: 204, headers });
-        return;
-      }
-
-      const input = request.postDataJSON() as {
-        source?: string;
-        studyMode?: string;
-        lessonSize?: string;
-      };
-      await fulfillJSON(route, 200, {
-        source: input.source ?? "mixed",
-        studyMode: input.studyMode ?? "study",
-        lessonSize: input.lessonSize ?? "30",
-        composition: {
-          total: QUALITY_WORDS.length + QUALITY_PHRASES.length,
-          words: QUALITY_WORDS.length,
-          phrases: QUALITY_PHRASES.length,
-          due: 4,
-          new: 1,
-          scheduled: 0,
-          availableWords: QUALITY_WORDS.length,
-          availablePhrases: QUALITY_PHRASES.length,
-        },
-      }, headers);
-    });
-  }
-
   if (contract.key === "active-lesson") {
     await page.route("**/api/v1/lessons/active", async (route) => {
       await fulfillJSON(route, 200, {

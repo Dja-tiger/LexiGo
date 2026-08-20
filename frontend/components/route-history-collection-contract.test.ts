@@ -74,6 +74,16 @@ describe("Issue #617 route history parity collection", () => {
     expect(ownerSource).toContain('state: "in_progress"');
   });
 
+  it("keeps lesson preview response ownership exclusively in the canonical context fixture", () => {
+    expect(ownerSource).toContain("await installQualityGateAPI(context)");
+    expect(ownerSource).not.toContain('page.route("**/api/v1/lessons/preview"');
+    expect(ownerSource).not.toContain("installLessonPreviewInterception");
+    expect(ownerSource).not.toContain('mode: "same-origin"');
+    expect(ownerSource).not.toContain("route.fallback");
+    expect(ownerSource).not.toContain("browserCorsHeaders");
+    expect(ownerSource).not.toContain('"access-control-allow-origin"');
+  });
+
   it("fails closed on exact route identity and canonical owner restoration", () => {
     expect(ownerSource).toContain("expectExactLocation(page, contract.path)");
     expect(ownerSource).toContain("contract.ownerSelector");
