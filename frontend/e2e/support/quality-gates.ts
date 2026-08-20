@@ -257,31 +257,12 @@ export const QUALITY_METADATA = {
   ],
 };
 
-async function fulfillJSON(
-  route: Route,
-  status: number,
-  body: unknown,
-  headers?: Record<string, string>,
-): Promise<void> {
+async function fulfillJSON(route: Route, status: number, body: unknown): Promise<void> {
   await route.fulfill({
     status,
     contentType: "application/json",
-    headers,
     body: JSON.stringify(body),
   });
-}
-
-function corsResponseHeaders(route: Route): Record<string, string> | undefined {
-  const origin = route.request().headers()["origin"];
-  if (!origin) return undefined;
-
-  return {
-    "access-control-allow-origin": origin,
-    "access-control-allow-credentials": "true",
-    "access-control-allow-headers": "authorization, content-type, x-csrf-token",
-    "access-control-allow-methods": "POST, OPTIONS",
-    vary: "Origin",
-  };
 }
 
 function paginated(items: readonly unknown[]) {
@@ -359,12 +340,6 @@ export async function installQualityGateAPI(
       return fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
     }
     if (path === "/api/v1/lessons/preview") {
-      const corsHeaders = corsResponseHeaders(route);
-      if (request.method() === "OPTIONS") {
-        await route.fulfill({ status: 204, headers: corsHeaders });
-        return;
-      }
-
       const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
@@ -380,7 +355,7 @@ export async function installQualityGateAPI(
           availableWords: QUALITY_WORDS.length,
           availablePhrases: QUALITY_PHRASES.length,
         },
-      }, corsHeaders);
+      });
     }
     if (path === "/api/v1/words/101") return fulfillJSON(route, 200, QUALITY_WORDS[0]);
     if (path.startsWith("/api/v1/phrases/") && request.method() === "GET") {
