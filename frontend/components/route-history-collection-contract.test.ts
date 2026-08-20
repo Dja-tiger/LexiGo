@@ -77,6 +77,8 @@ describe("Issue #617 route history parity collection", () => {
   it("keeps lesson preview response ownership in the canonical context fixture", () => {
     expect(ownerSource).toContain("await installQualityGateAPI(context)");
     expect(ownerSource).toContain("async function installLessonPreviewInterception(page: Page)");
+    expect(ownerSource).toContain('requestURL.pathname !== "/api/v1/lessons/preview"');
+    expect(ownerSource).toContain('mode: "same-origin"');
     expect(ownerSource).toContain('page.route("**/api/v1/lessons/preview"');
     expect(ownerSource).toContain("delete headers.origin");
     expect(ownerSource).toContain("route.fallback({ headers })");
