@@ -4,37 +4,28 @@
 
 ### Verified
 
-- Live `main` remains exact SHA `b63b6a88b49faf6114870f39e6b7473a28ca1e9d`, the squash merge of PR #621 (`next` 16.3.0 → 16.3.1).
-- PR #621 exact-head CI #3906 / run `32373102988` passed fully on `8b0e762a6075a636530b8510667b40e4216f53ff`, including both generic UI shards and both container builds.
-- Post-merge exact-main run `32374318211` first failed `UI tests (shard 1/2)` during Playwright image preparation because `mcr.microsoft.com` reset the TCP connection. The same diagnostics path then pulled the image successfully, proving an external transient registry failure.
-- A same-SHA rerun passed workspace preparation, dependency installation and production build, then failed the phrase new-tab E2E in `frontend/e2e/app-router-routes.spec.ts`.
-- Exact rerun artifact `frontend-playwright-report-ui-1` / artifact `9409322176`, digest `sha256:4df85fd6a649e11e036ca5498d66c6c7f8919a8a57ed832535faab9db1151dd8`, was downloaded and inspected.
-- Attempt 1 timed out at `context.waitForEvent("page")` after native middle-click.
-- Retry 1 created a new page and fetched the exact target document with HTTP 200 in ~26 ms, but the background tab never surfaced `domcontentloaded`; `tab.waitForLoadState("domcontentloaded")` timed out.
-- The same spec already contains separate native Chromium middle-click/new-tab coverage for the `/learn` semantic route.
-
-### Finding
-
-The phrase-specific acceptance duplicates a native browser gesture whose lifecycle is not deterministic in headless Chromium. Its unique product contract is different: the rendered backend phrase anchor must carry the canonical filtered href, and that href must load in an independent tab without target-tab catalog warm-up.
+- PR #629 exact-head CI #3908 / run `32378296969` was fully green on `6c50ad774e2f20b6d455fde45ec5dd703f54d806` and merged as main SHA `651a35541061cd9d667e440a1a57fffa4cf5cb56`.
+- PR head and merge commit have the same Git tree `226462030efdaffdfae454d59c73dbe8366a83e2`.
+- Exact-main CI run `32386739134` failed only in `Frontend E2E (UI tests (shard 1/2))`, job `96483659178`; all independent core/backend/shard2/visual/a11y/PWA/CSP/performance gates passed.
+- Artifact `frontend-playwright-report-ui-1` / `9413582203`, digest `sha256:27aa3d8539d8de1323dcdc1501c8d5eb9486641b6c1c9783e6bda645312bac4d`, identifies the older test `semantic route links support a real new tab and browser Back/Forward` as the final failure.
+- Initial attempt created the tab but timed out waiting for `domcontentloaded` after Playwright logged `networkidle`; retry timed out waiting for `context.page` after the same middle-click.
+- The trace source snapshot Git blob `42f252b1cd55b402ed013c62d61a95f7ec6daa1e` exactly matches the live branch file.
 
 ### Root cause
 
-The test couples backend phrase deep-link acceptance to native middle-click/background-tab scheduling. The target server route is healthy and returns 200; the nondeterminism is page creation/background renderer lifecycle, not Next.js 16.3.1 runtime behavior.
+The acceptance couples application routing/history verification to Chromium native middle-click background-tab creation and lifecycle. That browser behavior is nondeterministic in headless CI and is not a LexiGo-owned contract.
 
 ### Implemented
 
-- Issue #628 created with exact CI/artifact evidence.
-- Branch `test/issue-628-phrase-new-tab-stability` created from exact `main` SHA `b63b6a88...`.
-- Phrase test preserves the exact semantic href assertion.
-- Duplicate native middle-click handshake is replaced by an explicit independent `context.newPage()` plus direct `goto(href)`.
-- Target-tab API requests are captured and asserted to exclude catalog metadata, progress and word-catalog warm-up.
-- Existing separate native middle-click/new-tab coverage remains byte-identical.
-- Production code and canonical API fixture ownership remain unchanged.
+- Created Issue #630 and branch `test/issue-630-semantic-route-independent-tab` from exact main `651a3554...`.
+- Preserved the exact `/learn` semantic href assertion.
+- Replaced native middle-click + `context.waitForEvent("page")` with an explicit independent `context.newPage()` and navigation to the asserted href.
+- Preserved Learn heading verification and the complete primary-page Back/Forward journey.
+- Removed all middle-click/page-event references from this acceptance; no production source changed.
 
 ### Validation pending
 
-- Open draft PR and resolve immutable developer-authored head.
-- Full exact-head CI, especially generic UI shard 1/2 plus all remaining browser/container gates.
-- Review/thread audit and fresh-main check.
-- Squash merge and exact-main CI.
-- Only after exact-main green: repository-memory reconciliation and Dependabot PR #622.
+- Publish Draft PR from the developer-authored head.
+- Full immutable-head CI, especially UI shard 1.
+- Review/thread audit, Ready, expected-head squash merge and exact-main CI.
+- Only after green exact-main: Agent Docs reconciliation, then Dependabot PR #622.

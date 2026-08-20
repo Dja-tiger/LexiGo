@@ -2,57 +2,31 @@
 
 ## Task
 
-- Issue: #628
-- Branch: `test/issue-628-phrase-new-tab-stability`
-- Base SHA: `b63b6a88b49faf6114870f39e6b7473a28ca1e9d`
-- Head SHA: resolve from live branch ref after each write
-- PR: pending
+- Issue: #630
+- Branch: `test/issue-630-semantic-route-independent-tab`
+- Base SHA: `651a35541061cd9d667e440a1a57fffa4cf5cb56`
+- PR: pending publication
 
-## Skills used
+## Evidence
 
-### GitHub CI repair
+- exact-main CI run `32386739134`;
+- failed shard 1 job `96483659178`;
+- Playwright artifact `9413582203`, digest `sha256:27aa3d8539d8de1323dcdc1501c8d5eb9486641b6c1c9783e6bda645312bac4d`;
+- exact failed source blob `42f252b1cd55b402ed013c62d61a95f7ec6daa1e`;
+- PR #629 exact-head CI #3908 green and identical source tree after merge.
 
-Purpose:
+## Diagnosis
 
-Diagnose the post-merge UI shard failure using exact Actions evidence and stabilize only the failing Playwright acceptance without changing production behavior.
+Both Playwright attempts fail before LexiGo history assertions because native Chromium middle-click/background-tab lifecycle is nondeterministic: one attempt receives a page but never surfaces the awaited load state, the retry never receives the page event. This is the same browser-mechanics failure class previously observed in Issue #628.
 
-Instruction source:
+## Action
 
-`skills://plugins/github/github/skill.md`, repository `AGENTS.md`, `.agents/**`, `.agents/SKILLS.md` and `docs/agent-harness.md`.
+Keep desktop Chromium as the owner of this bounded route/history test, but test only application-owned semantics: assert the `/learn` anchor href, create an independent context page explicitly, navigate it to that href, verify Learn renders, then keep the existing primary-page click and real Back/Forward sequence unchanged.
 
-Version or verification date:
+## Safety boundaries
 
-2026-08-20.
+No production runtime, router implementation, authenticated API fixture, dependencies, visual baselines, CSS/design or runtime-error filtering are changed. No retry or timeout inflation is used to hide the failure.
 
-Inputs:
+## Validation
 
-- exact-main SHA `b63b6a88b49faf6114870f39e6b7473a28ca1e9d`;
-- CI run `32374318211` and rerun job `96447072687`;
-- Playwright artifact `9409322176` (`frontend-playwright-report-ui-1`), digest `sha256:4df85fd6a649e11e036ca5498d66c6c7f8919a8a57ed832535faab9db1151dd8`;
-- initial/retry error contexts and trace/network snapshots;
-- current `frontend/e2e/app-router-routes.spec.ts` source.
-
-Actions performed:
-
-1. Classified the first failed attempt as external MCR registry reset because the Playwright image pull failed before tests and immediately succeeded in diagnostics.
-2. Re-ran failed jobs on the same immutable main SHA instead of creating a code change for infrastructure noise.
-3. Inspected the rerun Playwright report after workspace/install/build succeeded and E2E failed.
-4. Verified attempt 1 timed out waiting for native middle-click page creation.
-5. Verified retry 1 created the target page and received the exact phrase document with HTTP 200 in ~26 ms, but background-tab `domcontentloaded` never surfaced.
-6. Confirmed the spec already owns independent native Chromium middle-click coverage for another semantic route.
-7. Defined the phrase-specific contract around semantic href + independent target-tab navigation, not a duplicated browser gesture.
-8. Replaced only that duplicate gesture with `context.newPage()` and explicit `goto(href)` while recording target-tab API requests.
-9. Added negative warm-up assertions for catalog metadata, progress and word-catalog requests.
-10. Kept production routing, fixtures, dependencies and the separate native new-tab test unchanged.
-
-Result:
-
-The proposed test now isolates the backend phrase deep-link contract from nondeterministic background-tab scheduling while retaining actual native new-tab coverage elsewhere in the same spec. Final acceptance requires full immutable-head CI and exact-main post-merge green.
-
-Fallback:
-
-If exact-head UI shard 1 still fails, inspect the new trace before any retry. Do not weaken target URL/heading/warm-up assertions or modify production code without evidence of a runtime defect.
-
-Reusable lesson:
-
-Do not make multiple acceptance tests depend on the same native browser gesture when only one needs to prove the gesture itself. Semantic-link consumers should separately verify their unique independent-load contract with explicit page ownership and request evidence.
+Final acceptance requires a new immutable-head full CI with shard 1 green, clean review/thread audit, expected-head squash merge, and green exact-main CI before any subsequent slice.
