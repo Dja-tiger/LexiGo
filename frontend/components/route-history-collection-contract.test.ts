@@ -12,6 +12,10 @@ const ownerSource = readFileSync(
   path.join(frontendRoot, "e2e", "route-history-parity.spec.ts"),
   "utf8",
 );
+const qualityGateSource = readFileSync(
+  path.join(frontendRoot, "e2e", "support", "quality-gates.ts"),
+  "utf8",
+);
 const frontendPackage = JSON.parse(
   readFileSync(path.join(frontendRoot, "package.json"), "utf8"),
 ) as FrontendPackage;
@@ -81,7 +85,24 @@ describe("Issue #617 route history parity collection", () => {
     expect(ownerSource).not.toContain('mode: "same-origin"');
     expect(ownerSource).not.toContain("route.fallback");
     expect(ownerSource).not.toContain("browserCorsHeaders");
+    expect(ownerSource).not.toContain("corsResponseHeaders");
     expect(ownerSource).not.toContain('"access-control-allow-origin"');
+
+    const previewFixtureSource = qualityGateSource.slice(
+      qualityGateSource.indexOf('if (path === "/api/v1/lessons/preview")'),
+      qualityGateSource.indexOf('if (path === "/api/v1/words/101")'),
+    );
+    expect(previewFixtureSource).toContain("const corsHeaders = corsResponseHeaders(route)");
+    expect(previewFixtureSource).toContain('request.method() === "OPTIONS"');
+    expect(previewFixtureSource).toContain("}, corsHeaders);");
+    expect(qualityGateSource).toContain('const origin = route.request().headers()["origin"]');
+    expect(qualityGateSource).toContain('"access-control-allow-origin": origin');
+    expect(qualityGateSource).toContain('"access-control-allow-credentials": "true"');
+    expect(qualityGateSource).toContain(
+      '"access-control-allow-headers": "authorization, content-type, x-csrf-token"',
+    );
+    expect(qualityGateSource).toContain('"access-control-allow-methods": "POST, OPTIONS"');
+    expect(qualityGateSource).not.toContain('"access-control-allow-origin": "*"');
   });
 
   it("fails closed on exact route identity and canonical owner restoration", () => {
