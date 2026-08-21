@@ -23,21 +23,21 @@ import (
 )
 
 type customPhrasePayload struct {
-	ID             int64     `json:"id"`
-	Kind           string    `json:"kind"`
-	Slug           string    `json:"slug"`
-	Lemma          string    `json:"lemma"`
-	Translation    string    `json:"translation"`
-	Phonetic       string    `json:"phonetic"`
-	PartOfSpeech   string    `json:"partOfSpeech"`
-	Topic          string    `json:"topic"`
-	Note           string    `json:"note"`
-	Cloze          string    `json:"cloze"`
-	ClozeAnswer    string    `json:"clozeAnswer"`
-	Status         string    `json:"status"`
-	DueAt          time.Time `json:"dueAt"`
-	Repetitions    int       `json:"repetitions"`
-	IntervalDays   int       `json:"intervalDays"`
+	ID           int64     `json:"id"`
+	Kind         string    `json:"kind"`
+	Slug         string    `json:"slug"`
+	Lemma        string    `json:"lemma"`
+	Translation  string    `json:"translation"`
+	Phonetic     string    `json:"phonetic"`
+	PartOfSpeech string    `json:"partOfSpeech"`
+	Topic        string    `json:"topic"`
+	Note         string    `json:"note"`
+	Cloze        string    `json:"cloze"`
+	ClozeAnswer  string    `json:"clozeAnswer"`
+	Status       string    `json:"status"`
+	DueAt        time.Time `json:"dueAt"`
+	Repetitions  int       `json:"repetitions"`
+	IntervalDays int       `json:"intervalDays"`
 }
 
 func TestCustomPhrasesAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
