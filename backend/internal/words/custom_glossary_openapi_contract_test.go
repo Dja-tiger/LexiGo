@@ -23,7 +23,7 @@ func TestOpenAPICustomGlossaryContractIsPortableBoundedAndPrivate(t *testing.T) 
 
 	content := string(contract)
 	for _, fragment := range []string{
-		"  version: 0.17.0\n",
+		"  version: 0.18.0\n",
 		"  /api/v1/words/custom/export:\n",
 		"      operationId: exportCustomGlossary",
 		"  /api/v1/words/custom/import:\n",
@@ -31,7 +31,7 @@ func TestOpenAPICustomGlossaryContractIsPortableBoundedAndPrivate(t *testing.T) 
 		"    CustomGlossaryExport:\n",
 		"    CustomGlossaryImportRequest:\n",
 		"    CustomGlossaryImportResult:\n",
-		"              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, version, items]",
+		"              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, cloze, clozeAnswer, version, items]",
 	} {
 		if !strings.Contains(content, fragment) {
 			t.Errorf("OpenAPI custom glossary contract is missing %q", fragment)
