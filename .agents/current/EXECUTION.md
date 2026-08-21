@@ -4,7 +4,7 @@
 
 - Branch: `docs/issue-203-openpencil-source-of-truth`
 - Base SHA: `7ccb027828f1a180dcb62b073ddf03b7d41cfc07`
-- Head SHA: resolve from live PR #636 after this final execution-log commit
+- Head SHA: resolve from live PR #636 after this execution-evidence commit
 - PR: #636
 
 ## Skills used
@@ -13,7 +13,7 @@
 
 Purpose:
 
-Safely reconstruct live repository state, isolate the Issue #203 slice, publish a Draft PR and prepare immutable-head CI/merge gates.
+Safely reconstruct live repository state, isolate Issue #203, publish a Draft PR, evaluate exact CI evidence and preserve expected-head merge safety.
 
 Instruction source:
 
@@ -30,13 +30,11 @@ Repository procedures re-read from `main` on 2026-08-21.
 
 Inputs:
 
-- live `main` and open PR/Issue state;
-- Issue #203 body;
-- existing repository handoff/docs/contracts.
+Live `main`, PR/Issue state, repository-owned source/docs/contracts and GitHub Actions evidence.
 
 Files inspected:
 
-- `.agents/**` mandatory/current documents;
+- mandatory/current `.agents/**` documents;
 - `README.md`, `docs/architecture.md`, `docs/agent-harness.md`;
 - `frontend/docs/adaptive-knowledge-coach.md`;
 - `frontend/docs/lesson-result-figma.md`;
@@ -47,40 +45,42 @@ Actions performed:
 
 - verified exact protected `main` and absence of parallel open PRs;
 - created the feature branch from exact `main`;
-- kept every write explicitly branch-scoped and read changed files back;
-- compared branch to the exact base and published Draft PR #636.
+- kept every write branch-scoped and read changed source files back;
+- compared branch to exact base and published Draft PR #636;
+- evaluated CI #3933 on developer head `56ec94d6d41bbede470fbd7041544d6c8c12dc1d` down to the failed job/log assertion.
 
 Commands or procedures:
 
-GitHub connector/API operations following the repository pre-flight, branch-isolation, readback and PR protocol.
+GitHub connector/API operations following repository pre-flight, branch-isolation, readback, Draft PR, workflow job/log and expected-head protocols.
 
 Artifacts produced:
 
-Draft PR #636 and current-task factual evidence.
+Draft PR #636 and current-task evidence.
 
 Result:
 
-Branch isolation and PR publication are complete. Final CI/Ready/merge/post-merge gates remain.
+Repository/branch state is isolated correctly. CI #3933 identified one documentation-sentinel self-match; the owning prose was corrected without runtime or structural-contract changes. A fresh full CI run is required on the new final developer head.
 
 Failures:
 
-No write failure. A branch-read attempt through a generic fetch URL returned an unsupported-endpoint 400; branch identity was instead verified through the supported branch/search path before writes continued.
+- A generic slash-containing branch fetch URL returned an unsupported-endpoint 400 during pre-flight readback; supported exact ref/file operations were used instead.
+- CI #3933 / run `32433461083` failed only in `Classify change scope` → `Validate Agent Docs routing contract` because the maintained handoff literally quoted the sentinel text `Figma source of truth` while explaining the prohibition.
 
 Root cause:
 
-The generic repository fetch action does not accept every slash-containing branch API URL form. This was a read-tool routing limitation, not a repository-state defect.
+The CI failure was a false positive in prose/sentinel interaction. All structural OpenPencil route/node/geometry/delivery assertions passed in the same run.
 
 Fallback:
 
-Use the supported branch/search or exact file/ref operations and never infer branch identity from the failed generic fetch.
+Rephrase the documentation prohibition so it does not quote its own banned sentinel; keep the structural source checks unchanged and require fresh full CI rather than rerunning the stale failed head.
 
 Limitations:
 
-No local checkout is available through this connector workflow; repository-owned CI is the executable validation environment.
+No local checkout is used in this connector workflow; repository-owned GitHub CI is the executable validation environment.
 
 Reusable lesson:
 
-A connector read-path limitation is not permission to weaken branch verification. Switch to a supported exact ref/read operation before any write.
+Negative source-ownership sentinels must not self-match explanatory documentation. Prefer positive active-owner assertions plus structural source validation, and keep negative phrases out of the prose that the sentinel scans.
 
 ### OpenPencil handoff reconstruction
 
@@ -101,22 +101,22 @@ Active source reconstructed from `main@7ccb027828f1a180dcb62b073ddf03b7d41cfc07`
 
 Inputs:
 
-Detailed `screens`/`activeScreens` inventory, active `.op` JSON and already-delivered Issue/PR evidence.
+Detailed `screens`/`activeScreens` inventory, active `.op` JSON and delivered Issue/PR evidence.
 
 Files inspected:
 
 - `design/openpencil/LexiGo Design System.op`;
 - `docs/figma/openpencil-screen-map.json`;
-- human handoff files;
-- Issue #194, Issue #196, PR #209 and PR #228 evidence plus current Issue #203.
+- both human handoff files;
+- Issue #194, Issue #196, PR #209, PR #228 and current Issue #203 evidence.
 
 Actions performed:
 
-- confirmed OpenPencil document structure and production pages;
-- recovered the ten real Lesson Result frame IDs, names and geometry plus matrix `fig_2745`;
+- confirmed top-level OpenPencil `pages` structure;
+- recovered Lesson Result matrix `fig_2745` and ten canonical mobile/desktop result frames;
 - recovered Scenario Catalog/Scenario Lesson canonical frames directly from the active `.op` where the compact inventory did not select them;
-- distinguished OpenPencil-native First Use `activeScreens` from imported historical provenance;
-- converted historical Figma identifiers into provenance-only metadata.
+- distinguished reviewed OpenPencil-native First Use `activeScreens` from historical provenance;
+- retained Figma identifiers only as archival provenance.
 
 Commands or procedures:
 
@@ -128,27 +128,27 @@ Artifacts produced:
 
 Result:
 
-Canonical production route/state selections now resolve to repository-owned OpenPencil sources with delivered Issue/PR status. Lesson Result, Phrases and Guest Home/First Use are no longer falsely represented as unresolved design gaps.
+Canonical production route/state selections resolve to repository-owned OpenPencil sources with delivered Issue/PR status. Lesson Result, Phrases and Guest Home/First Use are no longer represented as unresolved design gaps.
 
 Failures:
 
-Initial literal search for escaped `\"pages\":` returned no match in the decoded resource; a semantic `pages` search confirmed the actual top-level `pages` array before contract publication.
+An initial escaped literal lookup for the `pages` token returned no match in the decoded search resource; a semantic decoded-text search confirmed the actual top-level array.
 
 Root cause:
 
-The searchable response resource exposes decoded text snippets, so the escaped literal query was not the correct lookup representation.
+The searchable resource exposes decoded text, not the JSON-escaped representation used in the first lookup.
 
 Fallback:
 
-Search decoded semantic tokens and inspect surrounding structural context before drawing a schema conclusion.
+Search decoded semantic tokens and inspect surrounding structure before drawing a schema conclusion.
 
 Limitations:
 
-This slice validates structural identity/name/geometry and source ownership; it intentionally does not rerender or change visual baselines because no design pixels are changed.
+This slice validates structural identity/name/geometry and source ownership; it intentionally does not rerender or alter visual baselines because no design pixels change.
 
 Reusable lesson:
 
-After a design-tool migration, a historical node map is not sufficient as the production handoff. Keep an explicit route/state selection manifest and validate it against the active editable source.
+After a design-tool migration, an imported/historical node inventory is not sufficient as the production handoff. Keep an explicit route/state selection manifest validated against the active editable source.
 
 ### Documentation and executable contract maintenance
 
@@ -168,26 +168,26 @@ Re-read from `main` on 2026-08-21.
 
 Inputs:
 
-Active `.op`, detailed screen map, new production manifest and two human handoffs.
+Active `.op`, detailed screen map, production manifest and human handoffs.
 
 Files inspected:
 
 - `scripts/ci/agent_docs_scope_test.py`;
-- `.github/workflows/ci.yml` indirectly through the existing workflow-contract test;
+- existing architecture/workflow contract owners;
 - all design handoff owners named above.
 
 Actions performed:
 
-- added structural `.op` node traversal with duplicate-ID rejection;
+- added structural `.op` traversal with duplicate-ID rejection;
 - linked manifest `screens`/`activeScreens` selections to actual OpenPencil frames;
-- enforced exact canonical route/state key set and unique route/state ownership;
+- enforced the exact canonical route/state set and unique route/state ownership;
 - enforced all ten Lesson Result frames and matrix ownership;
-- prohibited reintroduction of active `Figma source of truth` wording in the maintained handoffs;
+- retained a negative active-Figma sentinel while removing its self-quoted occurrence from maintained prose;
 - preserved all pre-existing architecture/workflow contract tests.
 
 Commands or procedures:
 
-Python `unittest` source-contract code committed to the always-run root change-scope test owner; full execution delegated to immutable-head GitHub CI.
+Python `unittest` contract executed by the always-run root change-scope job; full product CI remains required because the slice is not Agent-Docs-only.
 
 Artifacts produced:
 
@@ -195,19 +195,19 @@ Updated `scripts/ci/agent_docs_scope_test.py` with `OpenPencilHandoffContractTes
 
 Result:
 
-The source-of-truth decision is executable instead of relying on prose review alone.
+CI #3933 proves every structural OpenPencil assertion passed; only the self-quoted sentinel failed. Commit `4b591a3efe29be22ddc880a49450b267069bd390` removes that self-match without weakening the test.
 
 Failures:
 
-None classified before immutable-head CI.
+CI #3933: one failure in `test_openpencil_is_the_only_active_handoff_source`; 13 other root contract tests passed.
 
 Root cause:
 
-Not applicable yet.
+The handoff contract scanned for a prohibited phrase and the documentation used the same literal phrase to describe what must not be reintroduced.
 
 Fallback:
 
-If CI exposes a real source/manifest mismatch, repair the owning mapping or test contract from exact job/log evidence; do not weaken source ownership or bypass full CI.
+Keep the negative assertion and phrase the documentation rule as “declares Figma to be the active production design source” instead of quoting the sentinel.
 
 Limitations:
 
@@ -215,4 +215,4 @@ The contract validates repository identity and structure, not pixel equivalence.
 
 Reusable lesson:
 
-Design handoff documentation is an architecture consumer: canonical source selection should be machine-readable and checked against the active design file, not inferred from prose or stale external-tool identifiers.
+Executable documentation contracts should validate semantic ownership and source identity; negative prose sentinels need wording discipline so explanatory text cannot trigger them.
