@@ -14,9 +14,10 @@ Remove the remaining repository-side ambiguity between historical Figma provenan
 
 ## Scope
 
-- Rewrite the design handoff so OpenPencil is the only active design/handoff owner and Figma identifiers are archival provenance only.
-- Record canonical OpenPencil sources and delivered Issue/PR status for the ten canonical product routes plus Guest Home and Lesson Result state coverage.
-- Add a fail-closed repository contract that parses the OpenPencil screen map and rejects missing/duplicate canonical route sources or a return to active-Figma wording.
+- Rewrite the Adaptive Knowledge Coach design handoff so OpenPencil is the only active design/handoff owner and Figma identifiers are archival provenance only.
+- Add a machine-readable OpenPencil production handoff manifest for the canonical product routes/states, including Lesson Result frames recovered from the active repository-owned `.op`.
+- Migrate the dedicated Lesson Result handoff away from its stale `Figma source of truth` wording while retaining legacy node IDs as provenance.
+- Add a fail-closed repository contract that parses the active `.op`, the detailed screen map and the production handoff manifest and rejects missing/duplicate canonical sources or a return to active-Figma wording.
 - Reconcile Issue #203 against the 2026-08-19 OpenPencil migration semantics.
 
 ## Non-goals
@@ -25,11 +26,13 @@ Remove the remaining repository-side ambiguity between historical Figma provenan
 - No mutation of `design/openpencil/LexiGo Design System.op`.
 - No Figma Cloud/MCP work.
 - No visual baseline changes.
-- No broad archive deletion of historical design files.
+- No deletion of historical Figma artifacts.
 
 ## Allowed paths
 
+- `docs/figma/openpencil-production-handoff.json`
 - `frontend/docs/adaptive-knowledge-coach.md`
+- `frontend/docs/lesson-result-figma.md`
 - `scripts/ci/agent_docs_scope_test.py`
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
@@ -38,7 +41,7 @@ Remove the remaining repository-side ambiguity between historical Figma provenan
 ## Prohibited paths
 
 - `frontend/app/**`
-- `frontend/components/**` except no changes are planned
+- `frontend/components/**`
 - `backend/**`
 - `api/**`
 - `deploy/**`
@@ -50,11 +53,13 @@ Remove the remaining repository-side ambiguity between historical Figma provenan
 
 Unchanged. Existing route islands and `LexigoBootstrappedApp` remain authoritative.
 
-## Documentation owners
+## Documentation/design owners
 
-- `frontend/docs/adaptive-knowledge-coach.md`
-- `docs/figma/openpencil-screen-map.json` as read-only active screen inventory
-- `scripts/ci/agent_docs_scope_test.py` as root-checkout executable documentation contract
+- `design/openpencil/LexiGo Design System.op` — active repository-owned editable design source, read-only in this slice.
+- `docs/figma/openpencil-screen-map.json` — detailed imported/OpenPencil-native screen inventory, read-only in this slice.
+- `docs/figma/openpencil-production-handoff.json` — canonical route/state selection and GitHub delivery mapping introduced by this slice.
+- `frontend/docs/adaptive-knowledge-coach.md` — human-readable production handoff.
+- `scripts/ci/agent_docs_scope_test.py` — root-checkout executable documentation/design contract.
 
 ## Invariants
 
@@ -67,24 +72,27 @@ Unchanged. Existing route islands and `LexigoBootstrappedApp` remain authoritati
 ## Acceptance criteria
 
 - Handoff starts from OpenPencil rather than Figma and explicitly labels Figma as archival provenance.
-- All ten canonical routes resolve to existing `openPencilNode` entries or reviewed `firstuse.*` active-screen keys.
+- Canonical routes resolve to existing OpenPencil nodes or reviewed `firstuse.*` active-screen keys.
+- Lesson Result resolves to the actual OpenPencil frames present in the active `.op`, not only legacy `217:*` provenance.
 - Guest Home, Phrases and Lesson Result are not incorrectly marked as unresolved design gaps where delivery evidence already exists.
-- Delivered Issue/PR status is explicit in the handoff.
-- Root-level CI contract fails closed on missing OpenPencil source keys, duplicate canonical ownership or active-Figma wording.
+- Delivered Issue/PR status is explicit in the route/state manifest and human-readable handoff.
+- Root-level CI contract fails closed on missing OpenPencil source keys/nodes, duplicate canonical ownership, geometry/name drift or active-Figma wording.
 - Final diff remains within allowed paths and full required CI is green on the immutable developer head.
 
 ## Required checks
 
 - `python3 scripts/ci/agent_docs_scope_test.py`
+- JSON parse of the new handoff manifest and existing detailed screen map
 - full GitHub CI because `frontend/docs/**` and `scripts/ci/**` are not pure Agent Docs
 - clean review/thread audit
 - exact-main CI after merge
 
 ## Risks
 
-- A documentation-only rewrite could accidentally invent an OpenPencil mapping not present in the repository screen map.
-- A brittle contract could bind to formatting instead of semantic screen keys.
+- A documentation-only rewrite could accidentally invent an OpenPencil mapping not present in the repository design source.
+- A brittle contract could bind to paragraph formatting instead of semantic screen keys/nodes.
+- Parsing the active `.op` adds a large but deterministic repository-local test input; the check must remain structural and avoid rendering.
 
 ## Rollback
 
-Revert the documentation/contract commit(s); no runtime or data rollback is required.
+Revert the documentation/manifest/contract commit(s); no runtime or data rollback is required.
