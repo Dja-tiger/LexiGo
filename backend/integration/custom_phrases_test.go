@@ -260,16 +260,23 @@ func TestCustomPhrasesAreOwnerScopedAndReuseLearningScheduler(t *testing.T) {
 		t.Fatalf("other account custom phrase copy = %+v, owner phrase = %+v", otherCopy, created)
 	}
 
-	// A custom-phrase delete route must never mutate shared phrase content.
+	// A custom-phrase delete route must never mutate shared phrase content. Own
+	// this fixture inside the test instead of depending on shared phrase seed
+	// state left by other integration cases in the same database.
+	sharedLemma := fmt.Sprintf("The shared delete checkpoint %d is protected.", checkpoint)
+	sharedTranslation := fmt.Sprintf("Общая контрольная точка удаления %d защищена.", checkpoint)
+	sharedSlug := fmt.Sprintf("integration-shared-delete-%d", checkpoint)
+	sharedCloze := fmt.Sprintf("The shared delete checkpoint %d is _____.", checkpoint)
 	var sharedPhraseID int64
 	if err := pg.QueryRow(ctx, `
-		select id
-		from words
-		where owner_user_id is null and kind = 'phrase'
-		order by id
-		limit 1
-	`).Scan(&sharedPhraseID); err != nil {
-		t.Fatalf("select shared phrase: %v", err)
+		insert into words (
+			lemma, translation, phonetic, part_of_speech, topic, source, note,
+			kind, slug, cloze, cloze_answer
+		) values ($1, $2, '', 'phrase', 'Integration', 'lexigo-technical-phrases-v1', '',
+		          'phrase', $3, $4, 'protected')
+		returning id
+	`, sharedLemma, sharedTranslation, sharedSlug, sharedCloze).Scan(&sharedPhraseID); err != nil {
+		t.Fatalf("create shared phrase delete fixture: %v", err)
 	}
 	deleteAuthenticated(t, fmt.Sprintf("%s/api/v1/phrases/custom/%d", testServer.URL, sharedPhraseID), owner.Tokens.AccessToken, http.StatusNotFound)
 	var sharedStillExists bool
