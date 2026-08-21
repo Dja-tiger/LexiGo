@@ -45,6 +45,7 @@ Add an authenticated private custom-phrase backend/API foundation on the existin
 - `backend/internal/words/custom_phrase_repository.go`
 - `backend/internal/words/custom_phrase_http.go`
 - `backend/internal/words/custom_phrase_openapi_contract_test.go`
+- `backend/internal/words/custom_glossary_openapi_contract_test.go` — proven shared OpenAPI parse/version/error-field consumer only; glossary runtime/schema behavior remains unchanged
 - `backend/internal/server/server.go`
 - `backend/integration/custom_phrases_test.go`
 - `api/openapi.yaml`
