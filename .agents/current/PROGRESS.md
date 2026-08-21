@@ -39,15 +39,18 @@ Source migration, imported/native screen inventory and product delivery evolved 
 - Pre-PR compare: branch ahead 6, behind 0 with only five approved paths before execution-log commits.
 - Active `.op` structural inspection confirms top-level `pages` and the exact Lesson Result/Scenario node IDs, names and geometry used by the manifest.
 - `main` re-read immediately before Draft PR publication and remained at the exact base SHA.
+- CI #3933 structurally validated all 13 canonical route entries, all ten Lesson Result frames, the `.op` frame names/geometry, human resolved-gap markers, existing architecture contracts and workflow contracts before the single sentinel failure.
 
 ### Checks failed
 
-- None classified yet. Full immutable-head CI is pending on the final developer-authored head.
+- CI #3933 / run `32433461083` failed in `Classify change scope` → `Validate Agent Docs routing contract`, test `OpenPencilHandoffContractTest.test_openpencil_is_the_only_active_handoff_source`.
+- Failure was a self-match: the human handoff literally quoted `Figma source of truth` while describing the phrase that the sentinel rejects. No route, node, geometry, ownership or delivery mapping failed.
+- The documentation sentence was rewritten to express the same prohibition without quoting the sentinel. The structural contract itself was not weakened.
 
 ### Current branch head
 
-Resolve from the live PR head after the final current-context commit. PR #636 was initially published at `148b85a46f6a7566da5ba353729c9137539d2ad6`; subsequent Agent Harness commits intentionally advance it before immutable-head CI evaluation.
+Resolve from live PR #636 after the execution evidence is synchronized with CI #3933. The failing evaluated developer head was `56ec94d6d41bbede470fbd7041544d6c8c12dc1d`; the corrective documentation commit is `4b591a3efe29be22ddc880a49450b267069bd390` before current-evidence commits.
 
 ### Next action
 
-Write the reproducible execution record, then treat the resulting PR head as immutable for required CI, classify any failure from exact job/log evidence, repair only the owning contract if necessary, audit review threads, mark Ready and squash-merge with expected-head protection.
+Synchronize the execution record with the exact #3933 failure/root cause, then treat the resulting PR head as the new immutable developer head. Require a fresh full CI run, audit review/comments/threads, mark Ready only if green, and squash-merge with expected-head protection.
