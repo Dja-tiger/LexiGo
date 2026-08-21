@@ -150,6 +150,8 @@ func NewWithOptions(
 	mux.Handle("POST /api/v1/words/custom", authenticated(http.HandlerFunc(wordsHandler.CreateCustom)))
 	mux.Handle("DELETE /api/v1/words/custom/{wordID}", authenticated(http.HandlerFunc(wordsHandler.DeleteCustom)))
 	mux.Handle("GET /api/v1/words/{wordID}", authenticated(http.HandlerFunc(wordsHandler.Detail)))
+	mux.Handle("POST /api/v1/phrases/custom", authenticated(http.HandlerFunc(wordsHandler.CreateCustomPhrase)))
+	mux.Handle("DELETE /api/v1/phrases/custom/{phraseID}", authenticated(http.HandlerFunc(wordsHandler.DeleteCustomPhrase)))
 	mux.Handle("GET /api/v1/phrases/{slug}", authenticated(http.HandlerFunc(wordsHandler.PhraseDetail)))
 	mux.Handle("POST /api/v1/words/{wordID}/review", authenticated(http.HandlerFunc(learningHandler.ReviewWord)))
 	mux.Handle("POST /api/v1/words/{wordID}/answer-suggestions", limiter.Middleware(10, authenticated(http.HandlerFunc(learningHandler.SubmitAnswerSuggestion))))
