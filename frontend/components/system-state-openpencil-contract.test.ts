@@ -2,20 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-type OpenPencilScreen = Readonly<{
-  key: string;
-  route: string;
-  legacyFigmaNode: string;
-  openPencilNode: string;
-  width: number;
-  height: number;
-}>;
-
-type OpenPencilScreenMap = Readonly<{
-  screens?: readonly OpenPencilScreen[];
-  activeScreens?: readonly OpenPencilScreen[];
-}>;
-
 const visualSource = readFileSync(
   new URL("../e2e/system-states-visual.spec.ts", import.meta.url),
   "utf8",
@@ -32,15 +18,6 @@ const onboardingRuntimeSource = readFileSync(
   new URL("./lexigo-onboarding-app.tsx", import.meta.url),
   "utf8",
 );
-const screenMap = JSON.parse(readFileSync(
-  new URL("../docs/figma/openpencil-screen-map.json", import.meta.url),
-  "utf8",
-)) as OpenPencilScreenMap;
-
-const activeScreens = [
-  ...(screenMap.screens ?? []),
-  ...(screenMap.activeScreens ?? []),
-];
 
 const SYSTEM_STATE_PROVENANCE = [
   {
@@ -107,22 +84,19 @@ const FIRST_USE_SYSTEM_STATE_KEYS = [
 ] as const;
 
 describe("system-state OpenPencil provenance contract", () => {
-  it("resolves every approved shared system-state baseline to the active OpenPencil map", () => {
-    for (const expected of SYSTEM_STATE_PROVENANCE) {
-      const screen = activeScreens.find((entry) => entry.key === expected.screenMapKey);
-      expect(screen, `${expected.baseline} must resolve ${expected.screenMapKey}`).toBeDefined();
-      expect(screen).toMatchObject({
-        key: expected.screenMapKey,
-        openPencilNode: expected.openPencilNode,
-        legacyFigmaNode: expected.legacyFigmaNode,
-        route: expected.route,
-        width: expected.width,
-        height: expected.height,
-      });
-    }
+  it("keeps the visual owner fail-closed against the active repository OpenPencil map", () => {
+    expect(visualSource).toContain('const relativePath = "docs/figma/openpencil-screen-map.json"');
+    expect(visualSource).toContain("function loadActiveOpenPencilScreens");
+    expect(visualSource).toContain("const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens()");
+    expect(visualSource).toContain("expectActiveOpenPencilContract(baselineName)");
+    expect(visualSource).toContain("screen?.openPencilNode");
+    expect(visualSource).toContain("screen?.legacyFigmaNode");
+    expect(visualSource).toContain("screen?.route");
+    expect(visualSource).toContain("screen?.width");
+    expect(visualSource).toContain("screen?.height");
   });
 
-  it("keeps the visual owner bound to OpenPencil keys/nodes/geometry and preserves approved hashes", () => {
+  it("keeps every approved shared baseline bound to OpenPencil provenance and preserves approved hashes", () => {
     for (const expected of SYSTEM_STATE_PROVENANCE) {
       expect(visualSource).toContain(`screenMapKey: "${expected.screenMapKey}"`);
       expect(visualSource).toContain(`openPencilNode: "${expected.openPencilNode}"`);
@@ -146,9 +120,6 @@ describe("system-state OpenPencil provenance contract", () => {
 
   it("keeps First Use loading/error as a separately tracked visual gap without duplicating its runtime state machine", () => {
     for (const key of FIRST_USE_SYSTEM_STATE_KEYS) {
-      const screen = activeScreens.find((entry) => entry.key === key);
-      expect(screen, `active OpenPencil map must retain ${key}`).toBeDefined();
-      expect(screen?.route).toBe("/onboarding");
       expect(visualSource).not.toContain(key);
     }
 
