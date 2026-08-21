@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "activeDesignSource": {
+    "tool": "OpenPencil",
+    "document": "design/openpencil/LexiGo Design System.op",
+    "detailedScreenInventory": "docs/figma/openpencil-screen-map.json",
+    "humanHandoff": "frontend/docs/adaptive-knowledge-coach.md",
+    "historicalFigmaRole": "archival-provenance-only"
+  },
+  "routes": [
+    {
+      "key": "home.authenticated",
+      "route": "/",
+      "state": "authenticated",
+      "mobile": {"inventory": "screens", "key": "home.mobile.dark"},
+      "desktop": {"inventory": "screens", "key": "home.desktop.light"},
+      "appearance": "opposite theme is semantic-token derived from the same production composition",
+      "delivery": {"issue": 522, "pr": 523, "status": "merged"}
+    },
+    {
+      "key": "home.guest",
+      "route": "/",
+      "state": "guest",
+      "mobile": {"inventory": "activeScreens", "key": "firstuse.guest.mobile.light"},
+      "desktop": {"inventory": "activeScreens", "key": "firstuse.guest.desktop.light"},
+      "appearance": "explicit Light/Dark First Use matrix",
+      "delivery": {"issue": 201, "pr": 556, "status": "merged"}
+    },
+    {
+      "key": "onboarding.first-use",
+      "route": "/onboarding",
+      "state": "first-use",
+      "mobile": {"inventory": "activeScreens", "key": "firstuse.onboarding.mobile.light"},
+      "desktop": {"inventory": "activeScreens", "key": "firstuse.onboarding.desktop.light"},
+      "appearance": "explicit Light/Dark First Use matrix; diagnostics/recovery remain in firstuse.* activeScreens",
+      "delivery": {"issue": 201, "pr": 556, "status": "merged"}
+    },
+    {
+      "key": "learn.composer",
+      "route": "/learn",
+      "state": "composer",
+      "mobile": {"inventory": "screens", "key": "learn.mobile.recommended"},
+      "desktop": {"inventory": "screens", "key": "learn.desktop.full"},
+      "appearance": "Light/Dark share the same composer ownership",
+      "delivery": {"issue": 525, "pr": 526, "status": "merged"}
+    },
+    {
+      "key": "lesson.active",
+      "route": "/lesson/active",
+      "state": "active",
+      "mobile": {"inventory": "screens", "key": "lesson.mobile.recall.default"},
+      "desktop": {"inventory": "screens", "key": "lesson.desktop.study.light"},
+      "appearance": "state matrix includes Recall/Choice/Offline; appearance follows semantic tokens",
+      "delivery": {"issue": 528, "pr": 529, "status": "merged"}
+    },
+    {
+      "key": "progress.default",
+      "route": "/progress",
+      "state": "default",
+      "mobile": {"inventory": "screens", "key": "progress.mobile.light"},
+      "desktop": {"inventory": "screens", "key": "progress.desktop.light"},
+      "appearance": "mobile Dark is explicit; desktop Dark is semantic-token derived",
+      "delivery": {"issue": 515, "pr": 517, "status": "merged"}
+    },
+    {
+      "key": "dictionary.catalog",
+      "route": "/dictionary",
+      "state": "catalog",
+      "mobile": {"inventory": "screens", "key": "dictionary.mobile.light"},
+      "desktop": {"inventory": "screens", "key": "dictionary.desktop.light"},
+      "appearance": "Dark is semantic-token derived",
+      "delivery": {"issue": 531, "pr": 532, "status": "merged"}
+    },
+    {
+      "key": "dictionary.word-detail",
+      "route": "/words/[id]",
+      "state": "detail",
+      "mobile": {"inventory": "screens", "key": "word.mobile.dark"},
+      "desktop": {"inventory": "screens", "key": "word.desktop.dark"},
+      "appearance": "Light is semantic-token derived",
+      "delivery": {"issue": 533, "pr": 535, "status": "merged"}
+    },
+    {
+      "key": "phrases.catalog",
+      "route": "/phrases",
+      "state": "catalog",
+      "mobile": {"inventory": "screens", "key": "phrases.mobile.catalog.light"},
+      "desktop": {"inventory": "screens", "key": "phrases.desktop.catalog.light"},
+      "appearance": "explicit Light/Dark catalog states exist in the detailed screen inventory",
+      "delivery": {"issue": 536, "pr": 538, "status": "merged"}
+    },
+    {
+      "key": "phrases.detail",
+      "route": "/phrases/[slug]",
+      "state": "detail",
+      "mobile": {"inventory": "screens", "key": "phrase.mobile.detail.dark.daily"},
+      "desktop": {"inventory": "screens", "key": "phrase.desktop.detail.dark.technical"},
+      "appearance": "explicit Light/Dark content variants preserve route ownership",
+      "delivery": {"issue": 540, "pr": 541, "status": "merged"}
+    },
+    {
+      "key": "profile.default",
+      "route": "/profile",
+      "state": "authenticated",
+      "mobile": {"inventory": "screens", "key": "profile.mobile.light"},
+      "desktop": {"inventory": "screens", "key": "profile.desktop.light"},
+      "appearance": "Dark is semantic-token derived",
+      "delivery": {"issue": 542, "pr": 543, "status": "merged"}
+    },
+    {
+      "key": "scenarios.catalog",
+      "route": "/scenarios",
+      "state": "catalog",
+      "mobile": {"opNode": "fig_3465", "name": "Mobile / Scenario Catalog / Light", "width": 390, "height": 844},
+      "desktop": {"opNode": "fig_3297", "name": "Desktop / Scenario Catalog / Light", "width": 1440, "height": 1024},
+      "appearance": "mobile Dark is also explicit in the active OpenPencil document",
+      "delivery": {"issue": 24, "pr": 228, "status": "merged-slice-parent-open"}
+    },
+    {
+      "key": "scenarios.active",
+      "route": "/scenarios/[slug]",
+      "state": "active",
+      "mobile": {"opNode": "fig_3656", "name": "Mobile / Scenario / Light", "width": 390, "height": 844},
+      "desktop": {"opNode": "fig_3524", "name": "Desktop / Scenario / Dark", "width": 1440, "height": 1024},
+      "appearance": "mobile Light/Dark are explicit; desktop uses the approved Dark composition",
+      "delivery": {"issue": 196, "pr": 221, "status": "merged"}
+    }
+  ],
+  "routeStates": [
+    {
+      "key": "lesson.result",
+      "route": "/lesson/active",
+      "state": "result",
+      "mobile": [
+        {"opNode": "fig_3072", "name": "Mobile / Result / Complete", "width": 390, "height": 844, "legacyFigmaNode": "217:5"},
+        {"opNode": "fig_3042", "name": "Mobile / Result / Daily Goal", "width": 390, "height": 844, "legacyFigmaNode": "217:6"},
+        {"opNode": "fig_3011", "name": "Mobile / Result / Next Block", "width": 390, "height": 844, "legacyFigmaNode": "217:7"},
+        {"opNode": "fig_2981", "name": "Mobile / Result / Due Review", "width": 390, "height": 844, "legacyFigmaNode": "217:8"},
+        {"opNode": "fig_2951", "name": "Mobile / Result / Sync Pending / Dark", "width": 390, "height": 844, "legacyFigmaNode": "217:9"}
+      ],
+      "desktop": [
+        {"opNode": "fig_2910", "name": "Desktop / Result / Complete", "width": 1440, "height": 1024, "legacyFigmaNode": "217:10"},
+        {"opNode": "fig_2869", "name": "Desktop / Result / Daily Goal", "width": 1440, "height": 1024, "legacyFigmaNode": "217:11"},
+        {"opNode": "fig_2828", "name": "Desktop / Result / Next Block", "width": 1440, "height": 1024, "legacyFigmaNode": "217:12"},
+        {"opNode": "fig_2787", "name": "Desktop / Result / Due Review", "width": 1440, "height": 1024, "legacyFigmaNode": "217:13"},
+        {"opNode": "fig_2746", "name": "Desktop / Result / Sync Pending / Dark", "width": 1440, "height": 1024, "legacyFigmaNode": "217:14"}
+      ],
+      "delivery": {"issue": 194, "pr": 209, "status": "merged"}
+    }
+  ],
+  "archivePolicy": {
+    "conceptAndExploration": "reference-only unless explicitly promoted into this manifest",
+    "figmaIdentifiers": "historical provenance only",
+    "deletion": "preserve historical artifacts until references/state coverage are reviewed",
+    "promotion": "update this manifest, the human handoff and executable contract in the same atomic slice"
+  }
+}
