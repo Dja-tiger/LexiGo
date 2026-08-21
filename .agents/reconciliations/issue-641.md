@@ -51,7 +51,9 @@ Task setup also recorded two incorrectly routed `create_pull_request(main→main
 
 A later stale-blob update attempt for `system-states-visual.spec.ts` was rejected by GitHub before mutation. The branch file was re-read and its live content was preserved rather than overwritten from stale state.
 
-These failures reinforce the repository rule to match the exact tool schema before every write and to treat rejected writes as a reason to revalidate branch/main state.
+During reconciliation, one duplicate `create_branch` call was rejected with HTTP 422 before mutation. A subsequent tool-selection error created an unreferenced Git commit object `90210cf420042d636f99dc08b34cf2f4db0c64c0`; no branch or ref points to that object, and protected `main` remained exact `7e8e4be4…`. The artifact is recorded here rather than hidden, and no ref update was performed.
+
+These failures reinforce the repository rule to match the exact tool schema before every write and to treat rejected or misrouted writes as a reason to revalidate branch/main state.
 
 ## Remaining #205 work
 
