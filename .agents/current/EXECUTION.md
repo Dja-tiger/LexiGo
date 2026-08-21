@@ -47,9 +47,7 @@ Files inspected:
 - `docs/figma/openpencil-production-handoff.json`.
 
 Actions performed:
-- verified there were no open PRs at task start and protected `main` was exact;
-- confirmed `.agents/current/**` was reset;
-- searched for duplicate system-state consolidation Issues and found none;
+- verified protected `main`, no open PR at task start and clean reset `.agents/current/**`;
 - created Issue #641 and branch `test/issue-641-system-state-openpencil` from exact main;
 - declared TASK/PROGRESS/EXECUTION with explicit path allow-list;
 - added `frontend/components/system-state-openpencil-contract.test.ts` to parse the active OpenPencil screen map and fail closed on provenance drift;
@@ -58,43 +56,59 @@ Actions performed:
 - audited First Use applicability instead of assuming delegation: confirmed reachable loading/error runtime branches, eight active OpenPencil loading/error nodes and the absence of those states from the current approved `first-use-visual.spec.ts` baseline set;
 - created child Issue #642 for that independent First Use visual-evidence gap;
 - added an audit refinement comment to #641 explicitly making #642 a blocker and preventing premature closure;
-- compared the branch to exact base and confirmed every changed file is in TASK allow-list, with no runtime/design/snapshot/workflow changes;
-- opened Draft PR #643 with `Refs #641`, not `Closes #641`, on exact base `37fe3016…`;
-- synchronized TASK/PROGRESS with PR #643 and #642 blocker before freezing final developer-authored head.
+- opened Draft PR #643 with `Refs #641`, not `Closes #641`;
+- froze developer head `cbf2799aaed3b47b777a08e76673e93224f25d37` and ran full CI #3949 / run `32473173511`;
+- classified the exact Frontend core failure from job `96744163203` logs rather than retrying or weakening assertions;
+- fixed only the proven source-contract path bug, then read it back and rechecked protected main;
+- synchronized PROGRESS/EXECUTION with the failure/fix before freezing the replacement final developer head.
+
+CI #3949 failure classification:
+- classifier succeeded;
+- lint succeeded with pre-existing warnings only;
+- typecheck succeeded;
+- Vitest: 134 test files passed, 821 tests passed; the only failed suite was the newly added `components/system-state-openpencil-contract.test.ts` before any test body executed;
+- exact error: `ENOENT: no such file or directory, open '/docs/figma/openpencil-screen-map.json'` at line 35;
+- root cause: from `/workspace/components`, `../../docs/...` climbs outside `/workspace` to `/docs`; the repository mapping is one level above components and must be `../docs/...`;
+- this is a deterministic source-contract fixture path error, not a product defect, visual drift, infrastructure failure or flake;
+- no same-head rerun was used because the failure was deterministic.
+
+Verified source fix:
+- commit `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a` changes only the mapping path from `../../docs/figma/openpencil-screen-map.json` to `../docs/figma/openpencil-screen-map.json`;
+- read-back blob is `65716a34be0873b8639f95b455e3908ef89a2426`;
+- no assertion, hash, renderer-equivalent allow-list, runtime flow or visual tolerance changed;
+- protected `main` remained `37fe3016…` after the write.
 
 Commands or procedures:
-GitHub connector reads/searches, explicit `create_issue`, `create_branch`, `fetch_file`, `create_file`, `update_file`, `compare_commits`, issue comment creation, Draft PR creation, and protected-main verification. No direct default-branch write, force ref update, snapshot update or workflow mutation.
+GitHub connector reads/searches, explicit `create_issue`, `create_branch`, `fetch_file`, `create_file`, `update_file`, `compare_commits`, issue comment creation, Draft PR creation, PR review/thread reads, commit workflow-run/job/log inspection, and protected-main verification. No direct default-branch write, force ref update, snapshot update or workflow mutation.
 
 Artifacts produced:
 - Issue #641;
 - child Issue #642;
 - Draft PR #643;
 - branch `test/issue-641-system-state-openpencil`;
-- TASK declaration commit `e5b3619ca6242e6a777412add03ebbdc1a66b32b`;
-- initial PROGRESS commit `4252a8c4ce19e109d7d28981d9d55ec124cf953f`;
-- initial EXECUTION commit `eed50159d2a1172822fcc1bb5666d40d5766a993`;
-- source-contract commit `9b82a18d11f36caac89a5bce803ab3636df53655`;
-- visual provenance commit `9a8fee2a1763a27d7bb3187a7631aa3ba55752e2`;
-- refreshed PROGRESS commit `d15ce052bfb42d36bfa08e7d3ac289df8f30b101`;
-- TASK PR/blocker sync commit `24ef587b0134e037be7c0f0179ed4f6a15f6882e`;
-- PR progress sync commit `e91e6a10b441a0ba546dba16c487390efe4876eb`.
+- source-contract and visual-provenance commits, including `9b82a18d11f36caac89a5bce803ab3636df53655` and `9a8fee2a1763a27d7bb3187a7631aa3ba55752e2`;
+- first frozen PR head `cbf2799aaed3b47b777a08e76673e93224f25d37`;
+- CI #3949 / run `32473173511`, deterministic Frontend core failure evidence;
+- path correction commit `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a`;
+- refreshed PROGRESS commit `3a3a24e8f86eceed48b256bafd1c0e050c082fc7`.
 
 Result:
-The shared five system-state baselines now carry active OpenPencil provenance without changing product behavior or approved fingerprints. The audit also surfaced and separately tracked the genuine First Use loading/error visual gap as #642. PR #643 is deliberately a partial provenance/evidence delivery and cannot close #641 until #642 completes the missing visual matrix.
+The shared five system-state baselines carry active OpenPencil provenance without product/runtime or fingerprint changes. The real First Use loading/error visual gap is tracked by #642. The first CI exposed one deterministic repository-relative path bug in the new contract; it was corrected minimally with all substantive assertions preserved. A fresh full CI is required on the replacement immutable head before Ready/merge.
 
-Failures:
+Process failure during setup:
 Two tool calls intended to create Issue #641 were mistakenly sent to `create_pull_request` with `main` as both head and base. GitHub rejected both with HTTP 422 `No commits between main and main`; no PR or repository mutation was created.
 
 Root cause:
-Tool-selection error: a similarly scoped GitHub write action was invoked without first loading and matching the exact `create_issue` schema, violating the repository tool-selection rule.
+Tool-selection error: a similarly scoped GitHub write action was invoked without first loading and matching the exact `create_issue` schema.
 
 Fallback:
-Stopped writes immediately after each rejection, re-read protected `main`, loaded the exact GitHub issue schema through tool discovery, then invoked `create_issue` successfully. The failed PR call was not retried after schema correction.
+Writes stopped after rejection, protected main was re-read, the exact issue schema was loaded, then `create_issue` was used successfully. The rejected PR call was not repeated after schema correction.
 
 Limitations:
-The container does not provide a reliable GitHub checkout path because DNS/network access to GitHub has failed; repository truth and writes therefore use the connected GitHub API. No local test pass is claimed. Authoritative unit/visual/full validation will be obtained from GitHub Actions on the final immutable PR head.
+The local container does not provide a reliable GitHub checkout path because DNS/network access to GitHub has failed; repository truth and validation use the connected GitHub API and GitHub Actions. No local test pass is claimed.
 
-Reusable lesson:
-- Before every repository write, match user intent to the exact discovered function name/schema. A rejected mutation is still a delivery-process failure and must trigger repository-state revalidation.
-- A design-state node existing in the active OpenPencil map is not proof that runtime visual evidence exists. Verify the actual authoritative baseline set; if a reachable state lacks reviewed evidence, split it into a fail-closed child Issue rather than claiming delegated coverage.
-- A parent audit PR must use `Refs`, not `Closes`, when applicability review proves an independent blocking child remains open.
+Reusable lessons:
+- Before every repository write, match intent to the exact discovered function/schema; after a rejected mutation revalidate repository state before further writes.
+- A design-state node in OpenPencil is not proof that an approved runtime visual exists; verify the actual baseline set and split missing evidence into a child Issue.
+- A parent audit PR must use `Refs`, not `Closes`, when a blocking child remains open.
+- Source-level tests that read repository-root artifacts must derive paths from their actual directory depth; verify the runtime filesystem path in CI instead of assuming test working-directory semantics.
