@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
 
@@ -31,6 +33,15 @@ type SystemStateVisualBaselineContract = {
   sha256: string;
   rendererEquivalentSha256?: readonly string[];
 };
+
+type OpenPencilScreenMapEntry = Readonly<{
+  key: string;
+  route: string;
+  legacyFigmaNode: string;
+  openPencilNode: string;
+  width: number;
+  height: number;
+}>;
 
 type StableLayoutSample = {
   viewportWidth: number;
@@ -109,6 +120,52 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
     sha256: "0d7393ab3793ab5d773d167f65f743d3cd53190c4da4899a2d915e1d3b01d2ae",
   },
 };
+
+function loadActiveOpenPencilScreens(): readonly OpenPencilScreenMapEntry[] {
+  const relativePath = "docs/figma/openpencil-screen-map.json";
+  const candidates = [
+    process.env.GITHUB_WORKSPACE
+      ? resolve(process.env.GITHUB_WORKSPACE, relativePath)
+      : undefined,
+    resolve("/repository", relativePath),
+    resolve(process.cwd(), "..", relativePath),
+    resolve(process.cwd(), relativePath),
+  ].filter((candidate): candidate is string => typeof candidate === "string");
+  const screenMapPath = candidates.find((candidate) => existsSync(candidate));
+
+  if (!screenMapPath) {
+    throw new Error(
+      `System-state visual provenance requires ${relativePath}; checked: ${candidates.join(", ")}`,
+    );
+  }
+
+  const parsed = JSON.parse(readFileSync(screenMapPath, "utf8")) as {
+    screens?: OpenPencilScreenMapEntry[];
+    activeScreens?: OpenPencilScreenMapEntry[];
+  };
+  const entries = [...(parsed.screens ?? []), ...(parsed.activeScreens ?? [])];
+  if (entries.length === 0) {
+    throw new Error(`${screenMapPath} does not expose screens or activeScreens`);
+  }
+  return entries;
+}
+
+const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens();
+
+function expectActiveOpenPencilContract(baselineName: SystemStateVisualBaseline): void {
+  const baseline = SYSTEM_STATE_VISUAL_BASELINES[baselineName];
+  const screen = ACTIVE_OPENPENCIL_SCREENS.find((entry) => entry.key === baseline.screenMapKey);
+
+  expect(
+    screen,
+    `${baselineName} must resolve active OpenPencil screen-map key ${baseline.screenMapKey}`,
+  ).toBeDefined();
+  expect(screen?.openPencilNode).toBe(baseline.openPencilNode);
+  expect(screen?.legacyFigmaNode).toBe(baseline.legacyFigmaNode);
+  expect(screen?.route).toBe(baseline.route);
+  expect(screen?.width).toBe(baseline.viewport.width);
+  expect(screen?.height).toBe(baseline.viewport.height);
+}
 
 const VISUAL_LESSON_ID = "00000000-0000-0000-0000-000000000575";
 const VISUAL_WORD = {
@@ -228,6 +285,7 @@ async function expectApprovedSystemStateBaseline(
   baselineName: SystemStateVisualBaseline,
 ): Promise<void> {
   const baseline = SYSTEM_STATE_VISUAL_BASELINES[baselineName];
+  expectActiveOpenPencilContract(baselineName);
   testInfo.annotations.push({
     type: "openpencil",
     description: `${baseline.screenMapKey} | node=${baseline.openPencilNode} | route=${baseline.route} | viewport=${baseline.viewport.width}×${baseline.viewport.height} | legacyFigma=${baseline.legacyFigmaNode}`,
