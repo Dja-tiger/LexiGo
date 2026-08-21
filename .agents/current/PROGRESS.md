@@ -1,66 +1,69 @@
 # Current Task Progress
 
-## 2026-08-21 13:36 +03
+## 2026-08-21 13:42 +03
 
 ### Verified
 
-- Live `main` is `37fe3016673ab261e4df4232274535f834578b77`.
+- Live `main` remains `37fe3016673ab261e4df4232274535f834578b77`.
 - Issue #641 is open under parent #205; child #642 tracks the separately proven First Use loading/error visual-evidence gap.
-- Branch `test/issue-641-system-state-openpencil` was created from exact `main@37fe3016…`.
-- Draft PR #643 is open to `main` with `Refs #641`, not `Closes #641`.
-- Active OpenPencil mapping contains Home Loading `fig_4258`, Dictionary Empty `fig_4234`, shared Error `fig_4222`, Desktop Offline `fig_4104` and Active Lesson Recall Offline `fig_3193`.
-- `frontend/components/lexigo-onboarding-app.tsx` has independently reachable First Use loading and recoverable-error presentation branches.
-- `docs/figma/openpencil-screen-map.json` contains eight First Use loading/error nodes across mobile/desktop and Light/Dark, while `frontend/e2e/first-use-visual.spec.ts` does not yet approve those eight states; #642 owns that missing evidence.
+- Draft PR #643 remains open from `test/issue-641-system-state-openpencil` to exact base `37fe3016…` with `Refs #641`, not `Closes #641`.
+- The five shared system-state OpenPencil mappings remain Home Loading `fig_4258`, Dictionary Empty `fig_4234`, shared Error `fig_4222`, Desktop Offline `fig_4104`, Active Lesson Recall Offline `fig_3193`.
+- First Use loading/error remains a separate real gap owned by #642.
 
-### Finding
+### Current implementation
 
-The five existing shared system-state Linux baselines required provenance migration only: their approved exact hashes and runtime flows remain unchanged. First Use loading/error is a real additional evidence gap and is not falsely delegated by this PR.
+- `frontend/e2e/system-states-visual.spec.ts` preserves all five existing primary SHA-256 fingerprints and all exact renderer-equivalent allow-lists.
+- The visual owner now records `screenMapKey`, `openPencilNode`, archival `legacyFigmaNode`, route and canonical viewport for every approved state.
+- It now loads `docs/figma/openpencil-screen-map.json` in the authoritative visual environment using the same proven repo-root candidate-resolution pattern as `first-use-visual.spec.ts` (`GITHUB_WORKSPACE`, `/repository`, parent/current working directory fallbacks).
+- Before each approved capture it fail-closes on exact active screen-map key/node/legacy provenance/route/width/height.
+- `frontend/components/system-state-openpencil-contract.test.ts` is now a pure source contract: it verifies that the visual owner contains and executes the real map loader/contract and retains all exact provenance/hashes, without trying to read repo-level `docs/` from the isolated Vitest frontend volume.
 
-### Root cause
+### CI history and classifications
 
-The design-source migration updated repository handoff/mapping, but the older shared visual owner remained bound to legacy Figma-only metadata. First Use later gained explicit loading/error runtime states and OpenPencil nodes without corresponding approved exact Linux visual baselines.
+#### CI #3949 / run `32473173511`
 
-### Changed files
+- First frozen head: `cbf2799aaed3b47b777a08e76673e93224f25d37`.
+- Lint/typecheck green; 134 other Vitest files and 821 tests green.
+- New contract failed before test execution with `ENOENT '/docs/figma/openpencil-screen-map.json'`.
+- Initial relative-path correction was made; no assertions/hashes/runtime flows were weakened.
 
-- `.agents/current/TASK.md` — Issue #641 / PR #643 scope, allow-list, #642 blocker and delivery gates.
-- `.agents/current/PROGRESS.md` — this factual task record.
-- `.agents/current/EXECUTION.md` — execution/CI/tool-selection evidence.
-- `frontend/components/system-state-openpencil-contract.test.ts` — fail-closed OpenPencil/source applicability contract.
-- `frontend/e2e/system-states-visual.spec.ts` — active OpenPencil provenance metadata/annotation for the existing five approved baselines; runtime flows and fingerprints unchanged.
+#### CI #3952 / run `32473507422`
 
-### Checks passed
+- Replacement head: `6edf18caf3ad2fed086bbe09dbb267721a2a6341`.
+- Lint/typecheck green again; 134 other Vitest files and 821 tests green.
+- New contract again failed before test execution with `ENOENT '/workspace/docs/figma/openpencil-screen-map.json'`.
+- Exact environment evidence proves the frontend core unit step runs from isolated `/workspace` containing frontend files only; repo-level `docs/` is intentionally absent there.
+- This is not a product defect or flake and cannot be fixed by another relative path.
 
-- Every successful branch write was read back and protected `main` rechecked unchanged at `37fe3016…`.
-- Updated visual owner read back as blob `e3d4504763d23eda3eabfa24961ce6138071c541`.
-- Existing five primary SHA-256 values remain unchanged.
-- Existing exact renderer-equivalent allow-lists remain unchanged.
-- Visual runtime request/interactions remain unchanged; only provenance types/metadata/annotation/error wording changed.
-- Branch diff before PR contained exactly five TASK-allowed paths and was 0 behind main.
-- Issue #641 explicitly records #642 as a blocking evidence gap.
-- PR #643 review submissions and inline threads were empty on the initial immutable head.
-- CI #3949 / run `32473173511` passed classifier, lint and typecheck before the new source contract executed.
+### Architectural correction after CI #3952
 
-### CI failure classified and fixed
+- Commit `8415c4105f10e8ad92dbd14e4cc71d22ecc2ff70`: removed direct `docs/` filesystem dependency from the Vitest source contract while preserving the provenance/hashes/applicability assertions.
+- Read-back blob: `f8daa01dd9952f737e87ac9351cf4acc296e9fc4`.
+- Commit `db88a546103d09a1fe401c3819d7c43030d15b5c`: moved the actual active screen-map resolution into `system-states-visual.spec.ts`, where repo-level design artifacts are available and where exact Linux screenshots are already owned.
+- Read-back blob: `58d636c6077063e41b54c2b917a91888064a3395`.
+- The visual loader mirrors the already-delivered `first-use-visual.spec.ts` repository resolution pattern instead of inventing a new filesystem convention.
+- Protected `main` was rechecked after both writes and remains `37fe3016…`.
 
-- CI #3949 Frontend core job `96744163203` failed only in `components/system-state-openpencil-contract.test.ts`; all 134 other test files passed and 821 tests were green.
-- Exact error: `ENOENT: no such file or directory, open '/docs/figma/openpencil-screen-map.json'`.
-- Root cause: the contract lives at `frontend/components/**`; `../../docs/...` climbed from `/workspace/components` to `/docs`, one level too far.
-- Source fix commit `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a` changes only that path to `../docs/figma/openpencil-screen-map.json`.
-- Fixed line was read back as blob `65716a34be0873b8639f95b455e3908ef89a2426`; protected `main` remained unchanged.
-- No assertion, fingerprint, runtime flow or tolerance was weakened.
+### Invariants still preserved
 
-### Other process failure
+- No runtime React/CSS/API/session/backend changes.
+- No OpenPencil source/mapping mutation.
+- No visual hash, renderer-equivalent allow-list or screenshot baseline changes.
+- No snapshot update mode, tolerance widening or test exclusion.
+- No change to the five system-state browser interaction/request flows.
+- First Use loading/error is not falsely claimed complete; #642 remains blocking evidence.
 
-- During task setup, two calls were incorrectly routed to `create_pull_request(main→main)` while intending to create Issue #641. GitHub rejected both before mutation with HTTP 422. Recovery and tool-selection lesson are recorded in EXECUTION.
-- No local/container test pass is claimed because repository checkout cannot reliably use GitHub DNS in this container; GitHub Actions is authoritative.
+### Process failure already recorded
+
+Two setup calls were mistakenly routed to `create_pull_request(main→main)` while intending to create Issue #641; GitHub rejected both HTTP 422 before mutation. Recovery/tool-selection lesson remains in EXECUTION.
 
 ### Current branch head
 
-- Provenance implementation: `9a8fee2a1763a27d7bb3187a7631aa3ba55752e2`.
-- First frozen PR head: `cbf2799aaed3b47b777a08e76673e93224f25d37`.
-- Verified CI path correction: `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a`.
-- Resolve final head after this PROGRESS and final EXECUTION sync; then freeze it for the replacement full CI run.
+- CI #3952 head: `6edf18caf3ad2fed086bbe09dbb267721a2a6341`.
+- Source-contract architecture correction: `8415c4105f10e8ad92dbd14e4cc71d22ecc2ff70`.
+- Visual-owner map validation correction: `db88a546103d09a1fe401c3819d7c43030d15b5c`.
+- Resolve final head after this PROGRESS + EXECUTION sync and freeze it for the next full CI.
 
 ### Next action
 
-Synchronize EXECUTION with the exact #3949 failure/fix, read it back and recheck `main`, then treat the resulting head as immutable and require a fresh full PR CI. If green, audit reviews/threads/main drift, mark PR #643 Ready and squash merge with expected-head protection. Post-merge exact-main CI is required; Stage redeploy is not applicable to this test/evidence-only PR.
+Update EXECUTION with CI #3952 environment/root-cause evidence, read back and recheck main, freeze the resulting developer-authored head, then require fresh full CI including successful Vitest and Visual regression. No same-head retry of #3952 is valid because its failure is deterministic and already source-corrected.
