@@ -127,7 +127,8 @@ describe("system-state OpenPencil provenance contract", () => {
     expect(onboardingRuntimeSource).toContain("if (loading && !snapshot)");
     expect(onboardingRuntimeSource).toContain('className="lx-first-use-panel lx-first-use-loading"');
     expect(onboardingRuntimeSource).toContain("if (errorMessage)");
-    expect(onboardingRuntimeSource).toContain('className="lx-first-use-panel lx-first-use-message" role="alert"');
+    expect(onboardingRuntimeSource).toContain('role="alert"');
+    expect(onboardingRuntimeSource).toContain('retryAction ? " lx-first-use-message--recoverable" : ""');
     expect(firstUseBehaviorSource).toContain("failFirstMark: true");
     expect(firstUseBehaviorSource).toContain("temporary failure");
     expect(firstUseBehaviorSource).toContain('getByRole("button", { name: "Повторить" })');
