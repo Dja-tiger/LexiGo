@@ -290,7 +290,9 @@ body:has(.lx-first-use) > .lx-legal-footer {
 .lx-first-use-copy-mobile,
 .lx-first-use-kicker--mobile,
 .lx-first-use-diagnostic-intro,
-.lx-first-use-diagnostic-context-desktop {
+.lx-first-use-diagnostic-context-desktop,
+.lx-first-use-state-mobile-only,
+.lx-first-use-loading-note--mobile {
   display: none;
 }
 
@@ -512,6 +514,59 @@ body:has(.lx-first-use) > .lx-legal-footer {
     line-height: 1.2;
   }
 
+  .lx-first-use-loading .lx-first-use-skeletons {
+    gap: 32px;
+    margin-top: 32px;
+  }
+
+  .lx-first-use-loading .lx-first-use-skeletons span:nth-child(1) { width: 94.5%; }
+  .lx-first-use-loading .lx-first-use-skeletons span:nth-child(2) { width: 82.3%; }
+  .lx-first-use-loading .lx-first-use-skeletons span:nth-child(3) { width: 100%; }
+  .lx-first-use-loading .lx-first-use-skeletons span:nth-child(4) { width: 71.3%; }
+  .lx-first-use-loading .lx-first-use-skeletons span:nth-child(5) { width: 89.6%; }
+
+  .lx-first-use-loading-note--desktop {
+    min-height: 74px;
+    margin-top: 66px;
+    align-content: center;
+    padding: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-message--recoverable {
+    justify-content: flex-start;
+    padding-top: 35px;
+  }
+
+  .lx-first-use-message--recoverable > .lx-first-use-state-icon {
+    flex: 0 0 88px;
+  }
+
+  .lx-first-use-message--recoverable > h1 {
+    margin-top: 24px;
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-message--recoverable > p {
+    max-width: 520px;
+    margin-top: 24px;
+    line-height: 1.2;
+  }
+
+  .lx-first-use-message--recoverable > .lx-first-use-button {
+    width: min(560px, 100%);
+  }
+
+  .lx-first-use-message--recoverable > .lx-first-use-button--primary {
+    margin-top: 84px;
+  }
+
+  .lx-first-use-message--recoverable > .lx-first-use-button--secondary {
+    margin-top: 14px;
+  }
+
   .lx-first-use-diagnostic {
     display: flex;
     min-height: 540px;
@@ -613,7 +668,9 @@ body:has(.lx-first-use) > .lx-legal-footer {
 
   .lx-first-use-copy-desktop,
   .lx-first-use-kicker--desktop,
-  .lx-first-use-practice-preview {
+  .lx-first-use-practice-preview,
+  .lx-first-use-loading-note--desktop,
+  .lx-first-use-skeletons .lx-first-use-skeleton-desktop {
     display: none;
   }
 
@@ -622,8 +679,13 @@ body:has(.lx-first-use) > .lx-legal-footer {
     display: inline;
   }
 
-  .lx-first-use-kicker--mobile {
+  .lx-first-use-kicker--mobile,
+  .lx-first-use-state-mobile-only {
     display: block;
+  }
+
+  .lx-first-use-loading-note--mobile {
+    display: grid;
   }
 
   .lx-first-use-guest-copy h1,
