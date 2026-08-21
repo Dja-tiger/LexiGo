@@ -33,7 +33,7 @@ const onboardingRuntimeSource = readFileSync(
   "utf8",
 );
 const screenMap = JSON.parse(readFileSync(
-  new URL("../../docs/figma/openpencil-screen-map.json", import.meta.url),
+  new URL("../docs/figma/openpencil-screen-map.json", import.meta.url),
   "utf8",
 )) as OpenPencilScreenMap;
 
