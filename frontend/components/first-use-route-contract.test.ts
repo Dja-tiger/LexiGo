@@ -78,6 +78,39 @@ describe("First Use canonical route and accessibility contracts", () => {
     expect(desktopBoundary).toMatch(/\.lx-first-use-diagnostic-resume-note \{[\s\S]*?order: 4;/);
   });
 
+  it("keeps desktop loading and recoverable-error hierarchy separate from compact First Use presentation", () => {
+    const onboarding = readSource("components", "lexigo-onboarding-app.tsx");
+    const css = readSource("app", "first-use.css");
+
+    expect(onboarding.match(/lx-first-use-diagnostic-intro lx-first-use-state-intro/g)).toHaveLength(2);
+    expect(onboarding).toContain("Восстанавливаем first-use state и текущую диагностическую позицию.");
+    expect(onboarding).toContain("Состояние связано напрямую с серверным onboarding contract.");
+    expect(onboarding).toContain('className="lx-first-use-kicker lx-first-use-state-mobile-only"');
+    expect(onboarding).toContain('className="lx-first-use-state-mobile-only">Подготавливаем диагностику</h1>');
+    expect(onboarding).toContain('className="lx-first-use-skeleton-desktop"');
+    expect(onboarding).toContain("Восстанавливаем текущую позицию без раскрытия будущих ответов.");
+    expect(onboarding).toContain('retryAction ? " lx-first-use-message--recoverable" : ""');
+    expect(onboarding).toContain('aria-busy="true"');
+    expect(onboarding).toContain('role="alert"');
+    expect(onboarding).toContain("Повторить");
+    expect(onboarding).toContain("Вернуться назад");
+
+    const desktopBoundary = css.match(/@media \(min-width: 720px\) \{([\s\S]*?)\n\}\n\n@media \(max-width: 719px\)/)?.[1];
+    expect(desktopBoundary).toBeTruthy();
+    expect(desktopBoundary).toMatch(/\.lx-first-use-loading \.lx-first-use-skeletons \{[\s\S]*?gap: 32px;[\s\S]*?margin-top: 32px;/);
+    expect(desktopBoundary).toContain(".lx-first-use-loading .lx-first-use-skeletons span:nth-child(5)");
+    expect(desktopBoundary).toMatch(/\.lx-first-use-loading-note--desktop \{[\s\S]*?min-height: 74px;[\s\S]*?margin-top: 66px;/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-message--recoverable \{[\s\S]*?justify-content: flex-start;[\s\S]*?padding-top: 35px;/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-message--recoverable > \.lx-first-use-button--primary \{[\s\S]*?margin-top: 84px;/);
+    expect(desktopBoundary).toMatch(/\.lx-first-use-message--recoverable > \.lx-first-use-button--secondary \{[\s\S]*?margin-top: 14px;/);
+
+    const compactBoundary = css.match(/@media \(max-width: 719px\) \{([\s\S]*?)\n\}\n\n@media \(max-width: 390px\)/)?.[1];
+    expect(compactBoundary).toBeTruthy();
+    expect(compactBoundary).toMatch(/\.lx-first-use-loading-note--desktop,[\s\S]*?\.lx-first-use-skeletons \.lx-first-use-skeleton-desktop \{[\s\S]*?display: none;/);
+    expect(compactBoundary).toMatch(/\.lx-first-use-state-mobile-only \{[\s\S]*?display: block;/);
+    expect(compactBoundary).toMatch(/\.lx-first-use-loading-note--mobile \{[\s\S]*?display: grid;/);
+  });
+
   it("keeps First Use Light foreground tokens WCAG AA against every surface they own", () => {
     const tokens = rootLightVariables(readSource("app", "first-use.css"));
     const threshold = 4.5;

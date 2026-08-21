@@ -261,15 +261,20 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
       <div className="lx-first-use lx-first-use--onboarding" data-route-client-island="onboarding">
         <FirstUseHeader />
         <main id="lexigo-main-content" className="lx-first-use-main" tabIndex={-1} aria-label={viewTitle("onboarding")} aria-busy="true">
-          <section className="lx-first-use-panel lx-first-use-loading" aria-live="polite">
+          <div className="lx-first-use-diagnostic-intro lx-first-use-state-intro">
             <span className="lx-first-use-kicker">ЗАГРУЗКА</span>
             <h1>Подготавливаем диагностику</h1>
+            <p>Восстанавливаем first-use state и текущую диагностическую позицию.</p>
+          </div>
+          <section className="lx-first-use-panel lx-first-use-loading" aria-live="polite">
+            <span className="lx-first-use-kicker lx-first-use-state-mobile-only">ЗАГРУЗКА</span>
+            <h1 className="lx-first-use-state-mobile-only">Подготавливаем диагностику</h1>
             <p className="lx-first-use-copy-mobile">Загружаем текущую позицию и сохраняем безопасный resume.</p>
-            <p className="lx-first-use-copy-desktop">Восстанавливаем first-use state и текущую диагностическую позицию.</p>
             <div className="lx-first-use-skeletons" aria-hidden="true">
-              <span /><span /><span /><span />
+              <span /><span /><span /><span /><span className="lx-first-use-skeleton-desktop" />
             </div>
-            <div className="lx-first-use-note">Никакие ответы не раскрываются во время загрузки.</div>
+            <div className="lx-first-use-note lx-first-use-loading-note--mobile">Никакие ответы не раскрываются во время загрузки.</div>
+            <div className="lx-first-use-note lx-first-use-loading-note--desktop">Восстанавливаем текущую позицию без раскрытия будущих ответов.</div>
           </section>
         </main>
       </div>
@@ -281,7 +286,14 @@ export function LexigoOnboardingApp({ initialSession, onSessionUpdated }: Lexigo
       <div className="lx-first-use lx-first-use--onboarding" data-route-client-island="onboarding">
         <FirstUseHeader />
         <main id="lexigo-main-content" className="lx-first-use-main" tabIndex={-1} aria-label={viewTitle("onboarding")}>
-          <section className="lx-first-use-panel lx-first-use-message" role="alert">
+          {retryAction ? (
+            <div className="lx-first-use-diagnostic-intro lx-first-use-state-intro">
+              <span className="lx-first-use-kicker">FIRST USE</span>
+              <h1>Не удалось продолжить</h1>
+              <p>Состояние связано напрямую с серверным onboarding contract.</p>
+            </div>
+          ) : null}
+          <section className={`lx-first-use-panel lx-first-use-message${retryAction ? " lx-first-use-message--recoverable" : ""}`} role="alert">
             <span className="lx-first-use-state-icon lx-first-use-state-icon--error" aria-hidden="true">!</span>
             <h1>{noCandidates ? "Диагностика пока недоступна" : "Не удалось продолжить"}</h1>
             <p>{errorMessage}</p>
