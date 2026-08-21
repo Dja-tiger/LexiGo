@@ -1,111 +1,114 @@
-# Adaptive Knowledge Coach — design and implementation handoff
+# Adaptive Knowledge Coach — OpenPencil production handoff
 
-This document records the source-of-truth contract for the approved Adaptive Knowledge Coach production direction.
+This document records the active production design/handoff contract for LexiGo.
 
-## Figma source
+## Active source of truth
 
-File: `LexiGo Design System`
+OpenPencil is the only active design and handoff source.
 
-File key: `3xXmBWnf38jbvLjtziwber`
+- editable source: `design/openpencil/LexiGo Design System.op`;
+- detailed imported/native screen inventory: `docs/figma/openpencil-screen-map.json`;
+- canonical production route/state selection: `docs/figma/openpencil-production-handoff.json`;
+- human-readable handoff: this document.
 
-A full plugin-level inventory confirms that the live file already contains:
+The repository still preserves historical Figma file metadata, `.fig` snapshots and legacy node IDs. They are archival provenance for already-delivered work only. They are not a live dependency, are not required for future implementation or acceptance, and must not block development because of Figma plan, quota, MCP or cloud availability.
 
-- Foundations, Components and Interaction Components;
-- Product Patterns for the daily recommendation, focused lesson, knowledge report, scenario and application shell;
-- complete Home, Active Lesson, Progress, Scenario, Learn, Dictionary, Profile and resilient-state screen matrices;
-- the Product Screen Map, native handoff and interactive accessibility prototype;
-- 92 local variables and 92 components/component sets.
+`docs/figma/openpencil-production-handoff.json` is the machine-readable route/state contract. It must be updated in the same atomic slice whenever a production source is promoted or superseded. `docs/figma/openpencil-screen-map.json` remains the broader detailed inventory and retains legacy Figma IDs where useful for provenance.
 
-The file also contains broader concept matrices and parallel versions of several routes. Production implementation must therefore reference explicit page and node IDs instead of treating every screen in the file as equally canonical.
-
-The repository also preserves provenance for the 2026-08-13 offline `LexiGo Design System.fig` snapshot in `docs/figma/`. The native snapshot is supplementary evidence only. OpenPencil is the active AI-native design owner; `docs/figma/openpencil-screen-map.json` records the reviewed imported mappings plus the stable OpenPencil-native First Use `activeScreens` keys delivered by PR #556.
-
-Selected nodes for PR #184:
-
-- page `13 — Product Screens — Home`: node `70:2`;
-- production desktop Home, Light, 1440×1024: node `194:249`;
-- production mobile Home, Dark, 390×844: node `196:223`.
-
-The existing Home matrix on the same page remains useful as product exploration and state coverage. PR #184 intentionally selects the production frames above because they enforce one dominant next-best action and a compact evidence surface.
-
-Prepared design slice for Issue #162:
-
-- page `20 — Production Slice — Learn Composer`: node `200:2`;
-- mobile recommended/collapsed composer: node `202:6`;
-- mobile manual-settings composer: node `203:5`;
-- desktop full composer: node `204:2`.
-
-Approved production design slice for Issue #199:
-
-- page `21 — Production Slice — Phrases`: node `253:2`;
-- production source-of-truth wrapper: node `253:3`;
-- mobile catalog, Light/default: node `255:10`;
-- mobile catalog, Dark/search + Travel filter: node `257:2`;
-- mobile Phrase Detail, Dark/daily: node `255:55`;
-- mobile Phrase Detail, Light/travel: node `257:47`;
-- desktop catalog, Light/default: node `255:81`;
-- desktop catalog, Dark/empty search: node `257:74`;
-- desktop Phrase Detail, Dark/technical: node `255:162`;
-- desktop Phrase Detail, Light/daily: node `257:159`;
-- loading, empty and error hooks: node `257:212`;
-- Product Screen Map handoff entry: node `261:2` inside canonical map `82:3`.
-
-The catalog contract keeps query and topic state visible and URL-backed while the results surface moves between default, loading, empty and error states. Phrase Detail preserves a direct-entry hierarchy of meaning, cloze prompt, working example, usage note and one lesson-configuration action. Technical, daily and travel content variants change phrase content, not application ownership or navigation semantics.
-
-Research and concept pages `01–08` currently act primarily as section shells in the live file. The approved direction and engineering contract are represented by the populated foundations, patterns, product-screen matrices, screen map and prototype. Do not infer missing production behavior from empty concept pages.
+Concept, exploration, prototype and historical variants are reference-only unless explicitly promoted into the production handoff manifest. Historical artifacts are preserved until their references and useful state coverage have been reviewed; preserving them does not grant production ownership.
 
 ## Canonical production route map
 
-This mapping is the repository-side handoff required by Issue #203. A route is production-ready only when the mapping points to explicit canonical nodes or to reviewed stable OpenPencil-native screen keys. Theme counterparts described as token-derived must preserve the same hierarchy and geometry and require separate visual verification; they are not permission to select another concept frame.
+A route/state has one canonical mobile source and one canonical desktop source. Explicit theme/state variants may exist, but they do not create a second production owner. A token-derived appearance uses the same hierarchy and geometry with semantic variables.
 
-| Route / state | Canonical mobile source | Canonical desktop source | Theme/state coverage | Delivery source |
+| Route / state | Canonical mobile OpenPencil source | Canonical desktop OpenPencil source | Appearance/state rule | Delivery |
 | --- | --- | --- | --- | --- |
-| `/` Home | `196:223` — Mobile / Home / Dark | `194:249` — Desktop / Home / Light | opposite appearance is semantic-token derived | PR #184 / Home production slice |
-| `/learn` Lesson Composer | `202:6` recommended/collapsed; `203:5` manual settings | `204:2` full composer | Light/Dark use the same composer ownership | Issue #162 |
-| `/lesson/active` Active Lesson | `75:6` Recall/Default; `75:30` Recall/Correct; `75:89` Choice/Incorrect; `75:57` Recall/Offline | `75:120` Study/Light; `75:150` Recall/Correct | canonical state matrix on page `75:2` | Issue #193; offline presentation #202 |
-| `/lesson/active` Lesson Result | `217:5–217:9` | `217:10–217:14` | normal, daily-goal, next-block, due-review and sync-pending/offline | Issue #194; matrix `217:2` |
-| `/lesson/active?scenario` | `76:100` Light; `76:127` Dark | `76:219` Dark | scenario variants share the Active Lesson runtime owner | Issue #196 |
-| `/progress` | `76:6` Light; `76:53` Dark | `76:154` Light | desktop Dark is semantic-token derived | Issue #195 |
-| `/dictionary` | `78:54` Light | `78:193` Light | Dark is semantic-token derived | Issue #197 |
-| `/words/[id]` | `78:99` Dark | `78:274` Dark | Light is semantic-token derived | Issue #198 |
-| `/phrases` | `255:10` Light/default; `257:2` Dark/search + Travel | `255:81` Light/default; `257:74` Dark/empty search | loading/empty/error hooks `257:212` | Issue #199; handoff `261:2` |
-| `/phrases/[slug]` | `255:55` Dark/daily; `257:47` Light/travel | `255:162` Dark/technical; `257:159` Light/daily | content variants do not change route ownership | Issue #199 |
-| `/profile` | `79:6` Light | `79:129` Light | Dark is semantic-token derived | Issue #200 |
-| shared system states | `79:69` Home Loading/Dark; `79:93` Dictionary Empty/Light; `79:117` Error/Dark | `79:194` Offline/Dark | lesson-specific offline source is `75:57` | Issue #202 |
-| `/` Guest Home / `/onboarding` First Use | `docs/figma/openpencil-screen-map.json` `activeScreens` keys under `firstuse.*` | same reviewed `firstuse.*` matrix, including desktop Guest Home and diagnostics | PR #556 reviewed Guest Home, role, diagnostic pre/reveal/resume, skip/skipped, complete, loading/error/recovery in Light/Dark across mobile/desktop | Issue #201 / PR #556 |
+| `/` authenticated Home | `home.mobile.dark` → `fig_2287` | `home.desktop.light` → `fig_2338` | opposite appearance is semantic-token derived | #522 / PR #523 merged |
+| `/` Guest Home | `firstuse.guest.mobile.light` → `n2` | `firstuse.guest.desktop.light` → `n321` | explicit Light/Dark First Use matrix | #201 / PR #556 merged |
+| `/onboarding` First Use | `firstuse.onboarding.mobile.light` → `fig_4282` | `firstuse.onboarding.desktop.light` → `n299` | diagnostics, resume, skip, complete, loading, error and recovery use reviewed `firstuse.*` active screens | #201 / PR #556 merged |
+| `/learn` Lesson Composer | `learn.mobile.recommended` → `fig_6826` | `learn.desktop.full` → `fig_6621` | manual mobile composer remains `learn.mobile.manual`; Light/Dark share ownership | #525 / PR #526 merged |
+| `/lesson/active` Active Lesson | `lesson.mobile.recall.default` → `fig_3247` | `lesson.desktop.study.light` → `fig_3132` | Recall/Choice/Offline variants remain in the same active matrix | #528 / PR #529 merged |
+| `/progress` | `progress.mobile.light` → `fig_3730` | `progress.desktop.light` → `fig_3564` | mobile Dark explicit; desktop Dark token-derived | #515 / PR #517 merged |
+| `/dictionary` | `dictionary.mobile.light` → `fig_4008` | `dictionary.desktop.light` → `fig_3833` | Dark token-derived; empty state remains separate shared-state evidence | #531 / PR #532 merged |
+| `/words/[id]` | `word.mobile.dark` → `fig_3982` | `word.desktop.dark` → `fig_3780` | Light token-derived | #533 / PR #535 merged |
+| `/phrases` | `phrases.mobile.catalog.light` → `fig_7281` | `phrases.desktop.catalog.light` → `fig_7099` | explicit Light/Dark catalog/search/empty variants retain one route owner | #536 / PR #538 merged |
+| `/phrases/[slug]` | `phrase.mobile.detail.dark.daily` → `fig_7255` | `phrase.desktop.detail.dark.technical` → `fig_7046` | Light/Dark and content-topic variants retain one route owner | #540 / PR #541 merged |
+| `/profile` authenticated | `profile.mobile.light` → `fig_4305` | `profile.desktop.light` → `fig_4157` | Dark token-derived | #542 / PR #543 merged |
+| `/scenarios` catalog | `fig_3465` — Mobile / Scenario Catalog / Light | `fig_3297` — Desktop / Scenario Catalog / Light | mobile Dark is explicit in the active `.op` | #24 slice / PR #228 merged |
+| `/scenarios/[slug]` | `fig_3656` — Mobile / Scenario / Light | `fig_3524` — Desktop / Scenario / Dark | mobile Light/Dark explicit; desktop approved Dark composition | #196 / PR #221 merged |
 
-### Route-selection rules
+The Scenario rows are verified directly against the active repository-owned `.op`; they predate the compact detailed `screens` inventory and therefore use direct `fig_*` references in the production manifest.
 
-- `82:3` remains the historical Figma Product Screen Map & Handoff entry point.
-- Production code and visual reviews use the node IDs in this document or the reviewed stable keys in `docs/figma/openpencil-screen-map.json`; a later reviewed mapping may supersede either source.
-- Concept/exploration matrices are reference-only unless explicitly promoted into this map.
-- A token-derived appearance means the same production composition rendered through semantic variables; it does not authorize a parallel layout.
-- Historical frames must not be deleted until prototype links, component references and useful state coverage have been checked.
-- First Use implementation uses the PR #556-reviewed `activeScreens` matrix. It must not reopen design scope or silently substitute legacy concept frames.
-- Figma Cloud remains provenance/reference for retained historical mappings; normal AI-native First Use design maintenance is owned by OpenPencil and its repository screen map.
+## Canonical Lesson Result state matrix
+
+Lesson Result is a state of `/lesson/active`, not a second route owner. Its old design-gap status is resolved: Issue #194 was delivered by PR #209 and the active OpenPencil document contains all ten production frames.
+
+| State | Mobile OpenPencil source | Desktop OpenPencil source | Historical Figma provenance |
+| --- | --- | --- | --- |
+| Complete | `fig_3072` — Mobile / Result / Complete | `fig_2910` — Desktop / Result / Complete | `217:5`, `217:10` |
+| Daily Goal | `fig_3042` — Mobile / Result / Daily Goal | `fig_2869` — Desktop / Result / Daily Goal | `217:6`, `217:11` |
+| Next Block | `fig_3011` — Mobile / Result / Next Block | `fig_2828` — Desktop / Result / Next Block | `217:7`, `217:12` |
+| Due Review | `fig_2981` — Mobile / Result / Due Review | `fig_2787` — Desktop / Result / Due Review | `217:8`, `217:13` |
+| Sync Pending / Dark | `fig_2951` — Mobile / Result / Sync Pending / Dark | `fig_2746` — Desktop / Result / Sync Pending / Dark | `217:9`, `217:14` |
+
+OpenPencil matrix owner: `fig_2745` — `Lesson Result / Production Matrix` on `14 — Active Lesson Screens`.
+
+The result keeps objective recall, supported recognition and activity as separate evidence concepts, exposes one primary action per state, creates a distinct next block rather than reopening the completed block, and treats due review as the primary fallback when no new block is available. Sync-pending state confirms local persistence without permitting duplicate submission.
+
+## Shared system states
+
+The detailed OpenPencil inventory preserves the canonical shared representatives:
+
+- Home loading Dark: `state.home.loading.dark` → `fig_4258`;
+- Dictionary empty Light: `state.dictionary.empty.light` → `fig_4234`;
+- shared error Dark: `state.error.dark` → `fig_4222`;
+- desktop offline Dark: `state.offline.desktop.dark` → `fig_4104`;
+- Active Lesson offline: `lesson.mobile.recall.offline` → `fig_3193`.
+
+These states supplement route ownership; they do not create alternate route graphs.
+
+## Resolved former design gaps
+
+The three historically tracked handoff gaps are no longer design blockers:
+
+- Lesson Result — Issue #194 / PR #209; ten OpenPencil frames are explicitly mapped above;
+- Phrases — catalog #536/#538 and detail #540/#541 are delivered and mapped to explicit OpenPencil nodes;
+- Guest Home / First Use — Issue #201 / PR #556 delivered the reviewed OpenPencil-native `firstuse.*` mobile/desktop Light/Dark matrix.
+
+Future work may still change these surfaces through a new explicit product/design Issue. It must not reopen the old gap merely because historical Figma identifiers remain in provenance fields.
+
+## Route-selection rules
+
+- `docs/figma/openpencil-production-handoff.json` is authoritative for which route/state sources are production selections.
+- `docs/figma/openpencil-screen-map.json` is authoritative for the detailed imported/native screen inventory and stable OpenPencil IDs that it contains.
+- Direct `opNode` entries in the production manifest must resolve to actual frame nodes in `design/openpencil/LexiGo Design System.op` with matching name and geometry.
+- `activeScreens` keys are reviewed OpenPencil-native First Use sources; they are not fallback placeholders.
+- Concept/exploration/prototype variants are reference-only until the production manifest explicitly promotes them.
+- A token-derived appearance is the same production composition rendered through semantic variables; it is not permission to select another layout.
+- Historical Figma file keys, page IDs and node IDs are provenance only.
+- Archive review may remove obsolete variants only after links/state coverage are checked; archive cleanup must not mutate the selected production contract accidentally.
 
 ## Production ownership
 
-The implementation must not introduce a second product graph.
+The design handoff must not introduce a second product graph.
 
 - `RouteChrome` remains the only owner of primary route navigation outside focused First Use and Active Lesson surfaces.
 - `LexigoBootstrappedApp` remains the sole session restoration, account runtime and dynamic route-entry owner.
 - `LexigoGuestHomeApp` owns unauthenticated `/` and does not load account progress, scheduler state or fake authenticated status.
 - `LexigoHomeApp` owns authenticated Home progress/active-lesson reads, next-best-action presentation and creation of a lesson through the existing API.
-- `LexigoOnboardingApp` owns authenticated First Use state and the existing server onboarding contract; `frontend/app/onboarding/page.tsx` is the canonical App Router page that prevents the client owner from mounting over a server not-found subtree.
-- Guest Home and `/onboarding` suppress ordinary route chrome through scoped First Use CSS without introducing a second navigation owner.
-- `LexigoPremiumApp` retains only Phrases compatibility orchestration until the approved Issue #199 catalog/detail slice is fully extracted into its route island.
-- `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners and are not imported by Home.
-- The backend remains authoritative for lesson position, completion, review persistence and onboarding `status/start/mark/complete/skip` state.
-- Diagnostic translation/reveal is presented only after a successful server mark mutation; reload/direct entry resumes authoritative server state.
-- The active lesson remains higher priority than the due queue, new study and manual configuration.
-- The Dictionary route island remains isolated and must not regress.
-
-Issue #250 changes the client-entry boundary, not the approved Home visual hierarchy. A transient `/lesson/active?resume=1` URL reuses the existing Active Lesson resume action and removes the query before execution; it does not create another lesson lifecycle owner.
+- `LexigoOnboardingApp` owns authenticated First Use state and the server onboarding contract; `frontend/app/onboarding/page.tsx` is the canonical App Router page owner.
+- `LexigoLearnApp` owns `/learn`; `LexigoActiveLessonApp` owns `/lesson/active`, including result continuation and recovery.
+- `LexigoDictionaryApp` owns `/dictionary` and `/words/[id]`.
+- `LexigoPhrasesApp` owns `/phrases` and `/phrases/[slug]`.
+- `LexigoProgressApp` owns `/progress`; authenticated `LexigoProfileApp` owns `/profile` summary/preferences.
+- `LexigoScenarioCatalogApp` and `LexigoScenarioApp` own `/scenarios` and `/scenarios/[slug]` respectively.
+- `LexigoPremiumApp` remains only a narrow compatibility fallback for remaining guest/auth legacy states and is not a canonical owner of the extracted routes above.
+- `ReviewOutboxRuntime`, Service Worker and appearance bootstrap remain persistent shared owners.
+- The backend remains authoritative for lesson position, completion, review persistence and onboarding mutation state.
 
 ## Application Shell contract
 
-Desktop from 1024 CSS pixels uses a persistent navigation rail. Compact mobile uses an edge-to-edge bottom navigation bar with safe-area padding. Focus order, route-focus restoration, browser history, scroll restoration and minimum 44×44 interaction targets remain blocking contracts.
+Desktop from 1024 CSS pixels uses a persistent navigation rail. Compact mobile uses an edge-to-edge bottom navigation bar with safe-area padding. Focus order, route-focus restoration, browser history, scroll restoration and minimum interaction-target contracts remain blocking.
 
 Light and Dark appearances use the same information hierarchy. Optional transitions are disabled under `prefers-reduced-motion: reduce`.
 
@@ -122,59 +125,58 @@ The next action resolves in this order:
 3. start recommended new study;
 4. open manual lesson configuration.
 
-The desktop and mobile production frames preserve this order and keep the primary action above mobile bottom navigation.
-
-Direct `/` entry and return navigation must use the dedicated Home island without repeating session restoration. Home-created or resumed lessons must reach the existing Active Lesson UI immediately, without exposing a second confirmation click.
+The desktop and mobile production sources preserve this order and keep the primary action above mobile bottom navigation.
 
 Unauthenticated `/` is a separate truthful Guest Home surface: it explains the product and routes into authentication/onboarding or the existing guest-compatible demo path without synthesizing progress or account scheduler data.
 
-## Current design delivery status
+## Delivery status
 
-All nine previously canonical route parity contracts under Issue #205 are delivered:
+The repository-side design delivery represented by this handoff is complete for the currently canonical surfaces:
 
-| Route | Parity Issue | Merge PR | Status |
-| --- | --- | --- | --- |
-| Home | #522 | #523 | ✅ merged |
-| Learn Composer | #525 | #526 | ✅ merged |
-| Active Lesson | #528 | #529 | ✅ merged |
-| Progress | #515 | #517 | ✅ merged |
-| Dictionary | #531 | #532 | ✅ merged |
-| Word Detail | #533 | #535 | ✅ merged |
-| Phrases catalog | #536 | #538 | ✅ merged |
-| Phrase Detail | #540 | #541 | ✅ merged |
-| Profile | #542 | #543 | ✅ merged |
+- Home parity: Issue #522 / PR #523 — merged;
+- Learn Composer parity: #525 / #526 — merged;
+- Active Lesson parity: #528 / #529 — merged;
+- Lesson Result: #194 / #209 — merged;
+- Progress parity: #515 / #517 — merged;
+- Dictionary parity: #531 / #532 — merged;
+- Word Detail parity: #533 / #535 — merged;
+- Phrases catalog parity: #536 / #538 — merged;
+- Phrase Detail parity: #540 / #541 — merged;
+- Profile parity: #542 / #543 — merged;
+- First Use / Guest Home design gate: #201 / #556 — merged;
+- Scenario catalog slice: #24 / #228 — merged slice; parent product Issue #24 can remain open for broader reconciliation;
+- Scenario Lesson UI: #196 / #221 — merged;
+- shared Dictionary Empty visual owner: #545 / #546 — merged.
 
-Additional design-linked deliveries:
+Issue #203 owns this source-of-truth reconciliation. Once its manifest, documentation and executable contract are merged and green, historical live-Figma synchronization is no longer an acceptance gate because Figma is explicitly archival provenance under the 2026-08-19 migration.
 
-- System States (Dictionary Empty renderer-equivalent): Issue #545 / PR #546 — scoped exact alternate fingerprint for hosted-runner rendering nondeterminism.
-- Native Figma binary preservation: Issue #487 / PR #547 — `design/figma/LexiGo Design System.fig` stored via Git LFS, SHA-256 verified.
-- First Use design gate: Issue #201 / PR #556 — reviewed OpenPencil 40-state First Use matrix, stable `activeScreens` mappings and design acceptance are merged.
+Issue #205 remains the umbrella final visual-parity audit; it does not change source ownership defined here.
 
-Issue #201 runtime now consumes that reviewed First Use matrix rather than reopening the design gate. Repository visual tests own deterministic Linux Guest Home/onboarding evidence and require manual PNG review before any new baseline hash can be accepted.
+## Executable handoff contract
 
-Issue #203 remains the maintenance owner for one-route/one-production-source reconciliation. Issue #205 remains the final route-by-route visual parity audit; neither changes the runtime ownership described above.
+`scripts/ci/agent_docs_scope_test.py` validates the design handoff from the complete repository checkout. The contract must fail closed when:
 
-## Figma/OpenPencil source-of-truth maintenance
+- the active design tool/document no longer identify OpenPencil;
+- a required canonical route/state key disappears or is duplicated;
+- a manifest entry references a missing `screens`/`activeScreens` key;
+- a direct OpenPencil node is missing from the active `.op` or its frame name/geometry drifts;
+- Lesson Result loses any of its ten canonical OpenPencil frames;
+- the human handoff or dedicated Lesson Result handoff reintroduces an active `Figma source of truth` claim.
 
-The following cleanup remains necessary and is tracked by Issue #203:
-
-- identify concept-only and production-ready variants through explicit naming/status metadata;
-- remove page-number collisions when new production slices are added;
-- avoid duplicating route ownership across prototype, matrix and production frames;
-- update the screen map when a production slice supersedes an exploratory composition;
-- preserve old variants until their state coverage has been transferred or explicitly archived;
-- keep this route map synchronized after each promoted or superseded production source.
+The contract is structural, not paragraph-format dependent. It validates semantic keys, nodes, names, geometry and source ownership.
 
 ## Verification gates
 
-The implementation is not complete until all of the following pass:
+A runtime implementation that changes one of these surfaces is not complete until all applicable gates pass:
 
-- lint, typecheck, unit tests and production build;
-- desktop 1440×1024 and mobile 390×844 browser geometry;
+- source contracts, lint, typecheck, unit tests and production build;
+- desktop and mobile browser geometry;
 - Light/Dark computed appearance;
 - 120–200% text reflow without horizontal overflow;
 - keyboard navigation and blocking accessibility audit;
 - reduced-motion computed styles;
 - route bundle and low-end mobile performance budgets;
-- deterministic Linux visual baselines after manual PNG review;
-- visual review on the deployed Stage build for runtime-changing delivery.
+- deterministic Linux visual baselines after manual review;
+- deployed Stage review for runtime-changing delivery.
+
+This Issue #203 maintenance slice changes no runtime, CSS, API, `.op` content or visual baselines. Its own blocking evidence is the executable OpenPencil handoff contract plus full immutable-head CI.
