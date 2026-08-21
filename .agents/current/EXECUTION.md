@@ -50,33 +50,37 @@ Actions performed:
 - verified protected `main`, no open PR at task start and clean reset `.agents/current/**`;
 - created Issue #641 and branch `test/issue-641-system-state-openpencil` from exact main;
 - declared TASK/PROGRESS/EXECUTION with explicit path allow-list;
-- added `frontend/components/system-state-openpencil-contract.test.ts` to parse the active OpenPencil screen map and fail closed on provenance drift;
 - migrated the existing five `system-states-visual.spec.ts` baselines from active-Figma metadata to exact `screenMapKey + openPencilNode + route + viewport` metadata while preserving every primary and renderer-equivalent SHA and every runtime interaction;
-- added OpenPencil test annotations with legacy Figma IDs explicitly archival;
-- audited First Use applicability instead of assuming delegation: confirmed reachable loading/error runtime branches, eight active OpenPencil loading/error nodes and the absence of those states from the current approved `first-use-visual.spec.ts` baseline set;
-- created child Issue #642 for that independent First Use visual-evidence gap;
-- added an audit refinement comment to #641 explicitly making #642 a blocker and preventing premature closure;
+- audited First Use applicability, proved the separate eight-state loading/error visual gap and created child Issue #642;
 - opened Draft PR #643 with `Refs #641`, not `Closes #641`;
-- froze developer head `cbf2799aaed3b47b777a08e76673e93224f25d37` and ran full CI #3949 / run `32473173511`;
-- classified the exact Frontend core failure from job `96744163203` logs rather than retrying or weakening assertions;
-- fixed only the proven source-contract path bug, then read it back and rechecked protected main;
-- synchronized PROGRESS/EXECUTION with the failure/fix before freezing the replacement final developer head.
+- classified two consecutive deterministic Frontend core failures from exact logs instead of retrying or weakening assertions;
+- corrected the validation architecture so the isolated Vitest source contract does not depend on repo-level `docs/`, while the authoritative Playwright visual owner performs the real screen-map resolution in the environment that already owns OpenPencil/Linux visual evidence;
+- synchronized harness state before freezing the next replacement immutable head.
 
-CI #3949 failure classification:
-- classifier succeeded;
-- lint succeeded with pre-existing warnings only;
-- typecheck succeeded;
-- Vitest: 134 test files passed, 821 tests passed; the only failed suite was the newly added `components/system-state-openpencil-contract.test.ts` before any test body executed;
-- exact error: `ENOENT: no such file or directory, open '/docs/figma/openpencil-screen-map.json'` at line 35;
-- root cause: from `/workspace/components`, `../../docs/...` climbs outside `/workspace` to `/docs`; the repository mapping is one level above components and must be `../docs/...`;
-- this is a deterministic source-contract fixture path error, not a product defect, visual drift, infrastructure failure or flake;
-- no same-head rerun was used because the failure was deterministic.
+CI #3949 / run `32473173511`:
+- head `cbf2799aaed3b47b777a08e76673e93224f25d37`;
+- lint/typecheck green; 134 other Vitest files / 821 tests green;
+- new source contract failed before test execution with `ENOENT '/docs/figma/openpencil-screen-map.json'`;
+- classified deterministic filesystem-path defect; no same-head retry.
 
-Verified source fix:
-- commit `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a` changes only the mapping path from `../../docs/figma/openpencil-screen-map.json` to `../docs/figma/openpencil-screen-map.json`;
-- read-back blob is `65716a34be0873b8639f95b455e3908ef89a2426`;
-- no assertion, hash, renderer-equivalent allow-list, runtime flow or visual tolerance changed;
-- protected `main` remained `37fe3016…` after the write.
+CI #3952 / run `32473507422`:
+- head `6edf18caf3ad2fed086bbe09dbb267721a2a6341`;
+- lint/typecheck green again; 134 other Vitest files / 821 tests green;
+- exact log proved `frontend-container.sh` executes Vitest from isolated `/workspace` and repo-level `docs/` is not present there;
+- failure remained deterministic: `ENOENT '/workspace/docs/figma/openpencil-screen-map.json'`;
+- conclusion: another relative-path tweak would be structurally invalid, because the file is intentionally outside the unit-test workspace.
+
+Architectural correction after CI #3952:
+- commit `8415c4105f10e8ad92dbd14e4cc71d22ecc2ff70` makes `frontend/components/system-state-openpencil-contract.test.ts` a pure source contract and removes direct repo-level docs I/O;
+- read-back blob `f8daa01dd9952f737e87ac9351cf4acc296e9fc4`;
+- source contract still fail-closes on all five exact OpenPencil keys/nodes/routes/viewports/hashes, active-source wording, and the presence/call of a real map validator inside the visual owner;
+- commit `db88a546103d09a1fe401c3819d7c43030d15b5c` adds the actual OpenPencil screen-map loader/validator to `frontend/e2e/system-states-visual.spec.ts`;
+- read-back blob `58d636c6077063e41b54c2b917a91888064a3395`;
+- loader uses the same repository-resolution candidates already proven in `first-use-visual.spec.ts`: `GITHUB_WORKSPACE`, `/repository`, parent cwd and cwd;
+- it parses `screens` + `activeScreens` and fails closed if the mapping is unavailable/empty;
+- before every approved system-state capture it verifies exact screen-map key, OpenPencil node, archival Figma node, route, width and height;
+- no SHA, renderer-equivalent allow-list, screenshot, runtime fixture or interaction step changed;
+- protected `main` remained `37fe3016…` after each write.
 
 Commands or procedures:
 GitHub connector reads/searches, explicit `create_issue`, `create_branch`, `fetch_file`, `create_file`, `update_file`, `compare_commits`, issue comment creation, Draft PR creation, PR review/thread reads, commit workflow-run/job/log inspection, and protected-main verification. No direct default-branch write, force ref update, snapshot update or workflow mutation.
@@ -86,14 +90,14 @@ Artifacts produced:
 - child Issue #642;
 - Draft PR #643;
 - branch `test/issue-641-system-state-openpencil`;
-- source-contract and visual-provenance commits, including `9b82a18d11f36caac89a5bce803ab3636df53655` and `9a8fee2a1763a27d7bb3187a7631aa3ba55752e2`;
-- first frozen PR head `cbf2799aaed3b47b777a08e76673e93224f25d37`;
-- CI #3949 / run `32473173511`, deterministic Frontend core failure evidence;
-- path correction commit `32fefe07f3a31548bb301ab8aaa41cfabccc3d7a`;
-- refreshed PROGRESS commit `3a3a24e8f86eceed48b256bafd1c0e050c082fc7`.
+- initial provenance/source-contract commits and harness evidence;
+- CI #3949 and #3952 deterministic failure evidence;
+- source-contract architecture correction `8415c4105f10e8ad92dbd14e4cc71d22ecc2ff70`;
+- visual-owner map validation correction `db88a546103d09a1fe401c3819d7c43030d15b5c`;
+- refreshed PROGRESS commit `6a42f802d188cb071043e5d3ae0ff52dabe02a02`.
 
 Result:
-The shared five system-state baselines carry active OpenPencil provenance without product/runtime or fingerprint changes. The real First Use loading/error visual gap is tracked by #642. The first CI exposed one deterministic repository-relative path bug in the new contract; it was corrected minimally with all substantive assertions preserved. A fresh full CI is required on the replacement immutable head before Ready/merge.
+The five shared system-state baselines retain their exact reviewed visual fingerprints and browser flows while the authoritative visual suite now fail-closes against active OpenPencil repository mapping. Unit tests no longer assume repo-level artifacts are copied into the frontend core workspace. A fresh full CI on the next frozen developer-authored head is required before Ready/merge.
 
 Process failure during setup:
 Two tool calls intended to create Issue #641 were mistakenly sent to `create_pull_request` with `main` as both head and base. GitHub rejected both with HTTP 422 `No commits between main and main`; no PR or repository mutation was created.
@@ -111,4 +115,4 @@ Reusable lessons:
 - Before every repository write, match intent to the exact discovered function/schema; after a rejected mutation revalidate repository state before further writes.
 - A design-state node in OpenPencil is not proof that an approved runtime visual exists; verify the actual baseline set and split missing evidence into a child Issue.
 - A parent audit PR must use `Refs`, not `Closes`, when a blocking child remains open.
-- Source-level tests that read repository-root artifacts must derive paths from their actual directory depth; verify the runtime filesystem path in CI instead of assuming test working-directory semantics.
+- Do not make unit tests depend on repo-level artifacts that are intentionally excluded from an isolated frontend workspace. Keep source-level ownership assertions in Vitest and execute repository/design-artifact validation in the authoritative visual environment that already has a proven repo-root resolution contract.
