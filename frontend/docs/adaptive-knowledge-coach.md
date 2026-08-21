@@ -161,7 +161,7 @@ Issue #205 remains the umbrella final visual-parity audit; it does not change so
 - a manifest entry references a missing `screens`/`activeScreens` key;
 - a direct OpenPencil node is missing from the active `.op` or its frame name/geometry drifts;
 - Lesson Result loses any of its ten canonical OpenPencil frames;
-- the human handoff or dedicated Lesson Result handoff reintroduces an active `Figma source of truth` claim.
+- either maintained human handoff again declares Figma to be the active production design source.
 
 The contract is structural, not paragraph-format dependent. It validates semantic keys, nodes, names, geometry and source ownership.
 
