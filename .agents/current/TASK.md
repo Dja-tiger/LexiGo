@@ -6,19 +6,19 @@
 - Branch: test/issue-641-system-state-openpencil
 - Base SHA: 37fe3016673ab261e4df4232274535f834578b77
 - Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: #643
 
 ## Objective
 
-Close the remaining automated system-state parity/provenance dimension under #205 by binding the already-approved loading/empty/error/offline visual evidence to the active repository-owned OpenPencil screen map, without changing runtime behavior or approved Linux fingerprints.
+Reconcile the five already-approved shared loading/empty/error/offline visual baselines to the active repository-owned OpenPencil screen map without changing runtime behavior or approved Linux fingerprints, while keeping Issue #641 open for the separately proven First Use loading/error evidence gap in #642.
 
 ## Scope
 
 - migrate `frontend/e2e/system-states-visual.spec.ts` from active-Figma provenance semantics to active OpenPencil provenance semantics;
-- resolve every existing approved system-state baseline against `docs/figma/openpencil-screen-map.json` by stable key, OpenPencil node, route and canonical viewport;
+- resolve every existing approved shared system-state baseline against `docs/figma/openpencil-screen-map.json` by stable key, OpenPencil node, route and canonical viewport;
 - retain legacy Figma IDs only as explicitly archival provenance if useful for traceability;
 - add a fail-closed source contract for the OpenPencil mapping and applicability boundary;
-- explicitly delegate First Use loading/error states to the existing First Use visual owner instead of duplicating that state machine;
+- prove that First Use loading/error states are reachable and mapped but are not part of the current approved shared or First Use baseline set, and track that gap explicitly as #642 rather than duplicating or falsely delegating it here;
 - preserve all existing approved hashes, renderer-equivalent hashes, runtime fixtures and behavioral owners.
 
 ## Non-goals
@@ -30,7 +30,7 @@ Close the remaining automated system-state parity/provenance dimension under #20
 - no screenshot/hash/baseline refresh;
 - no fuzzy pixel tolerance or assertion weakening;
 - no reimplementation of #202 system-state behavior;
-- no duplicate First Use loading/error Playwright flows;
+- no First Use loading/error baseline implementation inside this PR; that is #642;
 - no workflow, dependency or package-manifest changes.
 
 ## Allowed paths
@@ -62,6 +62,7 @@ Read-only owners that must remain behaviorally unchanged:
 - `frontend/e2e/system-state-touch-targets.spec.ts`
 - `frontend/components/system-states-contract.test.ts`
 - `frontend/e2e/first-use-visual.spec.ts`
+- `frontend/e2e/first-use.spec.ts`
 - `frontend/components/lexigo-onboarding-app.tsx`
 - existing shared async/connectivity and Active Lesson state runtime.
 
@@ -70,26 +71,28 @@ Read-only owners that must remain behaviorally unchanged:
 - active design mapping: `docs/figma/openpencil-screen-map.json` (read-only);
 - production handoff: `docs/figma/openpencil-production-handoff.json` (read-only);
 - umbrella audit: Issue #205;
+- active audit: Issue #641;
+- child First Use evidence gap: Issue #642;
 - implementation provenance: Issue #202;
 - design-source handoff: Issue #203.
 
 ## Invariants
 
 - OpenPencil is the active source of truth; Figma IDs are archival provenance only.
-- Existing five approved system-state PNG fingerprints remain byte-for-byte unchanged.
+- Existing five approved shared system-state PNG fingerprints remain byte-for-byte unchanged.
 - Existing renderer-equivalent exact allow-lists remain unchanged.
-- First Use loading/error remains owned by the existing First Use suite and is not duplicated here.
-- No runtime behavior, API request sequence, route ownership or CSS cascade changes in this PR.
+- First Use loading/error is not falsely marked covered: #642 remains explicit blocking evidence before #641/final #205 system-state reconciliation can close.
+- No runtime behavior, API request sequence, route ownership or CSS cascade changes in PR #643.
 - Any newly discovered product/design defect is split into a separate Issue/PR rather than hidden by an audit assertion or new hash.
 - Final developer-authored head is immutable before full CI/review audit.
 
 ## Acceptance criteria
 
-- All five existing system-state visual baselines resolve to exact active OpenPencil records by screen-map key, node, route and canonical viewport.
-- The visual suite no longer presents Figma as the active source; any legacy IDs are explicitly archival only.
+- All five existing shared system-state visual baselines resolve to exact active OpenPencil records by screen-map key, node, route and canonical viewport.
+- The shared visual suite no longer presents Figma as the active source; any legacy IDs are explicitly archival only.
 - Home Loading, Dictionary Empty, shared Error, desktop Offline and Active Lesson Recall Offline retain the current approved exact Linux fingerprints.
-- First Use loading/error applicability is explicitly delegated to the First Use owner.
-- Source contract fails closed on missing/drifted OpenPencil keys/nodes/routes/viewports or a regression back to active-Figma wording.
+- First Use loading/error applicability is explicitly proven as a separate open visual-evidence gap and linked to #642; PR #643 does not close #641.
+- Source contract fails closed on missing/drifted OpenPencil keys/nodes/routes/viewports, a regression back to active-Figma wording, or accidental duplication of First Use loading/error into the shared owner.
 - Existing system-state behavior/touch/reduced-motion/source owners remain green.
 - Full immutable-head CI passes; reviews/threads and main drift are clean before expected-head squash merge.
 - Post-merge exact-main CI passes; no Stage redeploy is claimed for this test/evidence-only slice.
@@ -110,8 +113,9 @@ Read-only owners that must remain behaviorally unchanged:
 - OpenPencil screen-map arrays contain both `screens` and `activeScreens`; the contract must resolve the exact intended owner rather than broad matching;
 - raw PNG hashes have scoped renderer-equivalent allow-lists that must not be reordered or widened accidentally;
 - a test-only edit can unintentionally fall out of the authoritative visual collection if project/skip semantics are changed;
-- tool-selection error occurred during task setup: two attempted `create_pull_request(main→main)` calls were rejected with HTTP 422 before any repository mutation; this must be recorded in EXECUTION and not repeated.
+- First Use design nodes are not equivalent to approved runtime baselines; #642 exists specifically because this distinction was verified;
+- tool-selection error occurred during task setup: two attempted `create_pull_request(main→main)` calls were rejected with HTTP 422 before any repository mutation; this is recorded in EXECUTION and must not be repeated.
 
 ## Rollback
 
-Revert the isolated audit/source-contract commit(s). No runtime, design source, data, API or visual baseline rollback is required.
+Revert the isolated PR #643 audit/source-contract commits. No runtime, design source, data, API or visual baseline rollback is required.
