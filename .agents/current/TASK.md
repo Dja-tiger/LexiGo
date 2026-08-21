@@ -6,7 +6,7 @@
 - Branch: fix/issue-647-first-use-desktop-state-hierarchy
 - Base SHA: 564bc24ab2b7f47e9f8d6e82989cbfd1df51adce
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #648
 
 ## Objective
 
@@ -18,7 +18,8 @@ Restore the repository-owned OpenPencil desktop hierarchy for First Use loading 
 - align desktop loading panel spacing/content intent with OpenPencil nodes n442 / n614;
 - align desktop generic recoverable-error panel structure/copy intent with n456 / n628;
 - preserve mobile presentation and existing onboarding behavior/state ownership;
-- add focused source-level regression protection.
+- add focused source-level regression protection;
+- reconcile existing downstream system-state source ownership assertions that became stale after the intended runtime class composition changed.
 
 ## Non-goals
 
@@ -37,6 +38,7 @@ Restore the repository-owned OpenPencil desktop hierarchy for First Use loading 
 - `frontend/components/lexigo-onboarding-app.tsx`
 - `frontend/app/first-use.css`
 - `frontend/components/first-use-route-contract.test.ts`
+- `frontend/components/system-state-openpencil-contract.test.ts`
 
 ## Prohibited paths
 
@@ -79,7 +81,7 @@ Restore the repository-owned OpenPencil desktop hierarchy for First Use loading 
 
 ## Required checks
 
-- focused First Use source contracts;
+- focused First Use and system-state source contracts;
 - frontend lint/typecheck/unit/build;
 - existing First Use browser behavior in Chromium/WebKit/Android/iOS;
 - accessibility/reduced-motion gates applicable to First Use;
@@ -90,7 +92,8 @@ Restore the repository-owned OpenPencil desktop hierarchy for First Use loading 
 
 - CSS changes could leak into mobile or normal diagnostic states;
 - duplicated responsive copy could create duplicate accessible headings if visibility ownership is incorrect;
-- centering rules on `.lx-first-use-message` could retain stale desktop geometry even after adding the intro block.
+- centering rules on `.lx-first-use-message` could retain stale desktop geometry even after adding the intro block;
+- older source contracts may incorrectly bind runtime ownership to a literal static class string instead of semantic error ownership.
 
 ## Rollback
 
