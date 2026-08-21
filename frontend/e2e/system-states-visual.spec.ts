@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
 
@@ -18,10 +20,28 @@ type SystemStateVisualBaseline =
   | "compact-recall-offline-dark";
 
 type SystemStateVisualBaselineContract = {
-  figmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
+  screenMapKey:
+    | "state.home.loading.dark"
+    | "state.dictionary.empty.light"
+    | "state.error.dark"
+    | "state.offline.desktop.dark"
+    | "lesson.mobile.recall.offline";
+  openPencilNode: "fig_4258" | "fig_4234" | "fig_4222" | "fig_4104" | "fig_3193";
+  legacyFigmaNode: "79:69" | "79:93" | "79:117" | "79:194" | "75:57";
+  route: "/" | "/dictionary" | "shared" | "/lesson/active";
+  viewport: Readonly<{ width: 390 | 1440; height: 844 | 1024 }>;
   sha256: string;
   rendererEquivalentSha256?: readonly string[];
 };
+
+type OpenPencilScreenMapEntry = Readonly<{
+  key: string;
+  route: string;
+  legacyFigmaNode: string;
+  openPencilNode: string;
+  width: number;
+  height: number;
+}>;
 
 type StableLayoutSample = {
   viewportWidth: number;
@@ -40,17 +60,26 @@ type StableLayoutSample = {
 
 const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemStateVisualBaselineContract> = {
   "compact-loading-dark": {
-    figmaNode: "79:69",
+    screenMapKey: "state.home.loading.dark",
+    openPencilNode: "fig_4258",
+    legacyFigmaNode: "79:69",
+    route: "/",
+    viewport: { width: 390, height: 844 },
     sha256: "45956af4fd18983b56d9c6ae38714b1ba5ed984a930c8ffca7472dd65a699368",
     // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
     rendererEquivalentSha256: ["2fd2755322269c6621884043efcac30741523671a8ab15588bfbdf37ebb7fc86"],
   },
   "compact-empty-light": {
-    figmaNode: "79:93",
+    screenMapKey: "state.dictionary.empty.light",
+    openPencilNode: "fig_4234",
+    legacyFigmaNode: "79:93",
+    route: "/dictionary",
+    viewport: { width: 390, height: 844 },
     sha256: "e140551792a87445af08658ed78439638918b174b4b1a0e3d36448ef1ce7dbdf",
     // Issue #545 independently compared authoritative Linux artifacts from the same 390×844 state.
-    // This hosted-renderer fingerprint differs from the primary Figma-approved raster at exactly
-    // three antialiased calendar-reminder edge pixels, with a maximum RGB delta of one LSB.
+    // This hosted-renderer fingerprint differs from the primary reviewed raster originally approved
+    // under legacy Figma provenance at exactly three antialiased calendar-reminder edge pixels,
+    // with a maximum RGB delta of one LSB.
     // Keep every renderer-equivalent as an exact scoped fingerprint: no numerical tolerance is accepted.
     // Issue #577 adds the independently reviewed semantic-Reminder renderer from CI 32048818693.
     // Issue #584: exact-main CI 32067797979 / artifact #9300795503 rendered 63d3af... on
@@ -63,22 +92,80 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
     ],
   },
   "compact-error-dark": {
-    figmaNode: "79:117",
+    screenMapKey: "state.error.dark",
+    openPencilNode: "fig_4222",
+    legacyFigmaNode: "79:117",
+    route: "shared",
+    viewport: { width: 390, height: 844 },
     sha256: "84576205fe0619b9e1707f5c2e8ccf4a6ce7e6c285c5a261170709efa1549b11",
     // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
     rendererEquivalentSha256: ["1eecf487083b33e975be9ddf665b97a493b0d8988a5abf2866f67a26b38ede67"],
   },
   "desktop-offline-dark": {
-    figmaNode: "79:194",
+    screenMapKey: "state.offline.desktop.dark",
+    openPencilNode: "fig_4104",
+    legacyFigmaNode: "79:194",
+    route: "shared",
+    viewport: { width: 1440, height: 1024 },
     sha256: "8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a",
     // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
     rendererEquivalentSha256: ["715215d255e3ab727ec3920c4164f43c82100d64e7f2d9d79d0b5b05c325ec0c"],
   },
   "compact-recall-offline-dark": {
-    figmaNode: "75:57",
+    screenMapKey: "lesson.mobile.recall.offline",
+    openPencilNode: "fig_3193",
+    legacyFigmaNode: "75:57",
+    route: "/lesson/active",
+    viewport: { width: 390, height: 844 },
     sha256: "0d7393ab3793ab5d773d167f65f743d3cd53190c4da4899a2d915e1d3b01d2ae",
   },
 };
+
+function loadActiveOpenPencilScreens(): readonly OpenPencilScreenMapEntry[] {
+  const relativePath = "docs/figma/openpencil-screen-map.json";
+  const candidates = [
+    process.env.GITHUB_WORKSPACE
+      ? resolve(process.env.GITHUB_WORKSPACE, relativePath)
+      : undefined,
+    resolve("/repository", relativePath),
+    resolve(process.cwd(), "..", relativePath),
+    resolve(process.cwd(), relativePath),
+  ].filter((candidate): candidate is string => typeof candidate === "string");
+  const screenMapPath = candidates.find((candidate) => existsSync(candidate));
+
+  if (!screenMapPath) {
+    throw new Error(
+      `System-state visual provenance requires ${relativePath}; checked: ${candidates.join(", ")}`,
+    );
+  }
+
+  const parsed = JSON.parse(readFileSync(screenMapPath, "utf8")) as {
+    screens?: OpenPencilScreenMapEntry[];
+    activeScreens?: OpenPencilScreenMapEntry[];
+  };
+  const entries = [...(parsed.screens ?? []), ...(parsed.activeScreens ?? [])];
+  if (entries.length === 0) {
+    throw new Error(`${screenMapPath} does not expose screens or activeScreens`);
+  }
+  return entries;
+}
+
+const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens();
+
+function expectActiveOpenPencilContract(baselineName: SystemStateVisualBaseline): void {
+  const baseline = SYSTEM_STATE_VISUAL_BASELINES[baselineName];
+  const screen = ACTIVE_OPENPENCIL_SCREENS.find((entry) => entry.key === baseline.screenMapKey);
+
+  expect(
+    screen,
+    `${baselineName} must resolve active OpenPencil screen-map key ${baseline.screenMapKey}`,
+  ).toBeDefined();
+  expect(screen?.openPencilNode).toBe(baseline.openPencilNode);
+  expect(screen?.legacyFigmaNode).toBe(baseline.legacyFigmaNode);
+  expect(screen?.route).toBe(baseline.route);
+  expect(screen?.width).toBe(baseline.viewport.width);
+  expect(screen?.height).toBe(baseline.viewport.height);
+}
 
 const VISUAL_LESSON_ID = "00000000-0000-0000-0000-000000000575";
 const VISUAL_WORD = {
@@ -198,6 +285,12 @@ async function expectApprovedSystemStateBaseline(
   baselineName: SystemStateVisualBaseline,
 ): Promise<void> {
   const baseline = SYSTEM_STATE_VISUAL_BASELINES[baselineName];
+  expectActiveOpenPencilContract(baselineName);
+  testInfo.annotations.push({
+    type: "openpencil",
+    description: `${baseline.screenMapKey} | node=${baseline.openPencilNode} | route=${baseline.route} | viewport=${baseline.viewport.width}×${baseline.viewport.height} | legacyFigma=${baseline.legacyFigmaNode}`,
+  });
+
   const firstCapture = await captureSystemState(page);
   await testInfo.attach(`system-state-${baselineName}-capture-1.png`, {
     body: firstCapture,
@@ -222,7 +315,7 @@ async function expectApprovedSystemStateBaseline(
   const acceptedSha256 = [baseline.sha256, ...(baseline.rendererEquivalentSha256 ?? [])];
   expect(
     acceptedSha256,
-    `System state ${baselineName} must match the primary Figma-approved SHA or an exact independently reviewed renderer-equivalent fingerprint for Figma ${baseline.figmaNode}; primary=${baseline.sha256}, received=${firstSha256}`,
+    `System state ${baselineName} must match the primary reviewed SHA or an exact independently reviewed renderer-equivalent fingerprint for active OpenPencil ${baseline.screenMapKey} (${baseline.openPencilNode}); legacy Figma provenance=${baseline.legacyFigmaNode}; primary=${baseline.sha256}, received=${firstSha256}`,
   ).toContain(firstSha256);
 }
 
@@ -241,7 +334,7 @@ async function installRecallLesson(page: Page) {
   }));
 }
 
-test.describe("System state Figma visual baselines", () => {
+test.describe("System state OpenPencil visual baselines", () => {
   test.describe.configure({ timeout: 90_000 });
 
   test.beforeEach(async ({ page }) => {
