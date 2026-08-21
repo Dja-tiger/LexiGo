@@ -6,7 +6,7 @@
 - Branch: `docs/issue-203-openpencil-source-of-truth`
 - Base SHA: `7ccb027828f1a180dcb62b073ddf03b7d41cfc07`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #636
 
 ## Objective
 
