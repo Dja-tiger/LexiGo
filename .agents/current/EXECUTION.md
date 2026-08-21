@@ -2,10 +2,10 @@
 
 ## Task
 
+- Issue: #638 — private custom phrases / parent #25 Phase 5
 - Branch: `feat/issue-638-custom-phrases`
 - Base SHA: `cb7559cca2160c4c1cd2e9e9fcd90770e13f7e49`
-- Head SHA: resolve from live branch ref
-- PR: not opened yet
+- PR: not opened yet at this record
 
 ## Skills used
 
@@ -13,7 +13,7 @@
 
 Purpose:
 
-Safely reconstruct live state, create Issue #638/isolated branch, constrain paths, write/read-back task memory and prepare guarded PR delivery.
+Safely reconstruct live state, isolate Issue #638, publish guarded commits, preserve complete large-file content, and prepare immutable PR delivery.
 
 Instruction source:
 
@@ -23,74 +23,92 @@ Instruction source:
 - `.agents/AGENTS.tool-selection.md`
 - `.agents/SKILLS.md`
 - `docs/agent-harness.md`
+- installed GitHub skill `skills://plugins/github/github/skill.md`
 
 Version or verification date:
 
-2026-08-21 task pre-flight against `main@cb7559cca2160c4c1cd2e9e9fcd90770e13f7e49`.
+2026-08-21 against live `main@cb7559cca2160c4c1cd2e9e9fcd90770e13f7e49`.
 
 Inputs:
 
-Issue #25 parent acceptance, delivered child issues/PRs #481/#482, #485/#486, #489/#493/#494/#495, #497/#498, live source and migrations.
+Issue #25 parent acceptance; delivered foundations #481/#482, #485/#486, #489/#493/#494/#495, #497/#498; live phrase/custom-word persistence, OpenAPI, integration tests and Agent Harness rules.
 
 Files inspected:
 
 - custom-word request/repository/HTTP/glossary owners;
 - phrase persistence and slug validator;
+- `words` repository public/authenticated owner filters;
+- phrase and lesson integration tests;
 - server route registration;
-- repository authenticated/public catalog filtering;
-- migration `000005_persistent_phrases.up.sql`;
-- migration `000022_custom_words.up.sql`;
+- migrations `000005_persistent_phrases.up.sql` and `000022_custom_words.up.sql`;
+- complete `api/openapi.yaml` blob;
+- `custom_glossary_openapi_contract_test.go` as a downstream full-document OpenAPI parser/version consumer;
 - OpenPencil screen map for UI-gap classification;
-- mandatory Agent Harness rules and public architecture docs.
+- mandatory Agent Harness rules.
 
 Actions performed:
 
-- completed parent #25 foundation audit;
-- proved no canonical listening/pronunciation/custom-vocabulary UI frames exist, so UI work remains design-gated;
-- identified private custom phrases as an independent backend gap;
-- created child Issue #638;
-- created branch from exact verified main;
-- wrote and read back task/pre-flight state.
+- proved UI remains design-gated and selected an independent backend phrase-ownership slice;
+- created Issue #638 and isolated branch from exact main;
+- widened the private DB scope without changing shared catalog ownership;
+- implemented bounded phrase request validation and cryptographically random server-owned slugs;
+- implemented transactional phrase create/enrollment and owner-safe deletion;
+- registered authenticated create/delete routes;
+- added deterministic unit/source and real PostgreSQL integration coverage;
+- fetched the complete large OpenAPI blob, constructed a complete additive `0.18.0` replacement, created/read back a new Git blob, then attached it through a single tree/commit fast-forward;
+- audited downstream exact OpenAPI consumers and synchronized only the proven glossary contract test assertion; no glossary runtime or v1 portability behavior changed;
+- continuously rechecked `main`, branch divergence and allowed-path diff.
 
 Commands or procedures:
 
-GitHub connector live reads/searches, exact branch creation, branch-explicit contents writes and post-write read-back/main verification.
+GitHub connector exact branch/file/blob/tree/commit/ref operations; source searches; commit comparison; branch-explicit read-backs. Local clone was attempted only as an optional validation convenience and abandoned when the execution container had no external DNS/network.
 
 Artifacts produced:
 
 - Issue #638;
 - branch `feat/issue-638-custom-phrases`;
-- `.agents/current/TASK.md` and `PROGRESS.md` task records.
+- migration `000023_custom_phrases.up.sql`;
+- custom phrase validation/repository/HTTP/test owners;
+- PostgreSQL integration test `custom_phrases_test.go`;
+- OpenAPI `0.18.0` additive contract;
+- synchronized shared OpenAPI full-document contract test;
+- populated `.agents/current/**` task records.
 
 Result:
 
-Pre-flight supports one backend/API/migration slice. No frontend/design dependency is required for this phase.
+Implementation is complete enough for authoritative repository CI. The product slice remains backend/API/migration only and reuses the established scheduler.
 
 Failures:
 
-One read-only REST branch URL containing a slash was rejected by the connector URL allow-list with HTTP 400.
+- one read-only branch REST URL containing `/` was rejected by the connector allow-list before mutation;
+- optional local clone/download was unavailable because the execution container lacked external DNS/network.
 
 Root cause:
 
-The generic fetch URL validator did not accept the unescaped slash-containing branch path.
+Tool/environment constraints, not repository defects.
 
 Fallback:
 
-Used branch search and commit comparison, which confirmed the ref and exact diff without any mutation.
+- branch existence and head state were verified through branch search/compare;
+- complete OpenAPI was manipulated through GitHub Git Data blobs/trees with pre-commit read-back;
+- compile, YAML structural parse and PostgreSQL execution are delegated to the repository's authoritative CI runners.
 
 Limitations:
 
-OpenAPI is a large file; mutation strategy must preserve the complete YAML document and must be followed by whole-document structural parsing. If connector file-size handling is unsuitable, use a verified local clone solely to construct/test complete file content, then publish through guarded repository writes.
+No local authoritative test execution is claimed. PR CI is mandatory before readiness/merge.
 
-Reusable lesson:
+Reusable lessons:
 
-Private phrase support must preserve slug lookup uniqueness. Do not make private slug uniqueness merely owner-scoped while `GET /api/v1/phrases/{slug}` can see both shared and owner rows; generate a globally unique canonical private slug instead.
+- private phrase support must preserve globally unambiguous slug lookup while detail resolution can see shared and owner rows;
+- do not generalize custom-word/glossary-v1 runtime merely to share code when an additive phrase owner is sufficient;
+- when a large canonical file cannot be safely patched incrementally, create/read-back a complete blob before moving the branch ref;
+- source changes to a shared specification require a downstream exact-consumer audit, including version and textual enum assertions.
 
 ### Backend validation
 
 Purpose:
 
-Protect PostgreSQL ownership, phrase shape, scheduler enrollment, deletion and OpenAPI contracts.
+Protect PostgreSQL ownership, phrase shape, scheduler enrollment, deletion, existing custom-word compatibility and OpenAPI structure.
 
 Instruction source:
 
@@ -103,46 +121,30 @@ Version or verification date:
 
 2026-08-21.
 
-Inputs:
+Implementation contract:
 
-Existing `words`/`user_words` model, phrase catalog/detail consumers and custom-word integration tests.
+- owner rows remain `source='user-custom-v1'`;
+- custom phrase `kind='phrase'` and `part_of_speech='phrase'`;
+- phrase shape includes non-empty canonical slug/cloze/cloze_answer;
+- cloze request contains exactly one `_____` marker;
+- private slug is generated server-side from 128 random bits;
+- create + user_words enrollment is one transaction;
+- owner duplicate is normalized `(lemma, translation)`; equivalent content is allowed for another owner;
+- public catalog excludes owner content;
+- deletion requires owner+kind+source and discards a containing active lesson first;
+- custom-word and `lexigo-custom-glossary-v1` behavior is unchanged.
 
-Files inspected:
+Validation ladder:
 
-See task pre-flight above.
+1. source/read-back and producer/consumer audit — completed;
+2. complete OpenAPI blob read-back — completed;
+3. Go unit/static/security and full YAML parse — pending CI;
+4. real PostgreSQL integration — pending CI;
+5. complete immutable-head CI — pending;
+6. review/thread audit — pending;
+7. expected-head squash merge — pending;
+8. exact-main CI and exact-SHA Stage/public smoke — pending.
 
-Actions performed:
+Current outcome:
 
-Producer/consumer and transaction-boundary audit completed before runtime code.
-
-Commands or procedures:
-
-Planned validation ladder: Go formatting/unit/source -> OpenAPI YAML parse -> PostgreSQL integration -> full repository CI -> exact-main CI -> exact-SHA Stage/public smoke.
-
-Artifacts produced:
-
-Issue #638 acceptance matrix and explicit allowed-path contract.
-
-Result:
-
-Implementation can reuse current scheduler and owner filters without a parallel model.
-
-Failures:
-
-None yet in product validation.
-
-Root cause:
-
-N/A.
-
-Fallback:
-
-If integration reveals a shared primitive is necessary, stop and expand allowed paths only to the proven owner; do not silently generalize custom-word/glossary-v1 code.
-
-Limitations:
-
-No local test run has been performed yet; implementation has not started.
-
-Reusable lesson:
-
-Cross-layer acceptance is not satisfied by widening a database constraint alone. Request validation, persistence, owner-safe read/delete consumers, OpenAPI and real PostgreSQL evidence must move together.
+No known deterministic source-contract blocker remains after synchronizing the shared OpenAPI version/error-field consumer.
