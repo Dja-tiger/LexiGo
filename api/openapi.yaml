@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: LexiGo API
-  version: 0.17.0
+  version: 0.18.0
   description: API персонального тренажёра технического английского.
 servers:
   - url: http://localhost:8080
@@ -824,6 +824,79 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Catalog item is not assigned to the current user.
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/phrases/custom:
+    post:
+      operationId: createCustomPhrase
+      tags: [learning]
+      summary: Create one private custom phrase and enroll it in the existing scheduler.
+      description: The server normalizes whitespace, validates exactly one cloze blank marker, fixes partOfSpeech to phrase, and generates a globally unique canonical slug. The client cannot choose ownership, source, kind, partOfSpeech or slug.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomPhraseRequest"
+      responses:
+        "201":
+          description: Owner-scoped phrase persisted and enrolled once with normal user_words scheduler defaults.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: An equivalent normalized custom item already exists for the current account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                duplicate:
+                  value:
+                    error:
+                      code: custom_phrase_duplicate
+                      message: an equivalent custom item already exists for the current account
+                      field: lemma
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/phrases/custom/{phraseID}:
+    delete:
+      operationId: deleteCustomPhrase
+      tags: [learning]
+      summary: Delete one custom phrase owned by the current account.
+      description: Missing, shared, and another account's private phrase intentionally return the same 404. If the phrase belongs to an active lesson, that lesson is discarded before dependent learning rows are cascade-deleted.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: phraseID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "204":
+          description: Owner-scoped custom phrase and dependent scheduler, review, and lesson references were deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Custom phrase is absent, shared, or belongs to another account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/phrases/{slug}:
@@ -1770,6 +1843,39 @@ components:
         note:
           type: string
           maxLength: 1000
+    CreateCustomPhraseRequest:
+      type: object
+      additionalProperties: false
+      required: [lemma, translation, cloze, clozeAnswer]
+      description: Private custom-phrase content. Whitespace is normalized before validation. The server owns kind, partOfSpeech, source, owner identity and slug; cloze must contain exactly one `_____` marker.
+      properties:
+        lemma:
+          type: string
+          minLength: 1
+          maxLength: 160
+        translation:
+          type: string
+          minLength: 1
+          maxLength: 500
+        phonetic:
+          type: string
+          maxLength: 120
+        topic:
+          type: string
+          maxLength: 120
+          description: Defaults to Personal when omitted or whitespace-only.
+        note:
+          type: string
+          maxLength: 1000
+        cloze:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Must contain exactly one `_____` marker after whitespace normalization.
+        clozeAnswer:
+          type: string
+          minLength: 1
+          maxLength: 160
     CustomGlossaryExport:
       type: object
       additionalProperties: false
@@ -1811,11 +1917,17 @@ components:
           maximum: 100
     UserWord:
       type: object
-      required: [id, lemma, translation, acceptedAnswers, status, dueAt]
+      required: [id, kind, lemma, translation, acceptedAnswers, status, dueAt]
       properties:
         id:
           type: integer
           format: int64
+        kind:
+          type: string
+          enum: [word, phrase]
+        slug:
+          type: string
+          description: Canonical phrase slug. Empty or omitted for word items.
         lemma:
           type: string
         translation:
@@ -1841,6 +1953,12 @@ components:
             type: string
         note:
           type: string
+        cloze:
+          type: string
+          description: Phrase cloze prompt; omitted for ordinary word items.
+        clozeAnswer:
+          type: string
+          description: Phrase cloze answer; omitted for ordinary word items.
         status:
           type: string
           enum: [new, learning, review, mastered]
@@ -2330,4 +2448,4 @@ components:
             field:
               type: string
               description: Опциональное стабильное имя поля формы, связанное с ошибкой.
-              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, version, items]
+              enum: [email, password, displayName, passwordConfirmation, token, lemma, translation, phonetic, partOfSpeech, topic, note, cloze, clozeAnswer, version, items]
