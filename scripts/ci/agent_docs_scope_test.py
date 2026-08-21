@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for LexiGo CI routing and architecture documentation contracts."""
+"""Regression tests for LexiGo CI routing and architecture/design documentation contracts."""
 
 from __future__ import annotations
 
@@ -19,6 +19,11 @@ DEPLOY_WORKFLOW = ROOT / ".github" / "workflows" / "deploy-stage.yml"
 README = ROOT / "README.md"
 ARCHITECTURE = ROOT / "docs" / "architecture.md"
 BOOTSTRAP = ROOT / "frontend" / "components" / "lexigo-bootstrapped-app.tsx"
+OPENPENCIL_DOCUMENT = ROOT / "design" / "openpencil" / "LexiGo Design System.op"
+OPENPENCIL_SCREEN_MAP = ROOT / "docs" / "figma" / "openpencil-screen-map.json"
+OPENPENCIL_HANDOFF = ROOT / "docs" / "figma" / "openpencil-production-handoff.json"
+ADAPTIVE_HANDOFF = ROOT / "frontend" / "docs" / "adaptive-knowledge-coach.md"
+LESSON_RESULT_HANDOFF = ROOT / "frontend" / "docs" / "lesson-result-figma.md"
 
 CANONICAL_ROUTE_ENTRIES = (
     ("LexigoHomeApp", "./lexigo-home-app"),
@@ -37,6 +42,35 @@ STALE_ARCHITECTURE_CLAIMS = (
     "только Phrases пока остаётся в compatibility graph",
     "текущая React state-модель ещё не извлечённых экранов",
 )
+
+REQUIRED_OPENPENCIL_ROUTE_KEYS = {
+    "home.authenticated",
+    "home.guest",
+    "onboarding.first-use",
+    "learn.composer",
+    "lesson.active",
+    "progress.default",
+    "dictionary.catalog",
+    "dictionary.word-detail",
+    "phrases.catalog",
+    "phrases.detail",
+    "profile.default",
+    "scenarios.catalog",
+    "scenarios.active",
+}
+
+REQUIRED_LESSON_RESULT_NODES = {
+    "fig_3072": ("Mobile / Result / Complete", 390, 844),
+    "fig_3042": ("Mobile / Result / Daily Goal", 390, 844),
+    "fig_3011": ("Mobile / Result / Next Block", 390, 844),
+    "fig_2981": ("Mobile / Result / Due Review", 390, 844),
+    "fig_2951": ("Mobile / Result / Sync Pending / Dark", 390, 844),
+    "fig_2910": ("Desktop / Result / Complete", 1440, 1024),
+    "fig_2869": ("Desktop / Result / Daily Goal", 1440, 1024),
+    "fig_2828": ("Desktop / Result / Next Block", 1440, 1024),
+    "fig_2787": ("Desktop / Result / Due Review", 1440, 1024),
+    "fig_2746": ("Desktop / Result / Sync Pending / Dark", 1440, 1024),
+}
 
 
 def _load_scope_module():
@@ -73,6 +107,31 @@ def _job_block(workflow: str, job_name: str) -> str:
         end = matches[index + 1].start() if index + 1 < len(matches) else len(workflow)
         return workflow[match.start():end]
     raise AssertionError(f"job {job_name!r} is missing")
+
+
+def _collect_openpencil_nodes(document: dict) -> dict[str, dict]:
+    nodes: dict[str, dict] = {}
+    pages = document.get("pages")
+    if not isinstance(pages, list):
+        raise AssertionError("OpenPencil document must contain a pages array")
+
+    for page in pages:
+        if not isinstance(page, dict):
+            continue
+        stack = list(page.get("children") or [])
+        while stack:
+            node = stack.pop()
+            if not isinstance(node, dict):
+                continue
+            node_id = node.get("id")
+            if isinstance(node_id, str):
+                if node_id in nodes:
+                    raise AssertionError(f"duplicate OpenPencil node id: {node_id}")
+                nodes[node_id] = node
+            children = node.get("children")
+            if isinstance(children, list):
+                stack.extend(children)
+    return nodes
 
 
 class PathClassificationTest(unittest.TestCase):
@@ -193,6 +252,157 @@ class ArchitectureDocumentationContractTest(unittest.TestCase):
         for stale_claim in STALE_ARCHITECTURE_CLAIMS:
             with self.subTest(stale_claim=stale_claim):
                 self.assertNotIn(stale_claim, public_architecture)
+
+
+class OpenPencilHandoffContractTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.document = json.loads(OPENPENCIL_DOCUMENT.read_text(encoding="utf-8"))
+        cls.nodes = _collect_openpencil_nodes(cls.document)
+        cls.screen_map = json.loads(OPENPENCIL_SCREEN_MAP.read_text(encoding="utf-8"))
+        cls.handoff = json.loads(OPENPENCIL_HANDOFF.read_text(encoding="utf-8"))
+        cls.adaptive_handoff = ADAPTIVE_HANDOFF.read_text(encoding="utf-8")
+        cls.lesson_result_handoff = LESSON_RESULT_HANDOFF.read_text(encoding="utf-8")
+
+        cls.inventory = {}
+        for inventory_name in ("screens", "activeScreens"):
+            entries = cls.screen_map.get(inventory_name)
+            if not isinstance(entries, list):
+                raise AssertionError(f"screen map {inventory_name!r} must be a list")
+            for entry in entries:
+                key = entry.get("key")
+                if not isinstance(key, str):
+                    raise AssertionError(f"screen map {inventory_name!r} entry is missing key")
+                identity = (inventory_name, key)
+                if identity in cls.inventory:
+                    raise AssertionError(f"duplicate screen-map key: {identity}")
+                cls.inventory[identity] = entry
+
+    def _assert_op_frame(self, source: dict) -> None:
+        node_id = source.get("opNode")
+        self.assertIsInstance(node_id, str)
+        node = self.nodes.get(node_id)
+        self.assertIsNotNone(node, f"missing OpenPencil node {node_id}")
+        assert node is not None
+        self.assertEqual(node.get("type"), "frame", node_id)
+        self.assertEqual(node.get("name"), source.get("name"), node_id)
+        self.assertEqual(float(node.get("width")), float(source.get("width")), node_id)
+        self.assertEqual(float(node.get("height")), float(source.get("height")), node_id)
+
+    def _assert_inventory_source(self, route: str, source: dict) -> None:
+        inventory_name = source.get("inventory")
+        key = source.get("key")
+        self.assertIn(inventory_name, ("screens", "activeScreens"))
+        self.assertIsInstance(key, str)
+        entry = self.inventory.get((inventory_name, key))
+        self.assertIsNotNone(entry, f"missing {inventory_name} key {key}")
+        assert entry is not None
+        self.assertEqual(entry.get("route"), route, key)
+        self._assert_op_frame(
+            {
+                "opNode": entry.get("openPencilNode"),
+                "name": entry.get("name"),
+                "width": entry.get("width"),
+                "height": entry.get("height"),
+            }
+        )
+
+    def test_openpencil_is_the_only_active_handoff_source(self) -> None:
+        active_source = self.handoff.get("activeDesignSource")
+        self.assertIsInstance(active_source, dict)
+        assert isinstance(active_source, dict)
+        self.assertEqual(active_source.get("tool"), "OpenPencil")
+        self.assertEqual(
+            active_source.get("document"),
+            "design/openpencil/LexiGo Design System.op",
+        )
+        self.assertEqual(active_source.get("historicalFigmaRole"), "archival-provenance-only")
+
+        combined_handoff = f"{self.adaptive_handoff}\n{self.lesson_result_handoff}".lower()
+        self.assertNotIn("figma source of truth", combined_handoff)
+        self.assertNotIn("## figma source", combined_handoff)
+        self.assertIn("openpencil is the only active design and handoff source", combined_handoff)
+        self.assertIn("archival provenance", combined_handoff)
+
+    def test_canonical_routes_are_unique_complete_and_delivered(self) -> None:
+        routes = self.handoff.get("routes")
+        self.assertIsInstance(routes, list)
+        assert isinstance(routes, list)
+
+        keys = [entry.get("key") for entry in routes]
+        self.assertEqual(len(keys), len(set(keys)), "canonical route keys must be unique")
+        self.assertEqual(set(keys), REQUIRED_OPENPENCIL_ROUTE_KEYS)
+
+        route_states = [(entry.get("route"), entry.get("state")) for entry in routes]
+        self.assertEqual(
+            len(route_states),
+            len(set(route_states)),
+            "each route/state pair must have one production owner",
+        )
+
+        for entry in routes:
+            with self.subTest(key=entry.get("key")):
+                route = entry.get("route")
+                self.assertIsInstance(route, str)
+                self.assertTrue(route.startswith("/"))
+                for viewport in ("mobile", "desktop"):
+                    source = entry.get(viewport)
+                    self.assertIsInstance(source, dict)
+                    assert isinstance(source, dict)
+                    if "inventory" in source:
+                        self._assert_inventory_source(route, source)
+                    else:
+                        self._assert_op_frame(source)
+
+                delivery = entry.get("delivery")
+                self.assertIsInstance(delivery, dict)
+                assert isinstance(delivery, dict)
+                self.assertIsInstance(delivery.get("issue"), int)
+                self.assertGreater(delivery["issue"], 0)
+                self.assertIsInstance(delivery.get("pr"), int)
+                self.assertGreater(delivery["pr"], 0)
+                self.assertIn(delivery.get("status"), ("merged", "merged-slice-parent-open"))
+
+    def test_lesson_result_uses_all_ten_openpencil_frames(self) -> None:
+        route_states = self.handoff.get("routeStates")
+        self.assertIsInstance(route_states, list)
+        assert isinstance(route_states, list)
+        self.assertEqual(len(route_states), 1)
+        result = route_states[0]
+        self.assertEqual(result.get("key"), "lesson.result")
+        self.assertEqual(result.get("route"), "/lesson/active")
+        self.assertEqual(result.get("state"), "result")
+        self.assertEqual(result.get("delivery"), {"issue": 194, "pr": 209, "status": "merged"})
+
+        sources = list(result.get("mobile") or []) + list(result.get("desktop") or [])
+        self.assertEqual(len(sources), 10)
+        self.assertEqual({source.get("opNode") for source in sources}, set(REQUIRED_LESSON_RESULT_NODES))
+        self.assertEqual(len({source.get("legacyFigmaNode") for source in sources}), 10)
+
+        for source in sources:
+            node_id = source.get("opNode")
+            expected_name, expected_width, expected_height = REQUIRED_LESSON_RESULT_NODES[node_id]
+            self.assertEqual(source.get("name"), expected_name)
+            self.assertEqual(source.get("width"), expected_width)
+            self.assertEqual(source.get("height"), expected_height)
+            self._assert_op_frame(source)
+
+        matrix = self.nodes.get("fig_2745")
+        self.assertIsNotNone(matrix)
+        assert matrix is not None
+        self.assertEqual(matrix.get("type"), "frame")
+        self.assertEqual(matrix.get("name"), "Lesson Result / Production Matrix")
+
+    def test_human_handoff_mentions_machine_contract_and_resolved_gaps(self) -> None:
+        for required in (
+            "`docs/figma/openpencil-production-handoff.json`",
+            "Lesson Result — Issue #194 / PR #209",
+            "Phrases — catalog #536/#538 and detail #540/#541",
+            "Guest Home / First Use — Issue #201 / PR #556",
+            "historical live-Figma synchronization is no longer an acceptance gate",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, self.adaptive_handoff)
 
 
 class WorkflowContractTest(unittest.TestCase):
