@@ -2,11 +2,23 @@ package learning
 
 import "time"
 
+type LessonSessionKind string
+
+const (
+	LessonSessionKindStudy       LessonSessionKind = "study"
+	LessonSessionKindReview      LessonSessionKind = "review"
+	LessonSessionKindRemediation LessonSessionKind = "remediation"
+)
+
 type LessonSelectionReason string
 
 const (
 	LessonReasonRecentFailure LessonSelectionReason = "recent_failure"
 	LessonReasonDue           LessonSelectionReason = "due"
+	LessonReasonOverdue       LessonSelectionReason = "overdue"
+	LessonReasonRelearningDue LessonSelectionReason = "relearning_due"
+	LessonReasonRepeatedAgain LessonSelectionReason = "repeated_again"
+	LessonReasonRepeatedAlmost LessonSelectionReason = "repeated_almost"
 	LessonReasonWeakTopic     LessonSelectionReason = "weak_topic"
 	LessonReasonNew           LessonSelectionReason = "new"
 	LessonReasonScheduled     LessonSelectionReason = "scheduled"
@@ -14,12 +26,13 @@ const (
 )
 
 type LessonCreateRequest struct {
-	Source      string     `json:"source"`
-	StudyMode   AnswerMode `json:"studyMode"`
-	LessonSize  string     `json:"lessonSize"`
-	Topic       string     `json:"topic,omitempty"`
-	WordIDs     []int64    `json:"wordIds,omitempty"`
-	ReviewRatio *int       `json:"reviewRatio,omitempty"`
+	Source      string            `json:"source"`
+	StudyMode   AnswerMode        `json:"studyMode"`
+	SessionKind LessonSessionKind `json:"sessionKind,omitempty"`
+	LessonSize  string            `json:"lessonSize"`
+	Topic       string            `json:"topic,omitempty"`
+	WordIDs     []int64           `json:"wordIds,omitempty"`
+	ReviewRatio *int              `json:"reviewRatio,omitempty"`
 }
 
 type LessonPreviewRequest struct {
@@ -80,16 +93,17 @@ type LessonItem struct {
 }
 
 type LessonSession struct {
-	ID           string       `json:"id"`
-	Source       string       `json:"source"`
-	StudyMode    AnswerMode   `json:"studyMode"`
-	LessonSize   string       `json:"lessonSize"`
-	CurrentIndex int          `json:"currentIndex"`
-	Version      int64        `json:"version"`
-	Status       string       `json:"status"`
-	Items        []LessonItem `json:"items"`
-	CreatedAt    time.Time    `json:"createdAt"`
-	UpdatedAt    time.Time    `json:"updatedAt"`
+	ID           string            `json:"id"`
+	Source       string            `json:"source"`
+	StudyMode    AnswerMode        `json:"studyMode"`
+	SessionKind  LessonSessionKind `json:"sessionKind,omitempty"`
+	LessonSize   string            `json:"lessonSize"`
+	CurrentIndex int               `json:"currentIndex"`
+	Version      int64             `json:"version"`
+	Status       string            `json:"status"`
+	Items        []LessonItem      `json:"items"`
+	CreatedAt    time.Time         `json:"createdAt"`
+	UpdatedAt    time.Time         `json:"updatedAt"`
 }
 
 type LessonReviewResult struct {
