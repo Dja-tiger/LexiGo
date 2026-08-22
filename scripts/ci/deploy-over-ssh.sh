@@ -96,6 +96,120 @@ log "extracting deployment bundle"
 ssh "${SSH_OPTIONS[@]}" "$TARGET" \
   "set -Eeuo pipefail; trap 'rm -f \"$REMOTE_ARCHIVE\"' EXIT; install -d -m 755 '$DEPLOY_PATH'; tar -xzf '$REMOTE_ARCHIVE' -C '$DEPLOY_PATH'"
 
+if [[ "$ENVIRONMENT" == "stage" ]]; then
+  log "checking Stage host capacity before image pulls"
+  ssh "${SSH_OPTIONS[@]}" "$TARGET" "bash -s -- '$DEPLOY_PATH' '$IMAGE_TAG'" <<'REMOTE_STAGE_CAPACITY'
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+deploy_path="${1:?deploy path is required}"
+requested_image_tag="${2:?requested image tag is required}"
+app_env_file="$deploy_path/deploy/env/stage.env"
+previous_image_tag=""
+min_free_kib=262144
+min_free_inodes=1024
+
+log() { printf '[stage-capacity] %s\n' "$*"; }
+die() { printf '[stage-capacity] ERROR: %s\n' "$*" >&2; exit 1; }
+
+[[ "$requested_image_tag" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] || die "requested image tag is invalid"
+command -v docker >/dev/null 2>&1 || die "docker is required for capacity recovery"
+command -v df >/dev/null 2>&1 || die "df is required for capacity recovery"
+
+if [[ -s "$app_env_file" ]]; then
+  previous_image_tag="$(sed -n 's/^IMAGE_TAG=//p' "$app_env_file" | tail -n 1)"
+  if [[ -n "$previous_image_tag" && ! "$previous_image_tag" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]; then
+    log "ignoring invalid previous image tag from Stage env"
+    previous_image_tag=""
+  fi
+fi
+
+capacity_path=""
+postgres_volume="$(
+  docker volume ls \
+    --filter 'label=com.docker.compose.project=lexigo-stage' \
+    --filter 'label=com.docker.compose.volume=stage_postgres' \
+    --format '{{.Name}}' \
+    | head -n 1 \
+    || true
+)"
+if [[ -n "$postgres_volume" ]]; then
+  capacity_path="$(docker volume inspect --format '{{.Mountpoint}}' "$postgres_volume" 2>/dev/null || true)"
+fi
+if [[ -z "$capacity_path" || ! -e "$capacity_path" ]]; then
+  capacity_path="$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || true)"
+fi
+if [[ -z "$capacity_path" || ! -e "$capacity_path" ]]; then
+  capacity_path="/"
+fi
+
+snapshot_capacity() {
+  local label="$1"
+  local available_kib available_inodes
+  available_kib="$(df -Pk "$capacity_path" | awk 'NR == 2 {print $4}')"
+  available_inodes="$(df -Pi "$capacity_path" | awk 'NR == 2 {print $4}')"
+  [[ "$available_kib" =~ ^[0-9]+$ ]] || die "could not read available filesystem KiB"
+  [[ "$available_inodes" =~ ^[0-9]+$ ]] || die "could not read available filesystem inodes"
+  log "$label path=$capacity_path available_kib=$available_kib available_inodes=$available_inodes"
+  df -Pk "$capacity_path" || true
+  df -Pi "$capacity_path" || true
+}
+
+snapshot_capacity "before cleanup"
+docker system df || true
+
+declare -A referenced_image_ids=()
+while IFS= read -r container_id; do
+  [[ -n "$container_id" ]] || continue
+  image_id="$(docker inspect --format '{{.Image}}' "$container_id" 2>/dev/null || true)"
+  [[ -n "$image_id" ]] && referenced_image_ids["$image_id"]=1
+done < <(docker ps -aq)
+
+for repository in ghcr.io/dja-tiger/lexigo-api ghcr.io/dja-tiger/lexigo-web; do
+  while IFS= read -r image_ref; do
+    [[ -n "$image_ref" ]] || continue
+    [[ "$image_ref" != "$repository:<none>" ]] || continue
+    image_tag="${image_ref#"$repository:"}"
+
+    if [[ "$image_tag" == "$requested_image_tag" || ( -n "$previous_image_tag" && "$image_tag" == "$previous_image_tag" ) ]]; then
+      log "preserving rollback/deploy image $image_ref"
+      continue
+    fi
+
+    image_id="$(docker image inspect --format '{{.Id}}' "$image_ref" 2>/dev/null || true)"
+    if [[ -z "$image_id" ]]; then
+      continue
+    fi
+    if [[ -n "${referenced_image_ids[$image_id]:-}" ]]; then
+      log "preserving container-referenced image $image_ref"
+      continue
+    fi
+
+    log "removing unused old LexiGo image tag $image_ref"
+    if ! docker image rm "$image_ref"; then
+      log "could not remove $image_ref; leaving it untouched"
+    fi
+  done < <(docker image ls "$repository" --format '{{.Repository}}:{{.Tag}}')
+done
+
+snapshot_capacity "after cleanup"
+
+after_available_kib="$(df -Pk "$capacity_path" | awk 'NR == 2 {print $4}')"
+after_available_inodes="$(df -Pi "$capacity_path" | awk 'NR == 2 {print $4}')"
+[[ "$after_available_kib" =~ ^[0-9]+$ ]] || die "could not verify available filesystem KiB after cleanup"
+[[ "$after_available_inodes" =~ ^[0-9]+$ ]] || die "could not verify available filesystem inodes after cleanup"
+
+if (( after_available_kib < min_free_kib )); then
+  die "Stage filesystem remains below ${min_free_kib} KiB free after safe LexiGo image cleanup"
+fi
+if (( after_available_inodes < min_free_inodes )); then
+  die "Stage filesystem remains below ${min_free_inodes} free inodes after safe LexiGo image cleanup"
+fi
+
+log "capacity gate passed; persistent volumes and containers were not removed"
+REMOTE_STAGE_CAPACITY
+fi
+
 log "deploying $ENVIRONMENT image $IMAGE_TAG to $PUBLIC_URL and $API_PUBLIC_URL"
 set -o pipefail
 printf '%s\n%s\n' "$GHCR_TOKEN" "$CLOUDFLARE_API_TOKEN" \
