@@ -76,7 +76,7 @@ func TestFilterLessonCandidatesForRemediationRequiresWeaknessSignal(t *testing.T
 		{WordID: 2, Kind: "word", Status: "review", DueAt: now.Add(2 * time.Hour), RecentFailure: true},
 		{WordID: 3, Kind: "phrase", Status: "review", DueAt: now.Add(3 * time.Hour), RepeatedAlmost: true},
 		{WordID: 4, Kind: "word", Status: "review", DueAt: now.Add(4 * time.Hour), WeakTopic: true},
-		{WordID: 5, Kind: "word", Status: "review", DueAt: now.Add(-time.Hour), Due: true},
+		{WordID: 5, Kind: "word", Status: "review", DueAt: now.Add(-time.Hour), Due: true, RepeatedAgain: true, RecentFailure: true, WeakTopic: true},
 		{WordID: 6, Kind: "word", Status: "new", DueAt: now, WeakTopic: true, RepeatedAlmost: true},
 	}
 
@@ -97,6 +97,32 @@ func TestFilterLessonCandidatesForRemediationRequiresWeaknessSignal(t *testing.T
 		LessonReasonWeakTopic,
 	}; !reflect.DeepEqual(reasons, want) {
 		t.Fatalf("remediation reasons = %v, want %v", reasons, want)
+	}
+}
+
+func TestDueWeakCandidateOwnedByReviewNotRemediation(t *testing.T) {
+	candidate := lessonCandidate{
+		WordID:         42,
+		Kind:           "word",
+		Status:         "review",
+		Due:            true,
+		RepeatedAgain:  true,
+		RecentFailure:  true,
+		RepeatedAlmost: true,
+		WeakTopic:      true,
+	}
+
+	review := filterLessonCandidatesForSession([]lessonCandidate{candidate}, LessonSessionKindReview)
+	if len(review) != 1 || review[0].WordID != candidate.WordID {
+		t.Fatalf("review ownership = %+v, want due candidate %d", review, candidate.WordID)
+	}
+	if reason := lessonCandidateReason(review[0]); reason != LessonReasonRepeatedAgain {
+		t.Fatalf("review reason = %q, want %q", reason, LessonReasonRepeatedAgain)
+	}
+
+	remediation := filterLessonCandidatesForSession([]lessonCandidate{candidate}, LessonSessionKindRemediation)
+	if len(remediation) != 0 {
+		t.Fatalf("remediation must not compete with review for due candidate: %+v", remediation)
 	}
 }
 

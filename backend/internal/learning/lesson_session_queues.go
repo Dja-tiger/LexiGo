@@ -209,7 +209,7 @@ func explicitLessonSelectionReason(candidate lessonCandidate, sessionKind Lesson
 			return LessonReasonDue, true
 		}
 	case LessonSessionKindRemediation:
-		if candidate.Status == "new" {
+		if candidate.Status == "new" || candidate.Due {
 			return "", false
 		}
 		switch {
