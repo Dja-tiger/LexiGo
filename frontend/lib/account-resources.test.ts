@@ -92,6 +92,13 @@ describe("account resource contracts", () => {
       updatedAt: "2026-07-18T00:00:00Z",
     };
     expect(isActiveLessonPayload(activeLesson)).toBe(true);
+    for (const sessionKind of ["study", "review", "remediation"]) {
+      expect(isActiveLessonPayload({ ...activeLesson, sessionKind })).toBe(true);
+    }
+    expect(isActiveLessonPayload({ ...activeLesson, sessionKind: "future" })).toBe(false);
+    for (const reason of ["overdue", "relearning_due", "repeated_again", "repeated_almost", "scheduled"]) {
+      expect(isActiveLessonPayload({ ...activeLesson, items: [{ ...ITEM, position: 0, reason }] })).toBe(true);
+    }
     expect(isActiveLessonPayload({ ...activeLesson, items: [{ ...ITEM, position: 0 }] })).toBe(true);
     expect(isActiveLessonPayload({ ...activeLesson, items: [{ ...ITEM, position: 0, reason: "unknown_reason" }] })).toBe(false);
     expect(isActiveLessonPayload({ ...activeLesson, source: "unknown" })).toBe(false);

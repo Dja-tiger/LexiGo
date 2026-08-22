@@ -796,36 +796,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
-  /api/v1/words/{wordID}:
-    get:
-      operationId: getWord
-      tags: [learning]
-      summary: Full catalog card assigned to the current user.
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: wordID
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-      responses:
-        "200":
-          description: Full word or term card with the current learning status.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserWord"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          description: Catalog item is not assigned to the current user.
-        "503":
-          $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/phrases/custom:
     post:
       operationId: createCustomPhrase
@@ -926,6 +896,36 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: Slug is invalid, absent, or the phrase is not assigned to the current user.
+        "503":
+          $ref: "#/components/responses/AuthenticationUnavailable"
+  /api/v1/words/{wordID}:
+    get:
+      operationId: getWord
+      tags: [learning]
+      summary: Full catalog card assigned to the current user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Full word or term card with the current learning status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWord"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Catalog item is not assigned to the current user.
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}/review:
@@ -2179,6 +2179,10 @@ components:
       type: string
       description: Stable lesson-composer source identifier. Academic Technical English maps to the curated hakui-technical-english-2020 catalog source.
       enum: [mixed, noun, verb, adjective, phrases, daily-life, travel, data-engineering, backend, academic-technical-english]
+    LessonSessionKind:
+      type: string
+      description: Optional staged-rollout lesson intent describing why the session exists. It is orthogonal to studyMode/answerMode, which describes how an exercise is answered. Omission means legacy/unspecified and must not be inferred as study.
+      enum: [study, review, remediation]
     LessonCreateRequest:
       type: object
       required: [source, studyMode, lessonSize]
@@ -2188,6 +2192,8 @@ components:
         studyMode:
           type: string
           enum: [study, recall, choice, listening]
+        sessionKind:
+          $ref: "#/components/schemas/LessonSessionKind"
         lessonSize:
           type: string
           enum: ["15", "30", "60"]
@@ -2271,6 +2277,10 @@ components:
           items: { type: string }
         note: { type: string }
         status: { type: string, enum: [new, learning, review, mastered] }
+        reason:
+          type: string
+          description: Durable server-owned reason explaining why the item was selected into the lesson.
+          enum: [recent_failure, due, overdue, relearning_due, repeated_again, repeated_almost, weak_topic, new, scheduled, manual]
         rating:
           type: [string, "null"]
           enum: [again, almost, known, null]
@@ -2287,6 +2297,8 @@ components:
         studyMode:
           type: string
           enum: [study, recall, choice, listening]
+        sessionKind:
+          $ref: "#/components/schemas/LessonSessionKind"
         lessonSize: { type: string }
         currentIndex: { type: integer, minimum: 0 }
         version:

@@ -2,7 +2,18 @@ export type PartOfSpeechSection = "noun" | "verb" | "adjective" | "other";
 export type WordCollection = "daily-life" | "travel" | "data-engineering" | "backend" | "academic-technical-english";
 export type WordSection = "mixed" | Exclude<PartOfSpeechSection, "other"> | WordCollection;
 export type LessonSize = 15 | 30 | 60 | "all";
-export type LessonSelectionReason = "recent_failure" | "due" | "weak_topic" | "new" | "scheduled" | "manual";
+export type LessonSessionKind = "study" | "review" | "remediation";
+export type LessonSelectionReason =
+  | "recent_failure"
+  | "due"
+  | "overdue"
+  | "relearning_due"
+  | "repeated_again"
+  | "repeated_almost"
+  | "weak_topic"
+  | "new"
+  | "scheduled"
+  | "manual";
 
 export const WORD_COLLECTION_TOPICS: Record<WordCollection, string> = {
   "daily-life": "Daily Life",

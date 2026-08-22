@@ -29,9 +29,14 @@ const LESSON_SOURCES = new Set([
   "academic-technical-english",
 ]);
 const STUDY_MODES = new Set(["study", "recall", "choice"]);
+const LESSON_SESSION_KINDS = new Set(["study", "review", "remediation"]);
 const LESSON_SELECTION_REASONS = new Set([
   "recent_failure",
   "due",
+  "overdue",
+  "relearning_due",
+  "repeated_again",
+  "repeated_almost",
   "weak_topic",
   "new",
   "scheduled",
@@ -126,6 +131,7 @@ export function isActiveLessonPayload(value: unknown): boolean {
   return isString(value.id)
     && LESSON_SOURCES.has(value.source as string)
     && STUDY_MODES.has(value.studyMode as string)
+    && (value.sessionKind === undefined || (isString(value.sessionKind) && LESSON_SESSION_KINDS.has(value.sessionKind)))
     && isString(value.lessonSize)
     && isNonNegativeNumber(value.currentIndex)
     && isNonNegativeNumber(value.version)
