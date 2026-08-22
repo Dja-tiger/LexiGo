@@ -2,42 +2,39 @@
 
 ## Verification
 
-- Last verified: 2026-08-21 Europe/Berlin.
+- Last verified: 2026-08-22 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
 - Live GitHub and live source are authoritative for branch heads, open work, ownership, review state, CI and deployment state.
 - This file is the current operational snapshot. Detailed historical delivery evidence remains preserved in Git history and the linked Issues/PRs.
 
 ## Latest completed runtime delivery
 
-- Issue #638 / PR #639 delivered owner-scoped private custom phrases as Phase 5 of parent #25.
-- Final developer-authored PR head: `89cff7136c467d6644b3e2168ca47fe78fbc5971`.
-- Immutable-head PR CI #3942 / run `32458596329`: **success** across backend unit/security, PostgreSQL integration with race detector, frontend core, both UI shards, Lesson completion, Visual regression, accessibility, performance, CSP/service-worker checks and API/web container builds.
-- Review audit before merge: no review submissions, no unresolved review threads and no PR comments; PR was mergeable and branch was not behind `main`.
-- PR #639 squash merge: `1235d45235aa81d34fccf084c52676b509a60794`; Issue #638 closed completed automatically.
-- Exact-main CI run `32459891269`: **success** on `1235d45235aa81d34fccf084c52676b509a60794`, including backend integration/unit/security, frontend/browser/visual/accessibility/performance gates and API/web image publication.
-- Deploy Stage run `32460782804`: **success** on exact image SHA `1235d45235aa81d34fccf084c52676b509a60794`.
+- Parent Issue #651 / PR #656 delivered Stage 1 of the learning-process separation architecture: an additive lesson-session intent contract without changing current candidate-selection or scheduler behavior.
+- Final PR head: `4df21dfd25611d9b16f0e0599dc52a906eece5a5`; immutable-head PR CI #3979 / run `32563683185`: **success** across backend unit/security/integration, frontend core, browser/visual/accessibility/performance/service-worker gates and API/web container builds.
+- Review audit before merge: no review submissions, no unresolved review threads and no PR comments; PR was mergeable against unchanged base `0873e31e26522d5a855f0ec95925a4fa4d2497e3`.
+- PR #656 squash merge: `68298977652d737ee267b4cfd5e1a978fb99828c`. Parent Issue #651 remains open because later queue-selector, workload and recommendation stages are intentionally out of this PR.
+- Exact-main CI run `32579145833`: **success** on `68298977652d737ee267b4cfd5e1a978fb99828c`, including backend integration/unit/security, frontend/browser/visual/accessibility/performance gates and API/web image publication.
+- Exact CI scope artifact `ci-scope-68298977652d737ee267b4cfd5e1a978fb99828c` reports `agent_docs_only=false` and exact head SHA `68298977652d737ee267b4cfd5e1a978fb99828c`.
+- Deploy Stage run `32579711137`: **success** on exact image SHA `68298977652d737ee267b4cfd5e1a978fb99828c`.
 - Stage deployment, public frontend/API smoke and public browser verification all passed; public Chromium + iOS WebKit runtime suite passed 12/12.
 
-## Issue #638 runtime contract now delivered
+## Issue #651 Stage 1 contract now delivered
 
-- Private phrases remain the existing `words(kind='phrase')` entity and reuse the existing `user_words`, lesson and review scheduler path; no second SRS exists.
-- Owner-scoped private vocabulary is restricted to `source='user-custom-v1'` and supports both custom words and custom phrases.
-- Custom phrase creation normalizes and bounds learner-owned fields, while `kind`, `partOfSpeech`, owner identity and slug remain server-owned.
-- Private phrase slugs are generated from cryptographic randomness and remain globally unique so they cannot shadow shared or another account's phrase detail route.
-- Phrase creation and exactly one scheduler enrollment are atomic.
-- Same-owner normalized duplicates are rejected; equivalent content across different accounts remains legal and isolated.
-- Public catalog projections exclude owner content; another authenticated account cannot resolve or delete another owner's private phrase.
-- Owner-safe deletion discards a containing active lesson before existing FK cascade cleanup of scheduler/review/lesson references.
-- Existing custom-word create/delete and `lexigo-custom-glossary-v1` word import/export behavior remain compatible.
-- OpenAPI is now `0.18.0` and documents the additive custom-phrase endpoints and phrase fields.
+- `sessionKind = study | review | remediation` is a distinct session-intent axis describing why a lesson exists; it remains orthogonal to `studyMode` / `answerMode`, which describe how an exercise is answered.
+- `sessionKind` is optional for backward compatibility. Legacy/omitted intent remains SQL `NULL` and omitted from JSON; it is never fabricated as `study`.
+- Explicit session intent persists in `lesson_sessions.session_kind` and participates in recent-active dedupe identity via null-safe comparison so different intents cannot alias one lesson.
+- Durable selection reasons now include `overdue`, `relearning_due`, `repeated_again` and `repeated_almost` while retaining the pre-existing reasons, including `scheduled`.
+- PostgreSQL constraints, backend HTTP/domain/persistence contracts, OpenAPI, frontend shared types/runtime validation and human-readable reason labels are synchronized.
+- Unit, integration and full-file OpenAPI contract regressions protect explicit round-trip behavior, invalid-value rejection, legacy omission semantics and expanded selection reasons.
+- This stage deliberately does not split Study/Review/Remediation candidate selectors, does not change review-ratio/due-priority behavior, and does not change scheduler intervals/easiness/repetitions.
 
-## Delivery lessons retained from #638
+## Delivery lessons retained from #651 Stage 1
 
-- Full OpenAPI edits must preserve the complete YAML document and be followed by structural parsing plus dependent contract audit.
-- A shared OpenAPI consumer test was correctly updated only for the additive API version and the newly valid `cloze` / `clozeAnswer` validation fields; glossary runtime semantics were not generalized.
-- First PR CI exposed only one `gofmt` failure in `integration/custom_phrases_test.go`; it was fixed without behavior changes.
-- The next integration failure was a test-fixture assumption (`select shared phrase: no rows in result set`), not a production defect. The test now creates its own explicit shared owner-null phrase fixture before proving custom-delete isolation.
-- Real PostgreSQL integration is the authority for migration, owner isolation, duplicate semantics, scheduler participation and deletion boundaries.
+- Additive shared enums must be traced through compiler-enforced exhaustive consumers, not only their primary API/type declarations.
+- CI #3977 exposed `frontend/lib/interface-copy.ts` as an exhaustive `LessonSelectionReason` consumer; adding the four required labels fixed the contract dependency without widening product behavior.
+- Legacy intent must remain distinguishable from explicit `study`; defaulting omitted data would corrupt future analytics and staged queue semantics.
+- Session intent belongs in active-session dedupe identity because a lesson created for one pedagogical process must not be reused for another.
+- Cross-layer contract changes require real PostgreSQL integration plus OpenAPI/frontend runtime validation in the same atomic slice.
 
 ## Design source of truth
 
@@ -102,6 +99,7 @@ Umbrella #205 remains open. Do not repeat already delivered tablet/desktop/trans
 - #133: moderated usability validation requires real sessions and is not replaceable by browser automation.
 - #205: final consolidated OpenPencil visual parity umbrella remains open.
 - #508: physical installed-PWA icon/splash/cold-start matrix remains manual QA.
+- #651: Stage 1 session-intent contract is delivered by #656; independent Study/Review/Remediation queue selection, bounded workload and recommendation UX remain open in the parent task.
 
 ## Delivery contract
 
