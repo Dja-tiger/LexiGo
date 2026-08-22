@@ -6,7 +6,7 @@
 - Branch: `feat/issue-651-process-aware-home`
 - Base SHA: `6d8c8dbc3b25f5fd428c18cb18b151402984ec72`
 - Head SHA: resolve from live branch ref
-- PR: Draft after the first coherent vertical implementation
+- PR: #664 (Draft until every required runtime, CI and Stage gate passes)
 
 ## Objective
 
@@ -31,7 +31,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Changing manual `/learn` size choices from 15/30/60 to the parent target 15/30/50; bounded manual workload is a later atomic slice.
 - Adding automatic `All`, changing catalog/source filters or redesigning the Learn composer.
 - Adding analytics/history dashboards or long-term recommendation scoring weights.
-- Broad Home redesign, new design tokens, snapshot refresh or unrelated CSS cleanup.
+- Broad Home redesign, new design tokens, blind visual-baseline refresh or unrelated CSS cleanup.
 - Closing parent Issue #651.
 
 ## Allowed paths
@@ -49,8 +49,13 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - `frontend/components/lexigo-home-app.tsx`
 - `frontend/app/adaptive-knowledge-coach-home.css`
 - `frontend/app/adaptive-knowledge-coach-home.test.ts`
+- `frontend/e2e/support/quality-gates.ts`
 - `frontend/e2e/adaptive-knowledge-coach-home.spec.ts`
-- `frontend/e2e/mobile-home-priority.spec.ts` only if the existing Home-priority contract requires synchronized request/copy updates
+- `frontend/e2e/mobile-home-priority.spec.ts`
+- `frontend/e2e/home-route-island.spec.ts`
+- `frontend/e2e/information-architecture.spec.ts`
+- `frontend/e2e/home-browser-zoom.spec.ts`
+- `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 
 ## Prohibited paths
 
@@ -93,7 +98,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Legacy preview without `sessionKind` keeps current composition semantics and response compatibility.
 - A candidate that is due and weak/error-signaled is owned by Review, not automatic Remediation.
 - Home obtains independent Study, Review and Remediation available counts from explicit previews.
-- Home renders one dominant recommendation and explicit process controls with truthful labels such as `Повторить 15 из N`, `Изучить 15 новых` / `Изучить 15 из N`, and `Разобрать N ошибок`.
+- Home renders one dominant recommendation and explicit process controls with truthful labels such as `Повторить 15 из N`, `Изучить 15 новых` / `Изучить N новых`, and `Разобрать N ошибок`.
 - Clicking any automatic Home process creates a lesson with the corresponding explicit `sessionKind`, compatible `studyMode` and `lessonSize: "15"`.
 - When Review backlog exceeds 15, Home says `15 из N` and creates 15; it never expands automatically to 30/60.
 - When Review is empty but Remediation exists, Remediation is recommended; when both are empty and Study exists, Study is recommended.
@@ -106,7 +111,8 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Full OpenAPI YAML structural validation and session-kind source contract.
 - Frontend lint/typecheck/unit/source contracts.
 - Targeted Home Playwright in desktop Chromium, Android Chromium and iOS WebKit, including request-body assertions, no horizontal overflow, touch/focus targets and reduced motion.
-- Full immutable-head CI including both UI shards, visual regression without baseline updates, accessibility, performance, CSP/service-worker and container builds.
+- Existing Home route-island, information-architecture, true browser-zoom and route-readiness consumers remain collected and green after their fixtures/locators are synchronized to the process-aware contract.
+- Full immutable-head CI including both UI shards, visual regression without blind baseline updates, accessibility, performance, CSP/service-worker and container builds.
 - Clean PR comments/reviews/threads and expected-head squash merge.
 - Exact-main CI plus Stage/public smoke/browser verification on the runtime merge SHA.
 
@@ -115,7 +121,8 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Preview mock drift could make UI counts differ from actual create semantics; fixtures must echo exact `sessionKind` request state.
 - Adding secondary process actions can create compact reflow/touch-target regressions; use existing button tokens and verify 320/390 widths plus 200% text.
 - Server preview and create could diverge if validation/selector paths differ; both must use the same `queryLessonCandidatesForSession` owner.
-- Due+weak candidates currently qualify for both Review and Remediation; the selector ownership correction must be protected by unit and real PostgreSQL evidence.
+- Due+weak candidates previously qualified for both Review and Remediation; the selector ownership correction is protected by unit and real PostgreSQL evidence.
+- Existing Home fixtures that used `progress.dueNow` or hard-coded `Повторить сейчас` are stale consumers once process preview becomes the recommendation source; they must be synchronized without weakening their original route/layout/accessibility purpose.
 
 ## Rollback
 
