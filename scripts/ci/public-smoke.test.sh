@@ -111,4 +111,47 @@ if PATH="$TEMP_DIR:$PATH" \
   exit 1
 fi
 
-printf 'public smoke script tests passed\n'
+DEPLOY_OVER_SSH="$SCRIPT_DIR/deploy-over-ssh.sh"
+python3 - "$DEPLOY_OVER_SSH" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+required = [
+    'if [[ "$ENVIRONMENT" == "stage" ]]',
+    'checking Stage host capacity before bundle upload and image pulls',
+    'min_free_kib=262144',
+    'min_free_inodes=1024',
+    "df -Pk \"$capacity_path\"",
+    "df -Pi \"$capacity_path\"",
+    "container_ids=\"$(docker ps -aq)\" || die",
+    'declare -A referenced_image_ids=()',
+    'ghcr.io/dja-tiger/lexigo-api ghcr.io/dja-tiger/lexigo-web',
+    'preserving rollback/deploy image',
+    'preserving container-referenced image',
+    'docker image rm "$image_ref"',
+    'capacity gate passed; persistent volumes and containers were not removed',
+    'tee -a "$LOG_FILE"',
+]
+for token in required:
+    if token not in source:
+        raise SystemExit(f"missing Stage capacity recovery contract: {token}")
+
+forbidden = re.compile(
+    r"docker\s+(?:system|image|container|volume|network)\s+prune"
+    r"|docker\s+(?:volume|container|network)\s+rm\b"
+    r"|docker\s+rm\b"
+    r"|down\s+-v\b"
+)
+match = forbidden.search(source)
+if match:
+    raise SystemExit(f"destructive or daemon-wide Stage cleanup is prohibited: {match.group(0)}")
+
+capacity_index = source.index('checking Stage host capacity before bundle upload and image pulls')
+bundle_index = source.index('log "building deployment bundle"')
+if capacity_index >= bundle_index:
+    raise SystemExit("Stage capacity recovery must run before bundle upload/extraction")
+PY
+
+printf 'public smoke and deployment capacity source-contract tests passed\n'
