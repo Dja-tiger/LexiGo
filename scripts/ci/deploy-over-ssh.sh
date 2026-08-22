@@ -88,17 +88,9 @@ SSH_OPTIONS=(
   -o ServerAliveCountMax=3
 )
 
-log "building deployment bundle"
-tar -C "$PROJECT_ROOT" -czf "$ARCHIVE_FILE" deploy scripts/remote-deploy.sh
-log "uploading deployment bundle"
-scp "${SSH_OPTIONS[@]}" "$ARCHIVE_FILE" "$TARGET:$REMOTE_ARCHIVE"
-log "extracting deployment bundle"
-ssh "${SSH_OPTIONS[@]}" "$TARGET" \
-  "set -Eeuo pipefail; trap 'rm -f \"$REMOTE_ARCHIVE\"' EXIT; install -d -m 755 '$DEPLOY_PATH'; tar -xzf '$REMOTE_ARCHIVE' -C '$DEPLOY_PATH'"
-
 if [[ "$ENVIRONMENT" == "stage" ]]; then
-  log "checking Stage host capacity before image pulls"
-  ssh "${SSH_OPTIONS[@]}" "$TARGET" "bash -s -- '$DEPLOY_PATH' '$IMAGE_TAG'" <<'REMOTE_STAGE_CAPACITY'
+  log "checking Stage host capacity before bundle upload and image pulls"
+  ssh "${SSH_OPTIONS[@]}" "$TARGET" "bash -s -- '$DEPLOY_PATH' '$IMAGE_TAG'" <<'REMOTE_STAGE_CAPACITY' 2>&1 | tee -a "$LOG_FILE"
 set -Eeuo pipefail
 IFS=$'\n\t'
 
@@ -158,14 +150,16 @@ snapshot_capacity() {
 snapshot_capacity "before cleanup"
 docker system df || true
 
+container_ids="$(docker ps -aq)" || die "could not inventory Docker containers"
 declare -A referenced_image_ids=()
 while IFS= read -r container_id; do
   [[ -n "$container_id" ]] || continue
   image_id="$(docker inspect --format '{{.Image}}' "$container_id" 2>/dev/null || true)"
   [[ -n "$image_id" ]] && referenced_image_ids["$image_id"]=1
-done < <(docker ps -aq)
+done <<< "$container_ids"
 
 for repository in ghcr.io/dja-tiger/lexigo-api ghcr.io/dja-tiger/lexigo-web; do
+  image_refs="$(docker image ls "$repository" --format '{{.Repository}}:{{.Tag}}')" || die "could not inventory $repository images"
   while IFS= read -r image_ref; do
     [[ -n "$image_ref" ]] || continue
     [[ "$image_ref" != "$repository:<none>" ]] || continue
@@ -189,7 +183,7 @@ for repository in ghcr.io/dja-tiger/lexigo-api ghcr.io/dja-tiger/lexigo-web; do
     if ! docker image rm "$image_ref"; then
       log "could not remove $image_ref; leaving it untouched"
     fi
-  done < <(docker image ls "$repository" --format '{{.Repository}}:{{.Tag}}')
+  done <<< "$image_refs"
 done
 
 snapshot_capacity "after cleanup"
@@ -210,12 +204,20 @@ log "capacity gate passed; persistent volumes and containers were not removed"
 REMOTE_STAGE_CAPACITY
 fi
 
+log "building deployment bundle"
+tar -C "$PROJECT_ROOT" -czf "$ARCHIVE_FILE" deploy scripts/remote-deploy.sh
+log "uploading deployment bundle"
+scp "${SSH_OPTIONS[@]}" "$ARCHIVE_FILE" "$TARGET:$REMOTE_ARCHIVE"
+log "extracting deployment bundle"
+ssh "${SSH_OPTIONS[@]}" "$TARGET" \
+  "set -Eeuo pipefail; trap 'rm -f \"$REMOTE_ARCHIVE\"' EXIT; install -d -m 755 '$DEPLOY_PATH'; tar -xzf '$REMOTE_ARCHIVE' -C '$DEPLOY_PATH'"
+
 log "deploying $ENVIRONMENT image $IMAGE_TAG to $PUBLIC_URL and $API_PUBLIC_URL"
 set -o pipefail
 printf '%s\n%s\n' "$GHCR_TOKEN" "$CLOUDFLARE_API_TOKEN" \
   | ssh "${SSH_OPTIONS[@]}" "$TARGET" \
       "bash '$DEPLOY_PATH/scripts/remote-deploy.sh' '$ENVIRONMENT' '$IMAGE_TAG' '$PUBLIC_URL' '$API_PUBLIC_URL' '$ACME_EMAIL' '$GHCR_USER'" \
       2>&1 \
-  | tee "$LOG_FILE"
+  | tee -a "$LOG_FILE"
 unset GHCR_TOKEN CLOUDFLARE_API_TOKEN
 log "$ENVIRONMENT deployment completed"
