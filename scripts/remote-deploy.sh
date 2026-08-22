@@ -248,11 +248,40 @@ print_http_diagnostic() (
   printf '\n'
 )
 
+print_service_state() {
+  local service="$1" container_id
+  container_id="$("${COMPOSE[@]}" ps -q "$service" 2>/dev/null | head -n 1 || true)"
+  if [[ -z "$container_id" ]]; then
+    log "$service container is not present"
+    return 0
+  fi
+
+  log "$service container state"
+  docker inspect --format \
+    'status={{.State.Status}} running={{.State.Running}} restarting={{.State.Restarting}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} error={{printf "%q" .State.Error}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+    "$container_id" || true
+  docker inspect --format \
+    '{{if .State.Health}}{{range .State.Health.Log}}{{println .Start "exit=" .ExitCode .Output}}{{end}}{{end}}' \
+    "$container_id" 2>/dev/null | tail -n 5 || true
+}
+
+print_service_logs() {
+  local service="$1"
+  log "$service logs (last 120 lines)"
+  "${COMPOSE[@]}" logs --no-color --tail=120 "$service" || true
+}
+
 print_deployment_diagnostics() {
   "${COMPOSE[@]}" ps || true
+  print_service_state postgres
+  print_service_state redis
+  print_service_state api
+  print_service_state web
+  print_service_logs postgres
+  print_service_logs redis
   print_http_diagnostic "frontend root" "$SITE_HOST" "/?lexigo_diagnostic=$REQUESTED_IMAGE_TAG" || true
   print_http_diagnostic "API readiness" "$API_HOST" "/health/ready" || true
-  "${COMPOSE[@]}" logs --tail=200 caddy api web || true
+  "${COMPOSE[@]}" logs --no-color --tail=200 caddy api web || true
 }
 
 rollback_to_previous_image() {
