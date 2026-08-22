@@ -19,7 +19,8 @@ Use the Stage-1 `sessionKind = study | review | remediation` contract on actual 
 - explicit `review` creation automatically selects only non-new items whose `due_at <= now()`; future scheduled items are never used to fill the block;
 - classify due review items with explainable primary reasons including `relearning_due`, `overdue`, `recent_failure`, `repeated_again` and `due`;
 - explicit `remediation` creation selects only weak/error candidates (`recent_failure`, `repeated_again`, `repeated_almost`, `weak_topic`) and may include not-due items because the session itself is an explicit remediation action;
-- derive repeated `again` / `almost` signals from persisted review events instead of a client-side heuristic;
+- derive repeated `again` / `almost` signals from persisted learner self-rating (`review_events.rating`) instead of objective correctness or a client-side heuristic;
+- keep objective failure evidence separate through persisted `correct` / `effective_rating` semantics;
 - keep queue ordering deterministic and retain word/phrase/topic diversification;
 - make recent-completed-block exclusion session-aware for explicit sessions while preserving the old cross-kind legacy behavior for omitted intent;
 - add unit and real-PostgreSQL integration regression coverage for strict queues, persisted reasons and legacy compatibility;
@@ -43,7 +44,6 @@ Use the Stage-1 `sessionKind = study | review | remediation` contract on actual 
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 - `backend/internal/learning/lesson.go`
-- `backend/internal/learning/lesson_http.go`
 - `backend/internal/learning/lesson_composer.go`
 - `backend/internal/learning/lesson_progression.go`
 - focused unit/integration tests under `backend/internal/learning/**` and `backend/integration/**`
@@ -79,8 +79,9 @@ Use the Stage-1 `sessionKind = study | review | remediation` contract on actual 
 
 ## Selection semantics for this slice
 
-- repeated `again`: at least two `again` effective ratings in the existing 14-day recent-failure window;
-- repeated `almost`: at least three `almost` effective ratings in the existing 14-day recent-failure window;
+- repeated `again`: at least two learner self-ratings `rating = 'again'` in the existing 14-day recent-failure window;
+- repeated `almost`: at least three learner self-ratings `rating = 'almost'` in the existing 14-day recent-failure window;
+- recent failure: latest review in the same window has scheduler-effective `again` or objective `correct = false`;
 - overdue: due for at least 24 hours; ordinary due remains `due`;
 - relearning due: `status = 'learning'` and due now;
 - remediation precedence: `repeated_again` → `recent_failure` → `repeated_almost` → `weak_topic`;
