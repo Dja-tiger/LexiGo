@@ -95,8 +95,14 @@ describe("First Use canonical route and accessibility contracts", () => {
     expect(onboarding).toContain("Повторить");
     expect(onboarding).toContain("Вернуться назад");
 
+    const genericNoteOwner = css.indexOf(".lx-first-use-note {");
+    const desktopBoundaryStart = css.indexOf("@media (min-width: 720px)");
+    expect(genericNoteOwner).toBeGreaterThan(-1);
+    expect(desktopBoundaryStart).toBeGreaterThan(genericNoteOwner);
+
     const desktopBoundary = css.match(/@media \(min-width: 720px\) \{([\s\S]*?)\n\}\n\n@media \(max-width: 719px\)/)?.[1];
     expect(desktopBoundary).toBeTruthy();
+    expect(desktopBoundary).toMatch(/\.lx-first-use-loading-note--mobile \{[\s\S]*?display: none;/);
     expect(desktopBoundary).toMatch(/\.lx-first-use-loading \.lx-first-use-skeletons \{[\s\S]*?gap: 32px;[\s\S]*?margin-top: 32px;/);
     expect(desktopBoundary).toContain(".lx-first-use-loading .lx-first-use-skeletons span:nth-child(5)");
     expect(desktopBoundary).toMatch(/\.lx-first-use-loading-note--desktop \{[\s\S]*?min-height: 74px;[\s\S]*?margin-top: 66px;/);

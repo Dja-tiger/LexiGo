@@ -514,6 +514,13 @@ body:has(.lx-first-use) > .lx-legal-footer {
     line-height: 1.2;
   }
 
+  /* The generic .lx-first-use-note owner is declared later than the initial
+   * compact visibility group. Reassert the desktop state after that generic
+   * owner so the compact note cannot be re-enabled by equal specificity. */
+  .lx-first-use-loading-note--mobile {
+    display: none;
+  }
+
   .lx-first-use-loading .lx-first-use-skeletons {
     gap: 32px;
     margin-top: 32px;
