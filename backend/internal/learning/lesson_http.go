@@ -25,6 +25,10 @@ func (h *Handler) PreviewLesson(w http.ResponseWriter, r *http.Request) {
 	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
+	if !validLessonSessionKind(request.SessionKind) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_session_kind", "sessionKind must be omitted or one of study, review or remediation")
+		return
+	}
 	preview, err := h.repository.PreviewLesson(r.Context(), userID, request)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "preview lesson failed", "user_id", userID, "error", err)
