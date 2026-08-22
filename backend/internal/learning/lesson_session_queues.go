@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	lessonOverdueWindow          = 24 * time.Hour
-	repeatedAgainMinimumAttempts = 2
+	lessonOverdueWindow           = 24 * time.Hour
+	repeatedAgainMinimumAttempts  = 2
 	repeatedAlmostMinimumAttempts = 3
 )
 
