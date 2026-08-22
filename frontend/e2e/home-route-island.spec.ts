@@ -122,12 +122,13 @@ const CANONICAL_HOME_CASES: readonly CanonicalHomeCase[] = [
   },
 ] as const;
 
-function lesson() {
+function lesson(input: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-0000-0000-000000000251",
     source: "mixed",
-    studyMode: "recall",
-    lessonSize: "30",
+    studyMode: typeof input.studyMode === "string" ? input.studyMode : "recall",
+    ...(typeof input.sessionKind === "string" ? { sessionKind: input.sessionKind } : {}),
+    lessonSize: typeof input.lessonSize === "string" ? input.lessonSize : "15",
     currentIndex: 0,
     version: 1,
     status: "active",
@@ -180,22 +181,27 @@ async function installAPI(context: BrowserContext): Promise<FixtureState> {
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as Record<string, unknown>;
       state.lessonCreates.push(input);
-      activeLesson = lesson();
+      activeLesson = lesson(input);
       return json(route, 201, activeLesson);
     }
     if (path === "/api/v1/lessons/preview") {
+      const input = request.postDataJSON() as Record<string, unknown>;
+      const sessionKind = typeof input.sessionKind === "string" ? input.sessionKind : "";
+      const review = sessionKind === "review";
+      const explicitEmpty = sessionKind === "remediation" || sessionKind === "study";
       return json(route, 200, {
-        source: "mixed",
-        studyMode: "study",
-        lessonSize: "30",
+        source: typeof input.source === "string" ? input.source : "mixed",
+        studyMode: typeof input.studyMode === "string" ? input.studyMode : "study",
+        ...(sessionKind ? { sessionKind } : {}),
+        lessonSize: typeof input.lessonSize === "string" ? input.lessonSize : "30",
         composition: {
-          total: 1,
-          words: 1,
+          total: explicitEmpty ? 0 : 1,
+          words: explicitEmpty ? 0 : 1,
           phrases: 0,
-          due: 1,
+          due: review || !sessionKind ? 1 : 0,
           new: 0,
           scheduled: 0,
-          availableWords: 1,
+          availableWords: explicitEmpty ? 0 : 1,
           availablePhrases: 0,
         },
       });
@@ -236,7 +242,7 @@ async function expectHomeRouteOwner(page: Page, appearance?: ExplicitAppearance)
   await expect(island).toHaveAttribute("data-figma-home-mobile", "196:223");
   await expect(island).toHaveAttribute("data-figma-home-desktop", "194:249");
   await expect(page.locator("#lexigo-main-content")).toHaveAttribute("aria-label", "Главная");
-  await expect(page.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Повторить 1", exact: true })).toBeVisible();
 
   if (appearance) {
     await expect(page.locator("html")).toHaveAttribute("data-lexigo-appearance", appearance);
@@ -330,10 +336,10 @@ test("Home starts the due lesson and consumes resume=1 without an intermediate g
 
   await page.goto("/");
   await expect(page.locator('[data-route-client-island="home"]')).toBeVisible();
-  await expect(page.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Повторить 1", exact: true })).toBeVisible();
   expect(state.refreshes).toBe(1);
 
-  await page.getByRole("button", { name: "Повторить сейчас" }).click();
+  await page.getByRole("button", { name: "Повторить 1", exact: true }).click();
 
   await expect(page).toHaveURL((url) => url.pathname === "/lesson/active" && url.search === "");
   await expect(page.locator(".lx-active-lesson")).toBeVisible();
@@ -341,7 +347,8 @@ test("Home starts the due lesson and consumes resume=1 without an intermediate g
   expect(state.lessonCreates).toEqual([{
     source: "mixed",
     studyMode: "recall",
-    lessonSize: "30",
+    sessionKind: "review",
+    lessonSize: "15",
   }]);
   expect(state.refreshes).toBe(1);
 });
