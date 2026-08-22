@@ -2,65 +2,139 @@
 
 ## Task
 
-- Issue: #659
-- Branch: `fix/issue-659-stage-capacity-recovery`
-- Base SHA: `f7edbb9a39e2b0ad26cba365ffca54ffedde54e0`
-- PR: pending Draft PR creation
+- Issue: #651
+- Branch: `feat/issue-651-session-queue-selectors`
+- Base SHA: `02001d365eb557efa48fa0ecb5f4289b7cb61456`
+- PR: #662 (Draft until final gates pass)
+- Atomic delivery stage: Stage 2 — independent backend automatic queues for explicit `sessionKind`
 
-## Skills used
+## Sources and prerequisites
 
-### GitHub repository operations
+Instruction sources read before writes:
 
-Purpose: continue the open Stage PostgreSQL incident after #660 made the failing dependency observable and immutable evidence proved host filesystem exhaustion.
+- root `AGENTS.md` and `.agents/AGENTS.md`;
+- all mandatory `.agents/AGENTS.*.md` documents referenced by the repository index;
+- `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, current task files and `docs/agent-harness.md`;
+- live Issue #651 and its comments;
+- live PR #656/Stage-1 repository state;
+- backend learning domain, lesson composer/progression/repository/scheduler contracts;
+- current migrations for review-event self-rating, objective correctness and judgement semantics;
+- current CI workflow and integration-test ownership.
 
-Instruction source: root Agent Harness, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, current task files, `docs/agent-harness.md`, Issue #659, deployment status #12 and exact GitHub Actions logs.
+Live preflight proved there was no open PR to continue and that Stage 1 had already delivered nullable `sessionKind` plus expanded selection-reason vocabulary. Stage 2 therefore began from exact live main rather than duplicating #656.
 
-Verification date: 2026-08-22.
+## Engineering decisions
 
-Inputs: `main=f7edbb9a39e2b0ad26cba365ffca54ffedde54e0`; no open PRs at slice start; failed exact-SHA Stage run `32592663356`; deploy job `97078782932`; previous rollback app image `68298977652d737ee267b4cfd5e1a978fb99828c`.
+### Compatibility boundary
 
-Proven root cause: PostgreSQL repeatedly reports `FATAL: could not write lock file "postmaster.pid": No space left on device`; state is exit 1/restarting/unhealthy and not OOM. Redis remains healthy and rollback reproduces the same database-start failure.
+Omitted `sessionKind` remains the rollout-safe legacy path. The existing `queryLessonCandidates` implementation is preserved and explicit intent is routed through a new selector owner instead of rewriting the legacy SQL in-place.
 
-Files inspected: `scripts/ci/deploy-over-ssh.sh`, `scripts/remote-deploy.sh`, `deploy/compose/docker-compose.stage.yml`, `.github/workflows/deploy-scripts-check.yml`, `scripts/ci/public-smoke.test.sh`, Agent Harness rules/current state and live Issue/deployment evidence.
+This keeps current frontend callers stable until a later #651 PR explicitly opts them into `study`, `review` or `remediation`.
 
-Actions performed:
+### Study queue
 
-- re-verified live main, Stage failure and absence of open PRs;
-- created `fix/issue-659-stage-capacity-recovery` from exact main;
-- added a Stage-only SSH capacity preflight before deployment bundle upload and image pulls;
-- made capacity discovery prefer the PostgreSQL named-volume mountpoint, with Docker-root/filesystem fallback;
-- added byte/inode diagnostics before and after cleanup;
-- restricted cleanup to old unused LexiGo API/web image tags;
-- protected requested, previous rollback and every container-referenced image ID;
-- made container/image inventory fail closed;
-- prohibited broad prune and volume/container/network deletion by implementation and source contract;
-- required 262144 KiB and 1024 free inodes before continuing;
-- appended capacity evidence to the existing deployment log;
-- extended the already-executed public-smoke test owner with a deployment capacity source contract so the normal Deployment scripts check exercises the safety invariants.
+Automatic explicit Study accepts only `user_words.status = 'new'`. Composer review-ratio logic cannot introduce learned items because the upstream candidate set is already new-only.
 
-Changed paths:
+### Review queue
 
-- `scripts/ci/deploy-over-ssh.sh`
-- `scripts/ci/public-smoke.test.sh`
-- `.agents/current/TASK.md`
-- `.agents/current/PROGRESS.md`
-- `.agents/current/EXECUTION.md`
+Automatic explicit Review accepts only non-new rows with `due_at <= now()`. The requested lesson size is an upper bound over the real due backlog, not a target that can be padded with future scheduled items.
 
-Restrictions preserved:
+Primary reason precedence is process-aware: relearning due, repeated learner failure, recent objective/scheduler failure, overdue, then ordinary due. Existing deterministic due-time ordering/diversification remains after the strict boundary.
 
-- no direct write to `main`;
-- no `docker system/image/container/volume/network prune`;
-- no `docker volume rm`, container/network removal or `down -v`;
-- no frontend/backend/API/design/Compose/database-data changes;
-- no secret/environment dump;
-- no PostgreSQL healthcheck weakening or image-version guess.
+### Remediation queue
 
-Validation pending: Draft PR, Deployment scripts check, full immutable-head CI, review/thread audit, expected-head squash merge, exact-main CI and automatic Stage/public validation.
+Automatic explicit Remediation requires persisted weakness/error evidence. Supported signals are repeated `again`, recent failure, repeated `almost` and weak topic. A future-scheduled item may enter this queue only because an explicit remediation process is being started; an ordinary scheduled item without a signal is excluded.
 
-Fallback: if targeted old LexiGo app-image cleanup cannot restore the minimum capacity gate, fail before deployment and preserve the capacity evidence. Do not broaden automatically to unrelated images, containers, volumes or host files; use the resulting byte/inode inventory for a separately justified action.
+### Self-rating vs objective correctness
 
-Reusable lesson candidate: a deploy pipeline that can fail because the target filesystem is full needs its capacity recovery before bundle upload/image pull, must distinguish bytes from inodes, and must preserve rollback/current/container-referenced artifacts while refusing broad cleanup.
+The repository already persists separate fields for learner self-assessment and objective/scheduler judgement. Repeated `Не знаю` / `Почти` therefore counts `review_events.rating`, not `effective_rating`.
+
+`recent_failure` remains a separate signal based on the latest recent event's objective `correct = false` or scheduler-effective `again`. This avoids fabricating the user's self-rating from an objective answer failure.
+
+### Persisted explanation
+
+Selected explicit candidates carry a primary `LessonSelectionReason` override into the existing lesson-item persistence path. Manual `wordIds` continue to persist `manual`. No scheduler state was mutated to manufacture a selector result.
+
+### Immediate continuation exclusion
+
+Explicit sessions exclude the immediately preceding completed block only when source, answer mode and `session_kind` match. Omitted legacy sessions retain the prior exclusion behavior to avoid rollout regression.
+
+### Preview boundary
+
+The documented external `POST /api/v1/lessons/preview` contract is not widened in Stage 2. Process-aware preview/recommendation should be delivered with the Home recommendation/count layer so backend API, OpenAPI and frontend caller move atomically.
+
+## Production code changed
+
+- `backend/internal/learning/lesson_session_queues.go`
+  - explicit candidate SQL;
+  - recent self-rating counts;
+  - weak-topic/recent-failure/overdue derivation;
+  - Study/Review/Remediation filters and primary-reason precedence;
+  - session-kind-scoped recent-completed exclusion.
+- `backend/internal/learning/lesson_composer.go`
+  - candidate metadata/reason override support;
+  - explicit-session routing hook;
+  - reason-aware scheduled composition count;
+  - deterministic easiness tie-break and process-aware priority tiers.
+- `backend/internal/learning/lesson_progression.go`
+  - automatic create path now routes explicit `sessionKind` through the independent selector owner while manual creation stays unchanged.
+- `backend/internal/learning/lesson.go`
+  - internal non-serialized preview staging field used by the shared composer hook; no external preview/OpenAPI surface change in this stage.
+
+No database migration, scheduler interval/easiness/repetition mutation, frontend presentation, CSS, deployment or dependency file is changed.
+
+## Regression tests added
+
+- `backend/internal/learning/lesson_session_queues_test.go`
+  - strict Study new-only filtering;
+  - Review future-scheduled exclusion and exact backlog behavior;
+  - Review/Remediation reason precedence;
+  - Remediation signal-only filtering;
+  - legacy reason compatibility.
+- `backend/integration/lesson_session_queues_test.go`
+  - real migrations/catalog/PostgreSQL/Redis server path;
+  - deterministic new, due, overdue, relearning-due, repeated-again future, repeated-almost future and ordinary future states;
+  - HTTP lesson creation for all three explicit session kinds;
+  - database read-back of durable `selection_reason`;
+  - omitted-intent legacy creation regression.
+
+## Validation process
+
+The first CI attempt classified the only backend failure as formatting: the new Go files were reported by `gofmt -l`. They were reformatted without changing selector semantics.
+
+On the subsequent code head the following gates were observed green before final documentation was committed:
+
+- change-scope classification;
+- Go formatting;
+- static analysis;
+- backend unit tests under the race detector;
+- coverage summary;
+- vulnerability scan;
+- frontend lint, typecheck, unit tests, production build and production dependency audit;
+- several browser/PWA/security/accessibility jobs.
+
+The authoritative merge gate is the fresh complete CI run on the final head containing these execution records; no intermediate run ID is promoted as durable state.
+
+## Review and safety audit
+
+Before final docs, PR #662 had no submitted reviews, no inline review threads and no conversation comments. This audit must be repeated on the final unchanged head before Ready.
+
+Safety/compatibility restrictions preserved:
+
+- no direct `main` write;
+- no parallel product PR while #662 is active;
+- no `scheduled-not-due` fill in explicit Review;
+- no learned-item fill in explicit Study;
+- no ordinary-item fill in explicit Remediation;
+- no conflation of self-rating with objective correctness;
+- no scheduler formula mutation;
+- no OpenAPI/frontend rollout ahead of explicit caller wiring;
+- no destructive data or deployment operation.
+
+## Rollback
+
+Revert the Stage-2 selector PR. Stage-1 nullable `session_kind` and reason vocabulary remain backward compatible, and callers that omit `sessionKind` continue using the pre-Stage-2 legacy composer path.
 
 ## Handoff
 
-Compare the branch with live main, open a Draft PR, run the normal deployment-script and full CI gates, then merge only on the final unchanged head. Issue #659 remains open until exact-main Stage, public smoke and public browser checks are healthy.
+Do not start the next #651 product slice until #662 has full required CI on its final immutable head, a clean review/thread audit, Ready state, expected-head squash merge, exact-main CI and Stage validation. After that, update durable project state/reset current context and begin the process-aware recommendation/Home slice from the new live main.

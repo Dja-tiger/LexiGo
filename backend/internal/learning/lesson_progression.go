@@ -47,7 +47,15 @@ func (r *Repository) CreateProgressiveLesson(
 	wordIDs := request.WordIDs
 	selectionReasons := make([]string, 0)
 	if wordIDs == nil {
-		candidates, candidateErr := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode, request.Topic)
+		candidates, candidateErr := queryLessonCandidatesForSession(
+			ctx,
+			tx,
+			userID,
+			request.Source,
+			request.StudyMode,
+			request.Topic,
+			request.SessionKind,
+		)
 		if candidateErr != nil {
 			return LessonSession{}, candidateErr
 		}

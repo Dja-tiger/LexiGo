@@ -26,15 +26,20 @@ const (
 )
 
 type lessonCandidate struct {
-	WordID        int64
-	Kind          string
-	Status        string
-	DueAt         time.Time
-	Due           bool
-	Topic         string
-	PartOfSpeech  string
-	RecentFailure bool
-	WeakTopic     bool
+	WordID         int64
+	Kind           string
+	Status         string
+	DueAt          time.Time
+	Due            bool
+	Topic          string
+	PartOfSpeech   string
+	RecentFailure  bool
+	WeakTopic      bool
+	Easiness       float64
+	RepeatedAgain  bool
+	RepeatedAlmost bool
+	Overdue        bool
+	ReasonOverride LessonSelectionReason
 }
 
 func (r *Repository) PreviewLesson(ctx context.Context, userID string, request LessonPreviewRequest) (LessonPreview, error) {
@@ -44,7 +49,15 @@ func (r *Repository) PreviewLesson(ctx context.Context, userID string, request L
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	candidates, err := queryLessonCandidates(ctx, tx, userID, request.Source, request.StudyMode, request.Topic)
+	candidates, err := queryLessonCandidatesForSession(
+		ctx,
+		tx,
+		userID,
+		request.Source,
+		request.StudyMode,
+		request.Topic,
+		request.SessionKind,
+	)
 	if err != nil {
 		return LessonPreview{}, err
 	}
@@ -56,6 +69,7 @@ func (r *Repository) PreviewLesson(ctx context.Context, userID string, request L
 	return LessonPreview{
 		Source:      request.Source,
 		StudyMode:   request.StudyMode,
+		SessionKind: request.SessionKind,
 		LessonSize:  request.LessonSize,
 		Composition: composition,
 	}, nil
@@ -296,7 +310,7 @@ func composeLessonCandidates(candidates []lessonCandidate, source string, limit 
 		}
 		if candidate.Status == "new" {
 			composition.New++
-		} else if !candidate.Due {
+		} else if lessonCandidateReason(candidate) == LessonReasonScheduled {
 			composition.Scheduled++
 		}
 		if candidate.RecentFailure {
@@ -401,17 +415,20 @@ func sortLessonQueue(queue []lessonCandidate) {
 		if !queue[left].DueAt.Equal(queue[right].DueAt) {
 			return queue[left].DueAt.Before(queue[right].DueAt)
 		}
+		if queue[left].Easiness != queue[right].Easiness {
+			return queue[left].Easiness < queue[right].Easiness
+		}
 		return queue[left].WordID < queue[right].WordID
 	})
 }
 
 func lessonCandidatePriority(candidate lessonCandidate) int {
 	switch lessonCandidateReason(candidate) {
-	case LessonReasonRecentFailure:
+	case LessonReasonRecentFailure, LessonReasonRelearningDue, LessonReasonRepeatedAgain:
 		return 0
-	case LessonReasonDue:
+	case LessonReasonDue, LessonReasonOverdue:
 		return 1
-	case LessonReasonWeakTopic:
+	case LessonReasonWeakTopic, LessonReasonRepeatedAlmost:
 		return 2
 	case LessonReasonNew:
 		return 3
@@ -421,6 +438,9 @@ func lessonCandidatePriority(candidate lessonCandidate) int {
 }
 
 func lessonCandidateReason(candidate lessonCandidate) LessonSelectionReason {
+	if candidate.ReasonOverride != "" {
+		return candidate.ReasonOverride
+	}
 	switch {
 	case candidate.RecentFailure:
 		return LessonReasonRecentFailure
