@@ -18,6 +18,7 @@ import (
 	postgresplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/postgres"
 	redisplatform "github.com/Dja-tiger/LexiGo/backend/internal/platform/redis"
 	"github.com/Dja-tiger/LexiGo/backend/internal/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
@@ -116,8 +117,7 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 	if _, err := pg.Exec(ctx, `
 		update user_words
 		set status = case
-		        when word_id = $2 then 'review'
-		        when word_id = $3 then 'review'
+		        when word_id in ($2, $3) then 'review'
 		        when word_id = $4 then 'learning'
 		        when word_id in ($5, $6, $7) then 'review'
 		        else status
@@ -197,9 +197,9 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 		t.Fatalf("review lesson size = %d, want exact due backlog 3; items=%+v", len(review.Items), review.Items)
 	}
 	wantReviewReasons := map[int64]string{
-		reviewDue:      "due",
-		overdue:        "overdue",
-		relearningDue:  "relearning_due",
+		reviewDue:     "due",
+		overdue:       "overdue",
+		relearningDue: "relearning_due",
 	}
 	for _, item := range review.Items {
 		wantReason, found := wantReviewReasons[item.ID]
@@ -258,14 +258,7 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 func assertPersistedLessonReasons(
 	t *testing.T,
 	ctx context.Context,
-	pg interface {
-		Query(context.Context, string, ...any) (interface {
-			Next() bool
-			Scan(...any) error
-			Err() error
-			Close()
-		}, error)
-	},
+	pg *pgxpool.Pool,
 	lessonID string,
 	want map[int64]string,
 ) {
