@@ -5,65 +5,61 @@
 - Issue: #642
 - Branch: `test/issue-642-first-use-loading-error-visual`
 - Base SHA: `0fce4b690a6fbff95dd2d4ec6c5e725a21700d9d`
-- Head SHA: resolve from live branch ref after reconstructed commit
+- Evidence collection head: `98282f9bb6a7cea9797cf4fddcf663ec7970d69f`
+- Final approval head: resolve from live branch after commit
 - PR: #645
 
 ## Skills used
 
 ### GitHub repository operations
 
-Purpose: reconstruct an evidence branch on exact current `main` without carrying stale runtime history, preserve a four-file atomic diff and obtain immutable-head Linux visual provenance.
+Purpose: reconstruct a stale visual-evidence branch on delivered `main`, collect exact immutable Linux evidence, approve only manually reviewed content-addressed fingerprints and preserve a four-file atomic scope.
 
-Instruction source: root `AGENTS.md`, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `docs/agent-harness.md`, Issue #642 and repository visual-evidence rules.
+Instruction source: root `AGENTS.md`, `.agents/AGENTS.md`, applicable `.agents/AGENTS.*`, `docs/agent-harness.md`, Issue #642 and repository visual-evidence rules.
 
-Version or verification date: live repository state revalidated on 2026-08-22.
+Verification date: 2026-08-22.
 
-Inputs: `main=0fce4b690a6fbff95dd2d4ec6c5e725a21700d9d`, Issue #642, Draft PR #645, prior head `93eb5733d6250eb159b76e23862c88b14c9c006f`, CI #3969 / run `32539008972`, Visual artifact `9466508067`, delivered runtime #647/#648 and active OpenPencil artifact `9448087269`.
+Inputs: current-base `0fce4b690a6fbff95dd2d4ec6c5e725a21700d9d`; Issue #642; Draft PR #645; reconstructed head `98282f9bb6a7cea9797cf4fddcf663ec7970d69f`; CI #3983 / `32582045336`; fresh Visual artifact `9478170455`; OpenPencil artifact `9448087269`.
 
-Files inspected: PR metadata/diff, `frontend/e2e/first-use-visual.spec.ts`, current `frontend/app/first-use.css`, delivered `frontend/components/lexigo-onboarding-app.tsx`, Issue #647 / PR #648 evidence, Agent Harness templates/current state, prior Linux visual artifact and exact OpenPencil renders.
+Files inspected: PR metadata/diff, authoritative `frontend/e2e/first-use-visual.spec.ts`, current First Use runtime/CSS, all eight fresh Linux actual PNGs, all eight active OpenPencil reference PNGs and Agent Harness current-task files.
 
-Actions performed: re-audited live refs; confirmed #656 delivery and reconciliation were complete; downloaded and manually compared the prior eight-state Linux artifact; rejected stale hashes because desktop loading still showed the compact note on the older head; confirmed current `main` contains the later desktop visibility reassertion; prepared a new single-parent reconstruction using the existing test blob and current task-local docs.
+Actions performed: revalidated live refs; reconstructed #645 as a single-parent branch from current `main`; ran immutable CI; confirmed all non-visual gates green; verified Visual failed exactly eight times only at `REVIEW_REQUIRED`; downloaded the exact Visual artifact; recomputed each PNG SHA-256; manually reviewed all eight actual/reference pairs; approved only the fresh current-head fingerprints; prepared a fast-forward fingerprint-approval commit.
 
-Commands or procedures: GitHub connector reads, workflow jobs/logs/artifact download, local artifact unzip/SHA-256 and side-by-side visual inspection, Git Data blob/tree/commit/ref workflow, compare audit and exact-head CI monitoring.
+Commands or procedures: GitHub connector reads/writes, Git Data blob/tree/commit/ref workflow, workflow job/log/artifact inspection, artifact digest verification, local ZIP extraction and SHA-256 recomputation, and side-by-side image review.
 
-Artifacts produced: diagnostic side-by-side comparisons of old Linux actuals versus OpenPencil references; reconstructed Draft PR #645 head; subsequent fresh Linux PNG/JSON evidence artifact.
+Artifacts produced: GitHub Actions artifact `9478170455` (`sha256:0191bada13f950d617681e92880f42bd9e4c2afaa57152e359889ada3fe7b6f0`) plus local comparison sheets used only for manual review.
 
-Result: pending branch ref update and fresh current-main immutable CI.
+Result: all eight fresh fingerprints approved for commit; final immutable CI still required.
 
-Failures: prior CI #3969 intentionally failed Visual regression because all eight new baselines were `REVIEW_REQUIRED`; aggregate Frontend quality failed only as a consequence. No semantic/core/backend/browser gate failed. The prior desktop loading actuals were not approved because they exposed a stale-base visibility mismatch.
+Failures: CI #3983 intentionally failed Visual regression because the eight new entries still contained `REVIEW_REQUIRED`; aggregate Frontend quality failed only as its dependency summary. Exactly 158 visual tests passed and exactly the eight intended First Use tests failed. No product/runtime assertion failed.
 
-Root cause: evidence hashes bind to the exact tested runtime. The previous PR head predates a later CSS specificity fix now present on `main`, so its desktop loading screenshots are not authoritative for current production code.
+Root cause: intentional fail-closed evidence collection. A previous run had also exposed stale desktop-loading CSS, so its hashes were rejected. On the current-main reconstruction the two desktop-loading hashes changed while the six unaffected cases remained stable, confirming the stale evidence was not reused.
 
-Fallback: if the fresh Visual job fails before reaching `REVIEW_REQUIRED`, inspect exact logs/artifacts and repair only the evidence owner if the defect is test-local. If fresh current-main actuals still expose a product mismatch, keep #645 fail-closed and create a separate runtime issue/PR.
+Fallback: if final CI after committing the reviewed hashes fails semantically or any fresh screenshot changes, do not update hashes automatically. Reproduce the failure and classify it as test-local, infrastructure/browser flake or product/design mismatch before any further write.
 
-Limitations: OpenPencil render hashes and Linux browser screenshot hashes are different evidence domains; only the fresh Linux actuals from the reconstructed current-main head may become runtime fingerprints.
+Limitations: Linux browser screenshot hashes are exact runtime artifacts and are not interchangeable with OpenPencil export hashes. Manual review established parity; it does not claim byte equality between the two rendering engines.
 
-Reusable lesson: never approve a visual fingerprint merely because the state and test are deterministic; first prove that the exact branch contains the latest delivered runtime/CSS and manually compare that exact artifact with its design node.
+Reusable lesson: visual approval must be tied to the exact current runtime/base and exact CI artifact. Deterministic stale screenshots are not valid baselines.
 
 ### OpenPencil visual evidence
 
-Purpose: bind every loading/error screenshot to the active repository-owned design source and preserve fail-closed approval semantics.
+Purpose: provide fail-closed provenance for First Use loading/error parity.
 
-Instruction source: Issue #642, `.agents/AGENTS.progress-pr214.md`, Issue #74 visual collection rules and the delivered #647 repair evidence.
+Instruction source: Issue #642, active repository-owned OpenPencil mapping and established Issue #74 visual collection rules.
 
 Inputs: OpenPencil source SHA `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`; acceptance run `32486519368`; artifact `9448087269`; digest `sha256:6613ec5c6680ff962e2612c366aba454a7ab815212e2b1a763a9f4c085b95689`; nodes `n117/n128/n277/n288/n442/n456/n614/n628`.
 
-Files inspected: all eight active OpenPencil loading/error PNGs and node exports, the previous Linux actuals, current runtime/CSS and `docs/figma/openpencil-screen-map.json` contract through the existing visual owner.
+Reviewed mappings:
 
-Actions performed: retained exact key/node/route/viewport bindings; retained canonical error copy; kept all new fingerprints at `REVIEW_REQUIRED`; manually classified the old mobile/error states as structurally aligned but rejected the old desktop-loading fingerprints because the stale branch rendered an extra compact callout that current `main` now suppresses.
+- `n117` loading compact Light → `5ac755583ae348e92dd14af1e28ae97874c3072fb7f6825c36b5a9ef7df9fb8b`
+- `n277` loading compact Dark → `643dcc73be33f1878765f2b6826d41e689f7ebec277ac0ce9777b9161f6d97e3`
+- `n442` loading desktop Light → `448d90d81985018b383454f905371379831f475fbc24be3b1e95822bf11b814d`
+- `n614` loading desktop Dark → `f9f88c3000aad5445d4bd1139cf81face075838b82d3f776d80227aa7c511a9e`
+- `n128` error compact Light → `e4b0f198fff3a41acdca84f23b07b82250affae262a3c95719fed43c1c402e49`
+- `n288` error compact Dark → `03983eea1fc462f0e667deba5246952bfcf247da24a3cef4c3f33eec3320a7b3`
+- `n456` error desktop Light → `1175fc95ac3085e4fc3b748cc4ffd6f4f032fe4dfe29a46d209d18bd1569a3fa`
+- `n628` error desktop Dark → `6cfbf773756e934a50e8b30a30a896399d3efd328fd2c101539d020b89682a06`
 
-Commands or procedures: authoritative `frontend/e2e/first-use-visual.spec.ts`, exact PNG SHA-256 attachments/JSON provenance, artifact digest verification and side-by-side review.
+Manual review result: accepted. Mobile reference exports include device/status-bar framing that is intentionally outside the browser runtime capture, but route content, hierarchy, copy, controls, theme and canonical content viewport align. Desktop loading now omits the stale compact callout and aligns with the intended desktop note owner.
 
-Artifacts produced: fresh eight Linux actual PNGs and JSON records will be produced by the next immutable Visual regression run.
-
-Result: pending fresh current-main evidence.
-
-Failures: historical pre-repair evidence triggered #647; the later #3969 evidence was test-semantically correct but stale relative to current `main`, so it is diagnostic only.
-
-Root cause: visual approval must follow current runtime, not merely a previously reconstructed evidence branch.
-
-Fallback: approve no hash until every fresh current-main actual is reviewed against its exact active node.
-
-Limitations: no fuzzy tolerance, snapshot update mode or Figma Cloud dependency is permitted.
-
-Reusable lesson: a fail-closed visual pipeline can correctly identify both product defects and stale-branch evidence; treat both as reasons not to bless hashes.
+No OpenPencil source, screen-map entry, runtime CSS/React, workflow or binary snapshot is modified by the approval commit.
