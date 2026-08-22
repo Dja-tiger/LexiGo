@@ -3,48 +3,64 @@
 ## Task
 
 - Issue: #659
-- Branch: `fix/issue-659-stage-postgres-diagnostics`
-- Base SHA: `0b92466b9385503e53f654b77da533caa362c2fb`
-- Validated implementation head: `a85d234f11ba0f5397170e3106eaa773f007e711`
-- Final evidence head: resolve from live branch after commit
-- PR: #660
+- Branch: `fix/issue-659-stage-capacity-recovery`
+- Base SHA: `f7edbb9a39e2b0ad26cba365ffca54ffedde54e0`
+- PR: pending Draft PR creation
 
 ## Skills used
 
 ### GitHub repository operations
 
-Purpose: diagnose and recover a reproducible Stage PostgreSQL startup incident without conflating it with the already-merged First Use visual-evidence change.
+Purpose: continue the open Stage PostgreSQL incident after #660 made the failing dependency observable and immutable evidence proved host filesystem exhaustion.
 
-Instruction source: root Agent Harness, current repository deploy scripts/workflows, Issue #12 deployment status and immutable GitHub Actions evidence.
+Instruction source: root Agent Harness, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `.agents/SKILLS.md`, `.agents/PROJECT_STATE.md`, current task files, `docs/agent-harness.md`, Issue #659, deployment status #12 and exact GitHub Actions logs.
 
 Verification date: 2026-08-22.
 
-Inputs: `main=0b92466b9385503e53f654b77da533caa362c2fb`; exact-main CI `32584377045`; failed Stage run `32584934165`; reproduced attempt-2 deploy job `97060166932`; previous healthy app image `68298977652d737ee267b4cfd5e1a978fb99828c`; PR #660 implementation head `a85d234f11ba0f5397170e3106eaa773f007e711`; Deployment scripts check `32585435004`; full CI `32585434981`.
+Inputs: `main=f7edbb9a39e2b0ad26cba365ffca54ffedde54e0`; no open PRs at slice start; failed exact-SHA Stage run `32592663356`; deploy job `97078782932`; previous rollback app image `68298977652d737ee267b4cfd5e1a978fb99828c`.
 
-Files inspected: `scripts/ci/deploy-over-ssh.sh`, `scripts/remote-deploy.sh`, `deploy/compose/docker-compose.stage.yml`, `.github/workflows/deploy-scripts-check.yml`, PR #660 metadata/diff and current Agent Harness task files.
+Proven root cause: PostgreSQL repeatedly reports `FATAL: could not write lock file "postmaster.pid": No space left on device`; state is exit 1/restarting/unhealthy and not OOM. Redis remains healthy and rollback reproduces the same database-start failure.
 
-Actions performed: verified no pre-existing open PR before starting #659; reproduced the same Stage failure with a controlled failed-job rerun; inspected immutable deploy logs; proved PostgreSQL becomes unhealthy before API/web startup and also prevents rollback; created Issue #659; implemented bounded, secret-safe diagnostics in `scripts/remote-deploy.sh`; opened Draft PR #660; ran the dedicated deployment-script workflow and full repository CI; rechecked live `main`, PR mergeability and all review/comment/thread surfaces; finalized Agent Harness evidence.
+Files inspected: `scripts/ci/deploy-over-ssh.sh`, `scripts/remote-deploy.sh`, `deploy/compose/docker-compose.stage.yml`, `.github/workflows/deploy-scripts-check.yml`, `scripts/ci/public-smoke.test.sh`, Agent Harness rules/current state and live Issue/deployment evidence.
 
-Commands or procedures: GitHub connector branch/issue/file/PR/workflow operations and Git Data fast-forward writes; no direct Stage SSH and no destructive database action.
+Actions performed:
 
-Artifacts produced: Issue #659; Draft PR #660; diagnostic implementation commit `a85d234f11ba0f5397170e3106eaa773f007e711`; successful Deployment scripts check #203 / `32585435004`; successful full CI #3986 / `32585434981`.
+- re-verified live main, Stage failure and absence of open PRs;
+- created `fix/issue-659-stage-capacity-recovery` from exact main;
+- added a Stage-only SSH capacity preflight before deployment bundle upload and image pulls;
+- made capacity discovery prefer the PostgreSQL named-volume mountpoint, with Docker-root/filesystem fallback;
+- added byte/inode diagnostics before and after cleanup;
+- restricted cleanup to old unused LexiGo API/web image tags;
+- protected requested, previous rollback and every container-referenced image ID;
+- made container/image inventory fail closed;
+- prohibited broad prune and volume/container/network deletion by implementation and source contract;
+- required 262144 KiB and 1024 free inodes before continuing;
+- appended capacity evidence to the existing deployment log;
+- extended the already-executed public-smoke test owner with a deployment capacity source contract so the normal Deployment scripts check exercises the safety invariants.
 
-Result: the observability slice is implementation-complete and validated on immutable PR head. It captures selected `.State`/health fields and bounded PostgreSQL/Redis logs before rollback without exposing container environment or mutating data. The actual PostgreSQL root cause remains intentionally unresolved until this tooling executes on Stage.
+Changed paths:
 
-Validation result: Deployment scripts check passed Bash syntax, public-smoke tests, HTTP readiness tests, runner cleanup checks, deployment security/readiness source contracts, Compose rendering, custom Caddy build/module/Caddyfile/systemd validation. Full CI passed backend unit/security, backend integration, frontend core, all browser/E2E groups, accessibility, visual regression, performance, aggregate frontend quality and web/API container builds.
+- `scripts/ci/deploy-over-ssh.sh`
+- `scripts/ci/public-smoke.test.sh`
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
 
-Review result: PR #660 has zero submitted reviews, zero conversation comments and zero inline review threads; it is mergeable. Live `main` remained `0b92466b9385503e53f654b77da533caa362c2fb` through the pre-finalization drift audit.
+Restrictions preserved:
 
-Failures: Stage run `32584934165` failed twice on exact SHA `0b92466b...`; both attempts show `lexigo-stage-postgres-1` unhealthy / `Restarting (1)`, and rollback to `682989...` fails for the same dependency reason. Public smoke/browser were never reached. These failures are incident evidence, not failures of PR #660 validation.
+- no direct write to `main`;
+- no `docker system/image/container/volume/network prune`;
+- no `docker volume rm`, container/network removal or `down -v`;
+- no frontend/backend/API/design/Compose/database-data changes;
+- no secret/environment dump;
+- no PostgreSQL healthcheck weakening or image-version guess.
 
-Root cause: pending PostgreSQL process logs from a Stage execution containing the repaired diagnostics. Product/runtime causation is unsupported by current evidence.
+Validation pending: Draft PR, Deployment scripts check, full immutable-head CI, review/thread audit, expected-head squash merge, exact-main CI and automatic Stage/public validation.
 
-Fallback: if the first Stage run with repaired diagnostics still cannot expose the postgres failure, extend only the deployment incident tooling with a dedicated bounded remote diagnostic action. Do not weaken health checks, dump environment variables or remove/reset the persistent PostgreSQL volume.
+Fallback: if targeted old LexiGo app-image cleanup cannot restore the minimum capacity gate, fail before deployment and preserve the capacity evidence. Do not broaden automatically to unrelated images, containers, volumes or host files; use the resulting byte/inode inventory for a separately justified action.
 
-Limitations: GitHub Actions can observe only what the remote deploy script emits. The connected GitHub tool does not provide arbitrary direct SSH access to the Stage host. Stage recovery therefore requires the diagnostic code to reach the deployment path.
-
-Reusable lesson: when rollback recreates a failed dependency, capture bounded service-specific logs and safe state before rollback. Compose status and reverse-proxy 502s are not enough to diagnose a database entrypoint failure.
+Reusable lesson candidate: a deploy pipeline that can fail because the target filesystem is full needs its capacity recovery before bundle upload/image pull, must distinguish bytes from inodes, and must preserve rollback/current/container-referenced artifacts while refusing broad cleanup.
 
 ## Handoff
 
-Final evidence commit should be fast-forward-only on PR #660. After its immutable CI is green and review/main-drift audit remains clean, mark the PR Ready for Review. Do not merge without explicit user authorization. Keep Issue #659 open after merge until exact-main CI, Stage PostgreSQL health, public smoke and public browser verification all succeed.
+Compare the branch with live main, open a Draft PR, run the normal deployment-script and full CI gates, then merge only on the final unchanged head. Issue #659 remains open until exact-main Stage, public smoke and public browser checks are healthy.
