@@ -2,97 +2,118 @@
 
 ## Identity
 
-- Issue: #659
-- Branch: fix/issue-659-stage-capacity-recovery
-- Base SHA: f7edbb9a39e2b0ad26cba365ffca54ffedde54e0
+- Issue: #651
+- Branch: `feat/issue-651-session-queue-selectors`
+- Base SHA: `02001d365eb557efa48fa0ecb5f4289b7cb61456`
 - PR: pending Draft PR creation
+- Delivery stage: Stage 2 — independent backend candidate selectors for explicit lesson session intent
 
 ## Objective
 
-Recover the Stage deployment after immutable diagnostics proved PostgreSQL cannot create `postmaster.pid` because the Stage filesystem has no free capacity, while preserving all persistent volumes and database data.
-
-## Proven root cause
-
-Stage run `32592663356` / deploy job `97078782932` on exact main SHA `f7edbb9a39e2b0ad26cba365ffca54ffedde54e0` repeatedly reports:
-
-`FATAL: could not write lock file "postmaster.pid": No space left on device`
-
-The same failure occurs during automatic rollback; Redis is healthy and PostgreSQL is not OOM-killed.
+Use the Stage-1 `sessionKind = study | review | remediation` contract to select independent automatic queues without changing legacy requests that omit `sessionKind`.
 
 ## Scope
 
-- run a Stage-only capacity preflight before deployment bundle upload and image pulls;
-- inspect the PostgreSQL named-volume filesystem when available, otherwise Docker root/filesystem fallback;
-- report free KiB and free inodes before and after cleanup;
-- reclaim only old unused `ghcr.io/dja-tiger/lexigo-api` and `ghcr.io/dja-tiger/lexigo-web` image tags;
-- always preserve the requested tag, previous rollback tag and every image ID referenced by any Docker container;
-- prohibit daemon-wide prune and volume/container/network deletion;
-- require at least 262144 KiB and 1024 free inodes after cleanup before deployment continues;
-- preserve capacity diagnostics in the deploy log;
-- protect the recovery contract with deployment source-contract checks;
-- after merge, require exact-main CI and exact-SHA Stage/public validation.
+- add optional `sessionKind` to lesson preview so preview and create use the same explicit queue contract;
+- preserve legacy preview/create candidate behavior when `sessionKind` is omitted;
+- explicit `study` automatically selects only `status = 'new'` items;
+- explicit `review` automatically selects only non-new items whose `due_at <= now()`; future scheduled items are never used to fill the block;
+- classify due review items with explainable primary reasons including `relearning_due`, `overdue`, `recent_failure`, `repeated_again` and `due`;
+- explicit `remediation` selects only weak/error candidates (`recent_failure`, `repeated_again`, `repeated_almost`, `weak_topic`) and may include not-due items because the session itself is an explicit remediation action;
+- derive repeated `again` / `almost` signals from persisted review events instead of a client-side heuristic;
+- keep queue ordering deterministic and retain word/phrase/topic diversification;
+- make recent-completed-block exclusion session-aware for explicit sessions while preserving the old cross-kind legacy behavior for omitted intent;
+- synchronize OpenAPI and add unit/integration regression coverage for strict queues and legacy compatibility;
+- keep scheduler state transitions and interval/easiness formulas unchanged.
 
 ## Non-goals
 
-- no frontend/backend/product behavior changes;
-- no PostgreSQL/Redis/Compose image changes;
-- no database migration or data mutation;
-- no `down -v`, volume deletion/reset or healthcheck weakening;
-- no daemon-wide Docker prune;
-- no removal of Docker containers or networks;
-- no cleanup of unrelated repositories/images.
+- no Home/Learn/Active Lesson redesign or new CTA wiring;
+- no change of lesson-size vocabulary (15/30/60 remains unchanged in this slice; bounded 15/30/50 UX is a later workload/UI stage);
+- no default removal of legacy mixed composition until frontend callers explicitly send `sessionKind`;
+- no scheduler algorithm rewrite, FSRS/SM-2 replacement, mastery redesign or interval tuning;
+- no new persisted score column or ML recommendation engine;
+- no analytics/dashboard redesign;
+- no OpenPencil/visual/CSS changes;
+- no database migration unless source evidence proves the existing review-event data is insufficient.
 
 ## Allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `scripts/ci/deploy-over-ssh.sh`
-- `scripts/ci/public-smoke.test.sh`
+- `backend/internal/learning/lesson.go`
+- `backend/internal/learning/lesson_http.go`
+- `backend/internal/learning/lesson_composer.go`
+- `backend/internal/learning/lesson_composer_test.go`
+- `backend/internal/learning/lesson_progression.go`
+- `backend/internal/learning/lesson_repository.go` only if an existing direct repository path must honor the same explicit contract
+- `backend/internal/learning/openapi_session_kind_contract_test.go`
+- `backend/integration/mixed_lesson_composer_test.go`
+- a focused new `backend/integration/*session*queue*_test.go` if isolating the acceptance matrix is clearer
+- `api/openapi.yaml`
+- frontend shared API/runtime contract files only if compiler/runtime validation proves they are direct downstream consumers of the changed preview contract
 
 ## Prohibited paths
 
-- `frontend/**`
-- `backend/**`
-- `api/**`
-- `design/**`
-- `deploy/compose/**`
-- database migrations or persisted Stage data
-- application dependency manifests/lockfiles
+- frontend presentation/CSS/visual snapshots;
+- scheduler interval/easiness/repetition implementation;
+- database migrations and schema constraints unrelated to a proven missing persistence contract;
+- deployment/workflow/dependency files;
+- unrelated route ownership or compatibility cleanup.
 
-## Runtime owners
+## Production owners
 
-- `scripts/ci/deploy-over-ssh.sh` — Stage-only host-capacity preflight before bundle upload and remote deployment.
-- `scripts/remote-deploy.sh` — existing compose startup, diagnostics and rollback; unchanged in this slice.
-- `deploy/compose/docker-compose.stage.yml` — existing service/volume ownership; unchanged.
-- `.github/workflows/deploy-stage.yml` — exact-main Stage orchestration; unchanged.
+- `backend/internal/learning/lesson_composer.go` — candidate query, queue filtering, ranking, composition and preview.
+- `backend/internal/learning/lesson_progression.go` — progressive lesson creation and persisted selection reasons.
+- `backend/internal/learning/lesson_http.go` — request validation.
+- `backend/internal/learning/lesson.go` — shared request/response/session-kind domain contracts.
+- `review_events` — authoritative persisted objective/self-rating history already used by the composer.
+- `user_words` — scheduler-owned status/easiness/repetitions/due state; read-only from the selector.
+
+## Contract matrix
+
+- Omitted `sessionKind`: exact legacy queue semantics remain available during staged rollout.
+- `study`: automatic candidates are `new` only; scheduled/review/learning items cannot fill shortages.
+- `review`: automatic candidates are due/relearning-due/overdue only; scheduled-not-due cannot enter regardless of review ratio or weakness score.
+- `remediation`: automatic candidates require an explicit weak/error signal and are never plain catalog/new fill.
+- Manual `wordIds`: continue to be accepted with durable `manual` selection reason; explicit intent does not silently rewrite the caller-selected list.
+- Preview and create: same explicit session selector and reason semantics.
+- Source/topic filters, mixed word/phrase alternation and deterministic ordering remain.
+- Recent-completed exclusion: explicit process excludes the immediately preceding block of the same process; omitted legacy intent retains prior behavior.
+- Scheduler mutations: unchanged; selector only reads existing `user_words` and `review_events` state.
+
+## Selection semantics for this slice
+
+- repeated `again`: at least two `again` effective ratings in the existing recent-failure window;
+- repeated `almost`: at least three `almost` effective ratings in the existing recent-failure window;
+- overdue: due for at least 24 hours; ordinary due remains `due`;
+- relearning due: `status = 'learning'` and due now;
+- remediation precedence: `repeated_again` → `recent_failure` → `repeated_almost` → `weak_topic`;
+- review precedence: relearning/repeated failure due → overdue → ordinary due, with due time/easiness/id providing deterministic tie-breaking.
+
+These thresholds are deterministic Stage-2 policy, not a new scheduler interval model. Later recommendation/analytics stages may evolve score weights while preserving the strict queue boundaries.
 
 ## Invariants
 
-- recovery must be scoped to Stage;
-- persistent volumes are inspection-only and never removed;
-- requested/rollback/container-referenced images cannot be deleted;
-- inventory failures fail closed before image deletion;
-- capacity evidence must distinguish byte and inode exhaustion;
-- production deployment behavior is unchanged.
+- `scheduled-not-due` never enters an explicit Review queue.
+- Explicit Study cannot be padded with previously learned items.
+- Explicit Remediation cannot be padded with ordinary new/scheduled items lacking a remediation signal.
+- Objective correctness and self-rating remain separate persisted review-event fields; no selector may fabricate correctness from rating.
+- Omitted session intent remains distinguishable from explicit `study`.
+- No existing scheduler mutation is changed to make the selector tests pass.
+- Selection reasons stored on lesson items describe the primary reason used by the explicit queue.
 
-## Acceptance criteria
+## Targeted validation
 
-- immutable PR checks validate the recovery and safety contract;
-- Stage preflight reclaims only eligible unused LexiGo app image tags;
-- PostgreSQL filesystem has sufficient byte/inode headroom after cleanup;
-- exact intended main SHA deploys with healthy PostgreSQL/API/web;
-- public smoke and public browser checks pass;
-- Issue #659 closes only after Stage/public recovery evidence is complete.
-
-## Required checks
-
-- Deployment scripts check;
-- full repository CI on final PR head;
-- clean review/comment/thread audit;
-- exact-main CI after squash merge;
-- exact-SHA Stage deploy, public smoke and public browser checks.
+- unit tests for session-kind filtering, reason precedence, repeated signals, strict no-fill behavior and legacy compatibility;
+- backend HTTP validation for preview/create optional session kinds;
+- real PostgreSQL integration proving explicit Study/Review/Remediation selection and persisted reasons;
+- regression proving future scheduled items do not enter explicit Review even when the requested lesson block is larger than the due backlog;
+- full-file OpenAPI YAML parse/contract validation after schema change;
+- backend formatting/static/unit/race/integration/security gates;
+- full required repository CI on immutable final PR head.
 
 ## Rollback
 
-Revert the Stage capacity-preflight change. Do not remove/reset the persistent PostgreSQL volume as part of code rollback.
+Revert the Stage-2 selector slice. Stage-1 nullable `session_kind` and expanded selection-reason vocabulary remain valid, and omitted requests continue to provide the pre-Stage-2 legacy path.
