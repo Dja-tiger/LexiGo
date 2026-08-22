@@ -147,9 +147,10 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 			($1::uuid, $2, 1, now() - interval '1 day', 'again', 'recall', false, false, 2, 'again', 'server', 'rejected_no_match'),
 			($1::uuid, $3, 3, now() - interval '3 days', 'almost', 'recall', true, false, 2, 'almost', 'server', 'accepted_exact'),
 			($1::uuid, $3, 3, now() - interval '2 days', 'almost', 'recall', true, false, 2, 'almost', 'server', 'accepted_exact'),
-			($1::uuid, $3, 3, now() - interval '1 day', 'almost', 'recall', true, false, 2, 'almost', 'server', 'accepted_exact')
-	`, userID, repeatedAgainFuture, repeatedAlmostFuture); err != nil {
-		t.Fatalf("seed remediation review evidence: %v", err)
+			($1::uuid, $3, 3, now() - interval '1 day', 'almost', 'recall', true, false, 2, 'almost', 'server', 'accepted_exact'),
+			($1::uuid, $4, 1, now() - interval '30 minutes', 'again', 'recall', false, false, 2, 'again', 'server', 'rejected_no_match')
+	`, userID, repeatedAgainFuture, repeatedAlmostFuture, reviewDue); err != nil {
+		t.Fatalf("seed process ownership review evidence: %v", err)
 	}
 
 	type lessonQueueItem struct {
@@ -162,12 +163,82 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 		SessionKind string            `json:"sessionKind"`
 		Items       []lessonQueueItem `json:"items"`
 	}
+	type lessonPreviewPayload struct {
+		Source      string `json:"source"`
+		StudyMode   string `json:"studyMode"`
+		SessionKind string `json:"sessionKind"`
+		LessonSize  string `json:"lessonSize"`
+		Composition struct {
+			Total            int `json:"total"`
+			New              int `json:"new"`
+			Scheduled        int `json:"scheduled"`
+			AvailableWords   int `json:"availableWords"`
+			AvailablePhrases int `json:"availablePhrases"`
+		} `json:"composition"`
+	}
+
+	automaticStudyMode := func(sessionKind string) string {
+		t.Helper()
+		if sessionKind == "study" {
+			return "study"
+		}
+		return "recall"
+	}
+	previewAutomaticLesson := func(sessionKind string) lessonPreviewPayload {
+		t.Helper()
+		studyMode := automaticStudyMode(sessionKind)
+		var preview lessonPreviewPayload
+		postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/preview", registered.Tokens.AccessToken, map[string]any{
+			"source": "mixed", "studyMode": studyMode, "sessionKind": sessionKind, "lessonSize": "15",
+		}, http.StatusOK, &preview)
+		if preview.Source != "mixed" || preview.StudyMode != studyMode || preview.SessionKind != sessionKind || preview.LessonSize != "15" {
+			t.Fatalf("unexpected %s preview payload: %+v", sessionKind, preview)
+		}
+		return preview
+	}
+	available := func(preview lessonPreviewPayload) int {
+		return preview.Composition.AvailableWords + preview.Composition.AvailablePhrases
+	}
+
+	studyPreview := previewAutomaticLesson("study")
+	if available(studyPreview) < 15 || studyPreview.Composition.Total != 15 || studyPreview.Composition.New != 15 {
+		t.Fatalf("study preview must expose a bounded new-only block and full backlog: %+v", studyPreview)
+	}
+	reviewPreview := previewAutomaticLesson("review")
+	if available(reviewPreview) != 3 || reviewPreview.Composition.Total != 3 || reviewPreview.Composition.Scheduled != 0 {
+		t.Fatalf("review preview must expose exact due backlog without scheduled fill: %+v", reviewPreview)
+	}
+	remediationPreview := previewAutomaticLesson("remediation")
+	if available(remediationPreview) != 2 || remediationPreview.Composition.Total != 2 || remediationPreview.Composition.Scheduled != 0 {
+		t.Fatalf("remediation preview must exclude the due failure owned by review: %+v", remediationPreview)
+	}
+
+	var legacyPreview lessonPreviewPayload
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/preview", registered.Tokens.AccessToken, map[string]any{
+		"source": "mixed", "studyMode": "study", "lessonSize": "15",
+	}, http.StatusOK, &legacyPreview)
+	if legacyPreview.SessionKind != "" || legacyPreview.Composition.Total != 15 {
+		t.Fatalf("legacy omitted preview intent changed unexpectedly: %+v", legacyPreview)
+	}
+
+	var invalidPreview struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons/preview", registered.Tokens.AccessToken, map[string]any{
+		"source": "mixed", "studyMode": "study", "sessionKind": "mixed", "lessonSize": "15",
+	}, http.StatusUnprocessableEntity, &invalidPreview)
+	if invalidPreview.Error.Code != "invalid_session_kind" {
+		t.Fatalf("invalid preview session kind code = %q, want invalid_session_kind", invalidPreview.Error.Code)
+	}
 
 	createAutomaticLesson := func(sessionKind string) lessonQueuePayload {
 		t.Helper()
+		studyMode := automaticStudyMode(sessionKind)
 		var lesson lessonQueuePayload
 		postAuthenticatedJSON(t, testServer.URL+"/api/v1/lessons", registered.Tokens.AccessToken, map[string]any{
-			"source": "mixed", "studyMode": "study", "sessionKind": sessionKind, "lessonSize": "15",
+			"source": "mixed", "studyMode": studyMode, "sessionKind": sessionKind, "lessonSize": "15",
 		}, http.StatusCreated, &lesson)
 		if lesson.ID == "" || lesson.SessionKind != sessionKind {
 			t.Fatalf("unexpected %s lesson payload: %+v", sessionKind, lesson)
@@ -197,7 +268,7 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 		t.Fatalf("review lesson size = %d, want exact due backlog 3; items=%+v", len(review.Items), review.Items)
 	}
 	wantReviewReasons := map[int64]string{
-		reviewDue:     "due",
+		reviewDue:     "recent_failure",
 		overdue:       "overdue",
 		relearningDue: "relearning_due",
 	}
@@ -215,7 +286,7 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 		t.Fatalf("review queue missed due candidates: %v", wantReviewReasons)
 	}
 	assertPersistedLessonReasons(t, ctx, pg, review.ID, map[int64]string{
-		reviewDue:     "due",
+		reviewDue:     "recent_failure",
 		overdue:       "overdue",
 		relearningDue: "relearning_due",
 	})
@@ -231,7 +302,7 @@ func TestExplicitLessonSessionQueuesAreIndependent(t *testing.T) {
 	for _, item := range remediation.Items {
 		wantReason, found := wantRemediationReasons[item.ID]
 		if !found {
-			t.Fatalf("remediation selected ordinary candidate %+v; plain scheduled id=%d", item, plainScheduledFuture)
+			t.Fatalf("remediation selected non-owned candidate %+v; due failure=%d plain scheduled=%d", item, reviewDue, plainScheduledFuture)
 		}
 		if item.Reason != wantReason {
 			t.Fatalf("remediation item %d reason = %q, want %q", item.ID, item.Reason, wantReason)
@@ -284,7 +355,7 @@ func assertPersistedLessonReasons(
 		seen[wordID] = reason
 	}
 	if err := rows.Err(); err != nil {
-		t.Fatalf("iterate persisted lesson reasons: %v", err)
+		t.Fatalf("iterate persisted lesson reason: %v", err)
 	}
 	if len(seen) != len(want) {
 		t.Fatalf("persisted reasons count = %d, want %d; got=%v want=%v", len(seen), len(want), seen, want)
