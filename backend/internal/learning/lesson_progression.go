@@ -89,10 +89,10 @@ func (r *Repository) CreateProgressiveLesson(
 
 	var lessonID string
 	if err := tx.QueryRow(ctx, `
-		insert into lesson_sessions(user_id, source, study_mode, lesson_size, review_ratio)
-		values ($1::uuid, $2, $3, $4, $5)
+		insert into lesson_sessions(user_id, source, study_mode, lesson_size, review_ratio, session_kind)
+		values ($1::uuid, $2, $3, $4, $5, nullif($6::text, ''))
 		returning id::text
-	`, userID, request.Source, request.StudyMode, request.LessonSize, reviewRatio).Scan(&lessonID); err != nil {
+	`, userID, request.Source, request.StudyMode, request.LessonSize, reviewRatio, string(request.SessionKind)).Scan(&lessonID); err != nil {
 		return LessonSession{}, fmt.Errorf("insert progressive lesson: %w", err)
 	}
 
@@ -145,6 +145,7 @@ func matchingRecentActiveLessonID(
 		          where item.session_id = lesson.id
 		      ), '{}'::bigint[]) = $8::bigint[]
 		  )
+		  and lesson.session_kind is not distinct from nullif($9::text, '')
 		order by lesson.updated_at desc
 		limit 1
 		for update
@@ -157,6 +158,7 @@ func matchingRecentActiveLessonID(
 		strings.TrimSpace(request.Topic),
 		resolveLessonReviewRatio(request.ReviewRatio),
 		request.WordIDs,
+		string(request.SessionKind),
 	).Scan(&lessonID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", nil

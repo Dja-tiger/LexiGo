@@ -59,6 +59,10 @@ const LESSON_SOURCE_LABELS: Record<LessonSourceLabelKey, string> = {
 const LESSON_SELECTION_REASON_LABELS: Record<LessonSelectionReason, string> = {
   recent_failure: "Недавняя ошибка",
   due: "Готово к повторению",
+  overdue: "Просрочено к повторению",
+  relearning_due: "Пора закрепить повторно",
+  repeated_again: "Повторная ошибка",
+  repeated_almost: "Повторная оценка «Почти»",
   weak_topic: "Слабая тема",
   new: "Новый материал",
   scheduled: "По расписанию",

@@ -49,6 +49,10 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
+	if !validLessonSessionKind(request.SessionKind) {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_session_kind", "sessionKind must be omitted or one of study, review or remediation")
+		return
+	}
 	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 60 || !uniquePositiveWordIDs(request.WordIDs)) {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_word_ids", "wordIds must be omitted or contain between 1 and 60 unique positive ids")
 		return
