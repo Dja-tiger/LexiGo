@@ -278,6 +278,82 @@ function paginated(items: readonly unknown[]) {
   };
 }
 
+function qualityLessonPreview(input: {
+  source?: string;
+  studyMode?: string;
+  sessionKind?: string;
+  lessonSize?: string;
+}) {
+  const common = {
+    source: input.source ?? "mixed",
+    studyMode: input.studyMode ?? "study",
+    lessonSize: input.lessonSize ?? "30",
+  };
+
+  if (input.sessionKind === "review") {
+    return {
+      ...common,
+      sessionKind: "review",
+      composition: {
+        total: 4,
+        words: 3,
+        phrases: 1,
+        due: 4,
+        new: 0,
+        scheduled: 0,
+        availableWords: 3,
+        availablePhrases: 1,
+      },
+    };
+  }
+  if (input.sessionKind === "remediation") {
+    return {
+      ...common,
+      sessionKind: "remediation",
+      composition: {
+        total: 2,
+        words: 2,
+        phrases: 0,
+        due: 0,
+        new: 0,
+        scheduled: 0,
+        availableWords: 2,
+        availablePhrases: 0,
+      },
+    };
+  }
+  if (input.sessionKind === "study") {
+    return {
+      ...common,
+      sessionKind: "study",
+      composition: {
+        total: 15,
+        words: 12,
+        phrases: 3,
+        due: 0,
+        new: 15,
+        scheduled: 0,
+        availableWords: 14,
+        availablePhrases: 4,
+      },
+    };
+  }
+
+  return {
+    ...common,
+    composition: {
+      total: QUALITY_WORDS.length + QUALITY_PHRASES.length,
+      words: QUALITY_WORDS.length,
+      phrases: QUALITY_PHRASES.length,
+      due: 4,
+      new: 1,
+      scheduled: 0,
+      availableWords: QUALITY_WORDS.length,
+      availablePhrases: QUALITY_PHRASES.length,
+    },
+  };
+}
+
 export async function installDeterministicRuntime(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const install = () => {
@@ -340,22 +416,13 @@ export async function installQualityGateAPI(
       return fulfillJSON(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
     }
     if (path === "/api/v1/lessons/preview") {
-      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
-      return fulfillJSON(route, 200, {
-        source: input.source ?? "mixed",
-        studyMode: input.studyMode ?? "study",
-        lessonSize: input.lessonSize ?? "30",
-        composition: {
-          total: QUALITY_WORDS.length + QUALITY_PHRASES.length,
-          words: QUALITY_WORDS.length,
-          phrases: QUALITY_PHRASES.length,
-          due: 4,
-          new: 1,
-          scheduled: 0,
-          availableWords: QUALITY_WORDS.length,
-          availablePhrases: QUALITY_PHRASES.length,
-        },
-      });
+      const input = request.postDataJSON() as {
+        source?: string;
+        studyMode?: string;
+        sessionKind?: string;
+        lessonSize?: string;
+      };
+      return fulfillJSON(route, 200, qualityLessonPreview(input));
     }
     if (path === "/api/v1/words/101") return fulfillJSON(route, 200, QUALITY_WORDS[0]);
     if (path.startsWith("/api/v1/phrases/") && request.method() === "GET") {
