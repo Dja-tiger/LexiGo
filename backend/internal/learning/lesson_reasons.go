@@ -27,6 +27,20 @@ func (r *Repository) lessonByIDWithReasons(
 }
 
 func (r *Repository) attachLessonSelectionReasons(ctx context.Context, lesson LessonSession) (LessonSession, error) {
+	var rawSessionKind string
+	if err := r.pool.QueryRow(ctx, `
+		select coalesce(session_kind, '')
+		from lesson_sessions
+		where id = $1::uuid
+	`, lesson.ID).Scan(&rawSessionKind); err != nil {
+		return LessonSession{}, fmt.Errorf("query lesson session kind: %w", err)
+	}
+	sessionKind := LessonSessionKind(rawSessionKind)
+	if !validLessonSessionKind(sessionKind) {
+		return LessonSession{}, ErrInvalidLessonState
+	}
+	lesson.SessionKind = sessionKind
+
 	rows, err := r.pool.Query(ctx, `
 		select position, coalesce(selection_reason, '')
 		from lesson_session_items
@@ -66,7 +80,16 @@ func (r *Repository) attachLessonSelectionReasons(ctx context.Context, lesson Le
 
 func validLessonSelectionReason(reason LessonSelectionReason) bool {
 	switch reason {
-	case LessonReasonRecentFailure, LessonReasonDue, LessonReasonWeakTopic, LessonReasonNew, LessonReasonScheduled, LessonReasonManual:
+	case LessonReasonRecentFailure,
+		LessonReasonDue,
+		LessonReasonOverdue,
+		LessonReasonRelearningDue,
+		LessonReasonRepeatedAgain,
+		LessonReasonRepeatedAlmost,
+		LessonReasonWeakTopic,
+		LessonReasonNew,
+		LessonReasonScheduled,
+		LessonReasonManual:
 		return true
 	default:
 		return false

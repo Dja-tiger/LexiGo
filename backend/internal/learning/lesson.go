@@ -10,19 +10,28 @@ const (
 	LessonSessionKindRemediation LessonSessionKind = "remediation"
 )
 
+func validLessonSessionKind(kind LessonSessionKind) bool {
+	switch kind {
+	case "", LessonSessionKindStudy, LessonSessionKindReview, LessonSessionKindRemediation:
+		return true
+	default:
+		return false
+	}
+}
+
 type LessonSelectionReason string
 
 const (
-	LessonReasonRecentFailure LessonSelectionReason = "recent_failure"
-	LessonReasonDue           LessonSelectionReason = "due"
-	LessonReasonOverdue       LessonSelectionReason = "overdue"
-	LessonReasonRelearningDue LessonSelectionReason = "relearning_due"
-	LessonReasonRepeatedAgain LessonSelectionReason = "repeated_again"
+	LessonReasonRecentFailure  LessonSelectionReason = "recent_failure"
+	LessonReasonDue            LessonSelectionReason = "due"
+	LessonReasonOverdue        LessonSelectionReason = "overdue"
+	LessonReasonRelearningDue  LessonSelectionReason = "relearning_due"
+	LessonReasonRepeatedAgain  LessonSelectionReason = "repeated_again"
 	LessonReasonRepeatedAlmost LessonSelectionReason = "repeated_almost"
-	LessonReasonWeakTopic     LessonSelectionReason = "weak_topic"
-	LessonReasonNew           LessonSelectionReason = "new"
-	LessonReasonScheduled     LessonSelectionReason = "scheduled"
-	LessonReasonManual        LessonSelectionReason = "manual"
+	LessonReasonWeakTopic      LessonSelectionReason = "weak_topic"
+	LessonReasonNew            LessonSelectionReason = "new"
+	LessonReasonScheduled      LessonSelectionReason = "scheduled"
+	LessonReasonManual         LessonSelectionReason = "manual"
 )
 
 type LessonCreateRequest struct {
