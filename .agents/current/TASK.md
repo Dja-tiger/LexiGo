@@ -2,97 +2,92 @@
 
 ## Identity
 
-- Issue: #642
-- Branch: test/issue-642-first-use-loading-error-visual
-- Base SHA: 0fce4b690a6fbff95dd2d4ec6c5e725a21700d9d
-- Head SHA: resolve from live branch ref after reconstructed commit
-- PR: #645
+- Issue: #659
+- Branch: fix/issue-659-stage-postgres-diagnostics
+- Base SHA: 0b92466b9385503e53f654b77da533caa362c2fb
+- Head SHA: resolve from live branch ref
+- PR: resolve after opening Draft PR
 
 ## Objective
 
-Reconstruct the First Use loading/error visual-evidence PR on current delivered `main` and collect exact fail-closed Linux evidence before approving any new content-addressed fingerprints.
+Recover the Stage deployment blocked by a reproducible PostgreSQL startup failure and make the deploy failure path preserve bounded, secret-safe database diagnostics before rollback/recreation.
 
 ## Scope
 
-- extend only the existing authoritative `frontend/e2e/first-use-visual.spec.ts` owner;
-- preserve the existing eight approved First Use fingerprints byte-for-byte;
-- cover mobile/desktop × Light/Dark × loading/error with exact OpenPencil key/node/route/viewport provenance;
-- use deterministic request-scoped loading/error fixtures and the canonical recoverable-error copy;
-- bind desktop error assertions separately to the visible state intro and `role=alert` panel;
-- assert loading `aria-busy`, no answer disclosure, horizontal overflow absence and error controls inside the canonical viewport;
-- keep all eight new hashes at `REVIEW_REQUIRED` until a fresh immutable Linux run on this reconstructed head is manually reviewed.
+- reproduce and classify the exact Stage failure from run `32584934165`;
+- add bounded PostgreSQL/Redis container state and logs to `scripts/remote-deploy.sh` diagnostics;
+- collect diagnostics before automatic rollback and again if rollback fails;
+- preserve current app-image rollback behavior;
+- use the new immutable Stage evidence to identify the actual PostgreSQL root cause;
+- apply only an evidence-backed non-destructive recovery;
+- restore exact-SHA Stage, public smoke and public browser checks;
+- add regression protection for the final deploy diagnostics/recovery contract.
 
 ## Non-goals
 
-- no runtime React/CSS changes;
-- no backend/API/session/state-machine changes;
-- no OpenPencil `.op` or screen-map mutation;
-- no workflow/dependency/deploy changes;
-- no competing visual test owner;
-- no blind fingerprint approval or fuzzy screenshot tolerance.
+- no learning/UI/runtime feature changes;
+- no weakening PostgreSQL health checks;
+- no `down -v`, volume deletion, database reset, blind image downgrade/upgrade or destructive recovery without evidence;
+- no environment/secret dumping;
+- no repeated deploy reruns without new evidence.
 
 ## Allowed paths
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
-- `frontend/e2e/first-use-visual.spec.ts`
+- `scripts/remote-deploy.sh`
+- deployment test/source-contract files only if required by the proven fix
 
 ## Prohibited paths
 
-- `frontend/components/**`
-- `frontend/app/**`
+- `frontend/**`
 - `backend/**`
 - `api/**`
 - `design/**`
-- `docs/figma/openpencil-screen-map.json`
-- `.github/workflows/**`
-- dependency manifests/lockfiles
-- deploy/runtime infrastructure files
-- existing visual snapshot binaries
+- application dependency manifests/lockfiles
+- database migrations or persisted Stage data unless a separate evidence-backed recovery proves they are the root cause
 
 ## Runtime owners
 
-- `frontend/components/lexigo-onboarding-app.tsx` — delivered First Use loading/error presentation and semantics from #647/#648.
-- `frontend/app/first-use.css` — delivered responsive/appearance presentation, including the later desktop reassertion that keeps `.lx-first-use-loading-note--mobile` hidden at desktop width.
+- `scripts/remote-deploy.sh` — target-host compose startup, readiness diagnostics and rollback.
+- `deploy/compose/docker-compose.stage.yml` — Stage PostgreSQL/Redis/API/web/Caddy service ownership.
+- `.github/workflows/deploy-stage.yml` — exact-main Stage orchestration.
 
 ## Documentation owners
 
-- Issue #642 / PR #645 and `.agents/current/**`.
+- Issue #659, deployment status #12 and `.agents/current/**`.
 
 ## Invariants
 
-- initial loading remains `aria-busy=true` and reveals no diagnostic answer content;
-- generic recoverable error remains `role=alert` with `Повторить` and `Вернуться назад`;
-- canonical recoverable-error copy is `Текущий выбор сохранён. Повторите запрос — диагностическая позиция не потеряется.`;
-- desktop error legitimately exposes separate state-intro and alert-panel headings with the same accessible text;
-- active OpenPencil source SHA-256 remains `6d73b785aaeb7dda35a53c9c5f16edfc9cbef1092dbce992183538f16505520e`;
-- existing eight approved First Use hashes must not change in this evidence slice.
+- exact-main application CI success remains independent from Stage host health;
+- diagnostics must not print container environment or secrets;
+- persistent database volumes are never removed as a diagnostic shortcut;
+- rollback must retain its previous-image contract;
+- a reproducible infrastructure/database failure is fixed separately from PR #645 visual evidence.
 
 ## Acceptance criteria
 
-- all eight new canonical cases execute in authoritative Linux Visual regression;
-- each case resolves to its exact active OpenPencil key/node/route/viewport;
-- first immutable Linux run on the reconstructed current-main head attaches PNG/JSON actuals and fails only because the eight fingerprints remain `REVIEW_REQUIRED`;
-- every fresh actual is manually reviewed against `n117/n128/n277/n288/n442/n456/n614/n628` before approval;
-- approved hashes are exact SHA-256 values from those reviewed Linux PNGs;
-- full immutable-head CI passes after reviewed fingerprint approval;
-- reviews/threads and main drift are clean before protected squash merge.
+- PostgreSQL process/health failure is visible in immutable deploy evidence;
+- Stage database is recovered without blind volume destruction;
+- intended immutable app SHA deploys with healthy postgres/api/web;
+- public smoke and public browser suite pass;
+- failure diagnostics remain bounded and actionable;
+- final immutable-head CI and review/thread audit are clean.
 
 ## Required checks
 
-- authoritative Linux Visual regression collection;
-- existing First Use behavior/retry coverage;
-- full frontend/core/browser/accessibility/security CI after fingerprint approval;
-- exact changed-file audit and review/thread audit.
+- deployment scripts check;
+- full repository CI on final head;
+- exact-main CI after merge;
+- exact-SHA Stage deploy/public smoke/public browser.
 
 ## Risks
 
-- stale evidence from a branch that does not contain current runtime/CSS must not be approved;
-- unscoped role locators can bind ambiguously because repaired desktop error intentionally renders two same-name headings;
-- screenshot hashes are Linux/browser-build specific and must never be inferred from OpenPencil PNG hashes;
-- a fresh product mismatch must remain fail-closed and be split into a separate runtime repair.
+- insufficient diagnostics can force another blind deploy attempt;
+- destructive recovery could lose Stage data;
+- dumping `docker inspect` wholesale could expose environment secrets, so only `.State` fields are allowed.
 
 ## Rollback
 
-Force-reset the evidence branch back to current `main`; no production runtime or data migration is involved.
+Revert the deploy-diagnostics/recovery change. Do not mutate or remove the persistent Stage PostgreSQL volume as part of code rollback.
