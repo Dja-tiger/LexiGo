@@ -45,8 +45,12 @@ test("Home exposes one dominant next action and delegates destinations to the ap
   await page.goto("/");
 
   const nextAction = page.getByRole("region", { name: "Следующее рекомендуемое действие" });
-  await expect(nextAction.getByRole("button", { name: "Повторить сейчас" })).toBeVisible();
+  await expect(nextAction.getByRole("button", { name: "Повторить 4", exact: true })).toBeVisible();
   await expect(nextAction.locator(".lx-button.primary")).toHaveCount(1);
+  const secondaryProcesses = nextAction.getByRole("group", { name: "Другие доступные учебные процессы" });
+  await expect(secondaryProcesses.getByRole("button")).toHaveCount(2);
+  await expect(secondaryProcesses.getByRole("button", { name: "Разобрать 2 слабых мест", exact: true })).toBeVisible();
+  await expect(secondaryProcesses.getByRole("button", { name: "Изучить 15 новых из 18", exact: true })).toBeVisible();
 
   // Home is not a dashboard or a duplicate catalogue. The route shell owns
   // access to Learn, Dictionary and Progress, while Home owns the next action.
