@@ -206,7 +206,10 @@ test.describe("Home browser-owned zoom", () => {
       });
       const hero = page.locator(".lx-home-next-action .lx-hero-card");
       const progress = page.getByRole("complementary", { name: "Краткий прогресс", exact: true });
-      const primaryAction = page.getByRole("button", { name: "Повторить сейчас", exact: true });
+      const primaryAction = page.getByRole("button", { name: "Повторить 4", exact: true });
+      const processActions = page.getByRole("group", { name: "Другие доступные учебные процессы", exact: true });
+      const remediationAction = processActions.getByRole("button", { name: "Разобрать 2 слабых мест", exact: true });
+      const studyAction = processActions.getByRole("button", { name: "Изучить 15 новых из 18", exact: true });
       const progressAction = page.getByRole("button", { name: "Открыть прогресс", exact: true });
       const profileAction = page.getByRole("button", { name: "Открыть профиль", exact: true });
       const paths = page.locator(".lx-home-paths");
@@ -216,6 +219,9 @@ test.describe("Home browser-owned zoom", () => {
       await expect(page.getByRole("heading", { level: 1, name: "4 элемента готовы к повторению" })).toBeVisible();
       await expect(page.getByRole("progressbar", { name: "Выполнение дневной цели" })).toHaveAttribute("aria-valuenow", "40");
       await expect(primaryAction).toBeEnabled();
+      await expect(processActions).toBeVisible();
+      await expect(remediationAction).toBeEnabled();
+      await expect(studyAction).toBeEnabled();
       await expect(progressAction).toBeEnabled();
       await expect(profileAction).toBeEnabled();
       await expect(paths).toBeHidden();
@@ -299,6 +305,8 @@ test.describe("Home browser-owned zoom", () => {
       await expectHorizontallyContained(hero, afterDOM.clientWidth, "Home hero");
       await expectHorizontallyContained(progress, afterDOM.clientWidth, "Home progress panel");
       await expectHorizontallyContained(primaryAction, afterDOM.clientWidth, "Home primary action");
+      await expectHorizontallyContained(processActions, afterDOM.clientWidth, "Home secondary process group");
+      await expectHorizontallyContained(processActions.getByRole("button"), afterDOM.clientWidth, "Home secondary process action");
       await expectHorizontallyContained(progressAction, afterDOM.clientWidth, "Home progress action");
       await expectHorizontallyContained(profileAction, afterDOM.clientWidth, "Home profile action");
       await expectHorizontallyContained(railNavigation, afterDOM.clientWidth, "route navigation rail");
@@ -318,6 +326,8 @@ test.describe("Home browser-owned zoom", () => {
       ).toBeLessThanOrEqual(1);
 
       await expectVisibleFocus(primaryAction);
+      await expectVisibleFocus(remediationAction);
+      await expectVisibleFocus(studyAction);
       await expectVisibleFocus(progressAction);
       await expectVisibleFocus(profileAction);
       const dictionaryNavigation = railNavigation.getByRole("link", { name: "Словарь", exact: true });
