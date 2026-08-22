@@ -52,6 +52,7 @@ Deliver the first atomic stage of Issue #651: introduce an explicit, backward-co
 - `frontend/lib/learning.ts`
 - `frontend/lib/account-resources.ts`
 - `frontend/lib/account-resources.test.ts`
+- `frontend/lib/interface-copy.ts` — compiler-enforced exhaustive consumer of `LessonSelectionReason`; added after CI typecheck exposed the dependency.
 
 ## Prohibited paths
 
@@ -73,6 +74,7 @@ Deliver the first atomic stage of Issue #651: introduce an explicit, backward-co
 - `backend/internal/learning/lesson_reasons.go` — returned session metadata and durable reason validation.
 - migration `000024_learning_session_kinds.up.sql` — nullable rollout-safe persistence/check constraints.
 - `api/openapi.yaml` and frontend validators/types — public/shared contract.
+- `frontend/lib/interface-copy.ts` — exhaustive human-readable labels for the shared selection-reason union; no new UI behavior.
 
 ## Documentation owners
 
