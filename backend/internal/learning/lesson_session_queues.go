@@ -66,8 +66,8 @@ func queryExplicitLessonCandidates(
 		),
 		recent_signal as (
 			select review_event.word_id,
-			       count(*) filter (where review_event.effective_rating = 'again')::int as again_count,
-			       count(*) filter (where review_event.effective_rating = 'almost')::int as almost_count
+			       count(*) filter (where review_event.rating = 'again')::int as again_count,
+			       count(*) filter (where review_event.rating = 'almost')::int as almost_count
 			from review_events review_event
 			where review_event.user_id = $1::uuid
 			  and review_event.reviewed_at >= now() - ($5::bigint * interval '1 second')
