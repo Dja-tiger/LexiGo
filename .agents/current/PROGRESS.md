@@ -1,56 +1,79 @@
 # Current Task Progress
 
-## 2026-08-22 19:37 +03
+## 2026-08-22 19:53 +03
 
 ### Verified
 
 - Repository: `Dja-tiger/LexiGo`.
-- Incident: Issue #659.
+- Incident: Issue #659; Draft PR #660.
 - Base/current `main`: `0b92466b9385503e53f654b77da533caa362c2fb`.
+- Validated implementation head: `a85d234f11ba0f5397170e3106eaa773f007e711`.
 - Exact-main CI after PR #645: run `32584377045` — success.
-- Automatic Stage run `32584934165` failed before public smoke/browser.
-- Controlled same-SHA rerun of only the failed deploy job reproduced the failure.
-- Attempt 2 deploy job: `97060166932`.
-- Both requested image `0b92466b9385503e53f654b77da533caa362c2fb` and rollback image `68298977652d737ee267b4cfd5e1a978fb99828c` fail because `lexigo-stage-postgres-1` enters `Restarting (1)` / unhealthy within about one second.
-- Redis becomes healthy; API/web never become healthy because PostgreSQL blocks their dependency chain.
+- Automatic Stage run `32584934165` failed before public smoke/browser; controlled same-SHA failed-job rerun reproduced the same PostgreSQL failure.
+- Attempt-2 deploy job: `97060166932`.
+- Requested image `0b92466b9385503e53f654b77da533caa362c2fb` and rollback image `68298977652d737ee267b4cfd5e1a978fb99828c` are both blocked because `lexigo-stage-postgres-1` enters `Restarting (1)` / unhealthy almost immediately.
+- Redis becomes healthy; API/web cannot start because PostgreSQL blocks their dependency chain.
+- PR #660 adds bounded selected container `.State`/health diagnostics plus the last 120 lines of PostgreSQL and Redis logs before rollback and on rollback failure.
+- The diagnostic patch does not dump `.Config.Env`, weaken health checks, change images/Compose, mutate volumes or touch application runtime.
+
+### Immutable PR validation
+
+- Deployment scripts check #203 / run `32585435004` on `a85d234f11ba0f5397170e3106eaa773f007e711`: completed — success.
+- Full CI #3986 / run `32585434981` on the same head: completed — success.
+- Backend unit/security: success.
+- Backend integration: success.
+- Frontend core quality: success.
+- UI tests shard 1/2 and 2/2: success.
+- Visual regression: success.
+- Lesson completion: success.
+- Content security: success.
+- Accessibility audit: success.
+- iOS PWA dictionary: success.
+- Performance budgets: success.
+- Dictionary smoke: success.
+- Controlled service worker: success.
+- Aggregate Frontend quality: success.
+- Container build web/API: success.
+- Deployment source-contract checks include Bash syntax, Compose rendering, security/readiness invariants and Caddy validation: success.
+
+### Review and drift audit
+
+- PR #660 is mergeable.
+- Submitted reviews: 0.
+- PR conversation comments: 0.
+- Inline review threads: 0.
+- `main` remains exactly `0b92466b9385503e53f654b77da533caa362c2fb`; no base drift was observed before final evidence write.
 
 ### Finding
 
-The current immutable deploy log proves a Stage PostgreSQL/container-start incident but does not contain PostgreSQL process logs. `scripts/remote-deploy.sh::print_deployment_diagnostics` prints compose state, HTTP probes and Caddy/API/web logs only. This destroys useful diagnostic opportunity because rollback recreates the failing Postgres container before the entrypoint failure is captured.
+The deploy observability slice is complete and validated. The actual PostgreSQL process root cause is still not proven because the repaired diagnostics have not yet executed on Stage. The next Stage attempt must run with this code before any recovery decision is made.
 
 ### Root cause
 
-Not yet proven. The reproduced failure is below the LexiGo application layer. The first repair is observability-only so the next exact Stage attempt can expose the real PostgreSQL entrypoint/process error without guessing or deleting the persistent volume.
+Pending the first Stage run containing the new PostgreSQL logs. Existing evidence proves a Stage PostgreSQL/container-start incident below the LexiGo application layer but does not prove why the postgres process exits.
 
 ### Changed files
 
-Planned first diagnostic commit:
+PR #660 remains bounded to four paths:
 
 - `.agents/current/TASK.md`
 - `.agents/current/PROGRESS.md`
 - `.agents/current/EXECUTION.md`
 - `scripts/remote-deploy.sh`
 
-### Checks passed
-
-- Open PR audit: none before starting #659.
-- Duplicate issue search: no existing dedicated Postgres unhealthy incident; #12 remains the deployment status owner.
-- Same-SHA rerun reproduced the failure; no product code changed.
-- Source audit confirms Stage uses `postgres:18.4-alpine` with persistent `stage_postgres:/var/lib/postgresql` and health check `pg_isready`.
-- Proposed diagnostics inspect only container `.State`, never `.Config.Env`.
-- Proposed logs are bounded and service-specific.
-
 ### Checks failed
 
 - Stage run `32584934165` attempt 1: failure.
-- Same run attempt 2 / job `97060166932`: failure at `Deploy stage`.
+- Same run attempt 2 / deploy job `97060166932`: failure at `Deploy stage`.
 - Public smoke/browser were skipped because compose startup failed.
 - Automatic rollback could not restore service because PostgreSQL remained unhealthy.
 
+These failures predate PR #660 and are the incident evidence the PR is designed to improve.
+
 ### Current branch head
 
-Resolve from live branch after the first diagnostic commit on `fix/issue-659-stage-postgres-diagnostics`.
+Final evidence head resolves from the live branch after this Agent Harness evidence commit. Its direct parent is validated implementation head `a85d234f11ba0f5397170e3106eaa773f007e711`.
 
 ### Next action
 
-Commit the bounded diagnostic change, run immutable PR CI/deployment-script checks, then use the resulting exact Stage failure evidence to identify and repair the actual PostgreSQL root cause. Keep the PR Draft until Stage is recovered.
+Run CI on the final docs head, keep the PR scoped and review-clean, then mark #660 Ready for Review. Merge is intentionally not performed without explicit user authorization. After merge, require exact-main CI and the automatic Stage run; use the newly emitted PostgreSQL evidence to choose a non-destructive recovery and keep Issue #659 open until Stage/public checks are healthy.

@@ -5,8 +5,9 @@
 - Issue: #659
 - Branch: fix/issue-659-stage-postgres-diagnostics
 - Base SHA: 0b92466b9385503e53f654b77da533caa362c2fb
-- Head SHA: resolve from live branch ref
-- PR: resolve after opening Draft PR
+- Validated implementation head: a85d234f11ba0f5397170e3106eaa773f007e711
+- Final evidence head: resolve from live branch ref after Agent Harness evidence commit
+- PR: #660
 
 ## Objective
 
