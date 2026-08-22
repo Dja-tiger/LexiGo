@@ -13,7 +13,15 @@ type FirstUseVisualBaseline =
   | "role-compact-light"
   | "role-compact-dark"
   | "resume-desktop-light"
-  | "resume-desktop-dark";
+  | "resume-desktop-dark"
+  | "loading-compact-light"
+  | "loading-compact-dark"
+  | "loading-desktop-light"
+  | "loading-desktop-dark"
+  | "error-compact-light"
+  | "error-compact-dark"
+  | "error-desktop-light"
+  | "error-desktop-dark";
 
 type FirstUseRoute = "/" | "/onboarding";
 type CanonicalViewport = Readonly<{ width: 390 | 1440; height: 844 | 900 }>;
@@ -31,11 +39,18 @@ type OpenPencilScreenMapEntry = Readonly<{
   width: number;
   height: number;
 }>;
+type OnboardingVisualMode = "role" | "resume" | "loading" | "error";
+type OnboardingAPIControls = Readonly<{
+  releaseLoading?: () => Promise<void>;
+}>;
 
 /**
  * These hashes are approval records for exact Linux PNGs, not generic snapshot
  * fixtures. A hash may change only after the corresponding artifact is manually
  * reviewed against the active OpenPencil node recorded alongside it.
+ *
+ * `REVIEW_REQUIRED` is intentionally fail-closed: the first immutable Linux run
+ * must publish exact PNG/JSON evidence before any new fingerprint is approved.
  *
  * Desktop First Use intentionally uses the canonical 1440×900 OpenPencil frame.
  * Broader 1440×1024 desktop behavior remains part of the umbrella #205 runtime
@@ -98,6 +113,62 @@ const FIRST_USE_VISUAL_BASELINES: Record<FirstUseVisualBaseline, FirstUseVisualC
     route: "/onboarding",
     viewport: { width: 1440, height: 900 },
   },
+  "loading-compact-light": {
+    sha256: "5ac755583ae348e92dd14af1e28ae97874c3072fb7f6825c36b5a9ef7df9fb8b",
+    screenMapKey: "firstuse.loading.mobile.light",
+    openPencilNode: "n117",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "loading-compact-dark": {
+    sha256: "643dcc73be33f1878765f2b6826d41e689f7ebec277ac0ce9777b9161f6d97e3",
+    screenMapKey: "firstuse.loading.mobile.dark",
+    openPencilNode: "n277",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "loading-desktop-light": {
+    sha256: "448d90d81985018b383454f905371379831f475fbc24be3b1e95822bf11b814d",
+    screenMapKey: "firstuse.loading.desktop.light",
+    openPencilNode: "n442",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
+  "loading-desktop-dark": {
+    sha256: "f9f88c3000aad5445d4bd1139cf81face075838b82d3f776d80227aa7c511a9e",
+    screenMapKey: "firstuse.loading.desktop.dark",
+    openPencilNode: "n614",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
+  "error-compact-light": {
+    sha256: "e4b0f198fff3a41acdca84f23b07b82250affae262a3c95719fed43c1c402e49",
+    screenMapKey: "firstuse.error.mobile.light",
+    openPencilNode: "n128",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "error-compact-dark": {
+    sha256: "03983eea1fc462f0e667deba5246952bfcf247da24a3cef4c3f33eec3320a7b3",
+    screenMapKey: "firstuse.error.mobile.dark",
+    openPencilNode: "n288",
+    route: "/onboarding",
+    viewport: { width: 390, height: 844 },
+  },
+  "error-desktop-light": {
+    sha256: "1175fc95ac3085e4fc3b748cc4ffd6f4f032fe4dfe29a46d209d18bd1569a3fa",
+    screenMapKey: "firstuse.error.desktop.light",
+    openPencilNode: "n456",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
+  "error-desktop-dark": {
+    sha256: "6cfbf773756e934a50e8b30a30a896399d3efd328fd2c101539d020b89682a06",
+    screenMapKey: "firstuse.error.desktop.dark",
+    openPencilNode: "n628",
+    route: "/onboarding",
+    viewport: { width: 1440, height: 900 },
+  },
 };
 
 function loadActiveOpenPencilScreens(): readonly OpenPencilScreenMapEntry[] {
@@ -153,6 +224,8 @@ const PROMPT = {
   topic: "Data Engineering",
 };
 
+const RECOVERABLE_ERROR_COPY = "Текущий выбор сохранён. Повторите запрос — диагностическая позиция не потеряется.";
+
 async function json(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -177,7 +250,10 @@ async function installGuestAPI(context: BrowserContext) {
   });
 }
 
-async function installOnboardingAPI(context: BrowserContext, mode: "role" | "resume") {
+async function installOnboardingAPI(
+  context: BrowserContext,
+  mode: OnboardingVisualMode,
+): Promise<OnboardingAPIControls> {
   await context.addCookies([{
     name: "lexigo_csrf",
     value: "first-use-visual-csrf",
@@ -185,12 +261,31 @@ async function installOnboardingAPI(context: BrowserContext, mode: "role" | "res
     sameSite: "Lax",
   }]);
 
+  let resolveLoadingRoute: ((route: Route) => void) | undefined;
+  const loadingRouteReady = mode === "loading"
+    ? new Promise<Route>((resolveRoute) => {
+      resolveLoadingRoute = resolveRoute;
+    })
+    : undefined;
+
   await context.route("**/api/v1/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (path === "/api/v1/auth/refresh") return json(route, 200, SESSION);
     if (path === "/api/v1/auth/sessions") return json(route, 200, { sessions: [] });
     if (path === "/api/v1/onboarding" && request.method() === "GET") {
+      if (mode === "loading") {
+        resolveLoadingRoute?.(route);
+        return;
+      }
+      if (mode === "error") {
+        return json(route, 503, {
+          error: {
+            code: "temporary_unavailable",
+            message: RECOVERABLE_ERROR_COPY,
+          },
+        });
+      }
       if (mode === "resume") {
         return json(route, 200, {
           state: "in_progress",
@@ -203,6 +298,14 @@ async function installOnboardingAPI(context: BrowserContext, mode: "role" | "res
     }
     return json(route, 404, { error: { code: "not_mocked", message: path } });
   });
+
+  if (!loadingRouteReady) return {};
+  return {
+    releaseLoading: async () => {
+      const route = await loadingRouteReady;
+      await json(route, 200, { state: "not_started", total: 0, marked: 0 });
+    },
+  };
 }
 
 function annotateOpenPencil(testInfo: TestInfo, baselineName: FirstUseVisualBaseline) {
@@ -252,10 +355,29 @@ async function settle(page: Page, appearance: ExplicitAppearance) {
   expect(dimensions.contentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
 }
 
+async function expectControlInsideViewport(page: Page, name: string) {
+  const geometry = await page.getByRole("button", { name }).evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      left: bounds.left,
+      right: bounds.right,
+      top: bounds.top,
+      bottom: bounds.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewportHeight + 1);
+}
+
 async function captureForReview(
   page: Page,
   testInfo: TestInfo,
   baselineName: FirstUseVisualBaseline,
+  beforeAssert?: () => Promise<void>,
 ) {
   const baseline = FIRST_USE_VISUAL_BASELINES[baselineName];
   expect(page.viewportSize()).toEqual(baseline.viewport);
@@ -283,6 +405,7 @@ async function captureForReview(
     }, null, 2)),
     contentType: "application/json",
   });
+  await beforeAssert?.();
   expect(
     actualSha256,
     `${baselineName} changed from active OpenPencil ${baseline.screenMapKey} (${baseline.openPencilNode}) at ${baseline.viewport.width}×${baseline.viewport.height}; manually review the exact Linux PNG before approving a new hash`,
@@ -345,6 +468,91 @@ test.describe("First Use reviewed OpenPencil visual baselines", () => {
       await unsureMark.click();
       await expect(unsureMark).toHaveAttribute("aria-checked", "true");
       await settle(page, appearance);
+      await captureForReview(page, testInfo, baselineName);
+    });
+
+    test(`Onboarding loading compact ${appearance}`, async ({ context, page }, testInfo) => {
+      const baselineName = `loading-compact-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 canonical loading evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
+      await installAppearance(page, appearance);
+      const controls = await installOnboardingAPI(context, "loading");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      const main = page.locator('#lexigo-main-content[data-route-client-island], #lexigo-main-content');
+      await expect(page.locator('[data-route-client-island="onboarding"]')).toBeVisible();
+      await expect(main).toHaveAttribute("aria-busy", "true");
+      await expect(page.locator(".lx-first-use-loading")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Подготавливаем диагностику" })).toBeVisible();
+      await expect(page.getByText(PROMPT.lemma)).toHaveCount(0);
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, baselineName, controls.releaseLoading);
+    });
+
+    test(`Onboarding loading desktop ${appearance}`, async ({ context, page }, testInfo) => {
+      const baselineName = `loading-desktop-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×900 canonical loading evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
+      await installAppearance(page, appearance);
+      const controls = await installOnboardingAPI(context, "loading");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      const main = page.locator("#lexigo-main-content");
+      await expect(page.locator('[data-route-client-island="onboarding"]')).toBeVisible();
+      await expect(main).toHaveAttribute("aria-busy", "true");
+      await expect(page.locator(".lx-first-use-loading")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Подготавливаем диагностику" })).toBeVisible();
+      await expect(page.getByText(PROMPT.lemma)).toHaveCount(0);
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      await settle(page, appearance);
+      await captureForReview(page, testInfo, baselineName, controls.releaseLoading);
+    });
+
+    test(`Onboarding error compact ${appearance}`, async ({ context, page }, testInfo) => {
+      const baselineName = `error-compact-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-compact", "390×844 canonical error evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
+      await installAppearance(page, appearance);
+      await installOnboardingAPI(context, "error");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      const alertPanel = page.locator('.lx-first-use-message[role="alert"]');
+      await expect(page.locator('[data-route-client-island="onboarding"]')).toBeVisible();
+      await expect(alertPanel).toBeVisible();
+      await expect(alertPanel.getByRole("heading", { name: "Не удалось продолжить" })).toBeVisible();
+      await expect(alertPanel.getByText(RECOVERABLE_ERROR_COPY)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Повторить" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Вернуться назад" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Перейти к обучению" })).toHaveCount(0);
+      await settle(page, appearance);
+      await expectControlInsideViewport(page, "Повторить");
+      await expectControlInsideViewport(page, "Вернуться назад");
+      await captureForReview(page, testInfo, baselineName);
+    });
+
+    test(`Onboarding error desktop ${appearance}`, async ({ context, page }, testInfo) => {
+      const baselineName = `error-desktop-${appearance}` as const;
+      test.skip(testInfo.project.name !== "visual-desktop", "1440×900 canonical error evidence only");
+      annotateOpenPencil(testInfo, baselineName);
+      await prepareCanonicalViewport(page, baselineName);
+      await installAppearance(page, appearance);
+      await installOnboardingAPI(context, "error");
+      await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+      const stateIntro = page.locator(".lx-first-use-state-intro");
+      const alertPanel = page.locator('.lx-first-use-message[role="alert"]');
+      await expect(page.locator('[data-route-client-island="onboarding"]')).toBeVisible();
+      await expect(stateIntro).toBeVisible();
+      await expect(stateIntro.getByRole("heading", { name: "Не удалось продолжить" })).toBeVisible();
+      await expect(alertPanel).toBeVisible();
+      await expect(alertPanel.getByRole("heading", { name: "Не удалось продолжить" })).toBeVisible();
+      await expect(alertPanel.getByText(RECOVERABLE_ERROR_COPY)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Повторить" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Вернуться назад" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Перейти к обучению" })).toHaveCount(0);
+      await settle(page, appearance);
+      await expectControlInsideViewport(page, "Повторить");
+      await expectControlInsideViewport(page, "Вернуться назад");
       await captureForReview(page, testInfo, baselineName);
     });
   }
