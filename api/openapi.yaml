@@ -925,7 +925,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Catalog item is not assigned to the current user.
+          description: Catalog item is not assignedен текущему пользователю.
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}/review:
@@ -2196,7 +2196,7 @@ components:
           $ref: "#/components/schemas/LessonSessionKind"
         lessonSize:
           type: string
-          enum: ["15", "30", "60"]
+          enum: ["15", "30", "50", "all"]
         topic:
           type: string
           maxLength: 120
@@ -2223,7 +2223,7 @@ components:
           $ref: "#/components/schemas/LessonSessionKind"
         lessonSize:
           type: string
-          enum: ["15", "30", "60"]
+          enum: ["15", "30", "50", "all"]
         topic:
           type: string
           maxLength: 120
