@@ -73,16 +73,27 @@ Visual acceptance and reconciliation:
 - Direct source inspection rejected a guessed Issue #603 3→4 assertion because it did not exist; the file already required `96px 96px 96px 96px`. Only the real `learn-browser-zoom.spec.ts` `toHaveLength(3)` assertion was changed to 4.
 - `.agents/current/TASK.md` was updated before mutation to authorize exactly 17 reviewed hash/provenance replacements plus that single assertion.
 - One-shot helper run `32669295151` succeeded with exact-anchor counts and a seven-file path allowlist, producing test-only commit `a4cc0a8d102e22ff4e2ec3f26b197dd7c3240ab8`.
-- The temporary workflow was immediately removed by `202c4d01e5cb0d11bc29dac7873d8622073e6cf3`; subsequent PR inventory contains zero `.github/workflows/**` diff.
-- CI #4074 was triggered on the helper-containing intermediate head and is explicitly ineligible as merge evidence. The final developer-authored harness head must receive a fresh complete immutable-head CI.
+- The temporary workflow was immediately removed by `202c4d01e5cb0d11bc29dac7873d8622073e6cf3`; subsequent PR inventory contained zero `.github/workflows/**` diff.
+
+Final immutable-head recovery:
+
+- CI #4078 / run `32669383712` executed on immutable branch head `3dd4ea9e6653eb94599e1669f3757e60570d5f46`.
+- Both UI shards, Lesson completion, backend unit/integration, frontend lint/type/unit/build, performance/security/accessibility, iOS PWA, Dictionary smoke and Controlled Service Worker gates passed.
+- Its sole failure was `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` dark `/learn` at exact `720×995`: branch expected `b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4b`, while initial and retry actuals were both `b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4f`.
+- Because only one final SHA-256 nibble differed, no baseline mutation was made from #4078 itself. The primary #4069 Playwright artifact `frontend-playwright-report-visual` was downloaded and inspected directly.
+- Artifact `9495610938`, digest `sha256:d6d345b7368a9a9e7610ed7419b1aaf1e2c18d37487a484a769f36c3ac07a015`, is tied to #4069 head `c4d52f51f944ba0d29c52e0707425ed2473e0267`; its Issue #603 dark error context records the original exact actual hash ending `...003d4f` at `720×995`.
+- That primary evidence proved a one-nibble transcription error had been introduced while copying the #4069 reviewed hash; there was no runtime or geometry drift.
+- `.agents/current/TASK.md` was updated before correction to authorize only the exact `...003d4b → ...003d4f` mutation with unchanged dimensions and provenance.
+- One-shot helper run `32670105012` then succeeded fail-closed and produced only `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` commit `075477711725263195454569092a278317e238e2`.
+- The helper was immediately deleted by `afe25aaa91c3aeaf73a149076a8417dd468139e8`; CI #4080 on the helper-containing intermediate head is diagnostic only and cannot serve as merge evidence.
+- The branch must now remain frozen after this final Agent Harness write and receive a complete fresh immutable-head CI.
 
 Large-file exact-rewrite procedure:
 
 - The connected GitHub Contents action replaces complete UTF-8 files and provides no safe inline patch operation for very large files.
 - Following repository precedent, `.agents/current/TASK.md` explicitly authorized every temporary exact-anchor helper use before mutation.
-- Earlier bounded helper uses repaired only their explicitly authorized OpenAPI/browser/Active-Lesson owners and were deleted after use.
-- The final reconciliation helper was similarly fail-closed on exact anchors, replacement count and seven exact test paths; it made no runtime changes and was deleted before the final candidate.
-- Final PR inventory after deletion contains zero `.github/workflows/**` diff.
+- Helpers were fail-closed on expected parent, exact anchor count and exact changed-path allowlists.
+- All temporary helpers were deleted before eligible final candidates; final acceptance requires zero `.github/workflows/**` diff.
 
 CI evidence so far:
 
@@ -90,22 +101,24 @@ CI evidence so far:
 - Recovery separated write validation from read compatibility rather than reintroducing `60` into new manual/API choices.
 - Diagnostic run #4052 / `32646629393` then passed frontend lint, type-check and unit tests before later branch writes superseded the run.
 - CI #4064 diagnosed the actual four-choice layout regression; its visual deltas were not approved.
-- CI #4069 is the exact post-CSS evidence source for the 17 reviewed `/learn` fingerprints and the remaining stale test contract.
+- CI #4069 is the exact post-CSS evidence source for the reviewed `/learn` fingerprints and stale test contracts.
+- CI #4078 proved all final gates except the one incorrectly transcribed Issue #603 fingerprint were green and independently reproduced the primary #4069 `...003d4f` value on both attempts.
 - The head produced by this final Agent Harness write is the only candidate eligible for final merge evidence; all earlier CI runs are diagnostic/superseded.
 
 Failures and recovery:
 
-- Local read-only clone was unavailable because the execution container could not reliably resolve `github.com`; connected GitHub reads/writes and GitHub Actions remained authoritative.
+- Local read-only clone was unavailable because the execution container could not reliably resolve `github.com`; connected GitHub reads/writes and GitHub Actions remained authoritative. Downloaded CI artifacts were inspected locally without changing repository state.
 - First implementation removed `60` too broadly from the frontend union; CI caught the mismatch. Correct recovery retained it only for read compatibility while keeping new write validation strict.
 - Existing adaptive and browser-zoom tests encoded the old default 30; they were reconciled to the new 15 default rather than weakening assertions.
 - Self-review found the Active Lesson `50 → 30` parser defect before merge; exact downstream compatibility was added with a regression.
 - Initial four-option CSS retained a three-column grid; Linux screenshots proved the resulting orphan row and prevented an incorrect baseline refresh.
 - A guessed second stale three-column assertion was deliberately rejected after direct source/report inspection showed the actual UI shard 2 failures were Issue #583 fingerprints, not an Issue #603 assertion.
 - An earlier helper revision failed closed on that nonexistent guessed anchor and wrote nothing; the corrected helper was authorized only after exact artifact evidence was obtained.
+- Final CI #4078 exposed a one-character copied SHA mismatch; recovery used the original #4069 artifact as the authority rather than blessing #4078 output as a new baseline.
 
 Result:
 
-Stage 4 implementation is feature-complete at the intended boundary: manual `/learn` owns `15 / 30 / 50 / Все`, automatic Home remains 15, backend/OpenAPI own exact new write vocabulary, explicit `all` is uncapped only after validation, Active Lesson preserves both new and historical sizes, and reviewed visual geometry/fingerprints now encode the corrected four-column runtime rather than the rejected orphan-row defect.
+Stage 4 implementation is feature-complete at the intended boundary: manual `/learn` owns `15 / 30 / 50 / Все`, automatic Home remains 15, backend/OpenAPI own exact new write vocabulary, explicit `all` is uncapped only after validation, Active Lesson preserves both new and historical sizes, and reviewed visual geometry/fingerprints encode the corrected four-column runtime with exact primary CI provenance.
 
 Limitations / non-goals preserved:
 
@@ -120,8 +133,8 @@ Limitations / non-goals preserved:
 
 Next action:
 
-Treat the head produced by this write as immutable. Require complete PR CI on that exact SHA, then review/thread/final-diff audit, mark ready, expected-head squash merge, exact-main CI and exact-SHA Stage/public validation. Only after those gates pass should a separate Agent Docs reconciliation record Stage 4 and reset `.agents/current/**`.
+Treat the head produced by this write as immutable. Require complete PR CI on that exact SHA, then re-audit review/thread/final diff, mark ready, expected-head squash merge, exact-main CI and exact-SHA Stage/public validation. Only after those gates pass should a separate Agent Docs reconciliation record Stage 4 and reset `.agents/current/**`.
 
 Reusable lesson:
 
-When an API vocabulary changes, write-contract validation and persisted read compatibility are different ownership boundaries. Visual baselines are also acceptance evidence, not a mechanism to hide geometry regressions: correct runtime first, prove stable dimensions on exact Linux CI, then refresh only reviewed content-addressed fingerprints with exact provenance.
+When an API vocabulary changes, write-contract validation and persisted read compatibility are different ownership boundaries. Visual baselines are acceptance evidence, not a mechanism to hide geometry regressions: correct runtime first, prove stable dimensions on exact Linux CI, and if a copied content hash later differs by transcription, return to the primary artifact before changing the baseline.
