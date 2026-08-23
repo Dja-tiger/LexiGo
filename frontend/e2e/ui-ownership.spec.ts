@@ -135,10 +135,24 @@ async function installBrowserMocks(page: Page) {
       return;
     }
     if (path === "/api/v1/lessons/preview") {
-      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
+      const input = request.postDataJSON() as { source?: string; studyMode?: string; sessionKind?: "study" | "review" | "remediation"; lessonSize?: string };
+      const available = input.sessionKind === "review"
+        ? PROGRESS.dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : PROGRESS.newWords;
+      const total = input.sessionKind ? Math.min(15, available) : 2;
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-        source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30",
-        composition: { total: 2, words: 1, phrases: 1, due: 2, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 },
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "study",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
+        lessonSize: input.lessonSize ?? "30",
+        composition: {
+          total, words: total, phrases: 0,
+          due: input.sessionKind === "review" ? total : 0,
+          new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
+          scheduled: 0, availableWords: available, availablePhrases: 0,
+        },
       }) });
     }
     if (path === "/api/v1/lessons/active") {
@@ -150,7 +164,7 @@ async function installBrowserMocks(page: Page) {
       return;
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
-      const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string; wordIds?: number[] };
+      const input = request.postDataJSON() as { source: string; studyMode: string; sessionKind?: "study" | "review" | "remediation"; lessonSize: string; wordIds?: number[] };
       const selected = input.wordIds
         ? WORDS.filter((item) => input.wordIds?.includes(item.id))
         : [WORDS[0], PHRASES[0]];
@@ -158,6 +172,7 @@ async function installBrowserMocks(page: Page) {
         id: "00000000-0000-0000-0000-000000000360",
         source: input.source,
         studyMode: input.studyMode,
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize,
         currentIndex: 0,
         version: 1,
@@ -266,7 +281,7 @@ test.beforeEach(async ({ page }) => {
 test("application shell, dictionary catalog and composer collections remain unique through React navigation", async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|доступ(?:ен|ны) для изучения|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
     await expect(page.locator(".lx-home-paths")).toBeHidden();
