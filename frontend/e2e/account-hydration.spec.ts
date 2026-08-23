@@ -206,24 +206,34 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
 
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(phraseNotice).toContainText("Сервис временно недоступен");
+
+  // Phrases owns its own progress evidence, so entering this route may add a
+  // progress read. Capture the stable route baseline and prove that retrying
+  // only the failed phrase catalog resource does not rehydrate unrelated
+  // progress or Home active-session state.
+  const progressBeforeRetry = requests.progressRequests();
+  const activeLessonBeforeRetry = requests.activeLessonRequests();
+  expect(progressBeforeRetry).toBeGreaterThanOrEqual(1);
+  expect(activeLessonBeforeRetry).toBe(1);
+
   await phraseNotice.getByRole("button", { name: "Повторить" }).click();
   await expect(phraseNotice).toBeHidden();
   await expect(page.locator(".lx-phrase-grid").getByText("Independent retry", { exact: true })).toBeVisible();
 
-  expect(requests.progressRequests()).toBe(1);
+  expect(requests.progressRequests()).toBe(progressBeforeRetry);
   expect(requests.phraseRequests()).toBe(2);
-  expect(requests.activeLessonRequests()).toBe(1);
+  expect(requests.activeLessonRequests()).toBe(activeLessonBeforeRetry);
 
   await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(dueCard.locator("strong")).toHaveText("7");
 
-  // Returning to Home remounts the Home route owner and therefore rehydrates
-  // Home-owned progress/active-session resources; the Phrases retry itself
-  // must not trigger those reads.
-  expect(requests.progressRequests()).toBe(2);
+  // Returning to Home remounts the Home route owner and therefore performs
+  // one fresh progress read and one fresh active-session read. The Phrases
+  // catalog itself remains untouched.
+  expect(requests.progressRequests()).toBe(progressBeforeRetry + 1);
   expect(requests.phraseRequests()).toBe(2);
-  expect(requests.activeLessonRequests()).toBe(2);
+  expect(requests.activeLessonRequests()).toBe(activeLessonBeforeRetry + 1);
 });
 
 test("standalone startup migrates away from corrupted navigation without clearing unrelated state", async ({ page }) => {
