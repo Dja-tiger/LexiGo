@@ -228,10 +228,10 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
   await expect(page).toHaveURL(/\/$/);
   await expect(dueCard.locator("strong")).toHaveText("7");
 
-  // Returning to Home remounts the Home route owner and therefore performs
-  // one fresh progress read and one fresh active-session read. The Phrases
-  // catalog itself remains untouched.
-  expect(requests.progressRequests()).toBe(progressBeforeRetry + 1);
+  // Returning to Home reuses the account-owned progress evidence while the
+  // Home route remounts its active-session owner. The Phrases catalog itself
+  // remains untouched.
+  expect(requests.progressRequests()).toBe(progressBeforeRetry);
   expect(requests.phraseRequests()).toBe(2);
   expect(requests.activeLessonRequests()).toBe(activeLessonBeforeRetry + 1);
 });
