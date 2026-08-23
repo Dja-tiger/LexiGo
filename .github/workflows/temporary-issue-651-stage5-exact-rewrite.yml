@@ -1,0 +1,204 @@
+name: Temporary Issue 651 Stage 5 exact rewrite
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/temporary-issue-651-stage5-exact-rewrite.yml
+
+permissions:
+  contents: write
+
+jobs:
+  exact-rewrite:
+    if: github.event.pull_request.number == 669 && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-process-continuation
+          fetch-depth: 0
+
+      - name: Apply Issue 651 Stage 5 process-continuation rewrite
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          expected_parent="de80344f872d7d6ea97129ce4f8b4f30f837e289"
+          actual_parent="$(git rev-parse HEAD^)"
+          if [ "$actual_parent" != "$expected_parent" ]; then
+            echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              "frontend/lib/lesson-result.ts": [
+                  (
+                      'export type LessonResultOutcomeState = "empty" | "study" | "partial" | "skipped" | "complete";\n\nexport type LessonResultSnapshot = {',
+                      'export type LessonResultSessionKind = "study" | "review" | "remediation";\nexport type LessonResultOutcomeState = "empty" | "study" | "partial" | "skipped" | "complete";\n\nexport type LessonResultSnapshot = {',
+                  ),
+                  (
+                      '  source: string;\n  studyMode: AnswerMode;\n  lessonSize: string;\n  topic: string;',
+                      '  source: string;\n  studyMode: AnswerMode;\n  sessionKind?: LessonResultSessionKind;\n  lessonSize: string;\n  topic: string;',
+                  ),
+                  (
+                      '  source: string;\n  studyMode: AnswerMode;\n  lessonSize: string;\n  topic?: string;',
+                      '  source: string;\n  studyMode: AnswerMode;\n  sessionKind?: LessonResultSessionKind;\n  lessonSize: string;\n  topic?: string;',
+                  ),
+                  (
+                      'function isAnswerMode(value: unknown): value is AnswerMode {\n  return value === "study" || value === "recall" || value === "choice";\n}\n\nfunction normalizeNullableCounter',
+                      'function isAnswerMode(value: unknown): value is AnswerMode {\n  return value === "study" || value === "recall" || value === "choice";\n}\n\nfunction isLessonResultSessionKind(value: unknown): value is LessonResultSessionKind {\n  return value === "study" || value === "review" || value === "remediation";\n}\n\nfunction normalizeNullableCounter',
+                  ),
+                  (
+                      '    source: input.source,\n    studyMode: input.studyMode,\n    lessonSize: input.lessonSize,',
+                      '    source: input.source,\n    studyMode: input.studyMode,\n    ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),\n    lessonSize: input.lessonSize,',
+                  ),
+                  (
+                      '      || typeof parsed.source !== "string"\n      || !isAnswerMode(parsed.studyMode)\n      || typeof parsed.lessonSize !== "string"',
+                      '      || typeof parsed.source !== "string"\n      || !isAnswerMode(parsed.studyMode)\n      || (parsed.sessionKind !== undefined && !isLessonResultSessionKind(parsed.sessionKind))\n      || typeof parsed.lessonSize !== "string"',
+                  ),
+              ],
+              "frontend/lib/lesson-result.test.ts": [
+                  (
+                      '      source: "mixed",\n      studyMode: "choice",\n      lessonSize: "15",',
+                      '      source: "mixed",\n      studyMode: "choice",\n      sessionKind: "study",\n      lessonSize: "15",',
+                  ),
+                  (
+                      '    expect(result.dailyGoalReached).toBe(true);\n    expect(result.dailyGoalJustReached).toBe(true);',
+                      '    expect(result.sessionKind).toBe("study");\n    expect(result.dailyGoalReached).toBe(true);\n    expect(result.dailyGoalJustReached).toBe(true);',
+                  ),
+                  (
+                      '  it("restores a recent version-2 snapshot and removes it explicitly", () => {\n    const storage = new MemoryStorage();\n    const result = snapshot();\n    writeLessonResultSnapshot(storage, result);\n\n    expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(result);\n    clearLessonResultSnapshot(storage, result.userId);\n    expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();\n  });',
+                      '  it("restores explicit process intent and historical version-2 snapshots that omit it", () => {\n    const storage = new MemoryStorage();\n    const explicit = snapshot({ sessionKind: "remediation" });\n    writeLessonResultSnapshot(storage, explicit);\n    expect(readLessonResultSnapshot(storage, explicit.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(explicit);\n\n    const historical = snapshot();\n    writeLessonResultSnapshot(storage, historical);\n    expect(readLessonResultSnapshot(storage, historical.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(historical);\n\n    clearLessonResultSnapshot(storage, historical.userId);\n    expect(readLessonResultSnapshot(storage, historical.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();\n  });',
+                  ),
+              ],
+              "frontend/components/lexigo-active-lesson-app.tsx": [
+                  (
+                      '  type LessonResultContinuation,\n  type LessonResultJudgement,\n  type LessonResultSelectedAction,\n  type LessonResultSnapshot,',
+                      '  type LessonResultContinuation,\n  type LessonResultJudgement,\n  type LessonResultSessionKind,\n  type LessonResultSelectedAction,\n  type LessonResultSnapshot,',
+                  ),
+                  (
+                      '  source: LessonSource;\n  studyMode: AnswerMode;\n  lessonSize: string;\n  currentIndex: number;',
+                      '  source: LessonSource;\n  studyMode: AnswerMode;\n  sessionKind?: LessonResultSessionKind;\n  lessonSize: string;\n  currentIndex: number;',
+                  ),
+                  (
+                      '        source: lessonResult.source,\n        studyMode: lessonResult.studyMode,\n        lessonSize: lessonResult.lessonSize,\n        ...(lessonResult.topic ? { topic: lessonResult.topic } : {}),',
+                      '        source: lessonResult.source,\n        studyMode: lessonResult.studyMode,\n        ...(lessonResult.sessionKind ? { sessionKind: lessonResult.sessionKind } : {}),\n        lessonSize: lessonResult.lessonSize,\n        ...(lessonResult.topic ? { topic: lessonResult.topic } : {}),',
+                  ),
+                  (
+                      '          source: activeLesson.source,\n          studyMode: activeLesson.studyMode,\n          lessonSize: activeLesson.lessonSize,\n          topic: lessonTopic,',
+                      '          source: activeLesson.source,\n          studyMode: activeLesson.studyMode,\n          ...(activeLesson.sessionKind ? { sessionKind: activeLesson.sessionKind } : {}),\n          lessonSize: activeLesson.lessonSize,\n          topic: lessonTopic,',
+                  ),
+                  (
+                      '    nextMode: AnswerMode,\n    nextTopic: string,\n    previousResult: LessonResultSnapshot,\n  ) => {',
+                      '    nextMode: AnswerMode,\n    nextTopic: string,\n    previousResult: LessonResultSnapshot,\n    nextSessionKind?: LessonResultSessionKind,\n  ) => {',
+                  ),
+                  (
+                      '            source: nextSource,\n            studyMode: nextMode,\n            lessonSize: String(nextSize),\n            ...(nextTopic ? { topic: nextTopic } : {}),',
+                      '            source: nextSource,\n            studyMode: nextMode,\n            ...(nextSessionKind ? { sessionKind: nextSessionKind } : {}),\n            lessonSize: String(nextSize),\n            ...(nextTopic ? { topic: nextTopic } : {}),',
+                  ),
+                  (
+                      '      lessonResult.studyMode,\n      lessonResult.topic,\n      lessonResult,\n    );',
+                      '      lessonResult.studyMode,\n      lessonResult.topic,\n      lessonResult,\n      lessonResult.sessionKind,\n    );',
+                  ),
+                  (
+                      '    void startLesson("mixed", 30, "recall", "", lessonResult);',
+                      '    void startLesson("mixed", 15, "recall", "", lessonResult, "review");',
+                  ),
+              ],
+              "frontend/components/lesson-result-presentation.tsx": [
+                  (
+                      '  if (continuation.kind === "due") {\n    return {\n      state: "due",\n      symbol: "↻",\n      eyebrow: "УРОК ЗАВЕРШЁН",\n      title: "Сначала закрепим материал",\n      body: outcomeBody,\n      actionEyebrow: "ГОТОВО К ПОВТОРЕНИЮ",\n      actionTitle: `${continuation.dueCount} элементов требуют проверки`,\n      actionBody: "Это уже наступивший server-owned срок, поэтому повторение полезнее нового блока.",\n      detailTitle: timing.title,\n      detailBody: timing.body,\n      primaryLabel: `Повторить ${continuation.dueCount} элементов`,\n      secondaryLabel: "На главную",\n      primaryAction: "due",\n      secondaryAction: "home",\n    };\n  }',
+                      '  if (continuation.kind === "due") {\n    const dueBlockCount = Math.min(15, continuation.dueCount);\n    const hasRemainingBacklog = continuation.dueCount > dueBlockCount;\n    return {\n      state: "due",\n      symbol: "↻",\n      eyebrow: "УРОК ЗАВЕРШЁН",\n      title: "Сначала закрепим материал",\n      body: outcomeBody,\n      actionEyebrow: "ГОТОВО К ПОВТОРЕНИЮ",\n      actionTitle: hasRemainingBacklog\n        ? `Повторить ${dueBlockCount} из ${continuation.dueCount}`\n        : `${continuation.dueCount} элементов требуют проверки`,\n      actionBody: hasRemainingBacklog\n        ? `Сейчас к повторению: ${continuation.dueCount}. Следующий блок ограничен ${dueBlockCount} элементами; остаток останется в очереди.`\n        : "Это уже наступивший server-owned срок, поэтому повторение полезнее нового блока.",\n      detailTitle: timing.title,\n      detailBody: timing.body,\n      primaryLabel: hasRemainingBacklog\n        ? `Повторить ${dueBlockCount} из ${continuation.dueCount}`\n        : `Повторить ${dueBlockCount} элементов`,\n      secondaryLabel: "На главную",\n      primaryAction: "due",\n      secondaryAction: "home",\n    };\n  }',
+                  ),
+              ],
+              "frontend/e2e/support/lesson-result-fixture.ts": [
+                  (
+                      '  repeatCompletedBlock?: boolean;\n  resumeWithReviewedItem?: boolean;\n};',
+                      '  repeatCompletedBlock?: boolean;\n  resumeWithReviewedItem?: boolean;\n  activeSessionKind?: LessonSessionKind;\n};',
+                  ),
+                  (
+                      '  previewRequests: () => number;\n  resultActionRequests: () => LessonResultActionRequest[];\n};',
+                      '  previewRequests: () => number;\n  previewRequestBodies: () => LessonRequest[];\n  lessonCreateRequestBodies: () => LessonRequest[];\n  resultActionRequests: () => LessonResultActionRequest[];\n};',
+                  ),
+                  (
+                      'type LessonRequest = {',
+                      'export type LessonRequest = {',
+                  ),
+                  (
+                      '  let lessonCreateCount = 0;\n  let previewCount = 0;\n  const resultActions: LessonResultActionRequest[] = [];',
+                      '  let lessonCreateCount = 0;\n  let previewCount = 0;\n  const previewBodies: LessonRequest[] = [];\n  const lessonCreateBodies: LessonRequest[] = [];\n  const resultActions: LessonResultActionRequest[] = [];',
+                  ),
+                  (
+                      '    source: "mixed",\n    studyMode: "recall",\n    lessonSize: "30",\n    currentIndex: 1,',
+                      '    source: "mixed",\n    studyMode: "recall",\n    ...(options.activeSessionKind ? { sessionKind: options.activeSessionKind } : {}),\n    lessonSize: options.activeSessionKind ? "15" : "30",\n    currentIndex: 1,',
+                  ),
+                  (
+                      '      const input = request.postDataJSON() as LessonRequest;\n      const legacyTotal = reviewCount > 0 ? previewTotal : 1;',
+                      '      const input = request.postDataJSON() as LessonRequest;\n      previewBodies.push({ ...input });\n      const legacyTotal = reviewCount > 0 ? previewTotal : 1;',
+                  ),
+                  (
+                      '      const input = request.postDataJSON() as LessonRequest;\n      const nextRequest = lessonCreateCount > 0;',
+                      '      const input = request.postDataJSON() as LessonRequest;\n      lessonCreateBodies.push({ ...input });\n      const nextRequest = lessonCreateCount > 0;',
+                  ),
+                  (
+                      '    lessonCreateRequests: () => lessonCreateCount,\n    previewRequests: () => previewCount,\n    resultActionRequests: () => [...resultActions],',
+                      '    lessonCreateRequests: () => lessonCreateCount,\n    previewRequests: () => previewCount,\n    previewRequestBodies: () => previewBodies.map((entry) => ({ ...entry })),\n    lessonCreateRequestBodies: () => lessonCreateBodies.map((entry) => ({ ...entry })),\n    resultActionRequests: () => [...resultActions],',
+                  ),
+              ],
+              "frontend/e2e/lesson-result.spec.ts": [
+                  (
+                      '  test("marks restored reviews with unavailable correctness as partial instead of lowering objective accuracy", async ({ page }) => {',
+                      '  test("preserves explicit process intent through result preview and the next block", async ({ page }) => {\n    const fixture = await installLessonResultFixture(page, {\n      previewTotal: 1,\n      resumeWithReviewedItem: true,\n      activeSessionKind: "study",\n    });\n\n    await page.goto("/lesson/active?resume=1", { waitUntil: "domcontentloaded" });\n    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible({ timeout: 15_000 });\n    const answer = page.getByRole("textbox", { name: "Введите ответ" });\n    await answer.fill("checkpoint");\n    await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();\n    await page.getByRole("button", { name: "Знал", exact: true }).click();\n    await page.getByRole("button", { name: "К результатам", exact: true }).click();\n\n    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");\n    const previewBodies = fixture.previewRequestBodies();\n    expect(previewBodies[previewBodies.length - 1]).toMatchObject({\n      source: "mixed",\n      studyMode: "recall",\n      sessionKind: "study",\n      lessonSize: "15",\n    });\n\n    await page.getByRole("button", { name: "Следующий урок", exact: true }).click();\n    const createBodies = fixture.lessonCreateRequestBodies();\n    expect(createBodies[createBodies.length - 1]).toMatchObject({\n      source: "mixed",\n      studyMode: "recall",\n      sessionKind: "study",\n      lessonSize: "15",\n    });\n    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();\n  });\n\n  test("marks restored reviews with unavailable correctness as partial instead of lowering objective accuracy", async ({ page }) => {',
+                  ),
+                  (
+                      '  test("prioritizes already-due review even when a new block is available", async ({ page }) => {\n    const fixture = await installLessonResultFixture(page, {\n      previewTotal: 1,\n      dueNow: 6,\n    });\n    await completeRecallLesson(page);\n\n    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");\n    await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();\n    await expect(page.getByText("6 элементов готовы сейчас", { exact: true })).toBeVisible();\n    const dueReview = page.getByRole("button", { name: "Повторить 6 элементов", exact: true });\n    await expect(dueReview).toBeVisible();\n    await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toHaveCount(0);\n\n    await dueReview.click();\n    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);\n    expect(fixture.resultActionRequests()[0]).toEqual({\n      recommendedAction: "due_review",\n      selectedAction: "due_review",\n    });\n  });',
+                      '  test("keeps the due backlog visible while starting only the next bounded review block", async ({ page }) => {\n    const fixture = await installLessonResultFixture(page, {\n      previewTotal: 1,\n      dueNow: 32,\n    });\n    await completeRecallLesson(page);\n\n    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");\n    await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();\n    await expect(page.getByText("32 элементов готовы сейчас", { exact: true })).toBeVisible();\n    await expect(page.getByText("Сейчас к повторению: 32. Следующий блок ограничен 15 элементами; остаток останется в очереди.", { exact: true })).toBeVisible();\n    const dueReview = page.getByRole("button", { name: "Повторить 15 из 32", exact: true });\n    await expect(dueReview).toBeVisible();\n    await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toHaveCount(0);\n\n    await dueReview.click();\n    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);\n    expect(fixture.resultActionRequests()[0]).toEqual({\n      recommendedAction: "due_review",\n      selectedAction: "due_review",\n    });\n    const createBodies = fixture.lessonCreateRequestBodies();\n    expect(createBodies[createBodies.length - 1]).toMatchObject({\n      source: "mixed",\n      studyMode: "recall",\n      sessionKind: "review",\n      lessonSize: "15",\n    });\n  });',
+                  ),
+              ],
+          }
+
+          expected_replacements = 28
+          applied = 0
+          for relative_path, pairs in replacements.items():
+              path = Path(relative_path)
+              text = path.read_text()
+              for old, new in pairs:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f"{relative_path}: expected exactly one anchor, found {count}: {old[:160]!r}")
+                  text = text.replace(old, new, 1)
+                  applied += 1
+              path.write_text(text)
+
+          if applied != expected_replacements:
+              raise SystemExit(f"expected {expected_replacements} exact replacements, applied {applied}")
+          PY
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            frontend/components/lesson-result-presentation.tsx
+            frontend/components/lexigo-active-lesson-app.tsx
+            frontend/e2e/lesson-result.spec.ts
+            frontend/e2e/support/lesson-result-fixture.ts
+            frontend/lib/lesson-result.test.ts
+            frontend/lib/lesson-result.ts
+          )
+          if [ "${changed[*]}" != "${expected[*]}" ]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${expected[@]}"
+          git commit -m "fix(learning): preserve process-aware lesson continuation"
+          git push origin HEAD:feat/issue-651-process-continuation
