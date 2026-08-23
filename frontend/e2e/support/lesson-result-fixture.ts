@@ -23,9 +23,12 @@ export type LessonResultFixture = {
   resultActionRequests: () => LessonResultActionRequest[];
 };
 
+type LessonSessionKind = "study" | "review" | "remediation";
+
 type LessonRequest = {
   source?: string;
   studyMode?: string;
+  sessionKind?: LessonSessionKind;
   lessonSize?: string;
 };
 
@@ -221,20 +224,27 @@ export async function installLessonResultFixture(
     if (path === "/api/v1/lessons/preview") {
       previewCount += 1;
       const input = request.postDataJSON() as LessonRequest;
-      const total = reviewCount > 0 ? previewTotal : 1;
+      const legacyTotal = reviewCount > 0 ? previewTotal : 1;
+      const available = input.sessionKind === "review"
+        ? dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : legacyTotal;
+      const total = input.sessionKind ? Math.min(15, available) : legacyTotal;
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize ?? "30",
         composition: {
           total,
           words: 0,
           phrases: total,
-          due: 0,
-          new: total,
+          due: input.sessionKind === "review" ? total : 0,
+          new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
           scheduled: 0,
           availableWords: 0,
-          availablePhrases: total,
+          availablePhrases: available,
           fallback: total > 0 ? "phrases_only" : "none",
         },
       });
@@ -252,6 +262,7 @@ export async function installLessonResultFixture(
         id: lessonID,
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize ?? "30",
         currentIndex: 0,
         version: 1,
