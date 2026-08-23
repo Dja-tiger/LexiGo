@@ -23,6 +23,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Provide explicit secondary controls for every available automatic process so Study and Remediation remain user-selectable even when Review is the recommendation.
 - Create Home lessons with the exact selected `sessionKind`, matching study mode and size 15.
 - Preserve existing route ownership, active-lesson resume priority, progress evidence, accessibility, responsive layout, reduced motion and manual Learn behavior.
+- Synchronize test-only downstream Home consumers discovered by immutable-head CI so their preview mocks echo the explicit `sessionKind` request without changing the session/PWA/navigation behavior those tests own.
 
 ## Non-goals
 
@@ -32,6 +33,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Adding automatic `All`, changing catalog/source filters or redesigning the Learn composer.
 - Adding analytics/history dashboards or long-term recommendation scoring weights.
 - Broad Home redesign, new design tokens, blind visual-baseline refresh or unrelated CSS cleanup.
+- Changing production session recovery, PWA lifecycle, adaptive-navigation ownership or browser-history behavior; only their stale Home API fixtures may be synchronized in this slice.
 - Closing parent Issue #651.
 
 ## Allowed paths
@@ -56,12 +58,14 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - `frontend/e2e/information-architecture.spec.ts`
 - `frontend/e2e/home-browser-zoom.spec.ts`
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
+- `frontend/e2e/session-resume-pwa.spec.ts` (test-only Home preview fixture synchronization; session recovery assertions remain unchanged)
+- `frontend/e2e/adaptive-navigation.spec.ts` (test-only Home preview fixture synchronization; navigation/layout assertions remain unchanged)
 
 ## Prohibited paths
 
 - migrations and scheduler mutation code outside the allowed learning selector files
 - `frontend/components/lexigo-learn-app.tsx` and manual Lesson Composer behavior
-- route bootstrap/session/PWA/history owners
+- production route bootstrap/session/PWA/history owners
 - design tokens, OpenPencil files and visual baselines
 - workflows, dependencies and deployment configuration
 - unrelated tests or compatibility cleanup
@@ -91,6 +95,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Active backend-owned lesson remains higher priority than creating any new process block.
 - Generic `progress.dueNow` may remain visible as progress evidence but is not the source of process-aware Home recommendation/counts.
 - No duplicate session bootstrap, API ownership, PWA owner or route graph is introduced.
+- Test fixtures for explicit Home previews must echo the requested `sessionKind`; legacy/manual preview fixtures may still omit it.
 
 ## Acceptance criteria
 
@@ -111,7 +116,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Full OpenAPI YAML structural validation and session-kind source contract.
 - Frontend lint/typecheck/unit/source contracts.
 - Targeted Home Playwright in desktop Chromium, Android Chromium and iOS WebKit, including request-body assertions, no horizontal overflow, touch/focus targets and reduced motion.
-- Existing Home route-island, information-architecture, true browser-zoom and route-readiness consumers remain collected and green after their fixtures/locators are synchronized to the process-aware contract.
+- Existing Home route-island, information-architecture, true browser-zoom, session-resume and adaptive-navigation consumers remain collected and green after their test-only fixtures/locators are synchronized to the process-aware contract.
 - Full immutable-head CI including both UI shards, visual regression without blind baseline updates, accessibility, performance, CSP/service-worker and container builds.
 - Clean PR comments/reviews/threads and expected-head squash merge.
 - Exact-main CI plus Stage/public smoke/browser verification on the runtime merge SHA.
@@ -122,7 +127,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Adding secondary process actions can create compact reflow/touch-target regressions; use existing button tokens and verify 320/390 widths plus 200% text.
 - Server preview and create could diverge if validation/selector paths differ; both must use the same `queryLessonCandidatesForSession` owner.
 - Due+weak candidates previously qualified for both Review and Remediation; the selector ownership correction is protected by unit and real PostgreSQL evidence.
-- Existing Home fixtures that used `progress.dueNow` or hard-coded `Повторить сейчас` are stale consumers once process preview becomes the recommendation source; they must be synchronized without weakening their original route/layout/accessibility purpose.
+- Existing Home fixtures that used `progress.dueNow`, omitted explicit-preview `sessionKind` or hard-coded `Повторить сейчас` are stale consumers once process preview becomes the recommendation source; they must be synchronized without weakening their original route/layout/accessibility/session-recovery purpose.
 
 ## Rollback
 
