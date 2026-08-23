@@ -26,9 +26,14 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          expected_parent="d0d34e2bdf015ed67f98904eade1aa82ae501b3b"
+          expected_parent="4905a0b17b4bbee4516fbc0431480ab765e006df"
           actual_parent="$(git rev-parse HEAD^)"
+          current_subject="$(git log -1 --pretty=%s)"
           if [ "$actual_parent" != "$expected_parent" ]; then
+            if [ "$current_subject" = "test(learning): reconcile reviewed stage 4 visual contracts" ]; then
+              echo "Reviewed reconciliation already applied; no-op on bot synchronize."
+              exit 0
+            fi
             echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
             exit 1
           fi
@@ -46,6 +51,16 @@ jobs:
                       'expect(responsiveStyles.sizeColumns.split(/\\s+/).filter(Boolean)).toHaveLength(4);',
                   ),
               ],
+              "frontend/e2e/issue-583-compact-library.spec.ts": [
+                  (
+                      '  "learn.light": {\n    width: 430,\n    height: 1575,\n    sha256: "84e41f0c3f35a564df1ef9a821aee3ab58b842b62b9438788cff15ef478f510a",\n    sourceRun: 32158725407,\n    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",\n  },',
+                      f'  "learn.light": {{\n    width: 430,\n    height: 1575,\n    sha256: "b735c5e48f5aaa4a364d7a7b16b48ef168088b4f4ebc904298dba3aa0b5ba2cf",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+                  (
+                      '  "learn.dark": {\n    width: 430,\n    height: 1575,\n    sha256: "cfcedd118c241757efc64efdb8e3215f136cad749e99055a79b71f332846bd53",\n    sourceRun: 32158725407,\n    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",\n  },',
+                      f'  "learn.dark": {{\n    width: 430,\n    height: 1575,\n    sha256: "737339c0b6395780f25516be3320c3dd478ef9c49718a87010725f071e838825",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+              ],
               "frontend/e2e/issue-603-browser-zoom-reflow.spec.ts": [
                   (
                       '    sha256: "7eb7f63ab91c45c2d8bfd6fcc1293866cfe0c848b162a1281be0f3b1a2298eff",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
@@ -54,10 +69,6 @@ jobs:
                   (
                       '    sha256: "eff73e6f44fda966c8812c7ba85d81a0156aa63df1bd7b76a0b5921993ea1e40",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
                       f'    sha256: "b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4b",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",',
-                  ),
-                  (
-                      'expect(learnSizeColumns, "manual lesson size control should preserve its three-column desktop geometry at browser zoom").toHaveLength(3);',
-                      'expect(learnSizeColumns, "manual lesson size control should preserve its four-column desktop geometry at browser zoom").toHaveLength(4);',
                   ),
               ],
               "frontend/e2e/route-browser-zoom-parity.spec.ts": [
@@ -122,7 +133,7 @@ jobs:
               ],
           }
 
-          expected_replacements = 17
+          expected_replacements = 18
           applied = 0
           for relative_path, pairs in replacements.items():
               path = Path(relative_path)
@@ -141,6 +152,7 @@ jobs:
 
           mapfile -t changed < <(git diff --name-only | sort)
           expected=(
+            frontend/e2e/issue-583-compact-library.spec.ts
             frontend/e2e/issue-603-browser-zoom-reflow.spec.ts
             frontend/e2e/learn-browser-zoom.spec.ts
             frontend/e2e/route-browser-zoom-parity.spec.ts
@@ -156,6 +168,7 @@ jobs:
           git diff --check
           git diff --stat
           git diff -- \
+            frontend/e2e/issue-583-compact-library.spec.ts \
             frontend/e2e/issue-603-browser-zoom-reflow.spec.ts \
             frontend/e2e/learn-browser-zoom.spec.ts \
             frontend/e2e/route-browser-zoom-parity.spec.ts \
@@ -166,6 +179,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
+            frontend/e2e/issue-583-compact-library.spec.ts \
             frontend/e2e/issue-603-browser-zoom-reflow.spec.ts \
             frontend/e2e/learn-browser-zoom.spec.ts \
             frontend/e2e/route-browser-zoom-parity.spec.ts \
