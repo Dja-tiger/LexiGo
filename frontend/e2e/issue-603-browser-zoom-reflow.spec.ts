@@ -86,7 +86,7 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "learn.dark": {
     width: 720,
     height: 995,
-    sha256: "b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4b",
+    sha256: "b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4f",
     sourceRun: 32648333357,
     sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
