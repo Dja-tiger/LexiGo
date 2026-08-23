@@ -25,6 +25,7 @@ import {
   writeLessonResultSnapshot,
   type LessonResultContinuation,
   type LessonResultJudgement,
+  type LessonResultSessionKind,
   type LessonResultSelectedAction,
   type LessonResultSnapshot,
 } from "../lib/lesson-result";
@@ -83,6 +84,7 @@ type LessonSessionResponse = {
   id: string;
   source: LessonSource;
   studyMode: AnswerMode;
+  sessionKind?: LessonResultSessionKind;
   lessonSize: string;
   currentIndex: number;
   version: number;
@@ -541,6 +543,7 @@ export function LexigoActiveLessonApp({
       body: JSON.stringify({
         source: lessonResult.source,
         studyMode: lessonResult.studyMode,
+        ...(lessonResult.sessionKind ? { sessionKind: lessonResult.sessionKind } : {}),
         lessonSize: lessonResult.lessonSize,
         ...(lessonResult.topic ? { topic: lessonResult.topic } : {}),
       }),
@@ -688,6 +691,7 @@ export function LexigoActiveLessonApp({
           lessonId: activeLesson.id,
           source: activeLesson.source,
           studyMode: activeLesson.studyMode,
+          ...(activeLesson.sessionKind ? { sessionKind: activeLesson.sessionKind } : {}),
           lessonSize: activeLesson.lessonSize,
           topic: lessonTopic,
           itemIds: activeLesson.items.map((item) => item.id),
@@ -773,6 +777,7 @@ export function LexigoActiveLessonApp({
     nextMode: AnswerMode,
     nextTopic: string,
     previousResult: LessonResultSnapshot,
+    nextSessionKind?: LessonResultSessionKind,
   ) => {
     if (lessonCreateInFlightRef.current) return;
     lessonCreateInFlightRef.current = true;
@@ -788,6 +793,7 @@ export function LexigoActiveLessonApp({
           body: JSON.stringify({
             source: nextSource,
             studyMode: nextMode,
+            ...(nextSessionKind ? { sessionKind: nextSessionKind } : {}),
             lessonSize: String(nextSize),
             ...(nextTopic ? { topic: nextTopic } : {}),
           }),
@@ -848,13 +854,14 @@ export function LexigoActiveLessonApp({
       lessonResult.studyMode,
       lessonResult.topic,
       lessonResult,
+      lessonResult.sessionKind,
     );
   }
 
   function startDueReviewFromResult() {
     if (!lessonResult) return;
     recordLessonResultAction("due_review");
-    void startLesson("mixed", 30, "recall", "", lessonResult);
+    void startLesson("mixed", 15, "recall", "", lessonResult, "review");
   }
 
   function renderLesson() {

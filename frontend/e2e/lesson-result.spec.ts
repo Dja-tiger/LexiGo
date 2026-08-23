@@ -44,6 +44,41 @@ test.describe("canonical Lesson Result", () => {
     expect(fixture.lessonCreateRequests()).toBe(2);
   });
 
+  test("preserves explicit process intent through result preview and the next block", async ({ page }) => {
+    const fixture = await installLessonResultFixture(page, {
+      previewTotal: 1,
+      resumeWithReviewedItem: true,
+      activeSessionKind: "study",
+    });
+
+    await page.goto("/lesson/active?resume=1", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible({ timeout: 15_000 });
+    const answer = page.getByRole("textbox", { name: "Введите ответ" });
+    await answer.fill("checkpoint");
+    await page.getByRole("button", { name: "Сверить ответ", exact: true }).click();
+    await page.getByRole("button", { name: "Знал", exact: true }).click();
+    await page.getByRole("button", { name: "К результатам", exact: true }).click();
+
+    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "next");
+    const previewBodies = fixture.previewRequestBodies();
+    expect(previewBodies[previewBodies.length - 1]).toMatchObject({
+      source: "mixed",
+      studyMode: "recall",
+      sessionKind: "study",
+      lessonSize: "15",
+    });
+
+    await page.getByRole("button", { name: "Следующий урок", exact: true }).click();
+    const createBodies = fixture.lessonCreateRequestBodies();
+    expect(createBodies[createBodies.length - 1]).toMatchObject({
+      source: "mixed",
+      studyMode: "recall",
+      sessionKind: "study",
+      lessonSize: "15",
+    });
+    await expect(page.getByRole("heading", { name: "Verify the ____." })).toBeVisible();
+  });
+
   test("marks restored reviews with unavailable correctness as partial instead of lowering objective accuracy", async ({ page }) => {
     const fixture = await installLessonResultFixture(page, {
       previewTotal: 1,
@@ -107,17 +142,18 @@ test.describe("canonical Lesson Result", () => {
     await expect(page.locator(".lx-lesson-result")).not.toHaveClass(/lx-lesson-result--celebrate/);
   });
 
-  test("prioritizes already-due review even when a new block is available", async ({ page }) => {
+  test("keeps the due backlog visible while starting only the next bounded review block", async ({ page }) => {
     const fixture = await installLessonResultFixture(page, {
       previewTotal: 1,
-      dueNow: 6,
+      dueNow: 32,
     });
     await completeRecallLesson(page);
 
     await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");
     await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();
-    await expect(page.getByText("6 элементов готовы сейчас", { exact: true })).toBeVisible();
-    const dueReview = page.getByRole("button", { name: "Повторить 6 элементов", exact: true });
+    await expect(page.getByText("32 элементов готовы сейчас", { exact: true })).toBeVisible();
+    await expect(page.getByText("Сейчас к повторению: 32. Следующий блок ограничен 15 элементами; остаток останется в очереди.", { exact: true })).toBeVisible();
+    const dueReview = page.getByRole("button", { name: "Повторить 15 из 32", exact: true });
     await expect(dueReview).toBeVisible();
     await expect(page.getByRole("button", { name: "Следующий урок", exact: true })).toHaveCount(0);
 
@@ -126,6 +162,13 @@ test.describe("canonical Lesson Result", () => {
     expect(fixture.resultActionRequests()[0]).toEqual({
       recommendedAction: "due_review",
       selectedAction: "due_review",
+    });
+    const createBodies = fixture.lessonCreateRequestBodies();
+    expect(createBodies[createBodies.length - 1]).toMatchObject({
+      source: "mixed",
+      studyMode: "recall",
+      sessionKind: "review",
+      lessonSize: "15",
     });
   });
 

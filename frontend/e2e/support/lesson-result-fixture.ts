@@ -9,6 +9,7 @@ export type LessonResultFixtureOptions = {
   dailyGoal?: number;
   repeatCompletedBlock?: boolean;
   resumeWithReviewedItem?: boolean;
+  activeSessionKind?: LessonSessionKind;
 };
 
 export type LessonResultActionRequest = {
@@ -20,12 +21,14 @@ export type LessonResultFixture = {
   reviewRequests: () => number;
   lessonCreateRequests: () => number;
   previewRequests: () => number;
+  previewRequestBodies: () => LessonRequest[];
+  lessonCreateRequestBodies: () => LessonRequest[];
   resultActionRequests: () => LessonResultActionRequest[];
 };
 
 type LessonSessionKind = "study" | "review" | "remediation";
 
-type LessonRequest = {
+export type LessonRequest = {
   source?: string;
   studyMode?: string;
   sessionKind?: LessonSessionKind;
@@ -112,12 +115,15 @@ export async function installLessonResultFixture(
   let reviewCount = 0;
   let lessonCreateCount = 0;
   let previewCount = 0;
+  const previewBodies: LessonRequest[] = [];
+  const lessonCreateBodies: LessonRequest[] = [];
   const resultActions: LessonResultActionRequest[] = [];
   let activeLesson: Record<string, unknown> | null = options.resumeWithReviewedItem ? {
     id: "00000000-0000-0000-0000-000000000194",
     source: "mixed",
     studyMode: "recall",
-    lessonSize: "30",
+    ...(options.activeSessionKind ? { sessionKind: options.activeSessionKind } : {}),
+    lessonSize: options.activeSessionKind ? "15" : "30",
     currentIndex: 1,
     version: 2,
     status: "active",
@@ -224,6 +230,7 @@ export async function installLessonResultFixture(
     if (path === "/api/v1/lessons/preview") {
       previewCount += 1;
       const input = request.postDataJSON() as LessonRequest;
+      previewBodies.push({ ...input });
       const legacyTotal = reviewCount > 0 ? previewTotal : 1;
       const available = input.sessionKind === "review"
         ? dueNow
@@ -251,6 +258,7 @@ export async function installLessonResultFixture(
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as LessonRequest;
+      lessonCreateBodies.push({ ...input });
       const nextRequest = lessonCreateCount > 0;
       lessonCreateCount += 1;
       const repeat = nextRequest && options.repeatCompletedBlock;
@@ -330,6 +338,8 @@ export async function installLessonResultFixture(
     reviewRequests: () => reviewCount,
     lessonCreateRequests: () => lessonCreateCount,
     previewRequests: () => previewCount,
+    previewRequestBodies: () => previewBodies.map((entry) => ({ ...entry })),
+    lessonCreateRequestBodies: () => lessonCreateBodies.map((entry) => ({ ...entry })),
     resultActionRequests: () => [...resultActions],
   };
 }
