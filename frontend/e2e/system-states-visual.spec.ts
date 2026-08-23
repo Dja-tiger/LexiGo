@@ -32,6 +32,7 @@ type SystemStateVisualBaselineContract = {
   viewport: Readonly<{ width: 390 | 1440; height: 844 | 1024 }>;
   sha256: string;
   rendererEquivalentSha256?: readonly string[];
+  reviewedProductStateSha256?: readonly string[];
 };
 
 type OpenPencilScreenMapEntry = Readonly<{
@@ -110,6 +111,12 @@ const SYSTEM_STATE_VISUAL_BASELINES: Record<SystemStateVisualBaseline, SystemSta
     sha256: "8f3b6192ba542969101166997046d92df0dc041ed9c8ec0fc7f588e951931f7a",
     // Issue #577: exact Linux artifact #9294131591, CI 32048818693, reviewed shared Reminder presentation.
     rendererEquivalentSha256: ["715215d255e3ab727ec3920c4164f43c82100d64e7f2d9d79d0b5b05c325ec0c"],
+    // Issue #651 Stage 3 intentionally changes the Home surface behind the existing
+    // offline system-state owner. Exact Linux CI 32635302334 / artifact #9492248013
+    // at head 77ca1ea56e23b058eeb2786524617797aaa18d47 was manually reviewed; the
+    // connectivity panel itself is unchanged and the new Review/Remediation/Study
+    // controls remain visible without clipping or overflow.
+    reviewedProductStateSha256: ["b7b1d3f7af73c4bbb1eb60b704929c79f78fc8a407115070fdb1c110d3698366"],
   },
   "compact-recall-offline-dark": {
     screenMapKey: "lesson.mobile.recall.offline",
@@ -312,10 +319,14 @@ async function expectApprovedSystemStateBaseline(
     `System state ${baselineName} must produce two consecutive identical steady-state captures; first=${firstSha256}, second=${secondSha256}`,
   ).toBe(firstSha256);
 
-  const acceptedSha256 = [baseline.sha256, ...(baseline.rendererEquivalentSha256 ?? [])];
+  const acceptedSha256 = [
+    baseline.sha256,
+    ...(baseline.rendererEquivalentSha256 ?? []),
+    ...(baseline.reviewedProductStateSha256 ?? []),
+  ];
   expect(
     acceptedSha256,
-    `System state ${baselineName} must match the primary reviewed SHA or an exact independently reviewed renderer-equivalent fingerprint for active OpenPencil ${baseline.screenMapKey} (${baseline.openPencilNode}); legacy Figma provenance=${baseline.legacyFigmaNode}; primary=${baseline.sha256}, received=${firstSha256}`,
+    `System state ${baselineName} must match the primary reviewed SHA, an exact independently reviewed renderer-equivalent fingerprint, or an explicitly reviewed product-state fingerprint for active OpenPencil ${baseline.screenMapKey} (${baseline.openPencilNode}); legacy Figma provenance=${baseline.legacyFigmaNode}; primary=${baseline.sha256}, received=${firstSha256}`,
   ).toContain(firstSha256);
 }
 
