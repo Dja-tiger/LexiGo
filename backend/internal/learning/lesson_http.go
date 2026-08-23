@@ -86,7 +86,7 @@ func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode
 		return false
 	}
 	if !validLessonSize(lessonSize) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30 or 60")
+		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_lesson_size", "lessonSize must be 15, 30, 50 or all")
 		return false
 	}
 	if len(strings.TrimSpace(topic)) > 120 {
@@ -267,7 +267,12 @@ func validLessonSource(value string) bool {
 }
 
 func validLessonSize(value string) bool {
-	return value == "15" || value == "30" || value == "60"
+	switch value {
+	case "15", "30", "50", "all":
+		return true
+	default:
+		return false
+	}
 }
 
 func uniquePositiveWordIDs(values []int64) bool {
