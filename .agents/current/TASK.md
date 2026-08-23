@@ -42,6 +42,7 @@ Preserve the explicit Study/Review/Remediation process across Active Lesson comp
 - `frontend/components/lesson-result-presentation.tsx`
 - `frontend/e2e/next-lesson-progression.spec.ts`
 - `frontend/e2e/lesson-result.spec.ts`
+- `frontend/e2e/support/lesson-result-fixture.ts`
 - additional narrowly scoped frontend source-contract test only if required by current repository ownership
 - temporary helper only: `.github/workflows/temporary-issue-651-stage5-exact-rewrite.yml`; it must be deleted before any final candidate CI and final PR diff must contain zero `.github/workflows/**` paths.
 
