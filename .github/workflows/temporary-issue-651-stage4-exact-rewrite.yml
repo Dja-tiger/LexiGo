@@ -1,0 +1,61 @@
+name: Temporary Issue 651 Stage 4 exact rewrite
+
+on:
+  push:
+    branches:
+      - feat/issue-651-bounded-manual-workload
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact branch head
+        uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-bounded-manual-workload
+          fetch-depth: 1
+
+      - name: Apply exact Active Lesson compatibility replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/components/lexigo-active-lesson-app.tsx")
+          old = "  if (parsed === 15 || parsed === 60) return parsed;"
+          new = "  if (parsed === 15 || parsed === 50 || parsed === 60) return parsed;"
+          text = path.read_text(encoding="utf-8")
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"{path}: expected exactly one Active Lesson size parser anchor, found {count}")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
+      - name: Verify bounded diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=("frontend/components/lexigo-active-lesson-app.tsx")
+          if [[ "${changed[*]}" != "${expected[*]}" ]]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+          git diff -- frontend/components/lexigo-active-lesson-app.tsx
+
+      - name: Commit exact rewrite
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/components/lexigo-active-lesson-app.tsx
+          git commit -m "fix(learning): preserve 50-item active lesson size"
+          git push origin HEAD:feat/issue-651-bounded-manual-workload
