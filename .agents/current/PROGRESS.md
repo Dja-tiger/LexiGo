@@ -18,7 +18,7 @@
 - Keyboard coverage proves four-option roving radio behavior `15 → 30 → 50 → Все → 15`.
 - True browser-zoom `/learn` fixture and default-size assertion were reconciled from 30 to 15 without weakening geometry/focus owners.
 - The two `.lx-size-control` responsive declarations use four equal columns, eliminating the deterministic orphan `Все` row from the initial four-option implementation.
-- Current PR inventory after deleting the temporary reconciliation workflow contains zero `.github/workflows/**` paths.
+- Current PR inventory after deleting temporary reconciliation workflows contains zero `.github/workflows/**` paths.
 
 ### Diagnostic CI findings and recovery
 
@@ -34,6 +34,11 @@
 - `.agents/current/TASK.md` was amended before mutation to authorize exactly the 17 reviewed hash/provenance updates plus the single 3→4 assertion.
 - Temporary helper run `32669295151` succeeded fail-closed and produced test-only commit `a4cc0a8d102e22ff4e2ec3f26b197dd7c3240ab8`; its exact changed-path guard allowed only seven authorized E2E owners.
 - The helper was immediately deleted by commit `202c4d01e5cb0d11bc29dac7873d8622073e6cf3`. CI #4074 was triggered on the helper-containing intermediate head and is diagnostic only, never merge evidence.
+- Final-candidate CI #4078 / run `32669383712` on head `3dd4ea9e6653eb94599e1669f3757e60570d5f46` passed both UI shards, Lesson completion, backend unit/integration, frontend core, performance, security, accessibility, iOS PWA, Dictionary smoke and service-worker gates. Its only failure was one Issue #603 dark 720×995 visual fingerprint: expected copied baseline `...003d4b`, actual and retry both `...003d4f`.
+- The primary #4069 artifact `frontend-playwright-report-visual` (artifact `9495610938`, digest `sha256:d6d345b7368a9a9e7610ed7419b1aaf1e2c18d37487a484a769f36c3ac07a015`) was downloaded and inspected directly. Its Issue #603 dark failure context records the original exact actual fingerprint `b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4f`, proving the branch baseline had a one-nibble transcription error rather than runtime drift.
+- `.agents/current/TASK.md` was amended again before mutation to authorize only that exact `...d4b → ...d4f` correction with unchanged `720×995` dimensions and unchanged #4069 provenance.
+- Temporary helper run `32670105012` succeeded fail-closed and produced the one-line test correction commit `075477711725263195454569092a278317e238e2`; the helper was immediately deleted by `afe25aaa91c3aeaf73a149076a8417dd468139e8`.
+- CI #4080 was triggered on the temporary-helper head and is diagnostic only. A fresh complete immutable-head CI is required after these final Agent Harness writes.
 
 ### Changed runtime/contract owners
 
@@ -55,4 +60,4 @@ Resolve from live branch ref after the final `EXECUTION.md` write. That develope
 
 ### Next action
 
-Freeze the branch after the final Agent Harness write, require a complete green CI on that exact head, audit PR comments/reviews/threads and final diff, then mark ready and squash-merge with expected-head protection. After merge require exact-main CI plus exact-SHA Stage/public validation before Stage 4 reconciliation.
+Freeze the branch after the final Agent Harness write, require a complete green CI on that exact head, re-audit PR comments/reviews/threads, final diff and `behind_by=0`, then mark ready and squash-merge with expected-head protection. After merge require exact-main CI plus exact-SHA Stage/public validation before Stage 4 reconciliation.
