@@ -6,7 +6,7 @@
 - Branch: `feat/issue-651-process-continuation`
 - Base SHA: `c590aa185e9e73354d8ca9fc23f46aba3ce77ec7`
 - Head SHA: resolve from live branch ref after each write
-- PR: Draft PR to be opened after initial harness write
+- PR: #669 (Draft)
 
 ## Objective
 
@@ -43,10 +43,11 @@ Preserve the explicit Study/Review/Remediation process across Active Lesson comp
 - `frontend/e2e/next-lesson-progression.spec.ts`
 - `frontend/e2e/lesson-result.spec.ts`
 - additional narrowly scoped frontend source-contract test only if required by current repository ownership
+- temporary helper only: `.github/workflows/temporary-issue-651-stage5-exact-rewrite.yml`; it must be deleted before any final candidate CI and final PR diff must contain zero `.github/workflows/**` paths.
 
 ## Prohibited paths
 
-- `.github/workflows/**`
+- all `.github/workflows/**` except the exact temporary helper above during bounded rewrite lifecycle
 - backend runtime/selectors/scheduler
 - `api/openapi.yaml`
 - migrations
@@ -92,9 +93,21 @@ Preserve the explicit Study/Review/Remediation process across Active Lesson comp
 - focused `lesson-result` unit/source contracts;
 - focused Playwright `lesson-result.spec.ts` and `next-lesson-progression.spec.ts` on owned browser projects;
 - frontend lint/type/unit/build;
-- full immutable-head CI including both UI shards, visual, accessibility, performance, security and container gates before Ready/merge;
+- full immutable-head PR CI including both UI shards, visual, accessibility, performance, security and container gates before Ready/merge;
 - final review/thread/diff audit and `behind_by=0`;
 - exact-main CI plus exact-SHA Stage/public validation after runtime merge.
+
+## Exact-rewrite helper contract
+
+The connected GitHub Contents action replaces complete UTF-8 files and provides no inline patch operation. For the large Active Lesson/Result presentation owners, a one-shot helper is allowed only because whole-file manual reconstruction would be less safe.
+
+- helper trigger: PR sync only;
+- expected parent/head guard must match the exact branch SHA immediately before helper creation;
+- every source anchor must occur exactly once before replacement and exactly once in its new form after replacement;
+- changed-path allowlist is limited to the Stage 5 runtime/test paths named above plus the helper itself;
+- helper bot commit is diagnostic/intermediate only and cannot serve as final merge evidence;
+- delete helper immediately after successful rewrite;
+- require zero workflow diff before final immutable-head CI.
 
 ## Risks
 
@@ -102,6 +115,7 @@ Preserve the explicit Study/Review/Remediation process across Active Lesson comp
 - process intent can still be lost if only preview or only create is updated;
 - due CTA copy may affect an existing result visual fingerprint and must be classified from Linux evidence rather than blindly refreshed;
 - the existing `startLesson` helper is shared by normal-next and due-next actions, so optional process intent must be explicit at the call boundary.
+- a rejected `create_file` call was accidentally sent to deliberately nonexistent branch `__invalid__` before branch creation. GitHub returned 404; `main` remained exact `c590aa185e9e73354d8ca9fc23f46aba3ce77ec7` and `__invalid__` is absent. Recovery followed `.agents/AGENTS.tool-selection.md`: writes stopped, `main`/target were rechecked, the exact `create_branch` schema was reloaded, and the real branch was created from the verified SHA.
 
 ## Rollback
 
