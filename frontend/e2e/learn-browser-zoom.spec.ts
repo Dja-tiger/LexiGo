@@ -459,7 +459,7 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       expect(responsiveStyles.setupDisplay).toBe("block");
       expect(responsiveStyles.sourceColumns.split(/\s+/).filter(Boolean)).toHaveLength(1);
       expect(responsiveStyles.modeColumns.split(/\s+/).filter(Boolean)).toHaveLength(3);
-      expect(responsiveStyles.sizeColumns.split(/\s+/).filter(Boolean)).toHaveLength(3);
+      expect(responsiveStyles.sizeColumns.split(/\s+/).filter(Boolean)).toHaveLength(4);
 
       await expectHorizontallyContained(manualSummary, afterDOM.clientWidth, "manual composer summary");
       await expectHorizontallyContained(setupCard, afterDOM.clientWidth, "manual setup card");

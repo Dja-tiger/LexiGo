@@ -97,16 +97,16 @@ const BASELINES_430: Record<`${EvidenceRoute}.${Appearance}`, Reviewed430Baselin
   "learn.light": {
     width: 430,
     height: 1575,
-    sha256: "84e41f0c3f35a564df1ef9a821aee3ab58b842b62b9438788cff15ef478f510a",
-    sourceRun: 32158725407,
-    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+    sha256: "b735c5e48f5aaa4a364d7a7b16b48ef168088b4f4ebc904298dba3aa0b5ba2cf",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
   "learn.dark": {
     width: 430,
     height: 1575,
-    sha256: "cfcedd118c241757efc64efdb8e3215f136cad749e99055a79b71f332846bd53",
-    sourceRun: 32158725407,
-    sourceHeadSha: "f483bb61d96e8e010cd7c11ab20cb77f050ded8f",
+    sha256: "737339c0b6395780f25516be3320c3dd478ef9c49718a87010725f071e838825",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
 };
 
