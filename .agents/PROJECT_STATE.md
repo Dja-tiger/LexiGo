@@ -10,7 +10,7 @@
 ## Latest completed runtime delivery
 
 - Parent Issue #651 / PR #666 delivered Stage 4 of the learning-process separation architecture: the manual `/learn` workload is now bounded and explicit while the Stage 3 automatic Study/Review/Remediation ownership model remains unchanged.
-- Final PR head: `3bd2f6fda9f2bdb9a39a11af17ee30615b10226f`; exact-head PR CI #4084 / run `32670204561`: **success** across backend unit/security/integration, frontend core, both UI shards, lesson completion, accessibility, visual, performance, CSP/service-worker, iOS PWA, Dictionary smoke and API/web container builds.
+- Final PR head: `3bd2f6fda9f2bdb9a39a11af17ee30615b10226f`; exact-head PR CI #4084 / run `32670204561`: **success** across backend unit/security/integration, OpenAPI, frontend core, both UI shards, lesson completion, accessibility, visual, performance, CSP/service-worker, iOS PWA, Dictionary smoke and API/web container builds.
 - Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 22 intended Stage 4 files and zero `.github/workflows/**` diff.
 - PR #666 squash merge: `87455e7154178e7986fdebccebabe12f89c4e159`. Parent Issue #651 remains open because recommendation/history/scheduler evolution and any other still-unmet acceptance criteria are intentionally outside Stage 4.
 - Exact-main CI #4085 / run `32672927534`: **success** on `87455e7154178e7986fdebccebabe12f89c4e159`, including backend unit/security/integration, frontend/browser/visual/accessibility/performance gates and API/web image publication.
@@ -57,6 +57,7 @@
 - Write vocabulary and persisted read compatibility are separate boundaries: removing an old value from new writes must not make already-created sessions unreadable.
 - Visual fingerprints are acceptance evidence, not a substitute for fixing geometry. Correct runtime first, verify exact dimensions on Linux CI, then refresh only reviewed content-addressed fingerprints with exact provenance.
 - When legitimate product copy can repeat, browser assertions must scope to the semantic owner/landmark rather than rely on global text uniqueness.
+- Intentional Home visual changes require exact Linux provenance and path-bounded promotion; product-state evidence must not be mislabeled as renderer drift.
 
 ## Design source of truth
 
