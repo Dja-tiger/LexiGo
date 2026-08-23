@@ -925,7 +925,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Catalog item is not assignedен текущему пользователю.
+          description: Catalog item is not assigned to the current user.
         "503":
           $ref: "#/components/responses/AuthenticationUnavailable"
   /api/v1/words/{wordID}/review:

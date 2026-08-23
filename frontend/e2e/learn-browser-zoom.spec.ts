@@ -175,7 +175,7 @@ async function installLessonComposerAPI(page: Page): Promise<void> {
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
-        lessonSize: input.lessonSize ?? "30",
+        lessonSize: input.lessonSize ?? "15",
         composition: {
           total: 30,
           words: 24,
@@ -412,7 +412,7 @@ test.describe("Lesson Composer browser-owned zoom", () => {
       await expect(recommendedStart).toBeEnabled();
       await expect(currentParameters).toContainText("Смешанная практика");
       await expect(currentParameters).toContainText("Воспроизведение");
-      await expect(currentParameters).toContainText("30 элементов");
+      await expect(currentParameters).toContainText("15 элементов");
       await expect(recommendation.getByText("18", { exact: true })).toBeVisible();
       await expect(recommendation.getByText("12", { exact: true })).toBeVisible();
 
