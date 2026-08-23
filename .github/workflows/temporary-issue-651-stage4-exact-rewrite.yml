@@ -1,9 +1,9 @@
 name: Temporary Issue 651 Stage 4 exact rewrite
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/issue-651-bounded-manual-workload
+      - main
     paths:
       - .github/workflows/temporary-issue-651-stage4-exact-rewrite.yml
 
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   exact-rewrite:
+    if: github.event.pull_request.number == 666 && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
@@ -25,7 +26,7 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          expected_parent="52a8c56371dacc02192b24a830cd640509dc6cd3"
+          expected_parent="d0d34e2bdf015ed67f98904eade1aa82ae501b3b"
           actual_parent="$(git rev-parse HEAD^)"
           if [ "$actual_parent" != "$expected_parent" ]; then
             echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
