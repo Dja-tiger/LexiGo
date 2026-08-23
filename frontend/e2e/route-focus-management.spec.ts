@@ -160,22 +160,30 @@ async function installAPI(page: Page) {
       const input = request.postDataJSON() as {
         source?: string;
         studyMode?: string;
+        sessionKind?: "study" | "review" | "remediation";
         lessonSize?: string;
       };
+      const available = input.sessionKind === "review"
+        ? PROGRESS.dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : PROGRESS.newWords;
+      const total = input.sessionKind ? Math.min(15, available) : 2;
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize ?? "30",
         composition: {
-          total: 2,
-          words: 2,
+          total,
+          words: total,
           phrases: 0,
-          due: 2,
-          new: 0,
+          due: input.sessionKind === "review" ? total : 0,
+          new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
           scheduled: 0,
-          availableWords: 2,
+          availableWords: available,
           availablePhrases: 0,
-          fallback: "words_only",
+          fallback: total > 0 ? "words_only" : "none",
         },
       });
     }
@@ -183,12 +191,14 @@ async function installAPI(page: Page) {
       const input = request.postDataJSON() as {
         source?: string;
         studyMode?: string;
+        sessionKind?: "study" | "review" | "remediation";
         lessonSize?: string;
       };
       activeLesson = {
         id: "00000000-0000-0000-0000-000000000460",
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize ?? "30",
         currentIndex: 0,
         version: lessonVersion,
