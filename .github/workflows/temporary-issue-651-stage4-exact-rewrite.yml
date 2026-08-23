@@ -1,0 +1,94 @@
+name: Temporary Issue 651 Stage 4 exact rewrite
+
+on:
+  push:
+    branches:
+      - feat/issue-651-bounded-manual-workload
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact branch head
+        uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-bounded-manual-workload
+          fetch-depth: 1
+
+      - name: Replace only legacy lesson-size grid declarations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/app/adaptive-lesson-composer.css")
+          old = "grid-template-columns: repeat(3, minmax(0, 1fr));"
+          new = "grid-template-columns: repeat(4, minmax(0, 1fr));"
+          text = path.read_text(encoding="utf-8")
+
+          selector = '.lx-main-content[aria-label="Обучение"] .lx-size-control {'
+          blocks = []
+          cursor = 0
+          while True:
+              start = text.find(selector, cursor)
+              if start < 0:
+                  break
+              end = text.find("}", start)
+              if end < 0:
+                  raise SystemExit("unterminated lx-size-control block")
+              blocks.append((start, end + 1))
+              cursor = end + 1
+
+          if len(blocks) != 2:
+              raise SystemExit(f"expected exactly two lx-size-control blocks, found {len(blocks)}")
+
+          for start, end in blocks:
+              block = text[start:end]
+              if block.count(old) != 1:
+                  raise SystemExit(
+                      "each lx-size-control block must contain exactly one legacy three-column declaration"
+                  )
+
+          replacements = 0
+          output = []
+          cursor = 0
+          for start, end in blocks:
+              output.append(text[cursor:start])
+              block = text[start:end]
+              output.append(block.replace(old, new, 1))
+              replacements += 1
+              cursor = end
+          output.append(text[cursor:])
+
+          if replacements != 2:
+              raise SystemExit(f"expected exactly two replacements, made {replacements}")
+          path.write_text("".join(output), encoding="utf-8")
+          PY
+
+      - name: Verify bounded diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != "frontend/app/adaptive-lesson-composer.css" ]]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+          git diff -- frontend/app/adaptive-lesson-composer.css
+
+      - name: Commit exact rewrite
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/app/adaptive-lesson-composer.css
+          git commit -m "fix(learning): keep four workload sizes on one row"
+          git push origin HEAD:feat/issue-651-bounded-manual-workload
