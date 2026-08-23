@@ -1,0 +1,159 @@
+name: Temporary Issue 651 Stage 5 exact rewrite
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/temporary-issue-651-stage5-exact-rewrite.yml
+
+permissions:
+  contents: write
+
+jobs:
+  exact-rewrite:
+    if: github.event.pull_request.number == 668 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-result-review-continuation
+          fetch-depth: 0
+
+      - name: Apply exact Stage 5 patch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          expected_parent="b4e455278e5ea759538c01514535be4ea9e4b52a"
+          actual_parent="$(git rev-parse HEAD^)"
+          current_subject="$(git log -1 --pretty=%s)"
+          if [ "$actual_parent" != "$expected_parent" ]; then
+            if [ "$current_subject" = "fix(learning): bound result review continuation" ]; then
+              echo "Exact Stage 5 patch already applied; no-op on bot synchronize."
+              exit 0
+            fi
+            echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              "frontend/lib/lesson-result.ts": [
+                  (
+                      'export const LESSON_RESULT_VERSION = 2 as const;\nexport const LESSON_RESULT_MAX_AGE_MS = 24 * 60 * 60 * 1000;\n',
+                      'export const LESSON_RESULT_VERSION = 2 as const;\nexport const LESSON_RESULT_MAX_AGE_MS = 24 * 60 * 60 * 1000;\nexport const LESSON_RESULT_REVIEW_BLOCK_SIZE = 15 as const;\n',
+                  ),
+                  (
+                      '  | { kind: "due"; dueCount: number }\n',
+                      '  | { kind: "due"; dueCount: number; blockCount: number }\n',
+                  ),
+                  (
+                      '  if (input.snapshot.dueNow > 0) return { kind: "due", dueCount: input.snapshot.dueNow };\n',
+                      '  if (input.snapshot.dueNow > 0) {\n    return {\n      kind: "due",\n      dueCount: input.snapshot.dueNow,\n      blockCount: Math.min(LESSON_RESULT_REVIEW_BLOCK_SIZE, input.snapshot.dueNow),\n    };\n  }\n',
+                  ),
+              ],
+              "frontend/lib/lesson-result.test.ts": [
+                  (
+                      '    })).toEqual({ kind: "due", dueCount: 4 });\n  });\n\n  it("maps every continuation to the stable recommendation analytics vocabulary", () => {\n',
+                      '    })).toEqual({ kind: "due", dueCount: 4, blockCount: 4 });\n\n    expect(resolveLessonResultContinuation({\n      snapshot: snapshot({\n        dailyGoalJustReached: false,\n        dailyGoalReached: false,\n        dueNow: 47,\n      }),\n      previewTotal: 15,\n    })).toEqual({ kind: "due", dueCount: 47, blockCount: 15 });\n  });\n\n  it("maps every continuation to the stable recommendation analytics vocabulary", () => {\n',
+                  ),
+                  (
+                      '    expect(lessonResultRecommendedAction({ kind: "due", dueCount: 4 })).toBe("due_review");\n',
+                      '    expect(lessonResultRecommendedAction({ kind: "due", dueCount: 4, blockCount: 4 })).toBe("due_review");\n',
+                  ),
+              ],
+              "frontend/components/lesson-result-presentation.tsx": [
+                  (
+                      '      actionTitle: `${continuation.dueCount} элементов требуют проверки`,\n      actionBody: "Это уже наступивший server-owned срок, поэтому повторение полезнее нового блока.",\n      detailTitle: timing.title,\n      detailBody: timing.body,\n      primaryLabel: `Повторить ${continuation.dueCount} элементов`,\n',
+                      '      actionTitle: `Сейчас к повторению: ${continuation.dueCount}`,\n      actionBody: continuation.dueCount > continuation.blockCount\n        ? `Текущий блок — ${continuation.blockCount} из ${continuation.dueCount}. После него можно продолжить ещё одним блоком или закончить на сегодня.`\n        : "Это уже наступивший server-owned срок; весь текущий backlog помещается в один ограниченный блок.",\n      detailTitle: timing.title,\n      detailBody: timing.body,\n      primaryLabel: continuation.dueCount > continuation.blockCount\n        ? `Повторить ${continuation.blockCount} из ${continuation.dueCount}`\n        : `Повторить ${continuation.dueCount} элементов`,\n',
+                  ),
+              ],
+              "frontend/components/lexigo-active-lesson-app.tsx": [
+                  (
+                      '  buildLessonResultSnapshot,\n  claimDailyGoalCelebration,\n',
+                      '  LESSON_RESULT_REVIEW_BLOCK_SIZE,\n  buildLessonResultSnapshot,\n  claimDailyGoalCelebration,\n',
+                  ),
+                  (
+                      '  type LearningItem,\n  type LessonSelectionReason,\n  type LessonSize,\n',
+                      '  type LearningItem,\n  type LessonSelectionReason,\n  type LessonSessionKind,\n  type LessonSize,\n',
+                  ),
+                  (
+                      '    nextTopic: string,\n    previousResult: LessonResultSnapshot,\n  ) => {\n',
+                      '    nextTopic: string,\n    previousResult: LessonResultSnapshot,\n    nextSessionKind?: LessonSessionKind,\n  ) => {\n',
+                  ),
+                  (
+                      '            lessonSize: String(nextSize),\n            ...(nextTopic ? { topic: nextTopic } : {}),\n',
+                      '            lessonSize: String(nextSize),\n            ...(nextSessionKind ? { sessionKind: nextSessionKind } : {}),\n            ...(nextTopic ? { topic: nextTopic } : {}),\n',
+                  ),
+                  (
+                      '    void startLesson("mixed", 30, "recall", "", lessonResult);\n',
+                      '    void startLesson(\n      "mixed",\n      LESSON_RESULT_REVIEW_BLOCK_SIZE,\n      "recall",\n      "",\n      lessonResult,\n      "review",\n    );\n',
+                  ),
+              ],
+              "frontend/e2e/support/lesson-result-fixture.ts": [
+                  (
+                      '  lessonCreateRequests: () => number;\n  previewRequests: () => number;\n',
+                      '  lessonCreateRequests: () => number;\n  lessonCreatePayloads: () => LessonRequest[];\n  previewRequests: () => number;\n',
+                  ),
+                  (
+                      '  let lessonCreateCount = 0;\n  let previewCount = 0;\n',
+                      '  let lessonCreateCount = 0;\n  const lessonCreatePayloads: LessonRequest[] = [];\n  let previewCount = 0;\n',
+                  ),
+                  (
+                      '      const input = request.postDataJSON() as LessonRequest;\n      const nextRequest = lessonCreateCount > 0;\n      lessonCreateCount += 1;\n',
+                      '      const input = request.postDataJSON() as LessonRequest;\n      const nextRequest = lessonCreateCount > 0;\n      lessonCreateCount += 1;\n      lessonCreatePayloads.push({ ...input });\n',
+                  ),
+                  (
+                      '    lessonCreateRequests: () => lessonCreateCount,\n    previewRequests: () => previewCount,\n',
+                      '    lessonCreateRequests: () => lessonCreateCount,\n    lessonCreatePayloads: () => lessonCreatePayloads.map((payload) => ({ ...payload })),\n    previewRequests: () => previewCount,\n',
+                  ),
+              ],
+              "frontend/e2e/lesson-result.spec.ts": [
+                  (
+                      '    await dueReview.click();\n    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);\n    expect(fixture.resultActionRequests()[0]).toEqual({\n      recommendedAction: "due_review",\n      selectedAction: "due_review",\n    });\n  });\n\n  test("rejects a server response that repeats the completed lesson", async ({ page }) => {\n',
+                      '    await dueReview.click();\n    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);\n    expect(fixture.resultActionRequests()[0]).toEqual({\n      recommendedAction: "due_review",\n      selectedAction: "due_review",\n    });\n    await expect.poll(() => fixture.lessonCreateRequests()).toBe(2);\n    expect(fixture.lessonCreatePayloads()[1]).toEqual({\n      source: "mixed",\n      studyMode: "recall",\n      sessionKind: "review",\n      lessonSize: "15",\n    });\n  });\n\n  test("bounds a large due backlog to one explicit 15-item Review continuation", async ({ page }) => {\n    const fixture = await installLessonResultFixture(page, {\n      previewTotal: 1,\n      dueNow: 47,\n    });\n    await completeRecallLesson(page);\n\n    await expect(page.locator(".lx-lesson-result")).toHaveAttribute("data-lesson-result-state", "due");\n    await expect(page.getByRole("heading", { name: "Сначала закрепим материал" })).toBeVisible();\n    await expect(page.getByText("Сейчас к повторению: 47", { exact: true })).toBeVisible();\n    await expect(page.getByText("Текущий блок — 15 из 47. После него можно продолжить ещё одним блоком или закончить на сегодня.", { exact: true })).toBeVisible();\n\n    const dueReview = page.getByRole("button", { name: "Повторить 15 из 47", exact: true });\n    await expect(dueReview).toBeVisible();\n    await dueReview.click();\n\n    await expect.poll(() => fixture.lessonCreateRequests()).toBe(2);\n    expect(fixture.lessonCreatePayloads()[1]).toEqual({\n      source: "mixed",\n      studyMode: "recall",\n      sessionKind: "review",\n      lessonSize: "15",\n    });\n    await expect.poll(() => fixture.resultActionRequests().length).toBe(1);\n    expect(fixture.resultActionRequests()[0]).toEqual({\n      recommendedAction: "due_review",\n      selectedAction: "due_review",\n    });\n  });\n\n  test("rejects a server response that repeats the completed lesson", async ({ page }) => {\n',
+                  ),
+              ],
+          }
+
+          expected_paths = sorted(replacements)
+          applied = 0
+          for filename, pairs in replacements.items():
+              path = Path(filename)
+              text = path.read_text()
+              for old, new in pairs:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f"{filename}: expected exactly one anchor, found {count}: {old[:100]!r}")
+                  text = text.replace(old, new, 1)
+                  applied += 1
+              path.write_text(text)
+
+          if applied != 17:
+              raise SystemExit(f"expected 17 exact replacements, applied {applied}")
+          PY
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            frontend/components/lesson-result-presentation.tsx
+            frontend/components/lexigo-active-lesson-app.tsx
+            frontend/e2e/lesson-result.spec.ts
+            frontend/e2e/support/lesson-result-fixture.ts
+            frontend/lib/lesson-result.test.ts
+            frontend/lib/lesson-result.ts
+          )
+          if [ "${changed[*]}" != "${expected[*]}" ]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${expected[@]}"
+          git commit -m "fix(learning): bound result review continuation"
+          git push origin HEAD:feat/issue-651-result-review-continuation
