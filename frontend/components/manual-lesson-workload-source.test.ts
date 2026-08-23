@@ -42,6 +42,13 @@ describe("Issue #651 bounded manual lesson workload", () => {
     expect(learnApp).toContain('lessonSize === "all" ? "Начать весь выбранный материал"');
   });
 
+  it("preserves new and historical sizes across the dedicated Active Lesson read boundary", () => {
+    const activeLesson = readComponent("lexigo-active-lesson-app.tsx");
+
+    expect(activeLesson).toContain('if (value === "all") return "all";');
+    expect(activeLesson).toContain("if (parsed === 15 || parsed === 50 || parsed === 60) return parsed;");
+  });
+
   it("does not broaden the automatic Home process blocks beyond 15", () => {
     const homeApp = readComponent("lexigo-home-app.tsx");
 
