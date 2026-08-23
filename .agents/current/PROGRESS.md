@@ -1,46 +1,49 @@
 # Current Task Progress
 
-## 2026-08-23 17:xx Europe/Berlin
+## 2026-08-23 — Issue #651 Stage 4 bounded manual workload
 
 ### Verified
 
-- Live `main` before task start: `5196a4b2824820bb3c5105d03112929d9a495da1`.
-- No open pull requests existed immediately before creating the Stage 4 branch.
-- Issue #651 remains open.
-- Stage 1 (#656), Stage 2 (#662), Stage 3 (#664) and Stage 3 reconciliation (#665) are already delivered; Stage/public runtime remains healthy on `cb0c82fced8e729672e80e8a202456366ead09d4`.
-- Current `/learn` manual size options are `15 / 30 / 60`; state defaults to `30`.
-- `frontend/lib/learning.ts` already has a latent `"all"` LessonSize type but uses legacy numeric `60`.
-- Backend request validation currently accepts only `15 / 30 / 60`; `all` is rejected.
-- `lessonSizeLimit` currently parses numeric strings with `strconv.Atoi`, so an explicit validated `all` path must be documented/tested rather than relying on accidental parse failure.
-- Stage 3 automatic Home process creation already owns fixed `lessonSize: "15"` and is outside this slice.
+- Base `main`: `5196a4b2824820bb3c5105d03112929d9a495da1`; branch remains `behind_by=0`.
+- Draft PR: #666, `feat/issue-651-bounded-manual-workload` → `main`.
+- Stage 1 (#656), Stage 2 (#662), Stage 3 (#664) and Stage 3 reconciliation (#665) are already delivered; Stage 3 exact runtime SHA `cb0c82fced8e729672e80e8a202456366ead09d4` passed main CI #4046 / run `32642124556` and Stage/public run `32642715936`.
+- Stage 4 manual `/learn` choices are now exactly `15 / 30 / 50 / Все`, default `15`.
+- Preview/create request vocabulary is exactly `15`, `30`, `50`, `all`; backend validation rejects legacy `60` and arbitrary values with `invalid_lesson_size`.
+- `lessonSizeLimit("all")` intentionally maps to the existing no-cap composer path; a 55-item candidate regression proves `50` returns 50 while `all` returns all 55.
+- Stage 3 Home automatic Study/Review/Remediation creation remains fixed at `lessonSize: "15"` and never sends `all`.
+- OpenAPI contains only the two intended lesson-size enum replacements; unrelated OpenAPI drift was removed.
+- Shared frontend `LessonSize` retains historical `60` only as a read-compatible value for already-created active lessons. New `/learn` manual choices do not expose 60 and backend writes reject it.
+- Dedicated Active Lesson parsing now preserves new `50` and `all` values while continuing to read historical `60`; this closes the `/learn` → `/lesson/active` downstream boundary.
+- Adaptive Lesson Composer E2E records exact preview and create payloads for all four manual tokens.
+- Keyboard coverage now proves four-option roving radio behavior `15 → 30 → 50 → Все → 15`.
+- True browser-zoom `/learn` fixture and default-size assertion were reconciled from 30 to 15 without weakening its geometry/focus owners.
+- Temporary exact-anchor rewrite helpers were used only because the connected Contents API cannot safely patch large files. Both helpers were removed after their bounded replacements; current compare contains zero `.github/workflows/**` diff.
 
-### Finding
+### Diagnostic CI findings and recovery
 
-Issue #651 blocking/workload acceptance is still incomplete specifically at the manual `/learn` boundary: the requested bounded presets `15 / 30 / 50` and explicit user-only `All` do not match the current frontend/API contract.
+- CI #4049 / run `32646428769` failed frontend type-check because removing `60` from the shared `LessonSize` union broke existing Active Lesson / compatibility read paths.
+- Recovery separated new write vocabulary from historical read compatibility: shared type retains `60`; backend preview/create still reject `60`.
+- Diagnostic CI #4052 / run `32646629393` subsequently passed lint, type-check and frontend unit tests before being superseded by later branch writes.
+- Acceptance audit then found a second real downstream defect: `LexigoActiveLessonApp.lessonSizeFromAPI` accepted `15`, `60`, `all` but not the newly writable `50`, silently falling back to `30`. The parser now accepts `15`, `50`, `60`, `all` and has a source regression.
+- One attempted Contents API update returned HTTP 409 because an incorrect blob SHA was supplied; the file was re-read and the same bounded change succeeded with the current SHA. No repository state was changed by the failed attempt.
 
-### Root cause
+### Changed runtime/contract owners
 
-The pre-#651 manual lesson-size vocabulary (`15 / 30 / 60`) remained unchanged while the process-aware automatic Home rollout was intentionally implemented as a separate 15-item path. Frontend retained an unused `"all"` type variant, but backend validation/OpenAPI never made it a real explicit manual action.
-
-### Changed files
-
-- `.agents/current/TASK.md`
-- `.agents/current/PROGRESS.md`
-
-### Checks passed
-
-- Live open-PR preflight: zero open PRs.
-- Exact-main preflight: `5196a4b2824820bb3c5105d03112929d9a495da1`.
-- Source audit of `/learn`, shared LessonSize type, backend HTTP validation and lesson composer limit behavior.
-
-### Checks failed
-
-- Local read-only clone was unavailable because the execution container cannot resolve `github.com`; live GitHub connector remains authoritative and usable.
+- `api/openapi.yaml`
+- `backend/internal/learning/lesson_http.go`
+- `backend/internal/learning/lesson_composer.go`
+- `backend/internal/learning/lesson_size_test.go`
+- `backend/internal/learning/lesson_composer_test.go`
+- `frontend/lib/learning.ts`
+- `frontend/components/lexigo-learn-app.tsx`
+- `frontend/components/lexigo-active-lesson-app.tsx`
+- focused frontend source/E2E/accessibility/browser-zoom tests
+- `.agents/current/**`
 
 ### Current branch head
 
-Resolve from live branch ref after this update.
+Resolve from live branch ref after the final `EXECUTION.md` update. That developer-authored head is the immutable candidate for full PR CI.
 
 ### Next action
 
-Implement the exact request vocabulary and manual UI behavior, then update focused backend/frontend/OpenAPI tests before opening the Draft PR.
+Freeze the branch after Agent Harness finalization, require a complete green CI on that exact head, audit PR comments/reviews/threads and final diff, then mark ready and squash-merge with expected-head protection. After merge require exact-main CI plus exact-SHA Stage/public validation before Stage 4 reconciliation.
