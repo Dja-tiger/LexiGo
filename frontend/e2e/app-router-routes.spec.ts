@@ -61,8 +61,25 @@ async function installAuthenticatedAPI(context: BrowserContext) {
         : json(route, 404, { error: { code: "active_lesson_not_found", message: "not found" } });
     }
     if (path === "/api/v1/lessons/preview") {
-      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
-      return json(route, 200, { source: input.source ?? "mixed", studyMode: input.studyMode ?? "study", lessonSize: input.lessonSize ?? "30", composition: { total: 1, words: 1, phrases: 0, due: 1, new: 0, scheduled: 0, availableWords: 1, availablePhrases: 1 } });
+      const input = request.postDataJSON() as { source?: string; studyMode?: string; sessionKind?: "study" | "review" | "remediation"; lessonSize?: string };
+      const available = input.sessionKind === "review"
+        ? PROGRESS.dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : PROGRESS.newWords;
+      const total = input.sessionKind ? Math.min(15, available) : 1;
+      return json(route, 200, {
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "study",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
+        lessonSize: input.lessonSize ?? "30",
+        composition: {
+          total, words: total, phrases: 0,
+          due: input.sessionKind === "review" ? total : 0,
+          new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
+          scheduled: 0, availableWords: available, availablePhrases: 0,
+        },
+      });
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as { studyMode?: string; wordIds?: number[] };
