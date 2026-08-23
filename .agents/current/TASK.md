@@ -52,6 +52,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - `frontend/app/adaptive-knowledge-coach-home.css`
 - `frontend/app/adaptive-knowledge-coach-home.test.ts`
 - `frontend/e2e/support/quality-gates.ts`
+- `frontend/e2e/support/lesson-result-fixture.ts` (test-only explicit Home preview/create fixture synchronization; legacy lesson-result behavior remains unchanged)
 - `frontend/e2e/adaptive-knowledge-coach-home.spec.ts`
 - `frontend/e2e/mobile-home-priority.spec.ts`
 - `frontend/e2e/home-route-island.spec.ts`
@@ -60,6 +61,12 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - `frontend/e2e/calendar-reminder-touch-targets.spec.ts`
 - `frontend/e2e/session-resume-pwa.spec.ts` (test-only Home preview fixture synchronization; session recovery assertions remain unchanged)
 - `frontend/e2e/adaptive-navigation.spec.ts` (test-only Home preview fixture synchronization; navigation/layout assertions remain unchanged)
+- `frontend/e2e/lesson-result.spec.ts` (test-only Home recommendation locator synchronization after result navigation)
+- `frontend/e2e/accessibility-keyboard.spec.ts` (test-only Home preview fixture synchronization; keyboard/axe assertions remain unchanged)
+- `frontend/e2e/route-focus-management.spec.ts` (test-only Home preview fixture synchronization; focus/history assertions remain unchanged)
+- `frontend/e2e/app-router-routes.spec.ts` (test-only Home preview fixture synchronization; route/history assertions remain unchanged)
+- `frontend/e2e/ui-ownership.spec.ts` (test-only Home preview fixture synchronization; ownership assertions remain unchanged)
+- `frontend/e2e/account-hydration.spec.ts` (test-only Home preview fixture synchronization and request-count assertions scoped to route ownership)
 
 ## Prohibited paths
 
