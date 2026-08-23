@@ -157,7 +157,8 @@ const MODE_OPTIONS: ModeOption[] = [
 const SIZE_OPTIONS: Array<{ value: LessonSize; label: string }> = [
   { value: 15, label: "15" },
   { value: 30, label: "30" },
-  { value: 60, label: "60" },
+  { value: 50, label: "50" },
+  { value: "all", label: "Все" },
 ];
 const SOURCE_VALUES: LessonSource[] = [
   ...SOURCE_OPTIONS.map((option) => option.value),
@@ -291,7 +292,7 @@ export function LexigoLearnApp({ initialSession, onSessionUpdated }: LexigoLearn
   const [source, setSource] = useState<LessonSource>(initialTarget.source ?? "mixed");
   const [lessonTopic, setLessonTopic] = useState(initialTarget.topic ?? "");
   const [studyMode, setStudyMode] = useState<StudyMode>("recall");
-  const [lessonSize, setLessonSize] = useState<LessonSize>(30);
+  const [lessonSize, setLessonSize] = useState<LessonSize>(15);
   const [mobileComposerExpanded, setMobileComposerExpanded] = useState(false);
   const [catalogMetadata, setCatalogMetadata] = useState<CatalogMetadata | null>(null);
   const [catalogMetadataStatus, setCatalogMetadataStatus] = useState<CatalogMetadataStatus>("loading");
@@ -570,8 +571,14 @@ export function LexigoLearnApp({ initialSession, onSessionUpdated }: LexigoLearn
     ? lessonPreview
     : null;
   const selectedModeLabel = studyMode === "study" ? "Изучение" : studyMode === "recall" ? "Воспроизведение" : "Варианты";
-  const selectedSizeLabel = `${lessonSize} элементов`;
-  const estimatedMinutes = lessonSize === 15 ? "≈7м" : lessonSize === 30 ? "≈14м" : "≈28м";
+  const selectedSizeLabel = lessonSize === "all" ? "Все доступные" : `${lessonSize} элементов`;
+  const estimatedMinutes = lessonSize === "all"
+    ? "по составу"
+    : lessonSize === 15
+      ? "≈7м"
+      : lessonSize === 30
+        ? "≈14м"
+        : "≈23м";
   const lessonPreviewPending = Boolean(session && (previewingLesson || !matchingLessonPreview));
   const lessonStartDisabled = busy || Boolean(session && (!matchingLessonPreview || matchingLessonPreview.composition.total === 0));
   const reviewedItems = activeLesson?.items.filter((item) => item.rating).length ?? 0;
@@ -662,7 +669,7 @@ export function LexigoLearnApp({ initialSession, onSessionUpdated }: LexigoLearn
               estimatedMinutes={estimatedMinutes}
               previewPending={lessonPreviewPending}
               startDisabled={lessonStartDisabled}
-              startLabel="Начать рекомендуемый урок"
+              startLabel={lessonSize === "all" ? "Начать весь выбранный материал" : "Начать рекомендуемый урок"}
               busy={busy}
               onToggle={() => setMobileComposerExpanded((current) => !current)}
               onStart={() => void startLesson()}
