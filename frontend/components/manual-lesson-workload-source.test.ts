@@ -4,8 +4,13 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const frontendDirectory = process.cwd();
+const appDirectory = path.join(frontendDirectory, "app");
 const componentsDirectory = path.join(frontendDirectory, "components");
 const libDirectory = path.join(frontendDirectory, "lib");
+
+function readApp(file: string): string {
+  return readFileSync(path.join(appDirectory, file), "utf8");
+}
 
 function readComponent(file: string): string {
   return readFileSync(path.join(componentsDirectory, file), "utf8");
@@ -32,6 +37,21 @@ describe("Issue #651 bounded manual lesson workload", () => {
     expect(learnApp).toContain('{ value: "all", label: "Все" }');
     expect(learnApp).not.toContain('{ value: 60, label: "60" }');
     expect(learnApp).toContain("useState<LessonSize>(15)");
+  });
+
+  it("keeps the four horizontal size choices in four equal responsive columns", () => {
+    const composerCSS = readApp("adaptive-lesson-composer.css");
+    const sizeControlBlocks = composerCSS.match(
+      /\.lx-main-content\[aria-label="Обучение"\] \.lx-size-control \{[\s\S]*?\}/g,
+    );
+
+    expect(sizeControlBlocks).toHaveLength(2);
+    for (const block of sizeControlBlocks ?? []) {
+      expect(block).toContain("grid-template-columns: repeat(4, minmax(0, 1fr));");
+      expect(block).not.toContain("repeat(3, minmax(0, 1fr))");
+    }
+    expect(composerCSS).toContain(".lx-main-content[aria-label=\"Обучение\"] .lx-size-control button {\n  min-height: 48px;");
+    expect(composerCSS).toContain(".lx-main-content[aria-label=\"Обучение\"] .lx-size-control button {\n    min-height: 44px;");
   });
 
   it("sends the exact selected manual token to both preview and create", () => {
