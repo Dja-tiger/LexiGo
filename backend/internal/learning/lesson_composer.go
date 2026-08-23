@@ -546,6 +546,9 @@ func normalizeLessonReviewRatio(value int) int {
 }
 
 func lessonSizeLimit(value string) int {
+	if value == "all" {
+		return 0
+	}
 	limit, _ := strconv.Atoi(value)
 	return limit
 }
