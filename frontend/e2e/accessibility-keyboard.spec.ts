@@ -60,29 +60,42 @@ async function installMocks(page: Page) {
       return fulfillJSON(route, 200, { items: WORDS, count: WORDS.length });
     }
     if (path === "/api/v1/lessons/preview") {
-      const input = request.postDataJSON() as { source?: string; studyMode?: string; lessonSize?: string };
+      const input = request.postDataJSON() as {
+        source?: string;
+        studyMode?: string;
+        sessionKind?: "study" | "review" | "remediation";
+        lessonSize?: string;
+      };
+      const available = input.sessionKind === "review"
+        ? PROGRESS.dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : PROGRESS.newWords;
+      const total = input.sessionKind ? Math.min(15, available) : 2;
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize ?? "30",
         composition: {
-          total: 2,
-          words: 1,
-          phrases: 1,
-          due: 2,
-          new: 0,
+          total,
+          words: total,
+          phrases: 0,
+          due: input.sessionKind === "review" ? total : 0,
+          new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
           scheduled: 0,
-          availableWords: 2,
-          availablePhrases: 2,
+          availableWords: available,
+          availablePhrases: 0,
         },
       });
     }
     if (path === "/api/v1/lessons" && request.method() === "POST") {
-      const input = request.postDataJSON() as { source: string; studyMode: string; lessonSize: string };
+      const input = request.postDataJSON() as { source: string; studyMode: string; sessionKind?: "study" | "review" | "remediation"; lessonSize: string };
       activeLesson = {
         id: "00000000-0000-0000-0000-000000000450",
         source: input.source,
         studyMode: input.studyMode,
+        ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
         lessonSize: input.lessonSize,
         currentIndex: 0,
         version: lessonVersion,

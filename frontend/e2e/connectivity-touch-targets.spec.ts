@@ -68,9 +68,10 @@ test.describe("Issue #74 connectivity action touch targets", () => {
     await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
 
     await context.setOffline(true);
-    await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
+    const connectivity = page.getByRole("complementary", { name: "Состояние подключения и синхронизации" });
+    await expect(connectivity.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
 
-    const action = page.getByRole("button", { name: "Подробнее", exact: true });
+    const action = connectivity.getByRole("button", { name: "Подробнее", exact: true });
     await expect(action).toBeVisible();
     const expectedMinimum = await page.evaluate(() => (
       window.matchMedia("(pointer: coarse)").matches ? 48 : 44

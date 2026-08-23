@@ -106,8 +106,8 @@ const MIN_MOBILE_VISUAL_BASELINES: Record<
   `${RouteParityKey}.${ExplicitAppearance}`,
   RouteVisualBaseline
 > = {
-  "home.light": { width: 320, height: 956, sha256: "8f974567aafc421282498b9d12634820d83d66beb2212d6b6ebc246744b48ae5", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },
-  "home.dark": { width: 320, height: 956, sha256: "4f5b801d8ef46772dc628040e121a5dc9fde0a998b5f696bb248e3bfb4a534ad", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },
+  "home.light": { width: 320, height: 956, sha256: "cedd4ed0db0f23f6738599c7e500b9dd01ca26fb88bcebec3e3915726d4aebd1", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
+  "home.dark": { width: 320, height: 956, sha256: "53a35494a8a7cc74bb608bdf300f17fe2935abfbc51c2f5cc397d39c8ad092c7", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
   "learn.light": { width: 320, height: 1366, sha256: "341170addd801f2bd93755ea7879b7e88e2d7fd18e791a16337b6070e3db1dc3", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },
   "learn.dark": { width: 320, height: 1366, sha256: "99714f5b3ffdd1aa0a4e81a4afdd2930cf24fa099a613aafd1fdaf486c769e2c", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },
   "active-lesson.light": { width: 320, height: 758, sha256: "d0e1025de310cec9270ba1e3215141d51c53b8e2e8604b78c360dfc525665f12", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },
@@ -141,8 +141,8 @@ const TABLET_VISUAL_BASELINES: Record<
   `${RouteParityKey}.${ExplicitAppearance}`,
   RouteVisualBaseline
 > = {
-  "home.light": { width: 768, height: 1105, sha256: "3ac66826a4315523e3b125f911460dfc05e7543d849e9912cbce2e06ff4bb5c3", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "home.dark": { width: 768, height: 1105, sha256: "fdf0cc1d239be231b2128915fe4d4811b479dc6907c8712a5551bc6f2ffd698f", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
+  "home.light": { width: 768, height: 1105, sha256: "f7836426dc58452dbf2368243a99b106ff6df56a8fb1864eb7082689ae059006", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
+  "home.dark": { width: 768, height: 1105, sha256: "5bd2f146f2919f8a1dab8549b2d7c78159d28c35d5c5a26aa02bce568260af24", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
   "learn.light": { width: 768, height: 1990, sha256: "93ac0782063716b42945f7aedd976215c53935f60f0f1f4e0992645df77b2555", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
   "learn.dark": { width: 768, height: 1990, sha256: "ab36aebf46a17830df6eba4fb60f92fd0ead4d04ef1c15ff35c94519fb74ead6", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
   "active-lesson.light": { width: 768, height: 1024, sha256: "39dbd304a26668f6a11acb774d7e790cab4ba51af2710b0fc42a00631b104998", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
@@ -177,8 +177,8 @@ const DESKTOP_VISUAL_BASELINES: Record<
   `${RouteParityKey}.${ExplicitAppearance}`,
   RouteVisualBaseline
 > = {
-  "home.light": { width: 1440, height: 1105, sha256: "244e969e90c4d733f4ce6a4aef8b918c255df1fa1206a7e50a1a662468c04f21", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },
-  "home.dark": { width: 1440, height: 1105, sha256: "660fd141c1ae6816dadeccfdcf993e43b795c352699e06586986b7dc55ef583e", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },
+  "home.light": { width: 1440, height: 1105, sha256: "b37b4a1d920e759801a69957d9f4c5e945066b36db0e5a6f9bbbf2bcc5586580", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
+  "home.dark": { width: 1440, height: 1105, sha256: "e9142aab3d15352b550032b1162843d8b10b3ede7d55198a5906b194f7607fec", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
   "learn.light": { width: 1440, height: 1656, sha256: "d196e015be4edaeb962a958e03d16bc053215421fa017cc899602bac627a201c", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },
   "learn.dark": { width: 1440, height: 1656, sha256: "9e736276cfa95789ca51daecb0853281bafcf239ede3e035cefcfb2c6a8dfd4e", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },
   "active-lesson.light": { width: 1440, height: 1024, sha256: "2d33261eddb56ed40d3819883ed079a0633b61b4c69ff1259a672f43e17776a0", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },

@@ -25,6 +25,9 @@ func (h *Handler) PreviewLesson(w http.ResponseWriter, r *http.Request) {
 	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
+	if !validateLessonSessionKind(w, request.SessionKind) {
+		return
+	}
 	preview, err := h.repository.PreviewLesson(r.Context(), userID, request)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "preview lesson failed", "user_id", userID, "error", err)
@@ -49,8 +52,7 @@ func (h *Handler) CreateLesson(w http.ResponseWriter, r *http.Request) {
 	if !validateLessonConfiguration(w, request.Source, request.StudyMode, request.LessonSize, request.Topic, request.ReviewRatio) {
 		return
 	}
-	if !validLessonSessionKind(request.SessionKind) {
-		httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_session_kind", "sessionKind must be omitted or one of study, review or remediation")
+	if !validateLessonSessionKind(w, request.SessionKind) {
 		return
 	}
 	if request.WordIDs != nil && (len(request.WordIDs) == 0 || len(request.WordIDs) > 60 || !uniquePositiveWordIDs(request.WordIDs)) {
@@ -96,6 +98,14 @@ func validateLessonConfiguration(w http.ResponseWriter, source string, studyMode
 		return false
 	}
 	return true
+}
+
+func validateLessonSessionKind(w http.ResponseWriter, sessionKind LessonSessionKind) bool {
+	if validLessonSessionKind(sessionKind) {
+		return true
+	}
+	httpx.WriteError(w, http.StatusUnprocessableEntity, "invalid_session_kind", "sessionKind must be omitted or one of study, review or remediation")
+	return false
 }
 
 func (h *Handler) ActiveLesson(w http.ResponseWriter, r *http.Request) {

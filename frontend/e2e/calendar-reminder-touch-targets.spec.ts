@@ -238,10 +238,10 @@ test.describe("Issue #74 calendar reminder touch targets", () => {
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await Promise.all([progressReady, activeLessonReady]);
-    // With the deterministic fixture, this final CTA is reachable only after
-    // both Home resource results have committed; measuring before it appears
-    // can sample the transient loading layout instead of the calendar owner.
-    await expect(page.getByRole("button", { name: "Повторить сейчас", exact: true })).toBeVisible();
+    // The process-aware CTA is reachable only after Home has committed its
+    // explicit Review preview. Waiting on it protects this geometry test from
+    // sampling the transient loading layout before navigating to Progress.
+    await expect(page.getByRole("button", { name: "Повторить 4", exact: true })).toBeVisible();
     await applyTextZoom(page);
 
     const routeEntry = page.locator(".lx-route-reminder-entry");

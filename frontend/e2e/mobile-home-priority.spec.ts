@@ -80,7 +80,8 @@ const METADATA = {
     dailyLife: 0,
     travel: 0,
     dataEngineering: 0,
-    backend: 0, academicTechnicalEnglish: 0,
+    backend: 0,
+    academicTechnicalEnglish: 0,
   },
   topics: [{ topic: "Mobile UX", count: 1, words: 1, phrases: 0 }],
 };
@@ -142,6 +143,28 @@ async function installAPI(
         updatedAt: "2026-07-22T00:00:00Z",
       });
     }
+    if (path === "/api/v1/lessons/preview" && request.method() === "POST") {
+      if (options.progressGate) await options.progressGate;
+      const input = request.postDataJSON() as Record<string, unknown>;
+      const sessionKind = typeof input.sessionKind === "string" ? input.sessionKind : "";
+      const backlog = sessionKind === "review" ? 12 : 0;
+      return fulfillJSON(route, 200, {
+        source: input.source ?? "mixed",
+        studyMode: input.studyMode ?? "study",
+        ...(sessionKind ? { sessionKind } : {}),
+        lessonSize: input.lessonSize ?? "15",
+        composition: {
+          total: Math.min(15, backlog),
+          words: Math.min(15, backlog),
+          phrases: 0,
+          due: sessionKind === "review" ? Math.min(15, backlog) : 0,
+          new: sessionKind === "study" ? Math.min(15, backlog) : 0,
+          scheduled: 0,
+          availableWords: backlog,
+          availablePhrases: 0,
+        },
+      });
+    }
     if (path === "/api/v1/words" || path === "/api/v1/words/due") {
       return fulfillJSON(route, 200, { items: [WORD], count: 1 });
     }
@@ -181,7 +204,7 @@ test.describe("compact mobile home priority", () => {
 
     const hero = page.locator(".lx-home-next-action .lx-hero-card");
     const progressPanel = page.locator(".lx-home-next-action .lx-progress-panel");
-    await expect(page.getByRole("heading", { name: "Настройте урок под текущую задачу" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Проверяем учебные процессы" })).toBeVisible();
     const pendingHero = await boundingBoxOrFail(hero);
     const pendingProgressPanel = await boundingBoxOrFail(progressPanel);
     const pendingDueRow = progressPanel.locator(".lx-progress-list > div").first();
@@ -190,7 +213,7 @@ test.describe("compact mobile home priority", () => {
 
     progressGate.resolve();
 
-    const primaryCTA = page.getByRole("button", { name: "Повторить сейчас" });
+    const primaryCTA = page.getByRole("button", { name: "Повторить 12", exact: true });
     await expect(primaryCTA).toBeVisible();
     const readyHero = await boundingBoxOrFail(hero);
     const readyProgressPanel = await boundingBoxOrFail(progressPanel);
@@ -229,7 +252,7 @@ test.describe("compact mobile home priority", () => {
     await expect(page.getByRole("heading", { name: "Продолжите с сохранённой позиции" })).toBeVisible();
     const resumeCTA = page.getByRole("button", { name: "Продолжить урок" });
     await expect(resumeCTA).toBeVisible();
-    await expect(page.getByRole("button", { name: "Повторить сейчас" })).toHaveCount(0);
+    await expect(page.locator('[data-home-process="review"]')).toHaveCount(0);
 
     const box = await boundingBoxOrFail(resumeCTA);
     expect(box.y + box.height).toBeLessThan(844 - 82);

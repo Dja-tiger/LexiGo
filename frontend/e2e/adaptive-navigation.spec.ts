@@ -173,20 +173,24 @@ async function installAPI(page: Page) {
       const input = request.postDataJSON() as {
         source?: string;
         studyMode?: string;
+        sessionKind?: string;
         lessonSize?: string;
       };
+      const explicitBacklog = input.sessionKind === "remediation" ? 0 : WORDS.length;
+      const total = input.sessionKind ? explicitBacklog : WORDS.length;
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
+        sessionKind: input.sessionKind,
         lessonSize: input.lessonSize ?? "30",
         composition: {
-          total: WORDS.length,
-          words: WORDS.length,
+          total,
+          words: total,
           phrases: 0,
-          due: WORDS.length,
-          new: 0,
+          due: input.sessionKind === "study" || input.sessionKind === "remediation" ? 0 : WORDS.length,
+          new: input.sessionKind === "study" ? WORDS.length : 0,
           scheduled: 0,
-          availableWords: WORDS.length,
+          availableWords: total,
           availablePhrases: 0,
           fallback: "words_only",
         },

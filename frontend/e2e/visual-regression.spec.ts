@@ -173,15 +173,34 @@ async function expectLearningSwitchClearOfRouteChrome(page: Page): Promise<void>
   expect(intersections, "Learning subsection switch must not overlap visible route chrome").toEqual([]);
 }
 
-const REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS = {
-  homeCompact: {
-    name: "home-reviewed-shared-reminder-compact.png",
+const PROCESS_AWARE_HOME_VISUAL_BASELINES = {
+  compact: {
+    name: "home-process-aware-compact.png",
     width: 390,
     height: 1038,
-    sha256: "0e3162e5b5ee20d46fbead6cee17879e31ed8a181f956f4b71ef22de17ef43aa",
-    sourceRun: 32048818693,
-    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+    sha256: "b801464bdf95965b7d6d3094e4c5c3830aa56209323a8ab16ff66ed5d2226a20",
+    sourceRun: 32635302334,
+    sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47",
   },
+  medium: {
+    name: "home-process-aware-medium.png",
+    width: 768,
+    height: 1105,
+    sha256: "8456559d6010f1e721d94a05f842cacded7b760a80290367b3c7463ef996b418",
+    sourceRun: 32635302334,
+    sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47",
+  },
+  desktop: {
+    name: "home-process-aware-desktop.png",
+    width: 1440,
+    height: 981,
+    sha256: "6af9312640d6d27c7b1955d493bf2c65f6bc20886351145d842e425a3c06dc15",
+    sourceRun: 32635302334,
+    sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47",
+  },
+} satisfies Record<string, ContentAddressedVisualBaseline>;
+
+const REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS = {
   progressCompact: {
     name: "progress-reviewed-shared-reminder-compact.png",
     width: 390,
@@ -318,11 +337,12 @@ test.describe("critical visual baselines", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Продолжите с сохранённой позиции|готов(?:ы)? к повторению|Добавьте новые слова|Соберите первый учебный блок|Настройте урок под текущую задачу/ })).toBeVisible();
     const width = page.viewportSize()?.width;
-    if (width === 390) {
-      await expectContentAddressedScreenshot(page, REVIEWED_SHARED_REMINDER_FUZZY_REPLACEMENTS.homeCompact);
-    } else {
-      await expectStableScreenshot(page, "home.png");
-    }
+    const baseline = width === 390
+      ? PROCESS_AWARE_HOME_VISUAL_BASELINES.compact
+      : width === 768
+        ? PROCESS_AWARE_HOME_VISUAL_BASELINES.medium
+        : PROCESS_AWARE_HOME_VISUAL_BASELINES.desktop;
+    await expectContentAddressedScreenshot(page, baseline);
     expect(runtimeErrors).toEqual([]);
   });
 

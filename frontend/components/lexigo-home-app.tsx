@@ -17,6 +17,7 @@ import type { Session } from "../lib/auth-session";
 import { interfaceActionLabel, learningTermCopy, lessonSourceLabel } from "../lib/interface-copy";
 import { russianPlural } from "../lib/lesson-composition";
 import { lessonResumeURL } from "../lib/lesson-resume-intent";
+import type { LessonSessionKind } from "../lib/learning";
 import { navigationURL, viewTitle, type NavigationTarget } from "../lib/navigation";
 import { queueProductJourneyIntent, type ProductJourneyIntent } from "../lib/product-journey";
 import { goalPercent, type ProgressSummary } from "../lib/progress";
@@ -47,6 +48,7 @@ type LessonSessionResponse = {
   id: string;
   source: LessonSource;
   studyMode: StudyMode;
+  sessionKind?: LessonSessionKind;
   lessonSize: string;
   currentIndex: number;
   version: number;
@@ -55,6 +57,27 @@ type LessonSessionResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+type HomeLessonComposition = {
+  total: number;
+  words: number;
+  phrases: number;
+  due: number;
+  new: number;
+  scheduled: number;
+  availableWords: number;
+  availablePhrases: number;
+};
+
+type HomeLessonPreview = {
+  source: "mixed";
+  studyMode: StudyMode;
+  sessionKind: LessonSessionKind;
+  lessonSize: "15";
+  composition: HomeLessonComposition;
+};
+
+type HomeProcessPreviews = Record<LessonSessionKind, HomeLessonPreview | null>;
 
 type LexigoHomeAppProps = {
   initialSession: Session | null;
@@ -70,7 +93,14 @@ type HomeNextAction = {
   label: string;
   icon: HomeIconName;
   disabled?: boolean;
+  processKind?: LessonSessionKind;
   action: () => void;
+};
+
+type HomeProcessDefinition = {
+  kind: LessonSessionKind;
+  mode: StudyMode;
+  icon: HomeIconName;
 };
 
 const PRODUCT_ROUTE_GRAPH_EVENT = "lexigo:product-route-graph";
@@ -78,12 +108,79 @@ const DUE_COPY = learningTermCopy("due");
 const RETAINED_COPY = learningTermCopy("retained");
 const RETRY_ACTION_LABEL = interfaceActionLabel("retry");
 const CONTINUE_LESSON_ACTION_LABEL = interfaceActionLabel("continueLesson");
+const HOME_AUTOMATIC_LESSON_SIZE = 15;
+const HOME_PROCESS_DEFINITIONS: readonly HomeProcessDefinition[] = [
+  { kind: "review", mode: "recall", icon: "repeat" },
+  { kind: "remediation", mode: "recall", icon: "repeat" },
+  { kind: "study", mode: "study", icon: "learn" },
+];
+const EMPTY_PROCESS_PREVIEWS: HomeProcessPreviews = {
+  study: null,
+  review: null,
+  remediation: null,
+};
 const WORD_PREVIEW = {
   prompt: "incident",
   phonetic: "/ˈɪnsɪdənt/",
   answer: "инцидент, происшествие",
   example: "We need to identify the cause of the incident.",
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0;
+}
+
+function isHomeLessonPreviewPayload(
+  value: unknown,
+  expectedKind: LessonSessionKind,
+  expectedMode: StudyMode,
+): value is HomeLessonPreview {
+  if (!isRecord(value)
+    || value.source !== "mixed"
+    || value.studyMode !== expectedMode
+    || value.sessionKind !== expectedKind
+    || value.lessonSize !== String(HOME_AUTOMATIC_LESSON_SIZE)
+    || !isRecord(value.composition)) {
+    return false;
+  }
+
+  const composition = value.composition;
+  return [
+    composition.total,
+    composition.words,
+    composition.phrases,
+    composition.due,
+    composition.new,
+    composition.scheduled,
+    composition.availableWords,
+    composition.availablePhrases,
+  ].every(isNonNegativeInteger);
+}
+
+function processBacklog(preview: HomeLessonPreview | null): number {
+  if (!preview) return 0;
+  return preview.composition.availableWords + preview.composition.availablePhrases;
+}
+
+function boundedAutomaticCount(backlog: number): number {
+  return Math.min(HOME_AUTOMATIC_LESSON_SIZE, backlog);
+}
+
+function processActionLabel(kind: LessonSessionKind, backlog: number): string {
+  const count = boundedAutomaticCount(backlog);
+  switch (kind) {
+    case "review":
+      return backlog > count ? `Повторить ${count} из ${backlog}` : `Повторить ${count}`;
+    case "remediation":
+      return backlog > count ? `Разобрать ${count} из ${backlog} слабых мест` : `Разобрать ${count} слабых мест`;
+    case "study":
+      return backlog > count ? `Изучить ${count} новых из ${backlog}` : `Изучить ${count} новых`;
+  }
+}
 
 function HomeIcon({ name, size = 19 }: { name: HomeIconName; size?: number }) {
   const common = {
@@ -119,13 +216,17 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
   const session = initialSession;
   const [progress, setProgress] = useState<ProgressSummary | null>(null);
   const [activeLesson, setActiveLesson] = useState<LessonSessionResponse | null>(null);
+  const [processPreviews, setProcessPreviews] = useState<HomeProcessPreviews>(EMPTY_PROCESS_PREVIEWS);
   const [progressStatus, setProgressStatus] = useState<ResourceStatus>(() => (
     session ? loadingResourceStatus() : readyResourceStatus()
   ));
   const [activeLessonStatus, setActiveLessonStatus] = useState<ResourceStatus>(() => (
     session ? loadingResourceStatus() : readyResourceStatus()
   ));
-  const [busy, setBusy] = useState(false);
+  const [processStatus, setProcessStatus] = useState<ResourceStatus>(() => (
+    session ? loadingResourceStatus() : readyResourceStatus()
+  ));
+  const [busyProcess, setBusyProcess] = useState<LessonSessionKind | null>(null);
   const [actionError, setActionError] = useState("");
 
   const adoptSession = useCallback((next: Session) => {
@@ -152,7 +253,10 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     }
   }, [adoptSession]);
 
-  const loadActiveLesson = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
+  const loadActiveLesson = useCallback(async (
+    activeSession: Session,
+    signal?: AbortSignal,
+  ): Promise<LessonSessionResponse | null | undefined> => {
     setActiveLessonStatus(loadingResourceStatus());
     try {
       const result = await authorizedJSON<LessonSessionResponse>(
@@ -161,21 +265,74 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
         { signal },
         isActiveLessonPayload,
       );
-      if (signal?.aborted) return;
+      if (signal?.aborted) return undefined;
       adoptSession(result.activeSession);
       setActiveLesson(result.data);
       setActiveLessonStatus(readyResourceStatus());
+      return result.data;
     } catch (error) {
-      if (signal?.aborted) return;
+      if (signal?.aborted) return undefined;
       if (error instanceof RequestFailure && error.status === 404) {
         setActiveLesson(null);
         setActiveLessonStatus(readyResourceStatus());
-        return;
+        return null;
       }
       setActiveLesson(null);
       setActiveLessonStatus(failedResourceStatus(error, "незавершённый урок"));
+      return undefined;
     }
   }, [adoptSession]);
+
+  const loadProcessPreviews = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
+    setProcessStatus(loadingResourceStatus());
+    try {
+      const results = await Promise.all(HOME_PROCESS_DEFINITIONS.map(async ({ kind, mode }) => {
+        const result = await authorizedJSON<HomeLessonPreview>(
+          activeSession,
+          "/api/v1/lessons/preview",
+          {
+            method: "POST",
+            signal,
+            body: JSON.stringify({
+              source: "mixed",
+              studyMode: mode,
+              sessionKind: kind,
+              lessonSize: String(HOME_AUTOMATIC_LESSON_SIZE),
+            }),
+          },
+          (value) => isHomeLessonPreviewPayload(value, kind, mode),
+        );
+        return { kind, result };
+      }));
+      if (signal?.aborted) return;
+
+      const next: HomeProcessPreviews = { ...EMPTY_PROCESS_PREVIEWS };
+      for (const { kind, result } of results) next[kind] = result.data;
+      const latestSession = results.at(-1)?.result.activeSession;
+      if (latestSession) adoptSession(latestSession);
+      setProcessPreviews(next);
+      setProcessStatus(readyResourceStatus());
+    } catch (error) {
+      if (signal?.aborted) return;
+      setProcessPreviews({ ...EMPTY_PROCESS_PREVIEWS });
+      setProcessStatus(failedResourceStatus(error, "учебные процессы"));
+    }
+  }, [adoptSession]);
+
+  const loadLessonPlan = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
+    const lesson = await loadActiveLesson(activeSession, signal);
+    if (signal?.aborted) return;
+    if (lesson === null) {
+      await loadProcessPreviews(activeSession, signal);
+      return;
+    }
+
+    // Process queues cannot change the dominant action while a server-owned
+    // lesson is active. Avoid three unnecessary preview requests and defer
+    // queue reads until there is no resumable lesson.
+    setProcessPreviews({ ...EMPTY_PROCESS_PREVIEWS });
+    setProcessStatus(readyResourceStatus());
+  }, [loadActiveLesson, loadProcessPreviews]);
 
   useEffect(() => {
     if (!session) return;
@@ -185,14 +342,14 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
       setActionError("");
       void Promise.all([
         loadProgress(session, controller.signal),
-        loadActiveLesson(session, controller.signal),
+        loadLessonPlan(session, controller.signal),
       ]);
     }, 0);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [loadActiveLesson, loadProgress, session]);
+  }, [loadLessonPlan, loadProgress, session]);
 
   const initial = useMemo(() => session?.user.displayName.trim().charAt(0).toUpperCase()
     || session?.user.email.charAt(0).toUpperCase()
@@ -212,9 +369,12 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     router.push(targetURL, { scroll: false });
   }, [router]);
 
-  const startLesson = useCallback(async (mode: StudyMode, lessonSize: 15 | 30) => {
-    if (!session || busy) return;
-    setBusy(true);
+  const startLesson = useCallback(async (sessionKind: LessonSessionKind) => {
+    if (!session || busyProcess) return;
+    const definition = HOME_PROCESS_DEFINITIONS.find(({ kind }) => kind === sessionKind);
+    if (!definition) return;
+
+    setBusyProcess(sessionKind);
     setActionError("");
     try {
       const result = await authorizedJSON<LessonSessionResponse>(
@@ -224,8 +384,9 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
           method: "POST",
           body: JSON.stringify({
             source: "mixed",
-            studyMode: mode,
-            lessonSize: String(lessonSize),
+            studyMode: definition.mode,
+            sessionKind,
+            lessonSize: String(HOME_AUTOMATIC_LESSON_SIZE),
           }),
         },
         isActiveLessonPayload,
@@ -236,9 +397,9 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Не удалось сформировать учебный блок");
     } finally {
-      setBusy(false);
+      setBusyProcess(null);
     }
-  }, [adoptSession, busy, openLesson, session]);
+  }, [adoptSession, busyProcess, openLesson, session]);
 
   const progressPending = Boolean(session && (
     progressStatus.phase === "idle" || progressStatus.phase === "loading"
@@ -246,7 +407,21 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
   const activeLessonPending = Boolean(session && (
     activeLessonStatus.phase === "idle" || activeLessonStatus.phase === "loading"
   ));
-  const dueNow = progress?.dueNow ?? 0;
+  const processPending = Boolean(session && (
+    processStatus.phase === "idle" || processStatus.phase === "loading"
+  ));
+  const processBacklogs = useMemo<Record<LessonSessionKind, number>>(() => ({
+    study: processBacklog(processPreviews.study),
+    review: processBacklog(processPreviews.review),
+    remediation: processBacklog(processPreviews.remediation),
+  }), [processPreviews]);
+  const recommendedProcessKind: LessonSessionKind | null = processBacklogs.review > 0
+    ? "review"
+    : processBacklogs.remediation > 0
+      ? "remediation"
+      : processBacklogs.study > 0
+        ? "study"
+        : null;
 
   const nextAction: HomeNextAction = activeLesson
     ? {
@@ -261,7 +436,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
       ? {
           eyebrow: "СИНХРОНИЗИРУЕМ ПЛАН",
           title: "Проверяем учебную очередь",
-          description: "Сначала проверяем незавершённый урок, затем материал к повторению и новые элементы.",
+          description: "Сначала проверяем незавершённый урок, затем независимые очереди повторения, разбора ошибок и нового материала.",
           label: "Загружаем…",
           icon: "learn",
           disabled: true,
@@ -274,36 +449,76 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
             description: "Не удалось надёжно проверить незавершённый урок. Повторите синхронизацию перед созданием новой очереди.",
             label: "Повторить проверку",
             icon: "repeat",
-            action: () => void loadActiveLesson(session),
+            action: () => void loadLessonPlan(session),
           }
-        : session && progress && dueNow > 0
+        : processPending
           ? {
-              eyebrow: "СЕЙЧАС ЛУЧШЕ ПОВТОРИТЬ",
-              title: `${dueNow} ${russianPlural(dueNow, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,
-              description: DUE_COPY.explanation,
-              label: "Повторить сейчас",
-              icon: "repeat",
-              action: () => void startLesson("recall", 30),
+              eyebrow: "СИНХРОНИЗИРУЕМ ПЛАН",
+              title: "Проверяем учебные процессы",
+              description: "Считаем материал, который действительно пора повторить, отдельно от новых и проблемных элементов.",
+              label: "Загружаем…",
+              icon: "learn",
+              disabled: true,
+              action: () => undefined,
             }
-          : session && progress
+          : session && processStatus.phase === "error"
             ? {
-                eyebrow: "СЛЕДУЮЩИЙ ШАГ",
-                title: "Добавьте новые слова в учебный цикл",
-                description: "Откройте короткий блок знакомства: ответы будут видны сразу, а самостоятельное воспроизведение начнётся на следующих повторениях.",
-                label: "Начать изучение",
-                icon: "learn",
-                action: () => void startLesson("study", 15),
+                eyebrow: "НУЖНА СИНХРОНИЗАЦИЯ",
+                title: "Не удалось проверить учебные процессы",
+                description: "Не создаём автоматический урок по приблизительной статистике. Повторите проверку или настройте урок вручную.",
+                label: "Повторить проверку",
+                icon: "repeat",
+                action: () => void loadProcessPreviews(session),
               }
-            : {
-                eyebrow: "ПЕРВЫЙ ШАГ",
-                title: session ? "Настройте урок под текущую задачу" : "Соберите первый учебный блок",
-                description: session
-                  ? "Очередь сейчас недоступна, но можно выбрать режим, раздел и размер урока вручную."
-                  : "Выберите формат обучения и посмотрите состав до регистрации и запуска.",
-                label: "Настроить урок",
-                icon: "learn",
-                action: () => navigate({ view: "learn" }, "home_next_action"),
-              };
+            : recommendedProcessKind === "review"
+              ? {
+                  eyebrow: "СЕЙЧАС ЛУЧШЕ ПОВТОРИТЬ",
+                  title: `${processBacklogs.review} ${russianPlural(processBacklogs.review, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,
+                  description: DUE_COPY.explanation,
+                  label: processActionLabel("review", processBacklogs.review),
+                  icon: "repeat",
+                  processKind: "review",
+                  action: () => void startLesson("review"),
+                }
+              : recommendedProcessKind === "remediation"
+                ? {
+                    eyebrow: "РАЗБЕРИТЕ СЛАБЫЕ МЕСТА",
+                    title: `${processBacklogs.remediation} ${russianPlural(processBacklogs.remediation, "элемент требует", "элемента требуют", "элементов требуют")} дополнительной практики`,
+                    description: "Здесь только недосрочные элементы с сохранённым сигналом ошибки или слабости. Материал, который уже пора повторить, остаётся в Review.",
+                    label: processActionLabel("remediation", processBacklogs.remediation),
+                    icon: "repeat",
+                    processKind: "remediation",
+                    action: () => void startLesson("remediation"),
+                  }
+                : recommendedProcessKind === "study"
+                  ? {
+                      eyebrow: "СЛЕДУЮЩИЙ ШАГ",
+                      title: `${processBacklogs.study} ${russianPlural(processBacklogs.study, "новый элемент доступен", "новых элемента доступны", "новых элементов доступны")} для изучения`,
+                      description: "Откройте короткий блок знакомства. Новый материал не смешивается с очередью повторения или разбором ошибок.",
+                      label: processActionLabel("study", processBacklogs.study),
+                      icon: "learn",
+                      processKind: "study",
+                      action: () => void startLesson("study"),
+                    }
+                  : {
+                      eyebrow: "ПЕРВЫЙ ШАГ",
+                      title: session ? "Автоматические очереди сейчас пусты" : "Соберите первый учебный блок",
+                      description: session
+                        ? "Срок повторения ещё не наступил, новых или проблемных элементов нет. Можно настроить отдельную практику вручную."
+                        : "Выберите формат обучения и посмотрите состав до регистрации и запуска.",
+                      label: "Настроить урок",
+                      icon: "learn",
+                      action: () => navigate({ view: "learn" }, "home_next_action"),
+                    };
+
+  const secondaryProcesses = !activeLesson
+    && !activeLessonPending
+    && activeLessonStatus.phase === "ready"
+    && processStatus.phase === "ready"
+    ? HOME_PROCESS_DEFINITIONS.filter(({ kind }) => (
+        kind !== recommendedProcessKind && processBacklogs[kind] > 0
+      ))
+    : [];
 
   return (
     <div className="lx-app" data-route-client-island="home" data-figma-home-desktop="194:249" data-figma-home-mobile="196:223">
@@ -331,7 +546,8 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
           {session ? (
             <div className="lx-resource-stack">
               <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgress(session)} />
-              <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLesson(session)} />
+              <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadLessonPlan(session)} />
+              <AsyncResourceNotice label="Учебные процессы" status={processStatus} onRetry={() => void loadProcessPreviews(session)} />
             </div>
           ) : null}
 
@@ -356,12 +572,30 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
                     className="lx-button primary large"
                     type="button"
                     data-journey-intent="home_next_action"
-                    disabled={busy || nextAction.disabled}
+                    data-home-process={nextAction.processKind}
+                    disabled={Boolean(busyProcess) || nextAction.disabled}
                     onClick={nextAction.action}
                   >
                     <HomeIcon name={nextAction.icon} />
-                    {busy ? "Подготавливаем урок…" : nextAction.label}
+                    {busyProcess === nextAction.processKind ? "Подготавливаем урок…" : nextAction.label}
                   </button>
+                  {secondaryProcesses.length > 0 ? (
+                    <div className="lx-home-process-actions" role="group" aria-label="Другие доступные учебные процессы">
+                      {secondaryProcesses.map(({ kind, icon }) => (
+                        <button
+                          key={kind}
+                          className="lx-button ghost"
+                          type="button"
+                          data-home-process={kind}
+                          disabled={Boolean(busyProcess)}
+                          onClick={() => void startLesson(kind)}
+                        >
+                          <HomeIcon name={icon} />
+                          {busyProcess === kind ? "Подготавливаем урок…" : processActionLabel(kind, processBacklogs[kind])}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="lx-hero-art" aria-hidden="true">
                   <div className="lx-word-preview">

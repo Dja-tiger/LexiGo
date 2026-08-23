@@ -78,7 +78,7 @@ test.describe("canonical Lesson Result", () => {
     expect(fixture.reviewRequests()).toBe(1);
 
     await page.getByRole("button", { name: "На главную", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /Добавьте новые слова|готов(?:ы)? к повторению/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Добавьте новые слова|готов(?:ы)? к повторению|доступ(?:ен|ны) для изучения/ })).toBeVisible();
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Готов следующий блок" })).toBeVisible();
     expect(fixture.reviewRequests()).toBe(1);

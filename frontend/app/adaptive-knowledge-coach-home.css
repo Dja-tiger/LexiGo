@@ -2,8 +2,8 @@
  * Adaptive Knowledge Coach — Application Shell + Home.
  *
  * This layer intentionally consumes the existing route graph and Home state
- * resolution. It changes presentation only: active lesson, due queue and
- * lesson creation remain owned by LexigoPremiumApp and the backend APIs.
+ * resolution. It changes presentation only: route ownership, process-aware
+ * lesson queues and lesson creation remain owned by the route island/backend.
  */
 :root {
   --ak-bg: var(--ak-color-canvas);
@@ -62,7 +62,7 @@
 /*
  * The production slice owns Home and route chrome only. Existing Learn,
  * Dictionary, Progress and Profile surfaces retain their established tokens
- * until their dedicated Figma slices are implemented.
+ * until their dedicated production slices are implemented.
  */
 .lx-routed-app .lx-main-content[aria-label="Главная"] {
   color: var(--ak-text);
@@ -229,6 +229,21 @@
   width: 100%;
   min-height: 48px;
   margin-top: auto;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-process-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-process-actions .lx-button {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  line-height: 1.25;
 }
 
 .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {
@@ -505,6 +520,17 @@
   .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-next-action-copy p {
     font-size: 0.94rem;
     line-height: 1.42;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-process-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-home-process-actions .lx-button {
+    min-height: 44px;
+    padding: 7px 8px;
+    font-size: 0.78rem;
   }
 
   .lx-routed-app .lx-main-content[aria-label="Главная"] .lx-progress-panel {

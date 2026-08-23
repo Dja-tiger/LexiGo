@@ -64,6 +64,35 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
   });
 }
 
+function homeProcessPreview(input: {
+  source?: string;
+  studyMode?: string;
+  sessionKind?: string;
+  lessonSize?: string;
+}) {
+  const backlog = input.sessionKind === "review"
+    ? 2
+    : input.sessionKind === "study"
+      ? 8
+      : 0;
+  return {
+    source: input.source ?? "mixed",
+    studyMode: input.studyMode ?? "study",
+    sessionKind: input.sessionKind,
+    lessonSize: input.lessonSize ?? "15",
+    composition: {
+      total: backlog,
+      words: backlog,
+      phrases: 0,
+      due: input.sessionKind === "review" ? backlog : 0,
+      new: input.sessionKind === "study" ? backlog : 0,
+      scheduled: 0,
+      availableWords: backlog,
+      availablePhrases: 0,
+    },
+  };
+}
+
 async function installSessionMocks(page: Page, initialFailure: InitialRefreshFailure) {
   let refreshRequests = 0;
   let refreshMaySucceed = false;
@@ -82,7 +111,8 @@ async function installSessionMocks(page: Page, initialFailure: InitialRefreshFai
   });
 
   await page.route("**/api/v1/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
 
     if (path === "/api/v1/auth/refresh") {
       refreshRequests += 1;
@@ -110,6 +140,16 @@ async function installSessionMocks(page: Page, initialFailure: InitialRefreshFai
     }
     if (path === "/api/v1/lessons/active") {
       await fulfillJSON(route, 404, { error: { code: "not_found", message: "not found" } });
+      return;
+    }
+    if (path === "/api/v1/lessons/preview" && request.method() === "POST") {
+      const input = request.postDataJSON() as {
+        source?: string;
+        studyMode?: string;
+        sessionKind?: string;
+        lessonSize?: string;
+      };
+      await fulfillJSON(route, 200, homeProcessPreview(input));
       return;
     }
 

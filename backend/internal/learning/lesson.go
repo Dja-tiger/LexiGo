@@ -47,7 +47,7 @@ type LessonCreateRequest struct {
 type LessonPreviewRequest struct {
 	Source      string            `json:"source"`
 	StudyMode   AnswerMode        `json:"studyMode"`
-	SessionKind LessonSessionKind `json:"-"`
+	SessionKind LessonSessionKind `json:"sessionKind,omitempty"`
 	LessonSize  string            `json:"lessonSize"`
 	Topic       string            `json:"topic,omitempty"`
 	ReviewRatio *int              `json:"reviewRatio,omitempty"`
@@ -71,7 +71,7 @@ type LessonComposition struct {
 type LessonPreview struct {
 	Source      string            `json:"source"`
 	StudyMode   AnswerMode        `json:"studyMode"`
-	SessionKind LessonSessionKind `json:"-"`
+	SessionKind LessonSessionKind `json:"sessionKind,omitempty"`
 	LessonSize  string            `json:"lessonSize"`
 	Composition LessonComposition `json:"composition"`
 }

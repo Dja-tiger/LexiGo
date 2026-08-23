@@ -48,6 +48,28 @@ func TestOpenAPILessonSessionKindContract(t *testing.T) {
 		t.Error("sessionKind must remain optional during staged rollout")
 	}
 
+	previewRequest := learningOpenAPIBlock(t, content, "    LessonPreviewRequest:\n", "    LessonComposition:\n")
+	if !strings.Contains(previewRequest, "        sessionKind:\n          $ref: \"#/components/schemas/LessonSessionKind\"") {
+		t.Error("LessonPreviewRequest must expose the optional LessonSessionKind reference")
+	}
+	if !strings.Contains(previewRequest, "      required: [source, studyMode, lessonSize]") {
+		t.Error("LessonPreviewRequest must preserve the legacy required-field set")
+	}
+	if strings.Contains(previewRequest, "required: [source, studyMode, sessionKind") {
+		t.Error("preview sessionKind must remain optional for legacy manual callers")
+	}
+
+	preview := learningOpenAPIBlock(t, content, "    LessonPreview:\n", "    LessonItem:\n")
+	if !strings.Contains(preview, "        sessionKind:\n          $ref: \"#/components/schemas/LessonSessionKind\"") {
+		t.Error("LessonPreview must document sessionKind for explicit process previews")
+	}
+	if !strings.Contains(preview, "      required: [source, studyMode, lessonSize, composition]") {
+		t.Error("LessonPreview must preserve the legacy required-field set")
+	}
+	if strings.Contains(preview, "required: [source, studyMode, sessionKind") {
+		t.Error("legacy LessonPreview payloads must remain valid without sessionKind")
+	}
+
 	lessonItem := learningOpenAPIBlock(t, content, "    LessonItem:\n", "    LessonSession:\n")
 	if !strings.Contains(lessonItem, "enum: [recent_failure, due, overdue, relearning_due, repeated_again, repeated_almost, weak_topic, new, scheduled, manual]") {
 		t.Error("LessonItem.reason must document the complete durable selection-reason vocabulary")

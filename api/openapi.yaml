@@ -2219,6 +2219,8 @@ components:
         studyMode:
           type: string
           enum: [study, recall, choice, listening]
+        sessionKind:
+          $ref: "#/components/schemas/LessonSessionKind"
         lessonSize:
           type: string
           enum: ["15", "30", "60"]
@@ -2249,6 +2251,8 @@ components:
         studyMode:
           type: string
           enum: [study, recall, choice, listening]
+        sessionKind:
+          $ref: "#/components/schemas/LessonSessionKind"
         lessonSize: { type: string }
         composition:
           $ref: "#/components/schemas/LessonComposition"

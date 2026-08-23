@@ -113,21 +113,23 @@ const REVIEW_REQUIRED: ReviewedZoomBaseline = {
 
 const REVIEWED_SOURCE_RUN = 32224361667;
 const REVIEWED_SOURCE_HEAD_SHA = "d04e2bacbb0d5f3ad2b7bc83dd1a251f481e8b20";
+const PROCESS_AWARE_HOME_SOURCE_RUN = 32635302334;
+const PROCESS_AWARE_HOME_SOURCE_HEAD_SHA = "77ca1ea56e23b058eeb2786524617797aaa18d47";
 
 const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZoomBaseline> = {
   "home.light": {
     width: 720,
-    height: 615,
-    sha256: "89ca202f311574c26355d2673cabacd47bb91780eee34011887d746732f9a568",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    height: 710,
+    sha256: "ca124f187dc23e195b3c8d0bf056b42e3ead05d2fd5332ec179d544f5edef1b5",
+    sourceRun: PROCESS_AWARE_HOME_SOURCE_RUN,
+    sourceHeadSha: PROCESS_AWARE_HOME_SOURCE_HEAD_SHA,
   },
   "home.dark": {
     width: 720,
-    height: 615,
-    sha256: "fdc9899a6c90005db48fc2e88b8d46cdfb057faace0c728c2da5725116c76b40",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    height: 710,
+    sha256: "c2ccd9bc642799bf9989cbfacf54ee3bfd444da14020a8d2e7c741c8b4972bca",
+    sourceRun: PROCESS_AWARE_HOME_SOURCE_RUN,
+    sourceHeadSha: PROCESS_AWARE_HOME_SOURCE_HEAD_SHA,
   },
   "learn.light": {
     width: 720,

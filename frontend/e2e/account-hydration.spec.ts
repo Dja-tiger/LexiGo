@@ -97,7 +97,8 @@ async function installAccountMocks(page: Page, options: { failPhrasesOnce?: bool
   }]);
 
   await page.route("**/api/v1/**", async (route) => {
-    const url = new URL(route.request().url());
+    const request = route.request();
+    const url = new URL(request.url());
     const path = url.pathname;
 
     if (path === "/api/v1/auth/refresh") {
@@ -127,6 +128,41 @@ async function installAccountMocks(page: Page, options: { failPhrasesOnce?: bool
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ items: PHRASES, count: PHRASES.length }),
+      });
+      return;
+    }
+    if (path === "/api/v1/lessons/preview") {
+      const input = request.postDataJSON() as {
+        source?: string;
+        studyMode?: string;
+        sessionKind?: "study" | "review" | "remediation";
+        lessonSize?: string;
+      };
+      const available = input.sessionKind === "review"
+        ? PROGRESS.dueNow
+        : input.sessionKind === "remediation"
+          ? 0
+          : PROGRESS.newWords;
+      const total = input.sessionKind ? Math.min(15, available) : Math.min(15, PROGRESS.newWords);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          source: input.source ?? "mixed",
+          studyMode: input.studyMode ?? "study",
+          ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
+          lessonSize: input.lessonSize ?? "30",
+          composition: {
+            total,
+            words: total,
+            phrases: 0,
+            due: input.sessionKind === "review" ? total : 0,
+            new: input.sessionKind === "review" || input.sessionKind === "remediation" ? 0 : total,
+            scheduled: 0,
+            availableWords: available,
+            availablePhrases: 0,
+          },
+        }),
       });
       return;
     }
@@ -170,17 +206,34 @@ test("an on-demand phrase catalog failure preserves progress and retries only it
 
   const phraseNotice = page.getByRole("alert", { name: "Каталог фраз: ошибка загрузки" });
   await expect(phraseNotice).toContainText("Сервис временно недоступен");
+
+  // Phrases owns its own progress evidence, so entering this route may add a
+  // progress read. Capture the stable route baseline and prove that retrying
+  // only the failed phrase catalog resource does not rehydrate unrelated
+  // progress or Home active-session state.
+  const progressBeforeRetry = requests.progressRequests();
+  const activeLessonBeforeRetry = requests.activeLessonRequests();
+  expect(progressBeforeRetry).toBeGreaterThanOrEqual(1);
+  expect(activeLessonBeforeRetry).toBe(1);
+
   await phraseNotice.getByRole("button", { name: "Повторить" }).click();
   await expect(phraseNotice).toBeHidden();
   await expect(page.locator(".lx-phrase-grid").getByText("Independent retry", { exact: true })).toBeVisible();
+
+  expect(requests.progressRequests()).toBe(progressBeforeRetry);
+  expect(requests.phraseRequests()).toBe(2);
+  expect(requests.activeLessonRequests()).toBe(activeLessonBeforeRetry);
 
   await visibleNavigation(page).getByRole("link", { name: "Главная", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(dueCard.locator("strong")).toHaveText("7");
 
-  expect(requests.progressRequests()).toBe(1);
+  // Returning to Home reuses the account-owned progress evidence while the
+  // Home route remounts its active-session owner. The Phrases catalog itself
+  // remains untouched.
+  expect(requests.progressRequests()).toBe(progressBeforeRetry);
   expect(requests.phraseRequests()).toBe(2);
-  expect(requests.activeLessonRequests()).toBe(1);
+  expect(requests.activeLessonRequests()).toBe(activeLessonBeforeRetry + 1);
 });
 
 test("standalone startup migrates away from corrupted navigation without clearing unrelated state", async ({ page }) => {
