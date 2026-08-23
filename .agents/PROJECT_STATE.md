@@ -9,35 +9,40 @@
 
 ## Latest completed runtime delivery
 
-- Parent Issue #651 / PR #662 delivered Stage 2 of the learning-process separation architecture: explicit Study/Review/Remediation backend queue selectors while preserving omitted `sessionKind` as the legacy staged-rollout path.
-- Final PR head: `6e84b10e939848bf9bf22ff14756ea2dd3c27866`; immutable-head PR CI #4001 / run `32598503787`: **success** across backend unit/security/integration, frontend core, browser/visual/accessibility/performance/service-worker gates and API/web container builds.
-- Review audit before merge: no review submissions, no unresolved review threads and no PR comments; PR was mergeable against unchanged base `02001d365eb557efa48fa0ecb5f4289b7cb61456`.
-- PR #662 squash merge: `32b79cd8e9937305efb6b22f54ea6801d33cb988`. Parent Issue #651 remains open because process-aware preview/Home rollout, deterministic cross-process ownership refinement, bounded workload controls and later recommendation/history work are intentionally outside Stage 2.
-- Exact-main CI #4002 / run `32602099045`: **success** on `32b79cd8e9937305efb6b22f54ea6801d33cb988`, including backend integration/unit/security, frontend/browser/visual/accessibility/performance gates and API/web image publication.
-- Exact CI scope artifact `ci-scope-32b79cd8e9937305efb6b22f54ea6801d33cb988` reports `agent_docs_only=false`, base SHA `02001d365eb557efa48fa0ecb5f4289b7cb61456`, and exact head SHA `32b79cd8e9937305efb6b22f54ea6801d33cb988`.
-- Deploy Stage run `32602630875`: **success** on exact image SHA `32b79cd8e9937305efb6b22f54ea6801d33cb988`.
+- Parent Issue #651 / PR #664 delivered Stage 3 of the learning-process separation architecture: the explicit Study/Review/Remediation selector model now reaches the public lesson-preview contract and authenticated Home recommendation/count/create flow while omitted `sessionKind` remains backward-compatible for the manual `/learn` composer.
+- Final PR head: `c9c5536dc6dda509937d92252d35fb3ec31a429e`; exact-head PR CI #4045 / run `32641466221`: **success** across backend unit/security/integration, OpenAPI, frontend core, both UI shards, lesson completion, accessibility, visual, performance, CSP/service-worker, iOS PWA, Dictionary smoke and API/web container builds.
+- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads.
+- PR #664 squash merge: `cb0c82fced8e729672e80e8a202456366ead09d4`. Parent Issue #651 remains open because bounded manual workload controls and later recommendation/history/scheduler evolution are intentionally outside Stage 3.
+- Exact-main CI #4046 / run `32642124556`: **success** on `cb0c82fced8e729672e80e8a202456366ead09d4`, including backend unit/security/integration, frontend/browser/visual/accessibility/performance gates and API/web image publication.
+- Exact CI scope artifact `ci-scope-cb0c82fced8e729672e80e8a202456366ead09d4` / artifact `9493878067` reports `agent_docs_only=false`, base SHA `6d8c8dbc3b25f5fd428c18cb18b151402984ec72`, and exact head SHA `cb0c82fced8e729672e80e8a202456366ead09d4`.
+- Deploy Stage run `32642715936`: **success** on exact image SHA `cb0c82fced8e729672e80e8a202456366ead09d4`.
 - Stage deployment, public frontend/API smoke and public browser verification all passed; public Chromium + iOS WebKit runtime suite passed 12/12.
 
-## Issue #651 Stage 2 contract now delivered
+## Issue #651 Stage 3 contract now delivered
 
-- Explicit `sessionKind=study` selects only `status = new` candidates.
-- Explicit `sessionKind=review` selects only non-new candidates that are due now, including relearning-due/overdue states, and never pads the block with future `scheduled-not-due` items.
-- Explicit `sessionKind=remediation` requires persisted weakness/error evidence and may pull a not-due item only because remediation was explicitly requested.
-- Repeated `again` / `almost` signals are derived from persisted learner self-rating (`review_events.rating`), while objective failure remains a separate signal based on correctness/effective scheduler evidence.
-- Durable process-specific primary reasons include `relearning_due`, `repeated_again`, `recent_failure`, `overdue`, `due`, `repeated_almost`, `weak_topic`, and `new`; manual `wordIds` remain caller-owned with durable `manual` reason.
-- Explicit completed-block exclusion is session-kind scoped; omitted `sessionKind` retains the legacy composer and completed-block behavior for staged backward compatibility.
-- Scheduler mutation, interval/easiness/repetition formulas and manual `/learn` composition behavior remain unchanged.
-- Real PostgreSQL integration and unit regressions protect strict Review no-fill semantics, explicit queue boundaries, reason persistence, self-rating/objective-signal separation and legacy compatibility.
-- `POST /api/v1/lessons/preview` and authenticated Home intentionally remain on the legacy public process contract after this stage; they must move atomically so process counts, recommendation copy and actual lesson creation cannot disagree.
+- Stage 1 / PR #656 introduced the optional durable `sessionKind = study | review | remediation` lesson-session intent contract without fabricating intent for legacy callers.
+- Stage 2 / PR #662 made explicit session kinds real backend selection boundaries: Study owns new candidates, Review owns due non-new candidates without future-scheduled fill, and Remediation uses persisted weakness/error evidence; self-rating `again` / `almost` remains distinct from objective correctness/effective scheduler evidence.
+- Stage 3 / PR #664 makes automatic ownership mutually exclusive: a due candidate remains Review-owned even when it also has weakness/error evidence; automatic Remediation is restricted to not-due non-new candidates with persisted weakness/error evidence.
+- `POST /api/v1/lessons/preview` accepts optional explicit `sessionKind`, validates the same vocabulary as creation and echoes explicit intent; omission retains the legacy manual-composer preview contract.
+- Authenticated Home loads independent Study, Review and Remediation previews and derives truthful process backlog from `composition.availableWords + composition.availablePhrases`, rather than generic `progress.dueNow`.
+- Automatic Home blocks are bounded to 15 items. A smaller process backlog creates a smaller block; no automatic process pads from another process population.
+- Home recommendation priority is deterministic: active backend-owned lesson > Review > Remediation > Study > manual configuration fallback.
+- Home keeps explicit secondary controls for each available automatic process, so Study and Remediation remain directly selectable when Review is the dominant recommendation.
+- Home creation sends the exact selected `sessionKind`, compatible `studyMode` and `lessonSize: "15"`, keeping recommendation copy, backlog counts and created-session semantics aligned.
+- Existing route ownership, active-lesson resume, PWA/session/history/connectivity boundaries, accessibility, reduced motion, 320/390/768/1440 responsive behavior and true 200% browser zoom remain protected by the full immutable-head matrix.
+- Home-only visual evidence for the required process controls was reviewed from exact Linux CI #4032 / run `32635302334` at `77ca1ea56e23b058eeb2786524617797aaa18d47`; non-Home visual fingerprints were not refreshed.
+- Scheduler interval/easiness/repetition formulas and manual `/learn` size choices remain unchanged by Stage 3.
 
-## Delivery lessons retained from #651 Stage 2
+## Delivery lessons retained from #651 Stage 2–3
 
-- Self-rating and objective correctness are different signals. Repeated `again` / `almost` recommendations must use the learner's stored rating rather than `effective_rating`, which can be overridden by objective answer correctness.
-- A staged additive `sessionKind` contract is only safe when omission remains behaviorally distinguishable from explicit `study`; legacy callers must not silently enter new queue semantics.
-- Review no-fill is a hard invariant and must be proven against real PostgreSQL data containing future-scheduled candidates, not only against in-memory ranking helpers.
-- Explicit remediation may intentionally pull a not-due weak/error item, but that permission must stay scoped to remediation and never leak into Review.
-- Process-aware preview, Home recommendation/counts and Home lesson creation must be rolled out together against the same selector source of truth; exposing only one layer would recreate semantic drift.
-- Stage 2 does not yet prove mutually exclusive automatic ownership for a candidate that is both due and weak/error-signaled; that deterministic cross-process ownership refinement remains for the next vertical rollout slice.
+- Self-rating and objective correctness are different signals. Repeated `again` / `almost` recommendations use persisted learner rating, while objective correctness/effective scheduler evidence remains a separate failure signal.
+- A staged additive `sessionKind` contract is safe only while omission remains behaviorally distinguishable from explicit `study`; legacy callers must not silently enter new queue semantics.
+- Review no-fill is a hard invariant and is protected against real PostgreSQL data containing future-scheduled candidates.
+- Automatic cross-process ownership must be deterministic. Due + weak/error-signaled items remain Review-owned; automatic Remediation cannot compete for them.
+- Process-aware preview, Home recommendation/counts and Home lesson creation must share the same selector source of truth; moving only one layer recreates semantic drift.
+- Explicit Home preview fixtures must echo the requested `sessionKind`; request-count tests should prove resource ownership rather than preserve arbitrary hydration counts.
+- When legitimate product copy can repeat, browser assertions must scope to the semantic owner/landmark rather than rely on global text uniqueness.
+- Intentional Home visual changes require exact Linux provenance and path-bounded promotion; product-state evidence must not be mislabeled as renderer drift.
 
 ## Design source of truth
 
@@ -102,7 +107,7 @@ Umbrella #205 remains open. Do not repeat already delivered tablet/desktop/trans
 - #133: moderated usability validation requires real sessions and is not replaceable by browser automation.
 - #205: final consolidated OpenPencil visual parity umbrella remains open.
 - #508: physical installed-PWA icon/splash/cold-start matrix remains manual QA.
-- #651: Stage 1 session-intent contract (#656) and Stage 2 explicit backend queue selectors (#662) are delivered; process-aware preview/Home rollout, deterministic cross-process ownership, bounded automatic/manual workload and later recommendation/history UX remain open in the parent task.
+- #651: Stage 1 session-intent contract (#656), Stage 2 explicit backend queue selectors (#662) and Stage 3 process-aware preview/Home rollout (#664) are delivered. Remaining parent work must be selected from still-unmet acceptance criteria, including bounded manual `/learn` sizing `15/30/50`, explicit user-only `All` handling and later recommendation/history/scheduler evolution; do not repeat already delivered automatic process ownership or Home queue work.
 
 ## Delivery contract
 
