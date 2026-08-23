@@ -24,6 +24,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Create Home lessons with the exact selected `sessionKind`, matching study mode and size 15.
 - Preserve existing route ownership, active-lesson resume priority, progress evidence, accessibility, responsive layout, reduced motion and manual Learn behavior.
 - Synchronize test-only downstream Home consumers discovered by immutable-head CI so their preview mocks echo the explicit `sessionKind` request without changing the session/PWA/navigation behavior those tests own.
+- Promote only the Home visual evidence that necessarily changed because Issue #651 explicitly requires visible Review / Study / Remediation controls and truthful bounded-count copy. Evidence must come from exact-head Linux artifact #9492248013 / CI #4032 at `77ca1ea56e23b058eeb2786524617797aaa18d47`, be manually reviewed at 320/390/768/1440 Light/Dark and true 200% zoom, and remain path-allow-listed.
 
 ## Non-goals
 
@@ -32,7 +33,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Changing manual `/learn` size choices from 15/30/60 to the parent target 15/30/50; bounded manual workload is a later atomic slice.
 - Adding automatic `All`, changing catalog/source filters or redesigning the Learn composer.
 - Adding analytics/history dashboards or long-term recommendation scoring weights.
-- Broad Home redesign, new design tokens, blind visual-baseline refresh or unrelated CSS cleanup.
+- Broad Home redesign, new design tokens, blind visual-baseline refresh, non-Home visual promotion or unrelated CSS cleanup.
 - Changing production session recovery, PWA lifecycle, adaptive-navigation ownership or browser-history behavior; only their stale Home API fixtures may be synchronized in this slice.
 - Closing parent Issue #651.
 
@@ -67,13 +68,20 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - `frontend/e2e/app-router-routes.spec.ts` (test-only Home preview fixture synchronization; route/history assertions remain unchanged)
 - `frontend/e2e/ui-ownership.spec.ts` (test-only Home preview fixture synchronization; ownership assertions remain unchanged)
 - `frontend/e2e/account-hydration.spec.ts` (test-only Home preview fixture synchronization and request-count assertions scoped to route ownership)
+- `frontend/e2e/visual-regression.spec.ts` (Home-only content-addressed fingerprint provenance)
+- `frontend/e2e/visual-regression.spec.ts-snapshots/home-visual-medium-linux.png`
+- `frontend/e2e/visual-regression.spec.ts-snapshots/home-visual-desktop-linux.png`
+- `frontend/e2e/route-tablet-parity.spec.ts` (Home-only 320/768/1440 Light/Dark fingerprints)
+- `frontend/e2e/home-tablet-progress-visual.spec.ts` (Home-only 768 Light/Dark fingerprints)
+- `frontend/e2e/route-browser-zoom-parity.spec.ts` (Home-only true-200%-zoom Light/Dark fingerprints)
+- `frontend/e2e/system-states-visual.spec.ts` (desktop-offline-dark fingerprint whose background Home surface necessarily changes with Stage 3 controls)
 
 ## Prohibited paths
 
 - migrations and scheduler mutation code outside the allowed learning selector files
 - `frontend/components/lexigo-learn-app.tsx` and manual Lesson Composer behavior
 - production route bootstrap/session/PWA/history owners
-- design tokens, OpenPencil files and visual baselines
+- design tokens, OpenPencil files and every non-Home visual baseline/fingerprint
 - workflows, dependencies and deployment configuration
 - unrelated tests or compatibility cleanup
 
@@ -103,6 +111,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Generic `progress.dueNow` may remain visible as progress evidence but is not the source of process-aware Home recommendation/counts.
 - No duplicate session bootstrap, API ownership, PWA owner or route graph is introduced.
 - Test fixtures for explicit Home previews must echo the requested `sessionKind`; legacy/manual preview fixtures may still omit it.
+- Visual promotion is restricted to exact Home surfaces changed by the required process controls; no unrelated renderer drift or neighboring route hash may be accepted.
 
 ## Acceptance criteria
 
@@ -115,6 +124,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - When Review backlog exceeds 15, Home says `15 из N` and creates 15; it never expands automatically to 30/60.
 - When Review is empty but Remediation exists, Remediation is recommended; when both are empty and Study exists, Study is recommended.
 - Existing active-lesson resume, progress navigation, compact/mobile layout, 200% reflow, reduced motion and accessibility contracts remain green.
+- Reviewed Linux Home evidence shows no overlap/clipping/overflow at 320/390/768/1440, preserves Light/Dark contrast, and proves the expected 200% height increase caused by the two contextual controls rather than a hidden overflow defect.
 
 ## Required checks
 
@@ -124,7 +134,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Frontend lint/typecheck/unit/source contracts.
 - Targeted Home Playwright in desktop Chromium, Android Chromium and iOS WebKit, including request-body assertions, no horizontal overflow, touch/focus targets and reduced motion.
 - Existing Home route-island, information-architecture, true browser-zoom, session-resume and adaptive-navigation consumers remain collected and green after their test-only fixtures/locators are synchronized to the process-aware contract.
-- Full immutable-head CI including both UI shards, visual regression without blind baseline updates, accessibility, performance, CSP/service-worker and container builds.
+- Full immutable-head CI including both UI shards, reviewed Home-only Linux visual promotion, accessibility, performance, CSP/service-worker and container builds.
 - Clean PR comments/reviews/threads and expected-head squash merge.
 - Exact-main CI plus Stage/public smoke/browser verification on the runtime merge SHA.
 
@@ -135,6 +145,7 @@ Roll out the explicit Study / Review / Remediation queue model from backend sele
 - Server preview and create could diverge if validation/selector paths differ; both must use the same `queryLessonCandidatesForSession` owner.
 - Due+weak candidates previously qualified for both Review and Remediation; the selector ownership correction is protected by unit and real PostgreSQL evidence.
 - Existing Home fixtures that used `progress.dueNow`, omitted explicit-preview `sessionKind` or hard-coded `Повторить сейчас` are stale consumers once process preview becomes the recommendation source; they must be synchronized without weakening their original route/layout/accessibility/session-recovery purpose.
+- Existing authoritative Home fingerprints encode the previous single-action Home state. They must not be retained by hiding the new secondary controls from shared fixtures, because Issue #651 explicitly requires those controls to be visible; only reviewed exact-head Linux evidence may replace them.
 
 ## Rollback
 
