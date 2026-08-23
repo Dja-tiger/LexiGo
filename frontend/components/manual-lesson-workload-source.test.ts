@@ -16,11 +16,11 @@ function readLibrary(file: string): string {
 }
 
 describe("Issue #651 bounded manual lesson workload", () => {
-  it("keeps the shared lesson-size vocabulary at 15, 30, 50 and explicit all", () => {
+  it("keeps legacy 60 read-compatible without exposing it as a new manual choice", () => {
     const learning = readLibrary("learning.ts");
 
-    expect(learning).toContain('export type LessonSize = 15 | 30 | 50 | "all";');
-    expect(learning).not.toContain("15 | 30 | 60");
+    expect(learning).toContain('export type LessonSize = 15 | 30 | 50 | 60 | "all";');
+    expect(learning).toContain("`60` remains read-compatible for active lessons created before Issue #651 Stage 4");
   });
 
   it("exposes exactly four manual /learn choices and defaults to 15", () => {
