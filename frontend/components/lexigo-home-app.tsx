@@ -474,7 +474,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
               ? {
                   eyebrow: "СЕЙЧАС ЛУЧШЕ ПОВТОРИТЬ",
                   title: `${processBacklogs.review} ${russianPlural(processBacklogs.review, "элемент готов", "элемента готовы", "элементов готовы")} к повторению`,
-                  description: `${DUE_COPY.explanation} Автоматический блок ограничен ${HOME_AUTOMATIC_LESSON_SIZE} элементами и не заполняется материалом, срок которого ещё не наступил.`,
+                  description: DUE_COPY.explanation,
                   label: processActionLabel("review", processBacklogs.review),
                   icon: "repeat",
                   processKind: "review",
