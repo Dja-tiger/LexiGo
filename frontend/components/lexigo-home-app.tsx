@@ -253,7 +253,10 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     }
   }, [adoptSession]);
 
-  const loadActiveLesson = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
+  const loadActiveLesson = useCallback(async (
+    activeSession: Session,
+    signal?: AbortSignal,
+  ): Promise<LessonSessionResponse | null | undefined> => {
     setActiveLessonStatus(loadingResourceStatus());
     try {
       const result = await authorizedJSON<LessonSessionResponse>(
@@ -262,19 +265,21 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
         { signal },
         isActiveLessonPayload,
       );
-      if (signal?.aborted) return;
+      if (signal?.aborted) return undefined;
       adoptSession(result.activeSession);
       setActiveLesson(result.data);
       setActiveLessonStatus(readyResourceStatus());
+      return result.data;
     } catch (error) {
-      if (signal?.aborted) return;
+      if (signal?.aborted) return undefined;
       if (error instanceof RequestFailure && error.status === 404) {
         setActiveLesson(null);
         setActiveLessonStatus(readyResourceStatus());
-        return;
+        return null;
       }
       setActiveLesson(null);
       setActiveLessonStatus(failedResourceStatus(error, "незавершённый урок"));
+      return undefined;
     }
   }, [adoptSession]);
 
@@ -314,6 +319,21 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
     }
   }, [adoptSession]);
 
+  const loadLessonPlan = useCallback(async (activeSession: Session, signal?: AbortSignal) => {
+    const lesson = await loadActiveLesson(activeSession, signal);
+    if (signal?.aborted) return;
+    if (lesson === null) {
+      await loadProcessPreviews(activeSession, signal);
+      return;
+    }
+
+    // Process queues cannot change the dominant action while a server-owned
+    // lesson is active. Avoid three unnecessary preview requests and defer
+    // queue reads until there is no resumable lesson.
+    setProcessPreviews({ ...EMPTY_PROCESS_PREVIEWS });
+    setProcessStatus(readyResourceStatus());
+  }, [loadActiveLesson, loadProcessPreviews]);
+
   useEffect(() => {
     if (!session) return;
 
@@ -322,15 +342,14 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
       setActionError("");
       void Promise.all([
         loadProgress(session, controller.signal),
-        loadActiveLesson(session, controller.signal),
-        loadProcessPreviews(session, controller.signal),
+        loadLessonPlan(session, controller.signal),
       ]);
     }, 0);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [loadActiveLesson, loadProcessPreviews, loadProgress, session]);
+  }, [loadLessonPlan, loadProgress, session]);
 
   const initial = useMemo(() => session?.user.displayName.trim().charAt(0).toUpperCase()
     || session?.user.email.charAt(0).toUpperCase()
@@ -430,7 +449,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
             description: "Не удалось надёжно проверить незавершённый урок. Повторите синхронизацию перед созданием новой очереди.",
             label: "Повторить проверку",
             icon: "repeat",
-            action: () => void loadActiveLesson(session),
+            action: () => void loadLessonPlan(session),
           }
         : processPending
           ? {
@@ -527,7 +546,7 @@ export function LexigoHomeApp({ initialSession, onSessionUpdated }: LexigoHomeAp
           {session ? (
             <div className="lx-resource-stack">
               <AsyncResourceNotice label="Прогресс" status={progressStatus} onRetry={() => void loadProgress(session)} />
-              <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadActiveLesson(session)} />
+              <AsyncResourceNotice label="Незавершённый урок" status={activeLessonStatus} onRetry={() => void loadLessonPlan(session)} />
               <AsyncResourceNotice label="Учебные процессы" status={processStatus} onRetry={() => void loadProcessPreviews(session)} />
             </div>
           ) : null}
