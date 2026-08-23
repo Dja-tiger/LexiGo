@@ -22,7 +22,8 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - Preserve read compatibility for already-created active lessons whose persisted `lessonSize` can still be `60`; this does not authorize new preview/create requests with `60`.
 - Ensure newly-created `50` and `all` lessons remain readable by the dedicated Active Lesson route instead of being normalized back to the legacy fallback size.
 - Keep UI labels/estimated-duration copy truthful for numeric sizes and explicit `All`.
-- Update focused backend/frontend/browser/accessibility contract tests required by the changed behavior.
+- Keep the four manual size choices in a balanced four-column row wherever the existing horizontal size control is rendered, instead of inheriting the legacy three-column grid and orphaning `Все` on a second row.
+- Update focused backend/frontend/browser/accessibility/visual contract tests required by the changed behavior.
 
 ## Non-goals
 
@@ -43,9 +44,10 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - `frontend/lib/learning.ts`
 - `frontend/components/lexigo-learn-app.tsx`
 - `frontend/components/lexigo-active-lesson-app.tsx` only for the downstream `lessonSizeFromAPI` compatibility parser required to consume the new Stage 4 values
+- `frontend/app/adaptive-lesson-composer.css` only for the two `.lx-size-control` grid-template declarations proven by exact Linux CI #4064 screenshots to retain the legacy three-column layout
 - focused frontend component/unit/e2e tests that validate the `/learn` lesson-size control, Active Lesson size parsing, keyboard semantics, preview/create payloads and route behavior
-- existing visual snapshots only if exact Linux evidence proves an intentional `/learn` fingerprint change caused solely by the added/relabelled size option
-- `.github/workflows/temporary-issue-651-stage4-exact-rewrite.yml` **only as a one-shot, exact-anchor, path-guarded large-file rewrite helper for the explicitly authorized large files (`api/openapi.yaml`, `frontend/e2e/learn-browser-zoom.spec.ts`, `frontend/components/lexigo-active-lesson-app.tsx`); it must be deleted before the final developer-authored candidate and final immutable-head CI, leaving zero workflow diff**
+- existing visual fingerprints/snapshots only after exact Linux evidence proves the remaining `/learn` delta is intentional after the four-column layout regression is corrected
+- `.github/workflows/temporary-issue-651-stage4-exact-rewrite.yml` **only as a one-shot, exact-anchor, path-guarded large-file rewrite helper for explicitly authorized large files (`api/openapi.yaml`, `frontend/e2e/learn-browser-zoom.spec.ts`, `frontend/components/lexigo-active-lesson-app.tsx`, `frontend/app/adaptive-lesson-composer.css`, and later proven visual fingerprint owners); it must be deleted before the final developer-authored candidate and final immutable-head CI, leaving zero workflow diff**
 
 ## Prohibited paths
 
@@ -62,6 +64,7 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - Backend lesson request validation and candidate limit interpretation own the new API write semantics.
 - `LexigoLearnApp` owns the manual `/learn` size choice and explicit `All` action.
 - `LexigoActiveLessonApp` owns dedicated-route parsing of newly-created `50`/`all` lessons and historical `60` lessons.
+- `adaptive-lesson-composer.css` owns the responsive geometry of the existing horizontal size control; Stage 4 changes only its column count from the obsolete three-option contract to four.
 - Stage 3 Home process-aware queues remain the owner of automatic 15-item recommendations.
 
 ## Documentation owners
@@ -77,6 +80,7 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - Omitted `sessionKind` remains the legacy manual-composer boundary established by earlier #651 stages.
 - Existing active lessons created before Stage 4 remain readable even if their stored size is `60`; new preview/create validation still rejects `60`.
 - Newly-created `50` and `all` active lessons retain their exact size semantics across the `/learn` → `/lesson/active` handoff.
+- The fourth manual size option must not create a one-item orphan row at compact, tablet or desktop widths; touch-target minima and 200% reflow remain intact.
 - `selection_reason`, answer-mode semantics, scheduler state transitions and review event semantics are unchanged.
 - Existing route/history/PWA/accessibility contracts remain intact.
 
@@ -89,6 +93,7 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - Automatic Home flows continue to request a fixed 15-item block and never send `all`.
 - Previously persisted active lessons with `lessonSize="60"` remain readable; this compatibility does not leak `60` back into new manual choices or API write validation.
 - Newly-created `lessonSize="50"` and `lessonSize="all"` remain exact when consumed by the dedicated Active Lesson route.
+- The size control renders four equal columns instead of the legacy three-column grid, with no orphan `Все` row at wide/tablet widths and no horizontal overflow at compact/200% reflow.
 - OpenAPI documents the exact accepted write vocabulary.
 - Keyboard/roving-radio semantics remain correct with four manual size choices.
 - Focused tests plus immutable-head full CI are green.
@@ -100,8 +105,10 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - frontend type/unit tests
 - focused Playwright `/learn` composer tests, including keyboard navigation and exact preview/create request payload assertions
 - focused source/runtime proof for dedicated Active Lesson size parsing of 50/all plus historical 60
+- source contract proving both size-control responsive declarations use four columns and retain minimum touch-target heights
 - OpenAPI validation/generation checks
 - true-browser-zoom `/learn` contract updated to the new default without weakening its geometry/focus assertions
+- exact Linux visual review after layout correction before any fingerprint refresh
 - full immutable-head PR CI after the temporary helper is removed
 - review audit: comments/reviews/unresolved threads
 - expected-head squash merge
@@ -111,6 +118,7 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 
 - Treating `all` as `0` implicitly can be ambiguous; implementation/tests must make explicit that zero means no manual cap only for the validated `all` token.
 - Adding a fourth horizontal radio may expose compact/zoom layout regressions; targeted responsive/a11y checks must cover it.
+- Retaining the legacy `repeat(3, ...)` grid after adding the fourth choice produces a deterministic orphan `Все` row (+56 px on 768/1440 Linux fingerprints); this is a product layout defect, not a baseline to approve.
 - Removing `60` from a shared read type breaks already-created active lessons; write vocabulary and persisted read compatibility must remain separate.
 - Adding `50` to writes without adding it to the Active Lesson read parser silently normalizes a valid new session back to 30.
 - Legacy fixtures may assume `60`; update only fixtures that model new manual preview/create vocabulary, not unrelated numeric limits or historical read paths.
