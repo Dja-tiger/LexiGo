@@ -1,0 +1,175 @@
+name: Temporary Issue 651 Stage 4 exact rewrite
+
+on:
+  push:
+    branches:
+      - feat/issue-651-bounded-manual-workload
+    paths:
+      - .github/workflows/temporary-issue-651-stage4-exact-rewrite.yml
+
+permissions:
+  contents: write
+
+jobs:
+  exact-rewrite:
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-bounded-manual-workload
+          fetch-depth: 0
+
+      - name: Apply reviewed Stage 4 test-only reconciliation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          expected_parent="52a8c56371dacc02192b24a830cd640509dc6cd3"
+          actual_parent="$(git rev-parse HEAD^)"
+          if [ "$actual_parent" != "$expected_parent" ]; then
+            echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          run = "32648333357"
+          head = "c4d52f51f944ba0d29c52e0707425ed2473e0267"
+
+          replacements = {
+              "frontend/e2e/learn-browser-zoom.spec.ts": [
+                  (
+                      'expect(responsiveStyles.sizeColumns.split(/\\s+/).filter(Boolean)).toHaveLength(3);',
+                      'expect(responsiveStyles.sizeColumns.split(/\\s+/).filter(Boolean)).toHaveLength(4);',
+                  ),
+              ],
+              "frontend/e2e/issue-603-browser-zoom-reflow.spec.ts": [
+                  (
+                      '    sha256: "7eb7f63ab91c45c2d8bfd6fcc1293866cfe0c848b162a1281be0f3b1a2298eff",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
+                      f'    sha256: "a4563b5be3b566214b64db8e1944837f4a07f8a23303583eccbf9653da2b0bf6",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",',
+                  ),
+                  (
+                      '    sha256: "eff73e6f44fda966c8812c7ba85d81a0156aa63df1bd7b76a0b5921993ea1e40",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
+                      f'    sha256: "b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4b",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",',
+                  ),
+                  (
+                      'expect(learnSizeColumns, "manual lesson size control should preserve its three-column desktop geometry at browser zoom").toHaveLength(3);',
+                      'expect(learnSizeColumns, "manual lesson size control should preserve its four-column desktop geometry at browser zoom").toHaveLength(4);',
+                  ),
+              ],
+              "frontend/e2e/route-browser-zoom-parity.spec.ts": [
+                  (
+                      '    sha256: "c1b05d53ca5d3184a73c3dda372aa67d2eab5deed26c4d603568297367377d5f",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
+                      f'    sha256: "7c0cf0a15c3ccea90b8c502517eff013574f5d5de494b63905af1617b7820fd3",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",',
+                  ),
+                  (
+                      '    sha256: "56a5c528fc096d798b36963227fab20791469d0e1a3300f1f8c2dea40a97434e",\n    sourceRun: REVIEWED_SOURCE_RUN,\n    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,',
+                      f'    sha256: "83a3155f8be52e7251c7249f2f60dd03963d2201dddeeb6848a4dddc8a1821e3",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",',
+                  ),
+              ],
+              "frontend/e2e/route-transition-runtime-visual.spec.ts": [
+                  (
+                      '  "learn.light": {\n    width: 390,\n    height: 1212,\n    sha256: "14732c934d4b91a89415174ccd01a9c1a9c4134c9b07c21229401c48bb544425",\n    sourceRun: 32093144691,\n    sourceHeadSha: "928b0186a688545aadcd9b82d84e5940f79f0ab6",\n  },',
+                      f'  "learn.light": {{\n    width: 390,\n    height: 1212,\n    sha256: "0239abe663f7af610eb82f982f217b7eb4818487a0c2ddd25726d554e2a09d6a",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+                  (
+                      '  "learn.dark": {\n    width: 390,\n    height: 1212,\n    sha256: "012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5",\n    sourceRun: 32046365625,\n    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",\n  },',
+                      f'  "learn.dark": {{\n    width: 390,\n    height: 1212,\n    sha256: "0bf4e4798ca43e2a0337f152f25be1a2880279456c0c45ce0eb143ca9f992d4b",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+              ],
+              "frontend/e2e/visual-regression.spec.ts": [
+                  (
+                      '  compact: {\n    name: "lesson-composer-compact.png",\n    width: 390,\n    height: 1212,\n    sha256: "e0f44f118b272b898cfaf635e81c7a808c274dd6834594c4a20245ff4f34a423",\n    sourceRun: 32048818693,\n    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",\n  },',
+                      f'  compact: {{\n    name: "lesson-composer-compact.png",\n    width: 390,\n    height: 1212,\n    sha256: "352570dbf32a2d7c85d65b0e2094b1c926f1ac709a3a86323ec1a5ca7344afd3",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+                  (
+                      '  medium: {\n    name: "lesson-composer-medium.png",\n    width: 768,\n    height: 1990,\n    sha256: "c8b941afa995bd67b5a4068441a9982cb24c859c7c12f645a5433e97cd3e0bc3",\n    sourceRun: 32048818693,\n    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",\n  },',
+                      f'  medium: {{\n    name: "lesson-composer-medium.png",\n    width: 768,\n    height: 1990,\n    sha256: "6dbffbd59638fc562d5b051ccdcf07e0ab00afb9c19c21a7fbc5bb934d524435",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+                  (
+                      '  desktop: {\n    name: "lesson-composer-desktop.png",\n    width: 1440,\n    height: 1656,\n    sha256: "3ef5fd76776f84c7f20f3e2efc757c0111ca99ccfc9ba0df8d6f4959769c7d1f",\n    sourceRun: 32048818693,\n    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",\n  },',
+                      f'  desktop: {{\n    name: "lesson-composer-desktop.png",\n    width: 1440,\n    height: 1656,\n    sha256: "063ca404f9644b9af5c26ad0285cfcd4514e6874c6e97137b38ec516328d426e",\n    sourceRun: {run},\n    sourceHeadSha: "{head}",\n  }},',
+                  ),
+              ],
+              "frontend/e2e/route-tablet-parity.spec.ts": [
+                  (
+                      '  "learn.light": { width: 320, height: 1366, sha256: "341170addd801f2bd93755ea7879b7e88e2d7fd18e791a16337b6070e3db1dc3", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },',
+                      f'  "learn.light": {{ width: 320, height: 1366, sha256: "9ef853e06c72b0c9a87c30fe6a6ea306a0313c1d8c5ad8299345e8c592c6f99e", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+                  (
+                      '  "learn.dark": { width: 320, height: 1366, sha256: "99714f5b3ffdd1aa0a4e81a4afdd2930cf24fa099a613aafd1fdaf486c769e2c", sourceRun: 32119608484, sourceHeadSha: "092a578bcf04e3ab7d4bcb98038535797058b011" },',
+                      f'  "learn.dark": {{ width: 320, height: 1366, sha256: "a61260b91ca1728295113e17eee18d039afce1d3b6dba6303b612a89d131f44c", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+                  (
+                      '  "learn.light": { width: 768, height: 1990, sha256: "93ac0782063716b42945f7aedd976215c53935f60f0f1f4e0992645df77b2555", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },',
+                      f'  "learn.light": {{ width: 768, height: 1990, sha256: "00ba24494bdc866ba46add09f2d6479c8b51b532f280b0f62045426fe05bfaca", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+                  (
+                      '  "learn.dark": { width: 768, height: 1990, sha256: "ab36aebf46a17830df6eba4fb60f92fd0ead4d04ef1c15ff35c94519fb74ead6", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },',
+                      f'  "learn.dark": {{ width: 768, height: 1990, sha256: "a147d33e49e9a1af7826eacf5c509de3190ab4ae497daea03db656ab074487f2", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+                  (
+                      '  "learn.light": { width: 1440, height: 1656, sha256: "d196e015be4edaeb962a958e03d16bc053215421fa017cc899602bac627a201c", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },',
+                      f'  "learn.light": {{ width: 1440, height: 1656, sha256: "e43546d068755051e084061dc63d4c0518034031c72846ffd8ca068174024cab", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+                  (
+                      '  "learn.dark": { width: 1440, height: 1656, sha256: "9e736276cfa95789ca51daecb0853281bafcf239ede3e035cefcfb2c6a8dfd4e", sourceRun: 32065112367, sourceHeadSha: "244a71b6202b3f22e51e46c9fccc7cc385cf92ad" },',
+                      f'  "learn.dark": {{ width: 1440, height: 1656, sha256: "787061230337e540534f932f47d5b0a633e8f191e58e4da6bf00c8372e6a6290", sourceRun: {run}, sourceHeadSha: "{head}" }},',
+                  ),
+              ],
+          }
+
+          expected_replacements = 17
+          applied = 0
+          for relative_path, pairs in replacements.items():
+              path = Path(relative_path)
+              text = path.read_text()
+              for old, new in pairs:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f"{relative_path}: expected exactly one anchor, found {count}: {old[:120]!r}")
+                  text = text.replace(old, new, 1)
+                  applied += 1
+              path.write_text(text)
+
+          if applied != expected_replacements:
+              raise SystemExit(f"expected {expected_replacements} exact replacements, applied {applied}")
+          PY
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            frontend/e2e/issue-603-browser-zoom-reflow.spec.ts
+            frontend/e2e/learn-browser-zoom.spec.ts
+            frontend/e2e/route-browser-zoom-parity.spec.ts
+            frontend/e2e/route-tablet-parity.spec.ts
+            frontend/e2e/route-transition-runtime-visual.spec.ts
+            frontend/e2e/visual-regression.spec.ts
+          )
+          if [ "${changed[*]}" != "${expected[*]}" ]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+          git diff -- \
+            frontend/e2e/issue-603-browser-zoom-reflow.spec.ts \
+            frontend/e2e/learn-browser-zoom.spec.ts \
+            frontend/e2e/route-browser-zoom-parity.spec.ts \
+            frontend/e2e/route-tablet-parity.spec.ts \
+            frontend/e2e/route-transition-runtime-visual.spec.ts \
+            frontend/e2e/visual-regression.spec.ts
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            frontend/e2e/issue-603-browser-zoom-reflow.spec.ts \
+            frontend/e2e/learn-browser-zoom.spec.ts \
+            frontend/e2e/route-browser-zoom-parity.spec.ts \
+            frontend/e2e/route-tablet-parity.spec.ts \
+            frontend/e2e/route-transition-runtime-visual.spec.ts \
+            frontend/e2e/visual-regression.spec.ts
+          git commit -m "test(learning): reconcile reviewed stage 4 visual contracts"
+          git push origin HEAD:feat/issue-651-bounded-manual-workload
