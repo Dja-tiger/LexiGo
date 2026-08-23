@@ -47,7 +47,9 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - `frontend/app/adaptive-lesson-composer.css` only for the two `.lx-size-control` grid-template declarations proven by exact Linux CI #4064 screenshots to retain the legacy three-column layout
 - focused frontend component/unit/e2e tests that validate the `/learn` lesson-size control, Active Lesson size parsing, keyboard semantics, preview/create payloads and route behavior
 - existing visual fingerprints/snapshots only after exact Linux evidence proves the remaining `/learn` delta is intentional after the four-column layout regression is corrected
-- `.github/workflows/temporary-issue-651-stage4-exact-rewrite.yml` **only as a one-shot, exact-anchor, path-guarded large-file rewrite helper for explicitly authorized large files (`api/openapi.yaml`, `frontend/e2e/learn-browser-zoom.spec.ts`, `frontend/components/lexigo-active-lesson-app.tsx`, `frontend/app/adaptive-lesson-composer.css`, and later proven visual fingerprint owners); it must be deleted before the final developer-authored candidate and final immutable-head CI, leaving zero workflow diff**
+- `frontend/e2e/learn-browser-zoom.spec.ts` and `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` only to reconcile the two CI #4069 assertions that still encode three lesson-size columns after runtime correctly moved to four
+- `frontend/e2e/route-tablet-parity.spec.ts`, `frontend/e2e/route-transition-runtime-visual.spec.ts`, `frontend/e2e/visual-regression.spec.ts`, `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`, and `frontend/e2e/route-browser-zoom-parity.spec.ts` only to replace the 15 exact `/learn` hashes reviewed from Linux CI #4069 / run `32648333357` on head `c4d52f51f944ba0d29c52e0707425ed2473e0267`, preserving the unchanged reviewed dimensions and updating provenance only for those `/learn` entries
+- `.github/workflows/temporary-issue-651-stage4-exact-rewrite.yml` **only as a one-shot, exact-anchor, path-guarded large-file rewrite helper for explicitly authorized large files (`api/openapi.yaml`, `frontend/e2e/learn-browser-zoom.spec.ts`, `frontend/components/lexigo-active-lesson-app.tsx`, `frontend/app/adaptive-lesson-composer.css`, and the five proven visual fingerprint owners listed above plus `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`); for the CI #4069 reconciliation it may change only the two stale 3→4 test assertions and the 15 reviewed `/learn` hash/provenance entries, must fail closed on anchor/count drift, and must be deleted before the final developer-authored candidate and final immutable-head CI, leaving zero workflow diff**
 
 ## Prohibited paths
 
@@ -109,6 +111,7 @@ Deliver the next atomic Issue #651 slice by making the manual `/learn` composer 
 - OpenAPI validation/generation checks
 - true-browser-zoom `/learn` contract updated to the new default without weakening its geometry/focus assertions
 - exact Linux visual review after layout correction before any fingerprint refresh
+- CI #4069 evidence must remain the sole source for the 15 refreshed `/learn` hashes: dimensions are unchanged after the CSS repair, and no unrelated route baseline may change
 - full immutable-head PR CI after the temporary helper is removed
 - review audit: comments/reviews/unresolved threads
 - expected-head squash merge
