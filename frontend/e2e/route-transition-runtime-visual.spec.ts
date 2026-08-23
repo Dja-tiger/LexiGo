@@ -51,16 +51,16 @@ const BASELINES: Record<`${TransitionRoute}.${Appearance}`, ReviewedTransitionBa
   "learn.light": {
     width: 390,
     height: 1212,
-    sha256: "14732c934d4b91a89415174ccd01a9c1a9c4134c9b07c21229401c48bb544425",
-    sourceRun: 32093144691,
-    sourceHeadSha: "928b0186a688545aadcd9b82d84e5940f79f0ab6",
+    sha256: "0239abe663f7af610eb82f982f217b7eb4818487a0c2ddd25726d554e2a09d6a",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
   "learn.dark": {
     width: 390,
     height: 1212,
-    sha256: "012800cae78c9639a97908b7a1d687e8b4893f47cc2cf615ecb6d04667827dc5",
-    sourceRun: 32046365625,
-    sourceHeadSha: "43e80f5b1b0d6c778f53147ba6a115fefc94df0b",
+    sha256: "0bf4e4798ca43e2a0337f152f25be1a2880279456c0c45ce0eb143ca9f992d4b",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
 };
 

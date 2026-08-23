@@ -134,16 +134,16 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "learn.light": {
     width: 720,
     height: 995,
-    sha256: "c1b05d53ca5d3184a73c3dda372aa67d2eab5deed26c4d603568297367377d5f",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "7c0cf0a15c3ccea90b8c502517eff013574f5d5de494b63905af1617b7820fd3",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
   "learn.dark": {
     width: 720,
     height: 995,
-    sha256: "56a5c528fc096d798b36963227fab20791469d0e1a3300f1f8c2dea40a97434e",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "83a3155f8be52e7251c7249f2f60dd03963d2201dddeeb6848a4dddc8a1821e3",
+    sourceRun: 32648333357,
+    sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267",
   },
   "active-lesson.light": {
     width: 720,

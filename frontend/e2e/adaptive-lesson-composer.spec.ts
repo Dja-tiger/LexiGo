@@ -100,6 +100,7 @@ async function fulfillJSON(route: Route, status: number, body: unknown) {
 
 async function installAPI(page: Page) {
   const lessonRequests: LessonRequest[] = [];
+  const previewRequests: LessonRequest[] = [];
 
   await page.context().addCookies([{
     name: "lexigo_csrf",
@@ -126,17 +127,20 @@ async function installAPI(page: Page) {
     }
     if (path === "/api/v1/lessons/preview") {
       const input = request.postDataJSON() as LessonRequest;
+      previewRequests.push(input);
+      const requestedSize = input.lessonSize ?? "15";
+      const total = requestedSize === "all" ? 100 : Number(requestedSize);
       return fulfillJSON(route, 200, {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
-        lessonSize: input.lessonSize ?? "30",
+        lessonSize: requestedSize,
         composition: {
-          total: 30,
-          words: 24,
-          phrases: 6,
-          due: 18,
-          new: 12,
-          scheduled: 0,
+          total,
+          words: Math.min(total, 80),
+          phrases: Math.max(0, total - 80),
+          due: Math.min(total, 18),
+          new: Math.max(0, Math.min(total - 18, 12)),
+          scheduled: Math.max(0, total - 30),
           availableWords: 80,
           availablePhrases: 20,
         },
@@ -149,7 +153,7 @@ async function installAPI(page: Page) {
         id: "00000000-0000-0000-0000-000000000162",
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "recall",
-        lessonSize: input.lessonSize ?? "30",
+        lessonSize: input.lessonSize ?? "15",
         currentIndex: 0,
         version: 1,
         status: "active",
@@ -164,14 +168,14 @@ async function installAPI(page: Page) {
     });
   });
 
-  return lessonRequests;
+  return { lessonRequests, previewRequests };
 }
 
 test.describe("progressive Lesson Composer", () => {
   test("mobile starts collapsed, exposes current recommendation and preserves selected payload", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "android-chromium", "The mobile disclosure contract is asserted in the Android profile.");
     await page.setViewportSize({ width: 390, height: 844 });
-    const lessonRequests = await installAPI(page);
+    const { lessonRequests } = await installAPI(page);
     await page.goto("/learn");
 
     const recommendation = page.getByRole("article", { name: "Рекомендуемый урок" });
@@ -183,9 +187,9 @@ test.describe("progressive Lesson Composer", () => {
     await expect(modeGroup).toBeHidden();
     await expect(page.getByLabel(/Текущие параметры:/)).toContainText("Смешанная практика");
     await expect(page.getByLabel(/Текущие параметры:/)).toContainText("Воспроизведение");
-    await expect(page.getByLabel(/Текущие параметры:/)).toContainText("30 элементов");
-    await expect(recommendation.getByText("18", { exact: true })).toBeVisible();
-    await expect(recommendation.getByText("12", { exact: true })).toBeVisible();
+    await expect(page.getByLabel(/Текущие параметры:/)).toContainText("15 элементов");
+    await expect(recommendation.getByText("15", { exact: true })).toBeVisible();
+    await expect(recommendation.getByText("0", { exact: true })).toBeVisible();
 
     await configure.focus();
     await page.keyboard.press("Enter");
@@ -221,6 +225,37 @@ test.describe("progressive Lesson Composer", () => {
       studyMode: "choice",
       lessonSize: "15",
     });
+  });
+
+  test("manual workload sends exact 15, 30, 50 and all tokens to preview and create", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Manual request vocabulary is asserted once in deterministic desktop Chromium.");
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    const { lessonRequests, previewRequests } = await installAPI(page);
+    const cases = [
+      { label: "15", token: "15" },
+      { label: "30", token: "30" },
+      { label: "50", token: "50" },
+      { label: "Все", token: "all" },
+    ] as const;
+
+    for (const scenario of cases) {
+      await page.goto("/learn");
+      const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
+      const size = sizeGroup.getByRole("radio", { name: scenario.label, exact: true });
+      await expect(sizeGroup.getByRole("radio")).toHaveCount(4);
+      if (scenario.token !== "15") await size.click();
+
+      await expect.poll(() => previewRequests.at(-1)?.lessonSize).toBe(scenario.token);
+      await expect(size).toHaveAttribute("aria-checked", "true");
+
+      const start = page.getByRole("button", { name: "Начать урок", exact: true });
+      await expect(start).toBeEnabled();
+      await start.click();
+      await expect(page).toHaveURL(/\/lesson\/active(?:\?|$)/);
+      expect(lessonRequests.at(-1)?.lessonSize).toBe(scenario.token);
+    }
+
+    expect(lessonRequests.map((request) => request.lessonSize)).toEqual(["15", "30", "50", "all"]);
   });
 
   test("desktop keeps the complete composer visible without duplicate recommendation actions", async ({ page }, testInfo) => {

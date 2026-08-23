@@ -171,7 +171,7 @@ function toLearningItem(item: APIItem): LearningItem {
 function lessonSizeFromAPI(value: string): LessonSize {
   if (value === "all") return "all";
   const parsed = Number(value);
-  if (parsed === 15 || parsed === 60) return parsed;
+  if (parsed === 15 || parsed === 50 || parsed === 60) return parsed;
   return 30;
 }
 

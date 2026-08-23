@@ -206,3 +206,48 @@ func TestResolveLessonReviewRatioDefaultsAndClamps(t *testing.T) {
 		t.Fatalf("high ratio = %d, want 100", got)
 	}
 }
+
+func TestLessonSizeLimitSupportsBoundedPresetsAndExplicitAll(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  int
+	}{
+		{name: "15", value: "15", want: 15},
+		{name: "30", value: "30", want: 30},
+		{name: "50", value: "50", want: 50},
+		{name: "all", value: "all", want: 0},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := lessonSizeLimit(test.value); got != test.want {
+				t.Fatalf("lessonSizeLimit(%q) = %d, want %d", test.value, got, test.want)
+			}
+		})
+	}
+}
+
+func TestManualLessonSizeFiftyCapsWhileExplicitAllKeepsEntireCandidateSet(t *testing.T) {
+	candidates := make([]lessonCandidate, 0, 55)
+	baseDueAt := time.Date(2026, 8, 23, 8, 0, 0, 0, time.UTC)
+	for index := 0; index < 55; index++ {
+		candidates = append(candidates, lessonCandidate{
+			WordID:       int64(index + 1),
+			Kind:         "word",
+			Status:       "new",
+			DueAt:        baseDueAt.Add(time.Duration(index) * time.Minute),
+			Topic:        "Manual workload",
+			PartOfSpeech: "noun",
+		})
+	}
+
+	bounded, boundedComposition := composeLessonCandidates(candidates, "noun", lessonSizeLimit("50"), 0)
+	if len(bounded) != 50 || boundedComposition.Total != 50 {
+		t.Fatalf("50-item manual lesson selected=%d composition=%+v, want exactly 50", len(bounded), boundedComposition)
+	}
+
+	all, allComposition := composeLessonCandidates(candidates, "noun", lessonSizeLimit("all"), 0)
+	if len(all) != 55 || allComposition.Total != 55 {
+		t.Fatalf("all-item manual lesson selected=%d composition=%+v, want entire 55-item candidate set", len(all), allComposition)
+	}
+}

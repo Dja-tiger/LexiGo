@@ -1,0 +1,78 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+const frontendDirectory = process.cwd();
+const appDirectory = path.join(frontendDirectory, "app");
+const componentsDirectory = path.join(frontendDirectory, "components");
+const libDirectory = path.join(frontendDirectory, "lib");
+
+function readApp(file: string): string {
+  return readFileSync(path.join(appDirectory, file), "utf8");
+}
+
+function readComponent(file: string): string {
+  return readFileSync(path.join(componentsDirectory, file), "utf8");
+}
+
+function readLibrary(file: string): string {
+  return readFileSync(path.join(libDirectory, file), "utf8");
+}
+
+describe("Issue #651 bounded manual lesson workload", () => {
+  it("keeps legacy 60 read-compatible without exposing it as a new manual choice", () => {
+    const learning = readLibrary("learning.ts");
+
+    expect(learning).toContain('export type LessonSize = 15 | 30 | 50 | 60 | "all";');
+    expect(learning).toContain("`60` remains read-compatible for active lessons created before Issue #651 Stage 4");
+  });
+
+  it("exposes exactly four manual /learn choices and defaults to 15", () => {
+    const learnApp = readComponent("lexigo-learn-app.tsx");
+
+    expect(learnApp).toContain('{ value: 15, label: "15" }');
+    expect(learnApp).toContain('{ value: 30, label: "30" }');
+    expect(learnApp).toContain('{ value: 50, label: "50" }');
+    expect(learnApp).toContain('{ value: "all", label: "Все" }');
+    expect(learnApp).not.toContain('{ value: 60, label: "60" }');
+    expect(learnApp).toContain("useState<LessonSize>(15)");
+  });
+
+  it("keeps the four horizontal size choices in four equal responsive columns", () => {
+    const composerCSS = readApp("adaptive-lesson-composer.css");
+    const sizeControlBlocks = composerCSS.match(
+      /\.lx-main-content\[aria-label="Обучение"\] \.lx-size-control \{[\s\S]*?\}/g,
+    );
+
+    expect(sizeControlBlocks).toHaveLength(2);
+    for (const block of sizeControlBlocks ?? []) {
+      expect(block).toContain("grid-template-columns: repeat(4, minmax(0, 1fr));");
+      expect(block).not.toContain("repeat(3, minmax(0, 1fr))");
+    }
+    expect(composerCSS).toContain(".lx-main-content[aria-label=\"Обучение\"] .lx-size-control button {\n  min-height: 48px;");
+    expect(composerCSS).toContain(".lx-main-content[aria-label=\"Обучение\"] .lx-size-control button {\n    min-height: 44px;");
+  });
+
+  it("sends the exact selected manual token to both preview and create", () => {
+    const learnApp = readComponent("lexigo-learn-app.tsx");
+
+    expect(learnApp.match(/lessonSize: String\(lessonSize\)/g)).toHaveLength(2);
+    expect(learnApp).toContain('lessonSize === "all" ? "Все доступные"');
+    expect(learnApp).toContain('lessonSize === "all" ? "Начать весь выбранный материал"');
+  });
+
+  it("preserves new and historical sizes across the dedicated Active Lesson read boundary", () => {
+    const activeLesson = readComponent("lexigo-active-lesson-app.tsx");
+
+    expect(activeLesson).toContain('if (value === "all") return "all";');
+    expect(activeLesson).toContain("if (parsed === 15 || parsed === 50 || parsed === 60) return parsed;");
+  });
+
+  it("does not broaden the automatic Home process blocks beyond 15", () => {
+    const homeApp = readComponent("lexigo-home-app.tsx");
+
+    expect(homeApp).toContain('lessonSize: "15"');
+    expect(homeApp).not.toContain('lessonSize: "all"');
+  });
+});

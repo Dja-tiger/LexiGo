@@ -1,7 +1,9 @@
 export type PartOfSpeechSection = "noun" | "verb" | "adjective" | "other";
 export type WordCollection = "daily-life" | "travel" | "data-engineering" | "backend" | "academic-technical-english";
 export type WordSection = "mixed" | Exclude<PartOfSpeechSection, "other"> | WordCollection;
-export type LessonSize = 15 | 30 | 60 | "all";
+// `60` remains read-compatible for active lessons created before Issue #651 Stage 4.
+// New manual preview/create requests are constrained by LexigoLearnApp and the backend API to 15/30/50/all.
+export type LessonSize = 15 | 30 | 50 | 60 | "all";
 export type LessonSessionKind = "study" | "review" | "remediation";
 export type LessonSelectionReason =
   | "recent_failure"
