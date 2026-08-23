@@ -1,0 +1,68 @@
+name: Temporary Issue 651 Stage 4 exact rewrite
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/temporary-issue-651-stage4-exact-rewrite.yml
+
+permissions:
+  contents: write
+
+jobs:
+  exact-rewrite:
+    if: github.event.pull_request.number == 666 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/issue-651-bounded-manual-workload
+          fetch-depth: 0
+
+      - name: Correct exact reviewed Issue 603 fingerprint
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          expected_parent="624022de362347512d6cd109d6a40aef6ef344f9"
+          actual_parent="$(git rev-parse HEAD^)"
+          current_subject="$(git log -1 --pretty=%s)"
+          if [ "$actual_parent" != "$expected_parent" ]; then
+            if [ "$current_subject" = "test(visual): correct reviewed issue 603 hash transcription" ]; then
+              echo "Exact correction already applied; no-op on bot synchronize."
+              exit 0
+            fi
+            echo "Unexpected helper parent: $actual_parent (expected $expected_parent)" >&2
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/e2e/issue-603-browser-zoom-reflow.spec.ts")
+          text = path.read_text()
+          old = 'b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4b'
+          new = 'b07510edb2246d3effceb174593b8ed66d619bb873a23e957f090e77ba003d4f'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"expected exactly one Issue 603 transcription anchor, found {count}")
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(frontend/e2e/issue-603-browser-zoom-reflow.spec.ts)
+          if [ "${changed[*]}" != "${expected[*]}" ]; then
+            printf 'Unexpected changed paths:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+
+          git diff --check
+          git diff -- frontend/e2e/issue-603-browser-zoom-reflow.spec.ts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- frontend/e2e/issue-603-browser-zoom-reflow.spec.ts
+          git commit -m "test(visual): correct reviewed issue 603 hash transcription"
+          git push origin HEAD:feat/issue-651-bounded-manual-workload
