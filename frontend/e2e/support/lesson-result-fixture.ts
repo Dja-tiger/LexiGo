@@ -259,7 +259,7 @@ export async function installLessonResultFixture(
     if (path === "/api/v1/lessons" && request.method() === "POST") {
       const input = request.postDataJSON() as LessonRequest;
       lessonCreateBodies.push({ ...input });
-      const nextRequest = lessonCreateCount > 0;
+      const nextRequest = lessonCreateCount > 0 || Boolean(options.resumeWithReviewedItem);
       lessonCreateCount += 1;
       const repeat = nextRequest && options.repeatCompletedBlock;
       const item = nextRequest && !repeat ? NEXT_ITEM : COMPLETED_ITEM;
