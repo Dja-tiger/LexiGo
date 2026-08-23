@@ -76,7 +76,7 @@ async function installMocks(page: Page) {
         source: input.source ?? "mixed",
         studyMode: input.studyMode ?? "study",
         ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
-        lessonSize: input.lessonSize ?? "30",
+        lessonSize: input.lessonSize ?? "15",
         composition: {
           total,
           words: total,
@@ -270,6 +270,7 @@ test("primary flows work with native links, Space controls, and a focus-trapped 
 
   const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
   const size15 = sizeGroup.getByRole("radio", { name: "15", exact: true });
+  await expect(size15).toHaveAttribute("aria-checked", "true");
   await size15.focus();
   await page.keyboard.press("Space");
   await expect(size15).toHaveAttribute("aria-checked", "true");
@@ -375,11 +376,23 @@ test("single-choice controls expose radio semantics and roving keyboard navigati
   await expect(study).toHaveAttribute("aria-checked", "true");
 
   const sizeGroup = page.getByRole("radiogroup", { name: "Размер урока" });
+  const size15 = sizeGroup.getByRole("radio", { name: "15", exact: true });
   const size30 = sizeGroup.getByRole("radio", { name: "30", exact: true });
-  const size60 = sizeGroup.getByRole("radio", { name: "60", exact: true });
+  const size50 = sizeGroup.getByRole("radio", { name: "50", exact: true });
+  const sizeAll = sizeGroup.getByRole("radio", { name: "Все", exact: true });
+  await expect(sizeGroup.getByRole("radio")).toHaveCount(4);
+  await expect(size15).toHaveAttribute("aria-checked", "true");
+  await size15.focus();
+  await size15.press("ArrowRight");
+  await expect(size30).toBeFocused();
   await expect(size30).toHaveAttribute("aria-checked", "true");
-  await size30.focus();
   await size30.press("ArrowRight");
-  await expect(size60).toBeFocused();
-  await expect(size60).toHaveAttribute("aria-checked", "true");
+  await expect(size50).toBeFocused();
+  await expect(size50).toHaveAttribute("aria-checked", "true");
+  await size50.press("ArrowRight");
+  await expect(sizeAll).toBeFocused();
+  await expect(sizeAll).toHaveAttribute("aria-checked", "true");
+  await sizeAll.press("ArrowRight");
+  await expect(size15).toBeFocused();
+  await expect(size15).toHaveAttribute("aria-checked", "true");
 });
