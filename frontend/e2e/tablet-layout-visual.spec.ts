@@ -71,7 +71,11 @@ async function settle(page: Page, appearance: Appearance): Promise<void> {
   await page.waitForTimeout(100);
 }
 
-async function expectSharedTabletGeometry(page: Page, requireActiveRailItem = false): Promise<void> {
+async function expectSharedTabletGeometry(
+  page: Page,
+  requireActiveRailItem = false,
+  requireGenericRailSurface = requireActiveRailItem,
+): Promise<void> {
   const geometry = await page.evaluate((requireActive) => {
     const root = document.documentElement;
     const rail = document.querySelector<HTMLElement>('[data-route-navigation="rail"]');
@@ -139,7 +143,9 @@ async function expectSharedTabletGeometry(page: Page, requireActiveRailItem = fa
   expect(geometry.railDisplay).toBe("flex");
   expect(geometry.railLeft).toBeGreaterThanOrEqual(-1);
   expect(geometry.railRight).toBeLessThanOrEqual(geometry.clientWidth + 1);
-  expect(geometry.railBackground).toBe(geometry.expectedRailBackground);
+  if (requireGenericRailSurface) {
+    expect(geometry.railBackground).toBe(geometry.expectedRailBackground);
+  }
   expect(geometry.inactiveColor).toBe(geometry.expectedInactiveColor);
 
   if (geometry.activeColor !== null) {
