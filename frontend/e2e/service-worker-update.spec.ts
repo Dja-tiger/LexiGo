@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+type ExplicitAppearance = "light" | "dark";
+
 async function installCatalogMock(page: Page) {
   await page.route("**/api/v1/catalog/metadata", async (route) => {
     await route.fulfill({
@@ -108,8 +110,31 @@ async function installActiveLessonMock(page: Page) {
   });
 }
 
-async function installServiceWorkerMock(page: Page, options: { registrationError?: boolean } = {}) {
-  await page.addInitScript(({ registrationError }) => {
+async function installAppearancePreference(
+  page: Page,
+  appearance: ExplicitAppearance,
+  options: { recovered?: boolean } = {},
+) {
+  await page.addInitScript(({ appearance, recovered }) => {
+    window.localStorage.setItem("lexigo.appearance.v1", appearance);
+    if (!recovered) return;
+    window.sessionStorage.setItem("lexigo.service-worker.recovery.v1", JSON.stringify({
+      version: 1,
+      reason: "service-worker-update",
+      requestedAt: "2026-08-24T18:00:00.000Z",
+      fromBuild: "previous-build",
+      href: "http://127.0.0.1:3000/",
+      resumeHref: "http://127.0.0.1:3000/",
+      lessonActive: false,
+    }));
+  }, { appearance, recovered: options.recovered ?? false });
+}
+
+async function installServiceWorkerMock(
+  page: Page,
+  options: { registrationError?: boolean; waiting?: boolean } = {},
+) {
+  await page.addInitScript(({ registrationError, waiting }) => {
     type MockSnapshot = {
       messages: unknown[];
       registeredURL: string;
@@ -141,10 +166,10 @@ async function installServiceWorkerMock(page: Page, options: { registrationError
       updateViaCache: ServiceWorkerUpdateViaCache = "none";
       waiting: ServiceWorker | null;
 
-      constructor(active: MockWorker, waiting: MockWorker) {
+      constructor(active: MockWorker, waitingWorker: MockWorker | null) {
         super();
         this.active = active as unknown as ServiceWorker;
-        this.waiting = waiting as unknown as ServiceWorker;
+        this.waiting = waitingWorker as unknown as ServiceWorker | null;
       }
 
       async getNotifications() {
@@ -171,8 +196,8 @@ async function installServiceWorkerMock(page: Page, options: { registrationError
       updateCount: 0,
     };
     const active = new MockWorker("http://127.0.0.1:3000/sw.js?build=incompatible-a");
-    const waiting = new MockWorker("http://127.0.0.1:3000/sw.js?build=incompatible-b");
-    const registration = new MockRegistration(active, waiting);
+    const waitingWorker = new MockWorker("http://127.0.0.1:3000/sw.js?build=incompatible-b");
+    const registration = new MockRegistration(active, waiting === false ? null : waitingWorker);
     const container = new EventTarget() as ServiceWorkerContainer & EventTarget;
 
     Object.assign(container, {
@@ -209,6 +234,57 @@ async function serviceWorkerSnapshot(page: Page) {
   return page.evaluate(() => (
     window as unknown as { __serviceWorkerMock: { snapshot: () => { messages: unknown[]; registeredURL: string; updateCount: number } } }
   ).__serviceWorkerMock.snapshot());
+}
+
+async function semanticPresentationSnapshot(page: Page, selector: string, primaryButtonName?: string) {
+  return page.locator(selector).evaluate((element, buttonName) => {
+    const resolveColor = (value: string) => {
+      const probe = document.createElement("span");
+      probe.style.color = value;
+      document.body.appendChild(probe);
+      const resolved = getComputedStyle(probe).color;
+      probe.remove();
+      return resolved;
+    };
+    const resolveBackground = (value: string) => {
+      const probe = document.createElement("span");
+      probe.style.backgroundColor = value;
+      document.body.appendChild(probe);
+      const resolved = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return resolved;
+    };
+
+    const surfaceStyle = getComputedStyle(element);
+    const strong = element.querySelector("strong");
+    const copy = element.querySelector("span");
+    const primary = buttonName
+      ? Array.from(element.querySelectorAll<HTMLButtonElement>("button"))
+        .find((button) => button.textContent?.trim() === buttonName)
+      : null;
+    const primaryStyle = primary ? getComputedStyle(primary) : null;
+
+    return {
+      appearance: document.documentElement.dataset.lexigoAppearance,
+      backgroundColor: surfaceStyle.backgroundColor,
+      backgroundImage: surfaceStyle.backgroundImage,
+      color: surfaceStyle.color,
+      strongColor: strong ? getComputedStyle(strong).color : "",
+      copyColor: copy ? getComputedStyle(copy).color : "",
+      primaryBackgroundColor: primaryStyle?.backgroundColor ?? "",
+      primaryBackgroundImage: primaryStyle?.backgroundImage ?? "",
+      primaryBorderColor: primaryStyle?.borderColor ?? "",
+      primaryColor: primaryStyle?.color ?? "",
+      tokenSurface: resolveColor("var(--ak-color-surface)"),
+      tokenTextMain: resolveColor("var(--ak-color-text-main)"),
+      tokenTextMuted: resolveColor("var(--ak-color-text-muted)"),
+      tokenPrimary: resolveColor("var(--ak-color-primary)"),
+      tokenRetained: resolveColor("var(--ak-color-retained)"),
+      tokenWeak: resolveColor("var(--ak-color-weak)"),
+      successBackground: resolveBackground("color-mix(in srgb, var(--ak-color-retained) 10%, var(--ak-color-surface))"),
+      errorBackground: resolveBackground("color-mix(in srgb, var(--ak-color-weak) 10%, var(--ak-color-surface))"),
+    };
+  }, primaryButtonName);
 }
 
 test.describe.configure({ timeout: 45_000 });
@@ -274,3 +350,62 @@ test("registration failures are visible and logged instead of being swallowed", 
   await expect(page.getByTestId("service-worker-error")).toContainText("Автоматическое обновление временно недоступно");
   await expect.poll(() => errors.some((message) => message.includes("Service worker registration failed"))).toBe(true);
 });
+
+for (const appearance of ["light", "dark"] as const) {
+  test(`update surface uses ${appearance} semantic appearance tokens`, async ({ page }) => {
+    await installAppearancePreference(page, appearance);
+    await installServiceWorkerMock(page);
+    await page.goto("/");
+
+    await expect(page.getByTestId("service-worker-update")).toBeVisible();
+    const snapshot = await semanticPresentationSnapshot(
+      page,
+      '[data-testid="service-worker-update"]',
+      "Обновить сейчас",
+    );
+
+    expect(snapshot.appearance).toBe(appearance);
+    expect(snapshot.backgroundColor).toBe(snapshot.tokenSurface);
+    expect(snapshot.backgroundImage).toBe("none");
+    expect(snapshot.color).toBe(snapshot.tokenTextMain);
+    expect(snapshot.strongColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.copyColor).toBe(snapshot.tokenTextMuted);
+    expect(snapshot.primaryBackgroundColor).toBe(snapshot.tokenPrimary);
+    expect(snapshot.primaryBackgroundImage).toBe("none");
+    expect(snapshot.primaryBorderColor).toBe(snapshot.tokenPrimary);
+    expect(snapshot.primaryColor).toBe(snapshot.tokenSurface);
+  });
+
+  test(`error surface uses ${appearance} weak semantic state`, async ({ page }) => {
+    await installAppearancePreference(page, appearance);
+    await installServiceWorkerMock(page, { registrationError: true });
+    await page.goto("/");
+
+    await expect(page.getByTestId("service-worker-error")).toBeVisible();
+    const snapshot = await semanticPresentationSnapshot(page, '[data-testid="service-worker-error"]');
+
+    expect(snapshot.appearance).toBe(appearance);
+    expect(snapshot.backgroundColor).toBe(snapshot.errorBackground);
+    expect(snapshot.backgroundImage).toBe("none");
+    expect(snapshot.color).toBe(snapshot.tokenTextMain);
+    expect(snapshot.strongColor).toBe(snapshot.tokenWeak);
+    expect(snapshot.copyColor).toBe(snapshot.tokenTextMuted);
+  });
+
+  test(`updated surface uses ${appearance} retained semantic state`, async ({ page }) => {
+    await installAppearancePreference(page, appearance, { recovered: true });
+    await installServiceWorkerMock(page, { waiting: false });
+    await page.goto("/");
+
+    const updated = page.locator(".lx-sw-update--success");
+    await expect(updated).toContainText("LexiGo обновлён");
+    const snapshot = await semanticPresentationSnapshot(page, ".lx-sw-update--success");
+
+    expect(snapshot.appearance).toBe(appearance);
+    expect(snapshot.backgroundColor).toBe(snapshot.successBackground);
+    expect(snapshot.backgroundImage).toBe("none");
+    expect(snapshot.color).toBe(snapshot.tokenTextMain);
+    expect(snapshot.strongColor).toBe(snapshot.tokenRetained);
+    expect(snapshot.copyColor).toBe(snapshot.tokenTextMuted);
+  });
+}
