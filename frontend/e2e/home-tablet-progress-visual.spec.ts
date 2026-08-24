@@ -35,16 +35,16 @@ const BASELINES: Record<Appearance, ReviewedBaseline> = {
   light: {
     width: 768,
     height: 1105,
-    sha256: "f7836426dc58452dbf2368243a99b106ff6df56a8fb1864eb7082689ae059006",
-    sourceRun: 32635302334,
-    sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47",
+    sha256: "c42542e7f5b09f3663b71073cac18588d3bd200811d9eea5ff305665cdb518ac",
+    sourceRun: 32730909720,
+    sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e",
   },
   dark: {
     width: 768,
     height: 1105,
-    sha256: "5bd2f146f2919f8a1dab8549b2d7c78159d28c35d5c5a26aa02bce568260af24",
-    sourceRun: 32635302334,
-    sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47",
+    sha256: "ca13b2be162e7b8a2356a359c2bf834d89603fdbb8d9ee12ad3cf6ddcf4f1227",
+    sourceRun: 32730909720,
+    sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e",
   },
 };
 
