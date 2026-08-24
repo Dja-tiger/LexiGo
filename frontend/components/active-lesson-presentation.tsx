@@ -398,7 +398,7 @@ export function ActiveLessonPresentation({
                 id="premium-answer"
                 lang={answerLanguage}
                 value={typedAnswer}
-                readOnly={revealed || queuedReview}
+                readOnly={Boolean(currentRating) || reviewing || queuedReview}
                 aria-describedby={revealed ? "active-lesson-feedback-note" : undefined}
                 onInput={(event) => onTypedAnswerChange(event.currentTarget.value)}
                 onKeyDown={handleRecallKeyDown}
