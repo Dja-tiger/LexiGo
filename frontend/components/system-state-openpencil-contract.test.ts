@@ -72,19 +72,93 @@ const SYSTEM_STATE_PROVENANCE = [
   },
 ] as const;
 
-const FIRST_USE_SYSTEM_STATE_KEYS = [
-  "firstuse.loading.mobile.light",
-  "firstuse.error.mobile.light",
-  "firstuse.loading.mobile.dark",
-  "firstuse.error.mobile.dark",
-  "firstuse.loading.desktop.light",
-  "firstuse.error.desktop.light",
-  "firstuse.loading.desktop.dark",
-  "firstuse.error.desktop.dark",
+const FIRST_USE_SYSTEM_STATE_PROVENANCE = [
+  {
+    baseline: "loading-compact-light",
+    screenMapKey: "firstuse.loading.mobile.light",
+    openPencilNode: "n117",
+    route: "/onboarding",
+    width: 390,
+    height: 844,
+    sha256: "5ac755583ae348e92dd14af1e28ae97874c3072fb7f6825c36b5a9ef7df9fb8b",
+  },
+  {
+    baseline: "loading-compact-dark",
+    screenMapKey: "firstuse.loading.mobile.dark",
+    openPencilNode: "n277",
+    route: "/onboarding",
+    width: 390,
+    height: 844,
+    sha256: "643dcc73be33f1878765f2b6826d41e689f7ebec277ac0ce9777b9161f6d97e3",
+  },
+  {
+    baseline: "loading-desktop-light",
+    screenMapKey: "firstuse.loading.desktop.light",
+    openPencilNode: "n442",
+    route: "/onboarding",
+    width: 1440,
+    height: 900,
+    sha256: "448d90d81985018b383454f905371379831f475fbc24be3b1e95822bf11b814d",
+  },
+  {
+    baseline: "loading-desktop-dark",
+    screenMapKey: "firstuse.loading.desktop.dark",
+    openPencilNode: "n614",
+    route: "/onboarding",
+    width: 1440,
+    height: 900,
+    sha256: "f9f88c3000aad5445d4bd1139cf81face075838b82d3f776d80227aa7c511a9e",
+  },
+  {
+    baseline: "error-compact-light",
+    screenMapKey: "firstuse.error.mobile.light",
+    openPencilNode: "n128",
+    route: "/onboarding",
+    width: 390,
+    height: 844,
+    sha256: "e4b0f198fff3a41acdca84f23b07b82250affae262a3c95719fed43c1c402e49",
+  },
+  {
+    baseline: "error-compact-dark",
+    screenMapKey: "firstuse.error.mobile.dark",
+    openPencilNode: "n288",
+    route: "/onboarding",
+    width: 390,
+    height: 844,
+    sha256: "03983eea1fc462f0e667deba5246952bfcf247da24a3cef4c3f33eec3320a7b3",
+  },
+  {
+    baseline: "error-desktop-light",
+    screenMapKey: "firstuse.error.desktop.light",
+    openPencilNode: "n456",
+    route: "/onboarding",
+    width: 1440,
+    height: 900,
+    sha256: "1175fc95ac3085e4fc3b748cc4ffd6f4f032fe4dfe29a46d209d18bd1569a3fa",
+  },
+  {
+    baseline: "error-desktop-dark",
+    screenMapKey: "firstuse.error.desktop.dark",
+    openPencilNode: "n628",
+    route: "/onboarding",
+    width: 1440,
+    height: 900,
+    sha256: "6cfbf773756e934a50e8b30a30a896399d3efd328fd2c101539d020b89682a06",
+  },
 ] as const;
 
+function firstUseBaselineBlock(baselineName: string): string {
+  const marker = `"${baselineName}": {`;
+  const start = firstUseVisualSource.indexOf(marker);
+  expect(start, `First Use visual owner must contain baseline ${baselineName}`).toBeGreaterThanOrEqual(0);
+
+  const end = firstUseVisualSource.indexOf("\n  },", start);
+  expect(end, `First Use baseline ${baselineName} must have a bounded contract block`).toBeGreaterThan(start);
+  return firstUseVisualSource.slice(start, end + "\n  },".length);
+}
+
 describe("system-state OpenPencil provenance contract", () => {
-  it("keeps the visual owner fail-closed against the active repository OpenPencil map", () => {
+  it("keeps the shared visual owner fail-closed against the active repository OpenPencil map", () => {
     expect(visualSource).toContain('const relativePath = "docs/figma/openpencil-screen-map.json"');
     expect(visualSource).toContain("function loadActiveOpenPencilScreens");
     expect(visualSource).toContain("const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens()");
@@ -97,6 +171,8 @@ describe("system-state OpenPencil provenance contract", () => {
   });
 
   it("keeps every approved shared baseline bound to OpenPencil provenance and preserves approved hashes", () => {
+    expect(SYSTEM_STATE_PROVENANCE).toHaveLength(5);
+
     for (const expected of SYSTEM_STATE_PROVENANCE) {
       expect(visualSource).toContain(`screenMapKey: "${expected.screenMapKey}"`);
       expect(visualSource).toContain(`openPencilNode: "${expected.openPencilNode}"`);
@@ -118,12 +194,32 @@ describe("system-state OpenPencil provenance contract", () => {
     expect(visualSource).not.toContain("for Figma ${baseline.");
   });
 
-  it("keeps First Use loading/error as a separately tracked visual gap without duplicating its runtime state machine", () => {
-    for (const key of FIRST_USE_SYSTEM_STATE_KEYS) {
-      expect(visualSource).not.toContain(key);
-    }
-
+  it("delegates delivered First Use loading/error parity to its authoritative OpenPencil visual owner", () => {
+    expect(FIRST_USE_SYSTEM_STATE_PROVENANCE).toHaveLength(8);
     expect(firstUseVisualSource).toContain('test.describe("First Use reviewed OpenPencil visual baselines"');
+    expect(firstUseVisualSource).toContain('const relativePath = "docs/figma/openpencil-screen-map.json"');
+    expect(firstUseVisualSource).toContain("const ACTIVE_OPENPENCIL_SCREENS = loadActiveOpenPencilScreens()");
+    expect(firstUseVisualSource).toContain("expectActiveOpenPencilContract(baselineName)");
+    expect(firstUseVisualSource).toContain("screen?.openPencilNode");
+    expect(firstUseVisualSource).toContain("screen?.route");
+    expect(firstUseVisualSource).toContain("{ width: screen?.width, height: screen?.height }");
+
+    for (const expected of FIRST_USE_SYSTEM_STATE_PROVENANCE) {
+      expect(
+        visualSource,
+        `${expected.screenMapKey} belongs to the First Use visual owner and must not be duplicated by shared system-state visuals`,
+      ).not.toContain(`screenMapKey: "${expected.screenMapKey}"`);
+
+      const block = firstUseBaselineBlock(expected.baseline);
+      expect(block).toContain(`screenMapKey: "${expected.screenMapKey}"`);
+      expect(block).toContain(`openPencilNode: "${expected.openPencilNode}"`);
+      expect(block).toContain(`route: "${expected.route}"`);
+      expect(block).toContain(`viewport: { width: ${expected.width}, height: ${expected.height} }`);
+      expect(block).toContain(`sha256: "${expected.sha256}"`);
+    }
+  });
+
+  it("preserves independent First Use runtime and retry owners without duplicating their state machines", () => {
     expect(onboardingRuntimeSource).toContain("if (loading && !snapshot)");
     expect(onboardingRuntimeSource).toContain('className="lx-first-use-panel lx-first-use-loading"');
     expect(onboardingRuntimeSource).toContain("if (errorMessage)");
