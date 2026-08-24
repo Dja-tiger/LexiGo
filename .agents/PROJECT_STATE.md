@@ -4,11 +4,23 @@
 
 - Last verified: 2026-08-24 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Current verified `main`: `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
+- Current verified `main`: `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
 - No open pull requests existed when this reconciliation slice started.
 - Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
 ## Latest completed runtime deliveries
+
+### Issue #681 / PR #682 — semantic Service Worker update surface for #205
+
+- Issue #681 is **closed / completed** by PR #682.
+- The globally mounted Service Worker update/recovery surface no longer effectively uses the legacy fixed navy/purple/cyan palette. Its Light/Dark surface, text, actions and success/error states now derive from current semantic `--ak-color-*` appearance tokens while preserving registration, activation, deferral, recovery, reload and storage semantics.
+- Regression protection includes a fail-closed source ownership contract plus effective `getComputedStyle` Playwright assertions for update, error and post-update success states in explicit Light and Dark.
+- Existing canonical visual baselines required no changes; full visual regression remained byte-stable outside the transient update surface.
+- Final developer head: `03a9f08a8f0e5420c920c5713ab5ab86e8df6f8c`.
+- Full immutable-head PR CI #4141 / run `32760498785`: **success**, including frontend core, both UI shards, Controlled Service Worker, visual regression, accessibility, content security, performance, backend unit/integration and API/web container builds.
+- PR #682 squash merge/current verified runtime `main`: `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
+- Exact-main push CI run `32761745559`: **success**.
+- Exact-SHA Stage run `32762898382`: deploy **success**, public smoke **success**, public browser **success**; API and web run image tag `98da1853529afea9ff686f3af37ba24b6ccbadc0`, and the 12-test public desktop/iOS runtime matrix passed.
 
 ### Issue #678 / PR #679 — semantic tablet RouteChrome palette for #205
 
@@ -18,7 +30,7 @@
 - Regression protection includes fail-closed source ownership checks plus computed-style/visual evidence. Profile Light remains correctly governed by its more-specific route-scoped compatibility owner rather than being forced to the generic rail surface contract.
 - Final developer head: `86032a3a0ce3e58985e0e8e9bf52a5e46df564f2`.
 - Full immutable-head PR CI #4134 / run `32755738186`: **success**.
-- PR #679 squash merge/current verified runtime `main`: `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
+- PR #679 squash merge: `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
 - Exact-main push CI run `32757028324`: **success**, including backend unit/integration, frontend core, both UI shards, visual regression, accessibility, content security, performance, iOS PWA, service worker and API/web container builds.
 
 ### Issue #651 / PR #673 — process-aware progress analytics
@@ -54,10 +66,11 @@
 
 ## Stage / deployment
 
-- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
-- Stage run `32758195993`: deployment-scope resolution **success**, deploy **success**, public smoke **success**, public browser **success**.
+- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
+- Stage run `32762898382`: deploy **success**, public smoke **success**, public browser **success**.
 - The capacity preflight passed with ample free bytes/inodes and preserved persistent volumes plus the rollback/deploy images.
-- PostgreSQL, Redis, API and web became healthy; API and web run the exact `0f58d48eb6966561a5e87a14b330392f4330f6f9` image tag.
+- PostgreSQL, Redis, API and web became healthy; API and web run the exact `98da1853529afea9ff686f3af37ba24b6ccbadc0` image tag.
+- Public runtime validation passed 12/12 tests across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
 
 ### Issue #659 — Stage PostgreSQL storage incident
 
@@ -91,7 +104,7 @@
 ## Open automated work verified at reconciliation
 
 - Issue #205 remains the High-priority visual-parity umbrella.
-- The #678 tablet RouteChrome palette defect is delivered and must not be repeated.
+- The #678 tablet RouteChrome palette defect and #681 global Service Worker update-surface palette defect are delivered and must not be repeated.
 - User-directed next work remains a route-by-route effective visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than raw color grep or redoing already-approved evidence.
 - Any reproduced runtime/design defect found by the #205 audit must be isolated into its own atomic Issue/PR; the umbrella audit must not silently redesign runtime.
 - Existing route-specific compatibility contracts, including Profile appearance ownership and Word Detail contrast ownership, must not be normalized globally without runtime evidence.
