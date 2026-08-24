@@ -4,158 +4,84 @@
 
 - Last verified: 2026-08-24 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Live GitHub and live source are authoritative for branch heads, open work, ownership, review state, CI and deployment state.
-- This file is the current operational snapshot. Detailed historical delivery evidence remains preserved in Git history and the linked Issues/PRs.
+- Current verified `main`: `8b5478abf7cb8fd434f07acd038a1f6ff05ecbd9`.
+- No open pull requests existed when this reconciliation slice started.
+- Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
-## Latest completed runtime delivery
+## Latest completed runtime deliveries
 
-- Parent Issue #651 / PR #671 delivered Stage 6a of the learning-process separation architecture: lesson-generated review events now persist immutable optional `session_kind` and `selection_reason`, so Study / Review / Remediation analytics no longer need to infer process intent from `answer_mode`.
-- Final PR head: `e9f8d4e301f566141be0922898fe88b23ba6269e`; exact-head PR CI #4107 / run `32678340038`: **success** across backend unit/security/integration, frontend core, browser/visual/accessibility/performance/PWA gates and API/web container builds.
-- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 6 intended Stage 6a files and zero `.github/workflows/**`, frontend or OpenAPI diff.
-- PR #671 squash merge: `55205ad0cf2387787dca4e9c19d9356ddbf8160b`. Parent Issue #651 remains open for genuinely unmet analytics/relearning/ADR and other acceptance evidence.
-- Exact-main CI #4108 / run `32697487758`: **success** on `55205ad0cf2387787dca4e9c19d9356ddbf8160b`, including backend unit/security/integration, full frontend/browser/visual/accessibility/performance gates, API/web image publication and deployment Caddy verification.
-- Exact CI scope artifact `ci-scope-55205ad0cf2387787dca4e9c19d9356ddbf8160b` / artifact `9509326851`, digest `sha256:5cbe20ea63f2027de340907a72132d41df1c53c9ca5513d412f0bfff028c6367`, reports the exact runtime head and non-Agent-docs scope.
-- Deploy Stage run `32698327650`: **success** on exact image SHA `55205ad0cf2387787dca4e9c19d9356ddbf8160b`; exact-scope resolution and deploy jobs both passed.
-- Stage deployment, public frontend/API smoke and public browser verification all passed; public Chromium + iOS WebKit runtime suite passed 12/12.
+### Issue #651 / PR #673 — process-aware progress analytics
 
-## Issue #651 Stage 3 contract now delivered
+- Issue #651 is **closed / completed**.
+- Stage 6b consumes the immutable `review_events.session_kind` / `selection_reason` attribution delivered by Stage 6a instead of reconstructing Study / Review / Remediation from `answer_mode`.
+- Progress exposes process evidence for `newLearned`, `dueReviewed`, `remediationReviewed`, `reviewBacklog`, `lapses` and Review retention while preserving legacy/null-attribution compatibility boundaries.
+- Explicit Study activity cannot inflate Review retention/process lapse evidence; future-scheduled non-new items do not inflate Review backlog.
+- Final developer head: `b1875396fc65a6c056a277be29d0cd1d97d8a084`.
+- Full immutable-head CI #4115 / run `32702815388`: **success**.
+- PR #673 squash merge: `db6a6480b06526a21819a2b93abc3fa832139d08`.
 
-- Stage 1 / PR #656 introduced the optional durable `sessionKind = study | review | remediation` lesson-session intent contract without fabricating intent for legacy callers.
-- Stage 2 / PR #662 made explicit session kinds real backend selection boundaries: Study owns new candidates, Review owns due non-new candidates without future-scheduled fill, and Remediation uses persisted weakness/error evidence; self-rating `again` / `almost` remains distinct from objective correctness/effective scheduler evidence.
-- Stage 3 / PR #664 makes automatic ownership mutually exclusive: a due candidate remains Review-owned even when it also has weakness/error evidence; automatic Remediation is restricted to not-due non-new candidates with persisted weakness/error evidence.
-- `POST /api/v1/lessons/preview` accepts optional explicit `sessionKind`, validates the same vocabulary as creation and echoes explicit intent; omission retains the legacy manual-composer preview contract.
-- Authenticated Home loads independent Study, Review and Remediation previews and derives truthful process backlog from `composition.availableWords + composition.availablePhrases`, rather than generic `progress.dueNow`.
-- Automatic Home blocks are bounded to 15 items. A smaller process backlog creates a smaller block; no automatic process pads from another process population.
-- Home recommendation priority is deterministic: active backend-owned lesson > Review > Remediation > Study > manual configuration fallback.
-- Home keeps explicit secondary controls for each available automatic process, so Study and Remediation remain directly selectable when Review is the dominant recommendation.
-- Home creation sends the exact selected `sessionKind`, compatible `studyMode` and `lessonSize: "15"`, keeping recommendation copy, backlog counts and created-session semantics aligned.
-- Existing route ownership, active-lesson resume, PWA/session/history/connectivity boundaries, accessibility, reduced motion, 320/390/768/1440 responsive behavior and true 200% browser zoom remain protected by the full immutable-head matrix.
-- Home-only visual evidence for the required process controls was reviewed from exact Linux CI #4032 / run `32635302334` at `77ca1ea56e23b058eeb2786524617797aaa18d47`; non-Home visual fingerprints were not refreshed.
-- Scheduler interval/easiness/repetition formulas and manual `/learn` size choices remain unchanged by Stage 3.
+### Issue #650 / PR #674 — answer input remains editable after reveal
 
-## Issue #651 Stage 4 contract now delivered
+- Issue #650 is **closed / completed**.
+- Recall answer reveal no longer makes the native answer input read-only. The learner can explicitly tap/click the textbox after reveal, regain focus and enter/edit text.
+- Immutability remains intentional while review persistence is in flight, after a rating is persisted and while an offline review is queued.
+- Regression protection is fail-closed: the browser owner is explicitly collected by `test:e2e:lesson`, and a source contract protects both the runtime condition and CI collection wiring.
+- Final developer head: `37f3ffb8491bb55b285838d2edd45a993051dd26`.
+- Full immutable-head CI #4119 / run `32713808811`: **success**, including frontend core, lesson E2E, both UI shards, accessibility, security, performance, visual regression and API/web container builds.
+- PR #674 squash merge/current runtime main: `8b5478abf7cb8fd434f07acd038a1f6ff05ecbd9`.
 
-- Manual `/learn` exposes exactly `15 / 30 / 50 / Все` and defaults to 15; legacy 60 is no longer a selectable or writable manual preset.
-- Preview/create write vocabulary is exactly `15`, `30`, `50`, `all`; backend validation and OpenAPI reject `60` and arbitrary values with `invalid_lesson_size`.
-- Explicit `all` uses the existing no-cap composer path only after validation. A deterministic 55-candidate regression proves `50` returns 50 while `all` returns all 55.
-- `All` remains a user-only manual action. Automatic Home Study/Review/Remediation creation stays fixed at `lessonSize: "15"` and never sends `all`.
-- Historical active lessons with persisted `lessonSize="60"` remain readable. The shared frontend read type and Active Lesson parser preserve that compatibility without reintroducing 60 into new writes.
-- Newly created `50` and `all` sessions retain their exact size semantics through the `/learn` → `/lesson/active` handoff.
-- The manual size control uses four equal responsive columns; the rejected three-column/four-option implementation was treated as a product defect rather than approved as a new visual baseline.
-- Keyboard roving-radio behavior covers all four choices, and exact preview/create E2E proves the four request tokens.
-- Reviewed `/learn` visual fingerprints were reconciled only from exact post-layout-repair Linux CI evidence. A later one-nibble Issue #603 hash mismatch was traced back to the original #4069 artifact and corrected as transcription, not blessed as renderer drift.
-- Stage 4 does not change scheduler formulas, Study/Review/Remediation selector ownership, due/remediation eligibility, Home recommendation priority, database schema, `wordIds` limits, dependencies or persistent workflows.
+## Stage / deployment
 
-## Issue #651 Stage 5 contract now delivered
+- Deployment status Issue #12 currently reports Stage **success** on exact image SHA `8b5478abf7cb8fd434f07acd038a1f6ff05ecbd9`.
+- Stage run `32716003877`: deploy **success**, public smoke **success**, public browser **success**.
+- The capacity preflight executed on the PostgreSQL-volume filesystem with ample free bytes/inodes; persistent volumes and running service containers were not deleted.
+- PostgreSQL, Redis, API and web all became healthy on the intended image.
 
-- Active Lesson consumes the already-server-owned optional `sessionKind` and preserves explicit `study | review | remediation` intent in the Lesson Result snapshot.
-- Historical version-2 Lesson Result snapshots that omit `sessionKind` remain readable; the client does not fabricate `study` for legacy/manual sessions.
-- Post-result preview repeats the explicit process intent when present, and normal next-block creation preserves the same explicit `sessionKind`, previous bounded lesson size, source, answer mode and topic.
-- The dedicated due-result continuation no longer launches legacy `mixed / recall / 30`. It creates exactly `source=mixed`, `studyMode=recall`, `sessionKind=review`, `lessonSize=15`.
-- When due backlog is larger than one block, the Result CTA distinguishes workload from backlog: e.g. `Повторить 15 из 32`; copy explicitly keeps the remaining backlog queued rather than implying all due items must be completed now.
-- Exact request-body E2E covers both process-preserving normal continuation and the bounded Review continuation. Visual Regression passed without baseline refresh.
-- Stage 5 changes no backend queue selector, scheduler formula/priority, Home recommendation, OpenAPI contract, database schema, migration, dependency or persistent workflow.
+### Issue #659 — Stage PostgreSQL storage incident
 
-## Issue #651 Stage 6a contract now delivered
-
-- Migration `000025_learning_process_attribution.up.sql` adds nullable constrained `review_events.session_kind` and `review_events.selection_reason` plus a process-analytics index; legacy/direct review writers remain compatible because attribution is nullable.
-- `ReviewLessonWord` copies both values from the same locked lesson/session-item rows used by the transactional review path. It does not derive process intent from `answer_mode`.
-- `session_kind` is restricted to `study | review | remediation`; `selection_reason` uses the durable server-owned reason vocabulary already used by lesson items.
-- Explicit Review sessions can persist an orthogonal objective mode such as `answer_mode=choice`, proving that session intent and interaction mode are separate facts.
-- Legacy lessons with omitted `session_kind` remain SQL NULL on review events; direct `/words/{id}/review` events remain unattributed rather than being reclassified from answer mode.
-- Integration coverage proves explicit attribution, legacy compatibility, direct-review compatibility and database rejection of unknown process values.
-- Stage 6a intentionally does not add Progress API aggregates or change scheduler formulas, queue selection, Home, frontend, OpenAPI or workflows. It establishes trustworthy event evidence for the remaining process analytics slice.
-
-## Delivery lessons retained from #651 Stage 2–6a
-
-- Self-rating and objective correctness are different signals. Repeated `again` / `almost` recommendations use persisted learner rating, while objective correctness/effective scheduler evidence remains a separate failure signal.
-- A staged additive `sessionKind` contract is safe only while omission remains behaviorally distinguishable from explicit `study`; legacy callers must not silently enter new queue semantics.
-- Review no-fill is a hard invariant and is protected against real PostgreSQL data containing future-scheduled candidates.
-- Automatic cross-process ownership must be deterministic. Due + weak/error-signaled items remain Review-owned; automatic Remediation cannot compete for them.
-- Process-aware preview, Home recommendation/counts and Home lesson creation must share the same selector source of truth; moving only one layer recreates semantic drift.
-- Explicit Home preview fixtures must echo the requested `sessionKind`; request-count tests should prove resource ownership rather than preserve arbitrary hydration counts.
-- Write vocabulary and persisted read compatibility are separate boundaries: removing an old value from new writes must not make already-created sessions unreadable.
-- Session intent must survive completion boundaries as well as initial composition. Dropping it in Result/continuation silently re-enters legacy mixed semantics even when the original lesson was process-owned.
-- Current block size and total backlog are different product facts. A continuation CTA must keep automatic work bounded while showing the remaining queue honestly.
-- Process analytics must record intent at event-write time. Reconstructing Study / Review / Remediation from `answer_mode` later is semantically unsafe; unattributed historical/direct events must remain distinguishable from explicit process events.
-- Visual fingerprints are acceptance evidence, not a substitute for fixing geometry. Correct runtime first, verify exact dimensions on Linux CI, then refresh only reviewed content-addressed fingerprints with exact provenance.
-- When legitimate product copy can repeat, browser assertions must scope to the semantic owner/landmark rather than rely on global text uniqueness.
-- Intentional Home visual changes require exact Linux provenance and path-bounded promotion; product-state evidence must not be mislabeled as renderer drift.
+- Issue #659 is **closed / completed**.
+- Immutable diagnostics from PR #660 proved the historical PostgreSQL startup failure was host storage exhaustion: `postmaster.pid: No space left on device`; it was not an application-image regression or OOM.
+- PR #661 added a bounded fail-closed capacity preflight/recovery path that distinguishes free bytes/inodes, preserves named persistent volumes and required deploy/rollback images, and avoids broad destructive prune/reset behavior.
+- Current Stage/public evidence above proves the repaired deployment path is operating successfully on the latest runtime SHA.
 
 ## Design source of truth
 
-- Active production design/handoff source: repository-owned OpenPencil.
+- Active production design/handoff source: repository-owned OpenPencil, not Figma Cloud.
 - Active document: `design/openpencil/LexiGo Design System.op`.
 - Active tokens: `design/openpencil/LexiGo Design Tokens.json`.
 - Route/state mapping: `docs/figma/openpencil-screen-map.json` plus `docs/figma/openpencil-production-handoff.json`.
-- Issue #203 / PR #636 is closed completed; PR #636 merge SHA is `96e4f99f853a6ae4124fb6367fd4e968e941447e`.
-- PR #636 made OpenPencil the explicit active production handoff source and retained Figma identifiers only as archival provenance.
-- Figma Cloud/MCP/fileKey access is not a prerequisite for new production work.
+- Historical Figma node IDs are archival provenance only unless a task explicitly proves otherwise from current repository contracts.
 
 ## Production ownership foundations
 
 - `LexigoBootstrappedApp` owns session restoration, refresh coordination, account runtime and route-entry selection.
-- Guest `/` is owned by `LexigoGuestHomeApp`; authenticated `/` is owned by `LexigoHomeApp`.
+- Guest `/` is owned by `LexigoGuestHomeApp`; authenticated `/` by `LexigoHomeApp`.
 - `LexigoOnboardingApp` owns `/onboarding`.
 - `LexigoLearnApp` owns `/learn`; `LexigoActiveLessonApp` owns `/lesson/active`.
 - `LexigoDictionaryApp` owns `/dictionary` and `/words/[id]`.
 - `LexigoPhrasesApp` owns `/phrases` and `/phrases/[slug]`.
-- `LexigoProgressApp` owns `/progress`; `LexigoProfileApp` owns authenticated Profile.
+- `LexigoProgressApp` owns `/progress`; authenticated Profile is owned by `LexigoProfileApp`.
 - `LexigoScenarioCatalogApp` / `LexigoScenarioApp` own scenario routes.
 - `RouteChrome` owns ordinary primary route navigation outside focused routes.
 - `ReviewOutboxRuntime` owns durable review queue/connectivity behavior.
-- Guest catalog content and authenticated scheduler/progress state remain separate security boundaries.
+- `LexigoPremiumApp` remains a narrow compatibility fallback; extracted canonical routes must not be reassigned to it.
 
-## Issue #25 — delivered foundations and remaining gap
+## Open automated work verified at reconciliation
 
-Delivered child foundations:
-
-- #481 / #482: `listening` persists as a distinct objective answer/study mode; typed recall remains `recall`.
-- #485 / #486: private custom words with owner isolation and existing scheduler enrollment.
-- #489 / #493 / #494 / #495: bounded, verifiable custom-word glossary import/export.
-- #497 / #498: optional local pronunciation recorder platform foundation; microphone access is explicit and recordings are not uploaded/persisted.
-- #638 / #639: private custom phrases with owner isolation and existing scheduler enrollment.
-
-Parent #25 remains open. Current source audit proves the remaining product gap is user-facing presentation/integration rather than another backend scheduler:
-
-- backend/OpenAPI/integration support `studyMode=listening`, but the frontend does not currently select a listening study mode;
-- the pronunciation recorder exists as a platform library/tests/privacy contract but is not mounted by a product screen;
-- custom vocabulary create/import/export APIs are not currently exposed through a verified user-facing custom-vocabulary surface;
-- do not invent these UI surfaces without canonical OpenPencil evidence.
-
-## Visual parity / route evidence
-
-Delivered major route/parity foundations include:
-
-- route-specific parity for Home, Learn, Active Lesson, Progress, Dictionary, Word Detail, Phrases, Profile and First Use;
-- consolidated tablet `768×1024` Light/Dark audit (#568/#570);
-- compact transition/runtime ownership repair (#577/#579);
-- consolidated desktop `1440×1024` Light/Dark audit (#581/#582);
-- exact renderer stabilization for Dictionary Empty (#584/#585);
-- direct-entry/reload/real Back-Forward matrix across canonical routes (#617/#618).
-
-Umbrella #205 remains open. Do not repeat already delivered tablet/desktop/transition/history work. Remaining acceptance must be selected from genuinely unproven dimensions such as minimum supported mobile width, missing 200% text zoom/reflow, keyboard/reduced-motion coverage, applicable system states and final consolidated evidence.
-
-## Other open release/validation work
-
-- #18: parent personalization/onboarding acceptance requires a separate live audit before any closure decision.
-- #25: remaining user-facing listening/pronunciation/custom-vocabulary presentation is design-gated as described above.
-- #65 / #461: physical-device/system reduced-motion and accessibility sign-off remains manual QA.
-- #78: production CSP/security-header enforcement still requires authorized staged production promotion; stage Report-Only evidence alone is not completion.
-- #133: moderated usability validation requires real sessions and is not replaceable by browser automation.
-- #205: final consolidated OpenPencil visual parity umbrella remains open.
-- #508: physical installed-PWA icon/splash/cold-start matrix remains manual QA.
-- #651: Stages 1–6a are delivered: session intent, independent queues, Home process rollout, bounded manual workload, process-preserving continuation and immutable review-event process attribution. `selection_reason` is already persisted/restored/exposed and Review priority already has deterministic regression coverage. Remaining parent work must be selected from genuinely unmet process analytics, relearning/scheduler semantics, Scheduler ADR/comparison or other acceptance evidence; do not repeat queue ownership, workload controls, selection-reason persistence, continuation semantics or event attribution.
+- Issue #641 is open High-priority automated QA work under parent #205. Its verified gap is executable system-state visual provenance: existing approved state fingerprints must be bound fail-closed to the active OpenPencil screen-map keys/nodes/routes/viewports instead of treating historical Figma IDs as the active source of truth.
+- Issue #205 remains the visual-parity umbrella; do not repeat already delivered route/tablet/desktop/history work. Select only genuinely unproven dimensions from live evidence.
+- Issue #654 remains Low-priority product-delight polish and is intentionally behind core learning/reliability/accessibility/parity work.
+- Issue #12 remains the operational deployment-status tracker and is not a normal product backlog item.
 
 ## Delivery contract
 
-- One PR contains one atomic product/tooling/reconciliation slice.
+- One PR contains one atomic product, tooling or reconciliation slice.
 - Product changes require immutable-head PR CI, clean review audit, expected-head squash merge, exact-main validation and Stage/public validation when runtime changes.
 - Pure Agent Docs reconciliation uses the fail-closed lightweight classifier and must not trigger a runtime Stage deployment.
-- Design changes use OpenPencil production identities and repository-owned mapping; historical Figma provenance is reference-only.
+- Design work uses OpenPencil production identities and repository-owned mapping; historical Figma provenance is reference-only.
 - Controlled same-head reruns may classify proven infrastructure/browser flakes; product code is not changed without a reproduced product defect.
-- Evidence-only audits do not silently redesign runtime. Reproduced runtime defects receive separate atomic Issues/PRs.
+- Evidence-only audits do not silently redesign runtime. A reproduced product defect receives its own atomic Issue/PR.
 
 ## Next selection rule
 
-After `.agents/current/**` is reset by the reconciliation PR, choose the next atomic slice from live GitHub and source evidence. Prefer automated engineering work over manual-only gates, but do not manufacture UI/design requirements where the active OpenPencil source has no approved state.
+After `.agents/current/**` is reset by the reconciliation PR, re-read live GitHub before creating another branch. Prefer the highest-priority automated engineering slice with an executable acceptance contract; at this verification point #641 is the next suitable High-priority candidate. If a new PR appears, finish/reconcile that PR first unless the user explicitly directs parallel work.
