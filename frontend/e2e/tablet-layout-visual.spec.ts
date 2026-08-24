@@ -24,16 +24,16 @@ const BASELINES: Record<`${RouteKey}.${Appearance}`, ReviewedBaseline> = {
   "phrases.light": {
     width: 768,
     height: 1593,
-    sha256: "1888474ef81dc4f577eb6d60e7824345633f5fd00d85ee317f9906e29e1da30e",
-    sourceRun: 32048818693,
-    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+    sha256: "c68cc0d13e97e7da6b09e22139f3403a18c05aadf0dbde8b4407059abf55abce",
+    sourceRun: 32730909720,
+    sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e",
   },
   "phrases.dark": {
     width: 768,
     height: 1593,
-    sha256: "b121949056aed463ee7bacb94b8425764989fdb11d4c9243d532d0c192e7c98a",
-    sourceRun: 32048818693,
-    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+    sha256: "08258a4fb5a2dd8f91f927f4abcd7394d2ff7f34820fcd03584259bc4e1f3c17",
+    sourceRun: 32730909720,
+    sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e",
   },
   "profile.light": {
     width: 768,
@@ -45,9 +45,9 @@ const BASELINES: Record<`${RouteKey}.${Appearance}`, ReviewedBaseline> = {
   "profile.dark": {
     width: 768,
     height: 4229,
-    sha256: "e8c4a7a37df7d1227212915ab083611097bbb63a65933462a267d02c752ab1af",
-    sourceRun: 32048818693,
-    sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25",
+    sha256: "f23d8098e6361043389970a3a7bf371ea984f8fdeea97851c1c58d79f7cb9880",
+    sourceRun: 32730909720,
+    sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e",
   },
 };
 
@@ -71,13 +71,50 @@ async function settle(page: Page, appearance: Appearance): Promise<void> {
   await page.waitForTimeout(100);
 }
 
-async function expectSharedTabletGeometry(page: Page): Promise<void> {
-  const geometry = await page.evaluate(() => {
+async function expectSharedTabletGeometry(
+  page: Page,
+  requireActiveRailItem = false,
+  requireGenericRailSurface = requireActiveRailItem,
+): Promise<void> {
+  const geometry = await page.evaluate((requireActive) => {
     const root = document.documentElement;
     const rail = document.querySelector<HTMLElement>('[data-route-navigation="rail"]');
     if (!rail) throw new Error("Expected tablet RouteChrome rail");
+    const active = rail.querySelector<HTMLElement>("a.active");
+    const inactive = rail.querySelector<HTMLElement>("a:not(.active)");
+    if (!inactive) throw new Error("Expected inactive tablet RouteChrome item");
+    if (requireActive && !active) throw new Error("Expected active tablet RouteChrome item");
+    const activeIcon = active?.querySelector<SVGElement>("svg") ?? null;
+    if (active && !activeIcon) throw new Error("Expected active tablet RouteChrome icon");
+
+    const resolveColor = (value: string): string => {
+      const probe = document.createElement("span");
+      probe.style.color = value;
+      document.body.appendChild(probe);
+      const resolved = window.getComputedStyle(probe).color;
+      probe.remove();
+      return resolved;
+    };
+    const resolveBackground = (value: string): string => {
+      const probe = document.createElement("span");
+      probe.style.background = value;
+      document.body.appendChild(probe);
+      const resolved = window.getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return resolved;
+    };
+
     const railStyle = window.getComputedStyle(rail);
+    const activeStyle = active ? window.getComputedStyle(active) : null;
+    const inactiveStyle = window.getComputedStyle(inactive);
+    const activeIconStyle = activeIcon ? window.getComputedStyle(activeIcon) : null;
+    const activeMarkerStyle = active ? window.getComputedStyle(active, "::before") : null;
     const railRect = rail.getBoundingClientRect();
+    const rootStyle = window.getComputedStyle(root);
+    const primary = rootStyle.getPropertyValue("--ak-color-primary").trim();
+    const primarySoft = rootStyle.getPropertyValue("--ak-color-primary-soft").trim();
+    const textMuted = rootStyle.getPropertyValue("--ak-color-text-muted").trim();
+    const surface = rootStyle.getPropertyValue("--ak-color-surface").trim();
 
     return {
       innerWidth: window.innerWidth,
@@ -87,8 +124,18 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
       railDisplay: railStyle.display,
       railLeft: railRect.left,
       railRight: railRect.right,
+      railBackground: railStyle.backgroundColor,
+      expectedRailBackground: resolveBackground(`color-mix(in srgb, ${surface} 96%, transparent)`),
+      inactiveColor: inactiveStyle.color,
+      expectedInactiveColor: resolveColor(textMuted),
+      activeColor: activeStyle?.color ?? null,
+      activeIconColor: activeIconStyle?.color ?? null,
+      activeMarkerColor: activeMarkerStyle?.backgroundColor ?? null,
+      expectedPrimaryColor: resolveColor(primary),
+      activeBackground: activeStyle?.backgroundColor ?? null,
+      expectedActiveBackground: resolveBackground(primarySoft),
     };
-  });
+  }, requireActiveRailItem);
 
   expect(geometry.innerWidth).toBe(768);
   expect(geometry.innerHeight).toBe(1024);
@@ -96,6 +143,37 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
   expect(geometry.railDisplay).toBe("flex");
   expect(geometry.railLeft).toBeGreaterThanOrEqual(-1);
   expect(geometry.railRight).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  if (requireGenericRailSurface) {
+    expect(geometry.railBackground).toBe(geometry.expectedRailBackground);
+  }
+  expect(geometry.inactiveColor).toBe(geometry.expectedInactiveColor);
+
+  if (geometry.activeColor !== null) {
+    expect(geometry.activeColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeIconColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeMarkerColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeBackground).toBe(geometry.expectedActiveBackground);
+  }
+
+  const effectivePaint = [
+    geometry.railBackground,
+    geometry.inactiveColor,
+    geometry.activeColor,
+    geometry.activeIconColor,
+    geometry.activeMarkerColor,
+    geometry.activeBackground,
+  ]
+    .filter((value): value is string => value !== null)
+    .map((value) => value.replace(/\s+/g, "").toLowerCase());
+  for (const legacyColor of [
+    "rgb(139,103,255)",
+    "rgb(51,168,255)",
+    "rgb(169,137,255)",
+    "rgb(8,14,27)",
+    "rgba(8,14,27,0.84)",
+  ]) {
+    expect(effectivePaint, `tablet RouteChrome must not compute legacy paint ${legacyColor}`).not.toContain(legacyColor);
+  }
 }
 
 async function expectPhrasesGeometry(page: Page): Promise<void> {
@@ -232,7 +310,7 @@ test.describe("Issue #571 tablet layout visual evidence", () => {
         page.getByRole("list", { name: "Результаты каталога фраз" }).getByRole("listitem"),
       ).toHaveCount(QUALITY_PHRASES.length);
       await settle(page, appearance);
-      await expectSharedTabletGeometry(page);
+      await expectSharedTabletGeometry(page, true);
       await expectPhrasesGeometry(page);
       expect(runtimeErrors).toEqual([]);
       await captureReviewedEvidence(page, testInfo, "phrases", appearance);
