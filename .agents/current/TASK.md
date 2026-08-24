@@ -20,6 +20,7 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 - Protect Light/Dark semantic surface, border, text and active-primary paint with fail-closed source and browser-computed-style evidence.
 - Keep the existing #603 seven-route CDP screenshot/reflow matrix as the all-route visual owner; add a focused #684 true-browser-zoom computed-style proof for the shared late selector.
 - Use exact Linux CI evidence before approving any changed visual fingerprints.
+- Harden only the existing offline connectivity E2E locator if immutable-head CI exposes the known duplicated offline copy from two legitimate semantic owners; do not alter runtime behavior or suppress either state.
 
 ## Non-goals
 
@@ -39,6 +40,7 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 - `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` only for reviewed exact Linux baseline/provenance changes if required
 - `frontend/e2e/issue-684-zoom-compact-semantic.spec.ts`
 - `frontend/e2e/route-browser-zoom-parity.spec.ts` only if reviewed exact Linux evidence requires consolidated baseline/provenance update
+- `frontend/e2e/system-states.spec.ts` only for the immutable-head CI selector hardening that scopes the offline assertion to the connectivity complementary region
 - `frontend/playwright.visual.config.ts` only to collect the dedicated #684 browser-computed-style proof
 
 ## Prohibited paths
@@ -95,6 +97,7 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 - Changing compact chrome geometry can affect evidence height or content viewport; review exact Linux actuals rather than assuming paint-only deltas.
 - Late #603 specificity/import order must remain strong enough to preserve mobile ownership but not reintroduce retired paint.
 - Existing #603 fingerprints intentionally freeze the old presentation and will require reviewed evidence if pixels change.
+- Offline Home can legitimately render both a route recovery copy and the global connectivity copy; selector assertions must stay scoped to their semantic owner to avoid strict-mode ambiguity without changing runtime behavior.
 
 ## Rollback
 
