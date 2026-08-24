@@ -5,7 +5,7 @@
 - Branch: feat/issue-651-process-attribution
 - Base SHA: 3c8f55987d659b5c0c53713b811a7f693c8228b3
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #671
 
 ## Skills used
 
@@ -53,20 +53,22 @@ Actions performed:
 - Added nullable constrained process-attribution storage.
 - Modified the locked lesson review transaction to copy exact optional `session_kind` and `selection_reason` into the review event without inferring from `answer_mode`.
 - Added integration coverage for explicit Review+choice orthogonality, legacy session-kind NULL, direct-review NULL attribution, and DB constraint rejection.
+- Opened Draft PR #671 for immutable-head CI and review gates.
 
 Commands or procedures:
 
-GitHub connector reads/writes, exact branch readback, compare against immutable base, repository CI to follow via Draft PR.
+GitHub connector reads/writes, exact branch readback, compare against immutable base, Draft PR CI and review audit.
 
 Artifacts produced:
 
 - `backend/internal/platform/migrate/migrations/000025_learning_process_attribution.up.sql`
 - `backend/integration/lesson_process_attribution_test.go`
 - bounded changes in `backend/internal/learning/lesson_repository.go`
+- Draft PR #671
 
 Result:
 
-Implementation is ready for Draft PR CI. No scheduler, queue, API, frontend or workflow contract was changed.
+Implementation is on Draft PR #671. No scheduler, queue, API, frontend or workflow contract was changed.
 
 Failures:
 
