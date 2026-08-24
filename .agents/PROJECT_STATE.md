@@ -9,13 +9,13 @@
 
 ## Latest completed runtime delivery
 
-- Parent Issue #651 / PR #669 delivered Stage 5 of the learning-process separation architecture: explicit Study/Review/Remediation intent now survives Active Lesson completion and post-result continuation, while due-result continuation is a bounded 15-item Review block instead of the legacy mixed/30 path.
-- Final PR head: `5a2b470ba30ef3ff0801a2e87fd5cc97bb689e9b`; exact-head PR CI #4101 / run `32675435219`: **success** across backend unit/security/integration, frontend core, Lesson completion, both UI shards, visual, accessibility, content security, performance, iOS PWA, Controlled Service Worker, Dictionary smoke and API/web container builds.
-- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 9 intended Stage 5 files and zero `.github/workflows/**` diff.
-- PR #669 squash merge: `8859580c424f2ac33e0c03632f45d758aea135a3`. Parent Issue #651 remains open for genuinely unmet scheduler/recommendation/history acceptance rather than already-delivered process continuation.
-- Exact-main CI #4102 / run `32676149952`: **success** on `8859580c424f2ac33e0c03632f45d758aea135a3`, including backend unit/security/integration, full frontend/browser/visual/accessibility/performance gates, API/web image publication and deployment Caddy verification.
-- Exact CI scope artifact `ci-scope-8859580c424f2ac33e0c03632f45d758aea135a3` / artifact `9502705752`, digest `sha256:bc7e532c23c55263b1d154d21304ef2be0c79bed6cb51dfb869538bc3c464578`, reports `agent_docs_only=false`, base SHA `c590aa185e9e73354d8ca9fc23f46aba3ce77ec7`, exact head SHA `8859580c424f2ac33e0c03632f45d758aea135a3`, and exactly the Stage 5 Agent-current plus frontend Result/Active Lesson/test paths.
-- Deploy Stage run `32676797936`: **success** on exact image SHA `8859580c424f2ac33e0c03632f45d758aea135a3`; exact-scope resolution and deploy jobs both passed.
+- Parent Issue #651 / PR #671 delivered Stage 6a of the learning-process separation architecture: lesson-generated review events now persist immutable optional `session_kind` and `selection_reason`, so Study / Review / Remediation analytics no longer need to infer process intent from `answer_mode`.
+- Final PR head: `e9f8d4e301f566141be0922898fe88b23ba6269e`; exact-head PR CI #4107 / run `32678340038`: **success** across backend unit/security/integration, frontend core, browser/visual/accessibility/performance/PWA gates and API/web container builds.
+- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 6 intended Stage 6a files and zero `.github/workflows/**`, frontend or OpenAPI diff.
+- PR #671 squash merge: `55205ad0cf2387787dca4e9c19d9356ddbf8160b`. Parent Issue #651 remains open for genuinely unmet analytics/relearning/ADR and other acceptance evidence.
+- Exact-main CI #4108 / run `32697487758`: **success** on `55205ad0cf2387787dca4e9c19d9356ddbf8160b`, including backend unit/security/integration, full frontend/browser/visual/accessibility/performance gates, API/web image publication and deployment Caddy verification.
+- Exact CI scope artifact `ci-scope-55205ad0cf2387787dca4e9c19d9356ddbf8160b` / artifact `9509326851`, digest `sha256:5cbe20ea63f2027de340907a72132d41df1c53c9ca5513d412f0bfff028c6367`, reports the exact runtime head and non-Agent-docs scope.
+- Deploy Stage run `32698327650`: **success** on exact image SHA `55205ad0cf2387787dca4e9c19d9356ddbf8160b`; exact-scope resolution and deploy jobs both passed.
 - Stage deployment, public frontend/API smoke and public browser verification all passed; public Chromium + iOS WebKit runtime suite passed 12/12.
 
 ## Issue #651 Stage 3 contract now delivered
@@ -56,7 +56,17 @@
 - Exact request-body E2E covers both process-preserving normal continuation and the bounded Review continuation. Visual Regression passed without baseline refresh.
 - Stage 5 changes no backend queue selector, scheduler formula/priority, Home recommendation, OpenAPI contract, database schema, migration, dependency or persistent workflow.
 
-## Delivery lessons retained from #651 Stage 2–5
+## Issue #651 Stage 6a contract now delivered
+
+- Migration `000025_learning_process_attribution.up.sql` adds nullable constrained `review_events.session_kind` and `review_events.selection_reason` plus a process-analytics index; legacy/direct review writers remain compatible because attribution is nullable.
+- `ReviewLessonWord` copies both values from the same locked lesson/session-item rows used by the transactional review path. It does not derive process intent from `answer_mode`.
+- `session_kind` is restricted to `study | review | remediation`; `selection_reason` uses the durable server-owned reason vocabulary already used by lesson items.
+- Explicit Review sessions can persist an orthogonal objective mode such as `answer_mode=choice`, proving that session intent and interaction mode are separate facts.
+- Legacy lessons with omitted `session_kind` remain SQL NULL on review events; direct `/words/{id}/review` events remain unattributed rather than being reclassified from answer mode.
+- Integration coverage proves explicit attribution, legacy compatibility, direct-review compatibility and database rejection of unknown process values.
+- Stage 6a intentionally does not add Progress API aggregates or change scheduler formulas, queue selection, Home, frontend, OpenAPI or workflows. It establishes trustworthy event evidence for the remaining process analytics slice.
+
+## Delivery lessons retained from #651 Stage 2–6a
 
 - Self-rating and objective correctness are different signals. Repeated `again` / `almost` recommendations use persisted learner rating, while objective correctness/effective scheduler evidence remains a separate failure signal.
 - A staged additive `sessionKind` contract is safe only while omission remains behaviorally distinguishable from explicit `study`; legacy callers must not silently enter new queue semantics.
@@ -67,6 +77,7 @@
 - Write vocabulary and persisted read compatibility are separate boundaries: removing an old value from new writes must not make already-created sessions unreadable.
 - Session intent must survive completion boundaries as well as initial composition. Dropping it in Result/continuation silently re-enters legacy mixed semantics even when the original lesson was process-owned.
 - Current block size and total backlog are different product facts. A continuation CTA must keep automatic work bounded while showing the remaining queue honestly.
+- Process analytics must record intent at event-write time. Reconstructing Study / Review / Remediation from `answer_mode` later is semantically unsafe; unattributed historical/direct events must remain distinguishable from explicit process events.
 - Visual fingerprints are acceptance evidence, not a substitute for fixing geometry. Correct runtime first, verify exact dimensions on Linux CI, then refresh only reviewed content-addressed fingerprints with exact provenance.
 - When legitimate product copy can repeat, browser assertions must scope to the semantic owner/landmark rather than rely on global text uniqueness.
 - Intentional Home visual changes require exact Linux provenance and path-bounded promotion; product-state evidence must not be mislabeled as renderer drift.
@@ -134,7 +145,7 @@ Umbrella #205 remains open. Do not repeat already delivered tablet/desktop/trans
 - #133: moderated usability validation requires real sessions and is not replaceable by browser automation.
 - #205: final consolidated OpenPencil visual parity umbrella remains open.
 - #508: physical installed-PWA icon/splash/cold-start matrix remains manual QA.
-- #651: Stage 1 session-intent contract (#656), Stage 2 explicit backend queue selectors (#662), Stage 3 process-aware preview/Home rollout (#664), Stage 4 bounded manual `/learn` workload (#666) and Stage 5 process-preserving Result continuation (#669) are delivered. `selection_reason` is already persisted in lesson-session items, restored with Active Lesson and exposed to the user as an explanation. Remaining parent work must be selected from genuinely unmet scheduler/relearning/priority/ADR or other acceptance evidence; do not repeat delivered queue ownership, workload controls, selection-reason persistence or continuation semantics.
+- #651: Stages 1–6a are delivered: session intent, independent queues, Home process rollout, bounded manual workload, process-preserving continuation and immutable review-event process attribution. `selection_reason` is already persisted/restored/exposed and Review priority already has deterministic regression coverage. Remaining parent work must be selected from genuinely unmet process analytics, relearning/scheduler semantics, Scheduler ADR/comparison or other acceptance evidence; do not repeat queue ownership, workload controls, selection-reason persistence, continuation semantics or event attribution.
 
 ## Delivery contract
 
