@@ -118,7 +118,7 @@ func TestProcessProgressAnalyticsUsesExplicitSessionAttribution(t *testing.T) {
       answer_revealed, event_schema_version, effective_rating, session_kind, selection_reason
   ) values (
       $1::uuid, $2, $3, `+reviewedAt+`, $4, $5, $6,
-      false, 2, $7, $8, $9
+      ($5 = 'study'), 2, $7, $8, $9
   )
         `, registered.User.ID, wordID, grade, rating, answerMode, correct, effectiveRating, sessionKind, reason); err != nil {
 			t.Fatalf("insert %s/%s event: %v", sessionKind, answerMode, err)
