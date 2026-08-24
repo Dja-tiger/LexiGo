@@ -6,7 +6,7 @@
 - Branch: feat/issue-651-process-attribution
 - Base SHA: 3c8f55987d659b5c0c53713b811a7f693c8228b3
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #671
 
 ## Objective
 
