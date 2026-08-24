@@ -97,6 +97,7 @@
     display: none;
   }
 
+  /* Issue #684: preserve #603 compact ownership but use current semantic compact chrome. */
   .lx-routed-app:is(
     [data-route-path="/learn"],
     [data-route-path="/progress"],
@@ -108,19 +109,20 @@
   ) .lx-route-nav--mobile {
     position: fixed;
     z-index: 170;
-    right: max(10px, env(safe-area-inset-right));
-    bottom: max(10px, env(safe-area-inset-bottom));
-    left: max(10px, env(safe-area-inset-left));
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: grid;
-    min-height: var(--lx-compact-navigation-height);
-    grid-template-columns: repeat(4, minmax(48px, 1fr));
-    gap: 4px;
-    border: 1px solid rgba(126, 146, 185, 0.2);
-    border-radius: 20px;
-    padding: 7px;
-    background: rgba(8, 14, 27, 0.96);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.42);
-    backdrop-filter: blur(22px);
+    min-height: calc(72px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border: 0;
+    border-top: 1px solid var(--ak-border);
+    border-radius: 0;
+    padding: 6px max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--ak-surface) 96%, transparent);
+    box-shadow: none;
+    backdrop-filter: blur(18px);
   }
 
   .lx-routed-app:is(
@@ -133,14 +135,15 @@
     [data-route-path="/profile"]
   ) .lx-route-nav--mobile a {
     display: grid;
-    min-width: 48px;
-    min-height: 52px;
+    min-width: 44px;
+    min-height: 54px;
     place-items: center;
-    border-radius: 13px;
+    border-radius: 10px;
     padding: 4px 2px;
+    color: var(--ak-text-muted);
     background: transparent;
-    font-size: 12px;
-    font-weight: 720;
+    font-size: 11px;
+    font-weight: 600;
     line-height: 1.15;
   }
 
@@ -170,8 +173,8 @@
   ) .lx-route-nav--mobile a > span > span {
     display: block;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
   }
 
@@ -184,8 +187,8 @@
     [data-route-path^="/phrases/"],
     [data-route-path="/profile"]
   ) .lx-route-nav--mobile a.active {
-    color: #c1adff;
-    background: rgba(104, 75, 220, 0.19);
+    color: var(--ak-primary);
+    background: transparent;
   }
 
   .lx-routed-app:is(
