@@ -134,31 +134,34 @@ const MIN_MOBILE_VISUAL_BASELINES: Record<
  * Reminder presentation; the 14 non-focused states that expose that owner were
  * re-reviewed from exact Linux artifact #9294131591 / CI 32048818693 on head
  * be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25. Unaffected focused/word-detail/
- * onboarding states retain their earlier reviewed fingerprints. Retries were
- * byte-stable for every changed state.
+ * onboarding states retain their earlier reviewed fingerprints. Issue #678 then
+ * semanticized the production-reachable 720–1023px rail palette without moving
+ * geometry. Exact Linux CI #4127 / run 32730909720 on diagnostic head
+ * aec5a7dc72cef09c59148c7ae0ba3868e021675e was manually reviewed; only the
+ * 13 states whose rendered rail paint changed receive new fingerprints below.
  */
 const TABLET_VISUAL_BASELINES: Record<
   `${RouteParityKey}.${ExplicitAppearance}`,
   RouteVisualBaseline
 > = {
-  "home.light": { width: 768, height: 1105, sha256: "f7836426dc58452dbf2368243a99b106ff6df56a8fb1864eb7082689ae059006", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
-  "home.dark": { width: 768, height: 1105, sha256: "5bd2f146f2919f8a1dab8549b2d7c78159d28c35d5c5a26aa02bce568260af24", sourceRun: 32635302334, sourceHeadSha: "77ca1ea56e23b058eeb2786524617797aaa18d47" },
-  "learn.light": { width: 768, height: 1990, sha256: "00ba24494bdc866ba46add09f2d6479c8b51b532f280b0f62045426fe05bfaca", sourceRun: 32648333357, sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267" },
-  "learn.dark": { width: 768, height: 1990, sha256: "a147d33e49e9a1af7826eacf5c509de3190ab4ae497daea03db656ab074487f2", sourceRun: 32648333357, sourceHeadSha: "c4d52f51f944ba0d29c52e0707425ed2473e0267" },
+  "home.light": { width: 768, height: 1105, sha256: "c42542e7f5b09f3663b71073cac18588d3bd200811d9eea5ff305665cdb518ac", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "home.dark": { width: 768, height: 1105, sha256: "ca13b2be162e7b8a2356a359c2bf834d89603fdbb8d9ee12ad3cf6ddcf4f1227", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "learn.light": { width: 768, height: 1990, sha256: "781a394ac1f088345910ba1ad89a14ed84c4370dec07863af3cc4cdea47a7f54", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "learn.dark": { width: 768, height: 1990, sha256: "aabfb0bcfc1686cbe613526b3526f4867e173e132ce2b39d8f47e73b9f23f02f", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
   "active-lesson.light": { width: 768, height: 1024, sha256: "39dbd304a26668f6a11acb774d7e790cab4ba51af2710b0fc42a00631b104998", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
   "active-lesson.dark": { width: 768, height: 1024, sha256: "4f02aaef1849bee10c6a3bc71a72dba26ee2cb3615e12030c6eead00281cf935", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
   "progress.light": { width: 768, height: 1689, sha256: "c097a3e74f7e5e49781fb5d5d051e0acd528eaa3d289940db4a58817c8d4e7fc", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
   "progress.dark": { width: 768, height: 1689, sha256: "22bbbee0ef240cdc99678248ca5a9012e0a3bfe5aa41e2e8513f2ad8cf7211e3", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "dictionary.light": { width: 768, height: 1760, sha256: "276b5066a4561f266ad65d9178dba27c4b13b8b23cf1a5736c8e1666236f3727", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "dictionary.dark": { width: 768, height: 1760, sha256: "d5a941d0404c27b1df5b1fd1c199dcaeeb6b61620ea3323363d84d5a57ad4eaf", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "word-detail.light": { width: 768, height: 1663, sha256: "e065b923b788c332735b40370c61734eb5fc4e59bdb98f5ee0a5ee1c7556deb8", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
-  "word-detail.dark": { width: 768, height: 1663, sha256: "d625844b0762103dc08a910dd994db0d0001ca7466691d779539d32945bf796a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
-  "phrases.light": { width: 768, height: 1593, sha256: "1888474ef81dc4f577eb6d60e7824345633f5fd00d85ee317f9906e29e1da30e", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "phrases.dark": { width: 768, height: 1593, sha256: "b121949056aed463ee7bacb94b8425764989fdb11d4c9243d532d0c192e7c98a", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "phrase-detail.light": { width: 768, height: 1496, sha256: "37d20ed62bda48c5c3378ce35d5b617cd36562fab02de66fc56a5cd2f27677dc", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "phrase-detail.dark": { width: 768, height: 1496, sha256: "aea943afe911220248920857412f0014a12506d2362b2ef9d71cf7d34c86d0be", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
+  "dictionary.light": { width: 768, height: 1760, sha256: "d5af40f12bf26b7bfa506bc9e26d3f94dceeae45a6d9f1e13fcde78ca128e4d2", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "dictionary.dark": { width: 768, height: 1760, sha256: "e1a69806d37031bf8036b28b12a2eee05a68bbde20a53ad08ff4f55237e71dc8", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "word-detail.light": { width: 768, height: 1663, sha256: "3fe9356aaa0f9dd84a41fef423804cfda4161527ce0aac7ee02daf9cb1549d5c", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "word-detail.dark": { width: 768, height: 1663, sha256: "b908f3e7d3adbc22e7df13d26adeecb677765b4c29c3129396765a79797eba9f", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "phrases.light": { width: 768, height: 1593, sha256: "c68cc0d13e97e7da6b09e22139f3403a18c05aadf0dbde8b4407059abf55abce", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "phrases.dark": { width: 768, height: 1593, sha256: "08258a4fb5a2dd8f91f927f4abcd7394d2ff7f34820fcd03584259bc4e1f3c17", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "phrase-detail.light": { width: 768, height: 1496, sha256: "7125cad7a72163ef913c26fa071846ed8b02a6b571a6c7f1328ffe27cdcb9b43", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
+  "phrase-detail.dark": { width: 768, height: 1496, sha256: "77c0e6193885815ff2f0500214dfc2dac181bbefc2f75ab6804e3543df9e4b61", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
   "profile.light": { width: 768, height: 4229, sha256: "4e03f171ad8dca2abfff40fd1e1368b9a42358de72d653b66fd4209a1b34bde4", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
-  "profile.dark": { width: 768, height: 4229, sha256: "e8c4a7a37df7d1227212915ab083611097bbb63a65933462a267d02c752ab1af", sourceRun: 32048818693, sourceHeadSha: "be2bf0341bc85bdb3f860e5e7ba3226f2cedbc25" },
+  "profile.dark": { width: 768, height: 4229, sha256: "f23d8098e6361043389970a3a7bf371ea984f8fdeea97851c1c58d79f7cb9880", sourceRun: 32730909720, sourceHeadSha: "aec5a7dc72cef09c59148c7ae0ba3868e021675e" },
   "onboarding.light": { width: 768, height: 1024, sha256: "b63d5ec40e59cf210db08a2edb5134a529adb62653b8dd751da91472d01f010a", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
   "onboarding.dark": { width: 768, height: 1024, sha256: "483efada706044601cd599aea9e7c76c0e71da176578a610740c666bfd620aad", sourceRun: 32040684330, sourceHeadSha: "3578718bdcba1a24873ce23999ef7672a22193c5" },
 };
@@ -228,9 +231,6 @@ async function installAppearance(page: Page, appearance: ExplicitAppearance): Pr
 }
 
 async function installOnboardingResumeAPI(context: BrowserContext): Promise<void> {
-  // The shared quality-gate API intentionally does not own the onboarding state
-  // machine. Replace only this test context's API route with the already-delivered
-  // #18 resume contract used by the canonical First Use visual suite.
   await context.unroute("**/api/v1/**");
   await context.addCookies([{
     name: "lexigo_csrf",
@@ -428,9 +428,6 @@ async function expectParityOwnership(
         && box.height > 0;
       if (!rendered) return [];
 
-      // Controls fully outside the viewport may belong to an intentional
-      // horizontal scroller. Partially visible focusable controls must keep the
-      // complete focus box inside the viewport.
       const intersectsViewport = box.right > 0 && box.left < root.clientWidth;
       if (!intersectsViewport) return [];
       if (box.left >= -1 && box.right <= root.clientWidth + 1) return [];
