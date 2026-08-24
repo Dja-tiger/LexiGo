@@ -10,7 +10,7 @@
 
 ## Objective
 
-Expose process-aware learning analytics from the durable Stage 6a review-event attribution without inferring Study / Review / Remediation from answer mode, and prevent Study events from inflating retention evidence.
+Expose process-aware learning analytics from the durable Stage 6a review-event attribution without inferring Study / Review / Remediation from answer mode, and prevent explicit Study events from inflating retention evidence.
 
 ## Scope
 
@@ -18,9 +18,10 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 - Count newly learned items from explicit Study + `selection_reason=new` evidence, not passive activity alone.
 - Count Review and Remediation work from immutable `session_kind` attribution.
 - Count Review lapses from explicit Review events rather than Study failures.
-- Compute retention only from explicit Review retrieval evidence; Study sessions must not increase retention.
+- Compute process retention only from explicit Review retrieval evidence; Study sessions must not increase it.
 - Keep legacy/null-attribution events visible in existing legacy/global metrics but out of process-specific aggregates.
-- Update backend producer, OpenAPI, frontend runtime validator/types/normalization/presentation and regression tests together.
+- Protect the existing retained-items metric from explicit Study sessions while retaining pre-Stage-6a null-attribution compatibility.
+- Update backend producer, OpenAPI, frontend runtime validator/types/normalization and regression tests together.
 
 ## Non-goals
 
@@ -28,6 +29,7 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 - No queue-selection or recommendation-priority changes.
 - No new database migration; Stage 6a already added event attribution.
 - No Home or lesson composer changes.
+- No visual Progress layout change without OpenPencil evidence; user-facing process analytics presentation is a separate design-backed slice if still required.
 - No workflow changes in the final diff.
 
 ## Allowed paths
@@ -40,7 +42,6 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 - frontend/lib/account-resources.ts
 - frontend/lib/account-resources.test.ts
 - frontend/lib/progress-evidence.test.ts
-- frontend/components/progress-evidence-dashboard.tsx
 - .agents/current/TASK.md
 - .agents/current/PROGRESS.md
 - .agents/current/EXECUTION.md
@@ -51,6 +52,8 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 - backend/internal/learning/lesson_session_queues.go
 - backend/internal/learning/lesson_composer.go
 - backend/internal/platform/migrate/migrations/**
+- frontend/components/**
+- frontend/app/**
 - .github/workflows/** in the final PR diff
 
 ## Runtime owners
@@ -58,7 +61,7 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 - `review_events.session_kind` / `selection_reason` are the immutable process evidence produced by Stage 6a.
 - `Repository.Progress` owns authenticated progress aggregation.
 - `ProgressSummary` + OpenAPI own the public API contract.
-- `account-resources.ts` owns frontend runtime validation; `progress.ts` owns normalization/types; `ProgressEvidenceDashboard` owns user-visible evidence.
+- `account-resources.ts` owns frontend runtime validation; `progress.ts` owns normalization/types.
 
 ## Documentation owners
 
@@ -67,22 +70,22 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 ## Invariants
 
 - Never infer `session_kind` from `answer_mode`.
-- Legacy/null process attribution is not retroactively fabricated.
-- Study activity cannot increase Review retention or Review lapse metrics.
+- Legacy/null process attribution is not retroactively fabricated in process-specific metrics.
+- Explicit Study activity cannot increase Review retention or Review lapse metrics.
 - Recognition/choice activity remains distinct from stronger retrieval evidence.
 - Review backlog counts only non-new items with `due_at <= now()`; scheduled-not-due items stay out.
-- Existing legacy/global Progress fields remain backward compatible.
+- Existing legacy/global Progress fields remain backward compatible; retained-item compatibility may include null-attribution historical recall but must exclude explicit Study.
 
 ## Acceptance criteria
 
-- Progress exposes distinct new-learned, due-reviewed, remediation-reviewed, review-backlog, lapses and retention evidence.
-- Process event metrics are based on explicit immutable Stage 6a attribution.
-- A Study recall event does not increase process retention.
-- A Review retrieval event can increase retention; a Review `again` contributes a lapse.
+- Progress exposes distinct `newLearned`, `dueReviewed`, `remediationReviewed`, `reviewBacklog`, `lapses` and `retention` evidence in a process analytics object.
+- Event metrics are based on explicit immutable Stage 6a attribution.
+- `newLearned` requires explicit Study + `selection_reason=new` + effective `known` evidence and does not count `again`/passive activity.
+- A Study recall event does not increase process retention or explicit retained-items evidence.
+- A Review retrieval event can increase retention; a Review effective `again` contributes a lapse.
 - Future-due non-new items do not increase Review backlog.
-- Frontend rejects malformed process analytics and safely normalizes absence for compatibility.
-- Progress UI labels process evidence separately from answer-mode activity.
-- OpenAPI remains structurally valid.
+- Frontend rejects malformed process analytics and safely normalizes absence for rolling compatibility.
+- OpenAPI remains structurally valid and documents the exact contract.
 
 ## Required checks
 
@@ -96,8 +99,8 @@ Expose process-aware learning analytics from the durable Stage 6a review-event a
 ## Risks
 
 - Counting answer mode instead of process would recreate the semantic bug Stage 6a was introduced to prevent.
-- Ambiguous `new_learned` semantics could count passive Study activity as learning; require explicit `selection_reason=new` plus successful/known evidence.
-- Retention changes can silently rewrite historical metrics; keep legacy fields compatible while making process-specific retention explicit.
+- Ambiguous `newLearned` semantics could count passive Study activity as learning; require explicit `selection_reason=new` plus effective `known` evidence.
+- Tightening retained-item semantics must not erase historical pre-attribution evidence; explicit Study is excluded while null legacy evidence remains readable.
 
 ## Rollback
 
