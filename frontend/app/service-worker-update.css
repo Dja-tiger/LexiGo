@@ -10,7 +10,7 @@
   border-radius: 20px;
   padding: 18px;
   color: var(--ak-color-text-main);
-  background: color-mix(in srgb, var(--ak-color-surface) 97%, transparent);
+  background: var(--ak-color-surface);
   box-shadow: var(--ak-elevation-3);
   backdrop-filter: blur(18px);
   pointer-events: none;
