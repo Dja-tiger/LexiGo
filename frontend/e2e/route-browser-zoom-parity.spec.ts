@@ -99,7 +99,6 @@ const ROUTES: readonly RouteZoomContract[] = [
   { key: "phrases", path: "/phrases", ownerSelector: '[data-route-client-island="phrases"]', expectedNavigation: "mobile" },
   { key: "phrase-detail", path: `/phrases/${QUALITY_PHRASES[0].slug}`, ownerSelector: '[data-route-client-island="phrases"]', expectedNavigation: "mobile" },
   { key: "profile", path: "/profile", ownerSelector: '[data-route-client-island="profile"]', expectedNavigation: "mobile" },
-  // Keep onboarding last: its deterministic API replaces the shared quality API.
   { key: "onboarding", path: "/onboarding", ownerSelector: ".lx-first-use-panel", expectedNavigation: "none" },
 ] as const;
 
@@ -113,21 +112,21 @@ const REVIEW_REQUIRED: ReviewedZoomBaseline = {
 
 const REVIEWED_SOURCE_RUN = 32224361667;
 const REVIEWED_SOURCE_HEAD_SHA = "d04e2bacbb0d5f3ad2b7bc83dd1a251f481e8b20";
-const PROCESS_AWARE_HOME_SOURCE_RUN = 32635302334;
-const PROCESS_AWARE_HOME_SOURCE_HEAD_SHA = "77ca1ea56e23b058eeb2786524617797aaa18d47";
+const PROCESS_AWARE_HOME_SOURCE_RUN = 32730909720;
+const PROCESS_AWARE_HOME_SOURCE_HEAD_SHA = "aec5a7dc72cef09c59148c7ae0ba3868e021675e";
 
 const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZoomBaseline> = {
   "home.light": {
     width: 720,
     height: 710,
-    sha256: "ca124f187dc23e195b3c8d0bf056b42e3ead05d2fd5332ec179d544f5edef1b5",
+    sha256: "22460dd5698065cc7169cd7f2b4135e2300c6a901dedafbdec375f66b6e16afb",
     sourceRun: PROCESS_AWARE_HOME_SOURCE_RUN,
     sourceHeadSha: PROCESS_AWARE_HOME_SOURCE_HEAD_SHA,
   },
   "home.dark": {
     width: 720,
     height: 710,
-    sha256: "c2ccd9bc642799bf9989cbfacf54ee3bfd444da14020a8d2e7c741c8b4972bca",
+    sha256: "019991cc898c4df44d50a5b6e7073e5c624874c7c8cde14701ea0782bbac993d",
     sourceRun: PROCESS_AWARE_HOME_SOURCE_RUN,
     sourceHeadSha: PROCESS_AWARE_HOME_SOURCE_HEAD_SHA,
   },
@@ -591,10 +590,6 @@ async function captureBrowserZoomEvidence(cdp: CDPSession): Promise<BrowserZoomE
   const zoom = metrics.cssVisualViewport.zoom;
   expect(zoom, "Issue #601 evidence must be captured while browser zoom remains 2x").toBeCloseTo(2, 4);
 
-  // CDP Page.Viewport clip coordinates are DIP while the layout/content metrics are
-  // CSS pixels. Convert the complete CSS surface into DIP and normalize the encoded
-  // raster back to one output pixel per CSS pixel. A plain Playwright full-page
-  // screenshot at browser zoom 2 captures only about half of the CSS viewport.
   const clip = {
     x: metrics.cssContentSize.x * zoom,
     y: metrics.cssContentSize.y * zoom,
@@ -701,10 +696,6 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
 
     for (const contract of ROUTES) {
       runtimeErrors.length = 0;
-
-      // Active Lesson owns a page-level catch-all API fixture. The consolidated
-      // matrix intentionally reuses one page, so dispose that route before the
-      // next canonical owner and fall back to the context-level quality API.
       if (contract.key !== "active-lesson") {
         await page.unroute("**/api/v1/**");
       }
