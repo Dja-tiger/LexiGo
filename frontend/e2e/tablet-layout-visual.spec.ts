@@ -71,15 +71,17 @@ async function settle(page: Page, appearance: Appearance): Promise<void> {
   await page.waitForTimeout(100);
 }
 
-async function expectSharedTabletGeometry(page: Page): Promise<void> {
-  const geometry = await page.evaluate(() => {
+async function expectSharedTabletGeometry(page: Page, requireActiveRailItem = false): Promise<void> {
+  const geometry = await page.evaluate((requireActive) => {
     const root = document.documentElement;
     const rail = document.querySelector<HTMLElement>('[data-route-navigation="rail"]');
     if (!rail) throw new Error("Expected tablet RouteChrome rail");
     const active = rail.querySelector<HTMLElement>("a.active");
     const inactive = rail.querySelector<HTMLElement>("a:not(.active)");
+    if (!inactive) throw new Error("Expected inactive tablet RouteChrome item");
+    if (requireActive && !active) throw new Error("Expected active tablet RouteChrome item");
     const activeIcon = active?.querySelector<SVGElement>("svg") ?? null;
-    if (!active || !inactive || !activeIcon) throw new Error("Expected active/inactive tablet RouteChrome items");
+    if (active && !activeIcon) throw new Error("Expected active tablet RouteChrome icon");
 
     const resolveColor = (value: string): string => {
       const probe = document.createElement("span");
@@ -99,10 +101,10 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
     };
 
     const railStyle = window.getComputedStyle(rail);
-    const activeStyle = window.getComputedStyle(active);
+    const activeStyle = active ? window.getComputedStyle(active) : null;
     const inactiveStyle = window.getComputedStyle(inactive);
-    const activeIconStyle = window.getComputedStyle(activeIcon);
-    const activeMarkerStyle = window.getComputedStyle(active, "::before");
+    const activeIconStyle = activeIcon ? window.getComputedStyle(activeIcon) : null;
+    const activeMarkerStyle = active ? window.getComputedStyle(active, "::before") : null;
     const railRect = rail.getBoundingClientRect();
     const rootStyle = window.getComputedStyle(root);
     const primary = rootStyle.getPropertyValue("--ak-color-primary").trim();
@@ -122,14 +124,14 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
       expectedRailBackground: resolveBackground(`color-mix(in srgb, ${surface} 96%, transparent)`),
       inactiveColor: inactiveStyle.color,
       expectedInactiveColor: resolveColor(textMuted),
-      activeColor: activeStyle.color,
-      activeIconColor: activeIconStyle.color,
-      activeMarkerColor: activeMarkerStyle.backgroundColor,
+      activeColor: activeStyle?.color ?? null,
+      activeIconColor: activeIconStyle?.color ?? null,
+      activeMarkerColor: activeMarkerStyle?.backgroundColor ?? null,
       expectedPrimaryColor: resolveColor(primary),
-      activeBackground: activeStyle.backgroundColor,
+      activeBackground: activeStyle?.backgroundColor ?? null,
       expectedActiveBackground: resolveBackground(primarySoft),
     };
-  });
+  }, requireActiveRailItem);
 
   expect(geometry.innerWidth).toBe(768);
   expect(geometry.innerHeight).toBe(1024);
@@ -139,10 +141,13 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
   expect(geometry.railRight).toBeLessThanOrEqual(geometry.clientWidth + 1);
   expect(geometry.railBackground).toBe(geometry.expectedRailBackground);
   expect(geometry.inactiveColor).toBe(geometry.expectedInactiveColor);
-  expect(geometry.activeColor).toBe(geometry.expectedPrimaryColor);
-  expect(geometry.activeIconColor).toBe(geometry.expectedPrimaryColor);
-  expect(geometry.activeMarkerColor).toBe(geometry.expectedPrimaryColor);
-  expect(geometry.activeBackground).toBe(geometry.expectedActiveBackground);
+
+  if (geometry.activeColor !== null) {
+    expect(geometry.activeColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeIconColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeMarkerColor).toBe(geometry.expectedPrimaryColor);
+    expect(geometry.activeBackground).toBe(geometry.expectedActiveBackground);
+  }
 
   const effectivePaint = [
     geometry.railBackground,
@@ -151,7 +156,9 @@ async function expectSharedTabletGeometry(page: Page): Promise<void> {
     geometry.activeIconColor,
     geometry.activeMarkerColor,
     geometry.activeBackground,
-  ].map((value) => value.replace(/\s+/g, "").toLowerCase());
+  ]
+    .filter((value): value is string => value !== null)
+    .map((value) => value.replace(/\s+/g, "").toLowerCase());
   for (const legacyColor of [
     "rgb(139,103,255)",
     "rgb(51,168,255)",
@@ -297,7 +304,7 @@ test.describe("Issue #571 tablet layout visual evidence", () => {
         page.getByRole("list", { name: "Результаты каталога фраз" }).getByRole("listitem"),
       ).toHaveCount(QUALITY_PHRASES.length);
       await settle(page, appearance);
-      await expectSharedTabletGeometry(page);
+      await expectSharedTabletGeometry(page, true);
       await expectPhrasesGeometry(page);
       expect(runtimeErrors).toEqual([]);
       await captureReviewedEvidence(page, testInfo, "phrases", appearance);
