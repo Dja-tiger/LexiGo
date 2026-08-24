@@ -126,6 +126,7 @@ describe("lesson result evidence", () => {
       lessonId: "lesson-194-a",
       source: "mixed",
       studyMode: "choice",
+      sessionKind: "study",
       lessonSize: "15",
       completedAt: COMPLETED_AT,
       itemIds: [101, 102],
@@ -145,6 +146,7 @@ describe("lesson result evidence", () => {
       currentStreak: 5,
     });
 
+    expect(result.sessionKind).toBe("study");
     expect(result.dailyGoalReached).toBe(true);
     expect(result.dailyGoalJustReached).toBe(true);
     expect(result.evidence.recognition).toEqual({ attempted: 2, correct: 1, unavailable: 0 });
@@ -244,14 +246,18 @@ describe("lesson result continuation", () => {
 });
 
 describe("lesson result persistence", () => {
-  it("restores a recent version-2 snapshot and removes it explicitly", () => {
+  it("restores explicit process intent and historical version-2 snapshots that omit it", () => {
     const storage = new MemoryStorage();
-    const result = snapshot();
-    writeLessonResultSnapshot(storage, result);
+    const explicit = snapshot({ sessionKind: "remediation" });
+    writeLessonResultSnapshot(storage, explicit);
+    expect(readLessonResultSnapshot(storage, explicit.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(explicit);
 
-    expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(result);
-    clearLessonResultSnapshot(storage, result.userId);
-    expect(readLessonResultSnapshot(storage, result.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();
+    const historical = snapshot();
+    writeLessonResultSnapshot(storage, historical);
+    expect(readLessonResultSnapshot(storage, historical.userId, Date.parse(COMPLETED_AT) + 1_000)).toEqual(historical);
+
+    clearLessonResultSnapshot(storage, historical.userId);
+    expect(readLessonResultSnapshot(storage, historical.userId, Date.parse(COMPLETED_AT) + 1_000)).toBeNull();
   });
 
   it("drops stale or malformed snapshots instead of restoring invented state", () => {

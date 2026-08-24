@@ -29,6 +29,7 @@ export type LessonResultConfidence = {
   again: number;
 };
 
+export type LessonResultSessionKind = "study" | "review" | "remediation";
 export type LessonResultOutcomeState = "empty" | "study" | "partial" | "skipped" | "complete";
 
 export type LessonResultSnapshot = {
@@ -37,6 +38,7 @@ export type LessonResultSnapshot = {
   lessonId: string;
   source: string;
   studyMode: AnswerMode;
+  sessionKind?: LessonResultSessionKind;
   lessonSize: string;
   topic: string;
   completedAt: string;
@@ -81,6 +83,7 @@ type BuildLessonResultSnapshotInput = {
   lessonId: string;
   source: string;
   studyMode: AnswerMode;
+  sessionKind?: LessonResultSessionKind;
   lessonSize: string;
   topic?: string;
   completedAt?: string;
@@ -120,6 +123,10 @@ function isNullableFiniteNonNegative(value: unknown): value is number | null {
 
 function isAnswerMode(value: unknown): value is AnswerMode {
   return value === "study" || value === "recall" || value === "choice";
+}
+
+function isLessonResultSessionKind(value: unknown): value is LessonResultSessionKind {
+  return value === "study" || value === "review" || value === "remediation";
 }
 
 function normalizeNullableCounter(value: number | null | undefined): number | null {
@@ -212,6 +219,7 @@ export function buildLessonResultSnapshot(
     lessonId: input.lessonId,
     source: input.source,
     studyMode: input.studyMode,
+    ...(input.sessionKind ? { sessionKind: input.sessionKind } : {}),
     lessonSize: input.lessonSize,
     topic: input.topic?.trim() ?? "",
     completedAt,
@@ -302,6 +310,7 @@ export function readLessonResultSnapshot(
       || typeof parsed.lessonId !== "string"
       || typeof parsed.source !== "string"
       || !isAnswerMode(parsed.studyMode)
+      || (parsed.sessionKind !== undefined && !isLessonResultSessionKind(parsed.sessionKind))
       || typeof parsed.lessonSize !== "string"
       || typeof parsed.topic !== "string"
       || typeof parsed.completedAt !== "string"

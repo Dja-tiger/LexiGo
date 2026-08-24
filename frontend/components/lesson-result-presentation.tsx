@@ -171,6 +171,8 @@ function resultCopy(
   }
 
   if (continuation.kind === "due") {
+    const dueBlockCount = Math.min(15, continuation.dueCount);
+    const hasRemainingBacklog = continuation.dueCount > dueBlockCount;
     return {
       state: "due",
       symbol: "↻",
@@ -178,11 +180,17 @@ function resultCopy(
       title: "Сначала закрепим материал",
       body: outcomeBody,
       actionEyebrow: "ГОТОВО К ПОВТОРЕНИЮ",
-      actionTitle: `${continuation.dueCount} элементов требуют проверки`,
-      actionBody: "Это уже наступивший server-owned срок, поэтому повторение полезнее нового блока.",
+      actionTitle: hasRemainingBacklog
+        ? `Повторить ${dueBlockCount} из ${continuation.dueCount}`
+        : `${continuation.dueCount} элементов требуют проверки`,
+      actionBody: hasRemainingBacklog
+        ? `Сейчас к повторению: ${continuation.dueCount}. Следующий блок ограничен ${dueBlockCount} элементами; остаток останется в очереди.`
+        : "Это уже наступивший server-owned срок, поэтому повторение полезнее нового блока.",
       detailTitle: timing.title,
       detailBody: timing.body,
-      primaryLabel: `Повторить ${continuation.dueCount} элементов`,
+      primaryLabel: hasRemainingBacklog
+        ? `Повторить ${dueBlockCount} из ${continuation.dueCount}`
+        : `Повторить ${dueBlockCount} элементов`,
       secondaryLabel: "На главную",
       primaryAction: "due",
       secondaryAction: "home",
