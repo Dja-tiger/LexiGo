@@ -6,12 +6,12 @@
   display: grid;
   width: min(520px, calc(100vw - 36px));
   gap: 16px;
-  border: 1px solid rgba(139, 92, 246, 0.45);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 20px;
   padding: 18px;
-  color: var(--text);
-  background: rgba(17, 23, 36, 0.97);
-  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.48);
+  color: var(--ak-color-text-main);
+  background: color-mix(in srgb, var(--ak-color-surface) 97%, transparent);
+  box-shadow: var(--ak-elevation-3);
   backdrop-filter: blur(18px);
   pointer-events: none;
 }
@@ -22,11 +22,12 @@
 }
 
 .lx-sw-update strong {
+  color: var(--ak-color-text-main);
   font-size: 16px;
 }
 
 .lx-sw-update span {
-  color: #cbd5e1;
+  color: var(--ak-color-text-muted);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -41,34 +42,64 @@
 
 .lx-sw-update button {
   min-height: 42px;
-  border: 0;
+  border: 1px solid var(--ak-color-primary);
   border-radius: 12px;
   padding: 10px 15px;
-  color: #fff;
-  background: linear-gradient(135deg, #7c3aed, #0891b2);
+  color: var(--ak-color-surface);
+  background: var(--ak-color-primary);
   font-weight: 800;
   pointer-events: auto;
 }
 
+.lx-sw-update button:hover:not(:disabled) {
+  border-color: var(--ak-color-primary-hover);
+  background: var(--ak-color-primary-hover);
+}
+
 .lx-sw-update button.secondary {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: color-mix(in srgb, var(--ak-color-text-muted) 32%, transparent);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-subtle);
+}
+
+.lx-sw-update button.secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ak-color-primary) 36%, var(--ak-color-text-muted));
+  background: color-mix(in srgb, var(--ak-color-subtle) 76%, var(--ak-color-surface));
 }
 
 .lx-sw-update button.quiet,
 .lx-sw-update--success > button,
 .lx-sw-update--error > button {
   justify-self: end;
-  color: #cbd5e1;
+  border-color: transparent;
+  color: var(--ak-color-text-muted);
   background: transparent;
 }
 
+.lx-sw-update button.quiet:hover:not(:disabled),
+.lx-sw-update--success > button:hover:not(:disabled),
+.lx-sw-update--error > button:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-subtle);
+}
+
 .lx-sw-update--success {
-  border-color: rgba(134, 239, 172, 0.38);
+  border-color: color-mix(in srgb, var(--ak-color-retained) 46%, var(--ak-color-text-muted));
+  background: color-mix(in srgb, var(--ak-color-retained) 10%, var(--ak-color-surface));
+}
+
+.lx-sw-update--success strong {
+  color: var(--ak-color-retained);
 }
 
 .lx-sw-update--error {
-  border-color: rgba(252, 165, 165, 0.42);
+  border-color: color-mix(in srgb, var(--ak-color-weak) 52%, var(--ak-color-text-muted));
+  background: color-mix(in srgb, var(--ak-color-weak) 10%, var(--ak-color-surface));
+}
+
+.lx-sw-update--error strong {
+  color: var(--ak-color-weak);
 }
 
 @media (max-width: 600px) {
