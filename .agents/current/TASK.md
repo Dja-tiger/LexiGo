@@ -18,7 +18,8 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 - Preserve #603 content width, reminder, Learn, Profile and Phrases reflow repairs.
 - Align only the late `.lx-route-nav--mobile` presentation in `issue-603-browser-zoom-reflow.css` to the current semantic compact owner from `adaptive-knowledge-coach-home.css`.
 - Protect Light/Dark semantic surface, border, text and active-primary paint with fail-closed source and browser-computed-style evidence.
-- Use existing true browser zoom/CDP Linux evidence before approving any changed visual fingerprints.
+- Keep the existing #603 seven-route CDP screenshot/reflow matrix as the all-route visual owner; add a focused #684 true-browser-zoom computed-style proof for the shared late selector.
+- Use exact Linux CI evidence before approving any changed visual fingerprints.
 
 ## Non-goals
 
@@ -35,8 +36,10 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 - `.agents/current/**`
 - `frontend/app/issue-603-browser-zoom-reflow.css`
 - `frontend/components/issue-603-browser-zoom-reflow-source.test.ts`
-- `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts`
-- `frontend/e2e/route-browser-zoom-parity.spec.ts` only if reviewed exact Linux evidence requires baseline/provenance update or consolidated effective-style protection
+- `frontend/e2e/issue-603-browser-zoom-reflow.spec.ts` only for reviewed exact Linux baseline/provenance changes if required
+- `frontend/e2e/issue-684-zoom-compact-semantic.spec.ts`
+- `frontend/e2e/route-browser-zoom-parity.spec.ts` only if reviewed exact Linux evidence requires consolidated baseline/provenance update
+- `frontend/playwright.visual.config.ts` only to collect the dedicated #684 browser-computed-style proof
 
 ## Prohibited paths
 
@@ -78,8 +81,9 @@ Preserve the proven #603 true-browser-zoom reflow repair while replacing the sta
 
 ## Required checks
 
-- Vitest fail-closed #603 source ownership contract.
-- Existing authoritative `issue-603-browser-zoom-reflow.spec.ts` true browser zoom/CDP matrix.
+- Vitest fail-closed #603/#684 source ownership contract.
+- Dedicated #684 true browser zoom computed-style Light/Dark proof.
+- Existing authoritative `issue-603-browser-zoom-reflow.spec.ts` true browser zoom/CDP seven-route matrix.
 - Consolidated `route-browser-zoom-parity.spec.ts` where affected.
 - Full visual regression, UI, accessibility, performance and security gates through immutable-head CI.
 - Clean review/thread audit.
