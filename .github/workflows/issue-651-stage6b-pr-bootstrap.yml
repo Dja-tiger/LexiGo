@@ -1,0 +1,35 @@
+name: Issue 651 Stage 6b PR bootstrap
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'feat/issue-651-process-analytics'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: feat/issue-651-process-analytics
+      - name: Execute bounded helper body
+        shell: bash
+        run: |
+          awk 'found { sub(/^          /, ""); print } /      - name: Apply bounded process analytics slice/ { named=1 } named && /        run: \|/ { found=1; next }' \
+            .github/workflows/issue-651-stage6b-helper.yml > /tmp/stage6b.sh
+          test -s /tmp/stage6b.sh
+          bash /tmp/stage6b.sh
+      - name: Remove bootstrap workflow
+        shell: bash
+        run: |
+          git pull --ff-only origin feat/issue-651-process-analytics
+          git rm .github/workflows/issue-651-stage6b-pr-bootstrap.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "chore(ci): remove issue 651 stage 6b bootstrap"
+          git push origin HEAD:feat/issue-651-process-analytics
