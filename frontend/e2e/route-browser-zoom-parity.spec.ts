@@ -161,16 +161,16 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "progress.light": {
     width: 720,
     height: 1664,
-    sha256: "b1178cacef2f9fdc8bb747f1253fefc903da665df4eb4672c7845ffa0b3c18e9",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "8e133b7078f10c16a4bd14036c212fe686aad097b51361d96611590c9cfd412a",
+    sourceRun: 32784991362,
+    sourceHeadSha: "6610ca81fbeb30c7df50f0cc589038c00d7b432c",
   },
   "progress.dark": {
     width: 720,
     height: 1664,
-    sha256: "f0832dafef9d02af60a970d1f252fea6ace675df58d609de8127a5ff74d87007",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "4a2a526256d567e51cf37f24d20d4da2fc81566d7ffccff51b55d08e166f0aef",
+    sourceRun: 32784991362,
+    sourceHeadSha: "6610ca81fbeb30c7df50f0cc589038c00d7b432c",
   },
   "dictionary.light": {
     width: 720,
