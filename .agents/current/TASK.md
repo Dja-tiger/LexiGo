@@ -15,10 +15,11 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 ## Scope
 
 - Preserve existing tablet navigation geometry and route semantics.
-- Add semantic shared RouteChrome ownership for the uncovered 720–1023px range.
-- Cover Light and Dark computed presentation at 768×1024.
+- Semanticize the existing tablet RouteChrome owner rather than adding a parallel override owner.
+- Cover Light and Dark presentation at 768×1024.
 - Cover all non-focused routes that expose the shared tablet rail.
 - Preserve focused Active Lesson / Onboarding ownership.
+- Add a fail-closed source ownership contract and rely on the existing exact Linux 768×1024 route matrix for effective visual/cascade proof.
 - Generate exact Linux visual evidence before approving any changed tablet fingerprints.
 
 ## Non-goals
@@ -33,9 +34,9 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 ## Allowed paths
 
 - `.agents/current/**`
-- `frontend/app/adaptive-knowledge-coach-home.css`
-- `frontend/e2e/route-tablet-parity.spec.ts`
-- tablet visual fingerprints in that test only after exact Linux actual PNG manual review proves the intentional palette-only delta
+- `frontend/app/route-navigation.css`
+- `frontend/components/tablet-route-chrome-semantic-css-ownership.test.ts`
+- `frontend/e2e/route-tablet-parity.spec.ts` only if exact Linux reviewed evidence requires updating the existing tablet fingerprints/contracts
 
 ## Prohibited paths
 
@@ -48,8 +49,8 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 
 ## Runtime owners
 
-- Shared route shell/navigation: `frontend/app/adaptive-knowledge-coach-home.css` semantic Application Shell + RouteChrome layer.
-- Legacy fallback tablet presentation being superseded only in this breakpoint: `frontend/app/route-navigation.css`.
+- Shared RouteChrome source: `frontend/app/route-navigation.css`.
+- New semantic Application Shell rules in `frontend/app/adaptive-knowledge-coach-home.css` already override compact `<=719px` and desktop `>=1024px`; this slice closes only the effective 720–1023px gap in the existing tablet owner.
 - Route graph/semantics remain owned by existing `RouteChrome` / routed-app components.
 
 ## Documentation owners
@@ -64,6 +65,7 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 - Existing tablet rail dimensions/placement/interaction remain unchanged.
 - Effective palette derives from semantic appearance tokens, not replacement hard-coded colors.
 - Focused routes do not receive shared rail accidentally.
+- Source ownership assertions alone do not prove runtime cascade; exact Linux 768×1024 screenshots remain mandatory effective evidence.
 - No baseline is approved before exact Linux screenshot inspection.
 - Main must remain the verified base until branch writes are complete; any main movement requires reconciliation/rebase before merge.
 
@@ -80,8 +82,8 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 
 ## Required checks
 
-- targeted source/unit/frontend checks covering RouteChrome ownership
-- `route-tablet-parity.spec.ts` in the appropriate Linux Playwright shard(s)
+- frontend Vitest source ownership contract
+- existing `route-tablet-parity.spec.ts` Linux 768×1024 matrix
 - visual regression / exact 768×1024 evidence
 - accessibility and performance gates as collected by full CI
 - full immutable-head CI
@@ -92,7 +94,7 @@ Close the #205 medium/tablet RouteChrome palette ownership gap so the canonical 
 ## Risks
 
 - Existing tablet hashes currently freeze the legacy rail; intentional pixels will fail the fingerprint gate until reviewed.
-- CSS specificity/import order can make source declarations non-effective; computed-style proof is mandatory.
+- CSS specificity/import order can make source declarations non-effective; visual/runtime evidence is mandatory.
 - Explicit Light/Dark token ownership must not be confused with prior Auto/system compatibility contracts from #589/#593.
 
 ## Rollback
