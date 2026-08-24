@@ -4,11 +4,22 @@
 
 - Last verified: 2026-08-24 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Current verified `main`: `d83f3e1f4e90464f47aa2ff8b42c2185ff051a5b`.
+- Current verified `main`: `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
 - No open pull requests existed when this reconciliation slice started.
 - Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
 ## Latest completed runtime deliveries
+
+### Issue #678 / PR #679 — semantic tablet RouteChrome palette for #205
+
+- Issue #678 is **closed / completed** by PR #679.
+- The production-reachable 720–1023px RouteChrome ownership gap is closed: the shared tablet rail no longer effectively uses the legacy navy/purple/cyan premium palette and now derives surface, text, hover and active paint from the current semantic `--ak-color-*` appearance tokens while preserving existing rail geometry and route semantics.
+- The exact Linux 768×1024 visual actuals were manually reviewed before changed SHA-256 fingerprints were approved. Focused Active Lesson / Onboarding ownership remains unchanged.
+- Regression protection includes fail-closed source ownership checks plus computed-style/visual evidence. Profile Light remains correctly governed by its more-specific route-scoped compatibility owner rather than being forced to the generic rail surface contract.
+- Final developer head: `86032a3a0ce3e58985e0e8e9bf52a5e46df564f2`.
+- Full immutable-head PR CI #4134 / run `32755738186`: **success**.
+- PR #679 squash merge/current verified runtime `main`: `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
+- Exact-main push CI run `32757028324`: **success**, including backend unit/integration, frontend core, both UI shards, visual regression, accessibility, content security, performance, iOS PWA, service worker and API/web container builds.
 
 ### Issue #651 / PR #673 — process-aware progress analytics
 
@@ -35,27 +46,25 @@
 ### Issue #641 / PR #676 — final system-state applicability matrix for #205
 
 - Issue #641 is **closed / completed** by PR #676.
-- The final executable cross-owner contract now binds the five shared/system-state OpenPencil visual owners and the eight already-approved First Use loading/error baselines without changing runtime, source design or visual fingerprints.
+- The final executable cross-owner contract binds the five shared/system-state OpenPencil visual owners and the eight already-approved First Use loading/error baselines without changing runtime, source design or visual fingerprints.
 - Active provenance remains repository-owned OpenPencil; historical Figma identifiers are archival only.
 - Final developer head: `63e5d024292c1a9b66e7fe9702f6d4e47a21296a`.
 - Full immutable-head CI #4123 / run `32727596944`: **success**, including frontend core, visual regression, UI shards, accessibility, content security, lesson completion, iOS PWA, service worker, performance, backend checks and container builds.
-- PR #676 squash merge/current verified `main`: `d83f3e1f4e90464f47aa2ff8b42c2185ff051a5b`.
-- This was a test/evidence-only delivery; it does not require or claim a Stage redeploy. Post-merge exact-main CI was not independently surfaced by the available connector during this reconciliation and must not be inferred.
+- PR #676 squash merge: `d83f3e1f4e90464f47aa2ff8b42c2185ff051a5b`.
 
 ## Stage / deployment
 
-- Deployment status Issue #12 most recently reports Stage **success** on exact runtime image SHA `8b5478abf7cb8fd434f07acd038a1f6ff05ecbd9`.
-- Stage run `32716003877`: deploy **success**, public smoke **success**, public browser **success**.
-- The capacity preflight executed on the PostgreSQL-volume filesystem with ample free bytes/inodes; persistent volumes and running service containers were not deleted.
-- PostgreSQL, Redis, API and web all became healthy on the intended image.
-- Later evidence-only merge `d83f3e1f4e90464f47aa2ff8b42c2185ff051a5b` changes no runtime/source design and therefore does not supersede the deployed runtime image or require Stage redeploy.
+- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `0f58d48eb6966561a5e87a14b330392f4330f6f9`.
+- Stage run `32758195993`: deployment-scope resolution **success**, deploy **success**, public smoke **success**, public browser **success**.
+- The capacity preflight passed with ample free bytes/inodes and preserved persistent volumes plus the rollback/deploy images.
+- PostgreSQL, Redis, API and web became healthy; API and web run the exact `0f58d48eb6966561a5e87a14b330392f4330f6f9` image tag.
 
 ### Issue #659 — Stage PostgreSQL storage incident
 
 - Issue #659 is **closed / completed**.
 - Immutable diagnostics from PR #660 proved the historical PostgreSQL startup failure was host storage exhaustion: `postmaster.pid: No space left on device`; it was not an application-image regression or OOM.
 - PR #661 added a bounded fail-closed capacity preflight/recovery path that distinguishes free bytes/inodes, preserves named persistent volumes and required deploy/rollback images, and avoids broad destructive prune/reset behavior.
-- Current Stage/public evidence above proves the repaired deployment path is operating successfully on the latest deployed runtime SHA.
+- Current Stage/public evidence above proves the repaired deployment path remains operational.
 
 ## Design source of truth
 
@@ -81,9 +90,11 @@
 
 ## Open automated work verified at reconciliation
 
-- Issue #205 remains the High-priority visual-parity umbrella. The automated system-state applicability gap previously tracked by #641 is now delivered; do not repeat it.
-- User-directed next work is a fresh route-by-route visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than redoing already-approved parity evidence.
+- Issue #205 remains the High-priority visual-parity umbrella.
+- The #678 tablet RouteChrome palette defect is delivered and must not be repeated.
+- User-directed next work remains a route-by-route effective visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than raw color grep or redoing already-approved evidence.
 - Any reproduced runtime/design defect found by the #205 audit must be isolated into its own atomic Issue/PR; the umbrella audit must not silently redesign runtime.
+- Existing route-specific compatibility contracts, including Profile appearance ownership and Word Detail contrast ownership, must not be normalized globally without runtime evidence.
 - Issue #654 remains Low-priority product-delight polish and is intentionally behind core learning/reliability/accessibility/parity work.
 - Issue #12 remains the operational deployment-status tracker and is not a normal product backlog item.
 
@@ -98,4 +109,4 @@
 
 ## Next selection rule
 
-After `.agents/current/**` is reset by this reconciliation PR, re-read live GitHub before creating another branch. If an open PR appears, finish/reconcile it first unless the user explicitly directs parallel work. With no open PR, follow the user's explicit direction to continue Issue #205 by selecting one genuinely unproven visual/cascade defect from live source and evidence, then deliver it as one atomic reviewable slice.
+After `.agents/current/**` is reset by this reconciliation PR, re-read live GitHub before creating another branch. If an open PR appears, finish/reconcile it first unless the user explicitly directs parallel work. With no open PR, continue Issue #205 by proving one remaining effective visual/cascade defect from live runtime/source evidence and deliver it as one atomic reviewable slice.
