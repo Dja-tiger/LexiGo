@@ -6,7 +6,7 @@
 - Branch: `fix/issue-681-sw-update-semantic-palette`
 - Base SHA: `478696cf600e92bd9724bb397a38fd6aa94d5abd`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #682 (Draft)
 
 ## Objective
 
@@ -51,7 +51,7 @@ Remove the production-reachable legacy purple/cyan/navy presentation from the gl
 ## Documentation owners
 
 - `.agents/current/**` for branch-local execution context.
-- Issue #681 / PR discussion for immutable evidence.
+- Issue #681 / PR #682 for immutable evidence.
 
 ## Invariants
 
@@ -85,4 +85,4 @@ Remove the production-reachable legacy purple/cyan/navy presentation from the gl
 
 ## Rollback
 
-Revert the atomic #681 presentation/test commit; Service Worker runtime semantics are unchanged by this slice.
+Revert the atomic #681 presentation/test squash merge; Service Worker runtime semantics are unchanged by this slice.
