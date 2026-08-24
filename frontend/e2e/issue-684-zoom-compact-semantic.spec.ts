@@ -6,7 +6,6 @@ import {
   test,
   type BrowserContext,
   type Page,
-  type TestInfo,
   type Worker,
 } from "@playwright/test";
 
@@ -146,7 +145,7 @@ async function expectSemanticCompactPaint(page: Page, appearance: ExplicitAppear
   }
 }
 
-async function runAppearance(appearance: ExplicitAppearance, testInfo: TestInfo): Promise<void> {
+async function runAppearance(appearance: ExplicitAppearance): Promise<void> {
   const extensionPath = resolve(process.cwd(), "e2e/support/browser-zoom-extension");
   const context = await chromium.launchPersistentContext("", {
     baseURL: "http://127.0.0.1:3000",
@@ -195,7 +194,7 @@ test.describe("Issue #684 semantic compact RouteChrome at exact 720px true brows
   for (const appearance of ["light", "dark"] as const) {
     test(`late #603 compact owner resolves current semantic paint — ${appearance}`, async ({}, testInfo) => {
       test.skip(testInfo.project.name !== "visual-desktop", "Issue #684 true browser zoom runs once in authoritative desktop Chromium");
-      await runAppearance(appearance, testInfo);
+      await runAppearance(appearance);
     });
   }
 });
