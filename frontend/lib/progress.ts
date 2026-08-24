@@ -65,6 +65,23 @@ export type WeeklyProgressEvidence = {
   strongTopic?: TopicEvidence;
 };
 
+export type ProcessRetentionEvidence = {
+  attempts: number;
+  successful: number;
+  rate: number;
+};
+
+export type LearningProcessEvidence = {
+  weekStart: string;
+  weekEnd: string;
+  newLearned: number;
+  dueReviewed: number;
+  remediationReviewed: number;
+  reviewBacklog: number;
+  lapses: number;
+  retention: ProcessRetentionEvidence;
+};
+
 export type ScenarioRecommendationReason =
   | "resume_in_progress"
   | "first_uncompleted"
@@ -114,6 +131,7 @@ export type ProgressSummary = {
   eventSchemaVersion?: number;
   modes?: ProgressModes;
   weekly?: WeeklyProgressEvidence;
+  processes?: LearningProcessEvidence;
   scenarios?: ScenarioProgressEvidence;
   nextDueAt?: string;
 };
@@ -194,6 +212,21 @@ export function normalizedWeeklyEvidence(progress: ProgressSummary): WeeklyProgr
     trend: EMPTY_TREND.map((entry) => ({ ...entry })),
     weakTopics: [],
     weakPartsOfSpeech: [],
+  };
+}
+
+export function normalizedLearningProcessEvidence(progress: ProgressSummary): LearningProcessEvidence {
+  if (progress.processes) return progress.processes;
+  const weekly = normalizedWeeklyEvidence(progress);
+  return {
+    weekStart: weekly.weekStart,
+    weekEnd: weekly.weekEnd,
+    newLearned: 0,
+    dueReviewed: 0,
+    remediationReviewed: 0,
+    reviewBacklog: 0,
+    lapses: 0,
+    retention: { attempts: 0, successful: 0, rate: 0 },
   };
 }
 

@@ -45,6 +45,16 @@ const PROGRESS = {
     choice: MODE,
     legacy: MODE,
   },
+  processes: {
+    weekStart: "2026-07-13",
+    weekEnd: "2026-07-19",
+    newLearned: 2,
+    dueReviewed: 4,
+    remediationReviewed: 1,
+    reviewBacklog: 3,
+    lapses: 1,
+    retention: { attempts: 4, successful: 3, rate: 75 },
+  },
 };
 
 const ITEM = {
@@ -67,6 +77,14 @@ describe("account resource contracts", () => {
     expect(isProgressSummaryPayload({ ...PROGRESS, dailyGoal: 0 })).toBe(false);
     expect(isProgressSummaryPayload({ ...PROGRESS, dueNow: undefined })).toBe(false);
     expect(isProgressSummaryPayload({ ...PROGRESS, nextDueAt: "not-a-date" })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...PROGRESS,
+      processes: { ...PROGRESS.processes, reviewBacklog: -1 },
+    })).toBe(false);
+    expect(isProgressSummaryPayload({
+      ...PROGRESS,
+      processes: { ...PROGRESS.processes, retention: { attempts: 2, successful: 3, rate: 100 } },
+    })).toBe(false);
     expect(isProgressSummaryPayload({
       ...PROGRESS,
       modes: { ...PROGRESS.modes, recall: { ...MODE, attemptsToday: -1 } },

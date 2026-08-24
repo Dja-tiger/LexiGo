@@ -2363,6 +2363,53 @@ components:
           type: integer
           minimum: 5
           maximum: 200
+    ProcessRetentionEvidence:
+      type: object
+      required: [attempts, successful, rate]
+      properties:
+        attempts:
+          type: integer
+          minimum: 0
+        successful:
+          type: integer
+          minimum: 0
+        rate:
+          type: integer
+          minimum: 0
+          maximum: 100
+    LearningProcessEvidence:
+      type: object
+      description: Current-week process evidence from immutable lesson session attribution; reviewBacklog is the current due non-new queue size.
+      required: [weekStart, weekEnd, newLearned, dueReviewed, remediationReviewed, reviewBacklog, lapses, retention]
+      properties:
+        weekStart:
+          type: string
+          format: date
+        weekEnd:
+          type: string
+          format: date
+        newLearned:
+          type: integer
+          minimum: 0
+          description: Distinct explicit Study/new items with effective known evidence in the current week.
+        dueReviewed:
+          type: integer
+          minimum: 0
+          description: Review-session events in the current week.
+        remediationReviewed:
+          type: integer
+          minimum: 0
+          description: Remediation-session events in the current week.
+        reviewBacklog:
+          type: integer
+          minimum: 0
+          description: Current non-new items whose due_at has arrived.
+        lapses:
+          type: integer
+          minimum: 0
+          description: Current-week Review events whose effective rating is again.
+        retention:
+          $ref: "#/components/schemas/ProcessRetentionEvidence"
     ProgressSummary:
       type: object
       required:
@@ -2389,6 +2436,7 @@ components:
         - retainedPhrasesWeek
         - eventSchemaVersion
         - modes
+        - processes
       properties:
         dueNow: { type: integer }
         dueWords: { type: integer }
@@ -2427,6 +2475,8 @@ components:
         nextDueAt:
           type: [string, "null"]
           format: date-time
+        processes:
+          $ref: "#/components/schemas/LearningProcessEvidence"
     ModeProgress:
       type: object
       required: [attemptsToday, successfulToday, attemptsTotal, successfulTotal]

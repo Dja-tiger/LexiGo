@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { isProgressSummaryPayload } from "./account-resources";
 import {
+  normalizedLearningProcessEvidence,
   normalizedWeeklyEvidence,
   type ProgressSummary,
   type WeeklyProgressEvidence,
@@ -74,6 +75,16 @@ const progress: ProgressSummary = {
     legacy: { attemptsToday: 0, successfulToday: 0, attemptsTotal: 0, successfulTotal: 0 },
   },
   weekly,
+  processes: {
+    weekStart: "2026-07-20",
+    weekEnd: "2026-07-26",
+    newLearned: 3,
+    dueReviewed: 5,
+    remediationReviewed: 2,
+    reviewBacklog: 4,
+    lapses: 1,
+    retention: { attempts: 4, successful: 3, rate: 75 },
+  },
   scenarios: {
     completedThisWeek: 1,
     completedTotal: 2,
@@ -93,6 +104,7 @@ const progress: ProgressSummary = {
 describe("weekly progress evidence", () => {
   it("retains the server-owned seven-day report and Scenario projection", () => {
     expect(normalizedWeeklyEvidence(progress)).toEqual(weekly);
+    expect(normalizedLearningProcessEvidence(progress)).toEqual(progress.processes);
     expect(isProgressSummaryPayload(progress)).toBe(true);
   });
 
@@ -162,5 +174,15 @@ describe("weekly progress evidence", () => {
     expect(fallback.trend).toHaveLength(7);
     expect(fallback.weakPartsOfSpeech).toEqual([]);
     expect(isProgressSummaryPayload({ ...progress, scenarios: undefined })).toBe(true);
+    expect(normalizedLearningProcessEvidence({ ...progress, processes: undefined })).toEqual({
+      weekStart: weekly.weekStart,
+      weekEnd: weekly.weekEnd,
+      newLearned: 0,
+      dueReviewed: 0,
+      remediationReviewed: 0,
+      reviewBacklog: 0,
+      lapses: 0,
+      retention: { attempts: 0, successful: 0, rate: 0 },
+    });
   });
 });
