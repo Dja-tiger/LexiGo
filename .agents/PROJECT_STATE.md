@@ -9,13 +9,13 @@
 
 ## Latest completed runtime delivery
 
-- Parent Issue #651 / PR #666 delivered Stage 4 of the learning-process separation architecture: the manual `/learn` workload is now bounded and explicit while the Stage 3 automatic Study/Review/Remediation ownership model remains unchanged.
-- Final PR head: `3bd2f6fda9f2bdb9a39a11af17ee30615b10226f`; exact-head PR CI #4084 / run `32670204561`: **success** across backend unit/security/integration, OpenAPI, frontend core, both UI shards, lesson completion, accessibility, visual, performance, CSP/service-worker, iOS PWA, Dictionary smoke and API/web container builds.
-- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 22 intended Stage 4 files and zero `.github/workflows/**` diff.
-- PR #666 squash merge: `87455e7154178e7986fdebccebabe12f89c4e159`. Parent Issue #651 remains open because recommendation/history/scheduler evolution and any other still-unmet acceptance criteria are intentionally outside Stage 4.
-- Exact-main CI #4085 / run `32672927534`: **success** on `87455e7154178e7986fdebccebabe12f89c4e159`, including backend unit/security/integration, frontend/browser/visual/accessibility/performance gates and API/web image publication.
-- Exact CI scope artifact `ci-scope-87455e7154178e7986fdebccebabe12f89c4e159` / artifact `9501864948`, digest `sha256:9f7bc6fb0d06d9e32bb4740fc8e6a22ea2dae6b50ac2f6481e75d5ccb82d0ee2`, reports `agent_docs_only=false`, base SHA `5196a4b2824820bb3c5105d03112929d9a495da1`, and exact head SHA `87455e7154178e7986fdebccebabe12f89c4e159`.
-- Deploy Stage run `32673520649`: **success** on exact image SHA `87455e7154178e7986fdebccebabe12f89c4e159`; exact-scope resolution and deploy jobs both passed.
+- Parent Issue #651 / PR #669 delivered Stage 5 of the learning-process separation architecture: explicit Study/Review/Remediation intent now survives Active Lesson completion and post-result continuation, while due-result continuation is a bounded 15-item Review block instead of the legacy mixed/30 path.
+- Final PR head: `5a2b470ba30ef3ff0801a2e87fd5cc97bb689e9b`; exact-head PR CI #4101 / run `32675435219`: **success** across backend unit/security/integration, frontend core, Lesson completion, both UI shards, visual, accessibility, content security, performance, iOS PWA, Controlled Service Worker, Dictionary smoke and API/web container builds.
+- Review audit before merge: zero PR comments, zero submitted reviews and zero unresolved review threads; final compare was `behind_by=0` with exactly 9 intended Stage 5 files and zero `.github/workflows/**` diff.
+- PR #669 squash merge: `8859580c424f2ac33e0c03632f45d758aea135a3`. Parent Issue #651 remains open for genuinely unmet scheduler/recommendation/history acceptance rather than already-delivered process continuation.
+- Exact-main CI #4102 / run `32676149952`: **success** on `8859580c424f2ac33e0c03632f45d758aea135a3`, including backend unit/security/integration, full frontend/browser/visual/accessibility/performance gates, API/web image publication and deployment Caddy verification.
+- Exact CI scope artifact `ci-scope-8859580c424f2ac33e0c03632f45d758aea135a3` / artifact `9502705752`, digest `sha256:bc7e532c23c55263b1d154d21304ef2be0c79bed6cb51dfb869538bc3c464578`, reports `agent_docs_only=false`, base SHA `c590aa185e9e73354d8ca9fc23f46aba3ce77ec7`, exact head SHA `8859580c424f2ac33e0c03632f45d758aea135a3`, and exactly the Stage 5 Agent-current plus frontend Result/Active Lesson/test paths.
+- Deploy Stage run `32676797936`: **success** on exact image SHA `8859580c424f2ac33e0c03632f45d758aea135a3`; exact-scope resolution and deploy jobs both passed.
 - Stage deployment, public frontend/API smoke and public browser verification all passed; public Chromium + iOS WebKit runtime suite passed 12/12.
 
 ## Issue #651 Stage 3 contract now delivered
@@ -46,7 +46,17 @@
 - Reviewed `/learn` visual fingerprints were reconciled only from exact post-layout-repair Linux CI evidence. A later one-nibble Issue #603 hash mismatch was traced back to the original #4069 artifact and corrected as transcription, not blessed as renderer drift.
 - Stage 4 does not change scheduler formulas, Study/Review/Remediation selector ownership, due/remediation eligibility, Home recommendation priority, database schema, `wordIds` limits, dependencies or persistent workflows.
 
-## Delivery lessons retained from #651 Stage 2–4
+## Issue #651 Stage 5 contract now delivered
+
+- Active Lesson consumes the already-server-owned optional `sessionKind` and preserves explicit `study | review | remediation` intent in the Lesson Result snapshot.
+- Historical version-2 Lesson Result snapshots that omit `sessionKind` remain readable; the client does not fabricate `study` for legacy/manual sessions.
+- Post-result preview repeats the explicit process intent when present, and normal next-block creation preserves the same explicit `sessionKind`, previous bounded lesson size, source, answer mode and topic.
+- The dedicated due-result continuation no longer launches legacy `mixed / recall / 30`. It creates exactly `source=mixed`, `studyMode=recall`, `sessionKind=review`, `lessonSize=15`.
+- When due backlog is larger than one block, the Result CTA distinguishes workload from backlog: e.g. `Повторить 15 из 32`; copy explicitly keeps the remaining backlog queued rather than implying all due items must be completed now.
+- Exact request-body E2E covers both process-preserving normal continuation and the bounded Review continuation. Visual Regression passed without baseline refresh.
+- Stage 5 changes no backend queue selector, scheduler formula/priority, Home recommendation, OpenAPI contract, database schema, migration, dependency or persistent workflow.
+
+## Delivery lessons retained from #651 Stage 2–5
 
 - Self-rating and objective correctness are different signals. Repeated `again` / `almost` recommendations use persisted learner rating, while objective correctness/effective scheduler evidence remains a separate failure signal.
 - A staged additive `sessionKind` contract is safe only while omission remains behaviorally distinguishable from explicit `study`; legacy callers must not silently enter new queue semantics.
@@ -55,6 +65,8 @@
 - Process-aware preview, Home recommendation/counts and Home lesson creation must share the same selector source of truth; moving only one layer recreates semantic drift.
 - Explicit Home preview fixtures must echo the requested `sessionKind`; request-count tests should prove resource ownership rather than preserve arbitrary hydration counts.
 - Write vocabulary and persisted read compatibility are separate boundaries: removing an old value from new writes must not make already-created sessions unreadable.
+- Session intent must survive completion boundaries as well as initial composition. Dropping it in Result/continuation silently re-enters legacy mixed semantics even when the original lesson was process-owned.
+- Current block size and total backlog are different product facts. A continuation CTA must keep automatic work bounded while showing the remaining queue honestly.
 - Visual fingerprints are acceptance evidence, not a substitute for fixing geometry. Correct runtime first, verify exact dimensions on Linux CI, then refresh only reviewed content-addressed fingerprints with exact provenance.
 - When legitimate product copy can repeat, browser assertions must scope to the semantic owner/landmark rather than rely on global text uniqueness.
 - Intentional Home visual changes require exact Linux provenance and path-bounded promotion; product-state evidence must not be mislabeled as renderer drift.
@@ -122,7 +134,7 @@ Umbrella #205 remains open. Do not repeat already delivered tablet/desktop/trans
 - #133: moderated usability validation requires real sessions and is not replaceable by browser automation.
 - #205: final consolidated OpenPencil visual parity umbrella remains open.
 - #508: physical installed-PWA icon/splash/cold-start matrix remains manual QA.
-- #651: Stage 1 session-intent contract (#656), Stage 2 explicit backend queue selectors (#662), Stage 3 process-aware preview/Home rollout (#664) and Stage 4 bounded manual `/learn` workload (#666) are delivered. Remaining parent work must be selected from still-unmet acceptance criteria such as later recommendation/history/scheduler evolution; do not repeat delivered queue ownership, Home process rollout or manual workload controls.
+- #651: Stage 1 session-intent contract (#656), Stage 2 explicit backend queue selectors (#662), Stage 3 process-aware preview/Home rollout (#664), Stage 4 bounded manual `/learn` workload (#666) and Stage 5 process-preserving Result continuation (#669) are delivered. `selection_reason` is already persisted in lesson-session items, restored with Active Lesson and exposed to the user as an explanation. Remaining parent work must be selected from genuinely unmet scheduler/relearning/priority/ADR or other acceptance evidence; do not repeat delivered queue ownership, workload controls, selection-reason persistence or continuation semantics.
 
 ## Delivery contract
 
