@@ -7,6 +7,9 @@ const presentationSource = readFileSync(
   path.join(process.cwd(), "components", "active-lesson-presentation.tsx"),
   "utf8",
 );
+const packageJSON = JSON.parse(
+  readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+) as { scripts?: Record<string, string> };
 
 describe("Active Lesson reveal-answer input contract", () => {
   it("keeps Recall input editable after reveal until the review becomes immutable", () => {
@@ -27,5 +30,11 @@ describe("Active Lesson reveal-answer input contract", () => {
       "feedbackRef.current?.focus({ preventScroll: true });",
     );
     expect(presentationSource).not.toContain("premiumAnswerRef.current?.focus");
+  });
+
+  it("collects the browser regression in the authoritative lesson CI command", () => {
+    expect(packageJSON.scripts?.["test:e2e:lesson"]).toContain(
+      "e2e/reveal-answer-input.spec.ts",
+    );
   });
 });
