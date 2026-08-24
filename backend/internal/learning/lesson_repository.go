@@ -165,17 +165,22 @@ func (r *Repository) ReviewLessonWord(
 	var lockedLessonID string
 	var currentIndex int
 	var lessonMode AnswerMode
+	var rawSessionKind string
 	var version int64
 	if err := tx.QueryRow(ctx, `
-		select id::text, current_index, study_mode, version
+		select id::text, current_index, study_mode, coalesce(session_kind, ''), version
 		from lesson_sessions
 		where id = $1::uuid and user_id = $2::uuid and status = 'active'
 		for update
-	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex, &lessonMode, &version); err != nil {
+	`, lessonID, userID).Scan(&lockedLessonID, &currentIndex, &lessonMode, &rawSessionKind, &version); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock lesson: %w", err)
+	}
+	sessionKind := LessonSessionKind(rawSessionKind)
+	if !validLessonSessionKind(sessionKind) {
+		return LessonReviewResult{}, ErrInvalidLessonState
 	}
 	if version != request.LessonVersion {
 		return LessonReviewResult{}, ErrLessonVersionConflict
@@ -186,16 +191,21 @@ func (r *Repository) ReviewLessonWord(
 
 	var position int
 	var existingRating *string
+	var rawSelectionReason string
 	if err := tx.QueryRow(ctx, `
-		select position, rating
+		select position, rating, coalesce(selection_reason, '')
 		from lesson_session_items
 		where session_id = $1::uuid and word_id = $2
 		for update
-	`, lessonID, wordID).Scan(&position, &existingRating); err != nil {
+	`, lessonID, wordID).Scan(&position, &existingRating, &rawSelectionReason); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LessonReviewResult{}, ErrLessonItemNotFound
 		}
 		return LessonReviewResult{}, fmt.Errorf("lock lesson item: %w", err)
+	}
+	selectionReason := LessonSelectionReason(rawSelectionReason)
+	if selectionReason != "" && !validLessonSelectionReason(selectionReason) {
+		return LessonReviewResult{}, ErrInvalidLessonState
 	}
 	if existingRating != nil {
 		return LessonReviewResult{}, ErrLessonItemAlreadyReviewed
@@ -267,10 +277,10 @@ func (r *Repository) ReviewLessonWord(
 		insert into review_events(
 			user_id, word_id, grade, response_ms, reviewed_at, rating, answer_mode, correct,
 			answer_revealed, event_schema_version, submitted_answer, effective_rating,
-			judgement_source, judgement_reason, matched_answer
+			judgement_source, judgement_reason, matched_answer, session_kind, selection_reason
 		) values (
 			$1::uuid, $2, $3, $4, $5, $6, $7, $8,
-			$9, 2, $10, $11, $12, $13, nullif($14, '')
+			$9, 2, $10, $11, $12, $13, nullif($14, ''), nullif($15::text, ''), nullif($16::text, '')
 		)
 		returning id
 	`,
@@ -288,6 +298,8 @@ func (r *Repository) ReviewLessonWord(
 		assessment.JudgementSource,
 		assessment.JudgementReason,
 		assessment.MatchedAnswer,
+		rawSessionKind,
+		rawSelectionReason,
 	).Scan(&reviewEventID); err != nil {
 		return LessonReviewResult{}, fmt.Errorf("insert review event: %w", err)
 	}
