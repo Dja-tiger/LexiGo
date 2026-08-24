@@ -251,6 +251,26 @@ function isWeeklyProgressEvidence(value: unknown): boolean {
     && (value.strongTopic === undefined || isTopicEvidence(value.strongTopic));
 }
 
+function isProcessRetentionEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isNonNegativeNumber(value.attempts)
+    && isNonNegativeNumber(value.successful)
+    && value.successful <= value.attempts
+    && isPercentage(value.rate);
+}
+
+function isLearningProcessEvidence(value: unknown): boolean {
+  return isRecord(value)
+    && isDateOnly(value.weekStart)
+    && isDateOnly(value.weekEnd)
+    && isNonNegativeNumber(value.newLearned)
+    && isNonNegativeNumber(value.dueReviewed)
+    && isNonNegativeNumber(value.remediationReviewed)
+    && isNonNegativeNumber(value.reviewBacklog)
+    && isNonNegativeNumber(value.lapses)
+    && isProcessRetentionEvidence(value.retention);
+}
+
 function isScenarioRecommendation(value: unknown): boolean {
   if (!isRecord(value)
     || !isNonEmptyString(value.slug)
@@ -292,6 +312,7 @@ export function isProgressSummaryPayload(value: unknown): value is ProgressSumma
   if (value.eventSchemaVersion !== undefined && !isNonNegativeNumber(value.eventSchemaVersion)) return false;
   if (value.modes !== undefined && !isProgressModes(value.modes)) return false;
   if (value.weekly !== undefined && !isWeeklyProgressEvidence(value.weekly)) return false;
+  if (value.processes !== undefined && !isLearningProcessEvidence(value.processes)) return false;
   if (value.scenarios !== undefined && !isScenarioProgressEvidence(value.scenarios)) return false;
   return true;
 }

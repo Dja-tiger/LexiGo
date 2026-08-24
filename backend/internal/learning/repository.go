@@ -150,6 +150,10 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 			Trend:      make([]DailyRecallEvidence, 0, 7),
 			WeakTopics: make([]TopicEvidence, 0, 3),
 		},
+		Processes: LearningProcessEvidence{
+			WeekStart: weekStartLocal.Format("2006-01-02"),
+			WeekEnd:   weekStartLocal.AddDate(0, 0, 6).Format("2006-01-02"),
+		},
 	}
 
 	if err := r.pool.QueryRow(ctx, `
@@ -182,6 +186,72 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 	); err != nil {
 		return ProgressSummary{}, fmt.Errorf("query learning progress: %w", err)
 	}
+
+	if err := r.pool.QueryRow(ctx, `
+		select count(*)::int
+		from user_words
+		where user_id = $1::uuid
+		  and status <> 'new'
+		  and due_at <= now()
+	`, userID).Scan(&result.Processes.ReviewBacklog); err != nil {
+		return ProgressSummary{}, fmt.Errorf("query process review backlog: %w", err)
+	}
+
+	if err := r.pool.QueryRow(ctx, `
+		select count(distinct word_id) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'study'
+		             and selection_reason = 'new'
+		             and effective_rating = 'known'
+		             and (correct is true or correct is null)
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'review'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'remediation'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'review'
+		             and effective_rating = 'again'
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'review'
+		             and answer_mode in ('recall', 'listening')
+		             and correct is not null
+		       )::int,
+		       count(*) filter (
+		           where reviewed_at >= $2 and reviewed_at < $3
+		             and event_schema_version = 2
+		             and session_kind = 'review'
+		             and answer_mode in ('recall', 'listening')
+		             and correct is true
+		       )::int
+		from review_events
+		where user_id = $1::uuid
+	`, userID, weekStartUTC, nextWeekUTC).Scan(
+		&result.Processes.NewLearned,
+		&result.Processes.DueReviewed,
+		&result.Processes.RemediationReviewed,
+		&result.Processes.Lapses,
+		&result.Processes.Retention.Attempts,
+		&result.Processes.Retention.Successful,
+	); err != nil {
+		return ProgressSummary{}, fmt.Errorf("query learning process evidence: %w", err)
+	}
+	result.Processes.Retention.Rate = percentage(
+		result.Processes.Retention.Successful,
+		result.Processes.Retention.Attempts,
+	)
 
 	if err := r.pool.QueryRow(ctx, `
 		with events as (
@@ -256,6 +326,7 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 		where current_review.user_id = $1::uuid
 		  and current_review.event_schema_version = 2
 		  and current_review.answer_mode = 'recall'
+		  and (current_review.session_kind = 'review' or current_review.session_kind is null)
 		  and current_review.correct is true
 		  and current_review.grade = 5
 		  and current_review.reviewed_at >= bounds.week_start
@@ -266,6 +337,7 @@ func (r *Repository) Progress(ctx context.Context, userID string, timezoneOffset
 			  and previous_review.word_id = current_review.word_id
 			  and previous_review.event_schema_version = 2
 			  and previous_review.answer_mode = 'recall'
+			  and (previous_review.session_kind = 'review' or previous_review.session_kind is null)
 			  and previous_review.correct is true
 			  and previous_review.grade = 5
 			  and previous_review.reviewed_at < bounds.week_start

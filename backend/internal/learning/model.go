@@ -110,6 +110,23 @@ type WeeklyProgressEvidence struct {
 	StrongTopic              *TopicEvidence         `json:"strongTopic,omitempty"`
 }
 
+type ProcessRetentionEvidence struct {
+	Attempts   int `json:"attempts"`
+	Successful int `json:"successful"`
+	Rate       int `json:"rate"`
+}
+
+type LearningProcessEvidence struct {
+	WeekStart           string                   `json:"weekStart"`
+	WeekEnd             string                   `json:"weekEnd"`
+	NewLearned          int                      `json:"newLearned"`
+	DueReviewed         int                      `json:"dueReviewed"`
+	RemediationReviewed int                      `json:"remediationReviewed"`
+	ReviewBacklog       int                      `json:"reviewBacklog"`
+	Lapses              int                      `json:"lapses"`
+	Retention           ProcessRetentionEvidence `json:"retention"`
+}
+
 type ScenarioRecommendationReason string
 
 const (
@@ -167,6 +184,7 @@ type ProgressSummary struct {
 	EventSchemaVersion       int                      `json:"eventSchemaVersion"`
 	Modes                    ProgressModes            `json:"modes"`
 	Weekly                   WeeklyProgressEvidence   `json:"weekly"`
+	Processes                LearningProcessEvidence  `json:"processes"`
 	Scenarios                ScenarioProgressEvidence `json:"scenarios"`
 	NextDueAt                *time.Time               `json:"nextDueAt,omitempty"`
 }
