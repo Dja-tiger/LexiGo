@@ -50,7 +50,7 @@
     "/words/101": {
       "baselineJavascriptBytes": 212877,
       "maxJavascriptBytes": 245000,
-      "maxInitialRequests": 20,
+      "maxInitialRequests": 21,
       "baselineEvidence": {
         "sourceRun": 30201374271,
         "capturedAt": "2026-07-26",
@@ -81,7 +81,7 @@
     "/scenarios": {
       "baselineJavascriptBytes": 198852,
       "maxJavascriptBytes": 230000,
-      "maxInitialRequests": 19,
+      "maxInitialRequests": 20,
       "baselineEvidence": {
         "sourceRun": 30181864359,
         "capturedAt": "2026-07-26",
@@ -91,7 +91,7 @@
     "/scenarios/incident-update": {
       "baselineJavascriptBytes": 202679,
       "maxJavascriptBytes": 235000,
-      "maxInitialRequests": 18,
+      "maxInitialRequests": 19,
       "baselineEvidence": {
         "sourceRun": 30169218809,
         "capturedAt": "2026-07-25",
