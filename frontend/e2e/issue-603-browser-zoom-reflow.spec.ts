@@ -163,16 +163,16 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "profile.light": {
     width: 720,
     height: 4086,
-    sha256: "8f6a191f24439ff8448384447271775fd750aa122a4ceb90266e8489e33853bf",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "ad7fa78d749de25beb9a44056f12f8328a6dd8244e2244021c0724c2603d32bc",
+    sourceRun: 32821542634,
+    sourceHeadSha: "5fb83d0a9a9ed3ef05b041fb1f41475559a0523e",
   },
   "profile.dark": {
     width: 720,
     height: 4086,
-    sha256: "ab70ab6cf55fef9ff0c96f6e641d77c9c9917c937e525e678090d9967b167d88",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "b3a9c20f75a01423c19752d62300cc15881e0df252067e144fb3be45ee577491",
+    sourceRun: 32821542634,
+    sourceHeadSha: "5fb83d0a9a9ed3ef05b041fb1f41475559a0523e",
   },
 };
 
