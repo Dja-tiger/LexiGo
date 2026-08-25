@@ -2,91 +2,91 @@
 
 ## Task
 
-- Branch: `fix/issue-687-error-boundary-semantic-palette`
-- Base SHA: `8fac9124f967bc18a02de4a273a8d5575d9b3873`
+- Branch: `fix/issue-689-error-boundary-hydration-race`
+- Base SHA: `e4bf0279f01e0ec4504e99581a3d7e1dc62b4a90`
 - Head SHA: resolve from live branch ref after this write
 - PR: pending Draft PR
 
 ## Skills used
 
-### Live-first visual ownership audit
+### Exact-main CI failure triage
 
 Purpose:
 
-Prove that the reported visual gap is production-reachable and identify the actual winning presentation owner before changing CSS.
+Determine whether #688's first post-merge failure was a production regression, an unrelated infrastructure failure, or a deterministic defect in the new browser proof before choosing rerun versus code repair.
 
 Instruction source:
 
-`AGENTS.md`, `.agents/AGENTS.md`, `.agents/AGENTS.base.md`, `.agents/AGENTS.tool-selection.md`, `.agents/AGENTS.issue-70-compatibility-reachability.md`, `.agents/AGENTS.issue-261-css-specificity.md`, `.agents/SKILLS.md`, `docs/agent-harness.md`.
+`AGENTS.md`, `.agents/AGENTS.md`, production-safe CI rules, Issue #687 acceptance criteria and the no-blind-rerun repository policy.
 
 Version or verification date:
 
-2026-08-25 Europe/Berlin, verified against live `main` `8fac9124f967bc18a02de4a273a8d5575d9b3873`.
+2026-08-25 Europe/Berlin, against exact merge SHA `e4bf0279f01e0ec4504e99581a3d7e1dc62b4a90`.
 
 Inputs:
 
-Issue #205 visual-parity umbrella, live repository source and already-delivered #678/#681/#684 slices.
+- PR-head CI #4170 / run `32865890130` on `d7dd1bf3f247a4ea84ca0d9d47bb2df039e96e63`.
+- Exact-main CI #4171 / run `32873693448`.
+- Failed job `Frontend E2E (UI tests (shard 2/2))` / job `97887223369`.
+- Workflow artifact `frontend-playwright-report-ui-2` / artifact `9573435222`.
 
 Files inspected:
 
-- `frontend/app/layout.tsx`
-- `frontend/app/error-boundary.css`
-- `frontend/components/application-error-boundary.tsx`
-- `frontend/app/design-tokens.css`
-- `frontend/app/appearance.css`
-- `frontend/app/system-states.css`
-- `frontend/app/global-error.tsx`
-- `frontend/package.json`
+- `frontend/e2e/application-error-boundary-appearance.spec.ts`
+- failed Playwright `error-context.md` files for Light/Dark and retries
+- failed Playwright `trace.zip` snapshots for Light/Dark and retries
+- existing appearance/WebKit test patterns
 
 Actions performed:
 
-- Confirmed no open PR before taking new work.
-- Confirmed `RootLayout` imports the fatal-boundary stylesheet and globally mounts `ApplicationErrorBoundary` around the routed application.
-- Searched the exact `.lx-fatal-error` selector family and verified there is no later semantic same-selector override.
-- Separated the application error boundary from the shared #202/#641 system states and from the independent `global-error.tsx` root-layout replacement.
-- Opened Issue #687 only after proving a distinct, non-duplicated production gap.
+- Confirmed build/install succeeded and failure occurred only in the E2E step.
+- Downloaded and unpacked the failed browser diagnostics artifact rather than rerunning the job blindly.
+- Confirmed both explicit Light and Dark cases fail on `ios-webkit`, including retry.
+- Compared trace snapshots around fixture insertion and the subsequent assertion.
+- Proved the fixture is connected immediately after insertion but disappears before the next Playwright task while the normal Home DOM is restored.
+- Correlated that behavior with the test's `body.replaceChildren()` after only `domcontentloaded`, identifying React hydration as the interleaving owner.
 
 Commands or procedures:
 
-Connected GitHub live search/fetch, exact branch/ref verification and source ownership/cascade audit.
+Connected GitHub Actions job/artifact inspection plus local structured inspection of Playwright reports and trace snapshots.
 
 Artifacts produced:
 
-Issue #687 and branch-local Agent Harness task definition.
+Issue #689 with exact failure/run/job/artifact evidence and an atomic hotfix branch from the failed merge SHA.
 
 Result:
 
-The sole live application error-boundary stylesheet was proven to retain a fixed pre-Foundation navy/purple/pink palette under explicit Light/Dark appearance.
+The failure is a deterministic test-harness race exposed by WebKit scheduling, not evidence that #688's semantic CSS is wrong. A blind rerun would be insufficient because the race already failed both Playwright attempts on exact-main and had passed once on PR-head.
 
 Failures:
 
-None.
+First exact-main CI #4171 remains failed and Stage was correctly blocked.
 
 Root cause:
 
-A pre-Foundation presentation owner remained reachable after the rest of the application moved to semantic appearance tokens.
+The test mutates React-owned DOM in one browser task and inspects it in another before React hydration is guaranteed complete.
 
 Fallback:
 
-Not required.
+Not used. No whole-workflow or targeted-job rerun was initiated before root-cause proof.
 
 Limitations:
 
-Raw color search was used only as discovery. The implementation decision was based on import, consumer and selector reachability evidence rather than literal presence alone.
+The trace establishes the DOM replacement race directly; it does not require or claim a production application failure.
 
 Reusable lesson:
 
-A legacy literal is actionable only after proving the selector is consumed by production markup and wins or participates in the effective cascade.
+A browser fixture that mutates framework-owned DOM must not split mutation and evidence across scheduler boundaries unless framework hydration/ownership is explicitly synchronized. For pure computed-style proof, atomic connected-DOM sampling is safer and more faithful than replacing the application body.
 
-### Semantic presentation and computed-style regression proof
+### Hydration-safe computed-style fixture
 
 Purpose:
 
-Replace only fatal-boundary paint ownership with current semantic tokens and prove the effective browser cascade in both explicit Light and Dark without changing error lifecycle behavior.
+Preserve the #687/#688 semantic cascade proof while eliminating React hydration as a competing DOM owner.
 
 Instruction source:
 
-Issue #687 acceptance criteria plus Agent Harness visual/cascade testing rules.
+Issue #689 acceptance criteria and the computed-cascade/browser evidence requirements inherited from #687/#205.
 
 Version or verification date:
 
@@ -94,55 +94,52 @@ Version or verification date:
 
 Inputs:
 
-Current `--ak-color-*` appearance contract and exact `.lx-fatal-error` selector family rendered by `ApplicationErrorBoundary`.
+The exact selector fixture and semantic assertions already collected by blocking `test:e2e:ui`.
 
 Files inspected:
 
+- `frontend/e2e/application-error-boundary-appearance.spec.ts`
 - `frontend/app/error-boundary.css`
-- `frontend/components/application-error-boundary.tsx`
-- `frontend/app/layout.tsx`
-- `frontend/app/appearance.css`
-- `frontend/package.json`
+- existing WebKit appearance tests using the real application cascade
 
 Actions performed:
 
-- Replaced fixed fatal canvas/text/error/muted paint and the legacy purple radial accent with semantic canvas, surface, subtle, weak, main-text and muted-text ownership.
-- Preserved all existing geometry and mobile action stacking.
-- Added a fail-closed Vitest source contract protecting global import, real selector consumers, lifecycle invariants, semantic-token usage, removal of known old literals and blocking browser collection.
-- Added Playwright Light/Dark computed-style proof using the complete runtime stylesheet cascade and an exact-selector fixture.
-- Added that proof to `test:e2e:ui`.
+- Removed the cross-task `mountFatalBoundaryFixture()` / locator visibility sequence.
+- Moved fixture creation into `semanticPresentationSnapshot()`.
+- Appended the synthetic fatal boundary to the live document without replacing the React-owned body.
+- Captured fixture computed styles and resolved semantic token probes in the same `page.evaluate()` task.
+- Removed the fixture in `finally` before the browser task returns.
+- Added an explicit post-capture zero-count assertion proving the synthetic fixture does not persist.
+- Preserved every Light/Dark semantic equality assertion and kept the test in the same blocking collection/browser matrix.
 
 Commands or procedures:
 
-Connected GitHub file updates with required read-back, branch-head verification and `main` drift checks after each write.
+Connected GitHub branch/file writes with required read-back and exact-main drift verification.
 
 Artifacts produced:
 
-- `frontend/app/error-boundary.css`
-- `frontend/components/application-error-boundary-semantic-css-ownership.test.ts`
-- `frontend/e2e/application-error-boundary-appearance.spec.ts`
-- updated `frontend/package.json`
+Updated `frontend/e2e/application-error-boundary-appearance.spec.ts` on Issue #689 branch.
 
 Result:
 
-Source ownership is now semantic by construction; effective browser verification is prepared for immutable-head CI.
+The fixture remains connected while computed styles are sampled, but React cannot interleave between insertion and evidence capture because JavaScript execution is atomic within the single evaluation task. The application body is never replaced.
 
 Failures:
 
-None reproduced before PR CI.
+No hotfix CI result yet; full immutable-head validation is still required.
 
 Root cause:
 
-Not applicable to the implementation phase beyond the ownership root cause above.
+Resolved in test-harness design by removing the scheduler boundary around React-owned DOM mutation.
 
 Fallback:
 
-If CI shows a later stylesheet wins the cascade, change the actual winning owner or narrowly increase ownership specificity; do not weaken computed-style assertions and do not add broad `!important`.
+If immutable-head CI exposes a browser-specific computed-style mismatch, inspect that exact cascade evidence; do not restore sleeps, skip WebKit or weaken semantic assertions.
 
 Limitations:
 
-The Playwright proof does not deliberately crash production React code or add a production-only test hook. Instead it loads the real application/global CSS cascade, mounts the exact selector family, and is bound back to the real component/import through a fail-closed source contract. `frontend/app/global-error.tsx` remains explicitly outside this atomic slice.
+This remains a selector-level computed-style proof rather than deliberately crashing production React. The existing fail-closed source contract from #688 continues to bind the fixture selectors to the real `ApplicationErrorBoundary` owner.
 
 Reusable lesson:
 
-For global error presentation, pair source reachability contracts with final `getComputedStyle` evidence; this proves both that the real component owns the selectors and that the complete browser cascade resolves the intended semantic values without perturbing failure/recovery state machines.
+For CSS ownership verification inside a hydrated SPA, append an ephemeral connected fixture and sample it atomically; do not replace the framework root and then depend on the fixture surviving into a later browser task.

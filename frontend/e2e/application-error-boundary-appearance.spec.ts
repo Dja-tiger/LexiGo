@@ -8,8 +8,8 @@ async function installAppearancePreference(page: Page, appearance: ExplicitAppea
   }, appearance);
 }
 
-async function mountFatalBoundaryFixture(page: Page) {
-  await page.evaluate(() => {
+async function semanticPresentationSnapshot(page: Page) {
+  return page.evaluate(() => {
     const fixture = document.createElement("main");
     fixture.className = "lx-fatal-error";
     fixture.setAttribute("data-testid", "application-error-boundary-appearance-fixture");
@@ -25,74 +25,78 @@ async function mountFatalBoundaryFixture(page: Page) {
         <button class="lx-button ghost" type="button">На главную</button>
       </div>
     `;
-    document.body.replaceChildren(fixture);
-  });
-}
 
-async function semanticPresentationSnapshot(page: Page) {
-  return page.getByTestId("application-error-boundary-appearance-fixture").evaluate((element) => {
-    const resolveColor = (value: string) => {
-      const probe = document.createElement("span");
-      probe.style.color = value;
-      document.body.appendChild(probe);
-      const resolved = getComputedStyle(probe).color;
-      probe.remove();
-      return resolved;
-    };
-    const resolveBackground = (value: string) => {
-      const probe = document.createElement("span");
-      probe.style.backgroundColor = value;
-      document.body.appendChild(probe);
-      const resolved = getComputedStyle(probe).backgroundColor;
-      probe.remove();
-      return resolved;
-    };
-    const resolveBorder = (value: string) => {
-      const probe = document.createElement("span");
-      probe.style.border = "1px solid";
-      probe.style.borderColor = value;
-      document.body.appendChild(probe);
-      const resolved = getComputedStyle(probe).borderColor;
-      probe.remove();
-      return resolved;
-    };
+    // Keep fixture insertion and computed-style evidence capture inside one browser
+    // task. React/Next hydration cannot interleave with this evaluation and reclaim
+    // the React-owned body before the evidence is read (Issue #689).
+    document.body.appendChild(fixture);
 
-    const mark = element.querySelector(".lx-fatal-error-mark");
-    const label = element.querySelector(":scope > span");
-    const heading = element.querySelector("h1");
-    const body = element.querySelector("p");
-    const code = element.querySelector("code");
-    const surfaceStyle = getComputedStyle(element);
-    const markStyle = mark ? getComputedStyle(mark) : null;
-    const codeStyle = code ? getComputedStyle(code) : null;
+    try {
+      const resolveColor = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.color = value;
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+      };
+      const resolveBackground = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.backgroundColor = value;
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return resolved;
+      };
+      const resolveBorder = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.border = "1px solid";
+        probe.style.borderColor = value;
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).borderColor;
+        probe.remove();
+        return resolved;
+      };
 
-    return {
-      appearance: document.documentElement.dataset.lexigoAppearance,
-      backgroundColor: surfaceStyle.backgroundColor,
-      backgroundImage: surfaceStyle.backgroundImage,
-      color: surfaceStyle.color,
-      headingColor: heading ? getComputedStyle(heading).color : "",
-      markColor: markStyle?.color ?? "",
-      markBackgroundColor: markStyle?.backgroundColor ?? "",
-      markBorderColor: markStyle?.borderColor ?? "",
-      labelColor: label ? getComputedStyle(label).color : "",
-      bodyColor: body ? getComputedStyle(body).color : "",
-      codeColor: codeStyle?.color ?? "",
-      codeBackgroundColor: codeStyle?.backgroundColor ?? "",
-      tokenCanvas: resolveColor("var(--ak-color-canvas)"),
-      tokenTextMain: resolveColor("var(--ak-color-text-main)"),
-      tokenTextMuted: resolveColor("var(--ak-color-text-muted)"),
-      tokenWeak: resolveColor("var(--ak-color-weak)"),
-      markBackground: resolveBackground(
-        "color-mix(in srgb, var(--ak-color-weak) 12%, var(--ak-color-surface))",
-      ),
-      markBorder: resolveBorder(
-        "color-mix(in srgb, var(--ak-color-weak) 46%, var(--ak-color-text-muted))",
-      ),
-      codeBackground: resolveBackground(
-        "color-mix(in srgb, var(--ak-color-subtle) 72%, var(--ak-color-surface))",
-      ),
-    };
+      const mark = fixture.querySelector(".lx-fatal-error-mark");
+      const label = fixture.querySelector(":scope > span");
+      const heading = fixture.querySelector("h1");
+      const body = fixture.querySelector("p");
+      const code = fixture.querySelector("code");
+      const surfaceStyle = getComputedStyle(fixture);
+      const markStyle = mark ? getComputedStyle(mark) : null;
+      const codeStyle = code ? getComputedStyle(code) : null;
+
+      return {
+        appearance: document.documentElement.dataset.lexigoAppearance,
+        backgroundColor: surfaceStyle.backgroundColor,
+        backgroundImage: surfaceStyle.backgroundImage,
+        color: surfaceStyle.color,
+        headingColor: heading ? getComputedStyle(heading).color : "",
+        markColor: markStyle?.color ?? "",
+        markBackgroundColor: markStyle?.backgroundColor ?? "",
+        markBorderColor: markStyle?.borderColor ?? "",
+        labelColor: label ? getComputedStyle(label).color : "",
+        bodyColor: body ? getComputedStyle(body).color : "",
+        codeColor: codeStyle?.color ?? "",
+        codeBackgroundColor: codeStyle?.backgroundColor ?? "",
+        tokenCanvas: resolveColor("var(--ak-color-canvas)"),
+        tokenTextMain: resolveColor("var(--ak-color-text-main)"),
+        tokenTextMuted: resolveColor("var(--ak-color-text-muted)"),
+        tokenWeak: resolveColor("var(--ak-color-weak)"),
+        markBackground: resolveBackground(
+          "color-mix(in srgb, var(--ak-color-weak) 12%, var(--ak-color-surface))",
+        ),
+        markBorder: resolveBorder(
+          "color-mix(in srgb, var(--ak-color-weak) 46%, var(--ak-color-text-muted))",
+        ),
+        codeBackground: resolveBackground(
+          "color-mix(in srgb, var(--ak-color-subtle) 72%, var(--ak-color-surface))",
+        ),
+      };
+    } finally {
+      fixture.remove();
+    }
   });
 }
 
@@ -106,11 +110,11 @@ for (const appearance of ["light", "dark"] as const) {
       () => page.evaluate(() => document.documentElement.dataset.lexigoAppearance),
     ).toBe(appearance);
 
-    await mountFatalBoundaryFixture(page);
-    const fixture = page.getByTestId("application-error-boundary-appearance-fixture");
-    await expect(fixture).toBeVisible();
-
     const snapshot = await semanticPresentationSnapshot(page);
+
+    // The fixture is intentionally ephemeral: it must not replace or persist in
+    // the React-owned application body after the atomic style read completes.
+    await expect(page.getByTestId("application-error-boundary-appearance-fixture")).toHaveCount(0);
 
     expect(snapshot.appearance).toBe(appearance);
     expect(snapshot.backgroundColor).toBe(snapshot.tokenCanvas);
