@@ -5,7 +5,7 @@
 - Branch: `fix/global-error-semantic-palette`
 - Base SHA: `2ceb77a682710aeaed3b27f0f62ea26c0c54af51`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #693
 
 ## Skills used
 
@@ -224,3 +224,76 @@ The synthetic browser proof verifies exact stylesheet computed semantics against
 Reusable lesson:
 
 Synthetic SPA/root-boundary CSS evidence must connect, sample and clean up atomically. Loading the exact stylesheet text plus browser-resolved semantic tokens gives deterministic cascade evidence without mutating React-owned document structure across scheduler boundaries.
+
+### Playwright module-loader contract triage
+
+Purpose:
+
+Classify and fix the first immutable-head browser failure without weakening runtime, browser assertions or CI coverage.
+
+Instruction source:
+
+- `.agents/AGENTS.base.md`
+- `.agents/AGENTS.tool-selection.md`
+- Issue #692 acceptance criteria;
+- PR #693 CI evidence.
+
+Version or verification date:
+
+2026-08-25.
+
+Inputs:
+
+- CI #4176 / run `32887081347`;
+- UI shard 2 job `97930562720` logs;
+- diagnostics artifact `frontend-playwright-report-ui-2`, artifact ID `9578084822`, SHA-256 `ffd0252e99a4a61c301d11221535c6ecc3ca9e508f3dbe8ace29c588aace392a`;
+- the initial Node-side CSS loader in `application-error-boundary-appearance.spec.ts`.
+
+Files inspected:
+
+- `frontend/e2e/application-error-boundary-appearance.spec.ts`
+- CI #4176 job logs and step conclusions;
+- `.agents/current/{TASK,PROGRESS,EXECUTION}.md`.
+
+Actions performed:
+
+- confirmed classifier and Frontend core quality were green, including lint, typecheck, unit/source tests, production build and dependency audit;
+- identified UI shard 2 failure before any browser test executed;
+- extracted the exact collection error: `SyntaxError: Cannot use 'import.meta' outside a module`;
+- classified the defect as a Playwright Node-side module-loader incompatibility rather than runtime CSS, Next build or browser behavior;
+- did not rerun the same immutable head;
+- replaced `new URL(..., import.meta.url)` with `path.join(process.cwd(), "app", "global-error.css")`, matching the actual isolated frontend CI workspace contract;
+- preserved every Light/Dark assertion, browser project, atomic fixture lifecycle and production file unchanged by this repair.
+
+Commands or procedures:
+
+`GitHub.fetch_workflow_job_steps`, `GitHub.fetch_workflow_job_logs`, exact branch file update, then immediate file/head/main read-back.
+
+Artifacts produced:
+
+- corrected Node-side loader in `frontend/e2e/application-error-boundary-appearance.spec.ts`;
+- factual #4176 failure record in `.agents/current/PROGRESS.md` and this execution log.
+
+Result:
+
+The deterministic collection blocker is removed at its actual loader boundary; a new immutable-head CI is required to prove browser collection and execution.
+
+Failures:
+
+CI #4176 UI shard 2 failed at collection on the superseded head `e6a14b33fc0ff49f917258bf4a06cf416887910e`. This failure remains authoritative history and must not be rewritten as green.
+
+Root cause:
+
+Playwright's collection path for this suite is CommonJS-compatible, so direct `import.meta` use is invalid there even though TypeScript and the Next production build accept the source. Frontend core therefore could not prove this specific test-loader contract.
+
+Fallback:
+
+Use the frontend workspace root exposed by `process.cwd()` for Node-side repository file reads; if the next exact-head CI fails, inspect the new exact job/log/artifact rather than retrying #4176.
+
+Limitations:
+
+This repair changes only the test-side file resolution mechanism. It does not itself prove the Light/Dark computed-style assertions; that evidence must come from the next immutable-head UI shard.
+
+Reusable lesson:
+
+Node-side Playwright helpers must honor the module format and filesystem boundary used by actual test collection. Passing frontend typecheck and production build does not prove that `import.meta` is valid in the Playwright loader; for repository file reads inside the isolated frontend workspace, prefer the established `process.cwd()` contract when module-format neutrality is required.
