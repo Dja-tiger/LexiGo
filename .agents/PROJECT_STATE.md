@@ -2,13 +2,25 @@
 
 ## Verification
 
-- Last verified: 2026-08-24 Europe/Berlin.
+- Last verified: 2026-08-25 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Current verified `main`: `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
+- Current verified `main`: `6fbd7401f9118a48b207d225943c753f12375e3e`.
 - No open pull requests existed when this reconciliation slice started.
 - Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
 ## Latest completed runtime deliveries
+
+### Issue #684 / PR #685 — semantic 720px true-browser-zoom compact RouteChrome for #205
+
+- Issue #684 is **closed / completed** by PR #685.
+- The intentional #603 `720–767px` compact/mobile continuation remains the production owner for seven ordinary route families at true 200% browser zoom; PR #685 preserves that reflow/clipping repair while replacing its stale copied navy/purple floating-bar presentation with the current semantic compact navigation geometry and appearance tokens.
+- Regression protection includes a fail-closed #603/#684 source ownership contract, an authoritative true-browser-zoom computed-style Light/Dark proof at exact `innerWidth=720`, and the existing seven-route #603/consolidated CDP visual/reflow matrix. Reviewed Linux content-addressed fingerprints were updated only for the intended semantic presentation delta.
+- Home remains independently owned at exact 720px, focused Active Lesson / Onboarding ownership is unchanged, and 719px compact plus 768px tablet boundaries remain regression controls.
+- Final developer head: `14f39d0d67e5344b5dce5f9f324bb58178818012`.
+- Full immutable-head PR CI #4166 / run `32834009903`: **success**.
+- PR #685 squash merge/current verified runtime `main`: `6fbd7401f9118a48b207d225943c753f12375e3e`.
+- Exact-main push CI #4167 / run `32835211639`: **success**.
+- Exact-SHA Stage run `32836331731`: deploy **success**, public smoke **success**, public browser **success**; API and web run image tag `6fbd7401f9118a48b207d225943c753f12375e3e`, and the 12-test public desktop/iOS runtime matrix passed.
 
 ### Issue #681 / PR #682 — semantic Service Worker update surface for #205
 
@@ -18,9 +30,9 @@
 - Existing canonical visual baselines required no changes; full visual regression remained byte-stable outside the transient update surface.
 - Final developer head: `03a9f08a8f0e5420c920c5713ab5ab86e8df6f8c`.
 - Full immutable-head PR CI #4141 / run `32760498785`: **success**, including frontend core, both UI shards, Controlled Service Worker, visual regression, accessibility, content security, performance, backend unit/integration and API/web container builds.
-- PR #682 squash merge/current verified runtime `main`: `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
+- PR #682 squash merge: `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
 - Exact-main push CI run `32761745559`: **success**.
-- Exact-SHA Stage run `32762898382`: deploy **success**, public smoke **success**, public browser **success**; API and web run image tag `98da1853529afea9ff686f3af37ba24b6ccbadc0`, and the 12-test public desktop/iOS runtime matrix passed.
+- Exact-SHA Stage run `32762898382`: deploy **success**, public smoke **success**, public browser **success**; API and web ran image tag `98da1853529afea9ff686f3af37ba24b6ccbadc0`, and the 12-test public desktop/iOS runtime matrix passed.
 
 ### Issue #678 / PR #679 — semantic tablet RouteChrome palette for #205
 
@@ -66,10 +78,10 @@
 
 ## Stage / deployment
 
-- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `98da1853529afea9ff686f3af37ba24b6ccbadc0`.
-- Stage run `32762898382`: deploy **success**, public smoke **success**, public browser **success**.
+- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `6fbd7401f9118a48b207d225943c753f12375e3e`.
+- Stage run `32836331731`: deploy **success**, public smoke **success**, public browser **success**.
 - The capacity preflight passed with ample free bytes/inodes and preserved persistent volumes plus the rollback/deploy images.
-- PostgreSQL, Redis, API and web became healthy; API and web run the exact `98da1853529afea9ff686f3af37ba24b6ccbadc0` image tag.
+- PostgreSQL, Redis, API and web became healthy; API and web run the exact `6fbd7401f9118a48b207d225943c753f12375e3e` image tag.
 - Public runtime validation passed 12/12 tests across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
 
 ### Issue #659 — Stage PostgreSQL storage incident
@@ -104,7 +116,7 @@
 ## Open automated work verified at reconciliation
 
 - Issue #205 remains the High-priority visual-parity umbrella.
-- The #678 tablet RouteChrome palette defect and #681 global Service Worker update-surface palette defect are delivered and must not be repeated.
+- The #678 tablet RouteChrome palette defect, #681 global Service Worker update-surface palette defect and #684 true-browser-zoom 720–767px compact RouteChrome palette defect are delivered and must not be repeated.
 - User-directed next work remains a route-by-route effective visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than raw color grep or redoing already-approved evidence.
 - Any reproduced runtime/design defect found by the #205 audit must be isolated into its own atomic Issue/PR; the umbrella audit must not silently redesign runtime.
 - Existing route-specific compatibility contracts, including Profile appearance ownership and Word Detail contrast ownership, must not be normalized globally without runtime evidence.
