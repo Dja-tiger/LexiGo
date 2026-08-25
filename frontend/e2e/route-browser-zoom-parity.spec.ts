@@ -140,7 +140,7 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "learn.dark": {
     width: 720,
     height: 995,
-    sha256: "b96851c4a4ac6ac5466a2a78475d55f6b61a5850531205434e586e679df78b0d",
+    sha256: "b96851c4a4ac6acac5466a2a78475d55f6b61a5850531205434e586e679df78b0d",
     sourceRun: 32770042784,
     sourceHeadSha: "b7e028a4c689335c94151e645071731c87c83b97",
   },
@@ -231,16 +231,16 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "profile.light": {
     width: 720,
     height: 4086,
-    sha256: "8dacc1f7f390229c9f4b3fed4a2b037731e00e0fd4b34d702c51027060b0237b",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "4c7aba294951dd87e062ac70f25874513449d55605b6b2b83dcb1cb1caf73f27",
+    sourceRun: 32829389988,
+    sourceHeadSha: "1c6c0abf898efe64794ee0ce95c3be2f0543dc1f",
   },
   "profile.dark": {
     width: 720,
     height: 4086,
-    sha256: "f6b7826b0a9b61e4092aa1696ead3ec7dd73a5c3af1aeafcdf1547c5af1105d5",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "cd0a0c2ea295ff8c7b76e3f0a0454abc2c281f219478fcef0c5061309d085b9f",
+    sourceRun: 32829389988,
+    sourceHeadSha: "1c6c0abf898efe64794ee0ce95c3be2f0543dc1f",
   },
   "onboarding.light": {
     width: 720,
