@@ -217,16 +217,16 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "phrase-detail.light": {
     width: 720,
     height: 1589,
-    sha256: "64b6dfcc35d1aa327945e4fac47c95cc31bd7daa14c199d1f6d4d52f23981f75",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "e6dfc3c60f6537c4577deb2622f70f4673c8b76f48ef553c330d42d17a68544e",
+    sourceRun: 32800435429,
+    sourceHeadSha: "9f63b6636837698afc5ec4b3ad9815425c96a87a",
   },
   "phrase-detail.dark": {
     width: 720,
     height: 1589,
-    sha256: "788bee88dc42223eeff5d9e923ed89d71c9205e8369afa9beb6ff54353576167",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "4d9fafb9ea1acee26452ee1654b2b55cde72f7bc7758112431d0a48157ad05ce",
+    sourceRun: 32800435429,
+    sourceHeadSha: "9f63b6636837698afc5ec4b3ad9815425c96a87a",
   },
   "profile.light": {
     width: 720,
