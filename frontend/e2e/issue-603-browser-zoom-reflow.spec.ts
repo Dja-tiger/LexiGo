@@ -149,16 +149,16 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "phrase-detail.light": {
     width: 720,
     height: 1589,
-    sha256: "221b59a1afb3503e112c7fc4229db3f53363af88912300f501d8f33b0ad59f5c",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "c16204414ef81645b52140aac3cbdcbc8ecc9b93b60aee0dfb853e68b6da88c3",
+    sourceRun: 32800435429,
+    sourceHeadSha: "9f63b6636837698afc5ec4b3ad9815425c96a87a",
   },
   "phrase-detail.dark": {
     width: 720,
     height: 1589,
-    sha256: "d48ab40a94206aeedc6ba6ade9c9adfa56b307304c8a17575b1a057d1f22a652",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "76a0355280bf61c8b3f7296e469123cfd51e31195bb3e4bd5c0c47aad3e3e32e",
+    sourceRun: 32800435429,
+    sourceHeadSha: "9f63b6636837698afc5ec4b3ad9815425c96a87a",
   },
   "profile.light": {
     width: 720,
@@ -297,7 +297,6 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
     }
 
     const textOffenders: Array<{
-      tag: string;
       text: string;
       left: number;
       right: number;
