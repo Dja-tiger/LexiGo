@@ -6,8 +6,6 @@ import { interfaceActionLabel } from "@/lib/interface-copy";
 import { subscribeAppearanceRuntime } from "@/lib/appearance-preference";
 import { clearLexigoRuntimeState, isVersionMismatchError } from "@/lib/service-worker-update";
 
-import "./design-tokens.css";
-import "./appearance.css";
 import "./global-error.css";
 
 const RETRY_ACTION_LABEL = interfaceActionLabel("retry");
