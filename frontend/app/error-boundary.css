@@ -5,10 +5,8 @@
   justify-items: center;
   gap: 14px;
   padding: max(32px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
-  color: #f8f9ff;
-  background:
-    radial-gradient(circle at 50% 20%, rgba(121, 93, 255, .22), transparent 34%),
-    #050914;
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-canvas);
   text-align: center;
 }
 
@@ -17,16 +15,16 @@
   width: 62px;
   height: 62px;
   place-items: center;
-  border: 1px solid rgba(255, 117, 137, .42);
+  border: 1px solid color-mix(in srgb, var(--ak-color-weak) 46%, var(--ak-color-text-muted));
   border-radius: 20px;
-  color: #ff7589;
-  background: rgba(126, 30, 47, .24);
+  color: var(--ak-color-weak);
+  background: color-mix(in srgb, var(--ak-color-weak) 12%, var(--ak-color-surface));
   font-size: 32px;
   font-weight: 800;
 }
 
 .lx-fatal-error > span {
-  color: #ff8798;
+  color: var(--ak-color-weak);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .14em;
@@ -35,6 +33,7 @@
 .lx-fatal-error h1 {
   max-width: 720px;
   margin: 0;
+  color: var(--ak-color-text-main);
   font-size: clamp(30px, 6vw, 54px);
   line-height: 1.05;
 }
@@ -42,16 +41,16 @@
 .lx-fatal-error p {
   max-width: 650px;
   margin: 0;
-  color: #9da9bd;
+  color: var(--ak-color-text-muted);
   line-height: 1.65;
 }
 
 .lx-fatal-error code {
-  border: 1px solid rgba(126, 146, 185, .2);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 10px;
   padding: 7px 10px;
-  color: #b9c4d7;
-  background: rgba(255, 255, 255, .04);
+  color: var(--ak-color-text-muted);
+  background: color-mix(in srgb, var(--ak-color-subtle) 72%, var(--ak-color-surface));
 }
 
 .lx-fatal-error-actions {
