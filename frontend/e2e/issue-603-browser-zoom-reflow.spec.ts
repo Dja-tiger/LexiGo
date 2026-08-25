@@ -107,16 +107,16 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "dictionary.light": {
     width: 720,
     height: 1058,
-    sha256: "c84193a3196fdaa201a12ce1528345db8b68ad4d63442672209f09780cf18659",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "141372bf3f67d078b0c15d96d25e30f95e9a821b63ddf58431ec18ac2e633332",
+    sourceRun: 32786150396,
+    sourceHeadSha: "249070f1349009438f04d98ef5d7b5888eebe011",
   },
   "dictionary.dark": {
     width: 720,
     height: 1058,
-    sha256: "9e7ceb4596f47432bff78ae1b1a4a7c7a4176f77f3edef530438507e8c7e14f4",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "c29fd9b39c0e1340e2703015cd10fe5393da6297396e2d64a3fe3e5576920bf3",
+    sourceRun: 32786150396,
+    sourceHeadSha: "249070f1349009438f04d98ef5d7b5888eebe011",
   },
   "word-detail.light": {
     width: 720,
@@ -527,7 +527,9 @@ async function runAppearance(appearance: ExplicitAppearance, testInfo: TestInfo)
   }
 
   if (reviewRequired.length > 0) {
-    throw new Error(`REVIEW_REQUIRED exact Linux Issue #603 evidence:\n${reviewRequired.join("\n")}`);
+    throw new Error(`REVIEW_REQUIRED exact Linux Issue #603 evidence:\
+${reviewRequired.join("\
+")}`);
   }
 }
 
