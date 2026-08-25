@@ -297,6 +297,7 @@ async function expectNoInternalInlineClipping(page: Page, contract: RouteContrac
     }
 
     const textOffenders: Array<{
+      tag: string;
       text: string;
       left: number;
       right: number;
