@@ -749,9 +749,7 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
   }
 
   if (reviewRequired.length > 0) {
-    throw new Error(`REVIEW_REQUIRED exact Linux 200% browser-zoom evidence:\
-${reviewRequired.join("\
-")}`);
+    throw new Error(`REVIEW_REQUIRED exact Linux 200% browser-zoom evidence:\n${reviewRequired.join("\n")}`);
   }
 }
 
