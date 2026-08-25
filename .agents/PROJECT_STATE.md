@@ -2,13 +2,28 @@
 
 ## Verification
 
-- Last verified: 2026-08-25 Europe/Berlin.
+- Last verified: 2026-08-26 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Current verified runtime `main`: `6237e99c890561be6dfebca467cbe238792c2128`.
-- No open pull requests existed when this reconciliation slice started.
+- Current verified runtime `main`: `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
+- No open pull requests existed when this reconciliation slice started after the completed #693 runtime delivery and Stage validation.
 - Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
 ## Latest completed runtime deliveries
+
+### Issue #692 / PR #693 — semantic Next.js root `global-error` palette for #205
+
+- Issue #692 is **closed / completed** by PR #693.
+- The production-reachable Next.js `global-error` root-layout replacement no longer owns the pre-Foundation fixed dark palette. Canvas, surface, text, muted/weak state and actions derive from current semantic `--ak-color-*` ownership while root failure detection, diagnostics, `reset()`, version-mismatch Service Worker/cache cleanup, reload, localized copy and Home navigation remain unchanged.
+- Because `global-error` replaces the root layout, it now imports only one dedicated emergency stylesheet instead of pulling the full normal-layout `design-tokens.css` and `appearance.css` owners into ordinary route graphs. That stylesheet mirrors only the seven consumed semantic colors for base/system-dark and explicit Light/Dark states, with a fail-closed source contract comparing every mirrored value to the canonical owners.
+- Browser evidence reuses the live CSP nonce when injecting the exact stylesheet text and samples/removes the synthetic root-error fixture atomically without replacing the React-owned body. This preserves the hydration-safe lesson from #689 and avoids the CSP failure proven during superseded CI #4180.
+- No JavaScript byte ceiling changed. Only three previously zero-headroom request ceilings were reconciled by exactly one request for the single root-fallback CSS asset: `/words/101`, `/scenarios` and `/scenarios/incident-update`.
+- Superseded CI #4176 / run `32887081347` exposed a Playwright CommonJS collection incompatibility with `import.meta`; the Node-side stylesheet loader was corrected to the frontend `process.cwd()` contract without weakening browser assertions.
+- Superseded CI #4180 / run `32887884931` proved two deterministic test/integration defects: the synthetic style lacked the page nonce, and the three-import special-boundary implementation leaked extra CSS requests into normal routes. Both were corrected at their actual boundaries rather than retried blindly.
+- Final developer head: `733fc18af54018fbaadec8bddb3c5ebf7e69c1fc`.
+- Full immutable-head PR CI #4188 / run `32906584146`: **success**, including frontend core, both UI shards, visual regression, accessibility, performance, content security, iOS PWA, controlled Service Worker, lesson/dictionary browser gates, backend checks and container builds.
+- PR #693 squash merge/current verified runtime `main`: `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
+- Exact-main push CI #4189 / run `32908963627`: **success** across the full required matrix, including both UI shards and the reconciled performance budgets.
+- Exact-SHA Stage #4042 / run `32909896850`: **success**; deploy **success**, public smoke **success**, public browser **success**. API and web run image tag `8e037dd161026987c687ac9075dc809e4c7ab6ad`; the public desktop Chromium/iOS WebKit matrix passed **12/12**.
 
 ### Issue #689 / PR #690 — hydration-safe ApplicationErrorBoundary appearance proof
 
@@ -17,9 +32,9 @@
 - PR #690 preserves every Light/Dark semantic computed-style assertion while appending an ephemeral connected fixture, sampling the real runtime cascade and removing the fixture atomically inside one `page.evaluate()` task. No production CSS/component/runtime behavior, browser skip, sleep-based correctness mechanism or visual fingerprint changed.
 - Final developer head: `016ef3b57e53226cca06947b18da0008b1ae2822`.
 - Full immutable-head PR CI #4172 / run `32875700307`: **success**, including both UI shards and the previously failing iOS WebKit Light/Dark proof.
-- PR #690 squash merge/current verified runtime `main`: `6237e99c890561be6dfebca467cbe238792c2128`.
+- PR #690 squash merge/runtime main at deployment time: `6237e99c890561be6dfebca467cbe238792c2128`.
 - Exact-main push CI #4173 / run `32882157881`: **success**, including frontend core, both UI shards, visual regression, accessibility, performance, content security, iOS PWA, controlled Service Worker, backend checks, API/web container builds and deployment Caddy publication.
-- Exact-SHA Stage #4026 / run `32883322112`: **success**; deploy **success**, public smoke **success**, public browser **success**. API and web run image tag `6237e99c890561be6dfebca467cbe238792c2128`; the public desktop Chromium/iOS WebKit matrix passed **12/12**.
+- Exact-SHA Stage #4026 / run `32883322112`: **success**; deploy **success**, public smoke **success**, public browser **success**. API and web ran image tag `6237e99c890561be6dfebca467cbe238792c2128`; the public desktop Chromium/iOS WebKit matrix passed **12/12**.
 
 ### Issue #687 / PR #688 — semantic global ApplicationErrorBoundary palette for #205
 
@@ -32,7 +47,7 @@
 - First exact-main push CI #4171 / run `32873693448`: **failure** only in `Frontend E2E (UI tests (shard 2/2))`; Stage was correctly blocked. Visual regression, Accessibility, Performance, Content Security, iOS PWA, Controlled Service Worker, Dictionary smoke, Lesson completion, backend and UI shard 1 passed on that same SHA.
 - Downloaded artifact `frontend-playwright-report-ui-2` / `9573435222` and WebKit traces proved the failure mechanism described in #689. This failed first post-merge attempt remains authoritative delivery history and is intentionally not rewritten as green.
 - Final successful exact-main and Stage validation for the delivered semantic palette is provided by follow-up #689/#690 on runtime SHA `6237e99c890561be6dfebca467cbe238792c2128`.
-- `frontend/app/global-error.tsx` remains explicitly outside #687/#688 and must be treated as an independent root-layout/bootstrap owner if a future #205 audit proves a distinct defect there.
+- `frontend/app/global-error.tsx` was explicitly outside #687/#688 and is now independently delivered by #692/#693.
 
 ### Issue #684 / PR #685 — semantic 720px true-browser-zoom compact RouteChrome for #205
 
@@ -102,12 +117,12 @@
 
 ## Stage / deployment
 
-- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `6237e99c890561be6dfebca467cbe238792c2128`.
-- Stage #4026 / run `32883322112`: deploy **success**, public smoke **success**, public browser **success**.
-- The exact CI scope artifact for `6237e99c890561be6dfebca467cbe238792c2128` was downloaded and validated before deployment.
-- The capacity preflight passed and preserved persistent volumes plus required rollback/deploy images.
-- PostgreSQL, Redis, API and web became healthy; API and web run the exact `6237e99c890561be6dfebca467cbe238792c2128` image tag.
-- Public runtime validation passed **12/12** tests across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
+- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
+- Stage #4042 / run `32909896850`: deploy **success**, public smoke **success**, public browser **success**.
+- The exact CI scope artifact for `8e037dd161026987c687ac9075dc809e4c7ab6ad` was downloaded and validated before deployment.
+- The bounded capacity preflight passed while preserving persistent volumes and the required rollback/deploy images; after cleanup the Stage host retained about 18.1 GiB available and healthy PostgreSQL/Redis/API/web services.
+- PostgreSQL, Redis, API and web became healthy; API and web run the exact `8e037dd161026987c687ac9075dc809e4c7ab6ad` image tag.
+- Public frontend root and API readiness returned HTTP 200 on the first attempt, and public runtime validation passed **12/12** tests across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
 
 ### Issue #659 — Stage PostgreSQL storage incident
 
@@ -141,10 +156,10 @@
 ## Open automated work verified at reconciliation
 
 - Issue #205 remains the High-priority visual-parity umbrella.
-- The #678 tablet RouteChrome palette defect, #681 global Service Worker update-surface palette defect, #684 true-browser-zoom 720–767px compact RouteChrome palette defect and #687 global `ApplicationErrorBoundary` palette defect are delivered and must not be repeated.
+- The #678 tablet RouteChrome palette defect, #681 global Service Worker update-surface palette defect, #684 true-browser-zoom 720–767px compact RouteChrome palette defect, #687 global `ApplicationErrorBoundary` palette defect and #692 Next.js root `global-error` palette defect are delivered and must not be repeated.
 - #689 was a trace-proven browser-test harness race in the #687/#688 proof and is delivered by #690; it is not a separate product visual defect.
+- The #692/#693 CI recovery adds two reusable test/ownership lessons: synthetic exact-CSS browser evidence must obey the live nonce-CSP, and a special App Router root replacement must not import broad normal-layout CSS owners if that makes its assets part of every normal route graph.
 - User-directed next work remains a route-by-route effective visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than raw color grep or redoing already-approved evidence.
-- `frontend/app/global-error.tsx` was observed during #687 discovery but remains an independent root-layout/bootstrap owner. It is only a candidate for the next #205 slice after live production reachability/appearance semantics and duplicate-Issue checks prove a distinct defect; do not assume it is actionable from literal grep alone.
 - Any reproduced runtime/design defect found by the #205 audit must be isolated into its own atomic Issue/PR; the umbrella audit must not silently redesign runtime.
 - Existing route-specific compatibility contracts, including Profile appearance ownership and Word Detail contrast ownership, must not be normalized globally without runtime evidence.
 - Issue #654 remains Low-priority product-delight polish and is intentionally behind core learning/reliability/accessibility/parity work.
