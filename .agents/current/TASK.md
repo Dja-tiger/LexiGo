@@ -6,7 +6,7 @@
 - Branch: `fix/global-error-semantic-palette`
 - Base SHA: `2ceb77a682710aeaed3b27f0f62ea26c0c54af51`
 - Head SHA: resolve from live branch ref
-- PR: pending
+- PR: #693
 
 ## Objective
 
@@ -63,6 +63,7 @@ Make the production-reachable Next.js root `global-error` fallback self-containe
 ## Documentation owners
 
 - Issue #692;
+- PR #693;
 - parent visual-parity umbrella #205;
 - active OpenPencil map `docs/figma/openpencil-screen-map.json`, shared Error provenance `state.error.dark` / `fig_4222`;
 - `.agents/PROJECT_STATE.md` only after completed runtime delivery in separate reconciliation.
@@ -102,7 +103,8 @@ Make the production-reachable Next.js root `global-error` fallback self-containe
 
 - root `global-error` replaces the normal root layout, so implicit normal-layout CSS/bootstrap assumptions can leave the fallback unstyled or fixed-theme;
 - importing too much normal application CSS would couple the emergency root fallback to unrelated legacy cascade owners;
-- browser proof must not repeat the #689 hydration race by replacing React-owned document content.
+- browser proof must not repeat the #689 hydration race by replacing React-owned document content;
+- Playwright spec collection runs through a CommonJS-compatible loader, so Node-side evidence helpers must not require `import.meta`.
 
 ## Rollback
 
