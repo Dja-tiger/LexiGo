@@ -6,11 +6,13 @@ const focused = readFileSync(new URL("../app/issue-603-browser-zoom-reflow.css",
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const routeNavigation = readFileSync(new URL("../app/route-navigation.css", import.meta.url), "utf8");
 const adaptiveNavigation = readFileSync(new URL("../app/adaptive-navigation.css", import.meta.url), "utf8");
+const semanticCompact = readFileSync(new URL("../app/adaptive-knowledge-coach-home.css", import.meta.url), "utf8");
 const learningSwitch = readFileSync(new URL("../app/learning-section-switch.css", import.meta.url), "utf8");
 const profileTablet = readFileSync(new URL("../app/profile-tablet-layout.css", import.meta.url), "utf8");
 const reminder = readFileSync(new URL("../app/calendar-reminder-entry.css", import.meta.url), "utf8");
 const visualConfig = readFileSync(new URL("../playwright.visual.config.ts", import.meta.url), "utf8");
 const browserProof = readFileSync(new URL("../e2e/issue-603-browser-zoom-reflow.spec.ts", import.meta.url), "utf8");
+const semanticBrowserProof = readFileSync(new URL("../e2e/issue-684-zoom-compact-semantic.spec.ts", import.meta.url), "utf8");
 const learnBrowserZoom = readFileSync(new URL("../e2e/learn-browser-zoom.spec.ts", import.meta.url), "utf8");
 const phrasesVisual = readFileSync(new URL("../e2e/phrases-visual.spec.ts", import.meta.url), "utf8");
 
@@ -64,7 +66,45 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(focused).toContain("display: none;");
     expect(focused).toContain(".lx-route-nav--mobile {");
     expect(focused).toContain("display: grid;");
-    expect(focused).toContain("grid-template-columns: repeat(4, minmax(48px, 1fr));");
+    expect(focused).toContain("grid-template-columns: repeat(4, minmax(0, 1fr));");
+  });
+
+  it("keeps the Issue #684 late compact owner aligned with current semantic compact presentation", () => {
+    expect(semanticCompact).toContain("@media (max-width: 719px) {");
+    for (const declaration of [
+      "right: 0;",
+      "bottom: 0;",
+      "left: 0;",
+      "min-height: calc(72px + env(safe-area-inset-bottom));",
+      "grid-template-columns: repeat(4, minmax(0, 1fr));",
+      "gap: 0;",
+      "border-top: 1px solid var(--ak-border);",
+      "border-radius: 0;",
+      "background: color-mix(in srgb, var(--ak-surface) 96%, transparent);",
+      "box-shadow: none;",
+      "backdrop-filter: blur(18px);",
+      "min-width: 44px;",
+      "min-height: 54px;",
+      "border-radius: 10px;",
+      "color: var(--ak-text-muted);",
+      "font-size: 11px;",
+      "font-weight: 600;",
+      "color: var(--ak-primary);",
+      "background: transparent;",
+    ]) {
+      expect(semanticCompact, `canonical compact owner missing ${declaration}`).toContain(declaration);
+      expect(focused, `720-767 continuation must mirror ${declaration}`).toContain(declaration);
+    }
+
+    expect(focused).toContain("Issue #684: preserve #603 compact ownership but use current semantic compact chrome.");
+    for (const retiredPaint of [
+      "rgba(126, 146, 185, 0.2)",
+      "rgba(8, 14, 27, 0.96)",
+      "#c1adff",
+      "rgba(104, 75, 220, 0.19)",
+    ]) {
+      expect(focused, `retired compact paint must stay absent: ${retiredPaint}`).not.toContain(retiredPaint);
+    }
   });
 
   it("resets route-specific rail reservations only inside the exact gap", () => {
@@ -104,6 +144,7 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
 
   it("routes the true browser-owned 720px proof through authoritative Visual CI and keeps it fail-closed", () => {
     expect(visualConfig.match(/"issue-603-browser-zoom-reflow\.spec\.ts"/g)).toHaveLength(1);
+    expect(visualConfig.match(/"issue-684-zoom-compact-semantic\.spec\.ts"/g)).toHaveLength(1);
     expect(browserProof).toContain('testInfo.project.name !== "visual-desktop"');
     expect(browserProof).toContain('viewport: { width: 1440, height: 900 }');
     expect(browserProof).toContain("setBrowserZoom(worker, targetURL, 2)");
@@ -121,6 +162,18 @@ describe("Issue #603 exact 720px browser-zoom reflow ownership", () => {
     expect(browserProof).not.toContain("page.screenshot({");
     expect(browserProof).toContain("REVIEW_REQUIRED");
     expect(browserProof).not.toContain("font-size: 200%");
+
+    expect(semanticBrowserProof).toContain('testInfo.project.name !== "visual-desktop"');
+    expect(semanticBrowserProof).toContain('viewport: { width: 1440, height: 900 }');
+    expect(semanticBrowserProof).toContain("setBrowserZoom(worker, page.url(), 2)");
+    expect(semanticBrowserProof).toContain("window.innerWidth");
+    expect(semanticBrowserProof).toContain("toBe(720)");
+    expect(semanticBrowserProof).toContain('[data-route-navigation="mobile"]');
+    expect(semanticBrowserProof).toContain("getComputedStyle");
+    expect(semanticBrowserProof).toContain("--ak-border");
+    expect(semanticBrowserProof).toContain("--ak-surface");
+    expect(semanticBrowserProof).toContain("--ak-text-muted");
+    expect(semanticBrowserProof).toContain("--ak-primary");
   });
 
   it("keeps standalone Learn and Phrases zoom owners aligned with compact RouteChrome at exact 720px", () => {

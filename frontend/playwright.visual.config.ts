@@ -30,6 +30,7 @@ export default defineConfig({
     "route-browser-zoom-parity.spec.ts",
     "route-transition-runtime-visual.spec.ts",
     "issue-603-browser-zoom-reflow.spec.ts",
+    "issue-684-zoom-compact-semantic.spec.ts",
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),

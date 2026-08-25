@@ -33,8 +33,9 @@ test("shows persistent offline details and a dismissible restored-connection sta
   await expect(page.getByRole("main", { name: "Главная", exact: true })).toBeVisible();
 
   await context.setOffline(true);
-  await expect(page.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Подробнее", exact: true }).click();
+  const connectivity = page.getByRole("complementary", { name: "Состояние подключения и синхронизации" });
+  await expect(connectivity.getByText("Нет подключения к сети", { exact: true })).toBeVisible();
+  await connectivity.getByRole("button", { name: "Подробнее", exact: true }).click();
 
   const panel = page.locator("#lexigo-connectivity-panel");
   await expect(panel.getByRole("heading", { name: "Работа без сети", exact: true })).toBeVisible();
@@ -49,9 +50,9 @@ test("shows persistent offline details and a dismissible restored-connection sta
   await expect(panel.getByRole("button", { name: "Проверить соединение", exact: true })).toBeVisible();
 
   await context.setOffline(false);
-  await expect(page.getByText("Подключение восстановлено", { exact: true })).toBeVisible();
-  await expect(page.getByText("LexiGo снова может загружать материалы и синхронизировать локальную очередь.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Готово", exact: true }).click();
+  await expect(connectivity.getByText("Подключение восстановлено", { exact: true })).toBeVisible();
+  await expect(connectivity.getByText("LexiGo снова может загружать материалы и синхронизировать локальную очередь.", { exact: true })).toBeVisible();
+  await connectivity.getByRole("button", { name: "Готово", exact: true }).click();
   await expect(page.locator(".lx-system-connectivity")).toHaveCount(0);
 });
 
