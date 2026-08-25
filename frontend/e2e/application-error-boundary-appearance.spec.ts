@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-const GLOBAL_ERROR_CSS = readFileSync(new URL("../app/global-error.css", import.meta.url), "utf8");
+const GLOBAL_ERROR_CSS = readFileSync(path.join(process.cwd(), "app", "global-error.css"), "utf8");
 
 type ExplicitAppearance = "light" | "dark";
 
