@@ -7,14 +7,14 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
-  border: 1px solid rgba(91, 181, 255, 0.24);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 26%, transparent);
   border-radius: 23px;
   padding: 21px 23px;
-  color: var(--lx-text, #f7f8ff);
+  color: var(--ak-color-text-main);
   background:
-    radial-gradient(circle at 12% 0%, rgba(51, 168, 255, 0.16), transparent 42%),
-    linear-gradient(145deg, rgba(13, 28, 49, 0.96), rgba(8, 17, 31, 0.96));
-  box-shadow: var(--lx-shadow, 0 24px 80px rgba(0, 0, 0, 0.34));
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--ak-color-primary) 12%, transparent), transparent 42%),
+    var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-2);
 }
 
 .lx-calendar-reminder-card-icon {
@@ -22,10 +22,10 @@
   width: 54px;
   height: 54px;
   place-items: center;
-  border: 1px solid rgba(83, 190, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--ak-color-primary) 34%, transparent);
   border-radius: 17px;
-  color: #78ceff;
-  background: rgba(31, 145, 216, 0.15);
+  color: var(--ak-color-primary);
+  background: var(--ak-color-primary-soft);
   font-size: 29px;
 }
 
@@ -35,7 +35,7 @@
 
 .lx-calendar-reminder-card-copy > span,
 .lx-calendar-modal header span {
-  color: #6fc8ff;
+  color: var(--ak-color-primary);
   font-size: 11px;
   font-weight: 850;
   letter-spacing: 0.13em;
@@ -49,7 +49,7 @@
 
 .lx-calendar-reminder-card-copy p {
   margin: 7px 0 0;
-  color: #8290a7;
+  color: var(--ak-color-text-muted);
   line-height: 1.45;
 }
 
@@ -61,7 +61,7 @@
   place-items: center;
   overflow-y: auto;
   padding: max(22px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
-  background: rgba(2, 6, 15, 0.78);
+  background: color-mix(in srgb, var(--ak-color-canvas) 34%, black 66%);
   backdrop-filter: blur(18px);
   animation: lx-calendar-backdrop-in 160ms ease-out;
 }
@@ -73,14 +73,14 @@
 
 .lx-calendar-modal {
   width: min(760px, 100%);
-  border: 1px solid rgba(129, 154, 201, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 24%, transparent);
   border-radius: 27px;
   padding: 27px;
-  color: var(--lx-text, #f7f8ff);
+  color: var(--ak-color-text-main);
   background:
-    radial-gradient(circle at 85% 0%, rgba(104, 80, 242, 0.17), transparent 35%),
-    linear-gradient(145deg, #0d182b, #07101e);
-  box-shadow: 0 38px 110px rgba(0, 0, 0, 0.58);
+    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--ak-color-primary) 12%, transparent), transparent 35%),
+    var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-3);
   animation: lx-calendar-modal-in 180ms ease-out;
 }
 
@@ -107,17 +107,17 @@
 }
 
 .lx-calendar-modal header h2[tabindex="-1"]:focus-visible {
-  outline: var(--lx-focus-width, 3px) solid var(--lx-focus-ring, #f8fafc) !important;
+  outline: var(--lx-focus-width, 3px) solid var(--lx-focus-ring, var(--ak-color-primary)) !important;
   outline-offset: var(--lx-focus-offset, 3px);
   box-shadow:
-    0 0 0 1px var(--lx-focus-edge, #050914),
-    0 0 0 7px var(--lx-focus-halo, rgba(79, 195, 255, 0.46)) !important;
+    0 0 0 1px var(--lx-focus-edge, var(--ak-color-canvas)),
+    0 0 0 7px var(--lx-focus-halo, color-mix(in srgb, var(--ak-color-primary) 28%, transparent)) !important;
 }
 
 .lx-calendar-modal header p {
   max-width: 590px;
   margin: 10px 0 0;
-  color: #8491a8;
+  color: var(--ak-color-text-muted);
   line-height: 1.55;
 }
 
@@ -126,17 +126,17 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(145, 168, 211, 0.16);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 24%, transparent);
   border-radius: 13px;
-  color: #b8c1d2;
-  background: rgba(255, 255, 255, 0.035);
+  color: var(--ak-color-text-muted);
+  background: color-mix(in srgb, var(--ak-color-subtle) 54%, transparent);
   font-size: 26px;
   line-height: 1;
 }
 
 .lx-calendar-modal-close:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-primary-soft);
 }
 
 .lx-calendar-form-grid {
@@ -149,7 +149,7 @@
 .lx-calendar-form-grid label {
   display: grid;
   gap: 8px;
-  color: #aeb8c9;
+  color: var(--ak-color-text-muted);
   font-size: 13px;
   font-weight: 720;
 }
@@ -158,23 +158,23 @@
 .lx-calendar-form-grid select {
   width: 100%;
   min-height: 48px;
-  border: 1px solid rgba(143, 161, 197, 0.19);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 32%, transparent);
   border-radius: 13px;
   padding: 0 14px;
-  color: #f8f9ff;
-  background: rgba(3, 9, 19, 0.72);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
   font: inherit;
   outline: none;
 }
 
 .lx-calendar-form-grid input:focus,
 .lx-calendar-form-grid select:focus {
-  border-color: rgba(103, 173, 255, 0.65);
-  box-shadow: 0 0 0 3px rgba(51, 168, 255, 0.1);
+  border-color: var(--ak-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ak-color-primary) 14%, transparent);
 }
 
 .lx-calendar-form-grid select {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 .lx-calendar-weekdays {
@@ -185,7 +185,7 @@
 
 .lx-calendar-weekdays legend {
   margin-bottom: 10px;
-  color: #aeb8c9;
+  color: var(--ak-color-text-muted);
   font-size: 13px;
   font-weight: 720;
 }
@@ -198,31 +198,31 @@
 
 .lx-calendar-weekdays button {
   min-height: 42px;
-  border: 1px solid rgba(143, 161, 197, 0.18);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 12px;
-  color: #8c99ae;
-  background: rgba(255, 255, 255, 0.025);
+  color: var(--ak-color-text-muted);
+  background: color-mix(in srgb, var(--ak-color-subtle) 44%, transparent);
 }
 
 .lx-calendar-weekdays button.selected {
-  border-color: rgba(97, 177, 255, 0.68);
-  color: #e9f6ff;
-  background: rgba(39, 141, 215, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(89, 184, 255, 0.08);
+  border-color: var(--ak-color-primary);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-primary-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ak-color-primary) 14%, transparent);
 }
 
 .lx-calendar-preview {
   display: grid;
   gap: 5px;
   margin-top: 22px;
-  border: 1px solid rgba(119, 99, 255, 0.2);
+  border: 1px solid color-mix(in srgb, var(--ak-color-primary) 24%, transparent);
   border-radius: 16px;
   padding: 16px 17px;
-  background: linear-gradient(135deg, rgba(70, 50, 151, 0.13), rgba(29, 111, 166, 0.08));
+  background: color-mix(in srgb, var(--ak-color-primary-soft) 64%, var(--ak-color-surface));
 }
 
 .lx-calendar-preview span {
-  color: #7f8da5;
+  color: var(--ak-color-primary);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -230,11 +230,12 @@
 }
 
 .lx-calendar-preview strong {
+  color: var(--ak-color-text-main);
   font-size: 18px;
 }
 
 .lx-calendar-preview small {
-  color: #8996ab;
+  color: var(--ak-color-text-muted);
   line-height: 1.45;
 }
 
@@ -251,19 +252,19 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 13px;
-  border: 1px solid rgba(143, 161, 197, 0.18);
+  border: 1px solid color-mix(in srgb, var(--ak-color-text-muted) 28%, transparent);
   border-radius: 17px;
   padding: 14px;
-  color: #f7f8ff;
-  background: rgba(255, 255, 255, 0.025);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
   text-align: left;
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 
 .lx-calendar-provider-grid > button:hover {
   transform: translateY(-2px);
-  border-color: rgba(105, 166, 255, 0.46);
-  background: rgba(39, 62, 102, 0.34);
+  border-color: color-mix(in srgb, var(--ak-color-primary) 54%, var(--ak-color-text-muted));
+  background: var(--ak-color-primary-soft);
 }
 
 .lx-calendar-provider-grid > button > span {
@@ -277,13 +278,13 @@
 }
 
 .lx-calendar-provider-grid .google > span {
-  color: #78c9ff;
-  background: rgba(46, 143, 213, 0.17);
+  color: var(--ak-color-primary);
+  background: var(--ak-color-primary-soft);
 }
 
 .lx-calendar-provider-grid .apple > span {
-  color: #d7ddea;
-  background: rgba(173, 184, 203, 0.12);
+  color: var(--ak-color-text-muted);
+  background: var(--ak-color-subtle);
 }
 
 .lx-calendar-provider-grid > button > div {
@@ -292,11 +293,12 @@
 }
 
 .lx-calendar-provider-grid strong {
+  color: var(--ak-color-text-main);
   font-size: 15px;
 }
 
 .lx-calendar-provider-grid small {
-  color: #7f8ca2;
+  color: var(--ak-color-text-muted);
   line-height: 1.4;
 }
 
@@ -309,15 +311,15 @@
 }
 
 .lx-calendar-privacy-note {
-  color: #75839a;
-  background: rgba(255, 255, 255, 0.022);
+  color: var(--ak-color-text-muted);
+  background: color-mix(in srgb, var(--ak-color-subtle) 54%, transparent);
   font-size: 12px;
 }
 
 .lx-calendar-status {
-  border: 1px solid rgba(64, 210, 147, 0.23);
-  color: #a9efd1;
-  background: rgba(22, 113, 75, 0.14);
+  border: 1px solid color-mix(in srgb, var(--ak-color-retained) 36%, transparent);
+  color: var(--ak-color-retained);
+  background: color-mix(in srgb, var(--ak-color-retained) 12%, var(--ak-color-surface));
   font-size: 13px;
 }
 
