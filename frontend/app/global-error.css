@@ -1,3 +1,55 @@
+/*
+ * Next.js global-error replaces the normal root layout when active, so this
+ * emergency boundary cannot rely on layout-owned CSS being present. Keep the
+ * bootstrap palette intentionally tiny: only the semantic colors consumed by
+ * this fallback are mirrored here. A fail-closed source contract compares each
+ * value with design-tokens.css and appearance.css so this copy cannot silently
+ * drift while avoiding their full CSS chunks on every normal route.
+ */
+:root {
+  --ak-color-canvas: #f4f7f5;
+  --ak-color-surface: #ffffff;
+  --ak-color-primary: #2557c7;
+  --ak-color-primary-soft: #dce7ff;
+  --ak-color-weak: #f06a6a;
+  --ak-color-text-main: #10211d;
+  --ak-color-text-muted: #354944;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ak-color-canvas: #10211d;
+    --ak-color-surface: #18302b;
+    --ak-color-primary: #6c93ef;
+    --ak-color-primary-soft: #203b69;
+    --ak-color-weak: #f06a6a;
+    --ak-color-text-main: #ffffff;
+    --ak-color-text-muted: #e6efeb;
+  }
+}
+
+:root[data-lexigo-appearance="light"] {
+  color-scheme: light;
+  --ak-color-canvas: #f4f7f5;
+  --ak-color-surface: #ffffff;
+  --ak-color-primary: #2557c7;
+  --ak-color-primary-soft: #dde8ff;
+  --ak-color-weak: #c93f4f;
+  --ak-color-text-main: #10211d;
+  --ak-color-text-muted: #354944;
+}
+
+:root[data-lexigo-appearance="dark"] {
+  color-scheme: dark;
+  --ak-color-canvas: #10211d;
+  --ak-color-surface: #18302b;
+  --ak-color-primary: #8eafff;
+  --ak-color-primary-soft: #203b69;
+  --ak-color-weak: #ff8d98;
+  --ak-color-text-main: #ffffff;
+  --ak-color-text-muted: #e6efeb;
+}
+
 .lx-global-error-body {
   margin: 0;
   min-height: 100vh;
