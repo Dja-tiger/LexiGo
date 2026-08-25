@@ -175,16 +175,16 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "dictionary.light": {
     width: 720,
     height: 1058,
-    sha256: "71f121025b9dac9572ec746942267e2b9b05c72f957fb47a3092d681e35b0c25",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "efe959368d7546958ff82742e52795d8c6e145546a20badfe3ea900a20b44a6f",
+    sourceRun: 32786150396,
+    sourceHeadSha: "249070f1349009438f04d98ef5d7b5888eebe011",
   },
   "dictionary.dark": {
     width: 720,
     height: 1058,
-    sha256: "fed59daf3407b2b93e56617e75ad8699af5167cea3796643c6dd62ca483b0b53",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "343f67c962949fde460b133ed2ce08bd5c81977aff8fa2c27b22910acd99646a",
+    sourceRun: 32786150396,
+    sourceHeadSha: "249070f1349009438f04d98ef5d7b5888eebe011",
   },
   "word-detail.light": {
     width: 720,
@@ -749,7 +749,9 @@ async function runAppearanceMatrix(appearance: ExplicitAppearance, testInfo: Tes
   }
 
   if (reviewRequired.length > 0) {
-    throw new Error(`REVIEW_REQUIRED exact Linux 200% browser-zoom evidence:\n${reviewRequired.join("\n")}`);
+    throw new Error(`REVIEW_REQUIRED exact Linux 200% browser-zoom evidence:\
+${reviewRequired.join("\
+")}`);
   }
 }
 
