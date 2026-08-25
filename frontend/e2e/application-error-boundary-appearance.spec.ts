@@ -1,4 +1,9 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { expect, test, type Page } from "@playwright/test";
+
+const GLOBAL_ERROR_CSS = readFileSync(path.join(process.cwd(), "app", "global-error.css"), "utf8");
 
 type ExplicitAppearance = "light" | "dark";
 
@@ -100,6 +105,137 @@ async function semanticPresentationSnapshot(page: Page) {
   });
 }
 
+async function globalErrorPresentationSnapshot(page: Page) {
+  return page.evaluate((globalErrorCSS) => {
+    const style = document.createElement("style");
+    const nonce =
+      document.querySelector<HTMLLinkElement>('link[rel="stylesheet"][nonce]')?.nonce
+      ?? document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce;
+    if (!nonce) {
+      throw new Error("CSP nonce is unavailable for global error stylesheet evidence");
+    }
+    style.nonce = nonce;
+    style.textContent = globalErrorCSS;
+    document.head.appendChild(style);
+
+    const fixture = document.createElement("div");
+    fixture.className = "lx-global-error-body";
+    fixture.setAttribute("data-testid", "global-error-appearance-fixture");
+    fixture.innerHTML = `
+      <main class="lx-global-error" role="alert">
+        <section class="lx-global-error-card">
+          <div class="lx-global-error-mark" aria-hidden="true">!</div>
+          <small class="lx-global-error-label">ОШИБКА ПРИЛОЖЕНИЯ</small>
+          <h1 class="lx-global-error-title">LexiGo не смог открыть страницу</h1>
+          <p class="lx-global-error-copy">Повторите загрузку. Сессия и уже сохранённые ответы не удалены.</p>
+          <code class="lx-global-error-code">ROOT_RENDER_FAILURE</code>
+          <div class="lx-global-error-actions">
+            <button class="lx-global-error-action lx-global-error-action--primary" type="button">Повторить</button>
+            <button class="lx-global-error-action lx-global-error-action--secondary" type="button">На главную</button>
+          </div>
+        </section>
+      </main>
+    `;
+
+    // Install the exact root-error stylesheet with the page's real CSP nonce,
+    // connect the synthetic owner, sample final computed styles and clean up in
+    // one browser task. This preserves the hydration-safe evidence contract
+    // established by Issue #689 without weakening Content Security Policy.
+    document.body.appendChild(fixture);
+
+    try {
+      const resolveColor = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.color = value;
+        fixture.appendChild(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+      };
+      const resolveBackground = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.backgroundColor = value;
+        fixture.appendChild(probe);
+        const resolved = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return resolved;
+      };
+      const resolveBorder = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.border = "1px solid";
+        probe.style.borderColor = value;
+        fixture.appendChild(probe);
+        const resolved = getComputedStyle(probe).borderColor;
+        probe.remove();
+        return resolved;
+      };
+
+      const root = fixture.querySelector<HTMLElement>(".lx-global-error");
+      const card = fixture.querySelector<HTMLElement>(".lx-global-error-card");
+      const mark = fixture.querySelector<HTMLElement>(".lx-global-error-mark");
+      const label = fixture.querySelector<HTMLElement>(".lx-global-error-label");
+      const heading = fixture.querySelector<HTMLElement>(".lx-global-error-title");
+      const copy = fixture.querySelector<HTMLElement>(".lx-global-error-copy");
+      const code = fixture.querySelector<HTMLElement>(".lx-global-error-code");
+      const primary = fixture.querySelector<HTMLButtonElement>(".lx-global-error-action--primary");
+      const secondary = fixture.querySelector<HTMLButtonElement>(".lx-global-error-action--secondary");
+
+      if (!root || !card || !mark || !label || !heading || !copy || !code || !primary || !secondary) {
+        throw new Error("global error appearance fixture is incomplete");
+      }
+
+      const bodyStyle = getComputedStyle(fixture);
+      const rootStyle = getComputedStyle(root);
+      const cardStyle = getComputedStyle(card);
+      const primaryStyle = getComputedStyle(primary);
+      const secondaryStyle = getComputedStyle(secondary);
+
+      return {
+        appearance: document.documentElement.dataset.lexigoAppearance,
+        bodyBackgroundColor: bodyStyle.backgroundColor,
+        bodyColor: bodyStyle.color,
+        rootBackgroundColor: rootStyle.backgroundColor,
+        rootBackgroundImage: rootStyle.backgroundImage,
+        rootColor: rootStyle.color,
+        cardBackgroundColor: cardStyle.backgroundColor,
+        cardColor: cardStyle.color,
+        cardBorderColor: cardStyle.borderColor,
+        markColor: getComputedStyle(mark).color,
+        labelColor: getComputedStyle(label).color,
+        headingColor: getComputedStyle(heading).color,
+        copyColor: getComputedStyle(copy).color,
+        codeColor: getComputedStyle(code).color,
+        primaryColor: primaryStyle.color,
+        primaryBackgroundColor: primaryStyle.backgroundColor,
+        primaryBorderColor: primaryStyle.borderColor,
+        secondaryColor: secondaryStyle.color,
+        secondaryBackgroundColor: secondaryStyle.backgroundColor,
+        secondaryBorderColor: secondaryStyle.borderColor,
+        tokenCanvas: resolveBackground("var(--ak-color-canvas)"),
+        tokenSurface: resolveBackground("var(--ak-color-surface)"),
+        tokenTextMain: resolveColor("var(--ak-color-text-main)"),
+        tokenTextMuted: resolveColor("var(--ak-color-text-muted)"),
+        tokenWeak: resolveColor("var(--ak-color-weak)"),
+        tokenPrimary: resolveColor("var(--ak-color-primary)"),
+        tokenPrimarySoft: resolveBackground("var(--ak-color-primary-soft)"),
+        transparentBackground: resolveBackground("transparent"),
+        cardBorder: resolveBorder(
+          "color-mix(in srgb, var(--ak-color-text-main) 18%, transparent)",
+        ),
+        primaryBorder: resolveBorder(
+          "color-mix(in srgb, var(--ak-color-primary) 58%, var(--ak-color-text-muted))",
+        ),
+        secondaryBorder: resolveBorder(
+          "color-mix(in srgb, var(--ak-color-text-muted) 58%, transparent)",
+        ),
+      };
+    } finally {
+      fixture.remove();
+      style.remove();
+    }
+  }, GLOBAL_ERROR_CSS);
+}
+
 test.describe.configure({ timeout: 45_000 });
 
 for (const appearance of ["light", "dark"] as const) {
@@ -128,5 +264,38 @@ for (const appearance of ["light", "dark"] as const) {
     expect(snapshot.bodyColor).toBe(snapshot.tokenTextMuted);
     expect(snapshot.codeColor).toBe(snapshot.tokenTextMuted);
     expect(snapshot.codeBackgroundColor).toBe(snapshot.codeBackground);
+  });
+
+  test(`global root error uses ${appearance} semantic appearance tokens`, async ({ page }) => {
+    await installAppearancePreference(page, appearance);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect.poll(
+      () => page.evaluate(() => document.documentElement.dataset.lexigoAppearance),
+    ).toBe(appearance);
+
+    const snapshot = await globalErrorPresentationSnapshot(page);
+
+    await expect(page.getByTestId("global-error-appearance-fixture")).toHaveCount(0);
+
+    expect(snapshot.appearance).toBe(appearance);
+    expect(snapshot.bodyBackgroundColor).toBe(snapshot.tokenCanvas);
+    expect(snapshot.bodyColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.rootBackgroundColor).toBe(snapshot.tokenCanvas);
+    expect(snapshot.rootBackgroundImage).toBe("none");
+    expect(snapshot.rootColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.cardBackgroundColor).toBe(snapshot.tokenSurface);
+    expect(snapshot.cardColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.cardBorderColor).toBe(snapshot.cardBorder);
+    expect(snapshot.markColor).toBe(snapshot.tokenWeak);
+    expect(snapshot.labelColor).toBe(snapshot.tokenWeak);
+    expect(snapshot.headingColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.copyColor).toBe(snapshot.tokenTextMuted);
+    expect(snapshot.codeColor).toBe(snapshot.tokenTextMuted);
+    expect(snapshot.primaryColor).toBe(snapshot.tokenPrimary);
+    expect(snapshot.primaryBackgroundColor).toBe(snapshot.tokenPrimarySoft);
+    expect(snapshot.primaryBorderColor).toBe(snapshot.primaryBorder);
+    expect(snapshot.secondaryColor).toBe(snapshot.tokenTextMain);
+    expect(snapshot.secondaryBackgroundColor).toBe(snapshot.transparentBackground);
+    expect(snapshot.secondaryBorderColor).toBe(snapshot.secondaryBorder);
   });
 }
