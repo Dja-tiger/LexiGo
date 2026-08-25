@@ -527,9 +527,7 @@ async function runAppearance(appearance: ExplicitAppearance, testInfo: TestInfo)
   }
 
   if (reviewRequired.length > 0) {
-    throw new Error(`REVIEW_REQUIRED exact Linux Issue #603 evidence:\
-${reviewRequired.join("\
-")}`);
+    throw new Error(`REVIEW_REQUIRED exact Linux Issue #603 evidence:\n${reviewRequired.join("\n")}`);
   }
 }
 
