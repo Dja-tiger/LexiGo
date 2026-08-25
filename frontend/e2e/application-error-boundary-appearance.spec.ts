@@ -108,6 +108,13 @@ async function semanticPresentationSnapshot(page: Page) {
 async function globalErrorPresentationSnapshot(page: Page) {
   return page.evaluate((globalErrorCSS) => {
     const style = document.createElement("style");
+    const nonce =
+      document.querySelector<HTMLLinkElement>('link[rel="stylesheet"][nonce]')?.nonce
+      ?? document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce;
+    if (!nonce) {
+      throw new Error("CSP nonce is unavailable for global error stylesheet evidence");
+    }
+    style.nonce = nonce;
     style.textContent = globalErrorCSS;
     document.head.appendChild(style);
 
@@ -130,9 +137,10 @@ async function globalErrorPresentationSnapshot(page: Page) {
       </main>
     `;
 
-    // Install the exact root-error stylesheet, connect the synthetic owner, sample
-    // final computed styles and clean up in one browser task. This preserves the
-    // hydration-safe evidence contract established by Issue #689.
+    // Install the exact root-error stylesheet with the page's real CSP nonce,
+    // connect the synthetic owner, sample final computed styles and clean up in
+    // one browser task. This preserves the hydration-safe evidence contract
+    // established by Issue #689 without weakening Content Security Policy.
     document.body.appendChild(fixture);
 
     try {
