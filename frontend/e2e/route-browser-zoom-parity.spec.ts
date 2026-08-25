@@ -140,7 +140,7 @@ const ZOOM_BASELINES: Record<`${RouteZoomKey}.${ExplicitAppearance}`, ReviewedZo
   "learn.dark": {
     width: 720,
     height: 995,
-    sha256: "b96851c4a4ac6acac5466a2a78475d55f6b61a5850531205434e586e679df78b0d",
+    sha256: "b96851c4a4ac6ac5466a2a78475d55f6b61a5850531205434e586e679df78b0d",
     sourceRun: 32770042784,
     sourceHeadSha: "b7e028a4c689335c94151e645071731c87c83b97",
   },
