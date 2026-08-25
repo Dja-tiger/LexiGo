@@ -121,16 +121,16 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "word-detail.light": {
     width: 720,
     height: 1676,
-    sha256: "04631e35bcbf87f2935b979f79829a2b1631d9406881addf1eb3289f51951333",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "f589c4d73cea905e46f46d4990d13e0442b3b029b82179daa1dbf0493715d5d2",
+    sourceRun: 32797940396,
+    sourceHeadSha: "e7f6503fe0115cc18e4c703bb16a2b390a32c322",
   },
   "word-detail.dark": {
     width: 720,
     height: 1676,
-    sha256: "6975d4fd3f6e9299aa8c7b522a468d124ae5b13c2b28093b3d9b4112b40c7d65",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "24bb226f3b4fc3a7671f13ab0c58c9fcb713c90bbf8cf6dea0b36dd77a9623f0",
+    sourceRun: 32797940396,
+    sourceHeadSha: "e7f6503fe0115cc18e4c703bb16a2b390a32c322",
   },
   "phrases.light": {
     width: 720,
