@@ -135,16 +135,16 @@ const BASELINES: Record<`${RouteKey}.${ExplicitAppearance}`, ReviewedBaseline> =
   "phrases.light": {
     width: 720,
     height: 1363,
-    sha256: "01dfcfe7dcb97e7968d67f627fbd94cc7b5b918f3977c3927c16f8b3b31de023",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "f8a5a2a49ad311b261b8216fdfea280d508450b02bafd8a7d4c98f330009b574",
+    sourceRun: 32798877581,
+    sourceHeadSha: "8db9c92fcfa97fb3f4914ded51355fca1b81c6ff",
   },
   "phrases.dark": {
     width: 720,
     height: 1363,
-    sha256: "3c5b3c216a17bdfd85160de0d4d5ead238116575dc4145d9ab53dfa6230e56fd",
-    sourceRun: REVIEWED_SOURCE_RUN,
-    sourceHeadSha: REVIEWED_SOURCE_HEAD_SHA,
+    sha256: "19714e7c8fd7cb51d4e01ca708c851b73b03fbbabea7d6ef4da6931919951889",
+    sourceRun: 32798877581,
+    sourceHeadSha: "8db9c92fcfa97fb3f4914ded51355fca1b81c6ff",
   },
   "phrase-detail.light": {
     width: 720,
