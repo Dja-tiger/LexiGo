@@ -40,6 +40,8 @@ Repair the production-reachable `/profile#email_change_token=…` confirmation s
 - `frontend/components/email-change-confirmation-semantic-css-ownership.test.ts`
 - `frontend/e2e/account-email-change.spec.ts`
 - `frontend/e2e/profile-visual.spec.ts`
+- `frontend/e2e/profile-email-confirmation-visual.spec.ts`
+- `frontend/playwright.visual.config.ts`
 
 ## Prohibited paths
 
