@@ -39,7 +39,9 @@ type DialogAppearanceSnapshot = Readonly<{
 
 async function installInitialAppearance(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    localStorage.setItem("lexigo.appearance.v1", "light");
+    if (localStorage.getItem("lexigo.appearance.v1") === null) {
+      localStorage.setItem("lexigo.appearance.v1", "light");
+    }
     localStorage.setItem("lexigo.calendar.reminder.v1", JSON.stringify({
       time: "19:00",
       durationMinutes: 20,
@@ -78,7 +80,7 @@ async function snapshotDialog(page: Page, appearance: Appearance): Promise<Dialo
   await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
 
   await openCalendarDialog(page);
-  await expect(page.locator(".lx-calendar-weekdays button.selected").first()).toBeVisible();
+  await expect(page.locator(".lx-calendar-weekdays button.selected")).toHaveCount(7);
 
   return page.evaluate((currentAppearance) => {
     const root = document.documentElement;
