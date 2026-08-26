@@ -410,7 +410,9 @@ test("email confirmation follows explicit Light/Dark semantic paint without geom
   await page.getByRole("region", { name: "Подтвердить новый адрес" })
     .getByRole("button", { name: "Подтвердить email" })
     .click();
-  await expect(page.getByRole("alert", { name: "" })).toHaveText("Ссылка подтверждения недействительна");
+  await expect(page.locator(".lx-email-confirmation-card .lx-account-notice.error")).toHaveText(
+    "Ссылка подтверждения недействительна",
+  );
   expectSemanticStatuses(await snapshotConfirmationStatuses(page), light);
 
   await switchAppearance(page, "dark");

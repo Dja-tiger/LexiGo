@@ -35,7 +35,7 @@ const CASES: readonly ConfirmationVisualCase[] = [
     height: 844,
     openPencilNode: "fig_4305",
     designContract: "Profile mobile Light / Foundation semantic confirmation surface",
-    approvedSha256: ["pending-linux-review-compact-light"],
+    approvedSha256: ["3bdd149366e5268774d6fd2d04abd85192458e0db9c1e2e0b799928802c3a79b"],
   },
   {
     key: "compact-dark",
@@ -45,7 +45,7 @@ const CASES: readonly ConfirmationVisualCase[] = [
     height: 844,
     openPencilNode: "fig_4305",
     designContract: "Profile mobile Dark token-derived confirmation surface",
-    approvedSha256: ["pending-linux-review-compact-dark"],
+    approvedSha256: ["f6f7d17e727d97f7641e9ff7aefb8cd7a58ed33aaf8ab41c9625af70c2b2989c"],
   },
   {
     key: "desktop-light",
@@ -55,7 +55,7 @@ const CASES: readonly ConfirmationVisualCase[] = [
     height: 1024,
     openPencilNode: "fig_4157",
     designContract: "Profile desktop Light / Foundation semantic confirmation surface",
-    approvedSha256: ["pending-linux-review-desktop-light"],
+    approvedSha256: ["cdf34ac9b167b2b4750baf088e0abde390c3fd3410fd882ff6d49e0a5a7843bf"],
   },
   {
     key: "desktop-dark",
@@ -65,7 +65,7 @@ const CASES: readonly ConfirmationVisualCase[] = [
     height: 1024,
     openPencilNode: "fig_4157",
     designContract: "Profile desktop Dark token-derived confirmation surface",
-    approvedSha256: ["pending-linux-review-desktop-dark"],
+    approvedSha256: ["4d817b7d917a490c8aa3d22d4092ab8bdb509db1db139782def9019872f5db66"],
   },
 ] as const;
 
