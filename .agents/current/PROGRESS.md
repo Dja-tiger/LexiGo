@@ -1,5 +1,17 @@
 # Current Task Progress
 
+## 2026-08-27 — immutable-head CI trigger boundary
+
+### Verified
+
+- The computed-cascade product correction was committed as `ce69bdb09dfbb54f5b129de9219a115f04123453` and read back successfully; `main` remained `f3c161af7cf4fe91dbb2f05441f848963b80e30f`, `behind_by=0`, and the PR diff remained inside the eight allow-listed paths.
+- GitHub registered no Actions workflow run and no check suite for `ce69bdb09dfbb54f5b129de9219a115f04123453` after the Git Data `create_commit` + `update_ref` fast-forward, despite `ci.yml` listening to every `pull_request` event.
+- Existing CI #4208 remains tied to old head `af9496299da0b188a7269746fc3c83cd3c97e9d9` and must not be retried as evidence for the corrected runtime.
+
+### Action
+
+This factual Agent Harness update is intentionally written through the normal GitHub Contents API on the existing PR branch so GitHub emits a standard branch update / `pull_request:synchronize` boundary. The resulting commit becomes the only acceptable immutable-head CI candidate; no workflow file, runtime behavior, test assertion or reviewed visual fingerprint is changed by this trigger commit.
+
 ## 2026-08-27 — CI #4208 computed-cascade correction
 
 ### Verified
