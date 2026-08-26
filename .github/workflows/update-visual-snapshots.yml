@@ -3,7 +3,7 @@ name: Update visual snapshots
 on:
   push:
     branches:
-      - agent/issue-162-progressive-lesson-composer
+      - fix/issue-695-calendar-dialog-semantic-palette
     paths:
       - .github/workflows/update-visual-snapshots.yml
 
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   update-snapshots:
-    name: Regenerate Issue 162 visual baselines
+    name: Regenerate Issue 695 Calendar visual baselines
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: agent/issue-162-progressive-lesson-composer
+          ref: fix/issue-695-calendar-dialog-semantic-palette
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare isolated frontend workspace
@@ -48,21 +48,38 @@ jobs:
           test -n "$container"
           docker cp "$container:/workspace/e2e/visual-regression.spec.ts-snapshots/." e2e/visual-regression.spec.ts-snapshots/
 
+      - name: Verify reviewed Calendar snapshot set
+        run: |
+          expected_paths=$(printf '%s\n' \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png | sort)
+          actual_paths=$(git diff --name-only --relative -- e2e/visual-regression.spec.ts-snapshots | sort)
+          printf 'Expected paths:\n%s\nActual paths:\n%s\n' "$expected_paths" "$actual_paths"
+          test "$actual_paths" = "$expected_paths"
+          printf '%s  %s\n' \
+            e76d050b3d94d0936259b55a4a269cb8418957de5c4494fdce92c39565c2b0e9 e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
+            f8fcc529b4f9888f1a9ef659b478d39fcb2aee56068799c8c3b0ded38b41383a e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
+            c93fda85f12a24ead3fc4c5c895641a6c19fd006dd9d211ecd4d9162b42efda5 e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png \
+            | sha256sum -c -
+
       - name: Cleanup container
         if: always()
         run: bash ../scripts/ci/frontend-container.sh cleanup
 
-      - name: Commit Issue 162 baselines
+      - name: Commit reviewed Calendar baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-compact-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-medium-linux.png \
-            e2e/visual-regression.spec.ts-snapshots/lesson-composer-visual-desktop-linux.png
-          if git diff --cached --quiet; then
-            echo "Composer baselines already match."
-          else
-            git commit -m "test(visual): update Lesson Composer baselines"
-            git push origin HEAD:agent/issue-162-progressive-lesson-composer
-          fi
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png
+          staged=$(git diff --cached --name-only --relative | sort)
+          expected=$(printf '%s\n' \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png \
+            e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png | sort)
+          test "$staged" = "$expected"
+          git commit -m "test(visual): update Calendar dialog baselines"
+          git push origin HEAD:fix/issue-695-calendar-dialog-semantic-palette
