@@ -22,6 +22,7 @@ export default defineConfig({
     "active-lesson-browser-zoom.spec.ts",
     "word-detail-visual.spec.ts",
     "profile-visual.spec.ts",
+    "profile-email-confirmation-visual.spec.ts",
     "system-states-visual.spec.ts",
     "phrases-visual.spec.ts",
     "first-use-visual.spec.ts",
