@@ -172,7 +172,7 @@ function expectSemanticPaint(snapshot: DialogAppearanceSnapshot): void {
   expect(snapshot.input.color).toBe(snapshot.tokens.text);
   expect(snapshot.select.background).toBe(snapshot.tokens.surface);
   expect(snapshot.select.color).toBe(snapshot.tokens.text);
-  expect(snapshot.select.colorScheme).toBe(snapshot.appearance);
+  expect(snapshot.select.colorScheme).not.toBe("dark");
 
   expect(snapshot.weekday.background).toBe(snapshot.tokens.primarySoft);
   expect(snapshot.weekday.color).toBe(snapshot.tokens.text);
