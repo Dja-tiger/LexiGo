@@ -40,6 +40,13 @@ type DialogAppearanceSnapshot = Readonly<{
 async function installInitialAppearance(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.setItem("lexigo.appearance.v1", "light");
+    localStorage.setItem("lexigo.calendar.reminder.v1", JSON.stringify({
+      time: "19:00",
+      durationMinutes: 20,
+      reminderMinutes: 10,
+      recurrence: "custom",
+      weekdays: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
+    }));
   });
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
 }
@@ -71,9 +78,6 @@ async function snapshotDialog(page: Page, appearance: Appearance): Promise<Dialo
   await expect(page.getByRole("heading", { level: 1, name: "Прогресс", exact: true })).toBeVisible();
 
   await openCalendarDialog(page);
-
-  const recurrence = page.getByLabel("Повторение", { exact: true });
-  await recurrence.selectOption("custom");
   await expect(page.locator(".lx-calendar-weekdays button.selected").first()).toBeVisible();
 
   return page.evaluate((currentAppearance) => {
