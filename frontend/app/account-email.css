@@ -62,13 +62,13 @@
   color: var(--ak-color-text-main);
 }
 
-.lx-email-confirmation-card .lx-account-notice.success {
+.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.success {
   border: 1px solid color-mix(in srgb, var(--ak-color-retained) 52%, var(--ak-color-subtle));
   color: var(--ak-color-text-main);
   background: color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface));
 }
 
-.lx-email-confirmation-card .lx-account-notice.error {
+.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.error {
   border: 1px solid color-mix(in srgb, var(--ak-color-weak) 52%, var(--ak-color-subtle));
   color: var(--ak-color-text-main);
   background: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));

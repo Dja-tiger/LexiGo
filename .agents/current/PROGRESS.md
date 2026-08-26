@@ -1,5 +1,43 @@
 # Current Task Progress
 
+## 2026-08-27 — CI #4208 computed-cascade correction
+
+### Verified
+
+- Repository: `Dja-tiger/LexiGo`.
+- Issue #698 remains open under parent #205; Draft PR #699 is the active runtime slice.
+- `main` is still `f3c161af7cf4fe91dbb2f05441f848963b80e30f`; PR #699 head before this correction is `af9496299da0b188a7269746fc3c83cd3c97e9d9`.
+- Immutable CI #4208 / run `33015103200` completed on that exact head.
+- Visual regression is fully green on #4208, so the reviewed content-addressed compact/desktop Light/Dark evidence remains valid and no visual baseline change is justified by this correction.
+- Frontend core, accessibility, content security, performance, iOS PWA, controlled Service Worker, dictionary/lesson browser gates and backend checks are green on the same head.
+- Both general UI shards fail the blocking account-email appearance proof. Desktop Chromium/WebKit and Android Chromium/iOS WebKit reproduce the same semantic status mismatch.
+- The exact Light success assertion expected the semantic `color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface))` result but the browser computed `#d7f5e9`, the legacy Profile Light compatibility value.
+- The downloaded UI trace proves `.lx-email-confirmation` is inside the common `.lx-routed-app[data-route-path="/profile"]` shell. It is a sibling of `LexigoProfileApp`, not a sibling of the routed shell itself.
+- `frontend/app/appearance.css` and `frontend/app/profile.css` both contain route-scoped Light `.lx-account-notice.success/error` compatibility rules. They are imported after `account-email.css` and their selectors out-rank the original confirmation-local status selectors.
+- UI1 also contains an unrelated Lesson Result WebKit timeout. It remains observation-only unless it recurs independently after the account-email production defect is removed.
+
+### Finding
+
+CI #4208 exposed a real product CSS ownership defect that the previous #4204 locator failure had masked. The browser assertion is correct and must remain strict: the confirmation card/action/copy are semantic, but success/error notice paint is still effectively owned by the legacy Profile Light compatibility bridge.
+
+### Root cause
+
+- Original confirmation status selector: `.lx-email-confirmation-card .lx-account-notice.success/error`, class/attribute specificity `(0,3,0)`.
+- Effective later Profile compatibility selectors: `html[data-lexigo-…="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.success/error`, specificity `(0,5,1)`.
+- Because the confirmation is a descendant of the routed shell, those compatibility selectors match and win. Import order alone cannot establish confirmation ownership.
+
+### Corrective slice
+
+- `frontend/app/account-email.css`: scope semantic success/error declarations through `.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card ...`, giving the focused owner class/attribute specificity `(0,6,0)` without `!important`, import reordering or changes to read-only compatibility files.
+- `frontend/components/email-change-confirmation-semantic-css-ownership.test.ts`: protect actual routed-shell reachability and require the confirmation status selectors to out-rank both `appearance.css` and `profile.css` compatibility selectors.
+- `.agents/current/TASK.md`: correct the stale ownership assumption and explicitly record the overlapping cascade boundary.
+- `.agents/current/PROGRESS.md` / `EXECUTION.md`: record #4208 provenance and the product-defect classification.
+- `frontend/e2e/account-email-change.spec.ts`: unchanged; its strict computed-style assertion is the regression gate that exposed the defect.
+
+### Next action
+
+Create one fast-forward Git Data commit from exact parent `af9496299da0b188a7269746fc3c83cd3c97e9d9`, read every changed path/ref back, confirm unchanged `main`, then require a new immutable-head CI. Do not retry #4208 or weaken the computed-style assertion.
+
 ## 2026-08-27 00:09 +03
 
 ### Verified

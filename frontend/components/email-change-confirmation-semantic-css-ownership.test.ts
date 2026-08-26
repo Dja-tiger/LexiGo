@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 const confirmationCSS = readFileSync(new URL("../app/account-email.css", import.meta.url), "utf8");
 const designTokens = readFileSync(new URL("../app/design-tokens.css", import.meta.url), "utf8");
 const appearance = readFileSync(new URL("../app/appearance.css", import.meta.url), "utf8");
+const profileCSS = readFileSync(new URL("../app/profile.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const routedShell = readFileSync(new URL("./routed-lexigo-app.tsx", import.meta.url), "utf8");
 const bootstrap = readFileSync(new URL("./lexigo-bootstrapped-app.tsx", import.meta.url), "utf8");
 const component = readFileSync(new URL("./email-change-confirmation.tsx", import.meta.url), "utf8");
 const browserProof = readFileSync(new URL("../e2e/account-email-change.spec.ts", import.meta.url), "utf8");
@@ -26,6 +28,19 @@ const REQUIRED_TOKENS = [
   "--ak-elevation-2",
 ] as const;
 
+const CONFIRMATION_SUCCESS_SELECTOR =
+  '.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.success';
+const CONFIRMATION_ERROR_SELECTOR =
+  '.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.error';
+const APPEARANCE_SUCCESS_SELECTOR =
+  'html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.success';
+const APPEARANCE_ERROR_SELECTOR =
+  'html[data-lexigo-resolved-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.error';
+const PROFILE_SUCCESS_SELECTOR =
+  'html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.success';
+const PROFILE_ERROR_SELECTOR =
+  'html[data-lexigo-appearance="light"] .lx-routed-app[data-route-path="/profile"] .lx-account-notice.error';
+
 function emailConfirmationPresentationBlock(): string {
   const start = confirmationCSS.indexOf(".lx-email-confirmation-card {");
   const end = confirmationCSS.indexOf("@media (max-width: 719px)", start);
@@ -34,11 +49,24 @@ function emailConfirmationPresentationBlock(): string {
   return confirmationCSS.slice(start, end);
 }
 
+function classAndAttributeSpecificity(selector: string): number {
+  return (selector.match(/\.[a-z0-9_-]+|\[[^\]]+\]/gi) ?? []).length;
+}
+
 describe("Issue #698 email confirmation semantic CSS ownership", () => {
-  it("proves the bootstrap-owned confirmation is production reachable outside the Profile island", () => {
+  it("proves the bootstrap-owned confirmation is a Profile-island sibling inside the routed shell", () => {
     expect(layout.match(/import "\.\/account-email\.css";/g)).toHaveLength(1);
     expect(layout.match(/import "\.\/design-tokens\.css";/g)).toHaveLength(1);
     expect(layout.match(/import "\.\/appearance\.css";/g)).toHaveLength(1);
+
+    const shellRender = routedShell.indexOf(
+      '<div className="lx-routed-app" data-app-router-shell="true" data-route-path={pathname}>',
+    );
+    const bootstrapRenderInShell = routedShell.indexOf(
+      "<LexigoBootstrappedApp pathname={pathname} onNavigateHome={navigateHome} />",
+    );
+    expect(shellRender).toBeGreaterThanOrEqual(0);
+    expect(bootstrapRenderInShell).toBeGreaterThan(shellRender);
 
     const confirmationRender = bootstrap.indexOf(
       "<EmailChangeConfirmation onSessionInvalidated={handleEmailChanged} />",
@@ -68,16 +96,34 @@ describe("Issue #698 email confirmation semantic CSS ownership", () => {
     expect(presentation).not.toContain("color-scheme: dark");
 
     expect(presentation).toContain(".lx-email-confirmation-card .lx-button.primary {");
-    expect(presentation).toContain(".lx-email-confirmation-card .lx-account-notice.success {");
-    expect(presentation).toContain(".lx-email-confirmation-card .lx-account-notice.error {");
+    expect(presentation).toContain(`${CONFIRMATION_SUCCESS_SELECTOR} {`);
+    expect(presentation).toContain(`${CONFIRMATION_ERROR_SELECTOR} {`);
     expect(presentation).toContain("background: var(--ak-color-surface);");
     expect(presentation).toContain("background: var(--ak-color-primary);");
     expect(presentation).toContain("box-shadow: var(--ak-elevation-2);");
   });
 
-  it("does not rely on the route-island Profile appearance bridge for this sibling surface", () => {
+  it("out-ranks the existing Profile compatibility status bridge without modifying that bridge", () => {
     expect(appearance).not.toContain(".lx-email-confirmation");
-    expect(appearance).toContain('.lx-routed-app[data-route-path="/profile"] .lx-account-security');
+    expect(profileCSS).not.toContain(".lx-email-confirmation");
+
+    expect(appearance).toContain(APPEARANCE_SUCCESS_SELECTOR);
+    expect(appearance).toContain(APPEARANCE_ERROR_SELECTOR);
+    expect(profileCSS).toContain(PROFILE_SUCCESS_SELECTOR);
+    expect(profileCSS).toContain(PROFILE_ERROR_SELECTOR);
+
+    expect(classAndAttributeSpecificity(CONFIRMATION_SUCCESS_SELECTOR)).toBeGreaterThan(
+      classAndAttributeSpecificity(APPEARANCE_SUCCESS_SELECTOR),
+    );
+    expect(classAndAttributeSpecificity(CONFIRMATION_SUCCESS_SELECTOR)).toBeGreaterThan(
+      classAndAttributeSpecificity(PROFILE_SUCCESS_SELECTOR),
+    );
+    expect(classAndAttributeSpecificity(CONFIRMATION_ERROR_SELECTOR)).toBeGreaterThan(
+      classAndAttributeSpecificity(APPEARANCE_ERROR_SELECTOR),
+    );
+    expect(classAndAttributeSpecificity(CONFIRMATION_ERROR_SELECTOR)).toBeGreaterThan(
+      classAndAttributeSpecificity(PROFILE_ERROR_SELECTOR),
+    );
   });
 
   it("binds computed Light/Dark browser proof to blocking UI CI", () => {

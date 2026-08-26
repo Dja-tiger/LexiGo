@@ -4,11 +4,70 @@
 
 - Branch: `fix/profile-email-confirmation-semantic-palette`
 - Base SHA: `f3c161af7cf4fe91dbb2f05441f848963b80e30f`
-- Head SHA before CI correction: `62d080fdf7fd770abc7ef62cf2bba705e45f5191`
+- Head SHA before computed-cascade correction: `af9496299da0b188a7269746fc3c83cd3c97e9d9`
 - PR: #699 (Draft)
 - Issue: #698
 
 ## Skills used
+
+### Computed-cascade correction
+
+Purpose:
+
+Remove the remaining effective legacy Light status paint from the email-change confirmation without modifying the shared Profile compatibility bridge or weakening browser acceptance.
+
+Instruction source:
+
+`.agents/AGENTS.issue-261-css-specificity.md`, `.agents/AGENTS.base.md`, `.agents/SKILLS.md` frontend validation and CI-debugging procedures.
+
+Version or verification date:
+
+2026-08-27.
+
+Inputs:
+
+Immutable CI #4208 / run `33015103200` on exact head `af9496299da0b188a7269746fc3c83cd3c97e9d9`; UI1/UI2 Playwright artifacts and traces; current `account-email.css`, `appearance.css`, `profile.css`, routed shell and blocking account-email E2E.
+
+Files inspected:
+
+`frontend/app/account-email.css`, `frontend/app/appearance.css`, `frontend/app/profile.css`, `frontend/app/layout.tsx`, `frontend/components/routed-lexigo-app.tsx`, `frontend/components/lexigo-bootstrapped-app.tsx`, `frontend/components/email-change-confirmation-semantic-css-ownership.test.ts`, `frontend/e2e/account-email-change.spec.ts` and exact #4208 UI traces.
+
+Actions performed:
+
+- proved from the runtime trace and routed-shell source that `EmailChangeConfirmation` is a descendant of `.lx-routed-app[data-route-path="/profile"]` and a sibling of `LexigoProfileApp`;
+- matched the browser-computed `#d7f5e9` success background to the existing Profile Light compatibility rule;
+- compared selector specificity and import order instead of relying on filename ownership;
+- kept the strict computed-style E2E unchanged;
+- prepared a confirmation-only selector with class/attribute specificity `(0,6,0)`, which out-ranks both later compatibility status selectors `(0,5,1)` without `!important` or stylesheet reordering;
+- strengthened the source contract to fail if routed-shell reachability or the specificity advantage is lost.
+
+Artifacts produced:
+
+Focused runtime CSS blob, specificity source-contract blob and corrected current-task records.
+
+Result:
+
+Ready for one atomic fast-forward branch commit from exact parent `af9496299da0b188a7269746fc3c83cd3c97e9d9`, followed by immutable-head CI.
+
+Failures:
+
+CI #4208 failed both general UI shards on the account-email semantic status assertion; Visual and the rest of the required matrix were green. UI1 also contained one unrelated Lesson Result WebKit timeout.
+
+Root cause:
+
+The original confirmation status selector had lower specificity than existing later-loaded Profile Light `.lx-account-notice.success/error` compatibility selectors that do match the confirmation because it lives inside the routed shell.
+
+Fallback:
+
+If the next exact-head browser proof still fails, inspect the new computed declaration source and trace before any further CSS change. Do not alter `appearance.css`, `profile.css`, browser assertions or timeouts without new evidence.
+
+Limitations:
+
+This correction intentionally addresses only confirmation-local success/error status paint. Shared account/security compatibility cleanup remains outside Issue #698.
+
+Reusable lesson:
+
+A route-island sibling can still be covered by route-scoped selectors when both share a persistent shell ancestor. CSS ownership must be proved from actual DOM reachability plus computed cascade and specificity, not from component sibling terminology.
 
 ### GitHub repository operations
 
@@ -46,7 +105,7 @@ Corrective test/evidence blobs plus this execution record.
 
 Result:
 
-Ready to create one atomic corrective commit from parent `62d080fdf7fd770abc7ef62cf2bba705e45f5191`.
+The #4204 locator/fingerprint correction was committed as head `af9496299da0b188a7269746fc3c83cd3c97e9d9`; CI #4208 then exposed the separate computed-cascade product defect documented above.
 
 Failures:
 
@@ -58,11 +117,11 @@ Account-email Light assertion used an ambiguous global alert role; four visual f
 
 Fallback:
 
-If the next immutable-head run exposes a different failure, inspect that exact job/report before another write. Do not rerun blindly.
+If an immutable-head run exposes a different failure, inspect that exact job/report before another write. Do not rerun blindly.
 
 Limitations:
 
-The unrelated Lesson Result WebKit timeout in UI1 is not changed by this slice unless it reproduces and yields independent evidence.
+Unrelated Lesson Result WebKit timeouts are not changed by this slice unless they reproduce and yield independent evidence.
 
 Reusable lesson:
 
@@ -104,7 +163,7 @@ Failure classification and exact visual fingerprint set recorded in `.agents/cur
 
 Result:
 
-Account-email failure classified as stale/ambiguous test locator, not product CSS defect. Visual failure classified as intentional fail-closed approval gate.
+Account-email #4204 failure classified as stale/ambiguous test locator. Visual #4204 failure classified as intentional fail-closed approval gate. The subsequent #4208 run is independently classified above as a production CSS cascade defect.
 
 Failures:
 
@@ -112,7 +171,7 @@ One unrelated `lesson-result.spec.ts` desktop WebKit timeout occurred in UI1.
 
 Root cause:
 
-For the relevant account test, `getByRole("alert", { name: "" })` matched both `.lx-account-notice.error` and Next.js `#__next-route-announcer__`.
+For the relevant #4204 account test, `getByRole("alert", { name: "" })` matched both `.lx-account-notice.error` and Next.js `#__next-route-announcer__`.
 
 Fallback:
 
@@ -120,7 +179,7 @@ Require recurrence before changing unrelated Lesson Result code/test; if it recu
 
 Limitations:
 
-No local browser execution is available in this connector environment, so the authoritative regression proof is the next immutable GitHub Actions run.
+No local browser execution is available in this connector environment, so authoritative regression proof is the next immutable GitHub Actions run.
 
 Reusable lesson:
 
@@ -165,7 +224,7 @@ Artifacts produced:
 
 Result:
 
-All four exact Linux renders approved for the content-addressed fingerprint allow-list. No existing canonical visual-regression PNG baseline changes are justified or required.
+All four exact Linux renders approved for the content-addressed fingerprint allow-list. CI #4208 Visual regression subsequently passed on the approved fingerprints. No existing canonical visual-regression PNG baseline changes are justified or required.
 
 Failures:
 
@@ -177,7 +236,7 @@ Fail-closed first-run review workflow.
 
 Fallback:
 
-If final-head SHA output differs, block merge and inspect the new exact artifact; do not broaden the approved hash list without review.
+If final-head visual SHA output differs, block merge and inspect the new exact artifact; do not broaden the approved hash list without review.
 
 Limitations:
 
