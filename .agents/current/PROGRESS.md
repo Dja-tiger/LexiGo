@@ -1,47 +1,72 @@
 # Current Task Progress
 
-## 2026-08-26 04:37 EEST
+## 2026-08-26
 
-### Verified
+### Verified live state
 
 - Repository: `Dja-tiger/LexiGo`.
-- Protected `main` remains `259a3e3b13e8db59e3c729621542dea57362fd13` with no drift.
-- Draft PR #696 is the only open PR.
-- Parent audit #205 remains open.
-- Issue #695 is a missed acceptance regression from #583/#599: the globally reachable Calendar trigger was semantic, but the opened dialog still used a fixed dark legacy palette in explicit Light.
-- OpenPencil has no dedicated Calendar screen owner; this slice is limited to Foundation semantic paint ownership and preserves geometry/behavior.
+- Protected `main`: `259a3e3b13e8db59e3c729621542dea57362fd13`; no drift through the baseline import/restore sequence.
+- Draft PR #696 `fix(calendar): semanticize reminder dialog palette` is the only open PR.
+- Issue #695 is the active regression slice; parent visual-parity audit #205 remains open.
+- PR branch: `fix/issue-695-calendar-dialog-semantic-palette`.
+- PR hygiene before final CI: no submitted reviews, no review threads, branch `behind_by=0`.
 
-### Changed files
+### Runtime change
 
-- `.agents/current/TASK.md` — exact Issue #695 scope/invariants/allowed paths.
-- `.agents/current/PROGRESS.md` — live progress and CI classification.
-- `.agents/current/EXECUTION.md` — execution evidence.
-- `frontend/app/calendar-reminders.css` — semantic Foundation paint for Calendar card/dialog/backdrop/forms/weekdays/preview/provider/privacy/status; geometry unchanged; native selects no longer force dark scheme.
-- `frontend/components/calendar-reminder-semantic-css-ownership.test.ts` — fail-closed legacy-literal/token/CI-routing contract.
-- `frontend/e2e/calendar-dialog-appearance.spec.ts` — blocking computed-style explicit Light/Dark proof with geometry/no-overflow invariants.
-- `frontend/package.json` — collects the proof in existing `test:e2e:ui`.
+- `frontend/app/calendar-reminders.css` now consumes Foundation semantic palette/elevation owners for the globally reachable Calendar reminder card/dialog/backdrop/forms/weekdays/preview/providers/privacy/status.
+- Fixed legacy forced-dark native control ownership with `color-scheme: inherit`; geometry, storage, Google/Apple integration, focus, touch and reduced-motion behavior remain outside the change.
+- No presentation hex literals, `rgba(` literals or `color-scheme: dark` remain in the Calendar stylesheet.
+- `frontend/components/calendar-reminder-semantic-css-ownership.test.ts` fails closed on legacy palette ownership and requires the browser proof in blocking `test:e2e:ui`.
+- `frontend/e2e/calendar-dialog-appearance.spec.ts` opens the production Calendar dialog under explicit Light and Dark, samples actual computed paint, verifies semantic token ownership, no horizontal overflow, and equal dialog geometry.
+- Deterministic Calendar storage seeds all seven custom weekdays; the test asserts exact selected count rather than an ambiguous `.first()` locator.
 
-### First authoritative CI
+### Authoritative CI classification
 
-- PR CI #4192 / run `32912866102` ran on immutable head `febfe3455cedc3946749783b4aee4ffe7d0cf471`.
-- Frontend core passed: lint, typecheck, unit/source contract, production build and dependency audit.
-- Backend integration, CSP, performance, accessibility, PWA and service-worker gates passed.
-- Visual regression: 30 cases passed; only the three expected Calendar Linux baselines failed at compact 390x844, medium 768x1024 and desktop 1440x900.
-- Visual artifact `9587323237` was manually reviewed. The intended delta is legacy dark surface -> Foundation Light surface; modal geometry/field grid/provider layout/clipping remained stable. No baseline has been updated yet.
-- UI shard 1 job `98010761452` failed in the new Calendar appearance proof on Chromium and WebKit, including retry.
+- CI #4192 / run `32912866102` on head `febfe3455cedc3946749783b4aee4ffe7d0cf471`: core/backend/CSP/performance/accessibility/PWA/SW green; Visual failed only the three intended Calendar baselines; new UI proof failed because recurrence `selectOption("custom")` stalled despite a visible combobox. The appearance-only proof was changed to seed the production Calendar storage key instead of exercising unrelated recurrence interaction.
+- CI #4194 / run `32919395226` on head `685e6e699ac13b207f686fcc444276b9bc9184cb`: the first locator failure was removed. New exact failure was `select.colorScheme === "normal"` while the test expected exact Light/Dark. Runtime source correctly uses inherited native scheme; acceptance was corrected to reject forced legacy `"dark"` while semantic surface/text paint is asserted independently.
+- CI #4195 / run `32920176432` on head `cea47eeaa75c9a8fece711698f9758cd19f539db`: Calendar proof still failed because `installInitialAppearance()` wrote `light` in an init script on every reload, undoing the explicit Dark preference. There were unrelated transient `system-states`/`lesson-result` failures outside the PR diff.
+- Test fix `95a9532215ca6f43c302f9a71e7d771f044c70e3` only initializes Light when the appearance key is absent, so explicit Dark survives reload; it also requires exactly seven selected weekdays.
+- CI #4196 / run `32940418905` on immutable head `95a9532215ca6f43c302f9a71e7d771f044c70e3`: Frontend core, backend unit/security, backend integration, iOS PWA dictionary, Lesson completion, CSP, Dictionary smoke, accessibility, controlled service worker, performance budgets, UI shard 1 and UI shard 2 all passed. The earlier unrelated transient failures did not reproduce.
+- CI #4196 Visual job `98090531494` failed only the three expected Calendar Linux snapshots. No other visual case failed.
 
-### UI shard 1 root-cause classification
+### Reviewed Linux baseline provenance
 
-The failure is test setup, not runtime CSS. Trace evidence shows the Calendar dialog is open and contains the expected `custom` option, but Playwright's `getByLabel("Повторение", { exact: true }).selectOption("custom")` remains stuck in the label locator until the 90s test timeout in both engines. The page snapshot at timeout still contains the visible combobox and all three recurrence options.
+Authoritative reviewed Calendar actuals were stable across repeated Linux visual artifacts, including #4196 artifact `9596559565`:
 
-The proof does not need to exercise recurrence interaction; it only needs deterministic selected-weekday paint. The test now seeds a normalized `custom` Calendar reminder through the production storage key `lexigo.calendar.reminder.v1` in `addInitScript`, then verifies a selected weekday after opening the dialog. This removes the flaky locator/action from the appearance-only contract without weakening runtime paint, geometry, overflow or Light/Dark assertions.
+- compact: `e76d050b3d94d0936259b55a4a269cb8418957de5c4494fdce92c39565c2b0e9`
+- medium: `f8fcc529b4f9888f1a9ef659b478d39fcb2aee56068799c8c3b0ded38b41383a`
+- desktop: `c93fda85f12a24ead3fc4c5c895641a6c19fd006dd9d211ecd4d9162b42efda5`
 
-### Current branch head
+Manual/decoded review established the intended delta as legacy dark Calendar paint -> Foundation semantic Light paint, with stable modal geometry, field grid, provider layout and clipping. Repeated decoded comparisons produced zero pixel drift between reviewed runs.
 
-- Test fix write: `f9f7bee1e7153ea1844076dcc7cec0886cb44d51`.
-- `main` after the write: still `259a3e3b13e8db59e3c729621542dea57362fd13`.
-- Resolve the new head again after Agent Harness documentation writes.
+The repository-owned snapshot workflow was temporarily scoped to #695 only after UI1/UI2 were green. Push run `32941489467`, job `98093195331` completed successfully, including:
+
+- visual regeneration;
+- exact changed-path verification requiring only the three Calendar PNGs;
+- exact SHA-256 verification against the reviewed hashes above;
+- bot commit `b4da0a4fff2d383aee70bf350e116c7e2785b393`.
+
+`4f6880c8978bb614559fcf8e49d829896f0bddb3..b4da0a4fff2d383aee70bf350e116c7e2785b393` contains exactly:
+
+- `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-compact-linux.png`
+- `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-medium-linux.png`
+- `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-desktop-linux.png`
+
+The temporary workflow modification was then restored in commit `33a63cd3ca274c928fa4ee797fe82d414ab2e242`; its blob is again `d4cde7f83d5f8b79f2d5c8653ead7aefa6dfccae`, byte-identical to `main`. `.github/workflows/update-visual-snapshots.yml` is absent from the PR diff.
+
+### Current PR diff before final candidate CI
+
+Expected paths only:
+
+- `.agents/current/TASK.md`
+- `.agents/current/PROGRESS.md`
+- `.agents/current/EXECUTION.md`
+- `frontend/app/calendar-reminders.css`
+- `frontend/components/calendar-reminder-semantic-css-ownership.test.ts`
+- `frontend/e2e/calendar-dialog-appearance.spec.ts`
+- `frontend/e2e/visual-regression.spec.ts-snapshots/calendar-dialog-visual-{compact,medium,desktop}-linux.png`
+- `frontend/package.json`
 
 ### Next action
 
-Read back Agent Harness writes and verify branch/main refs. Inspect the new immutable-head CI generated by these commits. Do not update the three Calendar PNG baselines until the computed Light/Dark browser proof is green; then import only the three manually reviewed Linux actuals and require a final full immutable-head green run before Ready/merge.
+Treat the Agent Harness evidence commit as the final candidate head. Require one full immutable-head CI with normal visual comparison green. Then recheck `main` drift, reviews/threads and changed paths; mark PR #696 Ready, squash-merge using the expected head SHA, require exact-main CI and exact-runtime Stage/public browser validation. After successful runtime delivery, create a separate docs-only reconciliation PR to update `.agents/PROJECT_STATE.md` and reset `.agents/current/**`.
