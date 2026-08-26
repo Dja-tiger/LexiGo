@@ -23,15 +23,16 @@
 }
 
 .lx-email-confirmation-card {
-  border: 1px solid rgba(167, 139, 250, 0.28);
+  border: 1px solid color-mix(in srgb, var(--ak-color-primary) 28%, var(--ak-color-subtle));
   border-radius: 22px;
   padding: clamp(20px, 4vw, 34px);
-  background: linear-gradient(145deg, rgba(76, 29, 149, 0.24), rgba(15, 23, 42, 0.94));
-  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.34);
+  color: var(--ak-color-text-main);
+  background: var(--ak-color-surface);
+  box-shadow: var(--ak-elevation-2);
 }
 
 .lx-email-confirmation-card > span {
-  color: #c4b5fd;
+  color: var(--ak-color-primary);
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.11em;
@@ -45,12 +46,32 @@
 .lx-email-confirmation-card p {
   max-width: 62ch;
   margin: 0 0 20px;
-  color: var(--lx-muted, #94a3b8);
+  color: var(--ak-color-text-muted);
   line-height: 1.6;
+}
+
+.lx-email-confirmation-card .lx-button.primary {
+  border: 0;
+  color: var(--ak-color-surface);
+  background: var(--ak-color-primary);
+  box-shadow: var(--ak-elevation-2);
 }
 
 .lx-email-confirmation-card .lx-account-notice {
   margin-bottom: 16px;
+  color: var(--ak-color-text-main);
+}
+
+.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.success {
+  border: 1px solid color-mix(in srgb, var(--ak-color-retained) 52%, var(--ak-color-subtle));
+  color: var(--ak-color-text-main);
+  background: color-mix(in srgb, var(--ak-color-retained) 16%, var(--ak-color-surface));
+}
+
+.lx-routed-app[data-route-path="/profile"] .lx-email-confirmation .lx-email-confirmation-card .lx-account-notice.error {
+  border: 1px solid color-mix(in srgb, var(--ak-color-weak) 52%, var(--ak-color-subtle));
+  color: var(--ak-color-text-main);
+  background: color-mix(in srgb, var(--ak-color-weak) 16%, var(--ak-color-surface));
 }
 
 @media (max-width: 719px) {
