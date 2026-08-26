@@ -4,11 +4,26 @@
 
 - Last verified: 2026-08-26 Europe/Berlin.
 - Repository: `Dja-tiger/LexiGo`.
-- Current verified runtime `main`: `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
-- No open pull requests existed when this reconciliation slice started after the completed #693 runtime delivery and Stage validation.
+- Current verified runtime `main`: `bf80e35bac10d87175540eef9d10af2008224675`.
+- No open pull requests existed when this reconciliation slice started after the completed #696 runtime delivery, exact-main CI and exact-SHA Stage validation.
 - Live GitHub and live source are authoritative for refs, Issues, PRs, CI, deployment and ownership. Historical delivery details remain in Git history and linked Issues/PRs.
 
 ## Latest completed runtime deliveries
+
+### Issue #695 / PR #696 — semantic Calendar reminder dialog palette for #205
+
+- Issue #695 is **closed / completed** by PR #696; parent visual-parity audit #205 remains open.
+- The globally reachable Calendar reminder dialog no longer owns the pre-Foundation fixed dark navy/blue palette. Modal/card/backdrop/forms/weekdays/preview/provider/privacy/status paint now derives from current Foundation semantic `--ak-color-*` / `--ak-elevation-*` ownership while dialog geometry, recurrence/settings persistence, Google/Apple Calendar behavior, focus lifecycle, touch semantics and reduced-motion behavior remain unchanged.
+- Native Calendar selects no longer force `color-scheme: dark`; they inherit application appearance. The fail-closed source contract rejects legacy presentation literals and requires the blocking computed Light/Dark browser proof.
+- The browser proof opens the production Calendar dialog under explicit Light and Dark, samples actual computed paint, verifies semantic token ownership, no horizontal overflow and identical dialog geometry. Deterministic recurrence state is seeded through the production storage owner; seven selected weekdays are asserted exactly.
+- The three Linux Calendar baselines were regenerated only after repeated authoritative actual review. Reviewed SHA-256 values are compact `e76d050b3d94d0936259b55a4a269cb8418957de5c4494fdce92c39565c2b0e9`, medium `f8fcc529b4f9888f1a9ef659b478d39fcb2aee56068799c8c3b0ded38b41383a`, desktop `c93fda85f12a24ead3fc4c5c895641a6c19fd006dd9d211ecd4d9162b42efda5`. The temporary branch-scoped snapshot workflow verified exact changed paths/hashes and was restored byte-for-byte before final CI.
+- Superseded CI #4192 / run `32912866102`, #4194 / run `32919395226` and #4195 / run `32920176432` classified test-harness defects rather than product regressions: an unrelated recurrence interaction stalled, inherited native `color-scheme` computed as `normal`, and an init script overwrote explicit Dark on reload. Each was corrected at the exact test ownership boundary without weakening runtime assertions.
+- CI #4196 / run `32940418905` proved both UI shards and all non-visual gates green while Visual failed only the three intended Calendar baselines; reviewed Linux artifact `9596559565` supplied the approved actuals.
+- Final developer head: `57864f699fbd0c6191a56729e78e96b3e72a2bc6`.
+- Full immutable-head PR CI #4200 / run `32944472428`: **success**, including frontend core, backend unit/security, backend integration, both UI shards, visual regression, accessibility, performance, content security, iOS PWA, controlled Service Worker, lesson/dictionary browser gates and container builds.
+- PR #696 squash merge/current verified runtime `main`: `bf80e35bac10d87175540eef9d10af2008224675`.
+- Exact-main push CI #4201 / run `32945526786`: **success** across the full required matrix, including normal Visual, both UI shards, API/web container builds and deployment Caddy publication.
+- Exact-SHA Stage #4053 / run `32946581385`: **success**; exact CI deployment scope validated, deploy **success**, public endpoints **success**, public browser UI **success** on runtime SHA `bf80e35bac10d87175540eef9d10af2008224675`.
 
 ### Issue #692 / PR #693 — semantic Next.js root `global-error` palette for #205
 
@@ -21,9 +36,9 @@
 - Superseded CI #4180 / run `32887884931` proved two deterministic test/integration defects: the synthetic style lacked the page nonce, and the three-import special-boundary implementation leaked extra CSS requests into normal routes. Both were corrected at their actual boundaries rather than retried blindly.
 - Final developer head: `733fc18af54018fbaadec8bddb3c5ebf7e69c1fc`.
 - Full immutable-head PR CI #4188 / run `32906584146`: **success**, including frontend core, both UI shards, visual regression, accessibility, performance, content security, iOS PWA, controlled Service Worker, lesson/dictionary browser gates, backend checks and container builds.
-- PR #693 squash merge/current verified runtime `main`: `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
+- PR #693 squash merge/current verified runtime `main` at delivery time: `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
 - Exact-main push CI #4189 / run `32908963627`: **success** across the full required matrix, including both UI shards and the reconciled performance budgets.
-- Exact-SHA Stage #4042 / run `32909896850`: **success**; deploy **success**, public smoke **success**, public browser **success**. API and web run image tag `8e037dd161026987c687ac9075dc809e4c7ab6ad`; the public desktop Chromium/iOS WebKit matrix passed **12/12**.
+- Exact-SHA Stage #4042 / run `32909896850`: **success**; deploy **success**, public smoke **success**, public browser **success**. API and web ran image tag `8e037dd161026987c687ac9075dc809e4c7ab6ad`; the public desktop Chromium/iOS WebKit matrix passed **12/12**.
 
 ### Issue #689 / PR #690 — hydration-safe ApplicationErrorBoundary appearance proof
 
@@ -117,12 +132,11 @@
 
 ## Stage / deployment
 
-- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `8e037dd161026987c687ac9075dc809e4c7ab6ad`.
-- Stage #4042 / run `32909896850`: deploy **success**, public smoke **success**, public browser **success**.
-- The exact CI scope artifact for `8e037dd161026987c687ac9075dc809e4c7ab6ad` was downloaded and validated before deployment.
-- The bounded capacity preflight passed while preserving persistent volumes and the required rollback/deploy images; after cleanup the Stage host retained about 18.1 GiB available and healthy PostgreSQL/Redis/API/web services.
-- PostgreSQL, Redis, API and web became healthy; API and web run the exact `8e037dd161026987c687ac9075dc809e4c7ab6ad` image tag.
-- Public frontend root and API readiness returned HTTP 200 on the first attempt, and public runtime validation passed **12/12** tests across desktop Chromium and iOS WebKit for `/`, `/learn`, `/phrases`, `/dictionary`, `/progress` and stale-build recovery.
+- Deployment status Issue #12 reports Stage **success** on exact runtime image SHA `bf80e35bac10d87175540eef9d10af2008224675`.
+- Stage #4053 / run `32946581385`: scope resolution **success**, deploy **success**, public endpoint verification **success**, public browser UI **success**.
+- The exact CI deployment-scope artifact for `bf80e35bac10d87175540eef9d10af2008224675` was downloaded and validated before deployment.
+- Stage deployment reported the exact runtime merge SHA; no docs-only or stale image was substituted.
+- Public frontend/API verification and browser validation completed successfully on the deployed runtime.
 
 ### Issue #659 — Stage PostgreSQL storage incident
 
@@ -156,9 +170,9 @@
 ## Open automated work verified at reconciliation
 
 - Issue #205 remains the High-priority visual-parity umbrella.
-- The #678 tablet RouteChrome palette defect, #681 global Service Worker update-surface palette defect, #684 true-browser-zoom 720–767px compact RouteChrome palette defect, #687 global `ApplicationErrorBoundary` palette defect and #692 Next.js root `global-error` palette defect are delivered and must not be repeated.
+- The #678 tablet RouteChrome palette defect, #681 global Service Worker update-surface palette defect, #684 true-browser-zoom 720–767px compact RouteChrome palette defect, #687 global `ApplicationErrorBoundary` palette defect, #692 Next.js root `global-error` palette defect and #695 opened Calendar reminder dialog palette defect are delivered and must not be repeated.
 - #689 was a trace-proven browser-test harness race in the #687/#688 proof and is delivered by #690; it is not a separate product visual defect.
-- The #692/#693 CI recovery adds two reusable test/ownership lessons: synthetic exact-CSS browser evidence must obey the live nonce-CSP, and a special App Router root replacement must not import broad normal-layout CSS owners if that makes its assets part of every normal route graph.
+- Reusable visual/browser ownership lessons now include: synthetic exact-CSS evidence must obey live nonce-CSP; special root replacements must not import broad normal-layout CSS owners; a semantic trigger does not make the dialog it opens semantic; inherited native `color-scheme` may compute as `normal`; appearance init scripts must not overwrite explicit persisted state on reload.
 - User-directed next work remains a route-by-route effective visual ownership audit under #205, focused on genuinely remaining legacy palette/appearance/cascade defects rather than raw color grep or redoing already-approved evidence.
 - Any reproduced runtime/design defect found by the #205 audit must be isolated into its own atomic Issue/PR; the umbrella audit must not silently redesign runtime.
 - Existing route-specific compatibility contracts, including Profile appearance ownership and Word Detail contrast ownership, must not be normalized globally without runtime evidence.
