@@ -1,13 +1,13 @@
 module github.com/Dja-tiger/LexiGo/backend
 
-go 1.25.0
+go 1.26.0
 
 toolchain go1.26.6
 
 require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/redis/go-redis/v9 v9.22.0
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
